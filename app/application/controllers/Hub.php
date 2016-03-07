@@ -7,7 +7,7 @@ class Hub extends HubBase{
 	include "index.html";
     }
     
-    public function on( $model, $method ){
+    public function on( $model=null, $method=null ){
 	if( $model ){
 	    $this->load_model($model);
 	    if( method_exists($this->{$model},$method) ){// && stripos($method,'core')===false

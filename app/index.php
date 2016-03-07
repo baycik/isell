@@ -6,37 +6,6 @@
  * -----------------------------------------------
  */
 include "../config.php";
-$uri_explode=explode('/',$_SERVER['REQUEST_URI']);
-$uri_explode[1]=null;
-$_SERVER['REQUEST_URI']= implode('/',$uri_explode);
-#ini_set('html_errors','off');
-/*
-
-
-$uri_explode[1]='isell3';
-if(substr($uri_explode[2],0,5)=='popup' ){
-    include "application/views/dialog/popup.php";
-    exit;
-}
-else
-if( isset($_REQUEST['mod']) ){
-    $uri_explode[2]='Proc'.$_REQUEST['mod'];
-    if( isset($_REQUEST['rq']) ){
-	$uri_explode[3]='on'.$_REQUEST['rq'];
-    }
-    $uri_explode[4]="?".$_SERVER['QUERY_STRING'];
-}
-else
-if( isset($_REQUEST['tpl']) ){
-    $uri_explode[2]='page';
-    $uri_explode[3]=$_REQUEST['tpl'];
-}
-$_SERVER['REQUEST_URI']= implode('/',$uri_explode);
-//header("X-isell-URI: ".$_SERVER['REQUEST_URI']);
-*/
-
-
-
 /**
  * CodeIgniter
  *
