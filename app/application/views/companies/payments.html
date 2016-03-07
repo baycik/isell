@@ -1,0 +1,375 @@
+<script language="javascript">
+require(["dojo/dom","dijit/registry","dojo/on", "dojo/date/locale","dojo/query","baycik/grid/DataGrid","dojo/domReady!"],
+function(dom,registry,on,locale,query){
+    CompaniesJs.payments.selectedAccount=0;
+    CompaniesJs.payments.init=function(){
+        this.initGrid();
+        this.initCalendars();
+        this.loadCompanyAccounts( CompaniesJs.payments.selectedAccount );
+    };
+    CompaniesJs.payments.focus=function(){
+        this.loadCompanyAccounts( CompaniesJs.payments.selectedAccount );
+    }
+    CompaniesJs.payments.loadCompanyAccounts=function( selected_account ){
+        Connector.addRequest({mod:'Accounts',rq:'GetCompanyBalance'},function(resp){
+            Acc.renderTpl('paym_company_accounts',resp);
+            if( !selected_account )
+                selected_account=resp.accs[0].acc_code;
+                for(var i in resp.accs){
+                    if( resp.accs[i].balance*1!=0 ){
+                        selected_account=resp.accs[i].acc_code;
+                        break;
+                    }
+                }
+            CompaniesJs.payments.selectCompanyAccount(selected_account);
+        });
+    }
+    CompaniesJs.payments.selectCompanyAccount=function(acc_code){
+        query("#paym_company_accounts>div").removeClass("acc_label_selected");
+        query("#paym_acc_button_"+acc_code).addClass("acc_label_selected");
+        CompaniesJs.payments.ledger_grid.loadByAccCode(acc_code);
+        CompaniesJs.payments.selectedAccount=acc_code;
+    }
+	/////////////////
+	//TRANS GRID
+	////////////////
+	CompaniesJs.payments.initGrid=function(){
+		CompaniesJs.payments.ledger_grid=new baycik.grid.DataGrid( {}, 'paym_account_ledger' );
+		with(CompaniesJs.payments.ledger_grid){
+			addToRequest({table_name:'account_ledger',passive_only:true});
+			onStructure=function( request ){
+				request.mod='Data';
+				request.rq='GridStructure';
+				Connector.addRequest(request,function(resp){
+					delete resp.columns[3];//Deleting pcomp_name column
+					CompaniesJs.payments.ledger_grid.setStructure(resp);
+				});
+			};
+			onRequest=function( request ){
+                            request.mod='Accounts';
+                            request.rq='AccountLedgerGrid';
+                            if( !request.idate || !request.fdate || !request.acc_code )
+                                return;
+                            Connector.addRequest(request,function(ledger){
+                                dom.byId('paym_incoming_balance_div').innerHTML= (ledger.incoming_balance || '0.00')+ledger.curr_symbol;
+                                dom.byId('paym_closing_balance_div').innerHTML= (ledger.closing_balance || '0.00')+ledger.curr_symbol;
+                                CompaniesJs.payments.ledgerCurrId=ledger.curr_id;
+                                //CompaniesJs.payments.selectedAccount=ledger.acc_code;
+                                CompaniesJs.payments.accType=ledger.acc_type;
+                                CompaniesJs.payments.ledger_grid.setData(ledger.entries);
+                            });
+			};
+			onPrint=function( request ){
+				request.rq='AccountLedgerGrid';
+				request.out_type='print';
+				Acc.printOut( request );
+			}
+			onDownload=function( request ){
+				request.rq='AccountLedgerGrid';
+				request.out_type='.xls';
+                                request.limit=0;
+				Connector.addRedirection(request);
+			}
+			onDblClick=function( data ){
+                            if( data.rowData['editable']=='user' ){ //Trans can be edited
+                                Connector.addRequest({mod:'Accounts',rq:'FetchTransData',trans_id:data.rowData['trans_id']},function(resp){
+                                    try{
+                                        var d=resp.cstamp.split(" ")[0].split("-");
+                                        var date=new Date(d[0],d[1]-1,d[2]);
+                                    }
+                                    catch(e){/*IF trans is not already exists*/
+                                        alert("Данные по этой проводке отсутствуют!");
+                                        return;
+                                    };
+                                    resp.date=date;
+                                    resp.amount=parseFloat(resp.amount);
+                                    resp.selected_acc=CompaniesJs.payments.selectedAccount;
+                                    Acc.showPopup(resp,CompaniesJs.payments.transEditCallback,{tpl:'trans_edit.html'});
+                                });
+                            }
+			}
+			onAction=function( data ){
+				if( data.action=='unpayed' || data.action=='partly' ){
+					var fvalue={payed_trans_id:data.rowData.trans_id};
+					fvalue.amount=data.rowData.debit||data.rowData.credit;
+					CompaniesJs.payments.addTransaction(fvalue);
+				}
+			}
+                calculateCell=function(cell){
+                    var is_active=CompaniesJs.payments.accType=='A';
+                    var is_plus=cell.cellData>0;
+		    if( cell.rowData['trans_id']==0 ){
+			cell.style.push('background-color:#d2dcff;color:#036;font-weight:bold;');
+			if( cell.cellData=='0.00' )
+			    cell.cellData='';
+		    }
+                    else if( cell.field=='debit'){
+                        if( is_active?is_plus:!is_plus )
+                            cell.style.push('color:green;font-weight:bold');
+                        else
+                            cell.style.push('color:red;font-weight:bold');
+                    }
+                    else if( cell.field=='credit'){
+                        if( is_active?!is_plus:is_plus )
+                            cell.style.push('color:green;font-weight:bold');
+                        else
+                            cell.style.push('color:red;font-weight:bold');
+                    }
+		    return cell;
+		}
+	}
+		this.ledger_grid.onDelete=function(){
+			var selectedRows=this.getSelected();
+			if( selectedRows.length==1 && selectedRows[0] ){
+				var row=selectedRows[0];
+				if( row.editable=='gear' )
+					return;
+				Connector.addRequest({mod:'Accounts',rq:'CancelTransaction',trans_id:row.trans_id});
+				CompaniesJs.payments.ledger_grid.loadGrid();
+			}
+			else
+				alert("Выберите одну проводку для отмены!");
+		}
+		this.ledger_grid.loadByAccCode=function( acc_code ){
+			CompaniesJs.payments.ledger_grid.addToRequest({acc_code:acc_code});
+			if( !CompaniesJs.payments.ledger_grid.started ){
+				CompaniesJs.payments.ledger_grid.startup();
+				CompaniesJs.payments.ledger_grid.started=true;
+				dom.byId('paym_accounts_content_pane').style.display='table-cell';
+			}
+			else
+				CompaniesJs.payments.ledger_grid.loadGrid();
+			CompaniesJs.payments.loadTransNames( acc_code );
+		}
+		this.ledger_grid.addTrans=function(){
+			CompaniesJs.payments.addTransaction();
+		}
+	}
+	CompaniesJs.payments.addTransaction=function( fvalue ){
+		var fvalue=fvalue||{};
+		fvalue.trans_id=0;
+		fvalue.date=new Date();
+		fvalue.passive_company_id=CompaniesJs.passive_company.company_id;
+		fvalue.selected_acc=CompaniesJs.payments.selectedAccount;
+
+		if( CompaniesJs.payments.ledgerCurrId==2 /*IF currency is dollar*/ ){
+			Connector.addRequest({mod:'Pref',rq:'Details'},function(resp){
+				fvalue.dollar_ratio=resp.dollar_ratio;
+				Acc.showPopup(fvalue,CompaniesJs.payments.transEditCallback,{tpl:'trans_edit.html'});
+			});
+		}
+		else
+			Acc.showPopup(fvalue,CompaniesJs.payments.transEditCallback,{tpl:'trans_edit.html'});		
+	}
+	CompaniesJs.payments.transEditCallback=function( request ){
+            request.mod="Accounts";
+            request.rq=request.cancel==1?'CancelTransaction':'UpdateTransaction';
+            var now=new Date();
+            request.date=locale.format(request.date,{selector:"date",datePattern:"yyyy-MM-dd" })+" "+now.getHours()+":"+now.getMinutes()+":"+now.getSeconds();
+            Connector.addRequest(request,function(){
+                CompaniesJs.payments.loadCompanyAccounts( CompaniesJs.payments.selectedAccount );
+                //CompaniesJs.payments.ledger_grid.loadGrid();
+            });
+	}
+	/////////////////
+	//CALENDAR SCALE
+	////////////////
+	CompaniesJs.payments.initCalendars=function(){
+		on(registry.byId('paym_accounts_idate'),'change',CompaniesJs.payments.onPeriodChange);
+		on(registry.byId('paym_accounts_fdate'),'change',CompaniesJs.payments.onPeriodChange);
+		on(document,"#paym_acc_month_box>div:click",function(e){
+			var month_num=e.target.id.split('_')[2];
+			CompaniesJs.payments.clickMonth( month_num );
+		});
+		
+		var month_num=(new Date()).getMonth()+1;
+		CompaniesJs.payments.monthLastSelected=month_num-1;
+		CompaniesJs.payments.clickMonth(month_num);
+	}
+	CompaniesJs.payments.onPeriodChange=function(){
+		try{
+			var isoidate=locale.format(registry.byId('paym_accounts_idate').get('value'),{selector:"date", datePattern:"yyyy-MM-dd" });		
+			var isofdate=locale.format(registry.byId('paym_accounts_fdate').get('value'),{selector:"date", datePattern:"yyyy-MM-dd" });
+			if( CompaniesJs.payments.lastIsoIdate==isoidate && CompaniesJs.payments.lastIsoFdate==isofdate )
+				return;
+			CompaniesJs.payments.lastIsoIdate=isoidate;
+			CompaniesJs.payments.lastIsoFdate=isofdate;
+		}
+		catch(e){
+			return false;
+		}
+		CompaniesJs.payments.ledger_grid.addToRequest({idate:isoidate,fdate:isofdate});
+		CompaniesJs.payments.ledger_grid.loadGrid();
+		query("#paym_acc_month_box>div").style("backgroundColor","");
+	}
+	CompaniesJs.payments.clickMonth=function( month_num ){
+		var start_month= Math.min(month_num,CompaniesJs.payments.monthLastSelected);
+		var finish_month=Math.max(month_num,CompaniesJs.payments.monthLastSelected);
+		CompaniesJs.payments.selectMonth( start_month, finish_month  );
+		CompaniesJs.payments.monthLastSelected=month_num;
+	}
+	CompaniesJs.payments.selectMonth=function( start_month, finish_month ){
+		var now=new Date();
+		registry.byId('paym_accounts_idate').set('value',new Date(now.getFullYear(),start_month-1,1),false);
+		registry.byId('paym_accounts_fdate').set('value',new Date(now.getFullYear(),finish_month,0));
+		setTimeout(function(){
+			query("#paym_acc_month_box>div").forEach(function(node,index,array){
+				var m=node.id.split('_')[2]*1;
+				if( start_month<=m && finish_month>=m )
+					node.style.backgroundColor='#f0f';
+				if( CompaniesJs.payments.monthLastSelected==m )
+					node.style.backgroundColor='#0f0';
+			});
+		},0);
+	}
+	/////////////////
+	//TRANS NAMES
+	////////////////
+	CompaniesJs.payments.loadTransNames=function( acc_code ){
+		Connector.addRequest({mod:'Accounts',rq:'TransNameList',selected_acc:acc_code},function(resp){
+			Acc.renderTpl('paym_acc_sugg_trans_container',resp);
+		});
+	}
+});
+</script>
+<div style="vertical-align:top;">
+	<div id="paym_company_accounts" style="display: table-cell;vertical-align:top;">
+		<b>Счета по компании</b>
+		<!--{%for acc in accs%}-->
+		<div id="paym_acc_button_{{acc.acc_code|default:''}}" onclick="CompaniesJs.payments.selectCompanyAccount('{{acc.acc_code}}')" class="acc_label">
+			<img src="img/hrivna24.png" align="absmiddle">
+			<b><big><big><!--{{acc.balance|default:'0'}} {{acc.curr_symbol|default:''}}--></big></big></b><br>
+			<i> <!--{{acc.acc_code|default:''}}--> <!--{{acc.label|default:''}}--></i>
+		</div>
+		<!--{%endfor%}-->
+	</div>
+	<div id="paym_acc_container" style="display: table-cell;vertical-align:top;" class="grid_wrapper">
+		<div id="paym_accounts_content_pane" style="display: table-cell;vertical-align:top;padding:3px;">
+			<div align="right">
+				<div class="button grn_grad" style="min-width:100px;display: inline-block;" title="Входящее сальдо">
+					<input data-dojo-type="dijit/form/DateTextBox" data-dojo-props="intermediateChanges: true" type="text" name="accounts_idate" id="paym_accounts_idate" style="width:7em;font:12px normal;">
+					<div id="paym_incoming_balance_div" style="color: #ffffff;white-space: nowrap"></div>
+				</div>
+				<img src="img/big_rightarrow.png" style="vertical-align: text-bottom;" />
+				<div class="button blue_grad" style="min-width:100px;display: inline-block;" title="Исходящее сальдо">
+					<input data-dojo-type="dijit/form/DateTextBox" data-dojo-props="intermediateChanges: true" type="text" name="accounts_fdate" id="paym_accounts_fdate" style="width:7em;font:12px normal;">
+					<div id="paym_closing_balance_div" style="color: #ffffff;white-space: nowrap"></div>
+				</div>
+			</div>
+			<div id="paym_account_ledger"></div>
+		</div>
+		<div id="paym_acc_month_box" style="display: table-cell;vertical-align:top;padding:3px;" class="paym_month_box">
+			<div class="month" id="paym_month_1">Январь</div>
+			<div class="month" id="paym_month_2">Февраль</div>
+			<div class="month" id="paym_month_3">Март</div>
+			<div class="month" id="paym_month_4">Апрель</div>
+			<div class="month" id="paym_month_5">Май</div>
+			<div class="month" id="paym_month_6">Июнь</div>
+			<div class="month" id="paym_month_7">Июль</div>
+			<div class="month" id="paym_month_8">Август</div>
+			<div class="month" id="paym_month_9">Сентябрь</div>
+			<div class="month" id="paym_month_10">Октябрь</div>
+			<div class="month" id="paym_month_11">Ноябрь</div>
+			<div class="month" id="paym_month_12">Декабрь</div>
+		</div>
+		<div id="paym_acc_sugg_trans_container" class="hidden" style="display: table-cell;vertical-align:top;padding:3px;">
+			<b>Возможные проводки по счету</b>
+			<div id="paym_acc_suggested_trans">
+				<!--{%for item in items%}-->
+				<div class="light_grad" style="margin:3px;padding:3px;cursor:pointer;width:200px"
+					 onclick="CompaniesJs.payments.addTransaction({trans_type:'{{item.trans_type|default:\'\'}}',description:'{{item.trans_name|default:\'\'}}',passive_company_id:1})">
+				<img src="img/edit_add.png" align="absmiddle"> {{item.trans_name|default:''}} </div>
+				<!--{%endfor%}-->
+			</div>
+		</div>
+	</div>
+</div>
+<style type="text/css">
+	.grid_wrapper{
+		padding:15px;
+		min-height:500px;
+		background:-moz-linear-gradient(top, #fff, #fff, #cdf);
+		border:#999 solid 1px;
+		box-shadow: 5px 5px 5px #bbb;
+		border-radius:10px;
+	}
+	#paym_company_accounts .acc_label{
+		position:relative;
+		left:1px;
+		padding:7px;
+		margin-bottom:5px;
+		background-color:#FFF;
+		border:#ccc solid 1px;
+		border-bottom-left-radius:5px;
+		border-top-left-radius:5px;
+		box-shadow: 0px 1px 3px #abc;
+		background:-moz-linear-gradient(top, #fff, #eef);
+		cursor:pointer;
+		color:#999;
+	}
+	#paym_company_accounts .acc_label_selected{
+		border:#aaa solid 1px;
+		border-right:#fff solid 1px;
+		box-shadow: -2px 1px 3px #bbb;
+		background:-moz-linear-gradient(left, #bfb, #fff);
+		color:black;
+	}
+	.paym_month_box {
+		width:70px;
+	}
+	.paym_month_box > div {
+		background-color:#ddf;
+		font-weight: bold;
+		text-align: center;
+		color: #333;
+		cursor:pointer;
+		padding:2px;
+		margin:1px;
+		border-radius: 3px;
+		-moz-user-select: none;  
+		-webkit-user-select: none;  
+		-ms-user-select: none;  
+	}
+	.paym_month_box > div:hover {
+		background-color: #f9f;
+	}
+</style>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

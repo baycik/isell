@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<DECLAR xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="{$v.c_doc}{$v.c_doc_sub}0{$v.c_doc_ver}.xsd">
+  <DECLARHEAD>
+    <TIN>{$v.a.company_code}</TIN>
+    <C_DOC>{$v.c_doc}</C_DOC>
+    <C_DOC_SUB>{$v.c_doc_sub}</C_DOC_SUB>
+    <C_DOC_VER>{$v.c_doc_ver}</C_DOC_VER>
+    <C_DOC_TYPE>{$v.c_doc_type}</C_DOC_TYPE>
+    <C_DOC_CNT>{$v.c_doc_cnt}</C_DOC_CNT>
+    <C_REG>{$v.c_reg}</C_REG>
+    <C_RAJ>{$v.c_raj}</C_RAJ>
+    <PERIOD_MONTH>{$v.period_month}</PERIOD_MONTH>
+    <PERIOD_TYPE>{$v.period_type}</PERIOD_TYPE>
+    <PERIOD_YEAR>{$v.period_year}</PERIOD_YEAR>
+    <C_STI_ORIG>{$v.c_sti_orig}</C_STI_ORIG>
+    <C_DOC_STAN>{$v.c_doc_stan}</C_DOC_STAN>
+    <LINKED_DOCS xsi:nil="true" />
+    <D_FILL>{function="str_replace('.','',$v.date_dot)"}</D_FILL>
+    <SOFTWARE>iSell</SOFTWARE>
+  </DECLARHEAD>
+  <DECLARBODY>
+    <HTYPR>{$v.extra->type_of_reason}</HTYPR>
+    <HORIG1>{$v.stay_at_seller}</HORIG1>
+    <HFILL>{function="str_replace('.','',$v.date_dot)"}</HFILL>
+    <HNUM>{$v.view_num}</HNUM>
+    <HNUM1 xsi:nil="true" />
+    <HNUM2 xsi:nil="true" />
+    <HNAMESEL>{$v.a.company_name}</HNAMESEL>
+    <HNAMEBUY>{$v.p.company_name}</HNAMEBUY>
+    <HKSEL>{$v.a.company_vat_id}</HKSEL>
+    <HKBUY>{$v.p.company_vat_id}</HKBUY>
+    <HLOCSEL>{$v.a.company_jaddress}</HLOCSEL>
+    <HLOCBUY>{$v.p.company_jaddress}</HLOCBUY>
+    <HTELSEL>{$v.a.company_phone}</HTELSEL>
+    <HTELBUY>{$v.p.company_phone}</HTELBUY>
+    <H01G1S>{$v.agreement_type}</H01G1S>
+    <H01G2D>{function="str_replace('.','',$v.p.ag_date_dot)"}</H01G2D>
+    <H01G3S>{$v.p.company_agreement_num}</H01G3S>
+    <H02G1S>{$v.payment_type}</H02G1S>
+{loop name="v.entries"}
+    <RXXXXG2D ROWNUM="{$counter+1}">{function="str_replace('.','',$v.date_dot)"}</RXXXXG2D>
+{/loop}
+{loop name="v.entries"}
+    <RXXXXG3S ROWNUM="{$counter+1}">{$value.product_name}</RXXXXG3S>
+{/loop}
+{loop name="v.entries"}
+    <RXXXXG4 ROWNUM="{$counter+1}">{$value.product_uktzet}</RXXXXG4>
+{/loop}
+{loop name="v.entries"}
+    <RXXXXG4S ROWNUM="{$counter+1}">{$value.product_unit}</RXXXXG4S>
+{/loop}
+{loop name="v.entries"}
+    <RXXXXG105_2S ROWNUM="{$counter+1}">{$value.product_unit_code}</RXXXXG105_2S>
+{/loop}
+{loop name="v.entries"}
+    <RXXXXG5 ROWNUM="{$counter+1}">{$value.product_quantity}</RXXXXG5>
+{/loop}
+{loop name="v.entries"}
+    <RXXXXG6 ROWNUM="{$counter+1}">{$value.product_price}</RXXXXG6>
+{/loop}
+{loop name="v.entries"}
+    <RXXXXG7 ROWNUM="{$counter+1}">{$value.product_sum}</RXXXXG7>
+{/loop}
+{loop name="v.entries"}
+    <RXXXXG8 ROWNUM="{$counter+1}" xsi:nil="true" />
+{/loop}
+{loop name="v.entries"}
+    <RXXXXG9 ROWNUM="{$counter+1}" xsi:nil="true" />
+{/loop}
+{loop name="v.entries"}
+    <RXXXXG10 ROWNUM="{$counter+1}" xsi:nil="true" />
+{/loop}
+    <R01G7>{function="str_replace(',','.',$v.footer.vatless)"}</R01G7>
+    <R01G8>0.00</R01G8>
+    <R01G9>0.00</R01G9>
+    <R01G10>0.00</R01G10>
+    <R01G11>{function="str_replace(',','.',$v.footer.vatless)"}</R01G11>
+    <R02G11 xsi:nil="true" />
+    <R03G7>{function="str_replace(',','.',$v.footer.vat)"}</R03G7>
+    <R03G8 xsi:nil="true" />
+    <R03G9 xsi:nil="true" />
+    <R03G10S xsi:nil="true" />
+    <R03G11>{function="str_replace(',','.',$v.footer.vat)"}</R03G11>
+    <R04G7>{function="str_replace(',','.',$v.footer.total)"}</R04G7>
+    <R04G8>0.00</R04G8>
+    <R04G9>0.00</R04G9>
+    <R04G10>0.00</R04G10>
+    <R04G11>{function="str_replace(',','.',$v.footer.total)"}</R04G11>
+    <R003G10S xsi:nil="true" />
+    <H10G1S>{$v.extra->sign}</H10G1S>
+  </DECLARBODY>
+</DECLAR>

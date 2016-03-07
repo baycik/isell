@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<dwsync>
+<file name="AbstractSmtpTransport.php" server="91.205.217.71//vat/" local="129701016000000000" remote="129701016000000000" />
+<file name="EsmtpHandler.php" server="91.205.217.71//vat/" local="129701016000000000" remote="129701016000000000" />
+<file name="EsmtpTransport.php" server="91.205.217.71//vat/" local="129701016000000000" remote="129701016000000000" />
+<file name="FailoverTransport.php" server="91.205.217.71//vat/" local="129701016000000000" remote="129701016000000000" />
+<file name="IoBuffer.php" server="91.205.217.71//vat/" local="129701016000000000" remote="129701016000000000" />
+<file name="LoadBalancedTransport.php" server="91.205.217.71//vat/" local="129701016000000000" remote="129701016000000000" />
+<file name="MailInvoker.php" server="91.205.217.71//vat/" local="129701016000000000" remote="129701016000000000" />
+<file name="MailTransport.php" server="91.205.217.71//vat/" local="129701016000000000" remote="129701016000000000" />
+<file name="NullTransport.php" server="91.205.217.71//vat/" local="129701016000000000" remote="129701016000000000" />
+<file name="SendmailTransport.php" server="91.205.217.71//vat/" local="129701016000000000" remote="129701016000000000" />
+<file name="SimpleMailInvoker.php" server="91.205.217.71//vat/" local="129701016000000000" remote="129701016000000000" />
+<file name="SmtpAgent.php" server="91.205.217.71//vat/" local="129701016000000000" remote="129701016000000000" />
+<file name="SpoolTransport.php" server="91.205.217.71//vat/" local="129701016000000000" remote="129701016000000000" />
+<file name="StreamBuffer.php" server="91.205.217.71//vat/" local="129701016000000000" remote="129701016000000000" />
+</dwsync>

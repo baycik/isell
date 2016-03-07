@@ -1,0 +1,152 @@
+<script type="text/javascript">
+    /* global App */
+    App.page_dialog_backup={
+	init:function(data){
+	    this.node.window({
+		title:'Резервное копирование',
+		width: 500,
+		height: 330,
+		top:50,
+		shadow:false,
+		onClose: function(){
+		    App.page_dialog_backup.handler.notify('close',App.page_dialog_backup.data);
+		    App.page_dialog_backup.destroy();
+		}		
+	    });
+	    this.node.window('window').css('position','fixed');
+	},
+	destroy:function () {
+	    this.node.window('destroy');
+	    this.node.remove();
+	    delete App.page_dialog_backup;
+	},
+	backupDump:function(){
+            App.page_dialog_backup.throbber(1);
+	    $.post("Maintain/backupDump/",function(ok){
+                App.page_dialog_backup.throbber(0);
+		if( ok*1 ){
+		    App.flash("Резервная копия базы данных создана");
+		    $('#page_dialog_backup_dg').datagrid('reload')
+		} else {
+		    alert("Ошибка при создании базы данных. Сведения в .log файле");
+		}
+	    });
+	},
+	backupImport:function(){
+	    var row=$('#page_dialog_backup_dg').datagrid('getSelected');
+	    var wrn="\
+		    Внимание!\n\
+		    - Импорт выбранного файла может привести к потере данных до момента его создания.\n\
+		    - В случае неудачного импорта может программа iSell может стать не работоспособной\n\n\
+		    Настойчиво рекомендуется создать и скачать резервную копию базы данных перед импортом!\n\n\n\
+		    Продолжить?";
+	    if( row && confirm(wrn) ){
+                App.page_dialog_backup.throbber(1);
+		$.post("Maintain/backupImport/",{filename:row.file},function(ok){
+                    App.page_dialog_backup.throbber(0);
+                    if( ok*1 ){
+                        App.flash("Импорт прошел успешно");
+                    } else {
+                        $('#page_dialog_backup_dg').datagrid('reload');
+                        alert("Ошибка импорта файла. Дополнительная информация в .log файле");
+                    }
+		})
+	    }
+	},
+	delete:function(){
+	    var row=$('#page_dialog_backup_dg').datagrid('getSelected');
+	    if( row && confirm("Удалить выбранный файл?") ){
+		$.post("Maintain/backupDelete/",{filename:row.file},function(ok){
+		    if( ok*1 ){
+			App.flash("Файл удален!");
+			$('#page_dialog_backup_dg').datagrid('reload');
+		    } else {
+			App.flash("Не удалось удалить файл");
+		    }
+		})
+	    }
+	},
+	create:function(){
+	    if( confirm("Создать резервную копию?") ){
+		this.backupDump();
+	    }
+	},
+	down:function(){
+	    var row=$('#page_dialog_backup_dg').datagrid('getSelected');
+	    if( row ){
+		location.href="Maintain/backupDown/"+App.uri(row.file);
+	    }
+	},
+	up:function(filelist){
+	    if( filelist.length ){
+                App.page_dialog_backup.throbber(1);
+		var url = 'Maintain/backupUp/';
+		var xhr = new XMLHttpRequest();
+		var fd = new FormData();
+		xhr.open("POST", url, true);
+		xhr.onreadystatechange = function() {
+		    if (xhr.readyState == 4 && xhr.status == 200) {
+			if( xhr.responseText=='uploaded1' ){
+			    $('#page_dialog_backup_dg').datagrid('reload');
+                            App.flash("Файл загружен.");
+			} else {
+			    App.flash("Не удалось загрузить "+xhr.responseText);
+			}
+                        App.page_dialog_backup.throbber(0);
+		    }
+		};
+		fd.append("upload_file", filelist[0]);
+		xhr.send(fd);
+	    }
+	},
+        throbber:function(show){
+            show?$("#backup_throbber").show():$("#backup_throbber").hide();
+        }
+    };
+</script>
+<style>
+    #backup_throbber img{
+        position: absolute;
+        z-index:10;
+        top: 130px;
+        left: 50%;
+    }
+</style>
+<div id="backup_throbber" style="display: none;position: relative;" >
+    <img src="img/throbber_1.gif">
+</div>
+<input type="file" id="page_dialog_backup_file" accept="text/*" style="display:none" onchange="App.page_dialog_backup.up(this.files)">
+<table>
+    <tr>
+	<td style="vertical-align: top;">
+	    <img src="img/database.png">
+	    <button onclick="App.page_dialog_backup.create();" style="width:170px;text-align: left"><img src="img/edit_add.png"> Создать резервную копию</button>
+	    <button onclick="App.page_dialog_backup.backupImport();" style="width:170px;text-align: left"><img src="img/database.png" style="width:24px;height: 24px;"> Импортировать выбранный файл</button>
+	</td>
+	<td>
+	    <div style="text-align: right;padding-right: 5px;">
+	        <span class="icon-24 icon-create" title="Создать резервную копию" onclick="App.page_dialog_backup.create();"> </span>
+		<span class="icon-24 icon-delete" title="Удалить выбранный файл" onclick="App.page_dialog_backup.delete();"> </span>
+		<span class="icon-24" style="background-image: url(img/file_upload.png);background-repeat: no-repeat" title="Отправить файл" onclick="$('#page_dialog_backup_file').click();"> </span>
+		<span class="icon-24" style="background-image: url(img/file_download.png);background-repeat: no-repeat" title="Скачать выбранный файл" onclick="App.page_dialog_backup.down();"> </span>
+		<span class="icon-24 icon-refresh" title="Обновить" onclick="$('#page_dialog_backup_dg').datagrid('reload')"> </span>
+	    </div>
+	    <table id="page_dialog_backup_dg" class="easyui-datagrid" data-options="
+		url:'Maintain/backupListNamed',
+		height:250,
+		width:290,
+		onDblClickRow:App.page_dialog_backup.down,
+		singleSelect:true,
+		enableFilter:true">
+	       <thead>
+		   <tr>
+		       <th data-options="field:'file'">Файл</th>
+		   </tr>
+	       </thead>
+	   </table>
+	</td>
+    </tr>
+</table>
+
+
+

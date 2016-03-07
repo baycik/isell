@@ -1,0 +1,120 @@
+<script>
+    /*global App*/
+    App.page_trade_document_list_full={
+	properties:{
+	    title: 'Товарные операции',
+	    iconCls:'icon-document16',
+	    closable:true,
+	    collapsible:true,
+	    shadow:false,
+	    width: 820,
+	    height: 'auto',
+	    onClose: function () {
+		App.page_trade_document_list_full.handler.notify('close');
+		App.page_trade_document_list_full.node.html('');
+		delete App.page_trade_document_list_full;
+	    }
+	},
+	init:function(){
+	    //this.node.panel(this.properties);
+	},
+	initAfter:function(){
+	    App.handler.progress(function(status){
+		if( status==="activeCompanySelected" ){
+		    $('#document_list_full_dg').datagrid('reload');
+		}
+	    });            
+	},
+	loader:function (param, success, error) {
+	    $.get(App.uri('DocumentCore', 'listFetch', param.page, param.rows), {filterRules: param.filterRules}, function (xhr) {
+		var resp = App.json(xhr);
+		if (resp.rows) {
+		    resp.rows.unshift(App.page_trade_document_list_full.getNewDocRow());
+		    success(resp);
+		}
+		else {
+		    success({
+			rows: [App.page_trade_document_list_full.getNewDocRow()],
+			total: 1
+		    });
+		}
+		$('#document_list_full_dg').datagrid('mergeCells', {index: 0,field: 'doc_date',colspan: 6});
+	    }); 
+	},
+	getNewDocRow: function () {
+	    return {
+		doc_id: 0,
+		doc_date: 'Создать новый документ',
+		doc_type_icon: "new Новый документ"
+	    };
+	},
+	toggleFilter: function () {
+	    if (this.filterEnabled) {
+		$('#document_list_full_dg').datagrid('disableFilter');
+		this.filterEnabled = false;
+	    }
+	    else {
+		$('#document_list_full_dg').datagrid('enableFilter');
+		this.filterEnabled = true;
+	    }
+	},
+	documentOpen:function( doc_id ){
+	    App.loadWindow('page/trade/document',{doc_id:doc_id}).progress(function(status){
+		switch( status ){
+		    case 'close':
+			$('#document_list_full_dg').datagrid('unselectAll');
+			break;
+		    case 'deleted':
+		    case 'uncommit':
+		    case 'commit':
+		    case 'created':
+		    case 'pcomp_changed':
+			$('#document_list_full_dg').datagrid('reload');
+			break;
+		}
+	    });
+	},
+	onClick:function () {
+	    var row=$("#document_list_full_dg").datagrid('getSelected');
+	    App.page_trade_document_list_full.documentOpen(row.doc_id);
+	}
+    };
+</script>
+
+<div class="easyui-panel" data-options="title: 'Товарные операции',iconCls:'icon-document16',width: 820" style="text-align: center;padding-left: 100px;">
+    <div style="width:620px">
+	<div style="float: left;font-weight: bold;padding-top: 8px;">
+	    <img src="img/table16.png" style="width:16px;height: 16px;"> Документы
+	</div>
+	<div style="float: right">
+	    <span class="icon-24 icon-change" title="Открыть документ" onclick="App.page_trade_document_list_full.onClick();"> </span>
+	    <span class="icon-24 icon-tablefilter" title="Фильтр таблицы" onclick="App.page_trade_document_list_full.toggleFilter()"> </span>
+	    <span class="icon-24 icon-refresh" title="Обновить" onclick="$('#document_list_full_dg').datagrid('reload')"> </span> 
+	</div>
+    </div>
+    <table id="document_list_full_dg" class="easyui-datagrid" style="width:620px"
+	   data-options="
+	   idField:'doc_id',
+	   loader:App.page_trade_document_list_full.loader,
+	   pagination:true,
+	   pageSize:25,
+	   pageList:[25,50,100,500,1000],
+	   singleSelect:true,
+	   remoteFilter:true,
+	   onSelect:function(){$('#document_list_full_dg').datagrid('resize');},
+	   onDblClickRow:App.page_trade_document_list_full.onClick">
+	<thead>
+	    <tr>
+		<th data-options="width:110,field:'company_name'">Компания</th>
+		<th data-options="width:25,field:'doc_type_icon',align:'center',formatter:App.datagrid.tooltip">Док</th>
+		<th data-options="width:45,field:'doc_num',align:'right'">Номер</th>
+		<th data-options="width:65,field:'doc_date'">Дата</th>
+		<th data-options="width:140,field:'doc_type_name'">Документ</th>
+		<th data-options="width:60,field:'amount',align:'right'">Сумма</th>
+		<th data-options="width:25,field:'commited',align:'center',formatter:App.datagrid.tooltip">Проведен</th>
+		<th data-options="width:25,field:'trans_status',align:'center',formatter:App.datagrid.tooltip">Оплачен</th>
+		<th data-options="width:120,field:'views'">Шаблоны печати</th>
+	    </tr>
+	</thead>
+    </table>
+</div>

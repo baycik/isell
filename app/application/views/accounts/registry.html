@@ -1,0 +1,267 @@
+<script type="text/javascript">
+    /* global App*/
+    App.page_accounts_registry={
+	sub_totals:{sell:{},buy:{}},
+	init:function(){
+	    var today=App.today().split('.');
+	    this.data.month=today[1];
+	    this.data.year=today[2];
+	    App.setupForm('#acc_tax_bill_reg_frm',this.data).change(function(){
+		$('#acc_tax_bill_reg_sell_dg').datagrid('reload');
+		$('#acc_tax_bill_reg_buy_dg').datagrid('reload');
+	    });
+	    //$('#acc_tax_bill_reg_sell_dg').datagrid('reload');
+	},
+	initAfter: function () {
+            App.handler.progress(function(status,pcomp){
+                if( status==='activeCompanySelected' ){
+                    $('#acc_tax_bill_reg_sell_dg').datagrid('reload');
+                    $('#acc_tax_bill_reg_buy_dg').datagrid('reload');
+                }
+            });
+	},
+	loader:function(param, success, error, mode){
+	    var fvalue=App.collectForm('#acc_tax_bill_reg_frm');
+	    if( fvalue.year*1 ){
+		var uri=App.uri(
+			    fvalue.year+'-'+fvalue.month,
+			    fvalue.group_by_comp?'group_by_comp':'expanded',
+			    mode
+			);
+		$.get('AccountsRegistry/registryFetch/'+uri, param, function (xhr) {
+		    var resp = App.json(xhr);
+		    if( resp ){
+			success(resp);
+			App.page_accounts_registry.renderSubtotals(mode,resp.sub_totals);
+		    } else {
+			success([]);
+		    }
+		});
+	    }
+	},
+	renderSubtotals:function( mode, sub_totals ){
+	    this.sub_totals[mode]=sub_totals;
+	    this.sub_totals.sell.sum_vatless=this.sub_totals.sell.sum_vatless||0;
+	    this.sub_totals.sell.sum_vat=this.sub_totals.sell.sum_vat||0;
+	    this.sub_totals.sell.sum_total=this.sub_totals.sell.sum_total||0;
+	    this.sub_totals.buy.sum_vatless=this.sub_totals.buy.sum_vatless||0;
+	    this.sub_totals.buy.sum_vat=this.sub_totals.buy.sum_vat||0;
+	    this.sub_totals.buy.sum_total=this.sub_totals.buy.sum_total||0;
+	    
+	    this.sub_totals.pay_vat=(this.sub_totals.sell.sum_vat-this.sub_totals.buy.sum_vat).toFixed(2);
+	    App.renderTpl('acc_tax_bill_reg_footer',this.sub_totals);
+	},
+	docTooltip:function(value, row){
+	    if( row.doc_id ){
+		return App.datagrid.tooltip('document Открыть документ', row, 'App.page_accounts_registry.openDoc('+this.buy+')');
+	    }
+	    return '';
+	},
+	printTooltip:function(value, row){
+	    if( row.doc_view_id ){
+		return App.datagrid.tooltip('print Распечатать', row, 'App.page_accounts_registry.openPrint('+this.buy+',\'.print\')');
+	    }
+	    return '';
+	},
+	saveTooltip:function(value, row){
+	    if( row.doc_view_id ){
+		return App.datagrid.tooltip('down Экспорт в .xml', row, 'App.page_accounts_registry.openPrint('+this.buy+',\'.xml\')');
+	    }
+	    return '';
+	},
+	openDoc:function(is_buy, doc_id){
+	    var dg=is_buy?'#acc_tax_bill_reg_buy_dg':'#acc_tax_bill_reg_sell_dg';
+	    if( doc_id===undefined ){
+		var row=$(dg).datagrid('getSelected');
+		doc_id=row.doc_id;
+	    }
+	    App.loadWindow('page/trade/document',{doc_id:doc_id}).progress(function(status){
+		if( status!=='inited' ){
+		    $(dg).datagrid('reload');
+		}
+	    });
+	},
+	openPrint:function(is_buy,out_type){
+	    var row=$(is_buy?'#acc_tax_bill_reg_buy_dg':'#acc_tax_bill_reg_sell_dg').datagrid('getSelected');
+	    if( out_type==='.print' ){
+		window.open("./DocumentView/documentViewGet/?out_type=.print&doc_view_id="+row.doc_view_id, '_new');
+	    } else {
+		location.href="./DocumentView/documentViewGet/?out_type=.xml&doc_view_id="+row.doc_view_id;
+	    }
+	},
+	toggleFilter: function () {
+	    if (this.filterEnabled) {
+		$('#acc_tax_bill_reg_sell_dg').datagrid('disableFilter');
+		$('#acc_tax_bill_reg_buy_dg').datagrid('disableFilter');
+		this.filterEnabled = false;
+	    }
+	    else {
+		$('#acc_tax_bill_reg_sell_dg').datagrid('enableFilter');
+		$('#acc_tax_bill_reg_buy_dg').datagrid('enableFilter');
+		this.filterEnabled = true;
+	    }
+	},
+	rowCreate:function( is_buy ){
+	    this.openDoc(is_buy,0);
+	},
+	rowUpdate:function( is_buy ){
+	    this.openDoc(is_buy);
+	},
+	rowDelete:function( is_buy ){
+	    this.openDoc(is_buy);
+	},
+	out:function(out_type){
+	    var fvalue=App.collectForm('#acc_tax_bill_reg_frm');
+	    window.open("./AccountsRegistry/registryViewGet/?out_type="+out_type+'&period='+(fvalue.year+'-'+fvalue.month)+'&mode='+(fvalue.group_by_comp?'group_by_comp':'expanded'), '_new');   
+	}
+    };
+</script>
+<style type="text/css">
+    #acc_tax_bill_reg_footer td{
+	border-bottom: 1px solid #999;
+	padding: 3px;
+    }
+</style>
+<div style="">
+    <div style="width:300px;display: inline-block;">
+	<div class="easyui-panel" title="Итого по реестру">
+	    <form id="acc_tax_bill_reg_frm">
+		<fieldset style="width:270px">
+		    <legend>Настройки реестра</legend>
+		    <select name="month" title="Месяц" style="width:110px">
+			<option value="0">ВЕСЬ ГОД</option>
+			<option value="01">Январь</option>
+			<option value="02">Февраль</option>
+			<option value="03">Март</option>
+			<option value="04">Апрель</option>
+			<option value="05">Май</option>
+			<option value="06">Июнь</option>
+			<option value="07">Июль</option>
+			<option value="08">Август</option>
+			<option value="09">Сентябрь</option>
+			<option value="10">Октябрь</option>
+			<option value="11">Ноябрь</option>
+			<option value="12">Декабрь</option>
+		    </select>
+		    <input name="year" title="Год" style="width:100px">
+		    <input name="group_by_comp" type="checkbox" title="Группировать по контрагентам">
+		</fieldset>
+	    </form>
+	    <fieldset style="width:270px;text-align: right">
+		<legend>Итоги реестра</legend>
+		<div id="acc_tax_bill_reg_footer" class="covert">
+		    <table style="width:100%">
+			<tr>
+			    <th style="width:100px"></th>
+			    <th>Покупка</th>
+			    <th>Продажа</th>
+			</tr>
+			<tr>
+			    <td>Колл-во:</td>
+			    <td>{{buy.count}} шт</td>
+			    <td>{{sell.count}} шт</td>
+			</tr>
+			<tr>
+			    <td>Сумма:</td>
+			    <td>{{buy.sum_total}}</td>
+			    <td>{{sell.sum_total}}</td>
+			</tr>
+			<tr>
+			    <td>Без НДС:</td>
+			    <td>{{buy.sum_vatless}}</td>
+			    <td>{{sell.sum_vatless}}</td>
+			</tr>
+			<tr>
+			    <td>НДС:</td>
+			    <td>{{buy.sum_vat}}</td>
+			    <td>{{sell.sum_vat}}</td>
+			</tr>
+			<tr>
+			    <td rowspan="2">К оплате НДС:</td>
+			    <td colspan="2"><b>{{pay_vat}}</b></td>
+			</tr>
+		    </table>
+		</div>
+	    </fieldset>
+	</div>
+    </div>
+    <div style="display: inline-block;vertical-align: top;">
+
+	<div style="clear:both">
+	    <div style="float: left;font-weight: bold;padding-top: 8px;">
+		<img src="img/table16.png" style="width:16px;height: 16px;"> Реестр полученных документов
+	    </div>
+	    <div style="float: right">
+		<span class="icon-24 icon-create" title="Добавить" onclick="App.page_accounts_registry.rowCreate('buy');"> </span>
+		<span class="icon-24 icon-change" title="Изменить" onclick="App.page_accounts_registry.rowUpdate('buy');"> </span>
+		<span class="icon-24 icon-delete" title="Удалить" onclick="App.page_accounts_registry.rowDelete('buy');"> </span>
+		<span class="icon-24 icon-tablefilter" title="Фильтр таблицы" onclick="App.page_accounts_registry.toggleFilter()"> </span>
+		<span class="icon-24 icon-refresh" title="Обновить" onclick="$('#acc_tax_bill_reg_buy_dg').datagrid('reload')"> </span>
+		<span class="icon-24 icon-print" title="Напечатать" onclick="App.page_accounts_registry.out('.print');"> </span>
+	    </div>
+	</div>
+	<table id="acc_tax_bill_reg_buy_dg" class="easyui-datagrid" style="width:855px;"
+	       data-options="
+	       url:'AccountsData/registryFetch',
+	       loader:function(param, success, error){App.page_accounts_registry.loader(param, success, error,'buy')},
+	       pagination:true,
+	       pageSize:50,
+	       pageList:[50,100,500,1000],
+	       onSelect:function(){$('#acc_tax_bill_reg_buy_dg').datagrid('resize');},
+	       singleSelect:true,
+	       remoteFilter:true">
+	    <thead>
+		<th data-options="width:25,field:'doc_type',formatter:App.datagrid.tooltip"></th>
+		<th data-options="width:50,align:'right',field:'tax_bill_num'">Номер</th>
+		<th data-options="width:70,field:'tax_bill_date'">Дата</th>
+		<th data-options="width:70,field:'cdate'">Проведен</th>
+		<th data-options="width:220,field:'company_name'">Предприятие</th>
+		<th data-options="width:100,field:'company_tax_id'">ИНН</th>
+		<th data-options="width:80,field:'vatless',align:'right'">Без НДС</th>
+		<th data-options="width:80,field:'vat',align:'right'">НДС</th>
+		<th data-options="width:80,field:'total',align:'right'">Сумма</th>
+		<th data-options="width:25,field:'doc',formatter:App.page_accounts_registry.docTooltip,buy:true"></th>
+		<th data-options="width:25,field:'print',formatter:App.page_accounts_registry.printTooltip,buy:true"></th>
+		<th data-options="width:25,field:'save',formatter:App.page_accounts_registry.saveTooltip,buy:true"></th>
+	    </thead>
+	</table>
+	<div style="clear:both">
+	    <div style="float: left;font-weight: bold;padding-top: 8px;">
+		<img src="img/table16.png" style="width:16px;height: 16px;"> Реестр выданых документов
+	    </div>
+	    <div style="float: right">
+		<span class="icon-24 icon-create" title="Добавить" onclick="App.page_accounts_registry.rowCreate('sell');"> </span>
+		<span class="icon-24 icon-change" title="Изменить" onclick="App.page_accounts_registry.rowUpdate('sell');"> </span>
+		<span class="icon-24 icon-delete" title="Удалить" onclick="App.page_accounts_registry.rowDelete('sell');"> </span>
+		<span class="icon-24 icon-tablefilter" title="Фильтр таблицы" onclick="App.page_accounts_registry.toggleFilter()"> </span>
+		<span class="icon-24 icon-refresh" title="Обновить" onclick="$('#acc_tax_bill_reg_sell_dg').datagrid('reload')"> </span>
+		<span class="icon-24 icon-print" title="Напечатать" onclick="App.page_accounts_registry.out('.print');"> </span>
+	    </div>
+	</div>
+	<table id="acc_tax_bill_reg_sell_dg" class="easyui-datagrid" style="width:855px;"
+	       data-options="
+	       url:'AccountsData/registryFetch',
+	       loader:function(param, success, error){App.page_accounts_registry.loader(param, success, error,'sell')},
+	       pagination:true,
+	       pageSize:50,
+	       pageList:[50,100,500,1000],
+	       onSelect:function(){$('#acc_tax_bill_reg_sell_dg').datagrid('resize');},
+	       singleSelect:true,
+	       remoteFilter:true">
+	    <thead>
+		<th data-options="width:25,field:'doc_type',formatter:App.datagrid.tooltip"></th>
+		<th data-options="width:50,align:'right',field:'tax_bill_num'">Номер</th>
+		<th data-options="width:70,field:'tax_bill_date'">Дата</th>
+		<th data-options="width:70,field:'cdate'">Проведен</th>
+		<th data-options="width:220,field:'company_name'">Предприятие</th>
+		<th data-options="width:100,field:'company_tax_id'">ИНН</th>
+		<th data-options="width:80,field:'vatless',align:'right'">Без НДС</th>
+		<th data-options="width:80,field:'vat',align:'right'">НДС</th>
+		<th data-options="width:80,field:'total',align:'right'">Сумма</th>
+		<th data-options="width:25,field:'doc',formatter:App.page_accounts_registry.docTooltip,buy:false"></th>
+		<th data-options="width:25,field:'print',formatter:App.page_accounts_registry.printTooltip,buy:false"></th>
+		<th data-options="width:25,field:'save',formatter:App.page_accounts_registry.saveTooltip,buy:false"></th>
+	    </thead>
+	</table>
+    </div>
+</div>

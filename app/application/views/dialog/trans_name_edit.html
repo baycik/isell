@@ -1,0 +1,101 @@
+<script type="text/javascript">
+require(["dojo/dom","dijit/registry","dojo/ready","dojo/on","dojo/data/ItemFileReadStore","dojo/domReady!"],
+function(dom,registry,ready,on,ItemFileReadStore){ 
+ready(function(){
+    var accStore=new ItemFileReadStore({url:"./?mod=Accounts&rq=AccList"});
+    registry.byId('acc_debit_code').setStore(accStore);
+    registry.byId('acc_credit_code').setStore(accStore);
+    registry.byId('acc_debit_code').set('value',fvalue.acc_debit_code);
+    registry.byId('acc_credit_code').set('value',fvalue.acc_credit_code);
+
+    if(fvalue.acc_trans_code){
+	registry.byId('acc_trans_code').set('disabled',false);
+	registry.byId('acc_trans_code').setStore(accStore);
+	registry.byId('acc_trans_code').set('value',fvalue.acc_trans_code);
+    }
+});});
+function beforeInit(){
+    var accs=fvalue.trans_type.split("_");
+    fvalue.acc_debit_code=accs[0];
+    fvalue.acc_credit_code=accs[1];
+    fvalue.acc_trans_code=accs[2];
+    document.title="Редактирование Названия Проводки";
+}
+function beforeSubmit(){
+    var msg=(!fvalue.trans_name)?'- Укажите Название проводки!\n':'';
+	msg+=(fvalue.acc_debit_code==fvalue.acc_credit_code)?'- Счета прихода и расхода должны быть разными!\n':'';
+    if( msg ){
+	alert( msg );
+	return false;
+    }
+    return true;
+}
+function deleteTransName(){
+    if(!confirm('Вы уверенны, что хотите удалить тип проводки?'))return;
+    fvalue.remove=1;
+    EditorForm.set('value',fvalue);
+    EditorForm.submit();
+}
+function resetForm(){
+    EditorForm.set('value',fvalue);
+}
+</script>
+<img src="img/payment.png" style="float:left;">
+<div style="font-size: 18px">Редактор типа проводки</div><br>
+<div data-dojo-type="dijit/form/Form" id="EditorForm" data-dojo-id="EditorForm">
+<input data-dojo-type="dijit/form/TextBox" type="hidden" name="trans_type" />
+<input data-dojo-type="dijit/form/TextBox" type="hidden" name="remove" />
+<table align="center">
+<tr>
+	<td align="right" valign="top">
+	  <label for="acc_debit_code">Приход:</label>
+	</td>
+	<td>
+		<input data-dojo-type="dijit/form/Select" data-dojo-props="maxHeight:-1" name="acc_debit_code" id="acc_debit_code" style="width:220px;">
+	</td>
+</tr>
+<tr>
+	<td align="right" valign="top">
+	  <label for="acc_credit_code">Расход:</label>
+	</td>
+	<td>
+		<input data-dojo-type="dijit/form/Select" data-dojo-props="maxHeight:-1" name="acc_credit_code" id="acc_credit_code" style="width:220px;">
+	</td>
+</tr>
+<tr>
+	<td align="right" valign="top">
+	  <label for="acc_credit_code">Группа:</label>
+	</td>
+	<td>
+	    <input data-dojo-type="dijit/form/Select" data-dojo-props="maxHeight:-1" disabled="disabled" name="acc_trans_code" id="acc_trans_code" style="width:220px;">
+	</td>
+</tr>
+<tr>
+	<td align="right" valign="top">
+		Доступ:
+	</td>
+	<td>
+		<b>
+		 Менеджер<input type="radio" data-dojo-type="dijit/form/RadioButton" name="user_level" value="1"> | 
+		 Бухгалтер<input type="radio" data-dojo-type="dijit/form/RadioButton" name="user_level" value="2"> | 
+		 Директор<input type="radio" data-dojo-type="dijit/form/RadioButton" name="user_level" value="3">
+		</b>
+	</td>
+</tr>
+<tr>
+	<td align="right" valign="top">
+		<label for="trans_name">Название:</label>
+	</td>
+	<td>
+		<input data-dojo-type="dijit/form/TextBox" name="trans_name" id="trans_name" style="width:220px;">
+	</td>
+</tr>
+<tr>
+	<td align="center" colspan="2">
+		<button type="submit" data-dojo-type="dijit/form/Button"><img src="img/apply24.png" /> Сохранить</button>
+		<button type="button" data-dojo-type="dijit/form/Button" onclick="resetForm()"><img src="img/close24.png" /> Сбросить</button>
+		<button type="button" data-dojo-type="dijit/form/Button" onclick="deleteTransName()"><img src="img/delete.png" /> Удалить</button>
+	</td>
+</tr>
+</table>
+</div>

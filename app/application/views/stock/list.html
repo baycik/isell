@@ -1,0 +1,213 @@
+<script>
+    
+    /*global StockJs, baycik,Connector,App*/
+require([
+    "dojo/dom",
+    "dijit/registry",
+    "dojo/on",
+    "dojo/date/locale",
+    "dojo/query",
+    "baycik/grid/DataGrid",
+    "baycik/tree/TreeWidget",
+    "dojo/domReady!"
+],
+function(
+	dom,
+	registry,
+	on,
+	locale,
+	query
+	) {
+    StockJs.list.init = function() {
+	this.initStockList();
+	this.initTree();
+	StockJs.SelectedCatName='Все категории';
+    };
+    StockJs.list.initStockList = function() {
+	StockJs.list.stock_list = new baycik.grid.DataGrid( {}, 'stock_list');
+	StockJs.list.stock_list.request.mod = 'Stock';
+	with (StockJs.list.stock_list) {
+	    addToRequest({table_name:'stock_entry_view',limit:50,parent_id:0});
+	    onStructure = function(request) {
+		request.mod='Data';
+		request.rq='GridStructure';
+		Connector.addRequest(request,this,'setStructure');
+	    };
+	    onRequest = function(request) {
+		request.mod='Stock';
+		request.rq = 'StockEntryData';
+		Connector.addRequest(request, this, 'setData');
+	    };
+	    onPrint = function(request) {
+		request.mod = 'Stock';
+		request.rq = 'StockGridOut';
+		Acc.printOut(request);
+		request.mod = 'Stock';
+	    };
+	    onDownload = function(request) {
+		request.mod = 'Stock';
+		request.rq = 'StockGridOut';
+		request.out_type='.xls';
+		request.limit=200;
+		Acc.printOut(request);
+		request.mod = 'Stock';
+	    };
+	    onUpdate = function(request) {
+		request.rq = 'StockEntryUpdate';
+		Connector.addRequest(request);
+	    };
+	    onDelete = function(request) {
+		request.rq = 'StockEntryDelete';
+		Connector.addRequest(request, StockJs.list.stock_list, 'loadGrid');
+	    };
+	    onDblClick = function(row){
+		StockJs.list.entryEditDialog(row.rowData.product_code);
+	    };
+	    calculateCell=function(cell){
+		if( cell.cellData==='0' ){
+		    cell.cellData='';
+		}
+		if( cell.field==='product_quantity' ){
+		    if( cell.rowData['product_wrn_quantity']*1>cell.rowData['product_quantity']*1 ){
+			cell.style.push('background-color:#fcf;');
+		    }
+		    if( cell.rowData['product_wrn_quantity']*1>cell.rowData['product_quantity']*2 ){
+			cell.style.push('background-color:#f9f;');
+		    }
+		}
+		if( cell.field==='m1' ){
+		    if( cell.rowData['m1']*1<cell.rowData['mc3']*1 ){
+			cell.style.push('color:red;');
+		    }
+		    else{
+			cell.style.push('color:green;');
+		    }
+		}
+		if( cell.field==='self_price' ){
+                    cell.cellData=Number(cell.cellData).toFixed(2);
+		}
+		return cell;
+	    };
+	    startup();
+	}
+	StockJs.list.stock_list.createProduct= function() {
+	    var product_code=prompt('Добавление в категорию "'+StockJs.SelectedCatName+'".\nВведите код из справочника товаров',"");
+	    if( product_code!==null ){
+		StockJs.list.stock_list.request.product_code=product_code;
+		StockJs.list.stock_list.request.rq = 'StockEntryInsert';
+		Connector.addRequest(StockJs.list.stock_list.request,function(){
+                    StockJs.list.stock_list.loadGrid();
+                });		
+	    }
+	};
+	StockJs.list.stock_list.updateProduct= function() {
+	    var selected=StockJs.list.stock_list.getSelected();
+	    if( selected[0] ){
+		StockJs.list.entryEditDialog(selected[0].product_code);
+	    }
+	    else{
+		alert("Выберите товар.");
+	    }
+	};
+        StockJs.list.stock_list.import=function(){
+            var f=[
+                {name:'Код товара',field:'product_code'}
+            ];
+            App.loadWindow('page/dialog/importer',{label:'склад',fields_to_import:f}).progress(function(status,fvalue){
+                if( status==='submit' ){
+                    fvalue.parent_id=StockJs.list.parent_id;
+                    $.post("Stock/import/",fvalue,function(ok){
+			App.flash("Добавлено "+ok);
+                        StockJs.list.stock_list.loadGrid();
+                    });
+                }
+            });
+        };
+    };
+    StockJs.list.initTree = function() {
+	Connector.addCss('js/dhtmlx/tree/dhtmlxtree.css');
+	StockJs.tree = new baycik.tree.TreeWidget({}, 'stock_tree');
+	with (StockJs.tree) {
+	    request.mod = 'Stock';
+	    request.id = 0;
+	    onRequest = function(request) {
+		request.rq = 'StockTree';
+		Connector.addRequest(request, this, 'setData');
+	    };
+	    onUpdate = function(request) {
+		request.rq = 'TreeItemUpdate';
+		Connector.addRequest(request, this, 'onUpdateReturn');
+	    };
+	    onInsert = function(request) {
+		request.rq = 'TreeItemInsert';
+		Connector.addRequest(request, this, 'onInsertReturn');
+	    };
+	    onDelete = function(request) {
+		request.rq = 'TreeItemDelete';
+		Connector.addRequest(request, this, 'onDeleteReturn');
+	    };
+	    onSelect = function(branch_data) {
+		StockJs.list.selectStockCath(branch_data.branch_id, tree.getSelectedItemText());
+	    };
+	    startup();
+	}
+    };
+    StockJs.list.selectStockCath = function(parent_id, cat_name) {
+	if (!parent_id)//first load or folder
+	    parent_id = 0;
+	this.parent_id = parent_id;
+	this.stock_list.addToRequest({parent_id:parent_id});
+	this.stock_list.loadGrid();
+	dom.byId("stock_tree_status").innerHTML = 'Категория ' + this.parent_id;
+	StockJs.SelectedCatName= this.parent_id ? cat_name : 'Все Категории';
+	dom.byId("stock_cat_name").innerHTML =StockJs.SelectedCatName;
+    };
+    StockJs.list.getIncomeOrder = function() {
+	var request = {mod: 'Stock', rq: 'IncomeOrder', parent_id: this.parent_id};
+	Connector.addRequest(request, function() {
+	    if (CompaniesJs.documents) {
+		CompaniesJs.documents.initDocumentList();
+	    }
+	});
+    };
+    StockJs.list.adjustMin = function() {
+	var ratio = prompt('Коэффициент расчета минимума в месячных продажах', 1);
+	if (!ratio)
+	    return;
+	var request = {mod: 'Stock', rq: 'AdjustMin', parent_id: this.parent_id, ratio: ratio};
+	Connector.addRequest(request, StockJs.list.stock_list, 'loadGrid');
+    };
+    StockJs.list.entryEditDialog=function(product_code){
+	window.open('?mod=Dialogs&dialog_name=productCard#'+product_code, 'dialog', 'width=800,height=400,left=400,top=300');
+    };
+});
+</script>
+<table border="0" cellspacing="0" cellpadding="3" width="100%">
+    <tr>
+	<td width="200" valign="top" style="border-right:dashed 1px #09F">
+	    <div id="stock_tree"></div>
+	    <div align="right">
+		<a href="javascript:StockJs.tree.insertNew()"><img src="js/baycik/tree/img/edit_add_small.gif"></a>
+		<a href="javascript:StockJs.tree.deleteSelected()"><img src="js/baycik/tree/img/edit_delete_small.gif"></a>
+		<a href="javascript:StockJs.tree.clearSelection()"><img src="js/baycik/tree/img/clear_selection.gif"></a>
+		<a href="javascript:StockJs.tree.reload()"><img src="js/baycik/tree/img/reload_small.gif"></a>
+		<div id="stock_tree_status" align="left"></div>
+		<hr size="1" />
+	    </div>
+	</td>
+	<td valign="top" style="padding-left:10px" align="center">
+	    <div id="stock_list"></div>
+	</td>
+	<td width="200" valign="top" style="border-left:dashed 1px #09F">
+	    <h2 id="stock_cat_name" align="center">Все Категории</h2><br />
+	    <button data-dojo-type="dijit/form/Button" type="button" onclick="StockJs.list.adjustMin()">Просчитать Минимумы</button>
+	    <button data-dojo-type="dijit/form/Button" type="button" onclick="StockJs.list.getIncomeOrder()">Подготовить Заказ</button>
+	    <hr color="#999999" size="1" />
+	    <div class="light_grad" style="margin:3px;padding:3px;cursor:pointer" onclick="window.open('./?mod=Dialogs&dialog_name=productCard', 'dialog', 'width=750,height=400,left=400,top=300')">
+		<img src="img/ProductCard.png" border="0" align="absmiddle" />
+		<b>Добавить товар</b>
+	    </div>
+	</td>
+    </tr>
+</table>
+

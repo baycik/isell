@@ -1,0 +1,622 @@
+<script type="text/javascript">
+    //dojo.require("dijit.Menu");
+    //dojo.require('dijit.form.Textarea');
+    //dojo.require('baycik.datatable.DataTable');
+    //dojo.require("baycik.form.AutoSuggest");
+    //dojo.require("dojo.cache");
+    //dojo.require("dijit.form.DateTextBox");
+    //dojo.require("dojo.on");
+
+    CompaniesJs.documents.init = function () {
+        this.doc_id = 0;
+        this.doc_type = 1;
+        this.doc_commited = 0;
+        //this.loadDocViews();
+
+        this.initDocumentList();
+        this.initTable();
+        this.initAutoSuggest();
+    }
+    CompaniesJs.documents.focus = function () {
+        this.list.loadTableData();
+    }
+    ////////////////////////////////////////
+    //DOC ENTRIES SECTION
+    ////////////////////////////////////////
+    CompaniesJs.documents.initTable = function () {
+        if (this.entries) return;
+        this.entries = new baycik.datatable.DataTable({
+            templatePath: dojo.moduleUrl('baycik.datatable', 'document_entry_table.tpl')
+        }, 'companies_doc_entries');
+        this.entries.request.mod = 'Companies';
+
+
+        this.entries.onStructure = function (request) {
+            request.rq = 'DocumentStructure';
+            Connector.addRequest(request, this, 'setStructure');
+        }
+        this.entries.onRequest = function (request) {
+            if (CompaniesJs.documents.doc_id == 0) {
+                this.setData({
+                    rows: []
+                });
+                Acc.renderTpl('companies_doc_foot', {});
+                return;
+            }
+            request.rq = 'DocumentData';
+            request.doc_id = CompaniesJs.documents.doc_id;
+            var _this = this;
+            var handler = function (document_data) {
+                _this.setData(document_data.entries);
+                Acc.renderTpl('companies_doc_foot', document_data.footer);
+            }
+            Connector.addRequest(request, handler);
+        }
+        this.entries.onUpdate = function (request) {
+            request.rq = 'UpdateEntry';
+            Connector.addRequest(request);
+        }
+        this.entries.onDelete = function (request) {
+            if (CompaniesJs.documents.doc_id == 0) return;
+            request.rq = 'DeleteEntry';
+            Connector.addRequest(request);
+            CompaniesJs.documents.list.loadTableData();
+        }
+        this.entries.commitDoc = function () {
+            if (CompaniesJs.documents.doc_id == 0) return;
+            var request = this.request;
+            request.rq = 'CommitDocument';
+            request.doc_id = CompaniesJs.documents.doc_id;
+            var handler = function (success) {
+                if (success)
+                    CompaniesJs.documents.list.loadTableData();
+            }
+            Connector.addRequest(request, handler); //Update header not body		
+        }
+        this.entries.uncommitDoc = function () {
+            if (CompaniesJs.documents.doc_id == 0) return;
+            if (CompaniesJs.documents.doc_commited == 1 && !confirm("Внимание!\nТоварные и бухгалтерские проводки изменятся!")) return;
+            if (CompaniesJs.documents.doc_commited == 0 && !confirm("Внимание!\nДокумент и шаблоны печати будут удалены!")) return;
+            var request = this.request;
+            request.rq = 'UncommitDocument';
+            request.doc_id = CompaniesJs.documents.doc_id;
+            var handler = function (success) {
+                if (success) {
+                    //CompaniesJs.documents.doc_id=0;//Select empty document why???
+                    CompaniesJs.documents.list.loadTableData();
+                }
+            }
+            Connector.addRequest(request, handler); //Update header not body		
+        }
+        this.entries.recalcDoc = function () {
+            if (CompaniesJs.documents.doc_id == 0) return;
+            var perc = prompt('Введите в процентах скидку (-) или надбавку (+)', 0);
+            if (perc == null) return;
+            var request = {};
+            request.mod = 'Companies';
+            request.rq = 'Recalc';
+            request.perc = perc;
+            request.doc_id = CompaniesJs.documents.doc_id;
+            Connector.addRequest(request, CompaniesJs.documents.entries, 'loadTableData');
+        }
+        this.entries.moveDoc = function () {
+            var fvalue = CompaniesJs.documents.def_doc_head;
+            if (fvalue.is_commited == '1') {
+                fvalue.disabledMove = true;
+            }
+	    App.loadWindow('page/dialog/move_doc',fvalue).progress(function (status,fvalue) {
+		if(status=='finish'){
+		    CompaniesJs.documents.list.loadTableData();
+		}
+	    });
+        }
+        this.entries.sendSms = function () {
+            var handler = function (fvalue) {
+                var request = {
+                    mod: 'Utils',
+                    rq: 'SendSms',
+                    to: fvalue.to,
+                    subject: fvalue.subject,
+                    body: fvalue.body,
+                    copy: fvalue.copy
+                };
+                Connector.addRequest(request);
+            }
+            var fvalue = {};
+            fvalue.to = CompaniesJs.documents.def_doc_head.company_mobile;
+            fvalue.subject = 'SMS ' + CompaniesJs.documents.def_doc_head.passive_comp;
+            fvalue.body = 'Номер Декларації\n' + CompaniesJs.documents.def_doc_head.doc_data;
+            fvalue.copy = 1;
+            Acc.showPopup(fvalue, handler, {
+                tpl: 'sendsms.html'
+            });
+        }
+        this.entries.addEvent = function () {
+            var head = CompaniesJs.documents.def_doc_head;
+            Connector.addRequest({mod:'Companies',rq:'Details'}, function (cont) {
+		var fvalue={
+		    event_id:0,
+		    event_user_id:Acc.userData.user_id,
+		    event_name: 'Накладна №' + head.doc_num,
+		    event_descr:head.doc_data,
+		    event_target:cont.company_person + " (" + cont.company_tree_name + ")",
+		    event_place:cont.company_address,
+		    event_note:cont.company_mobile
+		};
+		App.loadWindow('page/dialog/event',fvalue);
+            });
+        }
+        this.entries.calculateRow = function (rowNode) {
+            var currentPrice = rowNode.cells[10].innerHTML * 1;
+            if (currentPrice) {
+                var invoicePrice = rowNode.cells[7].innerHTML * 1;
+                rowNode.cells[7].style.color =
+                    currentPrice > invoicePrice ? 'green' : (
+                        currentPrice < invoicePrice ? 'red' : '');
+                rowNode.cells[7].title = currentPrice;
+            }
+        }
+        this.entries.startup();
+    }
+    CompaniesJs.documents.addDocument = function (call_back) {
+        var request = {};
+        request.mod = 'Companies';
+        request.rq = 'AddDocument';
+        request.doc_type = this.doc_type;
+        var _this = this;
+        Connector.addRequest(request, function (doc_id) {
+            _this.doc_id = doc_id;
+            _this.list.loadTableData();
+            call_back();
+        });
+    }
+    CompaniesJs.documents.addEntry = function (product_code, product_quantity) {
+        if (this.doc_id == 0) {
+            //Add new document first
+            var _this = this;
+            var call_back = function () {
+                _this.addEntry(product_code, product_quantity);
+            }
+            this.addDocument(call_back);
+            return;
+        }
+        var request = {};
+        request.mod = 'Companies';
+        request.rq = 'AddEntry';
+        request.doc_id = this.doc_id;
+        request.product_code = product_code;
+        request.product_quantity = product_quantity;
+        Connector.addRequest(request, this.list, 'loadTableData');
+    }
+    CompaniesJs.documents.loadDocument = function (doc_id) {
+        CompaniesJs.documents.doc_id = doc_id;
+        CompaniesJs.documents.loadDocumentHead();
+        this.entries.loadTableData();
+        CompaniesJs.documents.loadDocViews();
+    }
+    ////////////////////////////////////////
+    //DOC HEAD SECTION
+    ////////////////////////////////////////
+
+    CompaniesJs.documents.loadDocumentHead = function () {
+        var request = {};
+        request.mod = 'Companies';
+        request.rq = 'DocumentHead';
+        request.doc_id = this.doc_id;
+        if (this.doc_id == 0) {
+            //Load Default Document Head
+            request.rq = 'DefaultDocumentHead';
+        }
+        Connector.addRequest(request, CompaniesJs.documents.setDocHead);
+    }
+
+    CompaniesJs.documents.setDocHead = function (data) {
+        data.doc_type = parseInt(data.doc_type);
+        data.sell_doc = data.doc_type == 1;
+        data.buy_doc = data.doc_type == 2;
+        data.sout_doc = data.doc_type == 3;
+        data.sin_doc = data.doc_type == 4;
+        data.isservice = data.sout_doc || data.sin_doc;
+        Acc.renderTpl('companies_doc_head', data);
+        Acc.renderTpl('companies_doc_head2', data);
+        CompaniesJs.documents.doc_type = data.doc_type;
+        CompaniesJs.documents.doc_commited = data.is_commited;
+        CompaniesJs.documents.def_doc_head = data;
+        if (CompaniesJs.documents.entries.id) {
+            dojo.byId(CompaniesJs.documents.entries.id + '_status_bar').style.backgroundColor = data.is_commited == 1 ? (data.sell_doc || data.sout_doc) ? '#dfd' : '#fdf' : '';
+            dojo.byId(CompaniesJs.documents.entries.id + '_commit').style.display = data.is_commited == 1 ? 'none' : '';
+        }
+        CompaniesJs.documents.insertDocDateCalendar();
+    }
+    CompaniesJs.documents.swapDocType = function (by_good_type) {
+        if (by_good_type) {
+            //Service or product
+            this.doc_type += this.doc_type < 3 ? +2 : -2;
+        } else {
+            //Buy or sell
+            this.doc_type += this.doc_type % 2 ? +1 : -1;
+        }
+        if (this.doc_id > 0) {
+            var request = {};
+            request.mod = 'Companies';
+            request.rq = 'ChangeDocType';
+            request.doc_id = this.doc_id;
+            request.new_doc_type = this.doc_type;
+            Connector.addRequest(request, this.list, 'loadTableData');
+        } else {
+            CompaniesJs.documents.def_doc_head.doc_type = this.doc_type;
+            CompaniesJs.documents.setDocHead(CompaniesJs.documents.def_doc_head);
+        }
+    }
+    CompaniesJs.documents.changeDocAttrib = function (field, new_val) {
+        var request = {};
+        request.mod = 'Companies';
+        request.rq = 'UpdateHead';
+        request.doc_id = this.doc_id;
+        request.val = new_val;
+        request.field = field;
+        Connector.addRequest(request);
+        CompaniesJs.documents.def_doc_head[field] = new_val;
+    }
+    CompaniesJs.documents.changeDocHead = function (node, field) {
+        if (this.doc_id == 0) return;
+        if (field == 'ratio') {
+            if (!confirm('Цены будут пересчитаны по текущему прайсу!')) return;
+            var val = node.innerHTML.match(/\d*.?\d+/);
+            var new_val = prompt("Введите новое значение курса", val);
+        }
+        if (field == 'vat_rate') {
+            var val = node.innerHTML.match(/\d+/);
+            var new_val = prompt("Введите новое значение НДС", val);
+        }
+        if (field == 'num') {
+            if (CompaniesJs.documents.doc_commited == 1) {
+                alert("Будьте внимательны при изменении реквизитов проведенного документа!");
+            }
+            var val = node.innerHTML.match(/\d+/);
+            var new_val = prompt("Введите новый номер документа", val);
+        }
+        if (field == 'date') {
+            var new_val = node;
+        }
+        if (field == 'notcount') {
+            if (CompaniesJs.documents.doc_commited == 1) {
+                alert("Немогу изменить Учет на Складе проведенного документа :(");
+                return;
+            }
+            var new_val = "...";
+        }
+        if (field == 'is_reclamation') {
+            if (CompaniesJs.documents.doc_commited == 1) {
+                alert("Немогу изменить тип проведенного документа :(");
+                return;
+            }
+            var new_val = "...";
+        }
+        if (field == 'inernn') {
+            var new_val = "...";
+        }
+        if (field == 'use_vatless_price') {
+            var new_val = "...";
+        }
+        if (field == 'signs_after_dot') {
+            var val = node.innerHTML.match(/\d{1}/);
+            var new_val = prompt("Введите количество знаков, после запятой", val);
+        }
+        if (!new_val || new_val == val) return;
+        node.innerHTML = new_val;
+        this.changeDocAttrib(field, new_val);
+        this.list.loadTableData();
+    }
+    CompaniesJs.documents.insertDocDateCalendar = function () {
+        if (dijit.byId("companies_doc_date_cal"))
+            dijit.byId('companies_doc_date_cal').destroy();
+        var node = dojo.byId('companies_doc_date');
+        var dparts = node.innerHTML.match(/(\d{2}).(\d{2}).(\d{4})/);
+        if (dparts) {
+            var isodate = dparts[3] + '-' + dparts[2] + '-' + dparts[1];
+            node.innerHTML = '<input id="companies_doc_date_cal" dojoType="dijit/form/DateTextBox" type="text" value="' + isodate + '" style="width:8em;">';
+            dojo.require('dojo.parser');
+            dojo.parser.parse(node);
+            on(dijit.byId('companies_doc_date_cal'), 'change', function (date) {
+                var dparts = dojo.date.stamp.toISOString(date).match(/(\d{4})-(\d{2})-(\d{2})/);
+                var date_val = dparts[3] + '.' + dparts[2] + '.' + dparts[1];
+                CompaniesJs.documents.changeDocHead(date_val, 'date')
+            });
+        }
+    }
+    ////////////////////////////////////////
+    //SUGGEST SECTION
+    ////////////////////////////////////////
+    CompaniesJs.documents.initAutoSuggest = function () {
+        if (this.suggest) return;
+        require(["baycik/form/AutoSuggest"],function(){
+            CompaniesJs.documents.suggest = new baycik.form.AutoSuggest({
+                field: 'product_code',
+                width: '130px'
+            }, 'companies_doc_suggest');
+            CompaniesJs.documents.suggest.onRequest = function (request) {
+                request.mod = 'Companies';
+                request.rq = 'Suggestion';
+                request.doc_type = CompaniesJs.documents.doc_type;
+                Connector.addRequest(request, this, 'setData');
+            }
+            CompaniesJs.documents.suggest.onChange = function () {
+                CompaniesJs.documents.entries.qty_input.focus();
+            }
+        });
+    }
+    CompaniesJs.documents.suggFormSubmit = function (form) {
+        var product_code = form.elements[0].value;
+        var product_quantity = form.elements[1].value;
+        if (product_code == '' || product_quantity == '') return;
+        form.elements[0].value = '';
+        form.elements[1].value = '';
+        this.suggest.focus();
+        this.addEntry(product_code, product_quantity);
+    }
+    ////////////////////////////////////////
+    //DOC LIST SECTION
+    ////////////////////////////////////////
+    CompaniesJs.documents.initDocumentList = function () {
+        if (this.list) {
+            this.list.loadTableData();
+            return;
+        }
+        this.list = new baycik.datatable.DataTable({}, 'companies_doc_list');
+        this.list.request.mod = 'Companies';
+        this.list.request.limit = 20;
+        this.list.selected_row = 0; //Select first row on dataset
+
+        this.list.onStructure = function (request) {
+            request.rq = 'DocumentListStructure';
+            Connector.addRequest(request, this, 'setStructure');
+        }
+        this.list.onRequest = function (request) {
+            request.rq = 'DocumentListData';
+            Connector.addRequest(request, this, 'setData');
+        }
+        this.list.onSelect = function (row_data) {
+            CompaniesJs.documents.loadDocument(row_data.doc_id);
+        }
+        this.list.onDataSet = function () {
+            var is_inlist = this.seekField({
+                index: 0,
+                value: CompaniesJs.documents.doc_id
+            }); //Looking if is in list
+            if (!is_inlist) //if current doc not in list select empty doc
+                CompaniesJs.documents.loadDocument(0);
+        }
+        this.list.startup();
+    }
+    ////////////////////////////////////////
+    //VIEWS SECTION
+    ////////////////////////////////////////
+    CompaniesJs.documents.loadDocViews = function () {
+        //if( CompaniesJs.documents.doc_id==0 )return;
+        var request = {};
+        request.mod = 'Companies';
+        request.rq = 'DocumentViews';
+        //request.doc_id=CompaniesJs.documents.doc_id;
+
+        var handler = function (data) {
+            Acc.renderTpl('companies_doc_views', data);
+        }
+        Connector.addRequest(request, handler);
+    }
+    CompaniesJs.documents.editDocView = function (doc_view_id, field, value, is_extra) {
+        var new_value = prompt('Введите новое значение', value);
+        if (new_value == null || new_value == value) return;
+        var request = {};
+        request.mod = 'Companies';
+        request.rq = 'UpdateDocumentView';
+        request.doc_view_id = doc_view_id;
+        request.field = field;
+        request.value = new_value;
+        request.is_extra = is_extra ? 1 : 0;
+        Connector.addRequest(request, this, 'loadDocViews');
+    }
+    CompaniesJs.documents.deleteDocView = function (doc_view_id) {
+        if (!confirm("Вы уверены, что хотите удалить этот образ?")) return;
+        var request = {};
+        request.mod = 'Companies';
+        request.rq = 'DeleteDocumentView';
+        request.doc_view_id = doc_view_id;
+        Connector.addRequest(request, this, 'loadDocViews');
+    }
+    CompaniesJs.documents.freezeDocView = function (doc_view_id) {
+        if (!confirm("Заморозить образ?")) return;
+        var request = {};
+        request.mod = 'Companies';
+        request.rq = 'FreezeDocumentView';
+        request.doc_view_id = doc_view_id;
+        Connector.addRequest(request, this, 'loadDocViews');
+    }
+    CompaniesJs.documents.unfreezeDocView = function (doc_view_id) {
+        if (!confirm("Разморозить образ?")) return;
+        var request = {};
+        request.mod = 'Companies';
+        request.rq = 'UnfreezeDocumentView';
+        request.doc_view_id = doc_view_id;
+        Connector.addRequest(request, this, 'loadDocViews');
+    }
+    CompaniesJs.documents.expandDocView = function (counter, expand) {
+        var tile_dom = dojo.byId('tile_item_' + counter);
+        if (!tile_dom) return;
+        if (expand)
+            tile_dom.style.display = 'block';
+        else
+            tile_dom.style.display = 'none';
+    }
+    CompaniesJs.documents.clickDocView = function (doc_view_id, view_type_id) {
+        if (doc_view_id) {
+            Acc.printOut({
+                mod: 'Companies',
+                rq: 'DocumentOut',
+                doc_view_id: doc_view_id
+            });
+        } else {
+            var request = {};
+            request.mod = 'Companies';
+            request.rq = 'InsertDocumentView';
+            request.view_type_id = view_type_id;
+            request.doc_id = CompaniesJs.documents.doc_id;
+            Connector.addRequest(request, this, 'loadDocViews');
+            //For some view that changes docHead
+            CompaniesJs.documents.loadDocumentHead();
+        }
+    }
+</script>
+<table>
+    <tr>
+        <td style="width:500px;height: 400px;vertical-align: top">
+            <table>
+                <tr>
+                    <td id="companies_doc_head" class="hidden" style="font-weight: bold;">
+                        <big><i><span title="Контрагент"><!--{{passive_comp}}--> </span> 
+                           <!--{%if sell_doc%}--><img src="img/sell.png" align="absmiddle" /><!--{%endif%}-->
+                           <!--{%if buy_doc%}--><img src="img/buy.png" align="absmiddle" /><!--{%endif%}-->
+                           <!--{%if sin_doc%}--><img src="img/servicein.png" align="absmiddle" /><!--{%endif%}-->
+                           <!--{%if sout_doc%}--><img src="img/serviceout.png" align="absmiddle" /><!--{%endif%}-->
+                           <span title="Организация"> <!--{{active_comp}}--></span></i>
+                        </big><br /><br />
+                        <div align="right">
+                            <div class="trigger" style="background-color:{%ifequal isservice|default:'0' '0'%}#ddf{%else%}#F46{%endifequal%}" title="Вид ценностей" onclick="CompaniesJs.documents.swapDocType('goodtype')"><!--{%ifequal isservice|default:'0' '0'%}--><del>Услуга</del><!--{%else%}-->Услуга<!--{%endifequal%}--></div>
+                            <!--{%if sell_doc or buy_doc%}-->
+                            <div class="trigger" style="background-color:{%ifequal is_reclamation|default:'0' '0'%}#ddf{%else%}#F60{%endifequal%}" title="Возврат" onclick="CompaniesJs.documents.changeDocHead(this,'is_reclamation')"><!--{%ifequal is_reclamation|default:'0' '0'%}--><del>Возврат</del><!--{%else%}-->Возврат<!--{%endifequal%}--></div>
+                            <div class="trigger" style="background-color:{%ifequal notcount|default:'0' '0'%}#ddf{%else%}#Fc3{%endifequal%}" title="Учет на складе" onclick="CompaniesJs.documents.changeDocHead(this,'notcount')"><!--{%ifequal notcount|default:'0' '0'%}-->Учитывать<!--{%else%}-->Неучитывать<!--{%endifequal%}--></div>
+                            <!--{%endif%}-->
+                            <div class="trigger" style="background-color:{%ifequal use_vatless_price|default:'0' '1'%}#FF3{%else%}#ddf{%endifequal%}" title="Цена в таблице" onclick="CompaniesJs.documents.changeDocHead(this,'use_vatless_price')"><!--{%ifequal use_vatless_price|default:'0' '1'%}-->Без НДС<!--{%else%}-->С НДС<!--{%endifequal%}--></div>
+                            <div class="trigger" style="background-color:#ddf" title="НДС" onclick="CompaniesJs.documents.changeDocHead(this,'vat_rate')">НДС:<!--{{vat_rate}}-->%</div>
+                            <div class="trigger" style="background-color:{%ifequal signs_after_dot|default:'3' '3'%}#ddf{%else%}#0cf{%endifequal%}" title="Кол-во знаков после запятой" onclick="CompaniesJs.documents.changeDocHead(this,'signs_after_dot')">Точность: <!--{{signs_after_dot}}--></div>
+                            <div class="trigger" style="background-color:#ddf" title="Курс доллара" onclick="CompaniesJs.documents.changeDocHead(this,'ratio')"><!--{{doc_ratio}}--></div>
+                            <!--{%ifnotequal curr_code def_curr_code %}-->
+                                <div class="trigger" style="background-color:#ff0" title="Валюта">Валюта: <!--{{curr_code}}--></div>
+                            <!--{%endifnotequal%}-->
+                       </div><br />
+                        <div>
+                        <big>
+                            <!--{%ifequal is_commited|default:'0' '0'%}-->
+                                Новый <a href="javascript:CompaniesJs.documents.swapDocType()" style="font-size:15px" title="Изменить Тип">
+                                <!--{%if sell_doc or sout_doc%}-->Расходный<!--{%else%}-->Приходный<!--{%endif%}-->
+                                </a> документ 
+                                <!--{%ifequal is_reclamation|default:'0' '1'%}-->(Возврат)<!--{%endifequal%}-->
+                                <span title="Номер документа" class="trigger" style="background-color:#9e9" onclick="CompaniesJs.documents.changeDocHead(this,'num')">№<!--{%if doc_num%}{{doc_num}}{%endif%}--></span>
+                                <!--{%else%}-->
+                                <!--{%if sell_doc or sout_doc%}-->Расходный документ<!--{%else%}-->Приходный документ<!--{%endif%}--> 
+                                <!--{%ifequal is_reclamation|default:'0' '1'%}-->(Возврат)<!--{%endifequal%}-->
+                                <span title="Номер документа"><!--№{{doc_num|default:'...'}}--></span>
+                            <!--{%endifequal%}-->
+                            от <div class="trigger" style="background-color:#9e9" title="Дата документа" id="companies_doc_date"><!--{{doc_date}}--></div>
+                        </big> 
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <div id="companies_doc_entries" align="center"></div>
+                    </td>
+                </tr>
+                <tr>
+                    <td id="companies_doc_foot">
+                        <table width="100%" border="0" cellpadding="0" cellspacing="0">
+                            <tr>
+                                <td width="180" valign="top">
+                                    <table width="180" border="0" cellpadding="0" cellspacing="0" class="table">
+                                        <tr>
+                                            <td width="80" align="right">Вес :</td>
+                                            <td width="100" align="right"><b><!--{{total_weight|default:'0'}}--></b> кг</td>
+                                        </tr>
+                                        <tr>
+                                            <td width="80" align="right">Объем :</td>
+                                            <td align="right"><b><!--{{total_volume|default:'0'}}--></b> м<sup><small><small>3</small></small></sup>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                                <td>&nbsp;</td>
+                                <td width="180">
+                                    <table width="180" border="0" cellpadding="0" cellspacing="0" class="table">
+                                        <tr>
+                                            <td width="80" align="right">Всего :</td>
+                                            <td width="100" align="right"><b><!--{{vatless|default:'0'}} {{curr_symbol|default:'-'}}--></b>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td align="right">НДС :</td>
+                                            <td align="right"><b><!--{{vat|default:'0'}} {{curr_symbol|default:'-'}}--></b>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td align="right">Всего с НДС :</td>
+                                            <td align="right"><b><!--{{total|default:'0'}} {{curr_symbol|default:'-'}}--></b>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <div id="companies_doc_views" style="width:415px" class="hidden">
+                            <!--{% for view in views %}-->
+                            <div id="view_{{view.doc_view_id}}" class="tile_item" onmouseover="CompaniesJs.documents.expandDocView('{{forloop.counter}}', 1)" onmouseout="CompaniesJs.documents.expandDocView('{{forloop.counter}}',0)">
+                                <!--{% ifequal view.freezed '1' %}-->
+                                <i><a href="javascript:CompaniesJs.documents.clickDocView('{{view.doc_view_id|default:0}}','{{view.view_type_id}}')" style="color:#000">{{view.view_name}}</a></i>
+                                <br />
+                                <b>№{{view.view_num}}</b>
+                                <b>{{view.view_date}}</b>
+                                <div style="display:none;" id="tile_item_{{forloop.counter}}">
+                                    <a href="javascript:CompaniesJs.documents.deleteDocView('{{view.doc_view_id}}')" style="color:#F00">Удалить этот шаблон</a>
+                                    <a href="javascript:CompaniesJs.documents.unfreezeDocView('{{view.doc_view_id}}')" style="color:#0a0">Разморозить</a>
+                                    <br />
+                                    <br />
+                                </div>
+                                <!--{% else %}-->
+                                <!--{% if view.doc_view_id %}-->
+                                <i><a href="javascript:CompaniesJs.documents.clickDocView('{{view.doc_view_id|default:0}}','{{view.view_type_id}}')" style="color:#000">{{view.view_name}}</a></i>
+                                <br />
+                                <b><a href="javascript:CompaniesJs.documents.editDocView('{{view.doc_view_id}}','view_num','{{view.view_num}}')">№{{view.view_num}}</a></b>
+                                <b><a href="javascript:CompaniesJs.documents.editDocView('{{view.doc_view_id}}','view_date','{{view.view_date}}')">{{view.view_date}}</a></b>
+                                <div style="display:none;" id="tile_item_{{forloop.counter}}">
+                                    <a href="javascript:CompaniesJs.documents.deleteDocView('{{view.doc_view_id}}')" style="color:#F00">Удалить этот шаблон</a>
+                                    <a href="javascript:CompaniesJs.documents.freezeDocView('{{view.doc_view_id}}')" style="color:#009">Заморозить</a>
+                                    <!--{% for efield in view.extra_fields %}-->
+                                    <hr size="1" />{{efield.label}}:
+                                    <br />
+                                    <a href="javascript:CompaniesJs.documents.editDocView('{{view.doc_view_id}}','{{efield.name}}','{{efield.value|default:\'\'}}','EXTRA')">
+                                        {{efield.value|default:'________'}}
+                                    </a>
+                                    <!--{% endfor %}-->
+                                </div>
+                                <!--{% else %}-->
+                                <i><a href="javascript:CompaniesJs.documents.clickDocView('{{view.doc_view_id|default:0}}','{{view.view_type_id}}')" style="color:#000">{{view.view_name}}</a></i>
+                                <br />
+                                <!--{% endif %}-->
+                                <!--{% endifequal %}-->
+                            </div>
+                            <!--{% endfor %}-->
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td id="companies_doc_head2" class="hidden">
+                        <div class="rounded" style="display:inline-block" title="Создан">
+                            <img src="img/add-16.png" align="absmiddle"> {{created_by|default:''}}</div>
+                        <div class="rounded" style="display:inline-block" title="Изменен">
+                            <img src="img/edit-16.png" align="absmiddle"> {{modified_by|default:''}}</div>
+                        <textarea placeholder="Комментарии к документу..." rows="1" onChange="CompaniesJs.documents.changeDocAttrib('doc_data',this.value)" style="border:none;width:100%;background-color:#dFd" title="Комментарии">{{doc_data|default:''}}</textarea>
+                        <br />
+                        <br />
+                        <br />
+                    </td>
+                </tr>
+            </table>
+        </td>
+        <td style="padding-left:20px;vertical-align: top">
+            <div id="companies_doc_list"></div>
+        </td>
+    </tr>
+</table>

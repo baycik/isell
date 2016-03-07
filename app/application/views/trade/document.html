@@ -1,0 +1,941 @@
+<script type="text/javascript">
+    /* global App */
+    Doc=App.page_trade_document = {
+	isCreated:false,
+	properties:{
+	    title: 'Документ',
+	    iconCls:'icon-document16',
+	    closable:true,
+	    collapsible:true,
+	    shadow:false,
+	    width: 700,
+	    height: 'auto',
+	    top: 50,
+	    onClose: function () {
+		if( Doc.data.open_in==='panel' ){
+		    //Doc.node.panel('clear');
+		}
+		Doc.handler.notify('close');
+		//delete Doc,App.page_trade_document;
+	    }
+	},
+	init: function () {
+	    if( this.data.open_in==='panel' ){
+		this.properties.closable=false;
+		this.node.panel(this.properties);
+		Doc.node.panel('open');
+	    }
+	    else{
+		this.node.window(this.properties);
+	    }
+	    App.setupForm("#Doc_head_frm", {},'use_inp_values');
+	    this.head.load(this.data.doc_id);
+	},
+	initAfter:function(){
+	    this.suggest.init();
+	    this.entries.setupShortcuts();
+	},
+	setTitle:function(){
+	    var type=$('#Doc_type_cmb').combobox('getText');
+	    var status=Doc.head.props.is_commited*1?"Проведен":"Не проведен";
+	    Doc.node.window('setTitle','Документ - '+type+' ('+status+')' );
+	},
+	close:function(){
+	    Doc.data.open_in==='panel'?Doc.node.panel('close'):Doc.node.window('close');
+	},
+	create:function(){
+	    var createDef=$.Deferred();
+	    $.post('DocumentItems/createDocument',function(doc_id){
+		if( doc_id*1 ){
+		    Doc.head.load(doc_id,true,createDef);
+                    createDef.notify('created');
+                    Doc.handler.notify('created',doc_id);
+		} else {
+		    App.flash("Не удалось создать документ");
+		}
+	    });
+	    return createDef;
+	},
+	createThenAddEntry:function ( code, qty ){
+	    Doc.create().progress(function(status){
+		if( status==='created' ){
+                    Doc.isCreated=true;
+		    Doc.entries.add( code, qty );
+		}
+	    });
+	}
+    };
+    /////////////////////////////////////////////
+    // HEAD
+    /////////////////////////////////////////////
+    Doc.head = {
+	props:{},
+	load: function (doc_id,load_only_head,createDef) {
+            if( doc_id===null ){
+                return;
+            }
+	    Doc.head.props.doc_id=doc_id;
+	    Doc.isCreated=!!doc_id;
+	    $.get('DocumentItems/headGet/' + Doc.head.props.doc_id, function (xhr) {
+		Doc.head.props = App.json(xhr);
+                Doc.head.set();
+                Doc.view.loadTile();
+		if( !load_only_head ){
+		    Doc.entries.reload();
+		}
+                createDef && createDef.notify('head_loaded',doc_id);
+	    });
+	},
+        set:function(){
+            Doc.head.setPropsForm(Doc.head.props);
+            Doc.setTitle();
+            App.renderTpl('Doc_owners',Doc.head.props);            
+        },
+	reload:function(){
+	    Doc.head.load(Doc.head.props.doc_id,false);
+	},
+	setPropsForm:function(props){
+	    Doc.head.allowUpdate=false;
+	    $('#Doc_head_frm').form('load', props);
+	    $('#Doc_pci').combobox('reload');
+	    Doc.head.allowUpdate=true;
+	    Doc.head.hightlightCommited();
+	    Doc.head.typeComboFormatterIcon(Doc.head.props.doc_type);
+	},
+	hightlightCommited:function(){
+	    $('#Doc_commit_btn').css('display',(Doc.head.props.is_commited*1?"none":""));
+	    $('#Doc_type_cmb,#Doc_notcount_cmb,#Doc_pci').combobox(Doc.head.props.is_commited*1?'disable':'enable');//
+	    var color='';
+	    if( Doc.head.props.is_commited*1 ){
+		var doc_type=Math.abs(Doc.head.props.doc_type);
+		switch(doc_type){
+		    case 1:
+		    case 3:
+			color='#cfc';
+			break;
+		    case 2:
+		    case 4:
+			color='#fcf';
+			break;
+		}
+	    }
+	    $('#Doc_tool_bar').css('background-color',color);
+	    if( Doc.head.props.notcount*1 ){
+		$('#Doc_utils').show();
+		$('#Doc_notcount_cmb').combobox('textbox').css('background-color','#ffb');
+	    } else {
+		$('#Doc_notcount_cmb').combobox('textbox').css('background-color','');
+	    }
+	    if( Doc.head.props.use_vatless_price*1 ){
+		$('#Doc_utils').show();
+		$('#Doc_use_vatless_price_cmb').combobox('textbox').css('background-color','#ffb');
+	    } else{
+		$('#Doc_use_vatless_price_cmb').combobox('textbox').css('background-color','');
+	    }
+	},
+	update:function( field, value, oldval ){
+	    if( Doc.head.allowUpdate && value!==oldval ){
+		if( Doc.isCreated ){
+                    $.post('DocumentItems/headUpdate/'+App.uri(field,value),function(ok){
+			Doc.head.afterUpdate( ok, field, value, oldval );
+		    });
+		} else {
+		    if( field==='passive_company_id' ){
+			Doc.handler.notify('pcomp_changed',value);
+			return;
+		    }
+		    Doc.create().progress(function(status){
+                        if( status==='created' ){
+			    Doc.isCreated=true;
+                            Doc.head.update( field, value, oldval );
+                        }
+                    });	    
+		}
+	    }
+	},
+	afterUpdate:function( ok, field, value, oldval ){
+	    switch( field ){
+		case 'doc_ratio':
+		case 'vat_rate':
+		case 'use_vatless_price':
+		case 'signs_after_dot':
+		    Doc.entries.reload();
+		    break;
+		case 'passive_company_id':
+		    if( ok ){
+			Doc.handler.notify('pcomp_changed',value);
+		    } else {
+			App.flash("Сменить контрагента можно только у не проведенного документа.",'alert');
+			$("#Doc_pci").combobox('reload');			
+		    }
+		    break;
+		case 'doc_type':
+		    if( ok ){
+			Doc.head.reload();
+			Doc.entries.reload();
+		    } else {
+			App.flash("Сменить тип документа можно только у не проведенного документа.",'alert');
+			this.typeComboFormatterIcon(oldval);
+		    }
+		    break;
+		case 'notcount':
+		    if( !ok ){
+			App.flash("Сменить учет на складе можно только у не проведенного документа.",'alert');
+		    } else {
+			Doc.entries.reload();
+		    }
+		    break;
+	    }
+	    if( !ok ){
+		Doc.head.setPropsForm( Doc.head.props );
+		App.flash('Свойства документа не были сохранены');
+	    }
+	    else{
+		Doc.head.props[field]=value;
+		Doc.head.hightlightCommited();
+                Doc.head.set();
+		Doc.handler.notify('head_changed',value);
+	    }
+	},
+	typeComboFormatter: function (data) {
+	    return "<img src='img/" + (["", "sell", "buy", "serviceout", "servicein"][Math.abs(data.value)]) + ".png'> " + data.text;
+	},
+	typeComboFormatterIcon:function(newVal){
+	    var icon=Doc.head.typeComboFormatter({value:newVal,text:''});
+	    $('#Doc_type_cmb').next().find(".l-btn-text").html( icon );
+	},
+	companyListFrm:function(row){
+	    var label=row.label;
+	    if( row.path ){
+		var path_chunks=row.path.split('>');
+		var label=path_chunks.slice(path_chunks.length-2).reverse().join('/ ');
+	    }
+	    return label;
+	},
+        pcompLoader:function(param, success, error){
+	    if( param.q===undefined ){
+		success([{company_id:Doc.head.props.passive_company_id,label:Doc.head.props.label}]);
+		return;
+	    }
+	    $.get('Company/listFetch/', param, function (xhr) {
+		var resp = App.json(xhr);
+		success(resp[0] ? resp : []);
+	    });   
+        },
+	pcompTree:function(){
+	    App.loadWindow('page/company/tree',{}).progress(function(status,comp){
+		if( status==='select' ){
+		    $("#Doc_pci").combobox('setValue',comp.company_id);
+		    $("#Doc_pci").combobox('setText',comp.label);
+		    Doc.head.update( 'passive_company_id', comp.company_id);
+		}
+	    });
+	},
+	sendSms:function(){
+	    if( !Doc.isCreated ){
+		App.flash("Документ пуст.");
+		return;
+	    }
+	    $.get("Company/companyGet/"+Doc.head.props.passive_company_id, function ( xhr ) {
+		var passive_data=App.json(xhr);
+		var data={to:passive_data.company_mobile,body:Doc.head.props.doc_data};
+		App.loadWindow('page/dialog/send_sms',data);	    
+	    });
+	},
+	addEvent:function(){
+	    if( !Doc.isCreated ){
+		App.flash("Документ пуст.");
+		return;
+	    }
+	    $.get("Company/companyGet/"+Doc.head.props.passive_company_id, function ( xhr ) {
+		var passive_data=App.json(xhr);
+		var fvalue={
+		    event_id:0,
+		    event_label:'Доставка',
+		    event_user_id: App.user.props.user_id,
+		    event_name: 'Документ №' + Doc.head.props.doc_num,
+		    event_descr: Doc.head.props.doc_data,
+		    event_target: passive_data.company_person + " (" + passive_data.label + ")",
+		    event_place: passive_data.company_address,
+		    event_note: passive_data.company_mobile
+		};
+		App.loadWindow('page/events/event',fvalue);	    
+	    });
+	},
+	commit:function(){
+	    if( Doc.isCreated ){
+		$.post("DocumentItems/entryDocumentCommit/"+Doc.head.props.doc_id, function ( ok ) {
+		    if( ok*1 ){
+			Doc.head.allowUpdate=false;
+			Doc.head.reload();
+			Doc.handler.notify('commit');
+		    }
+		});
+	    } else {
+		App.flash("Документ пуст.");
+	    }
+	},
+	uncommit:function(){
+	    if( !Doc.isCreated ){
+		App.flash("Документ пуст.");
+		return;
+	    }
+	    var action=Doc.head.props.is_commited*1?'uncommit':'delete';
+	    if( action==='delete' && !confirm("Удалить документ?") ){
+		return;
+	    }
+	    $.post("DocumentItems/entryDocumentUncommit/"+Doc.head.props.doc_id, function ( ok ) {
+		if( ok*1 ){
+		    if( action==='uncommit' ){
+			Doc.head.reload();
+			Doc.handler.notify('uncommit');
+		    } else {
+			Doc.head.load(0);
+			Doc.handler.notify('deleted');
+		    }
+		    
+		}
+	    });
+	},
+	duplicate:function(){
+	    if( !Doc.isCreated ){
+		App.flash("Документ пуст.");
+		return;
+	    }
+	    if( confirm("Создать копию этого документа?") ){
+		$.post("DocumentItems/duplicate/"+Doc.head.props.doc_id,function(doc_id){
+		    if( doc_id*1 ){
+			Doc.head.load(doc_id);
+			Doc.handler.notify('created',doc_id);
+			App.flash("Документ скопирован и загружен");
+		    }
+		});
+	    }
+	},
+	import:function(){
+	    if( !Doc.isCreated ){
+		Doc.create().progress(function(status){
+		    if( status==='created' ){
+			Doc.isCreated=true;
+			Doc.head.import();
+		    }
+		});
+		return;
+	    }
+	    var config=[
+		{name:'Код товара',field:'product_code',required:true},
+		{name:'Кол-во',field:'product_quantity'},
+		{name:'Цена',field:'invoice_price'},
+		{name:'Партия',field:'party_label'}		    
+	    ];
+	    App.loadWindow('page/dialog/importer',{label:'документ',fields_to_import:config}).progress(function(status,fvalue,Importer){
+		if( status==='submit' ){
+		    if( Doc.head.props.doc_id>0 ){
+			Doc.head.importDo(fvalue,Importer);
+		    } else {
+			Doc.create().progress(function(status){
+			    if( status==='created' ){
+				Doc.head.importDo(fvalue,Importer);
+			    }
+			});
+		    }
+		}
+	    });
+	},
+	importDo:function(fvalue,Importer){
+	    if( Doc.head.props.is_commited*1 ){
+		App.flash("Документ должен быть не проведен");
+		return;
+	    }
+	    $.post("DocumentItems/import/"+Doc.head.props.doc_id,fvalue,function(ok){
+		App.flash("Импортировано "+ok);
+		Importer.reload();
+		Doc.entries.reload();
+	    });
+	}
+    };
+    /////////////////////////////////////////////
+    // ENTRIES
+    /////////////////////////////////////////////
+    Doc.entries = {
+	reload:function(){
+	    $('#Doc_entry_dg').datagrid('reload');
+	},
+        enumerate:function(entries){
+            for(var i=0;i<entries.length;i++){
+                entries[i].row_num=i+1;
+            }
+            return entries;
+        },
+	loader: function (param, success, error) {
+	    if( Doc.isCreated ){
+		$.post("DocumentItems/entryDocumentGet/"+Doc.head.props.doc_id, function ( xhr ) {
+		    var resp = App.json(xhr);
+                    var entries=Doc.entries.enumerate(resp.entries ? resp.entries : []);
+		    success(entries);
+		    Doc.entries.renderFooter( resp.footer );
+		});
+	    }
+	    else{
+		success([]);
+                Doc.entries.renderFooter( {} );
+	    }
+	},
+	add:function( code, qty ){
+	    if( code && qty ){
+		if( Doc.isCreated ){
+		    $.post("DocumentItems/entryPostAdd/",{doc_id:Doc.head.props.doc_id,code:code,quantity:qty},function(ok){
+			if( ok*1 ){
+			    Doc.entries.reload();
+			}
+			else{
+			    App.flash("Строка не добавлена!");
+			}
+		    });
+		} else {//if this added entry is the first in new doc then reload head of new created doc
+		    Doc.createThenAddEntry(code, qty);
+		}
+	    }
+	},
+	edit:function(index,field,value){
+	    var row=$("#Doc_entry_dg").datagrid('getSelected');
+	    if( !row ){
+		App.flash("Строка не выбрана!");
+		return;
+	    }
+	    row.head=Doc.head.props;
+	    row.focus=field;
+	    App.loadWindow('page/trade/document_entry_edit',row).progress(function(state){
+		if(state==='change'){
+		    Doc.entries.reload();
+		}
+		if( state==='close' ){
+		    $('#Doc_entry_dg').datagrid('getPanel').panel('panel').focus();
+		}
+		if( state==='delete' ){
+		    Doc.entries.delete();
+		}
+	    });
+	},
+	delete:function(){
+	    var rows=$("#Doc_entry_dg").datagrid('getSelections');
+	    if( !rows.length ){
+		App.flash("Ни одна строка не выбрана!");
+		return;
+	    }
+	    if( confirm("Удалить выделенные строки?") ){
+		var ids=[];
+		rows.forEach(function(row){
+		    ids.push(row.doc_entry_id);
+		});
+		$.post(App.uri('DocumentItems','entryDelete',Doc.head.props.doc_id,ids.join(',')), function () {
+		    Doc.entries.reload();
+		});		
+	    }
+	},
+	calculate: function (value, row) {
+	    if( row.is_loss*1 ){
+		return '<span style="color:red;font-weight:bold">' + value + '</span>';
+	    }
+	    return value;
+	},
+	onRowContextMenu: function (e, row) {
+	    e.preventDefault();
+	    var selected_rows=$('#Doc_entry_dg').datagrid('getSelected');
+	    if( !selected_rows ){
+		$('#Doc_entry_dg').datagrid('selectRow', row);
+	    }
+	    $('#Doc_entry_menu').menu('show', {
+		left: e.pageX,
+		top: e.pageY
+	    });
+	},
+	renderFooter:function( data ){
+	    data.total_weight=data.total_weight||0;
+	    data.total_volume=data.total_volume||0;
+	    data.vatless=data.vatless||0;
+	    data.vat=data.vat||0;
+	    data.total=data.total||0;
+	    App.renderTpl('Doc_footer',data);
+	},
+	initRecalculate:function(){
+	    if( !Doc.isCreated ){
+		App.flash("Документ пуст.");
+		return;
+	    }
+	    App.loadWindow('page/trade/document_recalculate').progress(function(state,data){
+		if( state==='submit' ){
+		    $.post("DocumentItems/recalc/"+Doc.head.props.doc_id+'/'+(data.recalc_proc*1||0), function ( xhr ) {
+			Doc.entries.reload();
+                        Doc.handler.notify('head_changed');
+		    });
+		}
+	    });
+	},
+        onSelect: function (index, row) {
+            $('#Doc_entry_dg').datagrid('resize');
+        },
+	setupShortcuts:function(){
+	    $('#Doc_entry_dg').datagrid('getPanel').panel('panel').attr('tabindex',1).bind('keydown',function(e){
+		var selected = $('#Doc_entry_dg').datagrid('getSelected');
+		var index = $('#Doc_entry_dg').datagrid('getRowIndex', selected);
+		switch(e.keyCode){
+		    case 13:
+			if (selected){
+			    Doc.entries.edit();
+			}
+			break;
+		    
+		    case 38:	// up
+			e.preventDefault();
+			if (selected){
+			    $('#Doc_entry_dg').datagrid('unselectAll');
+			    $('#Doc_entry_dg').datagrid('selectRow', index-1);
+			} else {
+			    $('#Doc_entry_dg').datagrid('unselectAll');
+			    $('#Doc_entry_dg').datagrid('selectRow', 0);
+			}
+			break;
+		    case 40:	// down
+			e.preventDefault();
+			if (selected){
+			    $('#Doc_entry_dg').datagrid('unselectAll');
+			    $('#Doc_entry_dg').datagrid('selectRow', index+1);
+			} else {
+			    $('#Doc_entry_dg').datagrid('unselectAll');
+			    $('#Doc_entry_dg').datagrid('selectRow', 0);
+			}
+			break;
+		}
+	});
+	}
+    };
+    /////////////////////////////////////////////
+    // SUGGEST
+    /////////////////////////////////////////////
+    Doc.suggest={
+	prevCode:'',
+	init:function(){
+	    var qty = $('#Doc_sugg_qty').textbox('textbox');
+	    var cmb=$('#Doc_suggest_cmb').combobox('textbox');
+	    cmb.bind( 'keydown', function(e){
+		var query=$('#Doc_suggest_cmb').combobox('getValue');
+		if( e.keyCode===38 && query==='' ){
+		    $('#Doc_suggest_cmb').combobox('setValue',Doc.suggest.prevCode);
+		}
+		else if( e.keyCode===13 ){
+		    qty.select();
+		}
+	    });
+	    qty.bind('keydown', function(e){
+		if ( e.keyCode===13 ){	// when press ENTER key, accept the inputed value.
+		    Doc.suggest.qtySubmit();
+		}
+	    });
+	    cmb.select();
+	},
+	qtySubmit:function(){
+	    var qty = $('#Doc_sugg_qty').textbox('textbox');
+	    var cmb=$('#Doc_suggest_cmb').combobox('textbox');
+	    var code=$('#Doc_suggest_cmb').combobox('getValue');
+	    var quantity=$(qty).val();
+	    if( quantity*1>0 ){
+		Doc.entries.add(code,quantity);
+		$(qty).val('');
+		cmb.select();	    
+	    }
+	},
+	loader:function(param, success, error){
+	    if( param.q ){
+		$.get("DocumentItems/suggestFetch/",param, function ( xhr ) {
+		    Doc.suggest.rows=App.json(xhr) || [];
+		    success( Doc.suggest.rows );
+		});		
+	    }
+	    else{
+		success([]);
+	    }
+	},
+	formatter:function(row){
+	    return ' <b>'+row['product_code']+'</b> '+row['label']+' <b>[x'+row['product_spack']+']'+' <font color=green>'+row['product_quantity']+'</font></b>';
+	},
+	findSPack:function( code ){
+	    for( var i in Doc.suggest.rows ){
+		if( Doc.suggest.rows[i].product_code===code ){
+		    return Doc.suggest.rows[i].product_spack;
+		}
+	    }
+	},
+	select:function(){
+	    var code=Doc.suggest.prevCode=$('#Doc_suggest_cmb').combobox('getValue');
+	    var spack=Doc.suggest.findSPack(code);
+	    $('#Doc_sugg_qty').textbox('setValue',spack);
+	    $('#Doc_sugg_qty').textbox('textbox').select();
+	}
+    };
+    /////////////////////////////////////////////
+    // VIEW
+    /////////////////////////////////////////////
+    Doc.view={
+	loadTile:function(){
+            if( Doc.isCreated ){
+                $.get('DocumentView/viewListFetch/'+Doc.head.props.doc_id, function (xhr) {
+                    Doc.view.views = Doc.view.compile(App.json(xhr));
+                    App.renderTpl('Doc_view_tile',{views:Doc.view.views});
+                });
+            } else {
+		$('#Doc_view_tile').addClass('covert');
+	    }
+	},
+	compile:function( views ){
+	    for( var i in views ){
+		var view=views[i];
+		var efield_vals=App.json(view.view_efield_values);
+		var efield_labs=App.json(view.view_efield_labels);
+		views[i].efields=[];
+		for( var k in efield_labs ){
+		    views[i].efields.push({field:k,label:efield_labs[k],value:efield_vals?efield_vals[k]||'':''});
+		}
+	    }
+	    return views;
+	},
+	settings:function( node ){
+	    var i=$(node).attr('data-view-i');
+	    var view=Doc.view.views[i];
+	    if( view.doc_view_id ){
+		App.loadWindow('page/trade/view_settings',view).progress(function(status){
+		    if( status==='deleted' || status==='changed' ){
+			Doc.view.loadTile();
+		    }
+		});
+	    }
+	},
+	create:function(view_type_id){
+	    $.post("DocumentView/viewCreate/"+view_type_id,function(doc_view_id){
+		if( doc_view_id*1 ){
+		    Doc.view.open(doc_view_id);
+		    Doc.view.loadTile();
+		}
+	    });
+	},
+	open:function(doc_view_id){
+	    window.open("./DocumentView/documentViewGet/?out_type=.print&doc_view_id="+doc_view_id, '_new');
+	},
+	click:function( node ){
+	    var doc_view_id=$(node).attr('data-view-id');
+	    var view_type_id=$(node).attr('data-view-type-id');
+	    if( doc_view_id*1 ){
+		Doc.view.open(doc_view_id);
+	    }
+	    else{
+		Doc.view.create(view_type_id);
+	    }
+	},
+	showhidden:false,
+	togglehidden:function(){
+	    this.showhidden=!this.showhidden;
+	    $('#Doc_view_arrow').attr('src','img/arrow'+(this.showhidden?'left':'right')+'.png');
+	    $('.view_is_hidden').css('display',(this.showhidden?'inline-block':'none'));
+	}
+    };
+</script>
+<form id="Doc_head_frm" onsubmit="return false;" style="-moz-user-select:none;">
+    <!-- DOCUMENT HEADER -->
+    <div style="width: 668px;margin: auto;padding-top: 10px;">
+	<div>
+	    <select class="easyui-combobox" id="Doc_type_cmb" name="doc_type" title="Вид" data-options="
+		    editable:false,
+		    buttonText:'<img src=img/sell.png>',
+		    buttonAlign:'left',
+		    formatter:Doc.head.typeComboFormatter,
+		    panelHeight:'auto',
+		    onChange:function(val,old){
+			Doc.head.update('doc_type',val,old);
+			Doc.head.typeComboFormatterIcon(val);
+		    }
+		    ">
+		<option value="1">Продажа</option>
+		<option value="-1">Возврат от покупателя</option>
+		<option value="2">Покупка</option>
+		<option value="-2">Возврат поставщику</option>
+		<option value="3">Оказание услуги</option>
+		<option value="4">Получение услуги</option>
+	    </select>
+	    <input type="text" name="doc_ratio" class="easyui-numberbox" title="Курс" data-options="
+		   min:1,
+		   precision:2,
+		   onChange:function(val,old){Doc.head.update('doc_ratio',val,old)}
+		   ">
+	    <input class="easyui-combobox" name="passive_company_id" id="Doc_pci" title="Контрагент" data-options="
+		    valueField: 'company_id',
+		    textField: 'label',
+                    loader:Doc.head.pcompLoader,
+		    mode: 'remote',
+		    hasDownArrow:false,
+		    selectOnNavigation:false,
+		    formatter:Doc.head.companyListFrm,
+		    onSelect: function(company){Doc.head.update('passive_company_id',company.company_id)},
+		    icons: [{
+			     iconCls:'icon-settings16',
+			     handler: function(e){
+				 Doc.head.pcompTree();
+			     }
+			 }]
+		    ">
+	    <input type="text" name="signs_after_dot" class="easyui-numberspinner" title="Точность" data-options="
+		   min:0,
+		   max:5,
+		   editable:false,
+		   required:'required',
+		   onChange:function(val,old){Doc.head.update('signs_after_dot',val,old)}
+		   ">
+	    <input type="text" name="doc_date" class="easyui-datebox" title="Дата" data-options="
+		   required:'required',
+		   onChange:function(val,old){Doc.head.update('doc_date',val,old)}
+		   ">
+	    <input type="text" name="doc_num" class="easyui-numberspinner" title="Номер" data-options="
+		   min:1,
+		   required:'required',
+		   onChange:function(val,old){Doc.head.update('doc_num',val,old)}
+		   ">
+	</div>
+	<div id="Doc_utils" style="display: none">
+	    <div class="inp_rule"></div>
+	    <select class="easyui-combobox" name="notcount" id="Doc_notcount_cmb" title="На складе" data-options="
+		    editable:false,
+		    panelHeight:'auto',
+		    onChange:function(val,old){Doc.head.update('notcount',val,old)}
+		    ">
+		<option value="0">Учитывать</option>
+		<option value="1">Неучитывать</option>
+	    </select>
+	    <select class="easyui-combobox" name="use_vatless_price" id="Doc_use_vatless_price_cmb" title="Цена" data-options="
+		    editable:false,
+		    panelHeight:'auto',
+		    onChange:function(val,old){Doc.head.update('use_vatless_price',val,old)}
+		    ">
+		<option value="0">В том числе НДС</option>
+		<option value="1">Плюс НДС</option>
+	    </select>
+	    <input type="text" name="vat_rate" class="easyui-numberbox" title="НДС %" data-options="
+		   min:0,
+		   precision:0,
+		   onChange:function(val,old){Doc.head.update('vat_rate',val,old)}
+		   ">
+	</div>
+	<div>
+	    <div id="Doc_tool_bar" class="" style="padding:1px;text-align: right;border-top:1px #fff solid;">
+		<div style="float:left;" title="↑ для вывода предыдущего кода">
+		    <input class="easyui-combobox" id="Doc_suggest_cmb" style="width:190px;" data-options="
+			   valueField: 'product_code',
+			   textField: 'product_code',
+			   formatter:Doc.suggest.formatter,
+			   loader:Doc.suggest.loader,
+			   selectOnNavigation:false,
+			   url: 'DocumentItems/suggestFetch/',
+			   panelHeight:'auto',
+			   mode: 'remote',
+			   method:'get',
+			   hasDownArrow:false,
+			   panelWidth:400,
+			   panelMinWidth:400,
+			   prompt:'код, название или штрихкод',
+			   onSelect: Doc.suggest.select
+			   ">
+		    <input type="text" class="easyui-numberbox" id="Doc_sugg_qty" style="width:50px;" data-options="min:1,precision:0,prompt:'Кол-во'">
+		    <button type="button" title="Добавить строку в документ" style="margin:4px;padding: 0px;" onclick="Doc.suggest.qtySubmit();">+</button>
+		</div>
+		<span class="icon-24 icon-commit" title="Провести документ" id="Doc_commit_btn" onclick="Doc.head.commit();"> </span>
+		<span class="icon-24 icon-uncommit" title="Отменить документ" onclick="Doc.head.uncommit();"> </span>
+		<span style="display: inline-block;width:26px"> </span>
+		<span class="icon-24 icon-change" title="Изменить строку" onclick="Doc.entries.edit();"> </span>
+		<span class="icon-24 icon-delete" title="Удалить строку" onclick="Doc.entries.delete();"> </span>
+		<span class="icon-24 icon-lorry" title="Добавить в распорядок" onclick="Doc.head.addEvent();"> </span>
+		<span class="icon-24 icon-sms" title="Отправить СМС" onclick="Doc.head.sendSms();"> </span>
+		<span class="icon-24 icon-calc" title="Перерасчитать цены" onclick="Doc.entries.initRecalculate();"> </span>
+		<span class="icon-24 icon-import" title="Импортировать" onclick="Doc.head.import();"> </span>
+		<span class="icon-24 icon-duplicate" title="Копировать" onclick="Doc.head.duplicate();"> </span>
+		<span class="icon-24 icon-utils" title="Дополнительные свойства" onclick="$('#Doc_utils').toggle('slow')"> </span>
+		<span class="icon-24 icon-refresh" title="Обновить" onclick="Doc.entries.reload();"> </span>
+	    </div>
+	</div>
+	<!-- 
+	----------------------------
+	DOCUMENT ENTRIES 
+	----------------------------
+	-->
+	<table class="easyui-datagrid" id="Doc_entry_dg" style="width:670px;max-height:800px;"
+	       data-options="
+	       noheader:true,
+	       ctrlSelect:true,
+	       autoRowHeight:true,
+	       loader:Doc.entries.loader,
+	       method:'get',
+	       onSelect:Doc.entries.onSelect,
+	       onDblClickCell:Doc.entries.edit,
+	       onRowContextMenu: Doc.entries.onRowContextMenu
+	       ">
+	    <thead>
+		<tr>
+                    <th data-options="field:'row_num',width:30">№</th>  
+                    <th data-options="field:'product_code',width:75">Код</th>  
+		    <th data-options="field:'product_name',width:300">Название</th>
+		    <th data-options="field:'product_quantity',width:50,align:'right'">Кол-во</th>
+		    <th data-options="field:'product_unit',width:40,align:'center'">Ед.</th>
+		    <th data-options="field:'product_price',width:60,align:'right',formatter:Doc.entries.calculate">Цена</th>
+		    <th data-options="field:'product_sum',width:70,align:'right'">Сумма</th>
+		    <th data-options="field:'row_status',width:24,align:'center',formatter:App.datagrid.tooltip">!</th>
+		</tr>
+	    </thead>
+	</table>
+	<!-- CONTEXT MENU -->
+	<div id="Doc_entry_menu" class="easyui-menu" style="width:170px;">
+	    <div data-options="iconCls:'icon-change16'" onclick="Doc.entries.edit()">Изменить</div>
+	    <div data-options="iconCls:'icon-delete16'" onclick="Doc.entries.delete()">Удалить</div>
+	    <div onclick="$('#Doc_entry_dg').datagrid('selectAll')">Выделить все</div>
+	    <div class="menu-sep"></div>
+	    <div data-options="iconCls:'icon-lorry16'" onclick="Doc.head.addEvent();">В распорядок</div>
+	    <div data-options="iconCls:'icon-sms16'" onclick="Doc.head.sendSms()">Отправить СМС</div>
+	    <div data-options="iconCls:'icon-calc16'" onclick="Doc.entries.initRecalculate()">Перерасчитать</div>
+	    <div data-options="iconCls:'icon-refresh16'" onclick="Doc.entries.reload();">Обновить</div>
+	</div>
+        <!-- DOCUMENT FOOTER -->
+	<div id="Doc_footer">
+	    <table style="float:left" class="footer_table">
+		<tr>
+		    <td>Вес:</td><td style="font-weight: bold;">{{total_weight}} кг</td>
+		</tr>
+		<tr>
+		    <td>Объем:</td><td style="font-weight: bold;">{{total_volume}} м<sup>3</sup></td>
+		</tr>
+	    </table>
+
+	    <table style="float:right" class="footer_table">
+		<tr>
+		    <td>Всего:</td><td style="font-weight: bold;width: 100px;">{{vatless}} {{curr_symbol}}</td>
+		</tr>
+		<tr>
+		    <td>НДС:</td><td style="font-weight: bold;">{{vat}} {{curr_symbol}}</td>
+		</tr>
+		<tr>
+		    <td>Всего с НДС:</td><td style="font-weight: bold;">{{total}} {{curr_symbol}}</td>
+		</tr>
+	    </table>
+	</div>
+	<div id="Doc_owners" class="transparent covert" style="clear: left">
+	    <img src="img/add-16.png" title="Создано пользователем" style="vertical-align: middle"> {{created_by}} 
+	    <img src="img/edit-16.png" title="Изменено пользователем" style="vertical-align: middle"> {{modified_by}}
+	</div>
+	<!-- DOCUMENT VIEWS -->
+        <div id="Doc_view_tile" style="clear:both;vertical-align: top;text-align: justify" class="covert">
+	    {{if views}}
+		{{views}}
+		<div class="view_button {{if view_hidden|equals>1}}view_is_hidden{{/if}}" 
+		     data-view-id="{{doc_view_id}}" 
+		     data-view-type-id="{{view_type_id}}" 
+		     onclick="Doc.view.click(this)">
+		    <div>{{view_name}}</div>
+		    {{if doc_view_id}}
+		    <img src="img/settings.png" data-view-i="{{#}}" onclick="Doc.view.settings(this);event.stopPropagation()" style="float:right;" title="Настройки">
+		    <b>№{{view_num}} {{view_date}}</b>
+			<div class="view_efields">
+			{{if efields}}
+			    {{efields}}
+			     {{label}}: {{if value}}<u style="color:red">{{value}}</u>{{/if}}<br/>
+			    {{/efields}}
+			{{/if}}
+		    {{/if}}
+		    </div>
+		</div>
+		{{/views}}
+	    {{/if}}
+	    <img id="Doc_view_arrow" src="img/arrowright.png" title="Дополнительные шаблоны печати" onclick="Doc.view.togglehidden()">
+	</div>
+	<textarea name="doc_data" title="Комментарий" placeholder="Комментарий" data-skip="1" class="document_comment" onchange="Doc.head.update('doc_data',this.value)"></textarea>
+    </div>
+</form>
+<style type="text/css">
+    .force_center .panel{
+	margin:auto;
+    }
+    .combo-panel{
+	cursor: default;
+	background-color: #fff;
+    }
+    .document_comment{
+	width: 650px;
+	height:30px;
+	margin-left:0px;
+	margin-top: 3px;
+	background-color: #cfd
+    }
+    .footer_table {
+	background-image: linear-gradient(#fff 0%,  #e0eeff 100%);
+	border-collapse: collapse;
+	margin:5px -2px 2px 0px;
+    }
+    .footer_table td{
+	text-align: right;
+	width: 80px;
+	border: 1px solid #ccc;
+	padding: 3px;
+    }
+    #Doc_view_arrow{
+	margin: 2px;
+	vertical-align:top;
+    }
+    #Doc_view_arrow:hover{
+	cursor: pointer;
+	background-color: #def;
+	border: 2px #abf solid;
+	border-radius: 5px;
+	margin: 0px;
+    }
+    .view_button{
+	display: inline-block;
+	border: 1px #bbb solid;
+	color: #333;
+	border-radius: 3px;
+	width:155px;
+	min-height: 32px;
+	margin: 0px 0px 6px 0px;
+	text-align: center;
+	background-image: linear-gradient(rgba(255,255,255,0.9) 0%,  rgba(255,255,255,0.1) 100%);
+	background-color:#cfd;
+	cursor: pointer;
+	vertical-align: top;
+    }
+    .view_button b{
+	color:#090;
+    }
+    .view_button img{
+	visibility: hidden;
+	z-index: 10;
+    }
+    .view_button:hover img{
+	visibility: visible;
+    }
+    .view_button:hover{
+	border: 1px #5c5 solid;
+	background-image: none;
+	z-index:100;	
+    }
+    .view_button:hover .view_efields{
+	display: block;
+    }
+    .view_efields{
+	background-color: white;
+	position: absolute;
+	margin-top:1px;
+	text-align: left;
+	width:155px;
+	border: 1px #5c5 solid;
+	overflow: hidden;
+	display: none;
+	margin-left:-1px;
+	z-index:100;
+    }
+    .view_is_hidden{
+	display: none;
+    }
+</style>

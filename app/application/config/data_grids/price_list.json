@@ -1,0 +1,35 @@
+{
+  "grid_name":"Список Цен",
+  "selectionMode":"extended",
+  "readonly":0,
+  "toolnames":[
+	"add",
+	"delete",
+	"upload",
+    "download",
+    "print"
+  ],
+  "identifier":"product_code",
+  "columns":[
+    {
+      "field":"product_code",
+      "width":"60px",
+      "name":"Артикул"
+    },
+    {
+      "field":"sell",
+      "width":"60px",
+      "name":"Продажа"
+    },
+    {
+      "field":"buy",
+      "width":"60px",
+      "name":"Покупка"
+    },
+    {
+      "field":"curr_code",
+      "width":"60px",
+      "name":"Валюта"
+    }
+  ]
+}

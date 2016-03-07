@@ -1,0 +1,241 @@
+<script>
+    CompaniesJs.details.suppress_update = true;
+    CompaniesJs.details.data = {};
+    CompaniesJs.details.init = function () {
+        var handler = function (content) {
+            CompaniesJs.details.suppress_update = true;
+            dijit.byId("details_form").attr('value', content);
+            CompaniesJs.details.data = content;
+            CompaniesJs.details.unlockUpdate();
+            Acc.dom.byId('company_name_h3').innerHTML = content.company_name;
+        };
+        var request = {};
+        request.mod = 'Companies';
+        request.rq = 'Details';
+        Connector.addRequest(request, handler);
+    };
+    CompaniesJs.details.focus = function () {
+        this.init();
+    };
+    CompaniesJs.details.unlockUpdate = function () {
+        setTimeout(function () {
+            CompaniesJs.details.suppress_update = false;
+        }, 100);
+    };
+    CompaniesJs.details.update = function (field) {
+        if (CompaniesJs.details.suppress_update) return;
+        CompaniesJs.details.data[field.name] = field.value;
+        var request = {};
+        request.mod = 'Companies';
+        request.rq = 'DetailUpdate';
+        request.field_name = field.name;
+        request.field_value = field.value;
+        Connector.addRequest(request);
+        if (field.name === 'company_name'){
+            Acc.dom.byId('company_name_h3').innerHTML = field.value;
+        }
+    };
+    CompaniesJs.details.update_bank_name = function (node) {
+        var request = {};
+        request.mod = 'Utils';
+        request.rq = 'GetBankName';
+        request.mfo = dijit.byId("company_bank_id").attr('value');
+        node.src = 'img/loading_16.gif';
+        var handler = function (resp, node) {
+            node.src = 'img/Search.png';
+            if (!resp) {
+                alert('Банк не найден!');
+            } else
+            if (confirm('Использовать название найденного банка?\n\n' + resp)) {
+                dijit.byId("company_bank_name").attr('value', resp);
+            }
+        };
+        Connector.addRequest(request, function (cont) {
+            handler(cont, node);
+        });
+    };
+    CompaniesJs.details.findDetails = function (field, node) {
+        var request = {
+            mod: 'Utils',
+            rq: 'FindDetails'
+        };
+        request.individualCode = field === 'company_code' ? CompaniesJs.details.data[field] : '';
+        request.individualNumber = field === 'company_vat_id' ? CompaniesJs.details.data[field] : '';
+        request.licenseNumber = field === 'company_vat_licence_id' ? CompaniesJs.details.data[field] : '';
+        node.src = 'img/loading_16.gif';
+        var handler = function (resp, node) {
+            node.src = 'img/Search.png';
+            if (!resp.name) {
+                alert('Предприятие не найдено!');
+            } else
+            if (confirm('Использовать данные найденного предприятия?\n\n' + resp.name)) {
+                dijit.byId("company_code").attr('value', resp.individualCode);
+                dijit.byId("company_vat_id").attr('value', resp.individualNumber);
+                dijit.byId("company_vat_licence_id").attr('value', resp.licenseNumber);
+            }
+        };
+        Connector.addRequest(request, function (cont) {
+            handler(cont, node);
+        });
+    };
+/*    CompaniesJs.details.searchEDR = function (field, node) {
+        var fvalue = {};
+        fvalue.company_code = field == 'company_code' ? CompaniesJs.details.data[field] : '';
+        Acc.showPopup(fvalue,
+            function (fvalue) {
+                registry.byId('company_name').set('value', fvalue.company_name || CompaniesJs.details.data['company_name']);
+                registry.byId('company_jaddress').set('value', fvalue.company_jaddress || CompaniesJs.details.data['company_jaddress']);
+                registry.byId('company_director').set('value', fvalue.company_director || CompaniesJs.details.data['company_director']);
+                registry.byId('company_phone').set('value', fvalue.company_phone || CompaniesJs.details.data['company_phone']);
+            }, {
+                tpl: 'dialogs/search_edr.html'
+            });
+    };
+*/
+        CompaniesJs.details.searchSTA = function (field, node) {
+        var fvalue = {};
+        fvalue.company_code = field === 'company_code' ? CompaniesJs.details.data[field] : '';
+        fvalue.company_vat_id = field === 'company_vat_id' ? CompaniesJs.details.data[field] : '';
+        fvalue.company_vat_licence_id = field === 'company_vat_licence_id' ? CompaniesJs.details.data[field] : '';
+        Acc.showPopup(fvalue,
+            function (fvalue) {
+                Acc.registry.byId('company_name').set('value', fvalue.company_name || CompaniesJs.details.data['company_name']);
+                Acc.registry.byId('company_code').set('value', fvalue.company_code || CompaniesJs.details.data['company_code']);
+                Acc.registry.byId('company_vat_id').set('value', fvalue.company_vat_id || CompaniesJs.details.data['company_vat_id']);
+                Acc.registry.byId('company_vat_licence_id').set('value', fvalue.company_vat_licence_id || CompaniesJs.details.data['company_vat_licence_id']);
+            }, {
+                tpl: 'search_sta.html'
+            });
+    };
+</script>
+<h3 id="company_name_h3">Загрузка...</h3>
+<br />
+<form data-dojo-type="dijit/form/Form" id="details_form">
+<div data-dojo-type="dijit/TitlePane" title="Основные данные">
+<table>
+    <tr>
+      <td width="120" align="right">Полное Название*:</td>
+      <td colspan="3"><input data-dojo-type="dijit/form/TextBox" onchange="CompaniesJs.details.update(this)" name="company_name" id="company_name" style="width:360px" /></td>
+      <td width="120" align="right">Номер Договора*:</td>
+      <td width="120"><input data-dojo-type="dijit/form/TextBox" onchange="CompaniesJs.details.update(this)" name="company_agreement_num" /></td>
+      <td>&nbsp;</td>
+      </tr>
+    <tr>
+      <td width="120" align="right">Юр. адрес*:</td>
+      <td colspan="3"><input data-dojo-type="dijit/form/TextBox" onchange="CompaniesJs.details.update(this)" name="company_jaddress" id="company_jaddress" style="width:360px" /></td>
+      <td width="120" align="right">Дата Договора*:</td>
+      <td width="120"><input data-dojo-type="dijit/form/TextBox" onchange="CompaniesJs.details.update(this)" name="company_agreement_date" /></td>
+      <td>&nbsp;</td>
+      </tr>
+    <tr>
+      <td width="120" align="right">КОД:</td>
+      <td width="120"><input data-dojo-type="dijit/form/TextBox" onchange="CompaniesJs.details.update(this)"  name="company_code" id="company_code" /></td>
+      <td width="120" align="left">
+        <img src="img/SearchSTA.png" title="Поиск на сайте налоговой службы" onclick="CompaniesJs.details.searchSTA('company_code',this)" style="cursor:pointer" border="0" />
+      </td>
+      <td>&nbsp;</td>
+      <td width="120" height="10" align="right">&nbsp;</td>
+      <td width="120">&nbsp;</td>
+      <td>&nbsp;</td>
+      </tr>
+  <tr>
+    <td align="right">ИНН*:</td>
+    <td width="120"><input data-dojo-type="dijit/form/TextBox" onchange="CompaniesJs.details.update(this)" name="company_vat_id" id="company_vat_id" /></td>
+      <td width="120" align="left">
+		  <img src="img/SearchSTA.png" title="Поиск на сайте налоговой службы" onclick="CompaniesJs.details.searchSTA('company_vat_id',this)" style="cursor:pointer" border="0" />
+	  </td>
+    <td>&nbsp;</td>
+    <td width="120" height="10" align="right">МФО:</td>
+    <td width="120"><input data-dojo-type="dijit/form/TextBox" onchange="CompaniesJs.details.update(this)" name="company_bank_id" id="company_bank_id" /></td>
+    <td><img src="img/Search.png" onclick="CompaniesJs.details.update_bank_name(this)" style="cursor:pointer" border="0" /></td>
+    </tr>
+  <tr>
+    <td align="right">Доп. Код:</td>
+    <td width="120"><input data-dojo-type="dijit/form/TextBox" onchange="CompaniesJs.details.update(this)" name="company_vat_licence_id" id="company_vat_licence_id" /></td>
+      <td width="120" align="left">
+		  <img src="img/SearchSTA.png" title="Поиск на сайте налоговой службы" onclick="CompaniesJs.details.searchSTA('company_vat_licence_id',this)" style="cursor:pointer" border="0" />
+	  </td>
+	<td>&nbsp;</td>
+    <td height="10" align="right">Название банка:</td>
+    <td width="120"><input data-dojo-type="dijit/form/TextBox" onchange="CompaniesJs.details.update(this)" id="company_bank_name" name="company_bank_name" /></td>
+    <td>&nbsp;</td>
+    </tr>
+  <tr>
+    <td width="120" height="10" align="right">Телефон*:</td>
+    <td width="120"><input data-dojo-type="dijit/form/TextBox" onchange="CompaniesJs.details.update(this)" name="company_phone" id="company_phone" /></td>
+    <td width="120">&nbsp;</td>
+    <td>&nbsp;</td>
+    <td width="120" height="10" align="right">Номер счета:</td>
+    <td width="120"><input data-dojo-type="dijit/form/TextBox" onchange="CompaniesJs.details.update(this)" name="company_bank_account" /></td>
+    <td>&nbsp;</td>
+    </tr>
+</table>
+<br /><hr size="1" color="#ccc" /><br />
+<table border="0">
+  <tr>
+    <td width="120" align="right">Короткое Название:</td>
+    <td width="120"><input data-dojo-type="dijit/form/TextBox" onchange="CompaniesJs.details.update(this)" name="company_tree_name" /></td>
+    <td width="120" align="right">&nbsp;</td>
+    <td>&nbsp;</td>
+    <td width="120" align="right">Email:</td>
+    <td width="120"><input data-dojo-type="dijit/form/TextBox" onchange="CompaniesJs.details.update(this)" name="company_email" /></td>
+  </tr>
+  <tr>
+    <td width="120" align="right">Директор:</td>
+    <td><input data-dojo-type="dijit/form/TextBox" onchange="CompaniesJs.details.update(this)" name="company_director" id="company_director" /></td>
+    <td width="120" align="right">&nbsp;</td>
+    <td>&nbsp;</td>
+    <td width="120" align="right">Web:</td>
+    <td><input data-dojo-type="dijit/form/TextBox" onchange="CompaniesJs.details.update(this)" name="company_web" /></td>
+  </tr>
+  <tr>
+    <td align="right">Контактное лицо:</td>
+    <td colspan="3"><input data-dojo-type="dijit/form/TextBox" onchange="CompaniesJs.details.update(this)" name="company_person" /></td>
+    <td align="right">Моб. Телефон:</td>
+    <td><input data-dojo-type="dijit/form/TextBox" onchange="CompaniesJs.details.update(this)" name="company_mobile" /></td>
+  </tr>
+  <tr>
+    <td width="120" align="right">Адрес Доставки:</td>
+    <td colspan="3"><input data-dojo-type="dijit/form/TextBox" onchange="CompaniesJs.details.update(this)" name="company_address" style="width:360px" /></td>
+    <td width="120" align="right">Факс:</td>
+    <td width="120"><input data-dojo-type="dijit/form/TextBox" onchange="CompaniesJs.details.update(this)" name="company_fax"  /></td>
+    </tr>
+  <tr>
+    <td align="right" valign="top">Информация</td>
+    <td colspan="3" rowspan="2" valign="top"><textarea data-dojo-type="dijit/form/Textarea" onchange="CompaniesJs.details.update(this)" name="company_description" style="width:362px" ></textarea></td>
+    <td width="120" align="right" valign="top">&nbsp;</td>
+    <td valign="top">&nbsp;</td>
+    </tr>
+  <tr>
+    <td align="right">&nbsp;</td>
+    <td align="right">&nbsp;</td>
+    <td>&nbsp;</td>
+  </tr>
+</table>
+</div><br />
+
+<div data-dojo-type="dijit/TitlePane" title="Дополнительные данные">
+<table border="0">
+    <tr>
+      <td width="120" height="10" align="right">Язык:</td>
+      <td>
+      <select data-dojo-type="dijit/form/Select" onchange="CompaniesJs.details.update(this)" name="language">
+        <option value="ua">Українська</option>
+        <option value="ru">Русский</option>
+        <option value="en">English</option>
+      </select>
+      </td>
+      <td width="120" align="right">Путь</td>
+      <td><input data-dojo-type="dijit/form/TextBox" onchange="CompaniesJs.details.update(this)" name="path" disabled="disabled" style="width:500px;" /></td>
+      <td width="120" align="right">Валюта</td>
+      <td>
+          <select data-dojo-type="dijit/form/Select" onchange="CompaniesJs.details.update(this)" name="curr_code" style="width:50px;">
+              <option value="UAH">Гривня</option>
+              <option value="USD">Доллар</option>
+              <option value="RUB">Рубль</option>
+          </select>
+      </td>
+    </tr>
+</table>
+</div>
+</form>

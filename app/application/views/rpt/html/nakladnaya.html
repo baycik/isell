@@ -1,0 +1,96 @@
+<style type="text/css">
+	body, html, td{
+		font-family:Arial;
+		font-size:13px;
+		line-height:normal;
+	}
+</style>
+<div class="page">
+<table width="718" border="0" cellpadding="0" cellspacing="0">
+  <tr>
+    <td align="center"><table width="700" border="0" cellpadding="3" cellspacing="0">
+      <tr>
+        <td width="120" align="left" valign="top"><b><u>Поставщик</u></b></td>
+        <td align="left">
+        Основной поставщик
+        </td>
+      </tr>
+      <tr>
+        <td align="left" valign="top"><b><u>Получатель</u></b></td>
+        <td align="left">
+        {$v.p.allbr} 
+		Контактное лицо: {$v.p.company_person}, Моб. Тел: {$v.p.company_mobile}, Адрес Доставки: {$v.p.company_address}.
+    </td>
+      </tr>
+    </table></td>
+  </tr>
+  <tr>
+    <td align="center"><table border="0" cellpadding="3" cellspacing="0">
+      <tr>
+        <td align="center">
+        <span class="large"><b>Накладная № {$v.view_num} от {$v.date_dot}</b></span>
+        </td>
+      </tr>
+    </table></td>
+  </tr>
+  <tr>
+    <td align="center">
+    <table class="table_border" width="700" border="0" cellpadding="1" cellspacing="0">
+      <tr class="big">
+        <td width="15" align="center" nowrap="nowrap" bgcolor="#aaaaaa"><b>№</b></td>
+        <td width="15" align="center" nowrap="nowrap" bgcolor="#aaaaaa"><b>Артикул</b></td>
+        <td align="center" nowrap="nowrap" bgcolor="#aaaaaa"><b>Полное название товара</b></td>
+        <td width="50" align="center" nowrap="nowrap" bgcolor="#aaaaaa"><b>Ед.</b></td>
+        <td width="50" align="center" nowrap="nowrap" bgcolor="#aaaaaa"><b>Кол-во</b></td>
+        <td width="95" align="center" nowrap="nowrap" bgcolor="#aaaaaa"><b>Цена</b></td>
+        <td width="100" align="center" nowrap="nowrap" bgcolor="#aaaaaa"><b>Сумма</b></td>
+      </tr>
+      {loop name="v.entries"}
+      <tr>
+        <td align="right" valign="top">{$counter+1}</td>
+        <td align="left" valign="top" nowrap="nowrap">{$value.1}</td>
+        <td align="left" valign="top">{$value.2}</td>
+        <td align="center" valign="top">{$value.5}</td>
+        <td align="right" valign="top">{$value.4}</td>
+        <td align="right" valign="top">{$value.6}</td>
+        <td align="right" valign="top">{$value.7}</td>
+      </tr>
+      {/loop}
+      <tr>
+        <td colspan="6" align="right" style="border:none"><b>Всего: </b></td>
+        <td align="right">{$v.footer.total}</td>
+      </tr>
+    </table></td>
+  </tr>
+  <tr>
+    <td align="center"><table width="700" border="0" cellspacing="0">
+      <tr>
+        <td align="left" valign="top">&nbsp;</td>
+        <td align="right" valign="bottom">&nbsp;</td>
+      </tr>
+      <tr>
+        <td align="left" valign="top"><table width="320" border="0" cellspacing="0">
+          <tr>
+            <td width="100"></td>
+            <td align="left">&nbsp;</td>
+          </tr>
+        </table></td>
+        <td align="right" valign="bottom"><table width="320" border="0" cellspacing="0">
+          <tr>
+            <td width="100"><b>Отримав(ла):</b></td>
+            <td align="left" style="border-bottom:solid 1px #000">&nbsp;</td>
+          </tr>
+        </table></td>
+      </tr>
+
+      <tr>
+        <td align="left" valign="top">{if="$v.footer.total_weight"}Вес: {$v.footer.total_weight}кг {/if}{if="$v.footer.total_volume"}Объем: {$v.footer.total_volume}м<sup><small>3</small></sup>{/if}</td>
+        <td align="right" valign="bottom">&nbsp;</td>
+      </tr>
+      <tr>
+		  <td align="left" colspan="2"><br><b><i><big>{$v.doc_data}</big></i></b></td>
+      </tr>
+	</table></td>
+  </tr>
+</table> 
+</div>

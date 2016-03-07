@@ -1,0 +1,266 @@
+<script type="text/javascript">
+    /* global App */
+    Tedit = App.page_accounts_trans_edit = {
+	parsed:true,
+	init: function () {
+	    this.node.window({
+		title: 'Редактирование проводки',
+		width: 450,
+		height: 300,
+		onClose: function(){
+		    App.page_accounts_trans_edit.handler.notify('close',App.page_accounts_trans_edit.data);
+		    App.page_accounts_trans_edit.node.window('destroy');
+		    App.page_accounts_trans_edit.node.remove();
+		    delete App.page_accounts_trans_edit,Tedit;
+		}
+	    });
+	    this.data.transIsNew=!this.data.trans_id;
+	    if( this.data.transIsNew ){
+		Tedit.initWidgets();
+	    } else {
+		$.post("AccountsCore/transFullGet/"+Tedit.data.trans_id,function(xhr){
+		    Tedit.data = App.json(xhr);
+		    Tedit.data.trans_date=App.toDmy(Tedit.data.cstamp.substr(0,10));
+		    Tedit.initWidgets();
+		});
+	    }
+	},
+	initWidgets:function(){
+	    App.setupForm("#trans_edit_frm");
+	    $.parser.parse("#page_accounts_trans_edit");//for easy ui
+	    this.suppressUpdate=true;
+	    $("#trans_edit_frm").form('load',Tedit.data);
+	    $("#trans_edit_frm").show();
+	    this.suppressUpdate=false;
+	    this.calc();
+	    this.initRefHighlight();
+	    this.initSubmit();
+	    this.initSelectOnClick();
+	    this.altCurrencyToggle();
+	},
+	initSubmit:function(){
+	    $("#trans_edit_frm").submit(function(e){
+		e.preventDefault();
+		Tedit.data=App.collectForm("#trans_edit_frm");
+		if( $("#trans_edit_frm").form('validate') && Tedit.data.amount*1 ){
+		    Tedit.transSubmit();
+		} else {
+		    alert("Проверьте правильность заполнения");
+		}
+	    });
+	},
+	initSelectOnClick:function(){
+	    $('#page_accounts_trans_edit .validatebox-text').on('focus', function() {
+		this.select();
+	    });
+	    $("#Tedit_amount").next().find(".validatebox-text").focus();	    
+	},
+	initRefHighlight:function(){
+	    if( Tedit.data.trans_ref*1 || Tedit.data.check_id*1 ){
+		$("#Tedit_amount,#Tedit_ratio,#Tedit_amount_alt").textbox('readonly',true);
+		$("#Tedit_amount").textbox('textbox').css('backgroundColor','#ddd');
+	    }
+	},
+	altCurrencyToggle:function(){
+	    if( Tedit.data.amount_alt*1 || Tedit.data.using_alt_currency*1 ){
+		$("#Tedit_alt_currency").show();
+	    } else {
+		$("#Tedit_alt_currency").hide();
+	    }
+	},
+	transSubmit:function(){
+	    if( Tedit.waitingForResponse ){
+		return;
+	    }
+	    Tedit.waitingForResponse=true;
+	    Tedit.data.trans_date=App.toIso(Tedit.data.trans_date);
+	    $.post("AccountsCore/transPostCreateUpdate/",Tedit.data,function(trans_id){
+		Tedit.waitingForResponse=false;
+		if( trans_id*1 ){
+		    Tedit.data.trans_id=trans_id;
+		    Tedit.handler.notify('save',Tedit.data);
+		    Tedit.node.window('close');
+		} else {
+		    alert("Проводка не сохранена");
+		}
+	    });
+	},
+	pcompLoader: function (param, success, error) {
+	    if( param.q===undefined ){
+		success([{company_id:Tedit.data.passive_company_id,label:Tedit.data.label}]);
+		return ;
+	    }
+	    $.get('Company/listFetch/with_active', param, function (xhr) {
+		var resp = App.json(xhr);
+		success(resp[0] ? resp : []);
+	    });
+	},
+	pcompTree:function(){
+	    App.loadWindow('page/company/tree',{}).progress(function(status,comp){
+		if( status==='select' ){
+		    $("#tedit_comp_cmb").combobox('setValue',comp.company_id);
+		    $("#tedit_comp_cmb").combobox('setText',comp.label);
+		}
+	    });
+	},
+	transnameLoader: function (param, success, error) {
+	    if( param.q ){//if there is query dont restrict to account
+		Tedit.data.current_acc_code=null;
+	    }
+	    if( param.q || Tedit.data.transIsNew ){
+		$.get('AccountsData/transNameListFetch/'+(Tedit.data.current_acc_code||''), param, function (xhr) {
+		    var resp = App.json(xhr);
+		    success(resp[0] ? resp : []);
+		    if( !Tedit.data.trans_type && resp[0] ){
+			$('#tedit_trans_type_cmb').combobox('select',resp[0].trans_type);
+			Tedit.data.trans_type=resp[0].trans_type;
+			
+			if( !Tedit.data.description ){
+			    $('#tedit_description_txt').textbox('setValue',resp[0].trans_name);
+			}
+		    }
+		});
+	    } else {
+		success([{
+			acc_debit_code: Tedit.data.trans_type.split('_')[0],
+			acc_credit_code:  Tedit.data.trans_type.split('_')[1],
+			trans_type:  Tedit.data.trans_type,
+			trans_name: Tedit.data.trans_name||'',
+			trans_type_name: (Tedit.data.trans_name||'')+' '+Tedit.data.trans_type,
+			user_level: Tedit.data.user_level
+		    }]);		
+	    }
+	},
+	transnameEdit:function(){
+	    App.loadWindow('page/accounts/trans_names_list',{trans_type:Tedit.data.current_acc_code}).progress(function(status,data){
+		if( status==='ok' ){
+		    $('#tedit_trans_type_cmb').combobox('loadData',[data]);
+		    $('#tedit_trans_type_cmb').combobox('setValue',data.trans_type);
+		}
+	    });
+	},
+	transDelete:function(){
+	    if( !confirm("Удалить проводку?") ){
+		return;
+	    }
+	    $.post("AccountsCore/transDelete/"+Tedit.data.trans_id,function(ok){
+		if( ok*1 ){
+		    App.flash("Проводка удалена");
+		    Tedit.handler.notify('delete',Tedit.data);
+		    Tedit.node.window('close');
+		} else {
+		    App.flash("Проводка не удалена");
+		}
+	    });
+	},
+	parser:function( node, text ){
+            try{
+                var result=eval(text.toString().replace(',','.').match( /[\(\d\.\)\*\/\+-]*/ ).toString())*1 || 0;
+            } catch(e){
+                var result=0;
+            }
+	    if( $(node).textbox('options').precision ){
+		result=Tedit.round(result,$(node).textbox('options').precision);
+	    };
+	    $(node).textbox('setValue',result);
+	},
+	round:function(num,precision){
+	    return num.toFixed(precision) || '';
+	},
+	calc:function( field ){
+	    if( this.suppressUpdate ){
+		return;
+	    }
+	    this.suppressUpdate=true;
+	    var amount=$("#Tedit_amount").textbox('getValue');
+	    var ratio=$("#Tedit_ratio").textbox('getValue');
+	    var amount_alt=$("#Tedit_amount_alt").textbox('getValue');
+	    switch(field){
+		case 'ratio':
+		    if( amount*1 ){
+			$("#Tedit_amount_alt").textbox('setValue',this.round(amount/ratio,2));
+		    } else {
+			$("#Tedit_amount").textbox('setValue',this.round(amount_alt*ratio,2));
+		    }
+		    break;
+		case 'amount_alt':
+		    if( ratio*1 ){
+			$("#Tedit_amount").textbox('setValue',this.round(amount_alt*ratio,2));
+		    } else {
+			$("#Tedit_ratio").textbox('setValue',this.round(amount/amount_alt,5));
+		    }
+		    break;
+		case 'amount':
+		default:
+		    if( ratio*1 ){
+			$("#Tedit_amount_alt").textbox('setValue',this.round(amount/ratio,2));
+		    } else {
+			$("#Tedit_ratio").textbox('setValue',this.round(amount/amount_alt,5));
+		    }
+	    }
+	    this.suppressUpdate=false;
+	}
+    };
+</script>
+<form id="trans_edit_frm" style="display:none">
+    <input type="hidden" name="trans_id">
+    <input type="hidden" name="trans_ref">
+    <input type="hidden" name="check_id">
+    <div style="display: inline-block;width: 205px;float:left;">
+	<input style="width:95px" class="easyui-datebox" name="trans_date" title="Дата" data-options="required:true">
+	<input style="width:95px" class="easyui-textbox" name="amount" id="Tedit_amount" title="Сумма" data-options="
+	       onChange:function(text){Tedit.parser(this,text);Tedit.calc('amount');},
+	       required:true,
+	       precision:2">
+    </div>
+    <div id="Tedit_alt_currency" style="display: none;width: 200px;float:left;">
+	<input style="width:95px" class="easyui-textbox" name="ratio" id="Tedit_ratio" title="Курс" data-options="
+	       onChange:function(text){Tedit.parser(this,text);Tedit.calc('ratio');},
+	       precision:5">
+	<input style="width:95px" class="easyui-textbox" name="amount_alt" id="Tedit_amount_alt" title="Сумма вал" data-options="
+	       onChange:function(text){Tedit.parser(this,text);Tedit.calc('amount_alt');},
+	       precision:2">
+    </div>
+    <div style="float:left;" onclick="$('#Tedit_alt_currency').toggle();" title="Эквивалент суммы в валюте"><button type="button">$</button></div>
+    <input style="width:300px" class="easyui-combobox" name="passive_company_id" id="tedit_comp_cmb" title="Контрагент" data-options="
+	   valueField: 'company_id',
+	   textField: 'label',
+	   loader:Tedit.pcompLoader,
+	   mode: 'remote',
+	   method:'get',
+	   onSelect: Tedit.pcompOnSelect,
+	   required:true,
+	   icons: [{
+		    iconCls:'icon-settings16',
+		    handler: function(e){
+			Tedit.pcompTree();
+		    }
+		}]
+	   ">
+    <input style="width:300px" class="easyui-combobox" name="trans_type" id="tedit_trans_type_cmb" title="Проводка" data-options="
+	   valueField: 'trans_type',
+	   textField: 'trans_type_name',
+	   url:'AccountsCore/transNameListFetch',
+	   loader:Tedit.transnameLoader,
+	   panelHeight:'auto',
+	   mode: 'remote',
+	   method:'get',
+	   required:true,
+	   icons: [{
+		    iconCls:'icon-settings16',
+		    handler: function(e){
+			Tedit.transnameEdit();
+		    }
+		}]
+	   ">
+    <input style="width:300px" class="easyui-textbox" name="description" id="tedit_description_txt" title="Комментарий" data-options="
+	   multiline:true,
+	   height:66,
+	   required:true
+	   ">
+    <div style="text-align: center;margin-top: 15px;">
+	<button type="submit"><img src="img/Save-24.png" /> Сохранить</button>
+	<button type="button" onclick="Tedit.transDelete();"><img src="img/delete.png" /> Удалить</button>
+	<button type="button" onclick="Tedit.node.window('close')"><img src="img/close24.png" /> Закрыть</button>
+    </div>
+</form>

@@ -1,0 +1,15 @@
+body{
+    font-family: "Trebuchet MS",Arial;
+}
+.wide_input{
+    width: 300px
+}
+.textbox,.textbox-text{
+    border-radius: 0px !important;
+}
+.textbox-text:hover{
+    background-color: #dfefff;
+}
+.field_label{
+    text-align: right;
+}

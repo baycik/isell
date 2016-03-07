@@ -1,0 +1,227 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<link href="css/main.css" rel="stylesheet" type="text/css" />
+<link rel="stylesheet" type="text/css" href="js/dijit/themes/claro/claro.css" />
+<link rel="icon" type="image/png" href="favicon.png"/>
+<script type="text/javascript" src="js/dojo/dojo.js" djConfig=" parseOnLoad: true,locale: 'ru'"></script>
+<script type="text/javascript" src="js/baycik/SeqConnector.js"></script>
+<script type="text/javascript" src="js/baycik/Utils.js"></script>
+<script type="text/javascript" src="js/dhtmlx/tree/dhtmlxcommon.js"></script>
+<script type="text/javascript" src="js/dhtmlx/tree/dhtmlxtree.js"></script>
+<script type="text/javascript" src="js/dhtmlx/tree/ext/dhtmlxtree_json.js"></script>
+<script type="text/javascript" src="js/jquery-2.1.1.min.js"></script>
+<title>Диалог</title>
+<style type="text/css">
+    .formtable{
+	white-space: nowrap;
+	font-size: 12px;
+	background-color: #DAE5F0;
+	border: 1px #999 solid;
+	border-collapse: collapse;
+    }
+    .formtable td{
+	border: 1px #fff solid;
+    }
+    .required{
+	background-color: #ffb!important;
+    }
+</style>
+<script type="text/javascript">
+document.title = "Товарная карточка";
+var Connector = new SeqConnector('./');
+var Acc = new Utils();
+StockJs = {};
+require(["dojo/dom", "dijit/registry", "dojo/ready", "baycik/tree/TreeWidget"],
+function (dom, registry, ready) {
+    StockJs.delete_code = function () {
+	var fvalue = registry.byId('productform').get('value');
+	if (!fvalue.product_code || !confirm("Вы уверены, что хотите удалить " + fvalue.product_code))
+	    return;
+	Connector.addRequest({mod: 'Dialogs', rq: 'DeleteCode', product_code: fvalue.product_code}, function (resp) {
+	    if (resp){
+		registry.byId('productform').reset();
+		if( opener.StockJs.list.stock_list ){
+		    opener.StockJs.list.stock_list.loadGrid();
+		}
+	    }
+	    else{
+		alert("Удаление из Списка Товаров не удалось. Код используется в накладных");
+	    }
+	});
+    };
+    StockJs.save_product_card = function () {
+	var fvalue = registry.byId('productform').get('value');
+	fvalue.new_product_code=fvalue.product_code;
+	fvalue.product_code=StockJs.current_product_code;
+	if (!fvalue['new_product_code'] || !fvalue['ru'] || !fvalue['product_unit']) {
+	    alert("Заполните все поля выделенные желтым!");
+	    return false;
+	}
+	if ( !/^[0-9a-zA-Zа-яА-ЯёЁ\-,./_ ]+$/.test(fvalue.new_product_code) ){
+	    alert("Артикул должен содержать только буквы, цифры, пробел и символы -_,./");
+	}
+	fvalue.mod = 'Dialogs';
+	fvalue.rq = 'SaveProductCard';
+	Connector.addRequest(fvalue,function(){
+	    if( opener.StockJs.list.stock_list ){
+		opener.StockJs.list.stock_list.loadGrid();
+	    }
+	});
+	return false;
+    };
+    StockJs.load_product_card = function (product_code) {
+	StockJs.current_product_code=product_code;
+	var request = {};
+	request.mod = 'Dialogs';
+	request.rq = 'GetProductCard';
+	request.product_code = StockJs.current_product_code;
+	request.parent_id = dom.byId('parent_id').value;
+	Connector.addRequest(request, function (fvalue) {
+	    //if (!fvalue){
+	//	fvalue = {product_code: product_code};
+	    //}
+	    //if( StockJs.current_product_code ){
+	//	StockJs.current_product_code=fvalue.product_code;
+	    //}
+	    registry.byId('productform').set('value', fvalue);
+	    if (fvalue['parent_id'])
+		setTimeout(function () {
+		    StockJs.tree.openBranch(fvalue['parent_id']);
+		}, 500);
+	});
+    };
+    StockJs.initTree = function () {
+	Connector.addCss('js/dhtmlx/tree/dhtmlxtree.css');
+	StockJs.tree = new baycik.tree.TreeWidget({}, 'stock_tree');
+	with (StockJs.tree) {
+	    request.mod = 'Stock';
+	    request.id = 0;
+	    request.whole = 1;
+
+	    onRequest = function (request) {
+		request.rq = 'StockTree';
+		Connector.addRequest(request, this, 'setData');
+	    };
+	    onUpdate = function (request) {
+		request.rq = 'TreeItemUpdate';
+		Connector.addRequest(request, this, 'onUpdateReturn');
+	    };
+	    onInsert = function (request) {
+		request.rq = 'TreeItemInsert';
+		Connector.addRequest(request, this, 'onInsertReturn');
+	    };
+	    onDelete = function (request) {
+		request.rq = 'TreeItemDelete';
+		Connector.addRequest(request, this, 'onDeleteReturn');
+	    };
+	    onSelect = function (branch_data) {
+		dojo.byId('parent_id').value = branch_data.branch_id;
+	    };
+	    startup();
+	}
+	StockJs.tree.openBranch = function (branch_id) {
+	    this.tree.openItem(this.tree.getParentId(branch_id));
+	    this.tree.selectItem(branch_id);
+	};
+    };
+    ready(function(){
+	StockJs.load_product_card(location.hash.substr(1));
+    });
+});
+</script>
+</head>
+<body onload="StockJs.initTree()" class="claro">
+    <form data-dojo-type="dijit/form/Form" id="productform" onsubmit="return StockJs.save_product_card()">
+	<table>
+	    <tr>
+		<td valign="top">
+		    <div id="stock_tree"></div>
+		    <hr/><div id="status"></div>
+		</td>
+		<td valign="top">
+		    <table width="500" class="formtable">
+			<tr>
+			    <td width="100">Артикул</td>
+			    <td width="150"><input data-dojo-type="dijit/form/TextBox" tabindex="1" type="text" name="product_code" id="product_code" style="font-weight:bold" class="required" /></td>
+			    <td>Объем ед. в м3</td>
+			    <td><input data-dojo-type="dijit/form/TextBox" name="product_volume" type="text" id="product_volume" size="5" /></td>
+			</tr>
+			<tr>
+			    <td>Единица</td>
+			    <td><input data-dojo-type="dijit/form/TextBox" tabindex="2" name="product_unit" type="text" id="product_unit" size="5" class="required" /></td>
+			    <td>Вес ед. в кг</td>
+			    <td><input data-dojo-type="dijit/form/TextBox" name="product_weight" type="text" id="product_weight" size="5" /></td>
+			</tr>
+			<tr>
+			    <td>Мин. колличество</td>
+			    <td><input data-dojo-type="dijit/form/TextBox" type="text" name="product_wrn_quantity" id="product_wrn_quantity" /></td>
+			    <td width="100">В коробке</td>
+			    <td width="150"><input data-dojo-type="dijit/form/TextBox" name="product_spack" type="text" id="product_spack" size="5" /></td> 
+			</tr>
+			<tr>
+			    <td>Партия</td>
+			    <td><input data-dojo-type="dijit/form/TextBox" name="party_label" type="text" id="party_label" size="5" /></td>
+			    <td>В ящике</td>
+			    <td><input data-dojo-type="dijit/form/TextBox" name="product_bpack" type="text" id="product_bpack" size="5" /></td>
+			</tr>
+			<tr>
+			    <td></td>
+			    <td></td>
+			    <td>УКТ ЗЕД</td>
+			    <td><input data-dojo-type="dijit/form/TextBox" type="text" name="product_uktzet" id="product_uktzet" /></td>
+			</tr>
+			<tr>
+			    <td></td>
+			    <td></td>
+			    <td>Штрихкод</td>
+			    <td><input data-dojo-type="dijit/form/TextBox" name="barcode" type="text" id="product_barcode" size="5" /></td>
+			</tr>
+			<tr>
+			    <td>Название Рус.</td>
+			    <td colspan="3"><input data-dojo-type="dijit/form/TextBox" style="width:99%" tabindex="3" type="text" name="ru" id="ru" class="required" /></td>
+			</tr>
+			<tr>
+			    <td>Название Укр.</td>
+			    <td colspan="3"><input data-dojo-type="dijit/form/TextBox" style="width:99%" tabindex="4" type="text" name="ua" id="ua" /></td>
+			</tr>
+			<tr>
+			    <td>Название Англ.</td>
+			    <td colspan="3"><input data-dojo-type="dijit/form/TextBox" style="width:99%" tabindex="5" name="en" type="text" id="en" size="5" /></td>
+			</tr>
+			<tr>
+			    <td colspan="4">&nbsp;</td>
+			</tr>
+			<tr>
+			    <td>Продажа</td>
+			    <td><input data-dojo-type="dijit/form/TextBox" tabindex="7" type="text" name="sell" id="sell" /></td>
+			    <td>Код валюты</td>
+			    <td>
+				<select data-dojo-type="dijit/form/Select" name="curr_code" id="curr_code">
+				    <option value="UAH">UAH</option>
+				    <option value="USD">USD</option>
+				    <option value="RUB">RUB</option>
+				</select>
+			    </td>
+			</tr>
+			<tr>
+			    <td>Покупка</td>
+			    <td><input data-dojo-type="dijit/form/TextBox" tabindex="8" type="text" name="buy" id="buy" /></td>
+			    <td></td>
+			    <td></td>
+			</tr>
+			<tr>
+			    <td height="42" colspan="4" align="center" valign="bottom">
+				<button data-dojo-type="dijit/form/Button" type="button" onclick="StockJs.load_new_code()" style="display:none"><img src="img/edit_add.png"/> Загрузить по артикулу</button>
+				<button data-dojo-type="dijit/form/Button" type="submit"><img src="img/Save-24.png"/> Сохранить</button>
+				<button data-dojo-type="dijit/form/Button" type="button" onclick="StockJs.delete_code()"><img src="img/delete.png"/> Удалить</button>
+			    </td>
+			</tr>
+		    </table></td>
+	    </tr>
+	</table>
+	<input data-dojo-type="dijit/form/TextBox" name="parent_id" id="parent_id" type="hidden" />
+    </form>
+</body>
+</html>

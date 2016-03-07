@@ -1,0 +1,60 @@
+{
+"table_name":"Список продукции",
+"hasupload":1,
+"toolnames":["add","delete","upload","download","print"],
+"multiselect":1,
+"columns":[
+  {
+	"field":"product_code",
+	"name":"Артикул",
+	"type":"string",
+	"readonly":1,
+	"is_key":1
+  },
+  {
+	"field":"ru",
+	"name":"Русский",
+	"type":"string"
+  },
+  {
+	"field":"ua",
+	"name":"Українська",
+	"type":"string"
+  },
+  {
+	"field":"product_uktzet",
+	"name":"УКТЗЕТ",
+	"type":"number"
+  },
+  {
+	"field":"product_bpack",
+	"name":"Бол. Уп.",
+	"type":"number"
+  },
+  {
+	"field":"product_spack",
+	"name":"Мал. Уп.",
+	"type":"number"
+  },
+  {
+	"field":"product_weight",
+	"name":"Вес Бол.",
+	"type":"number"
+  },
+  {
+	"field":"product_volume",
+	"name":"Объем Бол.",
+	"type":"number"
+  },
+  {
+	"field":"product_unit",
+	"name":"Ед.",
+	"type":"string"
+  },
+  {
+	"field":"is_service",
+	"name":"Услуга",
+	"type":"number"
+  }
+]
+}

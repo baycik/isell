@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<ZVIT>
+  <TRANSPORT>
+    <CREATEDATE>{$v.date_dot}</CREATEDATE>
+    <VERSION>3.0</VERSION>
+  </TRANSPORT>
+  <ORG>
+    <FIELDS>
+      <EDRPOU>{$v.a.company_code}</EDRPOU>
+      <DEPT />
+      <JUR>true</JUR>
+      <DPACD>0109</DPACD>
+      <NAME>{$v.a.company_name}</NAME>
+      <SHORTNAME>{$v.a.company_name}</SHORTNAME>
+      <PROPERTY>10</PROPERTY>
+
+      <ACTIVITY>71100</ACTIVITY>
+      <FINANC />
+      <STATFUND />
+      <ENTQTY />
+      <KOATYY>0110136300</KOATYY>
+      <LEADINDTAX>3068718338</LEADINDTAX>
+      <LEADFIO>Байчиков Решат Ернесович</LEADFIO>
+      <LEADPOS>директор</LEADPOS>
+	  
+      <CHIEFACCINDTAX>2727210845</CHIEFACCINDTAX>
+      <CHIEFACCFIO>Загута Людмила Анатольевна</CHIEFACCFIO>
+      <CHIEFACCPOS>головний бухгалтер</CHIEFACCPOS>
+      <OKONX />
+      <KVK />
+    </FIELDS>
+
+    <ORGADR>
+      <FIELDS>
+        <COUNTRY>804</COUNTRY>
+        <JUR>true</JUR>
+        <REGION>01000</REGION>
+        <AREA />
+        <STREET></STREET>
+
+        <ZIP></ZIP>
+      </FIELDS>
+    </ORGADR>
+    <CARD>
+      <FIELDS>
+        <PERTYPE>0</PERTYPE>
+        <PERDATE>{function="'01'.substr($v.date_dot,2)"}</PERDATE>
+
+        <CHARCODE>J1201004</CHARCODE>
+        <DOCNAME>Податкова накладна  №{$v.view_num} від {$v.date_dot}</DOCNAME>
+        <CRTDATE>{$v.date_dot}</CRTDATE>
+        <CARDYEAR></CARDYEAR>
+        <UM>1</UM>
+        <CTRLSUM></CTRLSUM>
+
+        <NCTRLSUM />
+        <FLAGS>0</FLAGS>
+        <DOCID></DOCID>
+        <GUIDIDPARENT />
+        <CLASSIFNAME />
+        <REPCODENUM />
+        <REPCODENAME />
+      </FIELDS>
+
+      <DOCUMENT>
+        <ROW TAB="0" LINE="0" NAME="A5_10">
+          <VALUE>0</VALUE>
+        </ROW>
+        <ROW TAB="0" LINE="0" NAME="A5_11">
+          <VALUE>{function="str_replace(',','.',$v.footer.vatless)"}</VALUE>
+        </ROW>
+        <ROW TAB="0" LINE="0" NAME="A5_7">
+
+          <VALUE>{function="str_replace(',','.',$v.footer.vatless)"}</VALUE>
+        </ROW>
+        <ROW TAB="0" LINE="0" NAME="A5_8">
+          <VALUE>0</VALUE>
+        </ROW>
+        <ROW TAB="0" LINE="0" NAME="A5_9">
+          <VALUE>0</VALUE>
+
+        </ROW>
+        <ROW TAB="0" LINE="0" NAME="A6_11">
+          <VALUE>{function="str_replace(',','.',$v.footer.vat)"}</VALUE>
+        </ROW>
+        <ROW TAB="0" LINE="0" NAME="A6_7">
+          <VALUE>{function="str_replace(',','.',$v.footer.vat)"}</VALUE>
+        </ROW>
+        <ROW TAB="0" LINE="0" NAME="A7_10">
+
+          <VALUE>0</VALUE>
+        </ROW>
+        <ROW TAB="0" LINE="0" NAME="A7_11">
+          <VALUE>{function="str_replace(',','.',$v.footer.total)"}</VALUE>
+        </ROW>
+        <ROW TAB="0" LINE="0" NAME="A7_7">
+          <VALUE>{function="str_replace(',','.',$v.footer.total)"}</VALUE>
+
+        </ROW>
+        <ROW TAB="0" LINE="0" NAME="A7_8">
+          <VALUE>0</VALUE>
+        </ROW>
+        <ROW TAB="0" LINE="0" NAME="A7_9">
+          <VALUE>0</VALUE>
+        </ROW>
+        <ROW TAB="0" LINE="0" NAME="CARDCODE">
+
+          <VALUE></VALUE>
+        </ROW>
+        <ROW TAB="0" LINE="0" NAME="EDR_POK">
+          <VALUE></VALUE>
+        </ROW>
+        <ROW TAB="0" LINE="0" NAME="FIRM_ADR">
+          <VALUE>{$v.a.company_jaddress}</VALUE>
+
+        </ROW>
+        <ROW TAB="0" LINE="0" NAME="FIRM_CITYCD">
+          <VALUE>0652</VALUE>
+        </ROW>
+        <ROW TAB="0" LINE="0" NAME="FIRM_EDRPOU">
+          <VALUE>{$v.a.company_code}</VALUE>
+        </ROW>
+        <ROW TAB="0" LINE="0" NAME="FIRM_INN">
+
+          <VALUE>{$v.a.company_vat_id}</VALUE>
+        </ROW>
+        <ROW TAB="0" LINE="0" NAME="FIRM_NAME">
+          <VALUE>{$v.a.company_name}</VALUE>
+        </ROW>
+        <ROW TAB="0" LINE="0" NAME="FIRM_PHON">
+          <VALUE>668546</VALUE>
+
+        </ROW>
+        <ROW TAB="0" LINE="0" NAME="FIRM_SRPNDS">
+          <VALUE>{$v.a.company_vat_licence_id}</VALUE>
+        </ROW>
+        <ROW TAB="0" LINE="0" NAME="FIRM_TELORG">
+          <VALUE>668546</VALUE>
+        </ROW>
+        <ROW TAB="0" LINE="0" NAME="N1">
+
+          <VALUE>X</VALUE>
+        </ROW>
+        <ROW TAB="0" LINE="0" NAME="N10">
+          <VALUE>{$v.extra->sign}</VALUE>
+        </ROW>
+        <ROW TAB="0" LINE="0" NAME="N11">
+          <VALUE>{$v.date_dot}</VALUE>
+
+        </ROW>
+        <ROW TAB="0" LINE="0" NAME="N12">
+          <VALUE>1</VALUE>
+        </ROW>
+        <ROW TAB="0" LINE="0" NAME="N2_1">
+          <VALUE>{$v.view_num}</VALUE>
+        </ROW>
+        <ROW TAB="0" LINE="0" NAME="N2_11">
+
+          <VALUE>{$v.view_num}</VALUE>
+        </ROW>
+        <ROW TAB="0" LINE="0" NAME="N2_1I">
+          <VALUE>{$v.view_num}</VALUE>
+        </ROW>
+        <ROW TAB="0" LINE="0" NAME="N3">
+          <VALUE>{$v.p.company_name}</VALUE>
+
+        </ROW>
+        <ROW TAB="0" LINE="0" NAME="N4">
+          <VALUE>{$v.p.company_vat_id}</VALUE>
+        </ROW>
+        <ROW TAB="0" LINE="0" NAME="N5">
+          <VALUE>{$v.p.company_jaddress}</VALUE>
+        </ROW>
+        <ROW TAB="0" LINE="0" NAME="N6">
+
+          <VALUE>{$v.p.company_phone}</VALUE>
+        </ROW>
+        <ROW TAB="0" LINE="0" NAME="N7">
+          <VALUE>{$v.p.company_vat_licence_id}</VALUE>
+        </ROW>
+        <ROW TAB="0" LINE="0" NAME="N8">
+          <VALUE>Договір поставки</VALUE>
+
+        </ROW>
+        <ROW TAB="0" LINE="0" NAME="N81">
+          <VALUE>{$v.p.company_agreement_num}</VALUE>
+        </ROW>
+        <ROW TAB="0" LINE="0" NAME="N82">
+          <VALUE>{$v.p.ag_date_dot}</VALUE>
+        </ROW>
+        <ROW TAB="0" LINE="0" NAME="N9">
+
+          <VALUE>Оплата з поточного рахунку</VALUE>
+        </ROW>
+        <ROW TAB="0" LINE="0" NAME="NAKL_TYPE">
+          <VALUE>1</VALUE>
+        </ROW>
+        <ROW TAB="0" LINE="0" NAME="PHON">
+          <VALUE>{$v.a.company_phone}</VALUE>
+
+        </ROW>
+        <ROW TAB="0" LINE="0" NAME="SN">
+          <VALUE>№{$v.view_num}</VALUE>
+        </ROW>
+		
+		
+		
+		
+		
+		
+		
+		
+        <ROW TAB="1" LINE="0" NAME="CARDCODE">
+          <VALUE></VALUE>
+        </ROW>
+        <ROW TAB="1" LINE="0" NAME="CODE">
+
+          <VALUE>5723</VALUE>
+        </ROW>
+        <ROW TAB="1" LINE="0" NAME="RECNO">
+          <VALUE>0</VALUE>
+        </ROW>
+        <ROW TAB="1" LINE="0" NAME="TAB1_A1">
+          <VALUE>I</VALUE>
+        </ROW>
+		
+		{loop name="v.entries"}
+        <ROW TAB="1" LINE="{$counter}" NAME="TAB1_A12">
+          <VALUE>{$v.date_dot}</VALUE>
+        </ROW>
+        <ROW TAB="1" LINE="{$counter}" NAME="TAB1_A13">
+          <VALUE>{$value.2}</VALUE>
+        </ROW>
+        <ROW TAB="1" LINE="{$counter}" NAME="TAB1_A131">
+          <VALUE>{$value.3}</VALUE>
+        </ROW>
+        <ROW TAB="1" LINE="{$counter}" NAME="TAB1_A14">
+          <VALUE>{$value.5}</VALUE>
+        </ROW>
+        <ROW TAB="1" LINE="{$counter}" NAME="TAB1_A15">
+          <VALUE>{$value.4}</VALUE>
+        </ROW>
+        <ROW TAB="1" LINE="{$counter}" NAME="TAB1_A16">
+          <VALUE>{function="str_replace(',','.',$value.6)"}</VALUE>
+        </ROW>
+        <ROW TAB="1" LINE="{$counter}" NAME="TAB1_A17">
+          <VALUE>{function="str_replace(',','.',$value.7)"}</VALUE>
+        </ROW>
+		{/loop}
+      </DOCUMENT>
+    </CARD>
+  </ORG>
+</ZVIT>

@@ -1,0 +1,570 @@
+  <style>
+.c0 { border-collapse:collapse; } 
+.c1 { font-family : 'Arial'; font-size : 10pt; font-weight : normal; font-style : normal;  text-decoration : none ; color : #000000 } 
+.c2 { border:none #000000;  vectical-align:middle; text-align:right; } 
+.c3 { font-family : 'Arial'; font-size : 10pt; font-weight : bold; font-style : normal;  text-decoration : none ; color : #000000 } 
+.c4 { border:none #000000;  vectical-align:middle; text-align:left; } 
+.c5 { border:none #000000;   text-align:right; } 
+.c6 { font-family : 'Arial'; font-size : 14pt; font-weight : bold; font-style : normal;  text-decoration : none ; color : #000000 } 
+.c7 { border:none #000000;  vectical-align:middle; text-align:center; } 
+.c8 { font-family : 'Arial'; font-size : 8pt; font-weight : normal; font-style : normal;  text-decoration : none ; color : #000000 } 
+.c9 { border-bottom: 1px solid #000000;border-left: 1px solid #000000;border-right: 1px solid #000000;border-top: 1.0pt solid #000000;  vectical-align:middle; text-align:center; } 
+.c10 { border-bottom: 1px solid #000000;border-left: 1px solid #000000;border-right: 1px solid #000000;border-top: 1.0pt solid #000000;  vectical-align:middle; text-align:center; } 
+.c11 { border-bottom: 1px solid #000000;border-left: 1px solid #000000;border-right: 1.0pt solid #000000;border-top: 1.0pt solid #000000;  vectical-align:middle; text-align:center; } 
+.c12 { border:1px solid #000000;  vectical-align:middle; text-align:left; } 
+.c13 { border:1px solid #000000;   text-align:left; } 
+.c14 { border:1px solid #000000;  vectical-align:middle; text-align:center; } 
+.c15 { border:1px solid #000000;  vectical-align:middle; text-align:right; } 
+.c16 { font-family : 'Arial'; font-size : 12pt; font-weight : bold; font-style : normal;  text-decoration : none ; color : #000000 } 
+.c17 { border-bottom: 1px solid #000000;  vectical-align:text-bottom;  } 
+.c18 { border-top: 1px solid #000000;  vectical-align:text-bottom;  } 
+  </style>
+<div class="page">
+<table style="width:789px;height:340px" class="c0" cellpadding="0" cellspacing="0">
+ <tbody><tr style="height:0px">
+  <td style="width:0px">
+ </td>
+  <td style="width:0px">
+ </td>
+  <td style="width:8px">
+ </td>
+  <td style="width:42px">
+ </td>
+  <td style="width:50px">
+ </td>
+  <td style="width:42px">
+ </td>
+  <td style="width:176px">
+ </td>
+  <td style="width:8px">
+ </td>
+  <td style="width:8px">
+ </td>
+  <td style="width:34px">
+ </td>
+  <td style="width:34px">
+ </td>
+  <td style="width:17px">
+ </td>
+  <td style="width:34px">
+ </td>
+  <td style="width:8px">
+ </td>
+  <td style="width:17px">
+ </td>
+  <td style="width:34px">
+ </td>
+  <td style="width:17px">
+ </td>
+  <td style="width:17px">
+ </td>
+  <td style="width:25px">
+ </td>
+  <td style="width:17px">
+ </td>
+  <td style="width:17px">
+ </td>
+  <td style="width:17px">
+ </td>
+  <td style="width:67px">
+ </td>
+  <td style="width:8px">
+ </td>
+  <td style="width:8px">
+ </td>
+  <td style="width:84px">
+ </td>
+ </tr>
+ <tr style="height:0px">
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+ </tr>
+ <tr style="height:19px">
+  <td>
+ </td>
+  <td>
+ </td>
+  <td colspan="3" class="c2">
+  <span class="c1">Организация: </span>
+ </td>
+  <td colspan="19" class="c4">
+  <span class="c3">{$v->a->company_name}</span>
+ </td>
+  <td colspan="2" class="c5">
+  <span class="c3">{$v->doc_view->date_dot}</span>
+ </td>
+ </tr>
+ <tr style="height:19px">
+  <td>
+ </td>
+  <td>
+ </td>
+  <td colspan="3" class="c2">
+  <span class="c1">ИНН/КПП: </span>
+ </td>
+  <td colspan="21" class="c4">
+  <span class="c3">{$v->a->company_vat_id} / </span>
+ </td>
+ </tr>
+ <tr style="height:38px">
+  <td>
+ </td>
+  <td>
+ </td>
+  <td colspan="24" class="c7">
+  <span class="c6">Товарный чек &nbsp;№ &nbsp;{$v->doc_view->view_num}</span>
+ </td>
+ </tr>
+ <tr style="height:19px">
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td colspan="8" class="c2">
+  <span class="c8">&nbsp;Валюта: Российский рубль</span>
+ </td>
+ </tr>
+ <tr style="height:38px">
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td class="c9">
+  <span class="c3">№<br>п/п</span>
+ </td>
+  <td colspan="6" class="c10">
+  <span class="c3">Наименование</span>
+ </td>
+  <td colspan="3" class="c10">
+  <span class="c3">Код</span>
+ </td>
+  <td colspan="3" class="c10">
+  <span class="c3">Ед.<br>Изм.</span>
+ </td>
+  <td colspan="4" class="c10">
+  <span class="c3">Кол-во</span>
+ </td>
+  <td colspan="3" class="c10">
+  <span class="c3">Цена</span>
+ </td>
+  <td colspan="3" class="c11">
+  <span class="c3">Сумма</span>
+ </td>
+ </tr>
+ 
+ {loop name="v->rows"}
+ <tr>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td class="c12">
+  <span class="c1">{$counter+1}</span>
+ </td>
+  <td colspan="6" class="c13">
+  <span class="c1">{$value->product_name}</span>
+ </td>
+  <td colspan="3" class="c13">
+  <span class="c1">{$value->product_code}</span>
+ </td>
+  <td colspan="3" class="c14">
+  <span class="c1">{$value->product_unit}</span>
+ </td>
+  <td colspan="4" class="c15">
+  <span class="c1">{$value->product_quantity}</span>
+ </td>
+  <td colspan="3" class="c15">
+  <span class="c1">{$value->product_price}</span>
+ </td>
+  <td colspan="3" class="c15">
+  <span class="c1">{$value->product_sum}</span>
+ </td>
+ </tr>
+ {/loop}
+ <tr style="height:19px">
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td colspan="13" class="c2">
+  <span class="c3">Итого</span>
+ </td>
+  <td colspan="3" class="c15">
+  <span class="c3">{$v->footer->total}</span>
+ </td>
+ </tr>
+ <tr style="height:19px">
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td colspan="13" class="c2">
+  <span class="c3">Скидка</span>
+ </td>
+  <td colspan="3" class="c15">
+  <span class="c3">-</span>
+ </td>
+ </tr>
+ <tr style="height:19px">
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td colspan="13" class="c2">
+  <span class="c3">Всего к оплате</span>
+ </td>
+  <td colspan="3" class="c15">
+  <span class="c3">{$v->footer->total}</span>
+ </td>
+ </tr>
+ <tr style="height:19px">
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+ </tr>
+ <tr style="height:19px">
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td colspan="23" class="c4">
+  <span class="c16">Всего к оплате: {$v->doc_view->total_spell}</span>
+ </td>
+ </tr>
+ <tr style="height:19px">
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td colspan="23" class="c4">
+  <span class="c1">НДС не облагается</span>
+ </td>
+ </tr>
+ <tr style="height:19px">
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+ </tr>
+ <tr style="height:19px">
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td colspan="6" class="c2">
+  <span class="c1">Подпись продавца</span>
+ </td>
+  <td colspan="5" class="c17">
+  <span class="c1"></span>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+ </tr>
+ <tr style="height:17px">
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td colspan="5" class="c18">
+  <span class="c1"></span>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+  <td>
+ </td>
+ </tr>
+ </tbody></table>
+</div>

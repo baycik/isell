@@ -1,0 +1,19 @@
+<script>
+    /* global App,DetInline */
+    App.page_trade_details={
+	init:function(){
+	    var data={};
+	    data.inline=true;
+	    App.loadModule('page/company/details',data,'DetInline',/(Cdet|page_company_details)([^\w]|_)/g,"DetInline$2").progress(function(status,param){
+		if( status==='inited' ){
+		    App.handler.progress(function(status){
+			if( status==="passiveCompanySelected" ){
+			    DetInline && DetInline.load( App.pcomp.company_id );
+			}
+		    });
+		}
+	    });
+	}
+    };
+</script>
+<div id="DetInline"></div>

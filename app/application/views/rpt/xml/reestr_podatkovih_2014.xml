@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="windows-1251"?>
+<DECLAR xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="J1201507.xsd">
+  <DECLARHEAD>
+    <TIN>{$v.a.company_code}</TIN>
+    <C_DOC>{$v.c_doc}</C_DOC>
+    <C_DOC_SUB>{$v.c_doc_sub}</C_DOC_SUB>
+    <C_DOC_VER>{$v.c_doc_ver}</C_DOC_VER>
+    <C_DOC_TYPE>{$v.c_doc_type}</C_DOC_TYPE>
+    <C_DOC_CNT>{$v.c_doc_cnt}</C_DOC_CNT>
+    <C_REG>{$v.c_reg}</C_REG>
+    <C_RAJ>{$v.c_raj}</C_RAJ>
+    <PERIOD_MONTH>{$v.period_month}</PERIOD_MONTH>
+    <PERIOD_TYPE>{$v.period_type}</PERIOD_TYPE>
+    <PERIOD_YEAR>{$v.period_year}</PERIOD_YEAR>
+    <C_STI_ORIG>{$v.c_sti_orig}</C_STI_ORIG>
+    <C_DOC_STAN>{$v.c_doc_stan}</C_DOC_STAN>
+    <LINKED_DOCS xsi:nil="true" />
+    <D_FILL>{$v.today}</D_FILL>
+    <SOFTWARE>iSell</SOFTWARE>
+  </DECLARHEAD>
+  <DECLARBODY>
+    <HZ>1</HZ>
+    <HNP>01</HNP>
+    <HZY>{$v.period_year}</HZY>
+    <HZM>{$v.period_month}</HZM>
+    <HNAME>{$v.a.company_name}</HNAME>
+    <HNPDV>{$v.a.company_vat_id}</HNPDV>
+    <HNSPDV xsi:nil="true" />
+{loop name="v.sell.entries.items"}
+    <T1RXXXXG1 ROWNUM="{$counter+1}">{$counter+1}</T1RXXXXG1>
+{/loop}
+{loop name="v.sell.entries.items"}
+    <T1RXXXXG2D ROWNUM="{$counter+1}">{function="str_replace('.','',$value.given)"}</T1RXXXXG2D>
+{/loop}
+{loop name="v.sell.entries.items"}
+    <T1RXXXXG3S ROWNUM="{$counter+1}">{$value.doc_num}</T1RXXXXG3S>
+{/loop}
+{loop name="v.sell.entries.items"}
+    <T1RXXXXG31 ROWNUM="{$counter+1}" xsi:nil="true" />
+{/loop}
+{loop name="v.sell.entries.items"}
+    <T1RXXXXG41S ROWNUM="{$counter+1}">ПНП</T1RXXXXG41S>
+{/loop}
+{loop name="v.sell.entries.items"}
+    <T1RXXXXG42S ROWNUM="{$counter+1}" xsi:nil="true" />
+{/loop}
+{loop name="v.sell.entries.items"}
+    <T1RXXXXG43S ROWNUM="{$counter+1}" xsi:nil="true" />
+{/loop}
+{loop name="v.sell.entries.items"}
+    <T1RXXXXG5S ROWNUM="{$counter+1}">{$value.company_name}</T1RXXXXG5S>
+{/loop}
+{loop name="v.sell.entries.items"}
+    <T1RXXXXG6 ROWNUM="{$counter+1}">{$value.company_vat_id}</T1RXXXXG6>
+{/loop}
+{loop name="v.sell.entries.items"}
+    <T1RXXXXG7 ROWNUM="{$counter+1}">{$value.total}</T1RXXXXG7>
+{/loop}
+{loop name="v.sell.entries.items"}
+    <T1RXXXXG8 ROWNUM="{$counter+1}">{$value.vatless}</T1RXXXXG8>
+{/loop}
+{loop name="v.sell.entries.items"}
+    <T1RXXXXG9 ROWNUM="{$counter+1}">{$value.vat}</T1RXXXXG9>
+{/loop}
+{loop name="v.sell.entries.items"}
+    <T1RXXXXG10 ROWNUM="{$counter+1}" xsi:nil="true" />
+{/loop}
+{loop name="v.sell.entries.items"}
+    <T1RXXXXG11 ROWNUM="{$counter+1}" xsi:nil="true" />
+{/loop}
+{loop name="v.sell.entries.items"}
+    <T1RXXXXG12 ROWNUM="{$counter+1}" xsi:nil="true" />
+{/loop}
+{loop name="v.sell.entries.items"}
+    <T1RXXXXG13 ROWNUM="{$counter+1}" xsi:nil="true" />
+{/loop}
+    <R011G7>{function="str_replace(' ','',$v.sell.gtotal)"}</R011G7>
+    <R011G8>{function="str_replace(' ','',$v.sell.gvatless)"}</R011G8>
+    <R011G9>{function="str_replace(' ','',$v.sell.gvat)"}</R011G9>
+    <R011G10 xsi:nil="true" />
+    <R011G11 xsi:nil="true" />
+    <R011G12 xsi:nil="true" />
+    <R011G13 xsi:nil="true" />
+    <R012G7 xsi:nil="true" />
+    <R012G8>0.00</R012G8>
+    <R012G9 xsi:nil="true" />
+    <R012G10 xsi:nil="true" />
+    <R012G11 xsi:nil="true" />
+    <R012G12 xsi:nil="true" />
+    <R012G13 xsi:nil="true" />
+{loop name="v.buy.entries.items"}
+    <T2RXXXXG1 ROWNUM="{$counter+1}">{$counter+1}</T2RXXXXG1>
+{/loop}
+{loop name="v.buy.entries.items"}
+    <T2RXXXXG2D ROWNUM="{$counter+1}">{function="substr($value.given,0,2)"}{$v.period_month}{$v.period_year}</T2RXXXXG2D>
+{/loop}
+{loop name="v.buy.entries.items"}
+    <T2RXXXXG3D ROWNUM="{$counter+1}">{function="str_replace('.','',$value.given)"}</T2RXXXXG3D>
+{/loop}
+{loop name="v.buy.entries.items"}
+    <T2RXXXXG4S ROWNUM="{$counter+1}">{$value.doc_num}</T2RXXXXG4S>
+{/loop}
+{loop name="v.buy.entries.items"}
+    <T2RXXXXG41 ROWNUM="{$counter+1}" xsi:nil="true" />
+{/loop}
+{loop name="v.buy.entries.items"}
+    <T2RXXXXG51S ROWNUM="{$counter+1}">ПНП</T2RXXXXG51S>
+{/loop}
+{loop name="v.buy.entries.items"}
+    <T2RXXXXG52S ROWNUM="{$counter+1}" xsi:nil="true" />
+{/loop}
+{loop name="v.buy.entries.items"}
+    <T2RXXXXG53S ROWNUM="{$counter+1}" xsi:nil="true" />
+{/loop}
+{loop name="v.buy.entries.items"}
+    <T2RXXXXG6S ROWNUM="{$counter+1}">{$value.company_name}</T2RXXXXG6S>
+{/loop}
+{loop name="v.buy.entries.items"}
+    <T2RXXXXG7 ROWNUM="{$counter+1}">{$value.company_vat_id}</T2RXXXXG7>
+{/loop}
+{loop name="v.buy.entries.items"}
+    <T2RXXXXG8 ROWNUM="{$counter+1}">{$value.total}</T2RXXXXG8>
+{/loop}
+{loop name="v.buy.entries.items"}
+    <T2RXXXXG9 ROWNUM="{$counter+1}">{$value.vatless}</T2RXXXXG9>
+{/loop}
+{loop name="v.buy.entries.items"}
+    <T2RXXXXG10 ROWNUM="{$counter+1}">{$value.vat}</T2RXXXXG10>
+{/loop}
+{loop name="v.buy.entries.items"}
+    <T2RXXXXG11 ROWNUM="{$counter+1}" xsi:nil="true" />
+{/loop}
+{loop name="v.buy.entries.items"}
+    <T2RXXXXG12 ROWNUM="{$counter+1}" xsi:nil="true" />
+{/loop}
+{loop name="v.buy.entries.items"}
+    <T2RXXXXG13 ROWNUM="{$counter+1}" xsi:nil="true" />
+{/loop}
+{loop name="v.buy.entries.items"}
+    <T2RXXXXG14 ROWNUM="{$counter+1}" xsi:nil="true" />
+{/loop}
+{loop name="v.buy.entries.items"}
+    <T2RXXXXG15 ROWNUM="{$counter+1}" xsi:nil="true" />
+{/loop}
+{loop name="v.buy.entries.items"}
+    <T2RXXXXG16 ROWNUM="{$counter+1}" xsi:nil="true" />
+{/loop}
+    <R021G8>{function="str_replace(' ','',$v.buy.gtotal)"}</R021G8>
+    <R021G9>{function="str_replace(' ','',$v.buy.gvatless)"}</R021G9>
+    <R021G10>{function="str_replace(' ','',$v.buy.gvat)"}</R021G10>
+    <R021G11 xsi:nil="true" />
+    <R021G12 xsi:nil="true" />
+    <R021G13 xsi:nil="true" />
+    <R021G14 xsi:nil="true" />
+    <R021G15 xsi:nil="true" />
+    <R021G16 xsi:nil="true" />
+    <R022G8 xsi:nil="true" />
+    <R022G9 xsi:nil="true" />
+    <R022G10 xsi:nil="true" />
+    <R022G11 xsi:nil="true" />
+    <R022G12 xsi:nil="true" />
+    <R022G13 xsi:nil="true" />
+    <R022G14 xsi:nil="true" />
+    <R022G15 xsi:nil="true" />
+    <R022G16 xsi:nil="true" />
+    <HFILL>{$v.today}</HFILL>
+    <HBOS>{$v.pref.director_name}</HBOS>
+    <HKBOS>{$v.pref.director_tin}</HKBOS>
+    <HBUH>{$v.pref.accountant_name}</HBUH>
+    <HKBUH>{$v.pref.accountant_tin}</HKBUH>
+  </DECLARBODY>
+</DECLAR>

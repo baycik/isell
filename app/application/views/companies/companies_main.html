@@ -1,0 +1,159 @@
+<script type="text/javascript">
+    require(["baycik/datatable/DataTable","baycik/tree/TreeWidget","dojo/domReady!"],function(){
+        //CompaniesJs.init();
+        Acc.pend(function(){
+            //CompaniesJs.selectPassiveCompany( 1557 );
+        });
+    });
+    
+    CompaniesJs = {};
+    CompaniesJs.init = function () {
+        CompaniesJs.initTree();
+    };
+    CompaniesJs.destroy = function () {
+        CompaniesJs.tree.destroy();
+    };
+    CompaniesJs.initTree = function () {
+        Connector.addCss('js/dhtmlx/tree/dhtmlxtree.css');
+        CompaniesJs.tree = new baycik.tree.TreeWidget({}, 'companies_tree');
+        with(CompaniesJs.tree) {
+            request.mod = 'Companies';
+            request.id = 0;
+            onRequest = function (request) {
+                request.rq = 'CompaniesTree';
+                Connector.addRequest(request, this, 'setData');
+            };
+            onInsert = function (request) {
+                request.rq = 'TreeItemInsert';
+                Connector.addRequest(request, this, 'onInsertReturn');
+            };
+            onUpdate = function (request) {
+                request.rq = 'TreeItemUpdate';
+                Connector.addRequest(request, this, 'onUpdateReturn');
+            };
+            onDelete = function (request) {
+                request.rq = 'TreeItemDelete';
+                Connector.addRequest(request, this, 'onDeleteReturn');
+            };
+            onSelect = function (branch_data) {
+                CompaniesJs.selectPassiveCompany(branch_data.branch_id);
+            };
+            startup();
+        }
+        CompaniesJs.tree.lockSelected = function () {
+            var branch_id = CompaniesJs.tree.tree.getSelectedItemId();
+            var level = CompaniesJs.tree.tree.getUserData(branch_id, 'level');
+            var new_level = prompt('Введите уровень доступа ветки' + level, level || 0);
+            if (new_level === null)
+                return;
+            Connector.addRequest({
+                mod: 'Companies',
+                rq: 'TreeItemLock',
+                branch_id: branch_id,
+                level: new_level
+            }, function (cont) {
+                CompaniesJs.tree.reload();
+            });
+        };
+    };
+    ////////////////////////////////////////
+    //SUGGEST SECTION
+    ////////////////////////////////////////
+    CompaniesJs.selectPassiveCompany = function (branch_id, passive_company_id) {
+        if (!(branch_id > 0 || passive_company_id > 0)) //SELECT PASSCOMP ONLY IF VALID IDS
+            return;
+        Connector.addRequest({
+            mod: 'Companies',
+            rq: 'SelectPassiveCompany',
+            branch_id: branch_id,
+            passive_company_id: passive_company_id
+        }, function (response) {
+            if (response) {
+                dom.byId('companiesTabHolder').style.display = 'block';
+                CompaniesJs.passive_company = response;
+                Acc.setSubTitle(response.company_name || '');
+                if (CompaniesJs.tabs) {
+                    CompaniesJs.selectTab(CompaniesJs.tabs.selectedChildWidget);
+                } else
+                    Acc.initModTabs(CompaniesJs, 'companies_tabs');
+            }
+        });
+    };
+    CompaniesJs.CompanySearchChange = function (_this) {
+        CompaniesJs.selectPassiveCompany(null, _this.value);
+        CompaniesJs.tree.clearSelection();
+        _this.set('value', '', false);
+    };
+
+    CompaniesJs.documents = {};
+    CompaniesJs.documents.tpl = 'companies/documents.html';
+
+    CompaniesJs.blanks = {};
+    CompaniesJs.blanks.tpl = 'companies/blanks.html';
+
+    CompaniesJs.details = {};
+    CompaniesJs.details.tpl = 'companies/details.html';
+
+    CompaniesJs.adjustments = {};
+    CompaniesJs.adjustments.tpl = 'companies/adjustments.html';
+
+    CompaniesJs.payments = {};
+    CompaniesJs.payments.tpl = 'companies/payments.html';
+
+    
+
+</script>
+<style type="text/css">
+#compmain_divid{
+    white-space: nowrap;
+    border-top: 1px #ccc solid;
+    margin: 2px;
+    text-align: right;
+}
+</style>
+<table style="border-collapse: collapse;border:none;">
+    <tr>
+        <td style="vertical-align: top;width: 10px;padding: 2px;">
+          <div data-dojo-type="dojox/data/QueryReadStore" data-dojo-id="companyStore" data-dojo-props="url:'./?mod=Companies&amp;rq=companieslist'"></div>
+          <input data-dojo-type="dijit/form/FilteringSelect" 
+                                 onchange="CompaniesJs.CompanySearchChange( this )"
+                                 placeholder="Поиск компании..."
+                                 accesskey="z"
+                                 data-dojo-props="store:companyStore,hasDownArrow:false,selectOnClick:true, searchAttr:'label', required:false,autoComplete: false,pageSize: 20" style="width:100%;">
+          <div id="companies_tree_widget" class="transp60">
+              <div id="companies_tree"></div>
+	      <div id="compmain_divid" style="background-color: #eee;padding:3px;">
+              <a href="javascript:CompaniesJs.tree.insertNew( {is_leaf:1} )" title="Добавить Компанию">
+                  <img src="js/baycik/tree/img/user_add.gif" alt="+">
+              </a>
+              <a href="javascript:CompaniesJs.tree.insertNew( {is_leaf:0} )">
+                  <img src="js/baycik/tree/img/add_folder.png" alt="Folder +">
+              </a>
+              <a href="javascript:CompaniesJs.tree.deleteSelected()">
+                  <img src="js/baycik/tree/img/edit_delete_small.gif" alt="-">
+              </a>
+              <a href="javascript:CompaniesJs.tree.lockSelected()">
+                  <img src="js/dhtmlx/tree/imgs/csh_dhx_skyblue/lock.gif" alt="Lock">
+              </a>
+              <a href="javascript:CompaniesJs.tree.clearSelection()" title="Отменить выбранное">
+                  <img src="js/baycik/tree/img/clear_selection.gif" alt="Deselect">
+              </a>
+              <a href="javascript:CompaniesJs.tree.reload()">
+                  <img src="js/baycik/tree/img/reload_small.gif" alt="reload">
+              </a>
+          </div>
+          </div>
+      </td>
+      <td style="padding-left:10px;text-align: left;vertical-align: top">
+      <div id="companiesTabHolder" style="display:none">
+          <div data-dojo-type="dijit/layout/TabContainer" data-dojo-props="controllerWidget:dijit.layout.TabController,doLayout:false" style="width: 100%;" id="companies_tabs">
+              <div data-dojo-type="dijit/layout/ContentPane" title="Документы">documents</div>
+              <div data-dojo-type="dijit/layout/ContentPane" title="Взаиморасчет">payments</div>
+              <div data-dojo-type="dijit/layout/ContentPane" title="Настройки">adjustments</div>
+              <div data-dojo-type="dijit/layout/ContentPane" title="Реквизиты">details</div>
+              <div data-dojo-type="dijit/layout/ContentPane" title="Бланки">blanks</div>
+          </div>
+      </div>
+      </td>
+    </tr>
+</table>

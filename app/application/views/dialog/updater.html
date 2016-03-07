@@ -1,0 +1,95 @@
+<script type="text/javascript">
+    /* global App */
+    App.page_dialog_updater={
+	init:function(data){
+	    this.node.window({
+		title:'Обновление программы',
+		width: 420,
+		height: 270,
+		onClose: function(){
+		    App.page_dialog_updater.handler.notify('close',App.page_dialog_updater.data);
+		    App.page_dialog_updater.destroy();
+		}		
+	    });
+	    this.node.window('center');
+	    App.renderTpl('updater_list_ul',data);
+	},
+	destroy:function () {
+	    this.node.window('destroy');
+	    this.node.remove();
+	    delete App.page_dialog_updater;
+	},
+	startUpdate:function(){
+	    $('#updater_list').hide('slow');
+	    $('#updater_status').show('slow');
+	    this.chain(0);
+	},
+	actionQueue:['download','unpack','prepare','swap','install'],
+	chain:function( step ){
+	    $('#updater_status_'+this.actionQueue[step-1]+' img').attr('src','img/ok.png');
+	    var action=this.actionQueue[step];
+	    if( action ){
+		$('#updater_status_'+action+' img').attr('src','img/loading_16.png');
+		if( action==='swap' ){
+		    $.post('../MaintainSwapper.php',{swap:1},function(ok){
+			if(ok*1){
+			    App.page_dialog_updater.chain(step+1);
+			} else {
+			    alert("Возникла шибка на шаге: "+action);
+			}
+		    });
+		} else {
+		    $.get('Maintain/appUpdate/'+action,function(ok){
+			if(ok*1){
+			    App.page_dialog_updater.chain(step+1);
+			} else {
+			    alert("Возникла шибка на шаге: "+action);
+			}
+		    });
+		}
+	    } else {
+		$('#updater_status_finish img').attr('src','img/ok.png');
+		$('#updater_close_btn').show();
+                if( confirm("Перезагрузить приложение?") ){
+                    location.reload();
+                }
+	    }
+	}
+    };
+</script>
+<div id="updater_list" style="text-align: center">
+    <h3>Список обновлений:</h3>
+    <div id="updater_list_ul" style="max-height: 145px;overflow: auto;text-align: left">
+	{{updates}}
+	<div><img src="img/grn.png"> {{date}} <span style="color: blue">{{name}}</span> <i>{{message}}</i></div>
+	{{/updates}}
+    </div>
+    <button onclick="App.page_dialog_updater.startUpdate()"><img src="img/update_yes.png" style="width:24px;height: 24px;"> Установить обновления</button>
+</div>
+<div id="updater_status">
+    <h3>Установка обновлений</h3>
+    <div id="updater_status_download"><img src="img/time.png"> Скачивание с github.com</div>
+    <div id="updater_status_unpack"><img src="img/time.png"> Распаковка архива</div>
+    <div id="updater_status_prepare"><img src="img/time.png"> Подготовка файлов</div>
+    <div id="updater_status_swap"><img src="img/time.png"> Установка файлов</div>
+    <div id="updater_status_install"><img src="img/time.png"> Настройка базы данных</div>
+    <div id="updater_status_finish"><img src="img/time.png"> Финиш!</div>
+</div>
+<div style="text-align: center">
+    <button onclick="App.page_dialog_updater.node.window('close');" style="display: none;margin: auto;" id="updater_close_btn"><img src="img/close24.png" style="width:24px;height: 24px;"> Закрыть</button>
+</div>
+<style>
+    #updater_list_ul div{
+	margin: 6px;
+    }
+    #updater_status{
+	display: none;
+	padding: 10px;
+    }
+    #page_dialog_updater img{
+	vertical-align: middle;
+    }
+    #updater_status div{
+	margin: 3px;
+    }
+</style>

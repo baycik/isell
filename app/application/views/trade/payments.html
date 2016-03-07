@@ -1,0 +1,25 @@
+<script>
+    /* global App,LedgerPayment */
+    App.page_trade_payments={
+	init:function(){
+	    var data={passive_filter:true};
+	    App.loadModule('page/accounts/ledger',data,'page_accounts_ledgerPayment',/(ledger)/ig,"$1Payment").progress(function(status,param){
+		if( status==='inited' ){
+		    App.handler.progress(function(status){
+			if( status==="passiveCompanySelected" ){
+			    LedgerPayment.fav.init();
+			    LedgerPayment.current_acc_code=0;
+			    //LedgerPayment.reload();
+			}
+		    });
+		}
+	    });
+	},
+	focus:function(){
+	    if( LedgerPayment ){
+		LedgerPayment.reload();
+	    }
+	}
+    };
+</script>
+<div id="page_accounts_ledgerPayment"></div>

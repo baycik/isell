@@ -1,0 +1,247 @@
+<script>
+    /*global App*/
+    Ctree = App.page_company_tree = {
+	properties: {
+	    title: 'Дерево компаний',
+	    width: 300,
+	    height: 440,
+	    modal: true,
+	    shadow:false,
+	    onClose: function () {
+		Ctree.handler.notify('close', Ctree.data);
+		Ctree.node.window('destroy');
+		Ctree.node.remove();
+		delete App.page_company_tree, Ctree;
+	    }
+	},
+	init: function () {
+	    if (!this.data.inline) {
+		this.node.window(Ctree.properties);
+                this.node.window('hcenter');
+                this.node.window('window').css('position','fixed');
+                this.node.window('window').css('top','40px');
+            }
+	    if( this.data.clickselect ){
+		this.node.find('button.ok').hide();
+	    }
+	},
+	initAfter:function(){
+	    this.node.find('.validatebox-text').on('focus', function() {
+                this.select();
+            });
+	},
+	close:function(){
+	    if (!this.data.inline) {
+		this.node.window('close');
+	    }
+	},
+	enableButtons:function( leaf ){
+	    if( leaf || this.data.enable_folder_select ){
+		Ctree.node.find('.ok').prop('disabled',false);
+	    }
+	    Ctree.node.find('.folder').prop('disabled',false);
+	},
+        disableButtons:function(){
+            Ctree.node.find('.folder,.ok').prop('disabled',true);
+        },
+	click:function(node){
+	    if( node.state==='closed' ) {
+		$(this).tree('expand',node.target);
+		Ctree.enableButtons(0);
+	    } else {
+		Ctree.enableButtons(1);
+	    }
+	    if( Ctree.data.clickselect ){
+		Ctree.selectTree();
+	    }
+	},
+	selectTree: function () {
+	    var branch=$('#Ctree_tree').tree('getSelected');
+	    if( branch.company_id ){
+		Ctree.handler.notify('select', branch);
+		Ctree.unselectCombo();
+	    } else {
+		Ctree.handler.notify('selectFolder', branch);
+	    }
+	},
+	unselectTree:function(){
+	    this.node.find('.tree-node-selected').removeClass('tree-node-selected');
+	},
+	selectCombo:function(company,oldVal){
+	    if( company.company_id ){
+		Ctree.handler.notify('select', company);
+		Ctree.unselectTree();
+	    }
+	},
+	unselectCombo:function(){
+	    $('#Ctree_combo').combobox('setText','');
+	},
+        loaderCombo:function(param, success, error){
+	    if( param.q===undefined ){
+		success([]);
+		return ;
+	    }
+	    $.get('Company/listFetch/', param, function (xhr) {
+		var resp = App.json(xhr);
+		success(resp[0] ? resp : []);
+	    });
+        },
+	create:function( new_branch_type ){
+	    var parent_id=0;
+	    var selected=$('#Ctree_tree').tree('getSelected');
+	    if( selected ){
+		parent_id=selected.is_leaf*1?selected.parent_id:selected.branch_id;
+	    }
+	    var parent_target=parent_id>0?$('#Ctree_tree').tree('find', parent_id).target:null;
+	    var newlabel=(new_branch_type === 'leaf')?prompt("Введите Короткое название новой компании",'Новая компания'):prompt("Введите название новой группы",'Новая группа');
+	    if( newlabel && newlabel.indexOf(',')===-1 ){
+		$.post('Company/companyTreeCreate/'+App.uri(parent_id,newlabel,new_branch_type),function(company_id){
+		    if(new_branch_type === 'leaf' && confirm("Компания '"+newlabel+"' создана.\nВвести реквизиты сейчас?\n\n")){
+			Ctree.updateDetails(company_id,parent_target);
+		    }
+		    $('#Ctree_tree').tree('reload',parent_target);
+		});
+	    }
+	},
+	update:function(){
+	    var node=$('#Ctree_tree').tree('getSelected');
+	    if( node.company_id ){
+		Ctree.updateDetails(node.company_id,node);
+	    } else {
+		var newlabel=prompt("Введите новое название группы: "+node.label,node.label);
+		if( newlabel && newlabel!==node.label ){
+		    $.post('Company/companyTreeUpdate/'+App.uri(node.branch_id,'label',newlabel),function(ok){
+			if( ok*1 ){
+			    App.flash("Сохранено: название папки");
+			    $('#Ctree_tree').tree('update', {target: node.target,text: newlabel});
+			} else {
+			    App.flash("Сохраненние не удалось: название папки");
+			}
+		    });
+		}
+	    }
+	},
+	updateDetails:function(company_id,parent_target){
+	    App.loadWindow('page/company/details',{company_id:company_id,autoselect_label:true}).progress(function(status){
+		if( status==='label_changed' ){
+		    $('#Ctree_tree').tree('reload',parent_target);
+		}
+	    });
+	},
+	drop:function(target,source,point){
+	    var target_node=$("#Ctree_tree").tree('getNode',target);
+	    $.post('Company/companyTreeUpdate/'+App.uri(source.branch_id,'parent_id',target_node.branch_id),function(ok){
+		if( ok*1 ){
+		    App.flash(source.label + " перемещен в " + target_node.label);
+		} else {
+		    App.flash("Перемещение не удалось");
+		}
+	    });
+	},
+	up:function(){
+	    if( confirm("Переместить выделенный элемент в корень дерева?") ){
+		var node=$('#Ctree_tree').tree('getSelected');
+		$.post('Company/companyTreeUpdate/'+App.uri(node.branch_id,'parent_id',0),function(ok){
+		    if( ok*1 ){
+			App.flash(node.label + " перемещен в корень");
+		    } else {
+			App.flash("Перемещение не удалось");
+		    }
+		});
+		Ctree.reload();
+	    }
+	},
+	delete:function(){
+	    var node=$('#Ctree_tree').tree('getSelected');
+	    if( node && confirm("Удалить выделенные компании?")  && confirm("ВНИМАНИЕ ЭТОТ ПРОЦЕСС НЕ ОБРАТИМ!\n\nБУДУТ УДАЛЕНЫ ВСЕ ДОКУМЕНТЫ, ШАБЛОНЫ ПЕЧАТИ, ПРОВОДКИ, ОПЛАТЫ\nА ТАК ЖЕ ВСЯ ИНФОРМАЦИЯ СВЯЗАННАЯ С КОМПАНИЯМИ!\n\n") ){
+		$.post("Company/companyTreeDelete/"+node.branch_id,function(ok){
+		    if( ok>0 ){
+			App.flash("Удалено: "+node.label);
+			$('#Ctree_tree').tree('remove', node.target);
+                        Ctree.disableButtons();
+                        Ctree.handler.notify('deleted',node.company_id?'company':'folder');
+		    } else {
+			App.flash("Удаление не удалось!");
+		    }
+		});
+	    }
+	},
+        lock:function(){
+	    var node=$('#Ctree_tree').tree('getSelected');
+	    if( node ){
+                var level=prompt("Введите номер мин. уровня доступа пользователя, который может работать с этой компанией\n0 (Все)\n2 (Менеджер)\n3 (Бухгалтер)\n4 (Администратор)",node.level);
+		if( level!==null ){
+		    $.post('Company/companyTreeUpdate/'+App.uri(node.branch_id,'level',level),function(ok){
+			if( ok*1 ){
+			    App.flash("Сохранено: уровень доступа");
+                            Ctree.reload();
+			} else {
+			    App.flash("Сохраненние не удалось: уровень доступа");
+			}
+		    });
+		}
+	    }
+        },
+	reload:function(){
+	    $('#Ctree_tree').tree('reload');
+	    Ctree.node.find('.ok,.folder').prop('disabled',true);
+	},
+        loaderTree:function(param, success, error){
+            $.get('Company/branchFetch/',param,function(resp){
+                var data=App.json(resp);
+                for(var i in data){
+                    data[i].id=data[i].branch_id;
+                    data[i].text=data[i].label;
+                    if(data[i].is_active*1){
+                        data[i].iconCls='icon-home';
+                    } else if( data[i].level!=0 ){
+                        data[i].iconCls='icon-lock';
+                    } else if( data[i].is_leaf*1 ){
+                        data[i].iconCls='icon-comp';
+                    }
+                }
+                success(data);
+                Ctree.handler.notify('treeLoaded');
+            });
+        }
+    };
+</script>
+<div style="height: calc(100% - 70px);overflow: auto;padding-left: 1px;">
+    <input class="easyui-combobox" id="Ctree_combo" style="width:195px" data-options="
+       valueField: 'company_id',
+       textField: 'label',
+       prompt:'Поиск по названию...',
+       loader:Ctree.loaderCombo,
+       hasDownArrow:false,
+       panelHeight:'auto',
+       selectOnNavigation:false,
+       mode: 'remote',
+       onSelect: Ctree.selectCombo
+       ">
+    <ul class="easyui-tree" id="Ctree_tree" data-options="
+        loader:Ctree.loaderTree,
+	onSelect:Ctree.click,
+	onDrop:Ctree.drop,
+	onDragOver:function(target,source){
+	    return !$(this).tree('isLeaf',target);
+	},
+	onDblClick:function(){
+	    Ctree.selectTree();
+	    Ctree.close();
+	},
+	animate:true,
+	dnd:true">
+    </ul>
+</div>
+<div style="text-align: left;padding: 2px;" class="tiny_button">
+    <button class="tiny_button" onclick="Ctree.create('leaf')" title="Добавить компанию"><img src="img/edit_add.png"></button>
+    <button class="tiny_button" onclick="Ctree.create('folder')" title="Добавить папку"><img src="img/FolderAdd-24.png"></button>
+    <button class="folder tiny_button" disabled="disabled" onclick="Ctree.update()" title="Редактировать"><img src="img/Edit-24.png"></button>
+    <button class="folder tiny_button" disabled="disabled" onclick="Ctree.delete()" title="Удалить"><img src="img/delete.png"></button>
+    <button class="folder tiny_button" disabled="disabled" onclick="Ctree.lock()" title="Скрыть"><img src="img/lock.png"></button>
+    <button class="folder tiny_button" disabled="disabled" onclick="Ctree.up()" title="Переместить в корень"><img src="img/up.png"></button>
+    <button class="tiny_button" onclick="Ctree.reload()" title="Обновить"><img src="img/reload.png"></button>
+</div>
+<div style="text-align: center;margin-top: 5px;">
+    <button class="ok" disabled="disabled" onclick="Ctree.selectTree();Ctree.close();"><img src="img/apply24.png"> Выбрать</button>
+</div>

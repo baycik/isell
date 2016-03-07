@@ -1,0 +1,135 @@
+<script type="text/javascript">
+    /* global App */
+    
+    CompPrefs=App.page_company_prefs={
+	init:function(){
+	    App.setupForm("#CompPrefs_other");
+	    //this.load();
+	    App.handler.progress(function(status){
+		if( status==="passiveCompanySelected" ){
+		    CompPrefs.load();
+		}
+	    });
+	    //$('#cpref_manager_id').combobox();
+	    App.formElements("#CompPrefs_other").change(function(node){
+		CompPrefs.update('other',this.name,App.val(this),this.title);
+	    });
+	},
+	focus:function(){
+	    this.load();
+	},
+	load:function(){
+	    $.get('Company/companyPrefsGet',function(resp){
+		if( resp ){
+		    resp=App.json(resp);
+		    CompPrefs.processDiscounts(resp);
+		    CompPrefs.processOthers(resp);
+		}
+	    });
+	},
+	update:function(type, id, value, title){
+	    $.post( App.uri('Company','companyPrefsUpdate', type, id, value), function(ok){
+		if( ok*1 ){
+		    App.flash("Сохранено: "+title);
+		} else {
+		    CompPrefs.load();
+		}
+	    });
+	},
+	processDiscounts:function(data){
+	    for(var i in data.discounts){
+		if( data.discounts[i].discount=== null ){
+		    data.discounts[i].plus='';
+		    data.discounts[i].minus='';
+		    continue;
+		}
+		var discount=data.discounts[i].discount*100-100;
+		if( discount>0 ){
+		    data.discounts[i].plus=discount;
+		    data.discounts[i].minus='';
+		} else {
+		    data.discounts[i].plus='';
+		    data.discounts[i].minus=-discount;
+		}
+	    }
+	    App.renderTpl("CompPrefs_markup",data);
+	},
+	disctUpdate:function(inp){
+	    var branch_id=inp.name.split('_')[1];
+	    var sign=( inp.name.split('_')[0]==='minus' )?-1:1;
+	    var ratio=1+sign*inp.value/100;
+	    var pair_name=(sign>0?'minus_':'plus_')+branch_id;
+	    $("input[name="+pair_name+"]").val('');
+	    CompPrefs.update('discount',branch_id,ratio,inp.title+' '+inp.value);
+	},
+	processOthers:function(data){
+	    //$("#CompPrefs_other").form('load',data.other);
+            App.setupForm("#CompPrefs_other",data.other);
+	},
+	managerLoader:function(param,success,error){
+	    $.get('Pref/getStaffList',function(text){
+		var resp=App.json(text);
+		resp.unshift({full_name:'-',user_id:0});
+		success(resp||[]);
+	    });
+	}
+    };
+    //CompPrefs.init();
+</script>
+
+<div class="panel_block">
+    <div class="easyui-panel" title="Скидки и надбавки" style="width:260px;padding: 3px;">
+	<div id="CompPrefs_markup" class="covert">
+	    <div style="padding: 2px;height: 20px;">
+		<b style="width:110px;display: inline-block">Категория</b>
+		<b style="width:55px;display: inline-block">Скидка</b>
+		<b style="width:50px;display: inline-block">Наценка</b>
+	    </div>
+	    {{discounts}}
+	    <div style="padding: 2px;border-top: 1px #ccf solid">
+		<span style="width:110px;display: inline-block">{{label}}:</span> 
+                <input type="text" title="Скидка {{label}}" value="{{minus}}" name="minus_{{branch_id}}" class="discount_inp" onchange="CompPrefs.disctUpdate(this);"> 
+		<input type="text" title="Наценка {{label}}" value="{{plus}}" name="plus_{{branch_id}}" class="discount_inp" onchange="CompPrefs.disctUpdate(this);">
+	    </div>
+	    {{/discounts}}	
+	</div>
+    </div>
+</div>
+<div class="panel_block">
+    <div id="CompPrefs_other" class="easyui-panel" title="Другие настройки" style="width:360px;padding: 3px;">
+	<input name="deferment" title="Отсрочка">
+	<input name="debt_limit" title="Лимит долга">
+        <input class="easyui-combobox" id="cpref_manager_id" name="manager_id" title="Ответственный" data-options="
+	       valueField: 'user_id',
+	       textField:'full_name',
+	       loader:CompPrefs.managerLoader,
+	       onSelect: function(row){
+		    CompPrefs.update('other','manager_id',row.user_id);
+	       }
+	       ">
+	<select name="curr_code" title="Валюта">
+	    <option value="UAH">Гривна</option>
+	    <option value="USD">Доллар</option>
+	    <option value="RUB">Рубль</option>
+	</select>
+	<select name="language" title="Язык">
+	    <option value="en">English</option>
+	    <option value="ua">Українська</option>
+	    <option value="ru">Русский</option>
+	</select>
+	<textarea name="path" title="Путь" disabled="disabled"></textarea>
+	<div>
+	    <input type="checkbox" name="is_supplier" title="Обновлять закуп. цены">
+	</div>
+    </div>
+</div>
+<style type="text/css">
+    .discount_inp{
+	text-align:right;
+	width:50px;
+    }
+    .panel_block{
+	display:inline-block;
+	vertical-align: top;
+    }
+</style>

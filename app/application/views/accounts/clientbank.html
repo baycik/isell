@@ -1,0 +1,443 @@
+<script>
+    /*global App,Cbank*/
+    Cbank=App.page_accounts_clientbank={
+        main_acc_code:0,
+        current_check:{},
+        init:function(){
+            if( !$.isEmptyObject(App.acomp) && !$.isEmptyObject(App.pcomp) ){
+                this.fav.load();
+            }
+            App.handler.progress(function(status){
+		if( status==="activeCompanySelected" ){
+		    Cbank.fav.load();
+		}
+	    });
+	},
+	renderCheck:function(){
+	    var row=$('#account_clientbank_dg').datagrid('getSelected');
+	    if( row && row.check_id ){
+		Cbank.current_check=row;
+		Cbank.renderCheckView();
+	    }
+	    $('#account_clientbank_dg').datagrid('resize');	    
+	},
+        renderCheckView:function(){
+           App.renderTpl("Cbank_check_view",this.current_check);
+           this.renderCorrespondent();
+        },
+        renderCorrespondent:function(){
+            $.post("AccountsBank/getCorrespondentStats/",{check_id:this.current_check.check_id},function(resp){
+		var corr_data=App.json(resp);
+		if( corr_data ){
+		    App.user.setPassiveCompany(corr_data.pcomp);
+		    App.renderTpl("Cbank_check_corresp",corr_data);
+		} else {
+		    App.renderTpl("Cbank_check_corresp",Cbank.current_check);
+		}
+            });
+        },
+        transClick:function(node){
+	    var trans_type,amount,acc_code,current_acc_code;
+	    var date=this.current_check.tdate;
+	    var description=this.current_check.assignment;
+	    var trans_ref=$(node).attr('data-trans-id') || 0;
+            if( this.current_check.debit ){
+		acc_code=$(node).attr('data-credit-code')||$(node).attr('data-acc-code')||'';
+                trans_type=acc_code?acc_code+"_"+this.main_acc_code:'';
+		current_acc_code="_"+this.main_acc_code;
+		amount=this.current_check.debit;
+            } else {
+		acc_code=$(node).attr('data-debit-code')||$(node).attr('data-acc-code')||'';
+                trans_type=acc_code?this.main_acc_code+"_"+acc_code:'';
+		current_acc_code=this.main_acc_code+"_";
+		amount=this.current_check.credit;
+            }
+            this.transCreate(trans_type,description,amount,trans_ref,this.current_check.check_id,date,current_acc_code);
+        },
+        transCreate:function( trans_type, description, amount, trans_ref, check_id, date, current_acc_code ){
+            var data={
+                trans_id:0,
+                trans_date:date,
+                amount:amount,
+		check_id:check_id,
+                trans_ref:trans_ref||null,
+                trans_type:trans_type||'',
+                description:description||'',
+                passive_company_id:App.pcomp?App.pcomp.company_id:0,
+                current_acc_code:current_acc_code,
+                using_alt_currency:false
+            };
+            if(App.pcomp){
+                data.passive_company_id=App.pcomp.company_id || 0;
+                data.label=App.pcomp.label || '?';
+            }
+            App.loadWindow('page/accounts/trans_edit',data).progress(function(status,data){
+                if( status==='save' || status==='delete' ){
+                    //$('#account_clientbank_dg').datagrid('reload');
+		    Cbank.fav.load();
+		    Cbank.renderCheck();
+                }
+            });
+        },
+	transEdit:function( trans_id ){
+	    App.loadWindow('page/accounts/trans_edit',{trans_id:trans_id}).progress(function(status,data){
+                if( status==='save' || status==='delete' ){
+                    //$('#account_clientbank_dg').datagrid('reload');
+		    Cbank.fav.load();
+		    Cbank.renderCheck();
+                }
+            });
+	},
+        payTrans:function(){
+            var row=$('#account_ledger_dg').datagrid('getSelected');
+            if( row.trans_status ){
+                var status=row.trans_status.split(' ')[0];
+                if( "unpayed partly payed".indexOf(status)>-1 ){
+                    this.rowCreate(null,null,row.debit||row.credit,row.trans_id);
+                } else if( "closing closed".indexOf(status)>-1 ){
+                    App.flash("Проводка уже связана.");
+                }
+            }
+        },
+	correspondentSelect:function(){
+	    App.loadWindow('page/company/tree',{}).progress(function(status,comp){
+		if( status==='select' ){
+		    Cbank.correspondentFill(comp.company_id);
+		}
+	    });
+	},
+	correspondentFill:function(company_id){
+            $.get("Pref/getPrefs/tax_id_in_checks",function(resp){
+                var pref=App.json(resp);
+                if( pref.tax_id_in_checks*1 ){
+                    Cbank.updateField(company_id,'company_vat_id',Cbank.current_check.correspondent_code,'Код');
+                } else {
+                    Cbank.updateField(company_id,'company_code',Cbank.current_check.correspondent_code,'Код');
+                }
+                Cbank.updateField(company_id,'company_bank_account',Cbank.current_check.correspondent_account,'Счет');
+                Cbank.updateField(company_id,'company_bank_corr_account',Cbank.current_check.correspondent_corr_account,'Корр. Счет');
+                Cbank.updateField(company_id,'company_bank_id',Cbank.current_check.correspondent_bank_code,'Код Банка');
+                Cbank.updateField(company_id,'company_bank_name',Cbank.current_check.correspondent_bank_name,'Название банка');
+                $('#account_clientbank_dg').datagrid('reload');
+                Cbank.renderCheck();
+            });
+	},
+	updateField:function(company_id,field,value,title){
+	    $.post('Company/companyUpdate/'+App.uri(company_id,field,value),function(ok){
+		if( ok*1 ){
+		    App.flash("Сохранено: " + title);
+		} else {
+		    App.flash("Сохраненние не удалось: " + title);
+		}
+	    });
+	},
+	fav:{
+	    load:function(){
+		$.get("AccountsData/accountFavoritesFetch/0/1",function(resp){
+		    var favs=App.json(resp);
+		    if( favs[0] ){
+			App.renderTpl('cbank_favorites',{favs:favs});	
+                        setTimeout(function(){
+                            Cbank.main_acc_code=Cbank.main_acc_code||favs[0].acc_code;
+                            Cbank.fav.select(Cbank.main_acc_code);
+                        },0);
+		    } else if(!Cbank.current_acc_code){
+			alert("Нет счетов для клиентбанка.");
+		    }
+		});
+	    },
+	    select:function(fav){
+                if( typeof fav==='object' ){
+                    fav=$(fav).attr('data-code');
+                }
+                $('#cbank_favorites .left_label_selected').removeClass('left_label_selected');
+		$('#cbank_favorites div[data-code='+fav+']').addClass('left_label_selected');
+		Cbank.main_acc_code=fav;
+		$('#account_clientbank_dg').datagrid('reload');		
+	    }
+	},
+        list:{
+	    loader: function (param, success, error) {
+		if( Cbank.main_acc_code ){
+		    Cbank.current_page=param.page;
+		    Cbank.current_rows=param.rows;
+		    Cbank.filterRules=param.filterRules,
+		    $.get(App.uri('AccountsBank', 'clientBankGet', Cbank.main_acc_code, Cbank.current_page, Cbank.current_rows), {filterRules: param.filterRules}, function (xhr) {
+			var resp = App.json(xhr);
+			var rows=Cbank.list.addBalanceRows(resp);
+			success(rows);
+		    });
+		} else {
+		    success([]);
+		}
+	    },
+	    addBalanceRows: function (resp) {
+		var sub_row = {
+		    assignment: "Оборот по платежным поручениям",
+		    debit: resp.sub_totals.tdebit,
+		    credit: resp.sub_totals.tcredit
+		};
+		resp.rows.unshift(sub_row);
+		return resp;
+	    },
+	    styler:function(value, row, index) {
+                return row.debit>0?"color:red;font-weight:bold":"color:green;font-weight:bold";
+	    },
+	    rowStyler: function (value, row, index) {
+		if (!row.check_id) {
+		    return "background-color:rgba(128,128,128,.1);color:darkblue";
+		}
+	    },
+            onSelect:function(){
+		Cbank.renderCheck();
+            },
+	    toggleFilter: function () {
+		if (this.filterEnabled) {
+		    $('#account_clientbank_dg').datagrid('disableFilter');
+		    this.filterEnabled = false;
+		}
+		else {
+		    $('#account_clientbank_dg').datagrid('enableFilter');
+		    this.filterEnabled = true;
+		}
+	    },
+	    out:function( out_type ){
+		var params={
+		    main_acc_code:Cbank.main_acc_code,
+		    filterRules:Cbank.filterRules,
+		    page:Cbank.current_page,
+		    rows:Cbank.current_rows,
+		    out_type:out_type
+		};
+		var url='AccountsBank/cbankViewGet/?'+$.param( params );
+		if( out_type==='.print' ){
+		    window.open(url,'print_tab');
+		} else {
+		    location.href=url;
+		}
+	    },
+	    up:function(filelist){
+		if( filelist.length ){
+		    Cbank.list.busy(1);
+		    var url = 'AccountsBank/Up/'+Cbank.main_acc_code;
+		    var xhr = new XMLHttpRequest();
+		    var fd = new FormData();
+		    xhr.open("POST", url, true);
+		    xhr.onreadystatechange = function() {
+			if (xhr.readyState === 4 && xhr.status === 200) {
+			    if( xhr.responseText==='imported' ){
+				$('#account_clientbank_dg').datagrid('reload');
+				App.flash("Файл загружен.");
+			    } else {
+				App.flash("Не удалось загрузить "+xhr.responseText);
+			    }
+			    Cbank.list.busy(0);
+			}
+		    };
+		    fd.append("upload_file", filelist[0]);
+		    xhr.send(fd);
+		}
+	    },
+	    busy:function(is){
+		$('body').css('cursor',is?'pointer':'');
+	    },
+	    rowDelete:function(){
+		var row=$('#account_clientbank_dg').datagrid('getSelected');
+		if( row && confirm("Удалить платежное поручение?\nВнимание связанная проводка будет также удалена") ){
+		    $.post("AccountsBank/checkDelete/"+row.check_id,function(ok){
+			if( ok*1 ){
+			    App.flash("Платежное поручение удалено");
+			    $('#account_clientbank_dg').datagrid('reload');
+			} else {
+			    App.flash("Платежное поручение не удалено!");
+			}
+		    });
+		}
+	    }
+        }
+    };
+</script>
+<style>
+    .trans_pay_table{
+	display:table;
+	width: 100%;
+	border-right: 1px solid #9cd;
+	border-top: 1px solid #9cd;
+	margin-top: 8px;
+    }
+    .trans_pay_table_head div{
+	display: table-cell;
+	border-bottom: 1px solid #9cd;
+	border-left: 1px solid #9cd;
+	padding: 2px;
+    }
+    .trans_pay_table_row div{
+	display: table-cell;
+	border-bottom: 1px solid #9cd;
+	border-left: 1px solid #9cd;
+	padding: 4px;
+    }
+    .trans_pay_table_row:hover{
+	background-color: #ffa;
+	cursor: pointer;
+    }
+    .left_label{
+	padding: 3px;
+	margin-bottom: 5px;
+	border: 1px solid #999;
+	border-right: none;
+	background: linear-gradient(90deg,rgba(255,255,255,1),rgba(255,255,255,0.5));
+    }
+    .left_label:hover{
+	background: linear-gradient(90deg,rgba(255,255,200,1),rgba(255,255,255,0.5));;
+	-border-color: #afa;
+	cursor: pointer;
+    }
+    .left_label_selected,.left_label_selected:hover{
+	background: #FF9;
+    }
+    #cbank_favorites{
+	width:760px;
+    }
+    #cbank_favorites .left_label{
+	min-height: 40px;
+	width:240px;
+	float:left;
+	border: 1px solid #999;
+	margin: 2px;
+    }
+</style>
+<div style="width:400px;display: inline-block;vertical-align: top;">
+    <div class="easyui-panel covert" title="Контрагент" id="Cbank_check_corresp" style="margin-bottom: 3px;">
+	{{if correspondent_code}}
+	    <h3 style="text-align: center">{{correspondent_name}}</h3>
+	    <div style="background-color: #ffd;padding: 5px; margin-bottom: 5px; border: 1px solid #ccc;text-align: center">
+		Контрагент {{correspondent_name}} с кодом {{correspondent_code}} не найден<br>
+		<button onclick="Cbank.correspondentSelect()">Выбрать контрагента</button>
+	    </div>	    
+	{{else}}
+        <h3 style="text-align: center">{{pcomp.company_name}}</h3>
+	<div>
+	    {{if trans_id|more>0}}
+		<div style="background-color: #dfd;padding: 5px; margin-bottom: 5px; border: 1px solid #ccc;text-align: center">
+		    Платежное поручение проведено<br>
+		    <button data-trans-id="{{trans_id}}" onclick="Cbank.transEdit(this.dataset.transId)">Редактировать проводку</button>
+		</div>
+	    {{else}}
+		{{favs}}
+		<div class="rounded">
+		    <b class="tag">{{acc_code}}</b> {{label}} {{if balance}}(<b>{{balance}}</b>){{/if}} 
+		    <button class="tiny_button" style="float: right;" 
+			    data-acc-code="{{acc_code}}" 
+			    onclick="Cbank.transClick(this)">Провести</button>
+		    {{if suggs}}
+		    <div class="trans_pay_table">
+			<div style="display: table-row;font-weight: bold;" class="trans_pay_table_head">
+			    <div style="width:22px;text-align: center">!</div>
+			    <div style="width:70px;">Дата</div>
+			    <div style="display: table-cell">Пояснение</div>
+			    <div style="width:50px;">Сумма</div>
+			</div>
+			{{suggs}}
+			<div style="display: table-row;" class="trans_pay_table_row" 
+			    data-debit-code="{{acc_debit_code}}" 
+			    data-credit-code="{{acc_credit_code}}" 
+			    data-trans-id="{{trans_id}}" 
+			    onclick="Cbank.transClick(this)">
+			    <div style="text-align: center"><img src="img/{{code}}.png" title="{{descr}}"></div>
+			    <div>{{date}}</div>
+			    <div>{{description}}</div>
+			    <div style="text-align: right">{{amount}}</div>
+			</div>
+			{{/suggs}}
+		    </div>
+		    {{/if}}
+		    <hr>
+		</div>
+		{{/favs}}
+		<div style="text-align: center;padding: 3px;">
+		    <button onclick="Cbank.transClick(this)">Провести по другому счету</button>
+		</div>
+	    {{/if}}
+	</div>
+	{{/if}}
+    </div>
+    <div class="easyui-panel covert" title="Платежное поручение" id="Cbank_check_view">
+        <table>
+            <tr>
+                <td class="bank_property_name">Контрагент:</td>
+                <td class="bank_property_value">{{correspondent_name}}</td>
+            </tr>
+            <tr>
+                <td class="bank_property_name">Код:</td>
+                <td class="bank_property_value">{{correspondent_code}}</td>
+            </tr>
+            <tr>
+                <td class="bank_property_name">Счет:</td>
+                <td class="bank_property_value">{{correspondent_account}}</td>
+            </tr>
+            <tr>
+                <td class="bank_property_name">Банк:</td>
+                <td class="bank_property_value"><i>{{correspondent_bank_code}}</i> {{correspondent_bank_name}}</td>
+            </tr>
+            <tr>
+                <td colspan="2" align="center" height="30">&nbsp;</td>
+            </tr>
+            <tr>
+                <td class="bank_property_name">Номер:</td>
+                <td class="bank_property_value">№{{number}} от <b>{{tdate}}</b></td>
+            </tr>
+            <tr>
+                <td class="bank_property_name">Сумма:</td>
+                <td class="bank_property_value"><b><span style="color:red">{{debit}}</span><span style="color:green">{{credit}}</span></b></td>
+            </tr>
+            <tr>
+                <td class="bank_property_name">Назначение:</td>
+                <td class="bank_property_value">{{assignment}}</td>
+            </tr>
+        </table>
+    </div>
+</div>
+<div style="display: inline-block;vertical-align: top;">
+    <div id="cbank_favorites" class="covert">
+	{{favs}}
+	<div class="left_label" onclick="Cbank.fav.select(this)" data-code="{{acc_code}}">
+	    <div class="tag">{{acc_code}}</div> {{label}} <br><span style="color:#058">{{balance|blank|format}}</span>
+	</div>
+	{{/favs}}
+    </div>
+    <input type="file" id="clientbank_uploader" style="display:none" onchange="Cbank.list.up(this.files)">
+    <div style="clear:both">
+	<div style="float: left;font-weight: bold;padding-top: 8px;">
+	    <img src="img/table16.png" style="width:16px;height: 16px;"> Платежные поручения
+	</div>
+	<div style="float: right">
+	    <span class="icon-24 icon-tablefilter" title="Фильтр таблицы" onclick="Cbank.list.toggleFilter()"> </span>
+	    <span class="icon-24 icon-delete" title="Удалить" onclick="Cbank.list.rowDelete();"> </span>
+	    <span class="icon-24 icon-upload" title="Отправить файл" onclick="$('#clientbank_uploader').click();"> </span>
+	    <span class="icon-24 icon-refresh" title="Обновить" onclick="$('#account_clientbank_dg').datagrid('reload')"> </span>
+	    <span class="icon-24 icon-print" title="Напечатать" onclick="Cbank.list.out('.print');"> </span>
+	</div>
+    </div>
+    <table id="account_clientbank_dg" class="easyui-datagrid" style="width:760px;"
+	   data-options="
+	   idField:'check_id',
+	   loader:Cbank.list.loader,
+	   rowStyler:Cbank.list.rowStyler,
+	   pagination:true,
+	   pageSize:25,
+	   pageList:[25,50,100,500,1000],
+	   singleSelect:true,
+	   remoteFilter:true,
+	   onSelect:Cbank.list.onSelect,
+	   onLoadSuccess:function(){$('#account_clientbank_dg').datagrid('resize');}">
+        <thead>
+            <th data-options="width:25,field:'status',formatter:App.datagrid.tooltip"></th>
+            <th data-options="width:70,field:'tdate'">Дата</th>
+            <th data-options="width:200,field:'correspondent_name'">Корреспондент</th>
+            <th data-options="width:300,field:'assignment'">Назначение</th>
+            <th data-options="width:80,field:'debit',formatter:App.formatNum,align:'right',styler:Cbank.list.styler">Дебит</th>
+            <th data-options="width:80,field:'credit',formatter:App.formatNum,align:'right',styler:Cbank.list.styler">Кредит</th>
+        </thead>
+    </table>
+</div>

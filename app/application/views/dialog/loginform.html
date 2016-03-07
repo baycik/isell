@@ -1,0 +1,39 @@
+<script>
+    if( $ ){
+	$('#user_login_form').on('submit',function(event){
+	    event.preventDefault();
+	    var user_login=$("#user_login").val();
+	    var user_pass=$("#user_pass").val();
+	    Connector.sendRequest({mod:'Login',rq:'UserLogin',user_login:user_login,user_pass:user_pass},function(resp){
+		if( resp == 'login_successfull' ){
+		    Connector.unfreezeSequence();
+		}
+	    });
+	});
+    }
+</script>
+<div class="rounded" style="width:260px;margin-left:auto;margin-right:auto;background: #abc">
+    <div style="color:#fff" id="SeqDialogMsg"></div>
+    <div class="rounded" style="margin-left:auto;margin-right:auto;background: #def;">
+	<form id="user_login_form" action="ProcLogin/onUserLogin" method="post">
+	    <table width="200" border="0" align="center" cellspacing="1">
+		<tr>
+		    <td colspan="2" align="center">
+		<big>Авторизация</big>
+		</td>
+		</tr>
+		<tr>
+		    <td><input type="text" id="user_login" name="user_login" style="width:100%;"  autofocus="autofocus" placeholder="Логин" /></td>
+		</tr>
+		<tr>
+		    <td><input type="password" id="user_pass" name="user_pass" style="width:100%;" placeholder="Пароль" /></td>
+		</tr>
+		<tr>
+		    <td colspan="2" align="center">
+			<button type="submit" value="Submit" id="submit_button"><img src="img/apply24.png" style="vertical-align: middle"/> Вход</button>
+		    </td>
+		</tr>
+	    </table>
+	</form>
+    </div>
+</div>

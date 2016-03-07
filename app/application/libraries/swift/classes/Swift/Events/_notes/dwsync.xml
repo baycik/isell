@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<dwsync>
+<file name="CommandEvent.php" server="91.205.217.71//vat/" local="129701016000000000" remote="129701016000000000" />
+<file name="CommandListener.php" server="91.205.217.71//vat/" local="129701016000000000" remote="129701016000000000" />
+<file name="Event.php" server="91.205.217.71//vat/" local="129701016000000000" remote="129701016000000000" />
+<file name="EventDispatcher.php" server="91.205.217.71//vat/" local="129701016000000000" remote="129701016000000000" />
+<file name="EventListener.php" server="91.205.217.71//vat/" local="129701016000000000" remote="129701016000000000" />
+<file name="EventObject.php" server="91.205.217.71//vat/" local="129701016000000000" remote="129701016000000000" />
+<file name="ResponseEvent.php" server="91.205.217.71//vat/" local="129701016000000000" remote="129701016000000000" />
+<file name="ResponseListener.php" server="91.205.217.71//vat/" local="129701016000000000" remote="129701016000000000" />
+<file name="SendEvent.php" server="91.205.217.71//vat/" local="129701016000000000" remote="129701016000000000" />
+<file name="SendListener.php" server="91.205.217.71//vat/" local="129701016000000000" remote="129701016000000000" />
+<file name="SimpleEventDispatcher.php" server="91.205.217.71//vat/" local="129701016000000000" remote="129701016000000000" />
+<file name="TransportChangeEvent.php" server="91.205.217.71//vat/" local="129701016000000000" remote="129701016000000000" />
+<file name="TransportChangeListener.php" server="91.205.217.71//vat/" local="129701016000000000" remote="129701016000000000" />
+<file name="TransportExceptionEvent.php" server="91.205.217.71//vat/" local="129701016000000000" remote="129701016000000000" />
+<file name="TransportExceptionListener.php" server="91.205.217.71//vat/" local="129701016000000000" remote="129701016000000000" />
+</dwsync>

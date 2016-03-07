@@ -1,0 +1,462 @@
+<script type="dontuse">
+    CompaniesJs.blanks.init = function () {
+	this.is_editing = false;
+	CompaniesJs.blanks.getFillData();
+	CompaniesJs.blanks.initBlankList();
+	CompaniesJs.blanks.loadBlankNew();
+    }
+    CompaniesJs.blanks.focus = function () {
+	this.init();
+    }
+    CompaniesJs.blanks.getFillData = function () {
+	CompaniesJs.blanks.blankData = {};
+	CompaniesJs.blanks.blankData.today = dojo.date.locale.format(new Date(), {
+	    datePattern: "dd.MM.yyyy",
+	    selector: "date"
+	});
+	CompaniesJs.blanks.blankData.today10 = dojo.date.locale.format(dojo.date.add(new Date(), "day", 10), {
+	    datePattern: "dd.MM.yyyy",
+	    selector: "date"
+	});
+	Connector.addRequest({
+	    mod: 'Pref',
+	    rq: 'Details'
+	}, function (cont) {
+	    CompaniesJs.blanks.blankData['a'] = cont;
+	});
+	Connector.addRequest({
+	    mod: 'Companies',
+	    rq: 'Details'
+	}, function (cont) {
+	    CompaniesJs.blanks.blankData['p'] = cont
+	});
+	Connector.addRequest({
+	    mod: 'Pref',
+	    rq: 'StaffList'
+	}, function (cont) {
+	    CompaniesJs.blanks.blankData['staff'] = cont
+	});
+    }
+
+    CompaniesJs.blanks.loadBlankNew = function () {
+	var handler = function (cont) {
+	    Acc.resetTpl('comp_blank_new_list'); //!!!!!!!!!!!!!!!!!
+	    Acc.renderTpl('comp_blank_new_list', {
+		blanks: cont
+	    });
+	}
+	var request = {
+	    mod: 'Companies'
+	};
+	request.rq = 'AvailBlanks';
+	Connector.addRequest(request, handler);
+    }
+    CompaniesJs.blanks.addNew = function (view_type_id, register_only) {
+	var request = {
+	    mod: 'Companies'
+	};
+	request.rq = 'AddBlank';
+	request.view_type_id = view_type_id;
+	request.register_only = register_only;
+	Connector.addRequest(request, function (doc_id) {
+	    CompaniesJs.blanks.initBlankList();
+	    CompaniesJs.blanks.loadBlank(doc_id);
+	    CompaniesJs.blanks.doc_id = doc_id;
+	});
+    }
+    CompaniesJs.blanks.showBlankEditor = function (show) {
+	Acc.dom.byId('comp_blank_editor').style.display = show ? 'block' : 'none';
+	Acc.dom.byId('comp_blank_new').style.display = show ? 'none' : 'block';
+    }
+    CompaniesJs.blanks.loadBlank = function (doc_id) {
+	var editor_tab = Acc.registry.byId('comp_blank_editor');
+	editor_tab.set('disabled', false)
+	Acc.registry.byId('blanks_divid2').selectChild(editor_tab);
+	if (this.is_editing) {
+	    if (CompaniesJs.blanks.doc_id == doc_id)
+		return;
+	    this.is_editing = false;
+	    Acc.dom.byId("comp_blanks").style.backgroundColor = '#ffffff';
+	}
+	if (doc_id > 0) {
+	    var handler = function (content) {
+		CompaniesJs.blanks.doc_id = content.doc_id;
+		CompaniesJs.blanks.blankData.doc = {
+		    num: content.doc_num,
+		    date: content.doc_date
+		};
+		//CompaniesJs.blanks.blankData.doc_date=content.doc_date;
+		//alert( CompaniesJs.blanks.blankData.doc.toSource());
+		Acc.dom.byId('comp_blank_name').innerHTML = content.view_name;
+		Acc.dom.byId('comp_blank_regdata').value = content.doc_data || '';
+		if (content.doc_view_id) {
+		    Acc.setInnerHTML('comp_blanks', content.html);
+		    CompaniesJs.blanks.doc_view_id = content.doc_view_id;
+		    if (content.loaded_is_tpl)
+			CompaniesJs.blanks.fillForm();
+		    Acc.dom.byId('comp_blank_form').style.display = 'none';
+		    Acc.dom.byId('comp_blank_editing_buttons').style.display = 'inline';
+		} else {
+		    Acc.setInnerHTML('comp_blanks', ' ');
+		    Acc.dom.byId('comp_blank_form').style.display = 'block';
+		    Acc.dom.byId('comp_blank_editing_buttons').style.display = 'none';
+		    Acc.dom.byId('comp_blank_regnum').value = content.doc_num;
+		    Acc.dom.byId('comp_blank_regdate').value = content.doc_date;
+		}
+	    }
+	    var request = {
+		mod: 'Companies'
+	    };
+	    request.rq = 'GetBlank';
+	    request.doc_id = doc_id;
+	    Connector.addRequest(request, handler);
+	}
+    }
+    CompaniesJs.blanks.deleteBlank = function () {
+	if (!confirm('Вы уверенны, что хотите удалить бланк?'))
+	    return;
+	var handler = function (cont) {
+	    CompaniesJs.blanks.doc_id = 0;
+	    CompaniesJs.blanks.initBlankList();
+	    var editor_tab = Acc.registry.byId('comp_blank_editor');
+	    editor_tab.set('disabled', true)
+	    Acc.registry.byId('blanks_divid2').selectChild(Acc.registry.byId('blanks_divid2').getChildren()[0]);
+	}
+	var request = {
+	    mod: 'Companies'
+	};
+	request.rq = 'DeleteBlank';
+	Connector.addRequest(request, handler);
+    }
+    CompaniesJs.blanks.saveBlank = function () {
+	var blank_xtra = CompaniesJs.blanks.prepareForSave();
+	if (blank_xtra) { //if all req fields are filled
+	    var request = {};
+	    request.mod = 'Companies';
+	    request.rq = 'SaveBlank';
+	    request.html = Acc.dom.byId('comp_blanks').innerHTML;
+	    request.num = blank_xtra.num;
+	    request.date = blank_xtra.date;
+	    Connector.addRequest(request, CompaniesJs.blanks.list, 'loadTableData');
+	}
+    }
+    CompaniesJs.blanks.printoutBlank = function () {
+	if (this.is_editing) {
+	    alert('Сначала сохраните бланк!');
+	    return;
+	}
+	Acc.printOut({
+	    mod: 'Companies',
+	    rq: 'DocumentOut',
+	    doc_view_id: CompaniesJs.blanks.doc_view_id
+	});
+    }
+    CompaniesJs.blanks.updateBlankReg = function (ele, field) {
+	var request = {
+	    mod: 'Companies',
+	    rq: 'UpdateBlankReg'
+	};
+	request.field = field;
+	if (field == 'date') {
+	    var dparts = dojo.date.stamp.toISOString(ele.value).match(/(\d{4})-(\d{2})-(\d{2})/);
+	    request.value = dparts[3] + '.' + dparts[2] + '.' + dparts[1];
+	} else {
+	    request.value = ele.value;
+	}
+	Connector.addRequest(request, CompaniesJs.blanks.list, 'loadTableData');
+    }
+    ////////////////////////////////////////
+    //DOC LIST SECTION
+    ////////////////////////////////////////
+    CompaniesJs.blanks.initBlankList = function () {
+	Connector.sendRequest({mod: 'Companies', rq: 'BlankListData'}, function (resp) {
+	    Acc.renderTpl('blank_list', {document_list: resp});
+	});
+    }
+    CompaniesJs.blanks.fillForm = function () {
+	Acc.resetTpl('comp_blanks');
+	Acc.renderTpl('comp_blanks', CompaniesJs.blanks.blankData);
+	CompaniesJs.blanks.prepareForEdit();
+    }
+    CompaniesJs.blanks.prepareForEdit = function () {
+	if (this.is_editing)
+	    return;
+	this.is_editing = true;
+	Acc.dom.byId("comp_blanks").style.backgroundColor = '#ffffdd';
+	Acc.query(".blank_row", "comp_blanks").forEach(function (node, index, arr) {
+	    if (arr.length == index + 1) { //only for last row
+		var clone = dojo.clone(node);
+		Acc.query(".blank_input,.blank_calendar", clone).forEach(function (node, index, arr) {
+		    node.innerHTML = '';
+		});
+		dojo.place(clone, node, "after");
+	    }
+	});
+	Acc.query(".blank_input", "comp_blanks").forEach(function (node, index, arr) {
+	    if (!(node.firstChild && node.firstChild.className == "blanks_inline_input")) {
+		var handlers = "";
+		if (node.className.indexOf('blank_spell_paren') > -1) {
+		    handlers = "onchange='CompaniesJs.blanks.spellInput(this,1)'";
+		} else if (node.className.indexOf('blank_spell') > -1) {
+		    handlers = "onchange='CompaniesJs.blanks.spellInput(this)'";
+		}
+		node.innerHTML = "<input type='text' class='blanks_inline_input' value=\"" + node.innerHTML + "\" " + handlers + ">";
+	    }
+	});
+	Acc.query(".blank_calendar", "comp_blanks").forEach(function (node, index, arr) {
+	    if (!(node.firstChild && node.firstChild.className == "blanks_inline_calendar")) {
+		var dparts = node.innerHTML.match(/(\d{2}).(\d{2}).(\d{4})/);
+		if (dparts) {
+		    var isodate = dparts[3] + '-' + dparts[2] + '-' + dparts[1];
+		    node.innerHTML = '<input dojoType="dijit.form.DateTextBox" type="text" value="' + isodate + '" style="width:7em;font:12px normal;" class="blanks_inline_calendar">';
+		    dojo.require('dojo.parser');
+		    dojo.parser.parse(node);
+		}
+	    }
+	});
+	Acc.query(".blank_select", "comp_blanks").forEach(function (node, index, arr) {
+	    var identificator = node.id.match(/[^_]+/);
+	    var dataSource = CompaniesJs.blanks.blankData[identificator];
+	    var dataStore = new Acc.ItemFileReadStore({
+		data: dataSource
+	    });
+	    var handler = function (selectedItem) {
+		if (!selectedItem)
+		    return;
+		Acc.query("*[ id ^= " + identificator + " ]", "comp_blanks").forEach(function (node, index, arr) {
+		    var field = node.id.match(/[^_]+_([\w_]*)/);
+		    if (field && field[1]) {
+			node.innerHTML = selectedItem[field[1]];
+		    }
+		});
+	    }
+	    var filteringSelect = new dijit.form.FilteringSelect({
+		store: dataStore,
+		value: node.innerHTML,
+		searchAttr: dataSource.label,
+		onChange: function (selectedId) {
+		    dataStore.fetchItemByIdentity({
+			identity: selectedId,
+			onItem: handler
+		    });
+		}
+	    });
+	    filteringSelect.domNode.style.width = '100%';
+	    dojo.place(filteringSelect.domNode, node, "only");
+	});
+    }
+    CompaniesJs.blanks.prepareForSave = function () {
+	if (!this.is_editing)
+	    return;
+	this.is_editing = false;
+	Acc.dom.byId("comp_blanks").style.backgroundColor = '#ffffff';
+	var blank_xtra = {};
+	var error = '';
+	Acc.query("div#comp_blanks .blank_input").forEach(function (node, index, arr) {
+	    if (node.firstChild && node.firstChild.className == "blanks_inline_input")
+		node.innerHTML = node.firstChild.value;
+	});
+	Acc.query("div#comp_blanks .blank_calendar").forEach(function (node, index, arr) {
+	    if (node.firstChild) {
+		var cal_widget = dijit.byId(node.firstChild.id.match(/widget_(\w+)/)[1]);
+		var dparts = dojo.date.stamp.toISOString(cal_widget.attr('value')).match(/(\d{4})-(\d{2})-(\d{2})/);
+		cal_widget.destroy();
+		node.innerHTML = dparts[3] + '.' + dparts[2] + '.' + dparts[1];
+	    }
+	});
+	Acc.query("div#comp_blanks .blank_row").forEach(function (node, index, arr) {
+	    if (index > 0) { //start from second row
+		var rowIsEmpty = true;
+		Acc.query(".blank_input,.blank_calendar", node).forEach(function (cellNode, index, arr) {
+		    if (cellNode.innerHTML != '')
+			rowIsEmpty = false;
+		});
+		if (rowIsEmpty)
+		    dojo.destroy(node);
+	    }
+	});
+	Acc.query(".blank_select", "comp_blanks").forEach(function (node, index, arr) {
+	    if (node.firstChild) {
+		var sel_widget = dijit.byId(node.firstChild.id.match(/widget_(\w+)/)[1]);
+		node.innerHTML = sel_widget.getValue();
+		sel_widget.destroy();
+	    }
+	});
+	Acc.query(".blank_date", "comp_blanks").forEach(function (node, index, arr) {
+	    blank_xtra.date = node.innerHTML;
+	});
+	Acc.query(".blank_number", "comp_blanks").forEach(function (node, index, arr) {
+	    blank_xtra.num = node.innerHTML;
+	});
+	Acc.query(".blank_required", "comp_blanks").forEach(function (node, index, arr) {
+	    if (!node.firstChild) {
+		error += "\nНе заполнено: " + node.title;
+	    }
+	});
+	if (!blank_xtra.date) {
+	    error += "\nДата бланка не установленна";
+	}
+	if (!blank_xtra.num) {
+	    error += "\nНомер бланка не установлен";
+	}
+	if (error) {
+	    error += "\n\nБланк не сохранен!";
+	    CompaniesJs.blanks.prepareForEdit();
+	    alert(error);
+	    return false;
+	}
+	return blank_xtra;
+    }
+    CompaniesJs.blanks.spellInput = function (node, in_paren) {
+	var num = parseInt(node.value);
+	if (num) { //if value is number
+	    Connector.addRequest({
+		mod: 'Utils',
+		rq: 'SpellNumber',
+		number: num,
+		unit: ''
+	    }, function (cont) {
+		if (in_paren)
+		    node.value = num + ' ( ' + cont + ' )';
+		else
+		    node.value = cont;
+	    });
+	}
+    }
+    require(
+	    [
+		"dojo/data/ItemFileReadStore",
+		"dijit/form/DateTextBox",
+		"dijit/form/FilteringSelect",
+		"dijit/form/DateTextBox"
+	    ],
+	    function (ItemFileReadStore) {
+		Acc.ItemFileReadStore = ItemFileReadStore;
+		//CompaniesJs.blanks.init();
+	    });</script>
+<style>
+    .blanks_inline_input {
+        width: 100%;
+        background-color: #FF8;
+        border: none;
+        padding-top: 2px;
+        padding-bottom: 2px;
+        margin: 0px;
+        margin-right: 3px;
+        font-family: Arial;
+        font-size: 12px;
+        color: #000000;
+        font-weight: bold;
+        font-style: normal;
+    }
+    .page1 {
+        box-shadow: 1px 1px 3px 3px #aaa;
+        padding: 30px;
+        margin: 10px;
+        display: inline-block;
+        text-align: left;
+        min-height: 1110px;
+        background: #FFFFFF url(img/2xLine.jpg) repeat-x 0px 1170px;
+    }
+    .appbar {
+        background: url(img/topbar.png) repeat-x;
+        border-bottom: solid 1px #aaf;
+        padding: 3px;
+    }
+
+    #divid{
+        background-color:#def;
+        padding:3px;
+        border-top:1px solid #9ab;
+        text-align: left;
+    }
+
+    .comp_blanks{
+        text-align: center;
+    }
+
+    .divclass{
+        border:#bcf solid 1px;
+	background-color: #fff;
+    }
+
+    #blanks_divid2{
+        width:95%;
+	min-height: 800px;
+        max-height: 900px;
+        -overflow: auto;
+    }
+    #comp_blank_editor{
+        height: 1000px;
+    }
+</style>
+<h2>Используйте соответствующий модуль в <a href="#mod=Trade">Торговле</a></h2>
+
+<div style="width:1100px;padding: 10px;display: none;">
+    <div id="blanks_divid2" data-dojo-type="dijit/layout/TabContainer" data-dojo-props="doLayout:false">
+	<div data-dojo-type="dijit/layout/ContentPane" title="Документы">
+	    <div id="blank_list">
+		<!--{% for doc in document_list %}-->
+		<div class="light_grad" style="margin:3px;padding:3px;cursor:pointer;display: inline-block;width:250px;">
+		    <a href="javascript:CompaniesJs.blanks.loadBlank('{{doc.doc_id}}');">
+			<img src="img/{{doc.icon_name}}.png">
+			{{doc.view_name}} №{{doc.doc_num}} от {{doc.doc_date}} 
+		    </a>
+		</div>
+		<!--{% endfor %}-->
+	    </div>
+	    <div id="comp_blank_new_list">
+		<!--{% for group in blanks %}-->
+		<div class="divclass">
+		    <div class="no_print appbar">
+			<img src="img/{{group.icon_name|default:''}}.png" /> <b>{{group.doc_type_name}}</b>
+		    </div>
+		    <!--{% for blank in group.avail_views %}-->
+		    <div class="tile_item" style="width:170px;margin:5px;">
+			<!--{{blank.view_name|default:''}}-->
+			<div style="border-top:1px solid #acf">
+			    <!--{% ifequal blank.only_reg|default:'1' '1' %}-->
+			    <img src="img/edit_add.png" style="cursor:pointer;" onclick="CompaniesJs.blanks.addNew('{{blank.view_type_id|default:0}}')" title="Создать новый документ" />
+			    <!--{% endifequal %}-->
+			    <img src="img/apply.png" style="cursor:pointer;" onclick="CompaniesJs.blanks.addNew('{{blank.view_type_id|default:0}}', 1)" title="Добавить в реестр документов" width="24" height="24" />
+			</div>
+		    </div>
+		    <!--{% endfor %}-->
+		</div>
+		<br />
+		<!--{% endfor %}-->
+	    </div>
+	</div>
+	<div data-dojo-type="dijit/layout/ContentPane" title="Редактирование Документа" data-dojo-props="disabled:true" id="comp_blank_editor">
+	    <div style="width:750px">
+		<div class="no_print appbar" align="center">
+		    <div id="comp_blank_editing_buttons">
+			<div class="gray_grad" style="display:inline-block;padding:3px;"><a href="javascript:CompaniesJs.blanks.printoutBlank()" style="color:black;font-size:12px;">Просмотр <img src="img/Preview-24.png" border="0" align="absmiddle" /></a></div>
+			<div style="display:inline-block;width:30px;">&nbsp;</div>
+			<div class="gray_grad" style="display:inline-block;padding:3px;"><a href="javascript:CompaniesJs.blanks.prepareForEdit()" style="color:black;font-size:12px;">Редактировать <img src="img/Edit-24.png" border="0" align="absmiddle" /></a></div>
+			<div class="gray_grad" style="display:inline-block;padding:3px;"><a href="javascript:CompaniesJs.blanks.saveBlank()" style="color:black;font-size:12px;">Сохранить <img src="img/Save-24.png" border="0" align="absmiddle" /></a></div>
+		    </div>
+		    <div class="gray_grad" style="display:inline-block;padding:3px;"><a href="javascript:CompaniesJs.blanks.deleteBlank()" style="color:black;font-size:12px;">Удалить <img src="img/close.png" border="0" align="absmiddle" /></a>
+		    </div>
+		</div>
+		<div align="center" style="background-color:#bdf;">
+		    <div id="comp_blank_name" style="padding:3px;font-size:16px"></div>
+		    <div id="comp_blank_form" align="center" style="background-color:#def;padding:3px;border-top:1px solid #9ab;display:none">
+			Номер Бланка
+			<input data-dojo-type="dijit/form/TextBox" id="comp_blank_regnum" onchange="CompaniesJs.blanks.updateBlankReg(this, 'num')" type="text" value="" style="width:7em;font:12px normal;">Дата Бланка
+			<input data-dojo-type="dijit/form/DateTextBox" id="comp_blank_regdate" onchange="CompaniesJs.blanks.updateBlankReg(this, 'date')" type="text" value="" style="width:7em;font:12px normal;">
+		    </div>
+		    <div id="divid">Комментарий для бланка
+			<br />
+			<input data-dojo-type="dijit/form/TextBox" id="comp_blank_regdata" onchange="CompaniesJs.blanks.updateBlankReg(this, 'data')" type="text" value="" title="Комментарий для бланка" style="width:100%;font:12px normal;">
+		    </div>
+		</div>
+		<div id="comp_blanks"></div>
+	    </div>
+	</div>
+    </div>
+    <div style="float:right">
+	<div id="companies_blank_list"></div>
+    </div>
+
+</div>

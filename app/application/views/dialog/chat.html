@@ -1,0 +1,222 @@
+<script>
+    /* global App*/
+    App.page_dialog_chat = {
+	init: function () {
+	    this.node.window({
+		width: 500,
+		title: 'Chat',
+		height: 400,
+		onClose: function () {
+		    App.page_dialog_chat.destroy();
+		}
+	    });
+	    this.node.window('center');
+	    this.loadUserlist();
+	    $("#chat_form").submit(function (e) {
+		e.preventDefault();
+		var text = $("#chat_form input").val();
+		$("#chat_form input").val('');
+		App.page_dialog_chat.sendRecieve(text);
+	    });
+	    App.page_dialog_chat.counterpart = App.cookie('last_chat_counterpart') || 'all';
+	    //this.clock=setInterval(App.page_dialog_chat.sendRecieve,1000);
+	    this.sendRecieve();
+	},
+	destroy:function(){
+	    clearInterval(App.page_dialog_chat.clock);
+	    App.page_dialog_chat.node.window('destroy');
+	    delete App.page_dialog_chat;
+	},
+	loadUserlist: function () {
+	    $.get('Chat/getUserList', function (resp) {
+		var users = {user_list: App.json(resp)};
+		users.user_list.push({user_login: 'all',name:'Всем'});
+		App.renderTpl('chat_users', users);
+		$("#chat_users div[data-user=" + App.page_dialog_chat.counterpart + "]").addClass('user_selected');
+		setTimeout(function(){
+		    try{App.page_dialog_chat.loadUserlist();}catch(e){};
+		},30*1000);
+	    });
+	},
+	setCounterpart: function (user_div) {
+	    $("#chat_users div").removeClass('user_selected');
+	    $(user_div).addClass('user_selected');
+	    this.counterpart = $(user_div).data('user');
+	    App.cookie('last_chat_counterpart', this.counterpart);
+	},
+	msg_count:0,
+	sendRecieve: function (msg) {
+	    $.post(App.uri('Chat', 'sendRecieve', App.page_dialog_chat.counterpart || ''),{message:msg}, function (resp) {
+		var resp=App.json(resp);
+		App.renderTpl('chat_field', resp);
+		if( App.page_dialog_chat.msg_count!==resp.msgs.length ){
+		    App.page_dialog_chat.msg_count=resp.msgs.length;
+		    $("#chat_field").animate({scrollTop: $("#chat_field")[0].scrollHeight}, 1000);
+		}
+                clearTimeout(App.page_dialog_chat.clock);
+		App.page_dialog_chat.clock=setTimeout(function(){
+		    try{App.page_dialog_chat.sendRecieve();}catch(e){};
+		},1000);
+	    });
+	}
+    };
+</script>
+<div id="chat_users">
+    {{user_list}}
+    <div onclick="App.page_dialog_chat.setCounterpart(this)" data-user="{{user_login}}" class="{{if has_new|more>0}}has_new{{/if}}">
+	{{if name}}
+	    {{name}}
+	{{else}}
+	    {{user_login}}
+	{{/if}}
+    </div>
+    {{/user_list}}
+</div>
+<div id="chat_field">
+    {{msgs}}
+    {{if for_me}}
+    <div class="bubble {{if unread|more>0}}red{{else}}yellow{{/if}} " title="Отправлено {{event_date}}">
+        <span style="color:#333">{{time}}</span> <b>{{sender}}</b> {{event_descr}} 
+    </div>
+    {{else}}
+    <div class="bubble bubble-alt {{if unread|more>0}}white{{else}}blue{{/if}}" title="Отправлено {{event_date}}">
+        <span style="color:#333">{{time}}</span> {{event_descr}}
+    </div>
+    {{/if}}
+    {{/msgs}}
+</div> 
+<form id="chat_form">
+    <table style="width: 100%">
+	<tr>
+	    <td><input type="text" style="width: calc(100% - 10px)"/></td>
+	    <td style="width:30px"><button type="submit"><img src="img/sms.png"></button></td>
+	</tr>
+    </table>
+</form>
+<style>
+    #chat_users{
+	max-height: 300px;
+        float: right;
+        background-color: #7af;
+	overflow: auto;
+    }
+    #chat_users div{
+        padding: 5px;
+        margin: 1px;
+        cursor: pointer;
+    }
+    #chat_users div:hover{
+        background-color: rgb(180,220,250);
+    }
+    #chat_users .user_selected{
+        background-color: #ffc;
+    }
+    #chat_users .has_new{
+	font-weight: bold;
+	text-decoration: underline;
+    }
+    #chat_field{
+        height: 300px;
+        overflow: auto;
+	margin: 0 auto;
+	padding: 10px;
+	z-index: 1;
+    }
+    
+    /** ios1-ios6 bubbles **/
+    .bubble {
+	box-sizing: border-box;
+	float: left;
+	width: auto;
+	max-width: 80%;
+	position: relative;
+	clear: both;
+	-background: #95c2fd;
+	-background-image: linear-gradient(bottom, #bee2ff 15%, #95c2fd 100%);
+	border: solid 1px rgba(0,0,0,0.2);
+	border-radius: 20px;
+	box-shadow: inset 0 8px 5px rgba(255,255,255,0.65), 0 1px 2px rgba(0,0,0,0.2);
+	margin-bottom: 20px;
+	padding: 6px 20px;
+	color: #000;
+	text-shadow: 0 1px 1px rgba(255,255,255,0.8);
+	word-wrap: break-word;
+    }
+
+    .bubble:before, .bubble:after {
+	border-radius: 20px / 5px;
+	content: '';
+	display: block;
+	position: absolute;
+    }
+    .bubble:before {
+	border: 10px solid transparent;
+	border-bottom-color: rgba(0,0,0,0.2);
+	bottom: 0px;
+	left: -9px;
+	top:8px;
+    }
+    .bubble:after {
+	border: 8px solid transparent;
+	border-bottom-color: #95c2fd; /* arrow color */
+	bottom: 1px;
+	left: -5px;
+    }
+
+    .bubble-alt {
+	float: right;
+    }
+    .bubble-alt:before {
+	left: auto;
+	right: -9px;
+    }
+    .bubble-alt:after {
+	left: auto;
+	right: -5px;
+    }
+
+    .bubble p {
+	font-size: 1.4em;
+    }
+
+    /* green bubble */
+    .green {
+	background: #7acd47;
+	background-image: linear-gradient(bottom, #ace44b 15%, #7acd47 100%);
+    }
+    .green:after {
+	border-bottom-color: #ace44b;
+    }
+
+    /* white bubble */
+    .white {
+	-background: rgba(255,255,255,.5);
+	background-image: linear-gradient(bottom, #fcf3c3 15%, #f4e371 100%);
+    }
+    .white:after {
+	border-bottom-color: rgba(255,255,255,.9);
+    }
+
+    .yellow {
+	background: #fcf3c3;
+	-background-image: linear-gradient(bottom, #fcf3c3 15%, #f4e371 100%);
+    }
+    .yellow:after {
+	border-bottom-color: #fcf3c3;
+    }
+
+    .red {
+	background: rgba(255,150,100,0.3);
+    }
+    .red:after {
+	border-bottom-color: rgba(255,220,200,1);
+    }
+
+    .blue {
+	background: rgba(180,220,250,1);
+	background-image: linear-gradient(bottom, rgba(250,100,250,1) 15%, rgba(250,100,250,1) 100%);
+    }
+    .blue:after {
+	border-bottom-color: rgba(180,220,250,1);
+    }
+</style>

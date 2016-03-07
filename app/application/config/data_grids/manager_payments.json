@@ -1,0 +1,36 @@
+{
+	"grid_name":"Оплаты по клиентам",
+	"toolnames":[
+	  "print"
+	],
+	"identifier":"company_id",
+	"columns":[
+	  {
+		"field":"cdate",
+		"name":"Дата"
+	  },
+	  {
+		"field":"not_tax_payer",
+		"name":"НП"
+	  },	  {
+		"field":"label",
+		"name":"Клиент"
+	  },
+	  {
+		"field":"description",
+		"name":"Пояснение",
+		"width":"200px"
+	  },
+	  {
+		"field":"credit",
+		"name":"Оплата",
+		"align":"right",
+		"width":"100px"
+	  },
+	  {
+		"field":"path",
+		"name":"Путь",
+		"width":"100px"
+	  }
+	]
+}

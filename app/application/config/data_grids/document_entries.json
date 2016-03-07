@@ -1,0 +1,43 @@
+{
+  "grid_name":"Список Товаров",
+  "selectionMode":"extended",
+  "readonly":0,
+  "toolnames":[
+	"upload",
+    "print"
+  ],
+  "identifier":"doc_entry_id",
+  "columns":[
+    {
+      "field":"doc_entry_id",
+      "width":"60px",
+      "name":"Id"
+    },
+    {
+      "field":"doc_id",
+      "width":"200px",
+      "name":"Doc Id"
+    },
+    {
+      "field":"product_code",
+      "width":"200px",
+      "name":"Product Code"
+    },
+    {
+      "field":"product_quantity",
+      "width":"200px",
+      "name":"Product Quantity"
+    },
+    {
+      "field":"self_price",
+      "width":"30px",
+      "name":"Self Price"
+    },
+    {
+      "field":"invoice_price",
+      "width":"30px",
+	  "align":"right",
+      "name":"Invoice Price"
+    }
+  ]
+}

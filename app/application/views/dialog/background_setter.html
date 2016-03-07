@@ -1,0 +1,52 @@
+<script type="text/javascript">
+    /* global App */
+    App.page_dialog_background_setter={
+	init:function(){
+	    this.node.window({
+		title: 'Фоновое изображение',
+		closable:true,
+		collapsible:true,
+		width: 350,
+		height: 'auto',
+		onClose: function () {
+		    App.page_dialog_background_setter.handler.notify('close');
+		    delete App.page_dialog_background_setter;
+		}
+	    });
+	},
+	setBg:function(input){
+	    if (input.files && input.files[0]) {
+		var reader = new FileReader();
+		reader.onload = function (e) {
+		    try{
+                        var suffix=App.acomp?App.acomp.company_id:0;
+			localStorage.setItem('isell_bg'+suffix,e.target.result);
+			App.loadBg();
+		    }
+		    catch(e){
+			alert("Не удалось сохранить файл! Возможно слишком большой размер.\n"+e);
+		    }
+		};
+		reader.readAsDataURL(input.files[0]);
+	    }
+	},
+	removeBg:function(){
+	    localStorage.removeItem('isell_bg'+(App.acomp?App.acomp.company_id:0));
+	    $("body").css('background', '');
+	},
+	clearLs:function(){
+	    localStorage.clear();
+	}
+    };
+</script>
+<p style="padding: 10px;">
+    <img src="img/personalize-icon.png" style="float:left;width:110px;height:auto;margin: 2px">
+    Загрузите изображение заднего фона в формате .jpeg, .png или .gif<br><br>
+    <input type="file" id="pdbackground_setter" style="display: none;" onchange="App.page_dialog_background_setter.setBg(this)">
+    <button onclick="$('#pdbackground_setter').click()"><img src="img/down.png" style="transform: rotate(180deg);">Загрузить изображение</button>
+<div style="clear: both;text-align: center;margin-top: 40px;">
+	<button type="button" onclick="App.page_dialog_background_setter.node.window('close')"><img src="img/apply24.png" style="vertical-align: middle"> Ок</button>
+	<button onclick="App.page_dialog_background_setter.removeBg()"><img src="img/delete.png" style="vertical-align: middle"> Удалить фон</button>
+	<button onclick="App.page_dialog_background_setter.clearLs()"><img src="img/truncate.png" style="vertical-align: middle"> Очистить память</button>
+    </div>
+</p>

@@ -1,0 +1,50 @@
+<script type="text/javascript">
+    /*global App */
+    App.page_stock_calc_min = {
+	parsed:true,
+	init: function () {
+	    this.node.window({
+		title: 'Расчет минимумов',
+		width: 550,
+                top:50,
+		height: 'auto',
+		shadow:false,
+		onClose:function(){
+                    delete App.page_stock_calc_min;
+		}
+	    });
+	    this.node.window('hcenter');
+	    this.node.window('window').css('position','fixed');
+	    $("#stock_calc_min_label").html(this.data.parent_label||"Все");
+	    App.setupForm("#page_stock_calc_min_frm",{},"use_inp_values");
+	},
+	submit:function(e){
+	    e.preventDefault();
+	    var fvalue=App.collectForm("#page_stock_calc_min_frm");
+	    if( fvalue.ratio>=0.5 ){
+		fvalue.ratio=fvalue.ratio*1;
+		this.handler.notify('submit',fvalue);
+	    } else {
+		alert("Коэффициент должен быть числом больше 0,5");
+	    }
+	}
+    };
+</script>
+<form id="page_stock_calc_min_frm" onsubmit="App.page_stock_calc_min.submit(event)">
+    <img src="img/calc.png" style="float:left" /> 
+    <p style="padding: 5px">
+    <big>Расчет минимальных остатков в категории "<b id="stock_calc_min_label"></b>"</big><br>
+	Формула расчета минимальных остатков.<br>
+	Минимальный остаток = Коэффициент * Продано за период;
+    </p>
+    <select name="period" title="Период продаж">
+	<option value="30">30 дней</option>
+	<option value="60">60 дней</option>
+	<option value="90" selected="selected">90 дней</option>
+    </select>
+    <input name="ratio" title="Коэффициент" value="1">
+    <div style="text-align: center;margin-top: 15px;">
+	<button type="submit"><img src="img/calc.png" style="width:24px;height: 24px;" /> Рассчитать</button>
+	<button type="button" onclick="App.page_stock_calc_min.node.window('close')"><img src="img/close24.png" /> Закрыть</button>
+    </div>
+</form>

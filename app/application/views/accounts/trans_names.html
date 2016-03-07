@@ -1,0 +1,129 @@
+<script type="text/javascript">
+    /* global App */
+    Tnames = App.page_accounts_trans_names = {
+	init: function () {
+	    this.node.window({
+		title: 'Редактирование типа проводки',
+		width: 350,
+		height: 'auto',
+		modal:true,
+		onClose: function(){
+		    Tnames.handler.notify('close',App.page_accounts_trans_names.data);
+		    Tnames.node.window('destroy');
+		    Tnames.node.remove();
+		    delete App.page_accounts_trans_names,Tnames;
+		}
+	    });
+	    App.setupForm('#Tnames_frm',this.data);
+	},
+	initAfter:function(){
+	    if( this.data.trans_type=='0_0' ){
+		Tnames.create();
+	    }
+	},
+	formChanged:function(field,value,title){
+	    if( this.suppressUpdate ){
+		return;
+	    }
+	    if( this.data.trans_type==='0_0' ){
+		this.checkNewModified();
+		return;
+	    }
+	    $.post(App.uri("AccountsData","transNameUpdate",this.data.trans_type,field,value),function(ok){
+		if(ok*1){
+		    App.flash("Сохранено: "+title+" "+value);
+		    if( field==='acc_debit_code' ){
+			var parts=Tnames.data.trans_type.split('_');
+			Tnames.data.trans_type=value+'_'+parts[1];
+		    }
+		    if( field==='acc_credit_code' ){
+			var parts=Tnames.data.trans_type.split('_');
+			Tnames.data.trans_type=parts[0]+'_'+value;
+		    }
+		} else {
+		    App.flash("Несохранено: "+title);
+		}
+	    });
+	},
+	checkNewModified:function(){
+	    var debit_code=$("#Tnames_acc_debit_code").textbox("getValue");
+	    var credit_code=$("#Tnames_acc_credit_code").textbox("getValue");
+	    if( debit_code && credit_code ){
+		$.post("AccountsData/transNameCreate/"+debit_code+'/'+credit_code,function(ok){
+		    if( ok*1 ){
+			Tnames.data.trans_type=debit_code+'_'+credit_code;
+			$("#Tnames_user_level").combobox('enable',true);
+			$("#Tnames_trans_name").textbox('enable',true);
+			$("#Tnames_ok").prop('disabled',false);
+			alert("Тип проводки добавлен. \nВведите название");
+			$("#Tnames_trans_name").textbox('textbox').select();
+		    } else {
+			alert("Добавление типа проводки не удалось!\nПроверьте правильность счетов дебит и кредита.")
+		    }
+		});
+	    }
+	},
+	showTree:function( field ){
+	    App.loadWindow('page/accounts/acc_tree',{}).progress(function(status,data){
+		if( status==='select' ){
+		    $("#Tnames_"+field).textbox('setValue',data.acc_code);
+		}
+	    });
+	},
+	create:function(){
+	    this.data={
+		trans_type:'0_0',
+		acc_debit_code:'',
+		acc_credit_code:'',
+		user_level:3,
+		trans_name:''
+	    };
+	    this.suppressUpdate=true;
+	    $("#Tnames_frm").form('load',this.data);
+	    $("#Tnames_user_level").combobox('disable',true);
+	    $("#Tnames_trans_name").textbox('disable',true);
+	    $("#Tnames_ok").prop('disabled',true);
+	    this.suppressUpdate=false;
+	    $("#Tnames_acc_debit_code").textbox('textbox').focus();
+	}
+    };
+</script>
+<div style="display: table-cell;vertical-align: top;">
+    <form id="Tnames_frm">
+	<input class="easyui-textbox" id="Tnames_acc_debit_code" name="acc_debit_code" title="Дебет" data-options="
+	       icons: [{
+		    iconCls:'icon-settings16',
+		    handler: function(e){
+			Tnames.showTree('acc_debit_code');
+		    }
+		}],
+		required:true,
+		onChange:function(newVal){Tnames.formChanged('acc_debit_code',newVal,'Дебет');}" />
+	<input class="easyui-textbox" id="Tnames_acc_credit_code" name="acc_credit_code" title="Кредит" data-options="
+	       icons: [{
+		    iconCls:'icon-settings16',
+		    handler: function(e){
+			Tnames.showTree('acc_credit_code');
+		    }
+		}],
+		required:true,
+		onChange:function(newVal){Tnames.formChanged('acc_credit_code',newVal,'Кредит');}" />
+	<select class="easyui-combobox" id="Tnames_user_level" name="user_level" title="Доступ" data-options="
+		panelHeight:'auto',
+		editable:false,
+		required:true,
+		onChange:function(newVal){Tnames.formChanged('user_level',newVal,'Доступ');}">
+	    <option value="2">Менеджер</option>
+	    <option value="3">Бухгалтер</option>
+	    <option value="4">Администратор</option>
+	</select>
+	<input class="easyui-textbox" name="trans_name" id="Tnames_trans_name" title="Название" data-options="
+		required:true,
+		multiline:true,
+		height:50,
+		onChange:function(newVal){Tnames.formChanged('trans_name',newVal,'Название');}" />
+    </form>
+    <div style="text-align: center;margin: 5px;">
+	<button onclick="Tnames.node.window('close')" id="Tnames_ok"><img src="img/apply24.png"> Ок</button>
+    </div>
+</div>

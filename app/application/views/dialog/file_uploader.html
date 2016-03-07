@@ -1,0 +1,32 @@
+<script>
+    dojo.require("dijit.form.Button");
+    function beforeInit() {
+    }
+//var callback;
+    function executeCallback() {
+	if (window.callback)
+	    window.callback();
+    }
+    function msg(m) {
+	dojo.byId('status').innerHTML = m.replace('\n', '<br>');
+    }
+</script>
+<iframe src='' name="tar" frameborder="0" width="0" height="0" onload="executeCallback()"></iframe>
+<form enctype="multipart/form-data" method="post" target="tar" action="./?<?php echo $_SERVER['QUERY_STRING']?>" onsubmit="msg('Файл выгружается на сервер...')">
+    <table width="100%" border="0">
+	<tr>
+	    <td style="border:double 5px #69F;font-weight:bold;" id="status" align="center">Выберите файл для загрузки</td>
+	</tr>
+	<tr>
+	    <td><fieldset>
+		    <legend>Файл данных</legend>
+		    <input type="file" name="Filedata" id="Filedata" />
+		</fieldset></td>
+	</tr>
+	<tr>
+	    <td align="center"><label>
+		    <button dojoType="dijit.form.Button" type="submit">Отправить</button>
+		</label></td>
+	</tr>
+    </table>
+</form>

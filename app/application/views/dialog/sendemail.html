@@ -1,0 +1,76 @@
+<script>
+    function fillForm(form_id, fvalue) {
+        var form = dojo.byId(form_id);
+        for (i in form.elements) {
+            if (form.elements[i].type == 'checkbox')
+                form.elements[i].checked = fvalue[form.elements[i].name] ? 'checked' : '';
+            else
+                form.elements[i].value = fvalue[form.elements[i].name];
+        }
+    }
+    function collectForm(form_id) {
+        var form = dojo.byId(form_id);
+        for (i in form.elements) {
+            if (form.elements[i].type == 'checkbox')
+                fvalue[form.elements[i].name] = form.elements[i].checked ? '1' : '0';
+            else
+                fvalue[form.elements[i].name] = form.elements[i].value;
+        }
+        return fvalue;
+    }
+    function beforeInit() {
+        fvalue.send_file = 1;
+        if (fvalue.file_name) {
+            dojo.byId('file_link').innerHTML = fvalue.file_name;
+            //dojo.byId('file_link').href=fvalue.file_url.replace(/\$/gi,'&');
+        }
+        fillForm('PopupForm', fvalue);
+        dojo.byId('sendbutton').focus();
+    }
+    function validate() {
+        fvalue = collectForm('PopupForm');
+        submit(fvalue);
+        return false;
+    }
+</script>
+<form id="PopupForm" enctype="multipart/form-data" action="" method="post" onsubmit="return validate()">
+<input type="hidden" name="copy" id="copy" value="1">
+<input type="hidden" name="file_name" id="file_name" value="">
+<table width="100%" border="0">
+        <tr>
+            <td align="right" width="50">
+                Получатель:
+            </td>
+            <td>
+                <input type="email" multiple="multiple"  name="to" style="width:99%;"> 
+            </td>
+        </tr>
+        <tr>
+            <td align="right">
+                Тема: 
+            </td>
+            <td>
+                <input type="text" name="subject" style="width:99%;">
+            </td>
+        </tr>
+        <tr>
+            <td align="right">
+                Файл:
+            </td>
+            <td>
+                <input type="checkbox" name="send_file" value="ok"><div style="display:inline-block" id="file_link"></div>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2" align="right">
+                <textarea name="body" style="width:99%" rows="4"></textarea>
+            </td>
+        </tr>
+       <tr>
+            <td align="center" colspan="2">
+		<button type="submit" data-dojo-type="dijit/form/Button" id="sendbutton" autofocus="autofocus"><img src="img/email.png"> Отправить</button>
+            	<button type="submit" data-dojo-type="dijit/form/Button" onclick="document.getElementById('copy').value=0">Отправить Без Копии</button>
+            </td>
+        </tr>
+    </table>
+</form>

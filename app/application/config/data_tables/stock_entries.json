@@ -1,0 +1,50 @@
+{
+"table_name":"Список склада",
+"multiselect":1,
+	"toolnames":["add","delete","upload","download","print"],
+"hasupload":1,
+"columns":[
+  {
+	"field":"parent_id",
+	"name":"Кат.",
+	"type":"number"
+  },
+  {
+	"field":"product_wrn_quantity",
+	"name":"Мин.",
+	"type":"number",
+	"readonly":1
+  },
+  {
+  	"field":"product_code",
+	"name":"Артикул",
+	"is_key":"1",
+	"type":"string",
+	"readonly":1
+  },
+  {
+	"field":"product_name",
+	"name":"Название продукта",
+	"type":"string",
+	"readonly":1
+  },
+  {
+	"field":"product_quantity",
+	"name":"Кол-во",
+	"type":"number",
+	"readonly":1
+  },
+  {
+	"field":"vat_quantity",
+	"name":"VAT",
+	"type":"number",
+	"readonly":1
+  },
+  {
+	"field":"self_price",
+	"name":"Себ",
+	"type":"number",
+	"readonly":1
+  }
+]
+}

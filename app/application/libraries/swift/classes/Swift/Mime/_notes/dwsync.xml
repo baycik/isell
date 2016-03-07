@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<dwsync>
+<file name="Attachment.php" server="91.205.217.71//vat/" local="129701016000000000" remote="129701016000000000" />
+<file name="CharsetObserver.php" server="91.205.217.71//vat/" local="129701016000000000" remote="129701016000000000" />
+<file name="ContentEncoder.php" server="91.205.217.71//vat/" local="129701016000000000" remote="129701016000000000" />
+<file name="EmbeddedFile.php" server="91.205.217.71//vat/" local="129701016000000000" remote="129701016000000000" />
+<file name="EncodingObserver.php" server="91.205.217.71//vat/" local="129701016000000000" remote="129701016000000000" />
+<file name="Grammar.php" server="91.205.217.71//vat/" local="129701016000000000" remote="129701016000000000" />
+<file name="Header.php" server="91.205.217.71//vat/" local="129701016000000000" remote="129701016000000000" />
+<file name="HeaderEncoder.php" server="91.205.217.71//vat/" local="129701016000000000" remote="129701016000000000" />
+<file name="HeaderFactory.php" server="91.205.217.71//vat/" local="129701016000000000" remote="129701016000000000" />
+<file name="HeaderSet.php" server="91.205.217.71//vat/" local="129701016000000000" remote="129701016000000000" />
+<file name="Message.php" server="91.205.217.71//vat/" local="129701016000000000" remote="129701016000000000" />
+<file name="MimeEntity.php" server="91.205.217.71//vat/" local="129701016000000000" remote="129701016000000000" />
+<file name="MimePart.php" server="91.205.217.71//vat/" local="129701016000000000" remote="129701016000000000" />
+<file name="ParameterizedHeader.php" server="91.205.217.71//vat/" local="129701016000000000" remote="129701016000000000" />
+<file name="SimpleHeaderFactory.php" server="91.205.217.71//vat/" local="129701016000000000" remote="129701016000000000" />
+<file name="SimpleHeaderSet.php" server="91.205.217.71//vat/" local="129701016000000000" remote="129701016000000000" />
+<file name="SimpleMessage.php" server="91.205.217.71//vat/" local="129701016000000000" remote="129701016000000000" />
+<file name="SimpleMimeEntity.php" server="91.205.217.71//vat/" local="129701016000000000" remote="129701016000000000" />
+</dwsync>

@@ -1,0 +1,195 @@
+﻿<script language="javascript">
+require(["dojo/dom", "dijit/registry", "dojo/on", "dojo/query"],
+function(dom, registry, on, query) {
+    StockJs.checkout.barcodeEntered = function() {
+        var request = {
+            mod: 'Stock',
+            rq: 'CheckoutEntryAdd',
+            checkout_id: StockJs.checkout.selected_checkout_id
+        };
+        var barcode = dom.byId('barcode_field').value;
+        request.barcode = barcode;
+        Connector.addRequest(request, function() {
+            StockJs.checkout.loadCheckoutEntries();
+        });
+        dom.byId('barcode_field').value = '';
+    };
+    StockJs.checkout.loadCheckoutEntries = function(checkout_id) {
+        dom.byId('barcode_field').disabled = (checkout_id == 0);
+        if (checkout_id != undefined)
+            StockJs.checkout.selected_checkout_id = checkout_id;
+        if (StockJs.checkout.selected_checkout_id == undefined)
+            return;
+        dom.byId('barcode_field').focus();
+        Connector.addRequest({
+            mod: 'Stock',
+            rq: 'CheckoutEntryFetch',
+            checkout_id: StockJs.checkout.selected_checkout_id
+        }, function(resp) {
+            dom.byId('stock_co_number').innerHTML = resp.count;
+            Acc.renderTpl("stock_checkout_list", resp);
+            if (resp.entries.length) {
+                /*
+
+                if( !parseInt(resp.entries[0].product_quantity)>0 ){
+                        //alert("ВВЕДИТЕ КОЛЛИЧЕСТВО!!!");
+                        dom.byId('barcode_field').disabled=true;
+                }
+                else
+                        dom.byId('barcode_field').disabled=false;
+                */
+                dom.byId('barcode_field').focus();
+            }
+        });
+    }
+    StockJs.checkout.entryChanged = function(input) {
+        var checkout_entry_id = input.id.split('_')[1];
+        if (input.id.split('_')[0] == 'stockChekoutDecr') {
+            var field = 'descr';
+        } else {
+            var field = 'qty';
+        }
+        var value = input.value;
+        Connector.addRequest({
+            mod: 'Stock',
+            rq: 'CheckoutEntryUpdate',
+            checkout_entry_id: checkout_entry_id,
+            value: value,
+            field: field
+        }, function() {
+            StockJs.checkout.loadCheckoutEntries();
+        });
+    }
+    StockJs.checkout.entryChangedCode = function(code_input) {
+        var checkout_entry_id = code_input.id.split('_')[1];
+        var product_code = code_input.value;
+        Connector.addRequest({
+            mod: 'Stock',
+            rq: 'CheckoutEntryUpdateCode',
+            checkout_entry_id: checkout_entry_id,
+            product_code: product_code
+        }, function() {
+            StockJs.checkout.loadCheckoutEntries();
+        });
+    }
+    StockJs.checkout.entryDelete = function(checkout_entry_id) {
+        if (confirm('DELETE ENTRY?')) {
+            Connector.addRequest({
+                mod: 'Stock',
+                rq: 'CheckoutEntryDelete',
+                checkout_entry_id: checkout_entry_id
+            }, function() {
+                StockJs.checkout.loadCheckoutEntries();
+            });
+        }
+    }
+
+    StockJs.checkout.setCheckoutName = function(name) {
+        dom.byId('stock_co_name').innerHTML = name;
+    }
+    StockJs.checkout.checkoutDelete = function(checkout_id) {
+        if (confirm('DELETE ?')) {
+            Connector.addRequest({
+                mod: 'Stock',
+                rq: 'CheckoutDelete',
+                checkout_id: checkout_id
+            }, function() {
+                StockJs.checkout.loadCheckouts();
+                StockJs.checkout.loadCheckoutEntries(0);
+            });
+        }
+    }
+    StockJs.checkout.checkoutAdd = function() {
+        var name = prompt('Name?') || '';
+        Connector.addRequest({
+            mod: 'Stock',
+            rq: 'CheckoutAdd',
+            name: name
+        }, function(co_id) {
+            StockJs.checkout.loadCheckouts();
+            //StockJs.checkout.loadCheckoutEntries(co_id);
+        })
+    }
+
+
+    StockJs.checkout.loadCheckouts = function() {
+        Connector.addRequest({
+            mod: 'Stock',
+            rq: 'CheckoutFetch'
+        }, function(resp) {
+            Acc.renderTpl('stock_checkouts', resp);
+        });
+    }
+    StockJs.checkout.loadCheckouts();
+});
+</script>
+<div style="text-align: left;">
+    <div id="stock_checkouts" class="hidden" style="display: inline-block;width:400px;border-right: 1px solid gray">
+        <!--{%for checkout in checkouts%}-->
+        <div class="lime_grad" style="display: inline-block;margin:3px;padding: 3px;text-align: left;font-family: 'Trebuchet MS';">
+            <a href="javascript:StockJs.checkout.loadCheckoutEntries('{{checkout.checkout_id}}');StockJs.checkout.setCheckoutName('{{checkout.date|default:\'\'}} {{checkout.description|default:\'\'}}')"
+               style="color:white">
+                <b>{{checkout.date|default:''}}</b> {{checkout.description|default:''}}
+            </a>
+            <img src="img/delete.png" onclick="StockJs.checkout.checkoutDelete('{{checkout.checkout_id}}')" width="16" height="16" style="vertical-align: middle">
+        </div>
+        <!--{%endfor%}-->
+        <img src="img/edit_add.png" onclick="StockJs.checkout.checkoutAdd()" style="vertical-align: middle">
+    </div>
+    <span style="font-size: 20px;" id="stock_co_name">----</span> <span id="stock_co_number" style="font-size: 20px;color:green"></span>
+    <button onclick="StockJs.checkout.loadCheckoutEntries();">Обновить</button> 
+</div>
+<hr size="1">
+
+<input type="text" 
+       style="font-size: 30px;color:green;text-align: center;background: #afa"
+       disabled="disabled"
+       id="barcode_field" 
+       onkeypress="if (event.keyCode == 13)StockJs.checkout.barcodeEntered()" />
+<div id="stock_checkout_list" style="width:800px;" class="hidden">
+    <!--{%for entry in entries%}-->
+    <!--{%ifequal forloop.counter '1'%}-->
+    <div style="zoom:1.5;-moz-transform: scale(1.5);margin:15px;background-color: #ff0;">
+        <!--{%else%}-->
+        <div>
+            <!--{%endifequal%}-->
+            <div style="display: inline-block;margin:3px;padding: 3px;text-align: left;font-family: 'Trebuchet MS';" class="light_grad">
+                <img src="img/delete.png" onclick="StockJs.checkout.entryDelete('{{entry.checkout_entry_id}}')">
+                <div style="width:150px;display: inline-block;">
+                    <div title="Штрихкод" style="font-size: 15px;color:#666">{{entry.product_barcode|default:''}}</div>
+                    <div title="Артикул" style="font-size: 22px;font-weight: bold;color:#333">
+                        <input type="text"
+                               value="{{entry.product_code|default:''}}"
+                               style="font-size: 22px;font-weight: bold;color:#333;width: 110px"
+                               onchange="StockJs.checkout.entryChangedCode(this)"
+                               onfocus="this.select()"
+                               id="stockChekoutCode_{{entry.checkout_entry_id}}" />
+
+                    </div>
+                </div>
+                <div style="width:400px;display: inline-block;">
+                    <div>{{entry.cstamp|default:''}}
+                        <input type="text" 
+                               id="stockChekoutDecr_{{entry.checkout_entry_id}}"
+                               style="width:270px;background-color: #eee" 
+                               onchange="StockJs.checkout.entryChanged(this)"
+                               value="{{entry.description|default:''}}"
+                               ></div>
+                    <div style="font-size: 25px;color:blue">
+                        {{entry.product_name|default:''}}
+                    </div>
+                </div>
+                <div style="width:100px;display: inline-block;">
+                    <input type="text"
+                           value="{{entry.product_quantity|default:''}}"
+                           style="font-size: 25px;color:green;width:80px;text-align: right"
+                           onchange="StockJs.checkout.entryChanged(this)"
+                           onfocus="this.select()"
+                           id="stockChekoutQty_{{entry.checkout_entry_id}}" />
+                </div>
+            </div>
+        </div>
+        <!--{%endfor%}-->
+    </div>
+</div>
+

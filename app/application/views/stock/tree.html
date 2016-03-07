@@ -1,0 +1,166 @@
+<script>
+    /*global App*/
+    Stree = App.page_stock_tree = {
+	properties: {
+	    title: 'Дерево категорий склада',
+	    width: 300,
+	    height: 440,
+            top:50,
+	    modal: true,
+	    onClose: function () {
+		Stree.handler.notify('close', Stree.data);
+		Stree.node.window('destroy');
+		Stree.node.remove();
+		delete App.page_stock_tree, Stree;
+	    }
+	},
+	init: function () {
+	    if (!this.data.inline) {
+		this.node.window(Stree.properties);
+	    }
+	    if( this.data.clickselect ){
+		this.node.find('button.ok').hide();
+	    }
+	},
+	close:function(){
+	    if (!this.data.inline) {
+		this.node.window('close');
+	    }
+	},
+	enableButtons:function( leaf ){
+	    Stree.node.find('.folder,.ok').prop('disabled',false);
+	},
+	disableButtons:function( leaf ){
+	    Stree.node.find('.folder,.ok').prop('disabled',true);
+	},
+	click:function(node){
+	    if( node.state==='closed' ) {
+		$(this).tree('expand',node.target);
+		Stree.enableButtons(0);
+	    } else {
+		Stree.enableButtons(1);
+	    }
+	    if( Stree.data.clickselect ){
+		Stree.selectTree();
+	    }
+	},
+	selectTree: function () {
+	    var branch=$('#Stree_tree').tree('getSelected');
+	    Stree.handler.notify('select', branch);
+	},
+	unselectTree:function(){
+	    this.node.find('.tree-node-selected').removeClass('tree-node-selected');
+	},
+	reset:function(){
+	    this.unselectTree();
+	    this.selectTree();
+	},
+	create:function( new_branch_type ){
+	    var parent_id=0;
+	    var selected=$('#Stree_tree').tree('getSelected');
+	    if( selected ){
+		parent_id=selected.is_leaf*1?selected.parent_id:selected.branch_id;
+	    }
+	    var parent_target=parent_id>0?$('#Stree_tree').tree('find', parent_id).target:null;
+	    var newlabel=prompt("Введите название категории",'Новая категория');
+	    if( newlabel ){
+		$.post('Stock/stockTreeCreate/'+App.uri(parent_id,newlabel),function(branch_id){
+		    $('#Stree_tree').tree('reload',parent_target);
+		});
+	    }
+	},
+	update:function(){
+	    var node=$('#Stree_tree').tree('getSelected');
+	    var newlabel=prompt("Введите новое название категории: "+node.label,node.label);
+	    if( newlabel && newlabel!==node.label ){
+		$.post('Stock/stockTreeUpdate/'+App.uri(node.branch_id,'label',newlabel),function(ok){
+		    if( ok*1 ){
+			App.flash("Сохранено: название папки");
+			$('#Stree_tree').tree('update', {target: node.target,text: newlabel});
+		    } else {
+			App.flash("Сохраненние не удалось: название папки");
+		    }
+		});
+	    }
+	},
+	drop:function(target,source,point){
+	    var target_node=$("#Stree_tree").tree('getNode',target);
+	    $.post('Stock/stockTreeUpdate/'+App.uri(source.branch_id,'parent_id',target_node.branch_id),function(ok){
+		if( ok*1 ){
+		    App.flash(source.label + " перемещен в " + target_node.label);
+		} else {
+		    App.flash("Перемещение не удалось");
+		}
+	    });
+	},
+	up:function(){
+	    if( confirm("Переместить выделенный элемент в корень дерева?") ){
+		var node=$('#Stree_tree').tree('getSelected');
+		$.post('Stock/stockTreeUpdate/'+App.uri(node.branch_id,'parent_id',0),function(ok){
+		    if( ok*1 ){
+			App.flash(node.label + " перемещен в корень");
+		    } else {
+			App.flash("Перемещение не удалось");
+		    }
+		});
+		Stree.reload();
+	    }
+	},
+	delete:function(){
+	    var node=$('#Stree_tree').tree('getSelected');
+	    if( node && confirm("Удалить выделенную категорию?\n( Товарные позиции удалены не будут )")){
+		$.post("Stock/stockTreeDelete/"+node.branch_id,function(ok){
+		    if( ok*1 ){
+			App.flash("Удалено: "+node.label);
+			$('#Stree_tree').tree('remove', node.target);
+			Stree.disableButtons();
+		    } else {
+			App.flash("Удаление не удалось!");
+		    }
+		});
+	    }
+	},
+	reload:function(){
+	    $('#Stree_tree').tree('reload');
+	    Stree.node.find('.ok,.folder').prop('disabled',true);
+	}
+    };
+</script>
+<div style="overflow: auto">
+    <button class="tiny_button" onclick="Stree.reset()" style="width:100%" title="Сбросить выделение">Все категории</button>
+    <ul class="easyui-tree" id="Stree_tree" data-options="
+	url:'Stock/branchFetch/',
+	method:'get',
+	loadFilter:function(data){
+	    for(var i in data){
+		data[i].id=data[i].branch_id;
+		data[i].text=data[i].label;
+		if( data[i].is_leaf*1 ){
+		    data[i].iconCls='icon-comp';
+		}
+	    }
+	    return data;
+	},
+	onSelect:Stree.click,
+	onDrop:Stree.drop,
+	onDragOver:function(target,source){
+	    return !$(this).tree('isLeaf',target);
+	},
+	onDblClick:function(){
+	    Stree.selectTree();
+	    Stree.close();
+	},
+	animate:true,
+	dnd:true">
+    </ul>
+</div>
+<div style="text-align: left;padding: 2px;" class="tiny_button">
+    <button class="tiny_button" onclick="Stree.create('folder')" title="Добавить папку"><img src="img/FolderAdd-24.png"></button>
+    <button class="folder tiny_button" disabled="disabled" onclick="Stree.update()" title="Редактировать"><img src="img/Edit-24.png"></button>
+    <button class="folder tiny_button" disabled="disabled" onclick="Stree.delete()" title="Удалить"><img src="img/delete.png"></button>
+    <button class="folder tiny_button" disabled="disabled" onclick="Stree.up()" title="Переместить в корень"><img src="img/up.png"></button>
+    <button class="tiny_button" onclick="Stree.reload()" title="Обновить"><img src="img/reload.png"></button>
+</div>
+<div style="text-align: center;margin-top: 5px;">
+    <button class="ok" disabled="disabled" onclick="Stree.selectTree();Stree.close();"><img src="img/apply24.png"> Выбрать</button>
+</div>

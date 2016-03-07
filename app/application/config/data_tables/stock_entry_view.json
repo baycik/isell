@@ -1,0 +1,63 @@
+{
+"table_name":"Список склада",
+"multiselect":1,
+"toolnames":["add","delete","download","print"],
+"columns":[
+  {
+	"field":"parent_id",
+	"name":"Кат.",
+	"type":"number",
+	"readonly":0
+  },
+  {
+	"field":"3m",
+	"name":"3м",
+	"type":"number",
+	"readonly":1
+  },
+  {
+	"field":"1m",
+	"name":"1м",
+	"type":"number",
+	"readonly":1
+  },
+  {
+	"field":"product_wrn_quantity",
+	"name":"Мин.",
+	"type":"number",
+	"readonly":0
+  },
+  {
+  	"field":"product_code",
+	"name":"Артикул",
+	"is_key":"1",
+	"type":"string",
+	"readonly":1
+  },
+  {
+	"field":"ru",
+	"name":"Название продукта",
+	"type":"string",
+	"readonly":1
+  },
+  {
+	"field":"product_quantity",
+	"name":"Кол-во",
+	"type":"number",
+	"readonly":1
+  },
+  {
+	"field":"vat_quantity",
+	"name":"VAT",
+	"type":"number",
+	"readonly":0
+  },
+  {
+	"field":"self_price",
+	"name":"SELF",
+	"type":"number",
+	"hidden":1
+  }
+
+]
+}

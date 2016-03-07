@@ -1,0 +1,157 @@
+<script type="text/javascript">
+document.title="Поиск в гос. реестре предприятий";
+var EDR={};
+var Connector=opener.Connector;
+require(["dojo/ready","dojo/dom","dojo/on","dijit/registry","dojo/domReady!"],
+function(ready,dom,on,registry){
+	EDR.sendQuery=function(){
+		registry.byId("standBy").show();
+		var request=registry.byId('requestEDRForm').get('value');
+		request.mod='Utils';
+		request.rq='StartEDRSession';
+		Connector.addRequest(request,function(resp){
+			registry.byId("standBy").hide();
+			dom.byId('captchaForm').style.display='block';
+			dom.byId('detailsForm').style.display='none';
+			dom.byId('EDRCaptcha').src='data:image/jpeg;base64,'+resp.img64;
+			registry.byId('captchaForm').set('value',resp);
+			registry.byId('captcha_num').set('value','');
+			registry.byId('captcha_num').focus();
+		});
+	}
+	EDR.confirmCaptcha=function(){
+		registry.byId("standBy").show();
+		var request=registry.byId('captchaForm').get('value');
+		request.mod='Utils';
+		request.rq='SearchEDR';
+		dom.byId('captchaForm').style.display='none';
+		Connector.addRequest(request,function(resp){
+			registry.byId("standBy").hide();
+			var details={};
+			if( resp && resp.length==5 ){
+				details.company_code=resp[0];
+				details.company_name=resp[1];
+				details.company_jaddress=capitalize(resp[2]);
+				details.company_director=capitalize(resp[3]);
+				details.company_phone=resp[4];
+				details.company_jaddress= condense( toabbr( details.company_jaddress ) );
+				
+				registry.byId('detailsForm').set('value',details);
+				registry.byId('queryPane').set('open',false);
+				registry.byId('resultPane').set('open',true);
+				dom.byId('detailsForm').style.display='block';
+			}
+			else{
+				alert("Предприятие отсутствует в реестре или ошибка чтения!");
+			}
+		});
+	}
+	EDR.applyDetails=function(e){
+		fvalue=registry.byId('detailsForm').get('value');
+		if( fvalue.usename!="use" )
+			fvalue.company_name=null;
+		if( fvalue.usejaddress!="use" )
+			fvalue.company_jaddress=null;
+		if( fvalue.usedirector!="use" )
+			fvalue.company_director=null;
+		if( fvalue.usephone!="use" )
+			fvalue.company_phone=null;
+		
+		window.callback( fvalue );
+		window.close();
+	}
+	function capitalize( str ){
+		return str.toLowerCase().replace(/^.|\s(\"|-)?\S|-\S/g, function(a) { return a.toUpperCase(); });
+	}
+	function toabbr( str ){
+		var arr=str.split(',').reverse();
+		var tmp=arr[0];
+		arr[0]=arr[1];
+		arr[1]=tmp;
+		return arr.join(",").replace("Будинок","буд.").replace("Місто","м.").replace("Вулиця","вул.").replace("Район","р-н.");
+	}
+	function condense( str ){
+		return str.replace(/^\s+|\s+$/g, "").replace(/\s\s/g," ").replace(/\s\s/g," ");
+	}
+	function init(){
+		registry.byId('company_code').set('value',fvalue.company_code);
+		registry.byId('company_code').focus();
+	}
+	ready( init );
+});
+</script>
+<style type="text/css">
+	td.label{
+		width:50px;
+		text-align: right;
+	}
+	.center{
+		margin-left: auto;
+		margin-right: auto;
+	}
+	body{
+		padding: 4px;
+	}
+</style>
+<div id="standBy" data-dojo-type="dojox/widget/Standby" data-dojo-props="target:'queryPane'"></div>
+<div data-dojo-type="dijit/TitlePane" id="queryPane" title="Запрос в ЕГРПОУ" style="width:370px" class="center">
+<form data-dojo-type="dijit/form/Form" id="requestEDRForm" onsubmit="EDR.sendQuery();return false;" action="#">
+	<input data-dojo-type="dijit/form/TextBox" type="hidden" name="type" value="2">
+	<table class="center">
+		<tr>
+			<td class="label">Код:</td>
+			<td><input data-dojo-type="dijit/form/TextBox" name="company_code" type="text" id="company_code"></td>
+		</tr>
+		<tr>
+			<td colspan="2" align="center"><button data-dojo-type="dijit/form/Button" type="submit">Послать Запрос</button></td>
+		</tr>
+	</table>
+</form>
+<form data-dojo-type="dijit/form/Form" id="captchaForm" onsubmit="EDR.confirmCaptcha();return false" action="#" style="display: none">
+	<input data-dojo-type="dijit/form/TextBox" type="hidden1" name="cookies">
+	<input data-dojo-type="dijit/form/TextBox" type="hidden1" name="reqid">
+	<table class="center">
+		<tr>
+			<td colspan="2" align="center"><img src="" id="EDRCaptcha"></td>
+		</tr>
+		<tr>
+			<td class="label">Код с картинки:</td>
+			<td><input data-dojo-type="dijit/form/TextBox" name="captcha" type="text" id="captcha_num"></td>
+		</tr>
+		<tr>
+			<td colspan="2" align="center"><button data-dojo-type="dijit/form/Button" type="submit">Подтвердить</button></td>
+		</tr>
+	</table>
+</form>
+</div>
+<div data-dojo-type="dijit/TitlePane" id="resultPane" data-dojo-props="open:false" title="Результаты запроса" style="width:370px" class="center">
+
+<form data-dojo-type="dijit/form/Form" id="detailsForm" onsubmit="EDR.applyDetails();return false" action="#">
+	<table class="center">
+		<tr>
+			<td class="label">Название:</td>
+			<td style="width:10px"><input data-dojo-type="dijit/form/CheckBox" type="checkbox" name="usename" value="use" checked="checked"></td>
+			<td><textarea data-dojo-type="dijit/form/Textarea" style="width: 260px" name="company_name"></textarea></td>
+		</tr>
+		<tr>
+			<td class="label">Адрес:</td>
+			<td><input data-dojo-type="dijit/form/CheckBox" type="checkbox" name="usejaddress" value="use" checked="checked"></td>
+			<td><textarea data-dojo-type="dijit/form/Textarea" style="width: 260px" name="company_jaddress"></textarea></td>
+		</tr>
+		<tr>
+			<td class="label">Директор:</td>
+			<td><input data-dojo-type="dijit/form/CheckBox" type="checkbox" name="usedirector" value="use" checked="checked"></td>
+			<td><input data-dojo-type="dijit/form/TextBox" style="width: 260px" type="text" name="company_director"></td>
+		</tr>
+		<tr>
+			<td class="label">Контакт:</td>
+			<td><input data-dojo-type="dijit/form/CheckBox" type="checkbox" name="usephone" value="use"></td>
+			<td><input data-dojo-type="dijit/form/TextBox" style="width: 260px" type="text" name="company_phone"></td>
+		</tr>
+		<tr>
+			<td colspan="3" align="center"><button data-dojo-type="dijit/form/Button" type="submit">Использовать Данные</button></td>
+		</tr>
+	</table>
+</form>
+</div>
+

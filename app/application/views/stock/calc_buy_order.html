@@ -1,0 +1,60 @@
+<script type="text/javascript">
+    /*global App */
+    App.page_stock_calc_buy_order = {
+	parsed:true,
+	init: function () {
+	    this.node.window({
+		title: 'Формирование заказа',
+		width: 550,
+                top:50,
+		height: 'auto',
+		shadow:false,
+		onClose:function(){
+                    delete App.page_stock_calc_buy_order;
+		}
+	    });
+	    this.node.window('hcenter');
+	    this.node.window('window').css('position','fixed');
+	    App.handler.progress(function(status,pcomp){
+                if( status==='passiveCompanySelected' ){
+		    $("#page_stock_calc_buy_order_pcomp").val(pcomp.label);
+                }
+            });
+	},
+	select_pcomp:function(){
+	    App.loadWindow('page/company/tree',{}).progress(function(status,comp){
+		if( status==='select' ){
+		    App.user.setPassiveCompany(comp);
+		}
+	    });
+	},
+	submit:function(e){
+	    e.preventDefault();
+	    if( !App.pcomp ){
+		alert("Выберите поставщика");
+		App.loadWindow('page/company/tree',{}).progress(function(status,comp){
+		    if( status==='select' ){
+			App.user.setPassiveCompany(comp);
+			App.page_stock_calc_buy_order.handler.notify('submit');
+		    }
+		});
+		return false;
+	    }
+	    this.handler.notify('submit');
+	}
+    };
+</script>
+<form id="page_stock_calc_min_frm" onsubmit="App.page_stock_calc_buy_order.submit(event)">
+    <img src="img/docnew.png" style="float:left" /> 
+    <p style="padding: 5px">
+    <big>Формирование заказа поставщику</big><br><br>
+	Формула расчета заказа.<br>
+	Заказ = Минимальный остаток - Текущий остаток;
+    </p>
+    Поставщик: <input id="page_stock_calc_buy_order_pcomp" value="не выбран" readonly="readonly" />
+    <button type="button" class="tiny_button" onclick="App.page_stock_calc_buy_order.select_pcomp()"><img src="img/settings.png"> Изменить</button>
+    <div style="text-align: center;margin-top: 25px;">
+	<button type="submit"><img src="img/docnew.png" style="width:24px;height: 24px;"> Сформировать</button>
+	<button type="button" onclick="App.page_stock_calc_buy_order.node.window('close')"><img src="img/close24.png" /> Закрыть</button>
+    </div>
+</form>

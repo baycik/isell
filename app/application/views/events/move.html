@@ -1,0 +1,30 @@
+<script type="text/javascript">
+    /* global App */
+    App.page_events_move = {
+	newdate:App.toIso(new Date()),
+	init: function () {
+	    this.node.window({
+		title: 'Перенести событие',
+		width: 330,
+		height: 'auto',
+		onClose: function () {
+		    App.page_events_move.handler.notify('close');
+		    delete App.page_events_move;
+		}
+	    });
+	    App.setupForm("#page_events_move_frm");
+	},
+	select:function(newdate){
+	    App.page_events_move.newdate=App.toIso(newdate);
+	},
+	move:function(mode){
+	    App.page_events_move.handler.notify('move',this.newdate,mode);
+	    this.node.window('close');
+	}
+    };
+</script>
+<div style="text-align: center">
+    <div class="easyui-calendar" style="width:280px;height:220px;display: inline-block;margin:15px;" data-options="onChange:App.page_events_move.select"></div>
+    <button type="button" onclick="App.page_events_move.move('one')"><img src="img/big_rightarrow.png" style="vertical-align: middle;width:24px; height: auto;"> Перенести</button>
+    <button type="button" onclick="App.page_events_move.move('all')"><img src="img/big_rightarrow.png" style="vertical-align: middle;width:24px; height: auto;"> Перенести всю группу</button>
+</div>

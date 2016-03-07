@@ -1,0 +1,375 @@
+<script type="text/javascript">
+    /* global App */
+    Leftovers=App.page_stock_leftovers={
+	init:function(){
+	    this.initTree();
+	    Leftovers.list.toggleFilter();
+	},
+	initTree:function(){
+	    App.loadModule('page/stock/tree',{inline:true,clickselect:true},'StreeInline',/(Stree|page_stock_tree)([^\w]|_)/g,"StreeInline$2").progress(function(status,branch){
+		if( status==='select' ){
+		    Leftovers.list.loadParent(branch?branch.branch_id:0,branch?branch.label:'Все');
+		}
+	    });
+	},
+        initAfter:function(){
+            this.list.checkHide();
+        },
+	focus:function(){
+	    Leftovers.list.reload();
+	},
+	list:{
+	    parent_id:0,
+	    parent_label:'Все',
+	    filterRules:{},
+	    currPage:1,
+	    loader:function( param, success, error ){
+		Leftovers.list.filterRules=param.filterRules;
+		Leftovers.list.currPage=param.page;
+		$.get("Stock/listFetch/"+App.uri(param.page,param.rows,Leftovers.list.parent_id), {filterRules: Leftovers.list.filterRules},function( xhr ){
+		    var resp=App.json(xhr);
+		    resp=Leftovers.list.calc.calcTable(resp);
+		    success(resp);
+		});
+	    },
+	    calc:{
+		calcTable:function( resp ){
+		    for(var i in resp.rows ){
+			resp.rows[i].m1=this.clear(resp.rows[i].m1);
+			resp.rows[i].m3=this.clear(resp.rows[i].m3);
+			resp.rows[i].product_spack=this.clear(resp.rows[i].product_spack);
+			resp.rows[i].product_bpack=this.clear(resp.rows[i].product_bpack);
+			resp.rows[i].product_quantity=this.clear(resp.rows[i].product_quantity);
+			resp.rows[i].product_wrn_quantity=this.clear(resp.rows[i].product_wrn_quantity);
+			resp.rows[i].product_weight=this.round(resp.rows[i].product_weight,5);
+			resp.rows[i].product_volume=this.round(resp.rows[i].product_volume,5);
+			resp.rows[i].self_price=this.round(resp.rows[i].self_price,2);
+			resp.rows[i].sell=this.round(resp.rows[i].sell,2);
+			resp.rows[i].buy=this.round(resp.rows[i].buy,2);
+		    }
+		    return resp;
+		},
+		clear:function(value){
+		    return value*1||'';
+		},
+		round:function(value,precision){
+		    return Number(value).toFixed(precision);
+		},
+		left:function(value,row){
+		    if( row.product_quantity*2<row.product_wrn_quantity ){
+			return 'background-color:#f9f';
+		    } 
+		    if( row.product_quantity<row.product_wrn_quantity ){
+			return 'background-color:#fcf';
+		    } 
+		},
+		m1:function(value,row){
+		    if( row.m1*1<row.m3*1 ){
+			return 'color:red';
+		    }
+		    return 'color:green';
+		}
+	    },
+            checkHide: function(){
+                if ( App.user.props.user_level>=3 ) {
+                    $('#stock_dg').datagrid('showColumn','sell');
+                    $('#stock_dg').datagrid('showColumn','buy');
+                    $('#stock_dg').datagrid('showColumn','curr_code');
+                    $('#stock_dg').datagrid('showColumn','self_price');
+                }
+                else {
+                    $('#stock_dg').datagrid('hideColumn','sell');
+                    $('#stock_dg').datagrid('hideColumn','buy');
+                    $('#stock_dg').datagrid('hideColumn','curr_code');
+                    $('#stock_dg').datagrid('hideColumn','self_price');
+                }	    
+            },
+	    reload:function(){
+		$("#stock_dg").datagrid('reload');
+	    },
+	    import:function(){
+		var config=[
+		    {name:'Код товара',field:'product_code',required:true},
+		    {name:'Название Рус.',field:'ru'},
+		    {name:'Название Укр.',field:'ua'},
+		    {name:'Название Анг.',field:'en'},
+		    {name:'Единица',field:'product_unit'},
+		    {name:'В коробке',field:'product_spack'},
+		    {name:'В ящике',field:'product_bpack'},
+		    {name:'Вес кг',field:'product_weight'},
+		    {name:'Объем м3',field:'product_volume'},
+		    {name:'Тамож. код',field:'product_uktzet'},
+		    {name:'Штрихкод',field:'barcode'},
+		    {name:'Партия',field:'party_label'},
+		    {name:'Тип',field:'analyse_type'},
+		    {name:'Группа',field:'analyse_group'},
+		    {name:'Класс',field:'analyse_class'},
+		    {name:'Раздел',field:'analyse_section'},
+		    {name:'Продажа',field:'sell'},
+		    {name:'Покупка',field:'buy'},
+		    {name:'Валюта',field:'curr_code'}		    
+		];
+		App.loadWindow('page/dialog/importer',{label:'склад',fields_to_import:config}).progress(function(status,fvalue,Importer){
+		    if( status==='submit' ){
+			fvalue.parent_id=Leftovers.list.parent_id;
+			$.post("Stock/import/",fvalue,function(ok){
+			    App.flash("Добавлено "+ok);
+			    Leftovers.list.reload();
+			    Importer.reload();
+			});
+		    }
+		});
+	    },
+	    out:function( out_type ){
+		var params={
+		    page:Leftovers.list.currPage,
+		    parent_id:Leftovers.list.parent_id,
+		    filterRules:Leftovers.list.filterRules,
+		    out_type:out_type
+		};
+		var url='StockView/stockViewGet/?'+$.param( params );
+		if( out_type==='.print' ){
+		    window.open(url,'print_tab');
+		}
+	    },
+            outfile:function( out_type ){
+		var params={
+		    page:1,
+		    parent_id:Leftovers.list.parent_id,
+		    filterRules:Leftovers.list.filterRules,
+		    out_type:out_type
+		};
+		var url='StockView/stockViewFileGet/?'+$.param( params );
+		location.href=url;
+	    },
+	    edit:function(index,field,value){
+		$("#stock_dg").datagrid('unselectAll');
+		$("#stock_dg").datagrid('selectRow',index);
+		var row=$("#stock_dg").datagrid('getSelected');
+		if( row ){
+		    row.focus=field;
+		    Leftovers.list.showProductCard(row);
+		}
+	    },
+	    create:function(){
+		var fvalue={
+		    parent_id:Leftovers.list.parent_id,
+		    parent_label:Leftovers.list.parent_label,
+		    product_code:''
+		};
+		Leftovers.list.showProductCard(fvalue);
+	    },
+	    showProductCard:function( fvalue ){
+		if( App.user.props.user_level<2 ){
+		    alert("Доступ ограничен");
+		    return;
+		}
+                fvalue.enablePrevnext=true;
+		App.loadWindow('page/stock/product_card',fvalue).progress(function(status,fvalue){
+		    if( status==='save' ){
+			Leftovers.list.reload();
+		    }
+		    if( status==='prev' ){
+			Leftovers.list.prev();
+		    }
+		    if( status==='next' ){
+			Leftovers.list.next();
+		    }
+		});
+	    },
+            prev:function(){
+                var selected = $("#stock_dg").datagrid('getSelected');
+                var index = $("#stock_dg").datagrid('getRowIndex', selected);
+                $("#stock_dg").datagrid('unselectRow',index);
+                if (selected && index>0) {
+                    $("#stock_dg").datagrid('selectRow', index - 1);
+                } else {
+                    var rows = $("#stock_dg").datagrid('getRows');
+                    $("#stock_dg").datagrid('selectRow', rows.length - 1);
+                }
+                var row = $("#stock_dg").datagrid('getSelected');
+                Leftovers.list.showProductCard(row);
+            },
+            next:function(){
+                var selected = $("#stock_dg").datagrid('getSelected');
+                var index = $("#stock_dg").datagrid('getRowIndex', selected);
+                $("#stock_dg").datagrid('unselectRow',index);
+                var rows = $("#stock_dg").datagrid('getRows');
+                if (selected && rows.length-1>index) {
+                    $("#stock_dg").datagrid('selectRow', index + 1);
+                } else {
+                    $("#stock_dg").datagrid('selectRow', 0);
+                }
+                var row = $("#stock_dg").datagrid('getSelected');
+                Leftovers.list.showProductCard(row);
+            },
+	    delete:function(){
+		var rows=$("#stock_dg").datagrid('getSelections');
+                var prod_codes=[];
+                for(var i=0;i<rows.length;i++){
+                    var row=rows[i];
+                    if( row && row.product_quantity>0 ){
+                        alert("Остаток '"+row.ru+"' должен быть нулевым");
+                        return;
+                    }
+                    prod_codes.push(row.product_code);
+                }
+		if( row && confirm("Удалить '"+prod_codes.join(' , ')+"' со списка склада?") ){
+		    $.post('Stock/productDelete/',{product_code:prod_codes},function(ok){
+			if( ok*1 ){
+			    App.flash("Товар удален: "+prod_codes.join(' , '));
+			    Leftovers.list.reload();
+			} else {
+			    App.flash("Товар не удален");
+			}
+		    });
+		}
+	    },
+            move:function(){
+		var rows=$("#stock_dg").datagrid('getSelections');
+                var prod_codes=[];
+                if( rows.length ){
+                    for(var i=0;i<rows.length;i++){
+                        prod_codes.push(rows[i].product_code);
+                    }
+                }
+                else{
+                    return;
+                }
+                App.loadWindow('page/stock/tree').progress(function(status,category){
+                    if( status==='select' ){
+                        $.post('Stock/productMove/',{product_code:prod_codes,parent_id:category.branch_id},function(ok){
+                            if( ok*1 ){
+                                App.flash("Товар перемещен в "+category.label+": "+prod_codes.join(' , '));
+                                Leftovers.list.reload();
+                            } else {
+                                App.flash("Товар не перемещен");
+                            }
+                        });
+                    }
+                });
+            },
+	    loadParent:function( parent_id,label ){
+		this.parent_id=parent_id;
+		this.parent_label=label;
+		$("#stock_cat_name").html(this.parent_label);
+		this.reload();
+	    },
+	    toggleFilter: function () {
+		if (this.filterEnabled) {
+		    $('#stock_dg').datagrid('disableFilter');
+		    this.filterEnabled = false;
+		}
+		else {
+		    $('#stock_dg').datagrid('enableFilter');
+		    this.filterEnabled = true;
+		}
+	    }
+	},
+	utils:{
+	    calc_min:function(){
+		App.loadWindow("page/stock/calc_min",{parent_label:Leftovers.list.parent_label}).progress(function(status, fvalue){
+		    if( status==='submit' ){
+			$.post("Utils/stockCalcMin/"+App.uri(Leftovers.list.parent_id,fvalue.period,fvalue.ratio),function(ok){
+			    if( ok*1 ){
+				Leftovers.list.reload();
+				App.flash("Минимумы расчитаны у "+ok+" товаров");
+			    } else {
+				App.flash("Минимумы не изменились");
+			    }
+			});
+		    }
+		});
+	    },
+	    calc_buy_order:function(){
+		App.loadWindow("page/stock/calc_buy_order",{parent_label:Leftovers.list.parent_label}).progress(function(status, fvalue){
+		    if( status==='submit' ){
+			if( !confirm('Сформировать заказ поставщику "'+App.pcomp.label+'" по категории "'+Leftovers.list.parent_label+'"?') ){
+			    return false;
+			}
+			$.post("Utils/stockCalcIncomeOrder/"+Leftovers.list.parent_id,{filterRules: Leftovers.list.filterRules},function(doc_id){
+			    if( doc_id*1 ){
+				App.flash("Заказ сформирован");
+				App.loadWindow('page/trade/document',{doc_id:doc_id});
+			    } else {
+				App.flash("Заказ не сформирован");
+			    }
+			});
+		    }
+		});
+	    }
+	}
+    };
+</script>
+<table style="min-width:500px">
+    <tr>
+	<td style="vertical-align: top">
+	    Категории товара
+	    <hr>
+	    <div id="StreeInline"></div>
+	    Инструменты
+	    <hr>
+	    <button style="width:100%;margin: 2px;text-align: left" onclick="Leftovers.utils.calc_min()"><img src="img/calc.png" style="width:24px;height: 24px;"> Рассчитать минимумы</button><br>
+	    <button style="width:100%;margin: 2px;text-align: left" onclick="Leftovers.utils.calc_buy_order()"><img src="img/docnew.png" style="width:24px;height: 24px;"> Сформировать заказ</button>
+	</td>
+	<td style="vertical-align: top">
+	    <div style="float: left;font-weight: bold;padding-top: 8px;">
+		<img src="img/table16.png" style="width:16px;height: 16px;"> Остатки в категории: "<span id="stock_cat_name">Все</span>"
+	    </div>
+	    <div style="text-align: right;padding-right: 5px;">
+		<span class="icon-24 icon-create" title="Добавить" onclick="Leftovers.list.create();"> </span>
+		<span class="icon-24 icon-change" title="Изменить" onclick="Leftovers.list.edit();"> </span>
+		<span class="icon-24 icon-delete" title="Удалить" onclick="Leftovers.list.delete();"> </span>
+		<span class="icon-24" style="background-image: url(img/big_rightarrow.png);background-repeat: no-repeat;background-size: 24px 24px;" title="Перенести в другую категорию" onclick="Leftovers.list.move();"> </span>
+		<span class="icon-24 icon-import" title="Импорт" onclick="Leftovers.list.import();"> </span>
+		<span class="icon-24 icon-tablefilter" title="Фильтр таблицы" onclick="Leftovers.list.toggleFilter()"> </span>
+		<span class="icon-24 icon-refresh" title="Обновить" onclick="Leftovers.list.reload()"> </span>
+		<span class="icon-24" style="background-image: url(img/file_download.png);background-repeat: no-repeat" title="Скачать таблицу" onclick="Leftovers.list.outfile('.xlsx');"> </span>
+		<span class="icon-24 icon-print" title="Печать" onclick="Leftovers.list.out('.print')"> </span>
+	    </div>
+	    <table class="easyui-datagrid" id="stock_dg" style="width:780px" data-options="
+		    loader:Leftovers.list.loader,
+		    pagination:true,
+		    pageSize:30,
+		    pageList:[30,60,120,600],
+		    singleSelect:false,
+		    autoRowHeight:false,
+		    remoteFilter:true,
+		    onSelect:function(){$('#stock_dg').datagrid('resize');},
+		    onDblClickCell:Leftovers.list.edit">
+		<thead data-options="frozen:true">
+		    <tr>
+			<th data-options="field:'parent_label',width:120">Категория</th>
+			<th data-options="field:'product_code',width:80">Код</th>
+		    </tr>
+		</thead>
+		<thead>
+		    <tr>
+			<th data-options="field:'ru',width:330">Название</th>
+			<th data-options="field:'product_quantity',width:70,align:'right',styler:Leftovers.list.calc.left">Остаток</th>
+			<th data-options="field:'product_unit',width:30,align:'left'">Ед</th>
+			<th data-options="field:'product_wrn_quantity',width:50,align:'right'">Мин</th>
+			<th data-options="field:'m1',width:50,align:'right',styler:Leftovers.list.calc.m1">1м</th>
+			<th data-options="field:'m3',width:50,align:'right'">3м</th>
+			<th data-options="field:'self_price',width:50,align:'right',hidden:true">Учетная ц.</th>
+			<th data-options="field:'sell',width:50,align:'right',hidden:true">Продажа</th>
+			<th data-options="field:'buy',width:50,align:'right',hidden:true">Покупка</th>
+			<th data-options="field:'curr_code',width:50,align:'right',hidden:true">Валюта</th>
+			<th data-options="field:'product_spack',width:50,align:'right'">М. упак</th>
+			<th data-options="field:'product_bpack',width:50,align:'right',">Б. упак</th>
+			<th data-options="field:'product_weight',width:70,align:'right'">Вес кг</th>
+			<th data-options="field:'product_volume',width:70,align:'right'">Объем м3</th>
+			<th data-options="field:'party_label',width:100">Партия</th>
+			<th data-options="field:'product_uktzet',width:100,align:'right'">Таможенный код</th>
+			<th data-options="field:'barcode',width:100,align:'right'">Штрихкод</th>
+
+                        <th data-options="field:'analyse_type',width:100">Тип</th>
+			<th data-options="field:'analyse_group',width:100">Группа</th>
+			<th data-options="field:'analyse_class',width:100">Класс</th>
+			<th data-options="field:'analyse_section',width:100">Раздел</th>
+                    </tr>
+		</thead>
+	    </table>
+	</td>
+    </tr>
+</table>

@@ -1,0 +1,143 @@
+<script>
+    /* global App*/
+    Cdet=App.page_company_details={
+	properties:{
+	    title: 'Реквизиты компании',
+	    width: 920,
+	    height: 'auto',
+	    onClose: function(){
+		Cdet.handler.notify('close',Cdet.data);
+		Cdet.node.window('destroy');
+		Cdet.node.remove();
+		delete Cdet;
+		delete App.page_company_details;
+	    }
+	},
+	init:function () {
+	    var props=Cdet.properties;
+            if(Cdet.data.inline){
+                Cdet.node.panel(props);
+            } else {
+                Cdet.node.window(props);
+        	this.node.window('hcenter');
+                this.node.window('window').css('position','fixed');
+                this.node.window('window').css('top','40px');
+            }
+	    Cdet.autoselect_label=Cdet.data.autoselect_label;
+	    this.checkActive();
+	    Cdet.load(Cdet.data.company_id);
+            this.initFormOnce();
+	},
+        initFormOnce:function(){
+            if( this.formInited ){
+                return;
+            }
+            this.formInited=true;
+            App.formElements("#page_company_details_frm").change(function () {
+		var node=this;
+		Cdet.updateField(node.name,node.value,node.title);
+	    });
+        },
+	checkActive:function(){
+	    if( this.data.is_active ){
+		this.node.find("#page_company_details_passive_details").hide();
+		this.node.find("#page_company_details_active_details").show();
+		App.handler.progress(function(status,data){
+		    if( status==="activeCompanySelected" ){
+			Cdet.load(data.company_id);
+		    }
+		});
+	    }
+	},
+	focus:function(){
+	    this.load(Cdet.data.company_id);
+	},
+	load:function( company_id ){
+	    if( company_id*1 ){
+		$.get('Company/companyGet/'+company_id,function(xhr){
+		    Cdet.data=App.json(xhr);
+		    Cdet.setup();
+		    Cdet.setTitle();
+		});
+	    }
+	},
+	setTitle:function(){
+	    this.node.panel('setTitle','Реквизиты компании '+(Cdet.data.label==='null'?Cdet.data.label:'') );
+	},
+	updateField:function(field,value,title){
+	    $.post('Company/companyUpdate/'+App.uri(Cdet.data.company_id*1,field,value),function(ok){
+		if( ok*1 ){
+		    Cdet.data[field]=value;
+		    App.flash("Сохранено: " + title);
+		    if( field==='label' ){
+			Cdet.handler.notify('label_changed');
+		    }
+		} else {
+		    App.flash("Сохраненние не удалось: " + title);
+		}
+	    });
+	},
+	setup:function(){
+	    App.setupForm("#page_company_details_frm", Cdet.data);
+	    if( this.autoselect_label ){
+		this.node.find('input[name=label]').select();
+	    }
+	}
+    };
+</script>
+<div id="page_company_details_frm" style="">
+    <div class="inp_group" style="width: 550px;">
+	<input type="text" name="company_name" title="Полное название*" style="width:410px;"/>	
+	<input type="text" name="company_jaddress" title="Юр. Адрес*" style="width:410px;"/>
+	<input type="text" name="company_vat_id" title="ИНН*"/>
+	<input type="text" name="company_code" title="КОД"/>	
+	<input type="text" name="company_phone" title="Телефон*"/>	
+	<input type="text" name="company_vat_licence_id" title="Доп. КОД"/>	
+	<input type="text" name="company_code_registration" title="Регистр. КОД"/>	
+    </div>
+    <div class="inp_group" style="width:340px;">
+	<div id="page_company_details_passive_details">
+	    <input type="text" name="company_agreement_num" title="Номер договора"/>
+	    <input type="text" name="company_agreement_date" title="Дата договора"/>
+	</div>
+	<div class="inp_rule"></div>
+	<input type="text" name="company_bank_id" title="Код Банка"/>
+	<input type="text" name="company_bank_name" title="Название банка"/>	
+	<input type="text" name="company_bank_account" title="Поточный счет"/>
+	<input type="text" name="company_bank_corr_account" title="Корр. счет"/>
+    </div>
+    <div class="inp_rule"></div>
+    <div class="inp_group" style="width:340px;">
+	<input type="text" name="label" title="Короткое название" style="font-weight: bold"/>
+	<input type="text" name="company_address" title="Фактический Адрес"/>
+	<input type="text" name="company_person" title="Контактное лицо"/>
+	<input type="text" name="company_director" title="Директор"/>
+    </div>
+    <div class="inp_group" style="width:340px;">
+	<input type="text" name="company_mobile" title="Мобильный"/>
+	<input type="text" name="company_fax" title="Факс"/>
+	<input type="text" name="company_email" title="E-mail"/>
+	<input type="text" name="company_web" title="Сайт"/>
+    </div>
+    <div class="inp_rule"></div>
+    <textarea name="company_description" title="Дополнительно" style="width:550px;"></textarea>
+    <div class="inp_rule"></div>
+    <div id="page_company_details_active_details" style="display: none">
+        <input type="text" name="company_vat_rate" title="Ставка НДС"/>
+        <select name="language" title="Язык">
+            <option value="en">English</option>
+            <option value="ua">Українська</option>
+            <option value="ru">Русский</option>
+        </select>
+        <select name="curr_code" title="Валюта">
+            <option value="UAH">Гривна UAH</option>
+            <option value="USD">Доллар USD</option>
+            <option value="RUB">Рубль RUB</option>
+        </select>
+    </div>
+</div>
+<style>
+    #page_company_details_frm b{
+	width:120px;
+    }
+</style>

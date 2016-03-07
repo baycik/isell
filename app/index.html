@@ -1,0 +1,310 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+	<title>iSell 3.12</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<link rel="icon" type="image/png" href="favicon.png" />
+	<link rel="stylesheet" type="text/css" href="js/jquery-easyui-1.4/themes/default/easyui.css"/>
+	<link rel="stylesheet" type="text/css" href="js/jquery-easyui-1.4/themes/icon.css"/>
+	<link rel="stylesheet" type="text/css" href="js/jquery-easyui-1.4/themes/color.css"/>
+	<link rel="stylesheet" type="text/css" href="css/app.css" />
+	<script type="text/javascript" src="js/markup.min.js"></script>
+	<script type="text/javascript" src="js/jquery-2.1.1.min.js"></script>
+	<script type="text/javascript" src="js/jquery-easyui-1.4/jquery.easyui.min.js"></script>
+	<script type="text/javascript" src="js/jquery-easyui-1.4/locale/easyui-lang-ru.js"></script>
+	<script type="text/javascript" src="js/jquery-easyui-1.4/datagridfilter/datagrid-filter.js"></script>
+	<script type="text/javascript" src="js/app.js"></script>
+	<script type="text/javascript">
+	    /* global App,dojo*/
+	    App.loadDojo=function(){
+		var dojodef=$.Deferred();
+		if( this.dojoloaded ){
+		    dojodef.notify('dojoloaded');
+		} else {
+		    $('#dojoloader').load('page/dojoloader.html',function(){
+			dojodef.notify('dojoloaded');
+		    });
+		    this.dojoloaded=true;
+		}
+		return dojodef.promise();
+	    };
+	    App.user = {
+		props: {},
+		signedIn:false,
+		getData: function () {
+		    $.get("User/getUserData", function (resp) {
+			App.user.setProps( App.json(resp) );
+		    });
+		},
+		setProps:function( userProps ){
+		    App.user.props=userProps;
+		    App.user.setActiveComp(userProps.acomp);
+		    if( userProps && userProps.user_level>0 ){
+			App.renderTpl('div_user_panel', App.user.props || '');	
+			App.renderTpl('div_module_list', App.user.props || '');
+			this.signedIn=true;
+			this.loginFormHide();
+			App.module.init();
+		    } else {
+			this.signedIn=false;
+			this.loginFormShow();
+		    }
+		},
+		getLevel:function(){
+		    return App.user.props && App.user.props.user_level>0?App.user.props.user_level:0;
+		},
+		signIn: function () {
+		    var user_login=$("#user_login").val();
+		    var user_pass=$("#user_pass").val();
+		    $.post("User/SignIn",{login:user_login,pass:user_pass},function(resp){
+			var props=App.json(resp);
+			if( props ){
+			    $("#SeqDialogMsg").html("");
+			    App.user.setProps( props );
+			} else {
+			    $("#SeqDialogMsg").html("Логин или пароль не верны!").css('color','red').css('font-size','14px');
+			}
+		    });
+		},
+		signOut: function () {
+		    $.get("User/SignOut");
+		    this.setProps({});
+		},
+                edit:function(){
+                    $.post("User/userFetch",function(resp){
+                        var props=App.json(resp);
+                        App.user.promptEditor(props);
+                    });
+                },
+                promptEditor:function( user ){
+                    App.loadWindow('page/dialog/user_edit',user).progress(function(status,user_data){
+                        if( status==='submit' ){
+                            $.post("User/save",user_data,function(ok){
+                                if( ok*1 ){
+                                    App.user.getData();
+                                    App.flash("Свойства пользователя сохранены");
+                                } else {
+                                    if( ok==='LAST_ADMIN' ){
+                                        alert("Должен остаться хотя бы один администратор.");
+                                    }
+                                    App.flash("Свойства пользователя не изменены");
+                                }
+                            });
+                        }
+                    });
+                },
+                loginFormShow: function () {
+		    $("#loginScreen,#loginOverlay").show();
+		    $("#user_login").focus();
+		},
+		loginFormHide: function () {
+		    $("#loginScreen,#loginOverlay").hide();
+		},
+                acompSwitch:function(){
+                    $.get("Company/switchActiveCompany",function(resp){
+                        var company=App.json(resp);
+			App.user.setActiveComp(company);
+                    });
+                },
+		setActiveComp:function(company){
+                    var old_acomp_id=App.acomp?App.acomp.company_id:0;
+		    App.acomp=company;
+		    if( company ){
+                        if( company.company_id===old_acomp_id ){
+                            App.handler.notify('activeCompanyReloaded',company);
+                            return;
+                        }
+			App.handler.notify('activeCompanySelected',company);
+			setTimeout(function(){
+			    App.loadBg();
+			},0);
+		    } else {
+			App.handler.notify('activeCompanyReset');
+		    }
+		},
+		setPassiveCompany:function(company){
+                    var old_pcomp_id=App.pcomp?App.pcomp.company_id:0;
+		    App.pcomp=company;
+		    if( company ){
+                        if( company.company_id===old_pcomp_id ){
+                            App.handler.notify('passiveCompanyReloaded',company);
+                            return;
+                        }
+			App.handler.notify('passiveCompanySelected',company);
+		    } else {
+			App.handler.notify('passiveCompanyReset');
+		    }
+		}
+	    };
+	    App.onReady = function () {
+		App.user.getData();
+                App.handler.progress(function(status){
+                    if( status==='passiveCompanySelected' || status==='activeCompanySelected' ){
+                        App.setTitle();
+                    }
+                });
+	    };
+	    App.module={
+		legacy:["Companies","Lists","Data","Home"],//,"Stock","Accounts"
+		init:function(){
+		    $(window).bind( 'hashchange', function(e) {
+			App.module.load(location.hash.substring(1));
+		    });
+		    if( !location.hash ){
+			location.hash="#"+App.user.props.module_list[0].name;
+		    }
+		    App.module.load(location.hash.substring(1));
+		},
+		load:function(name){
+		    if( this.current === name ){
+			return false;
+		    }
+		    $("#holder"+this.current).hide();
+		    this.current=name;
+		    var holder=$("#holder"+this.current);
+		    if( !holder.length ){
+			$("#ModuleContainer").append('<div id="holder' + this.current + '"></div>');
+			holder=$("#holder"+this.current);
+		    }
+		    holder.show();
+		    this.loadHTML(holder);
+		    this.findTitle();
+		    this.selectButton();
+		},
+		loadHTML:function(holder){
+		    var url="Proc"+this.current;
+		    if( !holder.html() ){
+			if( $.inArray(this.current,this.legacy)>-1 ){
+			    App.loadDojo().progress(function(event){
+				if( event==='dojoloaded' ){
+				    holder.load(url,function(){
+					App.module.initHTML();
+				    });
+				}
+			    });
+			} else {
+			    holder.load(url,function(){
+				App.module.initHTML();
+			    });
+			}	    
+		    }	
+		},
+		initHTML:function(){
+		    setTimeout(function(){
+			App.module.parseHTML();
+			$("#holder"+this.current).find("script").each(function() { eval(this.text);} );
+		    },0);
+		},
+		parseHTML:function(){
+		    if( App.dojoloaded && $.inArray(this.current,this.legacy)>-1 ){
+			dojo.require('dojo.parser');
+			dojo.parser.parse("holder"+App.module.current);
+		    }
+		    $.parser.parse("#holder"+App.module.current);//for easy ui   
+		    window[App.module.current + 'Js'] && window[App.module.current + 'Js'].init && window[App.module.current + 'Js'].init(); 		    
+		},
+		findTitle:function(){
+		    App.user.props.module_list.forEach(function(item){
+			if( item.name===App.module.current ){
+			    App.setTitle(item.label);
+			    return false;
+			}
+		    });
+		},
+		selectButton:function(){
+		    $(".ModuleButtonSelected").removeClass("ModuleButtonSelected");
+		    $("#"+this.current+"Button").addClass("ModuleButtonSelected");
+		}
+	    };
+	</script>
+    </head>
+    <body class=" claro ">
+	<div id="ApplicationBar" class="transparent">
+	    <img src="img/logo.png" style="vertical-align:top;height: 40px;width:auto;margin: 1px;" />
+	    <div style="color:#009;margin-top:10px;display: inline-block;font-size: 18px;white-space: nowrap;" class="covert" id="module_title">
+                {{module_name}}: 
+                <img src="img/home.png" style="margin-top: -4px;"> <span class="link_button" onclick="App.user.acompSwitch()">{{acomp_name}}</span>
+                {{if pcomp_name}}
+                / <img src="img/gray.png"> {{pcomp_name}}
+                {{/if}}
+            </div>
+	    <div id="holder_user_panel">
+		<img src="img/user-32.png" style="margin: 4px;"/>
+		<div id="div_user_panel">
+		    <div style="color:red">{{user_level_name}}</div>
+		    <div style="font-weight:bold;color:#000">{{user_login}}</div> 
+		    <button onclick="App.user.edit()"><img src="img/Edit-24.png"/> Редактировать</button>
+                    <button onclick="App.user.signOut()"><img src="img/logout.png"/> Выход</button>
+		</div>
+	    </div>
+	    <span id="chat_panel" class="covert" style="margin: 4px;cursor: pointer;float:right" onclick="App.loadWindow('page/dialog/chat')">
+		{{if count|more>0}}
+		<img src="img/chat_no.png" style="vertical-align: middle" class="blink" title="Есть новые сообщения" />{{count}}
+		{{else}}
+		<img src="img/chat_no.png" style="vertical-align: middle" title="Новых сообщений нет" />
+		{{/if}}	    
+	    </span>
+	    <span id="sync_panel" class="covert" style="margin: 4px;cursor: pointer;float:right">
+		{{if updates}}
+		{{if is_release}}
+		<img src="img/update_yes.png" style="vertical-align: middle" class="blink" title="Есть обновления" />
+		{{else}}
+		<img src="img/update_yes.png" style="vertical-align: middle" title="Есть обновления" />
+		{{/if}}
+		    {{updates|length}}
+		{{else}}
+		<img src="img/update_yes.png" style="vertical-align: middle" title="Обновлений нет" />
+		{{/if}}
+	    </span>
+            <span id="app_busy" style="margin: 12px;float:right;display: none"><img src="img/loading_16.png"></span>
+	</div>
+	<table style="border-spacing: 0px;border-collapse: separate;">
+	    <tr>
+		<td style="width:60px;vertical-align: top;padding: 0px;">
+		    <div id="div_module_list" class="covert transparent">
+			{{module_list}}
+			    <div class="ModuleButton" id="{{name}}Button" title="{{label}}">
+				<a href="#{{name}}">
+				    <!--<img src="img/Mods/{{icon}}" width="45" height="45" />-->
+				</a>
+			    </div>
+			{{/module_list}}
+			<img src="img/personalize-icon.png" style="width:48px;height:48px;cursor: pointer;" onclick="App.setBg()" title="Установить обои" />
+		    </div>
+		</td>
+		<td style="vertical-align: top;padding: 0px;">
+		    <div id="ModuleContainer" style="margin: 1px;vertical-align: top;"></div>
+		</td>
+	    </tr>
+	</table>
+	<div id="appWindowContainer"></div>
+	<div id="dojoloader"></div>
+	<div id="appStatus"></div>
+	<div id="loginScreen" class="rounded">
+	    <div style="color:#fff" id="SeqDialogMsg"></div>
+	    <div class="rounded" style="margin-left:auto;margin-right:auto;background: #def;">
+		<form action="User/SignIn" method="post" onsubmit="App.user.signIn();event.preventDefault();">
+		    <table width="200" border="0" align="center" cellspacing="1">
+			<tr>
+			    <td colspan="2" align="center">
+				<big>Авторизация</big>
+			    </td>
+			</tr>
+			<tr>
+			    <td><input type="text" id="user_login" name="user_login" style="width:100%;"  autofocus="autofocus" placeholder="Логин" /></td>
+			</tr>
+			<tr>
+			    <td><input type="password" id="user_pass" name="user_pass" style="width:100%;" placeholder="Пароль" /></td>
+			</tr>
+			<tr>
+			    <td colspan="2" align="center">
+				<button type="submit" value="Submit" id="submit_button"><img src="img/apply24.png" style="vertical-align: middle"/> Вход</button>
+			    </td>
+			</tr>
+		    </table>
+		</form>
+	    </div>
+	</div>    
+	<div id="loginOverlay"></div>
+    </body>
+</html>

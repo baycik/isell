@@ -1,0 +1,81 @@
+<script type="text/javascript">
+    /*global App */
+    App.page_dialog_event = {
+        init: function (data, handler) {
+            $('#page_dialog_event').window({
+                title: 'Добавить в распорядок',
+                width: 800,
+                height: 300
+            });
+            data.event_date = App.toDmy(data.event_date || new Date());
+            this.data = data;
+            this.handler = handler;
+            App.setupForm("#page_dialog_event_frm", data);
+            if (data.event_id) {
+                $('#event_delete_button').attr('disabled', false);
+            }
+            $('#page_dialog_event_frm').submit(function (event) {
+                event.preventDefault();
+                var fvalue = App.collectForm("#page_dialog_event_frm");
+                App.page_dialog_event.data = fvalue;
+                App.page_dialog_event.saveEvent(fvalue);
+            });
+        },
+        destroy: function () {
+            $('#page_dialog_event').window('close');
+            $('#page_dialog_event').remove();
+            delete App.page_dialog_event;
+        },
+        saveEvent: function (fvalue) {
+            fvalue.event_date = App.toIso(fvalue.event_date);
+            $.post('ProcLists/onSaveEvent',fvalue,function(event_id){
+                fvalue.event_id = event_id;
+                $("input[name='event_id']").val(fvalue.event_id);
+                App.page_dialog_event.data = fvalue;
+                App.flash("Создана запись: " + fvalue.event_name);
+                App.page_dialog_event.handler.notify('create', fvalue);
+                App.page_dialog_event.destroy();                
+            });
+        },
+        deleteEvent: function () {
+            var fvalue = App.page_dialog_event.data;
+            fvalue.event_date = App.toIso(fvalue.event_date);
+            if (confirm('Удалить запись?') && App.page_dialog_event.data.event_id) {
+                $.post('ProcLists/onDeleteEvent',{delIds:'[{"event_id":"'+App.page_dialog_event.data.event_id+'"}]'},function(){
+                    App.page_dialog_event.handler.notify('delete', App.page_dialog_event.data);
+                    App.page_dialog_event.destroy();                    
+                });
+            }
+        },
+        setLabel: function (label) {
+            App.page_dialog_event.data.event_label = label;
+            $('[name="event_label"]').val(label);
+        }
+    };
+</script>
+<form id="page_dialog_event_frm" onsubmit="return false;" style="-moz-user-select:none;">
+    <input type="hidden" name="event_user_id"/>
+    <input type="hidden" name="event_id"/>
+    <img src="img/event.png" style="float:left" />
+    <div style="display: inline-block;width: 320px;">
+        <input type="text" name="event_date" title="Дата" class="easyui-datebox" />
+        <input type="text" name="event_name" title="Задание" />
+        <input type="text" name="event_target" title="Цель" />
+        <input type="text" name="event_place" title="Место задания" />
+        <input type="text" name="event_note" title="Контакт" />
+    </div>
+    <div style="display: inline-block;width: 320px;vertical-align: top">
+        <input type="checkbox" name="event_is_private" value="1" title="Скрыть" />
+        <div class="inp_group" style="text-align: right;">
+            <a href="javascript:App.page_dialog_event.setLabel('Доставка')">Доставка</a> | 
+            <a href="javascript:App.page_dialog_event.setLabel('Напоминание клиенту')">Напоминание клиенту</a> | 
+            <a href="javascript:App.page_dialog_event.setLabel('Задания на складе')">Задания на складе</a> 
+        </div>
+        <input type="text" name="event_label" placeholder="Группа" title="Группа задания" style="background-color:#FFFFCC" />
+        <textarea rows="3" name="event_descr" title="Дополнительно"></textarea>
+    </div>
+    <div style="text-align: center;margin-top: 30px;">
+        <button type="submit"><img src="img/Save-24.png" style="vertical-align: middle" /> Сохранить</button>
+        <button type="button" onclick="App.page_dialog_event.deleteEvent()" id="event_delete_button" disabled="disabled"><img src="img/delete.png" style="vertical-align: middle" /> Удалить</button>
+    </div>
+</form>

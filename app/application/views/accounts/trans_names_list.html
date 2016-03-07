@@ -1,0 +1,104 @@
+<script type="text/javascript">
+    /* global App */
+    Tnames_list = App.page_accounts_trans_names_list = {
+	init: function () {
+	    this.node.window({
+		title: 'Операции по счету',
+		width: 470,
+		height: 420,
+		modal:true,
+		onClose: function(){
+		    Tnames_list.handler.notify('close',App.page_accounts_trans_names_list.data);
+		    Tnames_list.node.window('destroy');
+		    Tnames_list.node.remove();
+		    delete App.page_accounts_trans_names_list,Tnames_list;
+		}
+	    });
+	},
+	initAfter:function(){
+	    $("#Tnames_list_dg").datagrid('enableFilter');
+	    $('#Tnames_list_dg').datagrid('addFilterRule', {
+		    field: 'trans_type',
+		    op: 'contains',
+		    value: Tnames_list.data.trans_type
+	    });
+	},
+	altFormatter:function(value){
+	    return value*1?'$':'';
+	},
+	levelFormatter:function(value){
+	    return ["Нет доступа","Ограниченный","Менеджер","Бухгалтер","Администратор"][value];
+	},
+	edit:function(){
+	    var row=$("#Tnames_list_dg").datagrid('getSelected');
+	    if( row ){
+		App.loadWindow('page/accounts/trans_names',row).progress(function(status){
+		    if( status==='close' ){
+			$('#Tnames_list_dg').datagrid('reload');
+		    }
+		});
+	    }
+	},
+	create:function(){
+	    App.loadWindow('page/accounts/trans_names',{trans_type:'0_0'}).progress(function(status){
+		if( status==='close' ){
+		    Tnames_list.handler.notify('create');
+		    $('#Tnames_list_dg').datagrid('reload');
+		}
+	    });
+	},
+	delete:function(){
+	    var row=$("#Tnames_list_dg").datagrid('getSelected');
+	    if( !row || !confirm("Удалить этот тип проводки?") ){
+		return;
+	    }
+	    $.post("AccountsData/transNameDelete/"+row.trans_type,function(ok){
+		if(ok*1){
+		    App.flash("Тип проводки удален!");
+		    Tnames_list.handler.notify('delete');
+		    $('#Tnames_list_dg').datagrid('reload');
+		} else {
+		    App.flash("Не удалось удалить тип проводки!");
+		}
+	    });
+	},
+	ok:function(){
+	    var row=$("#Tnames_list_dg").datagrid('getSelected');
+	    if( row ){
+		Tnames_list.handler.notify('ok',row);
+		Tnames_list.node.window('close');
+	    } else {
+		Tnames_list.node.find('button').prop('disabled',true);
+	    }
+	},
+	enableOkButton:function(){
+	    Tnames_list.node.find('button').prop('disabled',false);
+	}
+    };
+</script>
+<div style="text-align: right;padding-right: 5px;">
+    <span class="icon-24 icon-create" title="Добавить" onclick="Tnames_list.create();"> </span>
+    <span class="icon-24 icon-change" title="Изменить" onclick="Tnames_list.edit();"> </span>
+    <span class="icon-24 icon-delete" title="Удалить" onclick="Tnames_list.delete();"> </span>
+    <span class="icon-24 icon-refresh" title="Обновить" onclick="$('#Tnames_list_dg').datagrid('reload')"> </span>
+</div>
+<table id="Tnames_list_dg" class="easyui-datagrid" data-options="
+     url:'AccountsData/transNameListFetch',
+     height:300,
+     width:450,
+     singleSelect:true,
+     onDblClickRow:Tnames_list.ok,
+     onSelect:Tnames_list.enableOkButton,
+     enableFilter:true">
+    <thead>
+	<tr>
+	    <th data-options="field:'trans_type',width:90">Дебет_Кредит</th>
+	    <th data-options="field:'trans_name',width:200">Название</th>
+	    <th data-options="field:'user_level',width:95,formatter:Tnames_list.levelFormatter">Доступ</th>
+	    <th data-options="field:'use_alt_currency',width:45,formatter:Tnames_list.altFormatter">Валютная</th>
+	</tr>
+    </thead>
+</table>
+<div style="text-align: center;padding-top: 15px">
+    <button onclick="Tnames_list.ok()" disabled="disabled"><img src="img/apply24.png"> Ок</button>
+</div>

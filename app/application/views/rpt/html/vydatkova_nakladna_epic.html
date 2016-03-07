@@ -1,0 +1,129 @@
+<style type="text/css">
+	body, html, td{
+		font-family:Arial;
+		font-size:13px;
+		line-height:normal;
+	}
+</style>
+<div class="page">
+<table width="718" border="0" cellpadding="0" cellspacing="0">
+  <tr>
+    <td align="center"><table width="700" border="0" cellpadding="3" cellspacing="0">
+      <tr>
+        <td width="120" align="left" valign="top"><b><u>Постачальник</u></b></td>
+        <td align="left">
+        {$v.a.allbr}
+        </td>
+      </tr>
+      <tr>
+        <td align="left" valign="top"><b><u>Одержувач</u></b></td>
+        <td align="left">
+        {$v.p.allbr}
+    </td>
+      </tr>
+      <tr>
+        <td align="left" valign="top"><b><u>Платник</u></b></td>
+        <td align="left">той самий</td>
+      </tr>
+      {if condition="$v.extra->sell_condition"}
+      <tr>
+        <td align="left" valign="top"><b><u>Умова продажу</u></b></td>
+        <td align="left">{$v.extra->sell_condition}</td>
+      </tr>
+      {/if}
+    </table></td>
+  </tr>
+  <tr>
+    <td align="center"><table border="0" cellpadding="3" cellspacing="0">
+      <tr>
+        <td align="center">
+        <span class="large"><b>Видаткова накладна № {$v.view_num}<br /> від {$v.loc_date} р.</b></span>
+        </td>
+      </tr>
+    </table></td>
+  </tr>
+  <tr>
+    <td align="center">
+    <table class="table_border" width="700" border="0" cellpadding="1" cellspacing="0">
+      <tr class="big">
+        <td width="15" align="center" nowrap="nowrap" bgcolor="#aaaaaa"><b>№</b></td>
+        <td width="15" align="center" nowrap="nowrap" bgcolor="#aaaaaa"><b>Артикул</b></td>
+        <td align="center" nowrap="nowrap" bgcolor="#aaaaaa"><b>Повна назва товару</b></td>
+        <td width="50" align="center" nowrap="nowrap" bgcolor="#aaaaaa"><b>Од.вим.</b></td>
+        <td width="50" align="center" nowrap="nowrap" bgcolor="#aaaaaa"><b>К-ть</b></td>
+        <td width="95" align="center" nowrap="nowrap" bgcolor="#aaaaaa"><b>Цiна без ПДВ</b></td>
+        <td width="100" align="center" nowrap="nowrap" bgcolor="#aaaaaa"><b>Сума без ПДВ</b></td>
+      </tr>
+      {loop name="v.entries"}
+      <tr>
+        <td align="right" valign="top">{$counter+1}</td>
+        <td align="left" valign="top" nowrap="nowrap">{$value.party_label}</td>
+        <td align="left" valign="top">{$value.product_name}</td>
+        <td align="center" valign="top">{$value.product_unit}</td>
+        <td align="right" valign="top">{$value.product_quantity}</td>
+        <td align="right" valign="top">{$value.product_price}</td>
+        <td align="right" valign="top">{$value.product_sum}</td>
+      </tr>
+      {/loop}
+      <tr>
+        <td colspan="6" align="right" style="border:none"><b>Разом без ПДВ: </b></td>
+        <td align="right">{$v.footer.vatless}</td>
+      </tr>
+      <tr>
+        <td colspan="6" align="right" style="border:none"><b>ПДВ: </b></td>
+        <td align="right">{$v.footer.vat}</td>
+      </tr>
+      <tr>
+        <td colspan="6" align="right" style="border:none"><b>Всього з ПДВ: </b></td>
+        <td align="right">{$v.footer.total}</td>
+      </tr>
+    </table></td>
+  </tr>
+  <tr>
+    <td align="center"><table width="700" border="0" cellspacing="0">
+      <tr>
+        <td width="350" align="left" valign="top"><b>Всього на суму:<br />{$v.footer.total_spell}<br /></b><b><br />
+        ПДВ: {$v.footer.vat}<br />
+          </b></td>
+        <td align="right" valign="bottom">&nbsp;</td>
+      </tr>
+      <tr>
+        <td align="left" valign="top">&nbsp;</td>
+        <td align="right" valign="bottom">&nbsp;</td>
+      </tr>
+      <tr>
+        <td align="left" valign="top"><table width="320" border="0" cellspacing="0">
+          <tr>
+            <td width="100"><b>Відвантажив(ла):</b></td>
+            <td align="left" style="border-bottom:solid 1px #000">&nbsp;</td>
+          </tr>
+          <tr>
+            <td>&nbsp;</td>
+            <td align="center">{$v.user_sign} <sup>*</sup></td>
+          </tr>
+          <tr>
+            <td colspan="2"><small>* {$v.user_position}</small></td>
+          </tr>
+        </table></td>
+        <td align="right" valign="bottom"><table width="320" border="0" cellspacing="0">
+          <tr>
+            <td width="100"><b>Отримав(ла):</b></td>
+            <td align="left" style="border-bottom:solid 1px #000">&nbsp;</td>
+          </tr>
+          <tr>
+            <td height="25" colspan="2">за дор. серії : {$v.extra->warrant}</td>
+            </tr>
+        </table></td>
+      </tr>
+      <tr>
+        <td align="left" valign="top">&nbsp;</td>
+        <td align="right" valign="bottom">&nbsp;</td>
+      </tr>
+      <tr>
+        <td align="left" valign="top">{if="$v.footer.total_weight"}Вага: {$v.footer.total_weight}кг {/if}{if="$v.footer.total_volume"}Об'єм: {$v.footer.total_volume}м<sup><small>3</small></sup>{/if}</td>
+        <td align="right" valign="bottom">&nbsp;</td>
+      </tr>
+    </table></td>
+  </tr>
+</table> 
+</div>

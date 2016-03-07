@@ -1,0 +1,42 @@
+{
+"readonly":1,
+"table_name":"Список Налоговых Накладных",
+"toolnames":[
+  "download",
+  "print"
+],
+"columns":[
+  {
+	"field":"date",
+	"name":"Дата",
+	"type":"string"
+  },
+  {
+	"field":"inernn",
+	"name":"ЕРНН",
+	"align":"center",
+	"type":"number"
+  },
+  {
+	"field":"view_num",
+	"name":"№",
+	"type":"number"
+  },
+  {
+	"field":"company_name",
+	"name":"Контрагент",
+	"type":"string"
+  },
+  {
+	"field":"amount_uah",
+	"name":"Сумма без НДС",
+	"type":"number"
+  },
+  {
+	"field":"view_efield_values",
+	"name":"Выписал",
+	"type":"json",
+	"property":"sign"
+  }
+]
+}

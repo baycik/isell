@@ -1,0 +1,206 @@
+
+/* CSS Document */
+body{
+    margin:0px;
+    padding:0px;
+    font-family:Trebuchet MS;
+    font-size:12px;
+}
+img{
+    border:none;
+}
+.dijitTabContainer {
+		overflow: hidden;
+	    }
+hr{
+    color:#999;
+    background-color:#999;
+    height:1px;
+    border-width:0;
+}
+a{
+    font-size:12px;
+    text-decoration:none;
+    color:#06F;
+}
+a:hover{
+    font-size:12px;
+    text-decoration:underline;
+    color:#F60;
+}
+h2{
+    margin: 0px;
+}
+h3{
+    color:#333;
+    font-size:14px;
+    margin:0px;
+}
+h4{
+    font-family: 'Trebuchet MS';
+    font-size:12px;
+    margin:0px;
+}
+h6{
+    font-family: 'Trebuchet MS';
+    font-size:12px;
+    font-weight:normal;
+    margin:0px;
+}
+#dialog_container{
+    position:absolute;
+    left:50%;
+    top:50%;
+    visibility:hidden;
+}
+
+
+.hidden{
+    display:none !important;
+}
+.border{
+    border:1px solid #000;
+}
+
+.module_menu5{
+    background-color:#E6F5FF;
+    background-image:url(../img/module_menu_bg.jpg);
+    background-repeat:repeat-x;
+}
+.small_text{
+    font-size:12px;
+}
+.trigger{
+    -moz-user-select: none;  
+    -webkit-user-select: none;  
+    -ms-user-select: none;  
+    cursor:pointer;
+    padding:2px;
+    border-radius: 3px;
+    display:inline-block;
+}
+.blue_bg{
+    background-color:#0bF;
+}
+.green_bg{
+    background-color:#0C0;
+}
+.gray_bg{
+    background-color:#CCC;
+}
+.container{
+    width: 100%;
+    height: 100%;
+    padding: 0 !important;
+    margin: 0;
+    overflow: hidden;
+}
+.table{
+    border-left:#E6F5FF 1px solid;
+    border-top:#E6F5FF 1px solid;
+}
+.table td{
+    font-family:Trebuchet MS,Verdana;
+    font-size:12px;
+    border-right:#E6F5FF 1px solid;
+    border-bottom:#E6F5FF 1px solid;
+    padding:2px 3px 2px 3px;
+    white-space:nowrap;
+    height:18px;
+    cursor:default;
+    -moz-user-select:-moz-none;
+    background-color:#dAe0F0;
+}
+#dialogColor_underlay { background-color:green; }
+.blue_grad{
+    background: #0099FF;
+    border: 1px solid #4066FF;
+    background: -moz-linear-gradient(top, 
+	#BBCFFF 0%,
+	#0099FF 40%,
+	#5577FF 100%);
+}
+.grn_grad{
+    background: #13D713;
+    border: 1px solid #00A400;
+    background: -moz-linear-gradient(top, 
+	#9CF59C 0%,
+	#13D713 40%,
+	#00A400 100%);
+}
+
+.lime_grad{
+    background: #daf;
+    border: 1px solid #b4c;
+    background: -moz-linear-gradient(top, 
+	#fef 0%,
+	#daf 40%,
+	#b4c 100%);
+}
+
+
+.button{
+    font-family: Helvetica, Arial, sans-serif;
+    font-weight: bold;
+    font-size: 140%;
+    text-align: center;
+    padding: 5px;
+    text-shadow: -1px -1px 1px #777777;
+    -moz-border-radius: 5px;
+    border-radius: 5px;
+}
+#SeqDialog{
+    position:absolute;
+    top:0px;left:0px;
+    width:100%;
+    min-height: 120%;
+    padding-top:20%;
+    background:url(../img/bg.jpg) repeat-x top #ffffff;
+    z-index:99999999;
+}
+
+.tile_item{
+    border: solid 1px #9ab;
+    border-radius:5px;
+    box-shadow:1px 1px 4px 0 #ccc;
+    display:inline-block;
+    width:130px;
+    padding:1px;
+    margin-bottom:4px;
+    background:url(../img/gray_bg.png) repeat-x #DDE5FF;
+    vertical-align:top;
+    text-align:center;
+    overflow:auto;
+}
+.tile_item_icon{
+    height:24px;
+    width:24px;
+    cursor:pointer;
+}
+
+
+.formLabel{
+    display: inline-block;
+    width: 150px;
+    text-align: right;
+    white-space:normal;
+}
+.formBox{
+    margin: 1px;
+    display: inline-block;
+    min-width: 330px;
+    white-space:nowrap;
+    vertical-align: top;
+}
+.claro .dijitContentPane{
+    background-color: rgba(255,255,255,0.75);
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.65), rgba(150, 200, 255, 0.75)) repeat scroll 0 0 rgba(0, 0, 0, 0);
+}
+.claro .dijitTabPaneWrapper{
+    background: none repeat scroll 0 0;
+    display: table-cell;
+    min-width: 500px;
+}
+.dijitTabContainerTop-tabs{
+    border-bottom: none;
+}

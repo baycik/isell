@@ -1,0 +1,216 @@
+<script>
+    /*global App*/
+    App.page_dialog_importer={
+	label:'',
+	init:function(){
+	    this.node.window({
+		width: 800,
+		title: 'Импорт таблицы',
+		height: 600,
+		top:50,
+		shadow:false,
+		onClose: function () {
+		    App.page_dialog_importer.node.window('destroy');
+		    App.page_dialog_importer.handler.notify('close');
+		    delete App.page_dialog_importer;
+		}
+	    });
+	    this.node.window('window').css('position','fixed');
+	    
+	    this.label=this.data.label||'';
+	    $("#page_dialog_importer_label").val(this.label);
+	    this.initSelector();
+	},
+	initSelector:function(){
+	    this.assigned={};
+	    App.renderTpl('page_dialog_importer_selector',this.data);
+	    this.initRequired();
+	    App.setupForm("#page_dialog_importer_frm").change(function(){
+		App.page_dialog_importer.assigned[this.name]=this.value;
+	    });
+            $("#page_dialog_importer_frm").submit(function(e){
+                e.preventDefault();
+                App.page_dialog_importer.submit();
+            });
+        },
+	initRequired:function(){
+	    var config=this.data.fields_to_import;
+	    for(var i in config){
+		if( config[i].required ){
+		    $("#page_dialog_importer_frm select[name="+config[i].field+"]").prop('required','required');
+		}
+	    }
+	},
+        submit:function(){
+            var fvalue=App.collectForm("#page_dialog_importer_frm");
+	    var source=[];
+	    var target=[];
+	    var missed=[];
+            for(var i in fvalue){
+                if( !fvalue[i] && $("#page_dialog_importer_frm select[name="+i+"]").attr('required') ){
+                    var title=$("#page_dialog_importer_frm select[name="+i+"]").attr('title');
+		    missed.push(title);
+                }
+		source.push(fvalue[i]);
+		target.push(i);
+            }
+	    if( missed.length>0 ){
+		alert( "Поле не сопоставлено: "+missed.join(',') );
+		return;
+	    }
+	    fvalue.source=source;
+	    fvalue.target=target;
+            fvalue.label=App.page_dialog_importer.label;
+            App.page_dialog_importer.handler.notify('submit',fvalue,App.page_dialog_importer);
+        },
+	up:function(filelist){
+	    if( filelist.length ){
+                App.page_dialog_importer.throbber(1);
+		var url = 'Importer/Up/'+App.page_dialog_importer.label;
+		var xhr = new XMLHttpRequest();
+		var fd = new FormData();
+		xhr.open("POST", url, true);
+		xhr.onreadystatechange = function() {
+		    if (xhr.readyState === 4 && xhr.status === 200) {
+			if( xhr.responseText==='imported' ){
+			    $('#page_dialog_importer_dg').datagrid('reload');
+                            App.flash("Файл загружен.");
+			} else {
+			    App.flash("Не удалось загрузить "+xhr.responseText);
+			}
+                        App.page_dialog_importer.throbber(0);
+		    }
+		};
+		fd.append("upload_file", filelist[0]);
+		xhr.send(fd);
+	    }
+	},
+        throbber:function(show){
+            show?$("#page_dialog_importer_throbber").show():$("#page_dialog_importer_throbber").hide();
+        },
+	delete:function(){
+	    var rows=$('#page_dialog_importer_dg').datagrid('getSelections');
+	    if( rows && confirm("Удалить выбранные строчки?") ){
+		var row_ids=[];
+		for(var i in rows){
+		    row_ids.push(rows[i].row_id);
+		}
+		$.post("Importer/deleteRows/",{row_ids:row_ids.join(',')},function(ok){
+		    if( ok*1 ){
+			App.flash("Удалено "+ok+" строк");
+			$('#page_dialog_importer_dg').datagrid('reload');
+		    } else {
+			App.flash("Не удалось удалить строки");
+		    }
+		});
+	    }
+	    
+	},
+	deleteAll:function(){
+	    if( confirm("Удалить строчки с меткой '"+App.page_dialog_importer.label+"'?") ){
+		$.post("Importer/deleteAll/"+App.page_dialog_importer.label,function(ok){
+		    if( ok*1 ){
+			App.flash("Удалено строчки с меткой '"+App.page_dialog_importer.label+"'");
+			$('#page_dialog_importer_dg').datagrid('reload');
+		    } else {
+			App.flash("Не удалось удалить строки");
+		    }
+		});
+	    }
+	},
+	filter:function( node ){
+	    App.page_dialog_importer.label=node.value||'';
+	    App.page_dialog_importer.reload();
+	},
+	reload:function(){
+	    $('#page_dialog_importer_dg').datagrid('reload');
+	},
+	loader:function(param, success, error){
+	    $.post('Importer/getRows/'+App.page_dialog_importer.label,param,function(xhr){
+		success(App.json(xhr));
+	    });
+	},
+        reload:function(){
+	    $('#page_dialog_importer_dg').datagrid('reload');
+        }
+    };
+</script>
+<style>
+    #page_dialog_importer_throbber img{
+        position: absolute;
+        z-index:10;
+        top: 280px;
+        left: 50%;
+    }
+</style>
+<div id="page_dialog_importer_throbber" style="display: none;position: relative;" >
+    <img src="img/throbber_1.gif">
+</div>
+<input type="file" id="page_dialog_importer_file" style="display:none" onchange="App.page_dialog_importer.up(this.files)">
+<div id="page_dialog_importer_selector" style="padding: 3px;">
+    <form id="page_dialog_importer_frm">
+        <button style="float:left;" type="submit">
+            <img src="img/database.png" style="height: 90px;width: auto;"><br>Импортировать
+        </button>
+        {{fields_to_import}}
+	<select name="{{field}}" title="{{name}} " style="width:50px;">
+	    <option>A</option>
+	    <option>B</option>
+	    <option>C</option>
+	    <option>D</option>
+	    <option>E</option>
+	    <option>F</option>
+	    <option>G</option>
+	    <option>H</option>
+	    <option>I</option>
+	    <option>K</option>
+	    <option>L</option>
+	    <option>M</option>
+	    <option>N</option>
+	    <option>O</option>
+	    <option>P</option>
+	    <option>Q</option>
+	</select>
+        {{/fields_to_import}}
+    </form>
+</div>
+<div style="clear: both;border-bottom: 1px solid #999;margin-top: 4px;"></div>
+<div style="text-align: right;padding: 3px;clear: left;">
+    <div style="display: inline-block;line-height: 26px;margin-top: 0px;float: left">
+	Выбранная метка: <input id="page_dialog_importer_label" style="width: 50px;" title="Выбранная метка" onkeyup="App.page_dialog_importer.filter(this)">
+    </div>
+    <span class="icon-24" style="background-image: url(img/truncate.png);background-repeat: no-repeat" title="Очистить таблицу" onclick="App.page_dialog_importer.deleteAll();"> </span>
+    <span class="icon-24 icon-delete" title="Удалить выбранные строчки" onclick="App.page_dialog_importer.delete();"> </span>
+    <span class="icon-24 icon-upload" title="Отправить файл" onclick="$('#page_dialog_importer_file').click();"> </span>
+    <span class="icon-24 icon-refresh" title="Обновить" onclick="$('#page_dialog_importer_dg').datagrid('reload')"> </span>
+</div>
+<table id="page_dialog_importer_dg" class="easyui-datagrid" data-options="
+	loader:App.page_dialog_importer.loader,
+	height:400,
+	rownumbers:true,
+	autoRowHeight:false,
+	pagination:true,
+	pageSize:100,
+	pageList:[100,500]">
+    <thead>
+	<tr>
+	    <th data-options="field:'label',width:50">метка</th>
+	    <th data-options="field:'A',width:180">A</th>
+	    <th data-options="field:'B',width:180">B</th>
+	    <th data-options="field:'C',width:180">C</th>
+	    <th data-options="field:'D',width:180">D</th>
+	    <th data-options="field:'E',width:180">E</th>
+	    <th data-options="field:'F',width:180">F</th>
+	    <th data-options="field:'G',width:180">G</th>
+	    <th data-options="field:'H',width:180">H</th>
+	    <th data-options="field:'I',width:180">I</th>
+	    <th data-options="field:'K',width:180">K</th>
+	    <th data-options="field:'L',width:180">L</th>
+	    <th data-options="field:'M',width:180">M</th>
+	    <th data-options="field:'N',width:180">N</th>
+	    <th data-options="field:'O',width:180">O</th>
+	    <th data-options="field:'P',width:180">P</th>
+	    <th data-options="field:'Q',width:180">Q</th>
+	</tr>
+    </thead>
+</table>

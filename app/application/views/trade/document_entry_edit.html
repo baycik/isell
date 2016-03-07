@@ -1,0 +1,126 @@
+<script type="text/javascript">
+    /* global App */
+    DocEntEd=App.page_trade_document_entry_edit = {
+	init: function () {
+	    this.node.window({
+		title: 'Редактирование строки',
+		width: 450,
+		height: 'auto',
+		shadow:false,
+		onClose: function () {
+		    DocEntEd.handler.notify('close');
+		    delete App.page_trade_document_entry_edit,DocEntEd;
+		}
+	    });
+	    this.node.window('hcenter');
+	    this.node.window('window').css('position','fixed');
+	    this.node.window('window').css('top','40px');
+	    
+	    App.renderTpl('DocEntEd_markup',this.data);
+	    App.setupForm("#document_ented_frm",this.data).change(function(){
+		DocEntEd.change(this.name,this.value);
+	    });
+	    DocEntEd.getStats();
+	},
+	initAfter:function(){
+	    $('#page_trade_document_entry_edit input').on('focus', function() {
+		this.select();
+	    });
+	    if( '/product_quantity/product_price/party_label/'.indexOf(this.data.focus)===-1 ){
+		this.data.focus='product_quantity';
+	    }
+	    $("input[name="+this.data.focus+"]").select();
+	},
+	change: function( name, value ){
+	    if( DocEntEd.suppressUpdate===true ){
+		return;
+	    }
+	    $.post( App.uri('DocumentItems','entryUpdate',DocEntEd.data.head.doc_id,DocEntEd.data.doc_entry_id,name,value), function(ok){
+		if(ok*1){
+		    DocEntEd.handler.notify('change');
+		    DocEntEd.data[name]=value;
+		    DocEntEd.getStats();
+		}
+		else{
+		    App.setupForm("#document_ented_frm",this.data);//form reset
+		    App.flash('Ошибка. Значение не изменено!');
+		}
+	    });
+	},
+	getStats:function(){
+	    $.post( App.uri('DocumentItems','entryStatsGet',DocEntEd.data.head.doc_id,DocEntEd.data.product_code), function(xhr){
+		DocEntEd.stats=App.json(xhr);
+		DocEntEd.renderStats();
+	    });
+	},
+	renderStats:function(){
+	    var stats=DocEntEd.stats||{};
+	    stats.unit=DocEntEd.data.product_unit;
+	    if( stats.price===DocEntEd.data.product_price ){
+		stats.color='blue';
+	    }else
+	    if(stats.price>DocEntEd.data.product_price){
+		stats.color='red';
+	    }
+	    else{
+		stats.color='green';
+	    }
+	    App.renderTpl('DocEntEd_qty_markup',stats);
+	    App.renderTpl('DocEntEd_price_markup',stats);
+	},
+	delete:function(){
+	    DocEntEd.handler.notify('delete');
+	},
+	showProductCard:function(){
+	    if( App.user.props.user_level<2 ){
+		alert("Доступ ограничен");
+		return;
+	    }
+	    App.loadWindow('page/stock/product_card',DocEntEd.data.product_code).progress(function(status,fvalue){
+		if( status==='save' ){
+		    DocEntEd.handler.notify('change');
+		}
+	    });	    
+	},
+        parsePrice:function( node ){
+            node.value=eval(node.value.toString().replace(',','.').match( /[\(\d\.\)\*\/\+-]*/ ).toString()) || 0;
+        }
+    };
+</script>
+<div id="DocEntEd_markup" class="covert">
+    <table>
+	<tr>
+	    <td style="width: 95px;text-align: right;vertical-align: top;">
+		Товар:
+	    </td>
+	    <td>
+		<strong title="Код">{{product_code}}</strong> <span title="Название">{{product_name}}</span>
+		<img onclick="DocEntEd.showProductCard();" style="cursor: pointer;vertical-align: middle" src="img/settings.png" title="Изменить свойства товара"><br>
+		<i class="hover_show" title="Таможенный код">Таможенный код: {{product_uktzet}}</i>
+	    </td>
+	</tr>
+    </table>
+</div>
+<form id="document_ented_frm" onsubmit="DocEntEd.node.window('close');return false;">
+    <div>
+	<input name="product_quantity" title="Кол-во" />
+	<span id="DocEntEd_qty_markup" class="covert" title="Кол-во на складе">Склад: {{product_quantity}} {{unit}}</span>
+    </div>
+    <div>
+        <input name="product_price" onchange="DocEntEd.parsePrice(this);" title="Цена" class="icon-calc16" style="background-position: right"/>
+    <span id="DocEntEd_price_markup" class="covert" title="Стандартная цена">Цена: <b style="color:'{{color}}'">{{price}} {{curr_symbol}}</b></span>
+    </div>
+ 	<input name="party_label" title="Партия">
+   <div style="text-align: center">
+	<button type="submit" onclick="DocEntEd.node.window('close')"><img src="img/apply24.png" style="vertical-align: middle"> Ок</button>
+	<button type="button" onclick="DocEntEd.delete();DocEntEd.node.window('close');"><img src="img/delete.png" style="vertical-align: middle"> Удалить</button>
+    </div>
+</form>
+<style>
+    #DocEntEd_markup table:hover i{
+	visibility: visible;
+    }
+    .hover_show{
+	visibility: hidden;
+    }
+</style>

@@ -1,0 +1,85 @@
+<script type="text/javascript">
+    /* global App */
+    App.page_dialog_move_doc={
+        init:function (data, handler) {
+            this.node.window({
+                title: 'Переместить документ',
+                width: 300,
+                height: 150,
+                onClose:function(){
+		    App.page_dialog_move_doc.handler.notify('close',App.page_dialog_move_doc.data);
+		    App.page_dialog_move_doc.destroy();
+		}
+            });
+            if( data.disabledMove ){
+                $('button[name="moveDoc"]').attr('disabled',true);
+            }
+        },
+        destroy:function(){
+            this.node.window('destroy');
+	    this.node.remove();
+	    delete App.page_dialog_move_doc;
+        },
+        data_loader:function (param, success, error) {
+            var q = param.q || '';
+            if (q.length <= 2) {
+                 return false;
+            }
+            $.ajax({
+                url: 'ProcCompanies/onCompaniesList/',
+                data: {
+                    label: q
+                },
+                success: function (xhr) {
+                    var data=JSON.parse(xhr);
+                    if( data.items ){
+                        data.items.shift();
+                        success(data.items);
+                    }
+                },
+                error: function () {
+                    error.apply(this, arguments);
+                }
+            });
+        }
+    };
+    $('#page_dialog_move_doc_frm').submit(function(event){
+	event.preventDefault();
+	var fvalue=App.collectForm("#page_dialog_move_doc_frm");
+	if( !fvalue.passive_company_id ){
+	    App.flash('Выберите конечного контрагента','alert');
+	    return;
+	}
+	$.ajax({
+	    url: 'ProcCompanies/onMoveDoc/',
+	    data: fvalue,
+	    method:'POST',
+	    success: function (xhr) {
+		App.page_dialog_move_doc.handler.notify('finish',fvalue);
+		App.page_dialog_move_doc.destroy();
+	    }
+	});
+    });
+
+</script>
+<form id="page_dialog_move_doc_frm" action="" method="post">
+    <input type="hidden" name="copy" value="0" />
+    <table align="center">
+        <tr>
+            <td>Контрагент:<br />
+                <input name="passive_company_id" class="easyui-combobox" style="width:250px" data-options="
+		       loader: App.page_dialog_move_doc.data_loader,
+		       mode: 'remote',
+		       valueField: 'company_id',
+		       textField: 'label'
+		       ">
+            </td>
+        </tr>
+	<tr>
+            <td align="center">
+                <button name="moveDoc" type="submit">Перенести</button>
+                <button type="submit" onClick="$('input[name=\'copy\']').val(1)">Копировать</button>
+            </td>
+        </tr>
+    </table>
+</form>

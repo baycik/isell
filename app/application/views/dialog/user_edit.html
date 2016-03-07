@@ -1,0 +1,138 @@
+<script type="text/javascript">
+    /*global App */
+    App.page_dialog_user_edit = {
+	init: function () {
+	    this.node.window({
+		title: 'Редактирование свойств пользователя',
+		width: 700,
+		height: 'auto',
+		onClose: function () {
+		    delete App.page_dialog_user_edit;
+		}
+	    });
+	    this.initReadonlySetup();
+	    App.setupForm("#page_dialog_user_edit_frm", this.data);
+	    $("#page_dialog_user_edit_frm").submit(function(e){
+		e.preventDefault();
+		App.page_dialog_user_edit.submit();
+	    });
+	},
+	initAfter:function(){
+	    this.pathLoad();
+	},
+	initReadonlySetup:function(){
+	    if( App.user.getLevel()<3 ){
+		this.node.find(".restrict").attr('disabled','disabled');
+	    }
+	    if( App.user.getLevel()<4 ){
+		this.node.find(".restrict4").attr('disabled','disabled');
+	    }
+	},
+	submit:function(){
+	    var user_data=App.collectForm("#page_dialog_user_edit_frm");
+	    user_data.user_assigned_path=this.data.user_assigned_path;
+	    this.handler.notify('submit',user_data);
+	    this.node.window('close');
+	},
+	pathLoad:function(){
+	    var rows=[];
+	    var chunks=this.data.user_assigned_path?this.data.user_assigned_path.split(','):[];
+	    var chunks_unique=[];
+	    for(var i in chunks){
+		if( chunks[i].length>0 && chunks_unique.indexOf(chunks[i])===-1 ){
+		   chunks_unique.push(chunks[i]);
+		   rows.push({path:chunks[i]}); 
+		}
+	    }
+	    this.data.user_assigned_path=chunks_unique.join(',');
+	    $("#page_dialog_user_edit_dg").datagrid('loadData',rows);
+	},
+	pathAdd:function(){
+	    if( App.user.getLevel()<3 ){
+		App.flash("Доступ ограничен");
+		return;
+	    }
+	    App.loadWindow("page/company/tree",{enable_folder_select:true}).progress(function(status,branch){
+		if( status==='select' || status==='selectFolder' ){
+		    App.page_dialog_user_edit.data.user_assigned_path+=','+branch.path;
+		    App.page_dialog_user_edit.pathLoad();
+		}
+	    });
+	},
+	pathDelete:function(){
+	    if( App.user.getLevel()<3 ){
+		App.flash("Доступ ограничен");
+		return;
+	    }
+	    var selected=$("#page_dialog_user_edit_dg").datagrid('getSelected');
+	    if( selected && confirm("Вы уверенны что хотите удалить?") ){
+		if( this.data.user_assigned_path ){
+		    this.data.user_assigned_path=this.data.user_assigned_path.replace(selected.path,'');
+		}
+		this.pathLoad();
+	    }
+	},
+	changePass:function(){
+	    var new_pass=prompt("Введите новый пароль (может содержать a-z A-Z 0-9)");
+	    if( new_pass ){
+		$("input[name=new_pass]").val(new_pass);
+	    } else {
+		App.flash("Пароль не изменен");
+	    }
+	}
+    };
+    ;
+</script>
+<form id="page_dialog_user_edit_frm" style="-moz-user-select:none;">
+    <input type="hidden" name="user_id"/>
+    <input type="hidden" name="new_pass"/>
+    <img src="img/user_big.png" style="float:left;width:100px;height: auto" />
+    <div style="display: inline-block;width: 320px;vertical-align: top">
+	<input name="user_login" title="Логин">
+	<div class="inp_group">
+	    <label>
+		<b>Пароль: </b>
+		<button type="button" onclick="App.page_dialog_user_edit.changePass();"><img src="img/keys.png"> Сменить пароль</button>
+	    </label>
+	</div>
+	<select name="user_level" title="Доступ" class="restrict4">
+	    <option value="0">Нет доступа</option>
+	    <option value="1">Ограниченный</option>
+	    <option value="2">Менеджер</option>
+	    <option value="3">Бухгалтер</option>
+	    <option value="4">Администратор</option>
+	</select>
+    </div>
+    <div style="display: inline-block;width: 240px;">
+	<div style="text-align: right;padding-right: 15px;">
+	    <span class="icon-24 icon-create" title="Добавить ограничение" onclick="App.page_dialog_user_edit.pathAdd();"> </span>
+	    <span class="icon-24 icon-delete" title="Удалить ограничение" onclick="App.page_dialog_user_edit.pathDelete();"> </span>
+	</div>
+	<table id="page_dialog_user_edit_dg" class="easyui-datagrid" style="min-height: 65px;">
+	    <thead>
+		<tr><th data-options="field:'path',width:235">Ограничения доступа по клиентам</th></tr>
+	    </thead>
+	</table>
+    </div>
+    <div class="inp_rule"></div>
+    <div>
+	<div style="display: inline-block;width: 320px;">
+	    <input name="first_name" title="Имя" class="restrict">
+	    <input name="last_name" title="Фамилия" class="restrict">
+	    <input name="middle_name" title="Отчество" class="restrict">
+	    <input name="user_sign" title="Подпись" class="restrict">
+	    <input name="user_position" title="Должность" class="restrict">
+	</div>
+	<div style="display: inline-block;width: 320px;">
+	    <input name="id_type" title="Документ" class="restrict">
+	    <input name="id_serial" title="Серия" class="restrict">
+	    <input name="id_number" title="Номер" class="restrict">
+	    <input name="id_given_by" title="Выдан" class="restrict">
+	    <input name="id_date" title="Дата" class="restrict">
+	</div>
+    </div>
+    <div style="text-align: center;margin-top: 15px;">
+	<button type="submit"><img src="img/Save-24.png" /> Сохранить</button>
+	<button type="button" onclick="App.page_dialog_user_edit.node.window('close')"><img src="img/close24.png" /> Закрыть</button>
+    </div>
+</form>

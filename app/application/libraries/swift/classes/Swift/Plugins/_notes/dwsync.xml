@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<dwsync>
+<file name="AntiFloodPlugin.php" server="91.205.217.71//vat/" local="129701016000000000" remote="129701016000000000" />
+<file name="BandwidthMonitorPlugin.php" server="91.205.217.71//vat/" local="129701016000000000" remote="129701016000000000" />
+<file name="DecoratorPlugin.php" server="91.205.217.71//vat/" local="129701016000000000" remote="129701016000000000" />
+<file name="ImpersonatePlugin.php" server="91.205.217.71//vat/" local="129701016000000000" remote="129701016000000000" />
+<file name="Logger.php" server="91.205.217.71//vat/" local="129701016000000000" remote="129701016000000000" />
+<file name="LoggerPlugin.php" server="91.205.217.71//vat/" local="129701016000000000" remote="129701016000000000" />
+<file name="MessageLogger.php" server="91.205.217.71//vat/" local="129701016000000000" remote="129701016000000000" />
+<file name="PopBeforeSmtpPlugin.php" server="91.205.217.71//vat/" local="129701016000000000" remote="129701016000000000" />
+<file name="RedirectingPlugin.php" server="91.205.217.71//vat/" local="129701016000000000" remote="129701016000000000" />
+<file name="Reporter.php" server="91.205.217.71//vat/" local="129701016000000000" remote="129701016000000000" />
+<file name="ReporterPlugin.php" server="91.205.217.71//vat/" local="129701016000000000" remote="129701016000000000" />
+<file name="Sleeper.php" server="91.205.217.71//vat/" local="129701016000000000" remote="129701016000000000" />
+<file name="ThrottlerPlugin.php" server="91.205.217.71//vat/" local="129701016000000000" remote="129701016000000000" />
+<file name="Timer.php" server="91.205.217.71//vat/" local="129701016000000000" remote="129701016000000000" />
+</dwsync>

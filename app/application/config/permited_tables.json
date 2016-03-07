@@ -1,0 +1,18 @@
+[
+    {"table_name":"prod_list","table_title":"Справочник товаров","level":1},
+    {"table_name":"price_list","table_title":"Справочник цен","level":2},
+    {"table_name":"stat_annual_sold","table_title":"Стат. годовые продажи","level":4},
+    {"table_name":"stat_annual_sellbuy","table_title":"Стат. годовые покупки-продажи","level":4},
+    {"table_name":"stat_sell_analyse","table_title":"Стат. анализ продаж","level":4},
+    {"table_name":"stat_brand_sold","table_title":"Стат. продажи брендов"},
+    {"table_name":"stat_brand_comp_sold","table_title":"Стат. продажи брендов, клиентов"},
+
+    {"table_name":"event_list","hidden":1,"level":1},
+    {"table_name":"user_list","hidden":1,"level":1},
+    {"table_name":"stock_entry_view","hidden":1,"level":1},
+    {"table_name":"stock_trans_view","hidden":1,"level":2},
+    {"table_name":"manager_payments","hidden":1,"level":1},
+    {"table_name":"expired_list","hidden":1,"level":1},
+    {"table_name":"document_registry","hidden":3,"level":1},
+    {"table_name":"account_ledger","hidden":1,"level":1}
+]

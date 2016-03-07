@@ -1,0 +1,61 @@
+{
+	"readonly":"1" ,
+	"table_name":"Проводки по счету",
+	"toolnames":["add","delete","download","print"],
+	"extratools":{
+		"add":{"img":"add.png","command":"addTrans()","tip":"Добавить проводку"}
+	},
+	"columns":[
+	  {
+		"field":"trans_id",
+		"hidden":"1",
+		"is_key":1
+	  },
+	  {
+		"field":"cstamp",
+		"hidden":"1"
+	  },
+	  {
+		"field":"trans_status",
+		"name":"",
+		"type":"tooltip"
+	  },
+	  {
+		"field":"editable",
+		"name":"",
+		"type":"tooltip"
+	  },
+	  {
+		"field":"date",
+		"name":"Дата",
+		"type":"string"
+	  },
+	  {
+		"field":"pcomp_name",
+		"name":"Компания",
+		"type":"short",
+		"length":50
+	  },
+	  {
+		"field":"description",
+		"name":"Пояснение",
+		"type":"short",
+		"length":50
+	  },
+	  {
+		"field":"debit",
+		"name":"Дебет",
+		"type":"number"
+	  },
+	  {
+		"field":"credit",
+		"name":"Кредит",
+		"type":"number"
+	  },
+	  {
+		"field":"transfer",
+		"name":"!",
+		"type":"string"
+	  }
+	]
+}

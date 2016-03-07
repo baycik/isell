@@ -1,0 +1,30 @@
+{
+    "grid_name": "Реестр документов",
+    "readonly": 1,
+    "toolnames": [
+	"download",
+	"print"
+    ],
+    "identifier": "",
+    "columns": [
+	{
+	    "field": "doc_date",
+	    "name": "Дата",
+	    "distinct":1
+	},
+	{
+	    "field": "company_name",
+	    "name": "Контрагент",
+	    "distinct":1
+	},
+	{
+	    "field": "doc_name",
+	    "name": "Документ",
+	    "distinct":1
+	},
+	{
+	    "field": "view_num",
+	    "name": "Шаблон"
+	}
+    ]
+}

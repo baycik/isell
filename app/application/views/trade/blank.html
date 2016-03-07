@@ -1,0 +1,457 @@
+<script type="text/javascript">
+    /* global App,Blank */
+    Blank=App.page_trade_blank = {
+	show_only_pcomp_docs:false,
+	init: function () {
+	    
+	},
+	initAfter: function () {
+	    this.list.init();
+	    this.availsOpen();
+	    this.buttonsAdjust();
+	    App.handler.progress(function(status){
+		if( status==='passiveCompanySelected' || status==='activeCompanySelected' ){
+		    Blank.select(0);
+		    $('#blank_list_dg').datagrid('reload');
+		}
+	    });
+	},
+	print:function(){
+	    if( Blank.parser.inputsRendered ){
+		alert('Сначала сохраните бланк!');
+		return;
+	    }
+	    window.open("./?mod=Companies&rq=DocumentOut&doc_view_id="+Blank.blankData.doc_view_id);
+	},
+	buttonsAdjust:function(){
+	    if( Blank.parser.inputsRendered ){
+		$('#blank_button_save').prop('disabled',false);
+		$('#blank_button_edit').prop('disabled',true);
+	    } else {
+		$('#blank_button_save').prop('disabled',true);
+		$('#blank_button_edit').prop('disabled',false);
+	    }
+	},
+	select:function( doc_id ){
+	    Blank.list.selectedDocId=doc_id;
+	    if( Blank.parser.inputsRendered ){
+		Blank.parser.unRenderInputs();
+	    }
+	    if( Blank.list.selectedDocId===0 ){
+		Blank.availsOpen();
+		$('#blank_edit').panel('collapse');
+	    } else {
+		$('#blank_avails').panel('collapse');
+		$('#blank_edit').panel('expand');
+		Blank.load();
+	    }
+	},
+	availsOpen:function(){
+	    $.get('DocumentBlank/availFetch/',function(resp){
+		var avails=App.json(resp);
+		$('#blank_avails').panel('expand');
+		App.renderTpl('blank_avails',{avails:avails});
+	    });
+	},
+	create:function(view_type_id){
+	    $.post('DocumentBlank/blankCreate/'+view_type_id,function(resp){
+		if( resp*1>0 ){
+		    Blank.list.selectedDocId=resp;
+		    $('#blank_list_dg').datagrid('reload');
+		} else {
+		    App.flash("Не удалось создать бланк! Возможно не выбран контрагент!")
+		}	
+	    });
+	},
+	delete:function(){
+	    if (!confirm('Вы уверенны, что хотите удалить бланк?')){
+		return;
+	    }
+	    if( Blank.parser.inputsRendered ){
+		Blank.parser.unRenderInputs();
+	    }
+	    $.post('DocumentBlank/blankDelete',function(ok){
+		if(ok*1){
+		    Blank.list.selectedDocId=0;
+		    $('#blank_list_dg').datagrid('unselectAll');
+		    $('#blank_list_dg').datagrid('reload');
+		    App.flash('Бланк удален!');
+		} else {
+		    App.flash('Ошибка удаления бланка!');
+		}
+	    });
+  
+	},
+	edit: function(){
+	    if( Blank.parser.inputsRendered===true ){
+		return;
+	    }
+	    $.get('DocumentBlank/getFillData',function(resp){
+		Blank.fillData=App.json(resp);
+		Blank.fillData.today10=App.toDmy(new Date(new Date().getTime()+(10*24*60*60*1000)));
+		Blank.fillData.doc={
+		    num:Blank.blankData.doc_num,
+		    date:Blank.blankData.doc_date,
+		    data:Blank.blankData.doc_data
+		};
+		$('#blank_wrapper').css('background-color','rgba(255,255,240,.6)');
+		App.renderTpl('blank_edit',Blank.fillData,'nocache');
+		Blank.parser.renderInputs();
+		Blank.buttonsAdjust();
+	    });	    
+	},
+	blankData:{},
+	load:function(){
+	    var doc_id=Blank.list.selectedDocId;
+	    $.get('DocumentBlank/blankGet/'+doc_id,function(resp){
+		Blank.blankData=App.json(resp);
+		$('#blank_wrapper').html(Blank.blankData.html);
+		if( Blank.blankData.loaded_is_tpl ){
+		    Blank.edit();
+		} else {
+		    Blank.parser.inputsRendered=false;
+		    Blank.buttonsAdjust();
+		    $('#blank_wrapper').css('background-color','');
+		}
+	    });
+	},
+	save:function(){
+	    if( Blank.parser.inputsRendered===false ){
+		return;
+	    }
+	    this.parser.unRenderInputs();
+	    this.parser.collectXtra();
+	    if( this.parser.checkNoErrors() ){
+		var vars=Blank.parser.xtra;
+		vars.html=$("#blank_wrapper").html();
+		$.post('DocumentBlank/save',vars,function(ok){
+		    if( ok*1 ){
+			$('#blank_list_dg').datagrid('reload');
+			$('#blank_wrapper').css('background-color','#fff');
+		    } else {
+			App.flash("Сохранение бланка не удалось!");
+		    }
+		});
+	    } else {
+		this.parser.renderInputs();
+	    }
+	    Blank.buttonsAdjust();
+	}
+    };
+    Blank.parser={
+	inputsRendered:false,
+	renderInputs:function(){
+	    if( !this.inputsRendered ){
+		this.inputsRendered=true;
+		this.comboBoxes=[];
+		this.dateBoxes=[];
+		this.blankInputRender();
+		this.blankRowRender();
+		this.blankCalendarRender();
+		this.blankSelectRender();
+	    }
+	},
+	blankSelectRender:function(){
+	    $('#blank_wrapper .blank_select').each(function(){
+		var identificator = this.id.match(/[^_]+/);
+		var dataSource = Blank.fillData[identificator];
+		App.store('blank_combo_'+identificator,$(this).text() || App.store('blank_combo_'+identificator));
+		var combo=$(this).html('<span></span>').find('span');
+		combo.combobox({
+		    width:'300px',
+		    editable:false,
+		    valueField:'label',
+		    textField:'label',
+		    data:dataSource,
+		    onChange:function(val){
+			Blank.parser.blankSelectAssign(val,dataSource,identificator);
+			App.store('blank_combo_'+identificator,val);
+		    }
+		});
+		combo.combobox('setValue',App.store('blank_combo_'+identificator));
+		Blank.parser.comboBoxes.push(combo);
+	    });
+	},
+	blankSelectAssign:function(label,data,identificator){
+	    for(var i in data){
+		if( data[i].label===label ){
+		    for(var k in data[i]){
+			$("#"+identificator+'_'+k).html(data[i][k]);
+		    }
+		}
+	    }
+	},
+	blankCalendarRender:function(){
+	    $('#blank_wrapper .blank_calendar').each(function(){
+                var date=$(this).html();
+		var dbox=$(this).html('<span></span>').find('span');
+                dbox.datebox({
+		    width:'90px',
+		    value:date
+		});
+		Blank.parser.dateBoxes.push(dbox);
+	    });
+	},
+	blankInputRender:function(){
+	    $('#blank_wrapper .blank_input').each(function(){
+		var node=$(this);
+		node.html('<input type="text" value="'+node.html()+'" />');
+		node.addClass("blank_input_active");
+		if( node.hasClass('blank_spell') ){
+		    node.find("input").change(Blank.parser.spellNumber);
+		}
+		if( node.hasClass('blank_spell_amount') ){
+		    node.find("input").change(Blank.parser.spellAmount);
+		}
+	    });	    
+	},
+	spellNumber:function(){
+	    var node=$(this);
+	    $.get('Utils/spellNumber/'+parseInt(node.val()),function(text){
+		node.val(text);
+	    });
+	},
+	spellAmount:function(){
+	    var node=$(this);
+	    $.get('Utils/spellAmount/'+parseFloat(node.val()),function(text){
+		if( node.parent().nextAll('.blank_spell_text').length ){
+		    node.parent().nextAll('.blank_spell_text').text(text);
+		} else {
+		    node.val(text);
+		}
+	    });
+	},
+	blankRowRender:function(){
+	    Blank.parser.blankRowCheckEmpty();
+	    $('#blank_wrapper .blank_row input').change(Blank.blankRowCheckEmpty);
+	},
+	blankRowCheckEmpty:function(){
+	    var empty_rows=Blank.parser.blankRowFindEmpty();
+	    if( !empty_rows.length ){
+		var clone=$('#blank_wrapper .blank_row').last().clone();
+		clone.find('input').val('').change(Blank.parser.blankRowCheckEmpty);
+		$('#blank_wrapper .blank_row').last().after(clone);
+	    } else 
+	    if( empty_rows.length>1 ){
+		for(var i=1;i<empty_rows.length;i++){
+		    empty_rows[i].remove();
+		}
+	    }
+	},
+	blankRowFindEmpty:function(){
+	    var empty_rows=[];
+	    $('#blank_wrapper .blank_row').each(function(){
+		var empty_row=$(this);
+		$(this).find('input').each(function(){
+		    empty_row=( $(this).val()!=='' )?null:empty_row;
+		});
+		empty_row?empty_rows.push(empty_row):'';
+	    });
+	    return empty_rows;
+	},
+	unRenderInputs:function(){
+	    if( this.inputsRendered ){
+		this.inputsRendered=false;
+		this.blankRowUnRender();
+		this.blankInputUnRender();
+		this.blankWidgetUnRender();
+		this.comboBoxes=[];
+		this.dateBoxes=[];
+	    }
+	},
+	blankInputUnRender:function(){
+	    $('#blank_wrapper .blank_input').each(function(){
+		$(this).html( $(this).find('input').val() );
+	    });
+	},
+	blankRowUnRender:function(){
+	    this.blankRowFindEmpty()[0] && this.blankRowFindEmpty()[0].remove();
+	},
+	blankWidgetUnRender:function(){
+	    $.each(Blank.parser.comboBoxes,function(i,node){
+		var val=node.combobox('getValue');
+		node.after(val);
+		node.combobox('destroy');
+	    });
+	    $.each(Blank.parser.dateBoxes,function(i,node){
+		node.after(node.datebox('getValue'));
+		node.datebox('destroy');
+	    });
+	},
+	xtra:{},
+	collectXtra:function(){
+	    $("#blank_wrapper .blank_date").each(function(){
+		Blank.parser.xtra.date=$(this).text();
+	    });
+	    $("#blank_wrapper .blank_number").each(function(){
+		Blank.parser.xtra.num=$(this).text();
+	    });
+	},
+	checkNoErrors:function(){
+	    var error='';
+	    $("#blank_wrapper .blank_required").each(function(){
+		if( !$(this).text() ){
+		    error += "\nНе заполнено: " + this.title;
+		    $(this).css('border','3px solid #f00');
+		} else {
+		    $(this).css('border','');
+		}
+	    });
+	    if (!Blank.parser.xtra.date) {
+		error += "\nДата бланка не установленна";
+	    }
+	    if (!Blank.parser.xtra.num) {
+		error += "\nНомер бланка не установлен";
+	    }
+	    if (error) {
+		error += "\n\nБланк не сохранен!";
+		alert(error);
+		return false;
+	    }
+	    return true;
+	}
+    };
+    Blank.list = {
+	init: function () {
+	    $('#blank_list_dg').datagrid('enableFilter');
+	},
+	loader:function(param,success,error){
+	    $.get(App.uri('DocumentBlank','listFetch',param.page,param.rows, 'show_only_pcomp_docs'),{filterRules:param.filterRules},function(xhr){
+		var resp=App.json(xhr);
+		if( resp.rows ){
+		    resp.rows.unshift(Blank.list.getNewDocRow());
+		    success( resp );
+		    if( Blank.list.selectedDocId ){
+			$('#blank_list_dg').datagrid('selectRecord',Blank.list.selectedDocId);
+		    }
+		}
+		else{
+		    success({
+			rows:[Blank.list.getNewDocRow()],
+			total:1
+		    });
+		}
+		$('#blank_list_dg').datagrid('mergeCells', {index: 0,field: 'doc_num',colspan: 4});
+	    });
+	},
+	getNewDocRow: function () {
+	    return {
+		doc_id: 0,
+		doc_num: 'Создать новый бланк',
+		doc_type_icon: "new Новый бланк"
+	    };
+	},
+	onSelect:function(index,row){
+	    Blank.select(row.doc_id);
+            $('#blank_list_dg').datagrid('resize');
+	}
+    };
+</script>
+<table style="border-collapse: collapse;">
+    <tr>
+	<td style="vertical-align: top;width:700px;"> 
+	    <div class="easyui-panel covert" title="Создать новый бланк" id="blank_avails" data-options="collapsible:true,iconCls:'icon-document16'">
+		{{avails}}
+		{{if avail_views}}
+		<div class="blank_group">
+		    <div class="blank_group_title"><img src="img/{{icon_name}}.png"> {{doc_type_name}}</div>
+		    {{avail_views}}
+		    <button onclick="Blank.create($(this).data('vt-id'))" data-vt-id="{{view_type_id}}"><img src="img/edit_add.png"> {{view_name}}</button>
+		    {{/avail_views}}
+		</div>
+		{{/if}}
+		{{/avails}}
+	    </div>
+	    <div class="easyui-panel" style="width:730px" title="Редактирование бланка" id="blank_edit" data-options="collapsible:true,iconCls:'icon-document16',collapsed:true">
+		<div style="text-align:center;padding: 2px;background-color: white">
+		    <button onclick="Blank.print()"><img src="img/print.png"/> Печать</button>
+		    <button onclick="Blank.edit()" id="blank_button_edit"><img src="img/Edit-24.png"/> Изменить</button>
+		    <button onclick="Blank.save()" id="blank_button_save"><img src="img/Save-24.png"/> Сохранить</button>
+		    <button onclick="Blank.delete()"><img src="img/delete.png"/> Удалить</button>
+		</div>
+		<div id="blank_wrapper">
+		    {{html}}
+		</div>
+	    </div>
+	</td>
+	<td style="vertical-align: top;">
+	    <div style="float: left;font-weight: bold;padding-top: 8px;">
+		<img src="img/table16.png" style="width:16px;height: 16px;"> Список бланков
+	    </div>
+	    <div style="float: right">
+		<span class="icon-24 icon-refresh" title="Обновить" onclick="$('#blank_list_dg').datagrid('reload')"> </span> 
+	    </div>
+	    <table id="blank_list_dg" class="easyui-datagrid" style="width:360px;"
+		   data-options="
+		   idField:'doc_id',
+		   loader:Blank.list.loader,
+		   pagination:true,
+		   pageSize:25,
+		   pageList:[25,50,100,500,1000],
+		   singleSelect:true,
+		   remoteFilter:true,
+		   onSelect:Blank.list.onSelect,
+		   tools:'#blank_list_dg_tools',
+		   method:'get'">
+		<thead>
+		    <tr>
+			<th data-options="width:25,field:'doc_type_icon',align:'center',formatter:App.datagrid.tooltip">Тип</th>
+			<th data-options="width:45,field:'doc_num',align:'left'">Номер</th>
+			<th data-options="width:65,field:'doc_date'">Дата</th>
+			<th data-options="width:195,field:'view_name'">Документ</th>
+			<th data-options="width:25,field:'saved',align:'center',formatter:App.datagrid.tooltip">Сохранен</th>
+		    </tr>
+		</thead>
+	    </table>
+	</td>
+    </tr>
+</table>
+<style>
+    .blank_input_active{
+	text-align: center;
+    }
+    .blank_input_active input{
+        width: calc(100% - 10px);
+	max-width: 300px;
+        background-color: #FFb;
+        border: none;
+        padding-top: 2px;
+        padding-bottom: 2px;
+        margin: 0px;
+        margin-right: 3px;
+        font-family: Arial;
+        font-size: 12px;
+        color: #000000;
+        font-weight: bold;
+        font-style: normal;
+    }
+    .blank_required input{
+        background-color: #FF8;
+    }
+    #blank_avails{
+	width: 740px;
+    }
+    #blank_avails div{
+	
+    }
+    #blank_avails .blank_group{
+	font-weight: bold;
+	vertical-align: top;
+	margin: 5px;
+    }
+    #blank_avails img{
+	vertical-align: middle;
+    }
+    #blank_avails button{
+	text-align: left;
+	vertical-align: top;
+	width: 200px;
+    }
+    .blank_group_title{
+	padding: 5px 0px 5px 0px;
+    }
+    #blank_wrapper{
+	padding:2px;
+	position: relative;
+    }
+</style>

@@ -1,0 +1,5 @@
+<IfModule mod_rewrite.c>
+	RewriteEngine on 
+	RewriteCond %{REQUEST_FILENAME} !-s
+	RewriteRule ^(.*)$ app/$1 
+</IfModule>

@@ -1,0 +1,25 @@
+<form>
+    <div class="inp_group" style="width: 230px;">
+	<input style="width:95px" class="easyui-datebox" name="idate" title="Начальная дата" value="{{first_day}}" data-options="required:true">
+	<input style="width:95px" class="easyui-datebox" name="fdate" title="Конечная дата" value="{{today}}" data-options="required:true">
+    </div>
+    <div class="inp_group" style="width: 350px;">
+	<select name="filter_by" title="Фильтровать по">
+	    <option value="cdate" selected="selected">Дате</option>
+	    <option value="label">Клиенту</option>
+	    <option value="description">Пояснению</option>
+	    <option value="debit">Отгрузке</option>
+	    <option value="credit">Оплате</option>
+	    <option value="path">Группа</option>
+	</select>
+	<input name="filter_value" title="Фильтр">	
+    </div>
+    <div class="inp_group" style="width: 200px;">
+	<input type="checkbox" name="all_active" title="Все наши фирмы" checked="checked">
+	<input type="checkbox" name="deliveries" title="Отгрузки" checked="checked">
+	<input type="checkbox" name="payments" title="Оплаты" checked="checked">
+    </div>
+    <div style="text-align: center">
+	<button type="submit"><img src="img/report24.png" style="width:24px;height: auto"> Сформировать</button>
+    </div>
+</form>

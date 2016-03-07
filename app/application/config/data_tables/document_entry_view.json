@@ -1,0 +1,80 @@
+{
+"table_name":"Документ",
+"hidesearch":1,
+"showrowid":1,
+"multiselect":1,
+"toolnames":["commit","uncommit","space","addevent","sendsms","movedoc","cancel","recalc"],
+"extratools":{
+	"commit":{"img":"commit_doc.png","command":"commitDoc()","tip":"Провести документ","id":"commit"},
+	"uncommit":{"img":"cancel_doc.png","command":"uncommitDoc()","tip":"Отменить документ","id":"uncommit"},
+	"sendsms":{"img":"sms.png","command":"sendSms()","tip":"Послать СМС"},
+	"addevent":{"img":"lorry24.png","command":"addEvent()","tip":"Добавить Событие"},
+	"movedoc":{"img":"move_doc.png","command":"moveDoc()","tip":"Перенести документ"},
+	"recalc":{"img":"recalc.png","command":"recalcDoc()","tip":"Перерасчитать документ"},
+	"cancel":{"img":"cancel.png","command":"deleteSelected()","tip":"Отменить строку"}
+},
+"columns":[
+  {
+	"field":"doc_entry_id",
+	"name":"dei",
+	"type":"number",
+	"is_key":1,
+	"hidden":1
+  },
+  {
+	"field":"product_code",
+	"name":"Артикул",
+	"type":"string",
+	"readonly":1
+  },
+  {
+	"field":"product_name",
+	"name":"Название",
+	"type":"string",
+	"width":300,
+	"readonly":1
+  },
+  {
+	"field":"product_uktzet",
+	"hidden":1
+  },
+  {
+  	"field":"product_quantity",
+	"name":"Кол-во",
+	"type":"number"
+  },
+  {
+	"field":"product_unit",
+	"name":"Ед.",
+	"type":"string",
+	"readonly":1
+  },
+  {
+	"field":"product_price",
+	"name":"Цена",
+	"type":"number"
+  },
+  {
+	"field":"product_sub_total",
+	"name":"Сумма",
+	"type":"number",
+	"readonly":1
+  },
+  {
+	"field":"row_status",
+	"name":"!",
+	"type":"tooltip",
+	"readonly":1
+  },
+  {
+	"field":"current_price",
+	"name":"!",
+	"hidden":1
+  },
+  {
+	"field":"party_label",
+	"name":"!",
+	"hidden":1
+  }
+]
+}

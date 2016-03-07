@@ -1,0 +1,59 @@
+<script type="text/javascript">
+    /*global App,Doc*/
+    App.page_trade_view_settings = {
+	init: function () {
+	    this.node.window({
+		title: 'Свойства бланка: '+App.page_trade_view_settings.data.view_name,
+		width: 350,
+		height: 'auto',
+		onClose: function () {
+		    App.page_trade_view_settings.handler.notify('close');
+		    delete App.page_trade_view_settings;
+		}
+	    });
+	    this.initEfields(this.data);
+	    App.setupForm("#view_settings_frm",this.data,'use_inp_values').change(function(){
+		App.page_trade_view_settings.fieldChanged(this.name,this.value,'extra',this.title);
+	    });
+	    this.node.window('center');
+	},
+	initEfields:function(data){
+	    App.renderTpl('view_settings_efields',data);
+	    if( data.efields.length>3 ){
+		this.node.window('resize',{width: 650,height: 'auto'});
+	    }
+	},
+	fieldChanged:function( field, value, is_extra, title ){
+	    $.post( App.uri('DocumentView','viewUpdate',this.data.doc_view_id,is_extra,field,value), function(xhr){
+		App.page_trade_view_settings.handler.notify('changed');
+		App.flash(xhr*1?"Сохранено: "+title:"Ошибка сохранения "+title);
+	    });
+	},
+	deleteView:function(){
+	    $.post( App.uri('DocumentView','viewDelete',this.data.doc_view_id), function(xhr){
+		App.page_trade_view_settings.handler.notify('deleted');
+		App.page_trade_view_settings.node.window('close');
+	    });	    
+	}
+    };
+</script>
+<form id="view_settings_frm">
+    <input type="text" name="view_date" class="easyui-datebox" title="Дата" 
+	   data-options="required:'required',
+	   onChange:function(val){App.page_trade_view_settings.fieldChanged('view_date',val,'notextra');}">
+    <input type="text" name="view_num" class="easyui-numberspinner" title="Номер" data-options="min:1,required:'required',
+	   onChange:function(val){App.page_trade_view_settings.fieldChanged('view_num',val,'notextra',this.title);}">
+    <div class="inp_rule"></div>
+    <div id="view_settings_efields">
+    {{if efields}}
+	{{efields}}
+	<input type="text" name="{{field}}" title="{{label}}" value="{{value}}">
+	{{/efields}}
+    {{/if}}
+    </div>
+</form>
+<div style="text-align: center">
+    <button onclick="App.page_trade_view_settings.node.window('close')"><img src="img/apply24.png" style="vertical-align: middle"> Закрыть</button>
+    <button onclick="App.page_trade_view_settings.deleteView();"><img src="img/delete.png" style="vertical-align: middle"> Удалить</button>
+</div>
+<br>

@@ -1,0 +1,80 @@
+{
+    "grid_name": "Список склада",
+    "selectionMode":"extended",
+    "table_style":"width:100%",
+    "toolnames": ["import","addProduct", "editProduct", "delete", "download", "print"],
+    "extratools": {
+        "import":{
+            "img":"import.png",
+            "command":"import()",
+            "tip":"Импортировать данные"
+        },
+	"addProduct": {
+	    "img": "add.png",
+	    "command": "createProduct()",
+	    "tip": "Добавить Товар"
+	},
+	"editProduct": {
+	    "img": "edit.png",
+	    "command": "updateProduct()",
+	    "tip": "Изменить товар"
+	}
+    },
+    "identifier": "product_code",
+    "columns": [
+	{
+	    "field": "parent_label",
+	    "name": "Категория",
+	    "minWidth":"30px",
+	    "readonly": 1
+	},
+	{
+	    "field": "mc3",
+	    "name": "3м",
+	    "minWidth":"30px",
+	    "align":"right",
+	    "readonly": 1
+	},
+	{
+	    "field": "m1",
+	    "name": "1м",
+	    "minWidth":"30px",
+	    "align":"right",
+	    "readonly": 1
+	},
+	{
+	    "field": "product_wrn_quantity",
+	    "name": "Мин.",
+	    "align":"right",
+	    "readonly": 1
+	},
+	{
+	    "field": "party_label",
+	    "name": "Партия",
+	    "readonly": 1
+	},
+	{
+	    "field": "product_code",
+	    "name": "Артикул",
+	    "readonly": 1
+	},
+	{
+	    "field": "ru",
+	    "name": "Название",
+	    "readonly": 1,
+	    "width":"400px"
+	},
+	{
+	    "field": "product_quantity",
+	    "name": "Кол-во",
+	    "align":"right",
+	    "readonly": 1
+	},
+	{
+	    "field": "self_price",
+	    "name": "Учетная ц.",
+	    "align":"right",
+	    "readonly": 1
+	}
+    ]
+}

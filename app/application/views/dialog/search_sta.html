@@ -1,0 +1,149 @@
+<script type="text/javascript">
+document.title="Поиск на сайте налоговой";
+var STA={};
+var Connector=opener.Connector;
+require(["dojo/ready","dojo/dom","dojo/on","dijit/registry","dojo/domReady!"],
+function(ready,dom,on,registry){
+	STA.getCaptcha=function(){
+		registry.byId("standBy").show();
+		var request={};
+		request.mod='Utils';
+		request.rq='StartSTASession';
+		Connector.addRequest(request,function(resp){
+			registry.byId("standBy").hide();
+			dom.byId('STACaptcha').src='data:image/jpeg;base64,'+resp.img64;
+			registry.byId('cookies').set('value',resp.cookies);
+			registry.byId('captcha_num').set('value','');
+			registry.byId('captcha_num').focus();
+		});
+	}
+	STA.sendQuery=function(){
+		registry.byId("standBy").show();
+		var request=registry.byId('requestSTAForm').get('value');
+		request.mod='Utils';
+		request.rq='SearchSTA';
+		Connector.addRequest(request,function(resp){
+			registry.byId("standBy").hide();
+			switch( resp.status ){
+				case 'notfound':
+					alert('Предприятие не найдено!');
+				break;
+				case 'canceled':
+					alert('Предприятие в базе Ануллированных свидетельств НДС!');
+				break;
+				case 'wrongcaptcha':
+					STA.getCaptcha();
+					alert('Неверно заполнен защитный код!');
+				break;
+				case 'readerror':
+					alert('Ошибка чтения!');
+				break;
+				case 'ok':
+					registry.byId('detailsForm').set('value',resp.result);
+					registry.byId('queryPane').set('open',false);
+					registry.byId('resultPane').set('open',true);
+					dom.byId('detailsForm').style.display='block';
+					registry.byId('apply_button').focus();
+				break;
+			}
+		});
+	}
+	STA.applyDetails=function(e){
+		fvalue=registry.byId('detailsForm').get('value');
+		if( fvalue.usename!="use" )
+			fvalue.company_name=null;
+		if( fvalue.usecode!="use" )
+			fvalue.company_code=null;
+		if( fvalue.usevatid!="use" )
+			fvalue.company_vat_id=null;
+		if( fvalue.usevatlicenceid!="use" )
+			fvalue.company_vat_licence_id=null;
+		window.callback( fvalue );
+		window.close();
+	}
+	function init(){
+		registry.byId('requestSTAForm').set('value',fvalue);
+		registry.byId('company_code').focus();
+		STA.getCaptcha();
+		on(registry.byId('queryPane'),'show',function(){
+			STA.getCaptcha();
+		});
+	}
+	ready( init );
+});
+</script>
+<style type="text/css">
+	td.label{
+		width:100px;
+		text-align: right;
+	}
+	.center{
+		margin-left: auto;
+		margin-right: auto;
+	}
+	body{
+		padding: 4px;
+	}
+</style>
+<div id="standBy" data-dojo-type="dojox/widget/Standby" data-dojo-props="target:'queryPane'"></div>
+<div data-dojo-type="dijit/TitlePane" id="queryPane" title="Запрос в Налоговую Службу" style="width:370px" class="center">
+<form data-dojo-type="dijit/form/Form" id="requestSTAForm" onsubmit="STA.sendQuery();return false;" action="#">
+	<input data-dojo-type="dijit/form/TextBox" type="hidden" name="cookies" id="cookies">
+	<table class="center">
+		<tr>
+			<td class="label">Код:</td>
+			<td><input data-dojo-type="dijit/form/TextBox" name="company_code" type="text" id="company_code"></td>
+		</tr>
+		<tr>
+			<td class="label">ИНН:</td>
+			<td><input data-dojo-type="dijit/form/TextBox" name="company_vat_id" type="text" id="company_vat_id"></td>
+		</tr>
+		<tr>
+			<td class="label">№ Свид. НДС:</td>
+			<td><input data-dojo-type="dijit/form/TextBox" name="company_vat_licence_id" type="text" id="company_vat_licence_id"></td>
+		</tr>
+		<tr style="cursor:pointer" onclick="STA.getCaptcha();" title="Обновить защитный код!">
+			<td class="label">Защитный код:</td>
+			<td><img src="" id="STACaptcha"></td>
+		</tr>
+		<tr>
+			<td class="label">Код с картинки:</td>
+			<td><input data-dojo-type="dijit/form/TextBox" name="captcha" type="text" id="captcha_num"></td>
+		</tr>
+		<tr>
+			<td colspan="2" align="center"><button data-dojo-type="dijit/form/Button" type="submit">Послать Запрос</button></td>
+		</tr>
+	</table>
+</form>
+</div>
+<div data-dojo-type="dijit/TitlePane" id="resultPane" data-dojo-props="open:false" title="Результаты запроса" style="width:370px" class="center">
+
+<form data-dojo-type="dijit/form/Form" id="detailsForm" onsubmit="STA.applyDetails();return false" action="#">
+	<table class="center">
+		<tr>
+			<td class="label">Название:</td>
+			<td style="width:10px"><input data-dojo-type="dijit/form/CheckBox" type="checkbox" name="usename" value="use"></td>
+			<td><textarea data-dojo-type="dijit/form/Textarea" style="width: 260px" name="company_name"></textarea></td>
+		</tr>
+		<tr>
+			<td class="label">Код:</td>
+			<td><input data-dojo-type="dijit/form/CheckBox" type="checkbox" name="usecode" value="use" checked="checked"></td>
+			<td><input data-dojo-type="dijit/form/TextBox" style="width: 260px" name="company_code"></td>
+		</tr>
+		<tr>
+			<td class="label">ИНН:</td>
+			<td><input data-dojo-type="dijit/form/CheckBox" type="checkbox" name="usevatid" value="use" checked="checked"></td>
+			<td><input data-dojo-type="dijit/form/TextBox" style="width: 260px" type="text" name="company_vat_id"></td>
+		</tr>
+		<tr>
+			<td class="label">№ Свид.:</td>
+			<td><input data-dojo-type="dijit/form/CheckBox" type="checkbox" name="usevatlicenceid" value="use" checked="checked"></td>
+			<td><input data-dojo-type="dijit/form/TextBox" style="width: 260px" type="text" name="company_vat_licence_id"></td>
+		</tr>
+		<tr>
+			<td colspan="3" align="center"><button data-dojo-type="dijit/form/Button" type="submit" id="apply_button">Использовать Данные</button></td>
+		</tr>
+	</table>
+</form>
+</div>
+

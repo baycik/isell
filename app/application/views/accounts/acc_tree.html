@@ -1,0 +1,52 @@
+<script type="text/javascript">
+    /* global App */
+    Atree = App.page_accounts_acc_tree = {
+	init: function () {
+	    this.node.window({
+		title: 'План счетов',
+		width: 470,
+		height: 440,
+		modal:true,
+		onClose: function(){
+		    Atree.handler.notify('close',Atree.data);
+		    Atree.node.window('destroy');
+		    Atree.node.remove();
+		    delete App.page_accounts_acc_tree,Atree;
+		}
+	    });
+	},
+	initAfter:function(){
+	},
+	select:function(node){
+	    var node=$("#Atree_tree").tree('getSelected');
+	    if( node ){
+		Atree.data.acc_code=node.acc_code;
+		Atree.handler.notify('select',Atree.data);
+		Atree.node.window('close');
+	    } else {
+		alert("Выберите счет из дерева");
+	    }
+	}
+    };
+</script>
+<div style="width:450px;height: 350px;overflow: auto">
+    <div class="easyui-tree" id="Atree_tree" data-options="
+	method:'get',
+	url:'AccountsData/accountTreeFetch',
+	loadFilter:function(data){
+	    for(var i in data){
+		if( data[i].is_leaf*1 ){
+		    data[i].iconCls='icon-comp';
+		}
+	    }
+	    return data;
+	},
+	onSelect:function(node){
+	    if(node.state=='closed')
+		$(this).tree('expand',node.target);
+	},
+	onDblClick:Atree.select"></div>
+</div>
+<div style="text-align: center">
+    <button onclick="Atree.select()"><img src="img/apply24.png"> Выбрать</button>
+</div>

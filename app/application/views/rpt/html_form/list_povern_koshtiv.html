@@ -1,0 +1,22 @@
+<div id="blank_template" class="page" style="width:710px;text-align: justify;font-size: 14px">
+	<div style="text-align:center;font-size: 18px">Лист про повернення помилково перерахованих коштів <br>
+		№ <span class="blank_number blank_input" title="Номер документа">{{doc.num}}</span> 
+		від <span class="blank_calendar blank_date" title="Дата документа">{{doc.date}}</span>
+	</div>
+	<br><br><br>
+	<p>
+	<b>{{a.company_name}}</b> платіжним дорученням 
+	№ <span class="blank_input blank_required" title="Номер платежки"></span> від <span class="blank_calendar">{{doc.date}}</span> р. 
+	помилково перерахував зі свого банківського рахунку ( п/р:{{a.company_bank_account}} у {{a.company_bank_name}}, МФО:{{a.company_bank_id}} ),
+	
+	підприємству <b>{{p.company_name}}</b> ( ЄДРПОУ:{{p.company_code}} п/р:{{p.company_bank_account}} у {{p.company_bank_name}},
+	МФО:{{p.company_bank_id}} ) кошти в сумі <b><span class="blank_input blank_spell_amount blank_required" title="Сумма числом"></span>грн. (<span class="blank_spell_text"></span>)</b>
+	</p>
+	<p>
+	Прошу повернути зазначені кошти на банківський рахунок {{a.company_name}} ( ЄДРПОУ:{{a.company_code}} п/р:{{a.company_bank_account}} у {{a.company_bank_name}}, МФО:{{a.company_bank_id}} ).
+	</p>
+	<br><br>
+	<p>
+	_______________________/директор {{a.company_director}}/
+	</p>
+</div>

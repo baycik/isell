@@ -1,0 +1,364 @@
+<script type="text/javascript">
+    
+    
+    AccountsJs.bank={};
+    
+        App.loadDojo().progress(function(status){
+        if (status==='dojoloaded'){
+
+
+        require(["dojo/dom","dijit/registry","dojo/on", "dojo/query","dojo/data/ItemFileReadStore","dojo/parser","baycik/grid/DataGrid","dojo/domReady!"],
+        function(dom,registry,on,query,ItemFileReadStore,parser){
+            parser.parse('accounts_bank_div');
+            AccountsJs.bank.init=function(){
+                this.main_acc_code=0;
+                this.initCheckList();
+                //this.initFoundList();
+                this.initUseClientbankList();
+
+                this.passive_company={};
+                this.current_check={};
+            };
+            AccountsJs.bank.initUseClientbankList=function(){
+                on(registry.byId('use_clientbank_list'),'change',function(){
+                   AccountsJs.bank.main_acc_code=registry.byId('use_clientbank_list').get('value');
+                   AccountsJs.bank.acc_check_list.addToRequest({main_acc_code:AccountsJs.bank.main_acc_code});
+                   AccountsJs.bank.acc_check_list.loadGrid();
+                });
+                AccountsJs.bank.reloadAccList();
+            }
+            AccountsJs.bank.reloadAccList=function(){
+                var accStore=new ItemFileReadStore({url:"./?mod=Accounts&rq=AccList&useClientbank=1"});
+                registry.byId('use_clientbank_list').setStore(accStore);
+                registry.byId('use_clientbank_list').set('value',0);
+            }
+            AccountsJs.bank.getMainAccBalance=function(){
+                Connector.sendRequest({mod:'Accounts',rq:'AccountBalance',acc_code:AccountsJs.bank.main_acc_code},function(resp){
+                    dom.byId('cb_acc_balance').innerHTML=resp.balance||"0.00";
+                });
+            }
+            AccountsJs.bank.initCheckList=function(){
+                AccountsJs.bank.acc_check_list=new baycik.grid.DataGrid( {}, 'acc_check_list' );
+                with( AccountsJs.bank.acc_check_list ){
+                    addToRequest({mod:'Accounts'});
+                    onStructure=function( request ){
+                        request.rq='CheckListStructure';
+                        Connector.addRequest(request,this,'setStructure');
+                    }			
+                    onRequest=function( request ){
+                        request.rq='CheckListData';
+                        if( request.main_acc_code ){
+                            Connector.addRequest(request,this,'setData');
+                            AccountsJs.bank.current_check={};
+                            AccountsJs.bank.getMainAccBalance();
+                        }
+                    }
+                    onUpload=function( request ){
+                        request.rq='XMLUpload';
+                        request.tpl='file_uploader.html';
+                        Acc.showPopup({},function(){AccountsJs.bank.acc_check_list.loadGrid()},request);
+                    }
+                    onDownload=function( request ){
+                        request.rq='CheckListViewOut';
+                        request.out_type='BankCheckList.xls';
+                        Connector.addRedirection(request);
+                    }
+                    onPrint=function( request ){
+                        request.rq='CheckListViewOut';
+                        Acc.printOut( request );
+                    }
+                    calculateCell=function(cell){
+                        if( cell.field=='debit' )
+                            cell.style.push('color:red;font-weight:bold');
+                        else if( cell.field=='credit' )
+                            cell.style.push('color:green;font-weight:bold');
+                        return cell;
+                    }
+                    onSelect=function( check ){
+                        AccountsJs.bank.showCheck(check[0]);
+                    };
+                    onDeselect=function(){
+                        AccountsJs.bank.showCheck();
+                    }
+                    onDelete=function(){
+                        var selectedRows=this.getSelected();
+                        Connector.addRequest({mod:'Accounts',rq:'CheckListDelete',check_id:selectedRows[0].check_id},function(){
+                            AccountsJs.bank.acc_check_list.loadGrid();
+                        });
+                    }
+                    startup();
+                }
+            }
+            AccountsJs.bank.showCheck=function( check ){
+                    AccountsJs.bank.currentCheck=check;
+                    if( AccountsJs.bank.currentCheck ){
+                            dom.byId('bank_check_undefined').style.display='none';
+                            dom.byId('bank_check_details').style.display='block';
+                            Acc.renderTpl('bank_check_details',AccountsJs.bank.currentCheck);
+                    }
+                    else{
+                            dom.byId('bank_check_undefined').style.display='block';
+                            dom.byId('bank_check_details').style.display='none';
+                    }
+                    AccountsJs.bank.showCorrespondent();
+            }
+            AccountsJs.bank.showCorrespondent=function(){
+                    var bankCorrDetails=registry.byId('bank_correspondent_details_pane');
+                    if( AccountsJs.bank.currentCheck ){
+                            dom.byId('bank_correspondent_details').style.visibility='visible';
+                            bankCorrDetails.set('title',AccountsJs.bank.currentCheck.correspondent_name);
+                            Connector.addRequest({
+                                    mod:'Accounts',
+                                    rq:'CorrespondentStats',
+                                    correspondent_code:AccountsJs.bank.currentCheck.correspondent_code
+                            },function(resp){
+                                    if( resp ){
+                                            resp.correspondentFound='1';
+                                            AccountsJs.bank.currentCheck.passive_company_id=resp.passive_company_id;
+                                    }
+                                    else{
+                                            var resp={};
+                                            resp.correspondentFound='0';
+                                            resp.correspondent_code=AccountsJs.bank.currentCheck.correspondent_code;
+                                    }
+                                    resp.alreadyCommited=AccountsJs.bank.currentCheck.trans_id!=0?'1':'0';
+                                    Acc.renderTpl('bank_correspondent_details',resp);
+                            });
+                            if( !bankCorrDetails.open )
+                                    bankCorrDetails.toggle();
+                    }
+                    else{
+                            dom.byId('bank_correspondent_details').style.visibility='hidden';
+                            bankCorrDetails.set('title','Контрагент');
+                            if( bankCorrDetails.open )
+                                    bankCorrDetails.toggle();
+                    }
+            }
+            AccountsJs.bank.updateCurrentTrans=function(){
+                Connector.addRequest({mod:'Accounts',rq:'FetchTransData',trans_id:AccountsJs.bank.currentCheck.trans_id},function(resp){
+                    try{
+                        var d=resp.cstamp.split(" ")[0].split("-");
+                        var date=new Date(d[0],d[1]-1,d[2]);
+                    }
+                    catch(e){/*IF trans is not already exists*/
+                        alert("Данные по этой проводке отсутствуют!");
+                        return;
+                    };
+                    resp.date=date;
+                    resp.amount_uah=parseFloat(resp.amount_uah);
+                    resp.selected_acc=311;
+                    Acc.showPopup(resp,AccountsJs.bank.transEditCallback,{tpl:'trans_edit.html'});
+                });
+            }
+            AccountsJs.bank.addTrans=function( acc_code ){
+                var fvalue={
+                    trans_id:0,
+                    selected_acc:AccountsJs.bank.main_acc_code,
+                    date_stamp:AccountsJs.bank.currentCheck.transaction_date,
+                    passive_company_id:AccountsJs.bank.currentCheck.passive_company_id,
+                    description:AccountsJs.bank.currentCheck.assignment
+                };
+                if( AccountsJs.bank.currentCheck.debit!=0 ){
+                    fvalue.acc_credit_code=AccountsJs.bank.main_acc_code;
+                    fvalue.acc_debit_code=acc_code;
+                    fvalue.amount=AccountsJs.bank.currentCheck.debit;
+                }
+                else if( AccountsJs.bank.currentCheck.credit!=0 ){
+                    fvalue.acc_credit_code=acc_code;
+                    fvalue.acc_debit_code=AccountsJs.bank.main_acc_code;
+                    fvalue.amount=AccountsJs.bank.currentCheck.credit;
+                }
+                Acc.showPopup(fvalue,AccountsJs.bank.transEditCallback,{tpl:'trans_edit.html'});
+            }
+            AccountsJs.bank.transEditCallback=function( fvalue ){
+                var request=fvalue;
+                request.mod="Accounts";
+                request.check_id=AccountsJs.bank.currentCheck.check_id;
+                if( request.cancel==1 ){
+                    request.rq='CancelTransaction';
+                }
+                else{
+                    var date_format=function( date ){
+                        var dt=new Date();
+                        return dojo.date.stamp.toISOString(date, {selector: 'date'})+" "+dt.getHours()+":"+dt.getMinutes()+":"+dt.getSeconds();//YYYY-MM-DD HH:mm:ss
+                    }
+                    request.rq='UpdateTransaction';
+                    request.date=date_format(fvalue.date);
+                }
+                Connector.addRequest(request,function(){
+                    AccountsJs.bank.acc_check_list.loadGrid();
+                });
+            }
+
+
+
+
+
+
+
+
+            AccountsJs.bank.findCorresponding=function( check ){
+                this.current_check=check;
+                Acc.renderTpl('acc_check_data',check);
+                AccountsJs.bank.acc_found_list.selected_comp_code=check.correspondent_code;
+                with(AccountsJs.bank.acc_found_list){
+                        request.check_id=check.check_id;
+                        this.table_structure?loadTableData():startup();
+                }
+            };
+            AccountsJs.bank.addPayTransaction=function( pay_trans_id ){
+                var request={};
+                request.mod='Accounts';
+                request.rq='addPayTransaction';
+                request.pay_trans_id=pay_trans_id;
+                request.check_id=this.current_check.check_id;
+                request.description=this.current_check.assignment;
+
+                var matches=this.current_check.transaction_date.match(/(\d{2}).(\d{2}).(\d{4})/);
+                request.cstamp=matches[3]+'-'+matches[2]+'-'+matches[1];//DD.MM.YYYY to YYYY-MM-DD
+                var handler=function(fvalue){
+                        fvalue.disable=['amount'];
+                        fvalue.date_stamp=fvalue.cstamp;
+                        fvalue.selected_acc=AccountsJs.bank.main_acc_code;
+                        Acc.showPopup(fvalue,AccountsJs.bank.transEditCallback,{tpl:'trans_edit.html'});
+                }
+                Connector.addRequest(request,handler);
+            };
+            AccountsJs.bank.init();
+        });
+    }
+        });
+</script>
+<style type="text/css">
+    .bank_property_name{
+	vertical-align: top;
+	text-align: right;
+	font-weight: bold;
+	font-size: 12px;
+	width: 70px;
+    }
+    .bank_property_value {
+	-border-bottom: solid 1px #fff;
+    }
+    #bank_check_details{
+	background: #DAE5F0;
+	border: solid 1px #ccc;
+    }
+    #bank_check_details table{
+	border-collapse: collapse;
+    }
+    #bank_check_details table td{
+	padding:3px;
+	border: solid 1px #fff;
+    }
+    .super_light_grad{
+	padding:7px;
+	margin-bottom:5px;
+	background-color:#FFF;
+	border:#ccc solid 1px;
+	border-radius:5px;
+	box-shadow: 0px 1px 3px #abc;
+	background:-moz-linear-gradient(top, #fff, #eef);
+    }
+
+</style>
+<div id="accounts_bank_div">
+    <div style="display:table-cell;width:400px;vertical-align: top;padding-right: 2px;">
+        <div id="bank_correspondent_details_pane" data-dojo-type="dijit/TitlePane" data-dojo-props="open:false" title="Контрагент">
+            <div id="bank_correspondent_details" class="hidden">
+                {%ifequal alreadyCommited '1'%}
+                <div style="background-color: #dfd;padding: 5px; margin-bottom: 5px; border: 1px solid #ccc;text-align: center">
+                    Платеж уже проведен!<br>
+                    <div class="light_grad" style="display: inline-block;padding:5px;cursor: pointer" onclick="AccountsJs.bank.updateCurrentTrans()">
+                        Редактировать проводку
+                    </div>
+                </div>
+                {%endifequal%}
+                {%ifequal correspondentFound '1'%}
+                {%for acc in accs%}
+                <div class="super_light_grad">
+                    <div style="color:#333">
+                        <img src="img/hrivna24.png" style="float:left">
+                        <big><big>
+                            <b>{{acc.balance|default:'0'}}</b>
+                            </big></big>
+					    <!--{%ifequal alreadyCommited '0'%}-->
+					    <div class="light_grad" style="float:right;padding:5px;cursor: pointer;" onclick="AccountsJs.bank.addTrans( ' {{acc.acc_code}} ' );">
+					    Провести по счету {{acc.acc_code}}
+					    </div>
+					    <!--{%endifequal%}-->
+					    <div style="clear:both">{{acc.label}}</div>
+					    <hr size="1"/>
+				    </div>
+
+			    </div>
+			    {%endfor%}
+                            <div class="light_grad" style="padding:5px;cursor: pointer;" onclick="AccountsJs.bank.addTrans();">
+                            Внести оплату в ручном режиме
+                            </div>
+		    {%else%}
+			    <div style="background-color: #ffc;padding: 5px; margin-bottom: 5px; border: 1px solid #ccc;text-align: center">
+				    Контрагент с кодом {{correspondent_code}} не найден!<br>
+				    <div class="light_grad" style="display: inline-block;padding:5px;cursor: pointer" onclick="AccountsJs.bank.addTrans('0')">Внести оплату</div>
+			    </div>
+		    {%endifequal%}
+		    </div>
+		</div>
+		
+		<div data-dojo-type="dijit/TitlePane" style="margin-top:10px;" title="Платежное поручение">
+			<div id="bank_check_undefined" style="text-align: center">
+				Выберите платежное поручение из списка
+			</div>
+			<div id="bank_check_details" class="hidden">
+			<table width="100%" border="1">
+				<tr>
+					<td class="bank_property_name">Контрагент:</td>
+					<td class="bank_property_value">{{correspondent_name|default:''}}</td>
+				</tr>
+				<tr>
+					<td class="bank_property_name">Код:</td>
+					<td class="bank_property_value">{{correspondent_code|default:''}}</td>
+				</tr>
+				<tr>
+					<td class="bank_property_name">Счет:</td>
+					<td class="bank_property_value">{{correspondent_account|default:''}}</td>
+				</tr>
+				<tr>
+					<td class="bank_property_name">Банк:</td>
+					<td class="bank_property_value"><i>{{correspondent_bank_code|default:''}}</i> {{correspondent_bank_name|default:''}}</td>
+				</tr>
+				<tr>
+					<td colspan="2" align="center" height="30">&nbsp;</td>
+				</tr>
+				<tr>
+					<td class="bank_property_name">Номер:</td>
+					<td class="bank_property_value">№{{number|default:''}} от <b>{{tdate}}</b></td>
+				</tr>
+				<tr>
+					<td class="bank_property_name">Сумма:</td>
+					<td class="bank_property_value"><b><span style="color:red">{{debit|default:''}}</span><span style="color:green">{{credit|default:''}}</span>грн</b></td>
+				</tr>
+				<tr>
+					<td class="bank_property_name">Назначение:</td>
+					<td class="bank_property_value">{{assignment}}</td>
+				</tr>
+			</table>
+			</div>
+		</div>
+	</div>
+
+	<div style="display:table-cell">
+	    <div data-dojo-type="dijit/TitlePane" title="Список платежек по счету">
+		<input data-dojo-type="dijit/form/Select" name="use_clientbank_list" id="use_clientbank_list" style="width:220px;">
+                <img src="img/reload_16.png" onclick="AccountsJs.bank.reloadAccList()" alt="Перезагрузить">
+		Баланс: <span id="cb_acc_balance" style="color:#333;font-weight: bold;"></span>грн
+		<div id="acc_check_list"></div>
+	    </div>
+	    
+	</div>
+
+</div>
+
+
+
+

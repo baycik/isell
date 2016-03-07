@@ -1,0 +1,234 @@
+<script type="text/javascript">
+window.editor_mode='use_trans_names';
+require(["dojo/dom","dijit/registry","dojo/ready","dojo/on","dojo/data/ItemFileReadStore","dojox/data/QueryReadStore","dojo/domReady!"],
+function(dom,registry,ready,on,ItemFileReadStore,QueryReadStore){ ready(function(){
+    var companyStore=new QueryReadStore({url:"./?mod=Companies&rq=companieslist&selected_comp_id="+fvalue.passive_company_id});
+    registry.byId('passive_company_id').set('store',companyStore);
+    companyStore.fetch({ onComplete : function() { 
+	registry.byId('passive_company_id').set('value',fvalue.passive_company_id)
+    }});
+    
+    function switch_modes( mod ){
+	if( mod=='use_trans_names' ){
+	    dom.byId('adv_settings').style.display='none';
+	    dom.byId('trans_type_select').style.display='block';
+	    registry.byId('trans_type_select').setStore(transStore);
+	    registry.byId('trans_type_select').set('value',fvalue.trans_type);
+	}
+	else
+	if( mod=='use_acc_codes' ){
+	    //registry.byId('trans_type_select').setStore(null);
+	    dom.byId('adv_settings').style.display='block';
+	    dom.byId('trans_type_select').style.display='none';
+	}
+	editor_mode=mod;
+    }
+    if( fvalue.use_articles ){
+	dom.byId("tr_article_id").style.display="";
+	var articlesStore=new ItemFileReadStore({url:"./?mod=Accounts&rq=articleslist&selected_acc="+fvalue.selected_acc});
+	registry.byId('acc_article_id').setStore(articlesStore);
+	registry.byId('acc_article_id').set('value',fvalue.trans_type);
+    }
+    /*
+    *Search in predefined tranactions our trans_type
+    */
+    var transStore=new ItemFileReadStore({url:"./?mod=Accounts&rq=transnamelist&selected_acc="+fvalue.selected_acc});
+    if( fvalue.trans_type ){
+        transStore.fetch({query:{trans_type:fvalue.trans_type}, onBegin:function(c){switch_modes(c?'use_trans_names':'use_acc_codes')} });
+    }
+    else{
+        transStore.fetch({onComplete:function(items){
+            fvalue.trans_type=items[0].trans_type[0];
+            switch_modes('use_trans_names');
+        }});
+    }
+    function type2codes( trans_type ){
+        var codes=registry.byId('trans_type').get('value').split('_');
+	registry.byId('acc_debit_code').set('value',codes[0]);
+	registry.byId('acc_credit_code').set('value',codes[1]);
+    }
+    function codes2type(){
+	var acc_debit_code=registry.byId('acc_debit_code').get('value');
+	var acc_credit_code=registry.byId('acc_credit_code').get('value');
+	registry.byId('trans_type').set('value',acc_debit_code+'_'+acc_credit_code);        
+    }
+    
+    
+    on(dom.byId("adv_settings_butt"),'click',function(){
+	switch_modes( editor_mode=="use_acc_codes"?'use_trans_names':'use_acc_codes' );
+    });
+    on(registry.byId('trans_type_select'),'change',function(){
+	var trans_type=registry.byId('trans_type_select').get('value');
+	registry.byId('trans_type').set('value',trans_type);
+    });
+    on(registry.byId('trans_type'),'change',function(){
+        type2codes();
+    });
+    on(registry.byId('acc_debit_code'),'change',function(){
+	codes2type();
+    });
+    on(registry.byId('acc_credit_code'),'change',function(){
+        codes2type();
+    });
+
+    registry.byId('amount').focus();
+    on(registry.byId('amount'),'change,blur',function(){
+        var amountW=registry.byId('amount');
+        var amount=0;
+	var expr=amountW.get('value').replace(',','.').match( /[\(\d\.\)\*\/\+-]*/ );
+	if( expr!='' )	
+	    eval( "amount="+expr+";" );
+        if( amount>0 ){
+            amountW.set('value',Math.round(amount*100)/100,false);
+        }
+	if( fvalue.dollar_ratio ){
+	    registry.byId('amount_alt').set('value',Math.round(amount/fvalue.dollar_ratio*100)/100,false);
+        }
+    });
+    on(registry.byId('amount_alt'),'change,blur',function(){
+        var amount_altW=registry.byId('amount_alt');
+	var amount_alt=0;
+	var expr=amount_altW.get('value').replace(',','.').match( /[\(\d\.\)\*\/\+-]*/ );
+	if( expr!='' )	
+	    eval( "amount_alt="+expr+";" );
+        if( amount_alt>0 ){
+            amount_altW.set('value',Math.round(amount_alt*100)/100,false);
+        }
+	if( fvalue.dollar_ratio ){
+	    registry.byId('amount').set('value',Math.round(amount_alt*fvalue.dollar_ratio*100)/100,false);
+        }
+    });
+	
+    window.showDollarAmount=function(){
+	dom.byId('amount_alt_div').style.display='block';
+	on(registry.byId('dollar_ratio'),'change',function(){
+	    fvalue.dollar_ratio=registry.byId('dollar_ratio').get('value');
+	    var usd=registry.byId('amount_alt').get('value');
+	    var uah=registry.byId('amount').get('value');
+	    if( usd )
+		registry.byId('amount').set('value',Math.round(usd*fvalue.dollar_ratio*100)/100,false);
+	    else 
+	    if( uah && !usd )
+		registry.byId('amount_alt').set('value',Math.round(uah/fvalue.dollar_ratio*100)/100,false);
+	});
+    }
+    if( fvalue.dollar_ratio )
+	window.showDollarAmount();
+});});
+
+function beforeInit(){
+    document.title = "Редактирование Проводки";
+    if (!fvalue.trans_type && fvalue.acc_debit_code && fvalue.acc_credit_code) {
+        fvalue.trans_type = fvalue.acc_debit_code + '_' + fvalue.acc_credit_code;
+    }
+    if (fvalue.date_stamp) {
+        var dt = fvalue.date_stamp.match(/(\d{4})-(\d{2})-(\d{2})/); //e.g. 2012-01-15
+        fvalue.date = new Date(dt[1], dt[2] - 1, dt[3]);
+    }
+    if (fvalue.amount_alt != 0 && !fvalue.dollar_ratio) {
+        fvalue.dollar_ratio = fvalue.amount / fvalue.amount_alt;
+    }
+    if (fvalue.disable) {
+        for (i in fvalue.disable)
+            dijit.byId(fvalue.disable[i]).disabled = true;
+    }
+}
+function beforeSubmit(){
+    if( fvalue.cancel == 1) {
+        return true;
+    }
+    var msg = '';
+    msg += (!fvalue.date) ? '- Укажите дату проводки!\n' : '';
+    msg += (fvalue.amount == 0) ? '- Укажите сумму проводки!\n' : '';
+    msg += (!fvalue.passive_company_id) ? '- Выберите контрагента!\n' : '';
+    msg += (!fvalue.trans_type || !fvalue.acc_debit_code || !fvalue.acc_credit_code) ? '- Выберите вид проводки!\n' : '';
+    msg += (!fvalue.description) ? '- Укажите пояснение!\n' : '';
+    if (msg) {
+        alert(msg);
+        return false;
+    }
+    return true;
+}
+function cancelTrans() {
+    if (!confirm('Вы уверенны, что хотите отменить проводку?'))
+        return;
+    dijit.byId('cancel').set('value', 1);
+    dijit.byId('EditorForm').submit();
+}
+</script>
+<div data-dojo-type="dijit/form/Form" id="EditorForm" data-dojo-id="EditorForm">
+<input data-dojo-type="dijit/form/TextBox" type="hidden" name="trans_id" id="trans_id">
+<input data-dojo-type="dijit/form/TextBox" type="hidden" name="check_id" id="check_id">
+<input data-dojo-type="dijit/form/TextBox" type="hidden" name="payed_trans_id" id="payed_trans_id">
+<input data-dojo-type="dijit/form/TextBox" type="hidden" name="cancel" id="cancel" value="0" />
+<input data-dojo-type="dijit/form/TextBox" type="hidden" name="trans_type" id="trans_type" value="0" />
+<table align="center">
+<tr>
+	<td align="right">
+		<label for="date">Дата:</label>
+	</td>
+	<td style="width:270px;">
+		<input data-dojo-type="dijit/form/DateTextBox" type="text" name="date" id="date"  style="width:120px;">
+	</td>
+</tr>
+<tr>
+	<td align="right">
+		<label for="amount">Сумма:</label>
+	</td>
+	<td>
+		<input data-dojo-type="dijit/form/TextBox" type="text" name="amount" id="amount" style="width:120px; text-align:right;"><a href="javascript:window.showDollarAmount()">$</a>
+		<div id="amount_alt_div" style="display: none">
+		<input data-dojo-type="dijit/form/TextBox" type="text" name="amount_alt" id="amount_alt" style="width:120px; text-align:right;"> <b>валюта</b>
+		<input data-dojo-type="dijit/form/TextBox" type="text" name="dollar_ratio" id="dollar_ratio" style="width:30px; text-align:right;"> <b>курс</b>
+		</div>
+	</td>
+</tr>
+<tr>
+    <td align="right">
+	<label for="passive_company_id">Контрагент:</label>
+    </td>
+    <td>
+	<input data-dojo-type="dijit/form/FilteringSelect" data-dojo-props="searchAttr:'label', autoComplete: false, pageSize: 20" onclick="this.focusNode.select()" name="passive_company_id" id="passive_company_id" style="width:250px;">
+    </td>
+</tr>
+<tr>
+	<td align="right" valign="top">
+	  <label for="trans_type_select"> Проводка: </label>
+	</td>
+	<td>
+		<img src="img/settings.png" id="adv_settings_butt" align="absmiddle" tabindex="-1" style="float:right;margin-top: 3px"/>
+		<input data-dojo-type="dijit/form/Select" id="trans_type_select" style="width:250px;display: none">
+		<div id="adv_settings" style="font-style: italic;font-weight: bold;width:248px;background-color: #ff9;padding: 2px;display: none">
+			  Приход: <input type="text" data-dojo-type="dijit/form/TextBox" name="acc_debit_code" id="acc_debit_code" style="width:50px;">
+			  Расход: <input type="text" data-dojo-type="dijit/form/TextBox" name="acc_credit_code" id="acc_credit_code" style="width:50px;">
+		</div>
+	</td>
+</tr>
+<tr id="tr_article_id" style="display: none;">
+    <td align="right">
+	<label>Статья движ.:</label>
+    </td>
+    <td>
+	<input data-dojo-type="dijit/form/Select" name="acc_article_id" id="acc_article_id" style="width:250px;">
+    </td>
+</tr>
+<tr>
+	<td align="right" valign="top">
+		<label for="description">Пояснение:</label>
+	</td>
+	<td>
+		<textarea data-dojo-type="dijit/form/Textarea" name="description" id="description" style="width:250px;">Оплата</textarea>
+	</td>
+</tr>
+<tr>
+    <td align="center" colspan="2">
+	<button type="submit" data-dojo-type="dijit/form/Button"><img src="img/apply24.png" /> Сохранить</button>
+	<button type="button" data-dojo-type="dijit/form/Button" onclick="cancelTrans()"><img src="img/cancel24.png" /> Отменить</button>
+	<button type="button" data-dojo-type="dijit/form/Button" onclick="window.close()"><img src="img/close24.png" /> Закрыть</button>
+    </td>
+</tr>
+<tr>
+    <td align="center" colspan="2" height="50">&nbsp;</td>
+</tr>
+</table>
+</div>

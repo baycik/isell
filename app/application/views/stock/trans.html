@@ -1,0 +1,35 @@
+<script>
+    dojo.require("baycik.grid.DataGrid");
+    StockJs.trans.init = function() {
+        StockJs.trans.stock_trans = new baycik.grid.DataGrid({}, 'stock_trans');
+	with(StockJs.trans.stock_trans){
+	    addToRequest({table_name:'stock_trans_view',limit:50});
+	    onStructure = function(request) {
+		request.mod='Data';
+		request.rq='GridStructure';
+		Connector.addRequest(request,this,'setStructure');
+	    };
+	    onRequest = function(request) {
+		request.mod='Data';
+		request.rq = 'GridData';
+		Connector.addRequest(request, this, 'setData');
+	    };
+	    onPrint = function(request) {
+		request.mod='Data';
+		request.rq='GridOut';
+		Acc.printOut( request );
+	    };
+	    onDownload = function(request) {
+		request.mod='Data';
+		request.rq='GridOut';
+		request.out_type='.xls';
+		request.limit=0;
+		Connector.addRedirection( request );
+	    };
+	    startup();
+	}
+	
+    };
+</script>
+
+<div id="stock_trans" align="center"></div>
