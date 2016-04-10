@@ -1072,23 +1072,23 @@ class Document extends Data {
 	}
 	if ($this->doc('doc_type') == 2) {//BUY DOCUMENT
 	    $desc = "Приходный документ " . ($this->doc('is_reclamation') ? "(Возврат) " : "") . "№$doc_num";
-	    $this->makeTransaction(28, 631, $sum['total'], $desc, 'total');
-	    $this->makeTransaction(281, 28, $sum['vatless'], $desc, 'vatless');
-	    $this->makeTransaction(641, 28, $sum['vat'], $desc, 'vat');
+	    $this->makeTransaction(84, 631, $sum['total'], $desc, 'total');
+	    $this->makeTransaction(281, 84, $sum['vatless'], $desc, 'vatless');
+	    $this->makeTransaction(641, 84, $sum['vat'], $desc, 'vat');
 	    return true;
 	}
 	if ($this->doc('doc_type') == 3) {//SERVICEOUT DOCUMENT
 	    $desc = "Акт Оказанных Услуг №$doc_num";
-	    $this->makeTransaction(361, 44, $sum['total'], $desc, 'total');
-	    $this->makeTransaction(44, 441, $sum['vatless'], $desc, 'vatless');
-	    $this->makeTransaction(44, 641, $sum['vat'], $desc, 'vat');
+	    $this->makeTransaction(361, 703, $sum['total'], $desc, 'total');
+	    $this->makeTransaction(703, 441, $sum['vatless'], $desc, 'vatless');
+	    $this->makeTransaction(703, 641, $sum['vat'], $desc, 'vat');
 	    return true;
 	}
 	if ($this->doc('doc_type') == 4) {//SERVICEIN DOCUMENT
 	    $desc = "Акт Полученных Услуг №$doc_num";
-	    $this->makeTransaction(44, 631, $sum['total'], $desc, 'total');
-	    $this->makeTransaction(441, 44, $sum['vatless'], $desc, 'vatless');
-	    $this->makeTransaction(641, 44, $sum['vat'], $desc, 'vat');
+	    $this->makeTransaction(84, 631, $sum['total'], $desc, 'total');
+	    $this->makeTransaction(85, 84, $sum['vatless'], $desc, 'vatless');
+	    $this->makeTransaction(641, 84, $sum['vat'], $desc, 'vat');
 	    return true;
 	}
     }
