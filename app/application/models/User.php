@@ -6,12 +6,12 @@ class User extends Catalog {
     public function SignIn(){
 	$login=$this->input->post('login');
 	$pass=$this->input->post('pass');
-	$this->check($login,'^[a-zA-Z_0-9]*$');
-	$this->check($pass,'^[a-zA-Z_0-9]*$');
-	//if( !$login || !$pass ){
+	$this->check($login,'^[a-zA-Z_0-9]+$');
+	$this->check($pass,'^[a-zA-Z_0-9]+$');
+	if( !$login || !$pass ){
 	    //allow empty pass
-	    //$this->Base->kick_out();
-	//}
+	    $this->Base->kick_out();
+	}
 	$pass_hash = md5($pass);
 	$user_data = $this->get_row("SELECT * FROM " . BAY_DB_MAIN . ".user_list WHERE user_login='$login' AND user_pass='$pass_hash'");
 	if ($user_data && $user_data->user_id) {
