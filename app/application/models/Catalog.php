@@ -129,7 +129,7 @@ class Catalog extends CI_Model {
     // CORE TREE FUNCTIONS
     ////////////////////////////////////////////////////
     protected function treeFetch( $table, $parent_id = null, $depth = 'all', $super_path='', $level=0 ) {
-	$where=array("level<=$level");
+	$where=array("level IS NULL OR level<=$level");
 	if( $super_path!=='' ){
 	    $where[]="path LIKE '$super_path".($parent_id===null?'':'%')."'";
 	}
