@@ -15,13 +15,13 @@ class Maintain extends CI_Model {
 	$this->dirWork = realpath('.');
 	if( file_exists($this->dirWork.'/.git') ){
 	    $this->Base->msg("Work folder contains .git folder. Update may corrupt your work! Workdir is set to -isell3 ");
-	    $this->dirWork = $this->dirParent.'/-isell';//realpath('.');
+	    $this->dirWork = $this->dirParent.'/-isell3';//realpath('.');
 	}
         $git_branch_name=$this->getGitBranch();
-	$this->dirUnpack=$this->dirParent.'/isell_update';
-	$this->dirBackup=$this->dirParent.'/isell_backup';
-	$this->zipPath = $this->dirUnpack.'/isell_update.zip';
-	$this->zipSubFolder = $this->dirUnpack."/isell-$git_branch_name/";	
+	$this->dirUnpack=$this->dirParent.'/isell3_update';
+	$this->dirBackup=$this->dirParent.'/isell3_backup';
+	$this->zipPath = $this->dirUnpack.'/isell3_update.zip';
+	$this->zipSubFolder = $this->dirUnpack."/isell3-$git_branch_name/";	
     }
     
     private function getGitBranch(){
@@ -105,7 +105,8 @@ class Maintain extends CI_Model {
     public function updateInstall(){
 	$this->dirWork = realpath('.');
 	$file = str_replace("\\", "/", $this->dirWork.'/install/db_update.sql');
-	return $this->backupImportExecute($file);
+	$this->backupImportExecute($file);
+	return true;
     }
 
     private function setupConf(){

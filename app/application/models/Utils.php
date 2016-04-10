@@ -80,6 +80,52 @@ class Utils extends Catalog{
     
     
     /////////////////////////////
+    //SMS FUNCTIONS
+    /////////////////////////////
+    public function sendSms() {
+	$number=$this->request('number');
+	$body=$this->request('body');
+	if (!$this->Base->pref('SMS_SENDER') || !$this->Base->pref('SMS_USER') || !$this->Base->pref('SMS_PASS')) {
+	    $this->Base->msg("Настройки для отправки смс не установленны");
+	    return false;
+	}
+	if (!in_array('https', stream_get_wrappers())) {
+	    $this->Base->msg("Sms can not be sent. https is not available");
+	    return false;
+	}
+	try {
+	    if (time() - $this->Base->svar('smsSessionTime') * 1 > 25 * 60) {
+		$this->Base->svar('smsSessionTime', time());
+		$sid = json_decode(file_get_contents("https://integrationapi.net/rest/User/SessionId?login=" . $this->Base->pref('SMS_USER') . "&password=" . $this->Base->pref('SMS_PASS')));
+		$this->Base->svar('smsSessionId', $sid);
+	    }
+	    $post_vars = array(
+		'sessionId' => $this->Base->svar('smsSessionId'),
+		'sourceAddress' => $this->Base->pref('SMS_SENDER'),
+		'destinationAddress' => $number,
+		'data' => $body
+	    );
+	    $opts = array(
+		'http' => array(
+		    'method' => "POST",
+		    'content' => http_build_query($post_vars)
+		)
+	    );
+	    $msg_ids = json_decode(
+		    file_get_contents('https://integrationapi.net/rest/Sms/Send', false, stream_context_create($opts))
+	    );
+	    if (!$msg_ids[0])
+		return false;
+	} catch (Exception $e) {
+	    $this->Base->svar('smsSessionTime', 0);
+	    /*
+	     * Make smsSid expire to try again
+	     */
+	    return false;
+	}
+	return true;
+    }
+    /////////////////////////////
     //EMAIL FUNCTIONS
     /////////////////////////////
     private function sendEmail($to,$subject,$body,$file=null){
@@ -90,16 +136,18 @@ class Utils extends Catalog{
             'protocol'=>'smtp',
             'charset'=>'utf8',
 	    'smtp_timeout'=>10,
-            'smtp_host'=>BAY_SMTP_SERVER,
-            'smtp_user'=>BAY_SMTP_USER,
-            'smtp_pass'=>BAY_SMTP_PASS,
-	    'smtp_port'=>BAY_SMTP_PORT,
-	    'smtp_crypto'=>BAY_SMTP_CRYPTO
+            'smtp_host'=>$this->Base->pref('SMTP_SERVER'),
+            'smtp_user'=>$this->Base->pref('SMTP_USER'),
+            'smtp_pass'=>$this->Base->pref('SMTP_PASS'),
+	    'smtp_port'=>$this->Base->pref('SMTP_PORT'),
+	    'smtp_crypto'=>$this->Base->pref('SMTP_CRYPTO')
         ]);
 	$this->email->set_newline("\r\n");
-        $this->email->from(BAY_SMTP_SENDER_MAIL,BAY_SMTP_SENDER_NAME);
+        $this->email->from($this->Base->pref('SMTP_SENDER_MAIL'),$this->Base->pref('SMTP_SENDER_NAME'));
         $this->email->to($to);
-        //$this->email->cc(BAY_SMTP_SENDER_MAIL);
+	if( $this->Base->pref('SMTP_SEND_COPY') ){
+	    $this->email->cc($this->Base->pref('SMTP_SENDER_MAIL'));
+	}
         $this->email->subject($subject);
         $this->email->message($body);
         if( $file ){

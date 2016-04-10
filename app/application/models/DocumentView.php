@@ -165,7 +165,9 @@ class DocumentView extends DocumentItems{
                 'rows'=>$rows,
                 'footer'=>$footer,
                 'director_name'=>$this->Base->pref('director_name'),
+                'director_tin'=>$this->Base->pref('director_tin'),
                 'accountant_name'=>$this->Base->pref('accountant_name'),
+                'accountant_tin'=>$this->Base->pref('accountant_tin'),
             ]
         ];
         return $dump;

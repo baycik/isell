@@ -1,7 +1,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
     <head>
-	<title>iSell 3.12</title>
+	<title>iSell 3.13</title>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 	<link rel="icon" type="image/png" href="favicon.png" />
 	<link rel="stylesheet" type="text/css" href="js/jquery-easyui-1.4/themes/default/easyui.css"/>
@@ -145,7 +145,7 @@
                 });
 	    };
 	    App.module={
-		legacy:["Companies","Lists","Data","Home"],//,"Stock","Accounts"
+		legacy:["Companies","Lists","Home"],//,"Stock","Accounts","Data"
 		init:function(){
 		    $(window).bind( 'hashchange', function(e) {
 			App.module.load(location.hash.substring(1));
@@ -223,7 +223,7 @@
 	    <img src="img/logo.png" style="vertical-align:top;height: 40px;width:auto;margin: 1px;" />
 	    <div style="color:#009;margin-top:10px;display: inline-block;font-size: 18px;white-space: nowrap;" class="covert" id="module_title">
                 {{module_name}}: 
-                <img src="img/home.png" style="margin-top: -4px;"> <span class="link_button" onclick="App.user.acompSwitch()">{{acomp_name}}</span>
+                <img src="img/home.png" style="margin-top: -4px;"> <span class="link_button" onclick="App.user.acompSwitch()" title="Сменить активную компанию">{{acomp_name}}</span>
                 {{if pcomp_name}}
                 / <img src="img/gray.png"> {{pcomp_name}}
                 {{/if}}

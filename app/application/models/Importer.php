@@ -7,11 +7,11 @@ class Importer extends Catalog{
 	$rows=$this->request('rows','int',50);
 	$this->check($label);
 	if( $label ){
-	    $where="WHERE label='$label'";
+	    $where="WHERE label LIKE '%$label%'";
 	} else {
 	    $where='';
 	}
-	$total=$this->get_value("SELECT COUNT(*) FROM imported_data WHERE label='$label'");
+	$total=$this->get_value("SELECT COUNT(*) FROM imported_data WHERE label LIKE '%$label%'");
 	$entries=$this->get_list("SELECT * FROM imported_data $where LIMIT $rows OFFSET ".(($page-1)*$rows));
 	return ['rows'=>$entries,'total'=>$total];
     }

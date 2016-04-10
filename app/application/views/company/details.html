@@ -40,8 +40,8 @@
         },
 	checkActive:function(){
 	    if( this.data.is_active ){
-		this.node.find("#page_company_details_passive_details").hide();
-		this.node.find("#page_company_details_active_details").show();
+		this.node.find(".page_company_details_passive_details").hide();
+		this.node.find(".page_company_details_active_details").show();
 		App.handler.progress(function(status,data){
 		    if( status==="activeCompanySelected" ){
 			Cdet.load(data.company_id);
@@ -82,6 +82,26 @@
 	    if( this.autoselect_label ){
 		this.node.find('input[name=label]').select();
 	    }
+	    Cdet.makeActiveButtonCheck();
+	},
+	makeActive:function(){
+	    if( confirm("Сделать компанию "+Cdet.data.label+" активной?") ){
+		$.post('Company/companyMakeActive/'+Cdet.data.company_id,function(ok){
+		    if( ok*1 ){
+			Cdet.data['is_active']=1;
+			Cdet.makeActiveButtonCheck();
+			App.flash("Компания "+Cdet.data.label+" теперь активная");
+		    } else {
+			App.flash("Сохраненние не удалось");
+		    }
+		});
+		
+	    }
+	},
+	makeActiveButtonCheck:function(){
+	    if( Cdet.data.is_active*1 ){
+		$(".comp_det_makeActBut").attr('disabled',true);
+	    }
 	}
     };
 </script>
@@ -96,7 +116,7 @@
 	<input type="text" name="company_code_registration" title="Регистр. КОД"/>	
     </div>
     <div class="inp_group" style="width:340px;">
-	<div id="page_company_details_passive_details">
+	<div class="page_company_details_passive_details">
 	    <input type="text" name="company_agreement_num" title="Номер договора"/>
 	    <input type="text" name="company_agreement_date" title="Дата договора"/>
 	</div>
@@ -121,8 +141,11 @@
     </div>
     <div class="inp_rule"></div>
     <textarea name="company_description" title="Дополнительно" style="width:550px;"></textarea>
+    <div class="page_company_details_passive_details inp_group" style="display: inline-block">
+	<button type="button" onclick="Cdet.makeActive()" class="comp_det_makeActBut"><img src="img/home.png"> Сделать активной компанией</button>
+    </div>
     <div class="inp_rule"></div>
-    <div id="page_company_details_active_details" style="display: none">
+    <div class="page_company_details_active_details" style="display: none">
         <input type="text" name="company_vat_rate" title="Ставка НДС"/>
         <select name="language" title="Язык">
             <option value="en">English</option>

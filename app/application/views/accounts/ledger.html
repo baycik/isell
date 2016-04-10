@@ -262,13 +262,15 @@
 		    trans_ref:trans_ref||null,
 		    trans_type:trans_type||'',
 		    description:trans_name||'',
-		    passive_company_id:App.pcomp?App.pcomp.company_id:0,
 		    current_acc_code:Ledger.current_acc_code,
 		    using_alt_currency:Ledger.using_alt_currency
 		};
-		if(App.pcomp){
+		if(Ledger.data.passive_filter && App.pcomp){
 		    data.passive_company_id=App.pcomp.company_id || 0;
 		    data.label=App.pcomp.label || '?';
+		} else {
+		    data.passive_company_id=App.acomp.company_id || 0;
+		    data.label=App.acomp.label || '?';
 		}
 		App.loadWindow('page/accounts/trans_edit',data).progress(function(status,data){
 		    if( status==='save' || status==='delete' ){

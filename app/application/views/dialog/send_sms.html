@@ -11,14 +11,11 @@
 		    delete App.page_dialog_send_sms;
 		}
 	    });
-            if( this.data.to.length===10 ){
-                this.data.to='38'+this.data.to;
-            }
 	    App.setupForm("#dialog_send_sms_frm",this.data);
 	    $('#dialog_send_sms_frm').submit(function(e){
 		e.preventDefault();
 		var data=App.collectForm('#dialog_send_sms_frm');
-		$.post('ProcUtils/onSendSms',data,function(xhr){
+		$.post('Utils/sendSms/',data,function(xhr){
 		    App.page_dialog_send_sms.node.window('close');
 		});
 	    });
@@ -27,7 +24,7 @@
 </script>
 <form id="dialog_send_sms_frm">
     <input type="hidden" name="copy" value="1">
-    <input type="text" name="to" title="Телефон" pattern="\d{12}" />
+    <input type="text" name="to" title="Телефон" pattern="\+?\d{11,12}" />
     <textarea name="body" title="Текст"></textarea>
     <div style="text-align: center">
 	<button type="submit"><img src="img/sms.png" style="vertical-align: middle"> Отправить</button>

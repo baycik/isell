@@ -1,110 +1,215 @@
 <script type="text/javascript">
-    /*global App,DataJs,Connector,baycik,dojo,Acc,data_grid,table_list*/
-    
-    
-    //dojo.require('dijit.layout.TabContainer');
-    //dojo.require("baycik.datatable.DataTable");
-    //dojo.require("dijit.layout.ContentPane");
-
-
-    dojo.require("baycik.grid.DataGrid");
-
-
-    DataJs = {};
-    DataJs.init = function () {
-	DataJs.tables.init();
-    };
-    DataJs.destroy = function () {
-	data_grid.destroy();
-	table_list.destroy();
-    };
-    DataJs.tables = {};
-    DataJs.tables.init = function () {
-	DataJs.tables.initTableList();
-	DataJs.tables.initDataGrid();
-    };
-    DataJs.tables.destroy = function () {
-	DataJs.tables.data_grid.destroy();
-	DataJs.tables.table_list.destroy();
-    };
-    DataJs.tables.initDataGrid = function () {
-	DataJs.tables.data_grid = new baycik.grid.DataGrid({}, 'data_grid');
-	with (DataJs.tables.data_grid) {
-	    request.mod = 'Data';
-	    onStructure = function (request) {
-		request.rq = 'GridStructure';
-		Connector.addRequest(request, this, 'setStructure');
-	    };
-	    onRequest = function (request) {
-		request.rq = 'GridData';
-		Connector.addRequest(request, this, 'setData');
-	    };
-	};
-	DataJs.tables.data_grid.onDelete = function (request) {
-	    request.rq = 'DeleteGridRow';
-	    Connector.addRequest(request);
-	    DataJs.tables.data_grid.loadGrid();
-	};
-	DataJs.tables.data_grid.onUpdate = function (request) {
-	    request.rq = 'UpdateGridRow';
-	    Connector.addRequest(request);
-	};
-	DataJs.tables.data_grid.onInsert = function (request) {
-	    request.rq = 'InsertGridRow';
-	    Connector.addRequest(request);
-	};
-	DataJs.tables.data_grid.onUpload = function (request) {
-	    var f=DataJs.tables.data_grid._structure.columns;
-            App.loadWindow('page/dialog/importer',{label:'данные',fields_to_import:f}).progress(function(status,fvalue,Importer){
-                if( status==='submit' ){
-                    $.post("Data/import/"+request.table_name,fvalue,function(ok){
-			App.flash("Добавлено строк "+ok);
-                        DataJs.tables.data_grid.loadGrid();
-			Importer.reload();
-                    });
-                }
-            });
-	};
-	DataJs.tables.data_grid.onPrint = function (request) {
-	    request.mod = 'Data';
-	    request.rq = 'GridOut';
-	    Acc.printOut(request);
-	};
-	DataJs.tables.data_grid.onDownload = function (request) {
-	    request.mod = 'Data';
-	    request.rq = 'GridOut';
-	    request.out_type = '.xls';
-	    request.limit = 0;
-	    Connector.addRedirection(request);
-	};
-    };
-    DataJs.tables.initTableList = function () {
-	DataJs.tables.table_list = new baycik.grid.DataGrid({}, 'table_list');
-	with (DataJs.tables.table_list) {
-	    request.mod = 'Data';
-	    request.table_name = 'table_list';
-	    onStructure = function () {
-		var table_structure = {readonly: 1, hidestatus: 1, hidefilter: 1, selectionMode: 'single', columns: [{field: "table_title", name: "Доступные таблицы"}]};
-		setStructure(table_structure);
-	    };
-	    onRequest = function (request) {
-		request.rq = 'PermitedTableList';
-		Connector.addRequest(request, this, 'setData');
-	    };
-	    startup();
+DataJs={
+    filterEnabled:false,
+    tableKey:[],
+    loadTable:function(){
+	var row=$("#data_table_list").datagrid('getSelected');
+	if( row ){
+	    $.get("Data/tableStructure/"+row.table_name,function(resp){
+		var struct=App.json(resp);
+		DataJs.processStruct(struct);
+		DataJs.initTable(row.table_name);
+	    });
+	    $("#data_table_holder").show();
+	    $("#data_table_name").html(row.table_title);
+	    row.editable*1?$("#data_grid_editables").show():$("#data_grid_editables").hide();
 	}
-	DataJs.tables.table_list.onSelect = function (selected) {
-	    DataJs.tables.data_grid.request.table_name = selected[0].table_name;
-	    DataJs.tables.data_grid.startup();
-	};
-    };
+    },
+    processStruct:function(struct){
+	this.tableWidth=10;
+    	for(var i in struct){
+	    struct[i].title=struct[i].name=struct[i].field=struct[i].Field;
+	    if( struct[i].Comment ){
+		struct[i].title=struct[i].name=struct[i].Comment;
+	    }
+	    if( struct[i].Type.indexOf('varchar')>-1 ){
+		var chars=parseInt(struct[i].Type.split('(')[1]);
+		if( chars<50 ){
+		    struct[i].width=100;
+		} else {
+		    struct[i].width=200;
+		}
+	    }
+	    if( struct[i].Type.indexOf('double')>-1 || struct[i].Type.indexOf('decimal')>-1 || struct[i].Type.indexOf('int')>-1 ){
+		struct[i].width=70;
+	    }
+	    this.tableWidth+=struct[i].width;
+	    if( struct[i].Key==="PRI" ){
+		DataJs.tableKey.push(struct[i].Field);
+	    }
+	}
+	DataJs.currentStruct=struct;	
+    },
+    initTable:function(table_name){
+	var grid_id='data_grid_'+table_name;
+	$('#data_grid').html('<div id="'+grid_id+'"></div>');
+	DataJs.currentGrid=$('#'+grid_id);
+	DataJs.currentGrid.datagrid({
+	    width:this.tableWidth<900?this.tableWidth:900,
+	    remoteFilter:true,
+	    pagination:true,
+	    pageSize:30,
+	    pageList:[30,60,120,600],
+	    columns:[this.currentStruct],
+	    onDblClickCell:DataJs.list.edit,
+	    onSelect:function(){
+		DataJs.currentGrid.datagrid('resize');
+	    },
+	    onBeforeLoad:function(){
+		//DataJs.filterEnabled?'':DataJs.currentGrid.datagrid('removeFilterRule');
+	    },
+	    loader:function( param, success, error ){
+		DataJs.list.currPage=param.page;
+		DataJs.list.filterRules=param.filterRules;
+		DataJs.list.rows=param.rows;
+		$.get("Data/tableData/"+table_name, param,function( xhr ){
+		    var resp=App.json(xhr);
+		    success(resp);
+		});
+	    }
+	});
+	DataJs.currentGrid.on('rowEdit',function(){
+	    DataJs.list.editClick();
+	});
+	DataJs.currentGrid.datagrid('enableFilter');
+	this.currentTable=table_name;
+    },
+    list:{
+	create:function(){
+	    this.openUnivEditor();
+	},
+	openUnivEditor:function(row){
+	    var rowKey=DataJs.list.getRowKey(row);
+	    var create=!row?1:0;
+	    App.loadWindow("page/data/universal_editor",{fvalue:row,fstruct:DataJs.currentStruct}).progress(function(status,createdRowKey,data,title){
+		if( status==='change' ){
+		    rowKey=createdRowKey||rowKey;
+		    $.post("Data/tableRowCreateUpdate/"+DataJs.currentTable,{rowKey:JSON.stringify(rowKey),data:JSON.stringify(data),create:create},function(ok){
+			if( ok>0 ){
+			    App.flash("Сохранено: "+title);
+			    DataJs.currentGrid.datagrid('reload');
+			    create=0;
+			} else {
+			    App.flash("Не сохранено!");
+			}
+		    });
+		}
+	    });
+	},
+	editClick:function(){
+	    var row=DataJs.currentGrid.datagrid('getSelected');
+	    if( row ){
+		DataJs.list.openUnivEditor(row);
+	    }	    
+	},
+	edit:function(index,field,value){
+	    DataJs.currentGrid.datagrid('unselectAll');
+	    DataJs.currentGrid.datagrid('selectRow',index);
+	    var row=DataJs.currentGrid.datagrid('getSelected');
+	    if( row ){
+		row.focus=field;
+		DataJs.list.openUnivEditor(row);
+	    }
+	},
+	getRowKey:function(row){
+	    if( !row ){
+		return null;
+	    }
+	    var key={};
+	    for(var i in DataJs.tableKey){
+		key[DataJs.tableKey[i]]=row[DataJs.tableKey[i]];
+	    }
+	    return key;
+	},
+	delete:function(){
+	    if(!confirm("Удалить выделенные строки?")){
+		return false;
+	    }
+	    var rowKey=[];
+	    var rows=DataJs.currentGrid.datagrid('getSelections');
+	    for(var i in rows){
+		rowKey.push(DataJs.list.getRowKey(rows[i]));
+	    }
+	    $.post("Data/tableRowsDelete/"+DataJs.currentTable,{rowKey:JSON.stringify(rowKey)},function(ok){
+		if(ok>0){
+		    DataJs.currentGrid.datagrid('reload');
+		    App.flash("Удалено строк: "+ok);
+		} else {
+		    App.flash("Удаление не удалось!");
+		}
+	    });
+	},
+	toggleFilter: function () {
+	    if (DataJs.filterEnabled) {
+		DataJs.currentGrid.datagrid('disableFilter');
+		DataJs.filterEnabled = false;
+	    }
+	    else {
+		DataJs.currentGrid.datagrid('enableFilter');
+		DataJs.filterEnabled = true;
+	    }
+	},
+	import:function(){
+	    App.loadWindow('page/dialog/importer',{label:'данные',fields_to_import:DataJs.currentStruct}).progress(function(status,fvalue,Importer){
+		if( status==='submit' ){
+		    $.post("Data/import/"+DataJs.currentTable,fvalue,function(ok){
+			App.flash("Добавлено строк "+ok);
+			DataJs.currentGrid.datagrid('reload');
+			Importer.reload();
+		    });
+		}
+	    });
+	},
+	out:function(out_type){
+	    var params={
+		page:DataJs.list.currPage,
+		filterRules:DataJs.list.filterRules,
+		out_type:out_type
+	    };
+	    var url="Data/tableViewGet/"+DataJs.currentTable+"?"+$.param( params );
+	    if( out_type==='.print' ){
+		window.open(url+"&rows="+DataJs.list.rows,'print_tab');
+	    } else {
+		location.href=url+"&rows=10000";
+	    }
+	}
+    }
+};
 </script>
-<table width="100%">
+<table style="width:100%">
     <tr>
-	<td width="200" valign="top">
-	    <div id="table_list"></div>
+	<td style="vertical-align: top;width: 205px">
+	    <table class="easyui-datagrid" id="data_table_list" data-options="
+		   url:'Data/permitedTableList',
+		   singleSelect:true,
+		   onSelect:function(){
+			$('#data_table_list').datagrid('resize');
+			DataJs.loadTable();
+		    }
+		   ">
+		<thead>
+		    <tr>
+			<th  data-options="field:'table_title',width:200">Доступные таблицы</th>
+		    </tr>
+		</thead>
+	    </table>
 	</td>
-	<td valign="top" align="center">
+	<td style="vertical-align: top;text-align: center;display: none;" id="data_table_holder">
+	    <div style="float: left;font-weight: bold;padding-top: 8px;">
+		<img src="img/table16.png" style="width:16px;height: 16px;"> <span id="data_table_name"></span>
+	    </div>
+	    <div style="text-align: right;padding-right: 5px;">
+		<span id="data_grid_editables">
+		    <span class="icon-24 icon-create" title="Добавить" onclick="DataJs.list.create();"> </span>
+		    <span class="icon-24 icon-change" title="Изменить" onclick="DataJs.list.editClick();"> </span>
+		    <span class="icon-24 icon-delete" title="Удалить" onclick="DataJs.list.delete();"> </span>
+		    <span class="icon-24 icon-import" title="Импорт" onclick="DataJs.list.import();"> </span>
+		</span>
+		<span class="icon-24 icon-tablefilter" title="Фильтр таблицы" onclick="DataJs.list.toggleFilter()"> </span>
+		<span class="icon-24 icon-refresh" title="Обновить" onclick="DataJs.currentGrid.datagrid('reload');"> </span>
+		<span class="icon-24" style="background-image: url(img/file_download.png);background-repeat: no-repeat" title="Скачать таблицу" onclick="DataJs.list.out('.xlsx');"> </span>
+		<span class="icon-24 icon-print" title="Печать" onclick="DataJs.list.out('.print')"> </span>
+	    </div>
 	    <div id="data_grid"></div>
 	</td>
     </tr>

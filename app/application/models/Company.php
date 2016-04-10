@@ -159,6 +159,9 @@ class Company extends Catalog{
 	$company=$this->companyGet( $company_id );
 	if( $company->is_active ){
 	    $this->Base->svar('acomp',$company);
+	    
+	    $user_id=$this->Base->svar('user_id');
+	    $this->update('user_list',['company_id'=>$company_id],['user_id'=>$user_id]);
 	    return $company;
 	}
 	return null;
@@ -177,6 +180,15 @@ class Company extends Catalog{
             LIMIT 1";
         $company_id=$this->get_value($sql);
         return $this->selectActiveCompany($company_id);
+    }
+    
+    public function companyMakeActive( $company_id ){
+	$this->Base->set_level(4);
+	$this->check($company_id,'int');
+	if( $company_id ){
+	    return $this->update('companies_list',['is_active'=>1],['company_id'=>$company_id]);
+	}
+	return false;
     }
     
     public function companyPrefsGet(){

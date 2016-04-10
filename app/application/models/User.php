@@ -6,14 +6,14 @@ class User extends Catalog {
     public function SignIn(){
 	$login=$this->input->post('login');
 	$pass=$this->input->post('pass');
-	$this->check($login,'^[a-zA-Z_0-9]+$');
-	$this->check($pass,'^[a-zA-Z_0-9]+$');
+	$this->check($login,'^[a-zA-Z_0-9]*$');
+	$this->check($pass,'^[a-zA-Z_0-9]*$');
 	if( !$login || !$pass ){
 	    //allow empty pass
 	    $this->Base->kick_out();
 	}
 	$pass_hash = md5($pass);
-	$user_data = $this->get_row("SELECT * FROM " . BAY_DB_MAIN . ".user_list WHERE user_login='$login' AND user_pass='$pass_hash'");
+	$user_data = $this->get_row("SELECT * FROM user_list WHERE user_login='$login' AND user_pass='$pass_hash'");
 	if ($user_data && $user_data->user_id) {
 	    $this->Base->svar('user_id', $user_data->user_id);
 	    $this->Base->svar('user_level', $user_data->user_level);
@@ -72,7 +72,7 @@ class User extends Catalog {
 		id_type,id_serial,id_number,id_given_by,id_date,
 		user_assigned_path,
 		CONCAT(last_name,' ',first_name,' ',middle_name) AS full_name 
-	    FROM ".BAY_DB_MAIN.".user_list
+	    FROM user_list
 		WHERE user_id='$user_id'";
         return $this->get_row($sql);
     }
@@ -85,7 +85,7 @@ class User extends Catalog {
 		id_type,id_serial,id_number,id_given_by,id_date,
 		user_assigned_path,
 		CONCAT(last_name,' ',first_name,' ',middle_name) AS full_name 
-	    FROM ".BAY_DB_MAIN.".user_list
+	    FROM user_list
 		$where 
 	    ORDER BY user_id<>'$user_id', user_level DESC";
         return $this->get_list($sql);
@@ -124,9 +124,9 @@ class User extends Catalog {
 	    }
 	}
 	if( $user_id===0 ){
-	    return $this->create(BAY_DB_MAIN.".user_list", $fields);
+	    return $this->create("user_list", $fields);
 	} else {
-	    return $this->update(BAY_DB_MAIN.".user_list", $fields,['user_id'=>$user_id]);
+	    return $this->update("user_list", $fields,['user_id'=>$user_id]);
 	}
     }
     public function remove( $user_id ){
@@ -136,7 +136,7 @@ class User extends Catalog {
 	if( $admin==='last' ){
 	    return 'LAST_ADMIN';
 	}
-	return $this->delete(BAY_DB_MAIN.".user_list", ['user_id'=>$user_id]);
+	return $this->delete("user_list", ['user_id'=>$user_id]);
     }
     private function adminLastCheck($user_id){
 	return $this->get_value("SELECT IF(user_level=4 AND (SELECT COUNT(*)=1 FROM user_list WHERE user_level=4),'last','not_last') FROM user_list WHERE user_id='$user_id'");

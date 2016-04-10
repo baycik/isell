@@ -34,12 +34,11 @@ class Pref extends Catalog {
     }
     public function setPrefs($field,$value='') {
 	$active_company_id=$this->Base->acomp('company_id');
-	$this->check($field,'[a-z_]+');
+	$this->check($field,'[a-zA-Z_]+');
 	$this->check($value,'[^|]+');
-	if( $field==='usd_ratio' ){
-	    $this->Base->set_level(2);
-	} else {
-	    $this->Base->set_level(3);	    
+	$this->Base->set_level(3);
+	if( !$field || !$value ){
+	    return false;
 	}
 	$this->query("REPLACE pref_list SET pref_name='$field',pref_value='$value',active_company_id='$active_company_id'");
 	return $this->db->affected_rows()>0?1:0;

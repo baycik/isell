@@ -30,6 +30,7 @@
 		    var resp=App.json(xhr);
 		    resp=Leftovers.list.calc.calcTable(resp);
 		    success(resp);
+                    $("#stock_dg").datagrid('selectRow', Leftovers.list.lastSelectedIndex);
 		});
 	    },
 	    calc:{
@@ -85,6 +86,10 @@
                 }	    
             },
 	    reload:function(){
+                var selected=$("#stock_dg").datagrid('getSelected');
+                if( selected ){
+                    this.lastSelectedIndex = $("#stock_dg").datagrid('getRowIndex', selected);
+                }
 		$("#stock_dg").datagrid('reload');
 	    },
 	    import:function(){

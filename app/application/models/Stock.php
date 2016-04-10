@@ -68,7 +68,7 @@ class Stock extends Catalog {
 		    LEFT JOIN
 		document_entries de USING(product_code)
 		    LEFT JOIN
-		document_list dl ON de.doc_id=dl.doc_id AND dl.is_commited=1 AND dl.doc_type=1
+		document_list dl ON de.doc_id=dl.doc_id AND dl.is_commited=1 AND dl.doc_type=1 AND notcount=0
 	    $where
 	    GROUP BY se.product_code
 	    HAVING $having
@@ -173,7 +173,7 @@ class Stock extends Catalog {
 	$this->importInTable('prod_list', $source, $target, '/product_code/ru/ua/en/product_spack/product_bpack/product_weight/product_volume/product_unit/product_uktzet/barcode/analyse_type/analyse_group/analyse_class/analyse_section/', $label);
 	$this->importInTable('price_list', $source, $target, '/product_code/sell/buy/curr_code/', $label);
 	$this->importInTable('stock_entries', $source, $target, '/product_code/party_label/parent_id/', $label);
-	$this->query("DELETE FROM imported_data WHERE label='$label' AND {$source[0]} IN (SELECT product_code FROM stock_entries)");
+	$this->query("DELETE FROM imported_data WHERE label LIKE '%$label%' AND {$source[0]} IN (SELECT product_code FROM stock_entries)");
         return  $this->db->affected_rows();
     }
     private function importInTable( $table, $src, $trg, $filter, $label ){
@@ -192,7 +192,7 @@ class Stock extends Catalog {
 	$target_list=  implode(',', $target);
 	$source_list=  implode(',', $source);
 	$set_list=  implode(',', $set);
-	$this->query("INSERT INTO $table ($target_list) SELECT $source_list FROM imported_data WHERE label='$label' ON DUPLICATE KEY UPDATE $set_list");
+	$this->query("INSERT INTO $table ($target_list) SELECT $source_list FROM imported_data WHERE label LIKE '%$label%' ON DUPLICATE KEY UPDATE $set_list");
 	//print("INSERT INTO $table ($target_list) SELECT $source_list FROM imported_data WHERE label='$label' ON DUPLICATE KEY UPDATE $set_list");
 	return $this->db->affected_rows();
     }

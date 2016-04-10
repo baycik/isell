@@ -4,6 +4,17 @@
     $this->view->doc_view->vat_spell=  num2str($this->view->footer->vat);
     $this->view->doc_view->loc_date=  russian_date($this->view->doc_view->date_dot);
 
+    $vat_ratio=1+$this->view->head->vat_rate/100;
+    foreach($this->view->rows as $row){
+        $row->product_price=format($row->product_price*$vat_ratio);
+        $row->product_sum=format($row->product_price*$row->product_quantity);
+    }
+    
+    function format($num){
+        return number_format($num, 2,'.','');
+    }    
+    
+    
     function getAll( $comp ) {
         $all =$comp->company_name." ".$comp->company_jaddress;
         $all.=$comp->company_phone?", тел.:{$comp->company_phone}":'';
@@ -17,6 +28,7 @@
         $all.=$comp->company_web?",{$comp->company_web}":'';
         return $all;
     }
+    
     function russian_date( $date_dot ){
         $date=explode(".", $date_dot);
         switch ($date[1]){

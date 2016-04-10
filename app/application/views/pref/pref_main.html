@@ -126,9 +126,8 @@
 	<table>
 	    <tr>
 		<td style="vertical-align: top;width:340px;">
-		    <div class="easyui-panel" title="Курс">
-			<input name="usd_ratio" title="Курс доллара">
-		    </div>
+		    <input name="usd_ratio" title="Курс доллара">
+		    <input name="default_debt_limit" title="Лимит долга по умолчанию">
 		</td>
 		<td style="vertical-align: top;width:340px;">
 		    <div class="easyui-panel" title="Подписи в документах" data-options="collapsible:true,collapsed:true" style="width:340px;float:left">
@@ -138,13 +137,30 @@
 			<input name="accountant_tin" title="Бухгалтер ИНН">
 			<input name="digital_signature" type="hidden" title="Цифровая подпись">	    
 		    </div>
-		    <div class="easyui-panel" title="Другие настройки" data-options="collapsible:true,collapsed:true" style="width:340px;float:left">
-			
+		    <div class="easyui-panel" title="Настройки бланков" data-options="collapsible:true,collapsed:true" style="width:340px;float:left">
 			<input type="checkbox" title="Округлять до цены с НДС в накладных" name="use_total_as_base">
                         <select name="blank_set" title="Комплект бланков">
                             <option value="ua">Україна</option>
                             <option value="ru">Россия</option>
                         </select>
+		    </div>
+		    <div class="easyui-panel" title="Настройки Емаил SMTP" data-options="collapsible:true,collapsed:true" style="width:340px;float:left">
+			<input name="SMTP_SERVER" title="SMTP Сервер">
+			<input name="SMTP_USER" title="Пользователь">
+			<input name="SMTP_PASS" title="Пароль">
+                        <select name="SMTP_CRYPTO" title="Шифрование">
+                            <option value="ssl">SSL</option>
+                            <option value="">нет</option>
+                        </select>
+			<input name="SMTP_PORT" title="Порт">
+			<input name="SMTP_SENDER_MAIL" title="Емаил отправителя">
+			<input name="SMTP_SENDER_NAME" title="Имя отправителя">
+			<input type="checkbox" title="Дублировать на Емаил отправителя" name="SMTP_SEND_COPY">
+		    </div>
+		    <div class="easyui-panel" title="Настройки ДевиноСМС" data-options="collapsible:true,collapsed:true" style="width:340px;float:left">
+			<input name="SMS_SENDER" title="Отправитель">
+			<input name="SMS_USER" title="Пользователь">
+			<input name="SMS_PASS" title="Пароль">
 		    </div>
 		    <div class="easyui-panel" title="Настройки клиент-банка" data-options="collapsible:true,collapsed:true" style="width:340px;float:left">
                         <input type="checkbox" title="Идентификатор в платежных поручениях ИНН" name="tax_id_in_checks"> <br>

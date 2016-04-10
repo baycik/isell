@@ -24,7 +24,7 @@ class AccountsRegistry extends AccountsCore{
 		view_num tax_bill_num,
 		DATE_FORMAT(dl.cstamp,'%d.%m.%Y') cdate,
 		DATE_FORMAT(dvl.tstamp,'%d.%m.%Y') tax_bill_date,
-		IF(company_vat_id,company_name,'НЕПЛАТЕЛЬЩИК НАЛОГА') company_name,
+		IF(company_vat_id,company_name,CONCAT(company_name,' (НЕПЛАТЕЛЬЩИК НАЛОГА)')) company_name,
 		company_vat_id company_tax_id,
 		(SELECT ROUND(amount,2) FROM acc_trans JOIN document_trans dt USING(trans_id) WHERE dt.doc_id=dl.doc_id AND trans_role='total') total,
 		(SELECT ROUND(amount,2) FROM acc_trans JOIN document_trans dt USING(trans_id) WHERE dt.doc_id=dl.doc_id AND trans_role='vat') vat,
@@ -39,10 +39,11 @@ class AccountsRegistry extends AccountsCore{
 		document_view_list dvl ON dl.doc_id=dvl.doc_id AND view_role='tax_bill'
 	    WHERE
 		active_company_id='$active_company_id'
-		AND dl.cstamp LIKE '$period%'
+                AND SUBSTRING(dl.cstamp,1,7)='{$period}'
 		AND is_commited=1
 		AND $direction_filter
-	    HAVING $having)";
+	    HAVING $having
+            ORDER BY SUBSTRING(dl.cstamp,1,10),doc_view_id )";
 	$this->query($tmp_sql);
 	
 	$sql_sub="SELECT 

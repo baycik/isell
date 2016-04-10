@@ -25,7 +25,7 @@ class AccountsCore extends Catalog{
 	}
         if( $use_passive_filter ){
             $acc_list=$this->Base->pcomp('company_acc_list');
-            $is_favorite=strpos($acc_list,$acc_code)!==false?1:0;
+            $is_favorite=($acc_list&&strpos($acc_list,$acc_code)!==false)?1:0;
         } else {
             $is_favorite="is_favorite";
         }

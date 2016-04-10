@@ -7,7 +7,7 @@ class Hub extends HubBase{
 	include "index.html";
     }
     
-    public function on( $model=null, $method=null ){
+    public function on( $model, $method ){
 	if( $model ){
 	    $this->load_model($model);
 	    if( method_exists($this->{$model},$method) ){// && stripos($method,'core')===false
@@ -118,8 +118,8 @@ class HubBase extends CI_Controller{
     }
     
     private function kick_out() {
-	$this->rtype = 'DIALOG';
-	$this->response('page/dialog/loginform.html');
+	$this->rtype = 'kickout';
+	$this->response('');
     }
     
     public function msg($msg) {
@@ -131,6 +131,9 @@ class HubBase extends CI_Controller{
 	switch( $error['code'] ){
 	    case 1451:
 		$this->msg('Элемент ипользуется, поэтому не может быть изменен или удален!');
+		break;
+	    case 1452:
+		$this->msg('Новое значение отсутствует в вышестоящей таблице!');
 		break;
 	    case 1062:
 		$this->msg('Запись с таким ключем уже есть!');

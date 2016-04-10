@@ -1,3236 +1,1294 @@
-<style type="text/css" media="print">
-    .page
-    {
-     -webkit-transform: rotate(-90deg); 
-     -moz-transform:rotate(-90deg);
-     filter:progid:DXImageTransform.Microsoft.BasicImage(rotation=3);
+<style>
+    <!--
+    /* Font Definitions */
+    @font-face{
+	font-family:Cambria;
+	panose-1:2 4 5 3 5 4 6 3 2 4;
     }
+    @font-face{
+	font-family:Calibri;
+	panose-1:2 15 5 2 2 2 4 3 2 4;
+    }
+    @font-face{
+	font-family:Tahoma;
+	panose-1:2 11 6 4 3 5 4 4 2 4;
+    }
+    /* Style Definitions */
+    p.MsoNormal, li.MsoNormal, div.MsoNormal{
+	margin:0in;
+	margin-bottom:.0001pt;
+	text-autospace:none;
+	font-size:10.0pt;
+	font-family:"Arial","serif";
+    }
+    .page{
+	min-height:20cm;
+	width:29.7cm;
+	background: none;
+	background-color:#FFFFFF;
+	page-break-after:always;
+	page-break-inside:avoid;
+    }
+    @page {
+      size: A4 landscape;
+    }
+    -->
 </style>
-<div class="page">
-  <STYLE>
-@media print{@page {size: landscape}}
-.c0 { border-collapse:collapse } 
-.c1 { font-family : 'Arial'; font-size : 8pt; font-weight : normal; font-style : normal;  text-decoration : none ; color : #000000 } 
-.c2 { border:none #000000;  vectical-align:text-top; text-align:right; } 
-.c3 { font-family : 'Arial'; font-size : 10pt; font-weight : normal; font-style : normal;  text-decoration : none ; color : #000000 } 
-.c4 { border:none #000000;  vectical-align:middle; text-align:right; } 
-.c5 { font-family : 'Arial'; font-size : 10pt; font-weight : bold; font-style : normal;  text-decoration : none ; color : #000000 } 
-.c6 { border-bottom: .5pt solid #000000;  vectical-align:middle; text-align:left; } 
-.c7 { border:.5pt solid #000000;  vectical-align:middle; text-align:center; } 
-.c8 { border-top: .5pt solid #000000;  vectical-align:text-top; text-align:center; } 
-.c9 { border:.5pt solid #000000;  vectical-align:text-bottom;  } 
-.c10 { border-bottom: .5pt solid #000000;border-top: .5pt solid #000000;  vectical-align:middle; text-align:left; } 
-.c11 { border-bottom: .5pt solid #000000;border-top: .5pt solid #000000;  vectical-align:text-bottom;  } 
-.c12 { border-bottom: .5pt solid #000000;border-right: .5pt solid #000000;border-top: .5pt solid #000000;  vectical-align:text-bottom;  } 
-.c13 { border-top: .5pt solid #000000;  vectical-align:text-bottom;  } 
-.c14 { border-left: .5pt solid #000000;border-right: .5pt solid #000000;border-top: .5pt solid #000000;  vectical-align:middle; text-align:center; } 
-.c15 { font-family : 'Arial'; font-size : 14pt; font-weight : normal; font-style : normal;  text-decoration : none ; color : #000000 } 
-.c16 { border:none #000000;  vectical-align:text-bottom; text-align:right; } 
-.c17 { border-bottom: 1.0pt solid #000000;border-left: .5pt solid #000000;border-top: .5pt solid #000000;  vectical-align:middle; text-align:center; } 
-.c18 { border-bottom: .5pt solid #000000;border-top: .5pt solid #000000;  vectical-align:middle; text-align:center; } 
-.c19 { border-bottom: 1.0pt solid #000000;border-left: .5pt solid #000000;border-right: .5pt solid #000000;border-top: .5pt solid #000000;  vectical-align:middle; text-align:center; } 
-.c20 { border-top: .5pt solid #000000;  vectical-align:middle; text-align:center; } 
-.c21 { border-bottom: 1.0pt solid #000000;border-top: .5pt solid #000000;  vectical-align:middle; text-align:center; } 
-.c22 { border-bottom: 1.0pt solid #000000;border-right: .5pt solid #000000;border-top: .5pt solid #000000;  vectical-align:middle; text-align:center; } 
-.c23 { border-bottom: .5pt solid #000000;border-left: .5pt solid #000000;  vectical-align:middle; text-align:center; } 
-.c24 { border-bottom: .5pt solid #000000;border-left: .5pt solid #000000;border-right: .5pt solid #000000;  vectical-align:middle; text-align:center; } 
-.c25 { border-bottom: .5pt solid #000000;  vectical-align:middle; text-align:center; } 
-.c26 { border-bottom: .5pt solid #000000;border-right: .5pt solid #000000;  vectical-align:middle; text-align:center; } 
-.c27 { border:.5pt solid #000000;  vectical-align:middle; text-align:left; } 
-.c28 { border-bottom: .5pt solid #000000;border-top: .5pt solid #000000;   text-align:left; } 
-.c29 { border:.5pt solid #000000;  vectical-align:middle; text-align:right; } 
-.c30 { border-bottom: .5pt solid #000000;border-top: .5pt solid #000000;  vectical-align:middle; text-align:right; } 
-.c31 { border-bottom: .5pt solid #000000;border-left: .5pt solid #000000;border-top: .5pt solid #000000;  vectical-align:text-bottom;  } 
-.c32 { border-right: .5pt solid #000000;  vectical-align:middle; text-align:right; } 
-.c33 { border-left: .5pt solid #000000;border-right: .5pt solid #000000;   text-align:right; } 
-.c34 { border-left: .5pt solid #000000;border-right: .5pt solid #000000;  vectical-align:middle; text-align:right; } 
-.c35 { border-left: .5pt solid #000000;  vectical-align:text-bottom;  } 
-.c36 { border:.5pt solid #000000;   text-align:right; } 
-.c37 { border-bottom: .5pt solid #000000;border-right: .5pt solid #000000;border-top: .5pt solid #000000;  vectical-align:middle; text-align:right; } 
-.c38 { border:none #000000;  vectical-align:middle; text-align:left; } 
-.c39 { border-bottom: .5pt solid #000000;  vectical-align:text-bottom;  } 
-.c40 { border-top: .5pt solid #000000;  vectical-align:middle; text-align:left; } 
-.c41 { border:none #000000;   text-align:center; } 
-.c42 { border:none #000000;  vectical-align:text-top; text-align:center; } 
-.c43 { border-left: 1.0pt solid #000000;  vectical-align:text-bottom;  } 
-.c44 { border:none #000000;  vectical-align:middle; text-align:center; } 
-.c45 { border:none #000000;  vectical-align:text-bottom; text-align:left; } 
-  </STYLE>
-</HEAD>
-<BODY>
-<FORM>
-<TABLE cellpadding=0 cellspacing=0  style1="width:1348px;height:855px" class=c0 >
- <TR style="height:0px" >
-  <TD style="width:0px">
- </TD>
-  <TD style="width:0px">
- </TD>
-  <TD style="width:8px">
- </TD>
-  <TD style="width:42px">
- </TD>
-  <TD style="width:8px">
- </TD>
-  <TD style="width:17px">
- </TD>
-  <TD style="width:8px">
- </TD>
-  <TD style="width:8px">
- </TD>
-  <TD style="width:17px">
- </TD>
-  <TD style="width:34px">
- </TD>
-  <TD style="width:8px">
- </TD>
-  <TD style="width:8px">
- </TD>
-  <TD style="width:17px">
- </TD>
-  <TD style="width:17px">
- </TD>
-  <TD style="width:8px">
- </TD>
-  <TD style="width:84px">
- </TD>
-  <TD style="width:25px">
- </TD>
-  <TD style="width:8px">
- </TD>
-  <TD style="width:8px">
- </TD>
-  <TD style="width:8px">
- </TD>
-  <TD style="width:17px">
- </TD>
-  <TD style="width:67px">
- </TD>
-  <TD style="width:8px">
- </TD>
-  <TD style="width:8px">
- </TD>
-  <TD style="width:8px">
- </TD>
-  <TD style="width:25px">
- </TD>
-  <TD style="width:8px">
- </TD>
-  <TD style="width:8px">
- </TD>
-  <TD style="width:17px">
- </TD>
-  <TD style="width:8px">
- </TD>
-  <TD style="width:8px">
- </TD>
-  <TD style="width:17px">
- </TD>
-  <TD style="width:50px">
- </TD>
-  <TD style="width:8px">
- </TD>
-  <TD style="width:8px">
- </TD>
-  <TD style="width:8px">
- </TD>
-  <TD style="width:8px">
- </TD>
-  <TD style="width:34px">
- </TD>
-  <TD style="width:8px">
- </TD>
-  <TD style="width:8px">
- </TD>
-  <TD style="width:8px">
- </TD>
-  <TD style="width:42px">
- </TD>
-  <TD style="width:8px">
- </TD>
-  <TD style="width:8px">
- </TD>
-  <TD style="width:17px">
- </TD>
-  <TD style="width:25px">
- </TD>
-  <TD style="width:25px">
- </TD>
-  <TD style="width:8px">
- </TD>
-  <TD style="width:8px">
- </TD>
-  <TD style="width:8px">
- </TD>
-  <TD style="width:17px">
- </TD>
-  <TD style="width:25px">
- </TD>
-  <TD style="width:25px">
- </TD>
-  <TD style="width:17px">
- </TD>
-  <TD style="width:8px">
- </TD>
-  <TD style="width:8px">
- </TD>
-  <TD style="width:8px">
- </TD>
-  <TD style="width:8px">
- </TD>
-  <TD style="width:17px">
- </TD>
-  <TD style="width:17px">
- </TD>
-  <TD style="width:8px">
- </TD>
-  <TD style="width:8px">
- </TD>
-  <TD style="width:17px">
- </TD>
-  <TD style="width:8px">
- </TD>
-  <TD style="width:8px">
- </TD>
-  <TD style="width:8px">
- </TD>
-  <TD style="width:8px">
- </TD>
-  <TD style="width:8px">
- </TD>
-  <TD style="width:8px">
- </TD>
-  <TD style="width:17px">
- </TD>
-  <TD style="width:8px">
- </TD>
-  <TD style="width:8px">
- </TD>
-  <TD style="width:8px">
- </TD>
-  <TD style="width:8px">
- </TD>
-  <TD style="width:17px">
- </TD>
-  <TD style="width:8px">
- </TD>
-  <TD style="width:8px">
- </TD>
-  <TD style="width:34px">
- </TD>
-  <TD style="width:25px">
- </TD>
-  <TD style="width:8px">
- </TD>
-  <TD style="width:25px">
- </TD>
-  <TD style="width:17px">
- </TD>
-  <TD style="width:25px">
- </TD>
-  <TD style="width:8px">
- </TD>
-  <TD style="width:72px">
- </TD>
- </TR>
- <TR style="height:0px" >
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
- </TR>
- <TR style="height:19px" >
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD colspan=44 CLASS=c2>
-  <SPAN CLASS=c1>Унифицированная форма № ТОРГ-12 Утверждено постановлением Госкомстата России от 25.12.98 г. № 132</SPAN>
- </TD>
-  <TD>
- </TD>
- </TR>
- <TR style="height:19px" >
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD rowspan=2 colspan=10 CLASS=c4>
-  <SPAN CLASS=c3>Организация - грузоотправитель:</SPAN>
- </TD>
-  <TD rowspan=2 colspan=41 CLASS=c6>
-  <SPAN CLASS=c5>{$v->a->all}</SPAN>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD colspan=15 CLASS=c4>
-  <SPAN CLASS=c3>Форма по ОКУД</SPAN>
- </TD>
-  <TD colspan=7 CLASS=c7>
-  <SPAN CLASS=c3>0330212</SPAN>
- </TD>
-  <TD>
- </TD>
- </TR>
- <TR style="height:19px" >
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD colspan=15 CLASS=c4>
-  <SPAN CLASS=c3>по ОКПО</SPAN>
- </TD>
-  <TD colspan=7 CLASS=c7>
-  <SPAN CLASS=c3>{$v->a->company_code}</SPAN>
- </TD>
-  <TD>
- </TD>
- </TR>
- <TR style="height:19px" >
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD colspan=41 CLASS=c8>
-  <SPAN CLASS=c1>структурное подразделение</SPAN>
- </TD>
-  <TD>
- </TD>
-  <TD colspan=23 CLASS=c4>
-  <SPAN CLASS=c3>Вид деятельности по ОКДП</SPAN>
- </TD>
-  <TD colspan=7 CLASS=c9>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD>
- </TD>
- </TR>
- <TR style="height:19px" >
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD colspan=10 CLASS=c4>
-  <SPAN CLASS=c3>Грузополучатель:</SPAN>
- </TD>
-  <TD colspan=52 CLASS=c6>
-  <SPAN CLASS=c5>{$v->p->all}</SPAN>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD colspan=11 CLASS=c4>
-  <SPAN CLASS=c3>по ОКПО</SPAN>
- </TD>
-  <TD colspan=7 CLASS=c7>
-  <SPAN CLASS=c3>{$v->p->company_code}</SPAN>
- </TD>
-  <TD>
- </TD>
- </TR>
- <TR style="height:19px" >
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD rowspan=2 colspan=10 CLASS=c4>
-  <SPAN CLASS=c3>Поставщик:</SPAN>
- </TD>
-  <TD rowspan=2 colspan=52 CLASS=c10>
-  <SPAN CLASS=c5>{$v->a->all}</SPAN>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD colspan=11 CLASS=c4>
-  <SPAN CLASS=c3>по ОКПО</SPAN>
- </TD>
-  <TD colspan=7 CLASS=c7>
-  <SPAN CLASS=c3>{$v->a->company_code}</SPAN>
- </TD>
-  <TD>
- </TD>
- </TR>
- <TR style="height:19px" >
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD colspan=7 CLASS=c9>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD>
- </TD>
- </TR>
- <TR style="height:19px" >
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD rowspan=2 colspan=10 CLASS=c4>
-  <SPAN CLASS=c3>Плательщик:</SPAN>
- </TD>
-  <TD rowspan=2 colspan=52 CLASS=c10>
-  <SPAN CLASS=c5>{$v->p->all}</SPAN>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD colspan=11 CLASS=c4>
-  <SPAN CLASS=c3>по ОКПО</SPAN>
- </TD>
-  <TD colspan=7 CLASS=c7>
-  <SPAN CLASS=c3>{$v->p->company_code}</SPAN>
- </TD>
-  <TD>
- </TD>
- </TR>
- <TR style="height:19px" >
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD colspan=7 CLASS=c9>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD>
- </TD>
- </TR>
- <TR style="height:19px" >
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD colspan=10 CLASS=c4>
-  <SPAN CLASS=c3>Основание:</SPAN>
- </TD>
-  <TD colspan=52 CLASS=c11>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD colspan=6 CLASS=c7>
-  <SPAN CLASS=c3>номер</SPAN>
- </TD>
-  <TD colspan=7 CLASS=c12>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD>
- </TD>
- </TR>
- <TR style="height:19px" >
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD colspan=19 CLASS=c13>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD colspan=6 CLASS=c13>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD CLASS=c13>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD colspan=4 CLASS=c13>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD colspan=10 CLASS=c13>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD colspan=12 CLASS=c13>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD colspan=6 CLASS=c7>
-  <SPAN CLASS=c3>дата</SPAN>
- </TD>
-  <TD colspan=7 CLASS=c9>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD>
- </TD>
- </TR>
- <TR style="height:19px" >
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD rowspan=2 colspan=6 CLASS=c14>
-  <SPAN CLASS=c3>Номер<BR>документа</SPAN>
- </TD>
-  <TD rowspan=2 colspan=5 CLASS=c14>
-  <SPAN CLASS=c3>Дата<BR>составления</SPAN>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD colspan=19 CLASS=c4>
-  <SPAN CLASS=c3>Транспортная накладная</SPAN>
- </TD>
-  <TD colspan=6 CLASS=c7>
-  <SPAN CLASS=c3>номер</SPAN>
- </TD>
-  <TD colspan=7 CLASS=c9>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD>
- </TD>
- </TR>
- <TR style="height:19px" >
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD rowspan=2 colspan=21 CLASS=c16>
-  <SPAN CLASS=c15>ТОВАРНАЯ НАКЛАДНАЯ</SPAN>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD colspan=6 CLASS=c7>
-  <SPAN CLASS=c3>дата</SPAN>
- </TD>
-  <TD colspan=7 CLASS=c9>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD>
- </TD>
- </TR>
- <TR style="height:19px" >
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD colspan=6 CLASS=c7>
-  <SPAN CLASS=c5>{$v->doc_view->view_num}</SPAN>
- </TD>
-  <TD colspan=5 CLASS=c7>
-  <SPAN CLASS=c5>{$v->doc_view->date_dot}</SPAN>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD colspan=14 CLASS=c4>
-  <SPAN CLASS=c3>Вид операции</SPAN>
- </TD>
-  <TD colspan=7 CLASS=c9>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD>
- </TD>
- </TR>
- <TR style="height:19px" >
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
- </TR>
- <TR style="height:19px" >
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD rowspan=2 CLASS=c17>
-  <SPAN CLASS=c5>№<BR>п/п</SPAN>
- </TD>
-  <TD colspan=19 CLASS=c7>
-  <SPAN CLASS=c5>Товар</SPAN>
- </TD>
-  <TD colspan=9 CLASS=c18>
-  <SPAN CLASS=c5>Ед. изм.</SPAN>
- </TD>
-  <TD rowspan=2 colspan=4 CLASS=c19>
-  <SPAN CLASS=c5>Вид упа-<BR>ков-<BR>ки</SPAN>
- </TD>
-  <TD colspan=7 CLASS=c20>
-  <SPAN CLASS=c5>Количество</SPAN>
- </TD>
-  <TD rowspan=2 colspan=3 CLASS=c19>
-  <SPAN CLASS=c5>Масса брут-<BR>то</SPAN>
- </TD>
-  <TD rowspan=2 colspan=5 CLASS=c21>
-  <SPAN CLASS=c5>Кол-во (масса нетто)</SPAN>
- </TD>
-  <TD rowspan=2 colspan=6 CLASS=c19>
-  <SPAN CLASS=c5>Цена,<BR>руб. коп.</SPAN>
- </TD>
-  <TD rowspan=2 colspan=10 CLASS=c21>
-  <SPAN CLASS=c5>Сумма без учета НДС,<BR>руб. коп.</SPAN>
- </TD>
-  <TD colspan=11 CLASS=c14>
-  <SPAN CLASS=c5>&nbsp;&nbsp;НДС</SPAN>
- </TD>
-  <TD rowspan=2 colspan=6 CLASS=c22>
-  <SPAN CLASS=c5>Сумма с<BR>учетом НДС,<BR>руб. коп.</SPAN>
- </TD>
-  <TD>
- </TD>
- </TR>
- <TR style="height:57px" >
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD colspan=17 CLASS=c19>
-  <SPAN CLASS=c5>наименование, характеристики<BR>сорт, код<BR>артикул товара</SPAN>
- </TD>
-  <TD colspan=2 CLASS=c19>
-  <SPAN CLASS=c5>Код</SPAN>
- </TD>
-  <TD colspan=5 CLASS=c21>
-  <SPAN CLASS=c5>наиме-<BR>нова-<BR>ние</SPAN>
- </TD>
-  <TD colspan=4 CLASS=c19>
-  <SPAN CLASS=c5>код по ОКЕИ</SPAN>
- </TD>
-  <TD colspan=4 CLASS=c21>
-  <SPAN CLASS=c5>в одном месте</SPAN>
- </TD>
-  <TD colspan=3 CLASS=c19>
-  <SPAN CLASS=c5>мест, штук</SPAN>
- </TD>
-  <TD colspan=4 CLASS=c17>
-  <SPAN CLASS=c5>%</SPAN>
- </TD>
-  <TD colspan=7 CLASS=c19>
-  <SPAN CLASS=c5>сумма,<BR>руб. коп.</SPAN>
- </TD>
-  <TD>
- </TD>
- </TR>
- <TR style="height:19px" >
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD CLASS=c23>
-  <SPAN CLASS=c3>1</SPAN>
- </TD>
-  <TD colspan=17 CLASS=c24>
-  <SPAN CLASS=c3>2</SPAN>
- </TD>
-  <TD colspan=2 CLASS=c24>
-  <SPAN CLASS=c3>3</SPAN>
- </TD>
-  <TD colspan=5 CLASS=c25>
-  <SPAN CLASS=c3>4</SPAN>
- </TD>
-  <TD colspan=4 CLASS=c24>
-  <SPAN CLASS=c3>5</SPAN>
- </TD>
-  <TD colspan=4 CLASS=c24>
-  <SPAN CLASS=c3>6</SPAN>
- </TD>
-  <TD colspan=4 CLASS=c25>
-  <SPAN CLASS=c3>7</SPAN>
- </TD>
-  <TD colspan=3 CLASS=c24>
-  <SPAN CLASS=c3>8</SPAN>
- </TD>
-  <TD colspan=3 CLASS=c24>
-  <SPAN CLASS=c3>9</SPAN>
- </TD>
-  <TD colspan=5 CLASS=c25>
-  <SPAN CLASS=c3>10</SPAN>
- </TD>
-  <TD colspan=6 CLASS=c24>
-  <SPAN CLASS=c3>11</SPAN>
- </TD>
-  <TD colspan=10 CLASS=c25>
-  <SPAN CLASS=c3>12</SPAN>
- </TD>
-  <TD colspan=4 CLASS=c23>
-  <SPAN CLASS=c3>13</SPAN>
- </TD>
-  <TD colspan=7 CLASS=c24>
-  <SPAN CLASS=c3>14</SPAN>
- </TD>
-  <TD colspan=6 CLASS=c26>
-  <SPAN CLASS=c3>15</SPAN>
- </TD>
-  <TD>
- </TD>
- </TR>
- 
- 
- 
- 
- 
- 
- 
- {loop name="v->rows"}
- <TR style="height:19px" >
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD CLASS=c27>
-  <SPAN CLASS=c3>{$counter+1}</SPAN>
- </TD>
-  <TD colspan=17 CLASS=c28>
-  <SPAN CLASS=c3>{$value->product_name}</SPAN>
- </TD>
-  <TD CLASS=c31>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD CLASS=c12>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD colspan=5 CLASS=c18>
-  <SPAN CLASS=c3>{$value->product_unit}</SPAN>
- </TD>
-  <TD colspan=4 CLASS=c29>
-  <SPAN CLASS=c3>{$value->product_unit_code}</SPAN>
- </TD>
-  <TD colspan=4 CLASS=c11>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD colspan=4 CLASS=c29>
-  <SPAN CLASS=c3>-</SPAN>
- </TD>
-  <TD colspan=3 CLASS=c30>
-  <SPAN CLASS=c3>-</SPAN>
- </TD>
-  <TD colspan=3 CLASS=c29>
-  <SPAN CLASS=c1>-</SPAN>
- </TD>
-  <TD colspan=5 CLASS=c30>
-  <SPAN CLASS=c3>{$value->product_quantity}</SPAN>
- </TD>
-  <TD colspan=6 CLASS=c29>
-  <SPAN CLASS=c3>{$value->product_price}</SPAN>
- </TD>
-  <TD colspan=10 CLASS=c30>
-  <SPAN CLASS=c3>{$value->product_sum}</SPAN>
- </TD>
-  <TD colspan=4 CLASS=c29>
-  <SPAN CLASS=c3>18%</SPAN>
- </TD>
-  <TD colspan=7 CLASS=c30>
-  <SPAN CLASS=c3>{$value->product_sum_vat}</SPAN>
- </TD>
-  <TD colspan=6 CLASS=c29>
-  <SPAN CLASS=c3>{$value->product_sum_total}</SPAN>
- </TD>
-  <TD>
- </TD>
- </TR>
- {/loop}
- 
- 
 
- <TR style="height:19px" >
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD colspan=11 CLASS=c32>
-  <SPAN CLASS=c5>ИТОГО</SPAN>
- </TD>
-  <TD colspan=3 CLASS=c33>
-  <SPAN CLASS=c1>-</SPAN>
- </TD>
-  <TD colspan=5 CLASS=c34>
-  <SPAN CLASS=c5>{$v->total_qty}</SPAN>
- </TD>
-  <TD CLASS=c35>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD colspan=12 CLASS=c32>
-  <SPAN CLASS=c5>{$v->footer->vatless}</SPAN>
- </TD>
-  <TD colspan=11 CLASS=c34>
-  <SPAN CLASS=c5>{$v->footer->vat}</SPAN>
- </TD>
-  <TD colspan=6 CLASS=c34>
-  <SPAN CLASS=c5>{$v->footer->total}</SPAN>
- </TD>
-  <TD CLASS=c35>
-  <SPAN CLASS=c3></SPAN>
- </TD>
- </TR>
- <TR style="height:19px" >
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD colspan=11 CLASS=c32>
-  <SPAN CLASS=c5>ВСЕГО ПО НАКЛАДНОЙ</SPAN>
- </TD>
-  <TD colspan=3 CLASS=c36>
-  <SPAN CLASS=c1>-</SPAN>
- </TD>
-  <TD colspan=5 CLASS=c29>
-  <SPAN CLASS=c5>{$v->total_qty}</SPAN>
- </TD>
-  <TD CLASS=c31>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD colspan=3 CLASS=c11>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD colspan=12 CLASS=c37>
-  <SPAN CLASS=c5>{$v->footer->vatless}</SPAN>
- </TD>
-  <TD colspan=11 CLASS=c29>
-  <SPAN CLASS=c5>{$v->footer->vat}</SPAN>
- </TD>
-  <TD colspan=6 CLASS=c29>
-  <SPAN CLASS=c5>{$v->footer->total}</SPAN>
- </TD>
-  <TD CLASS=c35>
-  <SPAN CLASS=c3></SPAN>
- </TD>
- </TR>
- <TR style="height:19px" >
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD colspan=14 CLASS=c38>
-  <SPAN CLASS=c3>Товарная накладная имеет приложение на</SPAN>
- </TD>
-  <TD colspan=16 CLASS=c39>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD colspan=3 CLASS=c39>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD colspan=4 CLASS=c38>
-  <SPAN CLASS=c3>листах</SPAN>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
- </TR>
- <TR style="height:19px" >
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD colspan=6 CLASS=c38>
-  <SPAN CLASS=c3>и содержит</SPAN>
- </TD>
-  <TD colspan=27 CLASS=c25>
-  <SPAN CLASS=c5>Два </SPAN>
- </TD>
-  <TD colspan=12 CLASS=c38>
-  <SPAN CLASS=c3>порядковых номеров записей</SPAN>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
- </TR>
- <TR style="height:19px" >
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD colspan=8 CLASS=c13>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD colspan=10 CLASS=c13>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD colspan=9 CLASS=c40>
-  <SPAN CLASS=c3>Масса груза (нетто)</SPAN>
- </TD>
-  <TD>
- </TD>
-  <TD colspan=11 CLASS=c39>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD colspan=29 CLASS=c39>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD>
- </TD>
-  <TD colspan=5 CLASS=c9>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD colspan=2 CLASS=c41>
-  <SPAN CLASS=c3>т</SPAN>
- </TD>
-  <TD>
- </TD>
- </TR>
- <TR style="height:19px" >
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD colspan=4 CLASS=c38>
-  <SPAN CLASS=c3>Всего мест</SPAN>
- </TD>
-  <TD>
- </TD>
-  <TD CLASS=c39>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD colspan=8 CLASS=c39>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD colspan=10 CLASS=c39>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD colspan=9 CLASS=c38>
-  <SPAN CLASS=c3>Масса груза (брутто)</SPAN>
- </TD>
-  <TD>
- </TD>
-  <TD colspan=40 CLASS=c11>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD>
- </TD>
-  <TD colspan=5 CLASS=c9>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD colspan=2 CLASS=c41>
-  <SPAN CLASS=c3>т</SPAN>
- </TD>
-  <TD>
- </TD>
- </TR>
- <TR style="height:19px" >
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD colspan=21 CLASS=c42>
-  <SPAN CLASS=c1>прописью</SPAN>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD colspan=42 CLASS=c42>
-  <SPAN CLASS=c1>прописью</SPAN>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
- </TR>
- <TR style="height:19px" >
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD colspan=15 CLASS=c38>
-  <SPAN CLASS=c3>Приложение (паспорта, сертификаты и т.п.) на</SPAN>
- </TD>
-  <TD colspan=9 CLASS=c39>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD CLASS=c39>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD colspan=7 CLASS=c39>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD colspan=4 CLASS=c38>
-  <SPAN CLASS=c3>листах</SPAN>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD CLASS=c43>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD colspan=8 CLASS=c38>
-  <SPAN CLASS=c3>По доверенности №</SPAN>
- </TD>
-  <TD>
- </TD>
-  <TD colspan=8 CLASS=c39>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD>
- </TD>
-  <TD colspan=2 CLASS=c38>
-  <SPAN CLASS=c3>от</SPAN>
- </TD>
-  <TD CLASS=c38>
-  <SPAN CLASS=c3>&quot;</SPAN>
- </TD>
-  <TD colspan=3 CLASS=c39>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD colspan=2 CLASS=c4>
-  <SPAN CLASS=c3>&quot;</SPAN>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD colspan=7 CLASS=c39>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD CLASS=c39>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD colspan=3 CLASS=c39>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD CLASS=c38>
-  <SPAN CLASS=c3>г.</SPAN>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
- </TR>
- <TR style="height:19px" >
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD colspan=11 CLASS=c38>
-  <SPAN CLASS=c3>Всего отпущено на сумму</SPAN>
- </TD>
-  <TD colspan=26 CLASS=c6>
-  <SPAN CLASS=c5>{$v->doc_view->total_spell}</SPAN>
- </TD>
-  <TD>
- </TD>
-  <TD CLASS=c43>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD colspan=4 CLASS=c38>
-  <SPAN CLASS=c3>выданной</SPAN>
- </TD>
-  <TD colspan=4 CLASS=c39>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD CLASS=c39>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD colspan=8 CLASS=c11>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD CLASS=c39>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD colspan=2 CLASS=c39>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD CLASS=c39>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD colspan=3 CLASS=c11>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD CLASS=c11>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD CLASS=c39>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD colspan=2 CLASS=c39>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD colspan=7 CLASS=c11>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD colspan=4 CLASS=c11>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD CLASS=c39>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD colspan=2 CLASS=c39>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
- </TR>
- <TR style="height:19px" >
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD colspan=4 CLASS=c13>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD colspan=5 CLASS=c13>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD colspan=8 CLASS=c8>
-  <SPAN CLASS=c1>прописью</SPAN>
- </TD>
-  <TD colspan=4 CLASS=c13>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD colspan=5 CLASS=c13>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD>
- </TD>
-  <TD rowspan=2 CLASS=c43>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD colspan=39 CLASS=c42>
-  <SPAN CLASS=c1>кем, кому(организация, должность, фамилия, и.,о.)</SPAN>
- </TD>
-  <TD>
- </TD>
- </TR>
- <TR style="height:19px" >
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD colspan=10 CLASS=c39>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD colspan=4 CLASS=c39>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD colspan=5 CLASS=c39>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD colspan=4 CLASS=c39>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD colspan=4 CLASS=c39>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD colspan=4 CLASS=c39>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD colspan=5 CLASS=c39>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
- </TR>
- <TR style="height:19px" >
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD colspan=8 CLASS=c13>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD colspan=2 CLASS=c13>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD colspan=4 CLASS=c13>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD CLASS=c13>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD CLASS=c13>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD CLASS=c13>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD colspan=4 CLASS=c13>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD CLASS=c13>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD CLASS=c13>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD colspan=8 CLASS=c13>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD colspan=5 CLASS=c13>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD>
- </TD>
-  <TD CLASS=c43>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD colspan=5 CLASS=c38>
-  <SPAN CLASS=c3>Груз принял</SPAN>
- </TD>
-  <TD>
- </TD>
-  <TD CLASS=c39>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD colspan=8 CLASS=c39>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD CLASS=c39>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD CLASS=c39>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD colspan=10 CLASS=c39>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD colspan=2 CLASS=c39>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD colspan=9 CLASS=c39>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
- </TR>
- <TR style="height:19px" >
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD colspan=9 CLASS=c38>
-  <SPAN CLASS=c3>Отпуск груза разрешил</SPAN>
- </TD>
-  <TD colspan=9 CLASS=c44>
-  <SPAN CLASS=c3>Генеральный директор</SPAN>
- </TD>
-  <TD colspan=4 CLASS=c39>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD>
- </TD>
-  <TD colspan=14 CLASS=c25>
-  <SPAN CLASS=c3>{$v->a->company_director}</SPAN>
- </TD>
-  <TD>
- </TD>
-  <TD rowspan=7 CLASS=c43>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD CLASS=c13>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD colspan=8 CLASS=c8>
-  <SPAN CLASS=c1>должность</SPAN>
- </TD>
-  <TD CLASS=c13>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD CLASS=c13>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD colspan=10 CLASS=c8>
-  <SPAN CLASS=c1>подпись</SPAN>
- </TD>
-  <TD colspan=2 CLASS=c13>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD>
- </TD>
-  <TD colspan=11 CLASS=c42>
-  <SPAN CLASS=c1>расшифровка подписи</SPAN>
- </TD>
-  <TD>
- </TD>
- </TR>
- <TR style="height:19px" >
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD colspan=6 CLASS=c8>
-  <SPAN CLASS=c1>должность</SPAN>
- </TD>
-  <TD CLASS=c13>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD>
- </TD>
-  <TD colspan=5 CLASS=c8>
-  <SPAN CLASS=c1>подпись</SPAN>
- </TD>
-  <TD>
- </TD>
-  <TD colspan=14 CLASS=c8>
-  <SPAN CLASS=c1>расшифровка подписи</SPAN>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
- </TR>
- <TR style="height:19px" >
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD colspan=13 CLASS=c38>
-  <SPAN CLASS=c3>Главный (старший) бухгалтер</SPAN>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD colspan=5 CLASS=c39>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD>
- </TD>
-  <TD colspan=14 CLASS=c25>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD>
- </TD>
-  <TD rowspan=2 colspan=6 CLASS=c45>
-  <SPAN CLASS=c3>Груз получил<BR>грузополучатель</SPAN>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
- </TR>
- <TR style="height:19px" >
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD colspan=5 CLASS=c8>
-  <SPAN CLASS=c1>подпись</SPAN>
- </TD>
-  <TD>
- </TD>
-  <TD colspan=14 CLASS=c8>
-  <SPAN CLASS=c1>расшифровка подписи</SPAN>
- </TD>
-  <TD>
- </TD>
-  <TD CLASS=c39>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD colspan=8 CLASS=c39>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD CLASS=c39>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD CLASS=c39>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD colspan=10 CLASS=c39>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD colspan=2 CLASS=c39>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD colspan=9 CLASS=c39>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
- </TR>
- <TR style="height:19px" >
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD colspan=8 CLASS=c38>
-  <SPAN CLASS=c3>Отпуск груза произвел</SPAN>
- </TD>
-  <TD>
- </TD>
-  <TD colspan=7 CLASS=c39>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD>
- </TD>
-  <TD colspan=5 CLASS=c39>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD>
- </TD>
-  <TD CLASS=c39>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD colspan=8 CLASS=c39>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD colspan=5 CLASS=c39>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD CLASS=c13>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD colspan=8 CLASS=c8>
-  <SPAN CLASS=c1>должность</SPAN>
- </TD>
-  <TD CLASS=c13>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD CLASS=c13>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD colspan=10 CLASS=c8>
-  <SPAN CLASS=c1>подпись</SPAN>
- </TD>
-  <TD colspan=2 CLASS=c13>
-  <SPAN CLASS=c3></SPAN>
- </TD>
-  <TD>
- </TD>
-  <TD colspan=11 CLASS=c42>
-  <SPAN CLASS=c1>расшифровка подписи</SPAN>
- </TD>
-  <TD>
- </TD>
- </TR>
- <TR style="height:19px" >
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD colspan=7 CLASS=c8>
-  <SPAN CLASS=c1>должность</SPAN>
- </TD>
-  <TD>
- </TD>
-  <TD colspan=5 CLASS=c8>
-  <SPAN CLASS=c1>подпись</SPAN>
- </TD>
-  <TD>
- </TD>
-  <TD colspan=14 CLASS=c8>
-  <SPAN CLASS=c1>расшифровка подписи</SPAN>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
- </TR>
- <TR style="height:19px" >
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD colspan=3 CLASS=c38>
-  <SPAN CLASS=c5>М.П.</SPAN>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD colspan=24 CLASS=c38>
-  <SPAN CLASS=c3>{$v->doc_view->date_spell}</SPAN>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD colspan=3 CLASS=c38>
-  <SPAN CLASS=c5>М.П.</SPAN>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD colspan=33 CLASS=c38>
-  <SPAN CLASS=c3>&lt;______&gt;_______________________________ года</SPAN>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
- </TR>
- <TR style="height:57px" >
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
-  <TD>
- </TD>
- </TR>
- </TABLE>
+<div class="page">
+    <p class=MsoNormal align=right style='text-align:right'><span style='font-size:8.0pt'>Унифицированная форма № ТОРГ-12</span></p>
+    <p class=MsoNormal align=right style='text-align:right'><span style='font-size:8.0pt'>Утверждена постановлением Госкомстата России</span></p>
+    <p class=MsoNormal align=right style='text-align:right'><span style='font-size:8.0pt'>от 25.12.98 № 132</span></p>
+    <p class=MsoNormal align=right style='text-align:right'><span style='font-size:8.0pt'>&nbsp;</span></p>
+    <table class=MsoNormalTable border=1 cellspacing=0 cellpadding=0
+	   style='border-collapse:collapse;border:none'>
+	<tr style='page-break-inside:avoid'>
+	    <td width=917 colspan=6 valign=top style='width:687.5pt;border:none;
+		border-right:solid windowtext 1.0pt;'>
+		<p class=MsoNormal align=center style='text-align:center'><span style='font-size:11.0pt'>&nbsp;</span></p>
+	    </td>
+	    <td width=130 valign=top style='width:97.75pt;border-top:solid windowtext 1.0pt; border-left:none;border-bottom:solid windowtext 1.5pt;border-right:solid windowtext 1.0pt;'>
+		<p class=MsoNormal align=center style='text-align:center'><span style='font-size:11.0pt'>Код</span></p>
+	    </td>
+	</tr>
+	<tr style='page-break-inside:avoid;height:14.2pt'>
+	    <td width=917 colspan=6 valign=bottom style='width:687.5pt;border:none;
+		border-right:solid windowtext 1.5pt;;height:14.2pt'>
+		<p class=MsoNormal align=right style='margin-right:2.85pt;text-align:right'><span style='font-size:11.0pt'>Форма по ОКУД</span></p>
+	    </td>
+	    <td width=130 valign=bottom style='width:97.75pt;border-top:none;border-left:none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.5pt;height:14.2pt'>
+		<p class=MsoNormal align=center style='text-align:center'><span style='font-size:11.0pt'>0330212</span></p>
+	    </td>
+	</tr>
+	<tr style='height:14.2pt'>
+	    <td width=118 valign=bottom style='width:88.2pt;border:none;'>
+		<p class=MsoNormal style='margin-right:2.85pt'><span style='font-size:11.0pt'>Организация - грузоотправитель</span></p>
+	    </td>
+	    <td width=727 colspan=3 valign=bottom style='width:545.2pt;border:none;
+		border-bottom:solid windowtext 1.0pt;'>
+		<p class=MsoNormal align=center style='margin-right:2.85pt;text-align:left'><span
+			style='font-size:11.0pt'>{$v->a->all}</span></p>
+	    </td>
+	    <td width=76 colspan=2 valign=bottom style='width:56.7pt;border:none;
+		border-right:solid windowtext 1.5pt;;height:14.2pt'>
+		<p class=MsoNormal align=right style='margin-right:2.85pt;text-align:right'><span
+			style='font-size:11.0pt'>по ОКПО</span></p>
+	    </td>
+	    <td width=130 valign=bottom style='width:97.75pt;border-top:none;border-left:
+		none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.5pt;
+		;height:14.2pt'>
+		<p class=MsoNormal align=center style='text-align:center'><span
+			style='font-size:11.0pt'>{$v->a->company_code}</span></p>
+	    </td>
+	</tr>
+
+
+	<tr style='page-break-inside:avoid'>
+	    <td width=482 colspan=3 valign=top style='width:361.5pt;border:none;
+		'>
+		<p class=MsoNormal align=right style='text-align:right'><span
+			style='font-size:7.0pt'>структурное подразделение</span></p>
+	    </td>
+	    <td width=435 colspan=3 valign=bottom style='width:326.0pt;border:none;
+		border-right:solid windowtext 1.5pt;'>
+		<p class=MsoNormal align=right style='margin-right:2.85pt;text-align:right'><span
+			style='font-size:11.0pt'>Вид деятельности по ОКДП</span></p>
+	    </td>
+	    <td width=130 valign=bottom style='width:97.75pt;border-top:none;border-left:
+		none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.5pt;
+		'>
+		<p class=MsoNormal align=center style='text-align:center'><span
+			style='font-size:11.0pt'>&nbsp;</span></p>
+	    </td>
+	</tr>
+	<tr style='page-break-inside:avoid'>
+	    <td width=118 valign=bottom style='width:88.2pt;border:none;
+		'>
+		<p class=MsoNormal style='margin-right:2.85pt'><span style='font-size:11.0pt'>Грузополучатель</span></p>
+	    </td>
+	    <td width=727 colspan=4 valign=bottom style='width:545.2pt;border:none;
+		border-bottom:solid windowtext 1.0pt;'>
+		<p class=MsoNormal align=center style='margin-right:2.85pt;text-align:left'><span
+			style='font-size:11.0pt;'>{$v->goods_reciever}</span></p>
+	    </td>
+	    <td width=72 valign=bottom style='width:54.1pt;border:none;border-right:solid windowtext 1.5pt;
+		'>
+		<p class=MsoNormal align=right style='margin-right:2.85pt;text-align:right'><span
+			style='font-size:11.0pt'>по ОКПО</span></p>
+	    </td>
+	    <td width=130 valign=bottom style='width:97.75pt;border-top:none;border-left:
+		none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.5pt;
+		'>
+		<p class=MsoNormal align=center style='text-align:center'><span
+			style='font-size:11.0pt'>{$v->goods_reciever_okpo}</span></p>
+	    </td>
+	</tr>
+	<tr style='page-break-inside:avoid'>
+	    <td width=118 colspan=2 valign=top style='width:88.2pt;border:none;
+		'>
+		<p class=MsoNormal align=right style='margin-right:2.85pt;text-align:right'><span
+			style='font-size:7.0pt'>&nbsp;</span></p>
+	    </td>
+	    <td width=727 colspan=3 valign=top style='width:545.2pt;border:none;
+		'></p>
+	    </td>
+	    <td width=72 valign=top style='width:54.1pt;border:none;border-right:solid windowtext 1.5pt;
+		'>
+		<p class=MsoNormal align=right style='margin-right:2.85pt;text-align:right'><span
+			style='font-size:7.0pt'>&nbsp;</span></p>
+	    </td>
+	    <td width=130 rowspan=2 valign=bottom style='width:97.75pt;border-top:none;
+		border-left:none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.5pt;
+		'>
+		<p class=MsoNormal align=center style='text-align:center'><span
+			style='font-size:11.0pt'>{$v->a->company_code}</span></p>
+	    </td>
+	</tr>
+	<tr style='page-break-inside:avoid'>
+	    <td width=85 valign=bottom style='width:63.8pt;border:none;'>
+		<p class=MsoNormal style='margin-right:2.85pt'><span style='font-size:11.0pt'>Поставщик</span></p>
+	    </td>
+	    <td width=759 colspan=4 valign=bottom style='width:569.6pt;border:none;
+		border-bottom:solid windowtext 1.0pt;'>
+		<p class=MsoNormal align=center style='margin-right:2.85pt;text-align:left'><span
+			style='font-size:11.0pt'>{$v->a->all}</span></p>
+	    </td>
+	    <td width=72 valign=bottom style='width:54.1pt;border:none;border-right:solid windowtext 1.5pt;
+		'>
+		<p class=MsoNormal align=right style='margin-right:2.85pt;text-align:right'><span
+			style='font-size:11.0pt'>по ОКПО</span></p>
+	    </td>
+	</tr>
+	<tr style='page-break-inside:avoid'>
+	    <td width=85 valign=top style='width:63.8pt;border:none;'>
+		<p class=MsoNormal align=right style='margin-right:2.85pt;text-align:right'><span
+			style='font-size:7.0pt'>&nbsp;</span></p>
+	    </td>
+	    <td width=759 colspan=4 valign=top style='width:569.6pt;border:none;
+		'>
+		<p class=MsoNormal align=center style='margin-right:2.85pt;text-align:center'></p>
+	    </td>
+	    <td width=72 valign=top style='width:54.1pt;border:none;border-right:solid windowtext 1.5pt;
+		'>
+		<p class=MsoNormal align=right style='margin-right:2.85pt;text-align:right'><span
+			style='font-size:7.0pt'>&nbsp;</span></p>
+	    </td>
+	    <td width=130 rowspan=2 valign=bottom style='width:97.75pt;border-top:none;
+		border-left:none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.5pt;
+		'>
+		<p class=MsoNormal align=center style='text-align:center'><span
+			style='font-size:11.0pt'>{$v->p->company_code}</span></p>
+	    </td>
+	</tr>
+	<tr style='page-break-inside:avoid'>
+	    <td width=85 valign=bottom style='width:63.8pt;border:none;'>
+		<p class=MsoNormal style='margin-right:2.85pt'><span style='font-size:11.0pt'>Плательщик</span></p>
+	    </td>
+	    <td width=759 colspan=4 valign=bottom style='width:569.6pt;border:none;
+		border-bottom:solid windowtext 1.0pt;'>
+		<p class=MsoNormal align=center style='margin-right:2.85pt;text-align:left'><span
+			style='font-size:11.0pt'>{$v->p->all}</span></p>
+	    </td>
+	    <td width=72 valign=bottom style='width:54.1pt;border-top:none;border-left:
+		none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.5pt;
+		'>
+		<p class=MsoNormal align=right style='margin-right:2.85pt;text-align:right'><span
+			style='font-size:11.0pt'>по ОКПО</span></p>
+	    </td>
+	</tr>
+	<tr style='page-break-inside:avoid'>
+	    <td width=85 valign=top style='width:63.8pt;border:none;'>
+		<p class=MsoNormal align=right style='margin-right:2.85pt;text-align:right'><span
+			style='font-size:7.0pt'>&nbsp;</span></p>
+	    </td>
+	    <td width=759 colspan=4 valign=top style='width:569.6pt;border:none;
+		border-right:solid windowtext 1.0pt;'>
+		<p class=MsoNormal align=center style='margin-right:2.85pt;text-align:center'></p>
+	    </td>
+	    <td width=72 rowspan=2 valign=bottom style='width:54.1pt;border-top:none;
+		border-left:none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.5pt;
+		'>
+		<p class=MsoNormal align=right style='margin-right:2.85pt;text-align:right'><span
+			style='font-size:11.0pt'>номер</span></p>
+	    </td>
+	    <td width=130 rowspan=2 valign=bottom style='width:97.75pt;border-top:none;
+		border-left:none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.5pt;'>
+		<p class=MsoNormal align=center style='text-align:center'><span
+			style='font-size:11.0pt'>{$v->doc_view->extra->reason_num}</span></p>
+	    </td>
+	</tr>
+	<tr style='page-break-inside:avoid'>
+	    <td width=85 valign=bottom style='width:63.8pt;border:none;'>
+		<p class=MsoNormal style='margin-right:2.85pt'><span style='font-size:11.0pt'>Основание</span></p>
+	    </td>
+	    <td width=759 colspan=4 valign=bottom style='width:569.6pt;border-top:none;
+		border-left:none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;
+		'>
+		<p class=MsoNormal style='margin-right:2.85pt;text-align:left'><span style='font-size:11.0pt'>{$v->doc_view->extra->reason}</span></p>
+	    </td>
+	</tr>
+	<tr style='page-break-inside:avoid'>
+	    <td width=85 valign=bottom style='width:63.8pt;border:none;'>
+		<p class=MsoNormal style='margin-right:2.85pt'><span style='font-size:7.0pt'>&nbsp;</span></p>
+	    </td>
+	    <td width=759 colspan=4 valign=top style='width:569.6pt;border:none;
+		border-right:solid windowtext 1.0pt;'>
+		<p class=MsoNormal align=center style='margin-right:2.85pt;text-align:center'></p>
+	    </td>
+	    <td width=72 valign=bottom style='width:54.1pt;border-top:none;border-left:
+		none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.5pt;
+		'>
+		<p class=MsoNormal align=right style='margin-right:2.85pt;text-align:right'><span
+			style='font-size:11.0pt'>дата</span></p>
+	    </td>
+	    <td width=130 valign=bottom style='width:97.75pt;border-top:none;border-left:
+		none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.5pt;
+		'>
+		<p class=MsoNormal align=center style='text-align:center'><span
+			style='font-size:11.0pt'>{$v->doc_view->extra->reason_date}</span></p>
+	    </td>
+	</tr>
+	<tr style='page-break-inside:avoid'>
+	    <td width=85 valign=bottom style='width:63.8pt;border:none;'>
+		<p class=MsoNormal style='margin-right:2.85pt'><span style='font-size:11.0pt'>&nbsp;</span></p>
+	    </td>
+	    <td width=759 colspan=4 valign=bottom style='width:569.6pt;border:none;
+		border-right:solid windowtext 1.0pt;'>
+		<p class=MsoNormal align=right style='margin-right:2.85pt;text-align:right'><span
+			style='font-size:11.0pt'>Транспортная накладная</span></p>
+	    </td>
+	    <td width=72 valign=bottom style='width:54.1pt;border-top:none;border-left:
+		none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.5pt;
+		'>
+		<p class=MsoNormal align=right style='margin-right:2.85pt;text-align:right'><span
+			style='font-size:11.0pt'>номер</span></p>
+	    </td>
+	    <td width=130 valign=bottom style='width:97.75pt;border-top:none;border-left:
+		none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.5pt;
+		'>
+		<p class=MsoNormal align=center style='text-align:center'><span
+			style='font-size:11.0pt'>{$v->doc_view->extra->transport_bill_num}</span></p>
+	    </td>
+	</tr>
+	<tr style='page-break-inside:avoid'>
+	    <td width=85 valign=bottom style='width:63.8pt;border:none;'>
+		<p class=MsoNormal style='margin-right:2.85pt'><span style='font-size:11.0pt'>&nbsp;</span></p>
+	    </td>
+	    <td width=759 colspan=4 valign=bottom style='width:569.6pt;border:none;
+		border-right:solid windowtext 1.0pt;'>
+		<p class=MsoNormal align=center style='margin-right:2.85pt;text-align:center'><span
+			style='font-size:11.0pt'>&nbsp;</span></p>
+	    </td>
+	    <td width=72 valign=bottom style='width:54.1pt;border-top:none;border-left:
+		none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.5pt;
+		'>
+		<p class=MsoNormal align=right style='margin-right:2.85pt;text-align:right'><span
+			style='font-size:11.0pt'>дата</span></p>
+	    </td>
+	    <td width=130 valign=bottom style='width:97.75pt;border-top:none;border-left:
+		none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.5pt;
+		'>
+		<p class=MsoNormal align=center style='text-align:center'><span
+			style='font-size:11.0pt'>{$v->doc_view->extra->transport_bill_date}</span></p>
+	    </td>
+	</tr>
+	<tr style='page-break-inside:avoid'>
+	    <td width=85 valign=bottom style='width:63.8pt;border:none;'>
+		<p class=MsoNormal style='margin-right:2.85pt'><span style='font-size:11.0pt'>&nbsp;</span></p>
+	    </td>
+	    <td width=832 colspan=5 valign=bottom style='width:623.7pt;border:none;
+		border-right:solid windowtext 1.5pt;'>
+		<p class=MsoNormal align=right style='margin-right:2.85pt;text-align:right'><span
+			style='font-size:11.0pt'>Вид операции</span></p>
+	    </td>
+	    <td width=130 valign=bottom style='width:97.75pt;border-top:none;border-left:
+		none;border-bottom:solid windowtext 1.5pt;border-right:solid windowtext 1.5pt;
+		'>
+		<p class=MsoNormal align=center style='text-align:center'><span
+			style='font-size:11.0pt'>&nbsp;</span></p>
+	    </td>
+	</tr>
+	<tr height=0>
+	    <td width=100 style='border:none'></td>
+	    <td width=28 style='border:none'></td>
+	    <td width=221 style='border:none'></td>
+	    <td width=230 style='border:none'></td>
+	    <td width=3 style='border:none'></td>
+	    <td width=64 style='border:none'></td>
+	    <td width=100 style='border:none'></td>
+	</tr>
+    </table>
+
+    <p class=MsoNormal><span style='font-size:8.0pt'>&nbsp;</span></p>
+
+    <div align=center>
+
+	<table class=MsoNormalTable border=1 cellspacing=0 cellpadding=0
+	       style='border-collapse:collapse;border:none'>
+	    <tr style='page-break-inside:avoid;height:14.2pt'>
+		<td width=219 style='width:164.45pt;border:none;border-right:solid windowtext 1.0pt;
+		    ;height:14.2pt'>
+		    <h3 align=center style='margin-right:0in;text-align:center'>&nbsp;</h3>
+		</td>
+		<td width=126 style='width:94.3pt;border-top:solid windowtext 1.0pt;
+		    border-left:none;border-bottom:solid windowtext 1.5pt;border-right:solid windowtext 1.0pt;
+		    ;height:14.2pt'>
+		    <p class=MsoNormal align=center style='margin-right:2.85pt;text-align:center'><span
+			    style='font-size:11.0pt'>Номер документа</span></p>
+		</td>
+		<td width=126 style='width:94.3pt;border-top:solid windowtext 1.0pt;
+		    border-left:none;border-bottom:solid windowtext 1.5pt;border-right:solid windowtext 1.0pt;
+		    ;height:14.2pt'>
+		    <p class=MsoNormal align=center style='margin-right:2.85pt;text-align:center'><span
+			    style='font-size:11.0pt'>Дата составления</span></p>
+		</td>
+	    </tr>
+	    <tr style='page-break-inside:avoid;height:14.2pt'>
+		<td width=219 style='width:164.45pt;border:none;border-right:solid windowtext 1.5pt;
+		    ;height:14.2pt'>
+		    <p class=MsoNormal align=center style='margin-right:2.85pt;text-align:center'><b><span
+				style='font-size:12.0pt'>ТОВАРНАЯ НАКЛАДНАЯ</span></b></p>
+		</td>
+		<td width=126 style='width:94.3pt;border-top:none;border-left:none;
+		    border-bottom:solid windowtext 1.5pt;border-right:solid windowtext 1.5pt;
+		    ;height:14.2pt'>
+		    <p class=MsoNormal align=center style='text-align:center'><span
+			    style='font-size:11.0pt'>{$v->doc_view->view_num}</span></p>
+		</td>
+		<td width=126 style='width:94.3pt;border-top:none;border-left:none;
+		    border-bottom:solid windowtext 1.5pt;border-right:solid windowtext 1.5pt;
+		    ;height:14.2pt'>
+		    <p class=MsoNormal align=center style='text-align:center'><span
+			    style='font-size:11.0pt'>{$v->doc_view->date_dot}</span></p>
+		</td>
+	    </tr>
+	</table>
+    </div>
+
+    <p class=MsoNormal><span style='font-size:8.0pt'>&nbsp;</span></p>
+    {loop name="v->tables"}
+    <table class=MsoNormalTable border=1 cellspacing=0 cellpadding=0 style='border-collapse:collapse;border:none'>
+	<!--HEADER-->
+	<thead>
+	<tr>
+	    <td width=48 rowspan=2 valign=top style='width:35.95pt;border:solid windowtext 1.0pt;'>
+		<p class=MsoNormal align=center style='text-align:center'>Номер по по-<br>рядку</p>
+	    </td>
+	    <td width=231 colspan=2 valign=top style='border:solid windowtext 1.0pt;
+		border-left:none;'>
+		<p class=MsoNormal align=center style='text-align:center'>Товар</p>
+	    </td>
+	    <td width=124 colspan=2 valign=top style='width:93.05pt;border:solid windowtext 1.0pt;
+		border-left:none;'>
+		<p class=MsoNormal align=center style='text-align:center'>Единица измерения</p>
+	    </td>
+	    <td width=62 rowspan=2 valign=top style='width:46.45pt;border:solid windowtext 1.0pt;
+		border-left:none;'>
+		<p class=MsoNormal align=center style='text-align:center'>Вид упаковки</p>
+	    </td>
+	    <td width=123 colspan=2 valign=top style='width:92.15pt;border:solid windowtext 1.0pt;
+		border-left:none;'>
+		<p class=MsoNormal align=center style='text-align:center'>Количество</p>
+	    </td>
+	    <td width=60 rowspan=2 valign=top style='width:44.8pt;border:solid windowtext 1.0pt;
+		border-left:none;'>
+		<p class=MsoNormal align=center style='text-align:center'>Масса брутто</p>
+	    </td>
+	    <td width=71 rowspan=2 valign=top style='width:53.6pt;border:solid windowtext 1.0pt;
+		border-left:none;'>
+		<p class=MsoNormal align=center style='text-align:center'>Количество (масса
+		    нетто)</p>
+	    </td>
+	    <td width=66 rowspan=2 valign=top style='width:49.65pt;border:solid windowtext 1.0pt;
+		border-left:none;'>
+		<p class=MsoNormal align=center style='text-align:center'>Цена,<br>
+		    руб. коп.</p>
+	    </td>
+	    <td width=69 rowspan=2 valign=top style='width:51.4pt;border:solid windowtext 1.0pt;
+		border-left:none;'>
+		<p class=MsoNormal align=center style='text-align:center'>Сумма без учета
+		    НДС, руб. коп.</p>
+	    </td>
+	    <td width=130 colspan=2 valign=top style='width:1.35in;border:solid windowtext 1.0pt;
+		border-left:none;'>
+		<p class=MsoNormal align=center style='text-align:center'>НДС</p>
+	    </td>
+	    <td width=65 rowspan=2 valign=top style='width:48.65pt;border:solid windowtext 1.0pt;
+		border-left:none;'>
+		<p class=MsoNormal align=center style='text-align:center'>Сумма с учетом НДС,<br>
+		    руб. коп.</p>
+	    </td>
+	</tr>
+	<tr>
+	    <td width=179 valign=top style='width:170pt;border-top:none;border-left:none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;'>
+		<p class=MsoNormal align=center style='text-align:center'>наименование,характерис-<br>тика, сорт, артикул товара</p>
+	    </td>
+	    <td width=51 valign=top style='width:60pt;border-top:none;border-left:none;
+		border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;
+		'>
+		<p class=MsoNormal align=center style='text-align:center'>код</p>
+	    </td>
+	    <td width=72 valign=top style='width:53.9pt;border-top:none;border-left:none;
+		border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;
+		'>
+		<p class=MsoNormal align=center style='text-align:center'>наимено-<br>
+		    вание</p>
+	    </td>
+	    <td width=52 valign=top style='width:39.15pt;border-top:none;border-left:
+		none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;
+		'>
+		<p class=MsoNormal align=center style='text-align:center'>код по ОКЕИ</p>
+	    </td>
+	    <td width=68 valign=top style='width:50.85pt;border-top:none;border-left:
+		none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;
+		'>
+		<p class=MsoNormal align=center style='text-align:center'>в одном месте</p>
+	    </td>
+	    <td width=55 valign=top style='width:41.3pt;border-top:none;border-left:none;
+		border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;
+		'>
+		<p class=MsoNormal align=center style='text-align:center'>мест,<br>
+		    штук</p>
+	    </td>
+	    <td width=65 valign=top style='width:48.6pt;border-top:none;border-left:none;
+		border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;
+		'>
+		<p class=MsoNormal align=center style='text-align:center'>ставка, %</p>
+	    </td>
+	    <td width=65 valign=top style='width:48.6pt;border-top:none;border-left:none;
+		border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;
+		'>
+		<p class=MsoNormal align=center style='text-align:center'>сумма, руб. коп.</p>
+	    </td>
+	</tr>
+	<tr>
+	    <td width=48 style='width:35.95pt;border:solid windowtext 1.0pt;border-top:
+		none;'>
+		<p class=MsoNormal align=center style='text-align:center'>1</p>
+	    </td>
+	    <td width=179 style='width:170pt;border-top:none;border-left:none;
+		border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;
+		'>
+		<p class=MsoNormal align=center style='text-align:center'>2</p>
+	    </td>
+	    <td width=51 style='width:60pt;border-top:none;border-left:none;border-bottom:
+		solid windowtext 1.5pt;border-right:solid windowtext 1.0pt;'>
+		<p class=MsoNormal align=center style='text-align:center'>3</p>
+	    </td>
+	    <td width=72 style='width:53.9pt;border-top:none;border-left:none;border-bottom:
+		solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;'>
+		<p class=MsoNormal align=center style='text-align:center'>4</p>
+	    </td>
+	    <td width=52 style='width:39.15pt;border-top:none;border-left:none;
+		border-bottom:solid windowtext 1.5pt;border-right:solid windowtext 1.0pt;
+		'>
+		<p class=MsoNormal align=center style='text-align:center'>5</p>
+	    </td>
+	    <td width=62 style='width:46.45pt;border-top:none;border-left:none;
+		border-bottom:solid windowtext 1.5pt;border-right:solid windowtext 1.0pt;
+		'>
+		<p class=MsoNormal align=center style='text-align:center'>6</p>
+	    </td>
+	    <td width=68 style='width:50.85pt;border-top:none;border-left:none;
+		border-bottom:solid windowtext 1.5pt;border-right:solid windowtext 1.0pt;
+		'>
+		<p class=MsoNormal align=center style='text-align:center'>7</p>
+	    </td>
+	    <td width=55 style='width:41.3pt;border-top:none;border-left:none;border-bottom:
+		solid windowtext 1.5pt;border-right:solid windowtext 1.0pt;'>
+		<p class=MsoNormal align=center style='text-align:center'>8</p>
+	    </td>
+	    <td width=60 style='width:44.8pt;border-top:none;border-left:none;border-bottom:
+		solid windowtext 1.5pt;border-right:solid windowtext 1.0pt;'>
+		<p class=MsoNormal align=center style='text-align:center'>9</p>
+	    </td>
+	    <td width=71 style='width:53.6pt;border-top:none;border-left:none;border-bottom:
+		solid windowtext 1.5pt;border-right:solid windowtext 1.0pt;'>
+		<p class=MsoNormal align=center style='text-align:center'>10</p>
+	    </td>
+	    <td width=66 style='width:49.65pt;border-top:none;border-left:none;
+		border-bottom:solid windowtext 1.5pt;border-right:solid windowtext 1.0pt;
+		'>
+		<p class=MsoNormal align=center style='text-align:center'>11</p>
+	    </td>
+	    <td width=69 style='width:51.4pt;border-top:none;border-left:none;border-bottom:
+		solid windowtext 1.5pt;border-right:solid windowtext 1.0pt;'>
+		<p class=MsoNormal align=center style='text-align:center'>12</p>
+	    </td>
+	    <td width=65 style='width:48.6pt;border-top:none;border-left:none;border-bottom:
+		solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;'>
+		<p class=MsoNormal align=center style='text-align:center'>13</p>
+	    </td>
+	    <td width=65 style='width:48.6pt;border-top:none;border-left:none;border-bottom:
+		solid windowtext 1.5pt;border-right:solid windowtext 1.0pt;'>
+		<p class=MsoNormal align=center style='text-align:center'>14</p>
+	    </td>
+	    <td width=65 style='width:48.65pt;border-top:none;border-left:none;
+		border-bottom:solid windowtext 1.5pt;border-right:solid windowtext 1.0pt;
+		'>
+		<p class=MsoNormal align=center style='text-align:center'>15</p>
+	    </td>
+	</tr>
+	</thead>
+	<!--END OF HEADER-->
+	{loop name="value"}
+	{if="$value->i"}
+	<tr style='height:14.2pt'>
+	    <td width=48 valign=bottom style='width:35.95pt;border:solid windowtext 1.0pt;border-top:none;;height:14.2pt'>
+		<p class=MsoNormal align=center style='text-align:center'>{$value->i}</p>
+	    </td>
+	    <td width=179 valign=bottom style='width:170pt;border-top:none;border-left:none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.5pt;;height:14.2pt'>
+		<p class=MsoNormal align=left style='text-align:left;max-height:2.5em;overflow: hidden;'>{$value->product_name}</p>
+	    </td>
+	    <td width=51 valign=bottom style='width:60pt;border-top:none;border-left:none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.5pt;;height:14.2pt'>
+		<p class=MsoNormal style='text-align:center;max-width:60pt;max-height:2.5em;overflow: hidden;'>{$value->product_code}</p>
+	    </td>
+	    <td width=72 valign=bottom style='width:53.9pt;border-top:none;border-left:none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.5pt;;height:14.2pt'>
+		<p class=MsoNormal align=center style='text-align:center;'>{$value->product_unit}</p>
+	    </td>
+	    <td width=52 valign=bottom style='width:39.15pt;border-top:none;border-left:none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;;height:14.2pt'>
+		<p class=MsoNormal align=center style='text-align:center'>{$value->product_unit_code}</p>
+	    </td>
+	    <td width=62 valign=bottom style='width:46.45pt;border-top:none;border-left:none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;;height:14.2pt'>
+		<p class=MsoNormal align=center style='text-align:center'>&nbsp;</p>
+	    </td>
+	    <td width=68 valign=bottom style='width:50.85pt;border-top:none;border-left:none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;;height:14.2pt'>
+		<p class=MsoNormal align=center style='text-align:center'>&nbsp;</p>
+	    </td>
+	    <td width=55 valign=bottom style='width:41.3pt;border-top:none;border-left:none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;;height:14.2pt'>
+		<p class=MsoNormal align=center style='text-align:center'>&nbsp;</p>
+	    </td>
+	    <td width=60 valign=bottom style='width:44.8pt;border-top:none;border-left:none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;;height:14.2pt'>
+		<p class=MsoNormal align=center style='text-align:center'>&nbsp;</p>
+	    </td>
+	    <td width=71 valign=bottom style='width:53.6pt;border-top:none;border-left:none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;;height:14.2pt'>
+		<p class=MsoNormal align=center style='text-align:center'>{$value->product_quantity}</p>
+	    </td>
+	    <td width=66 valign=bottom style='width:49.65pt;border-top:none;border-left:none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;;height:14.2pt'>
+		<p class=MsoNormal align=center style='text-align:center'>{$value->product_price}</p>
+	    </td>
+	    <td width=69 valign=bottom style='width:51.4pt;border-top:none;border-left:none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.5pt;;height:14.2pt'>
+		<p class=MsoNormal align=center style='text-align:center'>{$value->product_sum}</p>
+	    </td>
+	    <td width=65 valign=bottom style='width:48.6pt;border-top:none;border-left:none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.5pt;;height:14.2pt'>
+		<p class=MsoNormal align=center style='text-align:center'>18%</p>
+	    </td>
+	    <td width=65 valign=bottom style='width:48.6pt;border-top:none;border-left:none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;;height:14.2pt'>
+		<p class=MsoNormal align=center style='text-align:center'>{$value->product_sum_vat}</p>
+	    </td>
+	    <td width=65 valign=bottom style='width:48.65pt;border-top:none;border-left:none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.5pt;;height:14.2pt'>
+		<p class=MsoNormal align=center style='text-align:center'>{$value->product_sum_total}</p>
+	    </td>
+	</tr>
+	{/if}
+	{/loop}
+	<!--FOOTER-->
+	<tr style='height:14.2pt'>
+	    <td width=48 valign=bottom style='width:35.95pt;border:none;;height:14.2pt'>
+		<p class=MsoNormal align=center style='text-align:center'>&nbsp;</p>
+	    </td>
+	    <td width=179 valign=bottom style='width:170pt;border:none;;height:14.2pt'>
+		<p class=MsoNormal align=center style='text-align:center'>&nbsp;</p>
+	    </td>
+	    <td width=51 valign=bottom style='width:38.5pt;border:none;;height:14.2pt;border-top:solid windowtext 1.5pt;'>
+		<p class=MsoNormal align=center style='text-align:center'>&nbsp;</p>
+	    </td>
+	    <td width=72 valign=bottom style='width:53.9pt;border:none;;height:14.2pt'>
+		<p class=MsoNormal align=center style='text-align:center'>&nbsp;</p>
+	    </td>
+	    <td width=52 valign=bottom style='width:39.15pt;border:none;;border-top:solid windowtext 1pt;;height:14.2pt;border-top:solid windowtext 1.5pt;'>
+		<p class=MsoNormal align=center style='text-align:center'>&nbsp;</p>
+	    </td>
+	    <td width=62 valign=bottom style='width:46.45pt;border:none;;;border-top:solid windowtext 1pt;height:14.2pt;border-top:solid windowtext 1.5pt;'>
+		<p class=MsoNormal align=center style='text-align:center'>&nbsp;</p>
+	    </td>
+	    <td width=68 valign=bottom style='width:50.85pt;border:none;border-right:solid windowtext 1.0pt;;height:14.2pt;border-top:solid windowtext 1.5pt;'>
+		<p class=MsoNormal align=right style='margin-right:2.85pt;text-align:right'>Итого</p>
+	    </td>
+	    <td width=55 valign=bottom style='width:41.3pt;border-top:none;border-left:none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;;height:14.2pt;border-top:solid windowtext 1.5pt;'>
+		<p class=MsoNormal align=center style='text-align:center'>&nbsp;</p>
+	    </td>
+	    <td width=60 valign=bottom style='width:44.8pt;border-top:none;border-left:none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;;height:14.2pt;border-top:solid windowtext 1.5pt;'>
+		<p class=MsoNormal align=center style='text-align:center'>&nbsp;</p>
+	    </td>
+	    <td width=71 valign=bottom style='width:53.6pt;border-top:none;border-left:none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;;height:14.2pt;border-top:solid windowtext 1.5pt;'>
+		<p class=MsoNormal align=center style='text-align:center'>{$value.subcount}</p>
+	    </td>
+	    <td width=66 valign=bottom style='width:49.65pt;border-top:none;border-left:none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;;height:14.2pt;border-top:solid windowtext 1.5pt;'>
+		<p class=MsoNormal align=center style='text-align:center'>х</p>
+	    </td>
+	    <td width=69 valign=bottom style='width:51.4pt;border-top:none;border-left:none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;;height:14.2pt;border-top:solid windowtext 1.5pt;'>
+		<p class=MsoNormal align=center style='text-align:center'>{$value.subvatless}</p>
+	    </td>
+	    <td width=65 valign=bottom style='width:48.6pt;border-top:none;border-left:none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;;height:14.2pt'>
+		<p class=MsoNormal align=center style='text-align:center'>х</p>
+	    </td>
+	    <td width=65 valign=bottom style='width:48.6pt;border-top:none;border-left:none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;;height:14.2pt;border-top:solid windowtext 1.5pt;'>
+		<p class=MsoNormal align=center style='text-align:center'>{$value.subvat}</p>
+	    </td>
+	    <td width=65 valign=bottom style='width:48.65pt;border-top:none;border-left:none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;;height:14.2pt;border-top:solid windowtext 1.5pt;'>
+		<p class=MsoNormal align=center style='text-align:center'>{$value.subtotal}</p>
+	    </td>
+	</tr>
+	{if="$counter+1==$v->tables_count"}
+	<tr style='height:14.2pt'>
+	    <td width=48 valign=bottom style='width:35.95pt;border:none;;height:14.2pt'>
+		<p class=MsoNormal align=center style='text-align:center'>&nbsp;</p>
+	    </td>
+	    <td width=179 valign=bottom style='width:170pt;border:none;;height:14.2pt'>
+		<p class=MsoNormal align=center style='text-align:center'>&nbsp;</p>
+	    </td>
+	    <td width=51 valign=bottom style='width:38.5pt;border:none;;height:14.2pt;'>
+		<p class=MsoNormal align=center style='text-align:center'>&nbsp;</p>
+	    </td>
+	    <td width=72 valign=bottom style='width:53.9pt;border:none;;height:14.2pt'>
+		<p class=MsoNormal align=center style='text-align:center'>&nbsp;</p>
+	    </td>
+	    <td colspan="3" valign=bottom style='border:none;border-right:solid windowtext 1.0pt;height:14.2pt;'>
+		<p class=MsoNormal align=right style='margin-right:2.85pt;text-align:right'>Всего по накладной</p>
+	    </td>
+	    <td width=55 valign=bottom style='width:41.3pt;border-top:none;border-left:none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;;height:14.2pt;'>
+		<p class=MsoNormal align=center style='text-align:center'>&nbsp;</p>
+	    </td>
+	    <td width=60 valign=bottom style='width:44.8pt;border-top:none;border-left:none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;;height:14.2pt;'>
+		<p class=MsoNormal align=center style='text-align:center'>&nbsp;</p>
+	    </td>
+	    <td width=71 valign=bottom style='width:53.6pt;border-top:none;border-left:none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;;height:14.2pt;'>
+		<p class=MsoNormal align=center style='text-align:center'>{$v->footer->total_qty}</p>
+	    </td>
+	    <td width=66 valign=bottom style='width:49.65pt;border-top:none;border-left:none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;;height:14.2pt;'>
+		<p class=MsoNormal align=center style='text-align:center'>х</p>
+	    </td>
+	    <td width=69 valign=bottom style='width:51.4pt;border-top:none;border-left:none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;;height:14.2pt;'>
+		<p class=MsoNormal align=center style='text-align:center'>{$v->footer->vatless}</p>
+	    </td>
+	    <td width=65 valign=bottom style='width:48.6pt;border-top:none;border-left:none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;;height:14.2pt'>
+		<p class=MsoNormal align=center style='text-align:center'>х</p>
+	    </td>
+	    <td width=65 valign=bottom style='width:48.6pt;border-top:none;border-left:none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;;height:14.2pt;'>
+		<p class=MsoNormal align=center style='text-align:center'>{$v->footer->vat}</p>
+	    </td>
+	    <td width=65 valign=bottom style='width:48.65pt;border-top:none;border-left:none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.0pt;;height:14.2pt;'>
+		<p class=MsoNormal align=center style='text-align:center'>{$v->footer->total}</p>
+	    </td>
+	</tr>
+	{/if}
+
+    </table>
+    </div><div class="page">
+    {/loop}
+
+
+    <!--PAGE ENDS-->
+    <div style="text-align: left">
+	<table class=MsoNormalTable border=1 cellspacing=0 cellpadding=0 style='border-collapse:collapse;border:none'>
+	    <tr style='height:14.2pt'>
+		<td width=244 colspan=2 valign=bottom style='width:182.7pt;border:none;height:14.2pt'>
+		    <p class=MsoNormal>Товарная накладная имеет приложение на</p>
+		</td>
+		<td width=426 valign=bottom style='width:319.15pt;border:none;border-bottom:solid windowtext 1.0pt;;height:14.2pt'>
+		    <p class=MsoNormal align=center style='text-align:center'>{$v->total_pages}</p>
+		</td>
+		<td width=174 valign=bottom style='width:130.85pt;border:none;height:14.2pt'>
+		    <p class=MsoNormal style='margin-left:2.85pt'>листах</p>
+		</td>
+	    </tr>
+	    <tr style='height:14.2pt'>
+		<td width=70 valign=bottom style='width:52.5pt;border:none;height:14.2pt'>
+		    <p class=MsoNormal>и содержит</p>
+		</td>
+		<td width=599 colspan=2 valign=bottom style='width:449.35pt;border:none;border-bottom:solid windowtext 1.0pt;;height:14.2pt'>
+		    <p class=MsoNormal align=center style='text-align:center'>{$v->total_rows}</p>
+		</td>
+		<td width=174 valign=bottom style='width:130.85pt;border:none;height:14.2pt'>
+		    <p class=MsoNormal style='margin-left:2.85pt'><span style='letter-spacing:-.1pt'>порядковых номеров записей</span></p>
+		</td>
+	    </tr>
+	    <tr>
+		<td width=70 valign=bottom style='width:52.5pt;border:none;'>
+		    <p class=MsoNormal><span style='font-size:7.0pt'>&nbsp;</span></p>
+		</td>
+		<td width=599 colspan=2 valign=bottom style='width:449.35pt;border:none;'>
+		    <p class=MsoNormal align=center style='text-align:center'><span style='font-size:7.0pt'>прописью</span></p>
+		</td>
+		<td width=174 valign=bottom style='width:130.85pt;border:none;'>
+		    <p class=MsoNormal><span style='font-size:7.0pt'>&nbsp;</span></p>
+		</td>
+	    </tr>
+	</table>
+
+	<table class=MsoNormalTable border=1 cellspacing=0 cellpadding=0
+	       style='border-collapse:collapse;border:none'>
+	    <tr style='height:14.2pt'>
+		<td width=379 colspan=2 valign=bottom style='width:284.15pt;border:none;
+		    ;height:14.2pt'>
+		    <p class=MsoNormal align=center style='text-align:center'>&nbsp;</p>
+		</td>
+		<td width=130 valign=bottom style='width:97.3pt;border:none;;
+		    height:14.2pt'>
+		    <p class=MsoNormal style='margin-left:2.85pt'>Масса груза (нетто)</p>
+		</td>
+		<td width=377 valign=bottom style='width:282.65pt;border-top:none;border-left:
+		    none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.5pt;
+		    ;height:14.2pt'>
+		    <p class=MsoNormal align=center style='text-align:center'>&nbsp;</p>
+		</td>
+		<td width=162 valign=bottom style='width:121.2pt;border-top:solid windowtext 1.5pt;
+		    border-left:none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.5pt;
+		    ;height:14.2pt'>
+		    <p class=MsoNormal align=center style='text-align:center'>&nbsp;</p>
+		</td>
+	    </tr>
+	    <tr>
+		<td width=379 colspan=2 valign=top style='width:284.15pt;border:none;'>
+		    <p class=MsoNormal align=center style='text-align:center'><span style='font-size:7.0pt'>&nbsp;</span></p>
+		</td>
+		<td width=130 valign=top style='width:97.3pt;border:none;'>
+		    <p class=MsoNormal style='margin-left:2.85pt'><span style='font-size:7.0pt'>&nbsp;</span></p>
+		</td>
+		<td width=377 valign=top style='width:282.65pt;border:none;border-right:solid windowtext 1.5pt;'>
+		    <p class=MsoNormal align=center style='text-align:center'><span style='font-size:7.0pt'>прописью</span></p>
+		</td>
+		<td width=162 rowspan=2 valign=bottom style='width:121.2pt;border-top:none;
+		    border-left:none;border-bottom:solid windowtext 1.5pt;border-right:solid windowtext 1.5pt;'>
+		    <p class=MsoNormal align=center style='text-align:center'>&nbsp;</p>
+		</td>
+	    </tr>
+	    <tr style='height:14.2pt'>
+		<td width=71 valign=bottom style='width:53.2pt;border:none;;height:14.2pt'>
+		    <p class=MsoNormal>Всего мест</p>
+		</td>
+		<td width=308 valign=bottom style='width:230.95pt;border:none;border-bottom:solid windowtext 1.0pt;;height:14.2pt'>
+		    <p class=MsoNormal align=center style='text-align:center'>&nbsp;</p>
+		</td>
+		<td width=130 valign=bottom style='width:97.3pt;border:none;;height:14.2pt'>
+		    <p class=MsoNormal style='margin-left:2.85pt'>Масса груза (брутто)</p>
+		</td>
+		<td width=377 valign=bottom style='width:282.65pt;border-top:none;border-left:none;border-bottom:solid windowtext 1.0pt;border-right:solid windowtext 1.5pt;;height:14.2pt'>
+		    <p class=MsoNormal align=center style='text-align:center'>&nbsp;</p>
+		</td>
+	    </tr>
+	    <tr>
+		<td width=71 valign=top style='width:53.2pt;border:none;'>
+		    <p class=MsoNormal><span style='font-size:7.0pt'>&nbsp;</span></p>
+		</td>
+		<td width=308 valign=top style='width:230.95pt;border:none;'>
+		    <p class=MsoNormal align=center style='text-align:center'><span
+			    style='font-size:7.0pt'>прописью</span></p>
+		</td>
+		<td width=130 valign=top style='width:97.3pt;border:none;'>
+		    <p class=MsoNormal align=center style='text-align:center'><span
+			    style='font-size:7.0pt'>&nbsp;</span></p>
+		</td>
+		<td width=377 valign=top style='width:282.65pt;border:none;'>
+		    <p class=MsoNormal align=center style='text-align:center'><span
+			    style='font-size:7.0pt'>прописью</span></p>
+		</td>
+		<td width=162 valign=top style='width:121.2pt;border:none;'>
+		    <p class=MsoNormal align=center style='text-align:center'><span
+			    style='font-size:7.0pt'>&nbsp;</span></p>
+		</td>
+	    </tr>
+	</table>
+    </div>
+    <p class=MsoNormal>&nbsp;</p>
+
+    <table class=MsoNormalTable border=1 cellspacing=0 cellpadding=0
+	   style='border-collapse:collapse;border:none'>
+	<tr style='height:14.2pt'>
+	    <td width=272 colspan=7 valign=bottom style='width:203.7pt;border:none;;height:14.2pt'>
+		<p class=MsoNormal>Приложение (паспорта, сертификаты и т.п.) на</p>
+	    </td>
+	    <td width=195 colspan=5 valign=bottom style='width:146.25pt;border:none;border-bottom:solid windowtext 1.0pt;;height:14.2pt'>
+		<p class=MsoNormal align=center style='text-align:center'>&nbsp;</p>
+	    </td>
+	    <td width=50 colspan=2 valign=bottom style='width:37.8pt;border:none;;height:14.2pt'>
+		<p class=MsoNormal> листах</p>
+	    </td>
+	    <td width=7 valign=bottom style='width:4.9pt;border:none;border-right:solid windowtext 1.0pt;height:14.2pt'>
+		<p class=MsoNormal align=center style='text-align:center'>&nbsp;</p>
+	    </td>
+	    <td width=7 valign=bottom style='width:4.9pt;border:none;;height:14.2pt'>
+		<p class=MsoNormal align=center style='text-align:center'>&nbsp;</p>
+	    </td>
+	    <td width=118 colspan=2 valign=bottom style='width:88.2pt;border:none;height:14.2pt'>
+		<p class=MsoNormal>По доверенности №</p>
+	    </td>
+	    <td width=152 colspan=6 valign=bottom style='width:114.05pt;border:none;border-bottom:solid windowtext 1.0pt;;height:14.2pt'>
+		<p class=MsoNormal align=center style='text-align:center'>&nbsp;</p>
+	    </td>
+	    <td width=28 valign=bottom style='width:21.0pt;border:none;;height:14.2pt'>
+		<p class=MsoNormal align=right style='text-align:right'>от «</p>
+	    </td>
+	    <td width=30 valign=bottom style='width:22.4pt;border:none;border-bottom:solid windowtext 1.0pt;;height:14.2pt'>
+		<p class=MsoNormal align=center style='text-align:center'>&nbsp;</p>
+	    </td>
+	    <td width=20 valign=bottom style='width:14.7pt;border:none;;height:14.2pt'>
+		<p class=MsoNormal>»</p>
+	    </td>
+	    <td width=134 colspan=3 valign=bottom style='width:1.4in;border:none;border-bottom:solid windowtext 1.0pt;;height:14.2pt'>
+		<p class=MsoNormal align=center style='text-align:center'>&nbsp;</p>
+	    </td>
+	    <td width=35 valign=bottom style='width:26.6pt;border:none;;height:14.2pt'>
+		<p class=MsoNormal> года,</p>
+	    </td>
+	</tr>
+	<tr>
+	    <td width=272 colspan=7 valign=top style='width:203.7pt;border:none;'>
+		<p class=MsoNormal align=center style='text-align:center'><span
+			style='font-size:7.0pt'>&nbsp;</span></p>
+	    </td>
+	    <td width=195 colspan=5 valign=top style='width:146.25pt;border:none;'>
+		<p class=MsoNormal align=center style='text-align:center'><span
+			style='font-size:7.0pt'>прописью</span></p>
+	    </td>
+	    <td width=50 colspan=2 valign=top style='width:37.8pt;border:none;padding:0in 0in 0in 0in'>
+		<p class=MsoNormal align=center style='text-align:center'><span style='font-size:7.0pt'>&nbsp;</span></p>
+	    </td>
+	    <td width=7 valign=top style='width:4.9pt;border:none;border-right:solid windowtext 1.0pt;'>
+		<p class=MsoNormal align=center style='text-align:center'><span style='font-size:7.0pt'>&nbsp;</span></p>
+	    </td>
+	    <td width=7 valign=top style='width:4.9pt;border:none;'>
+		<p class=MsoNormal align=center style='text-align:center'><span style='font-size:7.0pt'>&nbsp;</span></p>
+	    </td>
+	    <td width=517 colspan=15 valign=top style='width:387.75pt;border:none;'>
+		<p class=MsoNormal align=center style='text-align:center'><span style='font-size:7.0pt'>&nbsp;</span></p>
+	    </td>
+	</tr>
+	<tr style='height:14.2pt'>
+	    <td width=158 colspan=2 valign=bottom style='width:118.3pt;border:none;;height:14.2pt'>
+		<p class=MsoNormal>Всего отпущено на сумму</p>
+	    </td>
+	    <td width=359 colspan=12 valign=bottom style='width:269.45pt;border:none;border-bottom:solid windowtext 1.0pt;;height:14.2pt'>
+		<p class=MsoNormal align=center style='text-align:center'>{$v->doc_view->total_spell}</p>
+	    </td>
+	    <td width=7 valign=bottom style='width:4.9pt;border:none;border-right:solid windowtext 1.0pt;;height:14.2pt'>
+		<p class=MsoNormal align=center style='text-align:center'>&nbsp;</p>
+	    </td>
+	    <td width=7 valign=bottom style='width:4.9pt;border:none;height:14.2pt'>
+		<p class=MsoNormal align=center style='text-align:center'>&nbsp;</p>
+	    </td>
+	    <td width=63 valign=bottom style='width:46.9pt;border:none;height:14.2pt'>
+		<p class=MsoNormal>выданной</p>
+	    </td>
+	    <td width=454 colspan=14 valign=bottom style='width:340.85pt;border:none;border-bottom:solid windowtext 1.0pt;;height:14.2pt'>
+		<p class=MsoNormal align=center style='text-align:center'>&nbsp;</p>
+	    </td>
+	</tr>
+	<tr>
+	    <td width=158 colspan=2 valign=top style='width:118.3pt;border:none;'>
+		<p class=MsoNormal align=center style='text-align:center'><span
+			style='font-size:7.0pt'>&nbsp;</span></p>
+	    </td>
+	    <td width=359 colspan=12 valign=top style='width:269.45pt;border:none;'>
+		<p class=MsoNormal align=center style='text-align:center'><span
+			style='font-size:7.0pt'>прописью</span></p>
+	    </td>
+	    <td width=7 valign=top style='width:4.9pt;border:none;border-right:solid windowtext 1.0pt;
+		'>
+		<p class=MsoNormal align=center style='text-align:center'><span
+			style='font-size:7.0pt'>&nbsp;</span></p>
+	    </td>
+	    <td width=7 valign=top style='width:4.9pt;border:none;'>
+		<p class=MsoNormal align=center style='text-align:center'><span
+			style='font-size:7.0pt'>&nbsp;</span></p>
+	    </td>
+	    <td width=63 valign=top style='width:46.9pt;border:none;'>
+		<p class=MsoNormal align=center style='text-align:center'><span
+			style='font-size:7.0pt'>&nbsp;</span></p>
+	    </td>
+	    <td width=454 colspan=14 valign=top style='width:340.85pt;border:none;
+		'>
+		<p class=MsoNormal align=center style='text-align:center'><span
+			style='font-size:7.0pt'>кем, кому (организация, должность, фамилия, и., о.) </span></p>
+	    </td>
+	</tr>
+	<tr style='height:14.2pt'>
+	    <td width=141 valign=bottom style='width:105.7pt;border:none;;height:14.2pt'>
+		<p class=MsoNormal>Отпуск груза разрешил</p>
+	    </td>
+	    <td width=115 colspan=4 valign=bottom style='width:86.1pt;border:none;border-bottom:solid windowtext 1.0pt;;height:14.2pt'>
+		<p class=MsoNormal align=center style='text-align:center'>директор</p>
+	    </td>
+	    <td width=8 valign=bottom style='width:6.3pt;border:none;;height:14.2pt'>
+		<p class=MsoNormal align=center style='text-align:center'>&nbsp;</p>
+	    </td>
+	    <td width=105 colspan=2 valign=bottom style='width:79.1pt;border:none;border-bottom:solid windowtext 1.0pt;;height:14.2pt'>
+		<p class=MsoNormal align=center style='text-align:center'>&nbsp;</p>
+	    </td>
+	    <td width=9 valign=bottom style='width:6.95pt;border:none;;height:14.2pt'>
+		<p class=MsoNormal align=center style='text-align:center'>&nbsp;</p>
+	    </td>
+	    <td width=138 colspan=5 valign=bottom style='width:103.6pt;border:none;border-bottom:solid windowtext 1.0pt;;height:14.2pt'>
+		<p class=MsoNormal align=center style='text-align:center'>{$v->director_name}</p>
+	    </td>
+	    <td width=7 valign=bottom style='width:4.9pt;border:none;border-right:solid windowtext 1.0pt;;height:14.2pt'>
+		<p class=MsoNormal align=center style='text-align:center'>&nbsp;</p>
+	    </td>
+	    <td width=7 valign=bottom style='width:4.9pt;border:none;;height:14.2pt'>
+		<p class=MsoNormal align=center style='text-align:center'>&nbsp;</p>
+	    </td>
+	    <td width=517 colspan=15 valign=bottom style='width:387.75pt;border:none;border-bottom:solid windowtext 1.0pt;;height:14.2pt'>
+		<p class=MsoNormal align=center style='text-align:center'>&nbsp;</p>
+	    </td>
+	</tr>
+	<tr>
+	    <td width=141 valign=bottom style='width:105.7pt;border:none;'>
+		<p class=MsoNormal align=center style='text-align:center'><span style='font-size:7.0pt'>&nbsp;</span></p>
+	    </td>
+	    <td width=115 colspan=4 valign=bottom style='width:86.1pt;border:none;'>
+		<p class=MsoNormal align=center style='text-align:center'><span style='font-size:7.0pt'>должность</span></p>
+	    </td>
+	    <td width=8 valign=bottom style='width:6.3pt;border:none;'>
+		<p class=MsoNormal align=center style='text-align:center'><span
+			style='font-size:7.0pt'>&nbsp;</span></p>
+	    </td>
+	    <td width=105 colspan=2 valign=bottom style='width:79.1pt;border:none;
+		'>
+		<p class=MsoNormal align=center style='text-align:center'><span
+			style='font-size:7.0pt'>подпись</span></p>
+	    </td>
+	    <td width=9 valign=bottom style='width:6.95pt;border:none;'>
+		<p class=MsoNormal align=center style='text-align:center'><span
+			style='font-size:7.0pt'>&nbsp;</span></p>
+	    </td>
+	    <td width=138 colspan=5 valign=bottom style='width:103.6pt;border:none;
+		'>
+		<p class=MsoNormal align=center style='text-align:center'><span
+			style='font-size:7.0pt'>расшифровка подписи</span></p>
+	    </td>
+	    <td width=7 valign=bottom style='width:4.9pt;border:none;border-right:solid windowtext 1.0pt;
+		'>
+		<p class=MsoNormal align=center style='text-align:center'><span
+			style='font-size:7.0pt'>&nbsp;</span></p>
+	    </td>
+	    <td width=7 valign=bottom style='width:4.9pt;border:none;'>
+		<p class=MsoNormal align=center style='text-align:center'><span
+			style='font-size:7.0pt'>&nbsp;</span></p>
+	    </td>
+	    <td width=517 colspan=15 valign=bottom style='width:387.75pt;border:none;
+		'>
+		<p class=MsoNormal align=center style='text-align:center'><span
+			style='font-size:7.0pt'>&nbsp;</span></p>
+	    </td>
+	</tr>
+	<tr style='height:14.2pt'>
+	    <td width=256 colspan=5 valign=bottom style='width:191.8pt;border:none;
+		;height:14.2pt'>
+		<p class=MsoNormal>Главный (старший) бухгалтер</p>
+	    </td>
+	    <td width=8 valign=bottom style='width:6.3pt;border:none;;
+		height:14.2pt'>
+		<p class=MsoNormal align=center style='text-align:center'>&nbsp;</p>
+	    </td>
+	    <td width=105 colspan=2 valign=bottom style='width:79.1pt;border:none;
+		border-bottom:solid windowtext 1.0pt;;height:14.2pt'>
+		<p class=MsoNormal align=center style='text-align:center'>&nbsp;</p>
+	    </td>
+	    <td width=9 valign=bottom style='width:6.95pt;border:none;;
+		height:14.2pt'>
+		<p class=MsoNormal align=center style='text-align:center'>&nbsp;</p>
+	    </td>
+	    <td width=138 colspan=5 valign=bottom style='width:103.6pt;border:none;border-bottom:solid windowtext 1.0pt;;height:14.2pt'>
+		<p class=MsoNormal align=center style='text-align:center'>{$v->accountant_name}</p>
+	    </td>
+	    <td width=7 valign=bottom style='width:4.9pt;border:none;border-right:solid windowtext 1.0pt;
+		;height:14.2pt'>
+		<p class=MsoNormal align=center style='text-align:center'>&nbsp;</p>
+	    </td>
+	    <td width=7 valign=bottom style='width:4.9pt;border:none;;
+		height:14.2pt'>
+		<p class=MsoNormal align=center style='text-align:center'>&nbsp;</p>
+	    </td>
+	    <td width=123 colspan=3 valign=bottom style='width:92.4pt;border:none;
+		;height:14.2pt'>
+		<p class=MsoNormal>Груз принял</p>
+	    </td>
+	    <td width=132 colspan=3 valign=bottom style='width:99.35pt;border:none;
+		border-bottom:solid windowtext 1.0pt;;height:14.2pt'>
+		<p class=MsoNormal align=center style='text-align:center'>&nbsp;</p>
+	    </td>
+	    <td width=8 valign=bottom style='width:6.3pt;border:none;;
+		height:14.2pt'>
+		<p class=MsoNormal align=center style='text-align:center'>&nbsp;</p>
+	    </td>
+	    <td width=105 colspan=5 valign=bottom style='width:79.1pt;border:none;
+		border-bottom:solid windowtext 1.0pt;;height:14.2pt'>
+		<p class=MsoNormal align=center style='text-align:center'>&nbsp;</p>
+	    </td>
+	    <td width=9 valign=bottom style='width:7.0pt;border:none;;
+		height:14.2pt'>
+		<p class=MsoNormal align=center style='text-align:center'>&nbsp;</p>
+	    </td>
+	    <td width=138 colspan=2 valign=bottom style='width:103.6pt;border:none;
+		border-bottom:solid windowtext 1.0pt;;height:14.2pt'>
+		<p class=MsoNormal align=center style='text-align:center'>&nbsp;</p>
+	    </td>
+	</tr>
+	<tr>
+	    <td width=141 valign=top style='width:105.7pt;border:none;'>
+		<p class=MsoNormal align=center style='text-align:center'><span
+			style='font-size:7.0pt'>&nbsp;</span></p>
+	    </td>
+	    <td width=115 colspan=4 valign=top style='width:86.1pt;border:none;
+		'>
+		<p class=MsoNormal align=center style='text-align:center'><span
+			style='font-size:7.0pt'>&nbsp;</span></p>
+	    </td>
+	    <td width=8 valign=top style='width:6.3pt;border:none;border-top:solid windowtext 1.0pt;
+		'>
+		<p class=MsoNormal align=center style='text-align:center'><span
+			style='font-size:7.0pt'>&nbsp;</span></p>
+	    </td>
+	    <td width=105 colspan=2 valign=top style='width:79.1pt;border:none;
+		'>
+		<p class=MsoNormal align=center style='text-align:center'><span
+			style='font-size:7.0pt'>подпись</span></p>
+	    </td>
+	    <td width=9 valign=top style='width:6.95pt;border:none;border-top:solid windowtext 1.0pt;
+		'>
+		<p class=MsoNormal align=center style='text-align:center'><span
+			style='font-size:7.0pt'>&nbsp;</span></p>
+	    </td>
+	    <td width=138 colspan=5 valign=top style='width:103.6pt;border:none;
+		'>
+		<p class=MsoNormal align=center style='text-align:center'><span
+			style='font-size:7.0pt'>расшифровка подписи</span></p>
+	    </td>
+	    <td width=7 valign=top style='width:4.9pt;border:none;border-right:solid windowtext 1.0pt;
+		'>
+		<p class=MsoNormal align=center style='text-align:center'><span
+			style='font-size:7.0pt'>&nbsp;</span></p>
+	    </td>
+	    <td width=7 valign=top style='width:4.9pt;border:none;'>
+		<p class=MsoNormal align=center style='text-align:center'><span
+			style='font-size:7.0pt'>&nbsp;</span></p>
+	    </td>
+	    <td width=123 colspan=3 valign=top style='width:92.4pt;border:none;
+		'>
+		<p class=MsoNormal align=center style='text-align:center'><span
+			style='font-size:7.0pt'>&nbsp;</span></p>
+	    </td>
+	    <td width=132 colspan=3 valign=top style='width:99.35pt;border:none;
+		'>
+		<p class=MsoNormal align=center style='text-align:center'><span
+			style='font-size:7.0pt'>должность</span></p>
+	    </td>
+	    <td width=8 valign=top style='width:6.3pt;border:none;'>
+		<p class=MsoNormal align=center style='text-align:center'><span
+			style='font-size:7.0pt'>&nbsp;</span></p>
+	    </td>
+	    <td width=105 colspan=5 valign=top style='width:79.1pt;border:none;
+		'>
+		<p class=MsoNormal align=center style='text-align:center'><span
+			style='font-size:7.0pt'>подпись</span></p>
+	    </td>
+	    <td width=9 valign=top style='width:7.0pt;border:none;'>
+		<p class=MsoNormal align=center style='text-align:center'><span
+			style='font-size:7.0pt'>&nbsp;</span></p>
+	    </td>
+	    <td width=138 colspan=2 valign=top style='width:103.6pt;border:none;
+		'>
+		<p class=MsoNormal align=center style='text-align:center'><span
+			style='font-size:7.0pt'>расшифровка подписи</span></p>
+	    </td>
+	</tr>
+	<tr style='height:14.2pt'>
+	    <td width=141 valign=bottom style='width:105.7pt;border:none;;
+		height:14.2pt'>
+		<p class=MsoNormal>Отпуск груза произвел</p>
+	    </td>
+	    <td width=115 colspan=4 valign=bottom style='width:86.1pt;border:none;
+		border-bottom:solid windowtext 1.0pt;;height:14.2pt'>
+		<p class=MsoNormal align=center style='text-align:center'>&nbsp;</p>
+	    </td>
+	    <td width=8 valign=bottom style='width:6.3pt;border:none;;
+		height:14.2pt'>
+		<p class=MsoNormal align=center style='text-align:center'>&nbsp;</p>
+	    </td>
+	    <td width=105 colspan=2 valign=bottom style='width:79.1pt;border:none;
+		border-bottom:solid windowtext 1.0pt;;height:14.2pt'>
+		<p class=MsoNormal align=center style='text-align:center'>&nbsp;</p>
+	    </td>
+	    <td width=9 valign=bottom style='width:6.95pt;border:none;;
+		height:14.2pt'>
+		<p class=MsoNormal align=center style='text-align:center'>&nbsp;</p>
+	    </td>
+	    <td width=138 colspan=5 valign=bottom style='width:103.6pt;border:none;
+		border-bottom:solid windowtext 1.0pt;;height:14.2pt'>
+		<p class=MsoNormal align=center style='text-align:center'>&nbsp;</p>
+	    </td>
+	    <td width=7 valign=bottom style='width:4.9pt;border:none;border-right:solid windowtext 1.0pt;
+		;height:14.2pt'>
+		<p class=MsoNormal align=center style='text-align:center'>&nbsp;</p>
+	    </td>
+	    <td width=7 valign=bottom style='width:4.9pt;border:none;;
+		height:14.2pt'>
+		<p class=MsoNormal align=center style='text-align:center'>&nbsp;</p>
+	    </td>
+	    <td width=123 colspan=3 valign=bottom style='width:92.4pt;border:none;
+		;height:14.2pt'>
+		<p class=MsoNormal>Груз получил</p>
+	    </td>
+	    <td width=132 colspan=3 valign=bottom style='width:99.35pt;border:none;
+		border-bottom:solid windowtext 1.0pt;;height:14.2pt'>
+		<p class=MsoNormal align=center style='text-align:center'>&nbsp;</p>
+	    </td>
+	    <td width=8 valign=bottom style='width:6.3pt;border:none;;
+		height:14.2pt'>
+		<p class=MsoNormal align=center style='text-align:center'>&nbsp;</p>
+	    </td>
+	    <td width=105 colspan=5 valign=bottom style='width:79.1pt;border:none;
+		border-bottom:solid windowtext 1.0pt;;height:14.2pt'>
+		<p class=MsoNormal align=center style='text-align:center'>&nbsp;</p>
+	    </td>
+	    <td width=9 valign=bottom style='width:7.0pt;border:none;;
+		height:14.2pt'>
+		<p class=MsoNormal align=center style='text-align:center'>&nbsp;</p>
+	    </td>
+	    <td width=138 colspan=2 valign=bottom style='width:103.6pt;border:none;
+		border-bottom:solid windowtext 1.0pt;;height:14.2pt'>
+		<p class=MsoNormal align=center style='text-align:center'>&nbsp;</p>
+	    </td>
+	</tr>
+	<tr>
+	    <td width=141 valign=top style='width:105.7pt;border:none;'>
+		<p class=MsoNormal align=center style='text-align:center'><span
+			style='font-size:7.0pt'>&nbsp;</span></p>
+	    </td>
+	    <td width=115 colspan=4 valign=top style='width:86.1pt;border:none;
+		'>
+		<p class=MsoNormal align=center style='text-align:center'><span
+			style='font-size:7.0pt'>должность</span></p>
+	    </td>
+	    <td width=8 valign=top style='width:6.3pt;border:none;'>
+		<p class=MsoNormal align=center style='text-align:center'><span
+			style='font-size:7.0pt'>&nbsp;</span></p>
+	    </td>
+	    <td width=105 colspan=2 valign=top style='width:79.1pt;border:none;
+		'>
+		<p class=MsoNormal align=center style='text-align:center'><span
+			style='font-size:7.0pt'>подпись</span></p>
+	    </td>
+	    <td width=9 valign=top style='width:6.95pt;border:none;'>
+		<p class=MsoNormal align=center style='text-align:center'><span
+			style='font-size:7.0pt'>&nbsp;</span></p>
+	    </td>
+	    <td width=138 colspan=5 valign=top style='width:103.6pt;border:none;
+		'>
+		<p class=MsoNormal align=center style='text-align:center'><span
+			style='font-size:7.0pt'>расшифровка подписи</span></p>
+	    </td>
+	    <td width=7 valign=top style='width:4.9pt;border:none;border-right:solid windowtext 1.0pt;
+		'>
+		<p class=MsoNormal align=center style='text-align:center'><span
+			style='font-size:7.0pt'>&nbsp;</span></p>
+	    </td>
+	    <td width=7 valign=top style='width:4.9pt;border:none;'>
+		<p class=MsoNormal align=center style='text-align:center'><span
+			style='font-size:7.0pt'>&nbsp;</span></p>
+	    </td>
+	    <td width=123 colspan=3 valign=top style='width:92.4pt;border:none;
+		'>
+		<p class=MsoNormal>грузополучатель</p>
+	    </td>
+	    <td width=132 colspan=3 valign=top style='width:99.35pt;border:none;
+		'>
+		<p class=MsoNormal align=center style='text-align:center'><span
+			style='font-size:7.0pt'>должность</span></p>
+	    </td>
+	    <td width=8 valign=top style='width:6.3pt;border:none;'>
+		<p class=MsoNormal align=center style='text-align:center'><span
+			style='font-size:7.0pt'>&nbsp;</span></p>
+	    </td>
+	    <td width=105 colspan=5 valign=top style='width:79.1pt;border:none;
+		'>
+		<p class=MsoNormal align=center style='text-align:center'><span
+			style='font-size:7.0pt'>подпись</span></p>
+	    </td>
+	    <td width=9 valign=top style='width:7.0pt;border:none;'>
+		<p class=MsoNormal align=center style='text-align:center'><span
+			style='font-size:7.0pt'>&nbsp;</span></p>
+	    </td>
+	    <td width=138 colspan=2 valign=top style='width:103.6pt;border:none;
+		'>
+		<p class=MsoNormal align=center style='text-align:center'><span
+			style='font-size:7.0pt'>расшифровка подписи</span></p>
+	    </td>
+	</tr>
+	<tr style='height:14.2pt'>
+	    <td width=141 valign=bottom style='width:105.7pt;border:none;;height:14.2pt'>
+		<p class=MsoNormal align=right style='text-align:right'>М. П.</p>
+	    </td>
+
+	    <td width=238 colspan=8 valign=bottom style='width:238px;border:none;height:14.2pt'>
+		<p class=MsoNormal align=center style='text-align:center'>{$v->doc_view->date_spell}</p>
+	    </td>
+
+	    <td width=138 colspan=5 valign=bottom style='width:103.6pt;border:none;;height:14.2pt'>
+		<p class=MsoNormal></p>
+	    </td>
+	    <td width=7 valign=bottom style='width:4.9pt;border:none;border-right:solid windowtext 1.0pt;
+		;height:14.2pt'>
+		<p class=MsoNormal align=center style='text-align:center'>&nbsp;</p>
+	    </td>
+	    <td width=7 valign=bottom style='width:4.9pt;border:none;;
+		height:14.2pt'>
+		<p class=MsoNormal align=center style='text-align:center'>&nbsp;</p>
+	    </td>
+	    <td width=123 colspan=3 valign=bottom style='width:92.4pt;border:none;
+		;height:14.2pt'>
+		<p class=MsoNormal align=right style='text-align:right'>М. П.                      «</p>
+	    </td>
+	    <td width=42 valign=bottom style='width:31.5pt;border:none;border-bottom:
+		solid windowtext 1.0pt;;height:14.2pt'>
+		<p class=MsoNormal align=center style='text-align:center'>&nbsp;</p>
+	    </td>
+	    <td width=18 valign=bottom style='width:13.3pt;border:none;;
+		height:14.2pt'>
+		<p class=MsoNormal>»</p>
+	    </td>
+	    <td width=196 colspan=8 valign=bottom style='width:146.95pt;border:none;
+		border-bottom:solid windowtext 1.0pt;;height:14.2pt'>
+		<p class=MsoNormal align=center style='text-align:center'>&nbsp;</p>
+	    </td>
+	    <td width=138 colspan=2 valign=bottom style='width:103.6pt;border:none;
+		;height:14.2pt'>
+		<p class=MsoNormal> года</p>
+	    </td>
+	</tr>
+	<tr height=0>
+	    <td width=102 style='border:none'></td>
+	    <td width=12 style='border:none'></td>
+	    <td width=17 style='border:none'></td>
+	    <td width=16 style='border:none'></td>
+	    <td width=34 style='border:none'></td>
+	    <td width=5 style='border:none'></td>
+	    <td width=5 style='border:none'></td>
+	    <td width=64 style='border:none'></td>
+	    <td width=6 style='border:none'></td>
+	    <td width=7 style='border:none'></td>
+	    <td width=33 style='border:none'></td>
+	    <td width=19 style='border:none'></td>
+	    <td width=9 style='border:none'></td>
+	    <td width=36 style='border:none'></td>
+	    <td width=4 style='border:none'></td>
+	    <td width=4 style='border:none'></td>
+	    <td width=63 style='border:none'></td>
+	    <td width=45 style='border:none'></td>
+	    <td width=3 style='border:none'></td>
+	    <td width=29 style='border:none'></td>
+	    <td width=16 style='border:none'></td>
+	    <td width=44 style='border:none'></td>
+	    <td width=4 style='border:none'></td>
+	    <td width=4 style='border:none'></td>
+	    <td width=23 style='border:none'></td>
+	    <td width=17 style='border:none'></td>
+	    <td width=14 style='border:none'></td>
+	    <td width=12 style='border:none'></td>
+	    <td width=5 style='border:none'></td>
+	    <td width=62 style='border:none'></td>
+	    <td width=34 style='border:none'></td>
+	</tr>
+    </table>
 </div>

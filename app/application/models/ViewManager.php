@@ -34,12 +34,16 @@ class ViewManager extends CI_Model{
 	return false;
     }
     public function out( $out_type='.print', $header_mode='send_headers' ){
-	if( $this->dump ){
+	if( $this->dump && $this->dump->tpl_files ){
 	    $FileEngine=$this->Base->load_model('FileEngine');
 	    if( isset($this->dump->tpl_files_folder) ){
 		$FileEngine->tpl_files_folder=$this->dump->tpl_files_folder;
 	    }
 	    $FileEngine->assign($this->dump->view, $this->dump->tpl_files);
+	    if( isset($this->dump->struct) ){
+		$FileEngine->tplModifier=$this->setupCols();
+		//print_r($this->dump);exit;
+	    }
 	    if ( $out_type=='.print' ) {
 		$file_name = '.print';
 		$FileEngine->show_controls = true;
@@ -58,6 +62,32 @@ class ViewManager extends CI_Model{
 	    return $FileEngine->fetch($file_name);
 	}
 	return null;
+    }
+    private function setupCols(){
+	return function($FileEngine, $Worksheet){
+            $headerX = 0;
+            $headerY = 1;
+            $contentY = $headerY + 1;
+            $headerTpl = $Worksheet->getCellByColumnAndRow($headerX, $headerY)->getValue();
+            $cellTpl = $Worksheet->getCellByColumnAndRow($headerX, $headerY + 1)->getValue();
+            foreach ($this->dump->struct as $i => $column) {
+		if( preg_match("/(int|decimal|double)/", $column->Type) ){
+		    $column->Width=8;
+		} else if( preg_match("/varchar\((\d+)\)/", $column->Type, $matches) ){
+		    $column->Width=$matches[1]<50?15:50;
+		} else {
+		    $column->Width=15;
+		}
+                $Worksheet->getColumnDimension(chr(65 + $headerX + $i))->setWidth($column->Width);
+                $Worksheet->getCellByColumnAndRow($headerX + $i, $headerY)->setValue(str_replace('_title_', $column->Comment?$column->Comment:$column->Field, $headerTpl));
+                $Worksheet->getCellByColumnAndRow($headerX + $i, $contentY)->setValue(str_replace('_field_', $column->Field, $cellTpl));
+            }
+            $alfaHeaderStart = chr(65 + $headerX);
+            $alfaHeaderStop = chr(65 + $headerX + $i);
+            $Worksheet->duplicateStyle($Worksheet->getStyle("$alfaHeaderStart$headerY"), "$alfaHeaderStart$headerY:$alfaHeaderStop$headerY");
+            $Worksheet->duplicateStyle($Worksheet->getStyle("$alfaHeaderStart$contentY"), "$alfaHeaderStart$contentY:$alfaHeaderStop$contentY");
+            return $Worksheet;	    
+	};
     }
     public function getFile($dump_id,$out_type){
 	$this->restore($dump_id);

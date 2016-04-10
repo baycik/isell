@@ -1,0 +1,65 @@
+<script>
+    /*global App*/
+    App.page_data_universal_editor={
+	createdRowKey:null,
+	init:function(){
+	    this.node.window({
+		width: 650,
+		title: 'Редактирование записи',
+		height: 'auto',
+		top:50,
+		shadow:false,
+		onClose: function () {
+		    App.page_data_universal_editor.node.window('destroy');
+		    App.page_data_universal_editor.handler.notify('close');
+		    delete App.page_data_universal_editor;
+		}
+	    });
+	    this.node.window('window').css('position','fixed');
+	    this.checkIfNew();
+	    this.createForm(this.data.fstruct);
+	    App.setupForm("#univ_editor_frm",this.data.fvalue).change(function(){
+		var data={};
+		data[$(this).attr('name')]=$(this).val();
+		App.page_data_universal_editor.handler.notify('change',App.page_data_universal_editor.createdRowKey,data,$(this).attr('title'));
+		if( App.page_data_universal_editor.createdRowKey && $(this).data('key')===1 ){
+		    App.page_data_universal_editor.createdRowKey[$(this).attr('name')]=$(this).val();
+		}
+	    });
+	    if( this.data.fvalue.focus ){
+		$("#univ_editor_frm input[name="+this.data.focus+"]").select();
+	    }
+	},
+	createForm:function(fstruct){
+	    App.renderTpl("univ_editor_frm",{fields:fstruct});
+	},
+	getFirstKeyField:function(){
+	    for(var i in this.data.fstruct){
+		if( this.data.fstruct[i].Key==="PRI" ){
+		    return this.data.fstruct[i].field;
+		}
+	    }
+	},
+	checkIfNew:function(){
+	    if( $.isEmptyObject(this.data.fvalue) ){
+		var keyField=App.page_data_universal_editor.getFirstKeyField();
+		this.createdRowKey={};
+		this.createdRowKey[keyField]=new Date().getTime();
+		this.data.fvalue=this.createdRowKey;
+		this.data.focus=keyField;
+	    }
+	}
+    };
+</script>
+<form id="univ_editor_frm" onsubmit="App.page_data_universal_editor.node.window('close')">
+    {{fields}}
+	{{if Key|equals>PRI}}
+	    <input name="{{field}}" title="{{title}}" style="background:#ffc" data-key="1">
+	{{else}}
+	    <input name="{{field}}" title="{{title}}">
+	{{/if}}
+    {{/fields}}
+    <div style="text-align: center">
+	<button><img src="img/apply24.png"> Ок</button>
+    </div>
+</form>

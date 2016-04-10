@@ -3,7 +3,7 @@ if ( isset($word_header) ) {
 ?>
 <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
     <head>
-    <title>Microsoft Office HTML Example</title>
+    <title><?php echo $user_data['title'] ?></title>
     <!--[if gte mso 9]>
     <xml>
     <w:WordDocument>
@@ -14,11 +14,10 @@ if ( isset($word_header) ) {
     </xml>
     <![endif]-->
     <style><!-- 
-	@page
-	{
-	    size:21cm 29.7cmt;  /* A4 */
+	@page{
+	    size:<?php echo ($this->landscape_orientation?'29.7cm 21cm':'21cm 29.7cm ')?>;  /* A4 */
 	    margin:0.5cm 0.5cm 0.5cm 0.5cm; /* Margins: 2.5 cm on each side */
-	    mso-page-orientation: portrait;  
+	    mso-page-orientation: <?php echo ($this->landscape_orientation?'landscape':'portrait')?>;  
 	}
 	@page WordSection1 { }
 	div.WordSection1 { page:WordSection1; }

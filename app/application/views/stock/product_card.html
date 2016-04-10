@@ -58,9 +58,9 @@
 		$.post('Stock/productSave/',this.data,function(ok){
 		    if( ok*1 ){
 			App.flash("Свойства товара сохранены");
-                        if( App.page_stock_product_card.closeOnSave ){
+                        //if( App.page_stock_product_card.closeOnSave ){
                             App.page_stock_product_card.handler.notify('save',App.page_stock_product_card.data);
-                        }
+                        //}
 		    } else {
 			App.flash("Свойства товара не изменились");
 		    }

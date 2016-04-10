@@ -73,7 +73,7 @@
 	    var dg=is_buy?'#acc_tax_bill_reg_buy_dg':'#acc_tax_bill_reg_sell_dg';
 	    if( doc_id===undefined ){
 		var row=$(dg).datagrid('getSelected');
-		doc_id=row.doc_id;
+		doc_id=row?row.doc_id:0;
 	    }
 	    App.loadWindow('page/trade/document',{doc_id:doc_id}).progress(function(status){
 		if( status!=='inited' ){
@@ -101,14 +101,14 @@
 		this.filterEnabled = true;
 	    }
 	},
-	rowCreate:function( is_buy ){
-	    this.openDoc(is_buy,0);
+	rowCreate:function( direction ){
+	    this.openDoc( direction==='buy', 0 );
 	},
-	rowUpdate:function( is_buy ){
-	    this.openDoc(is_buy);
+	rowUpdate:function( direction ){
+	    this.openDoc( direction==='buy' );
 	},
-	rowDelete:function( is_buy ){
-	    this.openDoc(is_buy);
+	rowDelete:function( direction ){
+	    this.openDoc( direction==='buy' );
 	},
 	out:function(out_type){
 	    var fvalue=App.collectForm('#acc_tax_bill_reg_frm');
@@ -208,6 +208,7 @@
 	       pageSize:50,
 	       pageList:[50,100,500,1000],
 	       onSelect:function(){$('#acc_tax_bill_reg_buy_dg').datagrid('resize');},
+               onDblClickRow:function(){App.page_accounts_registry.rowUpdate('buy')},
 	       singleSelect:true,
 	       remoteFilter:true">
 	    <thead>
@@ -217,9 +218,9 @@
 		<th data-options="width:70,field:'cdate'">Проведен</th>
 		<th data-options="width:220,field:'company_name'">Предприятие</th>
 		<th data-options="width:100,field:'company_tax_id'">ИНН</th>
+		<th data-options="width:80,field:'total',align:'right'">Сумма</th>
 		<th data-options="width:80,field:'vatless',align:'right'">Без НДС</th>
 		<th data-options="width:80,field:'vat',align:'right'">НДС</th>
-		<th data-options="width:80,field:'total',align:'right'">Сумма</th>
 		<th data-options="width:25,field:'doc',formatter:App.page_accounts_registry.docTooltip,buy:true"></th>
 		<th data-options="width:25,field:'print',formatter:App.page_accounts_registry.printTooltip,buy:true"></th>
 		<th data-options="width:25,field:'save',formatter:App.page_accounts_registry.saveTooltip,buy:true"></th>
@@ -246,6 +247,7 @@
 	       pageSize:50,
 	       pageList:[50,100,500,1000],
 	       onSelect:function(){$('#acc_tax_bill_reg_sell_dg').datagrid('resize');},
+               onDblClickRow:function(){App.page_accounts_registry.rowUpdate('sell')},
 	       singleSelect:true,
 	       remoteFilter:true">
 	    <thead>
@@ -255,9 +257,9 @@
 		<th data-options="width:70,field:'cdate'">Проведен</th>
 		<th data-options="width:220,field:'company_name'">Предприятие</th>
 		<th data-options="width:100,field:'company_tax_id'">ИНН</th>
+		<th data-options="width:80,field:'total',align:'right'">Сумма</th>
 		<th data-options="width:80,field:'vatless',align:'right'">Без НДС</th>
 		<th data-options="width:80,field:'vat',align:'right'">НДС</th>
-		<th data-options="width:80,field:'total',align:'right'">Сумма</th>
 		<th data-options="width:25,field:'doc',formatter:App.page_accounts_registry.docTooltip,buy:false"></th>
 		<th data-options="width:25,field:'print',formatter:App.page_accounts_registry.printTooltip,buy:false"></th>
 		<th data-options="width:25,field:'save',formatter:App.page_accounts_registry.saveTooltip,buy:false"></th>
