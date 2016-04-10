@@ -4,6 +4,7 @@ class DocumentView extends DocumentItems{
     public $min_level=1;
     public function viewListFetch( $doc_id ){
 	$this->check($doc_id);
+	$blank_set=$this->Base->pref('blank_set');
 	if( $doc_id ){
 	    $this->selectDoc($doc_id);
 	    $doc_type=$this->doc('doc_type');
@@ -24,7 +25,7 @@ class DocumentView extends DocumentItems{
 			    LEFT JOIN 
 			document_view_list dvl ON dvl.view_type_id=dvt.view_type_id AND doc_id = '$doc_id'
 		    WHERE
-			doc_types LIKE '%/$doc_type/%'
+			doc_types LIKE '%/$doc_type/%' AND blank_set='$blank_set'
 		    GROUP BY 
 			view_type_id
 		    ORDER BY
