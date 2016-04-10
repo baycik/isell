@@ -25,7 +25,11 @@ class User extends Catalog {
             $this->Base->svar('user_assigned_path',$user_data->user_assigned_path);
             
             $Company=$this->Base->load_model("Company");
-            $Company->selectActiveCompany($user_data->company_id);
+	    if( $user_data->company_id ){
+		$Company->selectActiveCompany($user_data->company_id);
+	    } else {
+		$Company->switchActiveCompany();
+	    }
 	    return $this->getUserData();
 	}
 	return false;
