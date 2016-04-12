@@ -5,7 +5,7 @@
  * ISELL4 CONFIG LOADER
  * -----------------------------------------------
  */
-include "../../config.php";
+include "../config.php";
 /**
  * CodeIgniter
  *

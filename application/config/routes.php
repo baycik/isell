@@ -39,9 +39,9 @@
 */
 $route['default_controller'] = "Hub";
 $route['404_override'] = '';
-$route['^\w+/page/(.+)'] = "hub/page/$1";
-$route['^\w+/(Proc.+)'] = "$1";
-$route['^\w+/(.*)'] = "hub/on/$1";
+$route['^page/(.+)'] = "hub/page/$1";
+$route['^(Proc.+)'] = "$1";
+$route['^(.*)'] = "hub/on/$1";
 $route['^\w+$'] = "hub/index";
 
 
