@@ -1,7 +1,7 @@
 <?php
 
 class Maintain extends CI_Model {
-
+    private $dirWork;
     public function getCurrentVersionStamp(){
 	$this->dirWork = realpath('.');
 	if( file_exists($this->dirWork.'/.git') ){
@@ -10,96 +10,10 @@ class Maintain extends CI_Model {
 	return ['stamp'=>date ("Y-m-d\TH:i:s\Z", filemtime($this->dirWork)),'branch'=>$this->getGitBranch()];
     }
     
-    private function setupUpdater(){
-	$this->dirParent=realpath('..');
-	$this->dirWork = realpath('.');
-	if( file_exists($this->dirWork.'/.git') ){
-	    $this->Base->msg("Work folder contains .git folder. Update may corrupt your work! Workdir is set to -isell3 ");
-	    $this->dirWork = $this->dirParent.'/-isell3';//realpath('.');
-	}
-        $git_branch_name=$this->getGitBranch();
-	$this->dirUnpack=$this->dirParent.'/isell3_update';
-	$this->dirBackup=$this->dirParent.'/isell3_backup';
-	$this->zipPath = $this->dirUnpack.'/isell3_update.zip';
-	$this->zipSubFolder = $this->dirUnpack."/isell3-$git_branch_name/";	
-    }
-    
     private function getGitBranch(){
 	$matches=[];
         preg_match("/\/(\w+).zip/", BAY_UPDATE_URL, $matches);
 	return $matches[1];
-    }
-    
-    public function appUpdate($action = 'download') {
-	$this->Base->set_level(2);
-	$this->setupUpdater();
-	if ($action == 'download') {
-	    return $this->updateDownload(BAY_UPDATE_URL, $this->zipPath);
-	}
-	if ($action == 'unpack') {
-	    return $this->updateUnpack();
-	}
-	if ($action == 'prepare') {
-	    return $this->updateSwapPrepare();
-	}
-	if ($action == 'install') {
-	    return $this->updateInstall();
-	}
-    }
-
-    private function updateDownload($updateUrl, $updateFile) {
-	set_time_limit(240);
-	if( !file_exists ($this->dirUnpack) ){
-	    mkdir($this->dirUnpack);
-	}
-	return copy($updateUrl, $updateFile);
-    }
-
-    private function updateUnpack() {
-	$this->delTree($this->zipSubFolder);
-	$zip = new ZipArchive;
-	if ($zip->open($this->zipPath) === TRUE) {
-	    $zip->extractTo($this->dirUnpack);
-	    $zip->close();
-	    return true;
-	} else {
-	    return false;
-	}
-    }
-    
-    private function updateSwap() {
-	if( file_exists($this->dirWork) && file_exists($this->zipSubFolder) ){
-            return  $this->swapSafeRename($this->dirWork, $this->dirBackup) && 
-		    $this->swapSafeRename($this->zipSubFolder, $this->dirWork) &&
-		    $this->delTree($this->dirUnpack);
-	}
-	return false;
-    }
-    
-    private function updateSwapFinisherCheck(){
-	return copy( 'application/models/MaintainSwapper.php', $this->dirParent.'/MaintainSwapper.php');
-    }
-    
-    private function updateSwapPrepare() {
-	if( file_exists($this->zipSubFolder) ){
-	    $this->delTree($this->dirWork."_new");
-	    $this->updateSwapFinisherCheck();
-            return  rename($this->zipSubFolder, $this->dirWork."_new") && 
-		    $this->delTree($this->dirBackup) &&
-		    $this->delTree($this->dirUnpack);
-	}
-	return false;
-    }
-
-    private function delTree($dir) {
-	if( !file_exists ($dir) ){
-	    return true;
-	}
-	$files = array_diff(scandir($dir), array('.', '..'));
-	foreach ($files as $file) {
-	    (is_dir("$dir/$file")) ? $this->delTree("$dir/$file") : unlink("$dir/$file");
-	}
-	return rmdir($dir);
     }
     
     public function updateInstall(){
@@ -108,7 +22,29 @@ class Maintain extends CI_Model {
 	$this->backupImportExecute($file);
 	return true;
     }
-
+    
+    public function updateConfigurator(){
+	$this->dirWork = realpath('.');
+	$this->xcopy($this->dirWork.'/install/configurator',realpath('../../') );
+	
+    }
+    
+    private function xcopy($src,$dst) {
+	$dir = opendir($src);
+	!file_exists($dst) && mkdir($dst);
+	while( false !== ($file = readdir($dir)) ) {
+	    if( $file=='.' || $file=='..' ){
+		continue;
+	    }
+	    if ( is_dir($src.'/'.$file) ) {
+		$this->xcopy( $src.'/'.$file, $dst.'/'.$file );
+	    } else {
+		copy( $src.'/'.$file, $dst.'/'.$file );
+	    }
+	}
+	closedir($dir);
+    }
+    
     private function setupConf(){
 	$this->dirWork = realpath('.');
 	$conf_file=  $this->dirWork."/conf".rand(1,1000);
