@@ -198,6 +198,7 @@ class UpdateInstaller {
 }
 
 if (isset($_GET['echo'])) {
+    header("X-isell-type:OK");
     $UpdateInstaller = new UpdateInstaller();
     $step = $UpdateInstaller->request('step');
     echo $UpdateInstaller->appUpdate($step);
