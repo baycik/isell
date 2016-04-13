@@ -105,8 +105,10 @@ class UpdateInstaller {
 	$last_name=  $this->request('last_name');
 	$user_login=  $this->request('user_login');
 	$user_pass=   $this->request('user_pass');
+	$blank_set=   $this->request('blank_set');
 	if( preg_match('/^[a-zA-Z_0-9]{3,}$/',$user_login) && preg_match('/^[a-zA-Z_0-9]{3,}$/',$user_pass) ){
 	    $pass_hash = md5($user_pass);
+	    $this->query("REPLACE INTO " . BAY_DB_NAME . ".pref_list SET active_company_id=(SELECT company_id FROM " . BAY_DB_NAME . ".companies_list WHERE is_active=1 LIMIT 1),pref_name=blank_set,pref_value='$blank_set'");
 	    $this->query("INSERT INTO " . BAY_DB_NAME . ".user_list SET first_name='$first_name',last_name='$last_name',user_login='$user_login',user_pass='$pass_hash',user_level=4");
 	    return mysqli_errno($this->link)?mysqli_errno($this->link):'admin_added';
 	} else {

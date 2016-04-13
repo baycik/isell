@@ -687,12 +687,6 @@ CREATE TABLE `pref_list` (
 -- Dumping data for table `pref_list`
 --
 
-LOCK TABLES `pref_list` WRITE;
-/*!40000 ALTER TABLE `pref_list` DISABLE KEYS */;
-INSERT INTO `pref_list` VALUES (1,'blank_set','ru'),(1,'use_total_as_base','1');
-/*!40000 ALTER TABLE `pref_list` ENABLE KEYS */;
-UNLOCK TABLES;
-
 --
 -- Table structure for table `price_list`
 --
@@ -960,15 +954,6 @@ CREATE TABLE `user_list` (
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
---
--- Dumping data for table `user_list`
---
-
-LOCK TABLES `user_list` WRITE;
-/*!40000 ALTER TABLE `user_list` DISABLE KEYS */;
-INSERT INTO `user_list` VALUES (1,'baycik','202cb962ac59075b964b07152d234b70',4,'','',1,'Решат','','Байчиков','','','','','','БР',NULL,'',NULL);
-/*!40000 ALTER TABLE `user_list` ENABLE KEYS */;
-UNLOCK TABLES;
 
 --
 -- Dumping events for database 'isell_db'
@@ -978,7 +963,7 @@ UNLOCK TABLES;
 -- Dumping routines for database 'isell_db'
 --
 /*!50003 DROP FUNCTION IF EXISTS `CHK_ENTRY` */;
-ALTER DATABASE `isell_db` CHARACTER SET latin1 COLLATE latin1_swedish_ci ;
+ALTER DATABASE `isell_db` CHARACTER SET utf8 COLLATE utf8_general_ci ;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
 /*!50003 SET @saved_cs_results     = @@character_set_results */ ;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
