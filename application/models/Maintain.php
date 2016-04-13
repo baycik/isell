@@ -20,16 +20,16 @@ class Maintain extends CI_Model {
     }
     
     public function updateInstall(){
+	$this->updateConfigurator();
 	$this->dirWork = realpath('.');
 	$file = str_replace("\\", "/", $this->dirWork.'/install/db_update.sql');
 	$this->backupImportExecute($file);
 	return true;
     }
     
-    public function updateConfigurator(){
+    private function updateConfigurator(){
 	$this->dirWork = realpath('.');
 	$this->xcopy($this->dirWork.'/install/configurator',realpath('../../') );
-	
     }
     
     private function xcopy($src,$dst) {
