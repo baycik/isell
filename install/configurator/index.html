@@ -94,7 +94,7 @@
 	    .rounded{
 		border-radius: 5px;
 	    }
-	    input{
+	    input, select{
 		margin: 2px;
 		padding: 3px;
 		width:300px;
@@ -113,14 +113,6 @@
 		oReq.responseType = 'text';
 		oReq.send(query);
 	    }
-
-	    var updateChain = [
-		{step: 'download', action: 'Скачивание с <a href="http://github.com/baycik/isell">github.com/baycik/isell</a>...'},
-		{step: 'unpack', action: 'Распаковка архива...'},
-		{step: 'swap', action: 'Установка файлов...'},
-		{step: 'install', action: 'Создание базы данных...'},
-		{step: 'signup', action: 'Регистрация администратора...'}
-	    ];
 	    function is_installed() {
 		post('UpdateInstaller.php?echo=1&step=is_installed',{}, function (resp) {
 		    var files_ok=resp.indexOf('files_ok')>-1;
@@ -142,6 +134,14 @@
 		    document.getElementById('signup_btn').style.display=files_ok && db_ok && !admin_ok?'inline':'none';
 		});
 	    }
+
+	    var updateChain = [
+		{step: 'download', action: 'Скачивание с <a href="http://github.com/baycik/isell">github.com/baycik/isell</a>...'},
+		{step: 'unpack', action: 'Распаковка архива...'},
+		{step: 'swap', action: 'Установка файлов...'},
+		{step: 'install', action: 'Создание базы данных...'},
+		{step: 'signup', action: 'Регистрация администратора...'}
+	    ];
 	    var currentStepIndex = 0;
 	    function chain() {
 		if (currentStepIndex < updateChain.length) {
@@ -174,7 +174,8 @@
 		    last_name:document.getElementById('last_name').value,
 		    user_login:document.getElementById('user_login').value,
 		    user_pass:document.getElementById('user_pass').value,
-		    user_pass2:document.getElementById('user_pass2').value
+		    user_pass2:document.getElementById('user_pass2').value,
+		    blank_set:document.getElementById('blank_set').value
 		};
 		if( fvalue.user_pass!==fvalue.user_pass2 ){
 		    alert("Пароли должны быть одинаковыми");

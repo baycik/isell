@@ -24,29 +24,23 @@
 	    $('#updater_status').show('slow');
 	    this.chain(0);
 	},
-	actionQueue:['download','unpack','prepare','swap','install'],
+	actionQueue:['download','unpack','swap','install'],
 	chain:function( step ){
 	    $('#updater_status_'+this.actionQueue[step-1]+' img').attr('src','img/ok.png');
 	    var action=this.actionQueue[step];
 	    if( action ){
 		$('#updater_status_'+action+' img').attr('src','img/loading_16.png');
-		if( action==='swap' ){
-		    $.post('../MaintainSwapper.php',{swap:1},function(ok){
-			if(ok*1){
-			    App.page_dialog_updater.chain(step+1);
-			} else {
-			    alert("Возникла шибка на шаге: "+action);
-			}
-		    });
-		} else {
-		    $.get('Maintain/appUpdate/'+action,function(ok){
-			if(ok*1){
-			    App.page_dialog_updater.chain(step+1);
-			} else {
-			    alert("Возникла шибка на шаге: "+action);
-			}
-		    });
+		var url="../UpdateInstaller.php?echo=1&step="+action;
+		if( action==='install' ){
+		    url='Maintain/updateInstall/';
 		}
+		$.get(url,function(ok){
+		    if(ok*1){
+			App.page_dialog_updater.chain(step+1);
+		    } else {
+			alert("Возникла шибка на шаге: "+action);
+		    }
+		});
 	    } else {
 		$('#updater_status_finish img').attr('src','img/ok.png');
 		$('#updater_close_btn').show();
