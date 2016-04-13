@@ -88,7 +88,7 @@ class UpdateInstaller {
 	    return 'admin_exists';
 	}
 	$this->dirWork = realpath('.');
-	$file = str_replace("\\", "/", $this->dirWork . '/isell/app/install/fresh_db_dump.sql');
+	$file = str_replace("\\", "/", $this->dirWork . '/isell/install/fresh_db_dump.sql');
 	$this->query("CREATE DATABASE IF NOT EXISTS " . BAY_DB_NAME);
 	return $this->backupImportExecute($file);
     }
@@ -121,11 +121,14 @@ class UpdateInstaller {
 
     private function checkInstalled(){
 	$status='';
-	if( file_exists($this->dirWork) && file_exists($this->dirWork.'/app/index.php') ){
-	    $status.='files_ok';
+	if( file_exists($this->dirWork) && file_exists($this->dirWork.'/index.php') ){
+	    $status.=' files_ok';
+	}
+	if( $this->query("SHOW DATABASES LIKE '" . BAY_DB_NAME . "'") ){
+	    $status.=' db_ok';
 	}
 	if( $this->checkAdminExists() ){
-	    $status.='admin_ok';
+	    $status.=' admin_ok';
 	}
 	return $status;
     }

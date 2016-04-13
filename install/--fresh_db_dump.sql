@@ -1,6 +1,6 @@
--- MySQL dump 10.13  Distrib 5.6.17, for Win64 (x86_64)
+-- MySQL dump 10.13  Distrib 5.7.11, for Win32 (AMD64)
 --
--- Host: 127.0.0.1    Database: isell_db
+-- Host: localhost    Database: isell_db
 -- ------------------------------------------------------
 -- Server version	5.7.11
 
@@ -407,7 +407,7 @@ CREATE TABLE `document_entries` (
   KEY `FK_document_entries_2` (`product_code`),
   CONSTRAINT `FK_document_entries_1` FOREIGN KEY (`doc_id`) REFERENCES `document_list` (`doc_id`) ON DELETE CASCADE,
   CONSTRAINT `FK_document_entries_2` FOREIGN KEY (`product_code`) REFERENCES `prod_list` (`product_code`) ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=COMPACT;
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8 ROW_FORMAT=COMPACT;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -456,7 +456,7 @@ CREATE TABLE `document_list` (
   CONSTRAINT `fk_document_list_document_types1` FOREIGN KEY (`doc_type`) REFERENCES `document_types` (`doc_type`) ON DELETE NO ACTION ON UPDATE NO ACTION,
   CONSTRAINT `fk_document_list_user_list1` FOREIGN KEY (`created_by`) REFERENCES `user_list` (`user_id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
   CONSTRAINT `fk_document_list_user_list2` FOREIGN KEY (`modified_by`) REFERENCES `user_list` (`user_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=COMPACT;
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8 ROW_FORMAT=COMPACT;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -545,7 +545,7 @@ CREATE TABLE `document_view_list` (
   KEY `FK_document_views_2` (`view_type_id`),
   CONSTRAINT `FK_document_views_1` FOREIGN KEY (`doc_id`) REFERENCES `document_list` (`doc_id`) ON DELETE CASCADE,
   CONSTRAINT `FK_document_views_2` FOREIGN KEY (`view_type_id`) REFERENCES `document_view_types` (`view_type_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -788,25 +788,24 @@ LOCK TABLES `replication_log` WRITE;
 UNLOCK TABLES;
 
 --
--- Temporary table structure for view `stat_sell_analyse`
+-- Temporary view structure for view `stat_sell_analyse`
 --
 
 DROP TABLE IF EXISTS `stat_sell_analyse`;
 /*!50001 DROP VIEW IF EXISTS `stat_sell_analyse`*/;
 SET @saved_cs_client     = @@character_set_client;
 SET character_set_client = utf8;
-/*!50001 CREATE TABLE `stat_sell_analyse` (
-  `m` tinyint NOT NULL,
-  `label` tinyint NOT NULL,
-  `product_code` tinyint NOT NULL,
-  `en` tinyint NOT NULL,
-  `qty` tinyint NOT NULL,
-  `avg_self` tinyint NOT NULL,
-  `self` tinyint NOT NULL,
-  `avg_sell` tinyint NOT NULL,
-  `invoice` tinyint NOT NULL,
-  `net` tinyint NOT NULL
-) ENGINE=MyISAM */;
+/*!50001 CREATE VIEW `stat_sell_analyse` AS SELECT 
+ 1 AS `m`,
+ 1 AS `label`,
+ 1 AS `product_code`,
+ 1 AS `en`,
+ 1 AS `qty`,
+ 1 AS `avg_self`,
+ 1 AS `self`,
+ 1 AS `avg_sell`,
+ 1 AS `invoice`,
+ 1 AS `net`*/;
 SET character_set_client = @saved_cs_client;
 
 --
@@ -1041,7 +1040,6 @@ ALTER DATABASE `isell_db` CHARACTER SET utf8 COLLATE utf8_general_ci ;
 -- Final view structure for view `stat_sell_analyse`
 --
 
-/*!50001 DROP TABLE IF EXISTS `stat_sell_analyse`*/;
 /*!50001 DROP VIEW IF EXISTS `stat_sell_analyse`*/;
 /*!50001 SET @saved_cs_client          = @@character_set_client */;
 /*!50001 SET @saved_cs_results         = @@character_set_results */;
@@ -1065,4 +1063,4 @@ ALTER DATABASE `isell_db` CHARACTER SET utf8 COLLATE utf8_general_ci ;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2016-04-12 22:24:39
+-- Dump completed on 2016-04-10 22:13:36
