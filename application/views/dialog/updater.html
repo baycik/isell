@@ -29,7 +29,7 @@
 	    $('#updater_status_'+this.actionQueue[step-1]+' img').attr('src','img/ok.png');
 	    var action=this.actionQueue[step];
 	    if( action ){
-		$('#updater_status_'+action+' img').attr('src','img/loading_16.png');
+		$('#updater_status_'+action+' img').attr('src','img/loading_16.gif');
 		var url="../UpdateInstaller.php?echo=1&step="+action;
 		if( action==='install' ){
 		    url='Maintain/updateInstall/';
@@ -48,7 +48,7 @@
 	    } else {
 		$('#updater_status_finish img').attr('src','img/ok.png');
 		$('#updater_close_btn').show();
-                if( confirm("Обзовление завершено. Перезагрузить приложение?") ){
+                if( confirm("Обновление успешно завершено. Перезагрузить приложение?") ){
                     location.reload();
                 }
 		App.page_dialog_updater.node.window.close();
