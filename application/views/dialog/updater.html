@@ -38,15 +38,20 @@
 		    if(ok*1){
 			App.page_dialog_updater.chain(step+1);
 		    } else {
-			alert("Возникла ошибка на шаге: "+action);
+			if( confirm("Не удалось завершить обновление. Попробовать еще раз?") ){
+			    App.page_dialog_updater.startUpdate();
+			} else {
+			    App.page_dialog_updater.node.window.close();
+			}
 		    }
 		});
 	    } else {
 		$('#updater_status_finish img').attr('src','img/ok.png');
 		$('#updater_close_btn').show();
-                if( confirm("Перезагрузить приложение?") ){
+                if( confirm("Обзовление завершено. Перезагрузить приложение?") ){
                     location.reload();
                 }
+		App.page_dialog_updater.node.window.close();
 	    }
 	}
     };
