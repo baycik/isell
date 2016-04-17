@@ -29,7 +29,7 @@ class Maintain extends CI_Model {
     
     private function updateConfigurator(){
 	$this->dirWork = realpath('.');
-	$this->xcopy($this->dirWork.'/install/configurator',realpath('../../') );
+	$this->xcopy($this->dirWork.'/install/configurator',realpath('../') );
     }
     
     private function xcopy($src,$dst) {
