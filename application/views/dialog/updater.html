@@ -41,7 +41,7 @@
 			if( confirm("Не удалось завершить обновление. Попробовать еще раз?") ){
 			    App.page_dialog_updater.startUpdate();
 			} else {
-			    App.page_dialog_updater.node.window.close();
+			    App.page_dialog_updater.destroy();
 			}
 		    }
 		});
@@ -51,7 +51,7 @@
                 if( confirm("Обновление успешно завершено. Перезагрузить приложение?") ){
                     location.reload();
                 }
-		App.page_dialog_updater.node.window.close();
+		App.page_dialog_updater.destroy();
 	    }
 	}
     };
