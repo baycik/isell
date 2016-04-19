@@ -26,7 +26,7 @@ class ViewManager extends CI_Model{
 	return $this->dump->dump_id;
     }
     public function restore( $dump_id ){
-	if( file_exists($this->viewStorageFolder.$dump_id) ){
+	if( $dump_id && file_exists($this->viewStorageFolder.$dump_id) ){
 	    $json=  file_get_contents($this->viewStorageFolder.$dump_id);
 	    $this->dump=  json_decode($json);
 	    return true;
