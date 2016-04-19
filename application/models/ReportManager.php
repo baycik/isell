@@ -48,7 +48,7 @@ class ReportManager extends Catalog {
 	$tpl_files=isset($this->current_info['template'])?$this->current_info['template']:$this->current_info['report_id'].'.xlsx';
 	$Plugin=$this->Base->load_plugin('reports',$report_id);
 	$dump=[
-	    'tpl_files_folder'=>"plugins/reports/{$this->current_info['report_id']}/",
+	    'tpl_files_folder'=>"../plugins/reports/{$this->current_info['report_id']}/",
 	    'tpl_files'=>$tpl_files,
 	    'title'=>$this->current_info['title'],
 	    'user_data'=>[
