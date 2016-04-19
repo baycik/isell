@@ -4,7 +4,7 @@ require_once('iSellBase.php');
 
 class ProcStock extends iSellBase {
 
-    public function ProcStock() {
+    public function __construct() {
         $this->ProcessorBase(1);
     }
 

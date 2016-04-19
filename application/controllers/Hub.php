@@ -53,7 +53,7 @@ class HubBase extends CI_Controller{
     public $level_names=array("Нет доступа","Ограниченный","Менеджер","Бухгалтер","Администратор");
     private $rtype='OK';
     private $msg='';
-    function HubBase(){
+    function __construct(){
 	$this->Session();
 	parent::__construct();
     }
@@ -103,6 +103,50 @@ class HubBase extends CI_Controller{
 	$Plugin->Base=$this;
 	return $Plugin;
     }
+    
+    private $action_events = [];
+    private $filter_events = [];
+ 
+    //Functions for Action Hooks
+    function do_action($tag){
+	if( isset($this->action_events[$tag]) ){
+	    foreach($this->action_events[$tag] as $handler){
+		if( !function_exists($handler) ) {
+		    die('Unknown function: '.$handler);
+		}
+		call_user_func($handler, $args);
+	    }
+	}
+    }
+ 
+    function add_action($tag, $function_to_add, $priority=10, $args){
+	$this->action_events[$tag][] = $function_to_add;
+    }
+ 
+//Functions for Filter Hooks
+function hook_filter($tag,$content) {
+ 
+    global $filter_events;
+ 
+    if(isset($filter_events[$tag]))
+    {
+        foreach($filter_events[$tag] as $func) {
+            if(!function_exists($func)) {
+                die('Unknown function: '.$func);
+            }
+          $content = call_user_func($func,$content);
+        }
+    }
+    return $content;
+}
+ 
+function register_filter($tag, $func)
+{
+    global $filter_events;
+    $filter_events[$tag][] = $func;
+}
+    
+    
     
     public function set_level($allowed_level) {
 	if ($this->svar('user_level') < $allowed_level) {

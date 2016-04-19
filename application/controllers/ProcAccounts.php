@@ -4,7 +4,7 @@ require_once('iSellBase.php');
 
 class ProcAccounts extends iSellBase {
 
-    public function ProcAccounts() {
+    public function __construct() {
         $this->ProcessorBase(1);
     }
 

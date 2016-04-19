@@ -106,11 +106,12 @@ class DataBase extends InputOutput {
     }
     
     private function db_connect(){
-	$this->db_link = mysql_connect(BAY_DB_HOST, BAY_DB_USER, BAY_DB_PASS) OR $this->response_error('COULD NOT CONNECT TO MYSQL');
+	$this->db_link = mysqli_connect(BAY_DB_HOST, BAY_DB_USER, BAY_DB_PASS, BAY_DB_NAME);
 	if ($this->db_link) {
-	    mysql_select_db(BAY_DB_NAME, $this->db_link) OR $this->response_error('COULD NOT SELECT DATABASE');
-	    mysql_query('SET NAMES utf8');
-	}	
+	    mysqli_query('SET NAMES utf8');
+	} else {
+	    $this->response_error('COULD NOT CONNECT TO MYSQL '.mysqli_connect_error());
+	}
     }
     
 //    public function db_free_result( $res ){
@@ -125,8 +126,8 @@ class DataBase extends InputOutput {
 	if( !$this->db_link ){
 	    $this->db_connect();
 	}
-	$res = mysql_query($sql, $this->db_link);
-	if ($throw_error && mysql_errno()) {
+	$res = mysqli_query($sql, $this->db_link);
+	if ($throw_error && mysqli_errno()) {
 	    if ($this->svar('user_level') > 2 || BAY_SQL_SHOW_ERRORS)
 		$this->response_error('SQL ERROR: ' . "\n$sql\n\n" . mysql_error());
 	    else
@@ -138,22 +139,22 @@ class DataBase extends InputOutput {
     public function get_list($sql) {
 	$tmplist = array();
 	$tmpres = $this->query($sql);
-	while ($row = mysql_fetch_assoc($tmpres)) {
+	while ($row = mysqli_fetch_assoc($tmpres)) {
 	    $tmplist[] = $row;
 	}
-	mysql_free_result($tmpres);
+	mysqli_free_result($tmpres);
 	return $tmplist;
     }
 
     public function get_row($sql, $index = NULL) {
 	$tmpres = $this->query($sql);
 	if ($index === NULL) {
-	    $row = mysql_fetch_assoc($tmpres);
-	    mysql_free_result($tmpres);
+	    $row = mysqli_fetch_assoc($tmpres);
+	    mysqli_free_result($tmpres);
 	    return $row;
 	} else {
-	    $row = mysql_fetch_array($tmpres);
-	    mysql_free_result($tmpres);
+	    $row = mysqli_fetch_array($tmpres);
+	    mysqli_free_result($tmpres);
 	    return $row[$index];
 	}
     }
@@ -164,7 +165,7 @@ class DataBase extends InputOutput {
 	    $fields['keys'] = array();
 	    $fields['columns'] = array();
 	    $res = $this->query("SHOW COLUMNS FROM $table_name");
-	    while ($row = mysql_fetch_assoc($res)) {
+	    while ($row = mysqli_fetch_assoc($res)) {
 		if ($hide_tstamp && $row['Default'] == 'CURRENT_TIMESTAMP')
 		    continue;
 		$fields['full'][] = $row;
@@ -173,7 +174,7 @@ class DataBase extends InputOutput {
 		    $fields['keys'][] = $row['Field'];
 		}
 	    }
-	    mysql_free_result($res);
+	    mysqli_free_result($res);
 	    $fields['count'] = count($fields['columns']);
 
 	    $this->field_list[$table_name] = $fields;

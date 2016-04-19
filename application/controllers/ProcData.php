@@ -6,7 +6,7 @@ class ProcData extends iSellBase {
 
     private $permited_tables;
 
-    function ProcData() {
+    function __construct() {
 	$this->permited_tables = json_decode(file_get_contents('config/permited_tables.json', true));
 	$this->ProcessorBase(1);
     }
