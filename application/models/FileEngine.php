@@ -123,10 +123,6 @@ class FileEngine {
                 $this->header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
                 $this->Writer = PHPExcel_IOFactory::createWriter($this->PHPexcel, 'Excel2007');
                 $this->Writer->save('php://output');
-            } else if ($ext == '.pdf') {
-                $this->header('Content-type: application/pdf');
-                $this->Writer = PHPExcel_IOFactory::createWriter($this->PHPexcel, 'PDF');
-                $this->Writer->save('php://output');
             }
         } else
         if ($this->compilator == 'Rain') {
