@@ -98,7 +98,7 @@ class HubBase extends CI_Controller{
     }
     
     public function load_plugin( $subfolder, $name ){
-	require_once "application/views/plugins/$subfolder/$name/$name.php";
+	require_once "application/plugins/$subfolder/$name/$name.php";
 	$Plugin=new $name();
 	$Plugin->Base=$this;
 	return $Plugin;

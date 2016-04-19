@@ -1,7 +1,7 @@
 <?php
 require_once 'Catalog.php';
 class ReportManager extends Catalog {
-    private $plugin_folder='application/views/plugins/reports/';
+    private $plugin_folder='application/plugins/reports/';
     private $current_info;
     public function listFetch(){
 	$plugins=$this->scanFolder($this->plugin_folder);

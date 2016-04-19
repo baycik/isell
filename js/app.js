@@ -263,7 +263,7 @@ App.updaterCheck=function ( skip_release_check ){
     var handler=$.Deferred();
     $.get('Maintain/getCurrentVersionStamp',function(resp){
 	var info=App.json(resp);
-	$.getJSON('https://api.github.com/repos/baycik/isell3/commits?since='+info.stamp+'&sha='+info.branch+'&callback=?',function(resp){
+	$.getJSON('https://api.github.com/repos/baycik/isell/commits?since='+info.stamp+'&sha='+info.branch+'&callback=?',function(resp){
 	    try{
 		var is_release=false;
 		var list=[];
