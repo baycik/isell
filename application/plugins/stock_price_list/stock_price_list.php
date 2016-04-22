@@ -9,6 +9,12 @@
  */
 
 add_action('stock_add_tab', function(){
-    echo 'Oley! it works!';
+    return 'TAB1 Oley! it works!';
+});
+add_action('stock_add_tab', function(){
+    return 'TAB2 Oley! it works!';
+});
+add_action('stock_add_tab', function(){
+    return 'TAB# Oley! it works!';
 });
 

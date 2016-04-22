@@ -40,12 +40,11 @@ class Plugins {
     public static $loadedPlugins=[];
     
     // Directory
-    public $plugins_dir;
+    private $plugins_dir='application/plugins/';
     
     public function __construct($params = array()){
         // Codeigniter instance
         $this->_ci =& get_instance();
-        
         $this->_ci->load->database();
     }
     /**
@@ -79,9 +78,9 @@ class Plugins {
     */
     private function include_activated_plugins( $domain ){
         // Only plugins in the database are active ones
-        $plugins = $this->_ci->db->like('plugin_'.$domain)->get('pref_list');
+	$plugins = $this->_ci->db->query("SELECT pref_name FROM pref_list WHERE pref_name LIKE 'plugin_{$domain}%'");
         // If we have activated plugins
-        if ($plugins->num_rows() > 0){
+        if ($plugins && $plugins->num_rows() > 0){
             // For every plugin, include it
             foreach ($plugins->result_array() AS $plugin){
 		$plugin_system_name=substr($plugin['pref_name'], strpos($plugin['pref_name'], "_") + 1);
@@ -96,7 +95,7 @@ class Plugins {
      */
     private function include_plugin( $plugin_system_name ){
 	$plugin_main_file=$this->plugins_dir.$plugin_system_name."/".$plugin_system_name.".php";
-	if( !self::$loadedPlugins[$plugin_system_name] && file_exists($plugin_main_file) ){
+	if( !isset(self::$loadedPlugins[$plugin_system_name]) && file_exists($plugin_main_file) ){
 	    self::$loadedPlugins[$plugin_system_name] = $this->get_plugin_headers($plugin_system_name);
 	    include_once $plugin_main_file;
 	}
@@ -105,7 +104,7 @@ class Plugins {
      * Get included files headers
      */
     private function get_plugin_headers( $plugin_system_name ){
-	$plugin_data = read_file($this->plugins_dir.$plugin_system_name."/".$plugin_system_name.".php"); // Load the plugin we want
+	$plugin_data = file_get_contents($this->plugins_dir.$plugin_system_name."/".$plugin_system_name.".php"); // Load the plugin we want
 	preg_match ('|Plugin Name:(.*)$|mi', $plugin_data, $name);
 	preg_match ('|Plugin URI:(.*)$|mi', $plugin_data, $uri);
 	preg_match ('|Version:(.*)|i', $plugin_data, $version);
@@ -126,9 +125,11 @@ class Plugins {
      */
     public function do_action( $action_name, $arguments=NULL ){
 	$this->lazy_load_plugins( $action_name );
+	$returned_values=[];
 	foreach (self::$actions[$action_name] as $callback) {
-            $callback($action_name, $arguments);
+            $returned_values[]=$callback($action_name, $arguments);
         }
+	return $returned_values;
     }
     /**
     * Add Action
@@ -170,4 +171,4 @@ function do_action($name, $arguments = ""){
     return Plugins::instance()->do_action($name, $arguments);
 }
 
-do_action('stock_add_tab');
+print_r(do_action('stock_add_tab'));
