@@ -40,6 +40,16 @@ class Summary_sell_profit extends Catalog{
 	$group_by_label=$this->group_by_client?"CONCAT($this->group_by,' / ',(SELECT company_name FROM companies_list WHERE company_id=passive_company_id))":"$this->group_by";
         $having=$this->group_by_filter?"HAVING group_by LIKE '%$this->group_by_filter%'":"";
 	
+	$calculated_buy_avg="
+	    SELECT 
+		SUM( invoice_price/IF($this->in_alt_currency,doc_ratio,1)*product_quantity )/SUM( product_quantity ) buy_avg
+	    FROM
+                document_entries de1
+                    JOIN
+                document_list dl1 USING(doc_id)
+            WHERE
+		de1.product_code=de.product_code AND doc_type=2 AND cstamp<'$this->fdate' AND is_commited=1 AND notcount=0 $active_filter $reclamation_filter";
+	
 	$this->query("DROP TEMPORARY TABLE IF EXISTS tmp_sell_profit;");
 	$main_table_sql="CREATE TEMPORARY TABLE tmp_sell_profit ( INDEX(product_code) ) ENGINE=MyISAM AS (
 	    SELECT 
@@ -47,11 +57,11 @@ class Summary_sell_profit extends Catalog{
 		product_code $passive_groupper,
 		product_name,
 		sell_qty,
-		self_prod_sum/sell_qty self_avg,
-		self_prod_sum,
+		self_avg,
+		sell_qty*self_avg self_prod_sum,
 		sell_prod_sum/sell_qty sell_avg,
 		sell_prod_sum,
-		sell_prod_sum-self_prod_sum net_prod_sum
+		sell_prod_sum-sell_qty*self_avg net_prod_sum
 	    FROM 	    
 		(SELECT
 		    product_code $passive_groupper,
@@ -62,7 +72,7 @@ class Summary_sell_profit extends Catalog{
 		    analyse_class,
 		    analyse_section,
 		    SUM( de.product_quantity ) sell_qty,
-		    SUM( de.self_price/IF($this->in_alt_currency,doc_ratio,1)*de.product_quantity ) self_prod_sum,
+		    ($calculated_buy_avg) self_avg,
 		    SUM( de.invoice_price/IF($this->in_alt_currency,doc_ratio,1)*de.product_quantity ) sell_prod_sum
 		FROM
 		    document_entries de
