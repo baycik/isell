@@ -1,7 +1,7 @@
 [
     {"level":"1","name":"Trade","icon":"trade.png","label":"Торговля"},
     {"level":"3","name":"Accounts","icon":"accounts.png","label":"Бухгалтерия"},
-    {"level":"1","name":"Stock","icon":"stock.png","label":"Склад"},
+    {"level":"1","name":"Stock","icon":"stock.png","label":"Товары"},
     {"level":"2","name":"Events","icon":"events.png","label":"Задания"},
     {"level":"1","name":"Reports","icon":"home.png","label":"Отчеты"},
     {"level":"2","name":"Pref","icon":"pref.png","label":"Настройки"},

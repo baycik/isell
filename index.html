@@ -132,7 +132,6 @@
                 });
 	    };
 	    App.module={
-		legacy:["Companies","Lists","Home"],//,"Stock","Accounts","Data"
 		init:function(){
 		    $(window).bind( 'hashchange', function(e) {
 			App.module.load(location.hash.substring(1));
@@ -159,7 +158,7 @@
 		    this.selectButton();
 		},
 		loadHTML:function(holder){
-		    var url="page/"+this.current+"/"+this.current+"_main.html";
+		    var url="page/"+this.current+"/"+this.current+"_main.php";
 		    if( !holder.html() ){
 			holder.load(url,function(){
 			    App.module.initHTML();
@@ -173,10 +172,6 @@
 		    },0);
 		},
 		parseHTML:function(){
-		    if( App.dojoloaded && $.inArray(this.current,this.legacy)>-1 ){
-			dojo.require('dojo.parser');
-			dojo.parser.parse("holder"+App.module.current);
-		    }
 		    $.parser.parse("#holder"+App.module.current);//for easy ui   
 		    window[App.module.current + 'Js'] && window[App.module.current + 'Js'].init && window[App.module.current + 'Js'].init(); 		    
 		},

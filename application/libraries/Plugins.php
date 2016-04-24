@@ -98,6 +98,11 @@ class Plugins {
 	if( !isset(self::$loadedPlugins[$plugin_system_name]) && file_exists($plugin_main_file) ){
 	    self::$loadedPlugins[$plugin_system_name] = $this->get_plugin_headers($plugin_system_name);
 	    include_once $plugin_main_file;
+	    try{
+		new $plugin_system_name;
+	    } catch (Exception $ex) {
+
+	    }
 	}
     }
     /*
@@ -171,4 +176,4 @@ function do_action($name, $arguments = ""){
     return Plugins::instance()->do_action($name, $arguments);
 }
 
-print_r(do_action('stock_add_tab'));
+//print_r(do_action('stock_add_tab'));
