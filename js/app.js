@@ -83,7 +83,7 @@ var App = {
 	App[id].initAfter ? App[id].initAfter(data, handler) : '';
 	handler.notify('inited',App[id]);
     },
-    loadModule: function (path, data, id_new, id_search, id_replace) {
+    loadModule: function ( path, data, id_new, id_search, id_replace ) {
 	var id = id_new?id_new:path.replace(/\//g, '_');
 	var handler = $.Deferred();
 	if( App[id] ){
@@ -91,6 +91,7 @@ var App = {
 	} else {
 	    App[id] = {};
 	    $.get(path + '.html',function(html){
+		var id_replace=id_replace||(id_new+"$2");
 		html=id_search?html.replace(id_search,id_replace):html;
 		//console.log(html);
 		App.setHTML("#"+id,html);

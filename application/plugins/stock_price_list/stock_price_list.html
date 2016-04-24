@@ -1,5 +1,49 @@
 <script>
-    
+    App.price_list=App.page_plugins_stock_price_list_stock_price_list={
+	init:function(){
+	    this.initTree();
+	},
+	initTree:function(){
+	    
+	}
+    };
 </script>
-price list
+<table style="width:1200px">
+    <tr>
+	<td style="vertical-align: top">
+	    <table class="easyui-datagrid" id="stock_price_list_headers_dg" style="width:305px" data-options="">
+		<thead>
+		    <tr>
+			<th data-options="field:'path',width:100">Категория</th>
+			<th data-options="field:'text',width:200">Заголовок</th>
+		    </tr>
+		</thead>
+		<tbody>
+		    <tr>
+			<td>/Nilson/</td>
+			<td>Promotion Nilson</td>
+		    </tr>
+		</tbody>
+	    </table>
+	</td>
+	<td style="vertical-align: top">
+	    <table class="easyui-datagrid" id="stock_price_list_dg" style="width:475px" data-options="">
+		<thead>
+		    <tr>
+			<th data-options="field:'product_code',width:100">Код</th>
+			<th data-options="field:'product_name',width:300">Название</th>
+			<th data-options="field:'product_price',width:70">Цена</th>
+		    </tr>
+		</thead>
+		<tbody>
+		    <tr>
+			<td>/Nilson/</td>
+			<td>Promotion Nilson</td>
+			<td>55,55</td>
+		    </tr>
+		</tbody>
+	    </table>
+	</td>
+    </tr>
+</table>
     
