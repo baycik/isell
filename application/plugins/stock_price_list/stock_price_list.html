@@ -1,49 +1,84 @@
+<script src="js/jquery.sortable.js"></script>
 <script>
     App.price_list=App.page_plugins_stock_price_list_stock_price_list={
 	init:function(){
-	    this.initTree();
+	    this.restoreLeftHeaders();
+	    $(function () {
+		App.price_list.initDrag();
+	    });
 	},
-	initTree:function(){
+	initDrag:function(){
+	    $('.connected').sortable({
+		connectWith: '.connected'
+	    }).one('dropupdate', function(e, ui) {
+		App.price_list.sortUpdate();
+	    });
+	},
+	sortUpdate:function(){
+	    App.price_list.restoreLeftHeaders();
+	    App.price_list.initDrag();
+	},
+	restoreLeftHeaders:function(){
+	    $(".available_items .h1,.available_items .h2").remove();
+	    $(".available_items").prepend( $("#price_list_templates li").clone() );
 	    
+	    console.log('sortupdate');
 	}
     };
+    
 </script>
-<table style="width:1200px">
+<style>
+    li.sortable-placeholder {
+	border: 1px dashed #000;
+	background: none;
+    }
+    li.sortable-dragging{
+	background: #FF0;
+    }
+    .connected li{
+	list-style: none;
+	border: 1px solid #CCC;
+	background: #fff;
+	margin: 5px;
+	padding: 5px;
+	height: 22px;
+    }
+    .connected {
+	float: left;
+	padding: 15px;
+	min-height: 100px;
+	background-color: rgba(0,0,0,0.2);
+    }
+    li.h1{
+	background-color: #fc0;
+	padding: 4px;
+	font-size: 18px;
+    }
+    li.h2{
+	background-color: #FF9;
+	font-size: 12px;
+    }
+</style>
+<div id="price_list_templates" style="display: none1">
+    <li class="h1">Большой заголовок</li>
+    <li class="h2">Маленький заголовок</li>
+</div>
+<table>
     <tr>
-	<td style="vertical-align: top">
-	    <table class="easyui-datagrid" id="stock_price_list_headers_dg" style="width:305px" data-options="">
-		<thead>
-		    <tr>
-			<th data-options="field:'path',width:100">Категория</th>
-			<th data-options="field:'text',width:200">Заголовок</th>
-		    </tr>
-		</thead>
-		<tbody>
-		    <tr>
-			<td>/Nilson/</td>
-			<td>Promotion Nilson</td>
-		    </tr>
-		</tbody>
-	    </table>
+	<td style="vertical-align: top;">
+	    <ul class="connected available_items" style="width:200px" ondrop1="App.price_list.restoreLeftHeaders();">
+		<li>Item 1</li>
+		<li>Item 2</li>
+		<li>Item 3</li>
+		<li>Item 4</li>
+		<li>Item 5</li>
+		<li>Item 6</li>
+	    </ul>
 	</td>
-	<td style="vertical-align: top">
-	    <table class="easyui-datagrid" id="stock_price_list_dg" style="width:475px" data-options="">
-		<thead>
-		    <tr>
-			<th data-options="field:'product_code',width:100">Код</th>
-			<th data-options="field:'product_name',width:300">Название</th>
-			<th data-options="field:'product_price',width:70">Цена</th>
-		    </tr>
-		</thead>
-		<tbody>
-		    <tr>
-			<td>/Nilson/</td>
-			<td>Promotion Nilson</td>
-			<td>55,55</td>
-		    </tr>
-		</tbody>
-	    </table>
+	<td style="vertical-align: top;">
+	    <ul class="connected price_items" style="width:400px" ondrop1="App.price_list.sortUpdate();">
+		
+	    </ul>
 	</td>
     </tr>
 </table>
-    
