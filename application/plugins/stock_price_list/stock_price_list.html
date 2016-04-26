@@ -10,7 +10,7 @@
 	initDrag:function(){
 	    $('.connected').sortable({
 		connectWith: '.connected'
-	    }).one('dropupdate', function(e, ui) {
+	    }).one('sortupdate', function(e, ui) {
 		App.price_list.sortUpdate();
 	    });
 	},
@@ -66,7 +66,7 @@
 <table>
     <tr>
 	<td style="vertical-align: top;">
-	    <ul class="connected available_items" style="width:200px" ondrop1="App.price_list.restoreLeftHeaders();">
+	    <ul class="connected available_items" style="width:200px">
 		<li>Item 1</li>
 		<li>Item 2</li>
 		<li>Item 3</li>
@@ -76,7 +76,7 @@
 	    </ul>
 	</td>
 	<td style="vertical-align: top;">
-	    <ul class="connected price_items" style="width:400px" ondrop1="App.price_list.sortUpdate();">
+	    <ul class="connected price_items" style="width:400px">
 		
 	    </ul>
 	</td>

@@ -48,10 +48,9 @@ $.fn.sortable = function(options) {
 			}
 			dragging.removeClass('sortable-dragging').show();
 			placeholders.detach();
-			if (index != dragging.index()) {
+			if (index==0 || index != dragging.index()) {
 				dragging.parent().trigger('sortupdate', {item: dragging});
 			}
-			dragging.parent().trigger('dropupdate', {item: dragging});
 			dragging = null;
 		}).not('a[href], img').on('selectstart.h5s', function() {
 			this.dragDrop && this.dragDrop();
