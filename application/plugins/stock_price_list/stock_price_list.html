@@ -8,6 +8,7 @@
 	    });
 	},
 	initDrag:function(){
+	    $('.connected').sortable('destroy');
 	    $('.connected').sortable({
 		connectWith: '.connected'
 	    }).one('sortupdate', function(e, ui) {
@@ -15,26 +16,23 @@
 	    });
 	},
 	sortUpdate:function(){
-	    App.price_list.restoreLeftHeaders();
-	    App.price_list.initDrag();
+	    this.restoreLeftHeaders();
+	    this.initDrag();
+	    this.saveUsedItems();
 	},
 	restoreLeftHeaders:function(){
-	    $(".available_items .h1,.available_items .h2").remove();
-	    $(".available_items").prepend( $("#price_list_templates li").clone() );
-	    
-	    console.log('sortupdate');
+	    $(".available_items .h1,.available_items .h2,.available_items .page").remove();
+	    $(".available_items").prepend( $("#price_list_templates li").clone().attr('draggable',true) );
+	},
+	saveUsedItems:function(){
+	    $(".used_items li").each(function(){
+		console.log(this);
+	    });
 	}
     };
     
 </script>
 <style>
-    li.sortable-placeholder {
-	border: 1px dashed #000;
-	background: none;
-    }
-    li.sortable-dragging{
-	background: #FF0;
-    }
     .connected li{
 	list-style: none;
 	border: 1px solid #CCC;
@@ -56,12 +54,27 @@
     }
     li.h2{
 	background-color: #FF9;
-	font-size: 12px;
+	font-size: 14px;
+    }
+    li.page{
+	background-color: #Fcf;	
+    }
+    li.sortable-placeholder {
+	border: 1px dashed #000;
+	background: none;
+    }
+    li.sortable-dragging{}
+    .available_items img{
+	display: none;
+    }
+    .used_items img{
+	float:right;
     }
 </style>
-<div id="price_list_templates" style="display: none1">
-    <li class="h1">Большой заголовок</li>
-    <li class="h2">Маленький заголовок</li>
+<div id="price_list_templates" style="display: none">
+    <li class="h1">Большой заголовок <img src="img/edit-16.png"></li>
+    <li class="h2">Средний заголовок <img src="img/edit-16.png"></li>
+    <li class="page">Произвольный текст <img src="img/edit-16.png"></li>
 </div>
 <table>
     <tr>
@@ -76,7 +89,7 @@
 	    </ul>
 	</td>
 	<td style="vertical-align: top;">
-	    <ul class="connected price_items" style="width:400px">
+	    <ul class="connected used_items" style="width:400px">
 		
 	    </ul>
 	</td>
