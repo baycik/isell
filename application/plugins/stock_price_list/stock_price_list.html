@@ -24,14 +24,55 @@
 	    $(".available_items .h1,.available_items .h2,.available_items .page").remove();
 	    $(".available_items").prepend( $("#price_list_templates li").clone().attr('draggable',true) );
 	},
+	itemEdit:function( img_node ){
+	    var li_node=$(img_node).parent();
+	    if( li_node.hasClass('page') ){
+		alert(555);
+		return ;
+	    }
+	    var li_label=li_node.find('span').text();
+	    var new_label=prompt("Введите текст заголовка",li_label);
+	    if( new_label!==null ){
+		li_node.find('span').text(new_label);
+	    }
+	},
 	saveUsedItems:function(){
+	    var items=[];
 	    $(".used_items li").each(function(){
-		console.log(this);
+		items.push({
+		    type:$(this).data('type'),
+		    id:$(this).data('id'),
+		    text:$(this).find('span').text()
+		});
 	    });
+	    console.log(items);
 	}
     };
     
 </script>
+<div id="price_list_templates" style="display: none">
+    <li data-type="h1" class="h1"><span>Большой заголовок</span> <img src="img/edit-16.png" onclick="App.price_list.itemEdit(this)"></li>
+    <li data-type="h2" class="h2"><span>Средний заголовок</span> <img src="img/edit-16.png" onclick="App.price_list.itemEdit(this)"></li>
+    <li data-type="page" class="page">Произвольный текст <img src="img/edit-16.png" onclick="App.price_list.itemEdit(this)"></li>
+</div>
+<table>
+    <tr>
+	<td style="vertical-align: top;">
+	    <ul class="connected available_items" style="width:200px">
+		<li data-id="121" data-type="category">Item 1 <img src="img/edit-16.png"></li>
+		<li data-id="121" data-type="category">Item 1 <img src="img/edit-16.png"></li>
+		<li data-id="121" data-type="category">Item 1 <img src="img/edit-16.png"></li>
+		<li data-id="121" data-type="category">Item 1 <img src="img/edit-16.png"></li>
+		<li data-id="121" data-type="category">Item 1 <img src="img/edit-16.png"></li>
+	    </ul>
+	</td>
+	<td style="vertical-align: top;">
+	    <ul class="connected used_items" style="width:400px">
+		
+	    </ul>
+	</td>
+    </tr>
+</table>
 <style>
     .connected li{
 	list-style: none;
@@ -69,29 +110,12 @@
     }
     .used_items img{
 	float:right;
+	padding: 2px;
+    }
+    .used_items img:hover{
+	border: 1px solid #000;
+	border-radius: 3px;
+	margin: -1px;
+	background-color: #ddd;
     }
 </style>
-<div id="price_list_templates" style="display: none">
-    <li class="h1">Большой заголовок <img src="img/edit-16.png"></li>
-    <li class="h2">Средний заголовок <img src="img/edit-16.png"></li>
-    <li class="page">Произвольный текст <img src="img/edit-16.png"></li>
-</div>
-<table>
-    <tr>
-	<td style="vertical-align: top;">
-	    <ul class="connected available_items" style="width:200px">
-		<li>Item 1</li>
-		<li>Item 2</li>
-		<li>Item 3</li>
-		<li>Item 4</li>
-		<li>Item 5</li>
-		<li>Item 6</li>
-	    </ul>
-	</td>
-	<td style="vertical-align: top;">
-	    <ul class="connected used_items" style="width:400px">
-		
-	    </ul>
-	</td>
-    </tr>
-</table>
