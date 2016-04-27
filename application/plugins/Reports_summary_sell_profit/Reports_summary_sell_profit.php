@@ -1,5 +1,5 @@
 <?php
-class Summary_sell_profit extends Catalog{
+class Reports_summary_sell_profit extends Catalog{
     private $idate;
     private $fdate;
     private $all_active;

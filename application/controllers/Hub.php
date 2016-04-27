@@ -11,9 +11,15 @@ class Hub extends HubBase{
     
     public function on( $model, $method ){
 	if( $model ){
+	    if( $model=='Plugin' ){
+		$plugin_name=method;
+		$plugin_args = array_slice(func_get_args(), 2);
+		$this->handlePluginCall($plugin_name,$plugin_args);
+		return;
+	    }
 	    $this->load_model($model);
 	    if( method_exists($this->{$model},$method) ){// && stripos($method,'core')===false
-		$this->{$model}->Base=$this;
+		//$this->{$model}->Base=$this;
 		$method_args = array_map("rawurldecode",array_slice(func_get_args(), 2));
 		$response=call_user_func_array(array($this->{$model}, $method),$method_args);
 		$this->response($response);
@@ -54,6 +60,7 @@ class Hub extends HubBase{
 	}
 	return $this->bridge->LoadClass($class_name);
     }
+    
 }
 class HubBase extends CI_Controller{
     public $level_names=array("Нет доступа","Ограниченный","Менеджер","Бухгалтер","Администратор");
@@ -103,11 +110,19 @@ class HubBase extends CI_Controller{
 	return $this->{$name};
     }
     
-    public function load_plugin( $subfolder, $name ){
-	require_once "application/plugins/$subfolder/$name/$name.php";
+    public function load_plugin( $name ){
+	require_once "application/plugins/$name/$name.php";
 	$Plugin=new $name();
 	$Plugin->Base=$this;
 	return $Plugin;
+    }
+    
+    protected function handlePluginCall( $plugin_name, $plugin_args ){
+	$Plugin=$this->load_plugin($subfolder, $name);
+	
+	
+	$response=call_user_func_array(array($this->{$model}, $method),$method_args);
+	$this->response($response);	
     }
     
     public function set_level($allowed_level) {

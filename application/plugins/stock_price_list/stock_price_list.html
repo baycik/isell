@@ -37,6 +37,7 @@
 	    }
 	},
 	saveUsedItems:function(){
+	    var price_list_id=1;
 	    var items=[];
 	    $(".used_items li").each(function(){
 		items.push({
@@ -45,7 +46,9 @@
 		    text:$(this).find('span').text()
 		});
 	    });
-	    console.log(items);
+	    $.post("Plugin/stock_price_list/saveUsedItems/"+price_list_id,function(resp){
+		
+	    });
 	}
     };
     
@@ -59,11 +62,11 @@
     <tr>
 	<td style="vertical-align: top;">
 	    <ul class="connected available_items" style="width:200px">
-		<li data-id="121" data-type="category">Item 1 <img src="img/edit-16.png"></li>
-		<li data-id="121" data-type="category">Item 1 <img src="img/edit-16.png"></li>
-		<li data-id="121" data-type="category">Item 1 <img src="img/edit-16.png"></li>
-		<li data-id="121" data-type="category">Item 1 <img src="img/edit-16.png"></li>
-		<li data-id="121" data-type="category">Item 1 <img src="img/edit-16.png"></li>
+		<li data-id="121" data-type="category"><span>Item 1</span> <img src="img/edit-16.png" onclick="App.price_list.itemEdit(this)"></li>
+		<li data-id="121" data-type="category"><span>Item 1</span> <img src="img/edit-16.png" onclick="App.price_list.itemEdit(this)"></li>
+		<li data-id="121" data-type="category"><span>Item 1</span> <img src="img/edit-16.png" onclick="App.price_list.itemEdit(this)"></li>
+		<li data-id="121" data-type="category"><span>Item 1</span> <img src="img/edit-16.png" onclick="App.price_list.itemEdit(this)"></li>
+		<li data-id="121" data-type="category"><span>Item 1</span> <img src="img/edit-16.png" onclick="App.price_list.itemEdit(this)"></li>
 	    </ul>
 	</td>
 	<td style="vertical-align: top;">

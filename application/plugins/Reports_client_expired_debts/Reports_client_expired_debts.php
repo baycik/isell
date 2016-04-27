@@ -1,5 +1,5 @@
 <?php
-class Client_expired_debts extends Catalog{
+class Reports_client_expired_debts extends Catalog{
     private $all_active;
     private $our_debts;
     private $their_debts;

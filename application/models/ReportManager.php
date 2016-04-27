@@ -1,12 +1,15 @@
 <?php
 require_once 'Catalog.php';
 class ReportManager extends Catalog {
-    private $plugin_folder='application/plugins/reports/';
+    private $plugin_folder='application/plugins/';
     private $current_info;
     public function listFetch(){
 	$plugins=$this->scanFolder($this->plugin_folder);
 	$reports=[];
 	foreach($plugins as $plugin_folder){
+	    if( strpos($plugin_folder, 'Reports')===false ){
+		continue;
+	    }
 	    $info=$this->infoGet($plugin_folder);
 	    if( $info['user_level']<=$this->Base->svar('user_level') ){
 		$reports[]=$info;
@@ -46,9 +49,9 @@ class ReportManager extends Catalog {
     public function formSubmit( $report_id=null ){
 	$this->current_info=$this->infoGet($report_id);
 	$tpl_files=isset($this->current_info['template'])?$this->current_info['template']:$this->current_info['report_id'].'.xlsx';
-	$Plugin=$this->Base->load_plugin('reports',$report_id);
+	$Plugin=$this->Base->load_plugin($report_id);
 	$dump=[
-	    'tpl_files_folder'=>"../plugins/reports/{$this->current_info['report_id']}/",
+	    'tpl_files_folder'=>"../plugins/{$this->current_info['report_id']}/",
 	    'tpl_files'=>$tpl_files,
 	    'title'=>$this->current_info['title'],
 	    'user_data'=>[
