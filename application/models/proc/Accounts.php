@@ -26,7 +26,7 @@ class Accounts extends Data {
                 created_by='$user_id',
                 modified_by='$user_id'";
         $this->Base->query($sql);
-        return mysql_insert_id();
+        return mysqli_insert_id($this->Base->db_link);
     }
 
     private function checkUserAccessLevel($trans_id, $acc_debit_code=null, $acc_credit_code=null) {
@@ -131,7 +131,7 @@ class Accounts extends Data {
 				user_level='$trans_user_level',
 				trans_name='$trans_name'
 				", false);
-        if ( mysql_errno() == 1062 ){
+        if ( mysqli_errno($this->Base->db_link) == 1062 ){
             $this->Base->query("UPDATE acc_trans_names SET 
 				acc_debit_code='$acc_debit_code', 
 				acc_credit_code='$acc_credit_code',
@@ -140,7 +140,7 @@ class Accounts extends Data {
 				WHERE CONCAT(acc_debit_code,'_',acc_credit_code)='$trans_type'
 				");
         }
-        if ( mysql_errno() || !mysql_affected_rows() ){
+        if ( mysqli_errno($this->Base->db_link) || !mysqli_affected_rows($this->Base->db_link) ){
             $this->Base->msg('Изменеиния названия проводки не сохранены!');
         }
     }
@@ -150,7 +150,7 @@ class Accounts extends Data {
         $this->Base->query("DELETE FROM acc_trans_names 
 			WHERE CONCAT(acc_debit_code,'_',acc_credit_code)='$trans_type' AND user_level<=$level
 			");
-        if (mysql_affected_rows() == 0)
+        if (mysqli_affected_rows($this->Base->db_link) == 0)
             $this->Base->msg('Название проводки не удалено!');
     }
 
@@ -423,15 +423,15 @@ class Accounts extends Data {
 //
 //        function findPath(&$_this, $prefix, $parent_id) {
 //            $res = $_this->Base->query("SELECT branch_id,label FROM acc_tree WHERE parent_id='$parent_id'");
-//            if (mysql_num_rows($res) > 0) {
-//                while ($row = mysql_fetch_assoc($res)) {
+//            if (mysqli_num_rows($res) > 0) {
+//                while ($row = mysqli_fetch_assoc($res)) {
 //                    $new_prefix = $prefix . '>' . $row['label'];
 //                    findPath($_this, $new_prefix, $row['branch_id']);
 //                }
 //            } else
 //                $prefix = substr($prefix, 1);
 //            $_this->Base->query("UPDATE acc_list SET branch_path='$prefix' WHERE branch_id='$parent_id'");
-//            mysql_free_result($res);
+//            mysqli_free_result($res);
 //        }
 //
 //        findPath($this, '', $branch_id);
@@ -450,10 +450,10 @@ class Accounts extends Data {
         $response = array('identifier' => 'acc_code', 'label' => 'path', 'items' => array());
         $res = $this->Base->query("SELECT acc_code,label acc_name,path FROM acc_tree WHERE IF($use_clientbank,use_clientbank,1) ORDER BY acc_code");
         //$response['items'][]=array('acc_id'=>'0','acc_code'=>'99999','acc_name'=>'','branch_path'=>'---');
-        while ($row = mysql_fetch_assoc($res)) {
+        while ($row = mysqli_fetch_assoc($res)) {
             $response['items'][] = $row;
         }
-        mysql_free_result($res);
+        mysqli_free_result($res);
         return $response;
     }
 

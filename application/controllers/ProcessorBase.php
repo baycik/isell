@@ -1,7 +1,7 @@
 <?php
 //extends CI_Controller
 class InputOutput extends CI_Controller{
-    function InputOutput(){
+    function __construct(){
 	if( defined('BAY_OMIT_CONTROLLER_CONSTRUCT') ){
 	    return;
 	}
@@ -99,16 +99,16 @@ class InputOutput extends CI_Controller{
 class DataBase extends InputOutput {
 
     public $field_list = array();
-    private $db_link;
+    public $db_link;
 
-    public function DataBase() {
-	$this->InputOutput();
+    public function __construct() {
+	parent::__construct();
     }
     
     private function db_connect(){
 	$this->db_link = mysqli_connect(BAY_DB_HOST, BAY_DB_USER, BAY_DB_PASS, BAY_DB_NAME);
 	if ($this->db_link) {
-	    mysqli_query('SET NAMES utf8');
+	    mysqli_query($this->db_link,'SET NAMES utf8');
 	} else {
 	    $this->response_error('COULD NOT CONNECT TO MYSQL '.mysqli_connect_error());
 	}
@@ -126,10 +126,10 @@ class DataBase extends InputOutput {
 	if( !$this->db_link ){
 	    $this->db_connect();
 	}
-	$res = mysqli_query($sql, $this->db_link);
-	if ($throw_error && mysqli_errno()) {
+	$res = mysqli_query($this->db_link,$sql);
+	if ($throw_error && mysqli_errno($this->db_link)) {
 	    if ($this->svar('user_level') > 2 || BAY_SQL_SHOW_ERRORS)
-		$this->response_error('SQL ERROR: ' . "\n$sql\n\n" . mysql_error());
+		$this->response_error('SQL ERROR: ' . "\n$sql\n\n" . mysqli_error($this->db_link));
 	    else
 		$this->response_wrn('Упс! Ошибочка вышла!');
 	}
@@ -187,14 +187,14 @@ class Session extends DataBase {
 
     public $level_names = array("Нет доступа", "Ограниченный", "Менеджер", "Бухгалтер", "Администратор");
 
-    public function Session() {
+    public function __construct() {
 	session_set_cookie_params(36000, '/');
 	session_name('baycikSid' . BAY_COOKIE_NAME);
 	@session_start();
 	if (method_exists($this, 'initApplication')) {
 	    $this->initApplication();
 	}
-	$this->DataBase();
+	parent::__construct();
     }
 
     public function svar($name, $value = NULL) {
@@ -252,8 +252,8 @@ class Session extends DataBase {
 
 class ProcessorBase extends Session {
 
-    public function ProcessorBase($allowed_user_level = 0) {
-	$this->Session();
+    public function __construct($allowed_user_level = 0) {
+	parent::__construct();
 	$this->set_level($allowed_user_level);
 
 	if ($this->request('mod')) {

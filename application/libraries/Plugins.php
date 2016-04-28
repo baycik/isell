@@ -96,12 +96,12 @@ class Plugins {
     private function include_plugin( $plugin_system_name ){
 	$plugin_main_file=$this->plugins_dir.$plugin_system_name."/".$plugin_system_name.".php";
 	if( !isset(self::$loadedPlugins[$plugin_system_name]) && file_exists($plugin_main_file) ){
-	    self::$loadedPlugins[$plugin_system_name] = $this->get_plugin_headers($plugin_system_name);
+	    self::$loadedPlugins[$plugin_system_name] = 'loaded';
 	    include_once $plugin_main_file;
 	    try{
-		new $plugin_system_name;
+		return new $plugin_system_name;
 	    } catch (Exception $ex) {
-
+		return false;
 	    }
 	}
     }
@@ -150,6 +150,15 @@ class Plugins {
             self::$actions[$action_name] = array();
         }
         self::$actions[$action_name][] = $callback;	
+    }
+    
+    public function call_method($plugin_name, $plugin_method, $plugin_method_args){
+	try{
+	    $Plugin=$this->include_plugin($plugin_name);
+	    return call_user_method_array($plugin_method, $Plugin, $plugin_method_args);
+	} catch (Exception $ex) {
+	    return $ex;
+	}
     }
 }
 

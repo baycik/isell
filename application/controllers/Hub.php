@@ -11,20 +11,12 @@ class Hub extends HubBase{
     
     public function on( $model, $method ){
 	if( $model ){
-	    if( $model=='Plugin' ){
-		$plugin_name=method;
-		$plugin_args = array_slice(func_get_args(), 2);
-		$this->handlePluginCall($plugin_name,$plugin_args);
-		return;
-	    }
-	    $this->load_model($model);
-	    if( method_exists($this->{$model},$method) ){// && stripos($method,'core')===false
-		//$this->{$model}->Base=$this;
+	    try {
+		$this->load_model($model);
 		$method_args = array_map("rawurldecode",array_slice(func_get_args(), 2));
 		$response=call_user_func_array(array($this->{$model}, $method),$method_args);
 		$this->response($response);
-	    }
-	    else{
+	    } catch (Exception $ex) {
 		show_error("X-isell-error: Such module function '$model->$method' not found!", 500);
 	    }
 	}
@@ -47,6 +39,18 @@ class Hub extends HubBase{
 	    show_error('X-isell-error: File not found!', 404);
 	}
 	exit;
+    }
+    
+    /*
+     * Here the url call to plugin goes as /plugin/plugin_name/plugin_method/args/...
+     * So to method comes the plugin_name in $args[0] and method name in $args[1]
+     */
+    public function plugin(){
+	$args=func_get_args();
+	$plugin_name=$args[0];
+	$plugin_method=$args[1];
+	$plugin_method_args = array_slice($args, 2);
+	return Plugins::instance()->call_method($plugin_name, $plugin_method, $plugin_method_args);
     }
     
     /*
@@ -110,19 +114,11 @@ class HubBase extends CI_Controller{
 	return $this->{$name};
     }
     
-    public function load_plugin( $name ){
-	require_once "application/plugins/$name/$name.php";
-	$Plugin=new $name();
+    public function load_plugin( $plugin_name ){
+	require_once "application/plugins/$plugin_name/$plugin_name.php";
+	$Plugin=new $plugin_name();
 	$Plugin->Base=$this;
 	return $Plugin;
-    }
-    
-    protected function handlePluginCall( $plugin_name, $plugin_args ){
-	$Plugin=$this->load_plugin($subfolder, $name);
-	
-	
-	$response=call_user_func_array(array($this->{$model}, $method),$method_args);
-	$this->response($response);	
     }
     
     public function set_level($allowed_level) {
