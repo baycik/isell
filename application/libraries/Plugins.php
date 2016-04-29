@@ -97,6 +97,7 @@ class Plugins {
 	$plugin_main_file=$this->plugins_dir.$plugin_system_name."/".$plugin_system_name.".php";
 	if( !isset(self::$loadedPlugins[$plugin_system_name]) && file_exists($plugin_main_file) ){
 	    self::$loadedPlugins[$plugin_system_name] = 'loaded';
+	    load_class('Model', 'core');
 	    include_once $plugin_main_file;
 	    try{
 		return new $plugin_system_name;
@@ -155,7 +156,7 @@ class Plugins {
     public function call_method($plugin_name, $plugin_method, $plugin_method_args){
 	try{
 	    $Plugin=$this->include_plugin($plugin_name);
-	    return call_user_method_array($plugin_method, $Plugin, $plugin_method_args);
+	    return call_user_func_array([$Plugin,$plugin_method], $plugin_method_args);
 	} catch (Exception $ex) {
 	    return $ex;
 	}
