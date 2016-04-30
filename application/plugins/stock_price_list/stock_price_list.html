@@ -7,6 +7,7 @@
 	    $(function () {
 		App.price_list.initDrag();
 	    });
+	    this.list.load();
 	},
 	initDrag:function(){
 	    $('.connected').sortable('destroy');
@@ -39,7 +40,7 @@
 	},
 	saveUsedItems:function(){
 	    var deployment_id=this.current_dpl_id;
-	    var deployment_data={items:[],name:$("#spl_price_name").attr('value')};
+	    var deployment_data={items:[],name:$("#spl_price_name").attr('value'),id:deployment_id};
 	    $(".used_items li").each(function(){
 		deployment_data.items.push({
 		    type:$(this).data('type'),
@@ -50,6 +51,14 @@
 	    $.post("plugin/stock_price_list/save/",{deployment_id:deployment_id,deployment_data:JSON.stringify(deployment_data)},function(ok){
 		console.log(ok);
 	    });
+	},
+	list:{
+	    load:function(){
+		$.get('plugin/stock_price_list/listFetch',function(resp){
+		    var list=App.json(resp);
+		    App.renderTpl('spl_bar',{list:list});
+		});
+	    }
 	}
     };
     
@@ -59,7 +68,17 @@
     <li data-type="h2" class="h2"><span>Средний заголовок</span> <img src="img/edit-16.png" onclick="App.price_list.itemEdit(this)"></li>
     <li data-type="page" class="page">Произвольный текст <img src="img/edit-16.png" onclick="App.price_list.itemEdit(this)"></li>
 </div>
-<table>
+<table cellpadding="0">
+    <tr>
+	<td colspan="2" style="background-color: rgba(255,255,255,0.7);">
+	    <div id="spl_bar">
+		{{list}}
+		<div>{{name}}</div>
+		{{/list}}
+	    </div>
+	    <input type="text" id="spl_price_name" value="Новый прайс">
+	</td>
+    </tr>
     <tr>
 	<td style="vertical-align: top;">
 	    <ul class="connected available_items" style="width:200px">
@@ -71,14 +90,21 @@
 	    </ul>
 	</td>
 	<td style="vertical-align: top;">
-	    <input type="text" id="spl_price_name" value="Новый прайс">
 	    <ul class="connected used_items" style="width:400px">
-		
 	    </ul>
 	</td>
     </tr>
 </table>
 <style>
+    #spl_bar{
+	padding: 5px;
+    }
+    #spl_bar div{
+	display: inline-block;
+	border-radius: 3px;
+	padding: 5px;
+	background-color: rgba(0,0,0,0.2);
+    }
     .connected li{
 	list-style: none;
 	border: 1px solid #CCC;
@@ -86,12 +112,14 @@
 	margin: 5px;
 	padding: 5px;
 	height: 22px;
+	cursor: move;
     }
     .connected {
 	float: left;
 	padding: 15px;
-	min-height: 100px;
+	min-height: 52px;
 	background-color: rgba(0,0,0,0.2);
+	margin: 0px;
     }
     li.h1{
 	background-color: #fc0;

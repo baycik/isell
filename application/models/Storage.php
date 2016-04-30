@@ -26,11 +26,18 @@ class Storage  extends CI_Model {
 	return file_get_contents($this->storageFolder."/".$path);
     }
     
+    public function file_list($dir){
+	$this->load->helper('directory');
+	return directory_map($this->storageFolder."/".$dir);
+    }
+    
     public function json_store( $path, $data ){
 	return $this->file_store( $path, json_encode($data) );
     }
     
     public function json_restore($path){
-	return json_decode($this->json_restore($path));
+	return json_decode($this->file_restore($path));
     }
+    
+    
 }

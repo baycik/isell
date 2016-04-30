@@ -25,6 +25,22 @@ class Stock_price_list extends CI_Model{
 	$this->load->model('Storage');
 	return $this->Storage->file_store('stock_price_list/deployments/'.$deployment_id.'.json',$deployment_data);
     }
+    public function open(){
+	$deployment_id=$this->input->get_post('deployment_id');
+	$this->load->model('Storage');
+	return $this->Storage->file_restore('stock_price_list/deployments/'.$deployment_id.'.json');	
+    }
+    public function listFetch(){
+	$this->load->model('Storage');
+	$dep_files=$this->Storage->file_list('stock_price_list/deployments/');
+	$dep_list=[];
+	foreach ($dep_files as $dep_file){
+	    $deployment=$this->Storage->json_restore('stock_price_list/deployments/'.$dep_file);
+	    $dep_list[]=['id'=>$deployment->id,'name'=>$deployment->name];
+	}
+	return $dep_list;
+	
+    }
 }
 
 
