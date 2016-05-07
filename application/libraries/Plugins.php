@@ -131,6 +131,9 @@ class Plugins {
      */
     public function do_action( $action_name, $arguments=NULL ){
 	$this->lazy_load_plugins( $action_name );
+        if( !self::$actions[$action_name] ){
+            return [];
+        }
 	$returned_values=[];
 	foreach (self::$actions[$action_name] as $callback) {
             $returned_values[]=$callback($action_name, $arguments);
