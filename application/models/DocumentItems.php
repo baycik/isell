@@ -67,6 +67,7 @@ class DocumentItems extends DocumentCore{
     protected function entriesFetch( $skip_vat_correction=false ){
 	$doc_id=$this->doc('doc_id');
 	$this->calcCorrections( $skip_vat_correction );
+        $curr_code=$this->Base->acomp('curr_code');
 	$company_lang = $this->Base->pcomp('language');
         $use_total_as_base=$this->Base->pref('use_total_as_base');
 	$sql = "SELECT
@@ -84,8 +85,8 @@ class DocumentItems extends DocumentCore{
                 party_label,
                 product_uktzet,
                 self_price,
-		IF(doc_type=1,invoice_price<buy/@curr_correction,invoice_price>buy/@curr_correction) is_loss,
-                buy
+                @buy:=IF(prl.curr_code='$curr_code' OR prl.curr_code='',buy,buy*doc_ratio) buy,
+                IF(doc_type=1,invoice_price<@buy,invoice_price>@buy) is_loss
             FROM
                 document_list
 		    JOIN
