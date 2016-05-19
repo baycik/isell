@@ -369,7 +369,7 @@ class Utils extends Catalog{
 		FROM
 		    document_entries de
 			JOIN
-		    document_list dl ON de.doc_id=dl.doc_id AND dl.is_commited=1 AND dl.doc_type=1
+		    document_list dl ON de.doc_id=dl.doc_id AND dl.is_commited=1 AND dl.notcount=0 AND dl.doc_type=1
 		WHERE 
 		    de.product_code=se.product_code
 		GROUP BY se.product_code) 
