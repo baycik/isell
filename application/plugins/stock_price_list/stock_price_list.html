@@ -52,8 +52,33 @@
 		console.log(ok);
 	    });
 	},
+	getDeployment:function( deployment_id ){
+	    $.post("plugin/stock_price_list/getDeployment/", {deployment_id: deployment_id}, function (deployment) {
+
+	    });
+	},
+	getAvailables:function(){
+	    $.post("plugin/stock_price_list/getAvailables/", function (deployment) {
+
+	    });	    
+	},
 	list: {
-	    load: function () {
+	    create: function () {
+		
+	    },
+	    delete: function(){
+		var row=$("#price_list_dg").datagrid('getSelected');
+		if( row && row.deployment_id && confirm("Удалить прайс-лист?") ){
+		    $.post("plugin/stock_price_list/delete/", {deployment_id: row.deployment_id}, function (ok) {
+			$('#price_list_dg').datagrid('reload');
+		    });
+		}
+	    },
+	    select:function(){
+		var row=$("#price_list_dg").datagrid('getSelected');
+		if( row && row.deployment_id ){
+		    App.price_list.getDeployment(row.deployment_id);
+		}
 	    }
 	}
     };
@@ -68,13 +93,13 @@
     <tr>
 	<td style="vertical-align: top;width:180px">
 	    <div style="text-align: right;padding-right: 5px;">
-		<span class="icon-24 icon-create" title="Добавить" onclick="Leftovers.list.create();"> </span>
-		<span class="icon-24 icon-change" title="Изменить" onclick="Leftovers.list.edit();"> </span>
-		<span class="icon-24 icon-delete" title="Удалить" onclick="Leftovers.list.delete();"> </span>
-		<span class="icon-24 icon-refresh" title="Обновить" onclick="Leftovers.list.reload()"> </span>
+		<span class="icon-24 icon-create" title="Добавить" onclick="App.price_list.list.create();"> </span>
+		<span class="icon-24 icon-delete" title="Удалить" onclick="App.price_list.list.delete();"> </span>
+		<span class="icon-24 icon-refresh" title="Обновить" onclick="$('#price_list_dg').datagrid('reload')"> </span>
 	    </div>
-	    <table class="easyui-datagrid" style="width:180px" title="Сохраненные прайсы" data-options="
-		   url:'plugin/stock_price_list/listFetch'">
+	    <table class="easyui-datagrid" style="width:180px" id="price_list_dg" title="Сохраненные прайсы" data-options="
+		   url:'plugin/stock_price_list/listFetch',
+		   onSelect:App.price_list.list.select">
 		<thead>
 		    <tr>
 			<th data-options="width:70,field:'date'">Дата</th>
@@ -84,7 +109,10 @@
 	    </table>
 	</td>
 	<td style="vertical-align: top">
-	    <h1>Новый прайс <img src="img/edit-16.png" onclick="App.price_list.itemEdit(this)"></h1>
+	    <div style="font-size:26px;border-bottom: 1px solid #999">
+		Новый прайс <img src="img/edit-16.png" onclick="App.price_list.itemEdit(this)">
+		<span style="float:right" class="icon-24 icon-print" title="Печать" onclick="Leftovers.list.out('.print')"> </span>
+	    </div>
 	    <b>Блоки которые можно добавить</b>
 	    <ul class="connected available_items" style="width:100%">
 		<li data-id="121" data-type="category"><span>Item 1</span> <img src="img/edit-16.png" onclick="App.price_list.itemEdit(this)"></li>
