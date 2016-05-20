@@ -36,7 +36,7 @@ class Stock_price_list extends CI_Model{
 	$dep_list=[];
 	foreach ($dep_files as $dep_file){
 	    $deployment=$this->Storage->json_restore('stock_price_list/deployments/'.$dep_file);
-	    $dep_list[]=['id'=>$deployment->id,'name'=>$deployment->name];
+	    $dep_list[]=['id'=>$deployment->id,'date'=>date('d.m.Y',substr($deployment->id,0,10)),'name'=>$deployment->name];
 	}
 	return $dep_list;
 	

@@ -1,129 +1,128 @@
 <script src="js/jquery.sortable.js"></script>
 <script>
-    App.price_list=App.page_plugins_stock_price_list_stock_price_list={
-	current_dpl_id:(new Date().getTime()),
-	init:function(){
+    App.price_list = App.page_plugins_stock_price_list_stock_price_list = {
+	current_dpl_id: (new Date().getTime()),
+	init: function () {
 	    this.restoreLeftHeaders();
 	    $(function () {
 		App.price_list.initDrag();
 	    });
 	    this.list.load();
 	},
-	initDrag:function(){
+	initDrag: function () {
 	    $('.connected').sortable('destroy');
 	    $('.connected').sortable({
 		connectWith: '.connected'
-	    }).one('sortupdate', function(e, ui) {
+	    }).one('sortupdate', function (e, ui) {
 		App.price_list.sortUpdate();
 	    });
 	},
-	sortUpdate:function(){
+	sortUpdate: function () {
 	    this.restoreLeftHeaders();
 	    this.initDrag();
 	    this.saveUsedItems();
 	},
-	restoreLeftHeaders:function(){
+	restoreLeftHeaders: function () {
 	    $(".available_items .h1,.available_items .h2,.available_items .page").remove();
-	    $(".available_items").prepend( $("#price_list_templates li").clone().attr('draggable',true) );
+	    $(".available_items").prepend($("#price_list_templates li").clone().attr('draggable', true));
 	},
-	itemEdit:function( img_node ){
-	    var li_node=$(img_node).parent();
-	    if( li_node.hasClass('page') ){
+	itemEdit: function (img_node) {
+	    var li_node = $(img_node).parent();
+	    if (li_node.hasClass('page')) {
 		alert(555);
-		return ;
+		return;
 	    }
-	    var li_label=li_node.find('span').text();
-	    var new_label=prompt("Введите текст заголовка",li_label);
-	    if( new_label!==null ){
+	    var li_label = li_node.find('span').text();
+	    var new_label = prompt("Введите текст заголовка", li_label);
+	    if (new_label !== null) {
 		li_node.find('span').text(new_label);
 	    }
 	},
-	saveUsedItems:function(){
-	    var deployment_id=this.current_dpl_id;
-	    var deployment_data={items:[],name:$("#spl_price_name").attr('value'),id:deployment_id};
-	    $(".used_items li").each(function(){
+	saveUsedItems: function () {
+	    var deployment_id = this.current_dpl_id;
+	    var deployment_data = {items: [], name: $("#spl_price_name").attr('value')||"Новый прайс", id: deployment_id};
+	    $(".used_items li").each(function () {
 		deployment_data.items.push({
-		    type:$(this).data('type'),
-		    id:$(this).data('id'),
-		    text:$(this).find('span').text()
+		    type: $(this).data('type'),
+		    id: $(this).data('id'),
+		    text: $(this).find('span').text()
 		});
 	    });
-	    $.post("plugin/stock_price_list/save/",{deployment_id:deployment_id,deployment_data:JSON.stringify(deployment_data)},function(ok){
+	    $.post("plugin/stock_price_list/save/", {deployment_id: deployment_id, deployment_data: JSON.stringify(deployment_data)}, function (ok) {
 		console.log(ok);
 	    });
 	},
-	list:{
-	    load:function(){
-		$.get('plugin/stock_price_list/listFetch',function(resp){
-		    var list=App.json(resp);
-		    App.renderTpl('spl_bar',{list:list});
-		});
+	list: {
+	    load: function () {
 	    }
 	}
     };
-    
+
 </script>
 <div id="price_list_templates" style="display: none">
     <li data-type="h1" class="h1"><span>Большой заголовок</span> <img src="img/edit-16.png" onclick="App.price_list.itemEdit(this)"></li>
     <li data-type="h2" class="h2"><span>Средний заголовок</span> <img src="img/edit-16.png" onclick="App.price_list.itemEdit(this)"></li>
     <li data-type="page" class="page">Произвольный текст <img src="img/edit-16.png" onclick="App.price_list.itemEdit(this)"></li>
 </div>
-<table cellpadding="0">
+<table style="width:1000px;margin-right: 30px;">
     <tr>
-	<td colspan="2" style="background-color: rgba(255,255,255,0.7);">
-	    <div id="spl_bar">
-		{{list}}
-		<div>{{name}}</div>
-		{{/list}}
+	<td style="vertical-align: top;width:180px">
+	    <div style="text-align: right;padding-right: 5px;">
+		<span class="icon-24 icon-create" title="Добавить" onclick="Leftovers.list.create();"> </span>
+		<span class="icon-24 icon-change" title="Изменить" onclick="Leftovers.list.edit();"> </span>
+		<span class="icon-24 icon-delete" title="Удалить" onclick="Leftovers.list.delete();"> </span>
+		<span class="icon-24 icon-refresh" title="Обновить" onclick="Leftovers.list.reload()"> </span>
 	    </div>
-	    <input type="text" id="spl_price_name" value="Новый прайс">
+	    <table class="easyui-datagrid" style="width:180px" title="Сохраненные прайсы" data-options="
+		   url:'plugin/stock_price_list/listFetch'">
+		<thead>
+		    <tr>
+			<th data-options="width:70,field:'date'">Дата</th>
+			<th data-options="width:108,field:'name'">Название</th>
+		    </tr>
+		</thead>
+	    </table>
 	</td>
-    </tr>
-    <tr>
-	<td style="vertical-align: top;">
-	    <ul class="connected available_items" style="width:200px">
+	<td style="vertical-align: top">
+	    <h1>Новый прайс <img src="img/edit-16.png" onclick="App.price_list.itemEdit(this)"></h1>
+	    <b>Блоки которые можно добавить</b>
+	    <ul class="connected available_items" style="width:100%">
 		<li data-id="121" data-type="category"><span>Item 1</span> <img src="img/edit-16.png" onclick="App.price_list.itemEdit(this)"></li>
 		<li data-id="121" data-type="category"><span>Item 1</span> <img src="img/edit-16.png" onclick="App.price_list.itemEdit(this)"></li>
 		<li data-id="121" data-type="category"><span>Item 1</span> <img src="img/edit-16.png" onclick="App.price_list.itemEdit(this)"></li>
 		<li data-id="121" data-type="category"><span>Item 1</span> <img src="img/edit-16.png" onclick="App.price_list.itemEdit(this)"></li>
 		<li data-id="121" data-type="category"><span>Item 1</span> <img src="img/edit-16.png" onclick="App.price_list.itemEdit(this)"></li>
 	    </ul>
-	</td>
-	<td style="vertical-align: top;">
-	    <ul class="connected used_items" style="width:400px">
-	    </ul>
+	    
+	    <div>
+		<b>Добавленные блоки</b>
+	    </div>
+	    
+	    <div>
+		<ul class="connected used_items" style="width:100%"></ul>
+	    </div>
 	</td>
     </tr>
 </table>
 <style>
-    #spl_bar{
-	padding: 5px;
-    }
-    #spl_bar div{
-	display: inline-block;
-	border-radius: 3px;
-	padding: 5px;
-	background-color: rgba(0,0,0,0.2);
-    }
     .connected li{
 	list-style: none;
 	border: 1px solid #CCC;
 	background: #fff;
-	margin: 5px;
+	margin: 2px;
 	padding: 5px;
 	height: 22px;
 	cursor: move;
     }
     .connected {
 	float: left;
-	padding: 15px;
-	min-height: 52px;
+	padding: 10px;
+	min-height: 42px;
 	background-color: rgba(0,0,0,0.2);
-	margin: 0px;
+	margin-bottom: 10px;
     }
     li.h1{
 	background-color: #fc0;
-	padding: 4px;
 	font-size: 18px;
     }
     li.h2{
@@ -140,6 +139,10 @@
     li.sortable-dragging{}
     .available_items img{
 	display: none;
+    }
+    .available_items li{
+	width:185px;
+	float: left;
     }
     .used_items img{
 	float:right;
