@@ -100,7 +100,13 @@ class Plugins {
 	    load_class('Model', 'core');
 	    include_once $plugin_main_file;
 	    try{
-		return new $plugin_system_name;
+		$plugin_class_instance=new $plugin_system_name;
+		
+		//do we really need this?
+		if( isset($this->Base) ){
+		    $plugin_class_instance->Base=$this->Base;
+		}
+		return $plugin_class_instance;
 	    } catch (Exception $ex) {
 		return false;
 	    }

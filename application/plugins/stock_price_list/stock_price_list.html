@@ -1,13 +1,26 @@
 <script src="js/jquery.sortable.js"></script>
+<script src="js/yellow-text/yellow-text.js"></script>
+<link rel="stylesheet" type="text/css" href="js/yellow-text/stylesheets/yellow-text-default.css" />
 <script>
     App.price_list = App.page_plugins_stock_price_list_stock_price_list = {
 	current_dpl_id: (new Date().getTime()),
 	init: function () {
-	    this.restoreLeftHeaders();
+	    //this.restoreLeftHeaders();
 	    $(function () {
+		//App.price_list.initDrag();
+		App.price_list.getDeployment(1463911365330);
+	    });
+	    //this.list.load();
+	},
+	getDeployment:function( deployment_id ){
+	    $.post("plugin/stock_price_list/getDeployment/", {deployment_id: deployment_id}, function (resp) {
+		var deployment=App.json(resp);
+		App.price_list.current_dpl_id=deployment_id;
+		App.renderTpl('price_list_availables',deployment);
+		App.renderTpl('price_list_deployment',deployment.deployment);
+		App.price_list.restoreLeftHeaders();
 		App.price_list.initDrag();
 	    });
-	    this.list.load();
 	},
 	initDrag: function () {
 	    $('.connected').sortable('destroy');
@@ -28,14 +41,15 @@
 	},
 	itemEdit: function (img_node) {
 	    var li_node = $(img_node).parent();
+	    var li_label = li_node.find('span').text();
 	    if (li_node.hasClass('page')) {
-		alert(555);
+		this.text.edit(li_label,li_node);
 		return;
 	    }
-	    var li_label = li_node.find('span').text();
 	    var new_label = prompt("Введите текст заголовка", li_label);
 	    if (new_label !== null) {
 		li_node.find('span').text(new_label);
+		App.price_list.saveUsedItems();
 	    }
 	},
 	saveUsedItems: function () {
@@ -52,16 +66,6 @@
 		console.log(ok);
 	    });
 	},
-	getDeployment:function( deployment_id ){
-	    $.post("plugin/stock_price_list/getDeployment/", {deployment_id: deployment_id}, function (deployment) {
-
-	    });
-	},
-	getAvailables:function(){
-	    $.post("plugin/stock_price_list/getAvailables/", function (deployment) {
-
-	    });	    
-	},
 	list: {
 	    create: function () {
 		
@@ -76,18 +80,31 @@
 	    },
 	    select:function(){
 		var row=$("#price_list_dg").datagrid('getSelected');
-		if( row && row.deployment_id ){
-		    App.price_list.getDeployment(row.deployment_id);
+		if( row && row.id ){
+		    App.price_list.getDeployment(row.id);
 		}
+	    }
+	},
+	text:{
+	    edit:function( li_label, li_node ){
+		this.current_node=li_node;
+		$("#price_list_wnd").show().window();
+		$("#price_list_txt").val(li_label);
+		$("#price_list_txt").YellowText();
+	    },
+	    save:function(){
+		this.current_node.find('span').html($("#price_list_txt").val());
+		App.price_list.saveUsedItems();
+		$("#price_list_wnd").window('close');
 	    }
 	}
     };
 
 </script>
 <div id="price_list_templates" style="display: none">
-    <li data-type="h1" class="h1"><span>Большой заголовок</span> <img src="img/edit-16.png" onclick="App.price_list.itemEdit(this)"></li>
-    <li data-type="h2" class="h2"><span>Средний заголовок</span> <img src="img/edit-16.png" onclick="App.price_list.itemEdit(this)"></li>
-    <li data-type="page" class="page">Произвольный текст <img src="img/edit-16.png" onclick="App.price_list.itemEdit(this)"></li>
+    <li data-type="h1" class="h1"><span>Большой заголовок</span> <img src="img/edit-16.png" onclick="App.price_list.itemEdit(this)" title="Изменить текст"></li>
+    <li data-type="h2" class="h2"><span>Средний заголовок</span> <img src="img/edit-16.png" onclick="App.price_list.itemEdit(this)" title="Изменить текст"></li>
+    <li data-type="page" class="page">Произвольный текст <img src="img/edit-16.png" onclick="App.price_list.itemEdit(this)" title="Изменить текст"></li>
 </div>
 <table style="width:1000px;margin-right: 30px;">
     <tr>
@@ -111,27 +128,45 @@
 	<td style="vertical-align: top">
 	    <div style="font-size:26px;border-bottom: 1px solid #999">
 		Новый прайс <img src="img/edit-16.png" onclick="App.price_list.itemEdit(this)">
-		<span style="float:right" class="icon-24 icon-print" title="Печать" onclick="Leftovers.list.out('.print')"> </span>
+		
+		<div style="float: right">
+		    <button onclick="App.price_list.print()"><img src="img/print.png"> Напечатать</button>
+		</div>
 	    </div>
 	    <b>Блоки которые можно добавить</b>
-	    <ul class="connected available_items" style="width:100%">
-		<li data-id="121" data-type="category"><span>Item 1</span> <img src="img/edit-16.png" onclick="App.price_list.itemEdit(this)"></li>
-		<li data-id="121" data-type="category"><span>Item 1</span> <img src="img/edit-16.png" onclick="App.price_list.itemEdit(this)"></li>
-		<li data-id="121" data-type="category"><span>Item 1</span> <img src="img/edit-16.png" onclick="App.price_list.itemEdit(this)"></li>
-		<li data-id="121" data-type="category"><span>Item 1</span> <img src="img/edit-16.png" onclick="App.price_list.itemEdit(this)"></li>
-		<li data-id="121" data-type="category"><span>Item 1</span> <img src="img/edit-16.png" onclick="App.price_list.itemEdit(this)"></li>
+	    <ul id="price_list_availables" class="connected available_items" style="width:100%">
+		{{availables}}
+		<li data-id="{{id}}" data-type="category" title="{{path}}">
+		    <span>{{text}}</span> ({{product_count}}) 
+		    <i>{{path}}</i>
+		</li>
+		{{/availables}}
 	    </ul>
 	    
 	    <div>
 		<b>Добавленные блоки</b>
 	    </div>
-	    
 	    <div>
-		<ul class="connected used_items" style="width:100%"></ul>
+		<ul id="price_list_deployment" class="connected used_items" style="width:100%">
+		    {{items}}
+			{{if type|equals>category}}
+			    <li data-id="{{id}}" data-type="category" title="{{path}}">
+				<span>{{text}}</span> ({{product_count}}) 
+				<i>{{path}}</i>
+			    </li>
+			{{else}}
+			    <li data-type="{{type}}" class="{{type}}"><img src="img/edit-16.png" onclick="App.price_list.itemEdit(this)"> <span>{{text}}</span></li>
+			{{/if}}
+		    {{/items}}
+		</ul>
 	    </div>
 	</td>
     </tr>
 </table>
+<div id="price_list_wnd" title="Редактор текста" data-options="width:650" style="text-align: center;display: none;padding: 10px">
+    <textarea id="price_list_txt" style=""></textarea>
+    <button onclick="App.price_list.text.save()"><img src="img/save-24.png"> Сохранить</button>
+</div>
 <style>
     .connected li{
 	list-style: none;
@@ -141,6 +176,7 @@
 	padding: 5px;
 	height: 22px;
 	cursor: move;
+	overflow: hidden;
     }
     .connected {
 	float: left;
@@ -169,17 +205,25 @@
 	display: none;
     }
     .available_items li{
-	width:185px;
+	width:186px;
 	float: left;
+    }
+    .available_items li i{
+	display: none;
     }
     .used_items img{
 	float:right;
 	padding: 2px;
+	cursor: pointer;
     }
     .used_items img:hover{
 	border: 1px solid #000;
 	border-radius: 3px;
 	margin: -1px;
 	background-color: #ddd;
+    }
+    .used_items li i{
+	display: inline;
+	color:#999;
     }
 </style>

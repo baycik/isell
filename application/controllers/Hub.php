@@ -1,5 +1,6 @@
 <?php
-include 'application/libraries/Plugins.php';
+set_include_path('.'.PATH_SEPARATOR.'application/');
+include 'libraries/Plugins.php';
 
 
 date_default_timezone_set('Europe/Kiev');
@@ -50,6 +51,7 @@ class Hub extends HubBase{
 	$plugin_name=$args[0];
 	$plugin_method=$args[1];
 	$plugin_method_args = array_slice($args, 2);
+	Plugins::instance()->Base=$this;
 	$response=Plugins::instance()->call_method($plugin_name, $plugin_method, $plugin_method_args);
 	$this->response($response);
     }

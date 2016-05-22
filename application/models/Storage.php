@@ -23,6 +23,9 @@ class Storage  extends CI_Model {
     }
     
     public function file_restore($path){
+	if( !file_exists($this->storageFolder."/".$path) ){
+	    return null;
+	}
 	return file_get_contents($this->storageFolder."/".$path);
     }
     
