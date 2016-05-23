@@ -7,12 +7,13 @@
 	init: function () {
 	    //this.restoreLeftHeaders();
 	    $(function () {
-		//App.price_list.initDrag();
-		App.price_list.getDeployment(1463911365330);
+		App.price_list.clear();
 	    });
 	    //this.list.load();
 	},
-	getDeployment:function( deployment_id ){
+	load:function( deployment_id ){
+	    $("#price_list_notloaded").hide();
+	    $("#price_list_loaded").show();
 	    $.post("plugin/stock_price_list/getDeployment/", {deployment_id: deployment_id}, function (resp) {
 		var deployment=App.json(resp);
 		App.price_list.current_dpl_id=deployment_id;
@@ -33,7 +34,7 @@
 	sortUpdate: function () {
 	    this.restoreLeftHeaders();
 	    this.initDrag();
-	    this.saveUsedItems();
+	    this.save();
 	},
 	restoreLeftHeaders: function () {
 	    $(".available_items .h1,.available_items .h2,.available_items .page").remove();
@@ -49,12 +50,13 @@
 	    var new_label = prompt("Введите текст заголовка", li_label);
 	    if (new_label !== null) {
 		li_node.find('span').text(new_label);
-		App.price_list.saveUsedItems();
+		return App.price_list.save();
 	    }
 	},
-	saveUsedItems: function () {
+	save: function () {
 	    var deployment_id = this.current_dpl_id;
-	    var deployment_data = {items: [], name: $("#spl_price_name").attr('value')||"Новый прайс", id: deployment_id};
+	    var deployment_data = {items: [], name: $("#price_list_name").text(), id: deployment_id};
+	    $("#price_list_drag_msg").remove();
 	    $(".used_items li").each(function () {
 		deployment_data.items.push({
 		    type: $(this).data('type'),
@@ -62,18 +64,36 @@
 		    text: $(this).find('span').text()
 		});
 	    });
-	    $.post("plugin/stock_price_list/save/", {deployment_id: deployment_id, deployment_data: JSON.stringify(deployment_data)}, function (ok) {
-		console.log(ok);
+	    return $.post("plugin/stock_price_list/save/", {deployment_id: deployment_id, deployment_data: JSON.stringify(deployment_data)}, function (ok) {
+		if(ok*1){
+		    App.flash(deployment_data.name+ " сохранен");
+		}
 	    });
+	},
+	clear:function(){
+	    $("#price_list_notloaded").show();
+	    $("#price_list_loaded").hide();
+	    $(".used_items").html('<h2 id="price_list_drag_msg">Перетащите сюда мышкой блоки</h2>');
+	    App.price_list.current_dpl_id=0;
 	},
 	list: {
 	    create: function () {
-		
+		var name=prompt("Введите название нового прайс-листа","Новый прайс-лист");
+		if( name && name.length>0 ){
+		    App.price_list.current_dpl_id=(new Date().getTime());
+		    $("#price_list_name").text(name);
+		    $(".used_items").html('');
+		    App.price_list.save().then(function(){
+			App.price_list.load(App.price_list.current_dpl_id);
+			$('#price_list_dg').datagrid('reload');
+		    });
+		}
 	    },
-	    delete: function(){
+	    remove: function(){
 		var row=$("#price_list_dg").datagrid('getSelected');
-		if( row && row.deployment_id && confirm("Удалить прайс-лист?") ){
-		    $.post("plugin/stock_price_list/delete/", {deployment_id: row.deployment_id}, function (ok) {
+		if( row && row.id && confirm("Удалить прайс-лист?") ){
+		    $.post("plugin/stock_price_list/remove/", {deployment_id: row.id}, function (ok) {
+			App.price_list.clear();
 			$('#price_list_dg').datagrid('reload');
 		    });
 		}
@@ -81,7 +101,7 @@
 	    select:function(){
 		var row=$("#price_list_dg").datagrid('getSelected');
 		if( row && row.id ){
-		    App.price_list.getDeployment(row.id);
+		    App.price_list.load(row.id);
 		}
 	    }
 	},
@@ -94,7 +114,7 @@
 	    },
 	    save:function(){
 		this.current_node.find('span').html($("#price_list_txt").val());
-		App.price_list.saveUsedItems();
+		App.price_list.save();
 		$("#price_list_wnd").window('close');
 	    }
 	}
@@ -106,58 +126,63 @@
     <li data-type="h2" class="h2"><span>Средний заголовок</span> <img src="img/edit-16.png" onclick="App.price_list.itemEdit(this)" title="Изменить текст"></li>
     <li data-type="page" class="page">Произвольный текст <img src="img/edit-16.png" onclick="App.price_list.itemEdit(this)" title="Изменить текст"></li>
 </div>
-<table style="width:1000px;margin-right: 30px;">
+<table style="width:1200px;margin-right: 30px;">
     <tr>
-	<td style="vertical-align: top;width:180px">
+	<td style="vertical-align: top;width:250px">
 	    <div style="text-align: right;padding-right: 5px;">
 		<span class="icon-24 icon-create" title="Добавить" onclick="App.price_list.list.create();"> </span>
-		<span class="icon-24 icon-delete" title="Удалить" onclick="App.price_list.list.delete();"> </span>
+		<span class="icon-24 icon-delete" title="Удалить" onclick="App.price_list.list.remove();"> </span>
 		<span class="icon-24 icon-refresh" title="Обновить" onclick="$('#price_list_dg').datagrid('reload')"> </span>
 	    </div>
-	    <table class="easyui-datagrid" style="width:180px" id="price_list_dg" title="Сохраненные прайсы" data-options="
+	    <table class="easyui-datagrid" style="width:250px" id="price_list_dg" title="Сохраненные прайсы" data-options="
 		   url:'plugin/stock_price_list/listFetch',
 		   onSelect:App.price_list.list.select">
 		<thead>
 		    <tr>
 			<th data-options="width:70,field:'date'">Дата</th>
-			<th data-options="width:108,field:'name'">Название</th>
+			<th data-options="width:178,field:'name'">Название</th>
 		    </tr>
 		</thead>
 	    </table>
 	</td>
 	<td style="vertical-align: top">
-	    <div style="font-size:26px;border-bottom: 1px solid #999">
-		Новый прайс <img src="img/edit-16.png" onclick="App.price_list.itemEdit(this)">
-		
-		<div style="float: right">
-		    <button onclick="App.price_list.print()"><img src="img/print.png"> Напечатать</button>
+	    <div id="price_list_notloaded" style="padding: 10px;min-height: 42px;background-color: rgba(0,0,0,0.2);text-align: center">
+		<h1>Модель прайс-листа не загружена</h1>
+		<h2>Вы можете создать новый или загрузить сохраненный прайс</h2>
+		<button onclick="App.price_list.list.create();"><img src="img/edit_add.png"> Создать прайс-лист</button>
+	    </div>
+	    <div id="price_list_loaded" style="display: none">
+		<div style="font-size:26px;border-bottom: 1px solid #999">
+		    <span id="price_list_name">---</span> <img src="img/edit-16.png" onclick="App.price_list.itemEdit(this).then(function(){$('#price_list_dg').datagrid('reload')});">
+		    <div style="float: right">
+			<button onclick="App.price_list.print()"><img src="img/print.png"> Напечатать</button>
+		    </div>
 		</div>
-	    </div>
-	    <b>Блоки которые можно добавить</b>
-	    <ul id="price_list_availables" class="connected available_items" style="width:100%">
-		{{availables}}
-		<li data-id="{{id}}" data-type="category" title="{{path}}">
-		    <span>{{text}}</span> ({{product_count}}) 
-		    <i>{{path}}</i>
-		</li>
-		{{/availables}}
-	    </ul>
-	    
-	    <div>
-		<b>Добавленные блоки</b>
-	    </div>
-	    <div>
-		<ul id="price_list_deployment" class="connected used_items" style="width:100%">
-		    {{items}}
-			{{if type|equals>category}}
-			    <li data-id="{{id}}" data-type="category" title="{{path}}">
-				<span>{{text}}</span> ({{product_count}}) 
-				<i>{{path}}</i>
-			    </li>
-			{{else}}
-			    <li data-type="{{type}}" class="{{type}}"><img src="img/edit-16.png" onclick="App.price_list.itemEdit(this)"> <span>{{text}}</span></li>
-			{{/if}}
-		    {{/items}}
+		<div>
+		    <b>Добавленные блоки</b>
+		</div>
+		<div>
+		    <ul id="price_list_deployment" class="connected used_items" style="width:100%">
+			{{items}}
+			    {{if type|equals>category}}
+				<li data-id="{{id}}" data-type="category" title="{{path}}">
+				    <span>{{text}}</span> ({{product_count}}) 
+				    <i>{{path}}</i>
+				</li>
+			    {{else}}
+				<li data-type="{{type}}" class="{{type}}"><img src="img/edit-16.png" onclick="App.price_list.itemEdit(this)"> <span>{{text}}</span></li>
+			    {{/if}}
+			{{/items}}
+		    </ul>
+		</div>
+		<b>Блоки которые можно добавить</b>
+		<ul id="price_list_availables" class="connected available_items" style="width:100%">
+		    {{availables}}
+		    <li data-id="{{id}}" data-type="category" title="{{path}}">
+			<span>{{text}}</span> ({{product_count}}) 
+			<i>{{path}}</i>
+		    </li>
+		    {{/availables}}
 		</ul>
 	    </div>
 	</td>
@@ -177,6 +202,7 @@
 	height: 22px;
 	cursor: move;
 	overflow: hidden;
+	white-space: nowrap;
     }
     .connected {
 	float: left;
@@ -205,11 +231,8 @@
 	display: none;
     }
     .available_items li{
-	width:186px;
+	width:218px;
 	float: left;
-    }
-    .available_items li i{
-	display: none;
     }
     .used_items img{
 	float:right;
@@ -222,8 +245,9 @@
 	margin: -1px;
 	background-color: #ddd;
     }
-    .used_items li i{
+    .connected li i{
 	display: inline;
 	color:#999;
+	
     }
 </style>

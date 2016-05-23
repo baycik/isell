@@ -31,6 +31,11 @@ class Stock_price_list extends Catalog{
 	$this->load->model('Storage');
 	return $this->Storage->file_restore('stock_price_list/deployments/'.$deployment_id.'.json');	
     }
+    public function remove(){
+	$deployment_id=$this->input->get_post('deployment_id');
+	$this->load->model('Storage');
+	return $this->Storage->file_remove('stock_price_list/deployments/'.$deployment_id.'.json');	
+    }
     public function listFetch(){
 	$this->load->model('Storage');
 	$dep_files=$this->Storage->file_list('stock_price_list/deployments/');

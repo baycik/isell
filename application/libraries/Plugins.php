@@ -163,12 +163,12 @@ class Plugins {
     }
     
     public function call_method($plugin_name, $plugin_method, $plugin_method_args){
-	try{
-	    $Plugin=$this->include_plugin($plugin_name);
+	$Plugin=$this->include_plugin($plugin_name);
+	if( method_exists($Plugin, $plugin_method) ){
 	    return call_user_func_array([$Plugin,$plugin_method], $plugin_method_args);
-	} catch (Exception $ex) {
-	    return $ex;
 	}
+	show_error('X-isell--plugin-error: method_not_found!', 500);
+	return null;
     }
 }
 
