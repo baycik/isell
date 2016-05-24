@@ -36,7 +36,7 @@ class Events extends Catalog{
 		event_list
 	    WHERE
 		DATE(event_date)='$date' AND event_label<>'chat' $label_filter
-	    ORDER BY event_label,event_priority IS NULL,event_priority";
+	    ORDER BY event_label,event_priority IS NULL,event_priority,event_target";
 	return $this->get_list($sql);
     }
     
