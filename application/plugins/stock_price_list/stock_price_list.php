@@ -99,6 +99,10 @@ class Stock_price_list extends Catalog{
 	    ORDER BY path";
 	return $this->get_list($sql);
     }
+    
+    public function printout(){
+	$deployment=$this->getDeployment();
+    }
 }
 
 

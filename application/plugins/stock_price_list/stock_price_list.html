@@ -3,32 +3,19 @@
 <link rel="stylesheet" type="text/css" href="js/yellow-text/stylesheets/yellow-text-default.css" />
 <script>
     App.price_list = App.page_plugins_stock_price_list_stock_price_list = {
-	current_dpl_id: (new Date().getTime()),
+	current_dpl_id: 0,
 	init: function () {
-	    //this.restoreLeftHeaders();
-	    $(function () {
-		App.price_list.clear();
-	    });
-	    //this.list.load();
-	},
-	load:function( deployment_id ){
-	    $("#price_list_notloaded").hide();
-	    $("#price_list_loaded").show();
-	    $.post("plugin/stock_price_list/getDeployment/", {deployment_id: deployment_id}, function (resp) {
-		var deployment=App.json(resp);
-		App.price_list.current_dpl_id=deployment_id;
-		App.renderTpl('price_list_availables',deployment);
-		App.renderTpl('price_list_deployment',deployment.deployment);
-		App.price_list.restoreLeftHeaders();
-		App.price_list.initDrag();
-	    });
+	    
 	},
 	initDrag: function () {
 	    $('.connected').sortable('destroy');
 	    $('.connected').sortable({
 		connectWith: '.connected'
 	    }).one('sortupdate', function (e, ui) {
-		App.price_list.sortUpdate();
+		clearTimeout(App.price_list.clock);
+		App.price_list.clock=setTimeout(function(){
+		    App.price_list.sortUpdate();
+		},500);
 	    });
 	},
 	sortUpdate: function () {
@@ -53,9 +40,28 @@
 		return App.price_list.save();
 	    }
 	},
+	load:function( deployment_id ){
+	    $("#price_list_notloaded").hide();
+	    $("#price_list_loaded").show();
+	    $.post("plugin/stock_price_list/getDeployment/", {deployment_id: deployment_id}, function (resp) {
+		var deployment=App.json(resp);
+		$("#price_list_name").html(deployment.deployment.name);
+		App.renderTpl('price_list_availables',deployment);
+		App.renderTpl('price_list_deployment',deployment.deployment);
+		App.price_list.current_dpl_id=deployment_id;
+		App.price_list.restoreLeftHeaders();
+		App.price_list.initDrag();
+	    });
+	},
+	clear:function(){
+	    $("#price_list_notloaded").show();
+	    $("#price_list_loaded").hide();
+	    $(".used_items").html('<h2 id="price_list_drag_msg">Перетащите мышкой сюда блоки</h2>');
+	    App.price_list.current_dpl_id=0;
+	},
 	save: function () {
 	    var deployment_id = this.current_dpl_id;
-	    var deployment_data = {items: [], name: $("#price_list_name").text(), id: deployment_id};
+	    var deployment_data = {items: [], name: $("#price_list_name").html(), id: deployment_id};
 	    $("#price_list_drag_msg").remove();
 	    $(".used_items li").each(function () {
 		deployment_data.items.push({
@@ -70,11 +76,10 @@
 		}
 	    });
 	},
-	clear:function(){
-	    $("#price_list_notloaded").show();
-	    $("#price_list_loaded").hide();
-	    $(".used_items").html('<h2 id="price_list_drag_msg">Перетащите сюда мышкой блоки</h2>');
-	    App.price_list.current_dpl_id=0;
+	print:function(){
+	    $.post("plugin/stock_price_list/printout/",{deployment_id: this.current_dpl_id},function(resp){
+		
+	    });
 	},
 	list: {
 	    create: function () {
@@ -119,12 +124,11 @@
 	    }
 	}
     };
-
 </script>
 <div id="price_list_templates" style="display: none">
-    <li data-type="h1" class="h1"><span>Большой заголовок</span> <img src="img/edit-16.png" onclick="App.price_list.itemEdit(this)" title="Изменить текст"></li>
-    <li data-type="h2" class="h2"><span>Средний заголовок</span> <img src="img/edit-16.png" onclick="App.price_list.itemEdit(this)" title="Изменить текст"></li>
-    <li data-type="page" class="page">Произвольный текст <img src="img/edit-16.png" onclick="App.price_list.itemEdit(this)" title="Изменить текст"></li>
+    <li data-type="h1" class="h1"> <img src="img/edit-16.png" onclick="App.price_list.itemEdit(this)" title="Изменить текст"><span>Большой заголовок</span></li>
+    <li data-type="h2" class="h2"> <img src="img/edit-16.png" onclick="App.price_list.itemEdit(this)" title="Изменить текст"><span>Средний заголовок</span></li>
+    <li data-type="page" class="page"> <img src="img/edit-16.png" onclick="App.price_list.itemEdit(this)" title="Изменить текст">Произвольный текст</li>
 </div>
 <table style="width:1200px;margin-right: 30px;">
     <tr>
@@ -147,13 +151,13 @@
 	</td>
 	<td style="vertical-align: top">
 	    <div id="price_list_notloaded" style="padding: 10px;min-height: 42px;background-color: rgba(0,0,0,0.2);text-align: center">
-		<h1>Модель прайс-листа не загружена</h1>
+		<h1>Прайс-лист не загружен</h1>
 		<h2>Вы можете создать новый или загрузить сохраненный прайс</h2>
 		<button onclick="App.price_list.list.create();"><img src="img/edit_add.png"> Создать прайс-лист</button>
 	    </div>
 	    <div id="price_list_loaded" style="display: none">
 		<div style="font-size:26px;border-bottom: 1px solid #999">
-		    <span id="price_list_name">---</span> <img src="img/edit-16.png" onclick="App.price_list.itemEdit(this).then(function(){$('#price_list_dg').datagrid('reload')});">
+		    <span id="price_list_name">---</span> <img src="img/edit-16.png" onclick="App.price_list.itemEdit(this).then(function(){$('#price_list_dg').datagrid('reload');});">
 		    <div style="float: right">
 			<button onclick="App.price_list.print()"><img src="img/print.png"> Напечатать</button>
 		    </div>
