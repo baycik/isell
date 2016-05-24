@@ -204,6 +204,7 @@ EventsJs={
 		    <span class="icon-24 icon-change" title="Изменить" onclick="EventsJs.tile.edit();"> </span>
 		    <span class="icon-24 icon-delete" title="Удалить" onclick="EventsJs.tile.delete();"> </span>
 		    <span class="icon-24" style="background-image: url(img/big_rightarrow.png);background-repeat: no-repeat;background-size: 24px 24px;" title="Перенести на другую дату" onclick="EventsJs.tile.move(this);"> </span>
+		    <span class="icon-24 icon-reload" title="Обновить" onclick="EventsJs.tile.load();"> </span>
 		    <span class="icon-24 icon-print" title="Печать" onclick="EventsJs.tile.out($(this).parent().data('header'),'.print');"> </span>
 		</div>
 		<span style="font-size:18px;font-weight: bold">
