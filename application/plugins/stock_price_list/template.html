@@ -1,0 +1,46 @@
+
+<div class="page">
+    <table border>
+    {loop name="v->price_blocks"}
+	{if="$value->type=='category'"}
+	    {loop name="$value->rows"}
+	    <tr>
+		<td class="product_code">{$value->product_code}</td>
+		<td class="product_name">{$value->product_name}</td>
+		<td class="product_price">{$value->product_price}</td>
+	    </tr>
+	    {/loop}
+	{else}
+	    <tr>
+		<td colspan="3" class="{$value->type}">{$value->text}</td>
+	    </tr>
+	{/if}
+    {/loop}
+    </table>
+</div>
+<style>
+    .product_code{
+	width:100px;
+    }
+    .product_name{
+	width:300px;
+    }
+    .product_price{
+	width:50px;
+	text-align: right;
+    }
+    .h1{
+	background-color: #fc0;
+	font-size: 18px;
+    }
+    .h2{
+	background-color: #FF9;
+	font-size: 14px;
+    }
+    table{
+	border-collapse: collapse;
+    }
+    table td{
+	padding: 2px;
+    }
+</style>

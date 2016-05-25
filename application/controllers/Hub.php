@@ -18,7 +18,7 @@ class Hub extends HubBase{
 		$response=call_user_func_array(array($this->{$model}, $method),$method_args);
 		$this->response($response);
 	    } catch (Exception $ex) {
-		show_error("X-isell-error: Such module function '$model->$method' not found!", 500);
+		show_error("X-isell-error: Such module function '$model->$method' not found or other error occured!\n\n".$ex, 500);
 	    }
 	}
 	else {

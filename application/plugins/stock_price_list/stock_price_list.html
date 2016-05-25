@@ -77,9 +77,7 @@
 	    });
 	},
 	print:function(){
-	    $.post("plugin/stock_price_list/printout/",{deployment_id: this.current_dpl_id},function(resp){
-		
-	    });
+	    window.open("plugin/stock_price_list/printout/?out_type=.print&deployment_id="+this.current_dpl_id,'print_tab');
 	},
 	list: {
 	    create: function () {

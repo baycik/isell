@@ -46,8 +46,11 @@ class Stock_price_list extends Catalog{
 	}
 	return $dep_list;
     }
-    public function getDeployment(){
-	$deployment_id=$this->input->get_post('deployment_id');
+    public function getDeployment( $deployment_id=null ){
+	if( !$deployment_id ){
+	    $deployment_id=$this->input->get_post('deployment_id');
+	}
+	
 	$this->load->model('Storage');
 	$availables=$this->getAvailables();
 	$deployment=$this->Storage->json_restore('stock_price_list/deployments/'.$deployment_id.'.json');
@@ -100,8 +103,53 @@ class Stock_price_list extends Catalog{
 	return $this->get_list($sql);
     }
     
+    private function fillPriceBlocks( $block ){
+	if( $block->type!='category' ){
+	    return $block;
+	}
+	$sql="SELECT
+		product_code,
+		ru product_name,
+		ROUND(sell,2) product_price,
+		product_quantity<>0 in_stock
+	    FROM
+		stock_entries
+		    JOIN
+		price_list USING(product_code)
+		    JOIN
+		prod_list USING(product_code)
+	    WHERE
+		parent_id='{$block->id}'";
+	$block->rows=$this->get_list($sql);
+	return $block;
+    }
+    
     public function printout(){
-	$deployment=$this->getDeployment();
+	$deployment_id=$this->input->get_post('deployment_id');
+	$out_type=$this->input->get_post('out_type');
+	$deployment=$this->getDeployment($deployment_id);
+	if( !$deployment['deployment'] ){
+	    return 'price is empty';
+	}
+	
+	$price_blocks=[];
+	foreach( $deployment['deployment']->items as $block ){
+	    $price_blocks[]=$this->fillPriceBlocks($block);
+	}
+	
+	$dump=[
+	    'tpl_files_folder'=>"../plugins/stock_price_list/",
+	    'tpl_files'=>"template.html",
+	    'title'=>"Прайс-лист",
+	    'view'=>[
+		'price_blocks'=>$price_blocks
+	    ]
+	];
+	
+	
+	$ViewManager=$this->Base->load_model('ViewManager');
+	$ViewManager->store($dump);
+	$ViewManager->outRedirect($out_type);
     }
 }
 
