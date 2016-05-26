@@ -142,6 +142,9 @@ App.toDmy = function (iso) {
 App.today = function () {
     return App.toDmy(new Date());
 };
+App.calc=function( expression ){
+    return eval(expression.toString().replace(/,/g,'.').match( /[\(\d\.\)\*\/\+-]*/ ).toString()) || 0;
+};
 App.formatNum = function (num, mode) {
     if (num === undefined || num === null || mode === 'clear' && num * 1 === 0) {
 	return '';

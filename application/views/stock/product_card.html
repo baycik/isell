@@ -6,7 +6,7 @@
 	init: function () {
 	    this.node.window({
 		title: 'Товарная карточка',
-		width: 780,
+		width: 800,
                 top:50,
 		height: 'auto',
 		shadow:false,
@@ -90,15 +90,42 @@
 	    var is_service=App.val("#product_card_srv_chk");
 	    this.node.find('.only_product_props input').attr('disabled',is_service?'disabled':null);
 	},
-        parsePrice:function( node ){
-            node.value=eval(node.value.toString().replace(',','.').match( /[\(\d\.\)\*\/\+-]*/ ).toString()) || 0;
+	up:function(filelist){
+	    if( filelist.length ){
+                App.page_dialog_backup.throbber(1);
+		var url = 'Maintain/backupUp/';
+		var xhr = new XMLHttpRequest();
+		var fd = new FormData();
+		xhr.open("POST", url, true);
+		xhr.onreadystatechange = function() {
+		    if (xhr.readyState == 4 && xhr.status == 200) {
+			if( xhr.responseText=='uploaded1' ){
+			    $('#page_dialog_backup_dg').datagrid('reload');
+                            App.flash("Файл загружен.");
+			} else {
+			    App.flash("Не удалось загрузить "+xhr.responseText);
+			}
+                        App.page_dialog_backup.throbber(0);
+		    }
+		};
+		fd.append("upload_file", filelist[0]);
+		xhr.send(fd);
+	    }
+	},
+        throbber:function(show){
+            show?$("#backup_throbber").show():$("#backup_throbber").hide();
         }
     };
 </script>
 <form id="page_stock_product_card_frm" onsubmit="App.page_stock_product_card.submit(event)">
     <input type="hidden" name="product_code">
-    <div class="inp_group" style="width: 420px;vertical-align: top">
-	<img src="img/product.png" style="float:left;width:100px;height: auto" />
+    <div class="inp_group" style="width: 450px;vertical-align: top">
+	<div style="float:left;width:120px;height:120px;border:solid 1px #000">
+	    <img src="img/product.png" style="width:100px;height:auto;border:solid 1px #000" />
+	    
+	    <button class="tiny_button">Загрузить</button>
+	</div>
+	
 	<input name="is_service" title="Услуга" type="checkbox" id="product_card_srv_chk" onclick="App.page_stock_product_card.serviceCheck(this)">
 	<input class="easyui-combobox" name="parent_id" id="Stock_parent_id" title="Категория" data-options="
 		valueField: 'branch_id',
@@ -116,9 +143,17 @@
 		">
 	<input name="product_code_new" title="Код" required="required">
 	<input name="product_unit" title="Единица" required="required">
-	<input name="ru" title="Название Рус" style="width:300px" required="required">
-	<input name="ua" title="Название Укр" style="width:300px">
-	<input name="en" title="Название Англ" style="width:300px">
+	<input name="ru" title="Название Рус" style="width:320px" required="required">
+	<input name="ua" title="Название Укр" style="width:320px">
+	<input name="en" title="Название Англ" style="width:320px">
+	<div class="inp_rule">Цены на товар</div>
+	    <input name="sell" title="Продажа" onchange="this.value=App.calc(this.value)" class="icon-calc16" style="background-position: right">
+	    <input name="buy" title="Покупка" onchange="this.value=App.calc(this.value)" class="icon-calc16" style="background-position: right">
+	    <select name="curr_code" title="Валюта">
+		<option value="UAH">UAH Гривна</option>
+		<option value="USD">USD Доллар</option>
+		<option value="RUB">RUB Рубль</option>
+	    </select>
     </div>
     <div class="inp_group only_product_props" style="width: 320px;vertical-align: top">
 	<input name="product_wrn_quantity" title="Мин. кол-во">
@@ -129,27 +164,12 @@
 	<input name="product_uktzet" title="Тамож. код">
 	<input name="barcode" title="Штрихкод">
 	<input name="party_label" title="Партия">
-    </div>
-    <div class="inp_group" style="width: 320px;vertical-align: top;">
-	<fieldset style="width: 300px;">
-	    <legend>Цены на товар</legend>
-            <input name="sell" title="Продажа" onchange="App.page_stock_product_card.parsePrice(this)" class="icon-calc16" style="background-position: right">
-	    <input name="buy" title="Покупка" onchange="App.page_stock_product_card.parsePrice(this)" class="icon-calc16" style="background-position: right">
-	    <select name="curr_code" title="Валюта">
-		<option value="UAH">UAH Гривна</option>
-		<option value="USD">USD Доллар</option>
-		<option value="RUB">RUB Рубль</option>
-	    </select>
-	</fieldset>
-    </div>
-    <div class="inp_group" style="width: 320px;vertical-align: top;margin-right: 15px;float:right">
-	<fieldset style="width: 300px;">
-	    <legend>Аналитика</legend>
-	    <input name="analyse_type" title="Тип">
-	    <input name="analyse_group" title="Группа">
-	    <input name="analyse_class" title="Класс">
-	    <input name="analyse_section" title="Раздел">
-	</fieldset>
+	
+	<div class="inp_rule">Аналитика</div>
+	<input name="analyse_type" title="Тип">
+	<input name="analyse_group" title="Бренд">
+	<input name="analyse_class" title="Класс">
+	<input name="analyse_section" title="Артикул">
     </div>
     <div style="text-align: center;margin-top: 15px;clear: both">
         <button type="submit" onclick="App.page_stock_product_card.closeOnSave=true;"><img src="img/Save-24.png" /> Сохранить</button>
