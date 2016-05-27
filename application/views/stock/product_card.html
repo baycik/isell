@@ -90,42 +90,56 @@
 	    var is_service=App.val("#product_card_srv_chk");
 	    this.node.find('.only_product_props input').attr('disabled',is_service?'disabled':null);
 	},
-	up:function(filelist){
-	    if( filelist.length ){
-                App.page_dialog_backup.throbber(1);
-		var url = 'Maintain/backupUp/';
-		var xhr = new XMLHttpRequest();
-		var fd = new FormData();
-		xhr.open("POST", url, true);
-		xhr.onreadystatechange = function() {
-		    if (xhr.readyState == 4 && xhr.status == 200) {
-			if( xhr.responseText=='uploaded1' ){
-			    $('#page_dialog_backup_dg').datagrid('reload');
-                            App.flash("Файл загружен.");
-			} else {
-			    App.flash("Не удалось загрузить "+xhr.responseText);
-			}
-                        App.page_dialog_backup.throbber(0);
+	img:{
+	    up:function(filelist){
+		if( filelist.length ){
+		    if( $("input[name=product_img]").val() ){
+			App.page_stock_product_card.img.remove();
 		    }
-		};
-		fd.append("upload_file", filelist[0]);
-		xhr.send(fd);
+		    var file_name=filelist[0].name;//(new Date()).getTime()+'.'+filelist[0].name.split('.').pop();
+		    $("input[name=product_img]").val(file_name);
+		    
+		    var url = 'Storage/upload/prodImg/';
+		    var xhr = new XMLHttpRequest();
+		    var fd = new FormData();
+		    xhr.open("POST", url, true);
+		    xhr.onreadystatechange = function() {
+			if (xhr.readyState === 4 && xhr.status === 200) {
+			    if( xhr.responseText==='uploaded1' ){
+				App.flash("Файл загружен.");
+			    } else {
+				App.flash("Не удалось загрузить "+xhr.responseText);
+			    }
+			}
+		    };
+		    fd.append("upload_file", filelist[0]);
+		    xhr.send(fd);
+		}
+	    },
+	    remove:function(){
+		var file_name=$("input[name=product_img]").val();
+		$.post('Storage/file_remove/prodImg/'+file_name,function(ok){
+		    if(ok*1){
+			App.flash("Файл удален");
+		    }
+		});
 	    }
-	},
-        throbber:function(show){
-            show?$("#backup_throbber").show():$("#backup_throbber").hide();
-        }
+	}
+	
     };
 </script>
 <form id="page_stock_product_card_frm" onsubmit="App.page_stock_product_card.submit(event)">
+    <input name="product_img" title="img" type="hidden">
     <input type="hidden" name="product_code">
     <div class="inp_group" style="width: 450px;vertical-align: top">
-	<div style="float:left;width:120px;height:120px;border:solid 1px #000">
-	    <img src="img/product.png" style="width:100px;height:auto;border:solid 1px #000" />
-	    
-	    <button class="tiny_button">Загрузить</button>
+	<div style="position: relative;float:left;width:130px;height:120px;border:solid 1px #000;">
+	    <input type="file" id="page_stock_product_card_file" accept="image/*" style="display:none" onchange="App.page_stock_product_card.img.up(this.files)">
+	    <img src="img/product.png" style="width:130px;height:auto;max-height:120px;" />
+	    <div style="position: absolute;bottom:1px;right:2px;">
+		<button class="tiny_button" type="button" title="Отправить файл" onclick="$('#page_stock_product_card_file').click();">Загрузить</button>
+		<button class="tiny_button" type="button" title="Удалить файл" onclick="App.page_stock_product_card.img.remove()">Удалить</button>		
+	    </div>
 	</div>
-	
 	<input name="is_service" title="Услуга" type="checkbox" id="product_card_srv_chk" onclick="App.page_stock_product_card.serviceCheck(this)">
 	<input class="easyui-combobox" name="parent_id" id="Stock_parent_id" title="Категория" data-options="
 		valueField: 'branch_id',
@@ -143,9 +157,9 @@
 		">
 	<input name="product_code_new" title="Код" required="required">
 	<input name="product_unit" title="Единица" required="required">
-	<input name="ru" title="Название Рус" style="width:320px" required="required">
-	<input name="ua" title="Название Укр" style="width:320px">
-	<input name="en" title="Название Англ" style="width:320px">
+	<input name="ru" title="Название Рус" style="width:330px" required="required">
+	<input name="ua" title="Название Укр" style="width:330px">
+	<input name="en" title="Название Англ" style="width:330px">
 	<div class="inp_rule">Цены на товар</div>
 	    <input name="sell" title="Продажа" onchange="this.value=App.calc(this.value)" class="icon-calc16" style="background-position: right">
 	    <input name="buy" title="Покупка" onchange="this.value=App.calc(this.value)" class="icon-calc16" style="background-position: right">

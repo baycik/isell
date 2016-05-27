@@ -56,6 +56,7 @@ class Stock extends Catalog {
 		se.party_label,
 		se.product_quantity,
 		se.product_wrn_quantity,
+		se.product_img,
 		se.self_price
 	    FROM
 		stock_entries se
@@ -136,6 +137,7 @@ class Stock extends Catalog {
 	    'product_code'=>$product_code,
 	    'parent_id'=>$this->request('parent_id','int'),
 	    'product_wrn_quantity'=>$this->request('product_wrn_quantity','int'),
+	    'product_img'=>$this->request('product_img'),
 	    'party_label'=>$this->request('party_label')
 	];
 	$stock_entries_set=$this->makeSet($stock_entries);
