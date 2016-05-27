@@ -1022,6 +1022,8 @@ DELIMITER ;
 /*!50003 SET collation_connection  = @saved_col_connection */ ;
 ALTER DATABASE `isell_db` CHARACTER SET utf8 COLLATE utf8_general_ci ;
 
+ALTER TABLE `stock_entries` 
+ADD COLUMN `product_img` VARCHAR(45) NULL AFTER `product_wrn_quantity`;
 --
 -- Final view structure for view `stat_sell_analyse`
 --
