@@ -40,6 +40,7 @@
 	    $("#Stock_parent_id").combobox('setValue',App.page_stock_product_card.data.parent_id);
 	    $("#Stock_parent_id").combobox('setText',App.page_stock_product_card.data.parent_label);
 	    this.serviceCheck();
+	    this.img.load();
 	},
 	categoryLoader:function(param, success, error){
 	    if( param.q===undefined ){
@@ -91,13 +92,21 @@
 	    this.node.find('.only_product_props input').attr('disabled',is_service?'disabled':null);
 	},
 	img:{
+	    load:function(){
+		var file_name=$("input[name=product_img]").val()?'Storage/image_get/130x120/prodImg/'+$("input[name=product_img]").val():"img/product.png";
+		$("#page_stock_product_card_thumb").attr('src',file_name);
+		console.log(file_name);
+	    },
 	    up:function(filelist){
 		if( filelist.length ){
+		    if( filelist[0].type.indexOf('image')===-1 ){
+			alert("Файл должен быть изображением");
+			return false;
+		    }
 		    if( $("input[name=product_img]").val() ){
 			App.page_stock_product_card.img.remove();
 		    }
 		    var file_name=filelist[0].name;//(new Date()).getTime()+'.'+filelist[0].name.split('.').pop();
-		    $("input[name=product_img]").val(file_name);
 		    
 		    var url = 'Storage/upload/prodImg/';
 		    var xhr = new XMLHttpRequest();
@@ -107,6 +116,8 @@
 			if (xhr.readyState === 4 && xhr.status === 200) {
 			    if( xhr.responseText==='uploaded1' ){
 				App.flash("Файл загружен.");
+				$("input[name=product_img]").val(file_name);
+				App.page_stock_product_card.img.load();
 			    } else {
 				App.flash("Не удалось загрузить "+xhr.responseText);
 			    }
@@ -118,9 +129,11 @@
 	    },
 	    remove:function(){
 		var file_name=$("input[name=product_img]").val();
+		$("input[name=product_img]").val('');
 		$.post('Storage/file_remove/prodImg/'+file_name,function(ok){
 		    if(ok*1){
 			App.flash("Файл удален");
+			App.page_stock_product_card.img.load();
 		    }
 		});
 	    }
@@ -129,12 +142,14 @@
     };
 </script>
 <form id="page_stock_product_card_frm" onsubmit="App.page_stock_product_card.submit(event)">
-    <input name="product_img" title="img" type="hidden">
+    <input type="hidden" name="product_img">
     <input type="hidden" name="product_code">
     <div class="inp_group" style="width: 450px;vertical-align: top">
-	<div style="position: relative;float:left;width:130px;height:120px;border:solid 1px #000;">
+	<div style="position: relative;float:left;width:130px;height:120px;">
 	    <input type="file" id="page_stock_product_card_file" accept="image/*" style="display:none" onchange="App.page_stock_product_card.img.up(this.files)">
-	    <img src="img/product.png" style="width:130px;height:auto;max-height:120px;" />
+	    <div style="text-align: center">
+		<img src="img/product.png" id="page_stock_product_card_thumb" style="cursor:pointer" onclick="window.open('Storage/image_get/1200x1200/prodImg/'+$('input[name=product_img]').val())" />
+	    </div>
 	    <div style="position: absolute;bottom:1px;right:2px;">
 		<button class="tiny_button" type="button" title="Отправить файл" onclick="$('#page_stock_product_card_file').click();">Загрузить</button>
 		<button class="tiny_button" type="button" title="Удалить файл" onclick="App.page_stock_product_card.img.remove()">Удалить</button>		
