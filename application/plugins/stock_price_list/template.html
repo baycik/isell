@@ -1,46 +1,72 @@
-
-<div class="page">
-    <table border>
-    {loop name="v->price_blocks"}
-	{if="$value->type=='category'"}
-	    {loop name="$value->rows"}
-	    <tr>
-		<td class="product_code">{$value->product_code}</td>
-		<td class="product_name">{$value->product_name}</td>
-		<td class="product_price">{$value->product_price}</td>
-	    </tr>
-	    {/loop}
-	{else}
-	    <tr>
-		<td colspan="3" class="{$value->type}">{$value->text}</td>
-	    </tr>
-	{/if}
-    {/loop}
-    </table>
-</div>
 <style>
     .product_code{
 	width:70px;
     }
     .product_name{
-	width:300px;
+	width:350px;
     }
     .product_price{
 	width:50px;
 	text-align: right;
     }
+    .product_imgs{
+	text-align: center;
+	width:150px;
+    }
+    .inner_table td{
+	padding: 3px;
+	border-left:none;
+	border-top:none;
+	border-right:1px solid #000;
+	border-bottom: 1px solid #000;
+    }
     .h1{
 	background-color: #fc0;
 	font-size: 18px;
+	padding: 5px;
     }
     .h2{
 	background-color: #FF9;
 	font-size: 14px;
+	padding: 3px;
     }
     table{
 	border-collapse: collapse;
+	
     }
     table td{
-	padding: 2px;
+	padding: 0px;
+	border:1px solid #000;
     }
 </style>
+<div class="page">
+    <table border>
+    {loop name="v->price_blocks"}
+	{if="$value->type=='category'"}
+	    <tr>
+		<td style="border:none;">
+		    <table class="inner_table">
+			{loop name="$value->rows"}
+			<tr style="height: 33px;">
+			    <td class="product_code">{$value->product_code}</td>
+			    <td class="product_name">{$value->product_name}</td>
+			    <td class="product_price"> {$value->product_price}</td>
+			</tr>
+			{/loop}
+		    </table>
+		</td>
+		<td style="border:none;" class="product_imgs">
+		    {loop name="$value->imgs"}
+			<img src="data:image/jpg;base64,{$value}#">
+		    {/loop}
+		</td>
+	    </tr>
+	    
+	{else}
+	    <tr>
+		<td colspan="2" class="{$value->type}">{$value->text}</td>
+	    </tr>
+	{/if}
+    {/loop}
+    </table>
+</div>

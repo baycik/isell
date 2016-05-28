@@ -111,7 +111,8 @@ class Stock_price_list extends Catalog{
 		product_code,
 		ru product_name,
 		ROUND(sell,2) product_price,
-		product_quantity<>0 in_stock
+		product_quantity<>0 in_stock,
+		product_img
 	    FROM
 		stock_entries
 		    JOIN
@@ -119,9 +120,26 @@ class Stock_price_list extends Catalog{
 		    JOIN
 		prod_list USING(product_code)
 	    WHERE
-		parent_id='{$block->id}'";
+		parent_id='{$block->id}'
+	    ORDER BY fetch_count";
 	$block->rows=$this->get_list($sql);
+	$block->imgs=$this->getBlockImg($block);
 	return $block;
+    }
+    
+    private function getBlockImg( $block ){
+	$imgs=[];
+	$limit=floor(count($block->rows)/3);
+	foreach( $block->rows as $row ){
+	    if( $row->product_img ){
+		$imgs[]=base64_encode($this->Base->Storage->image_get('150x120','prodImg/'.$row->product_img));
+		$limit--;
+	    }
+	    if( $limit==0 ){
+		break;
+	    }
+	}
+	return $imgs;
     }
     
     public function printout(){
@@ -132,11 +150,11 @@ class Stock_price_list extends Catalog{
 	    return 'price is empty';
 	}
 	
+	$this->Base->load_model('Storage');
 	$price_blocks=[];
 	foreach( $deployment['deployment']->items as $block ){
 	    $price_blocks[]=$this->fillPriceBlocks($block);
 	}
-	
 	$dump=[
 	    'tpl_files_folder'=>"../plugins/stock_price_list/",
 	    'tpl_files'=>"template.html",
@@ -145,7 +163,6 @@ class Stock_price_list extends Catalog{
 		'price_blocks'=>$price_blocks
 	    ]
 	];
-	
 	
 	$ViewManager=$this->Base->load_model('ViewManager');
 	$ViewManager->store($dump);

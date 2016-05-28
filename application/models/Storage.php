@@ -69,9 +69,11 @@ class Storage extends CI_Model {
 	    return null;
 	}
 	$size = explode('x', $size_x);
-	header("Content-type: image/jpg");
+	//header("Content-type: image/jpg");
 	$thumb=$this->image_resize($this->storageFolder . "/" .$path, $size[0], $size[1]);
-	imagejpeg($thumb,NULL,90);
+	ob_start();
+	    imagejpeg($thumb,NULL,90);
+	return ob_get_contents();
     }
 
     private function image_resize($path, $width, $height) {
