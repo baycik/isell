@@ -148,7 +148,7 @@
 	<div style="position: relative;float:left;width:130px;height:120px;">
 	    <input type="file" id="page_stock_product_card_file" accept="image/*" style="display:none" onchange="App.page_stock_product_card.img.up(this.files)">
 	    <div style="text-align: center">
-		<img src="img/product.png" id="page_stock_product_card_thumb" style="cursor:pointer" onclick="window.open('Storage/image_get/1200x1200/prodImg/'+$('input[name=product_img]').val())" />
+		<img src="img/product.png" id="page_stock_product_card_thumb" style="cursor:pointer" onclick="window.open(this.src.replace('130x120','1200x1200'))" />
 	    </div>
 	    <div style="position: absolute;bottom:1px;right:2px;">
 		<button class="tiny_button" type="button" title="Отправить файл" onclick="$('#page_stock_product_card_file').click();">Загрузить</button>
