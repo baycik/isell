@@ -121,7 +121,7 @@ class Stock_price_list extends Catalog{
 		prod_list USING(product_code)
 	    WHERE
 		parent_id='{$block->id}'
-	    ORDER BY fetch_count";
+	    ORDER BY fetch_count DESC";
 	$block->rows=$this->get_list($sql);
 	$block->imgs=$this->getBlockImg($block);
 	return $block;
@@ -132,7 +132,7 @@ class Stock_price_list extends Catalog{
 	$limit=floor(count($block->rows)/3);
 	foreach( $block->rows as $row ){
 	    if( $row->product_img ){
-		$imgs[]=base64_encode($this->Base->Storage->image_get('150x120','prodImg/'.$row->product_img));
+		$imgs[]=base64_encode($this->Base->Storage->image_get('150x120','dynImg/'.$row->product_img));
 		$limit--;
 	    }
 	    if( $limit==0 ){

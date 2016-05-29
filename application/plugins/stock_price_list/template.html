@@ -3,7 +3,7 @@
 	width:70px;
     }
     .product_name{
-	width:350px;
+	width:383px;
     }
     .product_price{
 	width:50px;
@@ -40,7 +40,7 @@
     }
 </style>
 <div class="page">
-    <table border>
+    <table border style="width:18cm">
     {loop name="v->price_blocks"}
 	{if="$value->type=='category'"}
 	    <tr>
@@ -57,7 +57,7 @@
 		</td>
 		<td style="border:none;" class="product_imgs">
 		    {loop name="$value->imgs"}
-			<img src="data:image/jpg;base64,{$value}#">
+		    <img src="data:image/jpg;base64,{$value}#" style="margin: 1px;">
 		    {/loop}
 		</td>
 	    </tr>

@@ -5,7 +5,15 @@
     App.price_list = App.page_plugins_stock_price_list_stock_price_list = {
 	current_dpl_id: 0,
 	init: function () {
-	    
+	    if( App.pcomp ){
+		$("#price_list_client_name").html(App.pcomp.label);
+	    } else {
+		App.handler.progress(function(status){
+		    if( status==='passiveCompanySelected' ){
+			$("#price_list_client_name").html(App.pcomp.label);
+		    }
+		});
+	    }
 	},
 	initDrag: function () {
 	    $('.connected').sortable('destroy');
@@ -156,6 +164,7 @@
 	    <div id="price_list_loaded" style="display: none">
 		<div style="font-size:26px;border-bottom: 1px solid #999">
 		    <span id="price_list_name">---</span> <img src="img/edit-16.png" onclick="App.price_list.itemEdit(this).then(function(){$('#price_list_dg').datagrid('reload');});">
+		    | для клиента <span id="price_list_client_name"></span>
 		    <div style="float: right">
 			<button onclick="App.price_list.print()"><img src="img/print.png"> Напечатать</button>
 		    </div>

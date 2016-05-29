@@ -63,17 +63,29 @@ class Storage extends CI_Model {
 
     public function image_get() {
 	$args = func_get_args();
+	ob_start();
+	    call_user_func_array(array($this, 'image_flush'),$args);
+	return ob_get_contents();
+    }
+    public function image_flush(){
+	$args = func_get_args();
 	$size_x = array_shift($args);
 	$path = implode('/', $args);
 	if (!file_exists($this->storageFolder . "/" . $path)) {
 	    return null;
 	}
 	$size = explode('x', $size_x);
-	//header("Content-type: image/jpg");
 	$thumb=$this->image_resize($this->storageFolder . "/" .$path, $size[0], $size[1]);
-	ob_start();
-	    imagejpeg($thumb,NULL,90);
-	return ob_get_contents();
+	
+	
+	$grey = imagecolorallocate($thumb, 0, 0, 0);
+	
+	//$text = 'нннн';
+	//$font = './system/fonts/texb.ttf';
+	//imagettftext($thumb, 20, 0, 11, 21, $grey, $font, $text);
+	
+	header("Content-type: image/jpeg");
+	imagejpeg($thumb,NULL,90);
     }
 
     private function image_resize($path, $width, $height) {

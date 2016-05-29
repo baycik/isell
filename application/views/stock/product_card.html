@@ -93,7 +93,7 @@
 	},
 	img:{
 	    load:function(){
-		var file_name=$("input[name=product_img]").val()?'Storage/image_get/130x120/prodImg/'+$("input[name=product_img]").val():"img/product.png";
+		var file_name=$("input[name=product_img]").val()?'Storage/image_flush/130x120/dynImg/'+$("input[name=product_img]").val():"img/product.png";
 		$("#page_stock_product_card_thumb").attr('src',file_name);
 		console.log(file_name);
 	    },
@@ -108,7 +108,7 @@
 		    }
 		    var file_name=filelist[0].name;//(new Date()).getTime()+'.'+filelist[0].name.split('.').pop();
 		    
-		    var url = 'Storage/upload/prodImg/';
+		    var url = 'Storage/upload/dynImg/';
 		    var xhr = new XMLHttpRequest();
 		    var fd = new FormData();
 		    xhr.open("POST", url, true);
@@ -130,7 +130,7 @@
 	    remove:function(){
 		var file_name=$("input[name=product_img]").val();
 		$("input[name=product_img]").val('');
-		$.post('Storage/file_remove/prodImg/'+file_name,function(ok){
+		$.post('Storage/file_remove/dynImg/'+file_name,function(ok){
 		    if(ok*1){
 			App.flash("Файл удален");
 			App.page_stock_product_card.img.load();
