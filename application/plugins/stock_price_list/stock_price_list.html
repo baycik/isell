@@ -14,6 +14,7 @@
 		    }
 		});
 	    }
+	    App.setupForm("#price_list_frm");
 	},
 	initDrag: function () {
 	    $('.connected').sortable('destroy');
@@ -162,12 +163,14 @@
 		<button onclick="App.price_list.list.create();"><img src="img/edit_add.png"> Создать прайс-лист</button>
 	    </div>
 	    <div id="price_list_loaded" style="display: none">
-		<div style="font-size:26px;border-bottom: 1px solid #999">
-		    <span id="price_list_name">---</span> <img src="img/edit-16.png" onclick="App.price_list.itemEdit(this).then(function(){$('#price_list_dg').datagrid('reload');});">
-		    | для клиента <span id="price_list_client_name"></span>
-		    <div style="float: right">
-			<button onclick="App.price_list.print()"><img src="img/print.png"> Напечатать</button>
-		    </div>
+		<div>
+		    <span style="font-size:26px;border-bottom: 1px solid #999" id="price_list_name">---</span> <img src="img/edit-16.png" onclick="App.price_list.itemEdit(this).then(function(){$('#price_list_dg').datagrid('reload');});">
+		    <button onclick="App.price_list.print()" style="float: right"><img src="img/print.png"> Напечатать</button>
+		    <form id="price_list_frm" style="width:700px;">
+			<input name="dolar_ratio" title="Курс">
+			<input name="sort_by_fetchcount" title="Сортировать по популярности" type="checkbox">
+			<input name="pcomp_id" title="Для клиента">
+		    </form>
 		</div>
 		<div>
 		    <b>Добавленные блоки</b>

@@ -132,7 +132,8 @@ class Stock_price_list extends Catalog{
 	$limit=floor(count($block->rows)/3);
 	foreach( $block->rows as $row ){
 	    if( $row->product_img ){
-		$imgs[]=base64_encode($this->Base->Storage->image_get('150x120','dynImg/'.$row->product_img));
+		$imgs[]="../../Storage/image_flush/150x120/dynImg/".$row->product_img;
+		//$imgs[]=base64_encode($this->Base->Storage->image_get('150x120','dynImg/'.$row->product_img));
 		$limit--;
 	    }
 	    if( $limit==0 ){

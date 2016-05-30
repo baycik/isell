@@ -12,13 +12,7 @@
     .product_imgs{
 	text-align: center;
 	width:150px;
-    }
-    .inner_table td{
-	padding: 3px;
-	border-left:none;
-	border-top:none;
-	border-right:1px solid #000;
-	border-bottom: 1px solid #000;
+	vertical-align: top;
     }
     .h1{
 	background-color: #fc0;
@@ -34,37 +28,28 @@
 	border-collapse: collapse;
 	
     }
-    table td{
-	padding: 0px;
-	border:1px solid #000;
-    }
 </style>
 <div class="page">
     <table border style="width:18cm">
     {loop name="v->price_blocks"}
-	{if="$value->type=='category'"}
-	    <tr>
-		<td style="border:none;">
-		    <table class="inner_table">
-			{loop name="$value->rows"}
-			<tr style="height: 33px;">
-			    <td class="product_code">{$value->product_code}</td>
-			    <td class="product_name">{$value->product_name}</td>
-			    <td class="product_price"> {$value->product_price}</td>
-			</tr>
+	{if="$value->type=='category' && $num=count($value->rows)"}
+	    {loop name="$value->rows"}
+		<tr style="height: 33px;">
+		    <td class="product_code">{$value->product_code}</td>
+		    <td class="product_name">{$value->product_name}</td>
+		    <td class="product_price"> {$value->product_price}</td>
+		    {if="$counter==0"}
+		    <td class="product_imgs" rowspan="{$num}">
+			{loop name="$value1->imgs"}
+			<img src="{$value}#" style="margin: 1px;">
 			{/loop}
-		    </table>
-		</td>
-		<td style="border:none;" class="product_imgs">
-		    {loop name="$value->imgs"}
-		    <img src="data:image/jpg;base64,{$value}#" style="margin: 1px;">
-		    {/loop}
-		</td>
-	    </tr>
-	    
+		    </td>
+		    {/if}
+		</tr>	
+	    {/loop}
 	{else}
 	    <tr>
-		<td colspan="2" class="{$value->type}">{$value->text}</td>
+		<td colspan="4" class="{$value->type}">{$value->text}</td>
 	    </tr>
 	{/if}
     {/loop}
