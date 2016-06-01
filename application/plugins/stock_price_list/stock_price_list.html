@@ -125,6 +125,7 @@
 	    },
 	    save:function(){
 		this.current_node.find('span').html($("#price_list_txt").val());
+		console.log($("#price_list_txt").YellowText('getContentFromEditor'));
 		App.price_list.save();
 		$("#price_list_wnd").window('close');
 	    }
