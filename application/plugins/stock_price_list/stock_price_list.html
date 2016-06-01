@@ -5,16 +5,15 @@
     App.price_list = App.page_plugins_stock_price_list_stock_price_list = {
 	current_dpl_id: 0,
 	init: function () {
-	    if( App.pcomp ){
-		$("#price_list_client_name").html(App.pcomp.label);
-	    } else {
-		App.handler.progress(function(status){
-		    if( status==='passiveCompanySelected' ){
-			$("#price_list_client_name").html(App.pcomp.label);
-		    }
-		});
-	    }
 	    App.setupForm("#price_list_frm");
+	    if( App.pcomp ){
+		$("input[name=pcomp_name]").val(App.pcomp.label);
+	    }
+	    App.handler.progress(function(status){
+		if( status==='passiveCompanySelected' ){
+		    $("input[name=pcomp_name]").val(App.pcomp.label);
+		}
+	    });
 	},
 	initDrag: function () {
 	    $('.connected').sortable('destroy');
@@ -129,6 +128,9 @@
 		App.price_list.save();
 		$("#price_list_wnd").window('close');
 	    }
+	},
+	select_pcomp:function(){
+	    App.user.pcompSelectionDialog();
 	}
     };
 </script>
@@ -163,33 +165,33 @@
 		<button onclick="App.price_list.list.create();"><img src="img/edit_add.png"> Создать прайс-лист</button>
 	    </div>
 	    <div id="price_list_loaded" style="display: none">
-		<div>
-		    <span style="font-size:26px;border-bottom: 1px solid #999" id="price_list_name">---</span> <img src="img/edit-16.png" onclick="App.price_list.itemEdit(this).then(function(){$('#price_list_dg').datagrid('reload');});">
+		<div style="margin-bottom: 10px;">
+		    <img src="img/pricetag.png" style="float:left">
+		    <span style="font-size:26px;" id="price_list_name">---</span> 
+		    <img src="img/edit-16.png" onclick="App.price_list.itemEdit(this).then(function(){$('#price_list_dg').datagrid('reload');});">
 		    <button onclick="App.price_list.print()" style="float: right"><img src="img/print.png"> Напечатать</button>
-		    <form id="price_list_frm" style="width:700px;">
-			<input name="dolar_ratio" title="Курс">
-			<input name="sort_by_fetchcount" title="Сортировать по популярности" type="checkbox">
-			<input name="pcomp_id" title="Для клиента">
-		    </form>
 		</div>
-		<div>
-		    <b>Добавленные блоки</b>
-		</div>
-		<div>
-		    <ul id="price_list_deployment" class="connected used_items" style="width:100%">
-			{{items}}
-			    {{if type|equals>category}}
-				<li data-id="{{id}}" data-type="category" title="{{path}}">
-				    <span>{{text}}</span> ({{product_count}}) 
-				    <i>{{path}}</i>
-				</li>
-			    {{else}}
-				<li data-type="{{type}}" class="{{type}}"><img src="img/edit-16.png" onclick="App.price_list.itemEdit(this)"> <span>{{text}}</span></li>
-			    {{/if}}
-			{{/items}}
-		    </ul>
-		</div>
-		<b>Блоки которые можно добавить</b>
+		
+		<form id="price_list_frm" style1="width:700px;">
+		    <input title="Для клиента" name="pcomp_name" value="не выбран" readonly="readonly" />
+		    <button type="button" class="tiny_button" onclick="App.price_list.select_pcomp()"><img src="img/settings.png"> Изменить</button>
+		    <input name="sort_by_fetchcount" title="Сортировать по популярности" type="checkbox">
+		    <input name="dolar_ratio" title="Курс">
+		</form>
+		
+		<ul id="price_list_deployment" class="connected used_items" style="width:100%">
+		    {{items}}
+			{{if type|equals>category}}
+			    <li data-id="{{id}}" data-type="category" title="{{path}}">
+				<span>{{text}}</span> ({{product_count}}) 
+				<i>{{path}}</i>
+			    </li>
+			{{else}}
+			    <li data-type="{{type}}" class="{{type}}"><img src="img/edit-16.png" onclick="App.price_list.itemEdit(this)"> <span>{{text}}</span></li>
+			{{/if}}
+		    {{/items}}
+		</ul>
+
 		<ul id="price_list_availables" class="connected available_items" style="width:100%">
 		    {{availables}}
 		    <li data-id="{{id}}" data-type="category" title="{{path}}">

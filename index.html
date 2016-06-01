@@ -25,7 +25,8 @@
 		},
 		setProps:function( userProps ){
 		    App.user.props=userProps;
-		    App.user.setActiveComp(userProps.acomp);
+		    App.user.setActiveCompany(userProps.acomp);
+		    App.user.setPassiveCompany(userProps.pcomp);
 		    if( userProps && userProps.user_level>0 ){
 			App.renderTpl('div_user_panel', App.user.props || '');	
 			App.renderTpl('div_module_list', App.user.props || '');
@@ -90,10 +91,24 @@
                 acompSwitch:function(){
                     $.get("Company/switchActiveCompany",function(resp){
                         var company=App.json(resp);
-			App.user.setActiveComp(company);
+			App.user.setActiveCompany(company);
                     });
                 },
-		setActiveComp:function(company){
+		pcompSelectionDialog:function(){
+		    App.loadWindow('page/company/tree',{}).progress(function(status,comp){
+			if( status==='select' ){
+			    App.user.pcompSelect(comp);
+			}
+		    });
+		},
+		pcompSelect: function ( company ) {
+		    if ( company.company_id ) {
+			$.post('Company/selectPassiveCompany/' + company.company_id, function (xhr) {
+			    App.user.setPassiveCompany(App.json(xhr));
+			});
+		    }
+		},
+		setActiveCompany:function(company){
                     var old_acomp_id=App.acomp?App.acomp.company_id:0;
 		    App.acomp=company;
 		    if( company ){
@@ -197,7 +212,7 @@
                 {{module_name}}: 
                 <img src="img/home.png" style="margin-top: -4px;"> <span class="link_button" onclick="App.user.acompSwitch()" title="Сменить активную компанию">{{acomp_name}}</span>
                 {{if pcomp_name}}
-                / <img src="img/gray.png"> {{pcomp_name}}
+                / <img src="img/gray.png">  <span class="link_button" onclick="App.user.pcompSelectionDialog();" title="Сменить клиента">{{pcomp_name}}</span>
                 {{/if}}
             </div>
 	    <div id="holder_user_panel">

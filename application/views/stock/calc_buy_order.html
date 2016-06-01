@@ -22,11 +22,7 @@
             });
 	},
 	select_pcomp:function(){
-	    App.loadWindow('page/company/tree',{}).progress(function(status,comp){
-		if( status==='select' ){
-		    App.user.setPassiveCompany(comp);
-		}
-	    });
+	    App.user.pcompSelectionDialog();
 	},
 	submit:function(e){
 	    e.preventDefault();
