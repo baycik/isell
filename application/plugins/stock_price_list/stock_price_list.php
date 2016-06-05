@@ -77,12 +77,13 @@ class Stock_price_list extends Catalog{
 	}
 	return $updated_items;
     }
+    
+    
     private function removeFromAvailables( &$availables, $id ){
 	for($i=0;$i<count($availables);$i++){
 	    $item=$availables[$i];
 	    if( $item->id==$id ){
 		array_splice($availables, $i, 1);
-		//unset( $availables[$i] );
 		return $item;
 	    }
 	}
@@ -107,21 +108,32 @@ class Stock_price_list extends Catalog{
 	if( $block->type!='category' ){
 	    return $block;
 	}
+	$pcomp_id=$this->Base->pcomp('company_id');
+	$dollar_ratio=$this->Base->pref('usd_ratio');
+	$main_curr_code=$this->Base->acomp('curr_code');
 	$sql="SELECT
 		product_code,
 		ru product_name,
-		ROUND(sell,2) product_price,
 		product_quantity<>0 in_stock,
-		product_img
+		product_img,
+		ROUND(
+		    sell
+			*IF(curr_code IS NOT NULL AND curr_code<>'$main_curr_code',$dollar_ratio,1)
+			*IF(discount,discount,1)
+		,2) product_price
 	    FROM
-		stock_entries
+		stock_entries se
 		    JOIN
 		price_list USING(product_code)
 		    JOIN
 		prod_list USING(product_code)
+		    LEFT JOIN
+		stock_tree st ON se.parent_id=st.branch_id
+		    LEFT JOIN
+		companies_discounts cd ON cd.branch_id=st.top_id AND company_id='$pcomp_id'
 	    WHERE
-		parent_id='{$block->id}'
-	    ORDER BY fetch_count DESC";
+		se.parent_id='{$block->id}'
+	    ORDER BY $this->sort_by";
 	$block->rows=$this->get_list($sql);
 	$block->imgs=$this->getBlockImg($block);
 	return $block;
@@ -129,7 +141,7 @@ class Stock_price_list extends Catalog{
     
     private function getBlockImg( $block ){
 	$imgs=[];
-	$limit=floor(count($block->rows)/3);
+	$limit=floor(count($block->rows)/4);
 	foreach( $block->rows as $row ){
 	    if( $row->product_img ){
 		$imgs[]="../../Storage/image_flush/150x120/dynImg/".$row->product_img;
@@ -150,6 +162,13 @@ class Stock_price_list extends Catalog{
 	if( !$deployment['deployment'] ){
 	    return 'price is empty';
 	}
+	if( $deployment['deployment']->sort_by ){
+	    $this->sort_by=$deployment['deployment']->sort_by;
+	    if( $this->sort_by=='fetch_count' ){
+		$this->sort_by.=" DESC";
+	    }
+	}
+	
 	
 	$this->Base->load_model('Storage');
 	$price_blocks=[];

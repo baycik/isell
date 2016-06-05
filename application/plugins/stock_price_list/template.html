@@ -3,7 +3,7 @@
 	width:70px;
     }
     .product_name{
-	width:383px;
+	
     }
     .product_price{
 	width:50px;
@@ -24,18 +24,22 @@
 	font-size: 14px;
 	padding: 3px;
     }
+    .price_page{
+	padding: 5px;
+	border: none;
+    }
     table{
 	border-collapse: collapse;
-	
+	width:18.5cm;
     }
 </style>
 <div class="page">
-    <table border style="width:18cm">
+    <table border>
     {loop name="v->price_blocks"}
 	{if="$value->type=='category' && $num=count($value->rows)"}
 	    {loop name="$value->rows"}
-		<tr style="height: 33px;">
-		    <td class="product_code">{$value->product_code}</td>
+		<tr style="height: 25px;">
+		    <td class="product_code" {if="$value->in_stock"}style="font-weight:bold"{/if}>{$value->product_code}</td>
 		    <td class="product_name">{$value->product_name}</td>
 		    <td class="product_price"> {$value->product_price}</td>
 		    {if="$counter==0"}
