@@ -1,0 +1,52 @@
+<script src="js/tinymce/tinymce.min.js"></script>
+<script>
+    App.page_dialog_text_editor={
+	init:function(){
+	    this.node.window({
+		title: 'Редактор текста',
+		closable:true,
+		collapsible:true,
+		width: 850,
+		top:50,
+		height: 'auto',
+		onClose: function () {
+		    App.page_dialog_text_editor.handler.notify('close');
+		    delete App.page_dialog_text_editor;
+		}
+	    });
+	    this.node.window('window').css('position','fixed');
+	    $('#page_dialog_text_editor textarea').text(App.page_dialog_text_editor.data.html);
+	    tinymce.init({
+		selector: '#page_dialog_text_editor textarea',
+		language: 'ru',
+		menubar:false,
+		statusbar: false,
+		paste_data_images: true,
+		images_upload_handler: function (blobInfo, success, failure) {
+		    success("data:" + blobInfo.blob().type + ";base64," + blobInfo.base64());
+		},
+		height: 400,
+		plugins: [
+		  'advlist autolink lists link image charmap print preview anchor',
+		  'searchreplace visualblocks code fullscreen',
+		  'insertdatetime media table contextmenu paste code',
+		  'textcolor colorpicker',
+		  'bdesk_photo'
+		],
+		toolbar: 'styleselect | forecolor backcolor | bdesk_photo | bold italic | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent',
+		setup : function(editor) {
+		    //editor.setContent(App.page_dialog_text_editor.data.html);
+		 }
+	      });
+	},
+	save:function(){
+	    this.data.html=tinymce.activeEditor.getContent();
+	    App.page_dialog_text_editor.handler.notify('save',this.data);
+	    App.page_dialog_text_editor.node.window('close');
+	}
+    };
+</script>
+<textarea></textarea>
+<div style="text-align: center">
+    <button onclick="App.page_dialog_text_editor.save();"><img src="img/save-24.png"> Сохранить</button>
+</div>

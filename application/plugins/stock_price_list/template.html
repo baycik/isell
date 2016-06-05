@@ -14,13 +14,13 @@
 	width:150px;
 	vertical-align: top;
     }
-    .h1{
-	background-color: #fc0;
+    .price_h1{
+	background-color: #6af;
 	font-size: 18px;
 	padding: 5px;
     }
-    .h2{
-	background-color: #FF9;
+    .price_h2{
+	background-color: #acf;
 	font-size: 14px;
 	padding: 3px;
     }
@@ -49,7 +49,7 @@
 	    {/loop}
 	{else}
 	    <tr>
-		<td colspan="4" class="{$value->type}">{$value->text}</td>
+		<td colspan="4" class="price_{$value->type}">{$value->text}</td>
 	    </tr>
 	{/if}
     {/loop}

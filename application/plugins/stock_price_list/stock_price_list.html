@@ -1,6 +1,4 @@
 <script src="js/jquery.sortable.js"></script>
-<script src="js/yellow-text/yellow-text.js"></script>
-<link rel="stylesheet" type="text/css" href="js/yellow-text/stylesheets/yellow-text-default.css" />
 <script>
     App.price_list = App.page_plugins_stock_price_list_stock_price_list = {
 	current_dpl_id: 0,
@@ -37,9 +35,9 @@
 	},
 	itemEdit: function (img_node) {
 	    var li_node = $(img_node).parent();
-	    var li_label = li_node.find('span').text();
+	    var li_label = li_node.find('span').html();
 	    if (li_node.hasClass('page')) {
-		this.text.edit(li_label,li_node);
+		this.itemTextEdit(li_label,li_node);
 		return;
 	    }
 	    var new_label = prompt("Введите текст заголовка", li_label);
@@ -47,6 +45,15 @@
 		li_node.find('span').text(new_label);
 		return App.price_list.save();
 	    }
+	},
+	itemTextEdit:function( li_html, li_node ){
+	    App.loadWindow('page/dialog/text_editor',{html:li_html}).progress(function(status,data){
+		if( status==='save' ){
+		    console.log(data.html);
+		    li_node.find('span').html(data.html);
+		    App.price_list.save();
+		}
+	    });
 	},
 	load:function( deployment_id ){
 	    $("#price_list_notloaded").hide();
@@ -75,7 +82,7 @@
 		deployment_data.items.push({
 		    type: $(this).data('type'),
 		    id: $(this).data('id'),
-		    text: $(this).find('span').text()
+		    text: $(this).find('span').html()
 		});
 	    });
 	    return $.post("plugin/stock_price_list/save/", {deployment_id: deployment_id, deployment_data: JSON.stringify(deployment_data)}, function (ok) {
@@ -116,29 +123,15 @@
 		}
 	    }
 	},
-	text:{
-	    edit:function( li_label, li_node ){
-		this.current_node=li_node;
-		$("#price_list_wnd").show().window();
-		$("#price_list_txt").val(li_label);
-		$("#price_list_txt").YellowText();
-	    },
-	    save:function(){
-		this.current_node.find('span').html($("#price_list_txt").val());
-		console.log($("#price_list_txt").YellowText('getContentFromEditor'));
-		App.price_list.save();
-		$("#price_list_wnd").window('close');
-	    }
-	},
 	select_pcomp:function(){
 	    App.user.pcompSelectionDialog();
 	}
     };
 </script>
 <div id="price_list_templates" style="display: none">
-    <li data-type="h1" class="h1"> <img src="img/edit-16.png" onclick="App.price_list.itemEdit(this)" title="Изменить текст"><span>Большой заголовок</span></li>
-    <li data-type="h2" class="h2"> <img src="img/edit-16.png" onclick="App.price_list.itemEdit(this)" title="Изменить текст"><span>Средний заголовок</span></li>
-    <li data-type="page" class="page"> <img src="img/edit-16.png" onclick="App.price_list.itemEdit(this)" title="Изменить текст">Произвольный текст</li>
+    <li data-type="h1" class="h1"> <img src="img/edit-16.png" class="edit_pencil" onclick="App.price_list.itemEdit(this)" title="Изменить текст"><span>Большой заголовок</span></li>
+    <li data-type="h2" class="h2"> <img src="img/edit-16.png" class="edit_pencil" onclick="App.price_list.itemEdit(this)" title="Изменить текст"><span>Средний заголовок</span></li>
+    <li data-type="page" class="page"> <img src="img/edit-16.png" class="edit_pencil" onclick="App.price_list.itemEdit(this)" title="Изменить текст">Произвольный текст</li>
 </div>
 <table style="width:1200px;margin-right: 30px;">
     <tr>
@@ -188,7 +181,7 @@
 				<i>{{path}}</i>
 			    </li>
 			{{else}}
-			    <li data-type="{{type}}" class="{{type}}"><img src="img/edit-16.png" onclick="App.price_list.itemEdit(this)"> <span>{{text}}</span></li>
+			    <li data-type="{{type}}" class="{{type}}"><img src="img/edit-16.png" class="edit_pencil" onclick="App.price_list.itemEdit(this)"> <span>{{text}}</span></li>
 			{{/if}}
 		    {{/items}}
 		</ul>
@@ -205,10 +198,6 @@
 	</td>
     </tr>
 </table>
-<div id="price_list_wnd" title="Редактор текста" data-options="width:650" style="text-align: center;display: none;padding: 10px">
-    <textarea id="price_list_txt" style=""></textarea>
-    <button onclick="App.price_list.text.save()"><img src="img/save-24.png"> Сохранить</button>
-</div>
 <style>
     .connected li{
 	list-style: none;
@@ -229,15 +218,20 @@
 	margin-bottom: 10px;
     }
     li.h1{
-	background-color: #fc0;
+	background-color: #6af;
 	font-size: 18px;
     }
     li.h2{
-	background-color: #FF9;
+	background-color: #acf;
 	font-size: 14px;
     }
     li.page{
 	background-color: #Fcf;	
+	transition: ease 1s;
+    }
+    li.page:hover{
+	height: 100px;
+	background-color: #fff;
     }
     li.sortable-placeholder {
 	border: 1px dashed #000;
@@ -251,12 +245,12 @@
 	width:218px;
 	float: left;
     }
-    .used_items img{
+    .used_items img.edit_pencil{
 	float:right;
 	padding: 2px;
 	cursor: pointer;
     }
-    .used_items img:hover{
+    .used_items img.edit_pencil:hover{
 	border: 1px solid #000;
 	border-radius: 3px;
 	margin: -1px;
