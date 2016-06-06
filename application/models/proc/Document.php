@@ -716,9 +716,9 @@ class Document extends Data {
 	}
 	$next_doc_num = $this->getNextDocNum($doc_type);
 	if ($prev_doc) {
-	    $pnotcount = $prev_doc[notcount];
-	    $psignsafterdot = $prev_doc[signs_after_dot];
-	    $pusevatlessprice = $prev_doc[use_vatless_price];
+	    $pnotcount = $prev_doc['notcount'];
+	    $psignsafterdot = $prev_doc['signs_after_dot'];
+	    $pusevatlessprice = $prev_doc['use_vatless_price'];
 	} else {
 	    $pnotcount = 0;
 	    $psignsafterdot = 2;
