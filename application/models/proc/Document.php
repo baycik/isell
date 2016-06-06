@@ -79,7 +79,7 @@ class Document extends Data {
 	$old_doc = $this->_doc;
 	$new_doc_id = $this->add($old_doc['doc_type']);
 	$res = $this->Base->query("SELECT * FROM document_entries WHERE doc_id=$old_doc[doc_id]");
-	while ($row = mysqli_fetch_assoc($this->Base->db_link,$res)) {
+	while ($row = mysqli_fetch_assoc($res)) {
 	    $copy = array();
 	    $copy[] = "product_code='$row[product_code]'";
 	    $copy[] = "product_quantity=$row[product_quantity]";
@@ -89,7 +89,7 @@ class Document extends Data {
 	    $copy = implode(',', $copy);
 	    $this->Base->query("INSERT INTO document_entries SET doc_id=$new_doc_id, $copy");
 	}
-	mysqli_free_result($this->Base->db_link,$res);
+	mysqli_free_result($res);
 	$copy = array();
 	$copy[] = "cstamp='$old_doc[cstamp]'";
 	$copy[] = "reg_stamp='$old_doc[reg_stamp]'";
@@ -108,11 +108,11 @@ class Document extends Data {
 	$rate = (1 + $perc / 100);
 	$doc_id = $this->doc('doc_id');
 	$res = $this->Base->query("SELECT doc_entry_id,product_code FROM document_entries WHERE doc_id='$doc_id'");
-	while ($row = mysqli_fetch_assoc($this->Base->db_link,$res)) {
+	while ($row = mysqli_fetch_assoc($res)) {
 	    $invoice = $this->getProductInvoicePrice($row['product_code']);
 	    $this->alterEntry('update', $row['doc_entry_id'], NULL, $invoice * $rate);
 	}
-	mysqli_free_result($this->Base->db_link,$res);
+	mysqli_free_result($res);
 	$this->updateTrans();
     }
 
@@ -206,7 +206,7 @@ class Document extends Data {
 	}
 	$this->Base->query("START TRANSACTION");
 	$res = $this->Base->query("SELECT doc_entry_id FROM document_entries WHERE doc_id=$doc_id");
-	while ($entry = mysqli_fetch_assoc($this->Base->db_link,$res)) {
+	while ($entry = mysqli_fetch_assoc($res)) {
 	    if (!$this->alterEntry('commit', $entry['doc_entry_id'], NULL, NULL)) {
 		$name = $this->Base->get_row("SELECT $company_lang FROM document_entries JOIN prod_list USING(product_code) WHERE doc_entry_id=$entry[doc_entry_id]", 0);
 		$this->Base->msg("Невозможно провести строку: \"$name\"\n");
@@ -219,7 +219,7 @@ class Document extends Data {
 	    //$this->updateBuyPartyLabel();
 	}
 	$entry_num = mysqli_num_rows($this->Base->db_link,$res);
-	mysqli_free_result($this->Base->db_link,$res);
+	mysqli_free_result($res);
 	if ($entry_num == 0) {//Doc is empty
 	    $this->Base->msg("\nДокумент пуст!");
 	    $this->Base->query("ROLLBACK");
@@ -248,7 +248,7 @@ class Document extends Data {
 
 	$this->Base->query("START TRANSACTION");
 	$res = $this->Base->query("SELECT * FROM document_entries WHERE doc_id='$doc_id'");
-	while ($entry = mysqli_fetch_assoc($this->Base->db_link,$res)) {
+	while ($entry = mysqli_fetch_assoc($res)) {
 	    if (!$this->alterEntry('uncommit', $entry['doc_entry_id'], NULL, NULL)) {
 		$this->Base->query("ROLLBACK");
 		$name = $this->Base->get_row("SELECT $company_lang FROM document_entries JOIN prod_list USING(product_code) WHERE doc_entry_id=$entry[doc_entry_id]", 0);
@@ -256,7 +256,7 @@ class Document extends Data {
 		return false;
 	    }
 	}
-	mysqli_free_result($this->Base->db_link,$res);
+	mysqli_free_result($res);
 	$this->Base->query("UPDATE document_list SET is_commited=0 WHERE doc_id=$doc_id");
 	$this->Base->query("COMMIT");
 
@@ -590,7 +590,7 @@ class Document extends Data {
 			    doc_id = '$doc_id'))) AS vl,'/%')
 	    GROUP BY view_type_id";
 	$res = $this->Base->query($sql);
-	while ($row = mysqli_fetch_assoc($this->Base->db_link,$res)) {
+	while ($row = mysqli_fetch_assoc($res)) {
 	    $row['extra_fields'] = getExtraFields($row['view_efield_labels'], $row['view_efield_values']);
 	    unset($row['view_efield_labels'], $row['view_efield_values']);
 	    $doc_views[] = $row;
@@ -1123,13 +1123,13 @@ class Document extends Data {
 	$res = $this->Base->query("SELECT trans_id FROM document_trans WHERE doc_id=$doc_id");
 	$this->Base->query("START TRANSACTION");
 	$this->Base->query("DELETE FROM document_trans WHERE doc_id=$doc_id");
-	while ($row = mysqli_fetch_assoc($this->Base->db_link,$res)) {
+	while ($row = mysqli_fetch_assoc($res)) {
 	    if (!$this->Base->Accounts->cancelTransaction($row['trans_id'])) {
 		$this->Base->query("ROLLBACK");
 		return false;
 	    }
 	}
-	mysqli_free_result($this->Base->db_link,$res);
+	mysqli_free_result($res);
 	$this->Base->query("COMMIT");
 	return true;
     }
