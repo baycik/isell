@@ -1,6 +1,5 @@
 <script type="text/javascript">
     /* global App */
-    App.pcomp={};
     TradeJs = {
         init: function () {
 	    this.ctreeInlineInit();
@@ -28,18 +27,11 @@
 	    }
 	    TradeJs.toggleView(true);
 	},
-        selectPassiveCompany: function ( company ) {
-            if ( company.company_id && company.company_id!==App.pcomp.company_id ) {
-                $.post('Company/selectPassiveCompany/' + company.company_id, function (xhr) {
-		    App.user.setPassiveCompany(App.json(xhr));
-                });
-            }
-        },
 	ctreeInlineInit:function(){
 	    App.loadModule('page/company/tree',{inline:true,clickselect:true},'CtreeInline',/(Ctree|page_company_tree)([^\w]|_)/g,"CtreeInline$2").progress(function(status,company){
                 if( status==='select' ){
 		    TradeJs.showTabs(true);
-                    TradeJs.selectPassiveCompany(company);
+		    App.user.pcompSelect(company);
                 }
                 if( status==='treeLoaded' ){
                     TradeJs.initTabsOnce();

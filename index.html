@@ -102,10 +102,23 @@
 		    });
 		},
 		pcompSelect: function ( company ) {
-		    if ( company.company_id ) {
+		    if ( company.company_id && company.company_id!==App.pcomp.company_id ) {
 			$.post('Company/selectPassiveCompany/' + company.company_id, function (xhr) {
 			    App.user.setPassiveCompany(App.json(xhr));
 			});
+		    }
+		},
+		setPassiveCompany:function(company){
+                    var old_pcomp_id=App.pcomp?App.pcomp.company_id:0;
+		    App.pcomp=company;
+		    if( company ){
+                        if( company.company_id===old_pcomp_id ){
+                            App.handler.notify('passiveCompanyReloaded',company);
+                            return;
+                        }
+			App.handler.notify('passiveCompanySelected',company);
+		    } else {
+			App.handler.notify('passiveCompanyReset');
 		    }
 		},
 		setActiveCompany:function(company){
@@ -123,28 +136,7 @@
 		    } else {
 			App.handler.notify('activeCompanyReset');
 		    }
-		},
-		setPassiveCompany:function(company){
-                    var old_pcomp_id=App.pcomp?App.pcomp.company_id:0;
-		    App.pcomp=company;
-		    if( company ){
-                        if( company.company_id===old_pcomp_id ){
-                            App.handler.notify('passiveCompanyReloaded',company);
-                            return;
-                        }
-			App.handler.notify('passiveCompanySelected',company);
-		    } else {
-			App.handler.notify('passiveCompanyReset');
-		    }
 		}
-	    };
-	    App.onReady = function () {
-		App.user.getData();
-                App.handler.progress(function(status){
-                    if( status==='passiveCompanySelected' || status==='activeCompanySelected' ){
-                        App.setTitle();
-                    }
-                });
 	    };
 	    App.module={
 		init:function(){
@@ -202,6 +194,14 @@
 		    $(".ModuleButtonSelected").removeClass("ModuleButtonSelected");
 		    $("#"+this.current+"Button").addClass("ModuleButtonSelected");
 		}
+	    };
+	    App.onReady = function () {
+		App.user.getData();
+                App.handler.progress(function(status){
+                    if( status==='passiveCompanySelected' || status==='activeCompanySelected' ){
+                        App.setTitle();
+                    }
+                });
 	    };
 	</script>
     </head>

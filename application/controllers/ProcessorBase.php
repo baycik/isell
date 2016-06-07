@@ -119,7 +119,7 @@ class DataBase extends InputOutput {
 //    }
 //    
 //    public function db_errno(){
-//	return mysql_errno();
+//	return mysqli_errno($this->Base->db_link);
 //    }
 
     public function query($sql, $throw_error = true) {

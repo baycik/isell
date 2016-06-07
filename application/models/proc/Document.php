@@ -218,7 +218,7 @@ class Document extends Data {
 	    $this->updateBuyPriceFromDoc();
 	    //$this->updateBuyPartyLabel();
 	}
-	$entry_num = mysqli_num_rows($this->Base->db_link,$res);
+	$entry_num = mysqli_num_rows($res);
 	mysqli_free_result($res);
 	if ($entry_num == 0) {//Doc is empty
 	    $this->Base->msg("\nДокумент пуст!");

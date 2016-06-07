@@ -54,7 +54,7 @@ class Stock extends Data {
                 WHERE
                     product_code='{$this->productCode}'";
             $this->Base->query($sql);
-            if ( !mysql_errno() ) {
+            if ( !mysqli_errno($this->Base->db_link) ) {
                 return true;
             }
         }
@@ -117,10 +117,10 @@ class Stock extends Data {
 
     public function stockEntryInsert($product_code, $parent_id) {
         $this->Base->query("INSERT INTO " . BAY_DB_MAIN . ".stock_entries SET product_code='$product_code',party_label=NULL, parent_id='$parent_id'",false);
-        if (mysql_errno() == 1062){
+        if (mysqli_errno($this->Base->db_link) == 1062){
             $this->Base->response_wrn("Строка с артикулом '$product_code' уже есть");
         }
-        if (mysql_errno() == 1452){
+        if (mysqli_errno($this->Base->db_link) == 1452){
             $this->Base->response_wrn("Артикул '$product_code' отсутствует в Справочнике Товаров");
         }
     }
@@ -133,7 +133,7 @@ class Stock extends Data {
         }
         $where = count($where) ? implode(' OR ', $where) : '';
         $this->Base->query("DELETE FROM " . BAY_DB_MAIN . ".stock_entries WHERE product_quantity=0 AND ($where)");
-        return !!mysql_affected_rows();
+        return !!mysqli_affected_rows($this->Base->db_link);
     }
 
     public function increaseFetchCount($product_code) {
@@ -176,10 +176,10 @@ class Stock extends Data {
     }
     private function find_sub_branches($branch_id) {
         $res = $this->Base->query("SELECT branch_id FROM stock_tree WHERE parent_id='$branch_id'");
-        while ($row = mysql_fetch_row($res)) {
+        while ($row = mysqli_fetch_row($res)) {
             $this->find_sub_branches($row[0]);
         }
-        mysql_free_result($res);
+        mysqli_free_result($res);
         $this->branches[] = $branch_id;
     }
 

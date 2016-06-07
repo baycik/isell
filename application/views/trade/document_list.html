@@ -3,20 +3,19 @@
     DocList = App.page_trade_document_list = {
 	init: function () {
             DocList.doc.init();
+
 	},
 	initAfter: function () {
-            App.handler.progress(function(status,pcomp){
+	    //DocList.list.load();
+	    App.handler.progress(function(status,pcomp){
                 if( status==='passiveCompanySelected' || status==='activeCompanySelected' ){
-                    if( !$.isEmptyObject(App.acomp) && !$.isEmptyObject(App.pcomp) ){
-                        DocList.doc.load(0);
-                    }
-                    $('#document_list_dg').datagrid('reload');
-		    $("#doc_list_pcompname").text(App.pcomp.label);
+		    DocList.list.load();
+		    console.log(status);
                 }
             });
 	},
 	doc:{
-	    doc_id:null,
+	    doc_id:0,
 	    init:function(){
 		App.loadModule('page/trade/document',{doc_id:DocList.doc.doc_id,open_in:'panel'},'DocInline',/(Doc|page_trade_document)([^\w]|_)/g,"DocInline$2").progress(function(status,param){
 		    switch( status ){
@@ -37,7 +36,7 @@
 			    $('#document_list_dg').datagrid('reload');
 			    break;
 			case 'pcomp_changed':
-			    TradeJs.selectPassiveCompany({company_id:param});
+			    App.user.pcompSelect({company_id:param});
 			    if( CtreeInline ){
 				CtreeInline.unselectTree();
 				CtreeInline.unselectCombo();
@@ -60,6 +59,10 @@
 	
     DocList.list = {
 	init: function () {
+	},
+	load:function(){
+	    $('#document_list_dg').datagrid('reload');
+	    $("#doc_list_pcompname").text(App.pcomp.label);	    
 	},
 	loader: function (param, success, error) {
             if( App.pcomp.company_id ){

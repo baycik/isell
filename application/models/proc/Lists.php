@@ -14,7 +14,7 @@ class Lists extends Data {
     public function addEvent() {
 	$user_id = $this->Base->svar('user_id');
 	$this->Base->query("INSERT INTO " . BAY_DB_MAIN . ".event_list SET event_date=NOW(),event_user_id=$user_id");
-	return mysql_insert_id();
+	return mysqli_insert_id($this->Base->db_link);
     }
     public function deleteEvent( $delIds ){
 	$this->deleteGridRows(BAY_DB_MAIN . ".event_list", $delIds);
