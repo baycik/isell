@@ -102,7 +102,10 @@
 		    });
 		},
 		pcompSelect: function ( company ) {
-		    if ( company.company_id && company.company_id!==App.pcomp.company_id ) {
+		    if ( company.company_id ) {
+			if( App.pcomp && App.pcomp.company_id===company.company_id ){
+			    return;
+			}
 			$.post('Company/selectPassiveCompany/' + company.company_id, function (xhr) {
 			    App.user.setPassiveCompany(App.json(xhr));
 			});

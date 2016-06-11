@@ -30,7 +30,6 @@
 	ctreeInlineInit:function(){
 	    App.loadModule('page/company/tree',{inline:true,clickselect:true},'CtreeInline',/(Ctree|page_company_tree)([^\w]|_)/g,"CtreeInline$2").progress(function(status,company){
                 if( status==='select' ){
-		    TradeJs.showTabs(true);
 		    App.user.pcompSelect(company);
                 }
                 if( status==='treeLoaded' ){
@@ -71,8 +70,8 @@
 		<div id="trade_main_tabs_info">
 		    <h1 style="text-shadow: 0px 0px 2px #fff;color:#333"><<< <i>Выберите клиента для начала работы</i></h1>
 		</div>
-		<div id="trade_main_tabs_content" style="visibility: hidden">
-		    <div id="trade_main_tabs" class="slim-tab">
+		<div id="trade_main_tabs_content" style="visibility: hidden;">
+		    <div id="trade_main_tabs" class="slim-tab" style="width:1000px;">
 			<div title="Документы" href="page/trade/document_list.html" style="min-height: 500px;"></div>
 			<div title="Взаиморасчет" href="page/trade/payments.html" style="min-height: 500px;"></div>
 			<div title="Настройки" href="page/company/prefs.html" style="min-height: 500px;"></div>

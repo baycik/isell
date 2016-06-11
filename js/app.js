@@ -91,7 +91,7 @@ var App = {
 	} else {
 	    App[id] = {};
 	    $.get(path + '.html',function(html){
-		var id_replace=id_replace||(id_new+"$2");
+		//var id_replace=id_replace||(id_new+"$2");
 		html=id_search?html.replace(id_search,id_replace):html;
 		//console.log(html);
 		App.setHTML("#"+id,html);
@@ -409,7 +409,7 @@ $.extend($.fn.datagrid.defaults, {
 		    if (selected && index>0){
 			grid.datagrid('selectRow', index-1);
 		    } else {
-			var rows = grid.datagrid('getRows')
+			var rows = grid.datagrid('getRows');
 			grid.datagrid('selectRow', rows.length - 1);
 		    }
 		    break;
@@ -424,7 +424,7 @@ $.extend($.fn.datagrid.defaults, {
 		    }
 		    break;
 		case 13:
-		    grid.trigger('rowEdit')
+		    grid.trigger('rowEdit');
 		    break;
 		    
 	    }
@@ -436,7 +436,7 @@ $.extend($.fn.datagrid.defaults, {
 		    var min=Math.min(currentIndex,grid.lastClickedRow);
 		    var max=Math.max(currentIndex,grid.lastClickedRow);
 		    $(this).parent().each(function(){
-			var index=$(this).data('datagrid-row-index')
+			var index=$(this).data('datagrid-row-index');
 			if( index>min && index>max ){
 			    $(this).addClass("datagrid-row-checked datagrid-row-selected");
 			}

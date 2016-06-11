@@ -3,19 +3,19 @@
     DocList = App.page_trade_document_list = {
 	init: function () {
             DocList.doc.init();
-
-	},
-	initAfter: function () {
-	    //DocList.list.load();
 	    App.handler.progress(function(status,pcomp){
                 if( status==='passiveCompanySelected' || status==='activeCompanySelected' ){
+		    DocList.list.readyToLoad=true;
 		    DocList.list.load();
-		    console.log(status);
-                }
+		    if( CtreeInline ){
+			CtreeInline.unselectTree();
+			CtreeInline.unselectCombo();
+		    }
+		}
             });
 	},
 	doc:{
-	    doc_id:0,
+	    doc_id:null,
 	    init:function(){
 		App.loadModule('page/trade/document',{doc_id:DocList.doc.doc_id,open_in:'panel'},'DocInline',/(Doc|page_trade_document)([^\w]|_)/g,"DocInline$2").progress(function(status,param){
 		    switch( status ){
@@ -58,6 +58,7 @@
     };
 	
     DocList.list = {
+	readyToLoad:false,
 	init: function () {
 	},
 	load:function(){
@@ -65,15 +66,17 @@
 	    $("#doc_list_pcompname").text(App.pcomp.label);	    
 	},
 	loader: function (param, success, error) {
-            if( App.pcomp.company_id ){
+            if( DocList.list.readyToLoad ){
                 $.get(App.uri('DocumentCore', 'listFetch', param.page, param.rows, 'show_only_pcomp_docs'), {filterRules: param.filterRules}, function (xhr) {
                     var resp = App.json(xhr);
                     if (resp.rows) {
                         resp.rows.unshift(DocList.list.getNewDocRow());
                         success(resp);
                         if (DocList.list.selectedDocId) {
-                            //$('#document_list_dg').datagrid('selectRecord', DocList.list.selectedDocId);
-                        }
+                            $('#document_list_dg').datagrid('selectRecord', DocList.list.selectedDocId);
+                        } else {
+			    $('#document_list_dg').datagrid('selectRow', 0);
+			}
                     }
                     else {
                         success({
@@ -109,6 +112,7 @@
 		DocList.list.suppressOnSelect=false;
 		return;
 	    }
+	    DocList.list.selectedDocId=row.doc_id;
 	    DocList.doc.load(row.doc_id);
 	}
 	/*,
