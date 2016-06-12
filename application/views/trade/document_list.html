@@ -4,7 +4,7 @@
 	init: function () {
             DocList.doc.init();
 	    App.handler.progress(function(status,pcomp){
-                if( status==='passiveCompanySelected' || status==='activeCompanySelected' ){
+                if( status==='passiveCompanyInited' ||  status==='passiveCompanySelected' || status==='activeCompanySelected' ){
 		    DocList.list.readyToLoad=true;
 		    DocList.list.load();
 		    if( CtreeInline ){

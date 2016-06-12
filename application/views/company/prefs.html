@@ -6,7 +6,7 @@
 	    App.setupForm("#CompPrefs_other");
 	    //this.load();
 	    App.handler.progress(function(status){
-		if( status==="passiveCompanySelected" ){
+		if( status==="passiveCompanyInited" || status==="passiveCompanySelected" ){
 		    CompPrefs.load();
 		}
 	    });
