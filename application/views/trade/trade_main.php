@@ -12,7 +12,7 @@
             this.tabsInited=true;
             App.initTabs('trade_main_tabs');
 	    App.handler.progress(function(status){
-		if( status==='passiveCompanyInited' ){
+		if( status==='passiveCompanyInited' || status==='passiveCompanySelected' ){
 		    TradeJs.showTabs(true);
 		}
 	    });
