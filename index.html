@@ -136,14 +136,14 @@
                             App.handler.notify('activeCompanyReloaded',company);
                             return;
                         }
+			setTimeout(function(){
+			    App.loadBg();
+			},0);
 			if( mode==='notify_init' ){
 			    App.handler.notify('activeCompanyInited',company);
                             return;
 			}
 			App.handler.notify('activeCompanySelected',company);
-			setTimeout(function(){
-			    App.loadBg();
-			},0);
 		    } else {
 			App.handler.notify('activeCompanyReset');
 		    }

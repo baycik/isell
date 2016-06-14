@@ -1,0 +1,10 @@
+<script>
+    function treeRecalculate() {
+	$.get("Utils/treeRecalculate", function (resp) {
+	    alert("Пересчет таблиц завершен");
+	});
+    }
+</script>
+
+<button onclick="App.loadWindow('page/dialog/backup');"><img src="img/database.png" style="width:24px;height:24px"> Запустить менеджер резевного копирования</button><br>
+<button onclick="treeRecalculate()"><img src="img/utils.png" style="width:24px;height:24px"> Исправить ошибки в дереве склада,компаний,бух.счетов</button>
