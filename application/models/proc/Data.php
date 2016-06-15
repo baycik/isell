@@ -245,10 +245,10 @@ class Data {
         $res = $this->Base->query("SELECT * FROM (SELECT $table_select FROM $table $table_where) AS t $table_filter $table_order $table_limit");
         //$this->Base->msg("SELECT * FROM (SELECT $table_select FROM $table $table_where) AS t $table_filter $table_order $table_limit");
 
-        while ($row = mysql_fetch_row($res)) {
+        while ($row = mysqli_fetch_row($res)) {
             $table_data['rows'][] = $row;
         }
-        mysql_free_result($res);
+        mysqli_free_result($res);
 
         return $table_data;
     }
@@ -312,7 +312,7 @@ class Data {
             $where = $this->make_where($field_list, $table_row);
 
             $this->Base->query("UPDATE $table_name SET $set WHERE $where");
-            if (!mysql_affected_rows()) {
+            if (!mysqli_affected_rows($this->Base->db_link)) {
                 $this->Base->query("INSERT INTO $table_name SET $set", false);
             }
         }
@@ -337,11 +337,11 @@ class Data {
     public function getSubBranchIds($table_name, $branch_id) {
         $branch_ids = array($branch_id);
         $res = $this->Base->query("SELECT branch_id FROM $table_name WHERE parent_id='$branch_id'");
-        while ($row = mysql_fetch_row($res)) {
+        while ($row = mysqli_fetch_row($res)) {
             $sub_branch_ids = $this->getSubBranchIds($table_name, $row[0]);
             $branch_ids = array_merge($branch_ids, $sub_branch_ids);
         }
-        mysql_free_result($res);
+        mysqli_free_result($res);
         return $branch_ids;
     }
 
@@ -356,7 +356,7 @@ class Data {
         $user_level = $this->Base->svar('user_level');
         $branches = array();
         $res = $this->Base->query("SELECT branch_id as '$bid_alias',parent_id as '$pid_alias',label as '$label_alias', branch_data, level FROM $table_name WHERE parent_id='$parent_id' AND level<='$user_level' ORDER BY is_leaf, label");
-        while ($branch = mysql_fetch_assoc($res)) {
+        while ($branch = mysqli_fetch_assoc($res)) {
             if ($branch['branch_data']) {
                 $bdata = json_decode($branch['branch_data']);
                 unset($branch['branch_data']);
@@ -379,7 +379,7 @@ class Data {
             }
             $branches[] = $branch;
         }
-        mysql_free_result($res);
+        mysqli_free_result($res);
         return $branches;
     }
 
@@ -389,7 +389,7 @@ class Data {
             return -1;
         //$top_id=$this->getTopBranch()
         $this->Base->query("INSERT INTO $table_name SET top_id='{$parent['top_id']}', level='{$parent['level']}', parent_id='$parent_id', label='$label', is_leaf='$is_leaf', branch_data='$branch_data'");
-        $new_branch_id = mysql_insert_id();
+        $new_branch_id = mysqli_insert_id($this->Base->db_link);
         if ($parent_id == 0) {
             //New branch is root so top_id==branch_id;
             $this->Base->query("UPDATE $table_name SET top_id=branch_id WHERE branch_id=$new_branch_id");

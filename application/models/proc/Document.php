@@ -79,7 +79,7 @@ class Document extends Data {
 	$old_doc = $this->_doc;
 	$new_doc_id = $this->add($old_doc['doc_type']);
 	$res = $this->Base->query("SELECT * FROM document_entries WHERE doc_id=$old_doc[doc_id]");
-	while ($row = mysql_fetch_assoc($res)) {
+	while ($row = mysqli_fetch_assoc($res)) {
 	    $copy = array();
 	    $copy[] = "product_code='$row[product_code]'";
 	    $copy[] = "product_quantity=$row[product_quantity]";
@@ -89,7 +89,7 @@ class Document extends Data {
 	    $copy = implode(',', $copy);
 	    $this->Base->query("INSERT INTO document_entries SET doc_id=$new_doc_id, $copy");
 	}
-	mysql_free_result($res);
+	mysqli_free_result($res);
 	$copy = array();
 	$copy[] = "cstamp='$old_doc[cstamp]'";
 	$copy[] = "reg_stamp='$old_doc[reg_stamp]'";
@@ -108,11 +108,11 @@ class Document extends Data {
 	$rate = (1 + $perc / 100);
 	$doc_id = $this->doc('doc_id');
 	$res = $this->Base->query("SELECT doc_entry_id,product_code FROM document_entries WHERE doc_id='$doc_id'");
-	while ($row = mysql_fetch_assoc($res)) {
+	while ($row = mysqli_fetch_assoc($res)) {
 	    $invoice = $this->getProductInvoicePrice($row['product_code']);
 	    $this->alterEntry('update', $row['doc_entry_id'], NULL, $invoice * $rate);
 	}
-	mysql_free_result($res);
+	mysqli_free_result($res);
 	$this->updateTrans();
     }
 
@@ -206,7 +206,7 @@ class Document extends Data {
 	}
 	$this->Base->query("START TRANSACTION");
 	$res = $this->Base->query("SELECT doc_entry_id FROM document_entries WHERE doc_id=$doc_id");
-	while ($entry = mysql_fetch_assoc($res)) {
+	while ($entry = mysqli_fetch_assoc($res)) {
 	    if (!$this->alterEntry('commit', $entry['doc_entry_id'], NULL, NULL)) {
 		$name = $this->Base->get_row("SELECT $company_lang FROM document_entries JOIN prod_list USING(product_code) WHERE doc_entry_id=$entry[doc_entry_id]", 0);
 		$this->Base->msg("Невозможно провести строку: \"$name\"\n");
@@ -218,8 +218,8 @@ class Document extends Data {
 	    $this->updateBuyPriceFromDoc();
 	    //$this->updateBuyPartyLabel();
 	}
-	$entry_num = mysql_num_rows($res);
-	mysql_free_result($res);
+	$entry_num = mysqli_num_rows($res);
+	mysqli_free_result($res);
 	if ($entry_num == 0) {//Doc is empty
 	    $this->Base->msg("\nДокумент пуст!");
 	    $this->Base->query("ROLLBACK");
@@ -248,7 +248,7 @@ class Document extends Data {
 
 	$this->Base->query("START TRANSACTION");
 	$res = $this->Base->query("SELECT * FROM document_entries WHERE doc_id='$doc_id'");
-	while ($entry = mysql_fetch_assoc($res)) {
+	while ($entry = mysqli_fetch_assoc($res)) {
 	    if (!$this->alterEntry('uncommit', $entry['doc_entry_id'], NULL, NULL)) {
 		$this->Base->query("ROLLBACK");
 		$name = $this->Base->get_row("SELECT $company_lang FROM document_entries JOIN prod_list USING(product_code) WHERE doc_entry_id=$entry[doc_entry_id]", 0);
@@ -256,7 +256,7 @@ class Document extends Data {
 		return false;
 	    }
 	}
-	mysql_free_result($res);
+	mysqli_free_result($res);
 	$this->Base->query("UPDATE document_list SET is_commited=0 WHERE doc_id=$doc_id");
 	$this->Base->query("COMMIT");
 
@@ -387,13 +387,13 @@ class Document extends Data {
 	$party_label = $this->Base->Stock->getEntryPartyLabel($product_code);
 	//$this->Base->msg($party_label);
 	$this->Base->query("INSERT INTO document_entries SET doc_id='$doc_id', product_code='$product_code',party_label='$party_label'", false);
-	if (mysql_errno() == 1062) {//Duplicate entry
+	if (mysqli_errno($this->Base->db_link) == 1062) {//Duplicate entry
 	    $this->Base->response_wrn("Строка с кодом '$product_code' уже добавлена!");
 	} else
-	if (mysql_errno() == 1452) {//Constraint fails
+	if (mysqli_errno($this->Base->db_link) == 1452) {//Constraint fails
 	    $this->Base->response_wrn("Артикул '$product_code' не существует!");
 	}
-	$doc_entry_id = mysql_insert_id();
+	$doc_entry_id = mysqli_insert_id($this->Base->db_link);
         /*
          *  bugfix getInvoicePrice accepts stripslashed product_code
          */
@@ -590,7 +590,7 @@ class Document extends Data {
 			    doc_id = '$doc_id'))) AS vl,'/%')
 	    GROUP BY view_type_id";
 	$res = $this->Base->query($sql);
-	while ($row = mysql_fetch_assoc($res)) {
+	while ($row = mysqli_fetch_assoc($res)) {
 	    $row['extra_fields'] = getExtraFields($row['view_efield_labels'], $row['view_efield_values']);
 	    unset($row['view_efield_labels'], $row['view_efield_values']);
 	    $doc_views[] = $row;
@@ -679,7 +679,7 @@ class Document extends Data {
 	}
 	$cstamp = $this->doc('cstamp');
 	$this->Base->query("INSERT INTO document_view_list SET doc_id='$doc_id', view_type_id='$view_type_id', view_efield_values='$efields', tstamp='$cstamp', view_num='$view_num', view_role='{$view_type_props['view_role']}'");
-	return mysqli_insert_id($this->db_link);
+	return mysqli_insert_id($this->Base->db_link);
     }
     
     private function getLastEfields($view_type_id){
@@ -716,9 +716,9 @@ class Document extends Data {
 	}
 	$next_doc_num = $this->getNextDocNum($doc_type);
 	if ($prev_doc) {
-	    $pnotcount = $prev_doc[notcount];
-	    $psignsafterdot = $prev_doc[signs_after_dot];
-	    $pusevatlessprice = $prev_doc[use_vatless_price];
+	    $pnotcount = $prev_doc['notcount'];
+	    $psignsafterdot = $prev_doc['signs_after_dot'];
+	    $pusevatlessprice = $prev_doc['use_vatless_price'];
 	} else {
 	    $pnotcount = 0;
 	    $psignsafterdot = 2;
@@ -738,7 +738,7 @@ class Document extends Data {
             modified_by=$user_id,
             vat_rate=$vat_rate"
 	);
-	$doc_id = mysql_insert_id();
+	$doc_id = mysqli_insert_id($this->Base->db_link);
 	$this->selectDoc($doc_id);
 	$this->updateTrans();
 	return $doc_id;
@@ -1123,13 +1123,13 @@ class Document extends Data {
 	$res = $this->Base->query("SELECT trans_id FROM document_trans WHERE doc_id=$doc_id");
 	$this->Base->query("START TRANSACTION");
 	$this->Base->query("DELETE FROM document_trans WHERE doc_id=$doc_id");
-	while ($row = mysql_fetch_assoc($res)) {
+	while ($row = mysqli_fetch_assoc($res)) {
 	    if (!$this->Base->Accounts->cancelTransaction($row['trans_id'])) {
 		$this->Base->query("ROLLBACK");
 		return false;
 	    }
 	}
-	mysql_free_result($res);
+	mysqli_free_result($res);
 	$this->Base->query("COMMIT");
 	return true;
     }

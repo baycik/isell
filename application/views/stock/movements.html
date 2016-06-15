@@ -46,10 +46,23 @@
 	    } else {
 		location.href=url;
 	    }
+	},
+	docTooltip:function(value, row){
+	    if( row.doc_id ){
+		return App.datagrid.tooltip('document Открыть документ', row, 'App.page_stock_movements.openDoc('+row.doc_id+')');
+	    }
+	    return '';
+	},
+	openDoc:function(doc_id){
+	    App.loadWindow('page/trade/document',{doc_id:doc_id}).progress(function(status){
+		if( status!=='inited' ){
+		    $("#Stock_movements_dg").datagrid('reload');
+		}
+	    });
 	}
     };
 </script>
-<div>
+<div style="width: 900px;">
     <div style="text-align: right;padding-right: 5px;">
         <span class="icon-24 icon-tablefilter" title="Фильтр таблицы" onclick="App.page_stock_movements.toggleFilter()"> </span>
         <span class="icon-24 icon-refresh" title="Обновить" onclick="App.page_stock_movements.reload()"> </span>
@@ -67,6 +80,7 @@
             remoteFilter:true">
         <thead>
             <tr>
+		<th data-options="width:25,field:'doc_id',formatter:App.page_stock_movements.docTooltip"></th>
                 <th data-options="field:'alabel',width:100">Предприятие</th>
                 <th data-options="field:'oper_date',width:70">Дата</th>
                 <th data-options="field:'doc',width:170">Документ</th>

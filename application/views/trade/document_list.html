@@ -3,16 +3,15 @@
     DocList = App.page_trade_document_list = {
 	init: function () {
             DocList.doc.init();
-	},
-	initAfter: function () {
-            App.handler.progress(function(status,pcomp){
-                if( status==='passiveCompanySelected' || status==='activeCompanySelected' ){
-                    if( !$.isEmptyObject(App.acomp) && !$.isEmptyObject(App.pcomp) ){
-                        DocList.doc.load(0);
-                    }
-                    $('#document_list_dg').datagrid('reload');
-		    $("#doc_list_pcompname").text(App.pcomp.label);
-                }
+	    App.handler.progress(function(status,pcomp){
+                if( status==='passiveCompanyInited' ||  status==='passiveCompanySelected' || status==='activeCompanySelected' ){
+		    DocList.list.readyToLoad=true;
+		    DocList.list.load();
+		    if( CtreeInline ){
+			CtreeInline.unselectTree();
+			CtreeInline.unselectCombo();
+		    }
+		}
             });
 	},
 	doc:{
@@ -37,7 +36,7 @@
 			    $('#document_list_dg').datagrid('reload');
 			    break;
 			case 'pcomp_changed':
-			    TradeJs.selectPassiveCompany({company_id:param});
+			    App.user.pcompSelect({company_id:param});
 			    if( CtreeInline ){
 				CtreeInline.unselectTree();
 				CtreeInline.unselectCombo();
@@ -59,18 +58,25 @@
     };
 	
     DocList.list = {
+	readyToLoad:false,
 	init: function () {
 	},
+	load:function(){
+	    $('#document_list_dg').datagrid('reload');
+	    $("#doc_list_pcompname").text(App.pcomp.label);	    
+	},
 	loader: function (param, success, error) {
-            if( App.pcomp.company_id ){
+            if( DocList.list.readyToLoad ){
                 $.get(App.uri('DocumentCore', 'listFetch', param.page, param.rows, 'show_only_pcomp_docs'), {filterRules: param.filterRules}, function (xhr) {
                     var resp = App.json(xhr);
                     if (resp.rows) {
                         resp.rows.unshift(DocList.list.getNewDocRow());
                         success(resp);
                         if (DocList.list.selectedDocId) {
-                            //$('#document_list_dg').datagrid('selectRecord', DocList.list.selectedDocId);
-                        }
+                            $('#document_list_dg').datagrid('selectRecord', DocList.list.selectedDocId);
+                        } else {
+			    $('#document_list_dg').datagrid('selectRow', 0);
+			}
                     }
                     else {
                         success({
@@ -106,6 +112,7 @@
 		DocList.list.suppressOnSelect=false;
 		return;
 	    }
+	    DocList.list.selectedDocId=row.doc_id;
 	    DocList.doc.load(row.doc_id);
 	}
 	/*,

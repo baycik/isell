@@ -222,6 +222,7 @@ class Stock extends Catalog {
 	    $having=$this->decodeFilterRules();
 	}
         $sql="SELECT
+		doc_id,
                 DATE_FORMAT(dl.cstamp,'%d.%m.%Y') oper_date,
                 CONCAT(dt.doc_type_name,IF(dl.is_reclamation,' (Возврат)',''),' #',dl.doc_num) doc,
 		(SELECT label FROM companies_tree JOIN companies_list USING(branch_id) WHERE company_id=passive_company_id) plabel,
@@ -255,6 +256,7 @@ class Stock extends Catalog {
 	    if( $prev_concat==$concat ){
 		$row->oper_date='';
 		$row->doc='';
+		$row->doc_id='';
 		$row->alabel='';
 		$row->plabel='';
 	    }

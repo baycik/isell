@@ -123,14 +123,14 @@ class Companies extends Data {
         $discounts = array();
         $res = $this->Base->query("SELECT branch_id,label,(SELECT discount FROM companies_discounts cd WHERE cd.branch_id=st.branch_id AND cd.company_id=$company_id) AS discount FROM stock_tree st  WHERE parent_id=0 ORDER BY label");
 
-        while ($row = mysql_fetch_assoc($res)) {
+        while ($row = mysqli_fetch_assoc($res)) {
             if ($row['discount'] > 1)
                 $row['plus'] = $row['discount'] * 100 - 100;
             if ($row['discount'] < 1 && $row['discount'] > 0)
                 $row['minus'] = 100 - $row['discount'] * 100;
             $discounts[] = $row;
         }
-        mysql_free_result($res);
+        mysqli_free_result($res);
         return $discounts;
     }
 

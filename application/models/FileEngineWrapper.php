@@ -22,15 +22,12 @@ if ( isset($word_header) ) {
 	@page WordSection1 { }
 	div.WordSection1 { page:WordSection1; }
 	--></style>
-	    <?php
-	} else {?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<?php } else { ?>
+<!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
     <head>
 	<link rel="icon" type="image/png" href="../../img/Printer.png">
-		<?php
-	    }
-	    ?>
+<?php } ?>
 	    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 	    <style type="text/css">
 		body, html, td{
@@ -46,24 +43,6 @@ if ( isset($word_header) ) {
 		}
 		.noborder{
 		    border:none;
-		}
-		.tiny{
-		    font-size:8px;
-		}
-		.small{
-		    font-size:9px;
-		}
-		.medium{
-		    font-size:11px;
-		}
-		.big{
-		    font-size:14px;
-		}
-		.bigest{
-		    font-size:16px;
-		}
-		.large{
-		    font-size:17px;
 		}
 		.cell{
 		    width:16px;
