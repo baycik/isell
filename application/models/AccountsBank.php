@@ -19,7 +19,7 @@ class AccountsBank extends AccountsData{
                 FROM acc_check_list 
 		WHERE main_acc_code='$main_acc_code' AND active_company_id='$active_company_id'
 		HAVING $having
-		ORDER BY transaction_date DESC 
+		ORDER BY trans_id IS NOT NULL,transaction_date DESC 
 		LIMIT $rows OFFSET $offset";
 	$result_rows=$this->get_list($sql);
 	$total_estimate=$offset+(count($result_rows)==$rows?$rows+1:count($result_rows));
@@ -67,6 +67,7 @@ class AccountsBank extends AccountsData{
 	$passive_company_id=$this->Base->pcomp('company_id');
 	$sql="SELECT 
 		    at.*,
+                    ROUND(at.amount,2) amount, 
 		    DATE_FORMAT(tstamp,'%d.%m.%Y') date,
 		    code,
 		    descr
