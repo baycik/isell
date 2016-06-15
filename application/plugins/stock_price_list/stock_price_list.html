@@ -134,7 +134,7 @@
 <div id="price_list_templates" style="display: none">
     <li data-type="h1" class="h1"> <img src="img/edit-16.png" class="edit_pencil" onclick="App.price_list.itemEdit(this)" title="Изменить текст"><span>Большой заголовок</span></li>
     <li data-type="h2" class="h2"> <img src="img/edit-16.png" class="edit_pencil" onclick="App.price_list.itemEdit(this)" title="Изменить текст"><span>Средний заголовок</span></li>
-    <li data-type="page" class="page"> <img src="img/edit-16.png" class="edit_pencil" onclick="App.price_list.itemEdit(this)" title="Изменить текст">Произвольный текст</li>
+    <li data-type="page" class="page"> <img src="img/edit-16.png" class="edit_pencil" onclick="App.price_list.itemEdit(this)" title="Изменить текст"><span>Произвольный текст</span></li>
 </div>
 <table style="width:1170px;margin-right: 30px;">
     <tr>
@@ -244,12 +244,20 @@
 	background: none;
     }
     li.sortable-dragging{}
+    .available_items{
+        max-height: 700px;
+        overflow-y: scroll;
+    }
     .available_items img{
 	display: none;
     }
     .available_items li{
 	width:190px;
 	float: left;
+    }
+    .used_items{
+        height: 700px;
+        overflow-y: scroll;
     }
     .used_items img.edit_pencil{
 	float:right;
