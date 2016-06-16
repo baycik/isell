@@ -80,10 +80,11 @@ class Storage extends CI_Model {
 	
 	$grey = imagecolorallocate($thumb, 0, 0, 0);
 	
-	//$text = 'нннн';
-	//$font = './system/fonts/texb.ttf';
-	//imagettftext($thumb, 20, 0, 11, 21, $grey, $font, $text);
-	
+        $mark=$this->input->get_post('mark');
+        if( $mark ){
+            $font = './system/fonts/texb.ttf';
+            imagettftext($thumb, 20, 0, 11, 21, $grey, $font, $mark);
+        }
 	header("Content-type: image/jpeg");
 	imagejpeg($thumb,NULL,90);
     }
