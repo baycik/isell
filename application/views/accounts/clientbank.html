@@ -110,7 +110,7 @@
             $.get("Pref/getPrefs/tax_id_in_checks",function(resp){
                 var pref=App.json(resp);
                 if( pref.tax_id_in_checks*1 ){
-                    Cbank.updateField(company_id,'company_vat_id',Cbank.current_check.correspondent_code,'Код');
+                    Cbank.updateField(company_id,'company_vat_id',Cbank.current_check.correspondent_code,'ИНН');
                 } else {
                     Cbank.updateField(company_id,'company_code',Cbank.current_check.correspondent_code,'Код');
                 }
@@ -315,7 +315,10 @@
 		Контрагент {{correspondent_name}} с кодом {{correspondent_code}} не найден<br>
 		<button onclick="Cbank.correspondentSelect()">Выбрать контрагента</button>
 	    </div>	    
-	{{else}}
+            <div style="text-align: center;padding: 3px;">
+                <button onclick="Cbank.transClick(this)">Провести по другому счету</button>
+            </div>
+        {{else}}
         <h3 style="text-align: center">{{pcomp.company_name}}</h3>
 	<div>
 	    {{if trans_id|more>0}}
