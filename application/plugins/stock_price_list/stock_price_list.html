@@ -136,7 +136,7 @@
     <li data-type="h2" class="h2"> <img src="img/edit-16.png" class="edit_pencil" onclick="App.price_list.itemEdit(this)" title="Изменить текст"><span>Средний заголовок</span></li>
     <li data-type="page" class="page"> <img src="img/edit-16.png" class="edit_pencil" onclick="App.price_list.itemEdit(this)" title="Изменить текст"><span>Произвольный текст</span></li>
 </div>
-<table style="width:1170px;margin-right: 30px;">
+<table style="width:1170px;margin-right: 30px;margin-bottom: 40px;">
     <tr>
 	<td style="vertical-align: top;width:420px">
 	    <div style="text-align: right;padding-right: 5px;">
@@ -182,7 +182,7 @@
     </tr>
     <tr id="price_list_loaded_connected" style="display: none">
 	<td style="vertical-align: top">
-	    <ul id="price_list_availables" class="connected available_items" style="width:415px;">
+	    <ul id="price_list_availables" class="connected available_items" style="width:435px;">
 		{{availables}}
 		<li data-id="{{id}}" data-type="category" title="{{path}}">
 		    <span>{{text}}</span> ({{product_count}}) 
@@ -245,7 +245,7 @@
     }
     li.sortable-dragging{}
     .available_items{
-        max-height: 700px;
+        max-height: 500px;
         overflow-y: scroll;
     }
     .available_items img{
@@ -256,8 +256,9 @@
 	float: left;
     }
     .used_items{
-        height: 700px;
-        overflow-y: scroll;
+        height: 500px;
+        padding-bottom: 20px;
+        overflow: auto;
     }
     .used_items img.edit_pencil{
 	float:right;

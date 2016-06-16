@@ -25,8 +25,8 @@
 		},
 		setProps:function( userProps ){
 		    App.user.props=userProps;
-		    App.user.setActiveCompany(userProps.acomp);
-		    App.user.setPassiveCompany(userProps.pcomp);
+		    App.user.setActiveCompany(userProps.acomp,'notify_init');
+		    App.user.setPassiveCompany(userProps.pcomp,'notify_init');
 		    if( userProps && userProps.user_level>0 ){
 			App.renderTpl('div_user_panel', App.user.props || '');	
 			App.renderTpl('div_module_list', App.user.props || '');
@@ -103,28 +103,15 @@
 		},
 		pcompSelect: function ( company ) {
 		    if ( company.company_id ) {
+			if( App.pcomp && App.pcomp.company_id===company.company_id ){
+			    return;
+			}
 			$.post('Company/selectPassiveCompany/' + company.company_id, function (xhr) {
 			    App.user.setPassiveCompany(App.json(xhr));
 			});
 		    }
 		},
-		setActiveCompany:function(company){
-                    var old_acomp_id=App.acomp?App.acomp.company_id:0;
-		    App.acomp=company;
-		    if( company ){
-                        if( company.company_id===old_acomp_id ){
-                            App.handler.notify('activeCompanyReloaded',company);
-                            return;
-                        }
-			App.handler.notify('activeCompanySelected',company);
-			setTimeout(function(){
-			    App.loadBg();
-			},0);
-		    } else {
-			App.handler.notify('activeCompanyReset');
-		    }
-		},
-		setPassiveCompany:function(company){
+		setPassiveCompany:function( company, mode ){
                     var old_pcomp_id=App.pcomp?App.pcomp.company_id:0;
 		    App.pcomp=company;
 		    if( company ){
@@ -132,19 +119,35 @@
                             App.handler.notify('passiveCompanyReloaded',company);
                             return;
                         }
+			if( mode==='notify_init' ){
+			    App.handler.notify('passiveCompanyInited',company);
+                            return;
+			}
 			App.handler.notify('passiveCompanySelected',company);
 		    } else {
 			App.handler.notify('passiveCompanyReset');
 		    }
+		},
+		setActiveCompany:function( company, mode ){
+                    var old_acomp_id=App.acomp?App.acomp.company_id:0;
+		    App.acomp=company;
+		    if( company ){
+                        if( company.company_id===old_acomp_id ){
+                            App.handler.notify('activeCompanyReloaded',company);
+                            return;
+                        }
+			setTimeout(function(){
+			    App.loadBg();
+			},0);
+			if( mode==='notify_init' ){
+			    App.handler.notify('activeCompanyInited',company);
+                            return;
+			}
+			App.handler.notify('activeCompanySelected',company);
+		    } else {
+			App.handler.notify('activeCompanyReset');
+		    }
 		}
-	    };
-	    App.onReady = function () {
-		App.user.getData();
-                App.handler.progress(function(status){
-                    if( status==='passiveCompanySelected' || status==='activeCompanySelected' ){
-                        App.setTitle();
-                    }
-                });
 	    };
 	    App.module={
 		init:function(){
@@ -202,6 +205,14 @@
 		    $(".ModuleButtonSelected").removeClass("ModuleButtonSelected");
 		    $("#"+this.current+"Button").addClass("ModuleButtonSelected");
 		}
+	    };
+	    App.onReady = function () {
+		App.user.getData();
+                App.handler.progress(function(status){
+                    if( status==='passiveCompanySelected' || status==='activeCompanySelected' ){
+                        App.setTitle();
+                    }
+                });
 	    };
 	</script>
     </head>

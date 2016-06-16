@@ -458,6 +458,7 @@
 	    data.vatless=data.vatless||0;
 	    data.vat=data.vat||0;
 	    data.total=data.total||0;
+	    data.curr_symbol=data.curr_symbol||'-';
 	    App.renderTpl('Doc_footer',data);
 	},
 	initRecalculate:function(){
@@ -616,7 +617,7 @@
 	background-color: #fff;
     }
     .document_comment{
-	width: 650px;
+	width: 660px;
 	height:30px;
 	margin-left:0px;
 	margin-top: 3px;
@@ -879,8 +880,10 @@
 	    </table>
 	</div>
 	<div id="Doc_owners" class="transparent covert" style="clear: left">
+	    {{if created_by}}
 	    <img src="img/add-16.png" title="Создано пользователем" style="vertical-align: middle"> {{created_by}} 
 	    <img src="img/edit-16.png" title="Изменено пользователем" style="vertical-align: middle"> {{modified_by}}
+	    {{/if}}
 	</div>
 	<!-- DOCUMENT VIEWS -->
         <div id="Doc_view_tile" style="clear:both;vertical-align: top;text-align: justify" class="covert">

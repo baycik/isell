@@ -85,7 +85,7 @@ class Pref {
         } else
             return false;
         $this->Base->query("UPDATE " . BAY_DB_MAIN . ".user_list SET $set,nick=CONCAT(SUBSTR(last_name,1,1),SUBSTR(first_name,1,1),SUBSTR(middle_name,1,1)) WHERE $where");
-        return mysql_affected_rows() ? true : false;
+        return mysqli_affected_rows($this->Base->db_link) ? true : false;
     }
 
     private function userAdminCountCheck($user_id) {
@@ -119,7 +119,7 @@ class Pref {
         $curr_hash = md5($curr_pass);
         $new_hash = md5($new_pass);
         $this->Base->query("UPDATE " . BAY_DB_MAIN . ".user_list SET user_pass='$new_hash' WHERE user_id='$user_id' AND user_pass='$curr_hash'"); //,user_level=IF(user_level=0,1,user_level)
-        return mysql_affected_rows() ? true : false;
+        return mysqli_affected_rows($this->Base->db_link) ? true : false;
     }
 
     public $fns = array(

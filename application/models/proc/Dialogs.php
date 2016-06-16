@@ -24,7 +24,7 @@ class Dialogs extends Data {
 	$this->Base->query("DELETE FROM " . BAY_DB_MAIN . ".stock_entries WHERE product_code='$product_code'");
 	$this->Base->query("DELETE FROM " . BAY_DB_MAIN . ".price_list WHERE product_code='$product_code'");
 	$this->Base->query("DELETE FROM " . BAY_DB_MAIN . ".prod_list WHERE product_code='$product_code'",false);
-	return mysql_errno()==0;
+	return mysqli_errno($this->Base->db_link)==0;
     }
 
     public function updateProduct($product_code, $product_data) {
