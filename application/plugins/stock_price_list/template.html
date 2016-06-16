@@ -45,7 +45,7 @@
 		    {if="$counter==0"}
 		    <td class="product_imgs" rowspan="{$num}">
 			{loop name="$value1->imgs"}
-			<img src="{$value}?mark={$value->product_code}#" style="margin: 1px;">
+                        <img src="{$value->src}?mark={$value->product_code}#" style="margin: 1px;">
 			{/loop}
 		    </td>
 		    {/if}
