@@ -78,12 +78,14 @@ class Storage extends CI_Model {
 	$thumb=$this->image_resize($this->storageFolder . "/" .$path, $size[0], $size[1]);
 	
 	
-	$grey = imagecolorallocate($thumb, 0, 0, 0);
+	$black = imagecolorallocate($thumb, 0, 0, 0);
+	$grey = imagecolorallocate($thumb, 128, 128, 128);
 	
         $mark=$this->input->get_post('mark');
         if( $mark ){
             $font = './system/fonts/texb.ttf';
-            imagettftext($thumb, 20, 0, 11, 21, $grey, $font, $mark);
+            imagettftext($thumb, 12, 0, 12, 12, $grey, $font, $mark);
+            imagettftext($thumb, 12, 0, 10, 10, $black, $font, $mark);
         }
 	header("Content-type: image/jpeg");
 	imagejpeg($thumb,NULL,90);
