@@ -35,27 +35,37 @@
 </style>
 <div class="page">
     <table border>
-    {loop name="v->price_blocks"}
-	{if="$value->type=='category' && $num=count($value->rows)"}
-	    {loop name="$value->rows"}
-		<tr style="height: 25px;">
-		    <td class="product_code" {if="$value->in_stock"}style="font-weight:bold"{/if}>{$value->product_code}</td>
-		    <td class="product_name">{$value->product_name}</td>
-		    <td class="product_price"> {$value->product_price}</td>
-		    {if="$counter==0"}
-		    <td class="product_imgs" rowspan="{$num}">
-			{loop name="$value1->imgs"}
-                        <img src="{$value->src}?mark={$value->product_code}#" style="margin: 1px;">
-			{/loop}
-		    </td>
-		    {/if}
-		</tr>	
-	    {/loop}
-	{else}
-	    <tr>
-		<td colspan="4" class="price_{$value->type}">{$value->text}</td>
-	    </tr>
-	{/if}
-    {/loop}
+        <thead>
+            <tr>
+                <th>Код</th>
+                <th>Название</th>
+                <th>Цена</th>
+                <th>Изображение</th>
+            </tr>
+        </thead>
+        <tbody>
+        {loop name="v->price_blocks"}
+            {if="$value->type=='category' && $num=count($value->rows)"}
+                {loop name="$value->rows"}
+                    <tr style="height: 25px;">
+                        <td class="product_code" {if="$value->in_stock"}style="font-weight:bold"{/if}>{$value->product_code}</td>
+                        <td class="product_name">{$value->product_name}</td>
+                        <td class="product_price"> {$value->product_price}</td>
+                        {if="$counter==0"}
+                        <td class="product_imgs" rowspan="{$num}">
+                            {loop name="$value1->imgs"}
+                            <img src="{$value->src}?mark={$value->product_code}#" style="margin: 1px;">
+                            {/loop}
+                        </td>
+                        {/if}
+                    </tr>	
+                {/loop}
+            {else}
+                <tr>
+                    <td colspan="4" class="price_{$value->type}">{$value->text}</td>
+                </tr>
+            {/if}
+        {/loop}
+        </tbody>
     </table>
 </div>
