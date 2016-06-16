@@ -118,7 +118,7 @@ class Stock_price_list extends Catalog{
 		product_img,
 		ROUND(
 		    sell
-			*IF(curr_code IS NOT NULL AND curr_code<>'$main_curr_code',$dollar_ratio,1)
+			*IF(curr_code AND curr_code<>'$main_curr_code',$dollar_ratio,1)
 			*IF(discount,discount,1)
 		,2) product_price
 	    FROM
