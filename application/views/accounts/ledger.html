@@ -10,7 +10,7 @@
                 this.fav.init();
             }
 	    App.handler.progress(function(status){
-		if( status==="activeCompanySelected" ){
+		if( status==="activeCompanyInited" || status==="activeCompanySelected" ){
 		    Ledger.fav.init();
 		}
 	    });
