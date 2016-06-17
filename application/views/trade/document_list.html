@@ -75,7 +75,10 @@
                         if (DocList.list.selectedDocId) {
                             $('#document_list_dg').datagrid('selectRecord', DocList.list.selectedDocId);
                         } else {
-			    $('#document_list_dg').datagrid('selectRow', 0);
+                            setTimeout(function(){
+                                //Sometimes doc is not loaded yet
+                                $('#document_list_dg').datagrid('selectRow', 0);
+                            },0);
 			}
                     }
                     else {
