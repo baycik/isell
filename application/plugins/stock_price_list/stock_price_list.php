@@ -135,26 +135,29 @@ class Stock_price_list extends Catalog{
 		se.parent_id='{$block->id}'
 	    ORDER BY $this->sort_by";
 	$block->rows=$this->get_list($sql);
-	$block->imgs=$this->getBlockImg($block);
+        
+        
+        
+
+	$block->imgs=$this->getBlockImg($block->id,count($block->rows));
 	return $block;
     }
     
-    private function getBlockImg( $block ){
-	$imgs=[];
-	$limit=floor(count($block->rows)/4);
-	foreach( $block->rows as $row ){
-	    if( $row->product_img ){
-		$imgs[]=[
-                    "src"=>"../../Storage/image_flush/150x100/dynImg/".$row->product_img,
-                    "product_code"=>$row->product_code
-                ];
-		$limit--;
-	    }
-	    if( $limit<=0 ){
-		break;
-	    }
-	}
-	return $imgs;
+    private function getBlockImg( $block_id,$block_rows ){
+        $limit=floor($block_rows/4);
+        $img_sql="SELECT
+		product_code,
+		product_img
+	    FROM
+		stock_entries se
+		    JOIN
+		stock_tree st ON se.parent_id=st.branch_id
+	    WHERE
+		se.parent_id='$block_id'
+                AND product_img
+	    ORDER BY fetch_count DESC
+            LIMIT $limit";
+        return $this->get_list($img_sql);
     }
     
     public function printout(){
