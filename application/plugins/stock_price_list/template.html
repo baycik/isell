@@ -35,14 +35,6 @@
 </style>
 <div class="page">
     <table border>
-        <thead>
-            <tr>
-                <th>Код</th>
-                <th>Название</th>
-                <th>Цена</th>
-                <th>Изображение</th>
-            </tr>
-        </thead>
         <tbody>
         {loop name="v->price_blocks"}
             {if="$value->type=='category' && $num=count($value->rows)"}
@@ -61,8 +53,15 @@
                     </tr>	
                 {/loop}
             {else}
+                </tbody><tbody>
                 <tr>
                     <td colspan="4" class="price_{$value->type}">{$value->text}</td>
+                </tr>
+                <tr>
+                    <th>Код</th>
+                    <th>Название</th>
+                    <th>Цена</th>
+                    <th>Изображение</th>
                 </tr>
             {/if}
         {/loop}
