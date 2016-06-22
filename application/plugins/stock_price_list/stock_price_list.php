@@ -145,12 +145,12 @@ class Stock_price_list extends Catalog{
 	foreach( $block->rows as $row ){
 	    if( $row->product_img ){
 		$imgs[]=[
-                    "src"=>"../../Storage/image_flush/150x120/dynImg/".$row->product_img,
+                    "src"=>"../../Storage/image_flush/150x100/dynImg/".$row->product_img,
                     "product_code"=>$row->product_code
                 ];
 		$limit--;
 	    }
-	    if( $limit==0 ){
+	    if( $limit<=0 ){
 		break;
 	    }
 	}
@@ -170,8 +170,6 @@ class Stock_price_list extends Catalog{
 		$this->sort_by.=" DESC";
 	    }
 	}
-	
-	
 	$this->Base->load_model('Storage');
 	$price_blocks=[];
 	foreach( $deployment['deployment']->items as $block ){

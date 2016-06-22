@@ -45,27 +45,30 @@
                         <td class="product_price"> {$value->product_price}</td>
                         {if="$counter==0"}
                         <td class="product_imgs" rowspan="{$num}">
+                            <div style="overflow: hidden;height:{$num*26}px;">
                             {loop name="$value1->imgs"}
-                            <div style="position: relative;">
-                                <div style="position:absolute;left:3px;top:3px;">{$value->product_code}</div>
-                            <img src="{$value->src}#" style="margin: 1px;">
+                            <div style="position: relative;margin: 1px;">
+                                <div style="position:absolute;left:3px;top:3px;background-color: rgba(255,255,255,.5)">{$value->product_code}</div>
+                                <img src="{$value->src}#">
                             </div>
                             {/loop}
+                            </div>
                         </td>
                         {/if}
                     </tr>	
                 {/loop}
             {else}
-                </tbody><tbody>
                 <tr>
                     <td colspan="4" class="price_{$value->type}">{$value->text}</td>
                 </tr>
+                {if="$value->type=='h2'"}
                 <tr>
                     <th>Код</th>
                     <th>Название</th>
                     <th>Цена</th>
                     <th>Изображение</th>
                 </tr>
+                {/if}
             {/if}
         {/loop}
         </tbody>
