@@ -50,14 +50,16 @@ class DocumentItems extends DocumentCore{
 		(SELECT
 		    ROUND(SUM(product_quantity*product_weight),2) total_weight,
 		    ROUND(SUM(product_quantity*product_volume),2) total_volume,
+                    SUM(
+                        ROUND(IF('$use_total_as_base',
+                            ROUND(ROUND(invoice_price, @signs_after_dot) * @vat_correction * @curr_correction, @signs_after_dot) * product_quantity,
+                            ROUND(invoice_price, @signs_after_dot) * @vat_correction * @curr_correction * product_quantity
+                        ),2)
+                    ) total,
 		    ROUND(IF('$use_total_as_base',
-			SUM(ROUND(invoice_price * @vat_ratio * @curr_correction,@signs_after_dot) * product_quantity),
-			SUM(ROUND(invoice_price * @curr_correction * product_quantity,2)) * @vat_ratio
-			),2) total,
-		    ROUND(IF('$use_total_as_base',
-			SUM(ROUND(invoice_price * @vat_ratio * @curr_correction,@signs_after_dot) * product_quantity)/ @vat_ratio,
-			SUM(ROUND(invoice_price * @curr_correction * product_quantity,2))
-			),2) vatless,
+			SUM(ROUND(ROUND(invoice_price, @signs_after_dot) * @vat_ratio * @curr_correction,@signs_after_dot) * product_quantity)/ @vat_ratio,
+			SUM(ROUND(ROUND(invoice_price, @signs_after_dot) * @curr_correction * product_quantity,2))
+                    ),2) vatless,
 		    SUM(ROUND(product_quantity*self_price,2)) self
 		FROM
 		    document_entries JOIN prod_list USING(product_code)
@@ -79,8 +81,9 @@ class DocumentItems extends DocumentCore{
 		analyse_section,
                 ROUND(invoice_price * @vat_correction * @curr_correction, @signs_after_dot) AS product_price,
                 ROUND(IF('$use_total_as_base',
-                    ROUND(invoice_price * @vat_correction * @curr_correction, @signs_after_dot) * product_quantity,
-                    invoice_price * @vat_correction * @curr_correction * product_quantity),2) product_sum,
+                    ROUND(ROUND(invoice_price, @signs_after_dot) * @vat_correction * @curr_correction, @signs_after_dot) * product_quantity,
+                    ROUND(invoice_price, @signs_after_dot) * @vat_correction * @curr_correction * product_quantity
+                ),2) product_sum,
                 CHK_ENTRY(doc_entry_id) AS row_status,
                 party_label,
                 product_uktzet,
