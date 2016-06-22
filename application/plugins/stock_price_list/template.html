@@ -46,7 +46,9 @@
                         {if="$counter==0"}
                         <td class="product_imgs" rowspan="{$num}">
                             {loop name="$value1->imgs"}
+                            <div>
                             <img src="{$value->src}?mark={$value->product_code}#" style="margin: 1px;">
+                            </div>
                             {/loop}
                         </td>
                         {/if}
