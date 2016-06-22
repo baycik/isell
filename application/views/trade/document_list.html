@@ -6,6 +6,7 @@
 	    App.handler.progress(function(status,pcomp){
                 if( status==='passiveCompanyInited' ||  status==='passiveCompanySelected' || status==='activeCompanySelected' ){
 		    DocList.list.readyToLoad=true;
+                    DocList.list.selectedDocId=0;
 		    DocList.list.load();
 		    if( CtreeInline ){
 			CtreeInline.unselectTree();
