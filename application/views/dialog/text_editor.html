@@ -12,8 +12,8 @@
 		height: 'auto',
 		onClose: function () {
 		    App.page_dialog_text_editor.handler.notify('close');
-                    delete tinymce;
-                    this.node.remove();
+                    tinymce.execCommand('mceRemoveControl', true, '#page_dialog_text_editor textarea');
+                    App.page_dialog_text_editor.node.remove();
 		    delete App.page_dialog_text_editor;
 		}
 	    });
