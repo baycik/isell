@@ -6,11 +6,14 @@
 		title: 'Редактор текста',
 		closable:true,
 		collapsible:true,
-		width: 850,
+		width: 730,
+                shadow:0,
 		top:50,
 		height: 'auto',
 		onClose: function () {
 		    App.page_dialog_text_editor.handler.notify('close');
+                    delete tinymce;
+                    this.node.remove();
 		    delete App.page_dialog_text_editor;
 		}
 	    });
@@ -19,7 +22,7 @@
 	    tinymce.init({
 		selector: '#page_dialog_text_editor textarea',
 		language: 'ru',
-		menubar:false,
+		menubar:true,
 		statusbar: false,
 		paste_data_images: true,
 		images_upload_handler: function (blobInfo, success, failure) {
@@ -33,7 +36,7 @@
 		  'textcolor colorpicker',
 		  'bdesk_photo'
 		],
-		toolbar: 'styleselect | forecolor backcolor | bdesk_photo | bold italic | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent',
+		toolbar: 'styleselect | forecolor backcolor | bdesk_photo | bold italic fontselect fontsizeselect | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent',
 		setup : function(editor) {
 		    //editor.setContent(App.page_dialog_text_editor.data.html);
 		 }
