@@ -111,14 +111,14 @@ class Stock_price_list extends Catalog{
 	$pcomp_id=$this->Base->pcomp('company_id');
 	$dollar_ratio=$this->Base->pref('usd_ratio');
 	$main_curr_code=$this->Base->acomp('curr_code');
-	$sql="SELECT
+        $sql="SELECT
 		product_code,
 		ru product_name,
 		product_quantity<>0 in_stock,
 		product_img,
 		ROUND(
 		    sell
-			*IF(curr_code AND curr_code<>'$main_curr_code',$dollar_ratio,1)
+			*IF(curr_code<>'' AND curr_code<>'$main_curr_code',$dollar_ratio,1)
 			*IF(discount,discount,1)
 		,2) product_price
 	    FROM
@@ -135,10 +135,6 @@ class Stock_price_list extends Catalog{
 		se.parent_id='{$block->id}'
 	    ORDER BY $this->sort_by";
 	$block->rows=$this->get_list($sql);
-        
-        
-        
-
 	$block->imgs=$this->getBlockImg($block->id,count($block->rows));
 	return $block;
     }
@@ -181,7 +177,7 @@ class Stock_price_list extends Catalog{
 	$dump=[
 	    'tpl_files_folder'=>"../plugins/stock_price_list/",
 	    'tpl_files'=>"template.html",
-	    'title'=>"Прайс-лист",
+	    'title'=>"РџСЂР°Р№СЃ-Р»РёСЃС‚",
 	    'view'=>[
 		'price_blocks'=>$price_blocks
 	    ]
