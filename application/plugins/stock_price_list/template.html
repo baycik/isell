@@ -3,7 +3,8 @@
 	width:70px;
     }
     .product_name{
-	
+	font-size: 16px;
+        font-family: Calibri,Arial;
     }
     .product_price{
 	width:60px;
@@ -11,7 +12,7 @@
     }
     .product_imgs{
 	text-align: center;
-	width:140px;
+	width:160px;
 	vertical-align: top;
     }
     .price_h1{
@@ -49,7 +50,7 @@
                             {loop name="$value1->imgs"}
                             <div style="position: relative;margin: 1px;">
                                 <div style="position:absolute;left:3px;top:3px;background-color: rgba(255,255,255,.5)">{$value->product_code}</div>
-                                <img src="../../Storage/image_flush/140x100/dynImg/{$value->product_img}#">
+                                <img src="../../Storage/image_flush/160x150/dynImg/{$value->product_img}#">
                             </div>
                             {/loop}
                             </div>
