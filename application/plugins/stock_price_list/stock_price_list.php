@@ -140,7 +140,7 @@ class Stock_price_list extends Catalog{
     }
     
     private function getBlockImg( $block_id,$block_rows ){
-        $limit=floor($block_rows/6);
+        $limit=floor($block_rows/5);
         $img_sql="SELECT
 		product_code,
 		product_img
