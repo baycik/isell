@@ -136,11 +136,12 @@ class Stock_price_list extends Catalog{
 	    ORDER BY $this->sort_by";
 	$block->rows=$this->get_list($sql);
 	$block->imgs=$this->getBlockImg($block->id,count($block->rows));
+        $block->img_height=count($block->rows)*25/count($block->imgs);
 	return $block;
     }
     
     private function getBlockImg( $block_id,$block_rows ){
-        $limit=floor($block_rows/5);
+        $limit=round($block_rows/4);
         $img_sql="SELECT
 		product_code,
 		product_img

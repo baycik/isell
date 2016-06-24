@@ -12,7 +12,7 @@
     }
     .product_imgs{
 	text-align: center;
-	width:160px;
+	width:140px;
 	vertical-align: top;
     }
     .price_h1{
@@ -50,11 +50,7 @@
                             {loop name="$value1->imgs"}
                             <div style="position: relative;margin: 1px;">
                                 <div style="position:absolute;left:3px;top:3px;background-color: rgba(255,255,255,.5)">{$value->product_code}</div>
-                                {if="$num>=5"}
-                                <img src="../../Storage/image_flush/160x125/dynImg/{$value->product_img}#">
-                                {else}
-                                <img src="../../Storage/image_flush/160x{$num*25}/dynImg/{$value->product_img}#">
-                                {/if}
+                                <img src="../../Storage/image_flush/140x{$value1->img_height}/dynImg/{$value->product_img}#">
                             </div>
                             {/loop}
                             </div>
