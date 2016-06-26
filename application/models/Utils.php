@@ -255,6 +255,7 @@ class Utils extends Catalog{
 	return $this->db->affected_rows();
     }
     private function selfPriceCheck($fdate){
+        //WTF
 	$sql="
 	    UPDATE 
 		document_entries de
@@ -263,10 +264,10 @@ class Utils extends Catalog{
 	    SET
 		self_price=invoice_price
 	    WHERE
-		cstamp<'$fdate'";
+		doc_type=2 AND cstamp<'$fdate'";
 	$this->db->query($sql);
     }
-    private function selfPriceTableMake($idate,$fdate){
+    private function selfPriceTableMake($idate,$fdate,$active_filter){
 	$this->db->query("DROP TEMPORARY TABLE IF EXISTS tmp_self_price_table;");// 
 	$sql="CREATE TEMPORARY TABLE tmp_self_price_table ( INDEX(product_code) ) ENGINE=MyISAM AS (
 	    SELECT
@@ -285,7 +286,7 @@ class Utils extends Catalog{
 	)";
 	$this->db->query($sql);	
     }
-    private function selfPriceAssign($idate,$fdate){
+    private function selfPriceAssign($idate,$fdate,$active_filter){
 	$sql="
 	    UPDATE
 		document_entries de
@@ -300,59 +301,124 @@ class Utils extends Catalog{
 	$this->db->query($sql);	
 	return $this->db->affected_rows();
     }
-    private function selfPriceOldApiRecalculate($idate,$fdate){
+    private function selfPriceOldApiRecalculate($idate,$fdate,$active_filter){
 	$Document2=$this->Base->bridgeLoad('Document');
-	$res = $this->db->query("SELECT doc_id,passive_company_id FROM document_list WHERE is_commited=1 AND doc_type=1 AND '$idate'<=cstamp AND cstamp<='$fdate' ORDER BY passive_company_id");
+	$res = $this->db->query("SELECT doc_id,passive_company_id FROM document_list WHERE is_commited=1 AND doc_type=1 AND '$idate'<=cstamp AND cstamp<='$fdate' $active_filter ORDER BY passive_company_id");
+	echo "SELECT doc_id,passive_company_id FROM document_list WHERE is_commited=1 AND doc_type=1 AND '$idate'<=cstamp AND cstamp<='$fdate' $active_filter ORDER BY passive_company_id";
 	if( $res ){
 	    foreach ($res->result() as $row) {
 		if ($Document2->Base->pcomp('company_id') != $row->passive_company_id){
 		    $Document2->Base->selectPassiveCompany($row->passive_company_id);
+		    echo " pcomp_id".$row->passive_company_id;
 		}
 		$doc_id = $row->doc_id;
 		$Document2->selectDoc($doc_id);
-		$Document2->updateTrans();
+		$Document2->updateTrans('profit_only');
 	    }
 	    $res->free_result();	    
 	}
-
     }
     private function dmy2iso( $dmy ){
 	$chunks=  explode('.', $dmy);
 	return "$chunks[2]-$chunks[1]-$chunks[0]";
     }
-    public function selfPriceInvoiceRecalculate($idatedmy,$fdatedmy){
-	set_time_limit(300);
-	
-	
-	
-	$idate=$this->dmy2iso($idatedmy).' 00:00:00';
-	$fdate=$this->dmy2iso($fdatedmy).' 23:59:59';
-	
-	$this->selfPriceCheck($fdate);
-	$this->selfPriceTableMake($idate,$fdate);
-	$this->selfPriceAssign($idate,$fdate);
-	$this->selfPriceOldApiRecalculate($idate, $fdate);
+
+    ////////////////////////////////////////////////////////////
+    // SELF RECALCULATION FUNCTIONS
+    ////////////////////////////////////////////////////////////
+    private function selfPriceCorrectEntries(){
+	$sql_update="UPDATE document_entries de JOIN tmp_self_calc tsc USING(doc_entry_id) SET de.self_price=tsc.sp WHERE doc_type=1;";
+	$this->db->query($sql_update);
     }
-    private function selfPriceStockAssign(){
-	$sql="
-	    UPDATE
-		stock_entries se
-		    JOIN
-		tmp_self_price_table spt USING(product_code)
-	    SET
-		se.self_price=fdate_buy_sum/fdate_buy_qty";
-	$this->db->query($sql);	
-	return $this->db->affected_rows();
-    }
-    public function selfPriceStockRecalculate(){
-	$idate='2000-01-01'.' 00:00:00';
-	$fdate='3000-01-01'.' 23:59:59';
-	
-	$this->selfPriceCheck($fdate);
-	$this->selfPriceTableMake($idate,$fdate);
-	return $this->selfPriceStockAssign($idate,$fdate);
+    private function selfPriceCreateTable($active_filter){
+	$sql_vars="SET @i:=0,@pointer:=0,@current_code:='',@qty_left1:=0,@qty_left:=0,@current_self_price=0.00;";
+	$sql_tbl_drop="DROP TEMPORARY TABLE IF  EXISTS tmp_self_calc;";
+	$sql_tbl_create="CREATE TEMPORARY TABLE tmp_self_calc AS (SELECT 
+		doc_entry_id,
+		doc_type,
+		product_code,
+		product_quantity,
+		self_price,
+		IF(product_code <> @current_code,(@current_code:=product_code) + (@qty_left:=0) + (@current_self_price:=0),1)*0 x,
+		    IF(doc_type = 2 AND NOT is_reclamation,@current_self_price:=(self_price*product_quantity+COALESCE(@current_self_price,0)*@qty_left)/(product_quantity+@qty_left),0 ) xx,
+		IF(doc_type = 2, (@qty_left:=@qty_left + product_quantity), (@qty_left:=@qty_left - product_quantity) ) qty_left,
+		@current_self_price sp,
+		i
+	     FROM (
+		SELECT 
+		    *,
+		    IF(product_code <> @current_code,(@current_code:=product_code) + (@qty_left1:=0),1)*0 x,
+		    IF(doc_type = 2, (@qty_left1:=@qty_left1 + product_quantity), (@qty_left1:=@qty_left1 - product_quantity) ) qty_left,
+		    IF(@pointer,IF(doc_type=1,@pointer,@pointer-5),@i:=@i+10) i,
+		    IF(@qty_left1<0,@pointer:=@i,@pointer:=0) pointer
+		FROM
+		    (SELECT 
+			doc_entry_id,
+			doc_type,
+			is_reclamation,
+			product_code,
+			product_quantity,
+			self_price
+		    FROM
+			document_entries
+			    JOIN 
+			document_list USING (doc_id)
+		    WHERE
+			notcount = 0 AND is_commited = 1 $active_filter
+		    ORDER BY product_code ,  cstamp) t ) tt
+	    ORDER BY i);";
+	$this->db->query($sql_vars);
+	$this->db->query($sql_tbl_drop);
+	$this->db->query($sql_tbl_create);
     }
     
+    public function selfPriceInvoiceRecalculate($idatedmy,$fdatedmy,$active_mode=''){
+	set_time_limit(300);
+	$idate=$this->dmy2iso($idatedmy).' 00:00:00';
+	$fdate=$this->dmy2iso($fdatedmy).' 23:59:59';
+        if( $active_mode=='all_active' ){
+            $active_filter='';
+        } else {
+            $active_filter=" AND active_company_id='".$this->Base->acomp('company_id')."'";
+        }
+	$this->selfPriceCreateTable($active_filter);
+	$this->selfPriceCorrectEntries();
+	$this->selfPriceOldApiRecalculate($idate, $fdate, $active_filter);
+    }
+    
+    private function selfPriceStockAssign(){
+	$sql_vars="SET @current_product_code:='';";
+	$sql_tbl_drop="DROP TEMPORARY TABLE IF  EXISTS tmp_stock_self;";
+	$sql_tbl_create="
+	    CREATE TEMPORARY TABLE tmp_stock_self AS(
+	    SELECT 
+		*
+	    FROM
+		(SELECT product_code,sp,qty_left FROM tmp_self_calc ORDER BY i DESC) ttt
+	    WHERE
+		IF(@current_product_code <> product_code,@current_product_code:=product_code,0));";
+	$sql_update="UPDATE stock_entries JOIN tmp_stock_self USING(product_code) SET self_price=sp;";
+	$this->db->query($sql_vars);	
+	$this->db->query($sql_tbl_drop);	
+	$this->db->query($sql_tbl_create);	
+	$this->db->query($sql_update);	
+	return $this->db->affected_rows();
+    }
+    
+    public function selfPriceStockRecalculate($active_mode=''){   
+        if( $active_mode=='all_active' ){
+            $active_filter='';
+        } else {
+            $active_filter=" AND active_company_id='".$this->Base->acomp('company_id')."'";
+        }
+	$this->selfPriceCreateTable($active_filter);
+ 	return $this->selfPriceStockAssign();
+    }
+    
+    
+    ////////////////////////////////////////////////////////////
+    // STOCK UTILS FUNCTIONS
+    ////////////////////////////////////////////////////////////
     public function stockCalcMin( $parent_id, $period, $ratio ){
 	$this->check($parent_id,'int');
 	$this->check($period,'int');

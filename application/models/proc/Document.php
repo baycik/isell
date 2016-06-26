@@ -1048,7 +1048,7 @@ class Document extends Data {
     // TRANS
     // SECTION
     ///////////////////////////////////
-    public function updateTrans() {
+    public function updateTrans( $mode=null ) {
 	$doc_num = $this->doc('doc_num');
 	if ($this->isCommited()) {
 	    $sum = $this->fetchFooter('total_in_uah');
@@ -1063,9 +1063,11 @@ class Document extends Data {
 	 */
 	if ($this->doc('doc_type') == 1) {//SELL DOCUMENT
 	    $desc = "Расходный документ " . ($this->doc('is_reclamation') ? "(Возврат) " : "") . "№$doc_num";
-	    $this->makeTransaction(361, 702, $sum['total'], $desc, 'total');
-	    $this->makeTransaction(702, 641, $sum['vat'], $desc, 'vat');
-	    $this->makeTransaction(702, 791, $sum['vatless'], $desc, 'vatless');
+            if( $mode!='profit_only' ){
+                $this->makeTransaction(361, 702, $sum['total'], $desc, 'total');
+                $this->makeTransaction(702, 641, $sum['vat'], $desc, 'vat');
+                $this->makeTransaction(702, 791, $sum['vatless'], $desc, 'vatless');
+            }
 	    $this->makeTransaction(791, 281, $sum['self'], $desc, 'self');
 	    $this->makeTransaction(791, 441, $sum['profit'], $desc, 'profit');
 	    return true;
