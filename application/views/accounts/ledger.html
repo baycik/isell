@@ -5,10 +5,7 @@
 	fdate: null,
 	acc_props: {},
 	initAfter: function () {
-	    this.date.initRange();
-            if( !$.isEmptyObject(App.acomp) && !$.isEmptyObject(App.pcomp) ){
-                this.fav.init();
-            }
+	    this.date.initRange();this.fav.init();
 	    App.handler.progress(function(status){
 		if( status==="activeCompanySelected" ){
 		    Ledger.fav.init();

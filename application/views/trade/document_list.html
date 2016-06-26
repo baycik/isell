@@ -6,6 +6,7 @@
 	    App.handler.progress(function(status,pcomp){
                 if( status==='passiveCompanyInited' ||  status==='passiveCompanySelected' || status==='activeCompanySelected' ){
 		    DocList.list.readyToLoad=true;
+                    DocList.list.selectedDocId=0;
 		    DocList.list.load();
 		    if( CtreeInline ){
 			CtreeInline.unselectTree();
@@ -18,7 +19,7 @@
 	    doc_id:null,
 	    init:function(){
 		App.loadModule('page/trade/document',{doc_id:DocList.doc.doc_id,open_in:'panel'},'DocInline',/(Doc|page_trade_document)([^\w]|_)/g,"DocInline$2").progress(function(status,param){
-		    switch( status ){
+                    switch( status ){
 			case 'close':
 			    $('#document_list_dg').datagrid('unselectAll');
 			    break;
@@ -26,7 +27,7 @@
 			case 'uncommit':
 			case 'commit':
 			case 'head_changed':
-			    //DocList.list.suppressOnSelect=true;
+			    DocList.list.suppressOnSelect=true;
 			    $('#document_list_dg').datagrid('reload');
 			    break;
 			case 'created':
@@ -75,7 +76,10 @@
                         if (DocList.list.selectedDocId) {
                             $('#document_list_dg').datagrid('selectRecord', DocList.list.selectedDocId);
                         } else {
-			    $('#document_list_dg').datagrid('selectRow', 0);
+                            setTimeout(function(){
+                                //Sometimes doc is not loaded yet
+                                $('#document_list_dg').datagrid('selectRow', 0);
+                            },0);
 			}
                     }
                     else {

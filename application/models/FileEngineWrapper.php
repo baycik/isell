@@ -103,6 +103,7 @@ if ( isset($word_header) ) {
 		    box-shadow:         none;
 		    padding:0px;
 		    margin:0px;
+                    background: none;
 		    background-color:#FFFFFF;
 		    display:block;
 		    height:auto;

@@ -1,0 +1,42 @@
+<script type="text/javascript">
+    /* global App */
+    App.page_plugins_reports_Summary_sell_profit_recalc_dialog = {
+	init: function () {
+	    this.node.window({
+		title: 'Корректировка себестоимости товаров',
+		width: 500,
+		height: 'auto',
+		onClose: function () {
+		    App.page_plugins_reports_Summary_sell_profit_recalc_dialog.handler.notify('close');
+		    delete App.page_plugins_reports_Summary_sell_profit_recalc_dialog;
+		}
+	    });
+	},
+	close:function(){
+	    this.node.window('close');
+	},
+	start:function(){
+	    $("#Summary_sell_profit_throbber").show();
+	    var fvalue=App.collectForm("#report_form_wrapper form");
+	    $.post("Utils/selfPriceInvoiceRecalculate/"+App.uri(fvalue.idate,fvalue.fdate),function(){
+		$("#Summary_sell_profit_throbber").hide();
+		alert("Пересчет себестоимости товаров окончен");
+	    });
+	}
+    };
+</script>
+<p style="padding: 5px">
+<div id="Summary_sell_profit_throbber" style="display: none;position: relative;position: absolute;z-index:10;top: 50px;left: 50%;" >
+    <img src="img/throbber_1.gif">
+</div>
+<img src="img/reportbig.png" style="float: left;width: 100px;height: auto;">
+Будет произведена корректировка себестоимости товаров в накладных за указанный период в три шага<br>
+1. Вычисление учетной цены как средней закупочных цен<br>
+2. Корректировка учетной цены в накладных за период<br>
+3. Корректировка проводок связанных с этими накладными<br>
+Операция может занять значительное время.<br><br>
+</p>
+<div style="text-align: center">
+    <button onclick="App.page_plugins_reports_Summary_sell_profit_recalc_dialog.start()"><img src="img/recalc.png"> Корректировать</button>
+    <button onclick="App.page_plugins_reports_Summary_sell_profit_recalc_dialog.close()" ><img src="img/close24.png"> Закрыть</button>
+</div>

@@ -111,14 +111,14 @@ class Stock_price_list extends Catalog{
 	$pcomp_id=$this->Base->pcomp('company_id');
 	$dollar_ratio=$this->Base->pref('usd_ratio');
 	$main_curr_code=$this->Base->acomp('curr_code');
-	$sql="SELECT
+        $sql="SELECT
 		product_code,
 		ru product_name,
 		product_quantity<>0 in_stock,
 		product_img,
 		ROUND(
 		    sell
-			*IF(curr_code IS NOT NULL AND curr_code<>'$main_curr_code',$dollar_ratio,1)
+			*IF(curr_code<>'' AND curr_code<>'$main_curr_code',$dollar_ratio,1)
 			*IF(discount,discount,1)
 		,2) product_price
 	    FROM
@@ -135,24 +135,26 @@ class Stock_price_list extends Catalog{
 		se.parent_id='{$block->id}'
 	    ORDER BY $this->sort_by";
 	$block->rows=$this->get_list($sql);
-	$block->imgs=$this->getBlockImg($block);
+	$block->imgs=$this->getBlockImg($block->id,count($block->rows));
+        $block->img_height=count($block->rows)*25/count($block->imgs);
 	return $block;
     }
     
-    private function getBlockImg( $block ){
-	$imgs=[];
-	$limit=floor(count($block->rows)/4);
-	foreach( $block->rows as $row ){
-	    if( $row->product_img ){
-		$imgs[]="../../Storage/image_flush/150x120/dynImg/".$row->product_img;
-		//$imgs[]=base64_encode($this->Base->Storage->image_get('150x120','dynImg/'.$row->product_img));
-		$limit--;
-	    }
-	    if( $limit==0 ){
-		break;
-	    }
-	}
-	return $imgs;
+    private function getBlockImg( $block_id,$block_rows ){
+        $limit=round($block_rows/4);
+        $img_sql="SELECT
+		product_code,
+		product_img
+	    FROM
+		stock_entries se
+		    JOIN
+		stock_tree st ON se.parent_id=st.branch_id
+	    WHERE
+		se.parent_id='$block_id'
+                AND product_img
+	    ORDER BY fetch_count DESC
+            LIMIT $limit";
+        return $this->get_list($img_sql);
     }
     
     public function printout(){
@@ -168,8 +170,6 @@ class Stock_price_list extends Catalog{
 		$this->sort_by.=" DESC";
 	    }
 	}
-	
-	
 	$this->Base->load_model('Storage');
 	$price_blocks=[];
 	foreach( $deployment['deployment']->items as $block ){
@@ -178,7 +178,7 @@ class Stock_price_list extends Catalog{
 	$dump=[
 	    'tpl_files_folder'=>"../plugins/stock_price_list/",
 	    'tpl_files'=>"template.html",
-	    'title'=>"Прайс-лист",
+	    'title'=>"РџСЂР°Р№СЃ-Р»РёСЃС‚",
 	    'view'=>[
 		'price_blocks'=>$price_blocks
 	    ]

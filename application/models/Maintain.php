@@ -2,7 +2,7 @@
 
 class Maintain extends CI_Model {
     
-    private $dirDbBackup="/iSell_DB_BACKUP/";
+    private $dirDbBackup="/ISELL_DBBACKUP/";
     private $dirWork;
     
     public function getCurrentVersionStamp(){
@@ -87,7 +87,7 @@ class Maintain extends CI_Model {
 	    mkdir($this->dirDbBackup);
 	}
         $output=[];
-        $filename=$this->dirDbBackup.date('Y-m-d_H-i-s')."-".BAY_DB_NAME.'-ISELL-DB-BACKUP.sql';
+        $filename=$this->dirDbBackup.date('Ymd_His')."_".BAY_DB_NAME.'_BACKUP.sql';
         exec("$path_to_mysql/bin/mysqldump --user=".BAY_DB_USER." --password=".BAY_DB_PASS."  --default-character-set=utf8 --single-transaction=TRUE --routines --events  ".BAY_DB_NAME." >".$filename,$output);
         if( count($output) ){
             file_put_contents($filename.'.log', implode( "\n", $output ));
