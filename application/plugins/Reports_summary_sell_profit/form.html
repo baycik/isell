@@ -1,5 +1,6 @@
 <script>
     function start_recalculate(){
+	$('#report_throbber').show()
 	App.flash("Начался пересчет себестоимости товаров");
 	var fvalue=App.collectForm("#report_form_wrapper form");
 	$.post("Utils/selfPriceInvoiceRecalculate/"+App.uri(fvalue.idate,fvalue.fdate,fvalue.all_active?'all_active':''),function(){
@@ -7,6 +8,7 @@
 	    msg+="\n\nПо всем нашим фирмам: "+(fvalue.all_active?'да':'нет');
 	    msg+="\nПериод корр. прибыли в накладных: "+fvalue.idate+"-"+fvalue.fdate;
 	    alert(msg);
+	    $('#report_throbber').hide()
 	});
     }
 </script>
