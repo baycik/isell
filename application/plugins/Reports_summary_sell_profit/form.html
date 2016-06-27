@@ -1,3 +1,19 @@
+<script>
+    function start_recalculate(){
+	$('#report_throbber').show()
+	App.flash("Начался пересчет себестоимости товаров");
+	var fvalue=App.collectForm("#report_form_wrapper form");
+	$.post("Utils/selfPriceInvoiceRecalculate/"+App.uri(fvalue.idate,fvalue.fdate,fvalue.all_active?'all_active':''),function(){
+	    var msg="Пересчет себестоимости товаров окончен";
+	    msg+="\n\nПо всем нашим фирмам: "+(fvalue.all_active?'да':'нет');
+	    msg+="\nПериод корр. прибыли в накладных: "+fvalue.idate+"-"+fvalue.fdate;
+	    alert(msg);
+	    $('#report_throbber').hide()
+	});
+    }
+</script>
+
+
 <form>
     <div class="inp_group" style="width: 230px;">
 	<input style="width:95px" class="easyui-datebox" name="idate" title="Начальная дата" value="{{first_day}}" data-options="required:true">
@@ -28,6 +44,7 @@
 	<input type="checkbox" name="group_by_client" title="Группировать по клиентам">
     </div>
     <div style="text-align: center">
+	<button type="button" onclick="start_recalculate();"><img src="img/recalc.png" style="width:24px;height: auto"> Корректировать себестоимость</button> 
 	<button type="submit"><img src="img/report24.png" style="width:24px;height: auto"> Сформировать</button>
     </div>
 </form>
