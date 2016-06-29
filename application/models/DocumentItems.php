@@ -50,12 +50,10 @@ class DocumentItems extends DocumentCore{
 		(SELECT
 		    ROUND(SUM(product_quantity*product_weight),2) total_weight,
 		    ROUND(SUM(product_quantity*product_volume),2) total_volume,
-                    SUM(
-                        ROUND(IF('$use_total_as_base',
-                            ROUND(ROUND(invoice_price, @signs_after_dot) * @vat_correction * @curr_correction, @signs_after_dot) * product_quantity,
-                            ROUND(invoice_price, @signs_after_dot) * @vat_correction * @curr_correction * product_quantity
-                        ),2)
-                    ) total,
+                    ROUND(IF('$use_total_as_base',
+                        SUM(ROUND(ROUND(invoice_price, @signs_after_dot) * @vat_correction * @curr_correction, @signs_after_dot) * product_quantity),
+                        SUM(ROUND(ROUND(invoice_price, @signs_after_dot) * @curr_correction * product_quantity,2)) * @vat_ratio
+                    ),2) total,
 		    ROUND(IF('$use_total_as_base',
 			SUM(ROUND(ROUND(invoice_price, @signs_after_dot) * @vat_ratio * @curr_correction,@signs_after_dot) * product_quantity)/ @vat_ratio,
 			SUM(ROUND(ROUND(invoice_price, @signs_after_dot) * @curr_correction * product_quantity,2))
