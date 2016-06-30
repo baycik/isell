@@ -127,7 +127,8 @@ class Stock extends Catalog {
 	    'analyse_group'=>$this->request('analyse_group'),
 	    'analyse_class'=>$this->request('analyse_class'),
 	    'analyse_section'=>$this->request('analyse_section'),            
-	    'barcode'=>$this->request('barcode')
+	    'barcode'=>$this->request('barcode'),
+            'is_service'=>$this->request('is_service','bool')
 	];
 	$prod_list_set=$this->makeSet($prod_list);
 	$this->query("INSERT INTO prod_list SET $prod_list_set ON DUPLICATE KEY UPDATE $prod_list_set");
