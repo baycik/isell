@@ -255,11 +255,11 @@ class Stock extends Catalog {
 	foreach( $result_rows as $row ){
 	    $concat=$row->alabel.$row->oper_date.$row->doc.$row->plabel;
 	    if( $prev_concat==$concat ){
-		$row->oper_date='';
-		$row->doc='';
+		$row->oper_date='-';
+		$row->doc='-';
 		$row->doc_id='';
-		$row->alabel='';
-		$row->plabel='';
+		$row->alabel='-';
+		$row->plabel='-';
 	    }
 	    $prev_concat=$concat;
 	}
