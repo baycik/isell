@@ -99,7 +99,7 @@
         },
 	correspondentSelect:function(){
 	    App.loadWindow('page/company/tree',{}).progress(function(status,comp){
-		if( status==='select' ){
+		if( status==='select' && !comp.is_active ){
 		    Cbank.correspondentFill(comp.company_id);
 		}
 	    });
