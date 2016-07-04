@@ -4,9 +4,7 @@
         main_acc_code:0,
         current_check:{},
         init:function(){
-            if( !$.isEmptyObject(App.acomp) && !$.isEmptyObject(App.pcomp) ){
-                this.fav.load();
-            }
+            this.fav.load();
             App.handler.progress(function(status){
 		if( status==="activeCompanySelected" ){
 		    Cbank.fav.load();
