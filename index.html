@@ -163,14 +163,16 @@
 		    if( this.current === name ){
 			return false;
 		    }
-		    $("#holder"+this.current).hide();
+		    //$("#holder"+this.current).hide();
+                    $("#holder"+this.current).css('left','-5000px');
 		    this.current=name;
 		    var holder=$("#holder"+this.current);
 		    if( !holder.length ){
-			$("#ModuleContainer").append('<div id="holder' + this.current + '"></div>');
+			$("#ModuleContainer").append('<div id="holder' + this.current + '" style="position:absolute;left:0px;top:0px;min-width:1200px;"></div>');
 			holder=$("#holder"+this.current);
 		    }
-		    holder.show();
+		    //holder.show();
+                    $("#holder"+this.current).css('left','0px');
 		    this.loadHTML(holder);
 		    this.findTitle();
 		    this.selectButton();
@@ -271,7 +273,7 @@
 		    </div>
 		</td>
 		<td style="vertical-align: top;padding: 0px;">
-		    <div id="ModuleContainer" style="margin: 1px;vertical-align: top;"></div>
+		    <div id="ModuleContainer" style="margin: 1px;vertical-align: top;position: relative;"></div>
 		</td>
 	    </tr>
 	</table>

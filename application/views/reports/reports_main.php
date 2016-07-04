@@ -116,7 +116,7 @@
     }
 </style>
 </style>
-<div id="reports_tile" class="covert">
+<div id="reports_tile" class="covert" style="float:left;">
     {{reports}}
 	{{if header}}
 	<div><b>{{header}}</b></div>
@@ -127,7 +127,7 @@
 	{{/if}}
     {{/reports}}
 </div>
-<div style="width:1000px;float:left;overflow: auto">
+<div style="width:950px;overflow: auto">
     <div id="report_info" class="covert">
 	<div id="report_throbber" style="display: none;position: relative;background-color: rgba(0,255,0,0.4);" >
 	    <img src="img/throbber_1.gif">

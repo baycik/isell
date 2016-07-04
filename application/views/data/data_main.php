@@ -180,6 +180,7 @@ DataJs={
     <tr>
 	<td style="vertical-align: top;width: 205px">
 	    <table class="easyui-datagrid" id="data_table_list" data-options="
+                   width:200,
 		   url:'Data/permitedTableList',
 		   singleSelect:true,
 		   onSelect:function(){
