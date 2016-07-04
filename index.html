@@ -163,7 +163,7 @@
 		    if( this.current === name ){
 			return false;
 		    }
-		    $("#holder"+this.current).hide();
+		    $("#holder"+this.current).remove();
 		    this.current=name;
 		    var holder=$("#holder"+this.current);
 		    if( !holder.length ){
