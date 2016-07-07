@@ -62,7 +62,7 @@
 	}
     };
 </script>
-<div style="width: 900px;">
+<div style="width: 970px;">
     <div style="text-align: right;padding-right: 5px;">
         <span class="icon-24 icon-tablefilter" title="Фильтр таблицы" onclick="App.page_stock_movements.toggleFilter()"> </span>
         <span class="icon-24 icon-refresh" title="Обновить" onclick="App.page_stock_movements.reload()"> </span>
@@ -70,7 +70,7 @@
         <span class="icon-24 icon-print" title="Печать" onclick="App.page_stock_movements.out('.print')"> </span>
     </div>
     <table class="easyui-datagrid" id="Stock_movements_dg" data-options="
-           width:895,
+           width:970,
             loader:App.page_stock_movements.loader,
             pagination:true,
             pageSize:30,
@@ -82,13 +82,14 @@
             <tr>
 		<th data-options="width:25,field:'doc_id',formatter:App.page_stock_movements.docTooltip"></th>
                 <th data-options="field:'alabel',width:100">Предприятие</th>
+                <th data-options="field:'plabel',width:110">Контрагент</th>
                 <th data-options="field:'oper_date',width:70">Дата</th>
                 <th data-options="field:'doc',width:170">Документ</th>
-                <th data-options="field:'plabel',width:110">Контрагент</th>
                 <th data-options="field:'product_code',width:90">Код</th>
                 <th data-options="field:'ru',width:250">Название</th>
                 <th data-options="field:'buy',width:50">Приход</th>
                 <th data-options="field:'sell',width:50">Расход</th>
+                <th data-options="field:'self',align:'right',width:50">Учетная цена</th>
             </tr>
         </thead>
     </table>

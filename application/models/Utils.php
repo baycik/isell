@@ -254,53 +254,6 @@ class Utils extends Catalog{
 	$this->db->query($sql);
 	return $this->db->affected_rows();
     }
-    private function selfPriceCheck($fdate){
-        //WTF
-	$sql="
-	    UPDATE 
-		document_entries de
-		    JOIN
-		document_list dl USING (doc_id)
-	    SET
-		self_price=invoice_price
-	    WHERE
-		doc_type=2 AND cstamp<'$fdate'";
-	$this->db->query($sql);
-    }
-    private function selfPriceTableMake($idate,$fdate,$active_filter){
-	$this->db->query("DROP TEMPORARY TABLE IF EXISTS tmp_self_price_table;");// 
-	$sql="CREATE TEMPORARY TABLE tmp_self_price_table ( INDEX(product_code) ) ENGINE=MyISAM AS (
-	    SELECT
-		product_code,
-		SUM( IF(cstamp<'$idate',IF(doc_type = 2,de.product_quantity,- de.product_quantity),0) ) idate_stock_qty,
-		SUM( IF(cstamp<'$fdate',IF(doc_type = 2,de.product_quantity,- de.product_quantity),0) ) fdate_stock_qty,
-		SUM( IF(doc_type = 2,de.product_quantity*de.self_price,0) ) fdate_buy_sum,
-		SUM( IF(doc_type = 2,de.product_quantity,0) ) fdate_buy_qty
-	    FROM
-		document_entries de
-		    JOIN
-		document_list dl USING (doc_id)     
-	    WHERE
-		cstamp<'$fdate' AND dl.is_commited = 1 AND dl.notcount = 0
-	    GROUP BY product_code
-	)";
-	$this->db->query($sql);	
-    }
-    private function selfPriceAssign($idate,$fdate,$active_filter){
-	$sql="
-	    UPDATE
-		document_entries de
-		    JOIN
-		document_list dl USING (doc_id) 
-		    JOIN
-		tmp_self_price_table spt USING(product_code)
-	    SET
-		de.self_price=fdate_buy_sum/fdate_buy_qty
-	    WHERE
-		cstamp>'$idate' AND cstamp<'$fdate' AND doc_type=1";
-	$this->db->query($sql);	
-	return $this->db->affected_rows();
-    }
     private function selfPriceOldApiRecalculate($idate,$fdate,$active_filter){
 	$Document2=$this->Base->bridgeLoad('Document');
 	$res = $this->db->query("SELECT doc_id,passive_company_id FROM document_list WHERE is_commited=1 AND doc_type=1 AND '$idate'<=cstamp AND cstamp<='$fdate' $active_filter ORDER BY passive_company_id");
@@ -383,6 +336,7 @@ class Utils extends Catalog{
         }
 	$this->selfPriceCreateTable($active_filter);
 	$this->selfPriceCorrectEntries();
+	$this->selfPriceStockAssign();
 	$this->selfPriceOldApiRecalculate($idate, $fdate, $active_filter);
     }
     

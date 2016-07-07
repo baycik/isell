@@ -231,7 +231,8 @@ class Stock extends Catalog {
                 product_code,
                 ru,
                 IF(doc_type=1,product_quantity,'') sell,
-                IF(doc_type=2,product_quantity,'') buy
+                IF(doc_type=2,product_quantity,'') buy,
+		ROUND(self_price,2) self
             FROM
                 document_entries de
                     JOIN
