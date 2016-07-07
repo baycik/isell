@@ -32,7 +32,8 @@ class Sync extends Catalog {
                         JOIN
                     stock_tree st ON se.parent_id=st.branch_id
                         LEFT JOIN
-                    companies_discounts cd ON st.top_id = cd.branch_id AND company_id='$this->defaultUserId'
+                    companies_discounts cd ON st.top_id = cd.branch_id
+                WHERE company_id='$this->defaultUserId'
                 ORDER BY fetch_count DESC
                 LIMIT $limit OFFSET $offset";
         return $this->get_list($sql);
