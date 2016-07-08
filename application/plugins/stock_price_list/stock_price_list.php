@@ -2,7 +2,7 @@
 /* 
  * Plugin Name: Price list creator
  * Plugin URI: isellsoft.ru
- * Version: 0.1
+ * Version: 0.9
  * Description: Tool for creating price list 
  * Author: baycik 2016
  * Author URI: isellsoft.ru
@@ -136,7 +136,7 @@ class Stock_price_list extends Catalog{
 	    ORDER BY $this->sort_by";
 	$block->rows=$this->get_list($sql);
 	$block->imgs=$this->getBlockImg($block->id,count($block->rows));
-        $block->img_height=count($block->rows)*25/count($block->imgs);
+        $block->img_height=count($block->imgs)>0?(count($block->rows)*25/count($block->imgs)):0;
 	return $block;
     }
     
@@ -178,7 +178,7 @@ class Stock_price_list extends Catalog{
 	$dump=[
 	    'tpl_files_folder'=>"../plugins/stock_price_list/",
 	    'tpl_files'=>"template.html",
-	    'title'=>"РџСЂР°Р№СЃ-Р»РёСЃС‚",
+	    'title'=>"Прайс Лист",
 	    'view'=>[
 		'price_blocks'=>$price_blocks
 	    ]
