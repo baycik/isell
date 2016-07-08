@@ -32,6 +32,7 @@ if ( isset($word_header) ) {
 	    <style type="text/css">
 		body, html, td{
 		    font-family:Arial;
+		    margin: 0px !important;
 		}
 		.table_border{
 		    border-collapse: collapse;
