@@ -15,7 +15,7 @@ class UpdateInstaller {
     function __construct() {
 	$this->dirParent = realpath('.');
 	$this->dirWork = $this->dirParent . '/isell';
-	$this->dirDbBackup=$this->dirParent.'/DB_BACKUP/';
+	$this->dirDbBackup=$this->dirParent."/ISELL_DBBACKUP/";
 	if (file_exists($this->dirWork . '/.git')) {
 	    exit("Work folder contains .git folder. Update may corrupt your work!");
 	}
@@ -87,8 +87,7 @@ class UpdateInstaller {
 	if( $this->checkAdminExists() ){
 	    return true;//'admin_exists';
 	}
-	$this->dirWork = realpath('.');
-	$file = str_replace("\\", "/", $this->dirWork . '/isell/install/fresh_db_dump.sql');
+	$file = str_replace("\\", "/", $this->dirWork . '/install/fresh_db_dump.sql');
 	$this->query("CREATE DATABASE IF NOT EXISTS " . BAY_DB_NAME);
 	return $this->backupImportExecute($file);
     }
@@ -136,7 +135,6 @@ class UpdateInstaller {
     }
     
     private function setupConf() {
-	$this->dirWork = realpath('.');
 	$conf_file = $this->dirWork . "/conf" . rand(1, 1000);
 	$conf = '[client]
 	    user="' . BAY_DB_USER . '"

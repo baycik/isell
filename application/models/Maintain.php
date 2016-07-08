@@ -5,9 +5,12 @@ class Maintain extends CI_Model {
     private $dirDbBackup="/ISELL_DBBACKUP/";
     private $dirWork;
     
-    public function getCurrentVersionStamp(){
+    function __construct(){
 	$this->dirWork = realpath('.');
-	if( file_exists($this->dirWork.'/.git') ){
+    }
+    
+    public function getCurrentVersionStamp(){
+	if( 0 && file_exists($this->dirWork.'/.git') ){
 	    return ['stamp'=>date ("Y-m-d\TH:i:s\Z", time()),'branch'=>$this->getGitBranch()];
 	}
 	return ['stamp'=>date ("Y-m-d\TH:i:s\Z", filemtime($this->dirWork)),'branch'=>$this->getGitBranch()];
@@ -21,14 +24,12 @@ class Maintain extends CI_Model {
     
     public function updateInstall(){
 	$this->updateConfigurator();
-	$this->dirWork = realpath('.');
 	$file = str_replace("\\", "/", $this->dirWork.'/install/db_update.sql');
 	$this->backupImportExecute($file);
 	return true;
     }
     
     private function updateConfigurator(){
-	$this->dirWork = realpath('.');
 	$this->xcopy($this->dirWork.'/install/configurator',realpath('../') );
     }
     
@@ -49,7 +50,6 @@ class Maintain extends CI_Model {
     }
     
     private function setupConf(){
-	$this->dirWork = realpath('.');
 	$conf_file=  $this->dirWork."/conf".rand(1,1000);
 	$conf='[client]
 	    user="'.BAY_DB_USER.'"
