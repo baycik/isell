@@ -35,7 +35,9 @@
     }
 </style>
 <div class="page">
-    <div style="font-size:30px;text-align: left;float: left;">ПРАЙС ЛИСТ ОТ {$v->date}</div>  <div style="float:right">{$v->pcomp_label} {$v->dollar_ratio}$</div>
+    <div>
+        <div style="font-size:30px;text-align: left;float: left;">ПРАЙС ЛИСТ ОТ {$v->date}</div>  <div style="float:right">{$v->pcomp_label} {$v->dollar_ratio}$</div>        
+    </div>
     <table border>
         <tbody>
         {loop name="v->price_blocks"}
