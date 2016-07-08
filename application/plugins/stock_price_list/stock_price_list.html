@@ -113,7 +113,7 @@
 		    for(var i in prefs.discounts){
 			if( prefs.discounts[i].discount ){
 			    var percent=(100*prefs.discounts[i].discount-100).toFixed(2);
-			    msg+="\n"+(percent>0?"+":"")+percent+"\t%\t"+prefs.discounts[i].label;
+			    msg+="\n"+(percent>0?"+":"")+percent+" % "+prefs.discounts[i].label;
 			}
 		    }
 		}
