@@ -101,6 +101,10 @@
 	    });
 	},
 	checknprint:function(){
+	    if( !App.pcomp ){
+		App.price_list.select_pcomp();
+		return;
+	    }
 	    $.get('Company/companyPrefsGet/',function(resp){
 		var msg="\nСкидки- /наценки+ клиента '"+App.pcomp.label+"':";
 		var prefs=App.json(resp);
