@@ -18,16 +18,22 @@
 	    $('.connected').sortable({
 		connectWith: '.connected'
 	    }).one('sortupdate', function (e, ui) {
-		clearTimeout(App.price_list.clock);
-		App.price_list.clock=setTimeout(function(){
+		App.price_list.sortUpdate();
+	    });
+	    $("#price_list_availables li").dblclick(function(){
+		if( 1 || $(this).data('type')==='category' ){
+		    $("#price_list_deployment").append(this);
 		    App.price_list.sortUpdate();
-		},500);
+		}
 	    });
 	},
 	sortUpdate: function () {
-	    this.restoreLeftHeaders();
-	    this.initDrag();
-	    this.save();
+	    clearTimeout(App.price_list.clock);
+	    App.price_list.clock=setTimeout(function(){
+		App.price_list.restoreLeftHeaders();
+		App.price_list.initDrag();
+		App.price_list.save();
+	    },500);
 	},
 	restoreLeftHeaders: function () {
 	    $(".available_items .h1,.available_items .h2,.available_items .page").remove();
@@ -92,6 +98,24 @@
 		if(ok*1){
 		    App.flash(deployment_data.name+ " сохранен");
 		}
+	    });
+	},
+	checknprint:function(){
+	    $.get('Company/companyPrefsGet/',function(resp){
+		var msg="\nСкидки- /наценки+ клиента '"+App.pcomp.label+"':";
+		var prefs=App.json(resp);
+		if( prefs.discounts ){
+		    for(var i in prefs.discounts){
+			if( prefs.discounts[i].discount ){
+			    var percent=(100*prefs.discounts[i].discount-100).toFixed(2);
+			    msg+="\n"+(percent>0?"+":"")+percent+"\t%\t"+prefs.discounts[i].label;
+			}
+		    }
+		}
+		msg+="\n\nНапечатать прайс лист с такими параметрами?";
+		if( confirm(msg) ){
+		    App.price_list.print();
+		};
 	    });
 	},
 	print:function(){
@@ -166,7 +190,7 @@
 		    <img src="img/pricetag.png" style="float:left">
 		    <span style="font-size:26px;" id="price_list_name">---</span> 
 		    <img src="img/edit-16.png" onclick="App.price_list.itemEdit(this).then(function(){$('#price_list_dg').datagrid('reload');});">
-		    <button onclick="App.price_list.print()" style="float: right"><img src="img/print.png"> Напечатать</button>
+		    <button onclick="App.price_list.checknprint()" style="float: right"><img src="img/print.png"> Напечатать</button>
 		</div>
 		<form id="price_list_frm">
 		    <input title="Для клиента" name="pcomp_name" value="не выбран" readonly="readonly" />
@@ -180,8 +204,15 @@
 	    </div>
 	</td>
     </tr>
+    <tr>
+	<td></td>
+	<td></td>
+    </tr>
     <tr id="price_list_loaded_connected" style="display: none">
 	<td style="vertical-align: top">
+	    <div style="height:40px;">
+		<h3>Не используемые блоки прайс листа</h3>
+	    </div>
 	    <ul id="price_list_availables" class="connected available_items" style="width:435px;">
 		{{availables}}
 		<li data-id="{{id}}" data-type="category" title="{{path}}">
@@ -192,6 +223,10 @@
 	    </ul>	    
 	</td>
 	<td style="vertical-align: top">
+	    <div style="height:40px;">
+		<h3>Использованные блоки прайс листа</h3>
+		Перетащите сюда или дважды щелкните не используемые блоки прайс листа. Блоки можно сортировать перетаскиванием.
+	    </div>
 	    <ul id="price_list_deployment" class="connected used_items" style="width:18.5cm;float:right;">
 		{{items}}
 		    {{if type|equals>category}}
@@ -256,8 +291,8 @@
 	float: left;
     }
     .used_items{
+	background-color: rgba(0,0,0,0.4);
         height: 500px;
-        padding-bottom: 20px;
         overflow: auto;
     }
     .used_items img.edit_pencil{
