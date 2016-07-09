@@ -30,7 +30,7 @@ class DocumentUtils extends Catalog{
     protected function updateProps( $props ){
 	$doc_id = $this->doc('doc_id');
 	$this->rowUpdate( 'document_list', $props, array('doc_id'=>$doc_id) );
-	$this->selectDoc($doc_id);
+	$this->loadDoc($doc_id);
     }
     protected function doc($name) {
 	if ( !isset($this->_doc) ) {
@@ -40,7 +40,7 @@ class DocumentUtils extends Catalog{
 	return isset($this->_doc->$name)?$this->_doc->$name:NULL;
     }
     protected function isServiceDoc(){
-	return $this->doc('doc_type')==3 OR $this->doc('doc_type')==4;
+	return $this->doc('doc_type')==3 || $this->doc('doc_type')==4;
     }
     protected function isCommited() {
 	return $this->doc('is_commited');
