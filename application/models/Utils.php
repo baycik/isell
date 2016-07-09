@@ -218,21 +218,6 @@ class Utils extends Catalog{
 	}
 	$res->free_result();
     }
-    private function treeUpdatePath($table, $branch_id) {
-	$this->db->query(
-		"SELECT @old_path:=COALESCE(t1.path, ''),@new_path:=CONCAT(COALESCE(t2.path, '/'), t1.label, '/')
-		FROM (SELECT * FROM $table) t1
-			LEFT JOIN
-		    (SELECT * FROM $table) t2 ON t1.parent_id = t2.branch_id 
-		WHERE
-		    t1.branch_id = $branch_id");
-	$this->db->query(
-		"UPDATE $table 
-		SET 
-		    path = IF(@old_path,REPLACE(path, @old_path, @new_path),@new_path)
-		WHERE
-		    IF(@old_path,path LIKE CONCAT(@old_path, '%'),branch_id=$branch_id)");
-    }
     /////////////////////////////
     //SELF PRICE FUNCTIONS
     /////////////////////////////

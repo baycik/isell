@@ -176,7 +176,8 @@ class Catalog extends CI_Model {
         }
 	return true;
     }
-    private function treeUpdatePath($table, $branch_id) {
+    protected function treeUpdatePath($table, $branch_id) {
+	$this->query("SET @old_path:='',@new_path:='';");
 	$this->query(
 		"SELECT @old_path:=COALESCE(t1.path, ''),@new_path:=CONCAT(COALESCE(t2.path, '/'), t1.label, '/')
 		FROM (SELECT * FROM $table) t1
@@ -187,18 +188,14 @@ class Catalog extends CI_Model {
 	$this->query(
 		"UPDATE $table 
 		SET 
-		    path = IF(@old_path,REPLACE(path, @old_path, @new_path),@new_path)
+		    path = IF(@old_path<>'',REPLACE(path, @old_path, @new_path),@new_path)
 		WHERE
-		    IF(@old_path,path LIKE CONCAT(@old_path, '%'),branch_id=$branch_id)");
+		    IF(@old_path<>'',path LIKE CONCAT(@old_path, '%'),branch_id=$branch_id)");
     }
-    private function treeUpdateTopId($table, $branch_id){
-        $path=$this->get_value("SELECT path FROM $table WHERE branch_id='$branch_id'");
-        $chunks=explode("/",$path);
-        if( $chunks[1] ){
-            $top_id=$this->get_value("SELECT branch_id FROM $table WHERE label='$chunks[1]'");
-            return $this->update($table,['top_id'=>$top_id],['branch_id'=>$branch_id]);
-        }
-        return false;
+    private function treeUpdateTopId($table_name, $branch_id){
+	$branch_ids=implode(',',$this->treeGetSub($table_name, $branch_id));
+	$this->query("UPDATE $table_name SET top_id='$branch_id' WHERE branch_id IN ($branch_ids)");
+        return $this->db->affected_rows();
     }
     protected function treeDelete($table,$branch_id){
 	$branch_ids=$this->treeGetSub($table, $branch_id);
