@@ -867,7 +867,7 @@ class Document extends Data {
         
         
         $pref=$this->Base->Pref->prefGet();
-        if( $pref['use_total_as_base'] ){
+        if( isset($pref['use_total_as_base']) && $pref['use_total_as_base'] ){
             $signs_after_dot=$this->doc('signs_after_dot');
             $sql = "SELECT
                     ROUND(SUM(product_quantity*product_weight),2) as total_weight,
