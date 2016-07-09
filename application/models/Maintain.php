@@ -10,7 +10,7 @@ class Maintain extends CI_Model {
     }
     
     public function getCurrentVersionStamp(){
-	if( 0 && file_exists($this->dirWork.'/.git') ){
+	if( file_exists($this->dirWork.'/.git') ){
 	    return ['stamp'=>date ("Y-m-d\TH:i:s\Z", time()),'branch'=>$this->getGitBranch()];
 	}
 	return ['stamp'=>date ("Y-m-d\TH:i:s\Z", filemtime($this->dirWork)),'branch'=>$this->getGitBranch()];
