@@ -173,25 +173,25 @@ class FileEngine {
     }
 
     private function renderWorkbook() {
-	$loop_rows=[];
         foreach ($this->Worksheet->getRowIterator() as $row) {
+	    $loop_row = NULL;
             $cellIterator = $row->getCellIterator();
             foreach ($cellIterator as $cell) {
                 $cellTpl = $cell->getValue();
                 if (strpos($cellTpl, '[]') !== false) {
                     preg_match_all('/(\$\w+)([\-\>\w]*)(\[\])([\-\>\w]*)?/', $cellTpl, $matches);
-                    $row->loop_var = $this->evalVar('$v' . $matches[2][0], $this->view);
-                    $row->index = $cell->getRow();
-		    $loop_rows[]=$row;
+                    $loop_row = $row;
+                    $loop_row->loop_var = $this->evalVar('$v' . $matches[2][0], $this->view);
+                    $loop_row->index = $cell->getRow();
                     break;
-                } else if( strpos($cellTpl,'$')!==false ){
+                } else {
                     $cell->setValue($this->evalStr($cellTpl, $this->view));
                 }
             }
+	    if (isset($loop_row)) {
+		$this->renderLoopRow($loop_row, $this->view);
+	    }
         }
-	foreach($loop_rows as $loop_row){
-	    $this->renderLoopRow($loop_row, $this->view);
-	}
     }
 
     private function renderLoopRow($row, $view) {
