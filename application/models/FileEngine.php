@@ -162,79 +162,67 @@ class FileEngine {
         return $output;
     }
 
-    private function evalVar($tpl, $v) {
-	//echo 'return ' . $tpl . ';';
-        return eval('return ' . $tpl . ';');
-    }
-
-    private function evalStr($tpl, $v) {
-	//echo 'return ' . $tpl . ';';
-        return eval('return "' . addslashes($tpl) . '";');
-    }
-
     private function renderWorkbook() {
-	$loop_rows=[];
-        foreach ($this->Worksheet->getRowIterator() as $row) {
-            $cellIterator = $row->getCellIterator();
-            foreach ($cellIterator as $cell) {
-                $cellTpl = $cell->getValue();
-                if (strpos($cellTpl, '[]') !== false) {
-                    preg_match_all('/(\$\w+)([\-\>\w]*)(\[\])([\-\>\w]*)?/', $cellTpl, $matches);
-                    $row->loop_var = $this->evalVar('$v' . $matches[2][0], $this->view);
-                    $row->index = $cell->getRow();
-		    $loop_rows[]=$row;
-                    break;
-                } else if( strpos($cellTpl,'$')!==false ){
-                    $cell->setValue($this->evalStr($cellTpl, $this->view));
-                }
-            }
-        }
-	foreach($loop_rows as $loop_row){
-	    $this->renderLoopRow($loop_row, $this->view);
+	error_reporting(E_ALL ^ E_NOTICE);
+	$highestRow = $this->Worksheet->getHighestRow(); // e.g. 10
+	$highestColumn = $this->Worksheet->getHighestColumn(); // e.g 'F'
+	$highestColumnIndex = PHPExcel_Cell::columnIndexFromString($highestColumn); // e.g. 5
+	$currentLoopRow=NULL;
+	for($row=1; $row<=$highestRow; ++$row){
+	    for ($col = 0; $col <= $highestColumnIndex; ++$col) {
+		$cellRawValue=$this->Worksheet->getCellByColumnAndRow($col, $row)->getValue();
+		if( strpos($cellRawValue,'[]')!==false ){//containing loop
+		    if( $currentLoopRow!==$row ){
+			$currentLoopRow=$row;
+			$insertedRowCount=$this->loopInsertRows($col, $row, $cellRawValue);
+			$highestRow+=$insertedRowCount;
+		    }
+		    $this->loopColFill($col, $row, $cellRawValue, $insertedRowCount);
+		    $cellRawValue=$this->Worksheet->getCellByColumnAndRow($col, $row)->getValue();
+		}
+		if( strpos($cellRawValue,'$v')!==false ){
+		    $v=$this->view;
+		    $cellValue=eval('return "' . addslashes($cellRawValue) . '";');
+		    $this->Worksheet->getCellByColumnAndRow($col, $row+$i)->setValue($cellValue);
+		}
+	    }
 	}
     }
 
-    private function renderLoopRow($row, $view) {
-        $items = $row->loop_var;
-        $item_count = count($items);
-        if ($item_count > 1){//Insert rows in count of item count of view
-            $this->Worksheet->insertNewRowBefore($row->index + 1, $item_count - 1);
-        }
-        $cellIterator = $row->getCellIterator();
-        foreach ($cellIterator as $cell) {
-            $cellTpl = $cell->getValue();
-            $column_letter = $cell->getColumn();
-            //Look for tpl tags
-            preg_match('/<(merge)(\d+)>/', $cellTpl, $tpl_tags);
-            if( isset($tpl_tags[1]) && $tpl_tags[1]=='merge' ){
-                $merge_width=$tpl_tags[2];
-                $merge_final_letter=PHPExcel_Cell::stringFromColumnIndex(PHPExcel_Cell::columnIndexFromString($column_letter)+$merge_width-2);
-                $cellTpl=str_replace("<merge$merge_width>", '', $cellTpl );
-            } else {
-                $merge_width=0;
-            }
-            //Parse cell tpl. Find path to data in view.
-            preg_match_all('/(\$\w+)([\-\>\w]*)(\[\])([\-\>\w]*)?/', $cellTpl, $tpl_path);
-            for ($i = 0; $i < $item_count; $i++) {
-                $curr_row_index=$row->index + $i;
-                $item = $items[$i];
-                $item?($item->i = $i + 1):'';
-                if( $merge_width>0 ){//There is <mergeNUM> tag must merge NUM cells. Need to merge cell in new row as in tpl row
-                    $this->Worksheet->mergeCells("{$column_letter}{$curr_row_index}:{$merge_final_letter}{$curr_row_index}");
-                }
-                if( isset($tpl_path[4][0]) ){//Evaluate cell if this is loop path
-		    $path = $tpl_path[4][0];
-                    $new_cell_value=$this->evalStr("{\$v$path}", $item);
-                } else 
-                if( substr($cellTpl, 0, 1)==='=' ){//Replace row number of tpl to current row number in formulas
-                    $new_cell_value=  str_replace($row->index, $curr_row_index, $cellTpl);
-                } else {//copy tpl otherwise
-                    $new_cell_value=$cellTpl;
-                }
-                $this->Worksheet->getCell($column_letter.$curr_row_index)->setValue($new_cell_value);
-            }        
-        }
+    private function loopInsertRows($col, $row, $cellRawValue){
+	$v=$this->view;
+	preg_match('/(\$[\-\>\w]*)\[\]\.*/',$cellRawValue, $matches);
+	$loopArrayName=$matches[1];
+	$loopArray=eval("return $loopArrayName;");
+	$loopCount=count($loopArray);
+	if( $loopCount>1 ){
+	    $this->Worksheet->insertNewRowBefore($row + 1, $loopCount - 1);
+	}
+	return $loopCount;
+    }
+    
+    private function loopColFill($col, $row, $cellRawValue, $insertedRowCount){
+	$mergingRange=$this->loopColMergeGet($col, $row);
+	for($i=0;$i<$insertedRowCount;$i++){
+	    if( strpos($cellRawValue,'[]->i') ){
+		$cellLoopValue=$i+1;
+	    } else {
+		$cellLoopValue=  str_replace('[]', "[$i]", $cellRawValue);
+	    }
+	    $this->Worksheet->getCellByColumnAndRow($col, $row+$i)->setValue($cellLoopValue);
+	    if($mergingRange){
+		$currentRange=  str_replace($row, $row+$i, $mergingRange);
+		$this->Worksheet->mergeCells($currentRange);
+	    }
+	}
+    }
+    
+    private function loopColMergeGet($col, $row){
+	$cell=$this->Worksheet->getCellByColumnAndRow($col, $row);
+	foreach($this->Worksheet->getMergeCells() as $cells) {
+	    if ($cell->isInRange($cells)) {
+		return $cells;
+	    }
+	}
     }
 }
-
-?>
