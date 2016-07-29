@@ -176,7 +176,7 @@ DataJs={
     }
 };
 </script>
-<table style="width:100%">
+<table>
     <tr>
 	<td style="vertical-align: top;width: 205px">
 	    <table class="easyui-datagrid" id="data_table_list" data-options="

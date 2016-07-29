@@ -347,17 +347,10 @@ class PHPExcel_Writer_HTML extends PHPExcel_Writer_Abstract implements PHPExcel_
 		return $html;
 	}
 
-	/**
-	 * Generate sheet data
-	 *
-	 * @return	string
-	 * @throws PHPExcel_Writer_Exception
-	 */
-	public function generateSheetData() {
-		// PHPExcel object known?
-		if (is_null($this->_phpExcel)) {
-			throw new PHPExcel_Writer_Exception('Internal PHPExcel object not set to an instance of an object.');
-		}
+        // Ensure that Spans have been calculated?
+        if ($this->_sheetIndex !== null || !$this->spansAreCalculated) {
+            $this->calculateSpans();
+        }
 
 		// Ensure that Spans have been calculated?
 		if (!$this->_spansAreCalculated) {
