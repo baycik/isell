@@ -306,6 +306,7 @@ CREATE TABLE `companies_list` (
   `company_acc_list` varchar(45) DEFAULT '361,631',
   `company_description` text NOT NULL,
   `curr_code` varchar(3) DEFAULT NULL,
+  `price_label` VARCHAR(45) NULL DEFAULT NULL,
   `language` varchar(2) DEFAULT NULL,
   `deferment` int(10) unsigned NOT NULL,
   `debt_limit` double NOT NULL,

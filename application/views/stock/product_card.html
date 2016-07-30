@@ -11,12 +11,17 @@
 		height: 'auto',
 		shadow:false,
 		onClose:function(){
-                    //delete App.page_stock_product_card;
+                    delete App.page_stock_product_card;
 		}
 	    });
 	    this.node.window('window').css('position','fixed');
 	    
 	    if( typeof this.data==='object' ){// Init card with existing data but get new anyway
+		App.page_stock_product_card.data.labeled_prices=[{
+			sell:App.page_stock_product_card.data.sell,
+			buy:App.page_stock_product_card.data.buy,
+			label:''
+		}];
 		App.page_stock_product_card.initWidgets();
 	    }
 	    $.get("Stock/productGet",{product_code:App.page_stock_product_card.data.product_code},function(resp){
@@ -30,6 +35,7 @@
 	},
 	initWidgets:function(){
 	    App.page_stock_product_card.data.product_code_new=App.page_stock_product_card.data.product_code;
+	    App.renderTpl('page_stock_product_card_pricetable',App.page_stock_product_card.data);
 	    App.setupForm("#page_stock_product_card_frm", App.page_stock_product_card.data);
 	    $.parser.parse("#page_stock_product_card");//for easy ui
 	    $('#page_stock_product_card input').on('focus', function() {
@@ -174,6 +180,9 @@
 	<input name="ua" title="Название Укр" style="width:330px">
 	<input name="en" title="Название Англ" style="width:330px">
 	<div class="inp_rule">Цены на товар</div>
+	
+
+	<div id="page_stock_product_card_pricetable">
 	<table>
 	    <tr>
 		<th style="width:110px;">Категория</th>
@@ -181,8 +190,9 @@
 		<th>Покупка</th>
 		<th>Валюта</th>
 	    </tr>
+	    {{labeled_prices}}
 	    <tr>
-		<td>Основная</td>
+		<td></td>
 		<td>
 		    <input name="sell" onchange="this.value=App.calc(this.value)" class="icon-calc16" style="background-position: right;width:100px">
 		</td>
@@ -197,7 +207,13 @@
 		    </select>
 		</td>
 	    </tr>
+	    1 - {{label}}
+	    {{/labeled_prices}}
 	</table>
+	</div>
+
+
+
     </div>
     <div class="inp_group only_product_props" style="width: 320px;vertical-align: top">
 	<input name="product_wrn_quantity" title="Мин. кол-во">

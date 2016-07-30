@@ -26,7 +26,6 @@
 		if( iskey && App.page_data_universal_editor.isNewCreated ){
 		    App.page_data_universal_editor.data.rowKey[field]=value;
 		}
-
 		App.page_data_universal_editor.createUpdateRow( field,value,title,iskey );
 	    });
 	    if( this.data.fvalue.focus ){
@@ -44,18 +43,19 @@
 		data:JSON.stringify(data),
 		create:App.page_data_universal_editor.isNewCreated?1:0
 	    };
+	    var ueditor=App.page_data_universal_editor;
 	    $.post("Data/tableRowCreateUpdate/"+this.data.currentTable,postVars,function(ok){
 		if( ok>0 ){
 		    App.flash("Сохранено: "+title);
-		    App.page_data_universal_editor.isNewCreated=0;
-		    App.page_data_universal_editor.data.fvalue[field]=value;
-		    App.page_data_universal_editor.handler.notify('change');
+		    ueditor.isNewCreated=0;
+		    ueditor.data.fvalue[field]=value;
+		    ueditor.handler.notify('change');
 		    if( iskey ){
-			App.page_data_universal_editor.data.rowKey[field]=value;
+			ueditor.data.rowKey[field]=value;
 		    }
 		} else {
 		    App.flash("Не сохранено!");
-		    App.setupForm("#univ_editor_frm",App.page_data_universal_editor.data.fvalue);
+		    App.setupForm("#univ_editor_frm",ueditor.data.fvalue);
 		}
 	    });	    
 	},
@@ -63,16 +63,11 @@
 	    App.renderTpl("univ_editor_frm",{fields:fstruct});
 	},
 	getKey:function(){
-	    var is_first=true;
 	    var createdRowKey={};
 	    for(var i in this.data.fstruct){
 		if( this.data.fstruct[i].Key==="PRI" ){
-		    var generatedKeyValue='';
-		    if( is_first ){
-			generatedKeyValue=new Date().getTime();
-			this.data.focus=this.data.fstruct[i].field;
-			//is_first=false;
-		    }
+		    var generatedKeyValue=new Date().getTime();
+		    this.data.focus=this.data.fstruct[i].field;
 		    createdRowKey[this.data.fstruct[i].field]=generatedKeyValue;
 		}
 	    }
@@ -83,9 +78,6 @@
 		this.data.fvalue=this.data.rowKey=App.page_data_universal_editor.getKey();
 		this.isNewCreated=true;
 	    }
-	},
-	undoUpdate:function(){
-	    
 	}
     };
 </script>

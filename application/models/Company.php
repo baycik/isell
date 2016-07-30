@@ -196,6 +196,8 @@ class Company extends Catalog{
 	if( !$passive_company_id ){
 	    return null;
 	}
+	$Pref=$this->Base->load_model("Pref");
+	$Stock=$this->Base->load_model("Stock");
 	$sql_disct="SELECT
 		st.branch_id,
 		label,
@@ -210,6 +212,7 @@ class Company extends Catalog{
 	$sql_other="SELECT
 		deferment,
 		curr_code,
+		price_label,
 		manager_id,
 		is_supplier,
 		company_acc_list,
@@ -220,10 +223,12 @@ class Company extends Catalog{
 	    WHERE 
 		company_id='$passive_company_id'
 	    ";
-	return array(
-	    'discounts'=>$this->get_list($sql_disct),
-	    'other'=>$this->get_row($sql_other)
-		);
+	return [
+		'discounts'=>$this->get_list($sql_disct),
+		'other'=>$this->get_row($sql_other),
+		'staff_list'=>$Pref->getStaffList(),
+		'price_label_list'=>$Stock->getPriceLabels()
+		];
     }
     
     public function companyPrefsUpdate( $type, $field, $value='' ){
@@ -232,10 +237,12 @@ class Company extends Catalog{
 	    case 'discount':
 		return $this->discountUpdate($field,$value);
 	    case 'other':
-		if( in_array($field, array('deferment','curr_code','manager_id','is_supplier','company_acc_list','language')) ){
+		if( in_array($field, array('deferment','curr_code','price_label','manager_id','is_supplier','company_acc_list','language')) ){
 		    $passive_company_id = $this->Base->pcomp('company_id');
 		    $this->query("UPDATE companies_list SET $field='$value' WHERE company_id=$passive_company_id");
-                    return $this->db->affected_rows();
+		    $ok=$this->db->affected_rows();
+		    $this->selectPassiveCompany( $passive_company_id );
+                    return $ok;
 		}
 		return false;
 	}

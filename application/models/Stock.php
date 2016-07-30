@@ -96,7 +96,10 @@ class Stock extends Catalog {
 		    price_list USING(product_code)
 		WHERE 
 		    product_code='{$product_code}'";
-	return $this->get_row($sql);
+	$sql_price="SELECT sell,buy,curr_code,label FROM price_list WHERE product_code='{$product_code}' AND label <>''";
+	$product_data=$this->get_row($sql);
+	$product_data->labeled_prices=$this->get_list($sql_price);
+	return $product_data;
     }
 
     public function productSave(){
@@ -264,5 +267,9 @@ class Stock extends Catalog {
 	    }
 	    $prev_concat=$concat;
 	}
+    }
+    public function getPriceLabels(){
+	$sql="SELECT DISTINCT label FROM price_list";
+	return $this->get_list($sql);
     }
 }

@@ -1171,13 +1171,14 @@ class Document extends Data {
 
     public function getRawProductPrice($product_code, $curr_correction) {
         $product_code=  addslashes($product_code);//bugfix if special characters are used like \ 
+	$pcomp_price_label=$this->Base->pcomp('price_label');
 	$def_curr_code = $this->Base->acomp('curr_code');
         
 	return $this->Base->get_row("SELECT 
             sell/{$this->vat_rate}*IF(curr_code<>'' AND curr_code<>'$def_curr_code',$curr_correction,1) sell,
             buy/{$this->vat_rate}*IF(curr_code<>'' AND curr_code<>'$def_curr_code',$curr_correction,1) buy
             FROM price_list 
-            WHERE product_code='$product_code'");
+            WHERE product_code='$product_code' AND (label='$pcomp_price_label' OR label IS NULL) LIMIT 1");
     }
 
     public function updateBuyPriceFromDoc() {

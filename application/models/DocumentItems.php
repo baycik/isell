@@ -86,16 +86,13 @@ class DocumentItems extends DocumentCore{
                 party_label,
                 product_uktzet,
                 self_price,
-                @buy:=IF(prl.curr_code='$curr_code' OR prl.curr_code='',buy,buy*doc_ratio) buy,
-                IF(doc_type=1,invoice_price<@buy,invoice_price>@buy) is_loss
+                IF(doc_type=1,invoice_price<self_price,invoice_price>self_price) is_loss
             FROM
                 document_list
 		    JOIN
 		document_entries de USING(doc_id)
 		    JOIN 
 		prod_list pl USING(product_code)
-                    LEFT JOIN
-                price_list prl USING(product_code)
             WHERE
                 doc_id='$doc_id'
             ORDER BY pl.product_code";
