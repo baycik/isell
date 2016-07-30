@@ -80,19 +80,9 @@ DataJs={
 	},
 	openUnivEditor:function(row){
 	    var rowKey=DataJs.list.getRowKey(row);
-	    var create=!row?1:0;
-	    App.loadWindow("page/data/universal_editor",{fvalue:row,fstruct:DataJs.currentStruct}).progress(function(status,createdRowKey,data,title){
+	    App.loadWindow("page/data/universal_editor",{fvalue:row,rowKey:rowKey,fstruct:DataJs.currentStruct,currentTable:DataJs.currentTable}).progress(function(status,createdRowKey,data,title){
 		if( status==='change' ){
-		    rowKey=createdRowKey||rowKey;
-		    $.post("Data/tableRowCreateUpdate/"+DataJs.currentTable,{rowKey:JSON.stringify(rowKey),data:JSON.stringify(data),create:create},function(ok){
-			if( ok>0 ){
-			    App.flash("Сохранено: "+title);
-			    DataJs.currentGrid.datagrid('reload');
-			    create=0;
-			} else {
-			    App.flash("Не сохранено!");
-			}
-		    });
+		    DataJs.currentGrid.datagrid('reload');
 		}
 	    });
 	},
@@ -153,7 +143,7 @@ DataJs={
 	    App.loadWindow('page/dialog/importer',{label:'данные',fields_to_import:DataJs.currentStruct}).progress(function(status,fvalue,Importer){
 		if( status==='submit' ){
 		    $.post("Data/import/"+DataJs.currentTable,fvalue,function(ok){
-			App.flash("Добавлено строк "+ok);
+			App.flash("Добавлено/измененно строк "+ok);
 			DataJs.currentGrid.datagrid('reload');
 			Importer.reload();
 		    });

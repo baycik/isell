@@ -97,8 +97,9 @@ class Catalog extends CI_Model {
     }
     protected function create($table,$data) {
 	$this->db->insert($table, $data);
+	$ok=!!$this->db->affected_rows();
         $this->check_error();
-	return $this->db->insert_id();
+	return $this->db->insert_id()||$ok;
     }
     protected function update($table, $data, $key) {
 	$this->db->update($table, $data, $key);

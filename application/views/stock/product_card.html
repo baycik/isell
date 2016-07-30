@@ -16,15 +16,14 @@
 	    });
 	    this.node.window('window').css('position','fixed');
 	    
-	    if( typeof this.data==='object' ){
+	    if( typeof this.data==='object' ){// Init card with existing data but get new anyway
 		App.page_stock_product_card.initWidgets();
-	    } else {
-		var product_code=App.page_stock_product_card.data;
-		$.get("Stock/productGet",{product_code:product_code},function(resp){
-		    App.page_stock_product_card.data=App.json(resp);
-		    App.page_stock_product_card.initWidgets();
-		});
 	    }
+	    $.get("Stock/productGet",{product_code:App.page_stock_product_card.data.product_code},function(resp){
+		App.page_stock_product_card.data=App.json(resp);
+		App.page_stock_product_card.initWidgets();
+	    });
+	    
             if( this.data.enablePrevnext ){
                 $("#stock_prod_card_prevnext").css('visibility','visible');   
             }
@@ -175,13 +174,30 @@
 	<input name="ua" title="Название Укр" style="width:330px">
 	<input name="en" title="Название Англ" style="width:330px">
 	<div class="inp_rule">Цены на товар</div>
-	    <input name="sell" title="Продажа" onchange="this.value=App.calc(this.value)" class="icon-calc16" style="background-position: right">
-	    <input name="buy" title="Покупка" onchange="this.value=App.calc(this.value)" class="icon-calc16" style="background-position: right">
-	    <select name="curr_code" title="Валюта">
-		<option value="UAH">UAH Гривна</option>
-		<option value="USD">USD Доллар</option>
-		<option value="RUB">RUB Рубль</option>
-	    </select>
+	<table>
+	    <tr>
+		<th style="width:110px;">Категория</th>
+		<th>Продажа</th>
+		<th>Покупка</th>
+		<th>Валюта</th>
+	    </tr>
+	    <tr>
+		<td>Основная</td>
+		<td>
+		    <input name="sell" onchange="this.value=App.calc(this.value)" class="icon-calc16" style="background-position: right;width:100px">
+		</td>
+		<td>
+		    <input name="buy" onchange="this.value=App.calc(this.value)" class="icon-calc16" style="background-position: right;width:100px">
+		</td>
+		<td>
+		    <select name="curr_code" style="width:100px;">
+			<option value="UAH">UAH Гривна</option>
+			<option value="USD">USD Доллар</option>
+			<option value="RUB">RUB Рубль</option>
+		    </select>
+		</td>
+	    </tr>
+	</table>
     </div>
     <div class="inp_group only_product_props" style="width: 320px;vertical-align: top">
 	<input name="product_wrn_quantity" title="Мин. кол-во">
