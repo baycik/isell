@@ -17,21 +17,43 @@
 	    this.node.window('window').css('position','fixed');
 	    
 	    if( typeof this.data==='object' ){// Init card with existing data but get new anyway
-		App.page_stock_product_card.data.labeled_prices=[{
-			sell:App.page_stock_product_card.data.sell,
-			buy:App.page_stock_product_card.data.buy,
-			label:''
-		}];
 		App.page_stock_product_card.initWidgets();
 	    }
 	    $.get("Stock/productGet",{product_code:App.page_stock_product_card.data.product_code},function(resp){
 		App.page_stock_product_card.data=App.json(resp);
+		App.page_stock_product_card.unpackPrices();
 		App.page_stock_product_card.initWidgets();
 	    });
 	    
             if( this.data.enablePrevnext ){
                 $("#stock_prod_card_prevnext").css('visibility','visible');   
             }
+	},
+	unpackPrices:function(){
+	    var data=App.page_stock_product_card.data;
+	    this.labeled_prices=data.labeled_prices;
+	    for(var i in this.labeled_prices ){
+		var labeled_price=this.labeled_prices[i];
+		data['sell-'+labeled_price['label']]=labeled_price['sell'];
+		data['buy-'+labeled_price['label']]=labeled_price['buy'];
+		data['curr_code-'+labeled_price['label']]=labeled_price['curr_code'];
+	    }
+	},
+	packPrices:function(){
+	    var packed_labeled_prices=[];
+	    var data=App.page_stock_product_card.data;
+	    for(var i in this.labeled_prices ){
+		packed_labeled_prices.push({
+		    sell:data['sell-'+this.labeled_prices[i].label],
+		    buy:data['buy-'+this.labeled_prices[i].label],
+		    curr_code:data['curr_code-'+this.labeled_prices[i].label],
+		    label:this.labeled_prices[i].label
+		});
+		delete App.page_stock_product_card.data['sell-'+this.labeled_prices[i]['label']];
+		delete App.page_stock_product_card.data['buy-'+this.labeled_prices[i]['label']];
+		delete App.page_stock_product_card.data['curr_code-'+this.labeled_prices[i]['label']];
+	    }
+	    App.page_stock_product_card.data.labeled_prices=JSON.stringify(packed_labeled_prices);
 	},
 	initWidgets:function(){
 	    App.page_stock_product_card.data.product_code_new=App.page_stock_product_card.data.product_code;
@@ -61,6 +83,7 @@
 	    e.preventDefault();
 	    this.data=App.collectForm("#page_stock_product_card_frm");
 	    if( this.data.product_code_new.match(/^[\wабвгдеёжзийклмнопрстуфхцчшщъыьюяіїє\. ,-]+$/i) ){
+		this.packPrices();
 		$.post('Stock/productSave/',this.data,function(ok){
 		    if( ok*1 ){
 			App.flash("Свойства товара сохранены");
@@ -71,10 +94,12 @@
 			App.flash("Свойства товара не изменились");
 		    }
                     App.page_stock_product_card.closeOnSave=true;
+		}).then(function(){
+		    if( App.page_stock_product_card.closeOnSave ){
+			App.page_stock_product_card.node.window('close');
+		    }
 		});
-                if( App.page_stock_product_card.closeOnSave ){
-                    App.page_stock_product_card.node.window('close');
-                }
+                
 	    } else {
 		alert("Код товара не должен содержать сивол: "+(this.data.product_code_new.match(/[^\wабвгдеёжзийклмнопрстуфхцчшщъыьюяіїє\. ,-]/ig)||[]).join(""));
 	    }
@@ -180,40 +205,34 @@
 	<input name="ua" title="Название Укр" style="width:330px">
 	<input name="en" title="Название Англ" style="width:330px">
 	<div class="inp_rule">Цены на товар</div>
-	
-
 	<div id="page_stock_product_card_pricetable">
-	<table>
-	    <tr>
-		<th style="width:110px;">Категория</th>
-		<th>Продажа</th>
-		<th>Покупка</th>
-		<th>Валюта</th>
-	    </tr>
+	    <div style="font-weight: bold">
+		<div style="width:120px;float:left;">Категория</div>
+		<div style="width:110px;float:left;">Продажа</div>
+		<div style="width:110px;float:left;">Покупка</div>
+		<div style="width:110px;float:left;">Валюта</div>
+	    </div>
 	    {{labeled_prices}}
-	    <tr>
-		<td></td>
-		<td>
-		    <input name="sell" onchange="this.value=App.calc(this.value)" class="icon-calc16" style="background-position: right;width:100px">
-		</td>
-		<td>
-		    <input name="buy" onchange="this.value=App.calc(this.value)" class="icon-calc16" style="background-position: right;width:100px">
-		</td>
-		<td>
-		    <select name="curr_code" style="width:100px;">
+	    <div style="clear: both;padding-top: 2px;">
+		<div style="width:120px;float:left;">
+		    {{label|blank>основная}} 
+		</div>
+		<div style="width:110px;float:left;">
+		    <input name="sell-{{label}}" onchange="this.value=App.calc(this.value)" class="icon-calc16" style="background-position: right;width:100px">
+		</div>
+		<div style="width:110px;float:left;">
+		    <input name="buy-{{label}}" onchange="this.value=App.calc(this.value)" class="icon-calc16" style="background-position: right;width:100px">
+		</div>
+		<div style="width:110px;float:left;">
+		    <select name="curr_code-{{label}}" style="width:100px;">
 			<option value="UAH">UAH Гривна</option>
 			<option value="USD">USD Доллар</option>
 			<option value="RUB">RUB Рубль</option>
 		    </select>
-		</td>
-	    </tr>
-	    1 - {{label}}
+		</div>
+	    </div>
 	    {{/labeled_prices}}
-	</table>
 	</div>
-
-
-
     </div>
     <div class="inp_group only_product_props" style="width: 320px;vertical-align: top">
 	<input name="product_wrn_quantity" title="Мин. кол-во">

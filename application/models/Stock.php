@@ -92,11 +92,9 @@ class Stock extends Catalog {
 		    stock_entries se
 			JOIN
 		    prod_list USING(product_code)
-			LEFT JOIN
-		    price_list USING(product_code)
 		WHERE 
 		    product_code='{$product_code}'";
-	$sql_price="SELECT sell,buy,curr_code,label FROM price_list WHERE product_code='{$product_code}' AND label <>''";
+	$sql_price="SELECT sell,buy,curr_code,label FROM price_list WHERE product_code='{$product_code}'";
 	$product_data=$this->get_row($sql);
 	$product_data->labeled_prices=$this->get_list($sql_price);
 	return $product_data;
@@ -148,16 +146,13 @@ class Stock extends Catalog {
 	$this->query("INSERT INTO stock_entries SET $stock_entries_set ON DUPLICATE KEY UPDATE $stock_entries_set");
 	$affected_rows+=$this->db->affected_rows()*1;
 	
-	$price_list=[
-	    'product_code'=>$product_code,
-	    'buy'=>$this->request('buy','double'),
-	    'sell'=>$this->request('sell','double'),
-	    'curr_code'=>$this->request('curr_code'),
-	];
-	$price_list_set=$this->makeSet($price_list);
-	$this->query("INSERT INTO price_list SET $price_list_set ON DUPLICATE KEY UPDATE $price_list_set");
-	$affected_rows+=$this->db->affected_rows()*1;
-	
+	$labeled_prices=$this->request('labeled_prices','json');
+	foreach( $labeled_prices as $price_list_entry ){
+	    $price_list_entry['product_code']=$product_code;
+	    $price_list_set=$this->makeSet($price_list_entry);
+	    $this->query("INSERT INTO price_list SET $price_list_set ON DUPLICATE KEY UPDATE $price_list_set");
+	    $affected_rows+=$this->db->affected_rows()*1;
+	}
 	return $affected_rows;
     }
     private function makeSet( $array ){
@@ -177,7 +172,7 @@ class Stock extends Catalog {
             $target[]='parent_id';
         }
 	$this->importInTable('prod_list', $source, $target, '/product_code/ru/ua/en/product_spack/product_bpack/product_weight/product_volume/product_unit/product_uktzet/barcode/analyse_type/analyse_group/analyse_class/analyse_section/', $label);
-	$this->importInTable('price_list', $source, $target, '/product_code/sell/buy/curr_code/', $label);
+	$this->importInTable('price_list', $source, $target, '/product_code/sell/buy/curr_code/label/', $label);
 	$this->importInTable('stock_entries', $source, $target, '/product_code/party_label/parent_id/', $label);
 	$this->query("DELETE FROM imported_data WHERE label LIKE '%$label%' AND {$source[0]} IN (SELECT product_code FROM stock_entries)");
         return  $this->db->affected_rows();

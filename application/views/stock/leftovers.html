@@ -112,7 +112,8 @@
 		    {name:'Раздел',field:'analyse_section'},
 		    {name:'Продажа',field:'sell'},
 		    {name:'Покупка',field:'buy'},
-		    {name:'Валюта',field:'curr_code'}		    
+		    {name:'Валюта',field:'curr_code'},	    
+		    {name:'Категория цен',field:'label'}		    
 		];
 		App.loadWindow('page/dialog/importer',{label:'склад',fields_to_import:config}).progress(function(status,fvalue,Importer){
 		    if( status==='submit' ){
