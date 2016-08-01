@@ -11,19 +11,31 @@
 		height: 'auto',
 		shadow:false,
 		onClose:function(){
-                    delete App.page_stock_product_card;
+                    //delete App.page_stock_product_card;
 		}
 	    });
 	    this.node.window('window').css('position','fixed');
 	    
-	    if( typeof this.data==='object' ){// Init card with existing data but get new anyway
-		App.page_stock_product_card.initWidgets();
-	    }
-	    $.get("Stock/productGet",{product_code:App.page_stock_product_card.data.product_code},function(resp){
-		App.page_stock_product_card.data=App.json(resp);
+
+	    if(this.data.product_code){
+		$.get("Stock/productGet",{product_code:App.page_stock_product_card.data.product_code},function(resp){
+		    App.page_stock_product_card.data=App.json(resp);
+		    App.page_stock_product_card.unpackPrices();
+		    App.page_stock_product_card.initWidgets();
+		});
+	    } else {//new product
+		App.page_stock_product_card.data={
+		    labeled_prices:[{
+			sell:0,
+			buy:0,
+			curr_code:'',
+			label:''
+		    }] 
+		};
 		App.page_stock_product_card.unpackPrices();
-		App.page_stock_product_card.initWidgets();
-	    });
+	    }
+		App.page_stock_product_card.initWidgets();		
+	    //App.page_stock_product_card.initWidgets();// Init card with existing data but get new anyway
 	    
             if( this.data.enablePrevnext ){
                 $("#stock_prod_card_prevnext").css('visibility','visible');   
