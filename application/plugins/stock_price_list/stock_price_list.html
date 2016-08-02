@@ -78,6 +78,7 @@
 		App.renderTpl('price_list_availables',deployment);
 		App.renderTpl('price_list_deployment',deployment.deployment);
 		App.price_list.node.find("select[name=sort_by]").val(deployment.deployment.sort_by||'product_code');
+		App.price_list.node.find("select[name=price_label]").val(deployment.deployment.price_label||'');
 		App.price_list.current_dpl_id=deployment_id;
 		App.price_list.restoreLeftHeaders();
 		App.price_list.initDrag();
