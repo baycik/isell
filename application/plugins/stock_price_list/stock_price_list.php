@@ -2,7 +2,7 @@
 /* 
  * Plugin Name: Price list creator
  * Plugin URI: isellsoft.ru
- * Version: 1.0
+ * Version: 1.1
  * Description: Tool for creating price list 
  * Author: baycik 2016
  * Author URI: isellsoft.ru
