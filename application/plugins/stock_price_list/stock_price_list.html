@@ -3,7 +3,7 @@
     App.price_list = App.page_plugins_stock_price_list_stock_price_list = {
 	current_dpl_id: 0,
 	init: function () {
-	    App.setupForm("#price_list_frm");
+            this.initForm();
 	    if( App.pcomp ){
 		$("input[name=pcomp_name]").val(App.pcomp.label);
 	    }
@@ -27,6 +27,13 @@
 		}
 	    });
 	},
+        initForm:function(){
+            $.get("Stock/getPriceLabels",function(resp){
+                var price_label_list=App.json(resp);
+                App.renderTpl("price_list_frm",{price_label_list:price_label_list});
+                App.setupForm("#price_list_frm");
+            });
+        },
 	sortUpdate: function () {
 	    clearTimeout(App.price_list.clock);
 	    App.price_list.clock=setTimeout(function(){
@@ -84,19 +91,20 @@
 	},
 	save: function () {
 	    var deployment_id = this.current_dpl_id;
-	    var deployment_data = {items: [], name: $("#price_list_name").html(), id: deployment_id};
-	    deployment_data.sort_by=App.price_list.node.find("select[name=sort_by]").val();
+	    this.deployment_data = {items: [], name: $("#price_list_name").html(), id: deployment_id};
+	    this.deployment_data.sort_by=App.price_list.node.find("select[name=sort_by]").val();
+	    this.deployment_data.price_label=App.price_list.node.find("select[name=price_label]").val();
 	    $("#price_list_drag_msg").remove();
 	    $(".used_items li").each(function () {
-		deployment_data.items.push({
+		App.price_list.deployment_data.items.push({
 		    type: $(this).data('type'),
 		    id: $(this).data('id'),
 		    text: $(this).find('span').html()
 		});
 	    });
-	    return $.post("plugin/stock_price_list/save/", {deployment_id: deployment_id, deployment_data: JSON.stringify(deployment_data)}, function (ok) {
+	    return $.post("plugin/stock_price_list/save/", {deployment_id: deployment_id, deployment_data: JSON.stringify(App.price_list.deployment_data)}, function (ok) {
 		if(ok*1){
-		    App.flash(deployment_data.name+ " сохранен");
+		    App.flash(App.price_list.deployment_data.name+ " сохранен");
 		}
 	    });
 	},
@@ -117,6 +125,7 @@
 			}
 		    }
 		}
+		msg+="\nВыбранная категория цен: "+App.price_list.deployment_data.price_label;
 		msg+="\n\nНапечатать прайс лист с такими параметрами?";
 		if( confirm(msg) ){
 		    App.price_list.print();
@@ -160,11 +169,11 @@
 	}
     };
 </script>
-<div id="price_list_templates" style="display: none">
+<ul id="price_list_templates" style="display: none">
     <li data-type="h1" class="h1"> <img src="img/edit-16.png" class="edit_pencil" onclick="App.price_list.itemEdit(this)" title="Изменить текст"><span>Большой заголовок</span></li>
     <li data-type="h2" class="h2"> <img src="img/edit-16.png" class="edit_pencil" onclick="App.price_list.itemEdit(this)" title="Изменить текст"><span>Средний заголовок</span></li>
     <li data-type="page" class="page"> <img src="img/edit-16.png" class="edit_pencil" onclick="App.price_list.itemEdit(this)" title="Изменить текст"><span>Произвольный текст</span></li>
-</div>
+</ul>
 <table style="width:1170px;margin-right: 30px;margin-bottom: 40px;">
     <tr>
 	<td style="vertical-align: top;width:420px">
@@ -205,6 +214,11 @@
 			<option value="fetch_count DESC">Популярность</option>
 			<option value="product_name">Название</option>
 		    </select>
+                    <select name="price_label" title="Категория цен" onchange="App.price_list.save()">
+                        {{price_label_list}}
+                        <option value="{{label}}">{{label}}</option>
+                        {{/price_label_list}}
+                    </select>
 		</form>
 	    </div>
 	</td>

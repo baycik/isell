@@ -133,6 +133,7 @@ class Stock_price_list extends Catalog{
 		companies_discounts cd ON cd.branch_id=st.top_id AND company_id='$pcomp_id'
 	    WHERE
 		se.parent_id='{$block->id}'
+                AND (price_list.label='{$this->price_label}' OR price_list.label='')
 	    ORDER BY $this->sort_by";
 	$block->rows=$this->get_list($sql);
 	$block->imgs=$this->getBlockImg($block->id,count($block->rows));
@@ -169,6 +170,9 @@ class Stock_price_list extends Catalog{
 	    if( $this->sort_by=='fetch_count' ){
 		$this->sort_by.=" DESC";
 	    }
+	}
+	if( $deployment['deployment']->price_label ){
+	    $this->price_label=$deployment['deployment']->price_label;
 	}
 	$this->Base->load_model('Storage');
 	$price_blocks=[];
