@@ -91,7 +91,7 @@ class Company extends Catalog{
 	    $this->Base->set_level(3);
 	}
 	if( $field=='label' ){
-	    $branch_id=$this->get_value("SELECT branch_id FROM companies_list WHERE (path LIKE '$assigned_path%' OR path IS NULL) AND company_id='$company_id'");
+	    $branch_id=$this->get_value("SELECT branch_id FROM companies_list JOIN companies_tree USING(branch_id)  WHERE (path LIKE '$assigned_path%' OR path IS NULL) AND company_id='$company_id'");
 	    $ok=$this->treeUpdate('companies_tree', $branch_id, $field, $value);
 	} else {
 	    	$sql="UPDATE 
