@@ -90,17 +90,22 @@ class Company extends Catalog{
 	if( $this->Base->acomp('company_id')==$company_id ){
 	    $this->Base->set_level(3);
 	}
-	$sql="UPDATE 
-		companies_list
-	    JOIN 
-		companies_tree USING(branch_id) 
-	    SET $field='$value' 
-	    WHERE 
-		(path LIKE '$assigned_path%' OR path IS NULL)
-		    AND
-		company_id=$company_id";
-	$this->query($sql);
-	$ok=$this->db->affected_rows()>0?1:0;
+	if( $field=='label' ){
+	    $branch_id=$this->get_value("SELECT branch_id FROM companies_list WHERE (path LIKE '$assigned_path%' OR path IS NULL) AND company_id='$company_id'");
+	    $ok=$this->treeUpdate('companies_tree', $branch_id, $field, $value);
+	} else {
+	    	$sql="UPDATE 
+			companies_list
+		    JOIN 
+			companies_tree USING(branch_id) 
+		    SET $field='$value' 
+		    WHERE 
+			(path LIKE '$assigned_path%' OR path IS NULL)
+			    AND
+			company_id=$company_id";
+		$this->query($sql);
+		$ok=$this->db->affected_rows()>0?1:0;
+	}
 	if( $this->Base->acomp('company_id')==$company_id ){/*@TODO move to lazy loading of pcomp/acomp in v4.0*/
 	    $this->selectActiveCompany($company_id);
 	}
