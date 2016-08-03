@@ -213,7 +213,7 @@ EventsJs={
 		</span>
 	    </div>
 	    <div class="event_tile_item_row event_tile_header">
-		<div style="width:25px">!</div>
+		<div style="width:25px"><img src="img/ok.png" title="Статус"></div>
 		<div style="width:60px">Дата</div>
 		<div style="width:150px">Задание</div>
 		<div style="width:200px">Место</div>
@@ -223,11 +223,11 @@ EventsJs={
 	    </div>
 	    {{else}}
 		<div class="event_tile_item_row event_tile_item_{{event_priority}}" data-event-index="{{#}}" onclick="EventsJs.tile.click(this);" ondblclick="EventsJs.tile.edit(this);">
-		    <div style="max-width:26px;width:25px;">
+		    <div style="max-width:26px;width:25px;text-align: center">
 			{{if event_status|equals>undone}}
-			<img src="img/done.png" style="opacity: 0.5;cursor: pointer" title="Отметить как выполненое">
+			<img src="img/red.png" style="cursor: pointer" title="Отметить как выполненое">
 			{{else}}
-			<img src="img/done.png" title="Выполнено">
+			<img src="img/grn.png" title="Выполнено">
 			{{/if}}
 		    </div>
 		    <div style="max-width:60px;width:60px;text-align: center">{{date_dmy}}</div>
