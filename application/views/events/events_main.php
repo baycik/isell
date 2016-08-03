@@ -138,11 +138,11 @@ EventsJs={
     }
     .event_tile_item_row{
 	margin:0px 5px 0px 5px;
-	background-color: rgba(255,255,255,0.4);
+	background-color: rgba(255,255,255,0.5);
 	border-bottom: 1px #999 solid;
     }
     .event_tile_item_row:hover{
-	background-color: rgba(255,255,255,0.7);
+	background-color: rgba(255,255,255,0.8);
 	cursor: pointer;
     }
     .event_tile_item_row div{
@@ -157,7 +157,7 @@ EventsJs={
     .event_tile_item_row_selected,.event_tile_item_row_selected:hover{
 	margin:-2px 3px -1px 3px;
 	border: 2px solid #08f;
-	background-color: rgba(255,255,255,0.7);
+	background-color: rgba(255,255,255,0.8);
     }
     .event_tile_header,.event_tile_header:hover{
 	background: linear-gradient(0deg, rgba(220,255,255,0.9), rgba(255,255,255,0.6));
