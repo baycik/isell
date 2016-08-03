@@ -35,8 +35,8 @@ class Events extends Catalog{
 	    FROM
 		event_list
 	    WHERE
-		DATE(event_date)='$date' AND event_label<>'chat' $label_filter
-	    ORDER BY event_label,event_priority IS NULL,event_priority,event_target";
+		(DATE(event_date)='$date' OR DATEDIFF(event_date,'$date')%event_repeat=0) AND event_label<>'chat' $label_filter OR event_status='undone'
+	    ORDER BY event_status='undone' DESC,event_label,event_priority IS NULL,event_priority,event_target";
 	return $this->get_list($sql);
     }
     
@@ -56,6 +56,7 @@ class Events extends Catalog{
 	    'event_place'=>$this->request('event_place'),
 	    'event_note'=>$this->request('event_note'),
 	    'event_descr'=>$this->request('event_descr'),
+	    'event_repeat'=>$this->request('event_repeat'),
 	    'event_is_private'=>$this->request('event_is_private'),
 	    'modified_by'=>$this->Base->svar('user_id')
 	];

@@ -50,7 +50,7 @@ EventsJs={
 		for(var i=0;i<EventsJs.tile.event_list.length;i++){
 		    if( EventsJs.tile.event_list[i].event_label!==event_label ){
 			event_label=EventsJs.tile.event_list[i].event_label||'-';
-                        event_list_tmp.push( {header:event_label} );
+                        event_list_tmp.push( {header:event_label,status:EventsJs.tile.event_list[i].event_status} );
 		    }
                     event_list_tmp.push( EventsJs.tile.event_list[i] );
 		}
@@ -193,7 +193,7 @@ EventsJs={
 	{{if events|empty}}
 	<div style="text-align: center">
 	    <h1>Нет заданий на этот день</h1>
-	    <button onclick="EventsJs.tile.create(this);"><img src="img/edit_add.png"> Добавть задание</button>
+	    <button onclick="EventsJs.tile.create(this);"><img src="img/edit_add.png"> Добавить задание</button>
 	</div>
 	{{/if}}
 	{{events}}
@@ -208,6 +208,7 @@ EventsJs={
 		    <span class="icon-24 icon-print" title="Печать" onclick="EventsJs.tile.out($(this).parent().data('header'),'.print');"> </span>
 		</div>
 		<span style="font-size:18px;font-weight: bold">
+		    {{if status|equals>undone}}<span style="color:red">НЕ ВЫПОЛНЕНО</span> {{/if}}
 		    {{header}}
 		</span>
 	    </div>
@@ -222,7 +223,13 @@ EventsJs={
 	    </div>
 	    {{else}}
 		<div class="event_tile_item_row event_tile_item_{{event_priority}}" data-event-index="{{#}}" onclick="EventsJs.tile.click(this);" ondblclick="EventsJs.tile.edit(this);">
-		    <div style="max-width:26px;width:25px;"></div>
+		    <div style="max-width:26px;width:25px;">
+			{{if event_status|equals>undone}}
+			<img src="img/done.png" style="opacity: 0.5;cursor: pointer" title="Отметить как выполненое">
+			{{else}}
+			<img src="img/done.png" title="Выполнено">
+			{{/if}}
+		    </div>
 		    <div style="max-width:60px;width:60px;text-align: center">{{date_dmy}}</div>
 		    <div style="max-width:150px;width:150px">{{event_name}}</div>
 		    <div style="max-width:200px;width:200px">{{event_place}}</div>
