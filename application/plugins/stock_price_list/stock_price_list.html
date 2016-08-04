@@ -7,6 +7,7 @@
 	    if( App.pcomp ){
 		$("input[name=pcomp_name]").val(App.pcomp.label);
 	    }
+	    
 	    App.handler.progress(function(status){
 		if( status==='passiveCompanySelected' ){
 		    $("input[name=pcomp_name]").val(App.pcomp.label);
@@ -82,6 +83,7 @@
 		App.price_list.current_dpl_id=deployment_id;
 		App.price_list.restoreLeftHeaders();
 		App.price_list.initDrag();
+		App.price_list.deployment_data=deployment;
 	    });
 	},
 	clear:function(){
