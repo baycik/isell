@@ -124,7 +124,7 @@
 			}
 		    }
 		}
-		msg+="\nВыбранная категория цен: "+App.price_list.deployment_data.price_label;
+		msg+="\nВыбранная категория цен: "+App.price_list.deployment_data.price_label||'"-основная цена-"';
 		msg+="\n\nНапечатать прайс лист с такими параметрами?";
 		if( confirm(msg) ){
 		    App.price_list.print();
