@@ -57,6 +57,7 @@ class Events extends Catalog{
 	    'event_note'=>$this->request('event_note'),
 	    'event_descr'=>$this->request('event_descr'),
 	    'event_repeat'=>$this->request('event_repeat'),
+	    'event_status'=>$this->request('event_status'),
 	    'event_is_private'=>$this->request('event_is_private'),
 	    'modified_by'=>$this->Base->svar('user_id')
 	];

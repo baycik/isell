@@ -184,6 +184,13 @@ EventsJs={
     .event_tile_item_5future{
 	background-color: rgba(150,255,150,0.4);
     }
+    
+    .event_tile_item_status_undone{
+	background-color: rgba(255,0,0,0.4);
+    }
+    .event_tile_item_status_done{
+	background-color: rgba(150,255,150,0.4);
+    }
 </style>
 <div id="event_calendar" class="easyui-calendar" style="width:220px;height:220px;display: inline-block" data-options="
 		 formatter:EventsJs.calendar.formatter,
@@ -213,7 +220,7 @@ EventsJs={
 		</span>
 	    </div>
 	    <div class="event_tile_item_row event_tile_header">
-		<div style="width:25px"><img src="img/ok.png" title="Статус"></div>
+		<div style="width:25px">Статус</div>
 		<div style="width:60px">Дата</div>
 		<div style="width:150px">Задание</div>
 		<div style="width:200px">Место</div>
@@ -223,13 +230,7 @@ EventsJs={
 	    </div>
 	    {{else}}
 		<div class="event_tile_item_row event_tile_item_{{event_priority}}" data-event-index="{{#}}" onclick="EventsJs.tile.click(this);" ondblclick="EventsJs.tile.edit(this);">
-		    <div style="max-width:26px;width:25px;text-align: center">
-			{{if event_status|equals>undone}}
-			<img src="img/red.png" style="cursor: pointer" title="Отметить как выполненое">
-			{{else}}
-			<img src="img/grn.png" title="Выполнено">
-			{{/if}}
-		    </div>
+		    <div class="event_tile_item_status_{{event_status}}" style="max-width:26px;width:25px;text-align: center"></div>
 		    <div style="max-width:60px;width:60px;text-align: center">{{date_dmy}}</div>
 		    <div style="max-width:150px;width:150px">{{event_name}}</div>
 		    <div style="max-width:200px;width:200px">{{event_place}}</div>
