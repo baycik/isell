@@ -170,9 +170,7 @@ class Stock_price_list extends Catalog{
 		$this->sort_by.=" DESC";
 	    }
 	}
-	if( $deployment['deployment']->price_label ){
-	    $this->price_label=$deployment['deployment']->price_label;
-	}
+	$this->price_label=$deployment['deployment']->price_label;
 	$this->Base->load_model('Storage');
 	$price_blocks=[];
 	foreach( $deployment['deployment']->items as $block ){
