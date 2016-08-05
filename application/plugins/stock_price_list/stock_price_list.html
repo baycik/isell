@@ -4,10 +4,6 @@
 	current_dpl_id: 0,
 	init: function () {
             this.initForm();
-	    if( App.pcomp ){
-		$("input[name=pcomp_name]").val(App.pcomp.label);
-	    }
-	    
 	    App.handler.progress(function(status){
 		if( status==='passiveCompanySelected' ){
 		    $("input[name=pcomp_name]").val(App.pcomp.label);
@@ -32,7 +28,7 @@
             $.get("Stock/getPriceLabels",function(resp){
                 var price_label_list=App.json(resp);
                 App.renderTpl("price_list_frm",{price_label_list:price_label_list});
-                App.setupForm("#price_list_frm");
+                App.setupForm("#price_list_frm",{pcomp_name:App.pcomp.label});
             });
         },
 	sortUpdate: function () {
