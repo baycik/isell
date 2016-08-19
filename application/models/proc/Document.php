@@ -1174,11 +1174,18 @@ class Document extends Data {
 	$pcomp_price_label=$this->Base->pcomp('price_label');
 	$def_curr_code = $this->Base->acomp('curr_code');
         
-	return $this->Base->get_row("SELECT 
+	$price=$this->Base->get_row("SELECT 
             sell/{$this->vat_rate}*IF(curr_code<>'' AND curr_code<>'$def_curr_code',$curr_correction,1) sell,
-            buy/{$this->vat_rate}*IF(curr_code<>'' AND curr_code<>'$def_curr_code',$curr_correction,1) buy
+            buy/{$this->vat_rate}*IF(curr_code<>'' AND curr_code<>'$def_curr_code',$curr_correction,1) buy,
+            label='$pcomp_price_label' is_rightlabel
             FROM price_list 
-            WHERE product_code='$product_code' AND (label='$pcomp_price_label' OR label IS NULL) LIMIT 1");
+            WHERE product_code='$product_code' AND (label='$pcomp_price_label' OR label='')
+            ORDER BY label='$pcomp_price_label' DESC
+            LIMIT 1");
+        if( !$price['is_rightlabel'] ){
+            $this->Base->msg("Была использована категория цен по умолчанию!");
+        }
+        return $price;
     }
 
     public function updateBuyPriceFromDoc() {

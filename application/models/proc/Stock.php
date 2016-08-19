@@ -160,7 +160,7 @@ class Stock extends Data {
     
     public function getEntryPartyLabel($product_code){
         $this->stockEntryLoad($product_code);
-        return $this->stockEntry->party_label;
+        return isset($this->stockEntry->party_label)?$this->stockEntry->party_label:'';
     }
 
     ///////////////////////////////////////////////////////////
