@@ -20,6 +20,7 @@
 	    this.data.created_by=this.data.created_by||'-';
 	    this.data.modified_by=this.data.modified_by||'-';
 	    this.data.event_priority=this.data.event_priority||'3medium';
+	    this.data.event_status=this.data.event_status||'undone';
 	    App.setupForm("#page_events_event_frm", this.data);
 	    App.renderTpl('page_events_event_frm_modified',this.data);
             if (this.data.event_id) {
@@ -95,13 +96,13 @@
 	    <option value="4low" style="background-color: #ccc">Низкий</option>
 	    <option value="5future" style="background-color: green">В планах</option>
 	</select>
-	<select name="event_status" title="Статус">
-	    <option value="">В процессе</option>
+	<select name="event_status" title="Выполнено">
+	    <option value="inprocess">В процессе</option>
 	    <option value="undone" style="color: red">Не выполнено</option>
 	    <option value="done" style="color: green">Выполнено</option>
 	</select>
         <input type="checkbox" name="event_is_private" value="1" title="Скрыть" />
-        <input type="text" name="event_repeat" placeholder="Повторять задание (дн.)" title="Повторять"/>
+        <input type="text" name="event_repeat" placeholder="Повторять задание (дн.)" title="Повторять через"/>
     </div>
     <div style="text-align: center;margin-top: 30px;">
         <button type="submit"><img src="img/Save-24.png" style="vertical-align: middle" /> Сохранить</button>
