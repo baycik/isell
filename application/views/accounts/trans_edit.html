@@ -125,8 +125,8 @@
 			acc_debit_code: Tedit.data.trans_type.split('_')[0],
 			acc_credit_code:  Tedit.data.trans_type.split('_')[1],
 			trans_type:  Tedit.data.trans_type,
-			trans_name: Tedit.data.trans_name||'',
-			trans_type_name: (Tedit.data.trans_name||'')+' '+Tedit.data.trans_type,
+			trans_name: Tedit.data.trans_name||'-Ручная проводка-',
+			trans_type_name: (Tedit.data.trans_name||''),
 			user_level: Tedit.data.user_level
 		    }]);		
 	    }
@@ -138,6 +138,25 @@
 		    $('#tedit_trans_type_cmb').combobox('setValue',data.trans_type);
 		}
 	    });
+	},
+	transnameSet:function(){
+	    var trans_type=$("#tedit_debit").val()+'_'+$("#tedit_credit").val();
+	    $.get('AccountsData/transNameListFetch/?q='+trans_type,function(resp){
+		var tname=App.json(resp);
+		if( tname[0] ){
+		    $('#tedit_trans_type_cmb').combobox('loadData',tname);
+		} else {
+		    $('#tedit_trans_type_cmb').combobox('loadData',[{trans_name:'-Ручная проводка-',trans_type:trans_type}]);
+		}
+		$("#tedit_trans_type_cmb").combobox('setValue',trans_type);
+	    });
+	},
+	transtypeSet:function(){
+	    var dt=$("#tedit_trans_type_cmb").combobox('getValue').replace(/[^\d_]/,'').split('_');
+	    if( dt[0] && dt[1] ){
+		$("#tedit_debit").val(dt[0]);
+		$("#tedit_credit").val(dt[1]);
+	    }
 	},
 	transDelete:function(){
 	    if( !confirm("Удалить проводку?") ){
@@ -239,12 +258,13 @@
 	   ">
     <input style="width:300px" class="easyui-combobox" name="trans_type" id="tedit_trans_type_cmb" title="Проводка" data-options="
 	   valueField: 'trans_type',
-	   textField: 'trans_type_name',
+	   textField: 'trans_name',
 	   url:'AccountsCore/transNameListFetch',
 	   loader:Tedit.transnameLoader,
 	   panelHeight:'auto',
 	   mode: 'remote',
 	   method:'get',
+	   onChange: Tedit.transtypeSet,
 	   required:true,
 	   icons: [{
 		    iconCls:'icon-settings16',
@@ -253,6 +273,10 @@
 		    }
 		}]
 	   ">
+    <div>
+	<input style="width:89px" title="Дебет" name="debit" id="tedit_debit" onchange="Tedit.transnameSet()">
+	<input style="width:89px" title="Кредит" name="credit" id="tedit_credit">
+    </div>
     <input style="width:300px" class="easyui-textbox" name="description" id="tedit_description_txt" title="Комментарий" data-options="
 	   multiline:true,
 	   height:66,
