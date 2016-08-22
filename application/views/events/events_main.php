@@ -64,6 +64,20 @@ EventsJs={
 	    //var index=$(node).data('event-index');
 	    //EventsJs.show_dialog(EventsJs.tile.event_list[index]);
 	},
+	statusClick:function( node ){
+	    var i=$(node).parent().data('event-index');
+	    var event=EventsJs.tile.event_list[i];
+	    if( event.event_status==='undone' ){
+		event.event_status='done';
+		EventsJs.tile.updateEvent(event);
+	    }
+	},
+	updateEvent:function(event){
+            $.post('Events/eventSave/'+event.event_id,event,function( resp ){
+                App.flash("Запись сохранена: " + event.event_name);
+		EventsJs.tile.load();               
+            });
+	},
 	create:function(node){
 	    var header=$(node).parent().data('header');
 	    var fvalue = {
@@ -143,7 +157,7 @@ EventsJs={
     }
     .event_tile_item_row:hover{
 	background-color: rgba(255,255,255,0.8);
-	cursor: pointer;
+	cursor: default;
     }
     .event_tile_item_row div{
 	display: table-cell;
@@ -186,10 +200,11 @@ EventsJs={
     }
     
     .event_tile_item_status_undone{
-	background-color: rgba(255,0,0,0.4);
+	background: url(img/red.png) no-repeat center;
+	cursor: pointer;
     }
     .event_tile_item_status_done{
-	background-color: rgba(150,255,150,0.4);
+	background: url(img/ok.png) no-repeat center;
     }
 </style>
 <div id="event_calendar" class="easyui-calendar" style="width:220px;height:220px;display: inline-block" data-options="
@@ -215,12 +230,12 @@ EventsJs={
 		    <span class="icon-24 icon-print" title="Печать" onclick="EventsJs.tile.out($(this).parent().data('header'),'.print');"> </span>
 		</div>
 		<span style="font-size:18px;font-weight: bold">
-		    {{if status|equals>undone}}<span style="color:red">НЕ ВЫПОЛНЕНО</span> {{/if}}
-		    {{header}}
+		    {{header}}{{if status|equals>undone}}<span style="color:red">  <img src="img/red.png">(невыполненные задания)</span> {{/if}}
+		    
 		</span>
 	    </div>
 	    <div class="event_tile_item_row event_tile_header">
-		<div style="width:25px">Статус</div>
+		<div style="width:50px">Вып-но</div>
 		<div style="width:60px">Дата</div>
 		<div style="width:150px">Задание</div>
 		<div style="width:200px">Место</div>
@@ -230,7 +245,7 @@ EventsJs={
 	    </div>
 	    {{else}}
 		<div class="event_tile_item_row event_tile_item_{{event_priority}}" data-event-index="{{#}}" onclick="EventsJs.tile.click(this);" ondblclick="EventsJs.tile.edit(this);">
-		    <div class="event_tile_item_status_{{event_status}}" style="max-width:26px;width:25px;text-align: center"></div>
+		    <div class="event_tile_item_status_{{event_status}}" onclick="EventsJs.tile.statusClick(this);" style="max-width:51px;width:50px;text-align: center"></div>
 		    <div style="max-width:60px;width:60px;text-align: center">{{date_dmy}}</div>
 		    <div style="max-width:150px;width:150px">{{event_name}}</div>
 		    <div style="max-width:200px;width:200px">{{event_place}}</div>

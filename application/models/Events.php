@@ -35,7 +35,8 @@ class Events extends Catalog{
 	    FROM
 		event_list
 	    WHERE
-		(DATE(event_date)='$date' OR DATEDIFF(event_date,'$date')%event_repeat=0) AND event_label<>'chat' $label_filter OR event_status='undone'
+		(DATE(event_date)='$date' OR DATEDIFF(event_date,'$date')%event_repeat=0) AND event_label<>'chat' $label_filter 
+		OR event_status='undone' AND DATE(event_date)<='$date'
 	    ORDER BY event_status='undone' DESC,event_label,event_priority IS NULL,event_priority,event_target";
 	return $this->get_list($sql);
     }
