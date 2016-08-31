@@ -104,7 +104,7 @@ class Stock extends Catalog {
 	$this->Base->set_level(2);
 	$affected_rows=0;
 	$product_code=$this->request('product_code');
-        $product_code_new=$this->request('product_code_new','^[\p{L}\d\. ,-_]+$');
+        $product_code_new=$this->request('product_code_new','^[\(\)\[\]\<\>\p{L}\d\. ,-_]+$');
         if( !$product_code_new ){// do not match the pattern
             return false;
         }
