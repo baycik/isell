@@ -118,6 +118,7 @@
 		Tedit.data.current_acc_code=null;
 	    }
 	    if( param.q || Tedit.data.transIsNew ){
+		Tedit.preventLoopOnChange=true;
 		$.get('AccountsData/transNameListFetch/'+(Tedit.data.current_acc_code||''), param, function (xhr) {
 		    var resp = App.json(xhr);
 		    success(resp[0] ? resp : []);
@@ -129,6 +130,7 @@
 			    $('#tedit_description_txt').textbox('setValue',resp[0].trans_name);
 			}
 		    }
+		    Tedit.preventLoopOnChange=false;
 		});
 	    } else {
 		success([{
@@ -150,6 +152,9 @@
 	    });
 	},
 	transnameSet:function(){
+	    if( Tedit.preventLoopOnChange===true ){
+		return;
+	    }
 	    var trans_type=$("#tedit_debit").textbox('getValue')+'_'+$("#tedit_credit").textbox('getValue');
 	    $.get('AccountsData/transNameListFetch/?q='+trans_type,function(resp){
 		var tname=App.json(resp);
