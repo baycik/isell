@@ -67,7 +67,7 @@ EventsJs={
 	statusClick:function( node ){
 	    var i=$(node).parent().data('event-index');
 	    var event=EventsJs.tile.event_list[i];
-	    if( event.event_status==='undone' ){
+	    if( event.event_status==='undone' || event.event_status==='pending' ){
 		event.event_status='done';
 		EventsJs.tile.updateEvent(event);
 	    }
@@ -201,6 +201,10 @@ EventsJs={
     
     .event_tile_item_status_undone{
 	background: url(img/red.png) no-repeat center;
+	cursor: pointer;
+    }
+    .event_tile_item_status_pending{
+	background: url(img/unknown.png) no-repeat center;
 	cursor: pointer;
     }
     .event_tile_item_status_done{

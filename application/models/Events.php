@@ -31,15 +31,18 @@ class Events extends Catalog{
 		*,
 		DATE_FORMAT(event_date,'%d.%m.%Y') date_dmy,
 		(SELECT nick FROM user_list WHERE user_id=created_by) created_by,
-		(SELECT nick FROM user_list WHERE user_id=modified_by) modified_by
+		(SELECT nick FROM user_list WHERE user_id=modified_by) modified_by,
+		IF(event_status='undone' AND DATE(event_date)='$date','pending',event_status) event_status
 	    FROM
 		event_list
 	    WHERE
-		(DATE(event_date)='$date' OR DATEDIFF(event_date,'$date')%event_repeat=0
-                 OR event_status='undone' AND DATE(event_date)<='$date') 
+		(
+		    DATE(event_date)='$date' 
+		    OR DATEDIFF(event_date,'$date')%event_repeat=0
+		    OR event_status='undone' AND DATE(event_date)<DATE(NOW())
+		) 
                 AND event_label<>'chat' $label_filter 
-		
-	    ORDER BY event_status='undone' DESC,event_label,event_priority IS NULL,event_priority,event_target";
+	    ORDER BY event_status='undone' AND DATE(event_date)<DATE(NOW()),event_label,event_priority IS NULL,event_priority,event_target";
 	return $this->get_list($sql);
     }
     
