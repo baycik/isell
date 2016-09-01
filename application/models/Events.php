@@ -61,9 +61,10 @@ class Events extends Catalog{
 	    'event_target'=>$this->request('event_target'),
 	    'event_place'=>$this->request('event_place'),
 	    'event_note'=>$this->request('event_note'),
-	    'event_descr'=>$this->request('event_descr'),
+	    'event_descr'=>$this->request('event_descr','raw'),
 	    'event_repeat'=>$this->request('event_repeat'),
 	    'event_status'=>$this->request('event_status'),
+	    'event_user_liable'=>$this->request('event_user_liable'),
 	    'event_is_private'=>$this->request('event_is_private'),
 	    'modified_by'=>$this->Base->svar('user_id')
 	];
