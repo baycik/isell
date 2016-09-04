@@ -204,7 +204,7 @@ EventsJs={
 	cursor: pointer;
     }
     .event_tile_item_status_pending{
-	background: url(img/unknown.png) no-repeat center;
+	background: url(img/gray.png) no-repeat center;
 	cursor: pointer;
     }
     .event_tile_item_status_done{
