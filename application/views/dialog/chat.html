@@ -4,7 +4,7 @@
 	has_new_status:0,
 	init: function () {
 	    this.node.window({
-		width: 500,
+		width: 600,
 		title: 'Chat',
 		height: 420,
 		onClose: function () {
@@ -80,11 +80,19 @@
 <div id="chat_field">
     {{dialog}}
     {{if for_me}}
-    <div class="bubble bubble-alt {{if undone|more>0}}white{{else}}yellow{{/if}} " title="Отправлено {{time}}">
-        {{event_descr}} 
+    <div class="bubble bubble-alt {{if event_status|equals>undone}}white{{else}}yellow{{/if}} {{if is_chat|less>1}}bubble-event{{/if}}" title="Отправлено {{time}}">
+	{{if is_chat|less>1}}
+	<div style="cursor: pointer" onclick="App.loadWindow()">
+	    Напоминание задания {{time}}<hr>
+	    <b>{{event_name}}</b><br>
+	    <b>Место:</b> {{event_place}}<br>
+	    <b>Цель:</b> {{event_target}}<br><br>
+	</div>
+	{{/if}}
+	{{event_descr}}
     </div>
     {{else}}
-    <div class="bubble {{if undone|more>0}}white{{else}}blue{{/if}}" title="Отправлено {{time}}">
+    <div class="bubble {{if event_status|equals>undone}}white{{else}}blue{{/if}}" title="Отправлено {{time}}">
         {{event_descr}}
     </div>
     {{/if}}
@@ -133,7 +141,7 @@
 	box-sizing: border-box;
 	float: left;
 	width: auto;
-	max-width: 80%;
+	max-width: 90%;
 	position: relative;
 	clear: both;
 	-background: #95c2fd;
@@ -178,6 +186,10 @@
     .bubble-alt:after {
 	left: auto;
 	right: -5px;
+    }
+    .bubble-event{
+	border: solid 5px rgba(0,0,0,0.2);
+	border-radius: 0px;
     }
 
     .bubble p {

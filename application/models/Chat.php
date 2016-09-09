@@ -8,7 +8,7 @@ class Chat extends Catalog{
                 user_id,
                 user_login,
 		CONCAT(first_name,' ',last_name) name,
-		(SELECT 1 FROM event_list WHERE event_user_id=user_id AND event_status='undone' AND event_user_liable='$my_id') has_new
+		(SELECT 1 FROM event_list WHERE created_by=user_id AND event_status='undone' AND event_user_liable='$my_id') has_new
             FROM
                 user_list";
         return $this->get_list($sql);
@@ -28,7 +28,8 @@ class Chat extends Catalog{
               SET 
                 event_label='Chat',
                 event_date=NOW(),
-                event_user_id='$my_id',
+                created_by='$my_id',
+                modified_by='$my_id',
                 event_user_liable='$his_id',
                 event_descr='$msg',
                 event_is_private=1,
@@ -45,14 +46,19 @@ class Chat extends Catalog{
 	$sql="
 	    SELECT
 		event_descr,
+		event_priority,
+		event_name,
+		DATE_FORMAT(event_date,'%d.%m.%Y %H:%i') time,
+		event_target,
+		event_place,
+		event_status,
 		IF(event_label='Chat',1,0) is_chat,
 		IF(event_user_liable='$my_id',1,NULL) for_me,
-		event_status='undone' undone,
 		IF(@undone_id=0 AND event_user_liable='$my_id' AND event_status='undone' AND event_label='Chat',@undone_id:=event_id,0) undone_id
 	    FROM 
 		event_list
 	    WHERE
-		(event_user_liable='$my_id' AND event_user_id='$his_id') OR (event_user_liable='$his_id' AND event_user_id='$my_id')
+		(event_user_liable='$my_id' AND created_by='$his_id') OR (event_user_liable='$his_id' AND created_by='$my_id')
 	    ORDER BY event_date
 	    LIMIT $limit
 	    ";
