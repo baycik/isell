@@ -45,6 +45,7 @@ class Chat extends Catalog{
 	$this->query("SET @undone_id=0;");
 	$sql="
 	    SELECT
+		event_id,
 		event_descr,
 		event_priority,
 		event_name,

@@ -97,14 +97,6 @@
             <a href="javascript:App.page_events_event.setLabel('Задания на складе')">Задания на складе</a> 
         </div>
         <input type="text" name="event_label" placeholder="Группа" title="Группа задания" style="background-color:#FFFFCC" />
-        <input type="checkbox" name="event_is_private" value="1" title="Скрыть" />
-	<select name="event_priority" title="Приоритет">
-	    <option value="1critical" style="background-color: red">Критический</option>
-	    <option value="2high" style="background-color: yellow">Высокий</option>
-	    <option value="3medium" selected="selected">Средний</option>
-	    <option value="4low" style="background-color: #ccc">Низкий</option>
-	    <option value="5future" style="background-color: green">В планах</option>
-	</select>
 	<select name="event_status" title="Выполнено">
 	    <option value="pending">В процессе</option>
 	    <option value="undone" style="color: red">Не выполнено</option>
@@ -115,7 +107,15 @@
 	    <option value="{{user_id}}">{{full_name}}</option>
 	    {{/staff_list}}
 	</select>
+	<select name="event_priority" title="Приоритет">
+	    <option value="1critical" style="background-color: red">Критический</option>
+	    <option value="2high" style="background-color: yellow">Высокий</option>
+	    <option value="3medium" selected="selected">Средний</option>
+	    <option value="4low" style="background-color: #ccc">Низкий</option>
+	    <option value="5future" style="background-color: green">В планах</option>
+	</select>
         <input type="text" name="event_repeat" placeholder="Повторять задание (дн.)" title="Повторять через"/>
+        <input type="checkbox" name="event_is_private" value="1" title="Скрыть" />
     </div>
     <div style="text-align: center;margin-top: 30px;">
         <button type="submit"><img src="img/Save-24.png" style="vertical-align: middle" /> Сохранить</button>

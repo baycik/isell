@@ -63,6 +63,13 @@
 		App.page_dialog_chat.msg_count=dialog.length;
 		$("#chat_field").animate({scrollTop: $("#chat_field")[0].scrollHeight}, 1000);
 	    }	    
+	},
+	loadEvent:function(node){
+	    var event_id=$(node).data('event-id');
+	    $.get("Events/eventGet/"+event_id,function(resp){
+		var fvalue=App.json(resp);
+		App.loadWindow('page/events/event', fvalue);
+	    });
 	}
     };
 </script>
@@ -82,7 +89,7 @@
     {{if for_me}}
     <div class="bubble bubble-alt {{if event_status|equals>undone}}white{{else}}yellow{{/if}} {{if is_chat|less>1}}bubble-event{{/if}}" title="Отправлено {{time}}">
 	{{if is_chat|less>1}}
-	<div style="cursor: pointer" onclick="App.loadWindow()">
+	<div style="cursor: pointer" onclick="App.page_dialog_chat.loadEvent(this)" data-event-id="{{event_id}}">
 	    Напоминание задания {{time}}<hr>
 	    <b>{{event_name}}</b><br>
 	    <b>Место:</b> {{event_place}}<br>

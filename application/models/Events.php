@@ -45,6 +45,20 @@ class Events extends Catalog{
 	    ORDER BY event_status='undone' AND DATE(event_date)<DATE(NOW()),event_label,event_priority IS NULL,event_priority,event_target";
 	return $this->get_list($sql);
     }
+    public function eventGet( $event_id ){
+	$this->check($event_id,'int');
+	$sql="SELECT
+		*,
+		DATE_FORMAT(event_date,'%d.%m.%Y') event_date,
+		(SELECT nick FROM user_list WHERE user_id=created_by) created_by,
+		(SELECT nick FROM user_list WHERE user_id=modified_by) modified_by,
+		event_status
+	    FROM
+		event_list
+	    WHERE
+		event_id='$event_id'";
+	return $this->get_row($sql);
+    }
     
     public function eventDelete( $event_id ){
 	$this->check($event_id,'int');
