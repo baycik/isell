@@ -309,7 +309,7 @@ App.chatCheck=function(){
 	    var count=resp*1;
 	    App.renderTpl('chat_panel',{count:count});
 	    if( count ){
-		App.flash("У вас "+count+" новых сообщенией!");
+		App.flash("У вас новое сообщение!");
 	    }
 	});
     }

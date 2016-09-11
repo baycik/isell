@@ -8,7 +8,7 @@ class Chat extends Catalog{
                 user_id,
                 user_login,
 		CONCAT(first_name,' ',last_name) name,
-		(SELECT 1 FROM event_list WHERE created_by=user_id AND event_status='undone' AND event_user_liable='$my_id') has_new
+		(SELECT 1 FROM event_list WHERE created_by=user_id AND event_status='undone' AND event_date<NOW() AND event_user_liable='$my_id') has_new
             FROM
                 user_list";
         return $this->get_list($sql);
@@ -74,7 +74,7 @@ class Chat extends Catalog{
 	    FROM 
 		event_list 
 	    WHERE 
-		event_status='undone' AND event_user_liable='$my_id'";
+		event_status='undone' AND event_date<NOW() AND event_user_liable='$my_id'";
 	return $this->get_value($sql);
     }
 }

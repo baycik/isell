@@ -379,6 +379,17 @@ img{
     animation:blink normal 2s infinite ease-in-out;
     border-radius: 5px;
 }
+@keyframes blinkborder{
+    0%{border-color: red;}
+    25%{border-color: yellow;}
+    50%{border-color: green;}
+    75%{border-color: yellow;}
+    100%{border-color: red;}
+}
+.blinkborder{
+    animation:blinkborder normal 2s infinite ease-in-out;
+    border-radius: 5px;
+}
 #loginOverlay{ 
     position:fixed;
     top:0;

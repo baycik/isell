@@ -109,7 +109,7 @@ EventsJs={
 	    var event_id=index?EventsJs.tile.event_list[index].event_id:0;
 	    App.loadWindow("page/events/move").progress(function(status,newdate,mode){
 		if( status==='move' ){
-		    $.post("Events/eventMove/"+App.uri(EventsJs.selectedDay,newdate,event_id,label,mode),function(ok){
+		    $.post("Events/eventMove/"+App.uri(event_id,newdate,mode,EventsJs.selectedDay,label),function(ok){
 			if( ok*1 ){
 			    App.flash("Запись перенесена");
 			    EventsJs.activeDatesGet();

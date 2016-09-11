@@ -64,17 +64,26 @@ class Events extends Catalog{
 	$this->check($event_id,'int');
 	return $this->delete("event_list",['event_id'=>$event_id]);
     }
+    public function eventUpdate( $event_id, $field, $value ){
+	$this->Base->set_level(2);
+	$this->check($event_id,'int');
+	$this->check($field,'\w+');
+	$this->check($value,'raw');
+	return $this->update('event_list', [$field=>$value], ['event_id'=>$event_id]);
+    }
+    
+    
     public function eventSave( $event_id ){
 	$this->Base->set_level(2);
 	$this->check($event_id,'int');
 	$event=[
 	    'event_date'=>$this->request('event_date'),
 	    'event_priority'=>$this->request('event_priority'),
-	    'event_name'=>$this->request('event_name'),
-	    'event_label'=>$this->request('event_label'),
-	    'event_target'=>$this->request('event_target'),
-	    'event_place'=>$this->request('event_place'),
-	    'event_note'=>$this->request('event_note'),
+	    'event_name'=>$this->request('event_name','raw'),
+	    'event_label'=>$this->request('event_label','raw'),
+	    'event_target'=>$this->request('event_target','raw'),
+	    'event_place'=>$this->request('event_place','raw'),
+	    'event_note'=>$this->request('event_note','raw'),
 	    'event_descr'=>$this->request('event_descr','raw'),
 	    'event_repeat'=>$this->request('event_repeat'),
 	    'event_status'=>$this->request('event_status'),
@@ -89,7 +98,7 @@ class Events extends Catalog{
 	return $this->update('event_list', $event, ['event_id'=>$event_id]);
     }
     
-    public function eventMove( $olddate, $newdate, $event_id, $label, $mode ){
+    public function eventMove( $event_id, $newdate, $mode=null, $olddate=null, $label=null ){
 	$this->check($event_id,'int');
 	$this->check($olddate,'\d\d\d\d-\d\d-\d\d');
 	$this->check($newdate,'\d\d\d\d-\d\d-\d\d');
