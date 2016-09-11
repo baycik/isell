@@ -50,7 +50,7 @@ EventsJs={
 		for(var i=0;i<EventsJs.tile.event_list.length;i++){
 		    if( EventsJs.tile.event_list[i].event_label!==event_label ){
 			event_label=EventsJs.tile.event_list[i].event_label||'-';
-                        event_list_tmp.push( {header:event_label} );
+                        event_list_tmp.push( {header:event_label,status:EventsJs.tile.event_list[i].event_status} );
 		    }
                     event_list_tmp.push( EventsJs.tile.event_list[i] );
 		}
@@ -63,6 +63,20 @@ EventsJs={
 	    $(node).addClass("event_tile_item_row_selected");
 	    //var index=$(node).data('event-index');
 	    //EventsJs.show_dialog(EventsJs.tile.event_list[index]);
+	},
+	statusClick:function( node ){
+	    var i=$(node).parent().data('event-index');
+	    var event=EventsJs.tile.event_list[i];
+	    if( event.event_status==='undone' || event.event_status==='pending' ){
+		event.event_status='done';
+		EventsJs.tile.updateEvent(event);
+	    }
+	},
+	updateEvent:function(event){
+            $.post('Events/eventSave/'+event.event_id,event,function( resp ){
+                App.flash("Запись сохранена: " + event.event_name);
+		EventsJs.tile.load();               
+            });
 	},
 	create:function(node){
 	    var header=$(node).parent().data('header');
@@ -95,7 +109,7 @@ EventsJs={
 	    var event_id=index?EventsJs.tile.event_list[index].event_id:0;
 	    App.loadWindow("page/events/move").progress(function(status,newdate,mode){
 		if( status==='move' ){
-		    $.post("Events/eventMove/"+App.uri(EventsJs.selectedDay,newdate,event_id,label,mode),function(ok){
+		    $.post("Events/eventMove/"+App.uri(event_id,newdate,mode,EventsJs.selectedDay,label),function(ok){
 			if( ok*1 ){
 			    App.flash("Запись перенесена");
 			    EventsJs.activeDatesGet();
@@ -138,12 +152,12 @@ EventsJs={
     }
     .event_tile_item_row{
 	margin:0px 5px 0px 5px;
-	background-color: rgba(255,255,255,0.4);
+	background-color: rgba(255,255,255,0.5);
 	border-bottom: 1px #999 solid;
     }
     .event_tile_item_row:hover{
-	background-color: rgba(255,255,255,0.7);
-	cursor: pointer;
+	background-color: rgba(255,255,255,0.8);
+	cursor: default;
     }
     .event_tile_item_row div{
 	display: table-cell;
@@ -157,7 +171,7 @@ EventsJs={
     .event_tile_item_row_selected,.event_tile_item_row_selected:hover{
 	margin:-2px 3px -1px 3px;
 	border: 2px solid #08f;
-	background-color: rgba(255,255,255,0.7);
+	background-color: rgba(255,255,255,0.8);
     }
     .event_tile_header,.event_tile_header:hover{
 	background: linear-gradient(0deg, rgba(220,255,255,0.9), rgba(255,255,255,0.6));
@@ -184,6 +198,18 @@ EventsJs={
     .event_tile_item_5future{
 	background-color: rgba(150,255,150,0.4);
     }
+    
+    .event_tile_item_status_undone{
+	background: url(img/red.png) no-repeat center;
+	cursor: pointer;
+    }
+    .event_tile_item_status_pending{
+	background: url(img/gray.png) no-repeat center;
+	cursor: pointer;
+    }
+    .event_tile_item_status_done{
+	background: url(img/ok.png) no-repeat center;
+    }
 </style>
 <div id="event_calendar" class="easyui-calendar" style="width:220px;height:220px;display: inline-block" data-options="
 		 formatter:EventsJs.calendar.formatter,
@@ -193,7 +219,7 @@ EventsJs={
 	{{if events|empty}}
 	<div style="text-align: center">
 	    <h1>Нет заданий на этот день</h1>
-	    <button onclick="EventsJs.tile.create(this);"><img src="img/edit_add.png"> Добавть задание</button>
+	    <button onclick="EventsJs.tile.create(this);"><img src="img/edit_add.png"> Добавить задание</button>
 	</div>
 	{{/if}}
 	{{events}}
@@ -208,11 +234,12 @@ EventsJs={
 		    <span class="icon-24 icon-print" title="Печать" onclick="EventsJs.tile.out($(this).parent().data('header'),'.print');"> </span>
 		</div>
 		<span style="font-size:18px;font-weight: bold">
-		    {{header}}
+		    {{header}}{{if status|equals>undone}}<span style="color:red">  <img src="img/red.png">(невыполненные задания)</span> {{/if}}
+		    
 		</span>
 	    </div>
 	    <div class="event_tile_item_row event_tile_header">
-		<div style="width:25px">!</div>
+		<div style="width:50px">Вып-но</div>
 		<div style="width:60px">Дата</div>
 		<div style="width:150px">Задание</div>
 		<div style="width:200px">Место</div>
@@ -222,7 +249,7 @@ EventsJs={
 	    </div>
 	    {{else}}
 		<div class="event_tile_item_row event_tile_item_{{event_priority}}" data-event-index="{{#}}" onclick="EventsJs.tile.click(this);" ondblclick="EventsJs.tile.edit(this);">
-		    <div style="max-width:26px;width:25px;"></div>
+		    <div class="event_tile_item_status_{{event_status}}" onclick="EventsJs.tile.statusClick(this);" style="max-width:51px;width:50px;text-align: center"></div>
 		    <div style="max-width:60px;width:60px;text-align: center">{{date_dmy}}</div>
 		    <div style="max-width:150px;width:150px">{{event_name}}</div>
 		    <div style="max-width:200px;width:200px">{{event_place}}</div>

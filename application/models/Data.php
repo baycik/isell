@@ -39,15 +39,6 @@ class Data extends Catalog {
 	return $this->db->affected_rows();
     }
 
-    
-    
-    
-    
-    
-    
-    
-    
-    
     private function checkTable($table_name) {
 	foreach ($this->permited_tables as $table) {
 	    if ( isset($table->level) && $this->Base->svar('user_level') < $table->level){
@@ -119,9 +110,9 @@ class Data extends Catalog {
 	    return false;
 	}
 	if( $create ){
-	    $this->create($table_name, $rowKey);
+	    $ok_created=$this->create($table_name, $rowKey);
 	}
-	return $this->update($table_name, $data, $rowKey);
+	return $this->update($table_name, $data, $rowKey) || $ok_created;
     }
     public function tableViewGet($table_name){
 	$out_type=$this->request('out_type');

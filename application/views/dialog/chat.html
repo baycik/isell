@@ -1,11 +1,12 @@
 <script>
     /* global App*/
     App.page_dialog_chat = {
+	has_new_status:0,
 	init: function () {
 	    this.node.window({
-		width: 500,
-		title: 'Chat',
-		height: 400,
+		width: 600,
+		title: 'Чат',
+		height: 420,
 		onClose: function () {
 		    App.page_dialog_chat.destroy();
 		}
@@ -30,12 +31,8 @@
 	loadUserlist: function () {
 	    $.get('Chat/getUserList', function (resp) {
 		var users = {user_list: App.json(resp)};
-		users.user_list.push({user_login: 'all',name:'Всем'});
 		App.renderTpl('chat_users', users);
 		$("#chat_users div[data-user=" + App.page_dialog_chat.counterpart + "]").addClass('user_selected');
-		setTimeout(function(){
-		    try{App.page_dialog_chat.loadUserlist();}catch(e){};
-		},30*1000);
 	    });
 	},
 	setCounterpart: function (user_div) {
@@ -48,22 +45,54 @@
 	sendRecieve: function (msg) {
 	    $.post(App.uri('Chat', 'sendRecieve', App.page_dialog_chat.counterpart || ''),{message:msg}, function (resp) {
 		var resp=App.json(resp);
-		App.renderTpl('chat_field', resp);
-		if( App.page_dialog_chat.msg_count!==resp.msgs.length ){
-		    App.page_dialog_chat.msg_count=resp.msgs.length;
-		    $("#chat_field").animate({scrollTop: $("#chat_field")[0].scrollHeight}, 1000);
+		App.page_dialog_chat.renderDialog(resp.dialog);
+		if( App.has_new_status!==resp.has_new*1 ){
+		    App.page_dialog_chat.loadUserlist();
+		    App.chatCheck();
+		    App.has_new_status=resp.has_new*1;
 		}
                 clearTimeout(App.page_dialog_chat.clock);
 		App.page_dialog_chat.clock=setTimeout(function(){
 		    try{App.page_dialog_chat.sendRecieve();}catch(e){};
 		},1000);
 	    });
+	},
+	renderDialog:function( dialog ){
+	    App.renderTpl('chat_field', {dialog:dialog});
+	    if( App.page_dialog_chat.msg_count!==dialog.length ){
+		App.page_dialog_chat.msg_count=dialog.length;
+		$("#chat_field").animate({scrollTop: $("#chat_field")[0].scrollHeight}, 1000);
+	    }	    
+	},
+	eventLoad:function(node){
+	    var event_id=$(node).parent().data('event-id');
+	    $.get("Events/eventGet/"+event_id,function(resp){
+		var fvalue=App.json(resp);
+		App.loadWindow('page/events/event', fvalue);
+	    });
+	},
+	eventDone:function(node){
+	    var event_id=$(node).parent().data('event-id');
+	    $.get("Events/eventUpdate/"+event_id+'/event_status/done',function(ok){
+		if( ok*1 ){
+		    alert("Задание отмечено как выполнено");
+		}
+	    });
+	},
+	eventMove:function(node){
+	    var event_id=$(node).parent().data('event-id');
+	    var tomorrow=App.toIso(new Date(new Date().getTime() + 24 * 60 * 60 * 1000));
+	    $.get("Events/eventMove/"+event_id+'/'+tomorrow,function(ok){
+		if( ok*1 ){
+		    alert("Задание перенесено на завтра");
+		}
+	    });
 	}
     };
 </script>
 <div id="chat_users">
     {{user_list}}
-    <div onclick="App.page_dialog_chat.setCounterpart(this)" data-user="{{user_login}}" class="{{if has_new|more>0}}has_new{{/if}}">
+    <div onclick="App.page_dialog_chat.setCounterpart(this)" data-user="{{user_id}}" class="{{if has_new|more>0}}blink{{/if}}">
 	{{if name}}
 	    {{name}}
 	{{else}}
@@ -73,22 +102,33 @@
     {{/user_list}}
 </div>
 <div id="chat_field">
-    {{msgs}}
+    {{dialog}}
     {{if for_me}}
-    <div class="bubble {{if unread|more>0}}red{{else}}yellow{{/if}} " title="Отправлено {{event_date}}">
-        <span style="color:#333">{{time}}</span> <b>{{sender}}</b> {{event_descr}} 
+    <div class="bubble bubble-alt {{if event_status|equals>undone}}white blinkborder{{else}}yellow done{{/if}} {{if is_chat|less>1}}bubble-event{{/if}}" title="Отправлено {{time}}">
+	{{if is_chat|less>1}}
+	<div data-event-id="{{event_id}}">
+	    <button class="fordonebuttons" type="button" onclick="App.page_dialog_chat.eventDone(this)"><img src="img/ok.png"> Выполнено</button>
+	    <button class="fordonebuttons" type="button" onclick="App.page_dialog_chat.eventMove(this)"><img src="img/big_rightarrow.png" style="width:16px;height:16px;"> Отложить</button>
+	    <button type="button" onclick="App.page_dialog_chat.eventLoad(this)"><img src="img/Edit-24.png" style="width:16px;height:16px;"> Изменить</button><br><br>
+	    Напоминание задания {{time}}<hr>
+	    <b>{{event_name}}</b><br>
+	    <b>Место:</b> {{event_place}}<br>
+	    <b>Цель:</b> {{event_target}}<br><br>
+	</div>
+	{{/if}}
+	{{event_descr}}
     </div>
     {{else}}
-    <div class="bubble bubble-alt {{if unread|more>0}}white{{else}}blue{{/if}}" title="Отправлено {{event_date}}">
-        <span style="color:#333">{{time}}</span> {{event_descr}}
+    <div class="bubble {{if event_status|equals>undone}}white{{else}}blue{{/if}}" title="Отправлено {{time}}">
+        {{event_descr}}
     </div>
     {{/if}}
-    {{/msgs}}
+    {{/dialog}}
 </div> 
 <form id="chat_form">
     <table style="width: 100%">
 	<tr>
-	    <td><input type="text" style="width: calc(100% - 10px)"/></td>
+	    <td><input type="text" style="width: calc(100% - 10px);height:30px;"/></td>
 	    <td style="width:30px"><button type="submit"><img src="img/sms.png"></button></td>
 	</tr>
     </table>
@@ -128,7 +168,7 @@
 	box-sizing: border-box;
 	float: left;
 	width: auto;
-	max-width: 80%;
+	max-width: 90%;
 	position: relative;
 	clear: both;
 	-background: #95c2fd;
@@ -174,6 +214,10 @@
 	left: auto;
 	right: -5px;
     }
+    .bubble-event{
+	border: solid 5px rgba(0,0,0,0.2);
+	border-radius: 0px;
+    }
 
     .bubble p {
 	font-size: 1.4em;
@@ -218,5 +262,9 @@
     }
     .blue:after {
 	border-bottom-color: rgba(180,220,250,1);
+    }
+    
+    .done .fordonebuttons{
+	display: none;
     }
 </style>

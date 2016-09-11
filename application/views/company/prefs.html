@@ -10,10 +10,6 @@
 		    CompPrefs.load();
 		}
 	    });
-	    //$('#cpref_manager_id').combobox();
-	    App.formElements("#CompPrefs_other").change(function(node){
-		CompPrefs.update('other',this.name,App.val(this),this.title);
-	    });
 	},
 	focus:function(){
 	    this.load();
@@ -21,9 +17,9 @@
 	load:function(){
 	    $.get('Company/companyPrefsGet',function(resp){
 		if( resp ){
-		    resp=App.json(resp);
-		    CompPrefs.processDiscounts(resp);
-		    CompPrefs.processOthers(resp);
+		    CompPrefs.prefData=App.json(resp);
+		    CompPrefs.processDiscounts(CompPrefs.prefData);
+		    CompPrefs.processOthers(CompPrefs.prefData);
 		}
 	    });
 	},
@@ -63,15 +59,10 @@
 	    CompPrefs.update('discount',branch_id,ratio,inp.title+' '+inp.value);
 	},
 	processOthers:function(data){
-	    //$("#CompPrefs_other").form('load',data.other);
-            App.setupForm("#CompPrefs_other",data.other);
-	},
-	managerLoader:function(param,success,error){
-	    $.get('Pref/getStaffList',function(text){
-		var resp=App.json(text);
-		resp.unshift({full_name:'-',user_id:0});
-		success(resp||[]);
-	    });
+	    App.renderTpl('CompPrefs_other',data);
+            App.setupForm("#CompPrefs_other",data.other).change(function(node){
+		CompPrefs.update('other',this.name,App.val(this),this.title);
+	    });;
 	}
     };
     //CompPrefs.init();
@@ -97,30 +88,34 @@
 </div>
 <div class="panel_block">
     <div id="CompPrefs_other" class="easyui-panel" title="Другие настройки" style="width:360px;padding: 3px;">
-	<input name="deferment" title="Отсрочка">
-	<input name="debt_limit" title="Лимит долга">
-        <input class="easyui-combobox" id="cpref_manager_id" name="manager_id" title="Ответственный" data-options="
-	       valueField: 'user_id',
-	       textField:'full_name',
-	       loader:CompPrefs.managerLoader,
-	       onSelect: function(row){
-		    CompPrefs.update('other','manager_id',row.user_id);
-	       }
-	       ">
-	<select name="curr_code" title="Валюта">
+	<div class="inp_rule">Ценовая политика</div>
+        <select name="price_label" title="Категория цен">
+	    {{price_label_list}}
+	    <option value="{{label}}">{{label}}</option>
+	    {{/price_label_list}}
+	</select>
+	<select name="curr_code" title="Осн. Валюта">
 	    <option value="UAH">Гривна</option>
 	    <option value="USD">Доллар</option>
 	    <option value="RUB">Рубль</option>
 	</select>
+	<div>
+	    <input type="checkbox" name="is_supplier" title="Обновлять закуп. цены">
+	</div>
+	<div class="inp_rule">Контроль</div>
+	<input name="deferment" title="Отсрочка">
+	<input name="debt_limit" title="Лимит долга">
+        <select name="manager_id" title="Закреплен за">
+	    {{staff_list}}
+	    <option value="{{user_id}}">{{full_name}}</option>
+	    {{/staff_list}}
+	</select>
+	<div class="inp_rule">Предпочтения</div>
 	<select name="language" title="Язык">
 	    <option value="en">English</option>
 	    <option value="ua">Українська</option>
 	    <option value="ru">Русский</option>
 	</select>
-	<textarea name="path" title="Путь" disabled="disabled"></textarea>
-	<div>
-	    <input type="checkbox" name="is_supplier" title="Обновлять закуп. цены">
-	</div>
     </div>
 </div>
 <style type="text/css">

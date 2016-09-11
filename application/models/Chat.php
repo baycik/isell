@@ -3,72 +3,78 @@ require_once 'Catalog.php';
 class Chat extends Catalog{
     public $min_level=1;
     public function getUserList(){
+	$my_id = $this->Base->svar('user_id');
         $sql="SELECT 
                 user_id,
                 user_login,
 		CONCAT(first_name,' ',last_name) name,
-		MAX( IF(event_status=1,1,0) ) has_new
+		(SELECT 1 FROM event_list WHERE created_by=user_id AND event_status='undone' AND event_date<NOW() AND event_user_liable='$my_id') has_new
             FROM
-                user_list
-                    LEFT JOIN
-                event_list ON event_user_id=user_id
-		GROUP BY user_id";
+                user_list";
         return $this->get_list($sql);
     }
-    public function sendRecieve( $he='all' ){
+    public function sendRecieve( $his_id='all' ){
 	$msg=$this->request('message');
-	$this->check($he);
-        if( $he && $msg ){
-            $this->addMessage($he, $msg);
+	$this->check($his_id);
+        if( $his_id && $msg ){
+            $this->addMessage($his_id, $msg);
         }
-        return $this->getMessages($he);
+	return $this->getDialog($his_id);
     }
-    private function addMessage( $he, $msg ){
-        $user_id = $this->Base->svar('user_id');
+    private function addMessage( $his_id, $msg ){
+        $my_id = $this->Base->svar('user_id');
         $sql="INSERT INTO
                 event_list
               SET 
                 event_label='Chat',
                 event_date=NOW(),
-                event_user_id='$user_id',
-                event_target='$he',
+                created_by='$my_id',
+                modified_by='$my_id',
+                event_user_liable='$his_id',
                 event_descr='$msg',
                 event_is_private=1,
-		event_status=1";
+		event_status='undone'";
         $this->query($sql);
     }
-    private function getMessages( $he ){
-        $me = $this->Base->svar('user_login');
-	$this->query("SET @unread_id=0;");
-        $sql="SELECT
-            event_list.*,
-            DATE_FORMAT(event_date,'%H:%i:%s') time,
-            IF(event_target='$me' OR event_target='all',1,NULL) for_me,
-            event_target reciever,
-            user_login sender,
-	    event_status=1 unread,
-	    IF( (event_target='$me' OR event_target='all') AND @unread_id=0 AND event_status=1,@unread_id:=event_id,0) unread_id
-                FROM
-                    event_list
-                        JOIN
-                    user_list ON event_user_id=user_id
-                WHERE 
-                    event_label='Chat' 
-                HAVING
-                    IF('$he'='all',
-                        reciever='all' OR reciever='$me',
-                        sender='$me' AND reciever='$he' OR sender='$he' AND reciever='$me')
-                ORDER BY event_date";
-	$messages=$this->get_list($sql);
-	$this->setAsRead();
-        return ['msgs'=>$messages,'has_new'=>$this->checkNew()];
-    }
+
     private function setAsRead(){
-	$this->query("UPDATE event_list SET event_status=2 WHERE event_id=@unread_id;");
+	$this->query("UPDATE event_list SET event_status='done' WHERE event_id=@undone_id;");
+    }
+    public function getDialog( $his_id, $limit=15 ){
+	$my_id = $this->Base->svar('user_id');
+	$this->query("SET @undone_id=0;");
+	$sql="
+	    SELECT
+		event_id,
+		event_descr,
+		event_priority,
+		event_name,
+		DATE_FORMAT(event_date,'%d.%m.%Y %H:%i') time,
+		event_target,
+		event_place,
+		event_status,
+		IF(event_label='Chat',1,0) is_chat,
+		IF(event_user_liable='$my_id',1,NULL) for_me,
+		IF(@undone_id=0 AND event_user_liable='$my_id' AND event_status='undone' AND event_label='Chat',@undone_id:=event_id,0) undone_id
+	    FROM 
+		event_list
+	    WHERE
+		(event_user_liable='$my_id' AND created_by='$his_id') OR (event_user_liable='$his_id' AND created_by='$my_id')
+	    ORDER BY event_date
+	    LIMIT $limit
+	    ";
+	$dialog=$this->get_list($sql);
+	$this->setAsRead();
+        return ['dialog'=>$dialog,'has_new'=>$this->checkNew()];
     }
     public function checkNew(){
-	$me = $this->Base->svar('user_login');
-	$sql="SELECT COUNT(*) FROM event_list WHERE event_status=1 AND (event_target='all' OR event_target='$me')";
+	$my_id = $this->Base->svar('user_id');
+	$sql="SELECT 
+		COUNT(*) 
+	    FROM 
+		event_list 
+	    WHERE 
+		event_status='undone' AND event_date<NOW() AND event_user_liable='$my_id'";
 	return $this->get_value($sql);
     }
 }

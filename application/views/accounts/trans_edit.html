@@ -48,6 +48,16 @@
 		    alert("Проверьте правильность заполнения");
 		}
 	    });
+	    $("#tedit_comp_cmb").textbox('textbox').keydown(function(e) {
+		if (e.keyCode === 13) {
+		      $("#trans_edit_frm").trigger("submit");
+		}
+	    });
+	    $("#tedit_trans_type_cmb").textbox('textbox').keydown(function(e) {
+		if (e.keyCode === 13) {
+		      $("#trans_edit_frm").trigger("submit");
+		}
+	    });
 	},
 	initSelectOnClick:function(){
 	    $('#page_accounts_trans_edit .validatebox-text').on('focus', function() {
@@ -108,6 +118,7 @@
 		Tedit.data.current_acc_code=null;
 	    }
 	    if( param.q || Tedit.data.transIsNew ){
+		Tedit.preventLoopOnChange=true;
 		$.get('AccountsData/transNameListFetch/'+(Tedit.data.current_acc_code||''), param, function (xhr) {
 		    var resp = App.json(xhr);
 		    success(resp[0] ? resp : []);
@@ -119,14 +130,15 @@
 			    $('#tedit_description_txt').textbox('setValue',resp[0].trans_name);
 			}
 		    }
+		    Tedit.preventLoopOnChange=false;
 		});
 	    } else {
 		success([{
 			acc_debit_code: Tedit.data.trans_type.split('_')[0],
 			acc_credit_code:  Tedit.data.trans_type.split('_')[1],
 			trans_type:  Tedit.data.trans_type,
-			trans_name: Tedit.data.trans_name||'',
-			trans_type_name: (Tedit.data.trans_name||'')+' '+Tedit.data.trans_type,
+			trans_name: Tedit.data.trans_name||'-Ручная проводка-',
+			trans_type_name: (Tedit.data.trans_name||''),
 			user_level: Tedit.data.user_level
 		    }]);		
 	    }
@@ -139,6 +151,28 @@
 		}
 	    });
 	},
+	transnameSet:function(){
+	    if( Tedit.preventLoopOnChange===true ){
+		return;
+	    }
+	    var trans_type=$("#tedit_debit").textbox('getValue')+'_'+$("#tedit_credit").textbox('getValue');
+	    $.get('AccountsData/transNameListFetch/?q='+trans_type,function(resp){
+		var tname=App.json(resp);
+		if( tname[0] ){
+		    $('#tedit_trans_type_cmb').combobox('loadData',tname);
+		} else {
+		    $('#tedit_trans_type_cmb').combobox('loadData',[{trans_name:'-Ручная проводка-',trans_type:trans_type}]);
+		}
+		$("#tedit_trans_type_cmb").combobox('setValue',trans_type);
+	    });
+	},
+	transtypeSet:function(){
+	    var dt=$("#tedit_trans_type_cmb").combobox('getValue').replace(/[^\d_]/,'').split('_');
+	    if( dt[0] && dt[1] ){
+		$("#tedit_debit").textbox('setValue',dt[0]);
+		$("#tedit_credit").textbox('setValue',dt[1]);
+	    }
+	},
 	transDelete:function(){
 	    if( !confirm("Удалить проводку?") ){
 		return;
@@ -150,6 +184,17 @@
 		    Tedit.node.window('close');
 		} else {
 		    App.flash("Проводка не удалена");
+		}
+	    });
+	},
+	showTree:function( side ){
+	    App.loadWindow('page/accounts/acc_tree',{}).progress(function(status,data){
+		if( status==='select' ){
+		    if( side==='debit' ){
+			$("#tedit_debit").textbox('setValue',data.acc_code);
+		    } else {
+			$("#tedit_credit").textbox('setValue',data.acc_code);
+		    }
 		}
 	    });
 	},
@@ -239,12 +284,13 @@
 	   ">
     <input style="width:300px" class="easyui-combobox" name="trans_type" id="tedit_trans_type_cmb" title="Проводка" data-options="
 	   valueField: 'trans_type',
-	   textField: 'trans_type_name',
+	   textField: 'trans_name',
 	   url:'AccountsCore/transNameListFetch',
 	   loader:Tedit.transnameLoader,
 	   panelHeight:'auto',
 	   mode: 'remote',
 	   method:'get',
+	   onChange: Tedit.transtypeSet,
 	   required:true,
 	   icons: [{
 		    iconCls:'icon-settings16',
@@ -253,6 +299,26 @@
 		    }
 		}]
 	   ">
+    <div>
+	<input style="width:97px" class="easyui-textbox" title="Дебет" name="debit" id="tedit_debit" data-options="
+	       onChange: Tedit.transnameSet,
+	       icons: [{
+		    iconCls:'icon-settings16',
+		    handler: function(e){
+			Tedit.showTree('debit');
+		    }
+		}]
+	       ">
+	<input style="width:97px" class="easyui-textbox" title="Кредит" name="credit" id="tedit_credit" data-options="
+	       onChange: Tedit.transnameSet,
+	       icons: [{
+		    iconCls:'icon-settings16',
+		    handler: function(e){
+			Tedit.showTree('credit');
+		    }
+		}]
+	       ">
+    </div>
     <input style="width:300px" class="easyui-textbox" name="description" id="tedit_description_txt" title="Комментарий" data-options="
 	   multiline:true,
 	   height:66,

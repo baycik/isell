@@ -20,6 +20,7 @@
 	    this.data.created_by=this.data.created_by||'-';
 	    this.data.modified_by=this.data.modified_by||'-';
 	    this.data.event_priority=this.data.event_priority||'3medium';
+	    this.data.event_status=this.data.event_status||'undone';
 	    App.setupForm("#page_events_event_frm", this.data);
 	    App.renderTpl('page_events_event_frm_modified',this.data);
             if (this.data.event_id) {
@@ -31,7 +32,15 @@
                 App.page_events_event.data = fvalue;
                 App.page_events_event.saveEvent(fvalue);
             });
+	    this.loadStaffList();
         },
+	loadStaffList:function(){
+	    $.get("Pref/getStaffList",function(resp){
+		var staff=App.json(resp);
+		App.renderTpl('page_events_event_frm_liable',{staff_list:staff});
+		$("select[name=event_user_liable]").val(App.page_events_event.data.event_user_liable);
+	    });
+	},
         saveEvent: function (fvalue) {
 	    var card_event_id=fvalue.event_id;
             fvalue.event_date = App.toIso(fvalue.event_date);
@@ -75,9 +84,29 @@
         <input type="text" name="event_place" title="Место" />
         <input type="text" name="event_target" title="Цель" />
         <input type="text" name="event_note" title="Контакт" />
-        <input type="checkbox" name="event_is_private" value="1" title="Скрыть" />
+        <textarea rows="4" name="event_descr" placeholder="Комментарий" style="width: 300px"></textarea>
+	<div id="page_events_event_frm_modified">
+	    <img src="img/add-16.png" title="Создано пользователем" style="vertical-align: middle"> {{created_by}} 
+	    <img src="img/edit-16.png" title="Изменено пользователем" style="vertical-align: middle"> {{modified_by}}
+	</div>
     </div>
     <div style="display: inline-block;width: 320px;vertical-align: top">
+        <div class="inp_group" style="text-align: right;">
+            <a href="javascript:App.page_events_event.setLabel('Доставка')">Доставка</a> | 
+            <a href="javascript:App.page_events_event.setLabel('Напоминание клиенту')">Напоминание клиенту</a> | 
+            <a href="javascript:App.page_events_event.setLabel('Задания на складе')">Задания на складе</a> 
+        </div>
+        <input type="text" name="event_label" placeholder="Группа" title="Группа задания" style="background-color:#FFFFCC" />
+	<select name="event_status" title="Выполнено">
+	    <option value="pending">В процессе</option>
+	    <option value="undone" style="color: red">Не выполнено</option>
+	    <option value="done" style="color: green">Выполнено</option>
+	</select>
+	<select name="event_user_liable" id="page_events_event_frm_liable" title="Закреплено за">
+	    {{staff_list}}
+	    <option value="{{user_id}}">{{full_name}}</option>
+	    {{/staff_list}}
+	</select>
 	<select name="event_priority" title="Приоритет">
 	    <option value="1critical" style="background-color: red">Критический</option>
 	    <option value="2high" style="background-color: yellow">Высокий</option>
@@ -85,17 +114,8 @@
 	    <option value="4low" style="background-color: #ccc">Низкий</option>
 	    <option value="5future" style="background-color: green">В планах</option>
 	</select>
-        <div class="inp_group" style="text-align: right;">
-            <a href="javascript:App.page_events_event.setLabel('Доставка')">Доставка</a> | 
-            <a href="javascript:App.page_events_event.setLabel('Напоминание клиенту')">Напоминание клиенту</a> | 
-            <a href="javascript:App.page_events_event.setLabel('Задания на складе')">Задания на складе</a> 
-        </div>
-        <input type="text" name="event_label" placeholder="Группа" title="Группа задания" style="background-color:#FFFFCC" />
-        <textarea rows="4" name="event_descr" placeholder="Комментарий" style="width: 300px"></textarea>
-	<div id="page_events_event_frm_modified">
-	    <img src="img/add-16.png" title="Создано пользователем" style="vertical-align: middle"> {{created_by}} 
-	    <img src="img/edit-16.png" title="Изменено пользователем" style="vertical-align: middle"> {{modified_by}}
-	</div>
+        <input type="text" name="event_repeat" placeholder="Повторять задание (дн.)" title="Повторять через"/>
+        <input type="checkbox" name="event_is_private" value="1" title="Скрыть" />
     </div>
     <div style="text-align: center;margin-top: 30px;">
         <button type="submit"><img src="img/Save-24.png" style="vertical-align: middle" /> Сохранить</button>

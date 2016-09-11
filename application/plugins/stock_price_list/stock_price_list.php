@@ -2,7 +2,7 @@
 /* 
  * Plugin Name: Price list creator
  * Plugin URI: isellsoft.ru
- * Version: 1.0
+ * Version: 1.1
  * Description: Tool for creating price list 
  * Author: baycik 2016
  * Author URI: isellsoft.ru
@@ -112,7 +112,7 @@ class Stock_price_list extends Catalog{
 	$dollar_ratio=$this->Base->pref('usd_ratio');
 	$main_curr_code=$this->Base->acomp('curr_code');
         $sql="SELECT
-		product_code,
+		se.product_code,
 		ru product_name,
 		product_quantity<>0 in_stock,
 		product_img,
@@ -124,9 +124,9 @@ class Stock_price_list extends Catalog{
 	    FROM
 		stock_entries se
 		    JOIN
-		price_list USING(product_code)
+		price_list pl ON pl.product_code=se.product_code AND pl.label='{$this->price_label}'
 		    JOIN
-		prod_list USING(product_code)
+		prod_list pdl ON pdl.product_code=se.product_code 
 		    LEFT JOIN
 		stock_tree st ON se.parent_id=st.branch_id
 		    LEFT JOIN
@@ -170,6 +170,7 @@ class Stock_price_list extends Catalog{
 		$this->sort_by.=" DESC";
 	    }
 	}
+	$this->price_label=$deployment['deployment']->price_label;
 	$this->Base->load_model('Storage');
 	$price_blocks=[];
 	foreach( $deployment['deployment']->items as $block ){

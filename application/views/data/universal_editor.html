@@ -19,34 +19,64 @@
 	    this.checkIfNew();
 	    this.createForm(this.data.fstruct);
 	    App.setupForm("#univ_editor_frm",this.data.fvalue).change(function(){
-		var data={};
-		data[$(this).attr('name')]=$(this).val();
-		App.page_data_universal_editor.handler.notify('change',App.page_data_universal_editor.createdRowKey,data,$(this).attr('title'));
-		if( App.page_data_universal_editor.createdRowKey && $(this).data('key')===1 ){
-		    App.page_data_universal_editor.createdRowKey[$(this).attr('name')]=$(this).val();
+		var field=$(this).attr('name');
+		var value=$(this).val();
+		var title=$(this).attr('title');
+		var iskey= !!$(this).data('key');
+		if( iskey && App.page_data_universal_editor.isNewCreated ){
+		    App.page_data_universal_editor.data.rowKey[field]=value;
 		}
+		App.page_data_universal_editor.createUpdateRow( field,value,title,iskey );
 	    });
 	    if( this.data.fvalue.focus ){
-		$("#univ_editor_frm input[name="+this.data.focus+"]").select();
+		$("#univ_editor_frm input[name='"+this.data.fvalue.focus+"']").select();
 	    }
+	    $('#univ_editor_frm input').on('focus', function() {
+		this.select();
+	    });
+	},
+	createUpdateRow:function( field,value,title,iskey ){
+	    var data={};
+	    data[field]=value;
+	    var postVars={
+		rowKey:JSON.stringify(this.data.rowKey),
+		data:JSON.stringify(data),
+		create:App.page_data_universal_editor.isNewCreated?1:0
+	    };
+	    var ueditor=App.page_data_universal_editor;
+	    $.post("Data/tableRowCreateUpdate/"+this.data.currentTable,postVars,function(ok){
+		if( ok>0 ){
+		    App.flash("Сохранено: "+title);
+		    ueditor.isNewCreated=0;
+		    ueditor.data.fvalue[field]=value;
+		    ueditor.handler.notify('change');
+		    if( iskey ){
+			ueditor.data.rowKey[field]=value;
+		    }
+		} else {
+		    App.flash("Не сохранено!");
+		    App.setupForm("#univ_editor_frm",ueditor.data.fvalue);
+		}
+	    });	    
 	},
 	createForm:function(fstruct){
 	    App.renderTpl("univ_editor_frm",{fields:fstruct});
 	},
-	getFirstKeyField:function(){
+	getKey:function(){
+	    var createdRowKey={};
 	    for(var i in this.data.fstruct){
 		if( this.data.fstruct[i].Key==="PRI" ){
-		    return this.data.fstruct[i].field;
+		    var generatedKeyValue=new Date().getTime();
+		    this.data.focus=this.data.fstruct[i].field;
+		    createdRowKey[this.data.fstruct[i].field]=generatedKeyValue;
 		}
 	    }
+	    return createdRowKey;
 	},
 	checkIfNew:function(){
-	    if( $.isEmptyObject(this.data.fvalue) ){
-		var keyField=App.page_data_universal_editor.getFirstKeyField();
-		this.createdRowKey={};
-		this.createdRowKey[keyField]=new Date().getTime();
-		this.data.fvalue=this.createdRowKey;
-		this.data.focus=keyField;
+	    if( !this.data.rowKey ){
+		this.data.fvalue=this.data.rowKey=App.page_data_universal_editor.getKey();
+		this.isNewCreated=true;
 	    }
 	}
     };
