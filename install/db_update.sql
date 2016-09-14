@@ -7,7 +7,8 @@ CHANGE COLUMN `transaction_date` `transaction_date` DATETIME NULL DEFAULT NULL ;
 ALTER TABLE `event_list` 
 CHANGE COLUMN `event_date` `event_date` DATETIME NULL DEFAULT NULL ;
 
+ALTER TABLE `price_list` 
+ADD COLUMN `label` VARCHAR(45) NOT NULL COMMENT 'Категория цен';
+
 ALTER TABLE `companies_list` 
 ADD COLUMN `price_label` VARCHAR(45) NULL DEFAULT NULL AFTER `curr_code`;
-ALTER TABLE `price_list` 
-CHANGE COLUMN `label` `label` VARCHAR(45) NOT NULL COMMENT 'Категория цен';

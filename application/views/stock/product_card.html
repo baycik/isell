@@ -106,12 +106,11 @@
 			App.flash("Свойства товара не изменились");
 		    }
                     App.page_stock_product_card.closeOnSave=true;
-		}).then(function(){
+		}).then(function(){//!!!!!!!!!!!!!!!!!!!!!
 		    if( App.page_stock_product_card.closeOnSave ){
 			App.page_stock_product_card.node.window('close');
 		    }
 		});
-                
 	    } else {
 		alert("Код товара не должен содержать сивол: "+(this.data.product_code_new.match(/[^\wабвгдеёжзийклмнопрстуфхцчшщъыьюяіїє\. ,-]/ig)||[]).join(""));
 	    }
