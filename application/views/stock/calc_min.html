@@ -24,6 +24,7 @@
 	    if( fvalue.ratio>=0.5 ){
 		fvalue.ratio=fvalue.ratio*1;
 		this.handler.notify('submit',fvalue);
+                this.node.window('window','close');
 	    } else {
 		alert("Коэффициент должен быть числом больше 0,5");
 	    }

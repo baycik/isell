@@ -20,23 +20,30 @@
 		    $("#page_stock_calc_buy_order_pcomp").val(pcomp.label);
                 }
             });
+            if( App.pcomp ){
+                this.data.pcomp_name=App.pcomp.label||"Не выбран";
+            }
+            this.data.round_to='bpack';
+            App.setupForm("#page_stock_calc_min_frm",this.data);
 	},
 	select_pcomp:function(){
 	    App.user.pcompSelectionDialog();
 	},
 	submit:function(e){
 	    e.preventDefault();
+            this.data=App.collectForm("#page_stock_calc_min_frm");
 	    if( !App.pcomp ){
 		alert("Выберите поставщика");
 		App.loadWindow('page/company/tree',{}).progress(function(status,comp){
 		    if( status==='select' ){
 			App.user.setPassiveCompany(comp);
-			App.page_stock_calc_buy_order.handler.notify('submit');
+			//App.page_stock_calc_buy_order.handler.notify('submit',App.page_stock_calc_buy_order.data);
 		    }
 		});
 		return false;
 	    }
-	    this.handler.notify('submit');
+	    this.handler.notify('submit',App.page_stock_calc_buy_order.data);
+            this.node.window('close');
 	}
     };
 </script>
@@ -47,8 +54,13 @@
 	Формула расчета заказа.<br>
 	Заказ = Минимальный остаток - Текущий остаток;
     </p>
-    Поставщик: <input id="page_stock_calc_buy_order_pcomp" value="не выбран" readonly="readonly" />
+    <input id="page_stock_calc_buy_order_pcomp" name="pcomp_name" title="Поставщик" value="не выбран" readonly="readonly" />
     <button type="button" class="tiny_button" onclick="App.page_stock_calc_buy_order.select_pcomp()"><img src="img/settings.png"> Изменить</button>
+    <select name="round_to" title="Округлять до">
+        <option value="bpack">Большой упаковки</option>
+        <option value="spack">Маленькой упаковки</option>
+        <option value="piece">Не округлять</option>
+    </select>
     <div style="text-align: center;margin-top: 25px;">
 	<button type="submit"><img src="img/docnew.png" style="width:24px;height: 24px;"> Сформировать</button>
 	<button type="button" onclick="App.page_stock_calc_buy_order.node.window('close')"><img src="img/close24.png" /> Закрыть</button>
