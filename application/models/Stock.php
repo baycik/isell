@@ -92,12 +92,27 @@ class Stock extends Catalog {
 		    stock_entries se
 			JOIN
 		    prod_list USING(product_code)
+			LEFT JOIN
+		    price_list USING(product_code)
 		WHERE 
 		    product_code='{$product_code}'";
-	$sql_price="SELECT sell,buy,curr_code,label FROM price_list WHERE product_code='{$product_code}'";
 	$product_data=$this->get_row($sql);
-	$product_data->labeled_prices=$this->get_list($sql_price);
 	return $product_data;
+    }
+    
+    public function productGetLabeledPrices(){
+	$product_code=$this->request('product_code');
+	$sql_price="
+	    SELECT 
+		ROUND(sell,2) sell,
+		ROUND(buy,2) buy,
+		curr_code,
+		label 
+	    FROM 
+		price_list 
+	    WHERE 
+		product_code='{$product_code}' AND label<>''";
+	return $this->get_list($sql_price);
     }
 
     public function productSave(){
@@ -146,6 +161,16 @@ class Stock extends Catalog {
 	$this->query("INSERT INTO stock_entries SET $stock_entries_set ON DUPLICATE KEY UPDATE $stock_entries_set");
 	$affected_rows+=$this->db->affected_rows()*1;
 	
+	$price_list=[
+	    'product_code'=>$product_code,
+	    'buy'=>$this->request('buy','double'),
+	    'sell'=>$this->request('sell','double'),
+	    'curr_code'=>$this->request('curr_code'),
+	];
+	$price_list_set=$this->makeSet($price_list);
+	$this->query("INSERT INTO price_list SET $price_list_set ON DUPLICATE KEY UPDATE $price_list_set");
+	$affected_rows+=$this->db->affected_rows()*1;
+
 	$labeled_prices=$this->request('labeled_prices','json');
 	foreach( $labeled_prices as $price_list_entry ){
 	    $price_list_entry['product_code']=$product_code;

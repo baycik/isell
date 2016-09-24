@@ -76,7 +76,7 @@
 		alert("Доступ ограничен");
 		return;
 	    }
-	    App.loadWindow('page/stock/product_card',{product_code:DocEntEd.data.product_code}).progress(function(status,fvalue){
+	    App.loadWindow('page/stock/product_card',{product_code:DocEntEd.data.product_code,loadProductByCode:true}).progress(function(status,fvalue){
 		if( status==='save' ){
 		    DocEntEd.handler.notify('change');
 		}
