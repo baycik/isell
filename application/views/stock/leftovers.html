@@ -293,7 +293,7 @@
 			if( !confirm('Сформировать заказ поставщику "'+App.pcomp.label+'" по категории "'+Leftovers.list.parent_label+'"?') ){
 			    return false;
 			}
-			$.post("Utils/stockCalcIncomeOrder/"+Leftovers.list.parent_id,{filterRules: Leftovers.list.filterRules},function(doc_id){
+			$.post("Utils/stockCalcIncomeOrder/"+Leftovers.list.parent_id+"/"+fvalue.round_to,{filterRules: Leftovers.list.filterRules},function(doc_id){
 			    if( doc_id*1 ){
 				App.flash("Заказ сформирован");
 				App.loadWindow('page/trade/document',{doc_id:doc_id});

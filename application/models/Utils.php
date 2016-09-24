@@ -382,15 +382,22 @@ class Utils extends Catalog{
 	$this->query($stock_table);
 	return $this->db->affected_rows();
     }
-    public function stockCalcIncomeOrder( $parent_id=0 ){
-	$this->check($doc_id,'int');
+    public function stockCalcIncomeOrder( $parent_id=0, $round_to='bpack' ){
+	$this->check($parent_id,'int');
 	$having=$this->decodeFilterRules();
+        if( $round_to==='spack' ){
+            $rounding_quantity='product_spack';
+        } else if( $round_to==='piece' ){
+            $rounding_quantity='1';
+        } else {
+            $rounding_quantity='product_bpack';
+        }
 	$branch_ids=$this->treeGetSub('stock_tree',$parent_id);
 	$where="product_wrn_quantity>product_quantity AND parent_id IN (".implode(',',$branch_ids).")";
 	$sql="
 	    SELECT
 		product_code,
-		IF(product_bpack,CEIL((product_wrn_quantity-product_quantity)/product_bpack)*product_bpack,product_wrn_quantity-product_quantity) qty
+		IF($rounding_quantity,CEIL((product_wrn_quantity-product_quantity)/$rounding_quantity)*$rounding_quantity,product_wrn_quantity-product_quantity) qty
 	    FROM
 		stock_entries
 		    JOIN
