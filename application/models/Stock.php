@@ -114,6 +114,17 @@ class Stock extends Catalog {
 		product_code='{$product_code}' AND label<>''";
 	return $this->get_list($sql_price);
     }
+    
+    public function productLabeledPriceRemove(){
+	$product_code=$this->request('product_code');
+	$label=$this->request('label');
+	return $this->delete("price_list",['product_code'=>$product_code,'label'=>$label]);
+    }
+    public function productLabeledPriceAdd(){
+	$product_code=$this->request('product_code');
+	$label=$this->request('label');
+	return $this->create("price_list",['product_code'=>$product_code,'label'=>$label]);
+    }
 
     public function productSave(){
 	$this->Base->set_level(2);

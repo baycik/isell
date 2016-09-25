@@ -43,32 +43,46 @@
 	price:{
 	    load:function(){
 		$.get("Stock/productGetLabeledPrices",{product_code:App.page_stock_product_card.data.product_code},function(resp){
-		    var labeled_prices=App.json(resp);
-		    App.page_stock_product_card.price.unpack(labeled_prices);
+		    App.page_stock_product_card.labeled_prices=App.json(resp);
+		    App.page_stock_product_card.price.unpack(App.page_stock_product_card.labeled_prices);
 		});
 	    },
 	    unpack:function(labeled_prices){
 		App.renderTpl('page_stock_product_card_pricetable',{labeled_prices:labeled_prices});
 	    },
 	    pack:function(){
+		var labeled_prices=App.page_stock_product_card.labeled_prices;
 		var packed_labeled_prices=[];
 		var data=App.page_stock_product_card.data;
-		for(var i in this.labeled_prices ){
+		for(var i in labeled_prices ){
 		    packed_labeled_prices.push({
-			sell:data['sell-'+this.labeled_prices[i].label],
-			buy:data['buy-'+this.labeled_prices[i].label],
-			curr_code:data['curr_code-'+this.labeled_prices[i].label],
-			label:this.labeled_prices[i].label
+			sell:data['sell-'+labeled_prices[i].label],
+			buy:data['buy-'+labeled_prices[i].label],
+			curr_code:data['curr_code-'+labeled_prices[i].label],
+			label:labeled_prices[i].label
 		    });
-		    delete App.page_stock_product_card.data['sell-'+this.labeled_prices[i]['label']];
-		    delete App.page_stock_product_card.data['buy-'+this.labeled_prices[i]['label']];
-		    delete App.page_stock_product_card.data['curr_code-'+this.labeled_prices[i]['label']];
+		    delete App.page_stock_product_card.data['sell-'+labeled_prices[i]['label']];
+		    delete App.page_stock_product_card.data['buy-'+labeled_prices[i]['label']];
+		    delete App.page_stock_product_card.data['curr_code-'+labeled_prices[i]['label']];
 		}
 		App.page_stock_product_card.data.labeled_prices=JSON.stringify(packed_labeled_prices);
 	    },
 	    remove:function(node){
 		var label=$(node).data('label');
-		alert(label);
+		if( !confirm("Удалить категорию цен "+label+"?") ){
+		    return ;
+		}
+		$.post("Stock/productLabeledPriceRemove/",{product_code:App.page_stock_product_card.data.product_code,label:label},function(resp){
+		    App.page_stock_product_card.price.load();
+		});
+	    },
+	    add:function(){
+		var label=prompt("Введите название новой категории цен");
+		if( label ){
+		    $.post("Stock/productLabeledPriceAdd",{product_code:App.page_stock_product_card.data.product_code,label:label},function(resp){
+			App.page_stock_product_card.price.load();
+		    });
+		}
 	    }
 	},
 
@@ -268,7 +282,7 @@
 		</div>
 	    </div>
 	    {{/labeled_prices}}
-	    
+	    <button class="tiny_button" type="button" title="Добавить категорию цен" onclick="App.page_stock_product_card.price.add()"><img src="img/add.png"> Добавить</button>
 	</div>
     </div>
     <div class="inp_group only_product_props" style="width: 320px;vertical-align: top">
