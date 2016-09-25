@@ -25,8 +25,23 @@ class Maintain extends CI_Model {
     public function updateInstall(){
 	$this->updateConfigurator();
 	$file = str_replace("\\", "/", $this->dirWork.'/install/db_update.sql');
-	$this->backupImportExecute($file);
+	$this->updateDb();
 	return true;
+    }
+    
+    private function updateDb(){
+	$result=$this->db->query("SELECT pref_value FROM pref_list WHERE pref_name='version_of_db'");
+	$version_of_db=$result->row()?$result->row()->pref_value:0;
+	$directory = str_replace("\\", "/", $this->dirWork.'/install/db_update/');
+	$patches = array_diff(scandir($directory), array('..', '.'));
+	foreach($patches as $patch){
+	    $version_number=  str_replace('.sql', '', $patch);
+	    if( $version_of_db<$version_number){
+		$this->backupImportExecute($directory.$patch);
+
+		$this->db->query("REPLACE pref_list SET pref_name='version_of_db', pref_value='$version_number'");
+	    }
+	}
     }
     
     private function updateConfigurator(){
