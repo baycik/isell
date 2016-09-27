@@ -9,4 +9,4 @@
  */
 
 ALTER TABLE `pref_list` 
-ADD COLUMN `pref_int` INT NOT NULL AFTER `pref_char`;
+ADD COLUMN `pref_int` INT NOT NULL AFTER `pref_value`;
