@@ -650,7 +650,7 @@
 	border: 1px #bbb solid;
 	color: #333;
 	border-radius: 3px;
-	width:155px;
+	width:150px;
 	min-height: 32px;
 	margin: 0px 0px 6px 0px;
 	text-align: center;
@@ -889,7 +889,7 @@
         <div id="Doc_view_tile" style="clear:both;vertical-align: top;text-align: justify" class="covert">
 	    {{if views}}
 		{{views}}
-		<div class="view_button {{if view_hidden|equals>1}}view_is_hidden{{/if}}" 
+		<div class="view_button {{if view_hidden|equals>1}}view_is_hidden{{/if}} {{if #|more>3}}view_is_hidden{{/if}}" 
 		     data-view-id="{{doc_view_id}}" 
 		     data-view-type-id="{{view_type_id}}" 
 		     onclick="Doc.view.click(this)">
