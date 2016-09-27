@@ -27,7 +27,7 @@ class DocumentItems extends DocumentCore{
 		stock_entries USING(product_code)
 	    WHERE
 		".( implode(' AND ',$where) )."
-		    ORDER BY fetch_count DESC, product_code
+		    ORDER BY fetch_count-DATEDIFF(NOW(),fetch_stamp) DESC, product_code
 	    LIMIT 15
 	    ";
 	return $this->get_list($sql);

@@ -5,6 +5,7 @@ class DocumentView extends DocumentItems{
     public function viewListFetch( $doc_id ){
 	$this->check($doc_id);
 	$blank_set=$this->Base->pref('blank_set');
+	$acomp_id=$this->Base->acomp('company_id');
 	if( $doc_id ){
 	    $this->selectDoc($doc_id);
 	    $doc_type=$this->doc('doc_type');
@@ -24,12 +25,14 @@ class DocumentView extends DocumentItems{
 			document_view_types dvt
 			    LEFT JOIN 
 			document_view_list dvl ON dvl.view_type_id=dvt.view_type_id AND doc_id = '$doc_id'
+			    LEFT JOIN
+			pref_list ON active_company_id='$acomp_id' AND pref_name=CONCAT('view_fetch_count_',dvt.view_type_id)
 		    WHERE
 			doc_types LIKE '%/$doc_type/%' AND blank_set='$blank_set'
 		    GROUP BY 
 			view_type_id
 		    ORDER BY
-			view_hidden
+			view_hidden, pref_int-DATEDIFF(NOW(),pref_value) DESC
 		    ";
 	    return $this->get_list($sql);	    
 	} else {
@@ -77,7 +80,21 @@ class DocumentView extends DocumentItems{
     }
     public function viewCreate( $view_type_id ){
 	$Document2=$this->Base->bridgeLoad('Document');
-	return $Document2->insertView($view_type_id);
+	$view_id= $Document2->insertView($view_type_id);
+	$this->viewIncreaseFetchCount($view_type_id);
+	return $view_id;
+    }
+    private function viewIncreaseFetchCount($view_type_id){
+	$acomp_id=$this->Base->acomp('company_id');
+	$sql="INSERT INTO 
+		pref_list 
+	    SET 
+		active_company_id='$acomp_id',
+		pref_name='view_fetch_count_$view_type_id',
+		pref_value=NOW(),
+		pref_int=1
+		ON DUPLICATE KEY UPDATE pref_value=NOW(),pref_int=pref_int+1";
+	$this->query($sql);
     }
     public function unfreezeView($doc_view_id) {
 	$this->query("UPDATE document_view_list SET freezed=0, html='' WHERE doc_view_id='$doc_view_id'");
