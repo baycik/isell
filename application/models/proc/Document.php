@@ -655,15 +655,15 @@ class Document extends Data {
 		$this->Base->msg('Сначала сохраните документ!');
 		return;
 	    }
-	    if ($this->Base->pcomp('company_vat_id') && (
-		    !$this->Base->pcomp('company_name') ||
-		    !$this->Base->pcomp('company_jaddress') ||
-		    !$this->Base->pcomp('company_phone') ||
-		    !$this->Base->pcomp('company_agreement_num') ||
-		    !$this->Base->pcomp('company_agreement_date'))
-	    ) {
-		$this->Base->response_wrn('Заполнены не все реквизиты!');
-	    }
+//	    if ($this->Base->pcomp('company_vat_id') && (
+//		    !$this->Base->pcomp('company_name') ||
+//		    !$this->Base->pcomp('company_jaddress') ||
+//		    !$this->Base->pcomp('company_phone') ||
+//		    !$this->Base->pcomp('company_agreement_num') ||
+//		    !$this->Base->pcomp('company_agreement_date'))
+//	    ) {
+//		$this->Base->response_wrn('Заполнены не все реквизиты!');
+//	    }
 	    //$this->checkInErnn();
 	    $view_num = $this->getViewNextNum($view_type_id);
             if ($this->Base->pcomp('company_vat_id')){
