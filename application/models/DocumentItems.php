@@ -109,8 +109,12 @@ class DocumentItems extends DocumentCore{
 	$quantity=$this->request('quantity','int');
 	return $this->entryAdd($doc_id, $code, $quantity);
     }
-    public function entryUpdate( $doc_id, $doc_entry_id, $name, $value='' ){
+    public function entryUpdate( $doc_id, $doc_entry_id, $name=null, $value=null ){
 	$this->check($doc_id,'int');
+        if( $name==null && $value==null ){
+            $name=$this->request('name');
+            $value=$this->request('value');
+        }
 	$this->selectDoc($doc_id);
 	$Document2=$this->Base->bridgeLoad('Document');
 	switch( $name ){
