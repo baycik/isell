@@ -135,7 +135,7 @@
 	update:function( field, value, oldval ){
 	    if( Doc.head.allowUpdate && value!==oldval ){
 		if( Doc.isCreated ){
-                    $.post('DocumentItems/headUpdate/'+App.uri(field,value),function(ok){
+                    $.post('DocumentItems/headUpdate/',{field:field,new_val:value},function(ok){
 			Doc.head.afterUpdate( ok, field, value, oldval );
 		    });
 		} else {

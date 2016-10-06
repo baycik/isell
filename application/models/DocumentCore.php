@@ -154,9 +154,14 @@ class DocumentCore extends DocumentUtils{
 	}
 	return true;
     }
-    public function headUpdate( $field, $new_val ){
-        $this->check($field);
-        $this->check($new_val);
+    public function headUpdate( $field=null, $new_val=null ){
+        if( $field==null && $new_val==null ){
+            $field=$this->request('field');
+            $new_val=$this->request('new_val');
+        } else {
+            $this->check($field);
+            $this->check($new_val);
+        }
 	switch( $field ){
 	    case 'doc_ratio':
 		$field='ratio';
