@@ -27,11 +27,34 @@ class MiSell extends Catalog{
         $d['user_sign']=$this->Base->svar('user_sign');
         return $d;
     }
-    private function getCompaniesTree(){
-	$assigned_path=  $this->Base->svar('user_assigned_path');
-	
+    public function getCompaniesTree(){
+	$tree=[];
 	$level=$this->Base->svar('user_level');
-	return $this->treeFetch('companies_tree', 0, 'all', $assigned_path, $level);
+	$assigned_path=  $this->Base->svar('user_assigned_path');
+	$companies_folder_list=$this->get_list("SELECT branch_id,label FROM companies_tree WHERE is_leaf=0 AND level<=$level AND path LIKE '$assigned_path%'");
+	foreach($companies_folder_list as $folder){
+	    $sql="SELECT
+			company_id,
+			label,
+			company_address,
+			company_person,
+			company_mobile,
+			company_description
+		    FROM
+			companies_tree 
+			    JOIN 
+			companies_list USING(branch_id) 
+		    WHERE 
+			is_leaf=1 
+			AND level<=$level 
+			AND parent_id='{$folder->branch_id}'";
+	    $companies_list=$this->get_list($sql);
+	    if($companies_list){
+		$folder->children=$companies_list;
+		$tree[]=$folder;
+	    }
+	}
+	return $tree;
     }
     private function getManagerClients( $user_id ){
         $sql="SELECT 

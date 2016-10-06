@@ -171,6 +171,10 @@ class Catalog extends CI_Model {
             $this->Base->msg($field=='parent_id'?"Not folder":"Label should not be empty");
 	    return false;
 	}
+	if( $field=='parent_id' && $branch_id==$value ){
+	    //move into self
+	    return false;
+	}
 	$this->update($table, [$field => $value],['branch_id' => $branch_id]);
 	$this->treeUpdatePath($table, $branch_id);
         if( $calc_top_id ){

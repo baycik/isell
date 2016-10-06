@@ -112,8 +112,8 @@ var _selected_client={},
 ///////////////////////////////
 function clientSelect(client_id){
     $.each(db.companies_tree,function(key,branch){
-        $.each(branch,function(i,company){
-            if(client_id==company.company_id){
+        $.each(branch.children,function(i,company){
+            if(client_id===company.company_id){
                 _selected_client=company;
                 clientShow();
                 return;
@@ -124,15 +124,15 @@ function clientSelect(client_id){
 }
 function clientShow(){
     var html="";
-    html+="<li style='white-space:normal'><b>Мобильный: </b>"+_selected_client.company_mobile+"</li>";
-    html+="<li style='white-space:normal'><b>Емаил: </b>"+_selected_client.company_email+"</li>";
-    html+="<li style='white-space:normal'><b>Адрес: </b>"+_selected_client.company_address+"</li>";
-    html+="<li style='white-space:normal'><b>Заметки: </b>"+_selected_client.company_description+"</li>";
+    html+="<li style='white-space:normal'><b>Контакт: </b>"+(_selected_client.company_person||'')+"</li>";
+    html+="<li style='white-space:normal'><b>Мобильный: </b>"+(_selected_client.company_mobile||'')+"</li>";
+    html+="<li style='white-space:normal'><b>Адрес: </b>"+(_selected_client.company_address||'')+"</li>";
+    html+="<li style='white-space:normal'><b>Заметки: </b>"+(_selected_client.company_description||'')+"</li>";
     $("#clientdetails").html(html);
     $("#clientdetails").listview("refresh");
     $("#clientdetails").trigger( "updatelayout");
     $("#clientdetailsBlock").show();
-    $("#clientSelectButton").html(_selected_client.sname);
+    $("#clientSelectButton").html(_selected_client.label);
 }
 //////////////////////////
 //ORDER HANDLING
@@ -198,7 +198,7 @@ function orderDelete(pcode){
         $("#orderServerInteraction").popup("open");
         return;
     }
-    $("#orderServerInteraction").html("<p>Заказ расчитывается...</p>")
+    $("#orderServerInteraction").html("<p>Заказ расчитывается...</p>");
     $("#orderServerInteraction").popup("open");
     var company_id=_selected_client.company_id;
     Connector.sendRequest({plugin:'MiSell',fn:'orderCalculate',order:JSON.stringify(_orderCache),company_id:company_id},function(resp){
@@ -251,7 +251,7 @@ function logout(){
        location.reload();
     });
 }
-var db=<?php echo $db;?>
+var db=<?php echo $db;?>;
 </script>
 </head>
 
@@ -270,15 +270,14 @@ var db=<?php echo $db;?>
           <p>
             <a href="#clientSelect" id="clientSelectButton" data-rel="popup" class="ui-btn ui-corner-all ui-shadow ui-icon-user ui-btn-icon-left ui-btn-b" data-transition="pop">Клиент не выбран</a>
             <div data-role="popup" id="clientSelect" data-theme="none">
-                <div data-role="collapsible-set" data-theme="b" data-content-theme="a" data-collapsed-icon="arrow-r" data-expanded-icon="arrow-d" style="margin:0; width:250px;">
+                <div data-role="collapsible-set" data-theme="b" data-content-theme="a" data-collapsed-icon="arrow-r" data-expanded-icon="arrow-d" style="margin:0;">
                     <?php $counter1=-1; if( isset($d["companies_tree"]) && is_array($d["companies_tree"]) && sizeof($d["companies_tree"]) ) foreach( $d["companies_tree"] as $key1 => $value1 ){ $counter1++; ?>
                     <div data-role="collapsible" data-inset="false">
                     <h2><?php echo $value1->label;?></h2>
                     <ul data-role="listview">
-                        <?php $counter2=-1; if( isset($children) && is_array($children) && sizeof($children) ) foreach( $children as $key2 => $value2 ){ $counter2++; ?>
+                        <?php $counter2=-1; if( isset($value1->children) && is_array($value1->children) && sizeof($value1->children) ) foreach( $value1->children as $key2 => $value2 ){ $counter2++; ?>
                         <li>
-                            <a href="#" data-rel="close"
-                               data-client-id="<?php echo $value2["company_id"];?>">
+                            <a href="#" data-rel="close" data-client-id="<?php echo $value2->company_id;?>">
                                 <?php echo $value2->label;?>
                             </a>
                         </li>
