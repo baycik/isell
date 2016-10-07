@@ -27,7 +27,7 @@ class MiSell extends Catalog{
         $d['user_sign']=$this->Base->svar('user_sign');
         return $d;
     }
-    public function getCompaniesTree(){
+    public function getCompaniesTree_(){
 	$tree=[];
 	$level=$this->Base->svar('user_level');
 	$assigned_path=  $this->Base->svar('user_assigned_path');
@@ -56,12 +56,26 @@ class MiSell extends Catalog{
 	}
 	return $tree;
     }
+    public function getCompaniesTree(){
+        $list=$this->getManagerClients($this->Base->svar('user_id'));
+        $this->Base->svar('allowed_comps',$list);
+        $tree=array();
+        $folder="";
+        foreach($list as $item){
+            if($item->folder!=$folder){
+                $folder=$item->folder;
+                $tree["$folder"]=array();
+            }
+            $tree["$folder"][]=$item;
+        }
+        return $tree;
+    }
     private function getManagerClients( $user_id ){
         $sql="SELECT 
                 COALESCE(ct2.label,'...') folder,
-                ct.label sname,
+                ct.label label,
                 company_id,
-                company_email,
+                company_person,
                 company_mobile,
                 company_address,
                 company_description
@@ -79,32 +93,40 @@ class MiSell extends Catalog{
     private function getSubBranches( $table_name, $branch, $depth ){
         return $this->treeFetch('stock_tree',0);
     }
-    public function suggest( $q, $parent_id, $callback ){
-        header("Content-Type:text/plain;charset=utf-8");
-        $q=str_replace(array('"',"'","#"), '', $q);
+    public function suggest(){
+	$q=$this->request('q');
+	$parent_id=$this->request('parent_id');
+	$company_id=$this->request('company_id','int',0);
         $clues=explode(' ',$q);
-        if($parent_id)
-            $where=array("parent_id='$parent_id'");
-        else 
-            $where=array();
+	$usd_ratio=$this->Base->pref('usd_ratio');
+	
+	
+	$cases=$parent_id?["parent_id='$parent_id'"]:[];
         foreach($clues as $clue){
-            $where[]="(product_code LIKE '%$clue%' OR ru LIKE '%$clue%')";
+            $cases[]="(product_code LIKE '%$clue%' OR ru LIKE '%$clue%')";
         }
-        $where=implode(' AND ',$where);
+        $where=implode(' AND ',$cases);
         $sql="SELECT 
                     product_code code,
                     ru name,
                     product_spack spack,
                     product_quantity<>0 AS instock,
-                    product_unit unit
+                    product_unit unit,
+		    
+		    ROUND(
+		     (SELECT IF(curr_code='USD',$usd_ratio,1)*sell FROM price_list pl WHERE pl.product_code=se.product_code AND label='')
+		    *COALESCE((SELECT discount FROM companies_discounts cd JOIN stock_tree st ON st.top_id=cd.branch_id WHERE st.branch_id=se.parent_id AND company_id=$company_id),1)
+			,2)
+		    price
+		    
                 FROM
                     prod_list
                 JOIN
-                    stock_entries USING (product_code)
+                    stock_entries se USING (product_code)
                 WHERE $where
                 ORDER BY fetch_count - DATEDIFF(NOW(), fetch_stamp) DESC, product_code
-                LIMIT 50";
-        return $this->Base->get_list($sql);
+                LIMIT 20";
+        return $this->get_list($sql);
     }
     public function orderCalculate($order,$company_id){
         if( !$this->checkCompanyId($company_id) ){
