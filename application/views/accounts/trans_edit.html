@@ -152,10 +152,12 @@
 	    });
 	},
 	transnameSet:function(){
-	    if( Tedit.preventLoopOnChange===true ){
+	    var debit_code=$("#tedit_debit").textbox('getValue');
+	    var credit_code=$("#tedit_credit").textbox('getValue');
+	    if( Tedit.preventLoopOnChange===true || !debit_code || !credit_code ){
 		return;
 	    }
-	    var trans_type=$("#tedit_debit").textbox('getValue')+'_'+$("#tedit_credit").textbox('getValue');
+	    var trans_type=debit_code+'_'+credit_code;
 	    App.get('AccountsData/transNameListFetch/?q='+trans_type,function(resp){
 		var tname=App.json(resp);
 		if( tname[0] ){
