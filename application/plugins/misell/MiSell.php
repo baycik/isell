@@ -1,12 +1,6 @@
 <?php
 include 'models/Catalog.php';
 class MiSell extends Catalog{
-    public $fns=array(
-        'html'=>'',
-        'suggest'=>'(string) q,(int) parent_id,[\w_0-9]* callback',
-        'orderCalculate'=>'(json) order,(int) company_id',
-        'orderSend'=>'(json) order,(int) company_id'
-    );
     public function html(){
         $this->Base->set_level(1);
         header("Content-Type:text/html;charset=utf-8");
@@ -139,18 +133,20 @@ class MiSell extends Catalog{
         }
         return $order;
     }
-    public function orderSend($order,$company_id){
+    public function orderSend(){
+	$order=$this->request('order','json');
+	$company_id=$this->request('company_id');
          if( !$this->checkCompanyId($company_id) ){
             return "Can't use this client!!!";
         }
-        $this->Base->selectPassiveCompany($company_id);
-        $this->Base->LoadClass('Document');
-        $this->Base->Document->add(1);
-		$this->Base->Document->updateHead( 'Интернет заказ', "doc_data" );
+	$this->Base->load_model('Company')->selectPassiveCompany($company_id);
+	$Document=$this->Base->load_model('DocumentItems');
+	$Document->createDocument(1);
+	$Document->headUpdate( "doc_data",'Заказ с приложения' );
         foreach($order as $product_code=>$entry){
-            $this->Base->Document->addEntry( $product_code, $entry['qty'] );
+            $Document->entryAdd( $product_code, $entry['qty'] );
         }
-        $this->orderAnnounceRecieved();
+        //$this->orderAnnounceRecieved();
         return true;
     }
     private function orderAnnounceRecieved(){
@@ -183,8 +179,9 @@ class MiSell extends Catalog{
     private function checkCompanyId($company_id){
         $list=$this->Base->svar('allowed_comps');
         foreach($list as $comp){
-            if($comp['company_id']==$company_id)
+            if($comp->company_id===$company_id){
                 return true;
+	    }
         }
         return false;
     }

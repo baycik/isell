@@ -75,48 +75,6 @@ App={
 	return {};
     }
 };
-
-
-Connector={};
-Connector.sendRequest=function( request, handler ){
-    $.ajax({
-        url: "./",
-        dataType: "text",
-        headers:{"X-Requested-With": "XMLHttpRequest"},
-        crossDomain: true,
-        method:'POST',
-        data: request
-    })
-    .then( function ( response ) {
-        try{
-            if(response!==''){//Allow empty response
-                response=JSON.parse(response);
-            }
-        }
-        catch(e){
-            console.log(e);
-            alert("Direct response:\n\n"+response);
-            return;
-        }
-        switch( response.type ){
-            case 'success':
-                handler(response.content);
-            break;
-            case 'wrn','error':
-                alert( response.content );
-            break;
-            case 'kick':
-                alert('SEQ:permission denied');
-            break;
-            default:
-                handler(response);
-            break;
-        };
-        if(response.msg){
-            alert(response.msg);
-        }
-    });
-};
 var _selected_client={},
     _orderCache={},
     _current_entry={},
@@ -208,20 +166,6 @@ function orderQtyEdit(pcode){
 function orderDelete(pcode){
     delete _orderCache[pcode];
     orderShow();
-}function orderCalculate(){
-    if(!_selected_client.company_id){
-        $("#orderServerInteraction").html("<p>Не выбран клиент!</p>");
-        $("#orderServerInteraction").popup("open");
-        return;
-    }
-    $("#orderServerInteraction").html("<p>Заказ расчитывается...</p>");
-    $("#orderServerInteraction").popup("open");
-    var company_id=_selected_client.company_id;
-    Connector.sendRequest({plugin:'MiSell',fn:'orderCalculate',order:JSON.stringify(_orderCache),company_id:company_id},function(resp){
-        $("#orderServerInteraction").popup("close");
-        _orderCache=resp;
-        orderShow();
-    });
 }
 function orderSend(){
     if(!_selected_client.company_id){
@@ -232,20 +176,15 @@ function orderSend(){
     $("#orderServerInteraction").html("<p>Заказ отправляется...</p>");
     $("#orderServerInteraction").popup("open");
     var company_id=_selected_client.company_id;
-    Connector.sendRequest({plugin:'MiSell',fn:'orderSend',order:JSON.stringify(_orderCache),company_id:company_id},function(resp){
+    $.post("./orderSend",{order:JSON.stringify(_orderCache),company_id:company_id},function(resp){
         $("#orderServerInteraction").html("<p>Заказ доставлен на сервер!</p>");
-		setTimeout(function(){$("#orderServerInteraction").popup("close");},1000);
+	setTimeout(function(){$("#orderServerInteraction").popup("close");},1000);
         _orderCache=[];
         orderShow();
     });
 }
 function format(num){
-   var parts=(Math.round(num*100)/100+'').split('.');
-   if(parts[0]&&parts[1]){
-        parts[1]+=parts[1]?(parts[1].length===1?'0':''):'00';
-        return parts.join('.');
-    }
-    return NaN;
+    return Number(num).fixed(2);
 }
 function orderShow(){
     var html="",i=0,sum=0;
@@ -339,10 +278,10 @@ ORDER PAGE
                     <tr>
                         <td><a href="#" class="ui-btn ui-btn-inline ui-btn-b" onclick="$('#qtyInput').val($('#qtyInput').val()*_current_entry.spack)">уп X</a></td>
                         <td><input data-clear-btn="true" pattern="[0-9]*" id="qtyInput" value="1" type="number"></td>
+			<td><a href="#" class="ui-btn ui-corner-all ui-shadow ui-btn-inline ui-btn-b" onclick="orderAdd()">OK</a></td>
                     </tr>
                 </table>
                 </form>
-                <a href="#" class="ui-btn ui-corner-all ui-shadow ui-btn-inline ui-btn-b" onclick="orderAdd()">OK</a>
             </div>
         </div>
         <!--ORDER LIST-->
@@ -367,7 +306,6 @@ ORDER PAGE
    <!-- /content -->
     <div id="right-panel" data-role="panel" data-position="right" data-theme="b" data-display="push">
         <ul data-role="listview">
-            <li><a href="#" onclick="orderCalculate()" data-rel="close" class="ui-btn ui-btn-inline ui-shadow ui-corner-all ui-btn-icon-left ui-icon-recycle">Расчитать</a></li>
             <li><a href="#" onclick="orderSend()" data-rel="close" class="ui-btn ui-btn-inline ui-shadow ui-corner-all ui-btn-icon-left ui-icon-mail">Отправить</a></li>
             <li data-role="list-divider">Категории товара</li>
             <ul id="stockCatTree" data-role="listview">

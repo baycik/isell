@@ -98,8 +98,7 @@ class DocumentItems extends DocumentCore{
             ORDER BY pl.product_code";
 	return $this->get_list($sql);
     }
-    public function entryAdd( $doc_id, $code, $quantity ){
-	$this->selectDoc($doc_id);
+    public function entryAdd( $code, $quantity ){
 	$Document2=$this->Base->bridgeLoad('Document');
 	return $Document2->addEntry( $code, $quantity );
     }
@@ -107,7 +106,8 @@ class DocumentItems extends DocumentCore{
 	$doc_id=$this->request('doc_id','int');
 	$code=$this->request('code');
 	$quantity=$this->request('quantity','int');
-	return $this->entryAdd($doc_id, $code, $quantity);
+	$this->selectDoc($doc_id);
+	return $this->entryAdd($code, $quantity);
     }
     public function entryUpdate( $doc_id, $doc_entry_id, $name=null, $value=null ){
 	$this->check($doc_id,'int');
