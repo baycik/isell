@@ -12,7 +12,7 @@
 
 	},
 	initPrefs: function () {
-	    $.get("Pref/getPrefs/", function (text) {
+	    App.get("Pref/getPrefs/", function (text) {
 		App.page_pref_preferences.prefData = App.json(text);
 		App.setupForm('#AcompPrefs', App.page_pref_preferences.prefData);
 	    });
@@ -31,7 +31,7 @@
 
 	},
 	updateField: function (field, value, title) {
-	    $.post('Pref/setPrefs/' + App.uri(field, value), function (ok) {
+	    App.post('Pref/setPrefs/' + App.uri(field, value), function (ok) {
 		if (ok * 1) {
 		    App.page_pref_preferences.prefData[field] = value;
 		    App.flash("Сохранено: " + title);

@@ -35,7 +35,7 @@
 	    this.loadStaffList();
         },
 	loadStaffList:function(){
-	    $.get("Pref/getStaffList",function(resp){
+	    App.get("Pref/getStaffList",function(resp){
 		var staff=App.json(resp);
 		App.renderTpl('page_events_event_frm_liable',{staff_list:staff});
 		$("select[name=event_user_liable]").val(App.page_events_event.data.event_user_liable);
@@ -44,7 +44,7 @@
         saveEvent: function (fvalue) {
 	    var card_event_id=fvalue.event_id;
             fvalue.event_date = App.toIso(fvalue.event_date);
-            $.post('Events/eventSave/'+card_event_id,fvalue,function( resp ){
+            App.post('Events/eventSave/'+card_event_id,fvalue,function( resp ){
 		if( !card_event_id ){//new record card_event_id==0
 		    fvalue.event_id = resp;
 		    $("input[name='event_id']").val(fvalue.event_id);
@@ -57,7 +57,7 @@
         },
         deleteEvent: function () {
             if (confirm('Удалить запись?') && App.page_events_event.data.event_id) {
-                $.post('Events/eventDelete/'+App.page_events_event.data.event_id,function(ok){
+                App.post('Events/eventDelete/'+App.page_events_event.data.event_id,function(ok){
 		    if( ok*1 ){
 			App.flash("Запись удалена");
 			App.page_events_event.handler.notify('delete');

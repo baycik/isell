@@ -5,7 +5,7 @@ DataJs={
     loadTable:function(){
 	var row=$("#data_table_list").datagrid('getSelected');
 	if( row ){
-	    $.get("Data/tableStructure/"+row.table_name,function(resp){
+	    App.get("Data/tableStructure/"+row.table_name,function(resp){
 		var struct=App.json(resp);
 		DataJs.processStruct(struct);
 		DataJs.initTable(row.table_name);
@@ -62,7 +62,7 @@ DataJs={
 		DataJs.list.currPage=param.page;
 		DataJs.list.filterRules=param.filterRules;
 		DataJs.list.rows=param.rows;
-		$.get("Data/tableData/"+table_name, param,function( xhr ){
+		App.get("Data/tableData/"+table_name, param,function( xhr ){
 		    var resp=App.json(xhr);
 		    success(resp);
 		});
@@ -120,7 +120,7 @@ DataJs={
 	    for(var i in rows){
 		rowKey.push(DataJs.list.getRowKey(rows[i]));
 	    }
-	    $.post("Data/tableRowsDelete/"+DataJs.currentTable,{rowKey:JSON.stringify(rowKey)},function(ok){
+	    App.post("Data/tableRowsDelete/"+DataJs.currentTable,{rowKey:JSON.stringify(rowKey)},function(ok){
 		if(ok>0){
 		    DataJs.currentGrid.datagrid('reload');
 		    App.flash("Удалено строк: "+ok);
@@ -142,7 +142,7 @@ DataJs={
 	import:function(){
 	    App.loadWindow('page/dialog/importer',{label:'данные',fields_to_import:DataJs.currentStruct}).progress(function(status,fvalue,Importer){
 		if( status==='submit' ){
-		    $.post("Data/import/"+DataJs.currentTable,fvalue,function(ok){
+		    App.post("Data/import/"+DataJs.currentTable,fvalue,function(ok){
 			App.flash("Добавлено/измененно строк "+ok);
 			DataJs.currentGrid.datagrid('reload');
 			Importer.reload();

@@ -26,7 +26,7 @@
 	    });            
 	},
 	loader:function (param, success, error) {
-	    $.get(App.uri('DocumentCore', 'listFetch', param.page, param.rows), {filterRules: param.filterRules}, function (xhr) {
+	    App.get(App.uri('DocumentCore', 'listFetch', param.page, param.rows), {filterRules: param.filterRules}, function (xhr) {
 		var resp = App.json(xhr);
 		if (resp.rows) {
 		    resp.rows.unshift(App.page_trade_document_list_full.getNewDocRow());

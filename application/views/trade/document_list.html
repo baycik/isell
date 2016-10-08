@@ -68,7 +68,7 @@
 	},
 	loader: function (param, success, error) {
             if( DocList.list.readyToLoad ){
-                $.get(App.uri('DocumentCore', 'listFetch', param.page, param.rows, 'show_only_pcomp_docs'), {filterRules: param.filterRules}, function (xhr) {
+                App.get(App.uri('DocumentCore', 'listFetch', param.page, param.rows, 'show_only_pcomp_docs'), {filterRules: param.filterRules}, function (xhr) {
                     var resp = App.json(xhr);
                     if (resp.rows) {
                         resp.rows.unshift(DocList.list.getNewDocRow());
@@ -121,7 +121,7 @@
 	}
 	/*,
 	createDoc: function () {
-	    $.post('DocumentCore/createDoc', function (resp) {
+	    App.post('DocumentCore/createDoc', function (resp) {
 		if (resp * 1 !== 0) {
 		    DocList.list.selectedDocId = resp;
 		    $('#document_list_dg').datagrid('reload');

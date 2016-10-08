@@ -15,7 +15,7 @@
 	    $('#dialog_send_sms_frm').submit(function(e){
 		e.preventDefault();
 		var data=App.collectForm('#dialog_send_sms_frm');
-		$.post('Utils/sendSms/',data,function(xhr){
+		App.post('Utils/sendSms/',data,function(xhr){
 		    App.page_dialog_send_sms.node.window('close');
 		});
 	    });

@@ -26,7 +26,7 @@
 	    loader:function( param, success, error ){
 		Leftovers.list.filterRules=param.filterRules;
 		Leftovers.list.currPage=param.page;
-		$.get("Stock/listFetch/"+App.uri(param.page,param.rows,Leftovers.list.parent_id), {filterRules: Leftovers.list.filterRules},function( xhr ){
+		App.get("Stock/listFetch/"+App.uri(param.page,param.rows,Leftovers.list.parent_id), {filterRules: Leftovers.list.filterRules},function( xhr ){
 		    var resp=App.json(xhr);
 		    resp=Leftovers.list.calc.calcTable(resp);
 		    success(resp);
@@ -118,7 +118,7 @@
 		App.loadWindow('page/dialog/importer',{label:'склад',fields_to_import:config}).progress(function(status,fvalue,Importer){
 		    if( status==='submit' ){
 			fvalue.parent_id=Leftovers.list.parent_id;
-			$.post("Stock/import/",fvalue,function(ok){
+			App.post("Stock/import/",fvalue,function(ok){
 			    App.flash("Добавлено "+ok);
 			    Leftovers.list.reload();
 			    Importer.reload();
@@ -221,7 +221,7 @@
                     prod_codes.push(row.product_code);
                 }
 		if( row && confirm("Удалить '"+prod_codes.join(' , ')+"' со списка склада?") ){
-		    $.post('Stock/productDelete/',{product_code:prod_codes},function(ok){
+		    App.post('Stock/productDelete/',{product_code:prod_codes},function(ok){
 			if( ok*1 ){
 			    App.flash("Товар удален: "+prod_codes.join(' , '));
 			    Leftovers.list.reload();
@@ -244,7 +244,7 @@
                 }
                 App.loadWindow('page/stock/tree').progress(function(status,category){
                     if( status==='select' ){
-                        $.post('Stock/productMove/',{product_code:prod_codes,parent_id:category.branch_id},function(ok){
+                        App.post('Stock/productMove/',{product_code:prod_codes,parent_id:category.branch_id},function(ok){
                             if( ok*1 ){
                                 App.flash("Товар перемещен в "+category.label+": "+prod_codes.join(' , '));
                                 Leftovers.list.reload();
@@ -276,7 +276,7 @@
 	    calc_min:function(){
 		App.loadWindow("page/stock/calc_min",{parent_label:Leftovers.list.parent_label}).progress(function(status, fvalue){
 		    if( status==='submit' ){
-			$.post("Utils/stockCalcMin/"+App.uri(Leftovers.list.parent_id,fvalue.period,fvalue.ratio),function(ok){
+			App.post("Utils/stockCalcMin/"+App.uri(Leftovers.list.parent_id,fvalue.period,fvalue.ratio),function(ok){
 			    if( ok*1 ){
 				Leftovers.list.reload();
 				App.flash("Минимумы расчитаны у "+ok+" товаров");
@@ -293,7 +293,7 @@
 			if( !confirm('Сформировать заказ поставщику "'+App.pcomp.label+'" по категории "'+Leftovers.list.parent_label+'"?') ){
 			    return false;
 			}
-			$.post("Utils/stockCalcIncomeOrder/"+Leftovers.list.parent_id+"/"+fvalue.round_to,{filterRules: Leftovers.list.filterRules},function(doc_id){
+			App.post("Utils/stockCalcIncomeOrder/"+Leftovers.list.parent_id+"/"+fvalue.round_to,{filterRules: Leftovers.list.filterRules},function(doc_id){
 			    if( doc_id*1 ){
 				App.flash("Заказ сформирован");
 				App.loadWindow('page/trade/document',{doc_id:doc_id});

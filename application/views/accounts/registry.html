@@ -29,7 +29,7 @@
 			    fvalue.group_by_comp?'group_by_comp':'expanded',
 			    mode
 			);
-		$.get('AccountsRegistry/registryFetch/'+uri, param, function (xhr) {
+		App.get('AccountsRegistry/registryFetch/'+uri, param, function (xhr) {
 		    var resp = App.json(xhr);
 		    if( resp ){
 			success(resp);

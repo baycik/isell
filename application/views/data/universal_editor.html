@@ -44,7 +44,7 @@
 		create:App.page_data_universal_editor.isNewCreated?1:0
 	    };
 	    var ueditor=App.page_data_universal_editor;
-	    $.post("Data/tableRowCreateUpdate/"+this.data.currentTable,postVars,function(ok){
+	    App.post("Data/tableRowCreateUpdate/"+this.data.currentTable,postVars,function(ok){
 		if( ok>0 ){
 		    App.flash("Сохранено: "+title);
 		    ueditor.isNewCreated=0;

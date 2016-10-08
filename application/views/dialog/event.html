@@ -28,7 +28,7 @@
         },
         saveEvent: function (fvalue) {
             fvalue.event_date = App.toIso(fvalue.event_date);
-            $.post('ProcLists/onSaveEvent',fvalue,function(event_id){
+            App.post('ProcLists/onSaveEvent',fvalue,function(event_id){
                 fvalue.event_id = event_id;
                 $("input[name='event_id']").val(fvalue.event_id);
                 App.page_dialog_event.data = fvalue;
@@ -41,7 +41,7 @@
             var fvalue = App.page_dialog_event.data;
             fvalue.event_date = App.toIso(fvalue.event_date);
             if (confirm('Удалить запись?') && App.page_dialog_event.data.event_id) {
-                $.post('ProcLists/onDeleteEvent',{delIds:'[{"event_id":"'+App.page_dialog_event.data.event_id+'"}]'},function(){
+                App.post('ProcLists/onDeleteEvent',{delIds:'[{"event_id":"'+App.page_dialog_event.data.event_id+'"}]'},function(){
                     App.page_dialog_event.handler.notify('delete', App.page_dialog_event.data);
                     App.page_dialog_event.destroy();                    
                 });

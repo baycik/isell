@@ -81,7 +81,7 @@
 		success([]);
 		return ;
 	    }
-	    $.get('Company/listFetch/', param, function (xhr) {
+	    App.get('Company/listFetch/', param, function (xhr) {
 		var resp = App.json(xhr);
 		success(resp[0] ? resp : []);
 	    });
@@ -95,7 +95,7 @@
 	    var parent_target=parent_id>0?$('#Ctree_tree').tree('find', parent_id).target:null;
 	    var newlabel=(new_branch_type === 'leaf')?prompt("Введите Короткое название новой компании",'Новая компания'):prompt("Введите название новой группы",'Новая группа');
 	    if( newlabel && newlabel.indexOf(',')===-1 ){
-		$.post('Company/companyTreeCreate/'+App.uri(parent_id,newlabel,new_branch_type),function(company_id){
+		App.post('Company/companyTreeCreate/'+App.uri(parent_id,newlabel,new_branch_type),function(company_id){
 		    if(new_branch_type === 'leaf' && confirm("Компания '"+newlabel+"' создана.\nВвести реквизиты сейчас?\n\n")){
 			Ctree.updateDetails(company_id,parent_target);
 		    }
@@ -110,7 +110,7 @@
 	    } else {
 		var newlabel=prompt("Введите новое название группы: "+node.label,node.label);
 		if( newlabel && newlabel!==node.label ){
-		    $.post('Company/companyTreeUpdate/'+App.uri(node.branch_id,'label',newlabel),function(ok){
+		    App.post('Company/companyTreeUpdate/'+App.uri(node.branch_id,'label',newlabel),function(ok){
 			if( ok*1 ){
 			    App.flash("Сохранено: название папки");
 			    $('#Ctree_tree').tree('update', {target: node.target,text: newlabel});
@@ -130,7 +130,7 @@
 	},
 	drop:function(target,source,point){
 	    var target_node=$("#Ctree_tree").tree('getNode',target);
-	    $.post('Company/companyTreeUpdate/'+App.uri(source.branch_id,'parent_id',target_node.branch_id),function(ok){
+	    App.post('Company/companyTreeUpdate/'+App.uri(source.branch_id,'parent_id',target_node.branch_id),function(ok){
 		if( ok*1 ){
 		    App.flash(source.label + " перемещен в " + target_node.label);
 		} else {
@@ -141,7 +141,7 @@
 	up:function(){
 	    if( confirm("Переместить выделенный элемент в корень дерева?") ){
 		var node=$('#Ctree_tree').tree('getSelected');
-		$.post('Company/companyTreeUpdate/'+App.uri(node.branch_id,'parent_id',0),function(ok){
+		App.post('Company/companyTreeUpdate/'+App.uri(node.branch_id,'parent_id',0),function(ok){
 		    if( ok*1 ){
 			App.flash(node.label + " перемещен в корень");
 		    } else {
@@ -154,7 +154,7 @@
 	delete:function(){
 	    var node=$('#Ctree_tree').tree('getSelected');
 	    if( node && confirm("Удалить выделенные компании?")  && confirm("ВНИМАНИЕ ЭТОТ ПРОЦЕСС НЕ ОБРАТИМ!\n\nБУДУТ УДАЛЕНЫ ВСЕ ДОКУМЕНТЫ, ШАБЛОНЫ ПЕЧАТИ, ПРОВОДКИ, ОПЛАТЫ\nА ТАК ЖЕ ВСЯ ИНФОРМАЦИЯ СВЯЗАННАЯ С КОМПАНИЯМИ!\n\n") ){
-		$.post("Company/companyTreeDelete/"+node.branch_id,function(ok){
+		App.post("Company/companyTreeDelete/"+node.branch_id,function(ok){
 		    if( ok>0 ){
 			App.flash("Удалено: "+node.label);
 			$('#Ctree_tree').tree('remove', node.target);
@@ -171,7 +171,7 @@
 	    if( node ){
                 var level=prompt("Введите номер мин. уровня доступа пользователя, который может работать с этой компанией\n0 (Все)\n2 (Менеджер)\n3 (Бухгалтер)\n4 (Администратор)",node.level);
 		if( level!==null ){
-		    $.post('Company/companyTreeUpdate/'+App.uri(node.branch_id,'level',level),function(ok){
+		    App.post('Company/companyTreeUpdate/'+App.uri(node.branch_id,'level',level),function(ok){
 			if( ok*1 ){
 			    App.flash("Сохранено: уровень доступа");
                             Ctree.reload();
@@ -187,7 +187,7 @@
 	    Ctree.node.find('.ok,.folder').prop('disabled',true);
 	},
         loaderTree:function(param, success, error){
-            $.get('Company/branchFetch/',param,function(resp){
+            App.get('Company/branchFetch/',param,function(resp){
                 var data=App.json(resp);
                 for(var i in data){
                     data[i].id=data[i].branch_id;

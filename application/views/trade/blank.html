@@ -47,14 +47,14 @@
 	    }
 	},
 	availsOpen:function(){
-	    $.get('DocumentBlank/availFetch/',function(resp){
+	    App.get('DocumentBlank/availFetch/',function(resp){
 		var avails=App.json(resp);
 		$('#blank_avails').panel('expand');
 		App.renderTpl('blank_avails',{avails:avails});
 	    });
 	},
 	create:function(view_type_id){
-	    $.post('DocumentBlank/blankCreate/'+view_type_id,function(resp){
+	    App.post('DocumentBlank/blankCreate/'+view_type_id,function(resp){
 		if( resp*1>0 ){
 		    Blank.list.selectedDocId=resp;
 		    $('#blank_list_dg').datagrid('reload');
@@ -70,7 +70,7 @@
 	    if( Blank.parser.inputsRendered ){
 		Blank.parser.unRenderInputs();
 	    }
-	    $.post('DocumentBlank/blankDelete',function(ok){
+	    App.post('DocumentBlank/blankDelete',function(ok){
 		if(ok*1){
 		    Blank.list.selectedDocId=0;
 		    $('#blank_list_dg').datagrid('unselectAll');
@@ -86,7 +86,7 @@
 	    if( Blank.parser.inputsRendered===true ){
 		return;
 	    }
-	    $.get('DocumentBlank/getFillData',function(resp){
+	    App.get('DocumentBlank/getFillData',function(resp){
 		Blank.fillData=App.json(resp);
 		Blank.fillData.today10=App.toDmy(new Date(new Date().getTime()+(10*24*60*60*1000)));
 		Blank.fillData.doc={
@@ -103,7 +103,7 @@
 	blankData:{},
 	load:function(){
 	    var doc_id=Blank.list.selectedDocId;
-	    $.get('DocumentBlank/blankGet/'+doc_id,function(resp){
+	    App.get('DocumentBlank/blankGet/'+doc_id,function(resp){
 		Blank.blankData=App.json(resp);
 		$('#blank_wrapper').html(Blank.blankData.html);
 		if( Blank.blankData.loaded_is_tpl ){
@@ -124,7 +124,7 @@
 	    if( this.parser.checkNoErrors() ){
 		var vars=Blank.parser.xtra;
 		vars.html=$("#blank_wrapper").html();
-		$.post('DocumentBlank/save',vars,function(ok){
+		App.post('DocumentBlank/save',vars,function(ok){
 		    if( ok*1 ){
 			$('#blank_list_dg').datagrid('reload');
 			$('#blank_wrapper').css('background-color','#fff');
@@ -207,13 +207,13 @@
 	},
 	spellNumber:function(){
 	    var node=$(this);
-	    $.get('Utils/spellNumber/'+parseInt(node.val()),function(text){
+	    App.get('Utils/spellNumber/'+parseInt(node.val()),function(text){
 		node.val(text);
 	    });
 	},
 	spellAmount:function(){
 	    var node=$(this);
-	    $.get('Utils/spellAmount/'+parseFloat(node.val()),function(text){
+	    App.get('Utils/spellAmount/'+parseFloat(node.val()),function(text){
 		if( node.parent().nextAll('.blank_spell_text').length ){
 		    node.parent().nextAll('.blank_spell_text').text(text);
 		} else {
@@ -316,7 +316,7 @@
 	    $('#blank_list_dg').datagrid('enableFilter');
 	},
 	loader:function(param,success,error){
-	    $.get(App.uri('DocumentBlank','listFetch',param.page,param.rows, 'show_only_pcomp_docs'),{filterRules:param.filterRules},function(xhr){
+	    App.get(App.uri('DocumentBlank','listFetch',param.page,param.rows, 'show_only_pcomp_docs'),{filterRules:param.filterRules},function(xhr){
 		var resp=App.json(xhr);
 		if( resp.rows ){
 		    resp.rows.unshift(Blank.list.getNewDocRow());

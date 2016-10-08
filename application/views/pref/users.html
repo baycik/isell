@@ -4,7 +4,7 @@
 
 	},
 	getList: function () {
-	    $.get("User/getList", function (text) {
+	    App.get("User/getList", function (text) {
 		var users = App.json(text);
 	    });
 	},
@@ -14,7 +14,7 @@
 	delete: function () {
 	    var user = $('#pref_user_dg').datagrid('getSelected');
 	    if (user && confirm("Удалить пользователя " + user.user_login + "?")) {
-		$.post("User/remove/" + user.user_id, function (ok) {
+		App.post("User/remove/" + user.user_id, function (ok) {
 		    if (ok * 1) {
 			App.flash("Пользователь " + user.user_login + " удален");
 		    } else {
@@ -41,7 +41,7 @@
 	    }
 	    App.loadWindow('page/dialog/user_edit', user).progress(function (status, user_data) {
 		if (status === 'submit') {
-		    $.post("User/save", user_data, function (ok) {
+		    App.post("User/save", user_data, function (ok) {
 			if (ok * 1) {
 			    $('#pref_user_dg').datagrid('reload');
 			    App.flash("Свойства пользователя сохранены");

@@ -29,7 +29,7 @@
 	    delete App.page_dialog_chat;
 	},
 	loadUserlist: function () {
-	    $.get('Chat/getUserList', function (resp) {
+	    App.get('Chat/getUserList', function (resp) {
 		var users = {user_list: App.json(resp)};
 		App.renderTpl('chat_users', users);
 		$("#chat_users div[data-user=" + App.page_dialog_chat.counterpart + "]").addClass('user_selected');
@@ -43,7 +43,7 @@
 	},
 	msg_count:0,
 	sendRecieve: function (msg) {
-	    $.post(App.uri('Chat', 'sendRecieve', App.page_dialog_chat.counterpart || ''),{message:msg}, function (resp) {
+	    App.post(App.uri('Chat', 'sendRecieve', App.page_dialog_chat.counterpart || ''),{message:msg}, function (resp) {
 		var resp=App.json(resp);
 		App.page_dialog_chat.renderDialog(resp.dialog);
 		if( App.has_new_status!==resp.has_new*1 ){
@@ -66,14 +66,14 @@
 	},
 	eventLoad:function(node){
 	    var event_id=$(node).parent().data('event-id');
-	    $.get("Events/eventGet/"+event_id,function(resp){
+	    App.get("Events/eventGet/"+event_id,function(resp){
 		var fvalue=App.json(resp);
 		App.loadWindow('page/events/event', fvalue);
 	    });
 	},
 	eventDone:function(node){
 	    var event_id=$(node).parent().data('event-id');
-	    $.get("Events/eventUpdate/"+event_id+'/event_status/done',function(ok){
+	    App.get("Events/eventUpdate/"+event_id+'/event_status/done',function(ok){
 		if( ok*1 ){
 		    alert("Задание отмечено как выполнено");
 		}
@@ -82,7 +82,7 @@
 	eventMove:function(node){
 	    var event_id=$(node).parent().data('event-id');
 	    var tomorrow=App.toIso(new Date(new Date().getTime() + 24 * 60 * 60 * 1000));
-	    $.get("Events/eventMove/"+event_id+'/'+tomorrow,function(ok){
+	    App.get("Events/eventMove/"+event_id+'/'+tomorrow,function(ok){
 		if( ok*1 ){
 		    alert("Задание перенесено на завтра");
 		}

@@ -25,7 +25,7 @@
 	    App.page_stock_movements.currPage=param.page;
 	    App.page_stock_movements.currRows=param.rows;
 	    App.page_stock_movements.filterRules=param.filterRules;
-	    $.get("Stock/movementsFetch/"+App.uri(param.page,param.rows), {filterRules: param.filterRules},function( xhr ){
+	    App.get("Stock/movementsFetch/"+App.uri(param.page,param.rows), {filterRules: param.filterRules},function( xhr ){
 		var resp=App.json(xhr);
 		success(resp);
 	    });	    

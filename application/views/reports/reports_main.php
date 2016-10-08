@@ -7,7 +7,7 @@
 	tile:{
 	    report_list:[],
 	    load:function(){
-		$.get("ReportManager/listFetch/",function(resp){
+		App.get("ReportManager/listFetch/",function(resp){
 		    ReportsJs.tile.report_list=App.json(resp);
 		    var group_name='';
 		    for(var i=0;i<ReportsJs.tile.report_list.length;i++){
@@ -38,7 +38,7 @@
 	    },
 	    formLoad:function(){
 		var report_id=this.current_report_info.report_id;
-		$.get("ReportManager/formGet/"+report_id,function(resp){
+		App.get("ReportManager/formGet/"+report_id,function(resp){
 		    $("#report_form_wrapper").html(resp);
 		    ReportsJs.report.formRender();
 		});

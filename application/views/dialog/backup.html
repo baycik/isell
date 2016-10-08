@@ -22,7 +22,7 @@
 	},
 	backupDump:function(){
             App.page_dialog_backup.throbber(1);
-	    $.post("Maintain/backupDump/",function(ok){
+	    App.post("Maintain/backupDump/",function(ok){
                 App.page_dialog_backup.throbber(0);
 		if( ok*1 ){
 		    App.flash("Резервная копия базы данных создана");
@@ -42,7 +42,7 @@
 		    Продолжить?";
 	    if( row && confirm(wrn) ){
                 App.page_dialog_backup.throbber(1);
-		$.post("Maintain/backupImport/",{filename:row.file},function(ok){
+		App.post("Maintain/backupImport/",{filename:row.file},function(ok){
                     App.page_dialog_backup.throbber(0);
                     if( ok*1 ){
                         App.flash("Импорт прошел успешно");
@@ -56,7 +56,7 @@
 	delete:function(){
 	    var row=$('#page_dialog_backup_dg').datagrid('getSelected');
 	    if( row && confirm("Удалить выбранный файл?") ){
-		$.post("Maintain/backupDelete/",{filename:row.file},function(ok){
+		App.post("Maintain/backupDelete/",{filename:row.file},function(ok){
 		    if( ok*1 ){
 			App.flash("Файл удален!");
 			$('#page_dialog_backup_dg').datagrid('reload');

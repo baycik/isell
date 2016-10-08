@@ -17,7 +17,7 @@
 	    this.node.window('window').css('position','fixed');
 	    
 	    if( this.data.loadProductByCode ){
-		$.get("Stock/productGet",{product_code:App.page_stock_product_card.data.product_code},function(resp){
+		App.get("Stock/productGet",{product_code:App.page_stock_product_card.data.product_code},function(resp){
 		    App.page_stock_product_card.data=App.json(resp);
 		    App.page_stock_product_card.initWidgets();
 		});
@@ -42,7 +42,7 @@
 	},
 	price:{
 	    load:function(){
-		$.get("Stock/productGetLabeledPrices",{product_code:App.page_stock_product_card.data.product_code},function(resp){
+		App.get("Stock/productGetLabeledPrices",{product_code:App.page_stock_product_card.data.product_code},function(resp){
 		    App.page_stock_product_card.labeled_prices=App.json(resp);
 		    App.page_stock_product_card.price.unpack(App.page_stock_product_card.labeled_prices);
 		});
@@ -72,14 +72,14 @@
 		if( !confirm("Удалить категорию цен "+label+"?") ){
 		    return ;
 		}
-		$.post("Stock/productLabeledPriceRemove/",{product_code:App.page_stock_product_card.data.product_code,label:label},function(resp){
+		App.post("Stock/productLabeledPriceRemove/",{product_code:App.page_stock_product_card.data.product_code,label:label},function(resp){
 		    App.page_stock_product_card.price.load();
 		});
 	    },
 	    add:function(){
 		var label=prompt("Введите название новой категории цен");
 		if( label ){
-		    $.post("Stock/productLabeledPriceAdd",{product_code:App.page_stock_product_card.data.product_code,label:label},function(resp){
+		    App.post("Stock/productLabeledPriceAdd",{product_code:App.page_stock_product_card.data.product_code,label:label},function(resp){
 			App.page_stock_product_card.price.load();
 		    });
 		}
@@ -105,7 +105,7 @@
 		success([{branch_id:App.page_stock_product_card.data.parent_id,label:App.page_stock_product_card.data.parent_label}]);
 		return ;
 	    }
-	    $.get('Stock/labelFetch/', param, function (xhr) {
+	    App.get('Stock/labelFetch/', param, function (xhr) {
 		var resp = App.json(xhr);
 		success(resp[0] ? resp : []);
 	    });
@@ -115,7 +115,7 @@
 	    this.data=App.collectForm("#page_stock_product_card_frm");
 	    if( this.data.product_code_new.match(/^[\(\)\[\]\<\>\wабвгдеёжзийклмнопрстуфхцчшщъыьюяіїє\. ,-]+$/i) ){
 		this.price.pack();
-		$.post('Stock/productSave/',this.data,function(ok){
+		App.post('Stock/productSave/',this.data,function(ok){
 		    if( ok*1 ){
 			App.flash("Свойства товара сохранены");
                         if( App.page_stock_product_card.closeOnSave ){
@@ -189,7 +189,7 @@
 	    remove:function(){
 		var file_name=$("input[name=product_img]").val();
 		$("input[name=product_img]").val('');
-		$.post('Storage/file_remove/dynImg/'+file_name,function(ok){
+		App.post('Storage/file_remove/dynImg/'+file_name,function(ok){
 		    if(ok*1){
 			App.flash("Файл удален");
 			App.page_stock_product_card.img.load();
