@@ -16,40 +16,40 @@ class MiSell extends Catalog{
     }
     private function getTplData(){
         $d=array();
-        $d['stock_tree']=$this->getSubBranches('stock_tree', array('branch_id'=>0), 2);
+        $d['stock_tree']=$this->treeFetch('stock_tree',0);
         $d['companies_tree']=$this->getCompaniesTree();
         $d['user_sign']=$this->Base->svar('user_sign');
         return $d;
     }
-    public function getCompaniesTree_(){
-	$tree=[];
-	$level=$this->Base->svar('user_level');
-	$assigned_path=  $this->Base->svar('user_assigned_path');
-	$companies_folder_list=$this->get_list("SELECT branch_id,label FROM companies_tree WHERE is_leaf=0 AND level<=$level AND path LIKE '$assigned_path%'");
-	foreach($companies_folder_list as $folder){
-	    $sql="SELECT
-			company_id,
-			label,
-			company_address,
-			company_person,
-			company_mobile,
-			company_description
-		    FROM
-			companies_tree 
-			    JOIN 
-			companies_list USING(branch_id) 
-		    WHERE 
-			is_leaf=1 
-			AND level<=$level 
-			AND parent_id='{$folder->branch_id}'";
-	    $companies_list=$this->get_list($sql);
-	    if($companies_list){
-		$folder->children=$companies_list;
-		$tree[]=$folder;
-	    }
-	}
-	return $tree;
-    }
+//    public function getCompaniesTree_(){
+//	$tree=[];
+//	$level=$this->Base->svar('user_level');
+//	$assigned_path=  $this->Base->svar('user_assigned_path');
+//	$companies_folder_list=$this->get_list("SELECT branch_id,label FROM companies_tree WHERE is_leaf=0 AND level<=$level AND path LIKE '$assigned_path%'");
+//	foreach($companies_folder_list as $folder){
+//	    $sql="SELECT
+//			company_id,
+//			label,
+//			company_address,
+//			company_person,
+//			company_mobile,
+//			company_description
+//		    FROM
+//			companies_tree 
+//			    JOIN 
+//			companies_list USING(branch_id) 
+//		    WHERE 
+//			is_leaf=1 
+//			AND level<=$level 
+//			AND parent_id='{$folder->branch_id}'";
+//	    $companies_list=$this->get_list($sql);
+//	    if($companies_list){
+//		$folder->children=$companies_list;
+//		$tree[]=$folder;
+//	    }
+//	}
+//	return $tree;
+//    }
     public function getCompaniesTree(){
         $list=$this->getManagerClients($this->Base->svar('user_id'));
         $this->Base->svar('allowed_comps',$list);
@@ -84,18 +84,17 @@ class MiSell extends Catalog{
             ORDER BY ct2.label";
         return $this->get_list($sql);
     }
-    private function getSubBranches( $table_name, $branch, $depth ){
-        return $this->treeFetch('stock_tree',0);
-    }
     public function suggest(){
 	$q=$this->request('q');
 	$parent_id=$this->request('parent_id');
 	$company_id=$this->request('company_id','int',0);
         $clues=explode(' ',$q);
 	$usd_ratio=$this->Base->pref('usd_ratio');
-	
-	
-	$cases=$parent_id?["parent_id='$parent_id'"]:[];
+	$cases=[];
+	if($parent_id){
+	    $parent_ids=$this->treeGetSub('stock_tree',$parent_id);
+	    $cases[]="(parent_id='".implode("' OR parent_id='",$parent_ids)."')";
+	}
         foreach($clues as $clue){
             $cases[]="(product_code LIKE '%$clue%' OR ru LIKE '%$clue%')";
         }
@@ -119,7 +118,7 @@ class MiSell extends Catalog{
                     stock_entries se USING (product_code)
                 WHERE $where
                 ORDER BY fetch_count - DATEDIFF(NOW(), fetch_stamp) DESC, product_code
-                LIMIT 20";
+                LIMIT 30";
         return $this->get_list($sql);
     }
     public function orderCalculate($order,$company_id){

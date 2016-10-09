@@ -58,7 +58,7 @@ $( document ).on( "pageinit", "#orderPage", function() {
         }
     });
 });
-
+location.hash="#homePage";
 //////////////////
 //CUSTOM FUNCTIONS
 //////////////////
@@ -106,6 +106,7 @@ function clientShow(){
     $("#clientdetails").trigger( "updatelayout");
     $("#clientdetailsBlock").show();
     $("#clientSelectButton").html(_selected_client.label);
+    $("#orderPageHeader").html(_selected_client.label+" / Заказ");
 }
 //////////////////////////
 //ORDER HANDLING
@@ -116,7 +117,7 @@ function loadSuggestions( q ){
     $ul.listview( "refresh" );
     $.get("./suggest",{q:q,parent_id:_selectedStockCat,company_id:_selected_client.company_id},function(response){
 	var suggested=App.json(response);
-        _suggest_list={}
+        _suggest_list={};
         var html = "";
         $.each( suggested, function ( i, val ) {
             _suggest_list[val.code]=val;
@@ -149,7 +150,11 @@ function orderAdd(){
     orderShow();
 }
 function orderSuggClick(pcode){
+    if(!pcode){
+	return ;
+    }
     _current_entry=_suggest_list[pcode];
+    console.log(pcode,_current_entry);
     $("#qtyPopup").popup( "open" );
     $("#qtyInput").val(_current_entry.spack);
     $("#qtyPopupHeader").html(_current_entry.name);
@@ -179,27 +184,29 @@ function orderSend(){
     $.post("./orderSend",{order:JSON.stringify(_orderCache),company_id:company_id},function(resp){
         $("#orderServerInteraction").html("<p>Заказ доставлен на сервер!</p>");
 	setTimeout(function(){$("#orderServerInteraction").popup("close");},1000);
-        _orderCache=[];
+        _orderCache={};
         orderShow();
     });
 }
 function format(num){
-    return Number(num).fixed(2);
+    return Number(num).toFixed(2);
 }
 function orderShow(){
     var html="",i=0,sum=0;
     $.each( _orderCache, function ( pcode, entry ) {
-        html+='<li>';
-        html+='<span style="width:60%;display:inline-block;overflow:hidden;"><a href="#" onclick="orderDelete('+pcode+')" style="text-decoration:none;color:red;">X</a> '+pcode+'</span>';
-        html+='<span style="width:20%;display:inline-block;overflow:hidden;"><a href="#" onclick="orderQtyEdit('+pcode+')">'+entry.qty+'</a>'+entry.unit+'</span>';
-        html+='<span style="width:20%;display:inline-block;overflow:hidden;">'+(format(entry.price)||'?')+'</span>';
-        html+='<br>'+(++i)+'. <i>'+entry.name+'</i></li>';
-        sum+=entry.price*entry.qty;
+	if( entry ){
+	    html+='<li>';
+	    html+='<span style="width:60%;display:inline-block;overflow:hidden;"><a href="#" onclick="orderDelete('+pcode+')" style="text-decoration:none;color:red;">X</a> '+pcode+'</span>';
+	    html+='<span style="width:20%;display:inline-block;overflow:hidden;"><a href="#" onclick="orderQtyEdit('+pcode+')">'+entry.qty+'</a>'+entry.unit+'</span>';
+	    html+='<span style="width:20%;display:inline-block;overflow:hidden;">'+(format(entry.price)||'?')+'</span>';
+	    html+='<br>'+(++i)+'. <i>'+entry.name+'</i></li>';
+	    sum+=entry.price*entry.qty;	    
+	}
     });
     $("#orderlist").html(html);
     $("#orderlist").listview("refresh");
     $("#orderlist").trigger( "updatelayout");
-    $("#orderSummary").html("Сумма: "+(format(sum)||'?')+"");
+    $("#orderSummary").html("Сумма: "+(format(sum)||'0')+"");
 }
 function logout(){
     Connector.sendRequest({mod:'Login',rq:'logout'},function(){
@@ -257,9 +264,9 @@ var db={$db};
 ORDER PAGE
 
 -->
-<div data-role="page" id="orderPage">
+<div data-role="page" id="orderPage" style="overflow-y: auto;">
     <div data-role="header" data-theme="b">
-        <h1>Заказ</h1>
+        <h1 id="orderPageHeader">Заказ</h1>
         <a href="#homePage" class="ui-btn ui-shadow ui-corner-all ui-icon-home ui-btn-icon-left">Домой</a>
         <a href="#right-panel" class="ui-btn ui-shadow ui-corner-all ui-btn-right ui-icon-bars ui-btn-icon-left">Меню</a>
     </div><!-- /header -->
@@ -310,18 +317,18 @@ ORDER PAGE
             <li data-role="list-divider">Категории товара</li>
             <ul id="stockCatTree" data-role="listview">
                 <li><a href="#right-panel" data-rel="close" id="stockBranch0" onclick="stockCatSelect(0)">Все</a></li>
-                {loop="d.stock_tree.children"}
-                {if="count($value.children)"}
+                {loop="d.stock_tree"}
+                {if="count($value->children)"}
                 <li data-role="collapsible" data-inset="false" data-iconpos="right">
-                    <h3><b>{$value.label}</b></h3>
+                    <h3><b>{$value->label}</b></h3>
                     <ul data-role="listview">
-                        {loop="value.children"}
+                        {loop="value->children"}
                         <li><a href="#right-panel"
                                data-rel="close"
-                               onclick="stockCatSelect('{$value.branch_id}')"
-                               id="stockBranch{$value.branch_id}"
+                               onclick="stockCatSelect('{$value->branch_id}')"
+                               id="stockBranch{$value->branch_id}"
                                style="padding-left:25px;">
-                               {$value.label}
+                               {$value->label}
                             </a>
                         </li>
                         {/loop}
@@ -330,9 +337,9 @@ ORDER PAGE
                 {else}
                 <li><a href="#right-panel"
                        data-rel="close"
-                       onclick="stockCatSelect('{$value.branch_id}')"
-                       id="stockBranch{$value.branch_id}">
-                       {$value.label}
+                       onclick="stockCatSelect('{$value->branch_id}')"
+                       id="stockBranch{$value->branch_id}">
+                       {$value->label}
                     </a>
                 </li>
                 {/if}

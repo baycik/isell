@@ -48,7 +48,7 @@ $( document ).on( "pageinit", "#orderPage", function() {
         }
     });
     $( "#autocomplete" ).on( "click", function ( e ){
-        orderSuggClick(e.target.getAttribute('data-product-code'));
+        orderSuggClick($(e.target).parent().data('product_code'));
     });
     $( document ).on( "swiperight", "#orderPage", function( e ) {
         if ( $( ".ui-page-active" ).jqmData( "panel" ) !== "open" ) {
@@ -58,7 +58,7 @@ $( document ).on( "pageinit", "#orderPage", function() {
         }
     });
 });
-
+location.hash="#homePage";
 //////////////////
 //CUSTOM FUNCTIONS
 //////////////////
@@ -106,6 +106,7 @@ function clientShow(){
     $("#clientdetails").trigger( "updatelayout");
     $("#clientdetailsBlock").show();
     $("#clientSelectButton").html(_selected_client.label);
+    $("#orderPageHeader").html(_selected_client.label+" / Заказ");
 }
 //////////////////////////
 //ORDER HANDLING
@@ -116,14 +117,14 @@ function loadSuggestions( q ){
     $ul.listview( "refresh" );
     $.get("./suggest",{q:q,parent_id:_selectedStockCat,company_id:_selected_client.company_id},function(response){
 	var suggested=App.json(response);
-        _suggest_list={}
+        _suggest_list={};
         var html = "";
         $.each( suggested, function ( i, val ) {
             _suggest_list[val.code]=val;
             html+="<li style='color:"+(val.instock==1?"green":"red")+"'";
             html+="data-product-code='"+val.code+"'>"
             html+="<div style='display:inline-block;width:5em;text-align:right;color:#999'>"+val.code+"</div>";
-            html+=" "+val.name+" <b>"+val.price+"</b> </li>";
+            html+=" <span>"+val.name+"</span> <b>"+val.price+"</b> </li>";
         });
         $ul.html( html );
         $ul.listview( "refresh" );
@@ -149,7 +150,11 @@ function orderAdd(){
     orderShow();
 }
 function orderSuggClick(pcode){
+    if(!pcode){
+	return ;
+    }
     _current_entry=_suggest_list[pcode];
+    console.log(pcode,_current_entry);
     $("#qtyPopup").popup( "open" );
     $("#qtyInput").val(_current_entry.spack);
     $("#qtyPopupHeader").html(_current_entry.name);
@@ -179,32 +184,29 @@ function orderSend(){
     $.post("./orderSend",{order:JSON.stringify(_orderCache),company_id:company_id},function(resp){
         $("#orderServerInteraction").html("<p>Заказ доставлен на сервер!</p>");
 	setTimeout(function(){$("#orderServerInteraction").popup("close");},1000);
-        _orderCache=[];
+        _orderCache={};
         orderShow();
     });
 }
 function format(num){
-   var parts=(Math.round(num*100)/100+'').split('.');
-   if(parts[0]&&parts[1]){
-        parts[1]+=parts[1]?(parts[1].length===1?'0':''):'00';
-        return parts.join('.');
-    }
-    return NaN;
+    return Number(num).toFixed(2);
 }
 function orderShow(){
     var html="",i=0,sum=0;
     $.each( _orderCache, function ( pcode, entry ) {
-        html+='<li>';
-        html+='<span style="width:60%;display:inline-block;overflow:hidden;"><a href="#" onclick="orderDelete('+pcode+')" style="text-decoration:none;color:red;">X</a> '+pcode+'</span>';
-        html+='<span style="width:20%;display:inline-block;overflow:hidden;"><a href="#" onclick="orderQtyEdit('+pcode+')">'+entry.qty+'</a>'+entry.unit+'</span>';
-        html+='<span style="width:20%;display:inline-block;overflow:hidden;">'+(format(entry.price)||'?')+'</span>';
-        html+='<br>'+(++i)+'. <i>'+entry.name+'</i></li>';
-        sum+=entry.price*entry.qty;
+	if( entry ){
+	    html+='<li>';
+	    html+='<span style="width:60%;display:inline-block;overflow:hidden;"><a href="#" onclick="orderDelete('+pcode+')" style="text-decoration:none;color:red;">X</a> '+pcode+'</span>';
+	    html+='<span style="width:20%;display:inline-block;overflow:hidden;"><a href="#" onclick="orderQtyEdit('+pcode+')">'+entry.qty+'</a>'+entry.unit+'</span>';
+	    html+='<span style="width:20%;display:inline-block;overflow:hidden;">'+(format(entry.price)||'?')+'</span>';
+	    html+='<br>'+(++i)+'. <i>'+entry.name+'</i></li>';
+	    sum+=entry.price*entry.qty;	    
+	}
     });
     $("#orderlist").html(html);
     $("#orderlist").listview("refresh");
     $("#orderlist").trigger( "updatelayout");
-    $("#orderSummary").html("Сумма: "+(format(sum)||'?')+"");
+    $("#orderSummary").html("Сумма: "+(format(sum)||'0')+"");
 }
 function logout(){
     Connector.sendRequest({mod:'Login',rq:'logout'},function(){
@@ -262,9 +264,9 @@ var db=<?php echo $db;?>;
 ORDER PAGE
 
 -->
-<div data-role="page" id="orderPage">
+<div data-role="page" id="orderPage" style="overflow-y: auto;">
     <div data-role="header" data-theme="b">
-        <h1>Заказ</h1>
+        <h1 id="orderPageHeader">Заказ</h1>
         <a href="#homePage" class="ui-btn ui-shadow ui-corner-all ui-icon-home ui-btn-icon-left">Домой</a>
         <a href="#right-panel" class="ui-btn ui-shadow ui-corner-all ui-btn-right ui-icon-bars ui-btn-icon-left">Меню</a>
     </div><!-- /header -->
@@ -315,18 +317,18 @@ ORDER PAGE
             <li data-role="list-divider">Категории товара</li>
             <ul id="stockCatTree" data-role="listview">
                 <li><a href="#right-panel" data-rel="close" id="stockBranch0" onclick="stockCatSelect(0)">Все</a></li>
-                <?php $counter1=-1; if( isset($d["stock_tree"]["children"]) && is_array($d["stock_tree"]["children"]) && sizeof($d["stock_tree"]["children"]) ) foreach( $d["stock_tree"]["children"] as $key1 => $value1 ){ $counter1++; ?>
-                <?php if( count($value1["children"]) ){ ?>
+                <?php $counter1=-1; if( isset($d["stock_tree"]) && is_array($d["stock_tree"]) && sizeof($d["stock_tree"]) ) foreach( $d["stock_tree"] as $key1 => $value1 ){ $counter1++; ?>
+                <?php if( count($value1->children) ){ ?>
                 <li data-role="collapsible" data-inset="false" data-iconpos="right">
-                    <h3><b><?php echo $value1["label"];?></b></h3>
+                    <h3><b><?php echo $value1->label;?></b></h3>
                     <ul data-role="listview">
-                        <?php $counter2=-1; if( isset($value1["children"]) && is_array($value1["children"]) && sizeof($value1["children"]) ) foreach( $value1["children"] as $key2 => $value2 ){ $counter2++; ?>
+                        <?php $counter2=-1; if( isset($value1->children) && is_array($value1->children) && sizeof($value1->children) ) foreach( $value1->children as $key2 => $value2 ){ $counter2++; ?>
                         <li><a href="#right-panel"
                                data-rel="close"
-                               onclick="stockCatSelect('<?php echo $value2["branch_id"];?>')"
-                               id="stockBranch<?php echo $value2["branch_id"];?>"
+                               onclick="stockCatSelect('<?php echo $value2->branch_id;?>')"
+                               id="stockBranch<?php echo $value2->branch_id;?>"
                                style="padding-left:25px;">
-                               <?php echo $value2["label"];?>
+                               <?php echo $value2->label;?>
                             </a>
                         </li>
                         <?php } ?>
@@ -335,9 +337,9 @@ ORDER PAGE
                 <?php }else{ ?>
                 <li><a href="#right-panel"
                        data-rel="close"
-                       onclick="stockCatSelect('<?php echo $value1["branch_id"];?>')"
-                       id="stockBranch<?php echo $value1["branch_id"];?>">
-                       <?php echo $value1["label"];?>
+                       onclick="stockCatSelect('<?php echo $value1->branch_id;?>')"
+                       id="stockBranch<?php echo $value1->branch_id;?>">
+                       <?php echo $value1->label;?>
                     </a>
                 </li>
                 <?php } ?>
