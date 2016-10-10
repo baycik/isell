@@ -19,7 +19,7 @@
 		props: {},
 		signedIn:false,
 		getData: function () {
-		    $.get("User/getUserData", function (resp) {
+		    App.get("User/getUserData", function (resp) {
 			App.user.setProps( App.json(resp) );
 		    });
 		},
@@ -44,7 +44,7 @@
 		signIn: function () {
 		    var user_login=$("#user_login").val();
 		    var user_pass=$("#user_pass").val();
-		    $.post("User/SignIn",{login:user_login,pass:user_pass},function(resp){
+		    App.post("User/SignIn",{login:user_login,pass:user_pass},function(resp){
 			var props=App.json(resp);
 			if( props ){
 			    $("#SeqDialogMsg").html("");
@@ -55,11 +55,11 @@
 		    });
 		},
 		signOut: function () {
-		    $.get("User/SignOut");
+		    App.get("User/SignOut");
 		    this.setProps({});
 		},
                 edit:function(){
-                    $.post("User/userFetch",function(resp){
+                    App.post("User/userFetch",function(resp){
                         var props=App.json(resp);
                         App.user.promptEditor(props);
                     });
@@ -67,7 +67,7 @@
                 promptEditor:function( user ){
                     App.loadWindow('page/dialog/user_edit',user).progress(function(status,user_data){
                         if( status==='submit' ){
-                            $.post("User/save",user_data,function(ok){
+                            App.post("User/save",user_data,function(ok){
                                 if( ok*1 ){
                                     App.user.getData();
                                     App.flash("Свойства пользователя сохранены");
@@ -89,7 +89,7 @@
 		    $("#loginScreen,#loginOverlay").hide();
 		},
                 acompSwitch:function(){
-                    $.get("Company/switchActiveCompany",function(resp){
+                    App.get("Company/switchActiveCompany",function(resp){
                         var company=App.json(resp);
 			App.user.setActiveCompany(company);
                     });
@@ -106,7 +106,7 @@
 			if( App.pcomp && App.pcomp.company_id===company.company_id ){
 			    return;
 			}
-			$.post('Company/selectPassiveCompany/' + company.company_id, function (xhr) {
+			App.post('Company/selectPassiveCompany/' + company.company_id, function (xhr) {
 			    App.user.setPassiveCompany(App.json(xhr));
 			});
 		    }

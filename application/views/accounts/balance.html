@@ -42,7 +42,7 @@
 	    if( App.page_accounts_balance.firstDay && App.page_accounts_balance.lastDay ){
                 App.page_accounts_balance.first_loaded=true;
 		var url='AccountsCore/accountBalanceTreeFetch/' + App.uri((param['id'] || 0), App.toIso(App.page_accounts_balance.firstDay), App.toIso(App.page_accounts_balance.lastDay),App.page_accounts_balance.unused_shown*1);
-		$.get(url,function(resp){
+		App.get(url,function(resp){
 		    var rows=App.json(resp);
 		    success(rows?rows:[]);
 		});
@@ -149,7 +149,7 @@
 	    return true;
 	},
 	delete: function (branch_id, label) {
-	    $.get('AccountsData/balanceTreeDelete/' + branch_id,function (resp) {
+	    App.get('AccountsData/balanceTreeDelete/' + branch_id,function (resp) {
 		if ( resp > 0 ) {
 		    $('#page_accounts_balance_dg').treegrid('remove', branch_id);
 		    App.flash("Удалено: " + resp + " записей " + label);

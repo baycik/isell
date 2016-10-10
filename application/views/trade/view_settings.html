@@ -24,13 +24,13 @@
 	    }
 	},
 	fieldChanged:function( field, value, is_extra, title ){
-	    $.post( App.uri('DocumentView','viewUpdate',this.data.doc_view_id,is_extra,field,value), function(xhr){
+	    App.post( App.uri('DocumentView','viewUpdate',this.data.doc_view_id,is_extra,field,value), function(xhr){
 		App.page_trade_view_settings.handler.notify('changed');
 		App.flash(xhr*1?"Сохранено: "+title:"Ошибка сохранения "+title);
 	    });
 	},
 	deleteView:function(){
-	    $.post( App.uri('DocumentView','viewDelete',this.data.doc_view_id), function(xhr){
+	    App.post( App.uri('DocumentView','viewDelete',this.data.doc_view_id), function(xhr){
 		App.page_trade_view_settings.handler.notify('deleted');
 		App.page_trade_view_settings.node.window('close');
 	    });	    

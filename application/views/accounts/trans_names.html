@@ -29,7 +29,7 @@
 		this.checkNewModified();
 		return;
 	    }
-	    $.post(App.uri("AccountsData","transNameUpdate",this.data.trans_type,field,value),function(ok){
+	    App.post(App.uri("AccountsData","transNameUpdate",this.data.trans_type,field,value),function(ok){
 		if(ok*1){
 		    App.flash("Сохранено: "+title+" "+value);
 		    if( field==='acc_debit_code' ){
@@ -49,7 +49,7 @@
 	    var debit_code=$("#Tnames_acc_debit_code").textbox("getValue");
 	    var credit_code=$("#Tnames_acc_credit_code").textbox("getValue");
 	    if( debit_code && credit_code ){
-		$.post("AccountsData/transNameCreate/"+debit_code+'/'+credit_code,function(ok){
+		App.post("AccountsData/transNameCreate/"+debit_code+'/'+credit_code,function(ok){
 		    if( ok*1 ){
 			Tnames.data.trans_type=debit_code+'_'+credit_code;
 			$("#Tnames_user_level").combobox('enable',true);

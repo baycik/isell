@@ -95,7 +95,7 @@
 		for(var i in rows){
 		    row_ids.push(rows[i].row_id);
 		}
-		$.post("Importer/deleteRows/",{row_ids:row_ids.join(',')},function(ok){
+		App.post("Importer/deleteRows/",{row_ids:row_ids.join(',')},function(ok){
 		    if( ok*1 ){
 			App.flash("Удалено "+ok+" строк");
 			$('#page_dialog_importer_dg').datagrid('reload');
@@ -108,7 +108,7 @@
 	},
 	deleteAll:function(){
 	    if( confirm("Удалить строчки с меткой '"+App.page_dialog_importer.label+"'?") ){
-		$.post("Importer/deleteAll/"+App.page_dialog_importer.label,function(ok){
+		App.post("Importer/deleteAll/"+App.page_dialog_importer.label,function(ok){
 		    if( ok*1 ){
 			App.flash("Удалено строчки с меткой '"+App.page_dialog_importer.label+"'");
 			$('#page_dialog_importer_dg').datagrid('reload');
@@ -126,7 +126,7 @@
 	    $('#page_dialog_importer_dg').datagrid('reload');
 	},
 	loader:function(param, success, error){
-	    $.post('Importer/getRows/'+App.page_dialog_importer.label,param,function(xhr){
+	    App.post('Importer/getRows/'+App.page_dialog_importer.label,param,function(xhr){
 		success(App.json(xhr));
 	    });
 	},

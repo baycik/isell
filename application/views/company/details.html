@@ -54,7 +54,7 @@
 	},
 	load:function( company_id ){
 	    if( company_id*1 ){
-		$.get('Company/companyGet/'+company_id,function(xhr){
+		App.get('Company/companyGet/'+company_id,function(xhr){
 		    Cdet.data=App.json(xhr);
 		    Cdet.setup();
 		    Cdet.setTitle();
@@ -65,7 +65,7 @@
 	    this.node.panel('setTitle','Реквизиты компании '+(Cdet.data.label==='null'?Cdet.data.label:'') );
 	},
 	updateField:function(field,value,title){
-	    $.post('Company/companyUpdate/'+App.uri(Cdet.data.company_id*1,field,value),function(ok){
+	    App.post('Company/companyUpdate/'+App.uri(Cdet.data.company_id*1,field,value),function(ok){
 		if( ok*1 ){
 		    Cdet.data[field]=value;
 		    App.flash("Сохранено: " + title);
@@ -86,7 +86,7 @@
 	},
 	makeActive:function(){
 	    if( confirm("Сделать компанию "+Cdet.data.label+" активной?") ){
-		$.post('Company/companyMakeActive/'+Cdet.data.company_id,function(ok){
+		App.post('Company/companyMakeActive/'+Cdet.data.company_id,function(ok){
 		    if( ok*1 ){
 			Cdet.data['is_active']=1;
 			Cdet.makeActiveButtonCheck();

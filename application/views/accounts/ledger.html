@@ -47,7 +47,7 @@
 		if( Ledger.data.passive_filter && !App.pcomp.company_id ){
 		    return;//Pcomp not yet selected
 		}
-		$.get("AccountsData/accountFavoritesFetch/"+(Ledger.data.passive_filter?1:0),function(resp){
+		App.get("AccountsData/accountFavoritesFetch/"+(Ledger.data.passive_filter?1:0),function(resp){
 		    var favs=App.json(resp);
 		    if( favs[0] ){
                         Ledger.fav.favs=favs;
@@ -72,7 +72,7 @@
 	    },
 	    toggle:function(){
 		Ledger.acc_props.is_favorite=Ledger.acc_props.is_favorite*1?0:1;
-		$.post("AccountsData/accountFavoritesToggle/"+App.uri(Ledger.acc_props.acc_code,Ledger.acc_props.is_favorite,Ledger.data.passive_filter?1:0),function(ok){
+		App.post("AccountsData/accountFavoritesToggle/"+App.uri(Ledger.acc_props.acc_code,Ledger.acc_props.is_favorite,Ledger.data.passive_filter?1:0),function(ok){
 		    Ledger.fav.init();
 		    App.renderTpl('Ledger_acc_props',Ledger.acc_props);
 		});
@@ -93,7 +93,7 @@
                     return str.replace('$','&#36;');
                 };
 		if( Ledger.current_acc_code ){
-		    $.get("AccountsData/transNameListFetch/"+Ledger.current_acc_code,function(resp){
+		    App.get("AccountsData/transNameListFetch/"+Ledger.current_acc_code,function(resp){
 			App.renderTpl('ledger_tnames',{tnames:App.json(resp)});
 		    });
 		}
@@ -175,7 +175,7 @@
 		if( Ledger.current_acc_code && Ledger.idate && Ledger.fdate ){
 		    Ledger.current_page=param.page;
 		    Ledger.current_rows=param.rows;
-		    $.get(App.uri('AccountsCore', 'ledgerFetch', Ledger.current_acc_code, App.toIso(Ledger.idate), App.toIso(Ledger.fdate), Ledger.current_page, Ledger.current_rows), {filterRules: param.filterRules}, function (xhr) {
+		    App.get(App.uri('AccountsCore', 'ledgerFetch', Ledger.current_acc_code, App.toIso(Ledger.idate), App.toIso(Ledger.fdate), Ledger.current_page, Ledger.current_rows), {filterRules: param.filterRules}, function (xhr) {
 			var resp = App.json(xhr);
 			if( resp.sub_totals ){
 			    Ledger.sub_totals = resp.sub_totals;
@@ -295,7 +295,7 @@
 	    rowDelete:function(){
 		var row=$('#account_ledger_dg').datagrid('getSelected');
 		if( row.editable*1 && row.trans_id && confirm("Удалить проводку?") ){
-		    $.post("AccountsCore/transDelete/"+row.trans_id,function(ok){
+		    App.post("AccountsCore/transDelete/"+row.trans_id,function(ok){
 			if( ok*1 ){
 			    App.flash("Проводка удалена");
 			    $('#account_ledger_dg').datagrid('reload');
@@ -330,7 +330,7 @@
 	    openDoc:function(){
 		var row=$('#account_ledger_dg').datagrid('getSelected');
 		if( row.trans_id ){
-		    $.get("AccountsCore/transGetDocId/"+row.trans_id,function(doc_id){
+		    App.get("AccountsCore/transGetDocId/"+row.trans_id,function(doc_id){
 			Ledger.documentOpen(doc_id);
 		    });
 		}

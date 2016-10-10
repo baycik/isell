@@ -137,7 +137,7 @@ class HubBase extends CI_Controller{
 	}
     }
     
-    private function kick_out() {
+    public function kick_out() {
 	$this->rtype = 'kickout';
 	$this->response('');
     }

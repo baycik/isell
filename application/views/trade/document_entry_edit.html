@@ -35,7 +35,7 @@
 	    if( DocEntEd.suppressUpdate===true ){
 		return;
 	    }
-	    $.post( App.uri('DocumentItems','entryUpdate',DocEntEd.data.head.doc_id,DocEntEd.data.doc_entry_id),{name:name,value:value}, function(ok){
+	    App.post( App.uri('DocumentItems','entryUpdate',DocEntEd.data.head.doc_id,DocEntEd.data.doc_entry_id),{name:name,value:value}, function(ok){
 		if(ok*1){
 		    DocEntEd.handler.notify('change');
 		    DocEntEd.data[name]=value;
@@ -48,7 +48,7 @@
 	    });
 	},
 	getStats:function(){
-	    $.post( App.uri('DocumentItems','entryStatsGet',DocEntEd.data.head.doc_id,DocEntEd.data.product_code), function(xhr){
+	    App.post( App.uri('DocumentItems','entryStatsGet',DocEntEd.data.head.doc_id,DocEntEd.data.product_code), function(xhr){
 		DocEntEd.stats=App.json(xhr);
 		DocEntEd.renderStats();
 	    });

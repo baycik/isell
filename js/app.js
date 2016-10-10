@@ -106,8 +106,32 @@ var App = {
 	    $('#appWindowContainer').append('<div id="' + id + '" class="app_window"></div>');
 	}
 	return App.loadModule(path, data || {});
+    },
+    sequence:[],
+    seqWait:false,
+    seqNext:function(){
+	if( this.seqWait || this.sequence.length===0 ){
+	    return;
+	}
+	this.seqSend( this.sequence.shift() );
+    },
+    seqSend:function( rq ){
+	this.wait=true;
+	$.post.apply(null,rq.args).always(function(){
+	    App.seqWait=false;
+	    App.seqNext();
+	});
+    },
+    get:function(){
+	this.sequence.push({type:'GET',args:arguments});
+	this.seqNext();
+    },
+    post:function(){
+	this.sequence.push({type:'POST',args:arguments});
+	this.seqNext();
     }
 };
+
 $(App.init);
 //////////////////////////////////////////////////
 //UTILS

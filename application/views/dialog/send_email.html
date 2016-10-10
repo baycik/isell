@@ -18,7 +18,7 @@
 		var data=App.collectForm('#dialog_send_email_frm');
                 if( data.to ){
 		    App.page_dialog_send_email.node.find('.submit').attr('disabled','disabled');
-                    $.post('Utils/postEmail',data,function(ok){
+                    App.post('Utils/postEmail',data,function(ok){
                         if( ok*1 ){
                             App.flash("Сообщение было отправлено на "+data.to);
                         } else {

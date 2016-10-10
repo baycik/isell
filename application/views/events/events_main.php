@@ -7,7 +7,7 @@ EventsJs={
 	this.activeDatesGet();
     },
     activeDatesGet:function(){
-	$.get("Events/activeDatesGet",function(resp){
+	App.get("Events/activeDatesGet",function(resp){
 	    EventsJs.activeDates=App.json(resp);
 	    $("#event_calendar").calendar();
 	    EventsJs.tile.load();
@@ -43,7 +43,7 @@ EventsJs={
     tile:{
 	event_list:[],
 	load:function(){
-	    $.get("Events/listFetch/"+EventsJs.selectedDay,function(resp){
+	    App.get("Events/listFetch/"+EventsJs.selectedDay,function(resp){
 		EventsJs.tile.event_list=App.json(resp);
                 var event_list_tmp=[];
 		var event_label='---';
@@ -73,7 +73,7 @@ EventsJs={
 	    }
 	},
 	updateEvent:function(event){
-            $.post('Events/eventSave/'+event.event_id,event,function( resp ){
+            App.post('Events/eventSave/'+event.event_id,event,function( resp ){
                 App.flash("Запись сохранена: " + event.event_name);
 		EventsJs.tile.load();               
             });
@@ -93,7 +93,7 @@ EventsJs={
 	delete:function(node){
 	    var index=node?$(node).data('event-index'):$(".event_tile_item_row_selected").data('event-index');
             if (confirm('Удалить запись?') && EventsJs.tile.event_list[index].event_id) {
-                $.post('Events/eventDelete/'+EventsJs.tile.event_list[index].event_id,function(ok){
+                App.post('Events/eventDelete/'+EventsJs.tile.event_list[index].event_id,function(ok){
 		    if( ok*1 ){
 			App.flash("Запись удалена");
 			EventsJs.tile.load();
@@ -109,7 +109,7 @@ EventsJs={
 	    var event_id=index?EventsJs.tile.event_list[index].event_id:0;
 	    App.loadWindow("page/events/move").progress(function(status,newdate,mode){
 		if( status==='move' ){
-		    $.post("Events/eventMove/"+App.uri(event_id,newdate,mode,EventsJs.selectedDay,label),function(ok){
+		    App.post("Events/eventMove/"+App.uri(event_id,newdate,mode,EventsJs.selectedDay,label),function(ok){
 			if( ok*1 ){
 			    App.flash("Запись перенесена");
 			    EventsJs.activeDatesGet();

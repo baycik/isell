@@ -15,7 +15,7 @@
 	    this.load();
 	},
 	load:function(){
-	    $.get('Company/companyPrefsGet',function(resp){
+	    App.get('Company/companyPrefsGet',function(resp){
 		if( resp ){
 		    CompPrefs.prefData=App.json(resp);
 		    CompPrefs.processDiscounts(CompPrefs.prefData);
@@ -24,7 +24,7 @@
 	    });
 	},
 	update:function(type, id, value, title){
-	    $.post( App.uri('Company','companyPrefsUpdate', type, id, value), function(ok){
+	    App.post( App.uri('Company','companyPrefsUpdate', type, id, value), function(ok){
 		if( ok*1 ){
 		    App.flash("Сохранено: "+title);
 		} else {
