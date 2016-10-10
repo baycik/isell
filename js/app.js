@@ -117,17 +117,17 @@ var App = {
     },
     seqSend:function( rq ){
 	this.wait=true;
-	$.post.apply(null,rq.args).always(function(){
+	$[rq.type].apply(null,rq.args).always(function(){
 	    App.seqWait=false;
 	    App.seqNext();
 	});
     },
     get:function(){
-	this.sequence.push({type:'GET',args:arguments});
+	this.sequence.push({type:'get',args:arguments});
 	this.seqNext();
     },
     post:function(){
-	this.sequence.push({type:'POST',args:arguments});
+	this.sequence.push({type:'post',args:arguments});
 	this.seqNext();
     }
 };
