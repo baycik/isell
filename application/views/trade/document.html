@@ -44,7 +44,7 @@
 	},
 	create:function(){
 	    var createDef=$.Deferred();
-	    App.post('DocumentItems/createDocument',function(doc_id){
+	    $.post('DocumentItems/createDocument',function(doc_id){
 		if( doc_id*1 ){
 		    Doc.head.load(doc_id,true,createDef);
                     createDef.notify('created');
@@ -75,7 +75,7 @@
             }
 	    Doc.head.props.doc_id=doc_id;
 	    Doc.isCreated=!!doc_id;
-	    App.get('DocumentItems/headGet/' + Doc.head.props.doc_id, function (xhr) {
+	    $.get('DocumentItems/headGet/' + Doc.head.props.doc_id, function (xhr) {
 		Doc.head.props = App.json(xhr);
                 Doc.head.set();
                 Doc.view.loadTile();
@@ -135,7 +135,7 @@
 	update:function( field, value, oldval ){
 	    if( Doc.head.allowUpdate && value!==oldval ){
 		if( Doc.isCreated ){
-                    App.post('DocumentItems/headUpdate/',{field:field,new_val:value},function(ok){
+                    $.post('DocumentItems/headUpdate/',{field:field,new_val:value},function(ok){
 			Doc.head.afterUpdate( ok, field, value, oldval );
 		    });
 		} else {
@@ -216,7 +216,7 @@
 		success([{company_id:Doc.head.props.passive_company_id,label:Doc.head.props.label}]);
 		return;
 	    }
-	    App.get('Company/listFetch/', param, function (xhr) {
+	    $.get('Company/listFetch/', param, function (xhr) {
 		var resp = App.json(xhr);
 		success(resp[0] ? resp : []);
 	    });   
@@ -238,7 +238,7 @@
 		App.flash("Документ пуст.");
 		return;
 	    }
-	    App.get("Company/companyGet/"+Doc.head.props.passive_company_id, function ( xhr ) {
+	    $.get("Company/companyGet/"+Doc.head.props.passive_company_id, function ( xhr ) {
 		var passive_data=App.json(xhr);
 		var data={to:passive_data.company_mobile,body:Doc.head.props.doc_data};
 		App.loadWindow('page/dialog/send_sms',data);	    
@@ -249,7 +249,7 @@
 		App.flash("Документ пуст.");
 		return;
 	    }
-	    App.get("Company/companyGet/"+Doc.head.props.passive_company_id, function ( xhr ) {
+	    $.get("Company/companyGet/"+Doc.head.props.passive_company_id, function ( xhr ) {
 		var passive_data=App.json(xhr);
 		var fvalue={
 		    event_id:0,
@@ -266,7 +266,7 @@
 	},
 	commit:function(){
 	    if( Doc.isCreated ){
-		App.post("DocumentItems/entryDocumentCommit/"+Doc.head.props.doc_id, function ( ok ) {
+		$.post("DocumentItems/entryDocumentCommit/"+Doc.head.props.doc_id, function ( ok ) {
 		    if( ok*1 ){
 			Doc.head.allowUpdate=false;
 			Doc.head.reload();
@@ -286,7 +286,7 @@
 	    if( action==='delete' && !confirm("Удалить документ?") ){
 		return;
 	    }
-	    App.post("DocumentItems/entryDocumentUncommit/"+Doc.head.props.doc_id, function ( ok ) {
+	    $.post("DocumentItems/entryDocumentUncommit/"+Doc.head.props.doc_id, function ( ok ) {
 		if( ok*1 ){
 		    if( action==='uncommit' ){
 			Doc.head.reload();
@@ -305,7 +305,7 @@
 		return;
 	    }
 	    if( confirm("Создать копию этого документа?") ){
-		App.post("DocumentItems/duplicate/"+Doc.head.props.doc_id,function(doc_id){
+		$.post("DocumentItems/duplicate/"+Doc.head.props.doc_id,function(doc_id){
 		    if( doc_id*1 ){
 			Doc.head.load(doc_id);
 			Doc.handler.notify('created',doc_id);
@@ -349,7 +349,7 @@
 		App.flash("Документ должен быть не проведен");
 		return;
 	    }
-	    App.post("DocumentItems/import/"+Doc.head.props.doc_id,fvalue,function(ok){
+	    $.post("DocumentItems/import/"+Doc.head.props.doc_id,fvalue,function(ok){
 		App.flash("Импортировано "+ok);
 		Importer.reload();
 		Doc.entries.reload();
@@ -371,7 +371,7 @@
         },
 	loader: function (param, success, error) {
 	    if( Doc.isCreated ){
-		App.post("DocumentItems/entryDocumentGet/"+Doc.head.props.doc_id, function ( xhr ) {
+		$.post("DocumentItems/entryDocumentGet/"+Doc.head.props.doc_id, function ( xhr ) {
 		    var resp = App.json(xhr);
                     var entries=Doc.entries.enumerate(resp.entries ? resp.entries : []);
 		    success(entries);
@@ -386,7 +386,7 @@
 	add:function( code, qty ){
 	    if( code && qty ){
 		if( Doc.isCreated ){
-		    App.post("DocumentItems/entryPostAdd/",{doc_id:Doc.head.props.doc_id,code:code,quantity:qty},function(ok){
+		    $.post("DocumentItems/entryPostAdd/",{doc_id:Doc.head.props.doc_id,code:code,quantity:qty},function(ok){
 			if( ok*1 ){
 			    Doc.entries.reload();
 			}
@@ -430,7 +430,7 @@
 		rows.forEach(function(row){
 		    ids.push(row.doc_entry_id);
 		});
-		App.post(App.uri('DocumentItems','entryDelete',Doc.head.props.doc_id,ids.join(',')), function () {
+		$.post(App.uri('DocumentItems','entryDelete',Doc.head.props.doc_id,ids.join(',')), function () {
 		    Doc.entries.reload();
 		});		
 	    }
@@ -468,7 +468,7 @@
 	    }
 	    App.loadWindow('page/trade/document_recalculate').progress(function(state,data){
 		if( state==='submit' ){
-		    App.post("DocumentItems/recalc/"+Doc.head.props.doc_id+'/'+(data.recalc_proc*1||0), function ( xhr ) {
+		    $.post("DocumentItems/recalc/"+Doc.head.props.doc_id+'/'+(data.recalc_proc*1||0), function ( xhr ) {
 			Doc.entries.reload();
                         Doc.handler.notify('head_changed');
 		    });
@@ -516,7 +516,7 @@
 	},
 	loader:function(param, success, error){
 	    if( param.q ){
-		App.get("DocumentItems/suggestFetch/",param, function ( xhr ) {
+		$.get("DocumentItems/suggestFetch/",param, function ( xhr ) {
 		    Doc.suggest.rows=App.json(xhr) || [];
 		    success( Doc.suggest.rows );
 		});		
@@ -548,7 +548,7 @@
     Doc.view={
 	loadTile:function(){
             if( Doc.isCreated ){
-                App.get('DocumentView/viewListFetch/'+Doc.head.props.doc_id, function (xhr) {
+                $.get('DocumentView/viewListFetch/'+Doc.head.props.doc_id, function (xhr) {
                     Doc.view.views = Doc.view.compile(App.json(xhr));
                     App.renderTpl('Doc_view_tile',{views:Doc.view.views});
                 });
@@ -580,7 +580,7 @@
 	    }
 	},
 	create:function(view_type_id){
-	    App.post("DocumentView/viewCreate/"+view_type_id,function(doc_view_id){
+	    $.post("DocumentView/viewCreate/"+view_type_id,function(doc_view_id){
 		if( doc_view_id*1 ){
 		    Doc.view.open(doc_view_id);
 		    Doc.view.loadTile();
