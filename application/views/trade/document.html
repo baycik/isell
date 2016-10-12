@@ -75,7 +75,7 @@
             }
 	    Doc.head.props.doc_id=doc_id;
 	    Doc.isCreated=!!doc_id;
-	    App.get('DocumentItems/headGet/' + Doc.head.props.doc_id, function (xhr) {
+	    $.get('DocumentItems/headGet/' + Doc.head.props.doc_id, function (xhr) {
 		Doc.head.props = App.json(xhr);
                 Doc.head.set();
                 Doc.view.loadTile();
@@ -216,7 +216,7 @@
 		success([{company_id:Doc.head.props.passive_company_id,label:Doc.head.props.label}]);
 		return;
 	    }
-	    App.get('Company/listFetch/', param, function (xhr) {
+	    $.get('Company/listFetch/', param, function (xhr) {
 		var resp = App.json(xhr);
 		success(resp[0] ? resp : []);
 	    });   
@@ -238,7 +238,7 @@
 		App.flash("Документ пуст.");
 		return;
 	    }
-	    App.get("Company/companyGet/"+Doc.head.props.passive_company_id, function ( xhr ) {
+	    $.get("Company/companyGet/"+Doc.head.props.passive_company_id, function ( xhr ) {
 		var passive_data=App.json(xhr);
 		var data={to:passive_data.company_mobile,body:Doc.head.props.doc_data};
 		App.loadWindow('page/dialog/send_sms',data);	    
@@ -249,7 +249,7 @@
 		App.flash("Документ пуст.");
 		return;
 	    }
-	    App.get("Company/companyGet/"+Doc.head.props.passive_company_id, function ( xhr ) {
+	    $.get("Company/companyGet/"+Doc.head.props.passive_company_id, function ( xhr ) {
 		var passive_data=App.json(xhr);
 		var fvalue={
 		    event_id:0,
@@ -516,7 +516,7 @@
 	},
 	loader:function(param, success, error){
 	    if( param.q ){
-		App.get("DocumentItems/suggestFetch/",param, function ( xhr ) {
+		$.get("DocumentItems/suggestFetch/",param, function ( xhr ) {
 		    Doc.suggest.rows=App.json(xhr) || [];
 		    success( Doc.suggest.rows );
 		});		
@@ -548,7 +548,7 @@
     Doc.view={
 	loadTile:function(){
             if( Doc.isCreated ){
-                App.get('DocumentView/viewListFetch/'+Doc.head.props.doc_id, function (xhr) {
+                $.get('DocumentView/viewListFetch/'+Doc.head.props.doc_id, function (xhr) {
                     Doc.view.views = Doc.view.compile(App.json(xhr));
                     App.renderTpl('Doc_view_tile',{views:Doc.view.views});
                 });

@@ -2,7 +2,7 @@
 require_once 'DocumentCore.php';
 class DocumentItems extends DocumentCore{
     public function suggestFetch(){
-	$q=$this->input->get('q');
+	$q=$this->request('q');
 	$clues=  explode(' ', $q);
 	$company_lang = $this->Base->pcomp('language');
 	$where=array();
