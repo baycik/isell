@@ -153,13 +153,14 @@ class MiSell extends Catalog{
     public function orderSend(){
 	$order=$this->request('order','json');
 	$company_id=$this->request('company_id');
+	$comment=$this->request('comment');
          if( !$this->checkCompanyId($company_id) ){
             return "Can't use this client!!!";
         }
 	$this->Base->load_model('Company')->selectPassiveCompany($company_id);
 	$Document=$this->Base->load_model('DocumentItems');
 	$Document->createDocument(1);
-	$Document->headUpdate( "doc_data",'Заказ с приложения' );
+	$Document->headUpdate( "doc_data",$comment.' (заказ с приложения)' );
         foreach($order as $product_code=>$entry){
             $Document->entryAdd( $product_code, $entry['qty'] );
         }

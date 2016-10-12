@@ -30,14 +30,23 @@ body{
 </style>
 <link rel="stylesheet" href="http://code.jquery.com/mobile/1.4.0/jquery.mobile-1.4.0.min.css" />
 <script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
-<script src="http://code.jquery.com/mobile/1.4.0/jquery.mobile-1.4.0.min.js"></script>
+<script src="application/plugins/MiSell/../../js/mobile/jquery.mobile-1.4.5.min.js"></script>
 <script type="text/javascript">
+var _orderCache={},
+    _current_entry={},
+    _suggest_list={},
+    _selectedStockCat=0;
+    
+location.hash="#homePage";
+
 $( document ).on( "pageinit", "#homePage", function() {
+    init();
     $("#clientSelect").on("click", function(e){
         clientSelect(e.target.getAttribute('data-client-id'));
     });
 });
 $( document ).on( "pageinit", "#orderPage", function() {
+    orderShow();
     stockCatSelect(_selectedStockCat);
     $( "#autocomplete" ).on( "filterablebeforefilter", function ( e, data ) {
         var $input = $( data.input ),
@@ -48,7 +57,7 @@ $( document ).on( "pageinit", "#orderPage", function() {
         }
     });
     $( "#autocomplete" ).on( "click", function ( e ){
-        orderSuggClick(e.target.getAttribute('data-product-code'));
+        orderSuggClick(e.target.parentNode.getAttribute('data-product-code') || e.target.getAttribute('data-product-code'));
     });
     $( document ).on( "swiperight", "#orderPage", function( e ) {
         if ( $( ".ui-page-active" ).jqmData( "panel" ) !== "open" ) {
@@ -58,7 +67,7 @@ $( document ).on( "pageinit", "#orderPage", function() {
         }
     });
 });
-location.hash="#homePage";
+
 //////////////////
 //CUSTOM FUNCTIONS
 //////////////////
@@ -75,11 +84,22 @@ App={
 	return {};
     }
 };
-var _selected_client={},
-    _orderCache={},
-    _current_entry={},
-    _suggest_list={},
-    _selectedStockCat=0;
+function store(key,value){
+    if(value===undefined){
+	return App.json(localStorage.getItem(key));
+    }
+    localStorage.setItem(key,JSON.stringify(value));
+}
+
+function init(){
+    if( store('selected_client') ){
+	clientShow();
+    }
+    _orderCache=store('orderCache')||{};
+}
+function format(num){
+    return Number(num).toFixed(2);
+}
 ///////////////////////////////
 //CLIENT HANDLING
 ///////////////////////////////
@@ -87,26 +107,28 @@ function clientSelect(client_id){
     $.each(db.companies_tree,function(key,tree_folder){
         $.each(tree_folder,function(i,company){
             if(client_id===company.company_id){
-                _selected_client=company;
+                store('selected_client',company);
                 clientShow();
                 return;
             }
         });
     });
-    $("#clientSelect" ).popup( "close" );
+    
 }
 function clientShow(){
+    var selected_client=store('selected_client');
     var html="";
-    html+="<li style='white-space:normal'><b>Контакт: </b>"+(_selected_client.company_person||'')+"</li>";
-    html+="<li style='white-space:normal'><b>Мобильный: </b>"+(_selected_client.company_mobile||'')+"</li>";
-    html+="<li style='white-space:normal'><b>Адрес: </b>"+(_selected_client.company_address||'')+"</li>";
-    html+="<li style='white-space:normal'><b>Заметки: </b>"+(_selected_client.company_description||'')+"</li>";
+    html+="<li style='white-space:normal'><b>Контакт: </b>"+(selected_client.company_person||'')+"</li>";
+    html+="<li style='white-space:normal'><b>Мобильный: </b>"+(selected_client.company_mobile||'')+"</li>";
+    html+="<li style='white-space:normal'><b>Адрес: </b>"+(selected_client.company_address||'')+"</li>";
+    html+="<li style='white-space:normal'><b>Заметки: </b>"+(selected_client.company_description||'')+"</li>";
     $("#clientdetails").html(html);
     $("#clientdetails").listview("refresh");
     $("#clientdetails").trigger( "updatelayout");
     $("#clientdetailsBlock").show();
-    $("#clientSelectButton").html(_selected_client.label);
-    $("#orderPageHeader").html(_selected_client.label+" / Заказ");
+    $("#clientSelectButton").html(selected_client.label);
+    $("#orderPageHeader").html(selected_client.label+" / Заказ");
+    $("#clientSelect" ).popup( "close" );
 }
 //////////////////////////
 //ORDER HANDLING
@@ -115,16 +137,16 @@ function loadSuggestions( q ){
     var $ul=$( "#autocomplete" );
     $ul.html( "<li><div class='ui-loader'><span class='ui-icon ui-icon-loading'></span></div></li>" );
     $ul.listview( "refresh" );
-    $.get("./suggest",{q:q,parent_id:_selectedStockCat,company_id:_selected_client.company_id},function(response){
+    $.get("./suggest",{q:q,parent_id:_selectedStockCat,company_id:store('selected_client').company_id},function(response){
 	var suggested=App.json(response);
         _suggest_list={};
         var html = "";
         $.each( suggested, function ( i, val ) {
             _suggest_list[val.code]=val;
-            html+="<li style='color:"+(val.instock===1?"green":"red")+"'";
+            html+="<li style='color:"+(val.instock*1===1?"green":"red")+"'";
             html+="data-product-code='"+val.code+"'>";
             html+="<div style='display:inline-block;width:5em;text-align:right;color:#999'>"+val.code+"</div>";
-            html+=" "+val.name+" <b>"+val.price+"</b> </li>";
+            html+="<span> "+val.name+" </span><b>"+val.price+"</b> </li>";
         });
         $ul.html( html );
         $ul.listview( "refresh" );
@@ -137,60 +159,9 @@ function stockCatSelect(branch_id){
     _selectedStockCat=branch_id;
     loadSuggestions();
 }
-function orderAdd(){
-    $("#qtyPopup").popup( "close" );
-    var qty=1*$("#qtyInput").val();
-    if( _orderCache[_current_entry.code] && _current_entry.mode!=='edit' ){
-        _current_entry.qty=qty+_orderCache[_current_entry.code].qty;
-    }
-    else{
-        _current_entry.qty=qty;
-    }
-    _orderCache[_current_entry.code]=_current_entry;
-    orderShow();
-}
-function orderSuggClick(pcode){
-    if(!pcode){
-	return ;
-    }
-    _current_entry=_suggest_list[pcode];
-    console.log(pcode,_current_entry);
-    $("#qtyPopup").popup( "open" );
-    $("#qtyInput").val(_current_entry.spack);
-    $("#qtyPopupHeader").html(_current_entry.name);
-    $("#qtyInput").select();
-}
-function orderQtyEdit(pcode){
-    _current_entry=_orderCache[pcode];
-    _current_entry.mode='edit';
-    $("#qtyPopup").popup( "open" );
-    $("#qtyInput").val(_current_entry.qty);
-    $("#qtyPopupHeader").html(_current_entry.name);
-    $("#qtyInput").select();
-}
-function orderDelete(pcode){
-    delete _orderCache[pcode];
-    orderShow();
-}
-function orderSend(){
-    if(!_selected_client.company_id){
-        $("#orderServerInteraction").html("<p>Не выбран клиент!</p>");
-        $("#orderServerInteraction").popup("open");
-        return;
-    }
-    $("#orderServerInteraction").html("<p>Заказ отправляется...</p>");
-    $("#orderServerInteraction").popup("open");
-    var company_id=_selected_client.company_id;
-    $.post("./orderSend",{order:JSON.stringify(_orderCache),company_id:company_id},function(resp){
-        $("#orderServerInteraction").html("<p>Заказ доставлен на сервер!</p>");
-	setTimeout(function(){$("#orderServerInteraction").popup("close");},1000);
-        _orderCache={};
-        orderShow();
-    });
-}
-function format(num){
-    return Number(num).toFixed(2);
-}
+
+
+
 function orderShow(){
     var html="",i=0,sum=0;
     $.each( _orderCache, function ( pcode, entry ) {
@@ -207,10 +178,63 @@ function orderShow(){
     $("#orderlist").listview("refresh");
     $("#orderlist").trigger( "updatelayout");
     $("#orderSummary").html("Сумма: "+(format(sum)||'0')+"");
+    store('orderCache',_orderCache);
 }
-function logout(){
-    Connector.sendRequest({mod:'Login',rq:'logout'},function(){
-       location.reload();
+function orderAdd(){
+    $("#qtyPopup").popup( "close" );
+    var qty=1*$("#qtyInput").val();
+    if( _orderCache[_current_entry.code] && _current_entry.mode!=='edit' ){
+        _current_entry.qty=qty+_orderCache[_current_entry.code].qty;
+    }
+    else{
+        _current_entry.qty=qty;
+    }
+    _orderCache[_current_entry.code]=_current_entry;
+    orderShow();
+}
+function orderDelete(pcode){
+    delete _orderCache[pcode];
+    orderShow();
+}
+function orderSuggClick(pcode){
+    if(!pcode){
+	return ;
+    }
+    _current_entry=_suggest_list[pcode];
+    $("#qtyPopup").popup( "open" );
+    $("#qtyInput").val(_current_entry.spack);
+    $("#qtyPopupHeader").html(_current_entry.name);
+    $("#qtyInput").select();
+}
+function orderQtyEdit(pcode){
+    _current_entry=_orderCache[pcode];
+    _current_entry.mode='edit';
+    $("#qtyPopup").popup( "open" );
+    $("#qtyInput").val(_current_entry.qty);
+    $("#qtyPopupHeader").html(_current_entry.name);
+    $("#qtyInput").select();
+}
+function orderSend(){
+    if(!store('selected_client').company_id){
+        $("#orderServerInteraction").html("<p>Не выбран клиент!</p>");
+        $("#orderServerInteraction").popup("open");
+        return;
+    }
+    if($.isEmptyObject(_orderCache)){
+	$("#orderServerInteraction").html("<p>Заказ пуст</p>");
+        $("#orderServerInteraction").popup("open");
+	return;
+    }
+    $("#orderServerInteraction").html("<p>Заказ отправляется...</p>");
+    $("#orderServerInteraction").popup("open");
+    var company_id=store('selected_client').company_id;
+    var comment=$("#ordercomment").val();
+    $.post("./orderSend",{order:JSON.stringify(_orderCache),comment:comment,company_id:company_id},function(resp){
+        $("#orderServerInteraction").html("<p>Заказ доставлен на сервер!</p>");
+	setTimeout(function(){$("#orderServerInteraction").popup("close");},1000);
+        _orderCache={};
+	$("#ordercomment").val('');
+        orderShow();
     });
 }
 var db=<?php echo $db;?>;
@@ -293,6 +317,7 @@ ORDER PAGE
         </div>
         <!--ORDER LIST-->
 
+	<div><textarea  id="ordercomment" style="width:100%;" placeholder="Комментарий к заказу"></textarea></div>
         <ul id="orderlist"
             data-role="listview"
             data-theme="a"
