@@ -49,7 +49,7 @@ class Hub extends HubBase{
     public function plugin(){
 	$args=func_get_args();
 	$plugin_name=$args[0];
-	$plugin_method=$args[1];
+	$plugin_method=isset($args[1])?$args[1]:'index';
 	$plugin_method_args = array_slice($args, 2);
 	Plugins::instance()->Base=$this;
 	$response=Plugins::instance()->call_method($plugin_name, $plugin_method, $plugin_method_args);

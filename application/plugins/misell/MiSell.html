@@ -121,8 +121,8 @@ function loadSuggestions( q ){
         var html = "";
         $.each( suggested, function ( i, val ) {
             _suggest_list[val.code]=val;
-            html+="<li style='color:"+(val.instock==1?"green":"red")+"'";
-            html+="data-product-code='"+val.code+"'>"
+            html+="<li style='color:"+(val.instock===1?"green":"red")+"'";
+            html+="data-product-code='"+val.code+"'>";
             html+="<div style='display:inline-block;width:5em;text-align:right;color:#999'>"+val.code+"</div>";
             html+=" "+val.name+" <b>"+val.price+"</b> </li>";
         });
@@ -256,7 +256,7 @@ var db={$db};
           </p>
           </div>
         </div>
-        <a href="#" onclick="logout()" class="ui-btn ui-btn-icon-left ui-icon-power">Выход</a>
+        <a href="./logout" class="ui-btn ui-btn-icon-left ui-icon-power">Выход</a>
     </div>
 </div>
 <!-- 

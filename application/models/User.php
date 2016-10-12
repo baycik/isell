@@ -3,14 +3,17 @@
 require_once 'Catalog.php';
 class User extends Catalog {
     public $min_level=0;
-    public function SignIn(){
-	$login=$this->input->post('login');
-	$pass=$this->input->post('pass');
+    public function SignIn($login=null,$pass=null){
+	if( !$login || !$pass ){
+	    $login=$this->input->post('login');
+	    $pass=$this->input->post('pass');
+	}
 	$this->check($login,'^[a-zA-Z_0-9]*$');
 	$this->check($pass,'^[a-zA-Z_0-9]*$');
 	if( !$login || !$pass ){
 	    //allow empty pass
 	    $this->Base->kick_out();
+	    return false;
 	}
 	$pass_hash = md5($pass);
 	$user_data = $this->get_row("SELECT * FROM user_list WHERE user_login='$login' AND user_pass='$pass_hash'");

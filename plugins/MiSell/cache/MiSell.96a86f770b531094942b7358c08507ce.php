@@ -48,7 +48,7 @@ $( document ).on( "pageinit", "#orderPage", function() {
         }
     });
     $( "#autocomplete" ).on( "click", function ( e ){
-        orderSuggClick($(e.target).parent().data('product_code'));
+        orderSuggClick(e.target.getAttribute('data-product-code'));
     });
     $( document ).on( "swiperight", "#orderPage", function( e ) {
         if ( $( ".ui-page-active" ).jqmData( "panel" ) !== "open" ) {
@@ -121,10 +121,10 @@ function loadSuggestions( q ){
         var html = "";
         $.each( suggested, function ( i, val ) {
             _suggest_list[val.code]=val;
-            html+="<li style='color:"+(val.instock==1?"green":"red")+"'";
-            html+="data-product-code='"+val.code+"'>"
+            html+="<li style='color:"+(val.instock===1?"green":"red")+"'";
+            html+="data-product-code='"+val.code+"'>";
             html+="<div style='display:inline-block;width:5em;text-align:right;color:#999'>"+val.code+"</div>";
-            html+=" <span>"+val.name+"</span> <b>"+val.price+"</b> </li>";
+            html+=" "+val.name+" <b>"+val.price+"</b> </li>";
         });
         $ul.html( html );
         $ul.listview( "refresh" );
@@ -256,7 +256,7 @@ var db=<?php echo $db;?>;
           </p>
           </div>
         </div>
-        <a href="#" onclick="logout()" class="ui-btn ui-btn-icon-left ui-icon-power">Выход</a>
+        <a href="./logout" class="ui-btn ui-btn-icon-left ui-icon-power">Выход</a>
     </div>
 </div>
 <!-- 

@@ -94,18 +94,19 @@ class Plugins {
      * Include plugin and headers only if its not loaded already
      */
     private function include_plugin( $plugin_system_name ){
+	set_include_path(get_include_path() . PATH_SEPARATOR . $this->plugins_dir.$plugin_system_name.'/');
 	$plugin_main_file=$this->plugins_dir.$plugin_system_name."/".$plugin_system_name.".php";
 	if( !isset(self::$loadedPlugins[$plugin_system_name]) && file_exists($plugin_main_file) ){
 	    self::$loadedPlugins[$plugin_system_name] = 'loaded';
 	    load_class('Model', 'core');
 	    include_once $plugin_main_file;
 	    try{
-		$plugin_class_instance=new $plugin_system_name;
-		
+		$plugin_class_instance=new $plugin_system_name($this->Base);
 		//do we really need this?
 		if( isset($this->Base) ){
 		    $plugin_class_instance->Base=$this->Base;
 		}
+		
 		return $plugin_class_instance;
 	    } catch (Exception $ex) {
 		return false;

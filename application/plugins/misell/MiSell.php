@@ -1,20 +1,38 @@
 <?php
 include 'models/Catalog.php';
 class MiSell extends Catalog{
-    public function html(){
-        $this->Base->set_level(1);
-        header("Content-Type:text/html;charset=utf-8");
-        include_once 'libraries/report/RainTpl.php';
-        raintpl::configure( 'tpl_dir', 'application/plugins/MiSell/' );
-        raintpl::configure( 'cache_dir', 'plugins/MiSell/cache/' );
-        $tplData=$this->getTplData();
-        $this->rain=new RainTPL();
-        $this->rain->assign('d',$tplData);
-        $this->rain->assign('db', json_encode($tplData) );
-        $this->rain->draw('MiSell');
-        exit();
+    function __construct($Base){
+	$user_id=$Base->svar('user_id');
+	if( !$user_id ){
+	    $user_login=$this->request('user_login');
+	    $user_pass=$this->request('user_pass');
+	    $User=$Base->load_model('User');
+	    if( $user_login && $user_pass && $User->SignIn($user_login,$user_pass) ){
+		return;
+	    }
+	    include 'login.html';
+	    exit;
+	}
     }
-    private function getTplData(){
+    public function index(){
+	$this->Base->set_level(1);
+	include_once 'libraries/report/RainTpl.php';
+	raintpl::configure( 'tpl_dir', 'application/plugins/MiSell/' );
+	raintpl::configure( 'cache_dir', 'plugins/MiSell/cache/' );
+	$tplData=$this->getTplData();
+	$this->rain=new RainTPL();
+	$this->rain->assign('d',$tplData);
+	$this->rain->assign('db', json_encode($tplData) );
+	$this->rain->draw('MiSell');
+	exit();
+    }
+    public function logout(){
+	$User=$this->Base->load_model('User');
+	$User->SignOut();
+	header("Location: ./");
+	exit();
+    }
+    public function getTplData(){
         $d=array();
         $d['stock_tree']=$this->treeFetch('stock_tree',0);
         $d['companies_tree']=$this->getCompaniesTree();
