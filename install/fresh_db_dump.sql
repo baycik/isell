@@ -1,4 +1,4 @@
--- MySQL dump 10.13  Distrib 5.6.17, for Win64 (x86_64)
+-- MySQL dump 10.13  Distrib 5.7.12, for Win64 (x86_64)
 --
 -- Host: 127.0.0.1    Database: isell_db
 -- ------------------------------------------------------
@@ -51,10 +51,10 @@ CREATE TABLE `acc_check_list` (
   `active_company_id` int(10) unsigned NOT NULL,
   `main_acc_code` varchar(15) NOT NULL,
   `number` int(11) DEFAULT NULL,
-  `date` timestamp NULL DEFAULT NULL,
-  `value_date` timestamp NULL DEFAULT NULL,
-  `assumption_date` timestamp NULL DEFAULT NULL,
-  `transaction_date` timestamp NULL DEFAULT NULL,
+  `date` datetime DEFAULT NULL,
+  `value_date` datetime DEFAULT NULL,
+  `assumption_date` datetime DEFAULT NULL,
+  `transaction_date` datetime DEFAULT NULL,
   `debit_amount` double DEFAULT NULL,
   `credit_amount` double DEFAULT NULL,
   `currency` varchar(3) DEFAULT NULL,
@@ -306,7 +306,7 @@ CREATE TABLE `companies_list` (
   `company_acc_list` varchar(45) DEFAULT '361,631',
   `company_description` text NOT NULL,
   `curr_code` varchar(3) DEFAULT NULL,
-  `price_label` VARCHAR(45) NULL DEFAULT NULL,
+  `price_label` varchar(45) DEFAULT NULL,
   `language` varchar(2) DEFAULT NULL,
   `deferment` int(10) unsigned NOT NULL,
   `debt_limit` double NOT NULL,
@@ -327,7 +327,7 @@ CREATE TABLE `companies_list` (
 
 LOCK TABLES `companies_list` WRITE;
 /*!40000 ALTER TABLE `companies_list` DISABLE KEYS */;
-INSERT INTO `companies_list` VALUES (1,2,'Наша фирма','','','','','','','','','','','','',NULL,'','',NULL,'','','',0,'361,631','','RUB','ru',0,0,NULL,0,1),(2,1,'Клиент','','','','','','','','','','','','',NULL,'','',NULL,'','','',0,'361,631','','RUB','ru',0,0,NULL,0,NULL);
+INSERT INTO `companies_list` VALUES (1,2,'Наша фирма','','','','','','','','','','','','',NULL,'','',NULL,'','','',0,'361,631','','RUB',NULL,'ru',0,0,NULL,0,1),(2,1,'Клиент','','','','','','','','','','','','',NULL,'','',NULL,'','','',0,'361,631','','RUB',NULL,'ru',0,0,NULL,0,NULL);
 /*!40000 ALTER TABLE `companies_list` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -604,7 +604,7 @@ CREATE TABLE `event_list` (
   `event_status` varchar(20) NOT NULL,
   `event_priority` varchar(45) DEFAULT NULL,
   `event_label` varchar(45) NOT NULL,
-  `event_date` timestamp NULL DEFAULT NULL,
+  `event_date` datetime DEFAULT NULL,
   `event_repeat` varchar(45) DEFAULT NULL,
   `event_name` varchar(45) NOT NULL,
   `event_target` varchar(255) NOT NULL,
@@ -688,6 +688,11 @@ CREATE TABLE `pref_list` (
 -- Dumping data for table `pref_list`
 --
 
+LOCK TABLES `pref_list` WRITE;
+/*!40000 ALTER TABLE `pref_list` DISABLE KEYS */;
+/*!40000 ALTER TABLE `pref_list` ENABLE KEYS */;
+UNLOCK TABLES;
+
 --
 -- Table structure for table `price_list`
 --
@@ -700,7 +705,7 @@ CREATE TABLE `price_list` (
   `sell` double NOT NULL COMMENT 'Продажа',
   `buy` double NOT NULL COMMENT 'Покупка',
   `curr_code` varchar(45) NOT NULL COMMENT 'Код валюты',
-  `label` varchar(45) NOT NULL COMMENT 'Группа цен',
+  `label` varchar(45) NOT NULL COMMENT 'Категория цен',
   PRIMARY KEY (`product_code`,`label`) USING BTREE,
   KEY `FK_price_list_1` (`product_code`),
   CONSTRAINT `FK_prodcode` FOREIGN KEY (`product_code`) REFERENCES `prod_list` (`product_code`) ON DELETE CASCADE ON UPDATE CASCADE
@@ -783,25 +788,24 @@ LOCK TABLES `replication_log` WRITE;
 UNLOCK TABLES;
 
 --
--- Temporary table structure for view `stat_sell_analyse`
+-- Temporary view structure for view `stat_sell_analyse`
 --
 
 DROP TABLE IF EXISTS `stat_sell_analyse`;
 /*!50001 DROP VIEW IF EXISTS `stat_sell_analyse`*/;
 SET @saved_cs_client     = @@character_set_client;
 SET character_set_client = utf8;
-/*!50001 CREATE TABLE `stat_sell_analyse` (
-  `m` tinyint NOT NULL,
-  `label` tinyint NOT NULL,
-  `product_code` tinyint NOT NULL,
-  `en` tinyint NOT NULL,
-  `qty` tinyint NOT NULL,
-  `avg_self` tinyint NOT NULL,
-  `self` tinyint NOT NULL,
-  `avg_sell` tinyint NOT NULL,
-  `invoice` tinyint NOT NULL,
-  `net` tinyint NOT NULL
-) ENGINE=MyISAM */;
+/*!50001 CREATE VIEW `stat_sell_analyse` AS SELECT 
+ 1 AS `m`,
+ 1 AS `label`,
+ 1 AS `product_code`,
+ 1 AS `en`,
+ 1 AS `qty`,
+ 1 AS `avg_self`,
+ 1 AS `self`,
+ 1 AS `avg_sell`,
+ 1 AS `invoice`,
+ 1 AS `net`*/;
 SET character_set_client = @saved_cs_client;
 
 --
@@ -874,6 +878,7 @@ CREATE TABLE `stock_entries` (
   `product_code` varchar(45) NOT NULL,
   `product_quantity` int(10) unsigned NOT NULL,
   `product_wrn_quantity` int(10) unsigned NOT NULL,
+  `product_img` varchar(45) DEFAULT NULL,
   `vat_quantity` int(10) NOT NULL,
   `self_price` double NOT NULL,
   `fetch_count` int(11) NOT NULL,
@@ -890,7 +895,7 @@ CREATE TABLE `stock_entries` (
 
 LOCK TABLES `stock_entries` WRITE;
 /*!40000 ALTER TABLE `stock_entries` DISABLE KEYS */;
-INSERT INTO `stock_entries` VALUES (5514,1,'','A001',0,0,0,0.5,3,'2016-04-10 12:09:28'),(5515,2,NULL,'аренда',0,0,0,0,0,NULL),(5516,2,NULL,'топливо',0,0,0,0,0,NULL),(5517,2,NULL,'интернет',0,0,0,0,0,NULL),(5518,2,NULL,'эл-во',0,0,0,0,0,NULL),(5519,2,NULL,'канц',0,0,0,0,0,NULL),(5520,2,NULL,'офис',0,0,0,0,0,NULL),(5521,2,NULL,'телефон',0,0,0,0,0,NULL),(5522,2,NULL,'ремонт',0,0,0,0,0,NULL),(5523,2,NULL,'услуга',0,0,0,0,0,NULL);
+INSERT INTO `stock_entries` VALUES (5514,1,'','A001',0,0,NULL,0,0.5,3,'2016-04-10 12:09:28'),(5515,2,NULL,'аренда',0,0,NULL,0,0,0,NULL),(5516,2,NULL,'топливо',0,0,NULL,0,0,0,NULL),(5517,2,NULL,'интернет',0,0,NULL,0,0,0,NULL),(5518,2,NULL,'эл-во',0,0,NULL,0,0,0,NULL),(5519,2,NULL,'канц',0,0,NULL,0,0,0,NULL),(5520,2,NULL,'офис',0,0,NULL,0,0,0,NULL),(5521,2,NULL,'телефон',0,0,NULL,0,0,0,NULL),(5522,2,NULL,'ремонт',0,0,NULL,0,0,0,NULL),(5523,2,NULL,'услуга',0,0,NULL,0,0,0,NULL);
 /*!40000 ALTER TABLE `stock_entries` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -955,16 +960,19 @@ CREATE TABLE `user_list` (
 ) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
+--
+-- Dumping data for table `user_list`
+--
 
---
--- Dumping events for database 'isell_db'
---
+LOCK TABLES `user_list` WRITE;
+/*!40000 ALTER TABLE `user_list` DISABLE KEYS */;
+/*!40000 ALTER TABLE `user_list` ENABLE KEYS */;
+UNLOCK TABLES;
 
 --
 -- Dumping routines for database 'isell_db'
 --
 /*!50003 DROP FUNCTION IF EXISTS `CHK_ENTRY` */;
-ALTER DATABASE `isell_db` CHARACTER SET utf8 COLLATE utf8_general_ci ;
 /*!50003 SET @saved_cs_client      = @@character_set_client */ ;
 /*!50003 SET @saved_cs_results     = @@character_set_results */ ;
 /*!50003 SET @saved_col_connection = @@collation_connection */ ;
@@ -1021,15 +1029,11 @@ DELIMITER ;
 /*!50003 SET character_set_client  = @saved_cs_client */ ;
 /*!50003 SET character_set_results = @saved_cs_results */ ;
 /*!50003 SET collation_connection  = @saved_col_connection */ ;
-ALTER DATABASE `isell_db` CHARACTER SET utf8 COLLATE utf8_general_ci ;
 
-ALTER TABLE `stock_entries` 
-ADD COLUMN `product_img` VARCHAR(45) NULL AFTER `product_wrn_quantity`;
 --
 -- Final view structure for view `stat_sell_analyse`
 --
 
-/*!50001 DROP TABLE IF EXISTS `stat_sell_analyse`*/;
 /*!50001 DROP VIEW IF EXISTS `stat_sell_analyse`*/;
 /*!50001 SET @saved_cs_client          = @@character_set_client */;
 /*!50001 SET @saved_cs_results         = @@character_set_results */;
@@ -1053,4 +1057,4 @@ ADD COLUMN `product_img` VARCHAR(45) NULL AFTER `product_wrn_quantity`;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2016-04-12 22:24:39
+-- Dump completed on 2016-10-13 11:02:29
