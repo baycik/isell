@@ -16,7 +16,7 @@ class Data extends Catalog {
 	    $this->importInTable('prod_list', $source, $target, '/product_code/ru/ua/en/product_spack/product_bpack/product_weight/product_volume/product_unit/product_uktzet/barcode/analyse_type/analyse_group/analyse_class/analyse_section/', $label);
 	} else if( $table_name=='price_list' ){
 	    $this->importInTable('prod_list', $source, $target, '/product_code/', $label);
-	    $this->importInTable('price_list', $source, $target, '/product_code/sell/buy/curr_code/', $label);
+	    $this->importInTable('price_list', $source, $target, '/product_code/sell/buy/curr_code/label/', $label);
 	}
 	$this->query("DELETE FROM imported_data WHERE label LIKE '%$label%' AND {$source[0]} IN (SELECT product_code FROM $table_name)");
         return  $this->db->affected_rows();

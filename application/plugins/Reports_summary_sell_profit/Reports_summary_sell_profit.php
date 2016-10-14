@@ -14,6 +14,8 @@ class Reports_summary_sell_profit extends Catalog{
 	$this->language=$this->request('language','\w+','ru');
 	$this->group_by_filter=$this->request('group_by_filter');
 	$this->group_by=$this->request('group_by','\w+');
+        $this->path_include=$this->request('path_include');
+        $this->path_exclude=$this->request('path_exclude');
 	if( !in_array($this->group_by, ['label','product_code','analyse_type','analyse_group','analyse_class','analyse_section']) ){
 	    $this->group_by='label';
 	}
@@ -35,6 +37,12 @@ class Reports_summary_sell_profit extends Catalog{
         }
         if( !$this->count_sells && !$this->count_reclamations ){
             $reclamation_filter=' AND 0';
+        }
+        $path_filter='';
+        if( $this->path_exclude || $this->path_include ){
+            $path_filter="JOIN companies_list cl ON dl.passive_company_id=company_id JOIN companies_tree ct ON cl.branch_id=ct.branch_id ";
+            $path_filter.=$this->path_include?"AND path LIKE '%$this->path_include%'":"";
+            $path_filter.=$this->path_exclude?"AND path NOT LIKE '%$this->path_exclude%'":"";
         }
 	$passive_groupper=$this->group_by_client?',passive_company_id':'';
 	$group_by_label=$this->group_by_client?"CONCAT($this->group_by,' / ',(SELECT company_name FROM companies_list WHERE company_id=passive_company_id))":"$this->group_by";
@@ -72,6 +80,7 @@ class Reports_summary_sell_profit extends Catalog{
 		    stock_entries se USING(product_code)
 			JOIN
 		    prod_list pl USING(product_code)
+                    $path_filter
 		WHERE
 		    doc_type=1 AND cstamp>'$this->idate' AND cstamp<'$this->fdate' AND is_commited=1 AND notcount=0 $active_filter $reclamation_filter
 		GROUP BY product_code $passive_groupper) entries

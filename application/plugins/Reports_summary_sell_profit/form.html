@@ -1,6 +1,6 @@
 <script>
     function start_recalculate(){
-	$('#report_throbber').show()
+	$('#report_throbber').show();
 	App.flash("Начался пересчет себестоимости товаров");
 	var fvalue=App.collectForm("#report_form_wrapper form");
 	$.post("Utils/selfPriceInvoiceRecalculate/"+App.uri(fvalue.idate,fvalue.fdate,fvalue.all_active?'all_active':''),function(){
@@ -8,7 +8,7 @@
 	    msg+="\n\nПо всем нашим фирмам: "+(fvalue.all_active?'да':'нет');
 	    msg+="\nПериод корр. прибыли в накладных: "+fvalue.idate+"-"+fvalue.fdate;
 	    alert(msg);
-	    $('#report_throbber').hide()
+	    $('#report_throbber').hide();
 	});
     }
 </script>
@@ -35,6 +35,9 @@
 	    <option value="analyse_section">Раздел</option>
 	</select>
 	<input name="group_by_filter" title="Фильтр группы">	
+        <hr>
+        <input name="path_exclude" title="Исключить компании">
+        <input name="path_include" title="Включить компании">
     </div>
     <div class="inp_group" style="width: 200px;">
     	<input type="checkbox" name="all_active" title="Все наши фирмы" checked="checked">
