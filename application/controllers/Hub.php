@@ -10,7 +10,7 @@ class Hub extends HubBase{
 	include "index.html";
     }
     
-    public function on( $model, $method ){
+    public function on( $model, $method='index' ){
 	if( $model ){
 	    try {
 		$this->load_model($model);

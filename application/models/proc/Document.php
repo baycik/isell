@@ -140,8 +140,8 @@ class Document extends Data {
 //	}
 //	$debt_limit = $this->Base->pcomp('debt_limit');
 //	if ($debt_limit == 0) {
-//	    $this->Base->LoadClass('Pref');
-//	    $prefs = $this->Base->Pref->prefGet();
+//	    $this->Base->LoadClass('PrefOld');
+//	    $prefs = $this->Base->PrefOld->prefGet();
 //	    $debt_limit = $prefs['default_debt_limit'];
 //	    if ($debt_limit == 0) {
 //		return false;
@@ -706,8 +706,8 @@ class Document extends Data {
 	$vat_rate = $this->Base->acomp('company_vat_rate');
 
 	$doc_curr_code = strtolower($this->Base->pcomp('curr_code'));
-	$this->Base->LoadClass('Pref');
-	$ratios = $this->Base->Pref->prefGet();
+	$this->Base->LoadClass('PrefOld');
+	$ratios = $this->Base->PrefOld->prefGet();
 	$doc_ratio = $ratios["usd_ratio"];
 
 	$prev_doc = $this->Base->get_row("SELECT use_vatless_price,signs_after_dot,notcount,doc_type,vat_rate FROM document_list WHERE active_company_id='$active_company_id' AND passive_company_id='$passive_company_id' AND doc_type<10 AND is_commited=1 ORDER BY cstamp DESC LIMIT 1");
@@ -863,10 +863,10 @@ class Document extends Data {
 	$doc_id = $this->doc('doc_id');
 
 	$curr_correction = $this->getCurrCorrection($mode);
-        $this->Base->LoadClass("Pref");
+        $this->Base->LoadClass("PrefOld");
         
         
-        $pref=$this->Base->Pref->prefGet();
+        $pref=$this->Base->PrefOld->prefGet();
         if( isset($pref['use_total_as_base']) && $pref['use_total_as_base'] ){
             $signs_after_dot=$this->doc('signs_after_dot');
             $sql = "SELECT

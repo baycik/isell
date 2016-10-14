@@ -222,7 +222,7 @@ class Utils extends Catalog{
     /////////////////////////////
     //EMAIL FUNCTIONS
     /////////////////////////////
-    private function sendEmail($to,$subject,$body,$file=null){
+    public function sendEmail($to,$subject,$body,$file=null){
         $this->Base->set_level(1);
         $this->load->library('email');
         $this->email->initialize([

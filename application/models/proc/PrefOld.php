@@ -1,6 +1,6 @@
 <?php
 
-class Pref {
+class PrefOld {
 
     public function getStaffList() {
         $list = array('identifier' => 'full_name', 'label' => 'full_name', 'items' => array());

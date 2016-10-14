@@ -28,23 +28,14 @@ body{
     font-size: 0.8em;
 }
 </style>
-<link rel="stylesheet" href="http://code.jquery.com/mobile/1.4.0/jquery.mobile-1.4.0.min.css" />
+<link rel="stylesheet" href="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.css" />
 <script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
-<script src="application/plugins/MiSell/../../js/mobile/jquery.mobile-1.4.5.min.js"></script>
+<script src="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js"></script>
 <script type="text/javascript">
 var _orderCache={},
     _current_entry={},
     _suggest_list={},
     _selectedStockCat=0;
-    
-location.hash="#homePage";
-
-$( document ).on( "pageinit", "#homePage", function() {
-    init();
-    $("#clientSelect").on("click", function(e){
-        clientSelect(e.target.getAttribute('data-client-id'));
-    });
-});
 $( document ).on( "pageinit", "#orderPage", function() {
     orderShow();
     stockCatSelect(_selectedStockCat);
@@ -67,6 +58,15 @@ $( document ).on( "pageinit", "#orderPage", function() {
         }
     });
 });
+$(function(){
+    //location.hash="#homePage";
+    init();
+    $("#clientSelect").on("click", function(e){
+        clientSelect(e.target.getAttribute('data-client-id'));
+    });
+
+});
+
 
 //////////////////
 //CUSTOM FUNCTIONS
@@ -143,10 +143,10 @@ function loadSuggestions( q ){
         var html = "";
         $.each( suggested, function ( i, val ) {
             _suggest_list[val.code]=val;
-            html+="<li style='color:"+(val.instock*1===1?"green":"red")+"'";
+            html+="<li style='color:"+(val.product_quantity*1>0?"green":"red")+"'";
             html+="data-product-code='"+val.code+"'>";
-            html+="<div style='display:inline-block;width:5em;text-align:right;color:#999'>"+val.code+"</div>";
-            html+="<span> "+val.name+" </span><b>"+val.price+"</b> </li>";
+            html+="<div style='display:inline-block;min-width:5em;text-align:right;color:#666';>"+val.code+"</div>";
+            html+="<span> "+val.name+" </span><b>"+val.price+"</b> ["+val.product_quantity+"] </li>";
         });
         $ul.html( html );
         $ul.listview( "refresh" );
@@ -167,7 +167,7 @@ function orderShow(){
     $.each( _orderCache, function ( pcode, entry ) {
 	if( entry ){
 	    html+='<li>';
-	    html+='<span style="width:60%;display:inline-block;overflow:hidden;"><a href="#" onclick="orderDelete('+pcode+')" style="text-decoration:none;color:red;">X</a> '+pcode+'</span>';
+	    html+='<span style="width:60%;display:inline-block;overflow:hidden;"><a href="#" onclick="orderDelete('+pcode+')" style="text-decoration:none;color:red;"><b>X</b></a> '+pcode+'</span>';
 	    html+='<span style="width:20%;display:inline-block;overflow:hidden;"><a href="#" onclick="orderQtyEdit('+pcode+')">'+entry.qty+'</a>'+entry.unit+'</span>';
 	    html+='<span style="width:20%;display:inline-block;overflow:hidden;">'+(format(entry.price)||'?')+'</span>';
 	    html+='<br>'+(++i)+'. <i>'+entry.name+'</i></li>';
@@ -252,7 +252,7 @@ var db=<?php echo $db;?>;
           <div class="ui-bar ui-bar-a">
             <h3>Работа с клиентами</h3>
           </div>
-          <div class="ui-body ui-body-a">
+	    <div class="ui-body ui-body-a" style="overflow-y: scroll">
           <p>
             <a href="#clientSelect" id="clientSelectButton" data-rel="popup" class="ui-btn ui-corner-all ui-shadow ui-icon-user ui-btn-icon-left ui-btn-b" data-transition="pop">Клиент не выбран</a>
             <div data-role="popup" id="clientSelect" data-theme="none">
@@ -275,12 +275,12 @@ var db=<?php echo $db;?>;
             </div>
             <div id="clientdetailsBlock" style="display:none">
                 <ul id="clientdetails" data-role="listview" data-theme="a" style="margin-bottom:3px;"></ul>
-                <a href="#orderPage" class="ui-btn ui-corner-all ui-shadow ui-btn-b">Принять заказ</a>
+                <a href="#orderPage" class="ui-btn ui-corner-all ui-shadow ui-btn-b ui-icon-shop ui-btn-icon-left">Принять заказ</a>
             </div>
           </p>
           </div>
         </div>
-        <a href="./logout" class="ui-btn ui-btn-icon-left ui-icon-power">Выход</a>
+        <a href="#" onclick="$.get('./logout').then(function(){location.reload()})" class="ui-btn ui-btn-icon-left ui-icon-power">Выход</a>
     </div>
 </div>
 <!-- 
@@ -345,7 +345,7 @@ ORDER PAGE
                 <?php $counter1=-1; if( isset($d["stock_tree"]) && is_array($d["stock_tree"]) && sizeof($d["stock_tree"]) ) foreach( $d["stock_tree"] as $key1 => $value1 ){ $counter1++; ?>
                 <?php if( count($value1->children) ){ ?>
                 <li data-role="collapsible" data-inset="false" data-iconpos="right">
-                    <h3><b><?php echo $value1->label;?></b></h3>
+                    <h3 onclick="stockCatSelect('<?php echo $value1->branch_id;?>')" data-rel="close"><b><?php echo $value1->label;?></b></h3>
                     <ul data-role="listview">
                         <?php $counter2=-1; if( isset($value1->children) && is_array($value1->children) && sizeof($value1->children) ) foreach( $value1->children as $key2 => $value2 ){ $counter2++; ?>
                         <li><a href="#right-panel"

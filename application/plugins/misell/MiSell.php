@@ -2,6 +2,7 @@
 include 'models/Catalog.php';
 class MiSell extends Catalog{
     function __construct($Base){
+	ob_start('ob_gzhandler');
 	$user_id=$Base->svar('user_id');
 	if( !$user_id ){
 	    $user_login=$this->request('user_login');
@@ -18,7 +19,7 @@ class MiSell extends Catalog{
 	$this->Base->set_level(1);
 	include_once 'libraries/report/RainTpl.php';
 	raintpl::configure( 'tpl_dir', 'application/plugins/MiSell/' );
-	raintpl::configure( 'cache_dir', 'plugins/MiSell/cache/' );
+	raintpl::configure( 'cache_dir', 'application/plugins/MiSell/cache/' );
 	$tplData=$this->getTplData();
 	$this->rain=new RainTPL();
 	$this->rain->assign('d',$tplData);
@@ -39,36 +40,36 @@ class MiSell extends Catalog{
         $d['user_sign']=$this->Base->svar('user_sign');
         return $d;
     }
-//    public function getCompaniesTree_(){
-//	$tree=[];
-//	$level=$this->Base->svar('user_level');
-//	$assigned_path=  $this->Base->svar('user_assigned_path');
-//	$companies_folder_list=$this->get_list("SELECT branch_id,label FROM companies_tree WHERE is_leaf=0 AND level<=$level AND path LIKE '$assigned_path%'");
-//	foreach($companies_folder_list as $folder){
-//	    $sql="SELECT
-//			company_id,
-//			label,
-//			company_address,
-//			company_person,
-//			company_mobile,
-//			company_description
-//		    FROM
-//			companies_tree 
-//			    JOIN 
-//			companies_list USING(branch_id) 
-//		    WHERE 
-//			is_leaf=1 
-//			AND level<=$level 
-//			AND parent_id='{$folder->branch_id}'";
-//	    $companies_list=$this->get_list($sql);
-//	    if($companies_list){
-//		$folder->children=$companies_list;
-//		$tree[]=$folder;
-//	    }
-//	}
-//	return $tree;
-//    }
     public function getCompaniesTree(){
+	$level=$this->Base->svar('user_level');
+	$assigned_path=  $this->Base->svar('user_assigned_path');
+	$companies_folder_list=$this->get_list("SELECT branch_id,label FROM companies_tree WHERE is_leaf=0 AND level<=$level AND path LIKE '$assigned_path%'");
+	$tree=[];
+	foreach($companies_folder_list as $folder){
+	    $sql="SELECT
+			company_id,
+			label,
+			company_address,
+			company_person,
+			company_mobile,
+			company_description
+		    FROM
+			companies_tree 
+			    JOIN 
+			companies_list USING(branch_id) 
+		    WHERE 
+			is_leaf=1 
+			AND level<=$level 
+			AND parent_id='{$folder->branch_id}'";
+	    $companies_list=$this->get_list($sql);
+	    if($companies_list){
+		//$folder->children=$companies_list;
+		$tree[$folder->label]=$companies_list;
+	    }
+	}
+	return $tree;
+    }
+    public function getCompaniesTree1(){
         $list=$this->getManagerClients($this->Base->svar('user_id'));
         $this->Base->svar('allowed_comps',$list);
         $tree=array();
@@ -121,7 +122,7 @@ class MiSell extends Catalog{
                     product_code code,
                     ru name,
                     product_spack spack,
-                    product_quantity<>0 AS instock,
+                    product_quantity,
                     product_unit unit,
 		    
 		    ROUND(
@@ -136,27 +137,28 @@ class MiSell extends Catalog{
                     stock_entries se USING (product_code)
                 WHERE $where
                 ORDER BY fetch_count - DATEDIFF(NOW(), fetch_stamp) DESC, product_code
-                LIMIT 30";
+                LIMIT 20";
         return $this->get_list($sql);
     }
-    public function orderCalculate($order,$company_id){
-        if( !$this->checkCompanyId($company_id) ){
-            return "Can't use this client!!!";
-        }
-        $this->Base->LoadClass('Pref');
-        $prefs=$this->Base->Pref->getPrefs('dollar_ratio');
-        foreach($order as $product_code=>$entry){
-            $order[$product_code]['price']=$this->orderGetPrice($product_code, $company_id,$prefs['dollar_ratio']);
-        }
-        return $order;
-    }
+//    public function orderCalculate($order,$company_id){
+//        if( !$this->checkCompanyId($company_id) ){
+//            return "Can't use this client!!!";
+//        }
+//        $this->Base->LoadClass('Pref');
+//        $prefs=$this->Base->Pref->getPrefs('dollar_ratio');
+//        foreach($order as $product_code=>$entry){
+//            $order[$product_code]['price']=$this->orderGetPrice($product_code, $company_id,$prefs['dollar_ratio']);
+//        }
+//        return $order;
+//    }
     public function orderSend(){
 	$order=$this->request('order','json');
 	$company_id=$this->request('company_id');
 	$comment=$this->request('comment');
-         if( !$this->checkCompanyId($company_id) ){
-            return "Can't use this client!!!";
-        }
+//         if( !$this->checkCompanyId($company_id) ){
+//            return "Can't use this client!!!";
+//        }
+        $this->orderAnnounceRecieved();
 	$this->Base->load_model('Company')->selectPassiveCompany($company_id);
 	$Document=$this->Base->load_model('DocumentItems');
 	$Document->createDocument(1);
@@ -164,44 +166,43 @@ class MiSell extends Catalog{
         foreach($order as $product_code=>$entry){
             $Document->entryAdd( $product_code, $entry['qty'] );
         }
-        //$this->orderAnnounceRecieved();
         return true;
     }
     private function orderAnnounceRecieved(){
-        $this->Base->LoadClass('Utils');
         $pcomp_name=$this->Base->pcomp('company_name');
         $user_sign=$this->Base->svar('user_sign');
+	$Utils=$this->Base->load_model('Utils');
         $text="Пользователем $user_sign, был прислан заказ для $pcomp_name";
-        $this->Base->Utils->sendEmail( "sell@nilson.ua", "Мобильный заказ $user_sign", $text, NULL, 'nocopy' );
-        $this->Base->Utils->sendSms("380955983001","",$text);
-		$this->Base->Utils->sendSms("380500377536","",$text);
+        $Utils->sendEmail( "bay@nilson.ua", "Мобильный заказ $user_sign", $text, NULL, 'nocopy' );
+        //$Utils->sendSms("380955983001","",$text);
+	//$Utils->sendSms("380500377536","",$text);
     }
-    private function orderGetPrice($product_code,$company_id,$dollar_ratio){
-        $sql="SELECT 
-                discount
-            FROM
-                companies_discounts cd
-                    JOIN
-                stock_tree st ON (cd.branch_id = st.top_id)
-                    JOIN
-                stock_entries se ON (st.branch_id = se.parent_id)
-            WHERE
-                se.product_code = '$product_code'
-                    AND cd.company_id = '$company_id'";
-        $discount=$this->Base->get_row($sql,0);
-        $discount!==NULL?$discount:1;
-        $row=$this->Base->get_row("SELECT * FROM price_list WHERE '$product_code'=product_code OR '$product_code' RLIKE CONCAT('^',product_code,'$')");
-        $sell=$discount*($row['price_uah']?$row['price_uah']:$row['price_usd']*$dollar_ratio);
-        return round($sell,2);
-    }
-    private function checkCompanyId($company_id){
-        $list=$this->Base->svar('allowed_comps');
-        foreach($list as $comp){
-            if($comp->company_id===$company_id){
-                return true;
-	    }
-        }
-        return false;
-    }
+//    private function orderGetPrice($product_code,$company_id,$dollar_ratio){
+//        $sql="SELECT 
+//                discount
+//            FROM
+//                companies_discounts cd
+//                    JOIN
+//                stock_tree st ON (cd.branch_id = st.top_id)
+//                    JOIN
+//                stock_entries se ON (st.branch_id = se.parent_id)
+//            WHERE
+//                se.product_code = '$product_code'
+//                    AND cd.company_id = '$company_id'";
+//        $discount=$this->Base->get_row($sql,0);
+//        $discount!==NULL?$discount:1;
+//        $row=$this->Base->get_row("SELECT * FROM price_list WHERE '$product_code'=product_code OR '$product_code' RLIKE CONCAT('^',product_code,'$')");
+//        $sell=$discount*($row['price_uah']?$row['price_uah']:$row['price_usd']*$dollar_ratio);
+//        return round($sell,2);
+//    }
+//    private function checkCompanyId($company_id){
+//        $list=$this->Base->svar('allowed_comps');
+//        foreach($list as $comp){
+//            if($comp->company_id===$company_id){
+//                return true;
+//	    }
+//        }
+//        return false;
+//    }
 }
 ?>
