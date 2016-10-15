@@ -34,15 +34,19 @@ class ViewManager extends CI_Model{
 	return false;
     }
     public function out( $out_type='.print', $header_mode='send_headers' ){
-	if( $this->dump && $this->dump->tpl_files ){
+	if( $this->dump ){
 	    $FileEngine=$this->Base->load_model('FileEngine');
 	    if( isset($this->dump->tpl_files_folder) ){
 		$FileEngine->tpl_files_folder=$this->dump->tpl_files_folder;
 	    }
-	    $FileEngine->assign($this->dump->view, $this->dump->tpl_files);
+	    if( isset($this->dump->html) ){
+		$FileEngine->loadHtml($this->dump->html);
+	    } else 
+	    if( isset($this->dump->tpl_files) ){
+		$FileEngine->assign($this->dump->view, $this->dump->tpl_files);
+	    }
 	    if( isset($this->dump->struct) ){
 		$FileEngine->tplModifier=$this->setupCols();
-		//print_r($this->dump);exit;
 	    }
 	    if ( $out_type=='.print' ) {
 		$file_name = '.print';

@@ -131,4 +131,8 @@ class DocumentBlank extends DocumentCore {
 	$this->query("DELETE FROM document_list WHERE doc_id=$doc_id");
 	return true;
     }
+    public function blankViewGet(){
+	$doc_view_id=$this->request('doc_view_id');
+	
+    }
 }

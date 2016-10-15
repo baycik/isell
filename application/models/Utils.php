@@ -5,31 +5,34 @@ class Utils extends Catalog{
     //////////////////////////////////////
     //FOLOWING FUNCTIONS ARE DEPRECATED
     //////////////////////////////////////
-    public function spellAmount($number, $unit = NULL, $return_cents = true) {
-	if (!$unit) {
-            $blank_set=$this->Base->pref('blank_set');
-            if( $blank_set=='ua' ){
-                $unit[0] = array('копійка', 'копійки', 'копійок');
-                $unit[1] = array('гривня', 'гривні', 'гривень');
-                $unit[2] = array('тисяча', 'тисячи', 'тисяч');
-                $unit[3] = array('мільон', 'мільони', 'мільонів');
-            } 
-            if( $blank_set=='ru' ){
-                $unit=array( // Units
-                    array('копейка' ,'копейки' ,'копеек'),
-                    array('рубль'   ,'рубля'   ,'рублей'),
-                    array('тысяча'  ,'тысячи'  ,'тысяч'),
-                    array('миллион' ,'миллиона','миллионов'),
-                    array('миллиард','милиарда','миллиардов'),
-                );          
-            }
+    public function spellAmount($number, $return_cents = true, $return_currency = true) {
+	$blank_set=$this->Base->pref('blank_set');
+	if( $blank_set=='ua' ){
+	    $unit=[
+		['копійка', 'копійки', 'копійок'],
+		['гривня', 'гривні', 'гривень'],
+		['тисяча', 'тисячи', 'тисяч'],
+		['мільон', 'мільони', 'мільонів']
+	    ];
+	} 
+	if( $blank_set=='ru' ){
+	    $unit=[
+		['копейка' ,'копейки' ,'копеек'],
+		['рубль'   ,'рубля'   ,'рублей'],
+		['тысяча'  ,'тысячи'  ,'тысяч'],
+		['миллион' ,'миллиона','миллионов'],
+		['миллиард','милиарда','миллиардов']
+	    ];
 	}
 	$millions = $this->getNumberPosition($number, 1000000, 100);
 	$thousands = $this->getNumberPosition($number, 1000, 100);
 	$ones = $this->getNumberPosition($number, 1, 100);
 	$cents = $this->getNumberPosition($number * 100, 1, 10);
 
-	$str = $this->spellNumber($millions, $unit[3]) . ' ' . $this->spellNumber($thousands, $unit[2]) . ' ' . $this->spellNumber($ones, $unit[1]) . ' ' . $this->spellNumber($cents, $unit[0], $return_cents);
+	$str =	  $this->spellNumber($millions, $unit[3]) . ' ' 
+		. $this->spellNumber($thousands, $unit[2]) . ' ' 
+		. $this->spellNumber($ones, $return_currency?$unit[1]:'') . ' ' 
+		. $this->spellNumber($cents, $unit[0], $return_cents);
 	$str = trim($str);
 	return mb_strtoupper(mb_substr($str, 0, 1, 'utf-8'), 'utf-8') . mb_substr($str, 1, mb_strlen($str) - 1, 'utf-8');
     }

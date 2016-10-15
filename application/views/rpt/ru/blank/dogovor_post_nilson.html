@@ -1,396 +1,403 @@
 <style>
-<!--
- /* Font Definitions */
- @font-face
-	{font-family:"Cambria Math";
-	panose-1:2 4 5 3 5 4 6 3 2 4;}
-@font-face
-	{font-family:Calibri;
-	panose-1:2 15 5 2 2 2 4 3 2 4;}
-@font-face
-	{font-family:Tahoma;
-	panose-1:2 11 6 4 3 5 4 4 2 4;}
-@font-face
-	{font-family:Cambria;
-	panose-1:2 4 5 3 5 4 6 3 2 4;}
- /* Style Definitions */
- p.MsoNormal, li.MsoNormal, div.MsoNormal
-	{margin-top:0cm;
-	margin-right:0cm;
-	margin-bottom:10.0pt;
-	margin-left:0cm;
-	line-height:115%;
-	font-size:11.0pt;
-	font-family:"Calibri","sans-serif";}
-a:link, span.MsoHyperlink
-	{color:blue;
-	text-decoration:underline;}
-a:visited, span.MsoHyperlinkFollowed
-	{color:purple;
-	text-decoration:underline;}
-p
-	{margin-right:0cm;
-	margin-left:0cm;
-	font-size:12.0pt;
-	font-family:"Times New Roman","serif";}
-p.MsoAcetate, li.MsoAcetate, div.MsoAcetate
-	{mso-style-link:"Текст выноски Знак";
-	margin:0cm;
-	margin-bottom:.0001pt;
-	font-size:8.0pt;
-	font-family:"Tahoma","sans-serif";}
-span.hidden-xs
-	{mso-style-name:hidden-xs;}
-span.a
-	{mso-style-name:"Текст выноски Знак";
-	mso-style-link:"Текст выноски";
-	font-family:"Tahoma","sans-serif";}
-.MsoChpDefault
-	{font-family:"Calibri","sans-serif";}
-.MsoPapDefault
-	{margin-bottom:10.0pt;
-	line-height:115%;}
-@page WordSection1
-	{size:595.3pt 841.9pt;
-	margin:2.0cm 42.5pt 2.0cm 3.0cm;}
-div.WordSection1
-	{page:WordSection1;}
- /* List Definitions */
- ol
-	{margin-bottom:0cm;}
-ul
-	{margin-bottom:0cm;}
--->
+    <!--
+    /* Font Definitions */
+    @font-face
+    {font-family:"Cambria Math";
+     panose-1:2 4 5 3 5 4 6 3 2 4;}
+    @font-face
+    {font-family:Calibri;
+     panose-1:2 15 5 2 2 2 4 3 2 4;}
+    @font-face
+    {font-family:Tahoma;
+     panose-1:2 11 6 4 3 5 4 4 2 4;}
+    @font-face
+    {font-family:Cambria;
+     panose-1:2 4 5 3 5 4 6 3 2 4;}
+    /* Style Definitions */
+    p.MsoNormal, li.MsoNormal, div.MsoNormal
+    {margin-top:0cm;
+     margin-right:0cm;
+     margin-bottom:10.0pt;
+     margin-left:0cm;
+     line-height:115%;
+     font-size:11.0pt;
+     font-family:"Calibri","sans-serif";}
+    a:link, span.MsoHyperlink
+    {color:blue;
+     text-decoration:underline;}
+    a:visited, span.MsoHyperlinkFollowed
+    {color:purple;
+     text-decoration:underline;}
+    p
+    {margin-right:0cm;
+     margin-left:0cm;
+     font-size:12.0pt;
+     font-family:"Times New Roman","serif";}
+    p.MsoAcetate, li.MsoAcetate, div.MsoAcetate
+    {mso-style-link:"Текст выноски Знак";
+     margin:0cm;
+     margin-bottom:.0001pt;
+     font-size:8.0pt;
+     font-family:"Tahoma","sans-serif";}
+    span.hidden-xs
+    {mso-style-name:hidden-xs;}
+    span.a
+    {mso-style-name:"Текст выноски Знак";
+     mso-style-link:"Текст выноски";
+     font-family:"Tahoma","sans-serif";}
+    .MsoChpDefault
+    {font-family:"Calibri","sans-serif";}
+    .MsoPapDefault
+    {margin-bottom:10.0pt;
+     line-height:115%;}
+    @page WordSection1
+    {size:595.3pt 841.9pt;
+     margin:2.0cm 42.5pt 2.0cm 3.0cm;}
+    div.WordSection1
+    {page:WordSection1;}
+    /* List Definitions */
+    ol
+    {margin-bottom:0cm;}
+    ul
+    {margin-bottom:0cm;}
+    .page{
+	max-width:21.7cm;
+    }
+    p{
+	text-align: justify;
+    }
+    -->
 </style>
-<div class=WordSection1>
-
-<p align=center style='text-align:center'><b><span style='font-size:11.0pt;
-font-family:"Cambria","serif"'>ДОГОВОР ПОСТАВКИ №<span class="blank_number blank_input" title="Номер документа">{{doc.num}}</span></span></b></p>
-
-<div style='font-size:11.0pt;font-family:"Cambria","serif";float:left'>г. <span class="blank_input" title="Город">Симферополь</span></div><div style="float:right" class="blank_calendar blank_date" title="Дата документа">{{doc.date}}</div></div>
-<div style="clear:both"></div>
-
-<p style='text-align:justify'><span style='font-size:11.0pt;font-family:"Cambria","serif"'>
-<b>{{a.company_name}}</b>, именуемое в дальнейшем «Поставщик», в лице Генерального
-директора <span class="blank_input blank_required" title="Имя директора продавца">{{a.company_director}}</span>, действующего на основании Устава, с
-одной стороны, и <b>{{p.company_name}}</b>, именуемое в дальнейшем
-«Покупатель», в лице Генерального директора <span class="blank_input">{{p.company_director}}</span>,
-действующего на основании Устава, с другой стороны, вместе и по отдельности
-именуемые «Стороны», заключили настоящий Договор о нижеследующем:</span></p>
-
-<p align=center style='text-align:center'><b><span style='font-size:11.0pt;
-font-family:"Cambria","serif"'>1. ПРЕДМЕТ И ОБЩИЕ УСЛОВИЯ ДОГОВОРА.</span></b></p>
-
-<p style='text-align:justify'><span style='font-size:11.0pt;font-family:"Cambria","serif"'>1.1.
-Поставщик обязуется передавать в обусловленный настоящим договором срок
-электротехнические товары (далее -  товар) Покупателю, а Покупатель обязуется
-принимать и оплачивать товар на условиях настоящего договора.</span></p>
-
-<p style='text-align:justify'><span style='font-size:11.0pt;font-family:"Cambria","serif"'>1.2.
-Наименование, количество, ассортимент, цена и сроки поставки товара согласовываются
-Сторонами в порядке, установленном в  настоящем договоре.</span></p>
-
-<p style='text-align:justify'><span style='font-size:11.0pt;font-family:"Cambria","serif"'>1.3.
-Товар предоставляется в невозвратной таре, стоимость которой включена в
-стоимость товара.</span></p>
-
-<p style='text-align:justify'><span style='font-size:11.0pt;font-family:"Cambria","serif"'>1.4.
-Качество товара подтверждается сертификатами соответствия. Поставщик
-гарантирует  обмен товара с фабричным браком.</span></p>
-
-<p align=center style='text-align:center'><b><span style='font-size:11.0pt;
-font-family:"Cambria","serif"'>2. ПРАВА И ОБЯЗАННОСТИ СТОРОН</span></b></p>
-
-<p style='text-align:justify'><span style='font-size:11.0pt;font-family:"Cambria","serif"'>2.1.
-Покупатель обязуется:</span></p>
-
-<p style='text-align:justify'><span style='font-size:11.0pt;font-family:"Cambria","serif"'>2.1.1.
-Оплатить на условиях настоящего договора стоимость поставляемого товара.</span></p>
-
-<p style='text-align:justify'><span style='font-size:11.0pt;font-family:"Cambria","serif"'>2.1.2.
-Совершить все необходимые действия, обеспечивающие принятие товара, указанного
-в товарной накладной, товарно-транспортной накладной и поставленного в
-соответствии с условиями настоящего договора.</span></p>
-
-<p style='text-align:justify'><span style='font-size:11.0pt;font-family:"Cambria","serif"'>2.1.3.
-В случае получения товара от транспортной компании, осуществляющей перевозку,
-проверить соответствие товара сведениям, указанным в транспортных и
-сопроводительных документах, а так же принять этот товар от транспортной
-компании с соблюдением правил, предусмотренных законами и иными правовыми
-актами.</span></p>
-
-<p style='text-align:justify'><span style='font-size:11.0pt;font-family:"Cambria","serif"'>2.2.
-Приемка товара по ассортименту, комплектации и количеству производится
-Покупателем в момент передачи товара Покупателю на складе Поставщика на
-основании подтвержденного Поставщиком заказа. Ассортимент и количество Товара
-должны соответствовать  ассортименту и количеству, указанным в товарной
-накладной и товарно-транспортной накладной.</span></p>
-
-<p style='text-align:justify'><span style='font-size:11.0pt;font-family:"Cambria","serif"'>2.3.
-Проверка Товара по качеству осуществляется в соответствии с инструкцией о
-приемке продукции установленной законодательством.</span></p>
-
-<p style='text-align:justify'><span style='font-size:11.0pt;font-family:"Cambria","serif"'>2.4.
-Поставщик обязуется:</span></p>
-
-<p style='text-align:justify'><span style='font-size:11.0pt;font-family:"Cambria","serif"'>2.4.1
-Поставлять товар в сроки, предусмотренные настоящим договором.</span></p>
-
-<p style='text-align:justify'><span style='font-size:11.0pt;font-family:"Cambria","serif"'>2.4.2.
-Поставить товар в количестве и комплектации, указанной в товарных накладных и
-товарно-транспортных накладных.</span></p>
-
-<p align=center style='text-align:center'><b><span style='font-size:11.0pt;
-font-family:"Cambria","serif"'>3. ОБЩАЯ СУММА ДОГОВОРА И ПОРЯДОК РАСЧЕТОВ</span></b></p>
-
-<p style='text-align:justify'><span style='font-size:11.0pt;font-family:"Cambria","serif"'>3.1.
-Общая стоимость настоящего договора равняется общей стоимости всех партий
-Товара отгруженных во время действия договора. Стоимость каждой партии
-указывается в товарных накладных и включает в себя стоимость поставляемого
-товара, НДС и иные расходы поставщика, связанные с исполнением настоящего
-договора.</span></p>
-
-<p style='text-align:justify'><span style='font-size:11.0pt;font-family:"Cambria","serif"'>3.2.
-Оплата производится в форме безналичного расчета путем банковского перевода Покупателем
-денежных средств на расчетный счет Поставщика.</span></p>
-
-<p style='text-align:justify'><span style='font-size:11.0pt;font-family:"Cambria","serif"'>3.3.
-Покупатель производит оплату поставленного товара не позднее <u><b><span class="blank_input blank_spell">{{p.deferment|blank>3}}</span></b></u>
-календарных дней с даты поставки товара. Датой поставки считается дата,
-указанная в товарно-транспортной накладной на данную поставку Товара.</span></p>
-
-<p style='text-align:justify'><span style='font-size:11.0pt;font-family:"Cambria","serif"'>3.4.
-Датой платежа считается дата зачисления денежных средств на расчетный счет
-Поставщика.</span></p>
-
-<p align=center style='text-align:center'><b><span style='font-size:11.0pt;
-font-family:"Cambria","serif"'>4. ЦЕНОВАЯ ПОЛИТИКА</span></b></p>
-
-<p style='text-align:justify'><span style='font-size:11.0pt;font-family:"Cambria","serif"'>4.1.
-Поставщик предоставляет  Покупателю скидку в размере <span class="blank_input blank_spell">29</span> процента от
-стоимости товара по прайс-листу Поставщика на согласованные  категории товара,
-при условии выполнения Покупателем обязательства, установленном в п. 4.3. и
-4.4. настоящего договора. Прайс-лист с действующей ценой направляется
-Покупателю по запросу на электронную почту. Поставщик оставляет за собой право
-пересмотреть в одностороннем порядке скидку, уведомив об этом Покупателя за 10
-канендарных дней.</span></p>
-
-<p style='text-align:justify'><span style='font-size:11.0pt;font-family:"Cambria","serif"'>4.2.
-Сумма задолженности Покупателя (кредитный лимит) в рамках данного договора не
-может превышать <span class="blank_input blank_spell">50&nbsp;000 (пятьдесят тысяч)</span> рублей. Сумма лимита может быть
-пересмотрена Поставщиком в одностороннем порядке. </span></p>
-
-<p style='text-align:justify'><span style='font-size:11.0pt;font-family:"Cambria","serif"'>4.3.
-Покупатель обязуется осуществлять выборку товара по прайс листу Поставщика на
-сумму не меньше <span class="blank_input blank_spell">150&nbsp;000 (сто пятьдесят тысяч)</span> рублей в квартал. Не соблюдение
-данного условия выборки будет являться основанием для пересмотра
-предоставленной скидки Поставщиком в одностороннем порядке с обязательным
-уведомлением Покупателя за 10 календарных дней.</span></p>
-
-<p style='text-align:justify'><span style='font-size:11.0pt;font-family:"Cambria","serif"'>4.4.
-Покупатель обязуется придерживаться рекомендуемых Поставщиком отпускных цен на
-Товар и не создавать предпосылки для демпинга и нечестной конкуренции, с
-другими компаниями торгующими этим Товаром. Все отступления от минимальных
-рекомендованных цен должны быть согласованы с поставщиком.</span></p>
-
-<p style='text-align:justify'><span style='font-size:11.0pt;font-family:"Cambria","serif"'>4.5.
-Поставщик может проводить различные акции ограниченные во времени, с понижением
-цены на определенные товары или группы товаров, с предварительным уведомлением
-Покупателя.</span></p>
-
-<p style='text-align:justify'><span style='font-size:11.0pt;font-family:"Cambria","serif"'>4.6.
-Обо всех изменениях прайс-листа Поставщик информирует Покупателя не позднее,
-чем за 5 календарных дней, до момента вступления их в силу на электронную почту
-Покупателя.</span></p>
-
-<p align=center style='text-align:center'><b><span style='font-size:11.0pt;
-font-family:"Cambria","serif"'>5. ПОРЯДОК ПОСТАВКИ ТОВАРА</span></b></p>
-
-<p style='text-align:justify'><span style='font-size:11.0pt;font-family:"Cambria","serif"'>5.1.
-Покупатель в срок не позднее, чем за 3 календарных дня до предполагаемой даты
-поставки направляет Поставщику заявку, в которой указывает наименование,
-артикул, количество и сроки поставки товара. </span></p>
-
-<p style='text-align:justify'><span style='font-size:11.0pt;font-family:"Cambria","serif"'>5.2.
-Заявка считается принятой Поставщиком после согласования Сторонами всех
-существенных условий поставки товара, указанных в заявке, и выставления
-Покупателю счета на оплату товаров, на условиях, указанных в заявке, а так же
-выписки Поставщиком товарной накладной и товарно-транспортной накладной.</span></p>
-
-<p style='text-align:justify'><span style='font-size:11.0pt;font-family:"Cambria","serif"'>5.3.
-Поставка товара осуществляется отдельными партиями в соответствии с заявками
-Покупателя, в сроки согласованные Сторонами в заявках.</span></p>
-
-<p style='text-align:justify'><span style='font-size:11.0pt;font-family:"Cambria","serif"'>5.4.
-Покупатель самостоятельно определяет периодичность  поставок, а так же
-количество и ассортимент товаров.</span></p>
-
-<p style='text-align:justify'><span style='font-size:11.0pt;font-family:"Cambria","serif"'>5.5.
-Датой поставки считается дата, указанная в товарной накладной и
-товарно-транспортной накладной Поставщика.</span></p>
-
-<p style='text-align:justify'><span style='font-size:11.0pt;font-family:"Cambria","serif"'>5.6.
-Доставка товаров при сумме заказа свыше 50&nbsp;000 рублей до согласованного
-Сторонами перевозчика осуществляется силами или за счет Поставщика.</span></p>
-
-<p style='text-align:justify'><span style='font-size:11.0pt;font-family:"Cambria","serif"'>5.7.
-Поставщик в праве отказать покупателю в поставке очередной партии Товара в
-случае, если Покупатель допустил образование задолженности в пользу Поставщика
-по предыдущим поставкам.</span></p>
-
-<p style='text-align:justify'><span style='font-size:11.0pt;font-family:"Cambria","serif"'>5.8.
-Право собственности, риск порчи, утраты или случайной гибели товара переходит
-от Поставщика к Покупателю с момента передачи Поставщиком данного товара
-перевозчику, выбранному Покупателем для транспортировки товара Покупателю,
-самому Покупателю или уполномоченным им лицам.</span></p>
-
-<p style='text-align:justify'><span style='font-size:11.0pt;font-family:"Cambria","serif"'>5.9.
-Товар, соответствующий условиям настоящего договора по количеству и качеству,
-может быть возвращен Поставщику только после согласования такого возврата, при
-соблюдении следующих необходимых условий:</span></p>
-
-<p style='text-align:justify'><span style='font-size:11.0pt;font-family:"Cambria","serif"'>-
-Товар не поврежден, не использовался;</span></p>
-
-<p style='text-align:justify'><span style='font-size:11.0pt;font-family:"Cambria","serif"'>-
-Транспортная упаковка не повреждена; </span></p>
-
-<p style='text-align:justify'><span style='font-size:11.0pt;font-family:"Cambria","serif"'>-
-Внешний вид и все характеристики такого товара позволяют его дальнейшую
-перепродажу;</span></p>
-
-<p style='text-align:justify'><span style='font-size:11.0pt;font-family:"Cambria","serif"'>-
-Возвращаемый товар не выведен из ассортиментной матрицы Поставщика (находится
-на момент возврата товара в актуальном прайс-листе Поставщика).</span></p>
-
-<p align=center style='text-align:center'><b><span style='font-size:11.0pt;
-font-family:"Cambria","serif"'>6. ОТВЕТСТВЕННОСТЬ СТОРОН</span></b></p>
-
-<p><span style='font-size:11.0pt;font-family:"Cambria","serif"'>6.1. Покупатель
-несет полную ответственность за сохранность товара в размере его полной
-стоимости, начиная с момента перехода к нему права собственности, рисков порчи,
-утраты и случайной гибели.</span></p>
-
-<p><span style='font-size:11.0pt;font-family:"Cambria","serif"'>6.2. В случае
-просрочки  установленных настоящим договором сроков оплаты более чем на 5
-(Пять) календарных дней Продавец имеет право взыскать с покупателя пени в
-размере 0.3% (Ноль целых три десятых процента) за каждый календарный день
-просрочки от суммы, подлежащей оплате.</span></p>
-
-<p><span style='font-size:11.0pt;font-family:"Cambria","serif"'>6.3. Оплата
-пени не освобождает Покупателя от исполнения своих обязательств по настоящему
-договору.</span></p>
-
-<p><span style='font-size:11.0pt;font-family:"Cambria","serif"'>6.4. В случае
-недопоставки Поставщиком товара по согласованному и оплаченному заказу более
-чем на 5 календарных дней, Покупатель в праве взыскать с Поставщика пени в
-размере 0.3% (Ноль целых три десятых процента) за каждый календарный день
-просрочки от суммы товара, подлежащего поставке. Общий размер пени не может
-превышать 5% (Пять процентов) от общей суммы не поставленного товара.</span></p>
-
-<p align=center style='text-align:center'><b><span style='font-size:11.0pt;
-font-family:"Cambria","serif"'>7. СРОК ДЕЙСТВИЯ И ПОРЯДОК РАСТОРЖЕНИЯ ДОГОВОРА</span></b></p>
-
-<p><span style='font-size:11.0pt;font-family:"Cambria","serif"'>7.1. Настоящий
-договор вступает в силу с момента его подписания и действует до<span class="blank_input blank_required" title="Срок действия">31 декабря </span>.</span> Договор автоматически пролонгируется на один год, и далее ежегодно, если ни одна из сторон не предъявила письменное уведомление об окончании срока действия договора за 30 календарный дней до окончания его срока действия.</p>
-
-<p><span style='font-size:11.0pt;font-family:"Cambria","serif"'>7.2. Если на
-день окончания настоящего договора Покупатель имеет невыполненные финансовые
-обязательства перед Поставщиком, то в части исполнения этих обязательств настоящий
-договор сохраняет свою силу до момента полного их исполнения.</span></p>
-
-<p><span style='font-size:11.0pt;font-family:"Cambria","serif"'>7.3. Настоящий
-договор может быть досрочно расторгнут по соглашению Сторон.</span></p>
-
-<p><span style='font-size:11.0pt;font-family:"Cambria","serif"'>7.4. Настоящий
-договор может быть расторгнут Поставщиком в одностороннем порядке в случае
-неоднократного нарушения Покупателем сроков оплаты товара, а также в иных
-случаях, установленных настоящим договором.</span></p>
-
-<p align=center style='text-align:center'><b><span style='font-size:11.0pt;
-font-family:"Cambria","serif"'>8. ПОРЯДОК РАССМОТРЕНИЯ СПОРОВ</span></b></p>
-
-<p><span style='font-size:11.0pt;font-family:"Cambria","serif"'>8.1. Стороны
-обязуются принять все меры к разрешению споров и разногласий, которые могут
-возникнуть из настоящего договора или в связи с ним, путем переговоров.</span></p>
-
-<p><span style='font-size:11.0pt;font-family:"Cambria","serif"'>8.2. В случае
-если Стороны не смогут прийти к соглашению, то все споры и разногласия,
-связанные с заключением, исполнением, расторжением договора, а так же споры,
-связанные с договором и возникшие после его расторжения или прекращения,
-подлежат судебному разрешению в Арбитражном суде по месту нахождения
-Поставщика. Споры разрешаются с соблюдением обязательного претензионного
-порядка урегулирования спора. Срок ответа на претензию – 20 (двадцать)
-календарных дней с момента ее получения.</span></p>
-
-<p align=center style='text-align:center'><b><span style='font-size:11.0pt;
-font-family:"Cambria","serif"'>9. ПРОЧИЕ УСЛОВИЯ</span></b></p>
-
-<p><span style='font-size:11.0pt;font-family:"Cambria","serif"'>9.1. С момента
-подписания настоящего договора все предварительные переговоры и переписка
-теряют силу. Все дополнения и изменения к настоящему договору действительны,
-если они составлены в письменной форме и подписаны обеими Сторонами.</span></p>
-
-<p><span style='font-size:11.0pt;font-family:"Cambria","serif"'>9.2. Все
-приложения к настоящему договору являются его неотъемлемыми частями.</span></p>
-
-<p><span style='font-size:11.0pt;font-family:"Cambria","serif"'>9.3. Стороны
-обязаны информировать друг друга об изменении юридических адресов или
-реквизитов.</span></p>
-
-<p><span style='font-size:11.0pt;font-family:"Cambria","serif"'>9.4. Стороны не
-имеют право передать третьим лицам исполнение настоящего договора без
-письменного согласия на то другой Стороны.</span></p>
-
-<p><span style='font-size:11.0pt;font-family:"Cambria","serif"'>9.5. Документы
-(за исключением платежных документов, счетов-фактур и документов,
-удостоверяющих качество товара), подписываемые во исполнение Договора и
-переданные по средствам электронной почты,  позволяющих достоверно определить,
-что документ исходит от Стороны по Договору, имеют юридическую силу до
-получения оригиналов по почте.</span></p>
-
-<p><span style='font-size:11.0pt;font-family:"Cambria","serif"'>9.6. Настоящий
-договор составлен в 2 экземплярах, имеющих одинаковую юридическую силу – по
-одному экземпляру для каждой стороны.</span></p>
-
-<p align=center style='text-align:center'><b><span style='font-size:11.0pt;
-font-family:"Cambria","serif"'>10. АДРЕСА И РЕКВИЗИТЫ СТОРОН</span></b></p>
-
-<table class=MsoTableGrid border=0 cellspacing=0 cellpadding=0
- style='border-collapse:collapse;border:none'>
- <tr>
-  <td width=319 valign=top style='width:239.25pt;padding:0cm 5.4pt 0cm 5.4pt;font-size:11.0pt;font-family:"Cambria","serif"'>
-      {{a.company_name}}
-      <br />{{a.company_jaddress}}
-      <br> Тел.:{{a.company_phone}}
-      {{if a.company_bank_account}}<br />Р/С {{a.company_bank_account}}{{/if}}
-	  {{if a.company_bank_corr_account}}<br />Корр. Счет {{a.company_bank_corr_account}}{{/if}}
-      {{if a.company_bank_name }} в {{a.company_bank_name}} {{/if}}
-      {{if a.company_bank_id }} БИК:{{a.company_bank_id}} {{/if}}
-      {{if a.company_vat_id }}<br /> ИНН:{{a.company_vat_id}} {{/if}}
-	  {{if a.company_vat_licence_id }}<br /> КПП:{{a.company_vat_licence_id}} {{/if}}
-      {{if a.company_code }}<br /> ОКПО:{{a.company_code}} {{/if}}
-      {{if a.company_web }}<br /> Сайт:{{a.company_web}} {{/if}}
-      {{if a.company_email }}<br /> e-mail:{{a.company_email}} {{/if}}
-  <p><span style='font-size:11.0pt;font-family:"Cambria","serif"'>Директор</span></p>
-  <p><span style='font-size:11.0pt;font-family:"Cambria","serif"'>М.П. _________________________/{{a.company_director}}/</span></p>
-  </td>
-  <td width=319 valign=top style='width:239.3pt;padding:0cm 5.4pt 0cm 5.4pt;font-size:11.0pt;font-family:"Cambria","serif"'>
-  {{p.company_name}}
-      <br />{{p.company_jaddress}}
-      <br> Тел.:{{p.company_phone}}
-      {{if p.company_bank_account}}<br />Р/С {{p.company_bank_account}}{{/if}}
-	  {{if p.company_bank_corr_account}}<br />Корр. Счет {{p.company_bank_corr_account}}{{/if}}
-      {{if p.company_bank_name }} в {{p.company_bank_name}} {{/if}}
-      {{if p.company_bank_id }} БИК:{{p.company_bank_id}} {{/if}}
-      {{if p.company_vat_id }}<br /> ИНН:{{p.company_vat_id}} {{/if}}
-	  {{if p.company_vat_licence_id }}<br /> КПП:{{p.company_vat_licence_id}} {{/if}}
-      {{if p.company_code }}<br /> ОКПО:{{p.company_code}} {{/if}}
-      {{if p.company_web }}<br /> Сайт:{{p.company_web}} {{/if}}
-      {{if p.company_email }}<br /> e-mail:{{p.company_email}} {{/if}}
-  <p><span style='font-size:11.0pt;font-family:"Cambria","serif"'>Директор</span></p>
-  <p><span style='font-size:11.0pt;font-family:"Cambria","serif"'>М.П. _________________________/{{p.company_director}}/</span></p>
-  </td>
- </tr>
-</table>
+<div class="WordSection1 page">
+
+    <p align=center style='text-align:center'><b><span style='font-size:11.0pt;
+						       font-family:"Cambria","serif"'>ДОГОВОР ПОСТАВКИ №<span class="blank_number blank_input" title="Номер документа">{{doc.num}}</span></span></b></p>
+
+    <table style="width:100%"><tr>
+	    <td>г. <span class="blank_input" title="Город">Симферополь</span></td>
+	    <td style="text-align: right"><div class="blank_calendar blank_date" title="Дата документа">{{doc.date}}</div></td>
+	</tr></table>
+
+    <p style='text-align:justify'><span style='font-size:11.0pt;font-family:"Cambria","serif"'>
+	    <b>{{a.company_name}}</b>, именуемое в дальнейшем «Поставщик», в лице Генерального
+	    директора <span class="blank_input blank_required" title="Имя директора продавца">{{a.company_director}}</span>, действующего на основании Устава, с
+	    одной стороны, и <b>{{p.company_name}}</b>, именуемое в дальнейшем
+	    «Покупатель», в лице Генерального директора <span class="blank_input">{{p.company_director}}</span>,
+	    действующего на основании Устава, с другой стороны, вместе и по отдельности
+	    именуемые «Стороны», заключили настоящий Договор о нижеследующем:</span></p>
+
+    <p align=center style='text-align:center'><b><span style='font-size:11.0pt;
+						       font-family:"Cambria","serif"'>1. ПРЕДМЕТ И ОБЩИЕ УСЛОВИЯ ДОГОВОРА.</span></b></p>
+
+    <p style='text-align:justify'><span style='font-size:11.0pt;font-family:"Cambria","serif"'>1.1.
+	    Поставщик обязуется передавать в обусловленный настоящим договором срок
+	    электротехнические товары (далее -  товар) Покупателю, а Покупатель обязуется
+	    принимать и оплачивать товар на условиях настоящего договора.</span></p>
+
+    <p style='text-align:justify'><span style='font-size:11.0pt;font-family:"Cambria","serif"'>1.2.
+	    Наименование, количество, ассортимент, цена и сроки поставки товара согласовываются
+	    Сторонами в порядке, установленном в  настоящем договоре.</span></p>
+
+    <p style='text-align:justify'><span style='font-size:11.0pt;font-family:"Cambria","serif"'>1.3.
+	    Товар предоставляется в невозвратной таре, стоимость которой включена в
+	    стоимость товара.</span></p>
+
+    <p style='text-align:justify'><span style='font-size:11.0pt;font-family:"Cambria","serif"'>1.4.
+	    Качество товара подтверждается сертификатами соответствия. Поставщик
+	    гарантирует  обмен товара с фабричным браком.</span></p>
+
+    <p align=center style='text-align:center'><b><span style='font-size:11.0pt;
+						       font-family:"Cambria","serif"'>2. ПРАВА И ОБЯЗАННОСТИ СТОРОН</span></b></p>
+
+    <p style='text-align:justify'><span style='font-size:11.0pt;font-family:"Cambria","serif"'>2.1.
+	    Покупатель обязуется:</span></p>
+
+    <p style='text-align:justify'><span style='font-size:11.0pt;font-family:"Cambria","serif"'>2.1.1.
+	    Оплатить на условиях настоящего договора стоимость поставляемого товара.</span></p>
+
+    <p style='text-align:justify'><span style='font-size:11.0pt;font-family:"Cambria","serif"'>2.1.2.
+	    Совершить все необходимые действия, обеспечивающие принятие товара, указанного
+	    в товарной накладной, товарно-транспортной накладной и поставленного в
+	    соответствии с условиями настоящего договора.</span></p>
+
+    <p style='text-align:justify'><span style='font-size:11.0pt;font-family:"Cambria","serif"'>2.1.3.
+	    В случае получения товара от транспортной компании, осуществляющей перевозку,
+	    проверить соответствие товара сведениям, указанным в транспортных и
+	    сопроводительных документах, а так же принять этот товар от транспортной
+	    компании с соблюдением правил, предусмотренных законами и иными правовыми
+	    актами.</span></p>
+
+    <p style='text-align:justify'><span style='font-size:11.0pt;font-family:"Cambria","serif"'>2.2.
+	    Приемка товара по ассортименту, комплектации и количеству производится
+	    Покупателем в момент передачи товара Покупателю на складе Поставщика на
+	    основании подтвержденного Поставщиком заказа. Ассортимент и количество Товара
+	    должны соответствовать  ассортименту и количеству, указанным в товарной
+	    накладной и товарно-транспортной накладной.</span></p>
+
+    <p style='text-align:justify'><span style='font-size:11.0pt;font-family:"Cambria","serif"'>2.3.
+	    Проверка Товара по качеству осуществляется в соответствии с инструкцией о
+	    приемке продукции установленной законодательством.</span></p>
+
+    <p style='text-align:justify'><span style='font-size:11.0pt;font-family:"Cambria","serif"'>2.4.
+	    Поставщик обязуется:</span></p>
+
+    <p style='text-align:justify'><span style='font-size:11.0pt;font-family:"Cambria","serif"'>2.4.1
+	    Поставлять товар в сроки, предусмотренные настоящим договором.</span></p>
+
+    <p style='text-align:justify'><span style='font-size:11.0pt;font-family:"Cambria","serif"'>2.4.2.
+	    Поставить товар в количестве и комплектации, указанной в товарных накладных и
+	    товарно-транспортных накладных.</span></p>
+
+    <p align=center style='text-align:center'><b><span style='font-size:11.0pt;
+						       font-family:"Cambria","serif"'>3. ОБЩАЯ СУММА ДОГОВОРА И ПОРЯДОК РАСЧЕТОВ</span></b></p>
+
+    <p style='text-align:justify'><span style='font-size:11.0pt;font-family:"Cambria","serif"'>3.1.
+	    Общая стоимость настоящего договора равняется общей стоимости всех партий
+	    Товара отгруженных во время действия договора. Стоимость каждой партии
+	    указывается в товарных накладных и включает в себя стоимость поставляемого
+	    товара, НДС и иные расходы поставщика, связанные с исполнением настоящего
+	    договора.</span></p>
+
+    <p style='text-align:justify'><span style='font-size:11.0pt;font-family:"Cambria","serif"'>3.2.
+	    Оплата производится в форме безналичного расчета путем банковского перевода Покупателем
+	    денежных средств на расчетный счет Поставщика.</span></p>
+
+    <p style='text-align:justify'><span style='font-size:11.0pt;font-family:"Cambria","serif"'>3.3.
+	    Покупатель производит оплату поставленного товара не позднее <u><b><span class="blank_input blank_spell">{{p.deferment|blank>3}}</span></b></u>
+	    календарных дней с даты поставки товара. Датой поставки считается дата,
+	    указанная в товарно-транспортной накладной на данную поставку Товара.</span></p>
+
+    <p style='text-align:justify'><span style='font-size:11.0pt;font-family:"Cambria","serif"'>3.4.
+	    Датой платежа считается дата зачисления денежных средств на расчетный счет
+	    Поставщика.</span></p>
+
+    <p align=center style='text-align:center'><b><span style='font-size:11.0pt;
+						       font-family:"Cambria","serif"'>4. ЦЕНОВАЯ ПОЛИТИКА</span></b></p>
+
+    <p style='text-align:justify'><span style='font-size:11.0pt;font-family:"Cambria","serif"'>4.1.
+	    Поставщик предоставляет  Покупателю скидку в размере <span class="blank_input blank_spell">29</span> процента от
+	    стоимости товара по прайс-листу Поставщика на согласованные  категории товара,
+	    при условии выполнения Покупателем обязательства, установленном в п. 4.3. и
+	    4.4. настоящего договора. Прайс-лист с действующей ценой направляется
+	    Покупателю по запросу на электронную почту. Поставщик оставляет за собой право
+	    пересмотреть в одностороннем порядке скидку, уведомив об этом Покупателя за 10
+	    канендарных дней.</span></p>
+
+    <p style='text-align:justify'><span style='font-size:11.0pt;font-family:"Cambria","serif"'>4.2.
+	    Сумма задолженности Покупателя (кредитный лимит) в рамках данного договора не
+	    может превышать <span class="blank_input blank_spell">50 000 (пятьдесят тысяч)</span> рублей. Сумма лимита может быть
+	    пересмотрена Поставщиком в одностороннем порядке. </span></p>
+
+    <p style='text-align:justify'><span style='font-size:11.0pt;font-family:"Cambria","serif"'>4.3.
+	    Покупатель обязуется осуществлять выборку товара по прайс листу Поставщика на
+	    сумму не меньше <span class="blank_input blank_spell">150 000 (сто пятьдесят тысяч)</span> рублей в квартал. Не соблюдение
+	    данного условия выборки будет являться основанием для пересмотра
+	    предоставленной скидки Поставщиком в одностороннем порядке с обязательным
+	    уведомлением Покупателя за 10 календарных дней.</span></p>
+
+    <p style='text-align:justify'><span style='font-size:11.0pt;font-family:"Cambria","serif"'>4.4.
+	    Покупатель обязуется придерживаться рекомендуемых Поставщиком отпускных цен на
+	    Товар и не создавать предпосылки для демпинга и нечестной конкуренции, с
+	    другими компаниями торгующими этим Товаром. Все отступления от минимальных
+	    рекомендованных цен должны быть согласованы с поставщиком.</span></p>
+
+    <p style='text-align:justify'><span style='font-size:11.0pt;font-family:"Cambria","serif"'>4.5.
+	    Поставщик может проводить различные акции ограниченные во времени, с понижением
+	    цены на определенные товары или группы товаров, с предварительным уведомлением
+	    Покупателя.</span></p>
+
+    <p style='text-align:justify'><span style='font-size:11.0pt;font-family:"Cambria","serif"'>4.6.
+	    Обо всех изменениях прайс-листа Поставщик информирует Покупателя не позднее,
+	    чем за 5 календарных дней, до момента вступления их в силу на электронную почту
+	    Покупателя.</span></p>
+
+    <p align=center style='text-align:center'><b><span style='font-size:11.0pt;
+						       font-family:"Cambria","serif"'>5. ПОРЯДОК ПОСТАВКИ ТОВАРА</span></b></p>
+
+    <p style='text-align:justify'><span style='font-size:11.0pt;font-family:"Cambria","serif"'>5.1.
+	    Покупатель в срок не позднее, чем за 3 календарных дня до предполагаемой даты
+	    поставки направляет Поставщику заявку, в которой указывает наименование,
+	    артикул, количество и сроки поставки товара. </span></p>
+
+    <p style='text-align:justify'><span style='font-size:11.0pt;font-family:"Cambria","serif"'>5.2.
+	    Заявка считается принятой Поставщиком после согласования Сторонами всех
+	    существенных условий поставки товара, указанных в заявке, и выставления
+	    Покупателю счета на оплату товаров, на условиях, указанных в заявке, а так же
+	    выписки Поставщиком товарной накладной и товарно-транспортной накладной.</span></p>
+
+    <p style='text-align:justify'><span style='font-size:11.0pt;font-family:"Cambria","serif"'>5.3.
+	    Поставка товара осуществляется отдельными партиями в соответствии с заявками
+	    Покупателя, в сроки согласованные Сторонами в заявках.</span></p>
+
+    <p style='text-align:justify'><span style='font-size:11.0pt;font-family:"Cambria","serif"'>5.4.
+	    Покупатель самостоятельно определяет периодичность  поставок, а так же
+	    количество и ассортимент товаров.</span></p>
+
+    <p style='text-align:justify'><span style='font-size:11.0pt;font-family:"Cambria","serif"'>5.5.
+	    Датой поставки считается дата, указанная в товарной накладной и
+	    товарно-транспортной накладной Поставщика.</span></p>
+
+    <p style='text-align:justify'><span style='font-size:11.0pt;font-family:"Cambria","serif"'>5.6.
+	    Доставка товаров при сумме заказа свыше 50&nbsp;000 рублей до согласованного
+	    Сторонами перевозчика осуществляется силами или за счет Поставщика.</span></p>
+
+    <p style='text-align:justify'><span style='font-size:11.0pt;font-family:"Cambria","serif"'>5.7.
+	    Поставщик в праве отказать покупателю в поставке очередной партии Товара в
+	    случае, если Покупатель допустил образование задолженности в пользу Поставщика
+	    по предыдущим поставкам.</span></p>
+
+    <p style='text-align:justify'><span style='font-size:11.0pt;font-family:"Cambria","serif"'>5.8.
+	    Право собственности, риск порчи, утраты или случайной гибели товара переходит
+	    от Поставщика к Покупателю с момента передачи Поставщиком данного товара
+	    перевозчику, выбранному Покупателем для транспортировки товара Покупателю,
+	    самому Покупателю или уполномоченным им лицам.</span></p>
+
+    <p style='text-align:justify'><span style='font-size:11.0pt;font-family:"Cambria","serif"'>5.9.
+	    Товар, соответствующий условиям настоящего договора по количеству и качеству,
+	    может быть возвращен Поставщику только после согласования такого возврата, при
+	    соблюдении следующих необходимых условий:</span></p>
+
+    <p style='text-align:justify'><span style='font-size:11.0pt;font-family:"Cambria","serif"'>-
+	    Товар не поврежден, не использовался;</span></p>
+
+    <p style='text-align:justify'><span style='font-size:11.0pt;font-family:"Cambria","serif"'>-
+	    Транспортная упаковка не повреждена; </span></p>
+
+    <p style='text-align:justify'><span style='font-size:11.0pt;font-family:"Cambria","serif"'>-
+	    Внешний вид и все характеристики такого товара позволяют его дальнейшую
+	    перепродажу;</span></p>
+
+    <p style='text-align:justify'><span style='font-size:11.0pt;font-family:"Cambria","serif"'>-
+	    Возвращаемый товар не выведен из ассортиментной матрицы Поставщика (находится
+	    на момент возврата товара в актуальном прайс-листе Поставщика).</span></p>
+
+    <p align=center style='text-align:center'><b><span style='font-size:11.0pt;
+						       font-family:"Cambria","serif"'>6. ОТВЕТСТВЕННОСТЬ СТОРОН</span></b></p>
+
+    <p><span style='font-size:11.0pt;font-family:"Cambria","serif"'>6.1. Покупатель
+	    несет полную ответственность за сохранность товара в размере его полной
+	    стоимости, начиная с момента перехода к нему права собственности, рисков порчи,
+	    утраты и случайной гибели.</span></p>
+
+    <p><span style='font-size:11.0pt;font-family:"Cambria","serif"'>6.2. В случае
+	    просрочки  установленных настоящим договором сроков оплаты более чем на 5
+	    (Пять) календарных дней Продавец имеет право взыскать с покупателя пени в
+	    размере 0.3% (Ноль целых три десятых процента) за каждый календарный день
+	    просрочки от суммы, подлежащей оплате.</span></p>
+
+    <p><span style='font-size:11.0pt;font-family:"Cambria","serif"'>6.3. Оплата
+	    пени не освобождает Покупателя от исполнения своих обязательств по настоящему
+	    договору.</span></p>
+
+    <p><span style='font-size:11.0pt;font-family:"Cambria","serif"'>6.4. В случае
+	    недопоставки Поставщиком товара по согласованному и оплаченному заказу более
+	    чем на 5 календарных дней, Покупатель в праве взыскать с Поставщика пени в
+	    размере 0.3% (Ноль целых три десятых процента) за каждый календарный день
+	    просрочки от суммы товара, подлежащего поставке. Общий размер пени не может
+	    превышать 5% (Пять процентов) от общей суммы не поставленного товара.</span></p>
+
+    <p align=center style='text-align:center'><b><span style='font-size:11.0pt;
+						       font-family:"Cambria","serif"'>7. СРОК ДЕЙСТВИЯ И ПОРЯДОК РАСТОРЖЕНИЯ ДОГОВОРА</span></b></p>
+
+    <p><span style='font-size:11.0pt;font-family:"Cambria","serif"'>7.1. Настоящий
+	    договор вступает в силу с момента его подписания и действует до<span class="blank_input blank_required" title="Срок действия">31 декабря </span>.</span> Договор автоматически пролонгируется на один год, и далее ежегодно, если ни одна из сторон не предъявила письменное уведомление об окончании срока действия договора за 30 календарный дней до окончания его срока действия.</p>
+
+    <p><span style='font-size:11.0pt;font-family:"Cambria","serif"'>7.2. Если на
+	    день окончания настоящего договора Покупатель имеет невыполненные финансовые
+	    обязательства перед Поставщиком, то в части исполнения этих обязательств настоящий
+	    договор сохраняет свою силу до момента полного их исполнения.</span></p>
+
+    <p><span style='font-size:11.0pt;font-family:"Cambria","serif"'>7.3. Настоящий
+	    договор может быть досрочно расторгнут по соглашению Сторон.</span></p>
+
+    <p><span style='font-size:11.0pt;font-family:"Cambria","serif"'>7.4. Настоящий
+	    договор может быть расторгнут Поставщиком в одностороннем порядке в случае
+	    неоднократного нарушения Покупателем сроков оплаты товара, а также в иных
+	    случаях, установленных настоящим договором.</span></p>
+
+    <p align=center style='text-align:center'><b><span style='font-size:11.0pt;
+						       font-family:"Cambria","serif"'>8. ПОРЯДОК РАССМОТРЕНИЯ СПОРОВ</span></b></p>
+
+    <p><span style='font-size:11.0pt;font-family:"Cambria","serif"'>8.1. Стороны
+	    обязуются принять все меры к разрешению споров и разногласий, которые могут
+	    возникнуть из настоящего договора или в связи с ним, путем переговоров.</span></p>
+
+    <p><span style='font-size:11.0pt;font-family:"Cambria","serif"'>8.2. В случае
+	    если Стороны не смогут прийти к соглашению, то все споры и разногласия,
+	    связанные с заключением, исполнением, расторжением договора, а так же споры,
+	    связанные с договором и возникшие после его расторжения или прекращения,
+	    подлежат судебному разрешению в Арбитражном суде по месту нахождения
+	    Поставщика. Споры разрешаются с соблюдением обязательного претензионного
+	    порядка урегулирования спора. Срок ответа на претензию – 20 (двадцать)
+	    календарных дней с момента ее получения.</span></p>
+
+    <p align=center style='text-align:center'><b><span style='font-size:11.0pt;
+						       font-family:"Cambria","serif"'>9. ПРОЧИЕ УСЛОВИЯ</span></b></p>
+
+    <p><span style='font-size:11.0pt;font-family:"Cambria","serif"'>9.1. С момента
+	    подписания настоящего договора все предварительные переговоры и переписка
+	    теряют силу. Все дополнения и изменения к настоящему договору действительны,
+	    если они составлены в письменной форме и подписаны обеими Сторонами.</span></p>
+
+    <p><span style='font-size:11.0pt;font-family:"Cambria","serif"'>9.2. Все
+	    приложения к настоящему договору являются его неотъемлемыми частями.</span></p>
+
+    <p><span style='font-size:11.0pt;font-family:"Cambria","serif"'>9.3. Стороны
+	    обязаны информировать друг друга об изменении юридических адресов или
+	    реквизитов.</span></p>
+
+    <p><span style='font-size:11.0pt;font-family:"Cambria","serif"'>9.4. Стороны не
+	    имеют право передать третьим лицам исполнение настоящего договора без
+	    письменного согласия на то другой Стороны.</span></p>
+
+    <p><span style='font-size:11.0pt;font-family:"Cambria","serif"'>9.5. Документы
+	    (за исключением платежных документов, счетов-фактур и документов,
+	    удостоверяющих качество товара), подписываемые во исполнение Договора и
+	    переданные по средствам электронной почты,  позволяющих достоверно определить,
+	    что документ исходит от Стороны по Договору, имеют юридическую силу до
+	    получения оригиналов по почте.</span></p>
+
+    <p><span style='font-size:11.0pt;font-family:"Cambria","serif"'>9.6. Настоящий
+	    договор составлен в 2 экземплярах, имеющих одинаковую юридическую силу – по
+	    одному экземпляру для каждой стороны.</span></p>
+
+    <p align=center style='text-align:center'><b><span style='font-size:11.0pt;
+						       font-family:"Cambria","serif"'>10. АДРЕСА И РЕКВИЗИТЫ СТОРОН</span></b></p>
+
+    <table style="width:100%">
+	<tr>
+	    <td width="50%" valign=top style='width:239.25pt;padding:0cm 5.4pt 0cm 5.4pt;font-size:11.0pt;font-family:"Cambria","serif"'>
+		{{a.company_name}}
+		<br />{{a.company_jaddress}}
+		<br> Тел.:{{a.company_phone}}
+		{{if a.company_bank_account}}<br />Р/С {{a.company_bank_account}}{{/if}}
+		{{if a.company_bank_corr_account}}<br />Корр. Счет {{a.company_bank_corr_account}}{{/if}}
+		{{if a.company_bank_name }} в {{a.company_bank_name}} {{/if}}
+		{{if a.company_bank_id }} БИК:{{a.company_bank_id}} {{/if}}
+		{{if a.company_vat_id }}<br /> ИНН:{{a.company_vat_id}} {{/if}}
+		{{if a.company_vat_licence_id }}<br /> КПП:{{a.company_vat_licence_id}} {{/if}}
+		{{if a.company_code }}<br /> ОКПО:{{a.company_code}} {{/if}}
+		{{if a.company_web }}<br /> Сайт:{{a.company_web}} {{/if}}
+		{{if a.company_email }}<br /> e-mail:{{a.company_email}} {{/if}}
+		<p><span style='font-size:11.0pt;font-family:"Cambria","serif"'>Директор</span></p>
+		<p><span style='font-size:11.0pt;font-family:"Cambria","serif"'>М.П. _________________________/{{a.company_director}}/</span></p>
+	    </td>
+	    <td width="50%" valign=top style='width:239.3pt;padding:0cm 5.4pt 0cm 5.4pt;font-size:11.0pt;font-family:"Cambria","serif"'>
+		{{p.company_name}}
+		<br />{{p.company_jaddress}}
+		<br> Тел.:{{p.company_phone}}
+		{{if p.company_bank_account}}<br />Р/С {{p.company_bank_account}}{{/if}}
+		{{if p.company_bank_corr_account}}<br />Корр. Счет {{p.company_bank_corr_account}}{{/if}}
+		{{if p.company_bank_name }} в {{p.company_bank_name}} {{/if}}
+		{{if p.company_bank_id }} БИК:{{p.company_bank_id}} {{/if}}
+		{{if p.company_vat_id }}<br /> ИНН:{{p.company_vat_id}} {{/if}}
+		{{if p.company_vat_licence_id }}<br /> КПП:{{p.company_vat_licence_id}} {{/if}}
+		{{if p.company_code }}<br /> ОКПО:{{p.company_code}} {{/if}}
+		{{if p.company_web }}<br /> Сайт:{{p.company_web}} {{/if}}
+		{{if p.company_email }}<br /> e-mail:{{p.company_email}} {{/if}}
+		<p><span style='font-size:11.0pt;font-family:"Cambria","serif"'>Директор</span></p>
+		<p><span style='font-size:11.0pt;font-family:"Cambria","serif"'>М.П. _________________________/{{p.company_director}}/</span></p>
+	    </td>
+	</tr>
+    </table>
 </div>

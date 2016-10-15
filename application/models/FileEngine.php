@@ -77,13 +77,18 @@ class FileEngine {
     }
 
     private function setup_compilator($out_ext) {
-	$this->out_ext=$out_ext;
+	if ( $this->compiled_html ){
+	    
+	}
+	/*
+	 * Finding suitable template to output needed file type
+	 */
         foreach ($this->tpl_files as $tpl_file) {
             $tpl_ext = substr($tpl_file, strrpos($tpl_file, '.'));
             if ($this->conversion_table[$tpl_ext]){
                 $this->export_types = array_merge($this->export_types, $this->conversion_table[$tpl_ext]);
 	    }
-            if (!$this->tpl_ext && in_array($this->out_ext, array_keys($this->conversion_table[$tpl_ext]))) {
+            if (!$this->tpl_ext && in_array($out_ext, array_keys($this->conversion_table[$tpl_ext]))) {
                 $this->tpl_ext = $tpl_ext;
                 $this->compile($tpl_file);
             }
@@ -91,18 +96,26 @@ class FileEngine {
     }
 
     public function send($file_name, $is_printpage = false) {
-        $ext = substr($file_name, strrpos($file_name, '.'));
-        if ($ext == '.print') {
-            $ext = '.html';
+        $out_extension = substr($file_name, strrpos($file_name, '.'));
+        if ($out_extension == '.print') {
+            $out_extension = '.html';
             $is_printpage = true;
         } else {
             $this->header('Content-Disposition: attachment;filename="' .$file_name . '"');
             $this->header('Cache-Control: max-age=0');
             $this->show_controls = false;
         }
-        $this->setup_compilator($ext);
+        
+	if (!$this->compiled_html) {
+	    /*
+	     * Find suitable  template to output needed file type
+	     */
+
+	    $this->setup_compilator($out_extension);
+	}
+	    
         if ($this->compilator == 'PHPExcel') {
-            if ($ext == '.html' || $is_printpage) {
+            if ($out_extension == '.html' || $is_printpage) {
                 $this->header('Content-Type: text/html; charset="utf-8"');
                 $this->Writer = new PHPExcel_Writer_HTML($this->PHPexcel);
                 $style = $this->Writer->generateStyles(true);
@@ -115,18 +128,18 @@ class FileEngine {
                 $show_controls = $this->show_controls;
                 $user_data = $this->user_data;
                 include 'FileEngineWrapper.php';
-            } else if ($ext == '.xls') {
+            } else if ($out_extension == '.xls') {
                 $this->header('Content-Type: application/vnd.ms-excel');
                 $this->Writer = PHPExcel_IOFactory::createWriter($this->PHPexcel, 'Excel5');
                 $this->Writer->save('php://output');
-            } else if ($ext == '.xlsx') {
+            } else if ($out_extension == '.xlsx') {
                 $this->header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
                 $this->Writer = PHPExcel_IOFactory::createWriter($this->PHPexcel, 'Excel2007');
                 $this->Writer->save('php://output');
             }
         } else
         if ($this->compilator == 'Rain') {
-            if ($ext == '.html') {
+            if ($out_extension == '.html') {
                 $this->header('Content-type: text/html; charset=utf-8;');
                 if ($this->compiled_html) {
                     $html = $this->compiled_html;
@@ -137,7 +150,7 @@ class FileEngine {
                 $show_controls = $this->show_controls;
                 $user_data = $this->user_data;
                 include 'FileEngineWrapper.php';
-            } else if ($ext == '.doc') {
+            } else if ($out_extension == '.doc') {
                 $this->header("Content-type: application/octet-stream");
                 if ($this->compiled_html) {
                     $html = $this->compiled_html;
@@ -146,12 +159,13 @@ class FileEngine {
                 }
                 $word_header = true;
                 include 'FileEngineWrapper.php';
-            } else if ($ext == '.xml') {
+            } else if ($out_extension == '.xml') {
                 $this->header('Content-type: text/xml; charset=windows-1251;');
                 $xml = $this->rain->draw($this->tpl_file, true);
                 echo iconv('utf-8', 'windows-1251', $xml);
             }
         }
+	echo $out_extension;
     }
 
     public function fetch($file_name) {

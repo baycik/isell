@@ -133,12 +133,22 @@ class DocumentView extends DocumentItems{
     }
     
     private function fillDump($doc_view_id){
-        $Utils=$this->Base->load_model('Utils');
-	$Company=$this->Base->load_model('Company');
 	$doc_view=$this->viewGet($doc_view_id);
 	if( !$doc_view ){
 	    return null;
 	}
+	if( $doc_view->html ){
+	    return [
+		    'html'=>$doc_view->html,
+		    'title'=>$doc_view->view_name,
+		    'user_data'=>[
+			'email'=>$pcomp->company_email,
+			'text'=>'Доброго дня'
+		    ],
+		];
+	}
+        $Utils=$this->Base->load_model('Utils');
+	$Company=$this->Base->load_model('Company');
 	//$doc_id=$doc_view->doc_id;
 	
         //$this->selectDoc($doc_id);
@@ -149,9 +159,11 @@ class DocumentView extends DocumentItems{
 	    /*if sell document use straight seller=acomp else buyer=pcomp*/
 	    $acomp=$Company->companyGet( $this->doc('active_company_id') );
 	    $pcomp=$Company->companyGet( $this->doc('passive_company_id') );
+	    $reciever_email=$pcomp->company_email;
 	} else {
 	    $pcomp=$Company->companyGet( $this->doc('active_company_id') );
-	    $acomp=$Company->companyGet( $this->doc('passive_company_id') );	    
+	    $acomp=$Company->companyGet( $this->doc('passive_company_id') );
+	    $reciever_email=$acomp->company_email;
 	}
         
 	
@@ -172,7 +184,7 @@ class DocumentView extends DocumentItems{
 	    'tpl_files'=>$doc_view->view_tpl,
 	    'title'=>$doc_view->view_name,
 	    'user_data'=>[
-		'email'=>$pcomp->company_email,
+		'email'=>$reciever_email,
 		'text'=>'Доброго дня'
 	    ],
             'view'=>[

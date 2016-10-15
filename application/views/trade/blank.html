@@ -21,7 +21,7 @@
 		alert('Сначала сохраните бланк!');
 		return;
 	    }
-	    window.open("./?mod=Companies&rq=DocumentOut&doc_view_id="+Blank.blankData.doc_view_id);
+	    window.open("./DocumentView/documentViewGet/?out_type=.print&doc_view_id="+Blank.blankData.doc_view_id, '_new');
 	},
 	buttonsAdjust:function(){
 	    if( Blank.parser.inputsRendered ){
@@ -207,17 +207,23 @@
 	},
 	spellNumber:function(){
 	    var node=$(this);
-	    App.get('Utils/spellNumber/'+parseInt(node.val()),function(text){
-		node.val(text);
+	    var number=parseInt(node.val().replace(/[^\d]/g,""));
+	    $.get('Utils/spellAmount/'+number+"/0/0",function(text){
+		if( node.parent().hasClass('.blank_text_only') ){
+		    node.val(text);
+		} else {
+		    node.val(number+" ("+text+")");
+		}
 	    });
 	},
 	spellAmount:function(){
 	    var node=$(this);
-	    App.get('Utils/spellAmount/'+parseFloat(node.val()),function(text){
-		if( node.parent().nextAll('.blank_spell_text').length ){
-		    node.parent().nextAll('.blank_spell_text').text(text);
-		} else {
+	    var number=parseFloat(node.val().replace(/[^\d]/g,""));
+	    $.get('Utils/spellAmount/'+number+"/1/1",function(text){
+		if( node.parent().hasClass('.blank_text_only') ){
 		    node.val(text);
+		} else {
+		    node.val(number+" ("+text+")");
 		}
 	    });
 	},
