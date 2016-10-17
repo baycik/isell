@@ -165,7 +165,6 @@ class FileEngine {
                 echo iconv('utf-8', 'windows-1251', $xml);
             }
         }
-	echo $out_extension;
     }
 
     public function fetch($file_name) {
