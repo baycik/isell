@@ -18,7 +18,7 @@ class Hub extends HubBase{
 		$response=call_user_func_array(array($this->{$model}, $method),$method_args);
 		$this->response($response);
 	    } catch (Exception $ex) {
-		show_error("X-isell-error: Such module function '$model->$method' not found or other error occured!\n\n".$ex, 500);
+		show_error("X-isell-error: Such module function '$model->$method' not found or other error occured!", 500);
 	    }
 	}
 	else {
@@ -49,6 +49,9 @@ class Hub extends HubBase{
     public function plugin(){
 	$args=func_get_args();
 	$plugin_name=$args[0];
+	if( !$plugin_name ){
+	    return;
+	}
 	$plugin_method=isset($args[1])?$args[1]:'index';
 	$plugin_method_args = array_slice($args, 2);
 	Plugins::instance()->Base=$this;

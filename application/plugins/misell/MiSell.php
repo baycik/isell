@@ -173,7 +173,7 @@ class MiSell extends Catalog{
         $user_sign=$this->Base->svar('user_sign');
 	$Utils=$this->Base->load_model('Utils');
         $text="Пользователем $user_sign, был прислан заказ для $pcomp_name";
-        $Utils->sendEmail( "bay@nilson.ua", "Мобильный заказ $user_sign", $text, NULL, 'nocopy' );
+        $Utils->sendEmail( "krim@nilson.ua", "Мобильный заказ $user_sign", $text, NULL, 'nocopy' );
         //$Utils->sendSms("380955983001","",$text);
 	//$Utils->sendSms("380500377536","",$text);
     }
