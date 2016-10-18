@@ -41,10 +41,14 @@ var _orderCache={},
 //////////////////
 App={
     init:function(){
-	location.href = location.href.replace(/\/?(\?|#|$)/, '/$1');
+	var location_with_slash= location.href.replace(/\/?(\?|#|$)/, '/$1');
+	if( location_with_slash!==location.href ){
+	    location.href=location_with_slash;
+	}
+	$("#orderPage").on( "pageinit",App.order.init);
+	$("#homePage").on( "pageinit",App.client.init);
 	location.hash="#homePage";
-	$(document).on( "pageinit", "#orderPage", App.order.init);
-	$(document).on( "pageinit", "#homePage",App.client.init);
+	setTimeout(App.client.init,0);
     },
     json:function(text){
         try{
@@ -131,8 +135,8 @@ App={
 	    $.each( _orderCache, function ( pcode, entry ) {
 		if( entry ){
 		    html+='<li>';
-		    html+='<span style="width:60%;display:inline-block;overflow:hidden;"><a href="#" onclick="App.order.entry.remove('+pcode+')" class="ui-btn ui-corner-all ui-icon-delete ui-btn-icon-notext ui-btn-b ui-btn-inline">Delete</a>  '+pcode+'</span>';
-		    html+='<span style="width:20%;display:inline-block;overflow:hidden;"><a href="#" onclick="App.order.entry.edit('+pcode+')" class="ui-btn ui-corner-all ui-mini ui-btn-inline ui-btn-b">'+entry.qty+'</a>'+entry.unit+'</span>';
+		    html+='<span style="width:60%;display:inline-block;overflow:hidden;"><a href="#" onclick="App.order.entry.remove(\''+pcode+'\')" class="ui-btn ui-corner-all ui-icon-delete ui-btn-icon-notext ui-btn-b ui-btn-inline">Delete</a>  '+pcode+'</span>';
+		    html+='<span style="width:20%;display:inline-block;overflow:hidden;"><a href="#" onclick="App.order.entry.edit(\''+pcode+'\')" class="ui-btn ui-corner-all ui-mini ui-btn-inline ui-btn-b">'+entry.qty+'</a>'+entry.unit+'</span>';
 		    html+='<span style="width:20%;display:inline-block;overflow:hidden; padding-bottom: 0.7em;">'+(App.format(entry.price)||'?')+'</span>';
 		    html+='<br>'+(++i)+'. <i>'+entry.name+'</i></li>';
 		    sum+=entry.price*entry.qty;	    

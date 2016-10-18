@@ -158,8 +158,10 @@ class MiSell extends Catalog{
 //         if( !$this->checkCompanyId($company_id) ){
 //            return "Can't use this client!!!";
 //        }
-        $this->orderAnnounceRecieved();
-	$this->Base->load_model('Company')->selectPassiveCompany($company_id);
+	$Company=$this->Base->load_model('Company');
+	$Company->selectActiveCompany(1);
+	$Company->selectPassiveCompany($company_id);
+        $this->orderAnnounceRecieved($comment);
 	$Document=$this->Base->load_model('DocumentItems');
 	$Document->createDocument(1);
 	$Document->headUpdate( "doc_data",$comment.' (заказ с приложения)' );
@@ -168,14 +170,13 @@ class MiSell extends Catalog{
         }
         return true;
     }
-    private function orderAnnounceRecieved(){
-        $pcomp_name=$this->Base->pcomp('company_name');
+    private function orderAnnounceRecieved($comment){
+        $pcomp_name=$this->Base->pcomp('label');
         $user_sign=$this->Base->svar('user_sign');
 	$Utils=$this->Base->load_model('Utils');
-        $text="Пользователем $user_sign, был прислан заказ для $pcomp_name";
-        $Utils->sendEmail( "krim@nilson.ua", "Мобильный заказ $user_sign", $text, NULL, 'nocopy' );
-        //$Utils->sendSms("380955983001","",$text);
-	//$Utils->sendSms("380500377536","",$text);
+        $text="Пользователем $user_sign, был прислан заказ для $pcomp_name в ".date("d.m.Y H:i");
+        $Utils->sendEmail( "krim@nilson.ua", "Мобильный заказ от $user_sign для $pcomp_name", $text, NULL, 'nocopy' );
+        $Utils->sendSms("79787288233",$text.$comment);//;79788440954
     }
 //    private function orderGetPrice($product_code,$company_id,$dollar_ratio){
 //        $sql="SELECT 

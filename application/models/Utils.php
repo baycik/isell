@@ -179,9 +179,9 @@ class Utils extends Catalog{
     /////////////////////////////
     //SMS FUNCTIONS
     /////////////////////////////
-    public function sendSms() {
-	$number=$this->request('to');
-	$body=$this->request('body');
+    public function sendSms($number=null,$body=null) {
+	$number=$this->request('to','string',$number);
+	$body=$this->request('body','string',$body);
 	if (!$this->Base->pref('SMS_SENDER') || !$this->Base->pref('SMS_USER') || !$this->Base->pref('SMS_PASS')) {
 	    $this->Base->msg("Настройки для отправки смс не установленны");
 	    return false;

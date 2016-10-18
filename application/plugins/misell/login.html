@@ -3,16 +3,22 @@
 	<title>Login to Mobile iSell</title>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<link rel="stylesheet" href="http://code.jquery.com/mobile/1.4.0/jquery.mobile-1.4.0.min.css" />
-	<script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
-	<script src="http://code.jquery.com/mobile/1.4.0/jquery.mobile-1.4.0.min.js"></script>
+	<link rel="stylesheet" href="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.css" />
+	<script>
+	    window.onload=function(){
+		var location_with_slash= location.href.replace(/\/?(\?|#|$)/, '/$1');
+		if( location_with_slash!==location.href ){
+		    location.href=location_with_slash;
+		}
+	    };
+	</script>
     </head>
     <body>
 	<h3>Вход в систему Mobile iSell</h3>
 	<form action="./"  method="post" enctype="multipart/form-data">
-	    <input name="user_login" style="width: 100%">
-	    <input name="user_pass" style="width: 100%" type="password">
-	    <button style="width: 100%">Вход в приложение</button>
+	    <input name="user_login" class="ui-input-text" style="width: 100%">
+	    <input name="user_pass" class="ui-input-text" style="width: 100%" type="password">
+	    <button class="ui-btn ui-bar-b ui-btn-corner-all">Вход в приложение</button>
 	</form>
     </body>
 </html>
