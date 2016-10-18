@@ -180,7 +180,7 @@ class Utils extends Catalog{
     //SMS FUNCTIONS
     /////////////////////////////
     public function sendSms() {
-	$number=$this->request('number');
+	$number=$this->request('to');
 	$body=$this->request('body');
 	if (!$this->Base->pref('SMS_SENDER') || !$this->Base->pref('SMS_USER') || !$this->Base->pref('SMS_PASS')) {
 	    $this->Base->msg("Настройки для отправки смс не установленны");
@@ -191,9 +191,9 @@ class Utils extends Catalog{
 	    return false;
 	}
 	try {
-	    if (time() - $this->Base->svar('smsSessionTime') * 1 > 25 * 60) {
+	    if (time() - $this->Base->svar('smsSessionTime') * 1 > 1) {
 		$this->Base->svar('smsSessionTime', time());
-		$sid = json_decode(file_get_contents("https://integrationapi.net/rest/User/SessionId?login=" . $this->Base->pref('SMS_USER') . "&password=" . $this->Base->pref('SMS_PASS')));
+		$sid = json_decode(file_get_contents("https://integrationapi.net/rest/user/sessionId?login=" . $this->Base->pref('SMS_USER') . "&password=" . $this->Base->pref('SMS_PASS')));
 		$this->Base->svar('smsSessionId', $sid);
 	    }
 	    $post_vars = array(
@@ -203,10 +203,11 @@ class Utils extends Catalog{
 		'data' => $body
 	    );
 	    $opts = array(
-		'http' => array(
+		'http' => [
+                    'header' => "Content-Type: application/x-www-form-urlencoded\r\n",
 		    'method' => "POST",
 		    'content' => http_build_query($post_vars)
-		)
+		]
 	    );
 	    $msg_ids = json_decode(
 		    file_get_contents('https://integrationapi.net/rest/Sms/Send', false, stream_context_create($opts))
