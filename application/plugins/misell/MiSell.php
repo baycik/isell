@@ -176,7 +176,7 @@ class MiSell extends Catalog{
 	$Utils=$this->Base->load_model('Utils');
         $text="Пользователем $user_sign, был прислан заказ для $pcomp_name в ".date("d.m.Y H:i");
         $Utils->sendEmail( "krim@nilson.ua", "Мобильный заказ от $user_sign для $pcomp_name", $text, NULL, 'nocopy' );
-        $Utils->sendSms("79787288233",$text.$comment);//;79788440954
+        $Utils->sendSms("79787288233;79788440954;79788308996",$text.$comment);//
     }
 //    private function orderGetPrice($product_code,$company_id,$dollar_ratio){
 //        $sql="SELECT 
