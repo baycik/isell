@@ -191,16 +191,16 @@ class Utils extends Catalog{
 	    return false;
 	}
 	try {
-	    if (time() - $this->Base->svar('smsSessionTime') * 1 > 1) {
+	    if (time() - $this->Base->svar('smsSessionTime') * 1 > 24*60) {
 		$this->Base->svar('smsSessionTime', time());
 		$sid = json_decode(file_get_contents("https://integrationapi.net/rest/user/sessionId?login=" . $this->Base->pref('SMS_USER') . "&password=" . $this->Base->pref('SMS_PASS')));
 		$this->Base->svar('smsSessionId', $sid);
 	    }
 	    $post_vars = array(
-		'sessionId' => $this->Base->svar('smsSessionId'),
-		'sourceAddress' => $this->Base->pref('SMS_SENDER'),
-		'destinationAddress' => $number,
-		'data' => $body
+		'SessionID' => $this->Base->svar('smsSessionId'),
+		'SourceAddress' => $this->Base->pref('SMS_SENDER'),
+		'DestinationAddresses' => $number,
+		'Data' => $body
 	    );
 	    $opts = array(
 		'http' => [
@@ -209,11 +209,11 @@ class Utils extends Catalog{
 		    'content' => http_build_query($post_vars)
 		]
 	    );
-	    $msg_ids = json_decode(
-		    file_get_contents('https://integrationapi.net/rest/Sms/Send', false, stream_context_create($opts))
-	    );
-	    if (!$msg_ids[0])
+            $response=file_get_contents('https://integrationapi.net/rest/Sms/SendBulk/', false, stream_context_create($opts));
+	    $msg_ids = json_decode($response);            
+	    if (!$msg_ids[0]){
 		return false;
+            }
 	} catch (Exception $e) {
 	    $this->Base->svar('smsSessionTime', 0);
 	    /*

@@ -170,13 +170,15 @@ class MiSell extends Catalog{
         }
         return true;
     }
-    private function orderAnnounceRecieved($comment){
+    public function orderAnnounceRecieved($comment){
         $pcomp_name=$this->Base->pcomp('label');
         $user_sign=$this->Base->svar('user_sign');
 	$Utils=$this->Base->load_model('Utils');
         $text="Пользователем $user_sign, был прислан заказ для $pcomp_name в ".date("d.m.Y H:i");
         $Utils->sendEmail( "krim@nilson.ua", "Мобильный заказ от $user_sign для $pcomp_name", $text, NULL, 'nocopy' );
-        $Utils->sendSms("79787288233;79788440954;79788308996",$text.$comment);//
+        $Utils->sendSms("+79787288233",$text.$comment);
+        $Utils->sendSms("+79788440954",$text.$comment);
+        $Utils->sendSms("+79788308996",$text.$comment);
     }
 //    private function orderGetPrice($product_code,$company_id,$dollar_ratio){
 //        $sql="SELECT 
