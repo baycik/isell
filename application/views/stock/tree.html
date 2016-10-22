@@ -64,7 +64,7 @@
 	    var parent_target=parent_id>0?$('#Stree_tree').tree('find', parent_id).target:null;
 	    var newlabel=prompt("Введите название категории",'Новая категория');
 	    if( newlabel ){
-		App.post('Stock/stockTreeCreate/'+App.uri(parent_id,newlabel),function(branch_id){
+		$.post('Stock/stockTreeCreate/'+App.uri(parent_id,newlabel),function(branch_id){
 		    $('#Stree_tree').tree('reload',parent_target);
 		});
 	    }
@@ -73,7 +73,7 @@
 	    var node=$('#Stree_tree').tree('getSelected');
 	    var newlabel=prompt("Введите новое название категории: "+node.label,node.label);
 	    if( newlabel && newlabel!==node.label ){
-		App.post('Stock/stockTreeUpdate/'+App.uri(node.branch_id,'label',newlabel),function(ok){
+		$.post('Stock/stockTreeUpdate/'+App.uri(node.branch_id,'label',newlabel),function(ok){
 		    if( ok*1 ){
 			App.flash("Сохранено: название папки");
 			$('#Stree_tree').tree('update', {target: node.target,text: newlabel});
@@ -85,7 +85,7 @@
 	},
 	drop:function(target,source,point){
 	    var target_node=$("#Stree_tree").tree('getNode',target);
-	    App.post('Stock/stockTreeUpdate/'+App.uri(source.branch_id,'parent_id',target_node.branch_id),function(ok){
+	    $.post('Stock/stockTreeUpdate/'+App.uri(source.branch_id,'parent_id',target_node.branch_id),function(ok){
 		if( ok*1 ){
 		    App.flash(source.label + " перемещен в " + target_node.label);
 		} else {
@@ -96,7 +96,7 @@
 	up:function(){
 	    if( confirm("Переместить выделенный элемент в корень дерева?") ){
 		var node=$('#Stree_tree').tree('getSelected');
-		App.post('Stock/stockTreeUpdate/'+App.uri(node.branch_id,'parent_id',0),function(ok){
+		$.post('Stock/stockTreeUpdate/'+App.uri(node.branch_id,'parent_id',0),function(ok){
 		    if( ok*1 ){
 			App.flash(node.label + " перемещен в корень");
 		    } else {
@@ -109,7 +109,7 @@
 	delete:function(){
 	    var node=$('#Stree_tree').tree('getSelected');
 	    if( node && confirm("Удалить выделенную категорию?\n( Товарные позиции удалены не будут )")){
-		App.post("Stock/stockTreeDelete/"+node.branch_id,function(ok){
+		$.post("Stock/stockTreeDelete/"+node.branch_id,function(ok){
 		    if( ok*1 ){
 			App.flash("Удалено: "+node.label);
 			$('#Stree_tree').tree('remove', node.target);

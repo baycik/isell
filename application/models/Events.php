@@ -39,7 +39,7 @@ class Events extends Catalog{
 		(
 		    DATE(event_date)='$date' 
 		    OR DATEDIFF(event_date,'$date')%event_repeat=0
-		    OR event_status='undone' AND DATE(event_date)<DATE(NOW())
+		    OR event_status='undone' AND DATE(event_date)<DATE('$date')
 		) 
                 AND event_label<>'chat' $label_filter 
 	    ORDER BY event_status='undone' AND DATE(event_date)<DATE(NOW()),event_label,event_priority IS NULL,event_priority,event_target";
