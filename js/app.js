@@ -334,6 +334,7 @@ App.chatCheck=function(){
 	    App.renderTpl('chat_panel',{count:count});
 	    if( count ){
 		App.flash("У вас новое сообщение!");
+                new Audio('img/icq_message_sound.mp3').play();
 	    }
 	});
     }
