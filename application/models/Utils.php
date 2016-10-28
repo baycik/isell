@@ -368,7 +368,7 @@ class Utils extends Catalog{
     }
     private function selfPriceCreateTable($active_filter){
 	$sql_vars="SET @i:=0,@pointer:=0,@current_code:='',@qty_left1:=0,@qty_left:=0,@current_self_price=0.00;";
-	$sql_tbl_drop="DROP TEMPORARY TABLE IF  EXISTS tmp_self_calc;";
+	$sql_tbl_drop="DROP TEMPORARY TABLE IF  EXISTS tmp_self_calc;";#TEMPORARY TEMPORARY 
 	$sql_tbl_create="CREATE TEMPORARY TABLE tmp_self_calc AS (SELECT 
 		doc_entry_id,
 		doc_type,
@@ -376,7 +376,7 @@ class Utils extends Catalog{
 		product_quantity,
 		self_price,
 		IF(product_code <> @current_code,(@current_code:=product_code) + (@qty_left:=0) + (@current_self_price:=0),1)*0 x,
-		    IF(doc_type = 2 AND NOT is_reclamation,@current_self_price:=(self_price*product_quantity+COALESCE(@current_self_price,0)*@qty_left)/(product_quantity+@qty_left),0 ) xx,
+		IF(doc_type = 2 AND NOT is_reclamation,@current_self_price:=(self_price*product_quantity+COALESCE(@current_self_price,0)*@qty_left)/(product_quantity+@qty_left),0 ) xx,
 		IF(doc_type = 2, (@qty_left:=@qty_left + product_quantity), (@qty_left:=@qty_left - product_quantity) ) qty_left,
 		@current_self_price sp,
 		i
@@ -400,7 +400,7 @@ class Utils extends Catalog{
 			    JOIN 
 			document_list USING (doc_id)
 		    WHERE
-			notcount = 0 AND is_commited = 1 $active_filter
+			notcount = 0 AND is_commited = 1 AND (doc_type=2 OR doc_type=1) $active_filter
 		    ORDER BY product_code ,  cstamp) t ) tt
 	    ORDER BY i);";
 	$this->db->query($sql_vars);
