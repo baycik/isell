@@ -44,12 +44,13 @@ class Chat extends Catalog{
 	$my_id = $this->Base->svar('user_id');
 	$this->query("SET @undone_id=0;");
 	$sql="
-	    SELECT
+	    SELECT * FROM (SELECT
 		event_id,
 		event_descr,
 		event_priority,
 		event_name,
 		DATE_FORMAT(event_date,'%d.%m.%Y %H:%i') time,
+		event_date,
 		event_target,
 		event_place,
 		event_status,
@@ -60,8 +61,9 @@ class Chat extends Catalog{
 		event_list
 	    WHERE
 		(event_user_liable='$my_id' AND created_by='$his_id') OR (event_user_liable='$his_id' AND created_by='$my_id')
-	    ORDER BY event_date
-	    LIMIT $limit
+	    ORDER BY event_date DESC
+	    LIMIT $limit) t
+		ORDER BY event_date
 	    ";
 	$dialog=$this->get_list($sql);
 	$this->setAsRead();
