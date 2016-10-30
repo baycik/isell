@@ -134,7 +134,9 @@ class DocumentCore extends DocumentUtils{
 		document_list
 	    WHERE doc_id=$doc_id"
 	;
-	return $this->get_row($sql);
+	$head=$this->get_row($sql);
+	$head->extra_expenses=$this->getExtraExpenses();
+	return $head;
     }
     private function setType( $doc_type ){
 	if( $this->isCommited() ){
@@ -185,9 +187,33 @@ class DocumentCore extends DocumentUtils{
 		break;
 	    case 'doc_type':
 		return $this->setType($new_val);
+	    case 'extra_expenses':
+		return $this->setExtraExpenses($new_val);
 	}
 	//$new_val=  rawurldecode($new_val);
 	$Document2=$this->Base->bridgeLoad('Document');
 	return $Document2->updateHead($new_val,$field);
+    }
+    private function setExtraExpenses($expense){//not beautifull function at all
+	$doc_type=$this->doc('doc_type');
+	$doc_id=$this->doc('doc_id');
+	if($doc_id && $doc_type==2){
+	    //only for buy documents
+	    $footer=$this->footerGet();
+	    $expense_ratio=$expense/$footer->vatless+1;
+	    return $this->query("UPDATE document_entries SET self_price=invoice_price*$expense_ratio WHERE doc_id=$doc_id");
+	}
+    }
+    private function getExtraExpenses(){
+	$doc_type=$this->doc('doc_type');
+	$doc_id=$this->doc('doc_id');
+	if($doc_id && $doc_type==2){
+	    //only for buy documents
+	    $footer=$this->footerGet();
+	    $expense_ratio=$this->get_value("SELECT self_price/invoice_price FROM document_entries WHERE doc_id=$doc_id LIMIT 1");
+	    $expense=$footer->vatless*($expense_ratio-1);
+	    return $expense;
+	}
+	return 0;
     }
 }
