@@ -43,7 +43,7 @@
 	},
 	msg_count:0,
 	sendRecieve: function (msg) {
-	    App.post(App.uri('Chat', 'sendRecieve', App.page_dialog_chat.counterpart || ''),{message:msg,is_phone_sms:App.page_dialog_chat.is_phone_sms}, function (resp) {
+	    App.post(App.uri('Chat', 'sendRecieve', App.page_dialog_chat.counterpart || ''),{message:msg,is_phone_sms:App.page_dialog_chat.is_phone_sms?1:0}, function (resp) {
 		var resp=App.json(resp);
 		App.page_dialog_chat.renderDialog(resp.dialog);
 		if( App.has_new_status!==resp.has_new*1 ){
