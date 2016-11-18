@@ -38,11 +38,7 @@ class User extends Catalog {
 	return false;
     }
     public function SignOut(){
-	$this->Base->svar('user_id', 0);
-	$this->Base->svar('user_level', 0);
-	$this->Base->svar('user_login', '');
-	$this->Base->svar('user_sign', '');
-	$this->Base->svar('user_position', '');
+        $_SESSION = array();
 	return true;
     }
     public function getUserData(){
