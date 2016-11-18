@@ -30,7 +30,8 @@ class Chat extends Catalog{
         if( $his_id>0 ){
             $user_phone=$this->get_value("SELECT user_phone FROM user_list WHERE user_id='$his_id'");
             $Utils=$this->Base->load_model('Utils');
-           return $user_phone && $Utils->sendSms($user_phone,$msg);
+            $sender=$this->Base->svar('user_sign');
+           return $user_phone && $Utils->sendSms($user_phone,"$sender написал вам в чате: \n$msg");
         }
 	return false;
     }
