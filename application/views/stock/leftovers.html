@@ -276,7 +276,7 @@
 	    calc_min:function(){
 		App.loadWindow("page/stock/calc_min",{parent_label:Leftovers.list.parent_label}).progress(function(status, fvalue){
 		    if( status==='submit' ){
-			App.post("Utils/stockCalcMin/"+App.uri(Leftovers.list.parent_id,fvalue.period,fvalue.ratio),function(ok){
+			App.post("Utils/stockCalcMin/"+App.uri(Leftovers.list.parent_id,fvalue.sales_period,fvalue.reserve_period),function(ok){
 			    if( ok*1 ){
 				Leftovers.list.reload();
 				App.flash("Минимумы расчитаны у "+ok+" товаров");

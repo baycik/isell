@@ -456,27 +456,26 @@ class Utils extends Catalog{
     ////////////////////////////////////////////////////////////
     // STOCK UTILS FUNCTIONS
     ////////////////////////////////////////////////////////////
-    public function stockCalcMin( $parent_id, $period, $ratio ){
+    public function stockCalcMin( $parent_id, $sales_period, $reserve_period ){
 	$this->check($parent_id,'int');
-	$this->check($period,'int');
-	$this->check($ratio,'double');
+	$this->check($sales_period,'int');
+	$this->check($reserve_period,'int');
 	$branch_ids=$this->treeGetSub('stock_tree',$parent_id);
-	$where="WHERE se.parent_id IN (".implode(',',$branch_ids).")";
 	$stock_table="
 	    UPDATE
 		stock_entries se
 	    SET
 		product_wrn_quantity=
-		(SELECT
-		    ROUND(SUM(IF(TO_DAYS(NOW()) - TO_DAYS(dl.cstamp) <= $period,de.product_quantity,0))*$ratio/10)*10
+		GREATEST((SELECT
+		    ROUND( SUM(de.product_quantity)/$sales_period*$reserve_period/10 )*10
 		FROM
 		    document_entries de
 			JOIN
 		    document_list dl ON de.doc_id=dl.doc_id AND dl.is_commited=1 AND dl.notcount=0 AND dl.doc_type=1
 		WHERE 
-		    de.product_code=se.product_code
-		GROUP BY se.product_code) 
-	    $where";
+		    de.product_code=se.product_code AND (TO_DAYS(NOW()) - TO_DAYS(dl.cstamp) <= $sales_period)
+		GROUP BY se.product_code),1)
+	    WHERE product_wrn_quantity>0 AND se.parent_id IN (".implode(',',$branch_ids).")";
 	$this->query($stock_table);
 	return $this->db->affected_rows();
     }
