@@ -1,73 +1,47 @@
 <?php
 require_once 'DocumentUtils.php';
 class DocumentTrans extends DocumentUtils{
-    ///////////////////////////////////////
-    //EXPERIMENTAL
-    ///////////////////////////////////////
-    private $docTypeConfig=[
-	1=>[
-	    'name'	=>"Расходный документ",
-	    'total'	=>'361_702',
-	    'vat'	=>'702_641',
-	    'vatless'	=>'702_791',
-	    'self'	=>'791_281',
-	    'profit'	=>'791_441'
-	],
-	2=>[
-	    'name'	=>"Приходный документ",
-	    'total'	=>'63_631',
-	    'vat'	=>'641_63',
-	    'vatless'	=>'',
-	    'self'	=>'281_63',
-	    'profit'	=>''
-	]
-    ];
-    ///////////////////////////////////////
-    //EXPERIMENTAL
-    ///////////////////////////////////////
-    private function docTotalsGet(){
-	$doc_id=$this->doc('doc_id');
-	$doc_vat_rate=$this->doc('vat_rate');
-	$sql="
-	    SELECT
-		total,
-		vatless,
-		self,
-		total-vatless vat,
-		vatless-self profit
-	    FROM
-		(SELECT
-		    SUM(ROUND(product_quantity*invoice_price*(1+$doc_vat_rate/100),2)) total,
-		    SUM(ROUND(product_quantity*invoice_price,2)) vatless,
-		    SUM(ROUND(product_quantity*self_price,2)) self
-		FROM
-		    document_entries
-		WHERE doc_id='$doc_id') t";
-	return $this->get_row($sql);
-    }
-    ///////////////////////////////////////
-    //EXPERIMENTAL
-    ///////////////////////////////////////
-    private function docTransGet(){
-	$doc_id=$this->doc('doc_id');
-	$sql="
-	    SELECT
-		trans_id,
-		type
-	    FROM
-		document_trans";
-	return $this->get_row($sql);	
-    }
-    ///////////////////////////////////////
-    //EXPERIMENTAL
-    ///////////////////////////////////////
-    public function docTransUpdate( $doc_id ){
-	$this->selectDoc($doc_id);
-	if( !$this->isCommited() ){
-	    return false;
+    public $documentAdd=['doc_type'=>'string'];
+    public function documentAdd( $doc_type ){
+	$this->Base->set_level(2);
+	$created_by=$this->Base->svar('user_id');
+	$acomp_id=$this->Base->acomp('company_id');
+	$pcomp_id=$this->Base->pcomp('company_id');
+	$vat_rate = $this->Base->acomp('company_vat_rate');
+	$usd_ratio=$this->Base->pref('usd_ratio');
+	$prev_document=$this->documentGetPrevious($acomp_id, $pcomp_id);
+	
+	if( !$doc_type ){
+	    $doc_type=$prev_document->doc_type?$prev_document->doc_type:'sell';
 	}
-	$totals=$this->docTotalsGet();
-	$docTrans=$this->docTransGet();
+	$doc_num=$this->documentNumNext($doc_type);
+	
+	$sql="";
     }
-
+    private function documentGetPrevious($acomp_id,$pcomp_id){
+	$sql="SELECT 
+	    * 
+	    FROM 
+		document_list 
+	    WHERE 
+		active_company_id='$acomp_id' 
+		AND passive_company_id='$pcomp_id' 
+		AND doc_type<10 
+		AND is_commited=1 
+	    ORDER BY cstamp DESC LIMIT 1";
+	return 	$this->get_row($sql);
+    }
+    private function documentNumNext($acomp_id,$doc_type){
+	$sql="SELECT 
+		MAX(doc_num)+1 
+	    FROM 
+		document_list 
+	    WHERE 
+		doc_type='$doc_type' 
+		AND active_company_id='$active_company_id' 
+		AND cstamp>DATE_FORMAT(NOW(),'%Y')";
+	
+	$next_num = $this->get_value($sql);
+	return $next_num ? $next_num : 1;
+    }
 }
