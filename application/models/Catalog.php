@@ -34,7 +34,7 @@ class Catalog extends CI_Model {
 		}
 	}
     }
-    protected function request( $name, $type=null, $default=null ){
+    public function request( $name, $type=null, $default=null ){
 	$value=$this->input->get_post($name);
 	if( $value!==null ){
 	    $this->check($value,$type);

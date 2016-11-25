@@ -11,18 +11,27 @@ class Hub extends HubBase{
     }
     
     public function on( $model, $method='index' ){
-	if( $model ){
-	    try {
-		$this->load_model($model);
-		$method_args = array_map("rawurldecode",array_slice(func_get_args(), 2));
-		$response=call_user_func_array(array($this->{$model}, $method),$method_args);
-		$this->response($response);
-	    } catch (Exception $ex) {
-		show_error("X-isell-error: Such module function '$model->$method' not found or other error occured!", 500);
-	    }
-	}
-	else {
+	if( !$model ){
 	    show_error('X-isell-error: Model is not set!', 500);
+	}
+	try {
+	    $this->load_model($model);
+	    $Model=$this->{$model};
+	    $method_config=$method;
+	    if( isset($Model->$method_config) ){
+		/*input config array is exists*/
+		$this->load_model('Catalog');
+		$method_args=[];
+		foreach( $Model->$method_config as $var_name=>$var_type ){
+		    $method_args[]=$this->Catalog->request($var_name,$var_type);
+		}
+	    } else {
+		$method_args = array_map("rawurldecode",array_slice(func_get_args(), 2));
+	    }
+	    $response=call_user_func_array([$Model, $method],$method_args);
+	    $this->response($response);
+	} catch (Exception $ex) {
+	    show_error("X-isell-error: Such module function '$model->$method' not found or other error occured!", 500);
 	}
     }
     
