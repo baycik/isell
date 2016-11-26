@@ -94,9 +94,9 @@ class DocumentBase extends Catalog{
 	$this->query("START TRANSACTION");
 	switch($field){
 	    case 'is_commited':
-		$this->documentCommit( $value );
+		$this->documentCommit( (bool) $value );
 	    case 'notcount':
-		$this->transChangeNotcount($value);
+		$this->transChangeNotcount((bool) $value );
 	    case 'use_vatless_price':
 	    case 'doc_ratio':
 		$this->transChangeCurrRatio( $value );
