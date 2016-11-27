@@ -1,0 +1,126 @@
+<script>
+    Plugins=App.page_pref_plugins = {
+	init: function () {
+	    this.tile.load();
+	},
+	tile:{
+	    plugin_list:[],
+	    load:function(){
+		App.get("PluginManager/listFetch/",function(resp){
+		    Plugins.tile.plugin_list=App.json(resp);
+		    var group_name='';
+		    for(var i=0;i<Plugins.tile.plugin_list.length;i++){
+			if( Plugins.tile.plugin_list[i].group_name!==group_name ){
+			    group_name=Plugins.tile.plugin_list[i].group_name||'';
+			    Plugins.tile.plugin_list.splice(i,0,{header:group_name});
+			}
+		    }
+		    App.renderTpl('plugins_tile',{plugins:Plugins.tile.plugin_list});
+		    var last_index=App.store('last_plugin_i')||1;
+		    Plugins.load(Plugins.tile.plugin_list[last_index]);
+		});
+	    },
+	    click:function(node){
+		var index=$(node).data('plugin-index');
+		App.store('last_plugin_i',index);
+		Plugins.load(Plugins.tile.plugin_list[index]);
+	    }
+	},
+	load:function(info){
+	    info.user_level_name=["Нет доступа", "Ограниченный", "Менеджер", "Бухгалтер", "Администратор"][info.user_level];
+	    App.renderTpl('plugin_info',info);
+	    this.loadSettings(info.system_name);
+	},
+	loadSettings:function( system_name ){
+	    Plugin.current_system_name=system_name;
+	    $.get('PluginManager/settingsAllFetch',{system_name:system_name},function(resp){
+		var all=App.json(resp);
+		Plugins.renderSettings(all);
+	    });
+	},
+	renderSettings:function(all){
+	    $('#plugin_settings_form').html(all.html);
+	    App.setupForm('#plugin_settings_form form',all.data);
+	    $('#plugin_settings_form form').submit(function(){
+		var settings=App.collectForm('#plugin_settings_form form');
+		$.post('PluginManager/settingsSave',{plugin_system_name:Plugin.current_system_name,settings_json:JSON.stringify(settings)},function(ok){
+		    if(ok*1){
+			App.flash("Настройки сохранены");
+		    }
+		});
+	    });
+	}
+    };
+</script>
+<style>
+    .left_label{
+	padding: 3px;
+	margin-bottom: 5px;
+	border: 1px solid #999;
+	border-right: none;
+	background: linear-gradient(90deg,rgba(255,255,255,1),rgba(255,255,255,0.5));
+    }
+    .left_label:hover{
+	background: linear-gradient(90deg,rgba(255,255,200,1),rgba(255,255,255,0.5));;
+	-border-color: #afa;
+	cursor: pointer;
+    }
+    .left_label_selected,.left_label_selected:hover{
+	background: #FF9;
+    }
+    #plugins_tile{
+	width:210px;
+	float:left;
+	border-right: 1px solid #ccc;
+	padding-right: 2px;
+    }
+    #plugins_tile .left_label{
+	min-height: 30px;
+	width:200px;
+	float:left;
+	border: 1px solid #999;
+	margin: 2px;
+    }
+    #plugin_info{
+	padding: 2px;
+	margin: 2px;
+	background-color: rgba(255,255,255,0.4);
+    }
+    #plugin_settings_form{
+	border-top:1px solid #fff;
+	margin-top: 4px;
+	
+    }
+    #plugin_settings_form .inp_group b{
+	width:120px;
+    }
+
+</style>
+<div id="plugins_tile" class="covert" style="float:left;">
+    {{plugins}}
+	{{if header}}
+	<div><b>{{header}}</b></div>
+	{{else}}
+	    <div class="left_label" data-plugin-index="{{#}}" onclick="Plugins.tile.click(this);">
+		<img src="img/plugin.png" style="width:24px;height: 24px;"> {{plugin_name}}
+	    </div>	
+	{{/if}}
+    {{/plugins}}
+</div>
+<div style="overflow: auto">
+    <div id="plugin_info" class="covert">
+	<img src="img/plugin.png" style="float:left;width:auto;height: 70px;">
+	<div style="float: right">
+	    <b>Автор:</b> {{plugin_author}}<br>
+	    <b>Версия:</b> {{plugin_version}}<br>
+	    {{if uri}}<b>Сайт:</b> <a href="{{plugin_author_uri}}" target="_blank">{{plugin_author_uri}}</a><br>{{/if}}
+	    <b>Группа:</b> {{group_name}}<br>
+	    <b>Доступ:</b> {{user_level_name}}<br>
+	</div>
+	<div>
+	    <h2>{{plugin_name}}</h2>
+	    {{plugin_description}}
+	</div>
+	<div id="plugin_settings_form"></div>
+    </div>
+</div>

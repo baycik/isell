@@ -11,6 +11,7 @@
     <div title="Реквизиты компании" href="page/pref/details.html" style="min-height:500px;"></div>
     <div title="Пользователи и сотрудники" href="page/pref/users.html" style="min-height:500px;"></div>
     <div title="Инструменты" href="page/pref/tools.html" style="min-height:500px;"></div>
+    <div title="Плагины" href="page/pref/plugins.html" style="min-height:500px;"></div>
 </div>
 <style>
     #AcompPrefs b{

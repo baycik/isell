@@ -1,4 +1,13 @@
 <?php
+/* User Level: 1
+ * Group Name: Mobile
+ * Plugin Name: MiSell
+ * Plugin URI: isellsoft.com
+ * Version: 0.1
+ * Description: Мобильное приложение для приема заказов
+ * Author: baycik 2016
+ * Author URI: isellsoft.com
+ */
 include 'models/Catalog.php';
 class MiSell extends Catalog{
     function __construct($Base){
