@@ -39,13 +39,16 @@
 	    });
 	},
 	renderSettings:function(all){
-	    $('#plugin_settings_form').html(all.html);
-	    App.setupForm('#plugin_settings_form form',all.data);
-	    $('#plugin_settings_form form').submit(function(){
-		var settings=App.collectForm('#plugin_settings_form form');
+	    $('#plugin_settings').html(all.html);
+	    App.setupForm('#plugin_settings form',App.json(all.data));
+	    $('#plugin_settings form').submit(function(e){
+		e.preventDefault();
+		var settings=App.collectForm('#plugin_settings form');
 		$.post('PluginManager/settingsSave',{plugin_system_name:Plugin.current_system_name,settings_json:JSON.stringify(settings)},function(ok){
 		    if(ok*1){
 			App.flash("Настройки сохранены");
+		    } else {
+			App.flash("Ничего не изменилось");
 		    }
 		});
 	    });
@@ -86,13 +89,13 @@
 	margin: 2px;
 	background-color: rgba(255,255,255,0.4);
     }
-    #plugin_settings_form{
+    #plugin_settings{
 	border-top:1px solid #fff;
 	margin-top: 4px;
 	
     }
-    #plugin_settings_form .inp_group b{
-	width:120px;
+    #plugin_settings .inp_group b{
+	width:140px;
     }
 
 </style>
@@ -113,7 +116,7 @@
 	<div style="float: right">
 	    <b>Автор:</b> {{plugin_author}}<br>
 	    <b>Версия:</b> {{plugin_version}}<br>
-	    {{if uri}}<b>Сайт:</b> <a href="{{plugin_author_uri}}" target="_blank">{{plugin_author_uri}}</a><br>{{/if}}
+	    {{if plugin_author_uri}}<b>Сайт:</b> <a href="{{plugin_author_uri}}" target="_blank">{{plugin_author_uri}}</a><br>{{/if}}
 	    <b>Группа:</b> {{group_name}}<br>
 	    <b>Доступ:</b> {{user_level_name}}<br>
 	</div>
@@ -121,6 +124,6 @@
 	    <h2>{{plugin_name}}</h2>
 	    {{plugin_description}}
 	</div>
-	<div id="plugin_settings_form"></div>
+	<div id="plugin_settings" style="clear:both"></div>
     </div>
 </div>

@@ -52,7 +52,7 @@ class PluginManager extends Catalog{
 	];
     }
     public function settingsDataFetch($plugin_system_name){
-	return $this->get_row("SELECT plugin_settings FROM plugin_list WHERE plugin_system_name='$plugin_system_name'");
+	return $this->get_value("SELECT plugin_settings FROM plugin_list WHERE plugin_system_name='$plugin_system_name'");
     }
     public function settingsAllFetch(){
 	$plugin_system_name=$this->request('system_name');
