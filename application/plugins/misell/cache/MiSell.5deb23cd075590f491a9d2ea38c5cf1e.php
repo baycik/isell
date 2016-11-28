@@ -31,13 +31,8 @@
                 font-size: 0.8em;
             }
         </style>
-	<?php $tpl = new RainTPL;$tpl_dir_temp = self::$tpl_dir;$tpl->assign( $this->var );$tpl->draw( dirname("jquery.mobile-1.4.5.min.css") . ( substr("jquery.mobile-1.4.5.min.css",-1,1) != "/" ? "/" : "" ) . basename("jquery.mobile-1.4.5.min.css") );?>
-	
-	
-	
-        <link rel="stylesheet" href="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.css" />
-        <script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
-        <script src="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js"></script>
+        <?php echo $scripts;?>
+	<script src="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js"></script>
         <script type="text/javascript">
             var _orderCache = {},
                     _current_entry = {},
@@ -338,7 +333,7 @@
                 <ul id="autocomplete"
                     data-role="listview" 
                     data-inset="false" 
-                    data-filter="true" 
+                    data-filter="false" 
                     data-filter-theme="a"
                     data-filter-placeholder="Поиск товаров..."
                     data-transition="pop"

@@ -1,6 +1,6 @@
 <?php
 /* User Level: 1
- * Group Name: Mobile
+ * Group Name: Мобильное
  * Plugin Name: MiSell
  * Plugin URI: isellsoft.com
  * Version: 0.1
@@ -33,8 +33,8 @@ class MiSell extends Catalog{
 	$this->rain=new RainTPL();
 	$this->rain->assign('d',$tplData);
 	$this->rain->assign('db', json_encode($tplData) );
+	$this->rain->assign('scripts', file_get_contents('application/plugins/MiSell/scripts.html') );
 	$this->rain->draw('MiSell');
-	exit();
     }
     public function logout(){
 	$User=$this->Base->load_model('User');
