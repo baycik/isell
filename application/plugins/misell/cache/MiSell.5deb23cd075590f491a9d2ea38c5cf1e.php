@@ -333,7 +333,7 @@
                 <ul id="autocomplete"
                     data-role="listview" 
                     data-inset="false" 
-                    data-filter="false" 
+                    data-filter="true" 
                     data-filter-theme="a"
                     data-filter-placeholder="Поиск товаров..."
                     data-transition="pop"
