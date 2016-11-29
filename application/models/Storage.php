@@ -70,12 +70,12 @@ class Storage extends CI_Model {
     public function image_flush(){
 	$args = func_get_args();
 	$size_x = array_shift($args);
-	$path = implode('/', $args);
-	if (!file_exists($this->storageFolder . "/" . $path)) {
-	    return null;
+	$path = $this->storageFolder . "/" . implode('/', $args);
+	if (!file_exists($path)) {
+	    $path='img/notfound.jpg';
 	}
 	$size = explode('x', $size_x);
-	$thumb=$this->image_resize($this->storageFolder . "/" .$path, $size[0], $size[1]);
+	$thumb=$this->image_resize($path, $size[0], $size[1]);
 	
 	
 	$black = imagecolorallocate($thumb, 0, 0, 0);
