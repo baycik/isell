@@ -52,6 +52,9 @@
                     location.hash = "#homePage";
                     setTimeout(App.client.init, 0);
                 },
+		get_screen_size:function(){
+		    return $(window).width()+'x'+$(window).height();
+		},
                 json: function (text) {
                     try {
                         if (text !== '') {//Allow empty response
@@ -121,6 +124,9 @@
                             }
                         });
                         $("#autocomplete").on("click", function (e) {
+			    if( e.target.tagName==='IMG' ){
+				return false;
+			    }
                             App.order.orderSuggClick(e.target.parentNode.getAttribute('data-product-code') || e.target.getAttribute('data-product-code'));
                         });
                         /* $( document ).on( "swiperight", "#orderPage", function( e ) {
@@ -200,6 +206,12 @@
                         }
                     },
 
+		    imgPopupShow:function( node ){
+			location.hash="#popupProductZoom";
+			
+		    console.log(App.get_screen_size());
+			$("#popupProductZoom img").attr('src',node.src.replace('100x100',App.get_screen_size()));
+		    },
                     loadSuggestions: function (q) {
                         var $ul = $("#autocomplete");
                         $ul.html("<li><div class='ui-loader'><span class='ui-icon ui-icon-loading'></span></div></li>");
@@ -212,8 +224,9 @@
                                 _suggest_list[val.code] = val;
                                 html += "<li style='color:" + (val.product_quantity * 1 > 0 ? "green" : "red") + "'";
                                 html += "data-product-code='" + val.code + "'>";
+                                html += "<img src='../../Storage/image_flush/100x100/dynImg/"+val.product_img+"' onclick='return App.order.imgPopupShow(this);'>";
                                 html += "<div style='display:inline-block;min-width:5em;text-align:right;color:#666;font-size:0.7em'>" + val.code + "</div>";
-                                html += " <b>" + val.price + "</b> [" + val.product_quantity + "] <span> " + val.name + " </span></li>";
+                                html += " <b>" + val.price + "</b> [" + val.product_quantity + "] <br><span> " + val.name + " </span></li>";
                             });
                             $ul.html(html);
                             $ul.listview("refresh");
@@ -378,5 +391,18 @@
                 </ul>
             </div><!-- /panel -->
         </div>
+	
+	
+	
+	
+	
+	
+	
+	
+
+	<div data-role="popup" id="popupProductZoom" class="photopopup" data-overlay-theme="a" data-corners="false" data-tolerance="30,15">
+	    <a href="#" data-rel="back" class="ui-btn ui-corner-all ui-shadow ui-btn-a ui-icon-delete ui-btn-icon-notext ui-btn-right">Close</a>
+	    <img src="">
+	</div>
     </body>
 </html>

@@ -3,7 +3,7 @@
  * Group Name: Мобильное
  * Plugin Name: MiSell
  * Plugin URI: isellsoft.com
- * Version: 0.1
+ * Version: 0.9
  * Description: Мобильное приложение для приема заказов
  * Author: baycik 2016
  * Author URI: isellsoft.com
@@ -133,7 +133,7 @@ class MiSell extends Catalog{
                     product_spack spack,
                     product_quantity,
                     product_unit unit,
-		    
+		    product_img,
 		    ROUND(
 		     (SELECT IF(curr_code='USD',$usd_ratio,1)*sell FROM price_list pl WHERE pl.product_code=se.product_code AND label='')
 		    *COALESCE((SELECT discount FROM companies_discounts cd JOIN stock_tree st ON st.top_id=cd.branch_id WHERE st.branch_id=se.parent_id AND company_id=$company_id),1)
