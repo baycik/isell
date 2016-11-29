@@ -207,9 +207,8 @@
                     },
 
 		    imgPopupShow:function( node ){
-			location.hash="#popupProductZoom";
-			
-		    console.log(App.get_screen_size());
+			//location.hash="#popupProductZoom";
+			$("#popupProductZoom").popup("open");
 			$("#popupProductZoom img").attr('src',node.src.replace('100x100',App.get_screen_size()));
 		    },
                     loadSuggestions: function (q) {
@@ -315,6 +314,10 @@
             <div data-role="main" class="ui-content">
                 <div id="orderServerInteraction" data-role="popup" data-dismissible="true" data-overlay-theme="b" data-theme="b"></div>
                 <div id="alert" data-role="popup" data-overlay-theme="b" data-theme="b"></div>
+				<div data-role="popup" id="popupProductZoom" class="photopopup" data-overlay-theme="a" data-corners="false" data-dismissible="true" data-tolerance="30,15">
+		    <a href="#" data-rel="back" class="ui-btn ui-corner-all ui-shadow ui-btn-a ui-icon-delete ui-btn-icon-notext ui-btn-right">Close</a>
+		    <img src="">
+		</div>
                 <!--QUANTITY DIALOG-->
                 <div data-role="popup" id="qtyPopup" data-overlay-theme="b" data-position-to="window" data-theme="a" data-dismissible="true" style="-max-width:400px;">
                     <div data-role="header" data-theme="b">
@@ -391,18 +394,5 @@
                 </ul>
             </div><!-- /panel -->
         </div>
-	
-	
-	
-	
-	
-	
-	
-	
-
-	<div data-role="popup" id="popupProductZoom" class="photopopup" data-overlay-theme="a" data-corners="false" data-tolerance="30,15">
-	    <a href="#" data-rel="back" class="ui-btn ui-corner-all ui-shadow ui-btn-a ui-icon-delete ui-btn-icon-notext ui-btn-right">Close</a>
-	    <img src="">
-	</div>
     </body>
 </html>
