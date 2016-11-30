@@ -3,20 +3,24 @@
     <input name="secret_key" title="Защищенный ключ">
     <input name="user_id" title="Номер пользователя">
     <input name="access_token" title="Код доступа">
+    <input name="market_id" title="ID маркета">
     <div style="text-align: center">
 	<button type="submit"><img src="img/Save-24.png" style="width:24px;height: auto"> Сохранить</button>
     </div>
     <div>
 	<h3>Инструкция по заполнению</h3>
-	1. <a href="https://vk.com/apps?act=manage">Создайте Standalone-приложение</a> нажмите редактировать - настройки скопируйте ID приложения и Защищенный ключ<br>
-	2. На своей странице зайдите в Все записи скопируйте с адресной строки Номер пользователя в конце <br>
-	3. <a href="javascript:access_token_get()">Нажмите по этой ссылке</a> и в открывшемся окне дайте разрешение на доступ<br>
-	4. Когда страница загрузится скопируйте с адресной строки Код доступа (между https://oauth.vk.com/blank.html#access_token=<КОД ДОСТУПА>&expires_in=0)<br>
+	<ol>
+	    <li> <a href="https://vk.com/apps?act=manage">Создайте Standalone-приложение</a> нажмите редактировать - настройки скопируйте ID приложения и Защищенный ключ
+	    <li> На своей странице зайдите в Все записи скопируйте с адресной строки Номер пользователя в конце
+	    <li> <a href="javascript:access_token_get()">Нажмите по этой ссылке</a> и в открывшемся окне дайте разрешение на доступ
+	    <li> Когда страница загрузится скопируйте с адресной строки Код доступа (между https://oauth.vk.com/blank.html#access_token=<КОД ДОСТУПА>&expires_in=0)
+	    <li> Откройте группу (маркет), в которой вы адинистратор и скопируйте с адресной строки цифры https://vk.com/club?&lt;ID маркета&gt;
+	</ol>
     </div>
 </form>
 <script>
     function access_token_get(){
-	var client_id=$('#plugin_settings_form input[name=client_id]').val();
+	var client_id=$('#plugin_settings input[name=client_id]').val();
 	var url='https://oauth.vk.com/authorize?redirect_uri=http://oauth.vk.com/blank.html&display=page&response_type=token&scope=wall,photos,friends,groups,market,offline&client_id='+client_id;
 	window.open(url);
     }
