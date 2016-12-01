@@ -1,4 +1,5 @@
 <form>
+    <h2>Настройки подключения</h2>
     <input name="client_id" title="ID приложения">
     <input name="secret_key" title="Защищенный ключ">
     <input name="user_id" title="Номер пользователя">
@@ -12,16 +13,55 @@
 	<ol>
 	    <li> <a href="https://vk.com/apps?act=manage">Создайте Standalone-приложение</a> нажмите редактировать - настройки скопируйте ID приложения и Защищенный ключ
 	    <li> На своей странице зайдите в Все записи скопируйте с адресной строки Номер пользователя в конце
-	    <li> <a href="javascript:access_token_get()">Нажмите по этой ссылке</a> и в открывшемся окне дайте разрешение на доступ
+	    <li> <a href="javascript:App.vk_api.access_token_get()">Нажмите по этой ссылке</a> и в открывшемся окне дайте разрешение на доступ
 	    <li> Когда страница загрузится скопируйте с адресной строки Код доступа (между https://oauth.vk.com/blank.html#access_token=<КОД ДОСТУПА>&expires_in=0)
 	    <li> Откройте группу (маркет), в которой вы адинистратор и скопируйте с адресной строки цифры https://vk.com/club?&lt;ID маркета&gt;
 	</ol>
     </div>
+    <div style="display: inline-block;background: rgba(255,255,255,0.5);border:1px solid #ccc;padding: 10px;margin: 10px">
+	<h2>Синхронизация товаров</h2>
+	<textarea title="Шаблон комментария к товару" name="description_tpl" style="width:400px;height:100px">Модель: [код товара]
+Наличие: [наличие]
+Производитель: [производитель]</textarea>
+	<input type="hidden" name="pcomp_id">
+	<input title="Цены клиента" name="pcomp_name" value="не выбран" readonly="readonly" />
+	<button type="button" class="tiny_button" onclick="App.vk_api.select_pcomp()"><img src="img/settings.png"> Изменить</button>
+	<hr>
+	<div style="text-align: center;">
+	    <button type="button" onclick="App.vk_api.sync()"><img src="img/down.png" id="vk_api_down_img">Синхронизировать комментарии</button>
+	</div>
+	<div id="vk_api_status" style="background: rgba(255,255,200,0.5);border:1px solid #fс0;padding: 10px;margin: 10px">
+	    Ожидание запуска синхронизации
+	</div>
+    </div>
 </form>
 <script>
-    function access_token_get(){
-	var client_id=$('#plugin_settings input[name=client_id]').val();
-	var url='https://oauth.vk.com/authorize?redirect_uri=http://oauth.vk.com/blank.html&display=page&response_type=token&scope=wall,photos,friends,groups,market,offline&client_id='+client_id;
-	window.open(url);
-    }
+    App.vk_api={
+	access_token_get:function(){
+	    var client_id=$('#plugin_settings input[name=client_id]').val();
+	    var url='https://oauth.vk.com/authorize?redirect_uri=http://oauth.vk.com/blank.html&display=page&response_type=token&scope=wall,photos,friends,groups,market,offline&client_id='+client_id;
+	    window.open(url);
+	},
+	sync:function(){
+	    $('#vk_api_down_img').attr('src','img/loading_16.gif');
+	    $.post('plugin/vk_api_sync/syncProducts',function(result){
+		$('#vk_api_status').html(result);
+		$('#vk_api_down_img').attr('src','img/down.png');
+		if( result.indexOf('--')>-1 ){
+		    App.vk_api.sync();
+		} else {
+		    return;
+		}
+		$('#vk_api_status').html(result);
+	    });
+	},
+	select_pcomp:function(){
+	    App.user.pcompSelectionDialog();
+	}
+    };
+    App.handler.progress(function(status){
+	if( status==='passiveCompanySelected' ){
+	    $("input[name=pcomp_name]").val(App.pcomp.label);
+	}
+    });
 </script>

@@ -40,7 +40,7 @@
 	},
 	renderSettings:function(all){
 	    $('#plugin_settings').html(all.html);
-	    App.setupForm('#plugin_settings form',all.data);
+	    App.setupForm('#plugin_settings form',all.data,'use_inp_values');
 	    $('#plugin_settings form').submit(function(e){
 		e.preventDefault();
 		var settings=App.collectForm('#plugin_settings form');
