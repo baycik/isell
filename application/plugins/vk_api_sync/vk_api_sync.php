@@ -25,7 +25,7 @@ class vk_api_sync extends PluginManager{
 	$offset=0;
 	$marketItems=[];
 	do{
-	    $response=$this->vk->market->get(['owner_id'=>$this->market_id,'count'=>200,'offset'=>$offset]);
+	    $response=$this->vk->market->get(['owner_id'=>$this->market_id,'count'=>200,'offset'=>$offset,'extended'=>1]);
 	    if( !is_array($response) || !count($response['items']) ){
 		break;
 	    }
@@ -34,41 +34,57 @@ class vk_api_sync extends PluginManager{
 	} while( 1 );
 	return $marketItems;
     }
-    private function marketGetAndStore(){
-	$items=$this->marketGetAll();
-	$Storage=$this->Base->load_model('Storage');
-	return $Storage->json_store('vk_api_sync/downloaded_market_items.json',$items);
-    }
+//    public function marketGetAndStore(){
+//	$items=$this->marketGetAll();
+//	$Storage=$this->Base->load_model('Storage');
+//	return $Storage->json_store('vk_api_sync/downloaded_market_items.json',$items);
+//    }
     /*
      * marketMakeDictionary
      * finds product_code in description and links it with id in market items
      */
-    private function marketMakeDictionary(){
+    public function marketGetAndCombine(){
 	$items=$this->marketGetAll();
 	if( !is_array($items) ){
 	    throw new Exception('No downloaded market items are found');
 	}
-	$dictionary=[];
-	foreach($items as $item){
+	foreach($items as &$item){
 	    $product_code='';
 	    preg_match('|Модель:(.*)$|mi',$item['description'],$product_code);
-	    $dictionary[]=['id'=>$item['id'],'product_code'=>trim($product_code[1])];
+	    $item['product_code']=trim($product_code[1]);
 	}
 	$Storage=$this->Base->load_model('Storage');
-	return $Storage->json_store('vk_api_sync/market_dictionary.json',$dictionary);
+	return $Storage->json_store('vk_api_sync/market_items_combine.json',$items);
     }
     private function uploadProducts($chunk){
-	foreach($chunk as $product){
-	    echo $product->product_code;
-	}
+	$item=$chunk[0];
+	
+	
+	//print_r( $item);
+	
+	$product=[
+	    'owner_id'=>$this->market_id,
+	    'item_id'=>$item->id,
+	    'name'=>$item->title,
+	    'description'=>$item->description,
+	    'category_id'=>$item->category->id,
+	    'price'=>$item->price->amount/1000,
+	    'main_photo_id'=>$item->photos[0]->id
+	];
+	
+	$this->vk->market->edit($product);
+	print_r($product);
+	$product=[''];
     }
-    private function uploadChunk(){
+    public function uploadChunk(){
 	$limit=10;
 	$offset=$this->Base->svar('vk_api_offset');
+	
 	$Storage=$this->Base->load_model('Storage');
-	$dictionary=(array)$Storage->json_restore('vk_api_sync/market_dictionary.json');
-	$chunk=array_slice($dictionary,$offset,$limit);
+	$items=$Storage->json_restore('vk_api_sync/market_items_combine.json');
+	$chunk=array_slice($items,$offset,$limit);
 	$this->uploadProducts($chunk);
+	
 	$this->Base->svar('vk_api_offset',$offset+$limit);
 	return 0;
     }
