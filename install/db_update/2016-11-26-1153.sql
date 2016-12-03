@@ -11,7 +11,7 @@
 ALTER TABLE `acc_trans` 
 CHANGE COLUMN `cstamp` `cstamp` DATETIME NULL DEFAULT NULL ,
 CHANGE COLUMN `tstamp` `tstamp` DATETIME NULL DEFAULT CURRENT_TIMESTAMP ,
-ADD COLUMN `doc_id` INT NULL AFTER `trans_id`;
+ADD COLUMN `acc_doc_id` INT NULL AFTER `trans_id`;
 
 
 
