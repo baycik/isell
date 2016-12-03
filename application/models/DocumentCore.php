@@ -34,13 +34,13 @@ class DocumentCore extends DocumentUtils{
 		    FROM 
 			acc_trans 
 			    JOIN 
-			document_trans USING(trans_id)
-		    WHERE doc_id=dl.doc_id 
+			document_trans dt USING(trans_id)
+		    WHERE dt.doc_id=dl.doc_id 
 		    ORDER BY trans_id LIMIT 1) amount,
 		label company_name,
 		GROUP_CONCAT(CONCAT(' ',LEFT(view_name,3),view_num)) views,
 		IF(is_commited,'ok Проведен','') as commited,
-		(SELECT CONCAT(code,' ',descr) FROM acc_trans_status JOIN acc_trans USING(trans_status) JOIN document_trans USING(trans_id) WHERE doc_id=dl.doc_id ORDER BY trans_id LIMIT 1) trans_status
+		(SELECT CONCAT(code,' ',descr) FROM acc_trans_status JOIN acc_trans USING(trans_status) JOIN document_trans dt USING(trans_id) WHERE dt.doc_id=dl.doc_id ORDER BY trans_id LIMIT 1) trans_status
 	    FROM 
 		document_list dl
 		    JOIN

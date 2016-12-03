@@ -68,7 +68,7 @@ class vk_api_sync extends PluginManager{
 	    'name'=>$item->title,
 	    'description'=>$item->description,
 	    'category_id'=>$item->category->id,
-	    'price'=>$item->price->amount/1000,
+	    'price'=>666,//$item->price->amount/1000,
 	    'main_photo_id'=>$item->photos[0]->id
 	];
 	
