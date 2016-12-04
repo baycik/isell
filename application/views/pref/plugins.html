@@ -44,7 +44,7 @@
 	    $('#plugin_settings form').submit(function(e){
 		e.preventDefault();
 		var settings=App.collectForm('#plugin_settings form');
-		$.post('PluginManager/settingsSave',{plugin_system_name:Plugin.current_system_name,settings_json:JSON.stringify(settings)},function(ok){
+		App.post('PluginManager/settingsSave',{plugin_system_name:Plugin.current_system_name,settings_json:JSON.stringify(settings)},function(ok){
 		    if(ok*1){
 			App.flash("Настройки сохранены");
 		    } else {

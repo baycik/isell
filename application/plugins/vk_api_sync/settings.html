@@ -1,42 +1,46 @@
 <form>
     <h2>Настройки подключения</h2>
-    <input name="client_id" title="ID приложения">
-    <input name="secret_key" title="Защищенный ключ">
-    <input name="user_id" title="Номер пользователя">
-    <textarea name="access_token" title="Код доступа"></textarea>
-    <input name="market_id" title="ID маркета">
-    <div style="text-align: center">
-	<button type="submit"><img src="img/Save-24.png" style="width:24px;height: auto"> Сохранить</button>
-    </div>
-    <div>
-	<h3>Инструкция по заполнению</h3>
-	<ol>
-	    <li> <a href="https://vk.com/apps?act=manage">Создайте Standalone-приложение</a> нажмите редактировать - настройки скопируйте ID приложения и Защищенный ключ
-	    <li> На своей странице зайдите в Все записи скопируйте с адресной строки Номер пользователя в конце
-	    <li> <a href="javascript:App.vk_api.access_token_get()">Нажмите по этой ссылке</a> и в открывшемся окне дайте разрешение на доступ
-	    <li> Когда страница загрузится скопируйте с адресной строки Код доступа (между https://oauth.vk.com/blank.html#access_token=<КОД ДОСТУПА>&expires_in=0)
-	    <li> Откройте группу (маркет), в которой вы адинистратор и скопируйте с адресной строки цифры https://vk.com/club?&lt;ID маркета&gt;
-	</ol>
+    <div class="plugin_settings">
+	<input name="client_id" title="ID приложения" required="required">
+	<input name="secret_key" title="Защищенный ключ" required="required">
+	<input name="user_id" title="Номер пользователя" required="required">
+	<textarea name="access_token" title="Код доступа" required="required"></textarea>
+	<input name="market_id" title="ID маркета" required="required">
+	<div style="text-align: center">
+	    <button type="submit"><img src="img/Save-24.png" style="width:24px;height: auto"> Сохранить</button>
+	</div>
+	<div>
+	    <h3>Инструкция по заполнению</h3>
+	    <ol>
+		<li> <a href="https://vk.com/apps?act=manage">Создайте Standalone-приложение</a> нажмите редактировать - настройки скопируйте ID приложения и Защищенный ключ
+		<li> На своей странице зайдите в Все записи скопируйте с адресной строки Номер пользователя в конце
+		<li> <a href="javascript:App.vk_api.access_token_get()">Нажмите по этой ссылке</a> и в открывшемся окне дайте разрешение на доступ
+		<li> Когда страница загрузится скопируйте с адресной строки Код доступа (между https://oauth.vk.com/blank.html#access_token=<КОД ДОСТУПА>&expires_in=0)
+		<li> Откройте группу (маркет), в которой вы адинистратор и скопируйте с адресной строки цифры https://vk.com/club?&lt;ID маркета&gt;
+	    </ol>
+	</div>
     </div>
     <div style="display: inline-block;background: rgba(255,255,255,0.5);border:1px solid #ccc;padding: 10px;margin: 10px">
 	<h2>Синхронизация товаров</h2>
-	<textarea title="Шаблон комментария к товару" name="description_tpl" style="width:400px;height:100px">Модель: [код товара]
-Наличие: [наличие]
-Производитель: [производитель]</textarea>
 	<input type="hidden" name="pcomp_id">
-	<input title="Цены клиента" name="pcomp_name" value="не выбран" readonly="readonly" />
+	<input title="Цены клиента" name="pcomp_name" value="" readonly="readonly" required="required"/>
 	<button type="button" class="tiny_button" onclick="App.vk_api.select_pcomp()"><img src="img/settings.png"> Изменить</button>
 	<hr>
 	<div style="text-align: center;">
-	    <button type="button" onclick="App.vk_api.sync()"><img src="img/down.png" id="vk_api_down_img">Синхронизировать комментарии</button>
+	    <button type="button" onclick="App.vk_api.start()"><img src="img/down.png" id="vk_api_down_img">Синхронизировать</button>
+	    <button type="button" onclick="App.vk_api.stop()"><img src="img/cancel24.png">Стоп</button>
 	</div>
-	<div id="vk_api_status" style="background: rgba(255,255,200,0.5);border:1px solid #fс0;padding: 10px;margin: 10px">
+	<div id="vk_api_status" style="background: rgba(255,255,200,0.5);border:1px solid #fс0;padding: 10px;margin: 10px;max-height: 200px;overflow-y: auto">
 	    Ожидание запуска синхронизации
 	</div>
     </div>
 </form>
 <script>
     App.vk_api={
+	init:function(){
+	    //$("input[name=pcomp_id]").val(App.pcomp.company_id);
+	    //$("input[name=pcomp_name]").val(App.pcomp.label);
+	},
 	access_token_get:function(){
 	    var client_id=$('#plugin_settings input[name=client_id]').val();
 	    var url='https://oauth.vk.com/authorize?redirect_uri=http://oauth.vk.com/blank.html&display=page&response_type=token&scope=widgets,wall,photos,friends,groups,market,offline&v=5.45&client_id='+client_id;
@@ -45,23 +49,38 @@
 	},
 	sync:function(){
 	    $('#vk_api_down_img').attr('src','img/loading_16.gif');
-	    $.post('plugin/vk_api_sync/syncProducts',function(result){
+	    App.post('plugin/vk_api_sync/syncProducts',function(result){
 		$('#vk_api_down_img').attr('src','img/down.png');
-		if( result.indexOf('--')>-1 ){
+		$('#vk_api_status').html(result+'<br>'+$('#vk_api_status').html());
+		if( result.indexOf('--')>-1 && App.vk_api.continue ){
 		    App.vk_api.sync();
 		} else {
 		    return;
 		}
-		$('#vk_api_status').html($('#vk_api_status').html()+'<br>'+result);
 	    });
+	},
+	start:function(){
+	    if(!confirm("Обновить информацию о ценах и наличии?\n\nБудут использованы цены клиента: "+$("input[name=pcomp_name]").val())){
+		return;
+	    }
+	    this.continue=true;
+	    $('#plugin_settings form').submit();
+	    $('#vk_api_status').html('');
+	    App.vk_api.sync();
+	},
+	stop:function(){
+	    this.continue=false;
+	    
 	},
 	select_pcomp:function(){
 	    App.user.pcompSelectionDialog();
 	}
     };
     App.handler.progress(function(status){
-	if( status==='passiveCompanySelected' ){
+	if( status==='passiveCompanySelected' || status==='passiveCompanyInited' ){
 	    $("input[name=pcomp_name]").val(App.pcomp.label);
+	    $("input[name=pcomp_id]").val(App.pcomp.company_id);
 	}
     });
+    $(App.vk_api.init);
 </script>
