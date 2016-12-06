@@ -8,5 +8,5 @@
  * Created: Sep 25, 2016
  */
 
-ALTER TABLE `isell_db`.`pref_list` 
+ALTER TABLE `pref_list` 
 DROP INDEX `fk_pref_list_companies_list1_idx` ;
