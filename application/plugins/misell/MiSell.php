@@ -52,31 +52,38 @@ class MiSell extends Catalog{
     public function getCompaniesTree(){
 	$level=$this->Base->svar('user_level');
 	$assigned_path=  $this->Base->svar('user_assigned_path');
-	$companies_folder_list=$this->get_list("SELECT branch_id,label,is_leaf FROM companies_tree WHERE level<=$level AND path LIKE '$assigned_path%'");
+	$companies_folder_list=$this->get_list("SELECT branch_id,label FROM companies_tree WHERE is_leaf=0 AND level<=$level AND path LIKE '$assigned_path%'");
 	$tree=[];
-	foreach($companies_folder_list as $folder){
-	    $sql="SELECT
-			company_id,
-			label,
-			company_address,
-			company_person,
-			company_mobile,
-			company_description
-		    FROM
-			companies_tree 
-			    JOIN 
-			companies_list USING(branch_id) 
-		    WHERE 
-			is_leaf=1 
-			AND level<=$level 
-			AND IF( {$folder->is_leaf},branch_id='{$folder->branch_id}',parent_id='{$folder->branch_id}')";
-	    $companies_list=$this->get_list($sql);
-	    if($companies_list){
-		//$folder->children=$companies_list;
-		$tree[$folder->label]=$companies_list;
+	if( $companies_folder_list ){
+	    foreach($companies_folder_list as $folder){
+		$companies_list=$this->getCompaniesTreeLeafs($folder->branch_id, $level, false);
+		if($companies_list){
+		    $tree[$folder->label]=$companies_list;
+		}
 	    }
+	} else {//if assignet_path pointing only to 1 client 
+	    $tree['Все клиенты']=$this->getCompaniesTreeLeafs(0, $level, $assigned_path);
 	}
+	
 	return $tree;
+    }
+    private function getCompaniesTreeLeafs($branch_id,$level,$assigned_path){
+	$sql="SELECT
+		    company_id,
+		    label,
+		    company_address,
+		    company_person,
+		    company_mobile,
+		    company_description
+		FROM
+		    companies_tree 
+			JOIN 
+		    companies_list USING(branch_id) 
+		WHERE 
+		    is_leaf=1 
+		    AND level<=$level 
+		    AND IF( {$branch_id},parent_id='{$branch_id}',path ='$assigned_path')";
+	return $this->get_list($sql);	
     }
 //    public function getCompaniesTree1(){
 //        $list=$this->getManagerClients($this->Base->svar('user_id'));
