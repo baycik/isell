@@ -134,12 +134,7 @@ class MiSell extends Catalog{
                     product_quantity,
                     product_unit unit,
 		    product_img,
-		    ROUND(
-		     (SELECT IF(curr_code='USD',$usd_ratio,1)*sell FROM price_list pl WHERE pl.product_code=se.product_code AND label='')
-		    *COALESCE((SELECT discount FROM companies_discounts cd JOIN stock_tree st ON st.top_id=cd.branch_id WHERE st.branch_id=se.parent_id AND company_id=$company_id),1)
-			,2)
-		    price
-		    
+		    GET_PRICE(product_code,$company_id,$usd_ratio) price
                 FROM
                     prod_list
                 JOIN
