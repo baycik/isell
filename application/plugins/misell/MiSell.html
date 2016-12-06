@@ -30,6 +30,12 @@
                 font-weight: normal;
                 font-size: 0.8em;
             }
+	    #autocomplete .ui-li-static.ui-li-has-thumb{
+		padding-left: 5.3em;
+	    }
+	    #autocomplete .ui-li-static{
+		white-space: normal;
+	    }
         </style>
         {$scripts}
 	<script src="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js"></script>
@@ -49,6 +55,8 @@
                     }
                     $("#orderPage").on("pageinit", App.order.init);
                     $("#homePage").on("pageinit", App.client.init);
+                    //location.hash = "#orderPage";
+                    //setTimeout(App.order.init, 0);
                     location.hash = "#homePage";
                     setTimeout(App.client.init, 0);
                 },
@@ -102,6 +110,7 @@
                         html += "<li style='white-space:normal'><b>Мобильный: </b>" + (selected_client.company_mobile || '') + "</li>";
                         html += "<li style='white-space:normal'><b>Адрес: </b>" + (selected_client.company_address || '') + "</li>";
                         html += "<li style='white-space:normal'><b>Заметки: </b>" + (selected_client.company_description || '') + "</li>";
+                        html += "<li style='white-space:normal'><b>Долг: </b>" + (selected_client.company_debt || '') + "</li>";
                         $("#clientdetails").html(html);
                         $("#clientdetails").listview("refresh");
                         $("#clientdetails").trigger("updatelayout");
@@ -115,7 +124,16 @@
                     init: function () {
                         App.order.show();
                         App.order.stockCatSelect(_selectedStockCat);
-                        $("#autocomplete").on("filterablebeforefilter", function (e, data) {
+			$("#suggest").on("keypress",function(e,data){
+			    var value=$("#suggest").val();
+			    if (value && value.length > 1) {
+				clearTimeout(App.order.clock);
+				App.order.clock=setTimeout(function(){
+				    App.order.loadSuggestions(value);
+				},300);
+                            }
+			});
+/*                        $("#autocomplete").on("filterablebeforefilter", function (e, data) {
                             var $input = $(data.input),
                                     value = $input.val();
                             $("#autocomplete").html("");
@@ -123,6 +141,7 @@
                                 App.order.loadSuggestions($input.val());
                             }
                         });
+	*/
                         $("#autocomplete").on("click", function (e) {
 			    if( e.target.tagName==='IMG' ){
 				return false;
@@ -142,9 +161,9 @@
                         $.each(_orderCache, function (pcode, entry) {
                             if (entry) {
                                 html += '<li>';
-                                html += '<span style="width:60%;display:inline-block;overflow:hidden;"><a href="#" onclick="App.order.entry.remove(\'' + pcode + '\')" class="ui-btn ui-corner-all ui-icon-delete ui-btn-icon-notext ui-btn-b ui-btn-inline">Delete</a>  ' + pcode + '</span>';
-                                html += '<span style="width:20%;display:inline-block;overflow:hidden;"><a href="#" onclick="App.order.entry.edit(\'' + pcode + '\')" class="ui-btn ui-corner-all ui-mini ui-btn-inline ui-btn-b">' + entry.qty + '</a>' + entry.unit + '</span>';
-                                html += '<span style="width:20%;display:inline-block;overflow:hidden; padding-bottom: 0.7em;">' + (App.format(entry.price) || '?') + '</span>';
+                                html += '<span style="width:40%;display:inline-block;overflow:hidden;"><a href="#" onclick="App.order.entry.remove(\'' + pcode + '\')" class="ui-btn ui-corner-all ui-icon-delete ui-btn-icon-notext ui-btn-b ui-btn-inline">Delete</a>  ' + pcode + '</span>';
+                                html += '<span style="width:30%;display:inline-block;overflow:hidden;"><a href="#" onclick="App.order.entry.edit(\'' + pcode + '\')" class="ui-btn ui-corner-all ui-mini ui-btn-inline ui-btn-b">' + entry.qty + '</a>' + entry.unit + '</span>';
+                                html += '<span style="width:30%;display:inline-block;overflow:hidden; padding-bottom: 0.7em;">' + (App.format(entry.price) || '?') + '</span>';
                                 html += '<br>' + (++i) + '. <i>' + entry.name + '</i></li>';
                                 sum += entry.price * entry.qty;
                             }
@@ -223,9 +242,9 @@
                                 _suggest_list[val.code] = val;
                                 html += "<li style='color:" + (val.product_quantity * 1 > 0 ? "green" : "red") + "'";
                                 html += "data-product-code='" + val.code + "'>";
-                                html += "<img src='../../Storage/image_flush/100x100/dynImg/"+val.product_img+"' onclick='return App.order.imgPopupShow(this);'>";
-                                html += "<div style='display:inline-block;min-width:5em;text-align:right;color:#666;font-size:0.7em'>" + val.code + "</div>";
-                                html += " <b>" + val.price + "</b> [" + val.product_quantity + "] <br><span> " + val.name + " </span></li>";
+                                html += "<img src='../../Storage/image_flush/100x100/dynImg/"+val.product_img+"' onclick='return App.order.imgPopupShow(this);' style='float:left'>";
+                                html += "<span style='color:#666;'>" + val.code + "</span>";
+                                html += " <b>" + val.price + "</b> [" + val.product_quantity + "] <br>" + val.name + "</li>";
                             });
                             $ul.html(html);
                             $ul.listview("refresh");
@@ -346,13 +365,15 @@
                 </ul>
                 <div id="orderSummary" style="text-align: right"></div>
                 <!--AUTOSUGGEST-->
+		<input type="search"  data-clear-btn="true" id="suggest" placeholder="Поиск товаров..." data-theme="b"/>
                 <ul id="autocomplete"
                     data-role="listview" 
                     data-inset="false" 
-                    data-filter="true" 
+                    data1-filter="true" 
                     data-filter-theme="a"
                     data-filter-placeholder="Поиск товаров..."
-                    data-transition="pop"
+                    data-transition="pop" 
+		    style="margin-top:0.5em"
                     >
                 </ul>
             </div>
