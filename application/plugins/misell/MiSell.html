@@ -53,12 +53,15 @@
                     if (location_with_slash !== location.href) {
                         location.href = location_with_slash;
                     }
+		    if( App.store('last_page')==='homePage' ){
+			location.hash = "#homePage";
+			setTimeout(App.client.init, 0);
+		    } else {
+			location.hash = "#orderPage";
+			setTimeout(App.order.init, 0);
+		    }
                     $("#orderPage").on("pageinit", App.order.init);
                     $("#homePage").on("pageinit", App.client.init);
-                    //location.hash = "#orderPage";
-                    //setTimeout(App.order.init, 0);
-                    location.hash = "#homePage";
-                    setTimeout(App.client.init, 0);
                 },
 		get_screen_size:function(){
 		    return $(window).width()+'x'+$(window).height();
@@ -84,6 +87,10 @@
                 },
                 client: {
                     init: function () {
+			if( App.client.inited ){
+			    return;
+			}
+			App.client.inited=true;
                         if (App.store('selected_client')) {
                             App.client.show();
                         }
@@ -91,6 +98,7 @@
                         $("#clientSelect").on("click", function (e) {
                             App.client.select(e.target.getAttribute('data-client-id'));
                         });
+			App.store('last_page','homePage');
                     },
                     select: function (client_id) {
                         $.each(db.companies_tree, function (key, tree_folder) {
@@ -122,39 +130,28 @@
                 },
                 order: {
                     init: function () {
+			if( App.order.inited ){
+			    return;
+			}
+			App.order.inited=true;
                         App.order.show();
                         App.order.stockCatSelect(_selectedStockCat);
-			$("#suggest").on("keypress",function(e,data){
+			$("#suggest").on("keyup",function(e,data){
 			    var value=$("#suggest").val();
 			    if (value && value.length > 1) {
 				clearTimeout(App.order.clock);
 				App.order.clock=setTimeout(function(){
 				    App.order.loadSuggestions(value);
-				},300);
+				},500);
                             }
 			});
-/*                        $("#autocomplete").on("filterablebeforefilter", function (e, data) {
-                            var $input = $(data.input),
-                                    value = $input.val();
-                            $("#autocomplete").html("");
-                            if (value && value.length > 1) {
-                                App.order.loadSuggestions($input.val());
-                            }
-                        });
-	*/
                         $("#autocomplete").on("click", function (e) {
 			    if( e.target.tagName==='IMG' ){
 				return false;
 			    }
                             App.order.orderSuggClick(e.target.parentNode.getAttribute('data-product-code') || e.target.getAttribute('data-product-code'));
                         });
-                        /* $( document ).on( "swiperight", "#orderPage", function( e ) {
-                         if ( $( ".ui-page-active" ).jqmData( "panel" ) !== "open" ) {
-                         if ( e.type === "swipeleft" ) {
-                         //$( "#right-panel" ).panel( "open" );
-                         }
-                         }
-                         });*/
+			App.store('last_page','orderPage');
                     },
                     show: function () {
                         var html = "", i = 0, sum = 0;
@@ -224,17 +221,16 @@
                             $("#qtyInput").select();
                         }
                     },
-
 		    imgPopupShow:function( node ){
-			//location.hash="#popupProductZoom";
-			$("#popupProductZoom").popup("open");
 			$("#popupProductZoom img").attr('src',node.src.replace('100x100',App.get_screen_size()));
+			$("#popupProductZoom img").load(function(){
+			    $("#popupProductZoom").popup("open");
+			});
 		    },
                     loadSuggestions: function (q) {
                         var $ul = $("#autocomplete");
-                        $ul.html("<li><div class='ui-loader'><span class='ui-icon ui-icon-loading'></span></div></li>");
-                        $ul.listview("refresh");
                         $.get("./suggest", {q: q, parent_id: _selectedStockCat, company_id: App.store('selected_client').company_id}, function (response) {
+			    
                             var suggested = App.json(response);
                             _suggest_list = {};
                             var html = "";
@@ -264,7 +260,6 @@
                     stockCatSelect: function (branch_id) {
                         $("#stockBranch" + _selectedStockCat).removeClass("ui-btn-active");
                         $("#stockBranch" + branch_id).addClass("ui-btn-active");
-                        ;
                         _selectedStockCat = branch_id;
                         App.order.loadSuggestions();
                     }
