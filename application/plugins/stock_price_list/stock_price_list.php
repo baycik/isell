@@ -1,11 +1,12 @@
 <?php
-/* 
+/* Group Name: Склад
+ * User Level: 2
  * Plugin Name: Price list creator
- * Plugin URI: isellsoft.ru
+ * Plugin URI: http://isellsoft.com
  * Version: 1.1
  * Description: Tool for creating price list 
  * Author: baycik 2016
- * Author URI: isellsoft.ru
+ * Author URI: http://isellsoft.com
  */
 include 'models/Catalog.php';
 class Stock_price_list extends Catalog{

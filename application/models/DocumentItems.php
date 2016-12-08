@@ -51,7 +51,7 @@ class DocumentItems extends DocumentCore{
 		    ROUND(SUM(product_quantity*product_weight),2) total_weight,
 		    ROUND(SUM(product_quantity*product_volume),2) total_volume,
                     ROUND(IF('$use_total_as_base',
-                        SUM(ROUND(ROUND(invoice_price, @signs_after_dot) * @vat_correction * @curr_correction, @signs_after_dot) * product_quantity),
+                        SUM(ROUND(ROUND(invoice_price, @signs_after_dot) * @vat_ratio * @curr_correction, @signs_after_dot) * product_quantity),
                         SUM(ROUND(ROUND(invoice_price, @signs_after_dot) * @curr_correction * product_quantity,2)) * @vat_ratio
                     ),2) total,
 		    ROUND(IF('$use_total_as_base',
@@ -236,6 +236,7 @@ class DocumentItems extends DocumentCore{
 	$target=[];
 	$source=[];
 	$this->calcCorrections();
+        $quantity_source_field='';
 	for( $i=0;$i<count($trg);$i++ ){
             if( strpos($filter,"/{$trg[$i]}/")===false || empty($src[$i]) ){
 		continue;
@@ -246,6 +247,10 @@ class DocumentItems extends DocumentCore{
 	    if( $trg[$i]=='invoice_price' ){
 		$src[$i]=$src[$i].'/@curr_correction/@vat_correction';
 	    }
+	    if( $trg[$i]=='product_quantity' ){
+		$quantity_source_field=$src[$i];
+	    }
+            
 	    $target[]=$trg[$i];
 	    $source[]=$src[$i];
 	    $set[]="{$trg[$i]}=$src[$i]";
@@ -253,7 +258,7 @@ class DocumentItems extends DocumentCore{
 	$target_list=  implode(',', $target);
 	$source_list=  implode(',', $source);
 	$set_list=  implode(',', $set);
-	$this->query("INSERT INTO $table ($target_list) SELECT $source_list FROM imported_data WHERE label='$label' AND $product_code_source IN (SELECT product_code FROM stock_entries) ON DUPLICATE KEY UPDATE $set_list");
+	$this->query("INSERT INTO $table ($target_list) SELECT $source_list FROM imported_data WHERE label='$label' AND $product_code_source IN (SELECT product_code FROM stock_entries) ON DUPLICATE KEY UPDATE product_quantity=product_quantity+$quantity_source_field");
 	return $this->db->affected_rows();
     }
 }

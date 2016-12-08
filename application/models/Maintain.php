@@ -24,22 +24,21 @@ class Maintain extends CI_Model {
     
     public function updateInstall(){
 	$this->updateConfigurator();
-	$file = str_replace("\\", "/", $this->dirWork.'/install/db_update.sql');
 	$this->updateDb();
 	return true;
     }
     
     private function updateDb(){
-	$result=$this->db->query("SELECT pref_value FROM pref_list WHERE pref_name='version_of_db'");
-	$version_of_db=$result->row()?$result->row()->pref_value:0;
+	$result=$this->db->query("SELECT pref_value FROM pref_list WHERE pref_name='db_applied_patches'");
+	$db_applied_patches=$result->row()?$result->row()->pref_value:'';
 	$directory = str_replace("\\", "/", $this->dirWork.'/install/db_update/');
 	$patches = array_diff(scandir($directory), array('..', '.'));
 	foreach($patches as $patch){
-	    $version_number=  str_replace('.sql', '', $patch);
-	    if( $version_of_db<$version_number){
+	    $patch_version=  str_replace('.sql', '', $patch);
+	    if( strpos($db_applied_patches,$patch_version)===false ){
 		$this->backupImportExecute($directory.$patch);
-
-		$this->db->query("REPLACE pref_list SET pref_name='version_of_db', pref_value='$version_number'");
+		$db_applied_patches.="|".$patch_version;
+		$this->db->query("REPLACE pref_list SET pref_name='db_applied_patches', pref_value='$db_applied_patches'");
 	    }
 	}
     }

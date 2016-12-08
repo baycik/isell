@@ -43,7 +43,7 @@
 	},
 	msg_count:0,
 	sendRecieve: function (msg) {
-	    App.post(App.uri('Chat', 'sendRecieve', App.page_dialog_chat.counterpart || ''),{message:msg}, function (resp) {
+	    App.post(App.uri('Chat', 'sendRecieve', App.page_dialog_chat.counterpart || ''),{message:msg,is_phone_sms:App.page_dialog_chat.is_phone_sms?1:0}, function (resp) {
 		var resp=App.json(resp);
 		App.page_dialog_chat.renderDialog(resp.dialog);
 		if( App.has_new_status!==resp.has_new*1 ){
@@ -56,6 +56,7 @@
 		    try{App.page_dialog_chat.sendRecieve();}catch(e){};
 		},1000);
 	    });
+	    App.page_dialog_chat.is_phone_sms=false;
 	},
 	renderDialog:function( dialog ){
 	    App.renderTpl('chat_field', {dialog:dialog});
@@ -129,7 +130,10 @@
     <table style="width: 100%">
 	<tr>
 	    <td><input type="text" style="width: calc(100% - 10px);height:30px;"/></td>
-	    <td style="width:30px"><button type="submit"><img src="img/sms.png"></button></td>
+	    <td style="width:90px">
+		<button type="submit"><img src="img/sms.png"></button>
+		<button type="submit" onclick="App.page_dialog_chat.is_phone_sms=true"><img src="img/phone-sms.png"></button>
+	    </td>
 	</tr>
     </table>
 </form>

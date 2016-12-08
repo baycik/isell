@@ -45,7 +45,7 @@ class Stock extends Catalog {
 	}
 	$sql="SELECT
 		st.label parent_label,
-		ROUND( SUM(IF(TO_DAYS(NOW()) - TO_DAYS(dl.cstamp) <= 90,de.product_quantity,0))/3 ) m3,
+		ROUND( SUM(IF(TO_DAYS(NOW()) - TO_DAYS(dl.cstamp) <= 92,de.product_quantity,0))/3 ) m3,
 		SUM(IF(TO_DAYS(NOW()) - TO_DAYS(dl.cstamp) <= 30,de.product_quantity,0)) m1,
 		pl.*,
 		pp.sell,
@@ -61,13 +61,13 @@ class Stock extends Catalog {
 	    FROM
 		stock_entries se
 		    JOIN
-		prod_list pl USING(product_code)
+		prod_list pl ON pl.product_code=se.product_code
 		    LEFT JOIN
-		price_list pp USING(product_code)
+		price_list pp ON pp.product_code=se.product_code AND pp.label=''
 		    LEFT JOIN
 		stock_tree st ON se.parent_id=branch_id
 		    LEFT JOIN
-		document_entries de USING(product_code)
+		document_entries de ON de.product_code=se.product_code
 		    LEFT JOIN
 		document_list dl ON de.doc_id=dl.doc_id AND dl.is_commited=1 AND dl.doc_type=1 AND notcount=0
 	    $where

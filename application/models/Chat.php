@@ -15,11 +15,25 @@ class Chat extends Catalog{
     }
     public function sendRecieve( $his_id='all' ){
 	$msg=$this->request('message');
-	$this->check($his_id);
+	$this->check($his_id,'int');
+	if( $this->request('is_phone_sms','bool') ){
+	    if( $this->sendPhoneSms($his_id, $msg) ){
+		$msg="[sms] ".$msg;
+	    }
+	}
         if( $his_id && $msg ){
             $this->addMessage($his_id, $msg);
         }
 	return $this->getDialog($his_id);
+    }
+    private function sendPhoneSms($his_id,$msg){
+        if( $his_id>0 ){
+            $user_phone=$this->get_value("SELECT user_phone FROM user_list WHERE user_id='$his_id'");
+            $Utils=$this->Base->load_model('Utils');
+            $sender=$this->Base->svar('user_sign');
+           return $user_phone && $Utils->sendSms($user_phone,"$sender написал вам в чате: \n$msg");
+        }
+	return false;
     }
     private function addMessage( $his_id, $msg ){
         $my_id = $this->Base->svar('user_id');

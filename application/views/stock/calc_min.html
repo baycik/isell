@@ -15,19 +15,31 @@
 	    });
 	    this.node.window('hcenter');
 	    this.node.window('window').css('position','fixed');
+            this.initSlider();
+            
+            
 	    $("#stock_calc_min_label").html(this.data.parent_label||"Все");
 	    App.setupForm("#page_stock_calc_min_frm",{},"use_inp_values");
 	},
+        initSlider:function(){
+                $("#page_stock_calc_min_slider").slider({
+		    width:300,
+		    value: [4],
+		    step:1,
+		    min:1,
+		    max:7,
+		    rule: ['1нд','2нд','3нд','1мес','2мес','3мес','6мес'],
+		    onChange:function(newVal){
+			Ledger.date.rangeToDate(newVal,'reload_ledger');
+		    }
+		});            
+        },
 	submit:function(e){
 	    e.preventDefault();
 	    var fvalue=App.collectForm("#page_stock_calc_min_frm");
-	    if( fvalue.ratio>=0.5 ){
-		fvalue.ratio=fvalue.ratio*1;
-		this.handler.notify('submit',fvalue);
-                this.node.window('window','close');
-	    } else {
-		alert("Коэффициент должен быть числом больше 0,5");
-	    }
+	    fvalue.reserve_period=fvalue.reserve_period1*1+fvalue.reserve_period2*1;
+	    this.handler.notify('submit',fvalue);
+	    this.node.window('window','close');
 	}
     };
 </script>
@@ -36,14 +48,30 @@
     <p style="padding: 5px">
     <big>Расчет минимальных остатков в категории "<b id="stock_calc_min_label"></b>"</big><br>
 	Формула расчета минимальных остатков.<br>
-	Минимальный остаток = Коэффициент * Продано за период;
+	Минимальный запас = Период * Среднемесячные продажи;
     </p>
-    <select name="period" title="Период продаж">
-	<option value="30">30 дней</option>
-	<option value="60">60 дней</option>
-	<option value="90" selected="selected">90 дней</option>
+    <select name="sales_period" title="Среднемесячные продажи за">
+	<option value="30">1 месяц</option>
+	<option value="92" selected="selected">3 месяца</option>
     </select>
-    <input name="ratio" title="Коэффициент" value="1">
+    <select name="reserve_period1" title="Мин. запас на" style="width:103px;">
+	<option value="0">0 месяцев</option>
+	<option value="30" selected="selected">1 месяц</option>
+	<option value="61">2 месяца</option>
+	<option value="92">3 месяца</option>
+	<option value="122">4 месяца</option>
+	<option value="153">5 месяцев</option>
+	<option value="183">6 месяцев</option>
+	<option value="275">9 месяцев</option>
+	<option value="365">1 год</option>
+    </select>
+    <select name="reserve_period2" style="width:103px;">
+	<option value="0">0 недель</option>
+	<option value="7">1 неделя</option>
+	<option value="14">2 недели</option>
+	<option value="21">3 недели</option>
+	<option value="28">4 недели</option>
+    </select>
     <div style="text-align: center;margin-top: 15px;">
 	<button type="submit"><img src="img/calc.png" style="width:24px;height: 24px;" /> Рассчитать</button>
 	<button type="button" onclick="App.page_stock_calc_min.node.window('close')"><img src="img/close24.png" /> Закрыть</button>

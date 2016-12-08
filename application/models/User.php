@@ -38,11 +38,7 @@ class User extends Catalog {
 	return false;
     }
     public function SignOut(){
-	$this->Base->svar('user_id', 0);
-	$this->Base->svar('user_level', 0);
-	$this->Base->svar('user_login', '');
-	$this->Base->svar('user_sign', '');
-	$this->Base->svar('user_position', '');
+        $_SESSION = array();
 	return true;
     }
     public function getUserData(){
@@ -75,7 +71,7 @@ class User extends Catalog {
     public function userFetch(){
 	$user_id = $this->Base->svar('user_id');
         $sql="SELECT
-		user_id,user_login,user_level,user_sign,user_position,
+		user_id,user_login,user_level,user_sign,user_position,user_phone,
 		first_name,middle_name,last_name,nick,
 		id_type,id_serial,id_number,id_given_by,id_date,
 		user_assigned_path,
@@ -88,7 +84,7 @@ class User extends Catalog {
 	$user_id = $this->Base->svar('user_id');
         $where = ($this->Base->svar('user_level') < 4) ? "WHERE user_id='$user_id'" : "";
         $sql="SELECT
-		user_id,user_login,user_level,user_sign,user_position,
+		user_id,user_login,user_level,user_sign,user_position,user_phone,
 		first_name,middle_name,last_name,nick,
 		id_type,id_serial,id_number,id_given_by,id_date,
 		user_assigned_path,
@@ -116,6 +112,7 @@ class User extends Catalog {
 	    $fields['middle_name']=$this->request('middle_name');	    
 	    $fields['last_name']=$this->request('last_name');
             $fields['nick']=mb_substr($fields['last_name'],0,1).mb_substr($fields['first_name'],0,1).mb_substr($fields['middle_name'],0,1);
+	    $fields['user_phone']=$this->request('user_phone');
 	    $fields['id_type']=$this->request('id_type');
 	    $fields['id_serial']=$this->request('id_serial');	    
 	    $fields['id_number']=$this->request('id_number');

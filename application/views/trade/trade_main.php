@@ -31,9 +31,7 @@
 	    App.loadModule('page/company/tree',{inline:true,clickselect:true},'CtreeInline',/(Ctree|page_company_tree)([^\w]|_)/g,"CtreeInline$2").progress(function(status,company){
                 if( status==='select' ){
 		    App.user.pcompSelect(company);
-                }
-                if( status==='treeLoaded' ){
-                    TradeJs.initTabsOnce();
+		    TradeJs.initTabsOnce();
                 }
                 if( status==='deleted' && company==='company' ){
                     TradeJs.showTabs(false);

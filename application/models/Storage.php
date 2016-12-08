@@ -12,6 +12,9 @@
 class Storage extends CI_Model {
 
     private $storageFolder = '../storage';
+    
+    
+    
 
     public function file_store($path, $data) {
 	$parts = explode('/', $path);
@@ -70,27 +73,19 @@ class Storage extends CI_Model {
     public function image_flush(){
 	$args = func_get_args();
 	$size_x = array_shift($args);
-	$path = implode('/', $args);
-	if (!file_exists($this->storageFolder . "/" . $path)) {
-	    return null;
+	$path = $this->storageFolder . "/" . implode('/', $args);
+	$cache=$path . "_{$size_x}";
+	if (is_dir($path) || !file_exists($path)) {
+	    $path='img/notfound.jpg';
 	}
-	$size = explode('x', $size_x);
-	$thumb=$this->image_resize($this->storageFolder . "/" .$path, $size[0], $size[1]);
-	
-	
-	$black = imagecolorallocate($thumb, 0, 0, 0);
-	$grey = imagecolorallocate($thumb, 255, 255, 255);
-	
-        $mark=$this->input->get_post('mark');
-        if( $mark ){
-            $font = './system/fonts/texb.ttf';
-            $font_size=floor($size[0]/10);
-            imagettftext($thumb, $font_size, 0, $font_size/2+$font_size/17, $font_size+$font_size/17, $grey, $font, $mark);
-            imagettftext($thumb, $font_size, 0, $font_size/2, $font_size, $black, $font, $mark);
-        }
+	if( !file_exists($cache) ){
+	    $size = explode('x', $size_x);
+	    $thumb=$this->image_resize($path, $size[0], $size[1]);
+	    imagejpeg($thumb,$cache,90);
+	}
 	header("Content-type: image/jpeg");
-	imagejpeg($thumb,NULL,90);
-        exit();
+	//echo file_get_contents($cache);
+        exit(file_get_contents($cache));
     }
 
     private function image_resize($path, $width, $height) {

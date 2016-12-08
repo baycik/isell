@@ -1,4 +1,13 @@
 <?php
+/* User Level: 1
+ * Group Name: Мобильное
+ * Plugin Name: MiSell
+ * Plugin URI: isellsoft.com
+ * Version: 1
+ * Description: Мобильное приложение для приема заказов
+ * Author: baycik 2016
+ * Author URI: isellsoft.com
+ */
 include 'models/Catalog.php';
 class MiSell extends Catalog{
     function __construct($Base){
@@ -24,8 +33,8 @@ class MiSell extends Catalog{
 	$this->rain=new RainTPL();
 	$this->rain->assign('d',$tplData);
 	$this->rain->assign('db', json_encode($tplData) );
+	$this->rain->assign('scripts', file_get_contents('application/plugins/MiSell/scripts.html') );
 	$this->rain->draw('MiSell');
-	exit();
     }
     public function logout(){
 	$User=$this->Base->load_model('User');
@@ -45,64 +54,71 @@ class MiSell extends Catalog{
 	$assigned_path=  $this->Base->svar('user_assigned_path');
 	$companies_folder_list=$this->get_list("SELECT branch_id,label FROM companies_tree WHERE is_leaf=0 AND level<=$level AND path LIKE '$assigned_path%'");
 	$tree=[];
-	foreach($companies_folder_list as $folder){
-	    $sql="SELECT
-			company_id,
-			label,
-			company_address,
-			company_person,
-			company_mobile,
-			company_description
-		    FROM
-			companies_tree 
-			    JOIN 
-			companies_list USING(branch_id) 
-		    WHERE 
-			is_leaf=1 
-			AND level<=$level 
-			AND parent_id='{$folder->branch_id}'";
-	    $companies_list=$this->get_list($sql);
-	    if($companies_list){
-		//$folder->children=$companies_list;
-		$tree[$folder->label]=$companies_list;
+	if( $companies_folder_list ){
+	    foreach($companies_folder_list as $folder){
+		$companies_list=$this->getCompaniesTreeLeafs($folder->branch_id, $level, false);
+		if($companies_list){
+		    $tree[$folder->label]=$companies_list;
+		}
 	    }
+	} else {//if assignet_path pointing only to 1 client 
+	    $tree['Все клиенты']=$this->getCompaniesTreeLeafs(0, $level, $assigned_path);
 	}
+	
 	return $tree;
     }
-    public function getCompaniesTree1(){
-        $list=$this->getManagerClients($this->Base->svar('user_id'));
-        $this->Base->svar('allowed_comps',$list);
-        $tree=array();
-        $folder="";
-        foreach($list as $item){
-            if($item->folder!=$folder){
-                $folder=$item->folder;
-                $tree["$folder"]=array();
-            }
-            $tree["$folder"][]=$item;
-        }
-        return $tree;
+    private function getCompaniesTreeLeafs($branch_id,$level,$assigned_path){
+	$sql="SELECT
+		    company_id,
+		    label,
+		    company_address,
+		    company_person,
+		    company_mobile,
+		    company_description
+		FROM
+		    companies_tree 
+			JOIN 
+		    companies_list USING(branch_id) 
+		WHERE 
+		    is_leaf=1 
+		    AND level<=$level 
+		    AND IF( {$branch_id},parent_id='{$branch_id}',path ='$assigned_path')";
+	return $this->get_list($sql);	
     }
-    private function getManagerClients( $user_id ){
-        $sql="SELECT 
-                COALESCE(ct2.label,'...') folder,
-                ct.label label,
-                company_id,
-                company_person,
-                company_mobile,
-                company_address,
-                company_description
-            FROM
-                companies_list cl
-                    JOIN
-                companies_tree ct ON cl.branch_id = ct.branch_id
-                    LEFT JOIN
-                companies_tree ct2 ON ct.parent_id = ct2.branch_id
-            WHERE
-                manager_id = $user_id
-            ORDER BY ct2.label";
-        return $this->get_list($sql);
-    }
+//    public function getCompaniesTree1(){
+//        $list=$this->getManagerClients($this->Base->svar('user_id'));
+//        $this->Base->svar('allowed_comps',$list);
+//        $tree=array();
+//        $folder="";
+//        foreach($list as $item){
+//            if($item->folder!=$folder){
+//                $folder=$item->folder;
+//                $tree["$folder"]=array();
+//            }
+//            $tree["$folder"][]=$item;
+//        }
+//        return $tree;
+//    }
+//    private function getManagerClients( $user_id ){
+//        $sql="SELECT 
+//                COALESCE(ct2.label,'...') folder,
+//                ct.label label,
+//                company_id,
+//                company_person,
+//                company_mobile,
+//                company_address,
+//                company_description
+//            FROM
+//                companies_list cl
+//                    JOIN
+//                companies_tree ct ON cl.branch_id = ct.branch_id
+//                    LEFT JOIN
+//                companies_tree ct2 ON ct.parent_id = ct2.branch_id
+//            WHERE
+//                manager_id = $user_id
+//            ORDER BY ct2.label";
+//        return $this->get_list($sql);
+//    }
     public function suggest(){
 	$q=$this->request('q');
 	$parent_id=$this->request('parent_id');
@@ -124,13 +140,8 @@ class MiSell extends Catalog{
                     product_spack spack,
                     product_quantity,
                     product_unit unit,
-		    
-		    ROUND(
-		     (SELECT IF(curr_code='USD',$usd_ratio,1)*sell FROM price_list pl WHERE pl.product_code=se.product_code AND label='')
-		    *COALESCE((SELECT discount FROM companies_discounts cd JOIN stock_tree st ON st.top_id=cd.branch_id WHERE st.branch_id=se.parent_id AND company_id=$company_id),1)
-			,2)
-		    price
-		    
+		    product_img,
+		    GET_PRICE(product_code,$company_id,$usd_ratio) price
                 FROM
                     prod_list
                 JOIN
