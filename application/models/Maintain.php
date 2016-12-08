@@ -24,7 +24,6 @@ class Maintain extends CI_Model {
     
     public function updateInstall(){
 	$this->updateConfigurator();
-	$file = str_replace("\\", "/", $this->dirWork.'/install/db_update.sql');
 	$this->updateDb();
 	return true;
     }
