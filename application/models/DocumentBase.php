@@ -15,7 +15,7 @@ class DocumentBase extends Catalog{
     }
     private function doc($field,$value=null){
 	if( !isset($this->document_properties) ){
-	    if( !$doc_id ){
+	    if( !$this->doc_id ){
 		throw new Exception("Can't use properties because Document is not selected");
 	    }
 	    $this->document_properties=$this->get_row("SELECT * FROM document_list WHERE doc_id='$this->doc_id'");
