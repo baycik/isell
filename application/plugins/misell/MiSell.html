@@ -53,13 +53,8 @@
                     if (location_with_slash !== location.href) {
                         location.href = location_with_slash;
                     }
-		    if( App.store('last_page')==='homePage' ){
-			location.hash = "#homePage";
-			setTimeout(App.client.init, 0);
-		    } else {
-			location.hash = "#orderPage";
-			setTimeout(App.order.init, 0);
-		    }
+                    location.hash = "#homePage";
+                    setTimeout(App.client.init, 0);
                     $("#orderPage").on("pageinit", App.order.init);
                     $("#homePage").on("pageinit", App.client.init);
                 },
