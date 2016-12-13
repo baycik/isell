@@ -28,7 +28,6 @@ class Sync extends Catalog {
                     price_list USING(product_code)
                         JOIN
                     stock_tree st ON se.parent_id=st.branch_id
-                WHERE company_id='$this->defaultUserId'
                 ORDER BY fetch_count DESC
                 LIMIT $limit OFFSET $offset";
         return $this->get_list($sql);
