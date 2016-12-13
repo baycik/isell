@@ -3,7 +3,7 @@ include "Catalog.php";
 class Sync extends Catalog {
     private $gateway_url = "http://nilsonmag.com/open/?route=module/baycikSync";
     private $login = "Default";
-    private $key = "PeeyPTkk7ptcaWPEocWjJKub199ov8zsGblWGS1RDjZmoDWHJbNkilItjvk7ofHnVeeJz48l9FIUEAuxJ3z3SIqd9lGpvEakqZzV2AizA19epJ1nz1DWXT090ic5BOn4PefoabFCOz19zKhJmUYr8uZ2ol3HDcoyJIFj9tPg2Kyt8DQWVtwBYJZKN2QXhOzdejbMwED6eqt2XcwDvbOx7WDqxpMMMjykmapuzGxY9shietVfoIndLsBKwEvAfgx4";
+    private $key = "9aFJXRMqyA1dQ1HHy5q618e5V9zKklmgswUu6vqsE3g3lP0OJpyb6Il6rnPGqCKM8QM38HpWJmvUWsrkCxpvITQ7CMZcrVkrkwMOQ4DC8b95nxX8kAi2ux0HxgLRaQwKsSS40AEQVE9M2ikusdZfl1ujpH1o19aX36SLgQMcmWOwzFulfdsrEh7YfEnDr4fr44zBhQQ9aQX2O9WFNQvXBLa8OZSE8a4gyLxZKYPVJukhyzzuOuiEq7pqRGKbCNx6";
     private $defaultUserId='319';
     private $dollarRatio=66;
 
