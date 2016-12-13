@@ -33,70 +33,155 @@ class DocumentItems extends DocumentCore{
 	return $this->get_list($sql);
     }
     protected function footerGet(){
-	$doc_id=$this->doc('doc_id');
+	//$doc_id=$this->doc('doc_id');
 	//$curr_symbol=$this->Base->pcomp('curr_symbol');
-	$use_total_as_base=$this->Base->pref('use_total_as_base');
-	$this->calcCorrections();
-	$sql = "
-	    SELECT
-		total_weight,
-		total_volume,
-		vatless,
-		total - vatless vat,
-		total,
-		@curr_symbol curr_symbol,
-		self
-	    FROM
-		(SELECT
-		    ROUND(SUM(product_quantity*product_weight),2) total_weight,
-		    ROUND(SUM(product_quantity*product_volume),2) total_volume,
-                    ROUND(IF('$use_total_as_base',
-                        SUM(ROUND(ROUND(invoice_price, @signs_after_dot) * @vat_ratio * @curr_correction, @signs_after_dot) * product_quantity),
-                        SUM(ROUND(ROUND(invoice_price, @signs_after_dot) * @curr_correction * product_quantity,2)) * @vat_ratio
-                    ),2) total,
-		    ROUND(IF('$use_total_as_base',
-			SUM(ROUND(ROUND(invoice_price, @signs_after_dot) * @vat_ratio * @curr_correction,@signs_after_dot) * product_quantity)/ @vat_ratio,
-			SUM(ROUND(ROUND(invoice_price, @signs_after_dot) * @curr_correction * product_quantity,2))
-                    ),2) vatless,
-		    SUM(ROUND(product_quantity*self_price,2)) self
-		FROM
-		    document_entries JOIN prod_list USING(product_code)
-		WHERE doc_id='$doc_id') t";
+	//$use_total_as_base=$this->Base->pref('use_total_as_base');
+        
+        $this->entriesTmpCreate();
+        $sql="SELECT
+                ROUND(SUM(weight),2) total_weight,
+                ROUND(SUM(volume),2) total_volume,
+                SUM(product_sum_vatless) vatless,
+                SUM(product_sum_total) total,
+                SUM(product_sum_total-product_sum_vatless) vat,
+                SUM(ROUND(product_quantity*self_price,2)) self,
+                @curr_symbol curr_symbol
+            FROM tmp_doc_entries";
+
+//	$this->calcCorrections();
+//        if( $use_total_as_base ){
+//            $sql = "
+//	    SELECT
+//		total_weight,
+//		total_volume,
+//		vatless,
+//		total - vatless vat,
+//		total,
+//		@curr_symbol curr_symbol,
+//		self
+//	    FROM
+//		(SELECT
+//		    ROUND(SUM(product_quantity*product_weight),2) total_weight,
+//		    ROUND(SUM(product_quantity*product_volume),2) total_volume,
+//                    SUM(ROUND(ROUND(invoice_price * @vat_ratio * @curr_correction, @signs_after_dot) * product_quantity,2)) total,
+//                    ROUND(SUM(ROUND(ROUND(invoice_price, @signs_after_dot) * @vat_ratio * @curr_correction,@signs_after_dot) * product_quantity)/ @vat_ratio,2) vatless,
+//		    SUM(ROUND(product_quantity*self_price,2)) self
+//		FROM
+//		    document_entries JOIN prod_list USING(product_code)
+//		WHERE doc_id='$doc_id') t";
+//        } else {
+//            $sql = "
+//	    SELECT
+//		total_weight,
+//		total_volume,
+//		vatless,
+//		total - vatless vat,
+//		total,
+//		@curr_symbol curr_symbol,
+//		self
+//	    FROM
+//		(SELECT
+//		    ROUND(SUM(product_quantity*product_weight),2) total_weight,
+//		    ROUND(SUM(product_quantity*product_volume),2) total_volume,
+//                    ROUND(SUM(ROUND(ROUND(invoice_price, @signs_after_dot) * @curr_correction * product_quantity,2)) * @vat_ratio,2) total,
+//		    SUM(ROUND(ROUND(invoice_price, @signs_after_dot) * @curr_correction * product_quantity,2)) vatless,
+//		    SUM(ROUND(product_quantity*self_price,2)) self
+//		FROM
+//		    document_entries JOIN prod_list USING(product_code)
+//		WHERE doc_id='$doc_id') t";
+//        }
 	return $this->get_row($sql);
     }
-    protected function entriesFetch( $skip_vat_correction=false ){
+    
+    
+    private function entriesTmpCreate( $skip_vat_correction=false ){
 	$doc_id=$this->doc('doc_id');
 	$this->calcCorrections( $skip_vat_correction );
         $curr_code=$this->Base->acomp('curr_code');
 	$company_lang = $this->Base->pcomp('language');
         $use_total_as_base=$this->Base->pref('use_total_as_base');
-	$sql = "SELECT
-                doc_entry_id,
-                pl.product_code,
-                $company_lang product_name,
-                product_quantity,
-                product_unit,
-		analyse_section,
-                ROUND(invoice_price * @vat_correction * @curr_correction, @signs_after_dot) AS product_price,
-                ROUND(IF('$use_total_as_base',
-                    ROUND(ROUND(invoice_price, @signs_after_dot) * @vat_correction * @curr_correction, @signs_after_dot) * product_quantity,
-                    ROUND(invoice_price, @signs_after_dot) * @vat_correction * @curr_correction * product_quantity
-                ),2) product_sum,
-                CHK_ENTRY(doc_entry_id) AS row_status,
-                party_label,
-                product_uktzet,
-                self_price,
-                IF(doc_type=1,invoice_price<self_price,invoice_price>self_price) is_loss
-            FROM
-                document_list
-		    JOIN
-		document_entries de USING(doc_id)
-		    JOIN 
-		prod_list pl USING(product_code)
-            WHERE
-                doc_id='$doc_id'
-            ORDER BY pl.product_code";
-	return $this->get_list($sql);
+
+        $this->query("DROP TEMPORARY TABLE IF EXISTS tmp_doc_entries");
+        $sql="CREATE TEMPORARY TABLE tmp_doc_entries ( INDEX(product_code) ) ENGINE=MyISAM AS (
+                SELECT 
+                    *,
+                    ROUND(product_price_vatless*product_quantity,2) product_sum_vatless,
+                    ROUND(product_price_total*product_quantity,2) product_sum_total
+                FROM
+                (SELECT
+                    doc_entry_id,
+                    pl.product_code,
+                    $company_lang product_name,
+                    product_quantity,
+                    ROUND(invoice_price * @curr_correction, @signs_after_dot) AS product_price_vatless,
+                    ROUND(invoice_price * @curr_correction * @vat_ratio, @signs_after_dot) AS product_price_total,
+                    product_quantity*product_weight weight,
+                    product_quantity*product_volume volume,
+                    CHK_ENTRY(doc_entry_id) AS row_status,
+                    product_unit,
+                    party_label,
+                    analyse_section,
+                    product_uktzet,
+                    self_price,
+                    IF(doc_type=1,invoice_price<self_price-0.01,invoice_price-0.01>self_price) is_loss
+                FROM
+                    document_list
+                        JOIN
+                    document_entries de USING(doc_id)
+                        JOIN 
+                    prod_list pl USING(product_code)
+                WHERE
+                    doc_id='$doc_id'
+                ORDER BY pl.product_code) t
+                )";
+        $this->query($sql);
+    }
+    
+    
+    
+    protected function entriesFetch( $skip_vat_correction=false ){
+        $this->entriesTmpCreate();
+        if( $this->doc('use_vatless_price') ){
+            $sql="SELECT *, product_price_vatless product_price, product_sum_vatless product_sum FROM tmp_doc_entries";
+        } else {
+            $sql="SELECT *, product_price_total product_price, product_sum_total product_sum FROM tmp_doc_entries";
+        }
+        return $this->get_list($sql);
+        
+        
+        
+//	$doc_id=$this->doc('doc_id');
+//	$this->calcCorrections( $skip_vat_correction );
+//        $curr_code=$this->Base->acomp('curr_code');
+//	$company_lang = $this->Base->pcomp('language');
+//        $use_total_as_base=$this->Base->pref('use_total_as_base');
+//	$sql = "SELECT
+//                doc_entry_id,
+//                pl.product_code,
+//                $company_lang product_name,
+//                product_quantity,
+//                product_unit,
+//		analyse_section,
+//                ROUND(invoice_price * @vat_correction * @curr_correction, @signs_after_dot) AS product_price,
+//                ROUND(IF('$use_total_as_base',
+//                    ROUND(ROUND(invoice_price, @signs_after_dot) * @vat_correction * @curr_correction, @signs_after_dot) * product_quantity,
+//                    ROUND(invoice_price, @signs_after_dot) * @vat_correction * @curr_correction * product_quantity
+//                ),2) product_sum,
+//                CHK_ENTRY(doc_entry_id) AS row_status,
+//                party_label,
+//                product_uktzet,
+//                self_price,
+//                IF(doc_type=1,invoice_price<self_price-0.01,invoice_price-0.01>self_price) is_loss
+//            FROM
+//                document_list
+//		    JOIN
+//		document_entries de USING(doc_id)
+//		    JOIN 
+//		prod_list pl USING(product_code)
+//            WHERE
+//                doc_id='$doc_id'
+//            ORDER BY pl.product_code";
+//	return $this->get_list($sql);
     }
     public function entryAdd( $code, $quantity ){
 	$Document2=$this->Base->bridgeLoad('Document');

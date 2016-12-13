@@ -14,8 +14,8 @@
         $this->view->total_qty+=$row->product_quantity;
         
         
-        $row->product_sum_vat=round($row->product_sum*0.18,2);
-        $row->product_sum_total=$row->product_sum+$row->product_sum_vat;
+        $row->product_sum_vat=$row->product_sum_total-$row->product_sum;
+        //$row->product_sum_total=$row->product_sum+$row->product_sum_vat;
     }
     $this->view->row_count=count($this->view->rows);
     
