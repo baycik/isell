@@ -8,8 +8,8 @@
  * Author: baycik 2016
  * Author URI: isellsoft.com
  */
-include 'models/Catalog.php';
-class MiSell extends Catalog{
+require_once 'models/PluginManager.php';
+class MiSell extends PluginManager{
     function __construct($Base){
 	ob_start('ob_gzhandler');
 	$user_id=$Base->svar('user_id');
@@ -85,40 +85,6 @@ class MiSell extends Catalog{
 		    AND IF( {$branch_id},parent_id='{$branch_id}',path ='$assigned_path')";
 	return $this->get_list($sql);	
     }
-//    public function getCompaniesTree1(){
-//        $list=$this->getManagerClients($this->Base->svar('user_id'));
-//        $this->Base->svar('allowed_comps',$list);
-//        $tree=array();
-//        $folder="";
-//        foreach($list as $item){
-//            if($item->folder!=$folder){
-//                $folder=$item->folder;
-//                $tree["$folder"]=array();
-//            }
-//            $tree["$folder"][]=$item;
-//        }
-//        return $tree;
-//    }
-//    private function getManagerClients( $user_id ){
-//        $sql="SELECT 
-//                COALESCE(ct2.label,'...') folder,
-//                ct.label label,
-//                company_id,
-//                company_person,
-//                company_mobile,
-//                company_address,
-//                company_description
-//            FROM
-//                companies_list cl
-//                    JOIN
-//                companies_tree ct ON cl.branch_id = ct.branch_id
-//                    LEFT JOIN
-//                companies_tree ct2 ON ct.parent_id = ct2.branch_id
-//            WHERE
-//                manager_id = $user_id
-//            ORDER BY ct2.label";
-//        return $this->get_list($sql);
-//    }
     public function suggest(){
 	$q=$this->request('q');
 	$parent_id=$this->request('parent_id');
@@ -151,17 +117,6 @@ class MiSell extends Catalog{
                 LIMIT 20";
         return $this->get_list($sql);
     }
-//    public function orderCalculate($order,$company_id){
-//        if( !$this->checkCompanyId($company_id) ){
-//            return "Can't use this client!!!";
-//        }
-//        $this->Base->LoadClass('Pref');
-//        $prefs=$this->Base->Pref->getPrefs('dollar_ratio');
-//        foreach($order as $product_code=>$entry){
-//            $order[$product_code]['price']=$this->orderGetPrice($product_code, $company_id,$prefs['dollar_ratio']);
-//        }
-//        return $order;
-//    }
     public function orderSend(){
 	$order=$this->request('order','json');
 	$company_id=$this->request('company_id');
@@ -182,41 +137,19 @@ class MiSell extends Catalog{
         return true;
     }
     public function orderAnnounceRecieved($comment){
+	$this->settings=$this->settingsDataFetch('misell');
         $pcomp_name=$this->Base->pcomp('label');
         $user_sign=$this->Base->svar('user_sign');
 	$Utils=$this->Base->load_model('Utils');
         $text="Пользователем $user_sign, был прислан заказ для $pcomp_name в ".date("d.m.Y H:i");
-        $Utils->sendEmail( "krim@nilson.ua", "Мобильный заказ от $user_sign для $pcomp_name", $text, NULL, 'nocopy' );
-        $Utils->sendSms("+79787288233",$text.$comment);
-        $Utils->sendSms("+79788440954",$text.$comment);
-        $Utils->sendSms("+79788308996",$text.$comment);
+	if( isset($this->settings->email) ){
+	    $Utils->sendEmail( $this->settings->email, "Мобильный заказ от $user_sign для $pcomp_name ", $text, NULL, 'nocopy' );
+	}
+	if( isset($this->settings->phone) ){
+	    $phones=  explode(',',preg_replace('|[^\d,]|', '', $this->settings->phone));
+	    foreach($phones as $phone){
+		$Utils->sendSms($phone,"$text $comment");
+	    }
+	}
     }
-//    private function orderGetPrice($product_code,$company_id,$dollar_ratio){
-//        $sql="SELECT 
-//                discount
-//            FROM
-//                companies_discounts cd
-//                    JOIN
-//                stock_tree st ON (cd.branch_id = st.top_id)
-//                    JOIN
-//                stock_entries se ON (st.branch_id = se.parent_id)
-//            WHERE
-//                se.product_code = '$product_code'
-//                    AND cd.company_id = '$company_id'";
-//        $discount=$this->Base->get_row($sql,0);
-//        $discount!==NULL?$discount:1;
-//        $row=$this->Base->get_row("SELECT * FROM price_list WHERE '$product_code'=product_code OR '$product_code' RLIKE CONCAT('^',product_code,'$')");
-//        $sell=$discount*($row['price_uah']?$row['price_uah']:$row['price_usd']*$dollar_ratio);
-//        return round($sell,2);
-//    }
-//    private function checkCompanyId($company_id){
-//        $list=$this->Base->svar('allowed_comps');
-//        foreach($list as $comp){
-//            if($comp->company_id===$company_id){
-//                return true;
-//	    }
-//        }
-//        return false;
-//    }
 }
-?>
