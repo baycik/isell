@@ -36,3 +36,9 @@ foreach($this->view->rows as &$row){
     function format($num){
         return number_format($num, 2,'.','');
     }    
+$this->view->doc_view->date_spell = daterus($this->view->doc_view->date_dot);
+function daterus($dmy) {
+    $dmy = explode('.', $dmy);
+    $months = array('ноября', 'января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря');
+    return ' &lt;' . $dmy[0] . '&gt; ' . $months[$dmy[1] * 1] . ' ' . $dmy[2] . ' года';
+}
