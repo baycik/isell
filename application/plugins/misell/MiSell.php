@@ -3,7 +3,7 @@
  * Group Name: Мобильное
  * Plugin Name: MiSell
  * Plugin URI: isellsoft.com
- * Version: 1
+ * Version: 1.1
  * Description: Мобильное приложение для приема заказов
  * Author: baycik 2016
  * Author URI: isellsoft.com
