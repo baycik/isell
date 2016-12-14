@@ -36,3 +36,4 @@ foreach($this->view->rows as &$row){
     function format($num){
         return number_format($num, 2,'.','');
     }    
+$this->view->doc_view->date_spell = daterus($this->view->doc_view->date_dot);
