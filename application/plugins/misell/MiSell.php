@@ -100,21 +100,25 @@ class MiSell extends PluginManager{
             $cases[]="(product_code LIKE '%$clue%' OR ru LIKE '%$clue%')";
         }
         $where=implode(' AND ',$cases);
-        $sql="SELECT 
+        $sql="
+		SELECT
+		    *,
+		    GET_PRICE(code,$company_id,$usd_ratio) price
+		FROM
+		(SELECT 
                     product_code code,
                     ru name,
                     product_spack spack,
                     product_quantity,
                     product_unit unit,
-		    product_img,
-		    GET_PRICE(product_code,$company_id,$usd_ratio) price
+		    product_img
                 FROM
                     prod_list
                 JOIN
                     stock_entries se USING (product_code)
                 WHERE $where
                 ORDER BY fetch_count - DATEDIFF(NOW(), fetch_stamp) DESC, product_code
-                LIMIT 20";
+                LIMIT 20) t";
         return $this->get_list($sql);
     }
     public function orderSend(){
