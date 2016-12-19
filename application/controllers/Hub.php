@@ -4,8 +4,7 @@ include 'libraries/Plugins.php';
 
 
 date_default_timezone_set('Europe/Kiev');
-class Hub extends HubBase{
-
+class Hub  extends CI_Controller{
     public function index(){
 	include "index.html";
     }
@@ -70,22 +69,22 @@ class Hub extends HubBase{
 	}
 	return $this->bridge->LoadClass($class_name);
     }
-    
-}
-class HubBase extends CI_Controller{
-    public $level_names=array("Нет доступа","Ограниченный","Менеджер","Бухгалтер","Администратор");
+    /*
+     * HUB BASE FUNCTIONS
+     * 
+     * 
+     * 
+     */
+
+    public $level_names=["Нет доступа","Ограниченный","Менеджер","Бухгалтер","Администратор"];
     private $rtype='OK';
     private $msg='';
     function __construct(){
-	$this->Session();
-	parent::__construct();
-    }
-    private function Session() {
 	session_set_cookie_params(36000, '/');
 	session_name('baycikSid' . BAY_COOKIE_NAME);
 	session_start();
+	parent::__construct();
     }
-    
     public function acomp($name){/*@TODO move to lazy loading of pcomp/acomp in v4.0*/
 	$acomp=$this->svar('acomp');
 	return isset($acomp->$name)?$acomp->$name:NULL;
