@@ -260,9 +260,30 @@ class DocumentItems extends DocumentCore{
 	$document['footer']=$this->footerGet();
 	return $document;
     }
+    
+    private function documentDiscountsSave(){
+	$pcomp_id=$this->Base->pcomp("company_id");
+	$discount_list=$this->get_list("SELECT branch_id,discount FROM companies_discounts WHERE company_id='$pcomp_id'");
+	$discount_obj=new stdClass();
+	foreach($discount_list as $dsc ){
+	    $discount_obj->{"b".$dsc->branch_id}=$dsc->discount;
+	}
+	$discounts_json=json_encode($discount_obj, JSON_NUMERIC_CHECK);
+	$this->documentSettingSet( '$.discounts', $discounts_json );
+    }
+    private function documentSettingSet( $key, $value ){
+	$doc_id=$this->doc('doc_id');
+	$this->query("UPDATE document_list SET doc_settings=JSON_SET(COALESCE(doc_settings,JSON_OBJECT()),'$key',CAST('$value' AS JSON)) WHERE doc_id='$doc_id'");	
+    }
+    private function documentSettingGet($key){
+	$doc_id=$this->doc('doc_id');
+	return $this->get_value("SELECT JSON_EXTRACT(doc_settings,'$key') FROM document_list WHERE doc_id='$doc_id'");	
+    }
+    
     public function entryDocumentCommit( $doc_id ){
 	$this->check($doc_id,'int');
 	$this->selectDoc($doc_id);
+	$this->documentDiscountsSave();
 	$Document2=$this->Base->bridgeLoad('Document');
 	return $Document2->commit();
     }
