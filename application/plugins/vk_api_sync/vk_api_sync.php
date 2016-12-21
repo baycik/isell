@@ -3,7 +3,7 @@
  * User Level: 2
  * Plugin Name: VK Синхронизатор
  * Plugin URI: http://isellsoft.com
- * Version: 0.1
+ * Version: 0.2
  * Description: Синхронизация с маркетом на сайте Вконтакте
  * Author: baycik 2016
  * Author URI: http://isellsoft.com
@@ -46,7 +46,7 @@ class vk_api_sync extends PluginManager{
 	foreach($items as &$item){
 	    $product_code='';
 	    preg_match('|Модель:(.*)$|mi',$item['description'],$product_code);
-	    $item['product_code']=trim($product_code[1]);
+	    $item['product_code']=isset($product_code[1])?trim($product_code[1]):null;
 	}
 	$Storage=$this->Base->load_model('Storage');
 	return $Storage->json_store('vk_api_sync/market_items_combine.json',$items);
@@ -113,13 +113,16 @@ class vk_api_sync extends PluginManager{
     
     
     public function uploadChunk(){
-	$limit=1;
+	$limit=2;
 	$offset=$this->Base->svar('vk_api_offset');
 	
 	$Storage=$this->Base->load_model('Storage');
 	$items=$Storage->json_restore('vk_api_sync/market_items_combine.json');
 	$chunk=array_slice($items,$offset,$limit);
 	foreach($chunk as $item){
+            if( !isset($item->product_code) ){
+                echo "<br> Код не найден для: ".$item->title;;
+            }
 	    if( $this->uploadProduct($item) ){
 		continue;
 	    } else {
