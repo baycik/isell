@@ -3,7 +3,7 @@
  * User Level: 2
  * Plugin Name: VK Синхронизатор
  * Plugin URI: http://isellsoft.com
- * Version: 0.1
+ * Version: 0.2
  * Description: Синхронизация с маркетом на сайте Вконтакте
  * Author: baycik 2016
  * Author URI: http://isellsoft.com
