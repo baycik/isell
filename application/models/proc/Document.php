@@ -92,7 +92,6 @@ class Document extends Data {
 	mysqli_free_result($res);
 	$copy = array();
 	$copy[] = "cstamp='$old_doc[cstamp]'";
-	$copy[] = "reg_stamp='$old_doc[reg_stamp]'";
 	$copy[] = "doc_data='$old_doc[doc_data]'";
 	$copy[] = "doc_ratio=$old_doc[doc_ratio]";
 	$copy[] = "notcount=$old_doc[notcount]";
@@ -225,7 +224,7 @@ class Document extends Data {
 	    $this->Base->query("ROLLBACK");
 	    return false;
 	}
-	$this->Base->query("UPDATE document_list SET is_commited=1,reg_stamp=NOW() WHERE doc_id=$doc_id");
+	$this->Base->query("UPDATE document_list SET is_commited=1 WHERE doc_id=$doc_id");
 
 	$this->selectDoc($doc_id);
 	if (!$this->updateTrans()) {
@@ -924,7 +923,7 @@ class Document extends Data {
 	} else
 	if ($field == 'date') {
 	    if ($new_val) {
-		$this->Base->query("UPDATE document_list SET reg_stamp=STR_TO_DATE('$new_val','%d.%m.%Y'),cstamp=CONCAT(STR_TO_DATE('$new_val','%d.%m.%Y'),DATE_FORMAT(NOW(),' %H:%i:%s')) WHERE doc_id='$doc_id'");
+		$this->Base->query("UPDATE document_list SET cstamp=CONCAT(STR_TO_DATE('$new_val','%d.%m.%Y'),DATE_FORMAT(NOW(),' %H:%i:%s')) WHERE doc_id='$doc_id'");
 		$this->selectDoc($doc_id);
 		if ($this->isCommited()) {
 		    $this->clearTrans(); // To change
@@ -932,9 +931,7 @@ class Document extends Data {
 		}
 	    }
 	} else
-	if ($field == 'reg_date') {
-	    $this->Base->query("UPDATE document_list SET reg_stamp='{$new_val}-01' WHERE doc_id='$doc_id'");
-	} else
+	
 	if ($field == 'doc_data') {
 	    $this->Base->query("UPDATE document_list SET doc_data='$new_val' WHERE doc_id='$doc_id'");
 	} else
