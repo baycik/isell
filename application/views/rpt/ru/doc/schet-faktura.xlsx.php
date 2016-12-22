@@ -24,9 +24,7 @@ $okei = [
 foreach($this->view->rows as &$row){
     $row->vat_rate=$this->view->head->vat_rate/100;
     $row->product_unit_code = $okei[$row->product_unit];
-    $row->product_sum_total = format($row->product_quantity*round($row->product_price*(1+$row->vat_rate),2));
-    $row->product_sum = format($row->product_sum_total/(1+$row->vat_rate));
-    $row->product_sum_vat = format($row->product_sum_total-$row->product_sum);
+    $row->product_sum_vat = $row->product_sum_total-$row->product_sum_vatless;
     $row->product_accis='без акциза';
     
     $row->origin_name=$row->product_uktzet;
@@ -38,3 +36,9 @@ foreach($this->view->rows as &$row){
     function format($num){
         return number_format($num, 2,'.','');
     }    
+$this->view->doc_view->date_spell = daterus($this->view->doc_view->date_dot);
+function daterus($dmy) {
+    $dmy = explode('.', $dmy);
+    $months = array('ноября', 'января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря');
+    return ' &lt;' . $dmy[0] . '&gt; ' . $months[$dmy[1] * 1] . ' ' . $dmy[2] . ' года';
+}

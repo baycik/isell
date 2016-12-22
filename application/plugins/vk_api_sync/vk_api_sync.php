@@ -3,7 +3,7 @@
  * User Level: 2
  * Plugin Name: VK Синхронизатор
  * Plugin URI: http://isellsoft.com
- * Version: 0.1
+ * Version: 0.2
  * Description: Синхронизация с маркетом на сайте Вконтакте
  * Author: baycik 2016
  * Author URI: http://isellsoft.com
@@ -23,7 +23,12 @@ class vk_api_sync extends PluginManager{
 	$offset=0;
 	$marketItems=[];
 	do{
-	    $response=$this->vk->market->get(['owner_id'=>$this->market_id,'count'=>200,'offset'=>$offset,'extended'=>1]);
+	    try{
+		$response=$this->vk->market->get(['owner_id'=>$this->market_id,'count'=>200,'offset'=>$offset,'extended'=>1]);
+	    } catch( Exception $e ){
+		$this->error($e);
+		return false;
+	    }
 	    if( !is_array($response) || !count($response['items']) ){
 		break;
 	    }
@@ -35,12 +40,13 @@ class vk_api_sync extends PluginManager{
     private function marketGetAndCombine(){
 	$items=$this->marketGetAll();
 	if( !is_array($items) ){
-	    throw new Exception('No downloaded market items are found');
+	    echo '<br> No downloaded market items are found';
+	    return false;
 	}
 	foreach($items as &$item){
 	    $product_code='';
 	    preg_match('|Модель:(.*)$|mi',$item['description'],$product_code);
-	    $item['product_code']=trim($product_code[1]);
+	    $item['product_code']=isset($product_code[1])?trim($product_code[1]):null;
 	}
 	$Storage=$this->Base->load_model('Storage');
 	return $Storage->json_store('vk_api_sync/market_items_combine.json',$items);
@@ -73,7 +79,7 @@ class vk_api_sync extends PluginManager{
 	$description=$this->stockRating($item->product_code, $item->description);
 	
 	if( !is_numeric($price) ){
-	    echo " Не найден код: ".$item->product_code;
+	    echo "<br> Не найден код: ".$item->product_code;
 	    $this->Base->msg("Не найден код: ".$item->product_code);
 	    return true;
 	}
@@ -87,28 +93,36 @@ class vk_api_sync extends PluginManager{
 		'price'=>$price,
 		'main_photo_id'=>$item->photos[0]->id
 	    ];
-	    
-	    echo $item->product_code;
-	    
 	    try{
-		echo " Обновляем: ".$item->product_code;
+		echo "<br> Обновляем: ".$item->product_code;
 		return $this->vk->market->edit($product);
 	    } catch(Exception $e){
-		echo " Ошибка ВК: ".$e->getMessage();;
+		$this->error($e);
 		return false;
 	    }
 	}
-	echo " Не изменился ".$item->product_code;
+	echo "<br> Не изменился ".$item->product_code;
 	return true;
     }
+    private function error( $e ){
+	if( $e->getCode()==5 ){
+	    die("<br> Ошибка ВК: ".$e->getMessage());
+	}
+	echo "<br> Ошибка ВК: ".$e->getMessage();
+    }
+    
+    
     public function uploadChunk(){
-	$limit=1;
+	$limit=2;
 	$offset=$this->Base->svar('vk_api_offset');
 	
 	$Storage=$this->Base->load_model('Storage');
 	$items=$Storage->json_restore('vk_api_sync/market_items_combine.json');
 	$chunk=array_slice($items,$offset,$limit);
 	foreach($chunk as $item){
+            if( !isset($item->product_code) ){
+                echo "<br> Код не найден для: ".$item->title;;
+            }
 	    if( $this->uploadProduct($item) ){
 		continue;
 	    } else {
@@ -137,11 +151,15 @@ class vk_api_sync extends PluginManager{
 		$next_step='';
 		break;
 	    default:
-		$this->marketGetAndCombine();
-		$next_step='upload_chunk';
-		echo '-- Получен список товаров с ВК';
-		$this->Base->svar('vk_api_offset',0);
-		$next_step='upload_chunk';
+		if( $this->marketGetAndCombine() ){
+		    $next_step='upload_chunk';
+		    echo '-- Получен список товаров с ВК';
+		    $this->Base->svar('vk_api_offset',0);
+		} else {
+		    $next_step='stop';
+		    echo 'Не удалось подключиться к ВК';
+		}
+		
 		break;
  	}
 	$this->Base->svar('vk_api_next_step',$next_step);

@@ -36,13 +36,11 @@ foreach ($this->view->tables as &$table) {
     $subtotal = 0;
     foreach ($table as &$row) {
 	$row->i = ++$i;
-	$row->product_sum_total = format($row->product_quantity*round($row->product_price*(1+$vat_percent),2));
-	$row->product_sum = format($row->product_sum_total/(1+$vat_percent));
-	$row->product_sum_vat = format($row->product_sum_total-$row->product_sum);
+	$row->product_sum_vat = $row->product_sum_total-$row->product_sum_vatless;
 	
 	$row->product_unit_code = $okei[$row->product_unit];
 	$subcount+=$row->product_quantity;
-	$subvatless+=$row->product_sum;
+	$subvatless+=$row->product_sum_vatless;
 	$subvat+=$row->product_sum_vat;
 	$subtotal+=$row->product_sum_total;
     }

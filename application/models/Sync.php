@@ -14,10 +14,7 @@ class Sync extends Catalog {
             SELECT
                     product_code,
                     ru product_name,
-                    ROUND(sell
-                    *IF(discount IS NOT NULL,discount,1)
-                    *IF(curr_code='USD',$this->dollarRatio,1),2)
-                        product_price,
+                    GET_PRICE(product_code,'$this->defaultUserId',$this->dollarRatio) product_price,
                     product_quantity,
                     product_volume,
                     product_weight,
@@ -31,9 +28,6 @@ class Sync extends Catalog {
                     price_list USING(product_code)
                         JOIN
                     stock_tree st ON se.parent_id=st.branch_id
-                        LEFT JOIN
-                    companies_discounts cd ON st.top_id = cd.branch_id
-                WHERE company_id='$this->defaultUserId'
                 ORDER BY fetch_count DESC
                 LIMIT $limit OFFSET $offset";
         return $this->get_list($sql);
