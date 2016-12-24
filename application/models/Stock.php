@@ -6,20 +6,20 @@ class Stock extends Catalog {
 	return $this->treeFetch("stock_tree", $parent_id, 'top');
     }
     public function stockTreeCreate($parent_id,$label){
-	$this->Base->set_level(2);
+	$this->Hub->set_level(2);
 	$this->check($parent_id,'int');
 	$this->check($label);
 	return $this->treeCreate('stock_tree', 'folder', $parent_id, $label, 'calc_top_id');
     }
     public function stockTreeUpdate($branch_id,$field,$value) {
-	$this->Base->set_level(2);
+	$this->Hub->set_level(2);
 	$this->check($branch_id,'int');
 	$this->check($field);
 	$this->check($value);
 	return $this->treeUpdate('stock_tree', $branch_id, $field, $value, 'calc_top_id');
     }
     public function stockTreeDelete( $branch_id ){
-	$this->Base->set_level(4);
+	$this->Hub->set_level(4);
 	$this->check($branch_id,'int');
 	$sub_ids=$this->treeGetSub('stock_tree', $branch_id);
 	$in=implode(',', $sub_ids);
@@ -127,7 +127,7 @@ class Stock extends Catalog {
     }
 
     public function productSave(){
-	$this->Base->set_level(2);
+	$this->Hub->set_level(2);
 	$affected_rows=0;
 	$product_code=$this->request('product_code');
         $product_code_new=$this->request('product_code_new','^[\(\)\[\]\<\>\p{L}\d\. ,-_]+$');

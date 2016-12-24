@@ -1,6 +1,6 @@
 <?php
 require_once 'Catalog.php';
-class DocumentBase extends Catalog{
+class DocumentList extends Catalog{
     private $doc_id=null;
     private $document_properties=null;
     private function documentSelect( $doc_id ){
@@ -13,7 +13,7 @@ class DocumentBase extends Catalog{
 	}
 	return $this->update('document_list',$this->document_properties,['doc_id'=>$this->document_properties->doc_id]);
     }
-    private function doc($field,$value=null){
+    private function doc($field=null,$value=null){
 	if( !isset($this->document_properties) ){
 	    if( !$this->doc_id ){
 		throw new Exception("Can't use properties because Document is not selected");
@@ -29,12 +29,12 @@ class DocumentBase extends Catalog{
     
     public $documentAdd=['doc_type'=>'string'];
     public function documentAdd( $doc_type ){
-	$this->Base->set_level(1);
-	$user_id=$this->Base->svar('user_id');
-	$acomp_id=$this->Base->acomp('company_id');
-	$pcomp_id=$this->Base->pcomp('company_id');
-	$vat_rate = $this->Base->acomp('company_vat_rate');
-	$usd_ratio=$this->Base->pref('usd_ratio');
+	$this->Hub->set_level(1);
+	$user_id=$this->Hub->svar('user_id');
+	$acomp_id=$this->Hub->acomp('company_id');
+	$pcomp_id=$this->Hub->pcomp('company_id');
+	$vat_rate = $this->Hub->acomp('company_vat_rate');
+	$usd_ratio=$this->Hub->pref('usd_ratio');
 	$new_document=[
 	    'doc_type'=>($doc_type?$doc_type:'sell'),
 	    'cstamp'=>date('Y-m-d H:i:s'),
@@ -64,7 +64,7 @@ class DocumentBase extends Catalog{
     }
     private function documentGetPrevious($acomp_id,$pcomp_id){
 	$sql="SELECT 
-	    * 
+		* 
 	    FROM 
 		document_list 
 	    WHERE 
@@ -90,11 +90,12 @@ class DocumentBase extends Catalog{
     }
     public $documentUpdate=['doc_id'=>'int','field'=>'escape','value'=>'string'];
     public function documentUpdate($doc_id,$field,$value){
-	$this->Base->set_level(2);
+	$this->Hub->set_level(2);
+	$this->documentSelect($doc_id);
 	$this->query("START TRANSACTION");
 	switch($field){
 	    case 'is_commited':
-		$this->documentCommit( (bool) $value );
+		$this->documentChangeCommit( (bool) $value );
 	    case 'notcount':
 		$this->transChangeNotcount((bool) $value );
 	    case 'use_vatless_price':
@@ -111,11 +112,33 @@ class DocumentBase extends Catalog{
 	$this->documentFlush();
 	$this->query("COMMIT");
     }
+    private function documentChangeCommit( $make_commited=false ){
+	if( $make_commited==false && !$this->doc('is_commited') ){
+	    $this->documentDelete();//if doc is uncommited then delete it
+	}
+	
+    }
+    private function documentCommitEntries(){
+	$doc_id=$this->doc('doc_id');
+	$document_entries=$this->get_list("SELECT * FROM document_entries WHERE doc_id='$doc_id'");
+	foreach($document_entries as $entry){
+	    $ok=$this->Hub->plugin_do("document".$this->doc('doc_type'),'commitEntry',[$this,$entry]);
+	    if(!$ok){
+		return false;
+	    }
+	}
+	return true;
+    }
+    
+    
+    
+    
     private function documentUpdateRatio( $new_ratio ){
 	
     }
-    private function documentDelete($doc_id){
-	//do_action("document_".$this->doc('doc_type')."_before_delete",$doc_id);
+    private function documentDelete(){
+	//do_action("document".$this->doc('doc_type')."_before_delete",$doc_id);
+	$doc_id=$this->doc('doc_id');
 	$this->query("START TRANSACTION");
 	$this->delete('document_entries',['doc_id'=>$doc_id]);
 	$this->delete('document_view_list',['doc_id'=>$doc_id]);

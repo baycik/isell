@@ -12,14 +12,14 @@ class DocumentBlank extends DocumentCore {
 	}
 	$andwhere='';
 	if( $mode==='show_only_pcomp_docs' ){
-	    $pcomp_id=$this->Base->pcomp('company_id');
+	    $pcomp_id=$this->Hub->pcomp('company_id');
 	    $andwhere.=" AND passive_company_id='$pcomp_id'";
 	}
-	$assigned_path=  $this->Base->svar('user_assigned_path');
+	$assigned_path=  $this->Hub->svar('user_assigned_path');
 	if( $assigned_path ){
 	    $andwhere.=" AND path LIKE '$assigned_path%'";
 	}
-	$active_company_id=$this->Base->acomp('company_id');
+	$active_company_id=$this->Hub->acomp('company_id');
         $sql = "SELECT 
                     doc_id,
                     doc_type_name,
@@ -60,25 +60,25 @@ class DocumentBlank extends DocumentCore {
         return $avail_docs;
     }
     public function blankCreate( $view_type_id, $register_only = false ){
-	if( $this->Base->pcomp('company_id') ){
+	if( $this->Hub->pcomp('company_id') ){
 	    $doc_types = $this->get_value("SELECT doc_types FROM document_view_types WHERE view_type_id='$view_type_id'");
 	    $doc_types_arr=explode('/',$doc_types);
 	    $doc_type=$doc_types_arr[1];
 	    
-	    $Document2=$this->Base->bridgeLoad('Document');
+	    $Document2=$this->Hub->bridgeLoad('Document');
 	    $Document2->add($doc_type);
 	    if ($register_only === false){
 		$Document2->insertView($view_type_id);
 	    }
 	    $doc_id=$Document2->doc('doc_id');
-	    $this->Base->svar('selectedBlankId',$doc_id);
+	    $this->Hub->svar('selectedBlankId',$doc_id);
 	    return $doc_id;
 	}
 	return 0;
     }
     public function blankGet($doc_id) {
-        $this->Base->svar('selectedBlankId',$doc_id);
-        $this->selectDoc($this->Base->svar('selectedBlankId'));
+        $this->Hub->svar('selectedBlankId',$doc_id);
+        $this->selectDoc($this->Hub->svar('selectedBlankId'));
         $blank = $this->get_row("SELECT * FROM document_view_list JOIN document_view_types USING(view_type_id) WHERE doc_id='$doc_id'");
         if (!$blank) {//only registry record
             $doc_type = $this->doc('doc_type');
@@ -95,11 +95,11 @@ class DocumentBlank extends DocumentCore {
         return $blank;
     }
     public function getFillData(){
-	$Company=$this->Base->load_model('Company');
-	$Pref=$this->Base->load_model('Pref');
+	$Company=$this->Hub->load_model('Company');
+	$Pref=$this->Hub->load_model('Pref');
 	$fillData = new stdClass();
-	$fillData->a=$Company->companyGet($this->Base->acomp('company_id'));
-	$fillData->p=$Company->companyGet($this->Base->pcomp('company_id'));
+	$fillData->a=$Company->companyGet($this->Hub->acomp('company_id'));
+	$fillData->p=$Company->companyGet($this->Hub->pcomp('company_id'));
 	$fillData->staff=$Pref->getStaffList();
 	return $fillData;
     }
@@ -108,14 +108,14 @@ class DocumentBlank extends DocumentCore {
 	$date=$this->input->post('date');
 	$html=$this->input->post('html');
 	
-	$this->selectDoc($this->Base->svar('selectedBlankId'));
+	$this->selectDoc($this->Hub->svar('selectedBlankId'));
 	$doc_id = $this->doc('doc_id');
 	$this->headUpdate('num', $num);
 	$this->headUpdate('date', $date);
 	$doc_view_id=$this->get_value("SELECT doc_view_id FROM document_view_list WHERE doc_id='$doc_id'");
 	
         if ($doc_view_id) {
-	    $View=$this->Base->load_model('DocumentView');
+	    $View=$this->Hub->load_model('DocumentView');
             $View->unfreezeView($doc_view_id);
             $View->viewUpdate($doc_view_id, false, 'view_num', $num);
             $View->viewUpdate($doc_view_id, false, 'view_date', $date);
@@ -125,7 +125,7 @@ class DocumentBlank extends DocumentCore {
 	return false;
     }
     public function blankDelete(){
-	$this->selectDoc($this->Base->svar('selectedBlankId'));
+	$this->selectDoc($this->Hub->svar('selectedBlankId'));
 	$doc_id = $this->doc('doc_id');
 	$this->query("DELETE FROM document_view_list WHERE doc_id=$doc_id");
 	$this->query("DELETE FROM document_list WHERE doc_id=$doc_id");

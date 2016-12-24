@@ -5,8 +5,8 @@ class AccountsData extends AccountsCore{
     public function transNameListFetch($selected_acc=null){
 	$q=  str_replace(["_","%"], ["\_","\%"], $this->request('q'));
 	$this->check($selected_acc);
-	$user_level = $this->Base->svar('user_level');
-	$curr_id=$this->Base->acomp('curr_id');
+	$user_level = $this->Hub->svar('user_level');
+	$curr_id=$this->Hub->acomp('curr_id');
 	$sql="SELECT
 		acc_debit_code,
 		acc_credit_code,
@@ -28,7 +28,7 @@ class AccountsData extends AccountsCore{
 	return $this->get_list($sql);
     }
     public function transNameUpdate($trans_type,$field,$value){
-	$this->Base->set_level(3);
+	$this->Hub->set_level(3);
 	$this->check($trans_type,'[a-z0-9_]*');
 	$this->check($field,'[a-z0-9_]*');
 	$this->check($value);
@@ -37,7 +37,7 @@ class AccountsData extends AccountsCore{
 	return $this->db->affected_rows()>0;
     }
     public function transNameCreate($acc_debit_code,$acc_credit_code){
-	$this->Base->set_level(3);
+	$this->Hub->set_level(3);
 	$this->check($acc_debit_code);
 	$this->check($acc_credit_code);
 	return $this->query("INSERT INTO acc_trans_names SET acc_debit_code='$acc_debit_code', acc_credit_code='$acc_credit_code', trans_name='---', user_level=3");
@@ -62,19 +62,19 @@ class AccountsData extends AccountsCore{
 	return $branches;
     }
     public function accountTreeUpdate($branch_id,$field,$value='') {
-	$this->Base->set_level(3);
+	$this->Hub->set_level(3);
 	$this->check($branch_id,'int');
 	$this->check($field);
 	$this->check($value);
 	return $this->treeUpdate('acc_tree', $branch_id, $field, $value);
     }
     public function balanceTreeDelete( $branch_id ){
-	$this->Base->set_level(3);
+	$this->Hub->set_level(3);
 	return $this->treeDelete('acc_tree',$branch_id);
     }
     public function accountFavoritesFetch( $use_passive_filter=false, $get_client_bank_accs=false ){
 	if( $use_passive_filter ){
-	    $acc_list=$this->Base->pcomp('company_acc_list');
+	    $acc_list=$this->Hub->pcomp('company_acc_list');
 	} else {
 	    $where=$get_client_bank_accs?'use_clientbank=1':'is_favorite=1';
 	    $acc_list= $this->get_value("SELECT GROUP_CONCAT(acc_code SEPARATOR ',') FROM acc_tree WHERE $where");
@@ -89,22 +89,22 @@ class AccountsData extends AccountsCore{
 	return $favs;
    }
     public function accountFavoritesToggle( $acc_code, $is_favorite, $use_passive_filter=false ){
-	$this->Base->set_level(3);
+	$this->Hub->set_level(3);
 	$this->check($acc_code);
 	$this->check($is_favorite,'bool');
 	$this->check($use_passive_filter,'bool');
 	if( $use_passive_filter ){
-	    $passive_company_id=$this->Base->pcomp('company_id');
-	    $acc_list=$this->Base->pcomp('company_acc_list');
+	    $passive_company_id=$this->Hub->pcomp('company_id');
+	    $acc_list=$this->Hub->pcomp('company_acc_list');
 	    $accs=explode(',',$acc_list);
 	    $accs=array_diff($accs,['']);
 	    
 	    $is_favorite?$accs[]=$acc_code:$accs=array_diff($accs,[$acc_code]);
 	    
 	    $new_acc_list=  implode(',', array_unique($accs));
-	    $this->Base->load_model('Company');
-	    $ok=$this->Base->Company->companyUpdate($passive_company_id,'company_acc_list',$new_acc_list);
-	    $this->Base->Company->selectPassiveCompany($passive_company_id);
+	    $this->Hub->load_model('Company');
+	    $ok=$this->Hub->Company->companyUpdate($passive_company_id,'company_acc_list',$new_acc_list);
+	    $this->Hub->Company->selectPassiveCompany($passive_company_id);
 	    
 	    return $ok;
 	} else {

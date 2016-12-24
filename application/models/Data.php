@@ -41,7 +41,7 @@ class Data extends Catalog {
 
     private function checkTable($table_name) {
 	foreach ($this->permited_tables as $table) {
-	    if ( isset($table->level) && $this->Base->svar('user_level') < $table->level){
+	    if ( isset($table->level) && $this->Hub->svar('user_level') < $table->level){
 		continue;
             }
 	    if ($table_name == $table->table_name){
@@ -54,7 +54,7 @@ class Data extends Catalog {
     public function permitedTableList() {
 	$table_list = [];
 	foreach ($this->permited_tables as $table) {
-	    if (isset($table->level) && $this->Base->svar('user_level') < $table->level || isset($table->hidden) && $table->hidden){
+	    if (isset($table->level) && $this->Hub->svar('user_level') < $table->level || isset($table->hidden) && $table->hidden){
 		continue;
             }
 	    $table_list[] = $table;
@@ -87,7 +87,7 @@ class Data extends Catalog {
 		];
     }
     public function tableRowsDelete($table_name){
-	$this->Base->set_level(3);
+	$this->Hub->set_level(3);
 	if( !$this->checkTable($table_name) ){
 	    return false;
 	}
@@ -99,7 +99,7 @@ class Data extends Catalog {
 	return $deleted;
     }
     public function tableRowCreateUpdate($table_name){
-	$this->Base->set_level(3);
+	$this->Hub->set_level(3);
 	if( !$this->checkTable($table_name) ){
 	    return false;
 	}
@@ -124,7 +124,7 @@ class Data extends Catalog {
 	    'tpl_files'=>'/GridTpl.xlsx',
 	    'title'=>"Экспорт таблицы",
 	    'user_data'=>[
-		'email'=>$this->Base->svar('pcomp')?$this->Base->svar('pcomp')->company_email:'',
+		'email'=>$this->Hub->svar('pcomp')?$this->Hub->svar('pcomp')->company_email:'',
 		'text'=>'Доброго дня'
 	    ],
 	    'struct'=>$this->tableStructure($table_name),
@@ -132,7 +132,7 @@ class Data extends Catalog {
 		'rows'=>$table['rows']
 	    ]
 	];
-	$ViewManager=$this->Base->load_model('ViewManager');
+	$ViewManager=$this->Hub->load_model('ViewManager');
 	$ViewManager->store($dump);
 	$ViewManager->outRedirect($out_type);
     }

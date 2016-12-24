@@ -26,7 +26,7 @@ class Reports_summary_sell_profit extends Catalog{
 	return "$chunks[2]-$chunks[1]-$chunks[0]";
     }
     public function viewGet(){
-	$active_filter=$this->all_active?'':' AND active_company_id='.$this->Base->acomp('company_id');
+	$active_filter=$this->all_active?'':' AND active_company_id='.$this->Hub->acomp('company_id');
         
         $reclamation_filter='';
         if( $this->count_sells && !$this->count_reclamations ){

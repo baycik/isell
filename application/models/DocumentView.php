@@ -4,8 +4,8 @@ class DocumentView extends DocumentItems{
     public $min_level=1;
     public function viewListFetch( $doc_id ){
 	$this->check($doc_id);
-	$blank_set=$this->Base->pref('blank_set');
-	$acomp_id=$this->Base->acomp('company_id');
+	$blank_set=$this->Hub->pref('blank_set');
+	$acomp_id=$this->Hub->acomp('company_id');
 	if( $doc_id ){
 	    $this->selectDoc($doc_id);
 	    $doc_type=$this->doc('doc_type');
@@ -47,10 +47,10 @@ class DocumentView extends DocumentItems{
 	$this->check($is_extra);
 	
 	if ( $this->isCommited() ){
-	    $this->Base->set_level(2);
+	    $this->Hub->set_level(2);
 	}
 	if ( $this->get_value("SELECT freezed FROM document_view_list WHERE doc_view_id='$doc_view_id'") ){
-	    $this->Base->msg('Образ заморожен! Чтобы изменить снимите блокировку!');
+	    $this->Hub->msg('Образ заморожен! Чтобы изменить снимите блокировку!');
 	    return false;
 	}
 	if ( $is_extra==='extra' ) {
@@ -61,7 +61,7 @@ class DocumentView extends DocumentItems{
 	    $value = addslashes(json_encode($extra_fields));
 	} else {
 	    if ( !in_array($field, array('view_num', 'view_date')) ){
-		$this->Base->msg('USING UNALLOWED FIELD NAME');
+		$this->Hub->msg('USING UNALLOWED FIELD NAME');
 		return false;
 	    }
 	    if ($field == 'view_date') {
@@ -70,22 +70,22 @@ class DocumentView extends DocumentItems{
 		$value = date("Y-m-d H:i:s", mktime(0, 0, 0, $out[2][0], $out[1][0], $out[3][0]));
 	    }
 	}
-	$user_id = $this->Base->svar('user_id');
+	$user_id = $this->Hub->svar('user_id');
 	$this->query("UPDATE document_view_list SET $field='$value',modified_by='$user_id' WHERE doc_view_id='$doc_view_id'");
 	return true;
     }
     public function viewDelete( $doc_view_id ){
-	$Document2=$this->Base->bridgeLoad('Document');
+	$Document2=$this->Hub->bridgeLoad('Document');
 	return $Document2->deleteView($doc_view_id);
     }
     public function viewCreate( $view_type_id ){
-	$Document2=$this->Base->bridgeLoad('Document');
+	$Document2=$this->Hub->bridgeLoad('Document');
 	$view_id= $Document2->insertView($view_type_id);
 	$this->viewIncreaseFetchCount($view_type_id);
 	return $view_id;
     }
     private function viewIncreaseFetchCount($view_type_id){
-	$acomp_id=$this->Base->acomp('company_id');
+	$acomp_id=$this->Hub->acomp('company_id');
 	$sql="INSERT INTO 
 		pref_list 
 	    SET 
@@ -114,7 +114,7 @@ class DocumentView extends DocumentItems{
 	
 	//print_r($dump);
 	//exit;
-	$ViewManager=$this->Base->load_model('ViewManager');
+	$ViewManager=$this->Hub->load_model('ViewManager');
 	$ViewManager->store($dump);
 	$ViewManager->outRedirect($out_type);
     }
@@ -147,8 +147,8 @@ class DocumentView extends DocumentItems{
 		    ],
 		];
 	}
-        $Utils=$this->Base->load_model('Utils');
-	$Company=$this->Base->load_model('Company');
+        $Utils=$this->Hub->load_model('Utils');
+	$Company=$this->Hub->load_model('Company');
 	//$doc_id=$doc_view->doc_id;
 	
         //$this->selectDoc($doc_id);
@@ -169,8 +169,8 @@ class DocumentView extends DocumentItems{
 	
         $doc_view->total_spell=$Utils->spellAmount($footer->total);
         $doc_view->loc_date=$Utils->getLocalDate($doc_view->tstamp);
-	$doc_view->user_sign=$this->Base->svar('user_sign');
-	$doc_view->user_position=$this->Base->svar('user_position');
+	$doc_view->user_sign=$this->Hub->svar('user_sign');
+	$doc_view->user_position=$this->Hub->svar('user_position');
 	$doc_view->date=date('dmY', strtotime($doc_view->tstamp));
 	$doc_view->date_dot=date('d.m.Y', strtotime($doc_view->tstamp));
 	$doc_view->entries_num=count($rows);
@@ -194,10 +194,10 @@ class DocumentView extends DocumentItems{
                 'head'=>$head,
                 'rows'=>$rows,
                 'footer'=>$footer,
-                'director_name'=>$this->Base->pref('director_name'),
-                'director_tin'=>$this->Base->pref('director_tin'),
-                'accountant_name'=>$this->Base->pref('accountant_name'),
-                'accountant_tin'=>$this->Base->pref('accountant_tin'),
+                'director_name'=>$this->Hub->pref('director_name'),
+                'director_tin'=>$this->Hub->pref('director_tin'),
+                'accountant_name'=>$this->Hub->pref('accountant_name'),
+                'accountant_tin'=>$this->Hub->pref('accountant_tin'),
             ]
         ];
         return $dump;

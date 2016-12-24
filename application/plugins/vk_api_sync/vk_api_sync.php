@@ -48,7 +48,7 @@ class vk_api_sync extends PluginManager{
 	    preg_match('|Модель:(.*)$|mi',$item['description'],$product_code);
 	    $item['product_code']=isset($product_code[1])?trim($product_code[1]):null;
 	}
-	$Storage=$this->Base->load_model('Storage');
+	$Storage=$this->Hub->load_model('Storage');
 	return $Storage->json_store('vk_api_sync/market_items_combine.json',$items);
     }
     private function stockRating($product_code,$description){
@@ -74,13 +74,13 @@ class vk_api_sync extends PluginManager{
     }
     private function uploadProduct($item){
 	$company_id=$this->settings->pcomp_id;//company_id for wich we will retrieve prices
-	$usd_ratio=$this->Base->pref('usd_ratio');
+	$usd_ratio=$this->Hub->pref('usd_ratio');
 	$price=$this->get_value("SELECT GET_PRICE('{$item->product_code}',$company_id,$usd_ratio)");
 	$description=$this->stockRating($item->product_code, $item->description);
 	
 	if( !is_numeric($price) ){
 	    echo "<br> Не найден код: ".$item->product_code;
-	    $this->Base->msg("Не найден код: ".$item->product_code);
+	    $this->Hub->msg("Не найден код: ".$item->product_code);
 	    return true;
 	}
 	if( $price && $price!=$item->price->amount/100 || $description!=$item->description ){
@@ -114,9 +114,9 @@ class vk_api_sync extends PluginManager{
     
     public function uploadChunk(){
 	$limit=2;
-	$offset=$this->Base->svar('vk_api_offset');
+	$offset=$this->Hub->svar('vk_api_offset');
 	
-	$Storage=$this->Base->load_model('Storage');
+	$Storage=$this->Hub->load_model('Storage');
 	$items=$Storage->json_restore('vk_api_sync/market_items_combine.json');
 	$chunk=array_slice($items,$offset,$limit);
 	foreach($chunk as $item){
@@ -130,11 +130,11 @@ class vk_api_sync extends PluginManager{
 		$this->uploadProduct($item);
 	    }
 	}
-	$this->Base->svar('vk_api_offset',$offset+$limit);
+	$this->Hub->svar('vk_api_offset',$offset+$limit);
 	return count($items)-$offset;
     }
     public function syncProducts(){
-	$this_step=$this->Base->svar('vk_api_next_step');
+	$this_step=$this->Hub->svar('vk_api_next_step');
 	switch($this_step){
 	    case 'upload_chunk':
 		$left_count=$this->uploadChunk();
@@ -154,7 +154,7 @@ class vk_api_sync extends PluginManager{
 		if( $this->marketGetAndCombine() ){
 		    $next_step='upload_chunk';
 		    echo '-- Получен список товаров с ВК';
-		    $this->Base->svar('vk_api_offset',0);
+		    $this->Hub->svar('vk_api_offset',0);
 		} else {
 		    $next_step='stop';
 		    echo 'Не удалось подключиться к ВК';
@@ -162,7 +162,7 @@ class vk_api_sync extends PluginManager{
 		
 		break;
  	}
-	$this->Base->svar('vk_api_next_step',$next_step);
+	$this->Hub->svar('vk_api_next_step',$next_step);
 	return ' ok';
     }
 }

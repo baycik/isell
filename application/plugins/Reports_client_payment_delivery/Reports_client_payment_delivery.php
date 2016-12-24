@@ -20,7 +20,7 @@ class Reports_client_payment_delivery extends Catalog{
 	return "$chunks[2]-$chunks[1]-$chunks[0]";
     }
     private function getAssignedPathWhere(){
-        $assigned_path=$this->Base->svar('user_assigned_path');
+        $assigned_path=$this->Hub->svar('user_assigned_path');
         return $assigned_path?"AND (path LIKE '".str_replace(',',"%' OR path LIKE '",$assigned_path.'')."%')":"";    
     }
     private function getDirectionFilter(){
@@ -35,8 +35,8 @@ class Reports_client_payment_delivery extends Catalog{
     }
     public function viewGet(){
 	$direction_filter=$this->getDirectionFilter();
-	$active_filter=$this->all_active?'':' AND active_company_id='.$this->Base->acomp('company_id');
-        $user_level=$this->Base->svar('user_level');
+	$active_filter=$this->all_active?'':' AND active_company_id='.$this->Hub->acomp('company_id');
+        $user_level=$this->Hub->svar('user_level');
         $path_filter=$this->getAssignedPathWhere();
         $having=$this->filter_value?"HAVING $this->filter_by LIKE '%$this->filter_value%'":"";
 	$sql="

@@ -9,8 +9,8 @@ class Events extends Catalog{
      * 
      */
     public function activeDatesGet() {//must be optimized
-	$user_id = $this->Base->svar('user_id');
-	$user_level = $this->Base->svar('user_level');
+	$user_id = $this->Hub->svar('user_id');
+	$user_level = $this->Hub->svar('user_level');
 	$sql="SELECT 
 		DISTINCT(DATE(event_date)) event_date
 	    FROM 
@@ -65,7 +65,7 @@ class Events extends Catalog{
 	return $this->delete("event_list",['event_id'=>$event_id]);
     }
     public function eventUpdate( $event_id, $field, $value ){
-	$this->Base->set_level(2);
+	$this->Hub->set_level(2);
 	$this->check($event_id,'int');
 	$this->check($field,'\w+');
 	$this->check($value,'raw');
@@ -74,7 +74,7 @@ class Events extends Catalog{
     
     
     public function eventSave( $event_id ){
-	$this->Base->set_level(2);
+	$this->Hub->set_level(2);
 	$this->check($event_id,'int');
 	$event=[
 	    'event_date'=>$this->request('event_date'),
@@ -89,10 +89,10 @@ class Events extends Catalog{
 	    'event_status'=>$this->request('event_status'),
 	    'event_user_liable'=>$this->request('event_user_liable'),
 	    'event_is_private'=>$this->request('event_is_private'),
-	    'modified_by'=>$this->Base->svar('user_id')
+	    'modified_by'=>$this->Hub->svar('user_id')
 	];
 	if( !$event_id ){
-	    $event['created_by']=$this->Base->svar('user_id');
+	    $event['created_by']=$this->Hub->svar('user_id');
 	    return $this->create('event_list', $event);
 	}
 	return $this->update('event_list', $event, ['event_id'=>$event_id]);
@@ -116,10 +116,10 @@ class Events extends Catalog{
 	
 	$rows=$this->listFetch($event_date,$label);
 	$dump=[
-	    'tpl_files'=>$this->Base->acomp('language').'/EventList.xlsx',
+	    'tpl_files'=>$this->Hub->acomp('language').'/EventList.xlsx',
 	    'title'=>"Список Заданий",
 	    'user_data'=>[
-		'email'=>$this->Base->svar('pcomp')?$this->Base->svar('pcomp')->company_email:'',
+		'email'=>$this->Hub->svar('pcomp')?$this->Hub->svar('pcomp')->company_email:'',
 		'text'=>'Доброго дня'
 	    ],
 	    'view'=>[
@@ -128,7 +128,7 @@ class Events extends Catalog{
 		'rows'=>$rows
 	    ]
 	];
-	$ViewManager=$this->Base->load_model('ViewManager');
+	$ViewManager=$this->Hub->load_model('ViewManager');
 	$ViewManager->store($dump);
 	$ViewManager->outRedirect($out_type);
     }

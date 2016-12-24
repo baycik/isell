@@ -9,8 +9,8 @@ class DocumentTrans extends DocumentBase{
 	$doc_id=$this->doc('doc_id');
 	$old_ratio=$this->doc('doc_ratio');
 	$change_ratio=$new_ratio/$old_ratio;
-	$default_currency=$this->Base->acomp('curr_code');
-	$price_label=$this->Base->pcomp('price_label');
+	$default_currency=$this->Hub->acomp('curr_code');
+	$price_label=$this->Hub->pcomp('price_label');
 	$sql="UPDATE
 		document_entries de
 		    JOIN

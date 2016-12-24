@@ -6,7 +6,7 @@ class Utils extends Catalog{
     //FOLOWING FUNCTIONS ARE DEPRECATED
     //////////////////////////////////////
     public function spellAmount($number, $return_cents = true, $return_currency = true) {
-	$blank_set=$this->Base->pref('blank_set');
+	$blank_set=$this->Hub->pref('blank_set');
 	if( $blank_set=='ua' ){
 	    $unit=[
 		['копійка', 'копійки', 'копійок'],
@@ -62,7 +62,7 @@ class Utils extends Catalog{
 	    $unit='';
 	}
 
-        $blank_set=$this->Base->pref('blank_set');
+        $blank_set=$this->Hub->pref('blank_set');
         if( $blank_set=='ua' ){
             $ones = ["", "одна", "дві", "три", "чотири", "п'ять", "шість", "сім", "вісім", "дев'ять"];
             $tens = ["", "десять", "двадцять", "тридцять", "сорок", "п'ятдесят", "шістдесят", "сімдесят", "вісімдесят", "дев'яносто"];
@@ -182,23 +182,23 @@ class Utils extends Catalog{
     public function sendSms($number=null,$body=null) {
 	$number=$this->request('to','string',$number);
 	$body=$this->request('body','string',$body);
-	if (!$this->Base->pref('SMS_SENDER') || !$this->Base->pref('SMS_USER') || !$this->Base->pref('SMS_PASS')) {
-	    $this->Base->msg("Настройки для отправки смс не установленны");
+	if (!$this->Hub->pref('SMS_SENDER') || !$this->Hub->pref('SMS_USER') || !$this->Hub->pref('SMS_PASS')) {
+	    $this->Hub->msg("Настройки для отправки смс не установленны");
 	    return false;
 	}
 	if (!in_array('https', stream_get_wrappers())) {
-	    $this->Base->msg("Sms can not be sent. https is not available");
+	    $this->Hub->msg("Sms can not be sent. https is not available");
 	    return false;
 	}
 	try {
-	    if (time() - $this->Base->svar('smsSessionTime') * 1 > 24*60) {
-		$this->Base->svar('smsSessionTime', time());
-		$sid = json_decode(file_get_contents("https://integrationapi.net/rest/user/sessionId?login=" . $this->Base->pref('SMS_USER') . "&password=" . $this->Base->pref('SMS_PASS')));
-		$this->Base->svar('smsSessionId', $sid);
+	    if (time() - $this->Hub->svar('smsSessionTime') * 1 > 24*60) {
+		$this->Hub->svar('smsSessionTime', time());
+		$sid = json_decode(file_get_contents("https://integrationapi.net/rest/user/sessionId?login=" . $this->Hub->pref('SMS_USER') . "&password=" . $this->Hub->pref('SMS_PASS')));
+		$this->Hub->svar('smsSessionId', $sid);
 	    }
 	    $post_vars = array(
-		'SessionID' => $this->Base->svar('smsSessionId'),
-		'SourceAddress' => $this->Base->pref('SMS_SENDER'),
+		'SessionID' => $this->Hub->svar('smsSessionId'),
+		'SourceAddress' => $this->Hub->pref('SMS_SENDER'),
 		'DestinationAddresses' => $number,
 		'Data' => $body
 	    );
@@ -215,7 +215,7 @@ class Utils extends Catalog{
 		return false;
             }
 	} catch (Exception $e) {
-	    $this->Base->svar('smsSessionTime', 0);
+	    $this->Hub->svar('smsSessionTime', 0);
 	    /*
 	     * Make smsSid expire to try again
 	     */
@@ -227,24 +227,24 @@ class Utils extends Catalog{
     //EMAIL FUNCTIONS
     /////////////////////////////
     public function sendEmail($to,$subject,$body,$file=null){
-        $this->Base->set_level(1);
+        $this->Hub->set_level(1);
         $this->load->library('email');
         $this->email->initialize([
             'useragent'=>'iSell',
             'protocol'=>'smtp',
             'charset'=>'utf8',
 	    'smtp_timeout'=>10,
-            'smtp_host'=>$this->Base->pref('SMTP_SERVER'),
-            'smtp_user'=>$this->Base->pref('SMTP_USER'),
-            'smtp_pass'=>$this->Base->pref('SMTP_PASS'),
-	    'smtp_port'=>$this->Base->pref('SMTP_PORT'),
-	    'smtp_crypto'=>$this->Base->pref('SMTP_CRYPTO')
+            'smtp_host'=>$this->Hub->pref('SMTP_SERVER'),
+            'smtp_user'=>$this->Hub->pref('SMTP_USER'),
+            'smtp_pass'=>$this->Hub->pref('SMTP_PASS'),
+	    'smtp_port'=>$this->Hub->pref('SMTP_PORT'),
+	    'smtp_crypto'=>$this->Hub->pref('SMTP_CRYPTO')
         ]);
 	$this->email->set_newline("\r\n");
-        $this->email->from($this->Base->pref('SMTP_SENDER_MAIL'),$this->Base->pref('SMTP_SENDER_NAME'));
+        $this->email->from($this->Hub->pref('SMTP_SENDER_MAIL'),$this->Hub->pref('SMTP_SENDER_NAME'));
         $this->email->to($to);
-	if( $this->Base->pref('SMTP_SEND_COPY') ){
-	    $this->email->cc($this->Base->pref('SMTP_SENDER_MAIL'));
+	if( $this->Hub->pref('SMTP_SEND_COPY') ){
+	    $this->email->cc($this->Hub->pref('SMTP_SENDER_MAIL'));
 	}
         $this->email->subject($subject);
         $this->email->message($body);
@@ -254,7 +254,7 @@ class Utils extends Catalog{
         $ok=$this->email->send(false);
         if( !$ok ){
             $err=$this->email->print_debugger(['headers', 'subject', 'body']);
-            $this->Base->msg($err);
+            $this->Hub->msg($err);
         }
         return $ok;
     }
@@ -276,7 +276,7 @@ class Utils extends Catalog{
         '.xml'=>'text/xml'
         ];
     private function generateFile($dump_id,$out_type='.xlsx',$subject='file'){
-        $ViewManager=$this->Base->load_model('ViewManager');
+        $ViewManager=$this->Hub->load_model('ViewManager');
 	$file_data=$ViewManager->getFile($dump_id,$out_type);
 	if( $file_data ){
 	    return [
@@ -285,7 +285,7 @@ class Utils extends Catalog{
 		'name'=>str_replace(' ', '_', $subject).$out_type
 	    ];
 	}
-	$this->Base->response(0);
+	$this->Hub->response(0);
         return null;
     }
     /////////////////////////////
@@ -338,13 +338,13 @@ class Utils extends Catalog{
 	return $this->db->affected_rows();
     }
     private function selfPriceOldApiRecalculate($idate,$fdate,$active_filter){
-	$Document2=$this->Base->bridgeLoad('Document');
+	$Document2=$this->Hub->bridgeLoad('Document');
 	$res = $this->db->query("SELECT doc_id,passive_company_id FROM document_list WHERE is_commited=1 AND doc_type=1 AND '$idate'<=cstamp AND cstamp<='$fdate' $active_filter ORDER BY passive_company_id");
 	echo "SELECT doc_id,passive_company_id FROM document_list WHERE is_commited=1 AND doc_type=1 AND '$idate'<=cstamp AND cstamp<='$fdate' $active_filter ORDER BY passive_company_id";
 	if( $res ){
 	    foreach ($res->result() as $row) {
-		if ($Document2->Base->pcomp('company_id') != $row->passive_company_id){
-		    $Document2->Base->selectPassiveCompany($row->passive_company_id);
+		if ($Document2->Hub->pcomp('company_id') != $row->passive_company_id){
+		    $Document2->Hub->selectPassiveCompany($row->passive_company_id);
 		    echo " pcomp_id".$row->passive_company_id;
 		}
 		$doc_id = $row->doc_id;
@@ -415,7 +415,7 @@ class Utils extends Catalog{
         if( $active_mode=='all_active' ){
             $active_filter='';
         } else {
-            $active_filter=" AND active_company_id='".$this->Base->acomp('company_id')."'";
+            $active_filter=" AND active_company_id='".$this->Hub->acomp('company_id')."'";
         }
 	$this->selfPriceCreateTable($active_filter);
 	$this->selfPriceCorrectEntries();
@@ -446,7 +446,7 @@ class Utils extends Catalog{
         if( $active_mode=='all_active' ){
             $active_filter='';
         } else {
-            $active_filter=" AND active_company_id='".$this->Base->acomp('company_id')."'";
+            $active_filter=" AND active_company_id='".$this->Hub->acomp('company_id')."'";
         }
 	$this->selfPriceCreateTable($active_filter);
  	return $this->selfPriceStockAssign();
@@ -502,7 +502,7 @@ class Utils extends Catalog{
 	    WHERE $where
 	    HAVING $having";
 	$buy_order=$this->get_list($sql);
-	$DocumentItems=$this->Base->load_model("DocumentItems");
+	$DocumentItems=$this->Hub->load_model("DocumentItems");
 	$doc_id=$DocumentItems->createDocument(2);//create buy document
 	foreach($buy_order as $row){
 	   $DocumentItems->entryAdd($row->product_code,$row->qty);

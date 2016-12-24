@@ -25,7 +25,7 @@ class MiSell extends PluginManager{
 	}
     }
     public function index(){
-	$this->Base->set_level(1);
+	$this->Hub->set_level(1);
 	include_once 'libraries/report/RainTpl.php';
 	raintpl::configure( 'tpl_dir', 'application/plugins/MiSell/' );
 	raintpl::configure( 'cache_dir', 'application/plugins/MiSell/cache/' );
@@ -37,7 +37,7 @@ class MiSell extends PluginManager{
 	$this->rain->draw('MiSell');
     }
     public function logout(){
-	$User=$this->Base->load_model('User');
+	$User=$this->Hub->load_model('User');
 	$User->SignOut();
 	header("Location: ./");
 	exit();
@@ -46,12 +46,12 @@ class MiSell extends PluginManager{
         $d=array();
         $d['stock_tree']=$this->treeFetch('stock_tree',0);
         $d['companies_tree']=$this->getCompaniesTree();
-        $d['user_sign']=$this->Base->svar('user_sign');
+        $d['user_sign']=$this->Hub->svar('user_sign');
         return $d;
     }
     public function getCompaniesTree(){
-	$level=$this->Base->svar('user_level');
-	$assigned_path=  $this->Base->svar('user_assigned_path');
+	$level=$this->Hub->svar('user_level');
+	$assigned_path=  $this->Hub->svar('user_assigned_path');
 	$companies_folder_list=$this->get_list("SELECT branch_id,label FROM companies_tree WHERE is_leaf=0 AND level<=$level AND path LIKE '$assigned_path%'");
 	$tree=[];
 	if( $companies_folder_list ){
@@ -90,7 +90,7 @@ class MiSell extends PluginManager{
 	$parent_id=$this->request('parent_id');
 	$company_id=$this->request('company_id','int',0);
         $clues=explode(' ',$q);
-	$usd_ratio=$this->Base->pref('usd_ratio');
+	$usd_ratio=$this->Hub->pref('usd_ratio');
 	$cases=[];
 	if($parent_id){
 	    $parent_ids=$this->treeGetSub('stock_tree',$parent_id);
@@ -128,11 +128,11 @@ class MiSell extends PluginManager{
 //         if( !$this->checkCompanyId($company_id) ){
 //            return "Can't use this client!!!";
 //        }
-	$Company=$this->Base->load_model('Company');
+	$Company=$this->Hub->load_model('Company');
 	$Company->selectActiveCompany(1);
 	$Company->selectPassiveCompany($company_id);
         $this->orderAnnounceRecieved($comment);
-	$Document=$this->Base->load_model('DocumentItems');
+	$Document=$this->Hub->load_model('DocumentItems');
 	$Document->createDocument(1);
 	$Document->headUpdate( "doc_data",$comment.' (заказ с приложения)' );
         foreach($order as $product_code=>$entry){
@@ -142,9 +142,9 @@ class MiSell extends PluginManager{
     }
     public function orderAnnounceRecieved($comment){
 	$this->settings=$this->settingsDataFetch('misell');
-        $pcomp_name=$this->Base->pcomp('label');
-        $user_sign=$this->Base->svar('user_sign');
-	$Utils=$this->Base->load_model('Utils');
+        $pcomp_name=$this->Hub->pcomp('label');
+        $user_sign=$this->Hub->svar('user_sign');
+	$Utils=$this->Hub->load_model('Utils');
         $text="Пользователем $user_sign, был прислан заказ для $pcomp_name в ".date("d.m.Y H:i");
 	if( isset($this->settings->email) ){
 	    $Utils->sendEmail( $this->settings->email, "Мобильный заказ от $user_sign для $pcomp_name ", $text, NULL, 'nocopy' );

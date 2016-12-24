@@ -14,7 +14,7 @@ class AccountsRegistry extends AccountsCore{
 	} else {
 	    $direction_filter="(doc_type=2 OR doc_type=4)";
 	}
-	$active_company_id=$this->Base->acomp('company_id');
+	$active_company_id=$this->Hub->acomp('company_id');
 	$this->query("DROP TEMPORARY TABLE IF EXISTS tax_bill_reg");
 	$tmp_sql="CREATE TEMPORARY TABLE tax_bill_reg ( INDEX(doc_view_id) ) ENGINE=MyISAM AS ( SELECT
 		dl.doc_id,
@@ -81,12 +81,12 @@ class AccountsRegistry extends AccountsCore{
 	$period=$this->request('period');
 	$mode=$this->request('mode');
 	$out_type=$this->request('out_type','string','.print');
-	$blank_set=$this->Base->pref('blank_set');
+	$blank_set=$this->Hub->pref('blank_set');
 	$dump=[
 	    'tpl_files'=>$blank_set.'/AccDocumentRegistry.xlsx',
 	    'title'=>"Реестр документов",
 	    'user_data'=>[
-		'email'=>$this->Base->svar('pcomp')?$this->Base->svar('pcomp')->company_email:'',
+		'email'=>$this->Hub->svar('pcomp')?$this->Hub->svar('pcomp')->company_email:'',
 		'text'=>'Доброго дня'
 	    ],
 	    'view'=>[
@@ -95,7 +95,7 @@ class AccountsRegistry extends AccountsCore{
 		'sell'=>$this->registryFetch($period, $mode,'sell')
 	    ]
 	];
-	$ViewManager=$this->Base->load_model('ViewManager');
+	$ViewManager=$this->Hub->load_model('ViewManager');
 	$ViewManager->store($dump);
 	$ViewManager->outRedirect($out_type);
     }

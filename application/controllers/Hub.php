@@ -62,9 +62,12 @@ class Hub  extends CI_Controller{
 	}
 	$plugin_method=isset($args[1])?$args[1]:'index';
 	$plugin_method_args = array_slice($args, 2);
-	Plugins::instance()->Base=$this;
-	$response=Plugins::instance()->call_method($plugin_name, $plugin_method, $plugin_method_args);
+	Plugins::instance()->Hub=$this;
+	$response=$this->plugin_do($plugin_name, $plugin_method, $plugin_method_args);
 	$this->response($response);
+    }
+    public function plugin_do($plugin_name, $plugin_method, $plugin_method_args){
+	return Plugins::instance()->call_method($plugin_name, $plugin_method, $plugin_method_args);
     }
     
     /*
@@ -124,7 +127,7 @@ class Hub  extends CI_Controller{
 	if( isset($this->{$name}->min_level) ){
 	    $this->set_level($this->{$name}->min_level);
 	}
-	$this->{$name}->Base=$this;
+	$this->{$name}->Hub=$this;
 	return $this->{$name};
     }
     

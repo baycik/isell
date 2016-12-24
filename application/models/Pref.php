@@ -22,7 +22,7 @@ class Pref extends Catalog {
         return $this->get_list($sql);
     }
     public function getPrefs($pref_names="") {// "pref1,pref2,pref3"
-	$active_company_id=$this->Base->acomp('company_id');
+	$active_company_id=$this->Hub->acomp('company_id');
 	$this->check($pref_names,'[a-z_,]+');
 	if( $pref_names ){
 	    $where = "WHERE active_company_id='$active_company_id' AND (pref_name='" . str_replace(',', "' OR pref_name='", $pref_names) . "')"; 
@@ -33,10 +33,10 @@ class Pref extends Catalog {
         return (object) array_combine(explode('|', $prefs->pnames), explode('|', $prefs->pvals));
     }
     public function setPrefs($field,$value='') {
-	$active_company_id=$this->Base->acomp('company_id');
+	$active_company_id=$this->Hub->acomp('company_id');
 	$this->check($field,'[a-zA-Z_]+');
 	$this->check($value,'[^|]+');
-	$this->Base->set_level(3);
+	$this->Hub->set_level(3);
 	if( !$field ){
 	    return false;
 	}

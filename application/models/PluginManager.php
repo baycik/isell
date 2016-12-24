@@ -10,7 +10,7 @@ class PluginManager extends Catalog{
 		continue;
 	    }
 	    $headers=$this->get_plugin_headers($plugin_folder);
-	    if( $headers['user_level']<=$this->Base->svar('user_level') ){
+	    if( $headers['user_level']<=$this->Hub->svar('user_level') ){
 		$plugins[]=$headers;
 	    }
 	}
@@ -24,7 +24,7 @@ class PluginManager extends Catalog{
 	return $plugins;
     }
     private function scanFolder( $path ){
-	$this->Base->set_level(1);
+	$this->Hub->set_level(1);
 	$files = array_diff(scandir($path), array('.', '..'));
 	arsort($files);
 	return array_values($files);	

@@ -3,7 +3,7 @@ require_once 'Catalog.php';
 class Chat extends Catalog{
     public $min_level=1;
     public function getUserList(){
-	$my_id = $this->Base->svar('user_id');
+	$my_id = $this->Hub->svar('user_id');
         $sql="SELECT 
                 user_id,
                 user_login,
@@ -29,14 +29,14 @@ class Chat extends Catalog{
     private function sendPhoneSms($his_id,$msg){
         if( $his_id>0 ){
             $user_phone=$this->get_value("SELECT user_phone FROM user_list WHERE user_id='$his_id'");
-            $Utils=$this->Base->load_model('Utils');
-            $sender=$this->Base->svar('user_sign');
+            $Utils=$this->Hub->load_model('Utils');
+            $sender=$this->Hub->svar('user_sign');
            return $user_phone && $Utils->sendSms($user_phone,"$sender написал вам в чате: \n$msg");
         }
 	return false;
     }
     private function addMessage( $his_id, $msg ){
-        $my_id = $this->Base->svar('user_id');
+        $my_id = $this->Hub->svar('user_id');
         $sql="INSERT INTO
                 event_list
               SET 
@@ -55,7 +55,7 @@ class Chat extends Catalog{
 	$this->query("UPDATE event_list SET event_status='done' WHERE event_id=@undone_id;");
     }
     public function getDialog( $his_id, $limit=15 ){
-	$my_id = $this->Base->svar('user_id');
+	$my_id = $this->Hub->svar('user_id');
 	$this->query("SET @undone_id=0;");
 	$sql="
 	    SELECT * FROM (SELECT
@@ -84,7 +84,7 @@ class Chat extends Catalog{
         return ['dialog'=>$dialog,'has_new'=>$this->checkNew()];
     }
     public function checkNew(){
-	$my_id = $this->Base->svar('user_id');
+	$my_id = $this->Hub->svar('user_id');
 	$sql="SELECT 
 		COUNT(*) 
 	    FROM 

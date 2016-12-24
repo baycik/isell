@@ -8,7 +8,7 @@ class StockView extends Stock{
 	$having=$this->decodeFilterRules();
 	$out_type=$this->request('out_type');
 	
-        $blank_set=$this->Base->pref('blank_set');
+        $blank_set=$this->Hub->pref('blank_set');
 	$table=$this->listFetch($page,$rows,$parent_id,$having);
 	foreach ($table['rows'] as $row) {
             $row->product_quantity==0?$row->product_quantity='':'';
@@ -17,18 +17,18 @@ class StockView extends Stock{
 	    'tpl_files'=>$blank_set.'/StockValidation.xlsx',
 	    'title'=>"Залишки на складі",
 	    'user_data'=>[
-		'email'=>$this->Base->svar('pcomp')?$this->Base->svar('pcomp')->company_email:'',
+		'email'=>$this->Hub->svar('pcomp')?$this->Hub->svar('pcomp')->company_email:'',
 		'text'=>'Доброго дня'
 	    ],
 	    'view'=>[
-		'p'=>$this->Base->svar('pcomp'),
+		'p'=>$this->Hub->svar('pcomp'),
 		'date'=>date('d.m.Y H:i'),
-		'user_sign'=>$this->Base->svar('user_sign'),
+		'user_sign'=>$this->Hub->svar('user_sign'),
 		'cat_name'=>$this->get_value("SELECT label FROM stock_tree WHERE branch_id='{$parent_id}'"),
 		'stock'=>$table
 	    ]
 	];
-	$ViewManager=$this->Base->load_model('ViewManager');
+	$ViewManager=$this->Hub->load_model('ViewManager');
 	$ViewManager->store($dump);
 	$ViewManager->outRedirect($out_type);
     }
@@ -38,7 +38,7 @@ class StockView extends Stock{
 	$parent_id=$this->request('parent_id','int');
 	$having=$this->decodeFilterRules();
 	$out_type=$this->request('out_type');
-	$blank_set=$this->Base->pref('blank_set');
+	$blank_set=$this->Hub->pref('blank_set');
 	$table=$this->listFetch($page,$rows,$parent_id,$having);
 	foreach ($table['rows'] as $row) {
             $row->product_quantity==0?$row->product_quantity='':'';
@@ -50,18 +50,18 @@ class StockView extends Stock{
 	    'tpl_files'=>$blank_set.'/StockTable.xlsx',
 	    'title'=>"Справочник товаров",
 	    'user_data'=>[
-		'email'=>$this->Base->svar('pcomp')?$this->Base->svar('pcomp')->company_email:'',
+		'email'=>$this->Hub->svar('pcomp')?$this->Hub->svar('pcomp')->company_email:'',
 		'text'=>'Доброго дня'
 	    ],
 	    'view'=>[
-		'p'=>$this->Base->svar('pcomp'),
+		'p'=>$this->Hub->svar('pcomp'),
 		'date'=>date('d.m.Y H:i'),
-		'user_sign'=>$this->Base->svar('user_sign'),
+		'user_sign'=>$this->Hub->svar('user_sign'),
 		'cat_name'=>$this->get_value("SELECT label FROM stock_tree WHERE branch_id='{$parent_id}'"),
 		'stock'=>$table
 	    ]
 	];
-	$ViewManager=$this->Base->load_model('ViewManager');
+	$ViewManager=$this->Hub->load_model('ViewManager');
 	$ViewManager->store($dump);
 	$ViewManager->outRedirect($out_type);
     }
@@ -70,21 +70,21 @@ class StockView extends Stock{
 	$rows=$this->request('rows','int');
 	$having=$this->decodeFilterRules();
 	$out_type=$this->request('out_type');
-	$blank_set=$this->Base->pref('blank_set');
+	$blank_set=$this->Hub->pref('blank_set');
 	$dump=[
 	    'tpl_files'=>$blank_set.'/StockMovements.xlsx',
 	    'title'=>"Рух товарів",
 	    'user_data'=>[
-		'email'=>$this->Base->svar('pcomp')?$this->Base->svar('pcomp')->company_email:'',
+		'email'=>$this->Hub->svar('pcomp')?$this->Hub->svar('pcomp')->company_email:'',
 		'text'=>'Доброго дня'
 	    ],
 	    'view'=>[
 		'date'=>date('d.m.Y H:i'),
-		'user_sign'=>$this->Base->svar('user_sign'),
+		'user_sign'=>$this->Hub->svar('user_sign'),
 		'table'=>$this->movementsFetch($page,$rows,$having)
 	    ]
 	];
-	$ViewManager=$this->Base->load_model('ViewManager');
+	$ViewManager=$this->Hub->load_model('ViewManager');
 	$ViewManager->store($dump);
 	$ViewManager->outRedirect($out_type);
     }

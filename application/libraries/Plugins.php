@@ -103,9 +103,9 @@ class Plugins {
 	    try{
 		
 		//do we really need this?
-		if( isset($this->Base) ){
-		    $plugin_class_instance=new $plugin_system_name($this->Base);
-		    $plugin_class_instance->Base=$this->Base;
+		if( isset($this->Hub) ){
+		    $plugin_class_instance=new $plugin_system_name($this->Hub);
+		    $plugin_class_instance->Hub=$this->Hub;
 		} else {
 		    $plugin_class_instance=new $plugin_system_name();
 		}
@@ -116,26 +116,26 @@ class Plugins {
 	    }
 	}
     }
-    /*
-     * Get included files headers
-     */
-    private function get_plugin_headers( $plugin_system_name ){
-	$plugin_data = file_get_contents($this->plugins_dir.$plugin_system_name."/".$plugin_system_name.".php"); // Load the plugin we want
-	preg_match ('|Plugin Name:(.*)$|mi', $plugin_data, $name);
-	preg_match ('|Plugin URI:(.*)$|mi', $plugin_data, $uri);
-	preg_match ('|Version:(.*)|i', $plugin_data, $version);
-	preg_match ('|Description:(.*)$|mi', $plugin_data, $description);
-	preg_match ('|Author:(.*)$|mi', $plugin_data, $author_name);
-	preg_match ('|Author URI:(.*)$|mi', $plugin_data, $author_uri);
-	return [
-	    'plugin_name'=>isset($name[1])?$name[1]:null,
-	    'plugin_uri'=>isset($uri[1])?$uri[1]:null,
-	    'plugin_version'=>isset($version[1])?$version[1]:null,
-	    'plugin_description'=>isset($description[1])?$description[1]:null,
-	    'plugin_author'=>isset($author_name[1])?$author_name[1]:null,
-	    'plugin_author_uri'=>isset($author_uri[1])?$author_uri[1]:null
-	];
-    }
+//    /*
+//     * Get included files headers
+//     */
+//    private function get_plugin_headers( $plugin_system_name ){
+//	$plugin_data = file_get_contents($this->plugins_dir.$plugin_system_name."/".$plugin_system_name.".php"); // Load the plugin we want
+//	preg_match ('|Plugin Name:(.*)$|mi', $plugin_data, $name);
+//	preg_match ('|Plugin URI:(.*)$|mi', $plugin_data, $uri);
+//	preg_match ('|Version:(.*)|i', $plugin_data, $version);
+//	preg_match ('|Description:(.*)$|mi', $plugin_data, $description);
+//	preg_match ('|Author:(.*)$|mi', $plugin_data, $author_name);
+//	preg_match ('|Author URI:(.*)$|mi', $plugin_data, $author_uri);
+//	return [
+//	    'plugin_name'=>isset($name[1])?$name[1]:null,
+//	    'plugin_uri'=>isset($uri[1])?$uri[1]:null,
+//	    'plugin_version'=>isset($version[1])?$version[1]:null,
+//	    'plugin_description'=>isset($description[1])?$description[1]:null,
+//	    'plugin_author'=>isset($author_name[1])?$author_name[1]:null,
+//	    'plugin_author_uri'=>isset($author_uri[1])?$author_uri[1]:null
+//	];
+//    }
     /*
      * Do actions but first load needed plugins
      */
