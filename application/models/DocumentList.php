@@ -122,7 +122,7 @@ class DocumentList extends Catalog{
 	$doc_id=$this->doc('doc_id');
 	$document_entries=$this->get_list("SELECT * FROM document_entries WHERE doc_id='$doc_id'");
 	foreach($document_entries as $entry){
-	    $ok=$this->Hub->plugin_do("document".$this->doc('doc_type'),'commitEntry',[$this,$entry]);
+	    $ok=$this->Hub->plugin_do("Document".$this->doc('doc_type'),'commitEntry',[$this,$entry]);
 	    if(!$ok){
 		return false;
 	    }

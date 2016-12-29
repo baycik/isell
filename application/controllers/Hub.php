@@ -63,7 +63,7 @@ class Hub  extends CI_Controller{
 	$plugin_method=isset($args[1])?$args[1]:'index';
 	$plugin_method_args = array_slice($args, 2);
 	Plugins::instance()->Hub=$this;
-	$response=$this->plugin_do($plugin_name, $plugin_method, $plugin_method_args);
+	$response=Plugins::instance()->call_method($plugin_name, $plugin_method, $plugin_method_args);
 	$this->response($response);
     }
     public function plugin_do($plugin_name, $plugin_method, $plugin_method_args){
@@ -134,7 +134,7 @@ class Hub  extends CI_Controller{
     public function load_plugin( $plugin_name ){
 	require_once "application/plugins/$plugin_name/$plugin_name.php";
 	$Plugin=new $plugin_name();
-	$Plugin->Base=$this;
+	$Plugin->Hub=$this;
 	return $Plugin;
     }
     
