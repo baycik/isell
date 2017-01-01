@@ -1,6 +1,6 @@
 <?php
 
-class Catalog extends CI_Model {
+abstract class Catalog extends CI_Model {
     public $min_level=1;
     protected function check( &$var, $type=null ){
 	switch( $type ){

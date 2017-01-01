@@ -1,19 +1,22 @@
 <?php
-require_once 'Catalog.php';
-class DocumentList extends Catalog{
-    private $doc_id=null;
-    private $document_properties=null;
-    private function documentSelect( $doc_id ){
+/*
+ * This class is a base class for all v5+ document handling classes
+ */
+//require_once 'Catalog.php';
+abstract class DocumentBase extends Catalog{
+    protected $doc_id=null;
+    protected $document_properties=null;
+    protected function documentSelect( $doc_id ){
 	$this->doc_id=$doc_id;
 	unset($this->document_properties);
     }
-    private function documentFlush(){
+    protected function documentFlush(){
 	if( !$this->document_properties ){
 	    throw new Exception("Can't flush properties because they are not loaded");
 	}
 	return $this->update('document_list',$this->document_properties,['doc_id'=>$this->document_properties->doc_id]);
     }
-    private function doc($field=null,$value=null){
+    protected function doc($field=null,$value=null){
 	if( !isset($this->document_properties) ){
 	    if( !$this->doc_id ){
 		throw new Exception("Can't use properties because Document is not selected");
@@ -62,7 +65,7 @@ class DocumentList extends Catalog{
 	do_action("document_{$new_document['doc_type']}_created",$new_doc_id);
 	return $new_doc_id;
     }
-    private function documentGetPrevious($acomp_id,$pcomp_id){
+    protected function documentGetPrevious($acomp_id,$pcomp_id){
 	$sql="SELECT 
 		* 
 	    FROM 
@@ -75,7 +78,7 @@ class DocumentList extends Catalog{
 	    ORDER BY cstamp DESC LIMIT 1";
 	return 	$this->get_row($sql);
     }
-    private function documentNumNext($acomp_id,$doc_type){
+    protected function documentNumNext($acomp_id,$doc_type){
 	$sql="SELECT 
 		MAX(doc_num)+1 
 	    FROM 
@@ -112,13 +115,13 @@ class DocumentList extends Catalog{
 	$this->documentFlush();
 	$this->query("COMMIT");
     }
-    private function documentChangeCommit( $make_commited=false ){
+    protected function documentChangeCommit( $make_commited=false ){
 	if( $make_commited==false && !$this->doc('is_commited') ){
 	    $this->documentDelete();//if doc is uncommited then delete it
 	}
 	
     }
-    private function documentCommitEntries(){
+    protected function documentCommitEntries(){
 	$doc_id=$this->doc('doc_id');
 	$document_entries=$this->get_list("SELECT * FROM document_entries WHERE doc_id='$doc_id'");
 	foreach($document_entries as $entry){
@@ -133,10 +136,10 @@ class DocumentList extends Catalog{
     
     
     
-    private function documentUpdateRatio( $new_ratio ){
+    protected function documentUpdateRatio( $new_ratio ){
 	
     }
-    private function documentDelete(){
+    protected function documentDelete(){
 	//do_action("document".$this->doc('doc_type')."_before_delete",$doc_id);
 	$doc_id=$this->doc('doc_id');
 	$this->query("START TRANSACTION");

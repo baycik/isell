@@ -46,10 +46,18 @@ class ReportManager extends Catalog {
 	show_error('X-isell-error: Form not found!', 500);
     }
     
+    
+    private function load_report( $plugin_name ){
+	require_once "application/plugins/$plugin_name/$plugin_name.php";
+	$Plugin=new $plugin_name();
+	$Plugin->Hub=$this->Hub;
+	return $Plugin;
+    }
+    
     public function formSubmit( $report_id=null ){
 	$this->current_info=$this->infoGet($report_id);
 	$tpl_files=isset($this->current_info['template'])?$this->current_info['template']:$this->current_info['report_id'].'.xlsx';
-	$Plugin=$this->Hub->load_plugin($report_id);
+	$Plugin=$this->load_report($report_id);
 	$dump=[
 	    'tpl_files_folder'=>"../plugins/{$this->current_info['report_id']}/",
 	    'tpl_files'=>$tpl_files,

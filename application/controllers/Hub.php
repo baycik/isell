@@ -1,38 +1,91 @@
 <?php
 set_include_path('.'.PATH_SEPARATOR.'application/');
+spl_autoload_register(function ($class_name) {
+    require_once 'models/'.$class_name . '.php';
+});
+
+
+
 include 'libraries/Plugins.php';
-
-
 date_default_timezone_set('Europe/Kiev');
+
+
 class Hub  extends CI_Controller{
+    public $level_names=["Нет доступа","Ограниченный","Менеджер","Бухгалтер","Администратор"];
+    private $rtype='OK';
+    private $msg='';
+    function __construct(){
+	session_set_cookie_params(36000, '/');
+	session_name('baycikSid' . BAY_COOKIE_NAME);
+	session_start();
+	parent::__construct();
+    }
     public function index(){
 	include "index.html";
     }
     
+//    public function on1( $model, $method='index' ){
+//	if( !$model ){
+//	    show_error('X-isell-error: Model is not set!', 500);
+//	}
+//	try {
+//	    $this->load_model($model);
+//	    $Model=$this->{$model};
+//	    $method_config=$method;
+//	    if( isset($Model->$method_config) ){
+//		/*input config array is exists*/
+//		$this->load_model('Catalog');
+//		$method_args=[];
+//		foreach( $Model->$method_config as $var_name=>$var_type ){
+//		    $method_args[]=$this->Catalog->request($var_name,$var_type);
+//		}
+//	    } else {
+//		$method_args = array_map("rawurldecode",array_slice(func_get_args(), 2));
+//	    }
+//	    $response=call_user_func_array([$Model, $method],$method_args);
+//	    $this->response($response);
+//	} catch (Exception $ex) {
+//	    show_error("X-isell-error: Such module function '$model->$method' not found or other error occured!", 500);
+//	}
+//    }
+    
     public function on( $model, $method='index' ){
-	if( !$model ){
-	    show_error('X-isell-error: Model is not set!', 500);
-	}
-	try {
-	    $this->load_model($model);
-	    $Model=$this->{$model};
-	    $method_config=$method;
-	    if( isset($Model->$method_config) ){
-		/*input config array is exists*/
-		$this->load_model('Catalog');
-		$method_args=[];
-		foreach( $Model->$method_config as $var_name=>$var_type ){
-		    $method_args[]=$this->Catalog->request($var_name,$var_type);
-		}
-	    } else {
-		$method_args = array_map("rawurldecode",array_slice(func_get_args(), 2));
+	$route="$model/$method";
+	$route_args =array_slice(func_get_args(), 2);
+	$trigger_before=$this->svar('trigger_before');
+	if($trigger_before[$route]){
+	    foreach($trigger_before[$route] as $model_override){
+		$this->execute($model_override, $method, $route_args);
 	    }
-	    $response=call_user_func_array([$Model, $method],$method_args);
+	}
+	$this->execute($model, $method, $route_args);
+    }
+    private function execute( $model, $method, $route_args ){
+	$Model=$this->load_model($model);
+	$method_args=$this->parseMethodArguments($Model->$method, $route_args);
+	
+	$response=call_user_func_array([$Model, $method],$method_args);
+	if( !is_null($response) ){
 	    $this->response($response);
-	} catch (Exception $ex) {
-	    show_error("X-isell-error: Such module function '$model->$method' not found or other error occured!", 500);
 	}
     }
+    private function parseMethodArguments($method_args_config,$route_args){
+	if( isset($method_args_config) ){
+	    $method_args=[];
+	    foreach( $method_args_config as $var_name=>$var_type ){
+		if( is_numeric($var_name) && $route_args[$var_name] ){
+		    $arg_value=rawurldecode($route_args[$var_name]);
+		    $this->check($arg_value, $var_type);
+		    $method_args[]=$arg_value;
+		} else {
+		    $method_args[]=$this->request($var_name,$var_type);
+		}
+	    }	    
+	} 
+	$method_args=array_map("rawurldecode",array_slice(func_get_args(), 2));//this behavior is deprecated
+	return $method_args;
+    }
+    
     
     public function page( $parent_folder=null ){
 	if( $parent_folder=='plugins' ){
@@ -65,11 +118,36 @@ class Hub  extends CI_Controller{
 	Plugins::instance()->Hub=$this;
 	$response=Plugins::instance()->call_method($plugin_name, $plugin_method, $plugin_method_args);
 	$this->response($response);
+    }    
+    public function pluginInitTriggers(){
+	$before=[];
+	$after=[];
+	$active_plugin_triggers=$this->get_list("SELECT 
+		plugin_system_name,trigger_before,trigger_after 
+	    FROM 
+		plugin_list 
+	    WHERE 
+		is_activated AND (trigger_before IS NOT NULL OR trigger_after IS NOT NULL)");
+	foreach($active_plugin_triggers as $trigger){
+	    if( $trigger->trigger_before ){
+		$this->pluginParseTriggers($before, $trigger->trigger_before, $trigger->plugin_system_name);
+	    }
+	    if( $trigger->trigger_after ){
+		$this->pluginParseTriggers($after, $trigger->trigger_after, $trigger->plugin_system_name);
+	    }
+	}
+	$this->Hub->svar('trigger_before',$before);
+	$this->Hub->svar('trigger_after',$after);
     }
-    public function plugin_do($plugin_name, $plugin_method, $plugin_method_args){
-	return Plugins::instance()->call_method($plugin_name, $plugin_method, $plugin_method_args);
+    private function pluginParseTriggers( &$registry, $triggers, $plugin_system_name ){
+	$trigger_list=explode(',',$triggers);
+	foreach($trigger_list as $trigger){
+	    if( !isset($registry[$trigger]) ){
+		$registry[$trigger]=[];
+	    }
+	    $registry[$trigger]=$plugin_system_name;
+	}
     }
-    
     /*
      * bridgeLoad function to load and use legacy iSell2 class files
      */
@@ -88,15 +166,6 @@ class Hub  extends CI_Controller{
      * 
      */
 
-    public $level_names=["Нет доступа","Ограниченный","Менеджер","Бухгалтер","Администратор"];
-    private $rtype='OK';
-    private $msg='';
-    function __construct(){
-	session_set_cookie_params(36000, '/');
-	session_name('baycikSid' . BAY_COOKIE_NAME);
-	session_start();
-	parent::__construct();
-    }
     public function acomp($name){/*@TODO move to lazy loading of pcomp/acomp in v4.0*/
 	$acomp=$this->svar('acomp');
 	return isset($acomp->$name)?$acomp->$name:NULL;
@@ -131,13 +200,6 @@ class Hub  extends CI_Controller{
 	return $this->{$name};
     }
     
-    public function load_plugin( $plugin_name ){
-	require_once "application/plugins/$plugin_name/$plugin_name.php";
-	$Plugin=new $plugin_name();
-	$Plugin->Hub=$this;
-	return $Plugin;
-    }
-    
     public function set_level($allowed_level) {
 	if ($this->svar('user_level') < $allowed_level) {
 	    if ($this->svar('user_level') == 0) {
@@ -149,6 +211,46 @@ class Hub  extends CI_Controller{
 		$this->response(0);
 	    }
 	}
+    }
+    private function check( &$var, $type=null ){
+	switch( $type ){
+	    case 'raw':
+		break;
+	    case 'int':
+		$var=(int) $var;
+		break;
+	    case 'double':
+		$var=(float) $var;
+		break;
+	    case 'bool':
+		$var=(bool) $var;
+		break;
+	    case 'escape':
+		$var=$this->db->escape($var);
+		break;
+	    case 'string':
+                $var=  addslashes( $var );
+                break;
+	    case 'json':
+                $var= json_decode( $var ,true);
+                break;
+	    default:
+		if( $type ){
+		    $matches=[];
+		    preg_match('/'.$type.'/u', $var, $matches);
+		    $var=  isset($matches[0])?$matches[0]:null;
+		} else {
+		    $var=  addslashes( $var );
+		}
+	}
+    }
+    public function request( $name, $type=null, $default=null ){
+	$value=$this->input->get_post($name);
+	if( $value!==null ){
+	    $this->check($value,$type);
+	    return $value;
+	}
+	return $default;
     }
     
     public function kick_out() {

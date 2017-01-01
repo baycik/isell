@@ -18,24 +18,29 @@ class User extends Catalog {
 	$pass_hash = md5($pass);
 	$user_data = $this->get_row("SELECT * FROM user_list WHERE user_login='$login' AND user_pass='$pass_hash'");
 	if ($user_data && $user_data->user_id) {
-	    $this->Hub->svar('user_id', $user_data->user_id);
-	    $this->Hub->svar('user_level', $user_data->user_level);
-	    $this->Hub->svar('user_level_name', $this->Hub->level_names[$user_data->user_level]);
-	    $this->Hub->svar('user_login', $user_data->user_login);
-	    $this->Hub->svar('user_sign', $user_data->user_sign);
-	    $this->Hub->svar('user_position', $user_data->user_position);
-            $this->Hub->svar('user_assigned_stat',$user_data->user_assigned_stat);
-            $this->Hub->svar('user_assigned_path',$user_data->user_assigned_path);
-            
-            $Company=$this->Hub->load_model("Company");
-	    if( $user_data->company_id ){
-		$Company->selectActiveCompany($user_data->company_id);
-	    } else {
-		$Company->switchActiveCompany();
-	    }
+	    $this->initLoggedUser($user_data);
 	    return $this->getUserData();
 	}
 	return false;
+    }
+    
+    private function initLoggedUser($user_data){
+	$this->Hub->svar('user_id', $user_data->user_id);
+	$this->Hub->svar('user_level', $user_data->user_level);
+	$this->Hub->svar('user_level_name', $this->Hub->level_names[$user_data->user_level]);
+	$this->Hub->svar('user_login', $user_data->user_login);
+	$this->Hub->svar('user_sign', $user_data->user_sign);
+	$this->Hub->svar('user_position', $user_data->user_position);
+	$this->Hub->svar('user_assigned_stat',$user_data->user_assigned_stat);
+	$this->Hub->svar('user_assigned_path',$user_data->user_assigned_path);
+
+	$Company=$this->Hub->load_model("Company");
+	if( $user_data->company_id ){
+	    $Company->selectActiveCompany($user_data->company_id);
+	} else {
+	    $Company->switchActiveCompany();
+	}
+	$this->Hub->pluginInitTriggers();
     }
     public function SignOut(){
         $_SESSION = array();
@@ -61,12 +66,6 @@ class User extends Catalog {
 	    }
 	}
 	return $alowed;
-    }
-    private function initLoggedUser($user_data){
-	$Company=$this->Hub->load_model("Company");
-	$Company->selectActiveCompany($user_data->company_id);
-        $this->Hub->svar('user_assigned_stat',$user_data->user_assigned_stat);
-        $this->Hub->svar('user_assigned_path',$user_data->user_assigned_path);
     }
     public function userFetch(){
 	$user_id = $this->Hub->svar('user_id');
