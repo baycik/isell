@@ -50,11 +50,10 @@ class Hub  extends CI_Controller{
 //    }
     
     public function on( $model, $method='index' ){
-	$route="$model/$method";
 	$route_args =array_slice(func_get_args(), 2);
 	$trigger_before=$this->svar('trigger_before');
-	if($trigger_before[$route]){
-	    foreach($trigger_before[$route] as $model_override){
+	if( $trigger_before[$model] ){
+	    foreach($trigger_before[$model] as $model_override){
 		$this->execute($model_override, $method, $route_args);
 	    }
 	}
