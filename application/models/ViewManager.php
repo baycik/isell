@@ -35,7 +35,8 @@ class ViewManager extends CI_Model{
     }
     public function out( $out_type='.print', $header_mode='send_headers' ){
 	if( $this->dump ){
-	    $FileEngine=$this->Hub->load_model('FileEngine');
+	    $this->load->library('FileEngine');
+	    $FileEngine=new FileEngine();
 	    if( isset($this->dump->tpl_files_folder) ){
 		$FileEngine->tpl_files_folder=$this->dump->tpl_files_folder;
 	    }

@@ -14,6 +14,6 @@
  */
 class DocumentSell extends DocumentBase{
     public function index(){
-	
+	echo 'hello';
     }
 }

@@ -1,13 +1,13 @@
 <?php
-set_include_path('.'.PATH_SEPARATOR.'application/');
-spl_autoload_register(function ($class_name) {
-    require_once 'models/'.$class_name . '.php';
-});
-
-
-
-include 'libraries/Plugins.php';
 date_default_timezone_set('Europe/Kiev');
+//set_include_path('.'.PATH_SEPARATOR.'application/');
+spl_autoload_register(function ($class_name) {
+    $filename=APPPATH.'models/'.$class_name . '.php';
+    if( file_exists($filename) ){
+	require_once $filename;
+    }
+});
+include APPPATH.'libraries/Plugins.php';
 
 
 class Hub  extends CI_Controller{
@@ -49,25 +49,26 @@ class Hub  extends CI_Controller{
 //	}
 //    }
     
-    public function on( $model, $method='index' ){
+    public function on( $model_name, $method='index' ){
 	$route_args =array_slice(func_get_args(), 2);
-	$trigger_before=$this->svar('trigger_before');
-	if( $trigger_before[$model] ){
-	    foreach($trigger_before[$model] as $model_override){
-		$this->execute($model_override, $method, $route_args);
+	$this->pluginTrigger($model_name,$method,$route_args);
+	$this->execute($model_name, $method, $route_args);
+    }
+    
+    private function execute( $model_name, $method, $route_args ){
+	try{
+	    $Model=$this->load_model($model_name);
+	    $method_args_config=isset($Model->$method)?$Model->$method:NULL;
+	    $method_args=$this->parseMethodArguments($method_args_config, $route_args);
+	    $response=call_user_func_array([$Model, $method],$method_args);
+	    if( !is_null($response) ){
+		$this->response($response);
 	    }
-	}
-	$this->execute($model, $method, $route_args);
-    }
-    private function execute( $model, $method, $route_args ){
-	$Model=$this->load_model($model);
-	$method_args=$this->parseMethodArguments($Model->$method, $route_args);
-	
-	$response=call_user_func_array([$Model, $method],$method_args);
-	if( !is_null($response) ){
-	    $this->response($response);
+	} catch(Exception $e){
+	    show_error("X-isell-error: ".$e->getMessage(), 500);
 	}
     }
+
     private function parseMethodArguments($method_args_config,$route_args){
 	if( isset($method_args_config) ){
 	    $method_args=[];
@@ -81,10 +82,9 @@ class Hub  extends CI_Controller{
 		}
 	    }	    
 	} 
-	$method_args=array_map("rawurldecode",array_slice(func_get_args(), 2));//this behavior is deprecated
+	$method_args=array_map("rawurldecode",$route_args);//this behavior is deprecated
 	return $method_args;
     }
-    
     
     public function page( $parent_folder=null ){
 	if( $parent_folder=='plugins' ){
@@ -121,13 +121,14 @@ class Hub  extends CI_Controller{
     public function pluginInitTriggers(){
 	$before=[];
 	$after=[];
-	$active_plugin_triggers=$this->get_list("SELECT 
+	$sql="SELECT 
 		plugin_system_name,trigger_before,trigger_after 
 	    FROM 
 		plugin_list 
 	    WHERE 
-		is_activated AND (trigger_before IS NOT NULL OR trigger_after IS NOT NULL)");
-	foreach($active_plugin_triggers as $trigger){
+		is_activated AND (trigger_before IS NOT NULL OR trigger_after IS NOT NULL)";
+	$active_plugin_triggers=$this->db->query($sql);
+	foreach( $active_plugin_triggers->result() as $trigger ){
 	    if( $trigger->trigger_before ){
 		$this->pluginParseTriggers($before, $trigger->trigger_before, $trigger->plugin_system_name);
 	    }
@@ -135,8 +136,9 @@ class Hub  extends CI_Controller{
 		$this->pluginParseTriggers($after, $trigger->trigger_after, $trigger->plugin_system_name);
 	    }
 	}
-	$this->Hub->svar('trigger_before',$before);
-	$this->Hub->svar('trigger_after',$after);
+	$active_plugin_triggers->free_result();
+	$this->svar('trigger_before',$before);
+	$this->svar('trigger_after',$after);
     }
     private function pluginParseTriggers( &$registry, $triggers, $plugin_system_name ){
 	$trigger_list=explode(',',$triggers);
@@ -145,6 +147,17 @@ class Hub  extends CI_Controller{
 		$registry[$trigger]=[];
 	    }
 	    $registry[$trigger]=$plugin_system_name;
+	}
+    }
+    private function pluginTrigger($model_name,$method,$route_args){
+	$trigger_before=$this->svar('trigger_before');
+	$model_override=$trigger_before[$model_name];
+	if( $model_override ){
+	    $this->load->add_package_path(APPPATH.'plugins/'.$model_override, FALSE);
+	    if( $model_override===$model_name ){//if plugin ovverides it self then adding package is enough
+		return false;
+	    }
+	    $this->execute($model_override, $method, $route_args);
 	}
     }
     /*

@@ -1,6 +1,6 @@
 <?php
 error_reporting(E_ERROR | E_WARNING | E_PARSE);
-class FileEngine extends CI_Model {
+class FileEngine{
     private $conversion_table = [
 	'.html' => ['.doc' => 'Word Документ','.html' => 'Веб Страница'],
 	'.xlsx' => ['.xlsx' => 'Excel', '.xls' => 'Excel 2003', '.html' => 'Веб Страница'],
@@ -18,7 +18,6 @@ class FileEngine extends CI_Model {
     public $file_name_override;
     public $tplModifier;
     public $tpl_files_folder='rpt/';
-    
     
     private function header($text){
         if( $this->header_mode==='send_headers' ){
