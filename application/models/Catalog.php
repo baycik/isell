@@ -98,7 +98,7 @@ abstract class Catalog extends CI_Model {
     protected function create($table,$data) {
 	$this->db->insert($table, $data);
 	$newid=$this->db->insert_id();
-	$ok=!!$this->db->affected_rows();
+	$ok=$this->db->affected_rows()>0;
         $this->check_error();
 	return $newid?$newid:$ok;
     }

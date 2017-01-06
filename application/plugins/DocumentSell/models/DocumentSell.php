@@ -16,4 +16,7 @@ class DocumentSell extends DocumentBase{
     public function index(){
 	echo 'hello';
     }
+    public function documentAdd( $doc_type ){
+	return parent::documentAdd('sell');
+    }
 }

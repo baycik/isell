@@ -1,4 +1,5 @@
 [
+    {"level":"1","name":"MTrade","icon":"trade.png","label":"Торговля"},
     {"level":"1","name":"Trade","icon":"trade.png","label":"Торговля"},
     {"level":"3","name":"Accounts","icon":"accounts.png","label":"Бухгалтерия"},
     {"level":"1","name":"Stock","icon":"stock.png","label":"Товары"},

@@ -8,7 +8,6 @@
  * Author: baycik 2016
  * Author URI: http://isellsoft.com
  */
-include 'models/Catalog.php';
 class Stock_price_list extends Catalog{
     function __construct(){
 	add_action( 'stock_add_tab', function(){

@@ -2,7 +2,6 @@
 /*
  * This class is a base class for all v5+ document handling classes
  */
-//require_once 'Catalog.php';
 abstract class DocumentBase extends Catalog{
     protected $doc_id=null;
     protected $document_properties=null;
@@ -29,9 +28,7 @@ abstract class DocumentBase extends Catalog{
 	return isset($this->document_properties->$field)?$this->document_properties->$field:null;
     }
     
-    
-    public $documentAdd=['doc_type'=>'string'];
-    public function documentAdd( $doc_type ){
+    protected function documentAdd( $doc_type ){
 	$this->Hub->set_level(1);
 	$user_id=$this->Hub->svar('user_id');
 	$acomp_id=$this->Hub->acomp('company_id');
@@ -62,7 +59,6 @@ abstract class DocumentBase extends Catalog{
 	}
 	$new_document['doc_num']=$this->documentNumNext($acomp_id,$doc_type);
 	$new_doc_id=$this->create('document_list', $new_document);
-	do_action("document_{$new_document['doc_type']}_created",$new_doc_id);
 	return $new_doc_id;
     }
     protected function documentGetPrevious($acomp_id,$pcomp_id){
@@ -95,52 +91,35 @@ abstract class DocumentBase extends Catalog{
     public function documentUpdate($doc_id,$field,$value){
 	$this->Hub->set_level(2);
 	$this->documentSelect($doc_id);
+	$ok=true;
 	$this->query("START TRANSACTION");
 	switch($field){
 	    case 'is_commited':
-		$this->documentChangeCommit( (bool) $value );
+		$ok=$this->documentChangeCommit( (bool) $value );
 	    case 'notcount':
-		$this->transChangeNotcount((bool) $value );
+		$ok=$this->transChangeNotcount((bool) $value );
 	    case 'use_vatless_price':
 	    case 'doc_ratio':
-		$this->transChangeCurrRatio( $value );
+		$ok=$this->transChangeCurrRatio( $value );
 	    case 'vat_rate':
-		$this->transChangeVatRate( $value );
+		$ok=$this->transChangeVatRate( $value );
 	    case 'doc_num':
 		if( !is_int($value) ){
 		    return false;
 		}
 	}
+	if( !$ok ){
+	    return false;
+	}
 	$this->doc($field,$value);
 	$this->documentFlush();
 	$this->query("COMMIT");
-    }
-    protected function documentChangeCommit( $make_commited=false ){
-	if( $make_commited==false && !$this->doc('is_commited') ){
-	    $this->documentDelete();//if doc is uncommited then delete it
-	}
-	
-    }
-    protected function documentCommitEntries(){
-	$doc_id=$this->doc('doc_id');
-	$document_entries=$this->get_list("SELECT * FROM document_entries WHERE doc_id='$doc_id'");
-	foreach($document_entries as $entry){
-	    $ok=$this->Hub->plugin_do("Document".$this->doc('doc_type'),'commitEntry',[$this,$entry]);
-	    if(!$ok){
-		return false;
-	    }
-	}
 	return true;
     }
-    
-    
-    
-    
     protected function documentUpdateRatio( $new_ratio ){
 	
     }
     protected function documentDelete(){
-	//do_action("document".$this->doc('doc_type')."_before_delete",$doc_id);
 	$doc_id=$this->doc('doc_id');
 	$this->query("START TRANSACTION");
 	$this->delete('document_entries',['doc_id'=>$doc_id]);
@@ -149,5 +128,37 @@ abstract class DocumentBase extends Catalog{
 	$ok=$this->delete('document_list',['doc_id'=>$doc_id,'is_commited'=>0]);
 	$this->query("COMMIT");
 	return $ok;
+    }
+    /*
+     * Commits and uncommit document
+     */
+    protected function documentChangeCommit( $make_commited=false ){
+	if( $make_commited ){//It is needed to commit document
+	    if($this->doc('is_commited')){
+		return true;
+	    }
+	    return $this->documentCommitEntries();
+	} else {
+	    if( !$this->doc('is_commited') ){//if doc is uncommited then delete it
+		return $this->documentDelete();
+	    }
+	    return $this->documentUncommitEntries();
+	}
+    }
+    protected function documentCommitEntries(){
+	$doc_id=$this->doc('doc_id');
+	$document_entries=$this->get_list("SELECT * FROM document_entries WHERE doc_id='$doc_id'");
+	foreach($document_entries as $entry){
+	    if(!$this->entryCommit($entry)){
+		return false;
+	    }
+	}
+	return true;
+    }
+    
+    
+    
+    protected function entryCommit($entry){
+	return false;
     }
 }
