@@ -416,6 +416,232 @@ Mark.pipes.format = function (str) {
 };
 
 
+	    App.user = {
+		props: {},
+		signedIn:false,
+		getData: function () {
+		    App.get("User/getUserData", function (resp) {
+			App.user.setProps( App.json(resp) );
+		    });
+		},
+		setProps:function( userProps ){
+		    App.user.props=userProps;
+		    App.user.setActiveCompany(userProps.acomp,'notify_init');
+		    App.user.setPassiveCompany(userProps.pcomp,'notify_init');
+		    if( userProps && userProps.user_level>0 ){
+			App.renderTpl('div_user_panel', App.user.props || '');	
+			App.renderTpl('div_module_list', App.user.props || '');
+			this.signedIn=true;
+			this.loginFormHide();
+			App.module.init();
+		    } else {
+			this.signedIn=false;
+			this.loginFormShow();
+		    }
+		},
+		getLevel:function(){
+		    return App.user.props && App.user.props.user_level>0?App.user.props.user_level:0;
+		},
+		signIn: function () {
+		    var user_login=$("#user_login").val();
+		    var user_pass=$("#user_pass").val();
+		    App.post("User/SignIn",{login:user_login,pass:user_pass},function(resp){
+			var props=App.json(resp);
+			if( props ){
+			    $("#SeqDialogMsg").html("");
+			    App.user.setProps( props );
+			} else {
+			    $("#SeqDialogMsg").html("Логин или пароль не верны!").css('color','red').css('font-size','14px');
+			}
+		    });
+		},
+		signOut: function () {
+		    App.get("User/SignOut");
+		    this.setProps({});
+		},
+                edit:function(){
+                    App.post("User/userFetch",function(resp){
+                        var props=App.json(resp);
+                        App.user.promptEditor(props);
+                    });
+                },
+                promptEditor:function( user ){
+                    App.loadWindow('page/dialog/user_edit',user).progress(function(status,user_data){
+                        if( status==='submit' ){
+                            App.post("User/save",user_data,function(ok){
+                                if( ok*1 ){
+                                    App.user.getData();
+                                    App.flash("Свойства пользователя сохранены");
+                                } else {
+                                    if( ok==='LAST_ADMIN' ){
+                                        alert("Должен остаться хотя бы один администратор.");
+                                    }
+                                    App.flash("Свойства пользователя не изменены");
+                                }
+                            });
+                        }
+                    });
+                },
+                loginFormShow: function () {
+		    $("#loginScreen,#loginOverlay").show();
+		    $("#user_login").focus();
+		},
+		loginFormHide: function () {
+		    $("#loginScreen,#loginOverlay").hide();
+		},
+                acompSwitch:function(){
+                    App.get("Company/switchActiveCompany",function(resp){
+                        var company=App.json(resp);
+			App.user.setActiveCompany(company);
+                    });
+                },
+		pcompSelectionDialog:function(){
+		    App.loadWindow('page/company/tree',{}).progress(function(status,comp){
+			if( status==='select' ){
+			    App.user.pcompSelect(comp);
+			}
+		    });
+		},
+		pcompSelect: function ( company ) {
+		    if ( company.company_id ) {
+			if( App.pcomp && App.pcomp.company_id===company.company_id ){
+			    return;
+			}
+			App.post('Company/selectPassiveCompany/' + company.company_id, function (xhr) {
+			    App.user.setPassiveCompany(App.json(xhr));
+			});
+		    }
+		},
+		setPassiveCompany:function( company, mode ){
+                    var old_pcomp_id=App.pcomp?App.pcomp.company_id:0;
+		    App.pcomp=company;
+		    if( company ){
+                        if( company.company_id===old_pcomp_id ){
+                            App.handler.notify('passiveCompanyReloaded',company);
+                            return;
+                        }
+			if( mode==='notify_init' ){
+			    App.handler.notify('passiveCompanyInited',company);
+                            return;
+			}
+			App.handler.notify('passiveCompanySelected',company);
+		    } else {
+			App.handler.notify('passiveCompanyReset');
+		    }
+		},
+		setActiveCompany:function( company, mode ){
+                    var old_acomp_id=App.acomp?App.acomp.company_id:0;
+		    App.acomp=company;
+		    if( company ){
+                        if( company.company_id===old_acomp_id ){
+                            App.handler.notify('activeCompanyReloaded',company);
+                            return;
+                        }
+			setTimeout(function(){
+			    App.loadBg();
+			},0);
+			if( mode==='notify_init' ){
+			    App.handler.notify('activeCompanyInited',company);
+                            return;
+			}
+			App.handler.notify('activeCompanySelected',company);
+		    } else {
+			App.handler.notify('activeCompanyReset');
+		    }
+		}
+	    };
+	    App.handler.progress(function(status){
+		console.log(status);
+	    });
+	    
+	    App.module={
+		init:function(){
+		    $(window).bind( 'hashchange', function(e) {
+			App.module.load(location.hash.substring(1));
+		    });
+		    if( !location.hash ){
+			location.hash="#"+App.user.props.module_list[0].name;
+		    }
+		    App.module.load(location.hash.substring(1));
+		},
+		load:function(name){
+		    if( this.current === name ){
+			return false;
+		    }
+		    //$("#holder"+this.current).hide();
+                    $("#holder"+this.current).css('height','0px');
+                    $("#holder"+this.current).css('overflow','hidden');
+		    this.current=name;
+		    var holder=$("#holder"+this.current);
+		    if( !holder.length ){
+			$("#ModuleContainer").append('<div id="holder' + this.current + '"></div>');
+			holder=$("#holder"+this.current);
+		    }
+		    //holder.show();
+                    holder.css('height','auto');
+		    this.loadHTML(holder);
+		    this.findTitle();
+		    this.selectButton();
+		},
+		loadHTML:function(holder){
+		    var url="page/"+this.current+"/"+this.current+"_main.html";
+		    if( !holder.html() ){
+			holder.load(url,function(){
+			    App.module.initHTML();
+			});
+		    }	
+		},
+		initHTML:function(){
+		    setTimeout(function(){
+			App.module.parseHTML();
+			$("#holder"+this.current).find("script").each(function() { eval(this.text);} );
+			window[App.module.current + 'Js'] && window[App.module.current + 'Js'].init && window[App.module.current + 'Js'].init(); 		    
+		    },0);
+		},
+		parseHTML:function(){
+		    $.parser.parse("#holder"+App.module.current);//for easy ui   
+		},
+		findTitle:function(){
+		    App.user.props.module_list.forEach(function(item){
+			if( item.name===App.module.current ){
+			    App.setTitle(item.label);
+			    return false;
+			}
+		    });
+		},
+		selectButton:function(){
+		    $(".ModuleButtonSelected").removeClass("ModuleButtonSelected");
+		    $("#"+this.current+"Button").addClass("ModuleButtonSelected");
+		}
+	    };
+	    App.onReady = function () {
+		App.user.getData();
+                App.handler.progress(function(status){
+                    if( status==='passiveCompanySelected' || status==='activeCompanySelected' ){
+                        App.setTitle();
+                    }
+                });
+	    };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 $.extend($.fn.datagrid.defaults, {
     ctrlSelect:true,
