@@ -1,14 +1,24 @@
-function SlickWrapper(settings){
+function SlickWrapper(node,settings){
     this.loaded=false;
-    this.id=settings.id;
+    this.node=node;
     this.data = settings.data;
     this.columns=settings.columns;
     this.options=settings.options;
+    this.scriptsLoad();
+};
+$.fn.slickgrid=function(settings){
+    return new SlickWrapper(this,settings);
+};
+SlickWrapper.prototype.scriptsLoad=function(){
+    var wrapper=this;
+    $("body").append("<div id='slickscriptloader'></div>");
+    $("#slickscriptloader").load('js/slick/scriptloader.html', function() {
+	wrapper.init();
+    });
 };
 
 SlickWrapper.prototype.init=function(){
-    this.grid=new Slick.Grid(this.id, this.data, this.columns, this.options);
-    return this.grid;
+    this.grid=new Slick.Grid(this.node, this.data, this.columns, this.options);
 };
 SlickWrapper.prototype.initLoader=function(){
     var grid=this.grid;
