@@ -1,0 +1,38 @@
+<script src="js/slick/jquery.event.drag-2.3.0.js"></script>
+<script src="js/slick/slick.core.js"></script>
+<script src="js/slick/slick.grid.js"></script>
+<script src="js/slick/plugins/slick.rowselectionmodel.js"></script>
+
+
+<div id="myGrid" style="width:600px;height:500px;"></div>
+
+<script>
+    var data = [];
+    for (var i = 0; i < 500; i++) {
+      data[i] = {
+        title: "Task " + i,
+        duration: "5 days",
+        percentComplete: Math.round(Math.random() * 100),
+        start: "01/01/2009",
+        finish: "01/05/2009",
+        effortDriven: (i % 5 === 0)
+      };
+    }   
+    
+    var docList=new SlickWrapper();
+    docList.columns=[
+	{id: "title", name: "Title", field: "title"},
+	{id: "duration", name: "Duration", field: "duration"},
+	{id: "%", name: "% Complete", field: "percentComplete"},
+	{id: "start", name: "Start", field: "start"},
+	{id: "finish", name: "Finish", field: "finish"},
+	{id: "effort-driven", name: "Effort Driven", field: "effortDriven"}
+    ];
+    docList.options={
+	enableCellNavigation: true,
+	enableColumnReorder: false
+    };
+    docList.data=data;
+    docList.init("#myGrid");
+    docList.grid.setSelectionModel(new Slick.RowSelectionModel());
+</script>

@@ -551,7 +551,7 @@ Mark.pipes.format = function (str) {
 		}
 	    };
 	    App.handler.progress(function(status){
-		console.log(status);
+		//console.log(status);
 	    });
 	    
 	    App.module={
