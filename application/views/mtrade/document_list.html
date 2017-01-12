@@ -2,32 +2,27 @@
 
 <script>
     var data = [];
-    for (var i = 0; i < 500; i++) {
-      data[i] = {
-        title: "Task " + i,
-        duration: "5 days",
-        percentComplete: Math.round(Math.random() * 100),
-        start: "01/01/2009",
-        finish: "01/05/2009",
-        effortDriven: (i % 5 === 0)
-      };
-    }   
+    var columns = [
+        {id: "mpn", name: "MPN", field: "mpn", formatter: mpnFormatter, width: 100, sortable: true },
+        {id: "brand", name: "Brand", field: "brand.name", formatter: brandFormatter, width: 100, sortable: true },
+        {id: "short_description", name: "Description", field: "short_description", width: 520 },
+    ];
+    var mpnFormatter = function (row, cell, value, columnDef, dataContext) {
+        s ="<a href='" + dataContext.octopart_url + "' target=_blank>" + dataContext.mpn + "</a>";
+        return s;
+    };
+    var brandFormatter = function (row, cell, value, columnDef, dataContext) {
+        return dataContext.brand.name;
+    };    
     
     var settings={
-	columns:[
-	    {id: "title", name: "Title", field: "title"},
-	    {id: "duration", name: "Duration", field: "duration"},
-	    {id: "%", name: "% Complete", field: "percentComplete"},
-	    {id: "start", name: "Start", field: "start"},
-	    {id: "finish", name: "Finish", field: "finish"},
-	    {id: "effort-driven", name: "Effort Driven", field: "effortDriven"}
-	],
+	columns:columns,
 	options:{
 	    enableCellNavigation: true,
-	    enableColumnReorder: false
+	    enableColumnReorder: false,
+	    url:'DocumentList/fetchList'
 	},
 	data:data
     };
     var docList=$("#myGrid").slickgrid(settings);
-    docList.grid.setSelectionModel(new Slick.RowSelectionModel());
 </script>

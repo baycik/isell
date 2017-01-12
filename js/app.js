@@ -129,6 +129,23 @@ var App = {
     post:function(){
 	this.sequence.push({type:'post',args:arguments});
 	this.seqNext();
+    },
+    loadedScripts:[],
+    loadScripts:function(urls,callback){
+	var filesLeft=urls.length;
+	function ok(){
+	    if(--filesLeft<=0){
+		callback();
+	    }
+	}
+	for(var i in urls){
+	    var url=urls[i];
+	    if( App.loadedScripts.indexOf(url)>-1 ){
+		ok();
+	    }
+	    App.loadedScripts.push(url);
+	    $.ajax({url: url,dataType: "script",cache: true,async:true}).done(ok);
+	}
     }
 };
 
@@ -355,7 +372,7 @@ $(document).ajaxComplete(function (event, xhr, settings) {
     if( xhr.statusText==='error' ){
 
     }
-    else if( settings.crossDomain===false ){
+    else if( settings.crossDomain===false && settings.dataType!=='script' ){
 	var type = xhr.getResponseHeader('X-isell-type');
 	var msg = xhr.getResponseHeader('X-isell-msg');
 	if (msg) {
