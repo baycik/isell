@@ -2,28 +2,55 @@
 
 (function($){
     function SlickWrapper(node,settings){
-	SlickWrapperSriptsLoaded=false;
 	var grid;
+	var loader;
+	var loadingIndicator = null;
+	var searchInput=null;
+	var searchClock;
 	var data = settings.data;
 	var columns=settings.columns;
 	var options=settings.options;
 
-
 	function init(){
-	    grid=new Slick.Grid(node, data, columns, options);
+	    loader = new Slick.Data.RemoteModel();
+	    grid=new Slick.Grid(node, loader.data, columns, options);
 	    grid.setSelectionModel(new Slick.RowSelectionModel());
+	    if( options.enableSearch ){
+		initSearch();
+	    }
 	    initLoader();
 	};
 	var urls=[
-	    "js/slick/jquery.event.drag-2.3.0.js",
+	    "js/slick/lib/jquery.event.drag-2.3.0.js",
 	    "js/slick/slick.core.js",
 	    "js/slick/slick.grid.js",
-	    "js/slick/plugins/slick.rowselectionmodel.js"];
-	App.loadScripts(urls,init);
-	
+	    "js/slick/plugins/slick.rowselectionmodel.js",
+	    'js/slick/lib/jquery.jsonp-2.4.min.js'];
+	App.require(urls,init);
+	function initSearch(){
+	    node.prepend('<input style="width:100%" placeholder="&#128269; Поиск в таблице..." class="slick-searchinput"/>');
+	    searchInput=node.find('input');
+	    searchInput.keyup(function (e) {
+		if (e.which === 13) {
+		    startsearch();
+		} else {
+		    clearTimeout(searchClock);
+		    searchClock=setTimeout(startsearch,500);
+		}
+	    });
+	    function startsearch(){
+		loader.setSearch(searchInput.val());
+		var vp = grid.getViewport();
+		loader.ensureData(vp.top, vp.bottom);
+	    }
+	}
 	function initLoader(){
-	    var loader = new Slick.Data.RemoteModel();
 	    grid.onViewportChanged.subscribe(function (e, args) {
+		var vp = grid.getViewport();
+		loader.ensureData(vp.top, vp.bottom);
+	    });
+	    grid.onSort.subscribe(function (e, args) {
+		loader.setSort(args.sortCol.field, args.sortAsc ? 1 : -1);
 		var vp = grid.getViewport();
 		loader.ensureData(vp.top, vp.bottom);
 	    });
@@ -46,6 +73,10 @@
 		grid.render();
 		loadingIndicator.fadeOut();
 	    });
+	    loader.setSearch($("#txtSearch").val());
+	    loader.setSort("score", -1);
+	    grid.setSortColumn("score", false);
+	    grid.onViewportChanged.notify();
 	};
 	
 	return this;

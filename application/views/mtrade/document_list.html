@@ -1,12 +1,7 @@
-<div id="myGrid" style="width:600px;height:500px;"></div>
+<div id="myGrid" style="width:100%;height:500px;"></div>
 
 <script>
     var data = [];
-    var columns = [
-        {id: "mpn", name: "MPN", field: "mpn", formatter: mpnFormatter, width: 100, sortable: true },
-        {id: "brand", name: "Brand", field: "brand.name", formatter: brandFormatter, width: 100, sortable: true },
-        {id: "short_description", name: "Description", field: "short_description", width: 520 },
-    ];
     var mpnFormatter = function (row, cell, value, columnDef, dataContext) {
         s ="<a href='" + dataContext.octopart_url + "' target=_blank>" + dataContext.mpn + "</a>";
         return s;
@@ -14,12 +9,18 @@
     var brandFormatter = function (row, cell, value, columnDef, dataContext) {
         return dataContext.brand.name;
     };    
+    var columns = [
+        {id: "mpn", name: "MPN", field: "mpn", formatter: mpnFormatter, width: 100, sortable: true },
+        {id: "brand", name: "Brand", field: "brand.name", formatter: brandFormatter, width: 100, sortable: true },
+        {id: "short_description", name: "Description", field: "short_description", width: 520 }
+    ];
     
     var settings={
 	columns:columns,
 	options:{
 	    enableCellNavigation: true,
 	    enableColumnReorder: false,
+	    enableSearch:true,
 	    url:'DocumentList/fetchList'
 	},
 	data:data

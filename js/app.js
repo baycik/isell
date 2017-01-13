@@ -131,7 +131,7 @@ var App = {
 	this.seqNext();
     },
     loadedScripts:[],
-    loadScripts:function(urls,callback){
+    require:function(urls,callback){
 	var filesLeft=urls.length;
 	function ok(){
 	    if(--filesLeft<=0){
