@@ -1,14 +1,20 @@
 <?php
 include "Catalog.php";
 class Sync extends Catalog {
-    private $gateway_url = "http://nilsonmag.com/open/?route=module/baycikSync";
+    //private $gateway_url = "http://localhost:888/isell4/test/hello/";// 
+    private $gateway_url ="http://nilsonmag.com/open/?route=module/baycikSync";
     private $login = "Default";
     private $key = "9aFJXRMqyA1dQ1HHy5q618e5V9zKklmgswUu6vqsE3g3lP0OJpyb6Il6rnPGqCKM8QM38HpWJmvUWsrkCxpvITQ7CMZcrVkrkwMOQ4DC8b95nxX8kAi2ux0HxgLRaQwKsSS40AEQVE9M2ikusdZfl1ujpH1o19aX36SLgQMcmWOwzFulfdsrEh7YfEnDr4fr44zBhQQ9aQX2O9WFNQvXBLa8OZSE8a4gyLxZKYPVJukhyzzuOuiEq7pqRGKbCNx6";
     private $defaultUserId='319';
-    private $dollarRatio=66;
+    private $dollarRatio=65;
+    
+    function __construct(){
+	//$this->dollarRatio=$this->Hub->pref('dollar_ratio');
+    }
+    
 
     private function getProducts($page = 0){
-        $limit = 10000;
+        $limit = 1;
         $offset = $limit * $page;
         $sql = "
             SELECT
@@ -41,6 +47,7 @@ class Sync extends Catalog {
             'login' => $this->login,
             'key' => $this->key
         );
+
         $this->sendToGateway($postdata);
     }
 
@@ -55,7 +62,8 @@ class Sync extends Catalog {
                     )
                 )
         );
-        echo file_get_contents($this->gateway_url, false, $context);
+	print_r(http_build_query($postdata));
+	echo file_get_contents($this->gateway_url, false, $context);
     }
 
 }

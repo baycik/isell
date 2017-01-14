@@ -394,14 +394,14 @@ $(document).ajaxComplete(function (event, xhr, settings) {
 	}
     }
 });
-$(document).ajaxError(function (event, xhr, settings) {
-    $("#app_busy").hide();
-    var type = xhr.getResponseHeader('X-isell-type');
-    if (type && type.indexOf('OK') > -1 || settings.crossDomain===true) {
-	return;
-    }
-    console.log("HTTP ERROR\n" + settings.url + "\n"+xhr.responseText);
-});
+//$(document).ajaxError(function (event, xhr, settings) {
+//    $("#app_busy").hide();
+//    var type = xhr.getResponseHeader('X-isell-type');
+//    if (type && type.indexOf('OK') > -1 || settings.crossDomain===true) {
+//	return;
+//    }
+//    console.log("HTTP ERROR\n" + settings.url + "\n"+xhr.responseText);
+//});
 $(document).ajaxSend(function () {
     $("#app_busy").show();
 });

@@ -80,7 +80,8 @@ class Hub  extends CI_Controller{
 		} else {
 		    $method_args[]=$this->request($var_name,$var_type);
 		}
-	    }	    
+	    }
+	    return $method_args;
 	} 
 	$method_args=array_map("rawurldecode",$route_args);//this behavior is deprecated
 	return $method_args;
