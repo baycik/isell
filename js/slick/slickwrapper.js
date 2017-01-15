@@ -10,13 +10,14 @@
 	var data = settings.data;
 	var columns = settings.columns;
 	var options = settings.options;
+	
 
 	function init() {
 	    loader = new Slick.Data.RemoteModel(options.url);
 	    grid = new Slick.Grid(node, loader.data, columns, options);
 	    grid.setSelectionModel(new Slick.RowSelectionModel());
-	    if (options.enableSearch) {
-		//initSearch();
+	    if (options.tools) {
+		initTools();
 	    }
 	    initLoader();
 	}
@@ -28,10 +29,13 @@
 	    "js/slick/plugins/slick.rowselectionmodel.js",
 	    'js/slick/lib/jquery.jsonp-2.4.min.js'];
 	App.require(urls, init);
-	function initSearch() {
-	    node.prepend('<input style="width:100%" placeholder="&#128269; Поиск в таблице..." class="slick-searchinput"/>');
-	    searchInput = node.find('input');
-	    searchInput.keyup(function (e) {
+	
+	function initTools(){
+	    var tool_bar=$(options.tools);
+	    tool_bar.find('.slick-tool-reload').click(function(){
+		alert('haha');
+	    });
+	    tool_bar.find('.slick-tool-search input').keyup(function(e){
 		if (e.which === 13) {
 		    startsearch();
 		} else {
@@ -39,12 +43,15 @@
 		    searchClock = setTimeout(startsearch, 500);
 		}
 	    });
-	    function startsearch() {
-		loader.setSearch(searchInput.val());
-		var vp = grid.getViewport();
-		loader.ensureData(vp.top, vp.bottom);
-	    }
 	}
+	
+	function startsearch() {
+	    var filter=$(options.tools).find('.slick-tool-search input').val();
+	    loader.setSearch(filter);
+	    var vp = grid.getViewport();
+	    loader.ensureData(vp.top, vp.bottom);
+	}
+
 	function initLoader() {
 	    grid.onViewportChanged.subscribe(function (e, args) {
 		var vp = grid.getViewport();
@@ -85,6 +92,7 @@
     ;
     window.SlickWrapper = SlickWrapper;
 })(jQuery);
+
 $.fn.slickgrid = function (settings) {
     return new SlickWrapper(this, settings);
 };
@@ -110,14 +118,13 @@ $.fn.slickgrid = function (settings) {
      * easily be extended to support any JSONP-compatible backend that accepts paging parameters.
      */
     function RemoteModel(url) {
-	// private
 	var PAGESIZE = 30;
+	var total_row_count=0;
 	var data = {length: 0};
 	var searchstr = "";
 	var sortcol = null;
 	var sortdir = 1;
 	var req = null; // ajax request
-	var offset=0;
 	var requestClock;
 
 	// events
@@ -129,11 +136,10 @@ $.fn.slickgrid = function (settings) {
 
 	function isDataLoaded(from, to) {
 	    for (var i = from; i <= to; i++) {
-		if (data[i] == undefined || data[i] == null) {
+		if (data[i] === undefined) {
 		    return false;
 		}
 	    }
-
 	    return true;
 	}
 
@@ -146,34 +152,29 @@ $.fn.slickgrid = function (settings) {
 
 	function ensureData(from, to) {
 	    cancelRequest();
-	    console.log('ensure',from,to);
-	    var skipped_from=from;
-	    for(var i=from;i<=to;i++){
-		//console.log('check',i,data[i]);
+	    var rows_to_load=[];
+	    for(var i=from;i<=to+10;i++){
 		if( data[i]===undefined ){
-		    continue;
+		    rows_to_load.push(i);
 		}
-		skipped_from=i;
 	    }
-	    console.log('skipped',skipped_from,to);
-	    if( to<=skipped_from ){//all rows in range are loaded
-		onDataLoaded.notify({from: from, to: to});
+	    var skipped_from=Math.min.apply(null, rows_to_load);
+	    var skipped_to=Math.max.apply(null, rows_to_load);
+	    if( rows_to_load.length===0 ){//all rows in range are loaded
+		onDataLoaded.notify({from: skipped_from, to: skipped_to});
 		return;
 	    }
-	    var limit=Math.max(to-skipped_from,PAGESIZE);
-	    console.log('corrected',skipped_from,skipped_from+limit);
-	    
+	    var limit=skipped_to-skipped_from+1;
+	    if(skipped_to>total_row_count){//rows are loaded at end of table 
+		limit=Math.max(limit,PAGESIZE);
+	    }
 	    clearTimeout(requestClock);
 	    requestClock=setTimeout(function(){
 		onDataLoading.notify({from: from, to: to});
-		for (var i = from; i <= limit; i++){
-		    data[i] = null;
-		}
 		makeRequest(skipped_from,limit);
 	    },50);
 	}
 	function cancelRequest(){
-	    console.log('cancel');
 	    if (req) {
 		req.abort();
 		for (var i = req.from; i <= req.limit; i++){
@@ -193,11 +194,12 @@ $.fn.slickgrid = function (settings) {
 	    req=$.get(url,params,function(resp){
 		var rows=App.json(resp);
 		var to = from+rows.length;
-		console.log('loaded',from,to);
 		for (var i = 0; i < rows.length; i++) {
 		    data[from + i] = rows[i];
+		    data[from + i].num = from + i;
 		}
-		data.length=to+PAGESIZE;
+		total_row_count=Math.max(total_row_count,to);
+		data.length=total_row_count+PAGESIZE;
 		req = null;
 		onDataLoaded.notify({from: from, to: to});
 	    });
@@ -205,65 +207,6 @@ $.fn.slickgrid = function (settings) {
 	    req.limit=limit;
 	}
 
-	function onSuccess(resp) {
-	    var rows=App.json(resp);
-	    var to = offset+rows.length;
-	    for (var i = 0; i < rows.length; i++) {
-		data[from + i] = rows[i];
-	    }
-	    last_loaded_row=Math.max(last_loaded_row,to);
-	    data.length=last_loaded_row+PAGESIZE;
-	    req = null;
-	    onDataLoaded.notify({from: from, to: to});
-	}
-	function ensureData22222222222222(from, to) {
-	    cancelRequest();
-	    if (from < 0) {
-		from = 0;
-	    }
-	    if (data.length > 0) {
-		to = Math.min(to, data.length - 1);
-	    }
-	    
-	    var fromPage = Math.floor(from / PAGESIZE);
-	    var toPage = Math.floor(to / PAGESIZE);
-
-	    
-	    while (data[fromPage * PAGESIZE] !== undefined && fromPage < toPage){
-		fromPage++;
-	    }
-	    while (data[toPage * PAGESIZE] !== undefined && fromPage < toPage){
-		toPage--;
-	    }
-	    
-	    
-	    
-	    console.log('ensure',from, to, fromPage, toPage);
-	    
-	    
-	    if (fromPage > toPage || ((fromPage === toPage) && data[fromPage * PAGESIZE] !== undefined)) {
-		// TODO:  look-ahead
-		onDataLoaded.notify({from: from, to: to});
-		return;
-	    }
-	    
-	    
-	    limit=(((toPage - fromPage) * PAGESIZE) + PAGESIZE);
-	    
-	    
-	    clearTimeout(requestClock);
-	    requestClock=setTimeout(function(){
-		for (var i = fromPage; i <= toPage; i++){
-		    data[i * PAGESIZE] = null; // null indicates a 'requested but not available yet'
-		}
-		onDataLoading.notify({from: from, to: to});
-	    },50);
-	    
-	    
-	    req=makeRequest(from);
-	    req.fromPage = fromPage;
-	    req.toPage = toPage; 
-	}
 
 	function reloadData(from, to) {
 	    for (var i = from; i <= to; i++)

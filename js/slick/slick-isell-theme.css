@@ -108,10 +108,16 @@ classes should alter those!
     -moz-animation-name: slickgrid-invalid-hilite;
     -webkit-animation-name: slickgrid-invalid-hilite;  
 }
-.slick-searchinput{
-    margin: 5px 0px 5px 0px;
+.slick-tool-search input{
     padding: 5px;
 }
+.slick-tool-search{
+    cursor: pointer;
+}
+.slick-tool-reload{
+    cursor: pointer;
+}
+
 
 @-moz-keyframes slickgrid-invalid-hilite {
     from { box-shadow: 0 0 6px red; }

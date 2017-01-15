@@ -389,8 +389,10 @@ $(document).ajaxComplete(function (event, xhr, settings) {
 	    }
 	}
 	else if (!type || type.indexOf('error') > -1 || type.indexOf('OK') === -1) {
+	    console.log('error? response:',xhr.responseText);
 	    //alert( xhr.responseText );
-	    App.flash("<h3>url: " + settings.url + "</h3><big>" + xhr.responseText+"</big>", 'error');
+	    //
+	    //App.flash("<h3>url: " + settings.url + "</h3><big>" + xhr.responseText+"</big>", 'error');
 	}
     }
 });

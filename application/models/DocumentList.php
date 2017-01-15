@@ -27,6 +27,23 @@ class DocumentList extends Catalog{
 	    $andwhere.=" AND path LIKE '$assigned_path%'";
 	}
 	$active_company_id=$this->Hub->acomp('company_id');
+	
+	/*
+	 * 
+	 * 		(SELECT amount 
+		    FROM 
+			acc_trans 
+			    JOIN 
+			document_trans dt USING(trans_id)
+		    WHERE dt.doc_id=dl.doc_id 
+		    ORDER BY trans_id LIMIT 1) amount,
+	 * 
+	 * 
+	 * 		(SELECT CONCAT(code,' ',descr) FROM acc_trans_status JOIN acc_trans USING(trans_status) JOIN document_trans dt USING(trans_id) WHERE dt.doc_id=dl.doc_id ORDER BY trans_id LIMIT 1) trans_status
+
+	 */
+	
+	
 	$sql="
 	    SELECT 
 		doc_id,
@@ -34,17 +51,9 @@ class DocumentList extends Catalog{
 		dl.cstamp,
 		doc_num,
 		doc_type_name,
-		(SELECT amount 
-		    FROM 
-			acc_trans 
-			    JOIN 
-			document_trans dt USING(trans_id)
-		    WHERE dt.doc_id=dl.doc_id 
-		    ORDER BY trans_id LIMIT 1) amount,
 		label,
 		GROUP_CONCAT(CONCAT(' ',LEFT(view_name,3),view_num)) views,
-		IF(is_commited,'ok Проведен','') as commited,
-		(SELECT CONCAT(code,' ',descr) FROM acc_trans_status JOIN acc_trans USING(trans_status) JOIN document_trans dt USING(trans_id) WHERE dt.doc_id=dl.doc_id ORDER BY trans_id LIMIT 1) trans_status
+		IF(is_commited,'ok Проведен','') as commited
 	    FROM 
 		document_list dl
 		    JOIN
