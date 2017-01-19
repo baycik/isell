@@ -1,57 +1,59 @@
-/*global App*/
+/*global App,Slick*/
 
 (function ($) {
     function SlickWrapper(node, settings) {
 	var grid;
 	var loader;
-	var loadingIndicator = null;
-	var searchInput = null;
-	var searchClock;
-	var data = settings.data;
 	var columns = settings.columns;
 	var options = settings.options;
+	var columnFilters={};
 	
 
 	function init() {
+	    if( options.enableFilter ){
+		options.showHeaderRow=true;
+	    }
 	    loader = new Slick.Data.RemoteModel(options.url);
 	    grid = new Slick.Grid(node, loader.data, columns, options);
 	    grid.setSelectionModel(new Slick.RowSelectionModel());
-	    if (options.tools) {
-		initTools();
-	    }
 	    initLoader();
+	    if( options.enableFilter ){
+		initFilter();
+	    }
 	}
-	;
 	var urls = [
 	    "js/slick/lib/jquery.event.drag-2.3.0.js",
 	    "js/slick/slick.core.js",
 	    "js/slick/slick.grid.js",
-	    "js/slick/plugins/slick.rowselectionmodel.js",
-	    'js/slick/lib/jquery.jsonp-2.4.min.js'];
+	    "js/slick/plugins/slick.rowselectionmodel.js"];
 	App.require(urls, init);
-	
-	function initTools(){
-	    var tool_bar=$(options.tools);
-	    tool_bar.find('.slick-tool-reload').click(function(){
-		alert('haha');
-	    });
-	    tool_bar.find('.slick-tool-search input').keyup(function(e){
-		if (e.which === 13) {
-		    startsearch();
-		} else {
-		    clearTimeout(searchClock);
-		    searchClock = setTimeout(startsearch, 500);
-		}
-	    });
-	}
-	
-	function startsearch() {
-	    var filter=$(options.tools).find('.slick-tool-search input').val();
-	    loader.setSearch(filter);
-	    var vp = grid.getViewport();
-	    loader.ensureData(vp.top, vp.bottom);
-	}
 
+	function initFilter(){
+	    $('.slick-headerrow-columns .slick-headerrow-column',node).each(function(){
+		var column_field=$(this).data('column').field;
+		$(this).empty();
+		$("<input type='text'>")
+		    .data("field",column_field)
+		    .appendTo(this);
+	    });
+	    var filterClock;
+	    function do_filter(input_node){
+		var field = $(input_node).data("field");
+		if (field !== null) {
+		    columnFilters[field] = $.trim($(input_node).val());
+		}
+		loader.setFilter(columnFilters);
+		reload();
+	    }
+	    $('.slick-headerrow-columns .slick-headerrow-column',node).on("change keyup", ":input", function (e) {
+		var input_node=this;
+		clearTimeout(filterClock);
+		filterClock=setTimeout(function(){do_filter(input_node);},500);
+	    });
+	}
+	function reload(){
+	    grid.onViewportChanged.notify();
+	}
 	function initLoader() {
 	    grid.onViewportChanged.subscribe(function (e, args) {
 		var vp = grid.getViewport();
@@ -62,34 +64,18 @@
 		var vp = grid.getViewport();
 		loader.ensureData(vp.top, vp.bottom);
 	    });
-	    loader.onDataLoading.subscribe(function () {
-		if (!loadingIndicator) {
-		    loadingIndicator = $("<span class='loading-indicator'><label>Buffering...</label></span>").appendTo(document.body);
-		    var $g = node;
-		    loadingIndicator
-			    .css("position", "absolute")
-			    .css("top", $g.position().top + $g.height() / 2 - loadingIndicator.height() / 2)
-			    .css("left", $g.position().left + $g.width() / 2 - loadingIndicator.width() / 2);
-		}
-		loadingIndicator.show();
-	    });
 	    loader.onDataLoaded.subscribe(function (e, args) {
 		for (var i = args.from; i <= args.to; i++) {
 		    grid.invalidateRow(i);
 		}
 		grid.updateRowCount();
 		grid.render();
-		loadingIndicator.fadeOut();
 	    });
-	    //loader.setSort("score", -1);
-	    //grid.setSortColumn("score", false);
-	    grid.onViewportChanged.notify();
+	    reload();
 	}
-	;
 
 	return this;
-    }
-    ;
+    };
     window.SlickWrapper = SlickWrapper;
 })(jQuery);
 
@@ -121,7 +107,7 @@ $.fn.slickgrid = function (settings) {
 	var PAGESIZE = 30;
 	var total_row_count=0;
 	var data = {length: 0};
-	var searchstr = "";
+	var filter = {};
 	var sortcol = null;
 	var sortdir = 1;
 	var req = null; // ajax request
@@ -148,6 +134,25 @@ $.fn.slickgrid = function (settings) {
 		delete data[key];
 	    }
 	    data.length = 0;
+	    total_row_count=0;
+	}
+
+	function reloadData(from, to) {
+	    for (var i = from; i <= to; i++){
+		delete data[i];
+	    }
+	    ensureData(from, to);
+	}
+
+	function setSort(column, dir) {
+	    sortcol = column;
+	    sortdir = dir;
+	    clear();
+	}
+
+	function setFilter(flt) {
+	    filter = flt;
+	    clear();
 	}
 
 	function ensureData(from, to) {
@@ -185,11 +190,11 @@ $.fn.slickgrid = function (settings) {
 	
 	function makeRequest(from,limit){
 	    var params={
-		offset:from,
+		offset:from<0?0:from,
 		limit:limit,
 		sortby:sortcol,
 		sortdir:((sortdir > 0) ? "ASC" : "DESC"),
-		filter:searchstr
+		filter:JSON.stringify(filter)
 	    };
 	    req=$.get(url,params,function(resp){
 		var rows=App.json(resp);
@@ -201,30 +206,11 @@ $.fn.slickgrid = function (settings) {
 		total_row_count=Math.max(total_row_count,to);
 		data.length=total_row_count+PAGESIZE;
 		req = null;
-		onDataLoaded.notify({from: from, to: to});
+		onDataLoaded.notify({from: from, to: from+limit});
 	    });
 	    req.from = from;
 	    req.limit=limit;
 	}
-
-
-	function reloadData(from, to) {
-	    for (var i = from; i <= to; i++)
-		delete data[i];
-	    ensureData(from, to);
-	}
-
-	function setSort(column, dir) {
-	    sortcol = column;
-	    sortdir = dir;
-	    clear();
-	}
-
-	function setSearch(str) {
-	    searchstr = str;
-	    clear();
-	}
-
 	init();
 	return {
 	    // properties
@@ -235,7 +221,7 @@ $.fn.slickgrid = function (settings) {
 	    "ensureData": ensureData,
 	    "reloadData": reloadData,
 	    "setSort": setSort,
-	    "setSearch": setSearch,
+	    "setFilter": setFilter,
 	    // events
 	    "onDataLoading": onDataLoading,
 	    "onDataLoaded": onDataLoaded

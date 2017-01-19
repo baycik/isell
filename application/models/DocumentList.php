@@ -5,8 +5,8 @@
  * @author Baycik
  */
 class DocumentList extends Catalog{
-    public $listFetch=['offset'=>'int','limit'=>'int','sortby'=>'string','sortdir'=>'(ASC|DESC)','filter'=>'string'];
-    public function listFetch($offset=0,$limit=50,$sortby='cstamp',$sortdir='DESC',$filter='',$mode=''){
+    public $listFetch=['offset'=>'int','limit'=>'int','sortby'=>'string','sortdir'=>'(ASC|DESC)','filter'=>'json'];
+    public function listFetch($offset=0,$limit=50,$sortby='cstamp',$sortdir='DESC',$filter=null,$mode=''){
 	$fields=['cstamp','doc_num','label'];
 	if( empty($sortby) ){
 	    $sortby='cstamp';
@@ -15,35 +15,21 @@ class DocumentList extends Catalog{
 	    throw new Exception("Invalid sortby fieldname: ".$sortby);
 	}
 	$andwhere='';
-	if( $mode==='show_only_pcomp_docs' ){
-	    $pcomp_id=$this->Hub->pcomp('company_id');
-            if( !$pcomp_id ){
-                return [];
-            }
-	    $andwhere.=" AND passive_company_id=$pcomp_id";
-	}	
+//	if( $mode==='show_only_pcomp_docs' ){
+//	    $pcomp_id=$this->Hub->pcomp('company_id');
+//            if( !$pcomp_id ){
+//                return [];
+//            }
+//	    $andwhere.=" AND passive_company_id=$pcomp_id";
+//	}	
 	$assigned_path=  $this->Hub->svar('user_assigned_path');
 	if( $assigned_path ){
 	    $andwhere.=" AND path LIKE '$assigned_path%'";
 	}
 	$active_company_id=$this->Hub->acomp('company_id');
 	
-	/*
-	 * 
-	 * 		(SELECT amount 
-		    FROM 
-			acc_trans 
-			    JOIN 
-			document_trans dt USING(trans_id)
-		    WHERE dt.doc_id=dl.doc_id 
-		    ORDER BY trans_id LIMIT 1) amount,
-	 * 
-	 * 
-	 * 		(SELECT CONCAT(code,' ',descr) FROM acc_trans_status JOIN acc_trans USING(trans_status) JOIN document_trans dt USING(trans_id) WHERE dt.doc_id=dl.doc_id ORDER BY trans_id LIMIT 1) trans_status
-
-	 */
 	
-	
+	$having=$this->makeFilter($filter);
 	$sql="
 	    SELECT 
 		doc_id,
@@ -68,9 +54,9 @@ class DocumentList extends Catalog{
 		document_view_types dvt USING(view_type_id)
 	    WHERE dl.doc_type<10 AND dl.active_company_id = '$active_company_id' $andwhere
 	    GROUP BY doc_id
+	    HAVING $having
 	    ORDER BY dl.is_commited,$sortby $sortdir
-	    LIMIT $limit OFFSET $offset 
-	";
+	    LIMIT $limit OFFSET $offset";
 	return $this->get_list($sql);
     }
 }

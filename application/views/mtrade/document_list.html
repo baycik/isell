@@ -1,8 +1,4 @@
 <div style="width:380px;float:left;">
-    <div id="docListTools" class="transp60" style="font-size:25px;text-align: right;padding: 2px;">
-	<span class="slick-tool-search"><input style="width:50%" placeholder="&#128269; Поиск в таблице..."/></span>
-	<span class="slick-tool-reload">&#128260;</span>
-    </div>
     <div id="myGrid" style="width:100%;height:500px;"></div>
 </div>
 <script>
@@ -15,6 +11,7 @@
 	options:{
 	    enableCellNavigation: true,
 	    enableColumnReorder: false,
+	    enableFilter:true,
 	    tools:"#docListTools",
 	    url:'DocumentList/listFetch'
 	}

@@ -238,10 +238,20 @@ abstract class Catalog extends CI_Model {
 	if( !is_array($filter) || count($filter)===0 ){
 	    return 1;
 	}
-	$having=array();
+	$having=[];
 	foreach( $filter as $rule ){
 	    $having[]="$rule->field LIKE '%$rule->value%'";
 	}
-	return implode(' AND ',$having);
+	return implode(' AND ',$having);	
+    }
+    protected function makeFilter($filter){
+	if( !$filter ){
+	    return 1;
+	}
+	$having=[];
+	foreach( $filter as $field=>$value ){
+	    $having[]="$field LIKE '%$value%'";
+	}
+	return implode(' AND ',$having);	
     }
 }

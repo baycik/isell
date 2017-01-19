@@ -108,11 +108,13 @@ classes should alter those!
     -moz-animation-name: slickgrid-invalid-hilite;
     -webkit-animation-name: slickgrid-invalid-hilite;  
 }
-.slick-tool-search input{
-    padding: 5px;
+.slick-headerrow-column input{
+    margin: 0px;
+    width:100%;
 }
-.slick-tool-search{
-    cursor: pointer;
+.slick-headerrow-column{
+    padding: 0px !important;
+    padding-right: 1px;
 }
 .slick-tool-reload{
     cursor: pointer;

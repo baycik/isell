@@ -129,15 +129,17 @@ class Hub  extends CI_Controller{
 	    WHERE 
 		is_activated AND (trigger_before IS NOT NULL OR trigger_after IS NOT NULL)";
 	$active_plugin_triggers=$this->db->query($sql);
-	foreach( $active_plugin_triggers->result() as $trigger ){
-	    if( $trigger->trigger_before ){
-		$this->pluginParseTriggers($before, $trigger->trigger_before, $trigger->plugin_system_name);
+	if($active_plugin_triggers){
+	    foreach( $active_plugin_triggers->result() as $trigger ){
+		if( $trigger->trigger_before ){
+		    $this->pluginParseTriggers($before, $trigger->trigger_before, $trigger->plugin_system_name);
+		}
+		if( $trigger->trigger_after ){
+		    $this->pluginParseTriggers($after, $trigger->trigger_after, $trigger->plugin_system_name);
+		}
 	    }
-	    if( $trigger->trigger_after ){
-		$this->pluginParseTriggers($after, $trigger->trigger_after, $trigger->plugin_system_name);
-	    }
+	    $active_plugin_triggers->free_result();
 	}
-	$active_plugin_triggers->free_result();
 	$this->svar('trigger_before',$before);
 	$this->svar('trigger_after',$after);
     }
