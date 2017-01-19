@@ -33,13 +33,13 @@ class DocumentList extends Catalog{
 	$sql="
 	    SELECT 
 		doc_id,
-		CONCAT(icon_name,' ',doc_type_name) doc_type_icon,
 		dl.cstamp,
 		doc_num,
+		label pcomp_label,
+		CONCAT(icon_name,' ',doc_type_name) doc_type_icon,
 		doc_type_name,
-		label,
 		GROUP_CONCAT(CONCAT(' ',LEFT(view_name,3),view_num)) views,
-		IF(is_commited,'ok Проведен','') as commited
+		IF(is_commited,'ok Проведен','') as is_commited
 	    FROM 
 		document_list dl
 		    JOIN

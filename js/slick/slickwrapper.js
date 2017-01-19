@@ -52,7 +52,8 @@
 	    });
 	}
 	function reload(){
-	    grid.onViewportChanged.notify();
+	    var vp = grid.getViewport();
+	    loader.reloadData(vp.top, vp.bottom);
 	}
 	function initLoader() {
 	    grid.onViewportChanged.subscribe(function (e, args) {
@@ -74,7 +75,9 @@
 	    reload();
 	}
 
-	return this;
+	return {
+	    "reload":reload
+	};
     };
     window.SlickWrapper = SlickWrapper;
 })(jQuery);
@@ -104,7 +107,7 @@ $.fn.slickgrid = function (settings) {
      * easily be extended to support any JSONP-compatible backend that accepts paging parameters.
      */
     function RemoteModel(url) {
-	var PAGESIZE = 30;
+	var PAGESIZE = 15;
 	var total_row_count=0;
 	var data = {length: 0};
 	var filter = {};

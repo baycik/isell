@@ -89,7 +89,7 @@ classes should alter those!
 }
 
 .slick-row.odd {
-    background: #eee;
+    background: rgba(230,230,230,0.7);
 }
 
 .slick-row.ui-state-active {
@@ -118,6 +118,9 @@ classes should alter those!
 }
 .slick-tool-reload{
     cursor: pointer;
+}
+.slick-align-right{
+    text-align: right;
 }
 
 
