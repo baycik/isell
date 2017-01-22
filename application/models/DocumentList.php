@@ -44,16 +44,16 @@ class DocumentList extends Catalog{
 	    FROM 
 		document_list dl
 		    JOIN
-		document_types dt USING(doc_type)
-		    JOIN
 		companies_list cl ON passive_company_id=company_id
 		    JOIN
 		companies_tree ct USING(branch_id)
 		    LEFT JOIN
+		document_types dt USING(doc_type)
+		    LEFT JOIN
 		document_view_list dv USING(doc_id)
 		    LEFT JOIN
 		document_view_types dvt USING(view_type_id)
-	    WHERE dl.doc_type<10 AND dl.active_company_id = '$active_company_id' $andwhere
+	    WHERE dl.active_company_id = '$active_company_id' $andwhere
 	    GROUP BY doc_id
 	    HAVING $having
 	    ORDER BY dl.is_commited,$sortby $sortdir

@@ -58,14 +58,13 @@ var App = {
 		if( href ){
 		    var id = href.replace(/\//g, '_').replace('.html', '');
 		    if( App[id] ){
-			if( !$("#" + id).length ){
-			    panel.wrapInner('<div id="'+id+'" style="padding:0px"></div>');
-			    panel.css('padding','5px');
-			}
-			App[id].data={inline:true};
-			App[id].node=$("#" + id);
-			App[id].init && App[id].init();
-			App[id].initAfter && App[id].initAfter();
+//			if( !$("#" + id).length ){
+//			    panel.wrapInner('<div id="'+id+'" style="padding:0px"></div>');
+//			    panel.css('padding','5px');
+//			}
+			App.require(App[id].require,function(){
+			    App.initModule(id,{inline:true},null);
+			});
 		    }
 		}
 	    }
@@ -81,7 +80,7 @@ var App = {
 	    App[id].parsed=true;
 	}
 	App[id].initAfter ? App[id].initAfter(data, handler) : '';
-	handler.notify('inited',App[id]);
+	handler&&handler.notify('inited',App[id]);
     },
     loadModule: function ( path, data, id_new, id_search, id_replace ) {
 	var id = id_new?id_new:path.replace(/\//g, '_');
@@ -91,11 +90,15 @@ var App = {
 	} else {
 	    App[id] = {};
 	    $.get(path + '.html',function(html){
-		//var id_replace=id_replace||(id_new+"$2");
 		html=id_search?html.replace(id_search,id_replace):html;
-		//console.log(html);
 		App.setHTML("#"+id,html);
-		App.initModule(id,data,handler);
+		if(App[id].require){
+		    App.require(App[id].require,function(){
+			App.initModule(id,data,handler);
+		    });
+		} else {
+		    App.initModule(id,data,handler);
+		}
 	    });   
 	}
 	return handler.promise();	
@@ -132,6 +135,10 @@ var App = {
     },
     loadedScripts:[],
     require:function(urls,callback){
+	if(!urls){
+	    callback&&callback();
+	    return false;
+	}
 	var filesLeft=urls.length;
 	function ok(){
 	    if( --filesLeft<=0){

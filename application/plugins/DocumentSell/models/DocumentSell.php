@@ -16,7 +16,11 @@ class DocumentSell extends DocumentBase{
     public function index(){
 	echo 'hello';
     }
-    public function documentAdd( $doc_type ){
-	return parent::documentAdd('sell');
+    public function documentAdd( $doc_type=null ){
+	$doc_type='sell';
+	return parent::documentAdd($doc_type);
+    }
+    public function formGet(){
+	return $this->load->view('DocumentSellForm.html');
     }
 }

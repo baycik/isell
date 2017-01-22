@@ -123,20 +123,20 @@ class Hub  extends CI_Controller{
 	$before=[];
 	$after=[];
 	$sql="SELECT 
-		plugin_system_name,trigger_before,trigger_after 
+		plugin_system_name,trigger_before
 	    FROM 
 		plugin_list 
 	    WHERE 
-		is_activated AND (trigger_before IS NOT NULL OR trigger_after IS NOT NULL)";
+		is_activated AND (trigger_before IS NOT NULL)";
 	$active_plugin_triggers=$this->db->query($sql);
 	if($active_plugin_triggers){
 	    foreach( $active_plugin_triggers->result() as $trigger ){
 		if( $trigger->trigger_before ){
 		    $this->pluginParseTriggers($before, $trigger->trigger_before, $trigger->plugin_system_name);
 		}
-		if( $trigger->trigger_after ){
-		    $this->pluginParseTriggers($after, $trigger->trigger_after, $trigger->plugin_system_name);
-		}
+//		if( $trigger->trigger_after ){
+//		    $this->pluginParseTriggers($after, $trigger->trigger_after, $trigger->plugin_system_name);
+//		}
 	    }
 	    $active_plugin_triggers->free_result();
 	}
