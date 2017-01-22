@@ -209,8 +209,8 @@ button img{
 }
 
 .tabs-header, .tabs-tool {
-    background-color: rgba(224,236,255,0.85);
-    background: none;
+    background-color: rgba(224,236,255,0.7);
+    -background: none;
     border: none;
 }
 /* blue datagrid hack 
@@ -453,4 +453,9 @@ img{
     padding: 1px;
     font-weight: bold;
     color:#fff;
+}
+h2{
+    font-weight: normal;
+    font-size: 14px;
+    margin: 3px;
 }

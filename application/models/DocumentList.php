@@ -16,11 +16,11 @@ class DocumentList extends Catalog{
 	}
 	$andwhere='';
 //	if( $mode==='show_only_pcomp_docs' ){
-//	    $pcomp_id=$this->Hub->pcomp('company_id');
-//            if( !$pcomp_id ){
-//                return [];
-//            }
-//	    $andwhere.=" AND passive_company_id=$pcomp_id";
+	    $pcomp_id=$this->Hub->pcomp('company_id');
+            if( !$pcomp_id ){
+                return [];
+            }
+	    $andwhere.=" AND passive_company_id=$pcomp_id";
 //	}	
 	$assigned_path=  $this->Hub->svar('user_assigned_path');
 	if( $assigned_path ){
@@ -33,6 +33,7 @@ class DocumentList extends Catalog{
 	$sql="
 	    SELECT 
 		doc_id,
+		doc_type,
 		dl.cstamp,
 		doc_num,
 		label pcomp_label,

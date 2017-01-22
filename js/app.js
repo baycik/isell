@@ -134,8 +134,8 @@ var App = {
     require:function(urls,callback){
 	var filesLeft=urls.length;
 	function ok(){
-	    if(--filesLeft<=0){
-		callback();
+	    if( --filesLeft<=0){
+		callback&&callback();
 	    }
 	}
 	for(var i in urls){
@@ -146,6 +146,25 @@ var App = {
 	    App.loadedScripts.push(url);
 	    $.ajax({url: url,dataType: "script",cache: true,async:true}).done(ok);
 	}
+    },
+    include:function(urls,callback){
+	var filesLeft=urls.length;
+	function ok(){
+	    if( --filesLeft<=0){
+		callback&&callback();
+	    }
+	}
+	for(var i in urls){
+	    var url=urls[i];
+	    if( App.loadedScripts.indexOf(url)>-1 ){
+		ok();
+	    }
+	    App.loadedScripts.push(url);
+	    var script = document.createElement('script');
+	    script.src = url;
+	    script.onload = ok;
+	    document.head.appendChild(script); //or something of the likes
+	}	
     }
 };
 
@@ -537,15 +556,19 @@ Mark.pipes.format = function (str) {
 		    if( company ){
                         if( company.company_id===old_pcomp_id ){
                             App.handler.notify('passiveCompanyReloaded',company);
+			    App.Topic('passiveCompanyReloaded').publish(company);
                             return;
                         }
 			if( mode==='notify_init' ){
 			    App.handler.notify('passiveCompanyInited',company);
+			    App.Topic('passiveCompanyInited').publish(company);
                             return;
 			}
 			App.handler.notify('passiveCompanySelected',company);
+			App.Topic('passiveCompanySelected').publish(company);
 		    } else {
 			App.handler.notify('passiveCompanyReset');
+			App.Topic('passiveCompanyReset').publish();
 		    }
 		},
 		setActiveCompany:function( company, mode ){
@@ -561,17 +584,37 @@ Mark.pipes.format = function (str) {
 			},0);
 			if( mode==='notify_init' ){
 			    App.handler.notify('activeCompanyInited',company);
+			    App.Topic('activeCompanyInited').publish(company);
                             return;
 			}
 			App.handler.notify('activeCompanySelected',company);
+			App.Topic('activeCompanySelected').publish(company);
 		    } else {
 			App.handler.notify('activeCompanyReset');
+			App.Topic('activeCompanyReset').publish();
 		    }
 		}
 	    };
 	    App.handler.progress(function(status){
 		//console.log(status);
 	    });
+	    App.topics={};
+	    App.Topic = function (id) {
+		var callbacks, topic = id && App.topics[ id ];
+
+		if (!topic) {
+		    callbacks = jQuery.Callbacks("memory");
+		    topic = {
+			publish: callbacks.fire,
+			subscribe: callbacks.add,
+			unsubscribe: callbacks.remove
+		    };
+		    if (id) {
+			App.topics[ id ] = topic;
+		    }
+		}
+		return topic;
+	    };
 	    
 	    App.module={
 		init:function(){
@@ -723,3 +766,8 @@ $.extend($.fn.datagrid.defaults, {
 	}
     }
 });
+
+
+
+
+

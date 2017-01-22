@@ -2,58 +2,57 @@
 
 (function ($) {
     function SlickWrapper(node, settings) {
-	var grid;
+	var grid = {};
 	var loader;
 	var columns = settings.columns;
 	var options = settings.options;
-	var columnFilters={};
-	
+	var columnFilters = {};
+	var readycallback;
 
-	function init() {
-	    if( options.enableFilter ){
-		options.showHeaderRow=true;
-	    }
-	    loader = new Slick.Data.RemoteModel(options.url);
-	    grid = new Slick.Grid(node, loader.data, columns, options);
-	    grid.setSelectionModel(new Slick.RowSelectionModel());
-	    initLoader();
-	    if( options.enableFilter ){
-		initFilter();
-	    }
+
+
+	if (options.enableFilter) {
+	    options.showHeaderRow = true;
 	}
-	var urls = [
-	    "js/slick/lib/jquery.event.drag-2.3.0.js",
-	    "js/slick/slick.core.js",
-	    "js/slick/slick.grid.js",
-	    "js/slick/plugins/slick.rowselectionmodel.js"];
-	App.require(urls, init);
+	loader = new Slick.Data.RemoteModel(options.url);
+	grid = new Slick.Grid(node, loader.data, columns, options);
+	grid.setSelectionModel(new Slick.RowSelectionModel());
+	grid.reload = function () {
+	    var vp = grid.getViewport();
+	    loader.reloadData(vp.top, vp.bottom);
+	};
+	initLoader();
+	if (options.enableFilter) {
+	    initFilter();
+	}
+	if (readycallback) {
+	    readycallback(grid);
+	}
 
-	function initFilter(){
-	    $('.slick-headerrow-columns .slick-headerrow-column',node).each(function(){
-		var column_field=$(this).data('column').field;
+	function initFilter() {
+	    $('.slick-headerrow-columns .slick-headerrow-column', node).each(function () {
+		var column_field = $(this).data('column').field;
 		$(this).empty();
 		$("<input type='text'>")
-		    .data("field",column_field)
-		    .appendTo(this);
+			.data("field", column_field)
+			.appendTo(this);
 	    });
 	    var filterClock;
-	    function do_filter(input_node){
+	    function do_filter(input_node) {
 		var field = $(input_node).data("field");
 		if (field !== null) {
 		    columnFilters[field] = $.trim($(input_node).val());
 		}
 		loader.setFilter(columnFilters);
-		reload();
+		grid.reload();
 	    }
-	    $('.slick-headerrow-columns .slick-headerrow-column',node).on("change keyup", ":input", function (e) {
-		var input_node=this;
+	    $('.slick-headerrow-columns .slick-headerrow-column', node).on("change keyup", ":input", function (e) {
+		var input_node = this;
 		clearTimeout(filterClock);
-		filterClock=setTimeout(function(){do_filter(input_node);},500);
+		filterClock = setTimeout(function () {
+		    do_filter(input_node);
+		}, 500);
 	    });
-	}
-	function reload(){
-	    var vp = grid.getViewport();
-	    loader.reloadData(vp.top, vp.bottom);
 	}
 	function initLoader() {
 	    grid.onViewportChanged.subscribe(function (e, args) {
@@ -72,13 +71,11 @@
 		grid.updateRowCount();
 		grid.render();
 	    });
-	    reload();
+	    grid.reload();
 	}
-
-	return {
-	    "reload":reload
-	};
-    };
+	return grid;
+    }
+    ;
     window.SlickWrapper = SlickWrapper;
 })(jQuery);
 
@@ -108,7 +105,7 @@ $.fn.slickgrid = function (settings) {
      */
     function RemoteModel(url) {
 	var PAGESIZE = 15;
-	var total_row_count=0;
+	var total_row_count = 0;
 	var data = {length: 0};
 	var filter = {};
 	var sortcol = null;
@@ -137,13 +134,11 @@ $.fn.slickgrid = function (settings) {
 		delete data[key];
 	    }
 	    data.length = 0;
-	    total_row_count=0;
+	    total_row_count = 0;
 	}
 
 	function reloadData(from, to) {
-	    for (var i = from; i <= to; i++){
-		delete data[i];
-	    }
+	    clear();
 	    ensureData(from, to);
 	}
 
@@ -160,59 +155,59 @@ $.fn.slickgrid = function (settings) {
 
 	function ensureData(from, to) {
 	    cancelRequest();
-	    var rows_to_load=[];
-	    for(var i=from;i<=to+10;i++){
-		if( data[i]===undefined ){
+	    var rows_to_load = [];
+	    for (var i = from; i <= to + 10; i++) {
+		if (data[i] === undefined) {
 		    rows_to_load.push(i);
 		}
 	    }
-	    var skipped_from=Math.min.apply(null, rows_to_load);
-	    var skipped_to=Math.max.apply(null, rows_to_load);
-	    if( rows_to_load.length===0 ){//all rows in range are loaded
+	    var skipped_from = Math.min.apply(null, rows_to_load);
+	    var skipped_to = Math.max.apply(null, rows_to_load);
+	    if (rows_to_load.length === 0) {//all rows in range are loaded
 		onDataLoaded.notify({from: skipped_from, to: skipped_to});
 		return;
 	    }
-	    var limit=skipped_to-skipped_from+1;
-	    if(skipped_to>total_row_count){//rows are loaded at end of table 
-		limit=Math.max(limit,PAGESIZE);
+	    var limit = skipped_to - skipped_from + 1;
+	    if (skipped_to > total_row_count) {//rows are loaded at end of table 
+		limit = Math.max(limit, PAGESIZE);
 	    }
 	    clearTimeout(requestClock);
-	    requestClock=setTimeout(function(){
+	    requestClock = setTimeout(function () {
 		onDataLoading.notify({from: from, to: to});
-		makeRequest(skipped_from,limit);
-	    },50);
+		makeRequest(skipped_from, limit);
+	    }, 50);
 	}
-	function cancelRequest(){
+	function cancelRequest() {
 	    if (req) {
 		req.abort();
-		for (var i = req.from; i <= req.limit; i++){
+		for (var i = req.from; i <= req.limit; i++) {
 		    data[i] = undefined;
 		}
 	    }
 	}
-	
-	function makeRequest(from,limit){
-	    var params={
-		offset:from<0?0:from,
-		limit:limit,
-		sortby:sortcol,
-		sortdir:((sortdir > 0) ? "ASC" : "DESC"),
-		filter:JSON.stringify(filter)
+
+	function makeRequest(from, limit) {
+	    var params = {
+		offset: from < 0 ? 0 : from,
+		limit: limit,
+		sortby: sortcol,
+		sortdir: ((sortdir > 0) ? "ASC" : "DESC"),
+		filter: JSON.stringify(filter)
 	    };
-	    req=$.get(url,params,function(resp){
-		var rows=App.json(resp);
-		var to = from+rows.length;
+	    req = $.get(url, params, function (resp) {
+		var rows = App.json(resp);
+		var to = from + rows.length;
 		for (var i = 0; i < rows.length; i++) {
 		    data[from + i] = rows[i];
 		    data[from + i].num = from + i;
 		}
-		total_row_count=Math.max(total_row_count,to);
-		data.length=total_row_count+PAGESIZE;
+		total_row_count = Math.max(total_row_count, to);
+		data.length = total_row_count + PAGESIZE;
 		req = null;
-		onDataLoaded.notify({from: from, to: from+limit});
+		onDataLoaded.notify({from: from, to: from + limit});
 	    });
 	    req.from = from;
-	    req.limit=limit;
+	    req.limit = limit;
 	}
 	init();
 	return {

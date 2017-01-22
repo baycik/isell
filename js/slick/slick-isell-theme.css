@@ -35,9 +35,12 @@ classes should alter those!
 
 .slick-row {
     position: absolute;
-    background: white;
+    background: rgba(255,255,255,0.7);
     border: 0px;
     line-height: 20px;
+}
+.slick-row.odd {
+    background: rgba(230,230,230,0.7);
 }
 
 .slick-row.selected {
@@ -88,9 +91,6 @@ classes should alter those!
     background: silver !important;
 }
 
-.slick-row.odd {
-    background: rgba(230,230,230,0.7);
-}
 
 .slick-row.ui-state-active {
     background: #F5F7D7;

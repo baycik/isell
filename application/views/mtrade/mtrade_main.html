@@ -1,30 +1,58 @@
 
 <script>
-    App.initTabs('mtrade_main_tabs');
+    (function(){
+	function init(){
+	    App.initTabs('mtrade_main_tabs');
+	    
+	    showTree();
+	    App.Topic('passiveCompanySelected').subscribe(function(company){
+		$("#mtradePcompLabel").html(company.label);
+	    });
+	    App.Topic('passiveCompanyInited').subscribe(function(company){
+		$("#mtradePcompLabel").html(company.label);
+	    });
+	    
+	    
+	    
+	}
+	function showTree(){
+	    App.loadModule('page/company/tree',{inline:true,clickselect:true},'mCtreeInline',/(Ctree|page_company_tree)([^\w]|_)/g,"mCtreeInline$2").progress(function(status,company){
+		if( status==='select' ){
+		    App.user.pcompSelect(company);
+		    //TradeJs.initTabsOnce();
+		}
+		if( status==='deleted' && company==='company' ){
+		    //TradeJs.showTabs(false);
+		    App.pcomp={};
+		}
+	    });
+	}
+	
+	init();
+	App.mtrade_main={
+	    
+	};
+    })();
     
     
     
     
-    function showTree(){
-	App.loadModule('page/company/tree',{inline:true,clickselect:true},'mCtreeInline',/(Ctree|page_company_tree)([^\w]|_)/g,"mCtreeInline$2").progress(function(status,company){
-	    if( status==='select' ){
-		App.user.pcompSelect(company);
-		TradeJs.initTabsOnce();
-	    }
-	    if( status==='deleted' && company==='company' ){
-		TradeJs.showTabs(false);
-		App.pcomp={};
-	    }
-	});
-    }
     
+
     
 
 </script>
 
-<div id="mCtreeInline" style="float: left" class="transp60"></div>
-<div id="mtrade_main_tabs" class="easyui-tabs" data-options="border:false,pill:true,tabHeight:35">
-    <div title="Торговые операции" href="page/mtrade/document_list.html" style="min-height: 500px;"></div>
+<div style="float: left;margin-right: 1px;" class="transp60">
+    <h2>Выбранный контрагент</h2>
+    <div style="height:40px;">
+	<img src="img/gray.png">  <span class="link_button" title="Сменить клиента" id="mtradePcompLabel"></span>
+    </div>
+    
+    <div id="mCtreeInline"></div>
+</div>
+<div id="mtrade_main_tabs" class="easyui-tabs" data-options="border:false,tabHeight:35">
+    <div title="Торговые операции" href="page/mtrade/document_list.html"></div>
     <div title="Взаиморасчет" href="page/mtrade/document_list.html" style="min-height: 500px;"></div>
     <div title="Настройки" href="page/mtrade/document_list.html" style="min-height: 500px;"></div>
 </div>

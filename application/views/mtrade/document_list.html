@@ -1,5 +1,5 @@
-<div style="width:415px;float:left;">
-    <div id="doclist_sg">
+<div style="width:415px; float: left">
+    <div id="doclist_sg_tools">
 	<div style="float: left;font-weight: bold;padding-top: 8px;">
 	    <img src="img/table16.png" style="width:16px;height: 16px;"> Документы
 	</div>
@@ -7,10 +7,20 @@
 	    <span class="icon-24 icon-refresh" title="Обновить"> </span> 
 	</div>
     </div>
-    <div id="myGrid" style="width:100%;height:700px;"></div>
+    <div id="doclist_sg" style="width:100%;height:700px;"></div>
+</div>
+<div id="doclist_document_panel" style="min-width:500px;width:100%;float: left">
+    
 </div>
 <script>
-    (function($){
+App.require([
+	    "js/slick/lib/jquery.event.drag-2.3.0.js",
+	    "js/slick/slick.core.js",
+	    "js/slick/slick.grid.js",
+	    "js/slick/plugins/slick.rowselectionmodel.js"],function(){
+    var docList;
+    var processorModel;
+    function gridInit(){
 	function dateFormatter(row, cell, value, columnDef, dataContext){
 	    var date_parts=value.split(' ')[0].split('-');
 	    var date=date_parts[2]+'.'+date_parts[1]+'.'+date_parts[0];
@@ -30,34 +40,62 @@
 		return '';
 	    }	    
 	}
-	
+
 	var settings={
 	    columns:[
-		{name: "Контрагент", field: "pcomp_label", width: 120 },
-		{name: "", field: "doc_type_icon", width: 25,formatter:tooltip},
-		{name: "Дата", field: "cstamp",  width: 70, sortable: true,formatter:dateFormatter },
-		{name: "Номер", field: "doc_num", width: 50, sortable: true,cssClass:'slick-align-right' },
-		{name: "Сумма", field: "doc_total", width: 70 },
-		{name: "Оплачен", field: "trans_status", width: 25,formatter:tooltip},
-		{name: "Проведен", field: "is_commited", width: 25,formatter:tooltip},
-		{name: "Тип документа", field: "doc_type_name", width: 150 },
-		{name: "Напечатано", field: "views", width: 70},
-		
+		{id:"pcomp_label", field: "pcomp_label",name: "Контрагент", width: 120 },
+		{id:"doc_type_icon", field: "doc_type_icon",name: "", width: 25,formatter:tooltip},
+		{id:"cstamp", field: "cstamp",name: "Дата",  width: 70, sortable: true,formatter:dateFormatter },
+		{id:"doc_num", field: "doc_num",name: "Номер", width: 50, sortable: true,cssClass:'slick-align-right' },
+		{id:"doc_total", field: "doc_total",name: "Сумма", width: 70, sortable: true },
+		{id:"trans_status", field: "trans_status",name: "Оплачен", width: 25, sortable: true,formatter:tooltip},
+		{id:"is_commited", field: "is_commited",name: "Проведен", width: 25,formatter:tooltip},
+		{id:"doc_type_name", field: "doc_type_name",name: "Тип документа", sortable: true, width: 150 },
+		{id:"views", field: "views",name: "Напечатано", width: 70}
+
 	    ],
 	    options:{
 		enableCellNavigation: true,
 		enableColumnReorder: false,
 		enableFilter:true,
+		multiSelect :false,
 		url:'DocumentList/listFetch'
 	    }
 	};
 	var h = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
-	$("#myGrid").css('height',(h-$("#myGrid").position().top-30)+'px');
-	var docList=$("#myGrid").slickgrid(settings);
-	
-	$("#doclist_sg .icon-refresh").click(function(){
+	$("#doclist_sg").css('height',(h-$("#doclist_sg").position().top-30)+'px');
+	$("#doclist_sg_tools .icon-refresh").click(function(){
 	    docList.reload();
 	});
+	docList=$("#doclist_sg").slickgrid(settings);
+	docList.onSelectedRowsChanged.subscribe(function(e,selection){
+	    var doclistRow=selection.grid.getDataItem(selection.rows[0]);
+	    documentLoad(doclistRow);
+	});
+    }
+    function init(){
+	gridInit();
+	App.Topic('passiveCompanySelected').subscribe(function(company){
+	    docList.reload();
+	});
+    }
+    init();
+    function documentLoad(doclistRow){
+	function capitalize(s){
+	    return s && s[0].toUpperCase() + s.slice(1);
+	}
+	if( $.isNumeric(doclistRow.doc_type) ){
+	    processorModel='DocumentLegacy';
+	} else if( doclistRow.doc_type.length>2 ) {//doc_type name must be at least 3 signs
+	    processorModel='Document'+capitalize(doclistRow.doc_type);
+	} else {
+	    processorModel=null;
+	}
+	documentFormLoad(processorModel,doclistRow.doc_id);
+    }
+    function documentFormLoad(processorModel,doc_id){
+	var doc_panel=$("#doclist_document_panel");
 	
-    })($);
+    }
+});
 </script>
