@@ -64,18 +64,19 @@ class Stock extends Data {
 
     private function stockEntryQtyAlter($action = 'increase', $product_code, $amount, $description = NULL, $self_price = NULL) {
         $this->stockEntryLoad($product_code);
+        $party_total=$self_price*$amount;
+        $stock_total=$this->stockEntry->self_price*$this->stockEntry->product_quantity;
         switch ($action) {
             case 'increase':
                 $this->stockEntry->product_quantity += $amount;
                 $this->stockEntry->vat_quantity += $amount;
+                $this->stockEntry->self_price =($stock_total+$party_total)/$this->stockEntry->product_quantity;
                 break;
             case 'decrease':
                 $this->stockEntry->product_quantity -= $amount;
                 $this->stockEntry->vat_quantity -= $amount;
+                $this->stockEntry->self_price =($stock_total-$party_total)/$this->stockEntry->product_quantity;
                 break;
-        }
-        if (isset($self_price)) {
-            $this->stockEntry->self_price = $self_price;
         }
         return $this->stockEntrySave();
     }
