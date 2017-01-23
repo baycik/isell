@@ -58,6 +58,7 @@ class UpdateInstaller {
     }
 
     private function updateUnpack() {
+        set_time_limit(60);
 	$this->delTree($this->zipSubFolder);
 	$zip = new ZipArchive;
 	if ($zip->open($this->zipPath) === TRUE) {
