@@ -1,7 +1,8 @@
 <?php
 include "Catalog.php";
 class Sync extends Catalog {
-    private $gateway_url = "http://nilsonmag.com/open/?route=module/baycikSync";
+    private $gateway_url = "https://nilsonmag.com/open/?route=extension/module/baycikSync";
+    //private $gateway_url = "http://localhost:888/nilsonmag.com/open/?route=extension/module/baycikSync";
     private $login = "Default";
     private $key = "9aFJXRMqyA1dQ1HHy5q618e5V9zKklmgswUu6vqsE3g3lP0OJpyb6Il6rnPGqCKM8QM38HpWJmvUWsrkCxpvITQ7CMZcrVkrkwMOQ4DC8b95nxX8kAi2ux0HxgLRaQwKsSS40AEQVE9M2ikusdZfl1ujpH1o19aX36SLgQMcmWOwzFulfdsrEh7YfEnDr4fr44zBhQQ9aQX2O9WFNQvXBLa8OZSE8a4gyLxZKYPVJukhyzzuOuiEq7pqRGKbCNx6";
     private $defaultUserId='319';
