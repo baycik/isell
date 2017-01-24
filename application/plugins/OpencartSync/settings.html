@@ -1,0 +1,28 @@
+<form>
+    <h2>Настройки подключения</h2>
+    <div class="plugin_settings">
+	<input name="login" title="API Логин" required="required">
+	<input name="dollar_ratio" title="Курс доллара" required="required">
+        <textarea name="key" title="API Ключ" required="required" rows="3"></textarea>
+        <textarea name="gateway_url" title="Адрес модуля OC" required="required" rows="3"></textarea>
+	<input type="hidden" name="pcomp_id">
+	<input title="Цены клиента" name="pcomp_name" value="" readonly="readonly" required="required"/>
+	<button type="button" class="tiny_button" onclick="App.user.pcompSelectionDialog();"><img src="img/settings.png"> Изменить</button>
+	<div style="text-align: center">
+	    <button type="submit"><img src="img/Save-24.png" style="width:24px;height: auto"> Сохранить</button>
+	</div>
+	<div>
+	    <h3>Инструкция по заполнению</h3>
+	    <ol>
+	    </ol>
+	</div>
+    </div>
+</form>
+<script>
+    App.handler.progress(function(status){
+	if( status==='passiveCompanySelected' || status==='passiveCompanyInited' ){
+	    $("input[name=pcomp_name]").val(App.pcomp.label);
+	    $("input[name=pcomp_id]").val(App.pcomp.company_id);
+	}
+    });
+</script>
