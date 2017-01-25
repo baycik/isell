@@ -9,7 +9,7 @@
  * Author URI: http://isellsoft.com
  */
 require_once 'models/PluginManager.php';
-class Sync extends PluginManager{
+class OpencartSync extends PluginManager{
     public $settings;
     function __construct(){
 	$this->settings=$this->settingsDataFetch('OpencartSync');
