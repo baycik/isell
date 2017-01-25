@@ -3,7 +3,7 @@
     TradeJs = {
         init: function () {
 	    this.ctreeInlineInit();
-            //setTimeout(function(){TradeJs.initTabsOnce()},3000);
+            setTimeout(function(){TradeJs.initTabsOnce();},0);
 	},
         initTabsOnce:function(){
             if( this.tabsInited ){
