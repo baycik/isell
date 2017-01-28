@@ -190,35 +190,33 @@ class Utils extends Catalog{
 	    $this->Base->msg("Sms can not be sent. https is not available");
 	    return false;
 	}
-	try {
-	    if (time() - $this->Base->svar('smsSessionTime') * 1 > 24*60) {
-		$this->Base->svar('smsSessionTime', time());
-		$sid = json_decode(file_get_contents("https://integrationapi.net/rest/user/sessionId?login=" . $this->Base->pref('SMS_USER') . "&password=" . $this->Base->pref('SMS_PASS')));
-		$this->Base->svar('smsSessionId', $sid);
-	    }
-	    $post_vars = array(
-		'SessionID' => $this->Base->svar('smsSessionId'),
-		'SourceAddress' => $this->Base->pref('SMS_SENDER'),
-		'DestinationAddresses' => $number,
-		'Data' => $body
-	    );
-	    $opts = array(
-		'http' => [
-                    'header' => "Content-Type: application/x-www-form-urlencoded\r\n",
-		    'method' => "POST",
-		    'content' => http_build_query($post_vars)
-		]
-	    );
-            $response=file_get_contents('https://integrationapi.net/rest/Sms/SendBulk/', false, stream_context_create($opts));
-	    $msg_ids = json_decode($response);            
-	    if (!$msg_ids[0]){
+	if (time() - $this->Base->svar('smsSessionTime') * 1 > 24*60) {
+	    $sid = json_decode(file_get_contents("https://integrationapi.net/rest/user/sessionId?login=" . $this->Base->pref('SMS_USER') . "&password=" . $this->Base->pref('SMS_PASS')));
+	    if( !$sid ){
+		$this->Base->msg('Authorization to SMS service failed');
 		return false;
-            }
-	} catch (Exception $e) {
+	    }
+	    $this->Base->svar('smsSessionId', $sid);
+	    $this->Base->svar('smsSessionTime', time());
+	}
+	$post_vars = array(
+	    'SessionID' => $this->Base->svar('smsSessionId'),
+	    'SourceAddress' => $this->Base->pref('SMS_SENDER'),
+	    'DestinationAddresses' => $number,
+	    'Data' => $body
+	);
+	$opts = array(
+	    'http' => [
+		'header' => "Content-Type: application/x-www-form-urlencoded\r\n",
+		'method' => "POST",
+		'content' => http_build_query($post_vars)
+	    ]
+	);
+	$response=file_get_contents('https://integrationapi.net/rest/Sms/SendBulk/', false, stream_context_create($opts));
+	$msg_ids = json_decode($response);            
+	if (!$msg_ids[0]){
+	    $this->Base->msg('Sending SMS is failed');
 	    $this->Base->svar('smsSessionTime', 0);
-	    /*
-	     * Make smsSid expire to try again
-	     */
 	    return false;
 	}
 	return true;
