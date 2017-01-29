@@ -179,7 +179,7 @@ class Utils extends Catalog{
     /////////////////////////////
     //SMS FUNCTIONS
     /////////////////////////////
-    public function sendSms($number=null,$body=null) {
+   public function sendSms($number=null,$body=null) {
 	$number=$this->request('to','string',$number);
 	$body=$this->request('body','string',$body);
 	if (!$this->Hub->pref('SMS_SENDER') || !$this->Hub->pref('SMS_USER') || !$this->Hub->pref('SMS_PASS')) {
@@ -190,35 +190,33 @@ class Utils extends Catalog{
 	    $this->Hub->msg("Sms can not be sent. https is not available");
 	    return false;
 	}
-	try {
-	    if (time() - $this->Hub->svar('smsSessionTime') * 1 > 24*60) {
-		$this->Hub->svar('smsSessionTime', time());
-		$sid = json_decode(file_get_contents("https://integrationapi.net/rest/user/sessionId?login=" . $this->Hub->pref('SMS_USER') . "&password=" . $this->Hub->pref('SMS_PASS')));
-		$this->Hub->svar('smsSessionId', $sid);
-	    }
-	    $post_vars = array(
-		'SessionID' => $this->Hub->svar('smsSessionId'),
-		'SourceAddress' => $this->Hub->pref('SMS_SENDER'),
-		'DestinationAddresses' => $number,
-		'Data' => $body
-	    );
-	    $opts = array(
-		'http' => [
-                    'header' => "Content-Type: application/x-www-form-urlencoded\r\n",
-		    'method' => "POST",
-		    'content' => http_build_query($post_vars)
-		]
-	    );
-            $response=file_get_contents('https://integrationapi.net/rest/Sms/SendBulk/', false, stream_context_create($opts));
-	    $msg_ids = json_decode($response);            
-	    if (!$msg_ids[0]){
+	if (time() - $this->Hub->svar('smsSessionTime') * 1 > 24*60) {
+	    $sid = json_decode(file_get_contents("https://integrationapi.net/rest/user/sessionId?login=" . $this->Hub->pref('SMS_USER') . "&password=" . $this->Hub->pref('SMS_PASS')));
+	    if( !$sid ){
+		$this->Hub->msg('Authorization to SMS service failed');
 		return false;
-            }
-	} catch (Exception $e) {
+	    }
+	    $this->Hub->svar('smsSessionId', $sid);
+	    $this->Hub->svar('smsSessionTime', time());
+	}
+	$post_vars = array(
+	    'SessionID' => $this->Hub->svar('smsSessionId'),
+	    'SourceAddress' => $this->Hub->pref('SMS_SENDER'),
+	    'DestinationAddresses' => $number,
+	    'Data' => $body
+	);
+	$opts = array(
+	    'http' => [
+		'header' => "Content-Type: application/x-www-form-urlencoded\r\n",
+		'method' => "POST",
+		'content' => http_build_query($post_vars)
+	    ]
+	);
+	$response=file_get_contents('https://integrationapi.net/rest/Sms/SendBulk/', false, stream_context_create($opts));
+	$msg_ids = json_decode($response);            
+	if (!$msg_ids[0]){
+	    $this->Hub->msg('Sending SMS is failed');
 	    $this->Hub->svar('smsSessionTime', 0);
-	    /*
-	     * Make smsSid expire to try again
-	     */
 	    return false;
 	}
 	return true;

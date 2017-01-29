@@ -34,17 +34,20 @@
 		if( action==='install' ){
 		    url='Maintain/updateInstall/';
 		}
-		App.get(url,function(ok){
+		$.get(url,function(ok){
 		    if(ok*1){
 			App.page_dialog_updater.chain(step+1);
 		    } else {
-			if( confirm("Не удалось завершить обновление. Попробовать еще раз?") ){
-			    App.page_dialog_updater.startUpdate();
-			} else {
-			    App.page_dialog_updater.destroy();
-			}
+                        onFail();
 		    }
-		});
+		}).fail(onFail);
+                function onFail(){
+                    if( confirm("Не удалось завершить обновление. Попробовать еще раз?") ){
+                        App.page_dialog_updater.startUpdate();
+                    } else {
+                        App.page_dialog_updater.destroy();
+                    }                      
+                };
 	    } else {
 		$('#updater_status_finish img').attr('src','img/ok.png');
 		$('#updater_close_btn').show();

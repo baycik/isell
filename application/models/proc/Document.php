@@ -1155,7 +1155,7 @@ class Document extends Data {
 	 */
 	$price = $this->getRawProductPrice($product_code, $this->doc('doc_ratio'));
 	$price_self = $price['buy'] ? $price['buy'] : $price['sell'];
-	$this->Base->Stock->setEntrySelfPrice($product_code, $price_self);
+	//$this->Base->Stock->setEntrySelfPrice($product_code, $price_self);
 	return $price_self;
     }
 

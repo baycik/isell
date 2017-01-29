@@ -39,8 +39,8 @@ class Reports_manager_sells extends Catalog{
         }
         //$having=$this->group_by_filter?"HAVING group_by LIKE '%$this->group_by_filter%'":"";
 	
-	$this->query("DROP TABLE IF EXISTS tmp_manager_sells;");#TEMPORARY TEMPORARY 
-	$main_table_sql="CREATE TABLE tmp_manager_sells ENGINE=MyISAM AS (
+	$this->query("DROP TEMPORARY TABLE IF EXISTS tmp_manager_sells;");#TEMPORARY TEMPORARY 
+	$main_table_sql="CREATE TEMPORARY TABLE tmp_manager_sells ENGINE=MyISAM AS (
 	    SELECT 
 		DATE_FORMAT(cstamp, '%d.%m.%Y') date,
 		doc_num,

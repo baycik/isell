@@ -4,17 +4,23 @@
     CompPrefs=App.page_company_prefs={
 	init:function(){
 	    App.setupForm("#CompPrefs_other");
-	    //this.load();
 	    App.handler.progress(function(status){
 		if( status==="passiveCompanyInited" || status==="passiveCompanySelected" ){
 		    CompPrefs.load();
 		}
 	    });
+	    this.loadOnce();
+	},
+	loadOnce:function(){
+	    if(!this.loadedonce){
+		this.load();
+	    }
 	},
 	focus:function(){
 	    this.load();
 	},
 	load:function(){
+	    this.loadedonce=true;
 	    App.get('Company/companyPrefsGet',function(resp){
 		if( resp ){
 		    CompPrefs.prefData=App.json(resp);
