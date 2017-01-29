@@ -20,7 +20,11 @@ class DocumentSell extends DocumentBase{
 	$doc_type='sell';
 	return parent::documentAdd($doc_type);
     }
-    public function formGet(){
-	return $this->load->view('DocumentSellForm.html');
+    public $headDataGet=['doc_id'=>'int'];
+    public function headDataGet( $doc_id ){
+	return parent::headDataGet($doc_id);
+    }
+    public function headFormGet(){
+	return $this->load->view('DocumentSellForm.html',[],true);
     }
 }

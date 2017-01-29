@@ -27,7 +27,41 @@ abstract class DocumentBase extends Catalog{
 	}
 	return isset($this->document_properties->$field)?$this->document_properties->$field:null;
     }
-    
+    protected function headDefaultDataGet(){
+	return [];
+    }
+    public function headDataGet( $doc_id ){
+	if( $doc_id==0 ){
+	    return $this->headDefaultDataGet();
+	}
+	//$this->documentSelect($doc_id);
+	$sql="
+	    SELECT
+		doc_id,
+		passive_company_id,
+                (SELECT label FROM companies_tree JOIN companies_list USING(branch_id) WHERE company_id=passive_company_id) label,
+		IF(is_reclamation,-doc_type,doc_type) doc_type,
+		is_reclamation,
+		is_commited,
+		notcount,
+		vat_rate,
+		use_vatless_price,
+		signs_after_dot,
+		doc_ratio,
+		doc_num,
+		DATE_FORMAT(cstamp,'%d.%m.%Y') doc_date,
+		doc_data,
+		(SELECT last_name FROM user_list WHERE user_id=created_by) created_by,
+		(SELECT last_name FROM user_list WHERE user_id=modified_by) modified_by
+	    FROM
+		document_list
+	    WHERE doc_id=$doc_id"
+	;
+	$head=$this->get_row($sql);
+	//$head->extra_expenses=$this->getExtraExpenses();
+	return $head;
+    }
+
     protected function documentAdd( $doc_type ){
 	$this->Hub->set_level(1);
 	$user_id=$this->Hub->svar('user_id');

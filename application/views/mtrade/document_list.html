@@ -1,17 +1,3 @@
-<div style="width:415px; float: left">
-    <div id="doclist_sg_tools">
-	<div style="float: left;font-weight: bold;padding-top: 8px;">
-	    <img src="img/table16.png" style="width:16px;height: 16px;"> Документы
-	</div>
-	<div style="float: right">
-	    <span class="icon-24 icon-refresh" title="Обновить"> </span> 
-	</div>
-    </div>
-    <div id="doclist_sg" style="width:100%;height:700px;"></div>
-</div>
-<div id="doclist_document_panel" style="min-width:500px;width:100%;float: left">
-    
-</div>
 <script>
 App.page_mtrade_document_list=(function(){
     var require=[
@@ -21,6 +7,7 @@ App.page_mtrade_document_list=(function(){
 	    "js/slick/plugins/slick.rowselectionmodel.js"];
     var docList;
     var processorModel;
+    var headData={};
     function gridInit(){
 	function dateFormatter(row, cell, value, columnDef, dataContext){
 	    var date_parts=value.split(' ')[0].split('-');
@@ -75,29 +62,47 @@ App.page_mtrade_document_list=(function(){
 	});
     }
     function init(){
-	gridInit();
+	//gridInit();
 	App.Topic('passiveCompanySelected').subscribe(function(company){
 	    docList.reload();
 	});
+	documentHeadLoad('DocumentSell',86);
     }
     function documentLoad(doclistRow){
 	function capitalize(s){
 	    return s && s[0].toUpperCase() + s.slice(1);
 	}
 	if( $.isNumeric(doclistRow.doc_type) ){
-	    processorModel='DocumentLegacy';
+	    switch(doclistRow.doc_type){
+		case '1':
+		    processorModel='DocumentSell';
+		    break;
+		case '2':
+		    processorModel='DocumentBuy';
+		    break;
+		case '3':
+		    processorModel='DocumentServiceout';
+		    break;
+		case '4':
+		    processorModel='DocumentServicein';
+		    break;
+	    }
 	} else if( doclistRow.doc_type.length>2 ) {//doc_type name must be at least 3 signs
 	    processorModel='Document'+capitalize(doclistRow.doc_type);
 	} else {
 	    processorModel=null;
 	}
-	documentFormLoad(processorModel,doclistRow.doc_id);
+	documentHeadLoad(processorModel,doclistRow.doc_id);
     }
-    function documentFormLoad(processorModel,doc_id){
-	var doc_panel=$("#doclist_document_panel");
-	doc_panel.load(processorModel+'/formGet',function(){
-	    console.log('form loaded');
-	});
+    function documentHeadLoad(processorModel,doc_id){
+	function headDataLoad(){
+	    $.get(processorModel+'/headDataGet',{doc_id:doc_id},function(resp){
+		headData=App.json(resp);
+		App.setupForm("#doclist_document_head form",headData);
+		$.parser.parse("#doclist_document_head form");//for easy ui
+	    });
+	}
+	$("#doclist_document_head").load(processorModel+'/headFormGet',headDataLoad);
     }
     return {
 	require:require,
@@ -105,3 +110,34 @@ App.page_mtrade_document_list=(function(){
     };
 })();
 </script>
+<style>
+    #doclist_document_head input{
+	width:110px;
+    }
+    #doclist_document_head select{
+	width:121px;
+	padding: 1px;
+    }
+    #doclist_document_head inp_group{
+	width:230px
+    }
+    
+</style>
+<div style="width:100%;">
+    <div style="width:40%;max-width:415px;display: inline-block">
+	<div id="doclist_sg_tools">
+	    <div style="float: left;font-weight: bold;padding-top: 8px;">
+		<img src="img/table16.png" style="width:16px;height: 16px;"> Документы
+	    </div>
+	    <div style="float: right">
+		<span class="icon-24 icon-refresh" title="Обновить"> </span> 
+	    </div>
+	</div>
+	<div id="doclist_sg" style="width:100%;height:700px;"></div>
+    </div>
+    <div style="width:60%;display: inline-block;vertical-align: top" id="doclist_document_panel" class="transp60">
+	<div>Документ</div>
+	<div id="doclist_document_head"></div>
+    </div>
+</div>
+
