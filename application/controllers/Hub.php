@@ -33,6 +33,9 @@ class Hub  extends CI_Controller{
     private function execute( $model_name, $method, $route_args ){
 	try{
 	    $Model=$this->load_model($model_name);
+	    if( !method_exists($model_name, $method) ){
+		show_error("X-isell-error: No such method '$method' in $model_name", 500);
+	    }
 	    $method_args_config=isset($Model->$method)?$Model->$method:NULL;
 	    $method_args=$this->parseMethodArguments($method_args_config, $route_args);
 	    $response=call_user_func_array([$Model, $method],$method_args);

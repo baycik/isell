@@ -6,8 +6,7 @@ App.page_mtrade_document_list=(function(){
 	    "js/slick/slick.grid.js",
 	    "js/slick/plugins/slick.rowselectionmodel.js"];
     var docList;
-    var processorModel;
-    var headData={};
+    var Document;
     function gridInit(){
 	function dateFormatter(row, cell, value, columnDef, dataContext){
 	    var date_parts=value.split(' ')[0].split('-');
@@ -58,7 +57,7 @@ App.page_mtrade_document_list=(function(){
 	docList=$("#doclist_sg").slickgrid(settings);
 	docList.onSelectedRowsChanged.subscribe(function(e,selection){
 	    var doclistRow=selection.grid.getDataItem(selection.rows[0]);
-	    documentLoad(doclistRow);
+	    Document.load(doclistRow);
 	});
     }
     function init(){
@@ -66,44 +65,131 @@ App.page_mtrade_document_list=(function(){
 	App.Topic('passiveCompanySelected').subscribe(function(company){
 	    docList.reload();
 	});
-	documentHeadLoad('DocumentSell',86);
+	Document.load({doc_type:'sell',doc_id:7180});
     }
-    function documentLoad(doclistRow){
-	function capitalize(s){
-	    return s && s[0].toUpperCase() + s.slice(1);
-	}
-	if( $.isNumeric(doclistRow.doc_type) ){
-	    switch(doclistRow.doc_type){
-		case '1':
-		    processorModel='DocumentSell';
-		    break;
-		case '2':
-		    processorModel='DocumentBuy';
-		    break;
-		case '3':
-		    processorModel='DocumentServiceout';
-		    break;
-		case '4':
-		    processorModel='DocumentServicein';
-		    break;
+    Document=(function(){
+	var documentModel;
+	var headData={};
+	function load(doclistRow){
+	    function capitalize(s){
+		return s && s[0].toUpperCase() + s.slice(1);
 	    }
-	} else if( doclistRow.doc_type.length>2 ) {//doc_type name must be at least 3 signs
-	    processorModel='Document'+capitalize(doclistRow.doc_type);
-	} else {
-	    processorModel=null;
+	    if( $.isNumeric(doclistRow.doc_type) ){
+		switch(doclistRow.doc_type){
+		    case '1':
+			documentModel='DocumentSell';
+			break;
+		    case '2':
+			documentModel='DocumentBuy';
+			break;
+		    case '3':
+			documentModel='DocumentServiceout';
+			break;
+		    case '4':
+			documentModel='DocumentServicein';
+			break;
+		}
+	    } else if( doclistRow.doc_type.length>2 ) {//doc_type name must be at least 3 signs
+		documentModel='Document'+capitalize(doclistRow.doc_type);
+	    } else {
+		documentModel=null;
+	    }
+	    headInit(documentModel,doclistRow.doc_id);
 	}
-	documentHeadLoad(processorModel,doclistRow.doc_id);
-    }
-    function documentHeadLoad(processorModel,doc_id){
-	function headDataLoad(){
-	    $.get(processorModel+'/headDataGet',{doc_id:doc_id},function(resp){
-		headData=App.json(resp);
-		App.setupForm("#doclist_document_head form",headData);
-		$.parser.parse("#doclist_document_head form");//for easy ui
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	function controlsInit(){
+	    function pcompComboInit(){
+		var node=$("#doclist_document_head  input[name=passive_company_id]");
+		if( !node ){
+		    return;
+		}
+		function pcomploader(param, success, error){
+		    if( param.q===undefined ){
+			success([{company_id:headData.passive_company_id,label:headData.label}]);
+			return;
+		    }
+		    $.get('Company/listFetch/', param, function (xhr) {
+			var resp = App.json(xhr);
+			success(resp[0] ? resp : []);
+		    });  	    
+		}
+		function pcomplistfrm(row){
+		    var label=row.label;
+		    if( row.path ){
+			var path_chunks=row.path.split('>');
+			var label=path_chunks.slice(path_chunks.length-2).reverse().join('/ ');
+		    }
+		    return label;
+		}
+		function openCompanyDetails(company_id){
+		    App.loadWindow('page/company/details',{company_id:headData.passive_company_id});
+		}
+		var options={
+		    valueField: 'company_id',
+		    textField: 'label',
+		    loader:pcomploader,
+		    mode: 'remote',
+		    hasDownArrow:false,
+		    selectOnNavigation:false,
+		    formatter:pcomplistfrm,
+		    width:220,
+		    icons: [
+			{iconCls:'icon-settings16',handler: App.user.pcompSelectionDialog},
+			{iconCls:'icon-change16',handler:openCompanyDetails}
+		     ]
+		};
+		node.combobox(options);
+	    }
+	    pcompComboInit();
+	    App[documentModel] && App[documentModel].init && App[documentModel].init($("#doclist_document_head"));
+	    $("#doclist_document_head .document_toolbar").click(function(e){
+		var action=$(e.target).data('action');
+		if( action ){
+		    headUpdate( action );
+		}
 	    });
 	}
-	$("#doclist_document_head").load(processorModel+'/headFormGet',headDataLoad);
-    }
+	
+	function headInit(documentModel,doc_id){
+	    function headDataLoad(){
+		$.get(documentModel+'/headDataGet',{doc_id:doc_id},function(resp){
+		    headData=App.json(resp);
+		    App.setupForm("#doclist_document_head form",headData).change(function(){
+			headUpdate( $(this).attr('name'), $(this).val(), $(this).attr('title') );
+		    });
+		    $.parser.parse("#doclist_document_head form");//for easy ui
+		    controlsInit();
+		});
+	    }
+	    $("#doclist_document_head").load(documentModel+'/headFormGet',headDataLoad);
+	}
+	function headUpdate( field, value, title ){
+	    $.post( documentModel+'/headUpdate',{dac_id:headData.doc_id,field:field,value:value},function(ok){
+		ok*1 && title && App.flash("Сохранено: "+title);
+	    });
+	}
+	
+	return {
+	    load:load
+	};
+    })();
+    
+    
+    
+    
     return {
 	require:require,
 	init:init
@@ -116,10 +202,14 @@ App.page_mtrade_document_list=(function(){
     }
     #doclist_document_head select{
 	width:121px;
-	padding: 1px;
+	height:25px;
     }
-    #doclist_document_head inp_group{
-	width:230px
+    #doclist_document_head .inp_group{
+	min-width:230px;
+	vertical-align: middle;
+    }
+    #doclist_document_head .inp_group b{
+	min-width1:130px;
     }
     
 </style>
@@ -136,7 +226,6 @@ App.page_mtrade_document_list=(function(){
 	<div id="doclist_sg" style="width:100%;height:700px;"></div>
     </div>
     <div style="width:60%;display: inline-block;vertical-align: top" id="doclist_document_panel" class="transp60">
-	<div>Документ</div>
 	<div id="doclist_document_head"></div>
     </div>
 </div>

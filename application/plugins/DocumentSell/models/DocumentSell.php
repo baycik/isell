@@ -27,4 +27,8 @@ class DocumentSell extends DocumentBase{
     public function headFormGet(){
 	return $this->load->view('DocumentSellForm.html',[],true);
     }
+    public $headUpdate=['doc_id'=>'int','field'=>'string','value'=>'string'];
+    public function headUpdate( $doc_id, $field, $value ){
+	
+    }
 }
