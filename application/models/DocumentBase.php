@@ -195,4 +195,10 @@ abstract class DocumentBase extends Catalog{
     protected function entryCommit($entry){
 	return false;
     }
+    
+    
+    public $entryListFetch=['doc_id'=>'int'];
+    public function entryListFetch($doc_id){
+	return [];
+    }
 }

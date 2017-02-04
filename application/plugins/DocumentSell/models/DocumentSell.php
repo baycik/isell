@@ -31,4 +31,11 @@ class DocumentSell extends DocumentBase{
     public function headUpdate( $doc_id, $field, $value ){
 	
     }
+    
+    public $entryListFetch=['doc_id'=>'int'];
+    public function entryListFetch($doc_id){
+	$sql="";
+	
+	return $this->get_list($sql);
+    }
 }

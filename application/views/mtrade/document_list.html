@@ -95,21 +95,8 @@ App.page_mtrade_document_list=(function(){
 		documentModel=null;
 	    }
 	    headInit(documentModel,doclistRow.doc_id);
+	    entriesInit(documentModel,doclistRow.doc_id);
 	}
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
 	function controlsInit(){
 	    function pcompComboInit(){
 		var node=$("#doclist_document_head  input[name=passive_company_id]");
@@ -162,7 +149,6 @@ App.page_mtrade_document_list=(function(){
 		}
 	    });
 	}
-	
 	function headInit(documentModel,doc_id){
 	    function headDataLoad(){
 		$.get(documentModel+'/headDataGet',{doc_id:doc_id},function(resp){
@@ -182,14 +168,66 @@ App.page_mtrade_document_list=(function(){
 	    });
 	}
 	
+	
+	
+	
+	
+	function entriesInit(documentModel,doc_id){
+	    function tooltip(row, cell, value, columnDef, dataContext){
+		if( !value ){
+		    return '';
+		}
+		var parts = value.split(' ');
+		var cmd = parts.shift();
+		if (cmd){
+		    var style='max-width:16px;height:auto';
+		    return '<img src="img/' + cmd + '.png" style="'+style+'" title="' + parts.join(' ') + '">';
+		}
+		else{
+		    return '';
+		}	    
+	    }
+	    var curr_queue=0;
+	    function queue(){
+		return ++curr_queue;
+	    }
+
+	    var settings={
+		columns:[
+		    {id:"queue",name: "№",formatter:queue },
+		    {id:"product_code", field: "product_code",name: "Код", width: 25, sortable: true },
+		    {id:"product_name", field: "product_name",name: "Название",  width: 70},
+		    {id:"product_quantity", field: "product_quantity",name: "Кол-во", width: 40, sortable: true,cssClass:'slick-align-right'},
+		    {id:"product_unit", field: "product_unit",name: "Ед.", width: 30, sortable: true },
+		    {id:"product_price", field: "product_price",name: "Оплачен", width: 40, sortable: true},
+		    {id:"product_sum", field: "product_sum",name: "Проведен", width: 35},
+		    {id:"row_status", field: "row_status",name: "Тип документа", sortable: true, width: 25,formatter:tooltip }
+		],
+		options:{
+		    enableCellNavigation: true,
+		    enableColumnReorder: false,
+		    enableFilter:false,
+		    multiSelect :true,
+		    url:documentModel+'/listFetch'
+		}
+	    };
+	    var h = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
+	    $("#doclist_sg").css('height',(h-$("#doclist_sg").position().top-30)+'px');
+	    $("#doclist_sg_tools .icon-refresh").click(function(){
+		docList.reload();
+	    });
+	    docList=$("#doclist_sg").slickgrid(settings);
+	    docList.onSelectedRowsChanged.subscribe(function(e,selection){
+		var doclistRow=selection.grid.getDataItem(selection.rows[0]);
+		Document.load(doclistRow);
+	    });
+	    
+	}
+	
 	return {
 	    load:load
 	};
     })();
-    
-    
-    
-    
     return {
 	require:require,
 	init:init
@@ -208,10 +246,6 @@ App.page_mtrade_document_list=(function(){
 	min-width:230px;
 	vertical-align: middle;
     }
-    #doclist_document_head .inp_group b{
-	min-width1:130px;
-    }
-    
 </style>
 <div style="width:100%;">
     <div style="width:40%;max-width:415px;display: inline-block">
