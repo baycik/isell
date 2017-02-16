@@ -89,11 +89,11 @@ class DocumentSell extends DocumentBase{
 	return $this->get_row($sql);
     }
     
-    public $entriesFetch=['doc_id'=>'int','offset'=>'int','limit'=>'int'];
-    public function entriesFetch($doc_id,$offset,$limit){
+    public $entriesFetch=['doc_id'=>'int','sortby'=>'string','sortdir'=>'(ASC|DESC)'];
+    public function entriesFetch($doc_id,$sortby='product_code',$sortdir='DESC'){
 	$this->entriesTmpCreate( $doc_id );
 	
-	$rows=$this->get_list("SELECT * FROM tmp_doc_entries LIMIT $limit OFFSET $offset");
+	$rows=$this->get_list("SELECT * FROM tmp_doc_entries ORDER BY $sortby $sortdir");
 	$entries=[
 	    'hasmorerows'=>0,
 	    'rows'=>$rows

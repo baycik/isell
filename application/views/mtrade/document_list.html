@@ -197,10 +197,10 @@ App.page_mtrade_document_list=(function(){
 		    {id:"queue",name: "№", width: 30,formatter:queue },
 		    {id:"product_code", field: "product_code",name: "Код", sortable: true, width: 80, sortable: true },
 		    {id:"product_name", field: "product_name",name: "Название", sortable: true, width: 300},
-		    {id:"product_quantity", field: "product_quantity",name: "Кол-во", sortable: true, width: 100, sortable: true,cssClass:'slick-align-right'},
+		    {id:"product_quantity", field: "product_quantity",name: "Кол-во", sortable: true, width: 70, sortable: true,cssClass:'slick-align-right'},
 		    {id:"product_unit", field: "product_unit",name: "Ед.", width: 50, sortable: true },
-		    {id:"product_price", field: "product_price",name: "Цена", sortable: true, width: 100, sortable: true},
-		    {id:"product_sum", field: "product_sum",name: "Сумма", sortable: true, width: 120},
+		    {id:"product_price_total", field: "product_price_total",name: "Цена", sortable: true, width: 70, sortable: true},
+		    {id:"product_sum_total", field: "product_sum_total",name: "Сумма", sortable: true, width: 80},
 		    {id:"row_status", field: "row_status",name: "!", width: 25,formatter:tooltip }
 		],
 		options:{
@@ -218,6 +218,7 @@ App.page_mtrade_document_list=(function(){
 		return $.get(url,param,function(resp){
 		    var data=App.json(resp);
 		    if( data ){
+			curr_queue=0;
 			success(data.entries);
 		    }
 		});
@@ -231,7 +232,7 @@ App.page_mtrade_document_list=(function(){
 	    docList=$("#doclist_document_entries_sg").slickgrid(settings);
 	    docList.onSelectedRowsChanged.subscribe(function(e,selection){
 		var doclistRow=selection.grid.getDataItem(selection.rows[0]);
-		Document.load(doclistRow);
+		
 	    });
 	    
 	}
@@ -274,14 +275,11 @@ App.page_mtrade_document_list=(function(){
     <div style="width:60%;display: inline-block;vertical-align: top" id="doclist_document_panel" class="transp60">
 	<div id="doclist_document_head"></div>
 	<div id="doclist_document_entries_sg_tools">
-	    <div style="float: left;font-weight: bold;padding-top: 8px;">
-		<img src="img/table16.png" style="width:16px;height: 16px;"> Документы
-	    </div>
 	    <div style="float: right">
 		<span class="icon-24 icon-refresh" title="Обновить"> </span> 
 	    </div>
 	</div>
-	<div id="doclist_document_entries_sg"></div>
+	<div id="doclist_document_entries_sg" style="width:100%;height:700px;"></div>
     </div>
 </div>
 
