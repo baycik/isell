@@ -3,7 +3,7 @@
 (function ($) {
     function SlickWrapper(node, settings) {
 	var grid = {};
-	var loader;
+	var remoteModel;
 	var columns = settings.columns;
 	var options = settings.options;
 	var columnFilters = {};
@@ -14,12 +14,13 @@
 	if (options.enableFilter) {
 	    options.showHeaderRow = true;
 	}
-	loader = new Slick.Data.RemoteModel(options.url);
-	grid = new Slick.Grid(node, loader.data, columns, options);
+	    remoteModel = new Slick.Data.RemoteDynamicalModel(options.url,options.loader);
+	
+	grid = new Slick.Grid(node, remoteModel.data, columns, options);
 	grid.setSelectionModel(new Slick.RowSelectionModel());
 	grid.reload = function () {
 	    var vp = grid.getViewport();
-	    loader.reloadData(vp.top, vp.bottom);
+	    remoteModel.reloadData(vp.top, vp.bottom);
 	};
 	initLoader();
 	if (options.enableFilter) {
@@ -43,7 +44,7 @@
 		if (field !== null) {
 		    columnFilters[field] = $.trim($(input_node).val());
 		}
-		loader.setFilter(columnFilters);
+		remoteModel.setFilter(columnFilters);
 		grid.reload();
 	    }
 	    $('.slick-headerrow-columns .slick-headerrow-column', node).on("change keyup", ":input", function (e) {
@@ -57,14 +58,14 @@
 	function initLoader() {
 	    grid.onViewportChanged.subscribe(function (e, args) {
 		var vp = grid.getViewport();
-		loader.ensureData(vp.top, vp.bottom);
+		remoteModel.ensureData(vp.top, vp.bottom);
 	    });
 	    grid.onSort.subscribe(function (e, args) {
-		loader.setSort(args.sortCol.field, args.sortAsc ? 1 : -1);
+		remoteModel.setSort(args.sortCol.field, args.sortAsc ? 1 : -1);
 		var vp = grid.getViewport();
-		loader.ensureData(vp.top, vp.bottom);
+		remoteModel.ensureData(vp.top, vp.bottom);
 	    });
-	    loader.onDataLoaded.subscribe(function (e, args) {
+	    remoteModel.onDataLoaded.subscribe(function (e, args) {
 		for (var i = args.from; i <= args.to; i++) {
 		    grid.invalidateRow(i);
 		}
@@ -88,11 +89,104 @@ $.fn.slickgrid = function (settings) {
 
 
 
+/*
+(function ($) {
+
+    function RemoteModel(url,loader) {
+	var data = {length: 0};
+	var filter = {};
+	var sortcol = null;
+	var sortdir = 1;
+	var req;
+	
+	
+	if( !loader ){
+	    loader=function(params,success){
+		return $.get(url, params, function (resp) {
+			    var rows = App.json(resp);
+			    success(rows);
+			});
+	    };
+	}
+	
+
+	// events
+	var onDataLoading = new Slick.Event();
+	var onDataLoaded = new Slick.Event();
+
+	function init() {
+	}
+
+	function isDataLoaded() {
+	    return true;
+	}
+
+	function clear() {
+	    for (var key in data) {
+		delete data[key];
+	    }
+	    data.length = 0;
+	}
+
+	function reloadData() {
+	    clear();
+	    makeRequest();
+	}
+
+	function setSort(column, dir) {
+	    sortcol = column;
+	    sortdir = dir;
+	    reloadData();
+	}
+
+	function setFilter(flt) {
+	    filter = flt;
+	    reloadData();
+	}
+
+	function ensureData() {}
+	
+	function cancelRequest() {
+	    if (req) {
+		req.abort();
+	    }
+	}
+
+	function makeRequest() {
+	    cancelRequest();
+	    var params = {
+		sortby: sortcol,
+		sortdir: ((sortdir > 0) ? "ASC" : "DESC"),
+		filter: JSON.stringify(filter)
+	    };
+	    function success(rows){
+		data.length = rows.length;
+		onDataLoaded.notify({from: 0, to: rows.length});
+	    }
+	    req = loader(params,success);
+	}
+	init();
+	return {
+	    // properties
+	    "data": data,
+	    // methods
+	    "clear": clear,
+	    "isDataLoaded": isDataLoaded,
+	    "ensureData": ensureData,
+	    "reloadData": reloadData,
+	    "setSort": setSort,
+	    "setFilter": setFilter,
+	    // events
+	    "onDataLoading": onDataLoading,
+	    "onDataLoaded": onDataLoaded
+	};
+    }
+    // Slick.Data.RemoteModel
+    $.extend(true, window, {Slick: {Data: {RemoteModel: RemoteModel}}});
+})(jQuery);
 
 
-
-
-
+*/
 
 
 
@@ -103,7 +197,7 @@ $.fn.slickgrid = function (settings) {
      * Right now, it's hooked up to load search results from Octopart, but can
      * easily be extended to support any JSONP-compatible backend that accepts paging parameters.
      */
-    function RemoteModel(url) {
+    function RemoteDynamicalModel(url,loader) {
 	var PAGESIZE = 15;
 	var total_row_count = 0;
 	var data = {length: 0};
@@ -112,6 +206,19 @@ $.fn.slickgrid = function (settings) {
 	var sortdir = 1;
 	var req = null; // ajax request
 	var requestClock;
+	var table_finished=false;
+	
+	
+	if( !loader ){
+	    loader=function(params,success){
+		return $.get(url, params, function (resp) {
+			    var rows = App.json(resp);
+			    success(rows);
+
+			});
+	    };
+	}
+	
 
 	// events
 	var onDataLoading = new Slick.Event();
@@ -135,6 +242,7 @@ $.fn.slickgrid = function (settings) {
 	    }
 	    data.length = 0;
 	    total_row_count = 0;
+	    table_finished=false;
 	}
 
 	function reloadData(from, to) {
@@ -154,6 +262,9 @@ $.fn.slickgrid = function (settings) {
 	}
 
 	function ensureData(from, to) {
+	    if( table_finished ){
+		return;
+	    }
 	    cancelRequest();
 	    var rows_to_load = [];
 	    for (var i = from; i <= to + 10; i++) {
@@ -194,18 +305,25 @@ $.fn.slickgrid = function (settings) {
 		sortdir: ((sortdir > 0) ? "ASC" : "DESC"),
 		filter: JSON.stringify(filter)
 	    };
-	    req = $.get(url, params, function (resp) {
-		var rows = App.json(resp);
-		var to = from + rows.length;
-		for (var i = 0; i < rows.length; i++) {
-		    data[from + i] = rows[i];
+	    function success(table){
+		var to = from + table.rows.length;
+		for (var i = 0; i < table.rows.length; i++) {
+		    data[from + i] = table.rows[i];
 		    data[from + i].num = from + i;
 		}
 		total_row_count = Math.max(total_row_count, to);
-		data.length = total_row_count + PAGESIZE;
+		data.length = total_row_count;
+		if( table.hasmorerows ){
+		    data.length+=1;
+		} else {
+		    table_finished=true;
+		}
 		req = null;
 		onDataLoaded.notify({from: from, to: from + limit});
-	    });
+	    }
+	    
+	    
+	    req = loader(params,success);
 	    req.from = from;
 	    req.limit = limit;
 	}
@@ -226,5 +344,5 @@ $.fn.slickgrid = function (settings) {
 	};
     }
     // Slick.Data.RemoteModel
-    $.extend(true, window, {Slick: {Data: {RemoteModel: RemoteModel}}});
+    $.extend(true, window, {Slick: {Data: {RemoteDynamicalModel: RemoteDynamicalModel}}});
 })(jQuery);

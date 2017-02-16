@@ -39,7 +39,7 @@ class DocumentSell extends DocumentBase{
 	$signs_after_dot=$this->doc('signs_after_dot');
 	$native_curr=($this->Hub->pcomp('curr_code') == $this->Hub->acomp('curr_code'))?1:0;
 	$curr_correction=$native_curr?1:1/$this->doc('doc_ratio');
-	$company_lang = $this->Hub->pcomp('language');
+	//$company_lang = $this->Hub->pcomp('language');
 
         $this->query("DROP TEMPORARY TABLE IF EXISTS tmp_doc_entries");
         $sql="CREATE TEMPORARY TABLE tmp_doc_entries ( INDEX(product_code) ) ENGINE=MyISAM AS (
@@ -50,7 +50,7 @@ class DocumentSell extends DocumentBase{
                 FROM
                 (SELECT
                     de.*,
-                    $company_lang product_name,
+                    ru product_name,
                     ROUND(invoice_price * $curr_correction, $signs_after_dot) AS product_price_vatless,
                     ROUND(invoice_price * $curr_correction * $doc_vat_ratio, $signs_after_dot) AS product_price_total,
 		    invoice_price<(self_price-0.01) is_loss,
@@ -89,11 +89,20 @@ class DocumentSell extends DocumentBase{
 	return $this->get_row($sql);
     }
     
-    public $entriesFetch=['doc_id'=>'int'];
-    public function entriesFetch($doc_id){
+    public $entriesFetch=['doc_id'=>'int','offset'=>'int','limit'=>'int'];
+    public function entriesFetch($doc_id,$offset,$limit){
 	$this->entriesTmpCreate( $doc_id );
+	
+	$rows=$this->get_list("SELECT * FROM tmp_doc_entries LIMIT $limit OFFSET $offset");
+	$entries=[
+	    'hasmorerows'=>0,
+	    'rows'=>$rows
+	];
+	
+	
+	
 	return [
-		'entries'=>$this->get_list("SELECT * FROM tmp_doc_entries"),
+		'entries'=>$entries,
 		'footer'=>$this->entriesFooterFetch()
 		];
     }

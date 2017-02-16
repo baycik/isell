@@ -194,23 +194,35 @@ App.page_mtrade_document_list=(function(){
 
 	    var settings={
 		columns:[
-		    {id:"queue",name: "№",formatter:queue },
-		    {id:"product_code", field: "product_code",name: "Код", width: 25, sortable: true },
-		    {id:"product_name", field: "product_name",name: "Название",  width: 70},
-		    {id:"product_quantity", field: "product_quantity",name: "Кол-во", width: 40, sortable: true,cssClass:'slick-align-right'},
-		    {id:"product_unit", field: "product_unit",name: "Ед.", width: 30, sortable: true },
-		    {id:"product_price", field: "product_price",name: "Оплачен", width: 40, sortable: true},
-		    {id:"product_sum", field: "product_sum",name: "Проведен", width: 35},
-		    {id:"row_status", field: "row_status",name: "Тип документа", sortable: true, width: 25,formatter:tooltip }
+		    {id:"queue",name: "№", width: 30,formatter:queue },
+		    {id:"product_code", field: "product_code",name: "Код", sortable: true, width: 80, sortable: true },
+		    {id:"product_name", field: "product_name",name: "Название", sortable: true, width: 300},
+		    {id:"product_quantity", field: "product_quantity",name: "Кол-во", sortable: true, width: 100, sortable: true,cssClass:'slick-align-right'},
+		    {id:"product_unit", field: "product_unit",name: "Ед.", width: 50, sortable: true },
+		    {id:"product_price", field: "product_price",name: "Цена", sortable: true, width: 100, sortable: true},
+		    {id:"product_sum", field: "product_sum",name: "Сумма", sortable: true, width: 120},
+		    {id:"row_status", field: "row_status",name: "!", width: 25,formatter:tooltip }
 		],
 		options:{
 		    enableCellNavigation: true,
 		    enableColumnReorder: false,
 		    enableFilter:false,
 		    multiSelect :true,
-		    url:documentModel+'/entriesFetch?doc_id='+doc_id
+		    enableDynamicalLoading:true,
+		    loader:entriesLoader
 		}
 	    };
+	    
+	    function entriesLoader(param,success){
+		var url=documentModel+'/entriesFetch?doc_id='+doc_id;
+		return $.get(url,param,function(resp){
+		    var data=App.json(resp);
+		    if( data ){
+			success(data.entries);
+		    }
+		});
+	    }
+	    
 	    var h = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
 	    $("#doclist_document_entries_sg").css('height',(h-$("#doclist_document_entries_sg").position().top-30)+'px');
 	    $("#doclist_document_entries_sg_tools .icon-refresh").click(function(){
