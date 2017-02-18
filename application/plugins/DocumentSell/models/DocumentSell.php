@@ -90,7 +90,15 @@ class DocumentSell extends DocumentBase{
     }
     
     public $entriesFetch=['doc_id'=>'int','sortby'=>'string','sortdir'=>'(ASC|DESC)'];
-    public function entriesFetch($doc_id,$sortby='product_code',$sortdir='DESC'){
+    public function entriesFetch($doc_id,$sortby,$sortdir){
+	if(!$sortby){
+	    $sortby='product_code';
+	}
+	if(!$sortdir){
+	    $sortdir='DESC';
+	}
+	
+	
 	$this->entriesTmpCreate( $doc_id );
 	
 	$rows=$this->get_list("SELECT * FROM tmp_doc_entries ORDER BY $sortby $sortdir");

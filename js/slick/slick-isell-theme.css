@@ -52,6 +52,13 @@ classes should alter those!
     padding-left: 4px;
     padding-right: 4px;
 }
+.slick-cell.active{
+    white-space: normal;
+    overflow: visible;
+    background-color: white;
+    height: auto !important;
+    z-index: 100;
+}
 
 .slick-group {
     border-bottom: 2px solid silver;
