@@ -68,6 +68,7 @@ App.page_mtrade_document_list=(function(){
 	Document.load({doc_type:'sell',doc_id:7180});
     }
     Document=(function(){
+	var docEntries;
 	var documentModel;
 	var headData={};
 	function load(doclistRow){
@@ -199,9 +200,12 @@ App.page_mtrade_document_list=(function(){
 		    {id:"product_name", field: "product_name",name: "Название", sortable: true, width: 300},
 		    {id:"product_quantity", field: "product_quantity",name: "Кол-во", sortable: true, width: 70, sortable: true,cssClass:'slick-align-right'},
 		    {id:"product_unit", field: "product_unit",name: "Ед.", width: 50, sortable: true },
-		    {id:"product_price_total", field: "product_price_total",name: "Цена", sortable: true, width: 70, sortable: true},
-		    {id:"product_sum_total", field: "product_sum_total",name: "Сумма", sortable: true, width: 80},
-		    {id:"row_status", field: "row_status",name: "!", width: 25,formatter:tooltip }
+		    {id:"product_price_total", field: "product_price_total",name: "Цена", sortable: true, width: 70, sortable: true,cssClass:'slick-align-right'},
+		    {id:"product_sum_total", field: "product_sum_total",name: "Сумма", sortable: true, width: 80,cssClass:'slick-align-right'},
+		    {id:"row_status", field: "row_status",name: "!",sortable: true, width: 25,formatter:tooltip },
+		    {id:"party_label",field:"party_label",name:"Партия",width:100},
+		    {id:"product_uktzet",field:'product_uktzet',name:"Происхождение",width:70},
+		    {id:"vat_rate",field:'vat_rate',name:"НДС %",width:60,cssClass:'slick-align-right'}
 		],
 		options:{
 		    enableCellNavigation: true,
@@ -227,13 +231,37 @@ App.page_mtrade_document_list=(function(){
 	    var h = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
 	    $("#doclist_document_entries_sg").css('height',(h-$("#doclist_document_entries_sg").position().top-30)+'px');
 	    $("#doclist_document_entries_sg_tools .icon-refresh").click(function(){
-		docList.reload();
+		docEntries.reload();
 	    });
-	    docList=$("#doclist_document_entries_sg").slickgrid(settings);
-	    docList.onSelectedRowsChanged.subscribe(function(e,selection){
+	    docEntries=$("#doclist_document_entries_sg").slickgrid(settings);
+	    docEntries.onSelectedRowsChanged.subscribe(function(e,selection){
 		var doclistRow=selection.grid.getDataItem(selection.rows[0]);
 		
+		entryEdit(doclistRow);
+		
 	    });
+	    
+	    function entryEdit(doclistRow,focus) {
+		var handler=$.Deferred();
+		$("#entryEditor").show();
+		App.setupForm("#doc_entry_frm",doclistRow);
+
+		$("#entryEditor").keydown(function (e) {
+		    if (e.which === 27) {//escape
+			$("#entryEditor").hide();
+		    }
+		});
+		$("#entryEditor").click(function(e){
+		    var action=$(e.target).data('action');
+		    if( action ){
+			var fvalue=App.collectForm("#doc_entry_frm");
+			handler.notify(action,fvalue);
+			$("#entryEditor").hide();
+		    }
+		});
+		return handler;
+	    }
+	    entryEdit();
 	    
 	}
 	
@@ -248,14 +276,14 @@ App.page_mtrade_document_list=(function(){
 })();
 </script>
 <style>
-    #doclist_document_head input{
+    .slim-input input{
 	width:110px;
     }
-    #doclist_document_head select{
+    .slim-input select{
 	width:121px;
 	height:25px;
     }
-    #doclist_document_head .inp_group{
+    .slim-input .inp_group{
 	min-width:230px;
 	vertical-align: middle;
     }
@@ -273,7 +301,7 @@ App.page_mtrade_document_list=(function(){
 	<div id="doclist_sg" style="width:100%;height:700px;"></div>
     </div>
     <div style="width:60%;display: inline-block;vertical-align: top" id="doclist_document_panel" class="transp60">
-	<div id="doclist_document_head"></div>
+	<div id="doclist_document_head" class="slim-input"></div>
 	<div id="doclist_document_entries_sg_tools">
 	    <div style="float: right">
 		<span class="icon-24 icon-refresh" title="Обновить"> </span> 
@@ -282,4 +310,35 @@ App.page_mtrade_document_list=(function(){
 	<div id="doclist_document_entries_sg" style="width:100%;height:700px;"></div>
     </div>
 </div>
+<style>
+    .item-details-form {
+	z-index: 10000;
+	display: inline-block;
+	border: 1px solid black;
+	margin: 8px;
+	padding: 10px;
+	background: #efefef;
+	box-shadow: 0px 0px 15px black;
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	transform: translate(-50%, -50%); /* Yep! */
+	width:350px
+    }
+</style>
 
+
+<div id="entryEditor" class='item-details-form' tabindex="-1">
+    <form id="doc_entry_frm" onsubmit="return false;">
+	<input name="product_code" title="Код" readonly="readonly"/>
+	<textarea name="product_name" title="Название"  readonly="readonly"></textarea>
+	<input name="product_quantity" title="Кол-во" />
+	<input name="product_price" onchange="DocEntEd.parsePrice(this);" title="Цена" class="icon-calc16" style="background-position: right"/>
+	<input name="party_label" title="Партия">
+	<div style="text-align: center">
+	    <button data-action="save"><img src="img/Save-24.png"> Сохранить</button>
+	    <button data-action="delete"><img src="img/delete.png"> Удалить</button>
+	    <button data-action="cancel"><img src="img/close24.png"> Отменить</button>
+	</div>
+    </form>
+</div>
