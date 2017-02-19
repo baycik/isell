@@ -30,7 +30,7 @@
       $input = $("<INPUT type=text class='editor-text' />")
           .appendTo(args.container)
           .on("keydown.nav", function (e) {
-            if (e.keyCode === 37/*LEFT*/ || e.keyCode === 39/*RIGHT*/) {
+            if (e.keyCode === $.ui.keyCode.LEFT || e.keyCode === $.ui.keyCode.RIGHT) {
               e.stopImmediatePropagation();
             }
           })
@@ -99,7 +99,7 @@
       $input = $("<INPUT type=text class='editor-text' />");
 
       $input.on("keydown.nav", function (e) {
-        if (e.keyCode === 37/*LEFT*/ || e.keyCode === 39/*RIGHT*/) {
+        if (e.keyCode === $.ui.keyCode.LEFT || e.keyCode === $.ui.keyCode.RIGHT) {
           e.stopImmediatePropagation();
         }
       });
@@ -168,7 +168,7 @@
       $input = $("<INPUT type=text class='editor-text' />");
 
       $input.on("keydown.nav", function (e) {
-        if (e.keyCode === 37/*LEFT*/ || e.keyCode === 39/*RIGHT*/) {
+        if (e.keyCode === $.ui.keyCode.LEFT || e.keyCode === $.ui.keyCode.RIGHT) {
           e.stopImmediatePropagation();
         }
       });
@@ -549,15 +549,15 @@
     };
 
     this.handleKeyDown = function (e) {
-      if (e.which == 13/*ENTER*/ && e.ctrlKey) {
+      if (e.which == $.ui.keyCode.ENTER && e.ctrlKey) {
         scope.save();
-      } else if (e.which == 27/*ESCAPE*/) {
+      } else if (e.which == $.ui.keyCode.ESCAPE) {
         e.preventDefault();
         scope.cancel();
-      } else if (e.which == 9/*TAB*/ && e.shiftKey) {
+      } else if (e.which == $.ui.keyCode.TAB && e.shiftKey) {
         e.preventDefault();
         args.grid.navigatePrev();
-      } else if (e.which == 9/*TAB*/) {
+      } else if (e.which == $.ui.keyCode.TAB) {
         e.preventDefault();
         args.grid.navigateNext();
       }

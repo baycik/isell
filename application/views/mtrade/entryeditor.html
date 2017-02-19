@@ -1,0 +1,56 @@
+
+<!--
+	    /*
+	    function entryEdit(doclistRow,focus) {
+		var handler=$.Deferred();
+		$("#entryEditor").show();
+		App.setupForm("#doc_entry_frm",doclistRow);
+
+		$("#entryEditor").keydown(function (e) {
+		    if (e.which === 27) {//escape
+			$("#entryEditor").hide();
+		    }
+		});
+		$("#entryEditor").click(function(e){
+		    var action=$(e.target).data('action');
+		    if( action ){
+			var fvalue=App.collectForm("#doc_entry_frm");
+			handler.notify(action,fvalue);
+			$("#entryEditor").hide();
+		    }
+		});
+		return handler;
+	    }
+	    entryEdit();*/
+<style>
+    .item-details-form {
+	z-index: 10000;
+	display: inline-block;
+	border: 1px solid black;
+	margin: 8px;
+	padding: 10px;
+	background: #efefef;
+	box-shadow: 0px 0px 15px black;
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	transform: translate(-50%, -50%); /* Yep! */
+	width:350px
+    }
+</style>
+
+
+<div id="entryEditor" class='item-details-form' tabindex="-1">
+    <form id="doc_entry_frm" onsubmit="return false;">
+	<input name="product_code" title="Код" readonly="readonly"/>
+	<textarea name="product_name" title="Название"  readonly="readonly"></textarea>
+	<input name="product_quantity" title="Кол-во" />
+	<input name="product_price" onchange="DocEntEd.parsePrice(this);" title="Цена" class="icon-calc16" style="background-position: right"/>
+	<input name="party_label" title="Партия">
+	<div style="text-align: center">
+	    <button data-action="save"><img src="img/Save-24.png"> Сохранить</button>
+	    <button data-action="delete"><img src="img/delete.png"> Удалить</button>
+	    <button data-action="cancel"><img src="img/close24.png"> Отменить</button>
+	</div>
+    </form>
+</div>-->

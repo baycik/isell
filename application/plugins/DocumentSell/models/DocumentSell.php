@@ -16,21 +16,56 @@ class DocumentSell extends DocumentBase{
     public function index(){
 	echo 'hello';
     }
+    public function extensionGet(){
+	return [
+	    'script'=>$this->load->view('sell_script.js',[],true)
+	];
+    }
     public function documentAdd( $doc_type=null ){
 	$doc_type='sell';
 	return parent::documentAdd($doc_type);
     }
-    public $headDataGet=['doc_id'=>'int'];
-    public function headDataGet( $doc_id ){
-	return parent::headDataGet($doc_id);
+    public $documentGet=['doc_id'=>'int','parts_to_load'=>'json'];
+    public function documentGet($doc_id,$parts_to_load){
+	$document=[];
+	if( in_array("head",$parts_to_load) ){
+	    $document["head"]=$this->headGet($doc_id);
+	}
+	if( in_array("body",$parts_to_load) ){
+	    $document["body"]=$this->bodyGet($doc_id);
+	}
+	if( in_array("foot",$parts_to_load) ){
+	    $document["foot"]=$this->footGet($doc_id);
+	}
+	if( in_array("views",$parts_to_load) ){
+	    $document["views"]=$this->viewsGet($doc_id);
+	}
+	return $document;
     }
-    public function headFormGet(){
-	return $this->load->view('DocumentSellForm.html',[],true);
+    private function bodyGet($doc_id){
+	$this->entriesTmpCreate( $doc_id );
+	return $this->get_list("SELECT * FROM tmp_doc_entries");
     }
-    public $headUpdate=['doc_id'=>'int','field'=>'string','value'=>'string'];
-    public function headUpdate( $doc_id, $field, $value ){
+    private function footGet(){
+	$curr_code=$this->Hub->pcomp('curr_code');
+	$curr_symbol=$this->get_value("SELECT curr_symbol FROM curr_list WHERE curr_code='$curr_code'");
+	$sql="SELECT
+	    ROUND(SUM(weight),2) total_weight,
+	    ROUND(SUM(volume),2) total_volume,
+	    SUM(product_sum_vatless) vatless,
+	    SUM(product_sum_total) total,
+	    SUM(product_sum_total-product_sum_vatless) vat,
+	    SUM(ROUND(product_quantity*self_price,2)) self,
+	    '$curr_symbol' curr_symbol
+	FROM tmp_doc_entries";
+	return $this->get_row($sql);
+    }
+    private function viewsGet(){
 	
     }
+    
+    
+    
     
     
     private function entriesTmpCreate( $doc_id ){
@@ -70,54 +105,5 @@ class DocumentSell extends DocumentBase{
                 ORDER BY pl.product_code) t
                 )";
         $this->query($sql);
-    }
-    
-    
-    
-    private function entriesFooterFetch(){
-	$curr_code=$this->Hub->pcomp('curr_code');
-	$curr_symbol=$this->get_value("SELECT curr_symbol FROM curr_list WHERE curr_code='$curr_code'");
-	$sql="SELECT
-	    ROUND(SUM(weight),2) total_weight,
-	    ROUND(SUM(volume),2) total_volume,
-	    SUM(product_sum_vatless) vatless,
-	    SUM(product_sum_total) total,
-	    SUM(product_sum_total-product_sum_vatless) vat,
-	    SUM(ROUND(product_quantity*self_price,2)) self,
-	    '$curr_symbol' curr_symbol
-	FROM tmp_doc_entries";
-	return $this->get_row($sql);
-    }
-    
-    public $entriesFetch=['doc_id'=>'int','sortby'=>'string','sortdir'=>'(ASC|DESC)'];
-    public function entriesFetch($doc_id,$sortby,$sortdir){
-	if(!$sortby){
-	    $sortby='product_code';
-	}
-	if(!$sortdir){
-	    $sortdir='DESC';
-	}
-	
-	
-	$this->entriesTmpCreate( $doc_id );
-	
-	$rows=$this->get_list("SELECT * FROM tmp_doc_entries ORDER BY $sortby $sortdir");
-	$entries=[
-	    'hasmorerows'=>0,
-	    'rows'=>$rows
-	];
-	
-	
-	
-	return [
-		'entries'=>$entries,
-		'footer'=>$this->entriesFooterFetch()
-		];
-    }
-    
-    public $entriesFooterGet=['doc_id'=>'int'];
-    public function entriesFooterGet($doc_id){
-	$this->entriesTmpCreate( $doc_id );
-	return $this->entriesFooterFetch();
     }
 }

@@ -4,7 +4,8 @@ App.page_mtrade_document_list=(function(){
 	    "js/slick/lib/jquery.event.drag-2.3.0.js",
 	    "js/slick/slick.core.js",
 	    "js/slick/slick.grid.js",
-	    "js/slick/plugins/slick.rowselectionmodel.js"];
+	    "js/slick/plugins/slick.rowselectionmodel.js",
+	    "js/slick/slick.editors.js"];
     var docList;
     var Document;
     function gridInit(){
@@ -65,94 +66,196 @@ App.page_mtrade_document_list=(function(){
 	App.Topic('passiveCompanySelected').subscribe(function(company){
 	    docList.reload();
 	});
-	Document.load({doc_type:'sell',doc_id:7180});
+	//Document.init({doc_type:'sell'});
+	//Document.load(7180);
+	$("#Document").load("page/mtrade/document.html",function(){
+	    App.Document.init('sell');
+	    App.Document.load(7180);
+	});
     }
     Document=(function(){
-	var docEntries;
-	var documentModel;
-	var headData={};
-	function load(doclistRow){
+	var doc_id;
+	var doc_entry_sg;
+	var document_model;
+	var document_data;
+	/*
+	 * INIT SECTION
+	 */
+	function init(doclistRow){
 	    function capitalize(s){
 		return s && s[0].toUpperCase() + s.slice(1);
 	    }
 	    if( $.isNumeric(doclistRow.doc_type) ){
 		switch(doclistRow.doc_type){
 		    case '1':
-			documentModel='DocumentSell';
+			document_model='DocumentSell';
 			break;
 		    case '2':
-			documentModel='DocumentBuy';
+			document_model='DocumentBuy';
 			break;
 		    case '3':
-			documentModel='DocumentServiceout';
+			document_model='DocumentServiceout';
 			break;
 		    case '4':
-			documentModel='DocumentServicein';
+			document_model='DocumentServicein';
 			break;
 		}
 	    } else if( doclistRow.doc_type.length>2 ) {//doc_type name must be at least 3 signs
-		documentModel='Document'+capitalize(doclistRow.doc_type);
+		document_model='Document'+capitalize(doclistRow.doc_type);
 	    } else {
-		documentModel=null;
+		document_model=null;
 	    }
-	    headInit(documentModel,doclistRow.doc_id);
-	    entriesInit(documentModel,doclistRow.doc_id);
+	    initHead();
+	    initEntries();
 	}
-	function controlsInit(){
-	    function pcompComboInit(){
-		var node=$("#doclist_document_head  input[name=passive_company_id]");
-		if( !node ){
-		    return;
-		}
-		function pcomploader(param, success, error){
-		    if( param.q===undefined ){
-			success([{company_id:headData.passive_company_id,label:headData.label}]);
+	function initHead(){
+	    function initHeadControls(){
+		function pcompComboInit(){
+		    var node=$("#doclist_document_head  input[name=passive_company_id]");
+		    if( !node ){
 			return;
 		    }
-		    $.get('Company/listFetch/', param, function (xhr) {
-			var resp = App.json(xhr);
-			success(resp[0] ? resp : []);
-		    });  	    
-		}
-		function pcomplistfrm(row){
-		    var label=row.label;
-		    if( row.path ){
-			var path_chunks=row.path.split('>');
-			var label=path_chunks.slice(path_chunks.length-2).reverse().join('/ ');
+		    function pcomploader(param, success, error){
+			if( param.q===undefined ){
+			    success([{company_id:headData.passive_company_id,label:headData.label}]);
+			    return;
+			}
+			$.get('Company/listFetch/', param, function (xhr) {
+			    var resp = App.json(xhr);
+			    success(resp[0] ? resp : []);
+			});  	    
 		    }
-		    return label;
+		    function pcomplistfrm(row){
+			var label=row.label;
+			if( row.path ){
+			    var path_chunks=row.path.split('>');
+			    var label=path_chunks.slice(path_chunks.length-2).reverse().join('/ ');
+			}
+			return label;
+		    }
+		    function openCompanyDetails(company_id){
+			App.loadWindow('page/company/details',{company_id:document_data.head.passive_company_id});
+		    }
+		    var options={
+			valueField: 'company_id',
+			textField: 'label',
+			loader:pcomploader,
+			mode: 'remote',
+			hasDownArrow:false,
+			selectOnNavigation:false,
+			formatter:pcomplistfrm,
+			width:220,
+			icons: [
+			    {iconCls:'icon-settings16',handler: App.user.pcompSelectionDialog},
+			    {iconCls:'icon-change16',handler:openCompanyDetails}
+			 ]
+		    };
+		    node.combobox(options);
 		}
-		function openCompanyDetails(company_id){
-		    App.loadWindow('page/company/details',{company_id:headData.passive_company_id});
-		}
-		var options={
-		    valueField: 'company_id',
-		    textField: 'label',
-		    loader:pcomploader,
-		    mode: 'remote',
-		    hasDownArrow:false,
-		    selectOnNavigation:false,
-		    formatter:pcomplistfrm,
-		    width:220,
-		    icons: [
-			{iconCls:'icon-settings16',handler: App.user.pcompSelectionDialog},
-			{iconCls:'icon-change16',handler:openCompanyDetails}
-		     ]
-		};
-		node.combobox(options);
+		pcompComboInit();
+		App[document_model] && App[document_model].init && App[document_model].init($("#doclist_document_head"));
+		$("#doclist_document_head .document_toolbar").click(function(e){
+		    var action=$(e.target).data('action');
+		    if( action ){
+			headUpdate( action );
+		    }
+		});
 	    }
-	    pcompComboInit();
-	    App[documentModel] && App[documentModel].init && App[documentModel].init($("#doclist_document_head"));
-	    $("#doclist_document_head .document_toolbar").click(function(e){
-		var action=$(e.target).data('action');
-		if( action ){
-		    headUpdate( action );
+	    $("#doclist_document_head").load(document_model+'/headFormGet',function(){
+		App.setupForm("#doclist_document_head form").change(function(){
+		    headUpdate( $(this).attr('name'), $(this).val(), $(this).attr('title') );
+		});
+		$.parser.parse("#doclist_document_head form");//for easy ui
+		initHeadControls();		
+	    });
+	}
+	function initEntries(){
+	    if( doc_entry_sg ){
+		return doc_entry_sg;
+	    }
+	    var h = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
+	    $("#doclist_document_entries_sg").css('height',(h-$("#doclist_document_entries_sg").position().top-30)+'px');
+
+	    
+	    var sg=$("#doclist_document_entries_sg").slickgrid(settings);
+	    sg.onSelectedRowsChanged.subscribe(function(e,selection){
+		//var doclistRow=selection.grid.getDataItem(selection.rows[0]);
+	    });
+	    sg.onCellChange.subscribe(function(e,data){
+		var updatedEntry=data.item;
+		var field=settings.columns[data.cell];
+		var value=updatedEntry[field];
+		entryUpdate(updatedEntry.document_entry_id,field,value);
+	    });
+	    return sg;
+	}
+	/*
+	 * RENDER SECTION
+	 */
+	function renderDocument( render_data ){
+	    render_data.head && renderHead( render_data.head );
+	    render_data.entries && renderEntries(render_data.entries);
+	    render_data.footer && renderFooter(render_data.footer);
+	    render_data.views && renderViews(render_data.views);
+	}
+	function renderHead(head){
+	    
+	}
+	function renderEntries(entries){
+	    doc_entry_sg.setData(entries);
+	    document_data.entries=entries;
+	}
+	function renderFooter(footer){
+	    
+	}
+	function renderViews(views){
+	    
+	}
+	/*
+	 * INTERACTION SECTION
+	 */
+	function loadDocument( parts_to_load ){
+	    var url=document_model+'/documentGet?doc_id='+doc_id;
+	    $.post(url,{parts_to_load:parts_to_load},function(resp){
+		var render_data=App.json(resp);
+		if(render_data){
+		    renderDocument( render_data );
+		} else {
+		    App.flash("Can't load document");
 		}
 	    });
 	}
-	function headInit(documentModel,doc_id){
+	    function entryUpdate(document_entry_id,field,value){
+		var url=document_model+'/entriesFetch?doc_id='+doc_id;
+		$.post(url,{document_entry_id:document_entry_id,field:field,value:value},function(ok){
+		    
+		});
+	    }
+	    
+	    
+	
+	    $("#doclist_document_entries_sg_tools .icon-refresh").click(function(){
+		doc_entry_sg.reload();
+	    });
+	
+	
+	
+	function load(_doc_id){
+	    doc_id=_doc_id;
+	    var url=document_model+'/documentGet?doc_id='+doc_id;
+	    $.post(url,function(resp){
+		document_data=App.json(resp);
+		headRender();
+		entriesRender();
+		footerRender();
+	    });
+	}
+	function reload(){
+	    load(doc_id);
+	}
+	function headInit(document_model,doc_id){
 	    function headDataLoad(){
-		$.get(documentModel+'/headDataGet',{doc_id:doc_id},function(resp){
+		$.get(document_model+'/headDataGet',{doc_id:doc_id},function(resp){
 		    headData=App.json(resp);
 		    App.setupForm("#doclist_document_head form",headData).change(function(){
 			headUpdate( $(this).attr('name'), $(this).val(), $(this).attr('title') );
@@ -161,10 +264,10 @@ App.page_mtrade_document_list=(function(){
 		    controlsInit();
 		});
 	    }
-	    $("#doclist_document_head").load(documentModel+'/headFormGet',headDataLoad);
+	    $("#doclist_document_head").load(document_model+'/headFormGet',headDataLoad);
 	}
 	function headUpdate( field, value, title ){
-	    $.post( documentModel+'/headUpdate',{dac_id:headData.doc_id,field:field,value:value},function(ok){
+	    $.post( document_model+'/headUpdate',{dac_id:headData.doc_id,field:field,value:value},function(ok){
 		ok*1 && title && App.flash("Сохранено: "+title);
 	    });
 	}
@@ -173,100 +276,10 @@ App.page_mtrade_document_list=(function(){
 	
 	
 	
-	function entriesInit(documentModel,doc_id){
-	    function tooltip(row, cell, value, columnDef, dataContext){
-		if( !value ){
-		    return '';
-		}
-		var parts = value.split(' ');
-		var cmd = parts.shift();
-		if (cmd){
-		    var style='max-width:16px;height:auto';
-		    return '<img src="img/' + cmd + '.png" style="'+style+'" title="' + parts.join(' ') + '">';
-		}
-		else{
-		    return '';
-		}	    
-	    }
-	    var curr_queue=0;
-	    function queue(){
-		return ++curr_queue;
-	    }
-
-	    var settings={
-		columns:[
-		    {id:"queue",name: "№", width: 30,formatter:queue },
-		    {id:"product_code", field: "product_code",name: "Код", sortable: true, width: 80, sortable: true },
-		    {id:"product_name", field: "product_name",name: "Название", sortable: true, width: 300},
-		    {id:"product_quantity", field: "product_quantity",name: "Кол-во", sortable: true, width: 70, sortable: true,cssClass:'slick-align-right'},
-		    {id:"product_unit", field: "product_unit",name: "Ед.", width: 50, sortable: true },
-		    {id:"product_price_total", field: "product_price_total",name: "Цена", sortable: true, width: 70, sortable: true,cssClass:'slick-align-right'},
-		    {id:"product_sum_total", field: "product_sum_total",name: "Сумма", sortable: true, width: 80,cssClass:'slick-align-right'},
-		    {id:"row_status", field: "row_status",name: "!",sortable: true, width: 25,formatter:tooltip },
-		    {id:"party_label",field:"party_label",name:"Партия",width:100},
-		    {id:"product_uktzet",field:'product_uktzet',name:"Происхождение",width:70},
-		    {id:"vat_rate",field:'vat_rate',name:"НДС %",width:60,cssClass:'slick-align-right'}
-		],
-		options:{
-		    enableCellNavigation: true,
-		    enableColumnReorder: false,
-		    enableFilter:false,
-		    multiSelect :true,
-		    enableDynamicalLoading:true,
-		    loader:entriesLoader
-		}
-	    };
-	    
-	    function entriesLoader(param,success){
-		var url=documentModel+'/entriesFetch?doc_id='+doc_id;
-		return $.get(url,param,function(resp){
-		    var data=App.json(resp);
-		    if( data ){
-			curr_queue=0;
-			success(data.entries);
-		    }
-		});
-	    }
-	    
-	    var h = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
-	    $("#doclist_document_entries_sg").css('height',(h-$("#doclist_document_entries_sg").position().top-30)+'px');
-	    $("#doclist_document_entries_sg_tools .icon-refresh").click(function(){
-		docEntries.reload();
-	    });
-	    docEntries=$("#doclist_document_entries_sg").slickgrid(settings);
-	    docEntries.onSelectedRowsChanged.subscribe(function(e,selection){
-		var doclistRow=selection.grid.getDataItem(selection.rows[0]);
-		
-		entryEdit(doclistRow);
-		
-	    });
-	    
-	    function entryEdit(doclistRow,focus) {
-		var handler=$.Deferred();
-		$("#entryEditor").show();
-		App.setupForm("#doc_entry_frm",doclistRow);
-
-		$("#entryEditor").keydown(function (e) {
-		    if (e.which === 27) {//escape
-			$("#entryEditor").hide();
-		    }
-		});
-		$("#entryEditor").click(function(e){
-		    var action=$(e.target).data('action');
-		    if( action ){
-			var fvalue=App.collectForm("#doc_entry_frm");
-			handler.notify(action,fvalue);
-			$("#entryEditor").hide();
-		    }
-		});
-		return handler;
-	    }
-	    entryEdit();
-	    
-	}
-	
 	return {
-	    load:load
+	    init:init,
+	    load:load,
+	    reload:reload
 	};
     })();
     return {
@@ -274,6 +287,11 @@ App.page_mtrade_document_list=(function(){
 	init:init
     };
 })();
+
+
+
+
+
 </script>
 <style>
     .slim-input input{
@@ -286,6 +304,10 @@ App.page_mtrade_document_list=(function(){
     .slim-input .inp_group{
 	min-width:230px;
 	vertical-align: middle;
+    }
+    #doclist_document_entries_sg input{
+	width:100%;
+	border: none;
     }
 </style>
 <div style="width:100%;">
@@ -300,45 +322,5 @@ App.page_mtrade_document_list=(function(){
 	</div>
 	<div id="doclist_sg" style="width:100%;height:700px;"></div>
     </div>
-    <div style="width:60%;display: inline-block;vertical-align: top" id="doclist_document_panel" class="transp60">
-	<div id="doclist_document_head" class="slim-input"></div>
-	<div id="doclist_document_entries_sg_tools">
-	    <div style="float: right">
-		<span class="icon-24 icon-refresh" title="Обновить"> </span> 
-	    </div>
-	</div>
-	<div id="doclist_document_entries_sg" style="width:100%;height:700px;"></div>
-    </div>
-</div>
-<style>
-    .item-details-form {
-	z-index: 10000;
-	display: inline-block;
-	border: 1px solid black;
-	margin: 8px;
-	padding: 10px;
-	background: #efefef;
-	box-shadow: 0px 0px 15px black;
-	position: absolute;
-	left: 50%;
-	top: 50%;
-	transform: translate(-50%, -50%); /* Yep! */
-	width:350px
-    }
-</style>
-
-
-<div id="entryEditor" class='item-details-form' tabindex="-1">
-    <form id="doc_entry_frm" onsubmit="return false;">
-	<input name="product_code" title="Код" readonly="readonly"/>
-	<textarea name="product_name" title="Название"  readonly="readonly"></textarea>
-	<input name="product_quantity" title="Кол-во" />
-	<input name="product_price" onchange="DocEntEd.parsePrice(this);" title="Цена" class="icon-calc16" style="background-position: right"/>
-	<input name="party_label" title="Партия">
-	<div style="text-align: center">
-	    <button data-action="save"><img src="img/Save-24.png"> Сохранить</button>
-	    <button data-action="delete"><img src="img/delete.png"> Удалить</button>
-	    <button data-action="cancel"><img src="img/close24.png"> Отменить</button>
-	</div>
-    </form>
+    <div style="width:70%;display: inline-block;vertical-align: top" id="Document" class="transp60"></div>
 </div>

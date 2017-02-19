@@ -1,0 +1,234 @@
+<script>
+    var holder_node_id = document.scripts[document.scripts.length - 1].parentNode.id;
+    App[holder_node_id]=(function($){
+	var holderId;
+	function setHolderId(id){
+	    holderId=id;
+	}
+	var doc_id;
+	var document_model;
+	var document_data={
+	    head:{},
+	    body:{},
+	    foot:{},
+	    views:{}
+	};
+	var extension;
+	/*
+	 * INIT SECTION
+	 */
+	function init(doc_type){
+	    function capitalize(s){
+		return s && s[0].toUpperCase() + s.slice(1);
+	    }
+	    if( $.isNumeric(doc_type) ){
+		switch(doc_type){
+		    case '1':
+			document_model='DocumentSell';
+			break;
+		    case '2':
+			document_model='DocumentBuy';
+			break;
+		    case '3':
+			document_model='DocumentServiceout';
+			break;
+		    case '4':
+			document_model='DocumentServicein';
+			break;
+		}
+	    } else if( doc_type.length>2 ) {//doc_type name must be at least 3 signs
+		document_model='Document'+capitalize(doc_type);
+	    } else {
+		document_model=null;
+	    }
+	    initExtension();
+	}
+	function initExtension(){
+	    $.get(document_model+'/extensionGet',function(resp){
+		extension=App.json(resp);
+		if( extension && extension.script ){
+		    eval(extension.script);
+		}
+		document.init();
+	    });
+	}
+	var document={
+	    init:function(){
+		head.init();
+		body.init();
+		foot.init();
+		views.init();
+	    },
+	    load:function(id,parts_to_load){
+		parts_to_load= parts_to_load || ["head","body","foot","views"];
+		doc_id=id;
+		var url=document_model+'/documentGet';
+		$.post(url,{doc_id:doc_id,parts_to_load:JSON.stringify(parts_to_load)},function(resp){
+		    var render_data=App.json(resp);
+		    if(render_data){
+			document.render( render_data );
+		    } else {
+			App.flash("Can't load document");
+		    }
+		});
+	    },
+	    reload:function(){
+		var parts=["head","body","foot","views"];
+		document.load(doc_id,parts);
+	    },
+	    render:function( render_data ){
+		render_data.head && head.render(render_data.head);
+		render_data.body && body.render(render_data.body);
+		render_data.foot && foot.render(render_data.foot);
+		render_data.views && views.render(render_data.views);
+	    }
+	};
+	var head={
+	    init:function(){
+		head.initControls();
+		head.initToolbar();
+	    },
+	    render:function(head){
+		document_data.head=head;
+		$("#"+holderId+" .x-head form").form('load',head);
+	    },
+	    initToolbar:function(){
+		$("#"+holderId+" .x-head .x-toolbar").click(function(e){
+		    var action=$(e.target).data('action');
+		    if( action ){
+			head.do( action );
+		    }
+		});
+	    },
+	    initControls:function(){
+		App.setupForm("#"+holderId+" .x-head form").change(function(){
+		    head.update( $(this).attr('name'), $(this).val(), $(this).attr('title') );
+		});
+		$.parser.parse("#"+holderId+" .x-head form");//for easy ui
+		head.pcompComboInit();
+	    },
+	    pcompComboInit:function(){
+		var node=$("#"+holderId+" .x-head input[name=passive_company_id]");
+		if( !node ){
+		    return;
+		}
+		var options={
+		    valueField: 'company_id',
+		    textField: 'label',
+		    loader:head.pcompLoader,
+		    mode: 'remote',
+		    hasDownArrow:false,
+		    selectOnNavigation:false,
+		    formatter:head.pcompListfrm,
+		    width:220,
+		    icons: [
+			{iconCls:'icon-settings16',handler: App.user.pcompSelectionDialog},
+			{iconCls:'icon-change16',handler:head.pcompDetails}
+		     ]
+		};
+		node.combobox(options);		
+	    },
+	    pcompLoader:function(param, success, error){
+		if( param.q===undefined ){
+		    success([{company_id:document_data.head.passive_company_id,label:document_data.head.label}]);
+		    return;
+		}
+		$.get('Company/listFetch/', param, function (xhr) {
+		    var resp = App.json(xhr);
+		    success(resp[0] ? resp : []);
+		});
+	    },
+	    pcompListfrm:function(row){
+		var label=row.label;
+		if( row.path ){
+		    var path_chunks=row.path.split('>');
+		    var label=path_chunks.slice(path_chunks.length-2).reverse().join('/ ');
+		}
+		return label;
+	    },
+	    pcompDetails:function(){
+		App.loadWindow('page/company/details',{company_id:document_data.head.passive_company_id});
+	    }
+	};
+	var body={
+	    init:function(){
+		
+	    },
+	    render:function(){
+		
+	    }
+	};
+	var foot={
+	    init:function(){
+		
+	    },
+	    render:function(){
+		
+	    }
+	};
+	var views={
+	    init:function(){
+		
+	    },
+	    render:function(){
+		
+	    }
+	};
+	
+
+	return {
+	    init:init,
+	    load:document.load,
+	    setHolderId:setHolderId
+	};
+    })(jQuery);
+    App[holder_node_id].setHolderId( holder_node_id );
+</script>
+<style>
+    .slim-input input{
+	width:110px;
+    }
+    .slim-input select{
+	width:121px;
+	height:25px;
+    }
+    .slim-input .inp_group{
+	min-width:230px;
+	vertical-align: middle;
+    }
+    #doclist_document_entries_sg input{
+	width:100%;
+	border: none;
+    }
+</style>
+<div class="x-head slim-input">
+    <form>
+	<input name="passive_company_id" title="Покупатель">
+	<input class="easyui-datebox" name="doc_date" title="Дата">
+	<input class="easyui-numberspinner" name="doc_num" title="Номер">
+	<div style="float:right" class="x-toolbar">
+	    <span class="icon-24 icon-commit" title="Провести документ" data-action="commit"> </span>
+	    <span class="icon-24 icon-uncommit" title="Отменить документ"  data-action="uncommit"> </span>
+	    <span style="display: inline-block;width:26px"> </span>
+	    <span class="icon-24 icon-lorry" title="Добавить в распорядок"  data-action="addevent"> </span>
+	    <span class="icon-24 icon-duplicate" title="Копировать"  data-action="duplicate"> </span>
+	    <span class="icon-24 icon-sms" title="Отправить СМС"  data-action="sendsms"> </span>
+	    <span class="icon-24 icon-utils" title="Дополнительные свойства" onclick="$('.x-utils').toggle('slow')"> </span>
+	</div>
+	<div class="x-utils" style="display: none">
+	    <hr>
+	    <select name="use_vatless_price" title="Цена">
+		<option value="0">В том числе НДС</option>
+		<option value="1">Плюс НДС</option>
+	    </select>
+	    <select name="notcount" title="На складе">
+		<option value="0">Учитывать</option>
+		<option value="1">Не учитывать</option>    
+	    </select>
+	    <input class="easyui-numberbox" name="doc_ratio" title="Курс">
+	</div>
+    </form>
+</div>
+<div class="x-body"></div>
+<div class="x-foot"></div>
+<div class="x-views"></div>

@@ -30,7 +30,7 @@ abstract class DocumentBase extends Catalog{
     protected function headDefaultDataGet(){
 	return [];
     }
-    public function headDataGet( $doc_id ){
+    public function headGet( $doc_id ){
 	if( $doc_id==0 ){
 	    return $this->headDefaultDataGet();
 	}
