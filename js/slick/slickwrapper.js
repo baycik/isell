@@ -14,8 +14,7 @@
 	if (options.enableFilter) {
 	    options.showHeaderRow = true;
 	}
-	    remoteModel = new Slick.Data.RemoteDynamicalModel(options.url,options.loader);
-	
+	remoteModel = new Slick.Data.RemoteModel(options.url,options.loader);
 	grid = new Slick.Grid(node, remoteModel.data, columns, options);
 	grid.setSelectionModel(new Slick.RowSelectionModel());
 	grid.reload = function () {
@@ -89,115 +88,9 @@ $.fn.slickgrid = function (settings) {
 
 
 
-/*
-(function ($) {
 
+(function ($) {
     function RemoteModel(url,loader) {
-	var data = {length: 0};
-	var filter = {};
-	var sortcol = null;
-	var sortdir = 1;
-	var req;
-	
-	
-	if( !loader ){
-	    loader=function(params,success){
-		return $.get(url, params, function (resp) {
-			    var rows = App.json(resp);
-			    success(rows);
-			});
-	    };
-	}
-	
-
-	// events
-	var onDataLoading = new Slick.Event();
-	var onDataLoaded = new Slick.Event();
-
-	function init() {
-	}
-
-	function isDataLoaded() {
-	    return true;
-	}
-
-	function clear() {
-	    for (var key in data) {
-		delete data[key];
-	    }
-	    data.length = 0;
-	}
-
-	function reloadData() {
-	    clear();
-	    makeRequest();
-	}
-
-	function setSort(column, dir) {
-	    sortcol = column;
-	    sortdir = dir;
-	    reloadData();
-	}
-
-	function setFilter(flt) {
-	    filter = flt;
-	    reloadData();
-	}
-
-	function ensureData() {}
-	
-	function cancelRequest() {
-	    if (req) {
-		req.abort();
-	    }
-	}
-
-	function makeRequest() {
-	    cancelRequest();
-	    var params = {
-		sortby: sortcol,
-		sortdir: ((sortdir > 0) ? "ASC" : "DESC"),
-		filter: JSON.stringify(filter)
-	    };
-	    function success(rows){
-		data.length = rows.length;
-		onDataLoaded.notify({from: 0, to: rows.length});
-	    }
-	    req = loader(params,success);
-	}
-	init();
-	return {
-	    // properties
-	    "data": data,
-	    // methods
-	    "clear": clear,
-	    "isDataLoaded": isDataLoaded,
-	    "ensureData": ensureData,
-	    "reloadData": reloadData,
-	    "setSort": setSort,
-	    "setFilter": setFilter,
-	    // events
-	    "onDataLoading": onDataLoading,
-	    "onDataLoaded": onDataLoaded
-	};
-    }
-    // Slick.Data.RemoteModel
-    $.extend(true, window, {Slick: {Data: {RemoteModel: RemoteModel}}});
-})(jQuery);
-
-
-*/
-
-
-
-
-(function ($) {
-    /***
-     * A sample AJAX data store implementation.
-     * Right now, it's hooked up to load search results from Octopart, but can
-     * easily be extended to support any JSONP-compatible backend that accepts paging parameters.
-     */
-    function RemoteDynamicalModel(url,loader) {
 	var PAGESIZE = 15;
 	var total_row_count = 0;
 	var data = {length: 0};
@@ -344,5 +237,5 @@ $.fn.slickgrid = function (settings) {
 	};
     }
     // Slick.Data.RemoteModel
-    $.extend(true, window, {Slick: {Data: {RemoteDynamicalModel: RemoteDynamicalModel}}});
+    $.extend(true, window, {Slick: {Data: {RemoteModel: RemoteModel}}});
 })(jQuery);
