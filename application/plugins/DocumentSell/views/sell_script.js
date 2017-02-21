@@ -1,56 +1,47 @@
-/*global Slick,body,holderId*/
-	//var entries_sg_height = $(window).height()-$("#"+holderId+" .x-body").position().top-30;
-	//$("#"+holderId+" .x-body").css('height',entries_sg_height+'px');
+/*global Slick,body,holderId,doc,document_model,App*/
 body={
     entries_sg:{},
-    row_queue:0,
-    settings:{
-	columns:[
-	    {id:"queue",name: "№", width: 30,formatter:body.queue },
-	    {id:"product_code", field: "product_code",name: "Код", sortable: true, width: 80},
-	    {id:"product_name", field: "product_name",name: "Название", sortable: true, width: 300},
-	    {id:"product_quantity", field: "product_quantity",name: "Кол-во", sortable: true, width: 70, cssClass:'slick-align-right', editor: Slick.Editors.Integer},
-	    {id:"product_unit", field: "product_unit",name: "Ед.", width: 50, sortable: true },
-	    {id:"product_price_total", field: "product_price_total",name: "Цена", sortable: true, width: 70, cssClass:'slick-align-right', editor: Slick.Editors.Float},
-	    {id:"product_sum_total", field: "product_sum_total",name: "Сумма", sortable: true, width: 80,cssClass:'slick-align-right'},
-	    {id:"row_status", field: "row_status",name: "!",sortable: true, width: 25,formatter:body.tooltip },
-	    {id:"party_label",field:"party_label",name:"Партия",width:100, editor: Slick.Editors.Text},
-	    {id:"product_uktzet",field:'product_uktzet',name:"Происхождение",width:70},
-	    {id:"vat_rate",field:'vat_rate',name:"НДС %",width:60,cssClass:'slick-align-right'}
-	],
-	options:{
-	    editable: true,
-	    autoEdit: true,
-	    enableCellNavigation: true,
-	    enableColumnReorder: false,
-	    enableFilter:false,
-	    multiSelect :true
-	}
-    },
+    row_queue:1,
     init:function(){
-	body.entries_sg = new Slick.Grid("#"+holderId+" .x-body", {length:0}, body.settings.columns, body.settings.options);
+	this.settings={
+	    columns:[
+		{id:"queue",name: "№", width: 30,formatter:body.queue },
+		{id:"product_code", field: "product_code",name: "Код", sortable: true, width: 80},
+		{id:"product_name", field: "product_name",name: "Название", sortable: true, width: 300},
+		{id:"product_quantity", field: "product_quantity",name: "Кол-во", sortable: true, width: 70, cssClass:'slick-align-right', editor: Slick.Editors.Integer},
+		{id:"product_unit", field: "product_unit",name: "Ед.", width: 50, sortable: true },
+		{id:"product_price_total", field: "product_price_total",name: "Цена", sortable: true, width: 70, cssClass:'slick-align-right', editor: Slick.Editors.Float},
+		{id:"product_sum_total", field: "product_sum_total",name: "Сумма", sortable: true, width: 80,cssClass:'slick-align-right'},
+		{id:"row_status", field: "row_status",name: "!",sortable: true, width: 25,formatter:body.tooltip },
+		{id:"party_label",field:"party_label",name:"Партия",width:100, editor: Slick.Editors.Text},
+		{id:"product_uktzet",field:'product_uktzet',name:"Происхождение",width:70},
+		{id:"vat_rate",field:'vat_rate',name:"НДС %",width:60,cssClass:'slick-align-right'}
+	    ],
+	    options:{
+		editable: true,
+		autoEdit: true,
+		autoHeight: true,
+		enableCellNavigation: true,
+		enableColumnReorder: false,
+		enableFilter:false,
+		multiSelect :true
+	    }
+	};
+	body.entries_sg = new Slick.Grid("#"+holderId+" .x-body", [], body.settings.columns, body.settings.options);
+	body.entries_sg.onCellChange.subscribe(function(e,data){
+	    var updatedEntry=data.item;
+	    var field=body.settings.columns[data.cell];
+	    var value=updatedEntry[field];
+	    body.entryUpdate(updatedEntry.doc_entry_id,field,value);
+	});
     },
-    
     render:function(entries){
-	var entries_sg_height = $(window).height()-$("#"+holderId+" .x-body").position().top-30;
-	$("#"+holderId+" .x-body").css('height',entries_sg_height+'px');
-	
-//	body.entries_sg.onCellChange.subscribe(function(e,data){
-//	    var updatedEntry=data.item;
-//	    var field=body.settings.columns[data.cell];
-//	    var value=updatedEntry[field];
-//	    entryUpdate(updatedEntry.document_entry_id,field,value);
-//	});
-	
-	
-	
-	
+	body.row_queue=1;
 	body.entries_sg.setData(entries);
-	body.entries_sg.updateRowCount();
 	body.entries_sg.render();
     },
     queue:function(){
-	body.row_queue++;
+	return body.row_queue++;
     },
     tooltip:function(row, cell, value, columnDef, dataContext){
 	if( value ){
@@ -61,5 +52,49 @@ body={
 	    }
 	}
 	return '';
+    },
+    entryUpdate:function(doc_entry_id,field,value){
+	var url=document_model+'/entryUpdate';
+	$.post(url,{doc_entry_id:doc_entry_id,field:field,value:value},function(ok){
+	    if(ok*1){
+		doc.reload(["body","foot"]);
+	    } else {
+		App.flash("Ошибка изменения строки");
+	    }
+	});
+    },
+    entryDelete:function(){
+	var selected_rows=body.entries_sg.getSelectedRows();
+	if(!selected_rows){
+	    App.flash("Ни одна строка не выбрана!");
+	    return;
+	}
+	if( !confirm("Удалить выделенные строки?") ){
+	    return;
+	}
+	var entries_to_delete=[];
+	for(var i in selected_rows){
+	    entries_to_delete.push(body.entries_sg.getDataItem(selected_rows[i]).doc_entry_id);
+	}
+	var url=document_model+'/entryDelete';
+	$.post(url,{doc_entry_ids:JSON.stringify(entries_to_delete)},function(ok){
+	    if(ok*1){
+		doc.reload(["body","foot"]);
+		App.flash("Удалено:"+ok+" строк");
+	    } else {
+		App.flash("Ошибка удаления строки");
+	    }
+	});
+    },
+    entryAdd:function(){
+	var url=document_model+'/entryDelete';
+	$.post(url,{doc_id:doc_id,quantity:quantity},function(ok){
+	    if(ok*1){
+		doc.reload(["body","foot"]);
+		App.flash("Добавлено:"+ok+" строк");
+	    } else {
+		App.flash("Ошибка добавления строки");
+	    }
+	});	
     }
 };

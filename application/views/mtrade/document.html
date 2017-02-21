@@ -49,7 +49,7 @@
 		if( extension && extension.script ){
 		    eval(extension.script);
 		}
-		document.init();
+		doc.init();
 	    });
 	}
 	var document={
@@ -66,7 +66,7 @@
 		$.post(url,{doc_id:doc_id,parts_to_load:JSON.stringify(parts_to_load)},function(resp){
 		    var render_data=App.json(resp);
 		    if(render_data){
-			document.render( render_data );
+			doc.render( render_data );
 		    } else {
 			App.flash("Can't load document");
 		    }
@@ -74,7 +74,7 @@
 	    },
 	    reload:function(){
 		var parts=["head","body","foot","views"];
-		document.load(doc_id,parts);
+		doc.load(doc_id,parts);
 	    },
 	    render:function( render_data ){
 		render_data.head && head.render(render_data.head);
@@ -99,6 +99,12 @@
 			head.do( action );
 		    }
 		});
+	    },
+	    do:function( action ){
+		switch( action ){
+		    case 'reload':
+			doc.reload();
+		}
 	    },
 	    initControls:function(){
 		App.setupForm("#"+holderId+" .x-head form").change(function(){
@@ -178,7 +184,7 @@
 
 	return {
 	    init:init,
-	    load:document.load,
+	    load:doc.load,
 	    setHolderId:setHolderId
 	};
     })(jQuery);
@@ -208,12 +214,13 @@
 	<input class="easyui-numberspinner" name="doc_num" title="Номер">
 	<div style="float:right" class="x-toolbar">
 	    <span class="icon-24 icon-commit" title="Провести документ" data-action="commit"> </span>
-	    <span class="icon-24 icon-uncommit" title="Отменить документ"  data-action="uncommit"> </span>
+	    <span class="icon-24 icon-uncommit" title="Отменить документ" data-action="uncommit"> </span>
 	    <span style="display: inline-block;width:26px"> </span>
-	    <span class="icon-24 icon-lorry" title="Добавить в распорядок"  data-action="addevent"> </span>
-	    <span class="icon-24 icon-duplicate" title="Копировать"  data-action="duplicate"> </span>
-	    <span class="icon-24 icon-sms" title="Отправить СМС"  data-action="sendsms"> </span>
+	    <span class="icon-24 icon-lorry" title="Добавить в распорядок" data-action="addevent"> </span>
+	    <span class="icon-24 icon-duplicate" title="Копировать" data-action="duplicate"> </span>
+	    <span class="icon-24 icon-sms" title="Отправить СМС" data-action="sendsms"> </span>
 	    <span class="icon-24 icon-utils" title="Дополнительные свойства" onclick="$('.x-utils').toggle('slow')"> </span>
+	    <span class="icon-24 icon-refresh" title="Обновить" data-action="reload"> </span> 
 	</div>
 	<div class="x-utils" style="display: none">
 	    <hr>
