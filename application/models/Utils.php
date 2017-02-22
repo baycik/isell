@@ -464,15 +464,16 @@ class Utils extends Catalog{
 		stock_entries se
 	    SET
 		product_wrn_quantity=
-		GREATEST((SELECT
-		    ROUND( SUM(de.product_quantity)/$sales_period*$reserve_period/10 )*10
+		GREATEST( COALESCE(
+                (SELECT ROUND( SUM(de.product_quantity)/$sales_period*$reserve_period/10 )*10
 		FROM
 		    document_entries de
 			JOIN
 		    document_list dl ON de.doc_id=dl.doc_id AND dl.is_commited=1 AND dl.notcount=0 AND dl.doc_type=1
 		WHERE 
 		    de.product_code=se.product_code AND (TO_DAYS(NOW()) - TO_DAYS(dl.cstamp) <= $sales_period)
-		GROUP BY se.product_code),1)
+		GROUP BY se.product_code)
+                ,0),1)
 	    WHERE product_wrn_quantity>0 AND se.parent_id IN (".implode(',',$branch_ids).")";
 	$this->query($stock_table);
 	return $this->db->affected_rows();
