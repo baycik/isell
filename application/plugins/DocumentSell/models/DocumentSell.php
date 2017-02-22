@@ -63,11 +63,6 @@ class DocumentSell extends DocumentBase{
     private function viewsGet(){
 	
     }
-    
-    
-    
-    
-    
     private function entriesTmpCreate( $doc_id ){
 	$this->documentSelect($doc_id);
 	$doc_vat_ratio=1+$this->doc('vat_rate')/100;
@@ -105,5 +100,14 @@ class DocumentSell extends DocumentBase{
                 ORDER BY pl.product_code) t
                 )";
         $this->query($sql);
+    }
+    
+    public $entryUpdate=['doc_entry_id'=>'int','field'=>'string','value'=>'double'];
+    public function entryUpdate($doc_entry_id,$field,$value){
+	$this->query("START TRANSACTION");
+	$ok=$this->update("document_entries",[$field=>$value],['doc_entry_id'=>$doc_entry_id]);
+	$this->entryCommit($doc_entry_id);
+	$this->query("COMMIT");
+	return $ok;
     }
 }

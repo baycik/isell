@@ -30,7 +30,7 @@ body={
 	body.entries_sg = new Slick.Grid("#"+holderId+" .x-body", [], body.settings.columns, body.settings.options);
 	body.entries_sg.onCellChange.subscribe(function(e,data){
 	    var updatedEntry=data.item;
-	    var field=body.settings.columns[data.cell];
+	    var field=body.settings.columns[data.cell].field;
 	    var value=updatedEntry[field];
 	    body.entryUpdate(updatedEntry.doc_entry_id,field,value);
 	});
@@ -54,6 +54,9 @@ body={
 	return '';
     },
     entryUpdate:function(doc_entry_id,field,value){
+	alert(field);
+	
+	
 	var url=document_model+'/entryUpdate';
 	$.post(url,{doc_entry_id:doc_entry_id,field:field,value:value},function(ok){
 	    if(ok*1){
