@@ -4,8 +4,8 @@ body{
     font-family: 'Trebuchet MS',Arial;
     font-size: 12px;
     -background: url(../img/bg.jpg) repeat-x fixed;
-    background: url(../img/bluebg.jpg)  fixed center top;
-    background-size: 100%;
+    background: url(../img/bluebg.jpg)  no-repeat center center fixed;
+    background-size: cover;
 }
 .app_window{
     background: url(../img/window-bg.png) repeat-x;
