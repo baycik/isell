@@ -10,8 +10,8 @@ body={
 		{id:"product_name", field: "product_name",name: "Название", sortable: true, width: 300},
 		{id:"product_quantity", field: "product_quantity",name: "Кол-во", sortable: true, width: 70, cssClass:'slick-align-right', editor: Slick.Editors.Integer},
 		{id:"product_unit", field: "product_unit",name: "Ед.", width: 50, sortable: true },
-		{id:"product_price_total", field: "product_price_total",name: "Цена", sortable: true, width: 70, cssClass:'slick-align-right', editor: Slick.Editors.Float},
-		{id:"product_sum_total", field: "product_sum_total",name: "Сумма", sortable: true, width: 80,cssClass:'slick-align-right'},
+		{id:"product_price_vatless", field: "product_price_vatless",name: "Цена", sortable: true, width: 70, cssClass:'slick-align-right', editor: Slick.Editors.Float},
+		{id:"product_sum_vatless", field: "product_sum_vatless",name: "Сумма", sortable: true, width: 80,cssClass:'slick-align-right'},
 		{id:"row_status", field: "row_status",name: "!",sortable: true, width: 25,formatter:body.tooltip },
 		{id:"party_label",field:"party_label",name:"Партия",width:100, editor: Slick.Editors.Text},
 		{id:"product_uktzet",field:'product_uktzet',name:"Происхождение",width:70},
@@ -58,7 +58,7 @@ body={
 	
 	
 	var url=document_model+'/entryUpdate';
-	$.post(url,{doc_entry_id:doc_entry_id,field:field,value:value},function(ok){
+	$.post(url,{doc_id:doc_id,doc_entry_id:doc_entry_id,field:field,value:value},function(ok){
 	    if(ok*1){
 		doc.reload(["body","foot"]);
 	    } else {

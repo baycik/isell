@@ -69,7 +69,6 @@ class DocumentSell extends DocumentBase{
 	$signs_after_dot=$this->doc('signs_after_dot');
 	$native_curr=($this->Hub->pcomp('curr_code') == $this->Hub->acomp('curr_code'))?1:0;
 	$curr_correction=$native_curr?1:1/$this->doc('doc_ratio');
-	//$company_lang = $this->Hub->pcomp('language');
 
         $this->query("DROP TEMPORARY TABLE IF EXISTS tmp_doc_entries");
         $sql="CREATE TEMPORARY TABLE tmp_doc_entries ( INDEX(product_code) ) ENGINE=MyISAM AS (
@@ -102,12 +101,28 @@ class DocumentSell extends DocumentBase{
         $this->query($sql);
     }
     
-    public $entryUpdate=['doc_entry_id'=>'int','field'=>'string','value'=>'double'];
-    public function entryUpdate($doc_entry_id,$field,$value){
+    public $entryUpdate=['doc_id'=>'int','doc_entry_id'=>'int','field'=>'(product_price_vatless|product_quantity)','value'=>'double'];
+    public function entryUpdate($doc_id,$doc_entry_id,$field,$value){
+	$this->documentSelect($doc_id);
 	$this->query("START TRANSACTION");
-	$ok=$this->update("document_entries",[$field=>$value],['doc_entry_id'=>$doc_entry_id]);
-	$this->entryCommit($doc_entry_id);
+	$ok=$this->entryAlter($doc_entry_id,$field,$value);
+	//$ok=$this->entryCommit($doc_entry_id);
 	$this->query("COMMIT");
 	return $ok;
     }
+    private function entryAlter($doc_entry_id,$field,$value){
+	return $this->update("document_entries",[$field=>$value],['doc_entry_id'=>$doc_entry_id]);
+    }
+    
+    
+    /*
+     * COMMIT SECTION
+     */
+    
+    
+    private function documentCommit($doc_id,$doc_entry_id){
+	$sql="";
+    }
+    
+    
 }
