@@ -303,4 +303,4 @@ class Stock extends Catalog {
 	$sql="SELECT DISTINCT label FROM price_list";
 	return $this->get_list($sql);
     }
-}
+    }

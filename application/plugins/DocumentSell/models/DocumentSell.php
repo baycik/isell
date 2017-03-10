@@ -110,18 +110,78 @@ class DocumentSell extends DocumentBase{
 	$this->query("COMMIT");
 	return $ok;
     }
-    private function entryAlter($doc_entry_id,$field,$value){
-	return $this->update("document_entries",[$field=>$value],['doc_entry_id'=>$doc_entry_id]);
+//    private function entryAlter($doc_entry_id,$field,$value){
+//	return $this->update("document_entries",[$field=>$value],['doc_entry_id'=>$doc_entry_id]);
+//    }
+    private function check_permission($level){
+	return false;
     }
-    
     
     /*
      * COMMIT SECTION
      */
+    private function stockLeftoverGet($product_code){
+	return $this->get_value("SELECT product_quantity FROM stock_entries WHERE product_code='$product_code'")+50;
+    }
+    private function entryGet($doc_entry_id){
+	$sql="SELECT * FROM document_entries WHERE doc_entry_id='$doc_entry_id'";
+	return $this->get_row($sql);
+    }
+    public $entryCommit=['doc_entry_id'=>'int'];
     
-    
-    private function documentCommit($doc_id,$doc_entry_id){
-	$sql="";
+    public  function entryCommit($doc_entry_id){
+	$this->check_permission(2);
+	
+	$entry_data=$this->entryGet($doc_entry_id);
+	$stock_lefover=$this->stockLeftoverGet($entry_data->product_code);
+	$this->entryOriginsFind($entry_data->product_code,$stock_lefover);
+	$entry_calculated=$this->entryOriginsCalc($entry_data->product_quantity);
+    }
+    private function entryOriginsFind($product_code,$stock_leftover){
+	$this->query("SET @total_buyed:=0,@pcode='$product_code',@stock_leftover:='$stock_leftover';");
+	$this->query("DROP  TABLE IF EXISTS tmp_original_entries;");#TEMPORARY
+	$this->query("CREATE  TABLE tmp_original_entries AS 
+			SELECT 
+			    *,
+			    LEAST(@stock_leftover - @total_buyed,product_quantity) party_quantity,
+			    @total_buyed:=@total_buyed + product_quantity tb
+			FROM
+			    (SELECT 
+				cstamp,
+				party_label,
+				self_price,
+				product_quantity
+			    FROM
+				document_entries
+				    JOIN
+				document_list USING (doc_id)
+			    WHERE
+				product_code = @pcode
+				    AND (doc_type = '2' OR doc_type = 'buy')
+				    AND is_reclamation = 0
+				    AND is_commited = 1
+			    ORDER BY cstamp DESC) t
+			WHERE
+			    @total_buyed < @stock_leftover");
+    }
+    private function entryOriginsCalc($product_quantity){
+	$sql="SET @sold_quantity:=40,@total_sold:=0,@average_self_price:=0.0,@first_party_label:='';
+
+	    SELECT 
+		first_party_label, SUM(self_sum) / @sold_quantity self
+	    FROM
+		(SELECT 
+		    LEAST(@sold_quantity - @total_sold, party_quantity) * self_price self_sum,
+			@total_sold:=@total_sold + party_quantity ts,
+			@first_party_label:=IF(@first_party_label, @first_party_label, party_label) first_party_label
+		FROM
+		    (SELECT 
+		    *
+		FROM
+		    tmp_original_entries
+		ORDER BY cstamp) t
+		WHERE
+		    @sold_quantity > @total_sold) t2;";
     }
     
     
