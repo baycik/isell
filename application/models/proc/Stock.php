@@ -75,7 +75,7 @@ class Stock extends Data {
             case 'decrease':
                 $this->stockEntry->product_quantity -= $amount;
                 $this->stockEntry->vat_quantity -= $amount;
-                $this->stockEntry->self_price =($stock_total-$party_total)/$this->stockEntry->product_quantity;
+                $this->stockEntry->self_price =$this->stockEntry->product_quantity>0?($stock_total-$party_total)/$this->stockEntry->product_quantity:0;
                 break;
         }
         return $this->stockEntrySave();
