@@ -37,6 +37,9 @@ class Hub  extends CI_Controller{
 		show_error("X-isell-error: No such method '$method' in $model_name", 500);
 	    }
 	    $method_args_config=isset($Model->$method)?$Model->$method:NULL;
+	    if(!$method_args_config){
+		show_error("X-isell-error: '$method' config for arguments is not set. Access denied", 500);
+	    }
 	    $method_args=$this->parseMethodArguments($method_args_config, $route_args);
 	    $response=call_user_func_array([$Model, $method],$method_args);
 	    if( !is_null($response) ){

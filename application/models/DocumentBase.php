@@ -27,6 +27,9 @@ abstract class DocumentBase extends Catalog{
 	}
 	return isset($this->document_properties->$field)?$this->document_properties->$field:null;
     }
+    protected function documentSetLevel($level){
+	return false;
+    }
     protected function headDefaultDataGet(){
 	return [];
     }

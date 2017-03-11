@@ -13,6 +13,8 @@
  * @author Baycik
  */
 class DocumentSell extends DocumentBase{
+    private $errtype='ok';
+    private $errmsg='';
     public function index(){
 	echo 'hello';
     }
@@ -105,18 +107,19 @@ class DocumentSell extends DocumentBase{
     public function entryUpdate($doc_id,$doc_entry_id,$field,$value){
 	$this->documentSelect($doc_id);
 	$this->query("START TRANSACTION");
+	/*
+	 * IF document is already commited then commit entry. If it is failed then abort update
+	 */
+	if( $field=='product_quantity' && $this->doc('is_commited') && $this->$this->entryCommit($doc_entry_id,$value) ){
+	    return false;
+	}
 	$ok=$this->entryAlter($doc_entry_id,$field,$value);
-	//$ok=$this->entryCommit($doc_entry_id);
 	$this->query("COMMIT");
 	return $ok;
     }
-//    private function entryAlter($doc_entry_id,$field,$value){
-//	return $this->update("document_entries",[$field=>$value],['doc_entry_id'=>$doc_entry_id]);
-//    }
-    private function check_permission($level){
-	return false;
+    private function entryAlter($doc_entry_id,$field,$value){
+	return $this->update("document_entries",[$field=>$value],['doc_entry_id'=>$doc_entry_id]);
     }
-    
     /*
      * COMMIT SECTION
      */
@@ -127,16 +130,34 @@ class DocumentSell extends DocumentBase{
 	$sql="SELECT * FROM document_entries WHERE doc_entry_id='$doc_entry_id'";
 	return $this->get_row($sql);
     }
-    public $entryCommit=['doc_entry_id'=>'int'];
+    //public $entryCommit=['doc_entry_id'=>'int'];//test only
     
-    public  function entryCommit($doc_entry_id){
-	$this->check_permission(2);
-	
+    public  function entryCommit($doc_entry_id,$new_product_quantity=NULL){
+	$this->documentSetLevel(2);
 	$entry_data=$this->entryGet($doc_entry_id);
 	$stock_lefover=$this->stockLeftoverGet($entry_data->product_code);
+	
+	$substract_quantity=$entry_data->product_quantity;
+	if( $new_product_quantity ){
+	    $substract_quantity=$new_product_quantity;
+	    $stock_lefover=$stock_lefover+$entry_data->product_quantity;
+	}
+	if( $substract_quantity>$stock_lefover ){
+	    /*
+	     * Not enough product in stock
+	     */
+	    $this->errtype='not_enough';
+	    $this->errmsg=$substract_quantity-$stock_lefover;
+	    return false;
+	}
 	$this->entryOriginsFind($entry_data->product_code,$stock_lefover);
 	$entry_calculated=$this->entryOriginsCalc($entry_data->product_quantity);
+	print_r($entry_calculated);
     }
+    /*
+     * Find entries from buy documents wich are original (correspond) to commited sell entry. 
+     * Orders by date entries from newest to oldest
+     */
     private function entryOriginsFind($product_code,$stock_leftover){
 	$this->query("SET @total_buyed:=0,@pcode='$product_code',@stock_leftover:='$stock_leftover';");
 	$this->query("DROP  TABLE IF EXISTS tmp_original_entries;");#TEMPORARY
@@ -164,10 +185,14 @@ class DocumentSell extends DocumentBase{
 			WHERE
 			    @total_buyed < @stock_leftover");
     }
+    /*
+     * Finds party_label from buy documents and calculated avg self price.
+     * Before orders entries from oldest to newest
+     */
     private function entryOriginsCalc($product_quantity){
-	$sql="SET @sold_quantity:=40,@total_sold:=0,@average_self_price:=0.0,@first_party_label:='';
-
-	    SELECT 
+	$product_quantity=500;
+	$this->query("SET @sold_quantity:=$product_quantity,@total_sold:=0,@first_party_label:='';");
+	$sql="SELECT 
 		first_party_label, SUM(self_sum) / @sold_quantity self
 	    FROM
 		(SELECT 
@@ -182,6 +207,7 @@ class DocumentSell extends DocumentBase{
 		ORDER BY cstamp) t
 		WHERE
 		    @sold_quantity > @total_sold) t2;";
+	return $this->get_row($sql);
     }
     
     
