@@ -18,6 +18,7 @@ class DocumentSell extends DocumentBase{
     public function index(){
 	echo 'hello';
     }
+    public $extensionGet=[];
     public function extensionGet(){
 	return [
 	    'script'=>$this->load->view('sell_script.js',[],true)
@@ -186,11 +187,10 @@ class DocumentSell extends DocumentBase{
 			    @total_buyed < @stock_leftover");
     }
     /*
-     * Finds party_label from buy documents and calculated avg self price.
+     * Finds party_label from buy document origin entries and calculated avg self price.
      * Before orders entries from oldest to newest
      */
     private function entryOriginsCalc($product_quantity){
-	$product_quantity=500;
 	$this->query("SET @sold_quantity:=$product_quantity,@total_sold:=0,@first_party_label:='';");
 	$sql="SELECT 
 		first_party_label, SUM(self_sum) / @sold_quantity self

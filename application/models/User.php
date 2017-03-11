@@ -46,6 +46,7 @@ class User extends Catalog {
         $_SESSION = array();
 	return true;
     }
+    public $getUserData=[];
     public function getUserData(){
 	return [
 	    'user_id'=>$this->Hub->svar('user_id'),

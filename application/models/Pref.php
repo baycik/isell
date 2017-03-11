@@ -1,6 +1,7 @@
 <?php
 require_once 'Catalog.php';
 class Pref extends Catalog {
+    public $getStaffList=[];
     public function getStaffList() {
         $sql = "SELECT 
                     user_id,
@@ -21,9 +22,9 @@ class Pref extends Catalog {
 		    first_name IS NOT NULL AND last_name IS NOT NULL";
         return $this->get_list($sql);
     }
+    public $getPrefs=['[a-z_,]+'];
     public function getPrefs($pref_names="") {// "pref1,pref2,pref3"
 	$active_company_id=$this->Hub->acomp('company_id');
-	$this->check($pref_names,'[a-z_,]+');
 	if( $pref_names ){
 	    $where = "WHERE active_company_id='$active_company_id' AND (pref_name='" . str_replace(',', "' OR pref_name='", $pref_names) . "')"; 
 	} else {
@@ -32,10 +33,9 @@ class Pref extends Catalog {
         $prefs = $this->get_row("SELECT GROUP_CONCAT(pref_value SEPARATOR '|') pvals,GROUP_CONCAT(pref_name SEPARATOR '|') pnames FROM pref_list  $where");
         return (object) array_combine(explode('|', $prefs->pnames), explode('|', $prefs->pvals));
     }
+    public $setPrefs=['[a-zA-Z_]+','[^|]+'];
     public function setPrefs($field,$value='') {
 	$active_company_id=$this->Hub->acomp('company_id');
-	$this->check($field,'[a-zA-Z_]+');
-	$this->check($value,'[^|]+');
 	$this->Hub->set_level(3);
 	if( !$field ){
 	    return false;

@@ -2,6 +2,8 @@
 require_once 'Catalog.php';
 class PluginManager extends Catalog{
     private $plugin_folder='application/plugins/';
+    
+    public $listFetch=[];
     public function listFetch(){
 	$plugins_folders=$this->scanFolder($this->plugin_folder);
 	$plugins=[];
@@ -30,7 +32,7 @@ class PluginManager extends Catalog{
 	return array_values($files);	
     }
     private function get_plugin_headers( $plugin_system_name ){
-	$plugin_data = file_get_contents($this->plugin_folder.$plugin_system_name."/".$plugin_system_name.".php"); // Load the plugin we want
+	$plugin_data = file_get_contents($this->plugin_folder.$plugin_system_name."/models/".$plugin_system_name.".php",true); // Load the plugin we want
 	preg_match ('|Group Name:(.*)$|mi', $plugin_data, $group_name);
 	preg_match ('|User Level:(.*)$|mi', $plugin_data, $user_level);
 	preg_match ('|Plugin Name:(.*)$|mi', $plugin_data, $name);
