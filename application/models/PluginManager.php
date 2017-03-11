@@ -32,7 +32,10 @@ class PluginManager extends Catalog{
 	return array_values($files);	
     }
     private function get_plugin_headers( $plugin_system_name ){
-	$plugin_data = file_get_contents($this->plugin_folder.$plugin_system_name."/models/".$plugin_system_name.".php",true); // Load the plugin we want
+	$plugin_data = @file_get_contents($this->plugin_folder.$plugin_system_name."/models/".$plugin_system_name.".php",true); // Load the plugin we want
+	if(!$plugin_data){
+	    $plugin_data = file_get_contents($this->plugin_folder.$plugin_system_name."/".$plugin_system_name.".php",true); // Support for older plugins
+	}
 	preg_match ('|Group Name:(.*)$|mi', $plugin_data, $group_name);
 	preg_match ('|User Level:(.*)$|mi', $plugin_data, $user_level);
 	preg_match ('|Plugin Name:(.*)$|mi', $plugin_data, $name);
@@ -53,9 +56,11 @@ class PluginManager extends Catalog{
 	    'plugin_author_uri'=>isset($author_uri[1])?trim($author_uri[1]):null
 	];
     }
+    public $settingsDataFetch=[];
     public function settingsDataFetch($plugin_system_name){
 	return json_decode($this->get_value("SELECT plugin_settings FROM plugin_list WHERE plugin_system_name='$plugin_system_name'"));
     }
+    public $settingsAllFetch=[];
     public function settingsAllFetch(){
 	$plugin_system_name=$this->request('system_name');
 	$settings_file=$this->plugin_folder.$plugin_system_name."/settings.html";
@@ -63,6 +68,7 @@ class PluginManager extends Catalog{
 	$settings_data=$this->settingsDataFetch($plugin_system_name);
 	return ['html'=>$settings_html,'data'=>$settings_data];
     }
+    public $settingsSave=[];
     public function settingsSave(){
 	$plugin_system_name=$this->request('plugin_system_name');
 	$settings_json=$this->request('settings_json');

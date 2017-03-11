@@ -15,7 +15,7 @@ body={
 		{id:"row_status", field: "row_status",name: "!",sortable: true, width: 25,formatter:body.tooltip },
 		{id:"party_label",field:"party_label",name:"Партия",width:100, editor: Slick.Editors.Text},
 		{id:"product_uktzet",field:'product_uktzet',name:"Происхождение",width:70},
-		{id:"vat_rate",field:'vat_rate',name:"НДС %",width:60,cssClass:'slick-align-right'}
+		{id:"self_price",field:'self_price',name:"maliet",width:60,cssClass:'slick-align-right'}
 	    ],
 	    options:{
 		editable: true,
@@ -54,9 +54,6 @@ body={
 	return '';
     },
     entryUpdate:function(doc_entry_id,field,value){
-	alert(field);
-	
-	
 	var url=document_model+'/entryUpdate';
 	$.post(url,{doc_id:doc_id,doc_entry_id:doc_entry_id,field:field,value:value},function(ok){
 	    if(ok*1){

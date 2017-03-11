@@ -108,24 +108,27 @@ class DocumentSell extends DocumentBase{
     public function entryUpdate($doc_id,$doc_entry_id,$field,$value){
 	$this->documentSelect($doc_id);
 	$this->query("START TRANSACTION");
-	/*
-	 * IF document is already commited then commit entry. If it is failed then abort update
-	 */
-	if( $field=='product_quantity' && $this->doc('is_commited') && $this->$this->entryCommit($doc_entry_id,$value) ){
-	    return false;
+	$entry_updated=[$field=>$value];
+	if( $field=='product_quantity' && $this->doc('is_commited') ){//IF document is already commited then commit entry. If commit is failed then abort update
+	    $entry_commited=$this->entryCommit($doc_entry_id,$value);
+	    if( !$entry_commited ){
+		return false;
+	    }
+	    $entry_updated['self_price']=$entry_commited->self_price;
+	    $entry_updated['party_label']=$entry_commited->first_party_label;
 	}
-	$ok=$this->entryAlter($doc_entry_id,$field,$value);
+	$ok=$this->update("document_entries",$entry_updated,['doc_entry_id'=>$doc_entry_id]);
 	$this->query("COMMIT");
 	return $ok;
-    }
-    private function entryAlter($doc_entry_id,$field,$value){
-	return $this->update("document_entries",[$field=>$value],['doc_entry_id'=>$doc_entry_id]);
     }
     /*
      * COMMIT SECTION
      */
     private function stockLeftoverGet($product_code){
-	return $this->get_value("SELECT product_quantity FROM stock_entries WHERE product_code='$product_code'")+50;
+	return $this->get_value("SELECT product_quantity FROM stock_entries WHERE product_code='$product_code'");
+    }
+    private function stockLeftoverSet($product_code,$leftover,$self_price){
+	return $this->update('stock_entries',['product_quantity'=>$leftover,'self_price'=>$self_price],['product_code'=>$product_code]);
     }
     private function entryGet($doc_entry_id){
 	$sql="SELECT * FROM document_entries WHERE doc_entry_id='$doc_entry_id'";
@@ -151,9 +154,14 @@ class DocumentSell extends DocumentBase{
 	    $this->errmsg=$substract_quantity-$stock_lefover;
 	    return false;
 	}
+	
 	$this->entryOriginsFind($entry_data->product_code,$stock_lefover);
 	$entry_calculated=$this->entryOriginsCalc($entry_data->product_quantity);
-	print_r($entry_calculated);
+	
+	
+	
+	$this->stockLeftoverSet($entry_data->product_code,$stock_lefover-$substract_quantity,0);
+	return $entry_calculated;
     }
     /*
      * Find entries from buy documents wich are original (correspond) to commited sell entry. 
@@ -193,7 +201,7 @@ class DocumentSell extends DocumentBase{
     private function entryOriginsCalc($product_quantity){
 	$this->query("SET @sold_quantity:=$product_quantity,@total_sold:=0,@first_party_label:='';");
 	$sql="SELECT 
-		first_party_label, SUM(self_sum) / @sold_quantity self
+		first_party_label, SUM(self_sum) / @sold_quantity self_price
 	    FROM
 		(SELECT 
 		    LEAST(@sold_quantity - @total_sold, party_quantity) * self_price self_sum,
