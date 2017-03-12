@@ -3,13 +3,8 @@
 require_once 'Catalog.php';
 class User extends Catalog {
     public $min_level=0;
-    public function SignIn($login=null,$pass=null){
-	if( !$login || !$pass ){
-	    $login=$this->input->post('login');
-	    $pass=$this->input->post('pass');
-	}
-	$this->check($login,'^[a-zA-Z_0-9]*$');
-	$this->check($pass,'^[a-zA-Z_0-9]*$');
+    public $SignIn=['login'=>'^[a-zA-Z_0-9]*$','pass'=>'^[a-zA-Z_0-9]*$'];
+    public function SignIn($login,$pass){
 	if( !$login || !$pass ){
 	    //allow empty pass
 	    $this->Hub->kick_out();
@@ -68,6 +63,7 @@ class User extends Catalog {
 	}
 	return $alowed;
     }
+    public $userFetch=[];
     public function userFetch(){
 	$user_id = $this->Hub->svar('user_id');
         $sql="SELECT
@@ -80,6 +76,7 @@ class User extends Catalog {
 		WHERE user_id='$user_id'";
         return $this->get_row($sql);
     }
+    public $listFetch=[];
     public function listFetch(){
 	$user_id = $this->Hub->svar('user_id');
         $where = ($this->Hub->svar('user_level') < 4) ? "WHERE user_id='$user_id'" : "";
@@ -94,6 +91,7 @@ class User extends Catalog {
 	    ORDER BY user_id<>'$user_id', user_level DESC";
         return $this->get_list($sql);
     }
+    public $save=[];
     public function save(){
 	$fields=[];
 	$user_id=$this->request('user_id','int');
@@ -134,6 +132,7 @@ class User extends Catalog {
 	    return $this->update("user_list", $fields,['user_id'=>$user_id]);
 	}
     }
+    public $remove=['int'];
     public function remove( $user_id ){
 	$this->Hub->set_level(4);
 	$this->check($user_id,'int');

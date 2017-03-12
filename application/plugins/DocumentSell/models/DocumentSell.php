@@ -69,22 +69,22 @@ class DocumentSell extends DocumentBase{
     private function entriesTmpCreate( $doc_id ){
 	$this->documentSelect($doc_id);
 	$doc_vat_ratio=1+$this->doc('vat_rate')/100;
-	$signs_after_dot=$this->doc('signs_after_dot');
-	$native_curr=($this->Hub->pcomp('curr_code') == $this->Hub->acomp('curr_code'))?1:0;
-	$curr_correction=$native_curr?1:1/$this->doc('doc_ratio');
+	//$signs_after_dot=$this->doc('signs_after_dot');
+	$curr_correction=$this->documentCurrencyCorrectionGet();
 
         $this->query("DROP TEMPORARY TABLE IF EXISTS tmp_doc_entries");
         $sql="CREATE TEMPORARY TABLE tmp_doc_entries ( INDEX(product_code) ) ENGINE=MyISAM AS (
                 SELECT 
                     *,
-                    ROUND(product_price_vatless*product_quantity,2) product_sum_vatless,
-                    ROUND(product_price_total*product_quantity,2) product_sum_total
+                    ROUND(corrected_price, 2) AS product_price_vatless,
+                    ROUND(corrected_price * $doc_vat_ratio, 2) AS product_price_total,
+                    ROUND(corrected_price * product_quantity,2) product_sum_vatless,
+                    ROUND(corrected_price * $doc_vat_ratio * product_quantity,2) product_sum_total
                 FROM
                 (SELECT
                     de.*,
                     ru product_name,
-                    ROUND(invoice_price * $curr_correction, $signs_after_dot) AS product_price_vatless,
-                    ROUND(invoice_price * $curr_correction * $doc_vat_ratio, $signs_after_dot) AS product_price_total,
+		    invoice_price * $curr_correction corrected_price,
 		    invoice_price<(self_price-0.01) is_loss,
 		    product_quantity*product_weight weight,
                     product_quantity*product_volume volume,
@@ -103,23 +103,50 @@ class DocumentSell extends DocumentBase{
                 )";
         $this->query($sql);
     }
+    private function entryPriceNormalize( $price ){
+	$doc_vat_ratio=1+$this->doc('vat_rate')/100;
+	$curr_correction=$this->documentCurrencyCorrectionGet();
+
+	return round($price,2)/$doc_vat_ratio/$curr_correction;	
+    }
     
-    public $entryUpdate=['doc_id'=>'int','doc_entry_id'=>'int','field'=>'(product_price_vatless|product_quantity)','value'=>'double'];
+    public $entryUpdate=['doc_id'=>'int','doc_entry_id'=>'int','field'=>'(product_price_total|product_quantity|product_sum_total)','value'=>'double'];
     public function entryUpdate($doc_id,$doc_entry_id,$field,$value){
 	$this->documentSelect($doc_id);
+	$this->errtype='ok';
 	$this->query("START TRANSACTION");
-	$entry_updated=[$field=>$value];
+	$entry_updated=[];
+	
+	if( $field=='product_sum_total' ){
+	    $entry_data=$this->entryGet($doc_entry_id);
+	    $product_price_vatless=$this->entryPriceNormalize($value);
+	    $entry_updated['invoice_price']=$product_price_vatless/$entry_data->product_quantity;	    
+	} else
+	if( $field=='product_price_total' ){
+	    $product_price_vatless=$this->entryPriceNormalize($value);
+	    $entry_updated['invoice_price']=$product_price_vatless;
+	} else
+	    
 	if( $field=='product_quantity' && $this->doc('is_commited') ){//IF document is already commited then commit entry. If commit is failed then abort update
 	    $entry_commited=$this->entryCommit($doc_entry_id,$value);
 	    if( !$entry_commited ){
-		return false;
+		return [
+		    'errtype'=>$this->errtype,
+		    'errmsg'=>$this->errmsg,
+		];
 	    }
+	    $entry_updated['product_quantity']=$value;
 	    $entry_updated['self_price']=$entry_commited->self_price;
 	    $entry_updated['party_label']=$entry_commited->first_party_label;
 	}
-	$ok=$this->update("document_entries",$entry_updated,['doc_entry_id'=>$doc_entry_id]);
-	$this->query("COMMIT");
-	return $ok;
+	$update_ok=$this->update("document_entries",$entry_updated,['doc_entry_id'=>$doc_entry_id]);
+	if( $update_ok && $this->errtype=='ok' ){
+	    $this->query("COMMIT");
+	}
+	return [
+	    'errtype'=>$this->errtype,
+	    'errmsg'=>$this->errmsg,
+	];
     }
     /*
      * COMMIT SECTION
@@ -134,15 +161,13 @@ class DocumentSell extends DocumentBase{
 	$sql="SELECT * FROM document_entries WHERE doc_entry_id='$doc_entry_id'";
 	return $this->get_row($sql);
     }
-    //public $entryCommit=['doc_entry_id'=>'int'];//test only
-    
     public  function entryCommit($doc_entry_id,$new_product_quantity=NULL){
 	$this->documentSetLevel(2);
 	$entry_data=$this->entryGet($doc_entry_id);
 	$stock_lefover=$this->stockLeftoverGet($entry_data->product_code);
 	
 	$substract_quantity=$entry_data->product_quantity;
-	if( $new_product_quantity ){
+	if( $new_product_quantity!==NULL ){
 	    $substract_quantity=$new_product_quantity;
 	    $stock_lefover=$stock_lefover+$entry_data->product_quantity;
 	}
@@ -152,14 +177,11 @@ class DocumentSell extends DocumentBase{
 	     */
 	    $this->errtype='not_enough';
 	    $this->errmsg=$substract_quantity-$stock_lefover;
+	    
 	    return false;
 	}
-	
 	$this->entryOriginsFind($entry_data->product_code,$stock_lefover);
-	$entry_calculated=$this->entryOriginsCalc($entry_data->product_quantity);
-	
-	
-	
+	$entry_calculated=$this->entryOriginsCalc($substract_quantity);
 	$this->stockLeftoverSet($entry_data->product_code,$stock_lefover-$substract_quantity,0);
 	return $entry_calculated;
     }
@@ -169,8 +191,8 @@ class DocumentSell extends DocumentBase{
      */
     private function entryOriginsFind($product_code,$stock_leftover){
 	$this->query("SET @total_buyed:=0,@pcode='$product_code',@stock_leftover:='$stock_leftover';");
-	$this->query("DROP  TABLE IF EXISTS tmp_original_entries;");#TEMPORARY
-	$this->query("CREATE  TABLE tmp_original_entries AS 
+	$this->query("DROP TEMPORARY TABLE IF EXISTS tmp_original_entries;");#TEMPORARY
+	$this->query("CREATE TEMPORARY TABLE tmp_original_entries AS 
 			SELECT 
 			    *,
 			    LEAST(@stock_leftover - @total_buyed,product_quantity) party_quantity,
@@ -201,7 +223,7 @@ class DocumentSell extends DocumentBase{
     private function entryOriginsCalc($product_quantity){
 	$this->query("SET @sold_quantity:=$product_quantity,@total_sold:=0,@first_party_label:='';");
 	$sql="SELECT 
-		first_party_label, SUM(self_sum) / @sold_quantity self_price
+		first_party_label, ROUND(SUM(self_sum) / @sold_quantity,2) self_price
 	    FROM
 		(SELECT 
 		    LEAST(@sold_quantity - @total_sold, party_quantity) * self_price self_sum,

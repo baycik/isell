@@ -27,6 +27,10 @@ abstract class DocumentBase extends Catalog{
 	}
 	return isset($this->document_properties->$field)?$this->document_properties->$field:null;
     }
+    protected function documentCurrencyCorrectionGet(){
+	$native_curr=$this->Hub->pcomp('curr_code') && ($this->Hub->pcomp('curr_code') != $this->Hub->acomp('curr_code'))?0:1;
+	return $native_curr?1:1/$this->doc('doc_ratio');
+    }
     protected function documentSetLevel($level){
 	return false;
     }
