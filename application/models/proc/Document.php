@@ -673,7 +673,13 @@ class Document extends Data {
                 $efields = '{"sign":"' . $this->Base->acomp('company_director') . '","type_of_reason":"02"}';
             }
             
-	} else {
+	} else
+        if ($view_type_props['view_role'] == 'sell_bill') {
+	    if (!$this->isCommited()) {
+		$this->Base->msg('Сначала сохраните документ!');
+		return;
+	    }
+        } else {
 	    $view_num = $this->doc('doc_num');
 	    $efields = addslashes($this->getLastEfields($view_type_id));
 	}
