@@ -639,7 +639,8 @@ class Document extends Data {
     }
 
     protected function getViewNextNum($view_type_id) {
-	$num=$this->Base->get_row("SELECT MAX(view_num)+1 FROM document_view_list WHERE view_type_id=$view_type_id AND tstamp>DATE_FORMAT(NOW(),'%Y')", 0);
+        $acomp_id=$this->Base->acomp('company_id');
+	$num=$this->Base->get_row("SELECT MAX(view_num)+1 FROM document_view_list JOIN document_list USING(doc_id) WHERE active_company_id='$acomp_id' AND view_type_id=$view_type_id AND tstamp>DATE_FORMAT(NOW(),'%Y')", 0);
         return $num?$num:1;
     }
 
