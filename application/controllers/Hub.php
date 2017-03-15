@@ -59,7 +59,7 @@ class Hub  extends CI_Controller{
 		    $this->check($arg_value, $var_type);
 		    $method_args[]=$arg_value;
 		} else {
-		    $method_args[]=$this->request($var_name,$var_type);
+		    $method_args[]=is_array($var_type)?$this->request($var_name,$var_type[0],$var_type[1]):$this->request($var_name,$var_type);
 		}
 	    }
 	    return $method_args;

@@ -1,16 +1,17 @@
-<!DOCTYPE html>
-<!--
-To change this license header, choose License Headers in Project Properties.
-To change this template file, choose Tools | Templates
-and open the template in the editor.
--->
-<html>
-    <head>
-	<title>TODO supply a title</title>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-    </head>
-    <body>
-	<div>TODO write content</div>
-    </body>
-</html>
+<div class="x-picker transp60">
+    <div class="x-tree" style="height:200px;width:300px;float:right;overflow: auto"></div>
+    <div class="x-stock" style="height:200px;"></div>
+</div>
+<div class="x-entrytools">
+    <div style="float:left;margin: 1px;margin-right: 10%" title="↑ для вывода предыдущего кода">
+	<input class="x-suggest" placeholder="код, название или штрихкод" style="width:300px;">
+	<input class="x-qty" placeholder="Кол-во" style="margin: 0px; padding-top: 0px; padding-bottom: 0px; height: 24px; line-height: 24px; width: 80px;vertical-align: middle;">
+	<button type="button" title="Добавить строку в документ" style="padding: 2px;vertical-align: middle;">Добавить</button> | 
+	<button type="button" title="Подобрать товар со склада" style="padding: 2px;vertical-align: middle;">Подобрать</button>
+    </div>
+    <span class="icon-24 icon-delete" title="Удалить стоку" data-action="delete"> </span>
+    <span class="icon-24 icon-calc" title="Перерасчитать цены" data-action="calc"> </span>
+    <span class="icon-24 icon-import" title="Импортировать" data-action="import"> </span>
+</div>
+<div style="clear:both;"></div>
+<div class="x-entries"></div>

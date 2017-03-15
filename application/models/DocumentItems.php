@@ -1,8 +1,8 @@
 <?php
 require_once 'DocumentCore.php';
 class DocumentItems extends DocumentCore{
-    public function suggestFetch(){
-	$q=$this->request('q');
+    public $suggestFetch=['q'=>'string'];
+    public function suggestFetch($q){
 	$clues=  explode(' ', $q);
 	$company_lang = $this->Hub->pcomp('language');
 	$where=array();
@@ -187,6 +187,7 @@ class DocumentItems extends DocumentCore{
 	$Document2=$this->Hub->bridgeLoad('Document');
 	return $Document2->addEntry( $code, $quantity );
     }
+    public $entryPostAdd=[];
     public function entryPostAdd(){
 	$doc_id=$this->request('doc_id','int');
 	$code=$this->request('code');
@@ -194,8 +195,8 @@ class DocumentItems extends DocumentCore{
 	$this->selectDoc($doc_id);
 	return $this->entryAdd($code, $quantity);
     }
+    public $entryUpdate=['int','int','string','string'];
     public function entryUpdate( $doc_id, $doc_entry_id, $name=null, $value=null ){
-	$this->check($doc_id,'int');
         if( $name==null && $value==null ){
             $name=$this->request('name');
             $value=$this->request('value');
@@ -216,13 +217,14 @@ class DocumentItems extends DocumentCore{
 		return true;
 	}
     }
+    public $entryDelete=['int','string'];
     public function entryDelete( $doc_id, $ids ){
-	$this->check($doc_id,'int');
 	$this->selectDoc($doc_id);
 	$ids_arr=  json_decode('[['.str_replace(',', '],[', rawurldecode($ids)).']]');
 	$Document2=$this->Hub->bridgeLoad('Document');
 	return $Document2->deleteEntry($ids_arr);
     }
+    public $entryStatsGet=['int','string'];
     public function entryStatsGet( $doc_id, $product_code ){
 	$this->check($doc_id,'int');
 	$this->selectDoc($doc_id);
@@ -252,6 +254,7 @@ class DocumentItems extends DocumentCore{
 //	}
 //	return round($invoice,$this->doc('signs_after_dot'));
     }
+    public $entryDocumentGet=['int'];
     public function entryDocumentGet( $doc_id ){
 	$this->check($doc_id,'int');
 	$this->selectDoc($doc_id);
@@ -279,7 +282,7 @@ class DocumentItems extends DocumentCore{
 	$doc_id=$this->doc('doc_id');
 	return $this->get_value("SELECT JSON_EXTRACT(doc_settings,'$key') FROM document_list WHERE doc_id='$doc_id'");	
     }
-    
+    public $entryDocumentCommit=['int'];
     public function entryDocumentCommit( $doc_id ){
 	$this->check($doc_id,'int');
 	$this->selectDoc($doc_id);
@@ -287,12 +290,14 @@ class DocumentItems extends DocumentCore{
 	$Document2=$this->Hub->bridgeLoad('Document');
 	return $Document2->commit();
     }
+    public $entryDocumentUncommit=['int'];
     public function entryDocumentUncommit( $doc_id ){
 	$this->check($doc_id,'int');
 	$this->selectDoc($doc_id);
 	$Document2=$this->Hub->bridgeLoad('Document');
 	return $Document2->uncommit();
     }
+    public $recalc=['int','double'];
     public function recalc( $doc_id, $proc=0 ){
 	$this->check($doc_id,'int');
 	$this->selectDoc($doc_id);
@@ -311,6 +316,7 @@ class DocumentItems extends DocumentCore{
 	$old_head=$this->get_row("SELECT cstamp,reg_stamp,doc_data,doc_ratio,notcount,inernn,use_vatless_price FROM document_list WHERE doc_id='$old_doc_id'");
 	$this->update("document_list", $old_head, ['doc_id'=>$new_doc_id]);
     }
+    public $duplicate=['int'];
     public function duplicate( $old_doc_id ){
 	$this->check($old_doc_id,'int');
 	$this->Hub->set_level(2);
@@ -321,6 +327,7 @@ class DocumentItems extends DocumentCore{
 	$this->duplicateHead($new_doc_id, $old_doc_id);
 	return $new_doc_id;
     }
+    public $import=['int'];
     public function import( $doc_id ){
 	$this->check($doc_id,'int');
 	$this->selectDoc($doc_id);

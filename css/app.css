@@ -176,6 +176,7 @@ button img{
 }
 .combo-panel{
     background-color: #fff;
+    border: none;
 }
 .tabs{
     border: none;

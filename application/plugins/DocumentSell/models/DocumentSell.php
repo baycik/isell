@@ -21,9 +21,14 @@ class DocumentSell extends DocumentBase{
     public $extensionGet=[];
     public function extensionGet(){
 	return [
-	    'script'=>$this->load->view('sell_script.js',[],true)
+	    'script'=>$this->load->view('sell_script.js',[],true),
+	    'head'=>$this->load->view('head.html',[],true),
+	    'body'=>$this->load->view('body.html',[],true),
+	    'foot'=>$this->load->view('foot.html',[],true),
+	    'views'=>$this->load->view('views.html',[],true)
 	];
     }
+    
     public function documentAdd( $doc_type=null ){
 	$doc_type='sell';
 	return parent::documentAdd($doc_type);
@@ -66,6 +71,9 @@ class DocumentSell extends DocumentBase{
     private function viewsGet(){
 	
     }
+    /*
+     * Entries section 
+     */
     private function entriesTmpCreate( $doc_id ){
 	$this->documentSelect($doc_id);
 	$doc_vat_ratio=1+$this->doc('vat_rate')/100;
@@ -99,17 +107,35 @@ class DocumentSell extends DocumentBase{
                     prod_list pl USING(product_code)
                 WHERE
                     doc_id='$doc_id'
-                ORDER BY pl.product_code) t
-                )";
+                ORDER BY pl.product_code) t)";
         $this->query($sql);
     }
     private function entryPriceNormalize( $price ){
 	$doc_vat_ratio=1+$this->doc('vat_rate')/100;
 	$curr_correction=$this->documentCurrencyCorrectionGet();
-
 	return round($price,2)/$doc_vat_ratio/$curr_correction;	
     }
-    
+    public $entryAdd=['doc_id'=>'int','product_code'=>'escape','product_quantity'=>'int'];
+    public function entryAdd($doc_id,$product_code,$product_quantity){
+	$pcomp_id=$this->Hub->pcomp('company_id');
+	$doc_ratio=$this->doc('doc_ratio');
+	$this->documentSelect($doc_id);
+	$this->errtype='ok';
+	$this->query("START TRANSACTION");
+	$this->query("INSERT INTO document_entries SET product_code='$product_code',product_quantity='$product_quantity',invoice_price=GET_PRICE('$product_code',$pcomp_id,'$doc_ratio')");
+	$doc_entry_id=$this->db->insert_id();
+	$entry_commited=true;
+	if( $this->doc('is_commited') ){
+	    $entry_commited=$this->entryCommit($doc_entry_id);
+	}
+	if( $entry_commited && $this->errtype=='ok' ){
+	    $this->query("COMMIT");
+	}
+	return [
+	    'errtype'=>$this->errtype,
+	    'errmsg'=>$this->errmsg,
+	];
+    }
     public $entryUpdate=['doc_id'=>'int','doc_entry_id'=>'int','field'=>'(product_price_total|product_quantity|product_sum_total)','value'=>'double'];
     public function entryUpdate($doc_id,$doc_entry_id,$field,$value){
 	$this->documentSelect($doc_id);
@@ -126,7 +152,6 @@ class DocumentSell extends DocumentBase{
 	    $product_price_vatless=$this->entryPriceNormalize($value);
 	    $entry_updated['invoice_price']=$product_price_vatless;
 	} else
-	    
 	if( $field=='product_quantity' && $this->doc('is_commited') ){//IF document is already commited then commit entry. If commit is failed then abort update
 	    $entry_commited=$this->entryCommit($doc_entry_id,$value);
 	    if( !$entry_commited ){
@@ -148,6 +173,24 @@ class DocumentSell extends DocumentBase{
 	    'errmsg'=>$this->errmsg,
 	];
     }
+    public $entryDelete=['doc_id'=>'int','doc_entry_id'=>'int'];
+    public function entryDelete($doc_id,$doc_entry_id){
+	$this->documentSelect($doc_id);
+	$this->errtype='ok';
+	$this->query("START TRANSACTION");
+	$delete_ok=$this->delete('document_entries',['doc_id'=>$doc_id,'doc_entry_id'=>$doc_entry_id]);
+	$entry_commited=true;
+	if( $this->doc('is_commited') ){
+	    $entry_commited=$this->entryCommit($doc_entry_id,0);
+	}
+	if( $delete_ok && $entry_commited && $this->errtype=='ok' ){
+	    $this->query("COMMIT");
+	}
+	return [
+	    'errtype'=>$this->errtype,
+	    'errmsg'=>$this->errmsg,
+	];
+    }    
     /*
      * COMMIT SECTION
      */
@@ -239,6 +282,41 @@ class DocumentSell extends DocumentBase{
 		    @sold_quantity > @total_sold) t2;";
 	return $this->get_row($sql);
     }
-    
-    
+    /*
+     * Suggestion
+     */
+    public $suggestFetch=['q'=>'string'];
+    public function suggestFetch($q){
+	if( $q=='' ){
+	    return [];
+	}
+	$company_lang = $this->Hub->pcomp('language');
+	if( !$company_lang ){
+	    $company_lang='ru';
+	}
+	$where=['is_service=0'];
+	$clues=  explode(' ', $q);
+	foreach ($clues as $clue) {
+            if ($clue == ''){
+                continue;
+	    }
+            $where[]="(product_code LIKE '%$clue%' OR $company_lang LIKE '%$clue%')";
+        }
+	$sql="
+	    SELECT
+		product_code,
+		$company_lang label,
+		product_spack,
+		product_quantity
+	    FROM
+		prod_list
+		    JOIN
+		stock_entries USING(product_code)
+	    WHERE
+		".( implode(' AND ',$where) )."
+		    ORDER BY fetch_count-DATEDIFF(NOW(),fetch_stamp) DESC, product_code
+	    LIMIT 15
+	    ";
+	return $this->get_list($sql);
+    }
 }

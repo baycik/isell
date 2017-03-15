@@ -46,6 +46,18 @@
 	function initExtension(){
 	    $.get(document_model+'/extensionGet',function(resp){
 		extension=App.json(resp);
+		if( extension && extension.head ){
+		    $("#"+holderId+" .x-head").html(extension.head);
+		}
+		if( extension && extension.body ){
+		    $("#"+holderId+" .x-body").html(extension.body);
+		}
+		if( extension && extension.foot ){
+		    $("#"+holderId+" .x-foot").html(extension.foot);
+		}
+		if( extension && extension.views ){
+		    $("#"+holderId+" .x-views").html(extension.views);
+		}
 		if( extension && extension.script ){
 		    eval(extension.script);
 		}

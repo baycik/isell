@@ -28,18 +28,74 @@ body={
 		enableAsyncPostRender: true
 	    }
 	};
-	body.entries_sg = new Slick.Grid("#"+holderId+" .x-body", [], body.settings.columns, body.settings.options);
+	body.entries_sg = new Slick.Grid("#"+holderId+" .x-body .x-entries", [], body.settings.columns, body.settings.options);
 	body.entries_sg.onCellChange.subscribe(function(e,data){
 	    var updatedEntry=data.item;
 	    var field=body.settings.columns[data.cell].field;
 	    var value=updatedEntry[field];
 	    body.entryUpdate(updatedEntry.doc_entry_id,field,value);
 	});
+	/*
+	 * Init entry tools
+	 */
+	function suggFormatter(row){
+	    return ' <b>'+row['product_code']+'</b> '+row['label']+' <b>[x'+row['product_spack']+']'+' <font color=green>'+row['product_quantity']+'</font></b>';
+	};
+	var suggPrevCode='';
+	function suggOnselect( row ){
+	    suggPrevCode=row.product_code;
+	    $("#"+holderId+" .x-body .x-qty").val(row.product_spack).select();
+	};
+	$("#"+holderId+" .x-body .x-suggest").combobox({
+	    valueField: 'product_code',
+	    textField: 'product_code',
+	    formatter:suggFormatter,
+	    selectOnNavigation:false,
+	    url: 'DocumentSell/suggestFetch/',
+	    panelHeight:'auto',
+	    mode: 'remote',
+	    method:'get',
+	    hasDownArrow:false,
+	    panelWidth:400,
+	    panelMinWidth:400,
+	    prompt:'код, название или штрихкод',
+	    onSelect: suggOnselect
+	}).combobox('textbox').bind( 'keydown', function(e){
+	    if( e.keyCode===38 && $("#"+holderId+" .x-body .x-suggest").combobox('getValue')==='' ){
+		$("#"+holderId+" .x-body .x-suggest").combobox('setValue',suggPrevCode);
+	    }
+	    else if( e.keyCode===13 ){
+		$("#"+holderId+" .x-body .x-qty").select();
+	    }
+	});
+	/*
+	 * Init picker
+	 */
+	body.pickerInit();
     },
     render:function(entries){
 	body.row_queue=1;
 	body.entries_sg.setData(entries);
 	body.entries_sg.render();
+    },
+    pickerInit:function(){
+	function pickerTreeSelect(){
+	    console.log(this);
+	}
+	$("#"+holderId+" .x-body .x-tree").tree({
+	    url:'Stock/branchFetch/',
+	    loadFilter:function(data){
+		for(var i in data){
+		    data[i].id=data[i].branch_id;
+		    data[i].text=data[i].label;
+		    if( data[i].is_leaf*1 ){
+			data[i].iconCls='icon-comp';
+		    }
+		}
+		return data;
+	    },
+	    onSelect:pickerTreeSelect
+	});
     },
     queue:function(){
 	return body.row_queue++;

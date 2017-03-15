@@ -1,36 +1,31 @@
 <?php
 require_once 'Catalog.php';
 class Stock extends Catalog {
-    public function branchFetch() {
-	$parent_id=$this->request('id','int',0);
+    public $branchFetch=['id'=>['int',0]];
+    public function branchFetch($parent_id=0) {
 	return $this->treeFetch("stock_tree", $parent_id, 'top');
     }
+    public $stockTreeCreate=['int','string'];
     public function stockTreeCreate($parent_id,$label){
 	$this->Hub->set_level(2);
-	$this->check($parent_id,'int');
-	$this->check($label);
 	return $this->treeCreate('stock_tree', 'folder', $parent_id, $label, 'calc_top_id');
     }
+    public $stockTreeUpdate=['int','string','string'];
     public function stockTreeUpdate($branch_id,$field,$value) {
 	$this->Hub->set_level(2);
-	$this->check($branch_id,'int');
-	$this->check($field);
-	$this->check($value);
 	return $this->treeUpdate('stock_tree', $branch_id, $field, $value, 'calc_top_id');
     }
+    public $stockTreeDelete=['int'];
     public function stockTreeDelete( $branch_id ){
 	$this->Hub->set_level(4);
-	$this->check($branch_id,'int');
 	$sub_ids=$this->treeGetSub('stock_tree', $branch_id);
 	$in=implode(',', $sub_ids);
 	$this->query("DELETE FROM stock_tree WHERE branch_id IN ($in)");
 	$deleted=$this->db->affected_rows();
 	return $deleted;
     }
+    public $listFetch=['int','int','int','string'];
     public function listFetch( $page=1, $rows=30, $parent_id=0, $having=null ){
-	$this->check($page,'int');
-	$this->check($rows,'int');
-	$this->check($parent_id,'int');
 	$offset=($page-1)*$rows;
 	if( $offset<0 ){
 	    $offset=0;
@@ -79,13 +74,12 @@ class Stock extends Catalog {
 	$total_estimate=$offset+(count($result_rows)==$rows?$rows+1:count($result_rows));
 	return array('rows'=>$result_rows,'total'=>$total_estimate);
     }
-    public function labelFetch(){
-	$q=$this->request('q','string',0);
+    public $labelFetch=['q'=>'string'];
+    public function labelFetch($q=0){
 	return $this->get_list("SELECT branch_id,label FROM stock_tree WHERE label LIKE '%$q%'");
     }
-    
-    public function productGet(){
-	$product_code=$this->request('product_code');
+    public $productGet=['product_code'=>'string'];
+    public function productGet($product_code){
 	$sql="SELECT
 		    *
 		FROM
@@ -99,9 +93,8 @@ class Stock extends Catalog {
 	$product_data=$this->get_row($sql);
 	return $product_data;
     }
-    
-    public function productGetLabeledPrices(){
-	$product_code=$this->request('product_code');
+    public $productGetLabeledPrices=['product_code'=>'string'];
+    public function productGetLabeledPrices($product_code){
 	$sql_price="
 	    SELECT 
 		ROUND(sell,2) sell,
@@ -114,18 +107,15 @@ class Stock extends Catalog {
 		product_code='{$product_code}' AND label<>''";
 	return $this->get_list($sql_price);
     }
-    
-    public function productLabeledPriceRemove(){
-	$product_code=$this->request('product_code');
-	$label=$this->request('label');
+    public $productLabeledPriceRemove=['product_code'=>'string','label'=>'string'];
+    public function productLabeledPriceRemove($product_code,$label){
 	return $this->delete("price_list",['product_code'=>$product_code,'label'=>$label]);
     }
-    public function productLabeledPriceAdd(){
-	$product_code=$this->request('product_code');
-	$label=$this->request('label');
+    public $productLabeledPriceAdd=['product_code'=>'string','label'=>'string'];
+    public function productLabeledPriceAdd($product_code,$label){
 	return $this->create("price_list",['product_code'=>$product_code,'label'=>$label]);
     }
-
+    public $productSave=[];
     public function productSave(){
 	$this->Hub->set_level(2);
 	$affected_rows=0;
@@ -198,11 +188,11 @@ class Stock extends Catalog {
 	}
 	return implode(',',$set);
     }
-    public function import(){
-	$label=$this->request('label');
-	$source = array_map('addslashes',$this->request('source','raw'));
-	$target = array_map('addslashes',$this->request('target','raw'));
-        $parent_id=$this->request('parent_id','int');
+    
+    public $import=['label'=>'string','source'=>'raw','target'=>'raw','parent_id'=>'int'];
+    public function import($label,$source,$target,$parent_id){
+	$source = array_map('addslashes',$source);
+	$target = array_map('addslashes',$target);
         if( $parent_id ){
             $source[]=$parent_id;
             $target[]='parent_id';
@@ -233,22 +223,20 @@ class Stock extends Catalog {
 	//print("INSERT INTO $table ($target_list) SELECT $source_list FROM imported_data WHERE label='$label' ON DUPLICATE KEY UPDATE $set_list");
 	return $this->db->affected_rows();
     }
-    public function productDelete(){
-	$product_codes=$this->request('product_code','raw');
+    public $productDelete=['product_code'=>'raw'];
+    public function productDelete($product_codes){
         $product_codes_in= "'".implode("','", array_map('addslashes',$product_codes))."'";
         $this->query("DELETE FROM stock_entries WHERE product_quantity=0 AND product_code IN ($product_codes_in)");
         return $this->db->affected_rows();
     }
-    public function productMove(){
-        $parent_id=$this->request('parent_id','int');
-	$product_codes=$this->request('product_code','raw');
+    public $productMove=['parent_id'=>'int','product_code'=>'raw'];
+    public function productMove($parent_id,$product_codes){
         $product_codes_in= "'".implode("','", array_map('addslashes',$product_codes))."'";
         $this->query("UPDATE stock_entries SET parent_id='$parent_id' WHERE product_code IN ($product_codes_in)");
         return $this->db->affected_rows();
     }
+    public $movementsFetch=['int','int','string'];
     public function movementsFetch( $page=1, $rows=30, $having=null ){
-	$this->check($page,'int');
-	$this->check($rows,'int');
 	$offset=($page-1)*$rows;
 	if( $offset<0 ){
 	    $offset=0;
@@ -299,6 +287,7 @@ class Stock extends Catalog {
 	    $prev_concat=$concat;
 	}
     }
+    public $getPriceLabels=[];
     public function getPriceLabels(){
 	$sql="SELECT DISTINCT label FROM price_list";
 	return $this->get_list($sql);
