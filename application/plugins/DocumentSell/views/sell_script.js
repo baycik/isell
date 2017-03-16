@@ -38,6 +38,15 @@ body={
 	/*
 	 * Init entry tools
 	 */
+	body.suggestInit();
+	body.pickerInit();
+    },
+    render:function(entries){
+	body.row_queue=1;
+	body.entries_sg.setData(entries);
+	body.entries_sg.render();
+    },
+    suggestInit:function(){
 	function suggFormatter(row){
 	    return ' <b>'+row['product_code']+'</b> '+row['label']+' <b>[x'+row['product_spack']+']'+' <font color=green>'+row['product_quantity']+'</font></b>';
 	};
@@ -68,20 +77,27 @@ body={
 		$("#"+holderId+" .x-body .x-qty").select();
 	    }
 	});
-	/*
-	 * Init picker
-	 */
-	body.pickerInit();
-    },
-    render:function(entries){
-	body.row_queue=1;
-	body.entries_sg.setData(entries);
-	body.entries_sg.render();
+	function suggestSubmit(){
+	    var product_code=$("#"+holderId+" .x-body .x-suggest").combobox('getValue');
+	    var product_quantity=$("#"+holderId+" .x-body .x-qty").val();
+	    body.entryAdd(product_code,product_quantity);
+	}
+	$("#"+holderId+" .x-body .x-qty").bind( 'keydown', function(e){
+	    if( e.keyCode===13 ){
+		suggestSubmit();
+	    }
+	});
+	$("#"+holderId+" .x-body .x-suggest-submit").click(suggestSubmit);
     },
     pickerInit:function(){
-	function pickerTreeSelect(){
-	    console.log(this);
+	function pickerTreeSelect(branch){
+	    picklist.updateOptions({params:{parent_id:branch.branch_id}});
+	    picklist.reload();
 	}
+	$("#"+holderId+" .x-body .x-allcath").click(function(){
+	    pickerTreeSelect({branch_id:0});
+	    $("#"+holderId+" .x-body .x-tree").find('.tree-node-selected').removeClass('tree-node-selected');
+	});
 	$("#"+holderId+" .x-body .x-tree").tree({
 	    url:'Stock/branchFetch/',
 	    loadFilter:function(data){
@@ -95,6 +111,27 @@ body={
 		return data;
 	    },
 	    onSelect:pickerTreeSelect
+	});
+	var settings={
+	    columns:[
+		{id:"product_code", field: "product_code",width:100,name: "Код", sortable: true },
+		{id:"ru", field: "ru",name: "Название",width:200, sortable: true},
+		{id:"product_quantity", field: "product_quantity",width:70,name: "Остаток",cssClass:'slick-align-right', sortable: true },
+		{id:"price", field: "price",name: "Цена",width:70, sortable: true,cssClass:'slick-align-right' }
+	    ],
+	    options:{
+		enableColumnReorder: false,
+		enableFilter:true,
+		multiSelect :false,
+		forceFitColumns:true,
+		url:'DocumentSell/pickerListFetch'
+	    }
+	};
+	var picklist=$("#"+holderId+" .x-body .x-stock").slickgrid(settings);
+	picklist.onSelectedRowsChanged.subscribe(function(e,selection){
+	    var row=selection.grid.getDataItem(selection.rows[0]);
+	    $("#"+holderId+" .x-body .x-suggest").combobox('setValue',row.product_code);
+	    $("#"+holderId+" .x-body .x-qty").val(row.product_spack).select();
 	});
     },
     queue:function(){
@@ -114,6 +151,22 @@ body={
 	if( dataContext.is_loss*1 ){
 	    $(cellNode).css('color','red');
 	}
+    },
+    entryAdd:function(product_code,product_quantity){
+	var url=document_model+'/entryAdd';
+	$.post(url,{doc_id:doc_id,product_code:product_code,product_quantity:product_quantity},function(resp){
+	    var result=App.json(resp);
+	    if(result.errtype==='not_enough'){
+		App.flash("Не достаточное колличество. Нехватает: ".result.errmsg);
+	    } else
+	    if(result.errtype==='already_exists'){
+		App.flash("Строка с таким кодом уже добавлена");
+	    } else
+	    if(result.errtype!=='ok'){
+		App.flash("Ошибка добавления строки ".result.errmsg);
+	    }
+	    doc.reload(["body","foot"]);
+	});	
     },
     entryUpdate:function(doc_entry_id,field,value){
 	var url=document_model+'/entryUpdate';
@@ -150,16 +203,5 @@ body={
 		App.flash("Ошибка удаления строки");
 	    }
 	});
-    },
-    entryAdd:function(){
-	var url=document_model+'/entryDelete';
-	$.post(url,{doc_id:doc_id,quantity:quantity},function(ok){
-	    if(ok*1){
-		doc.reload(["body","foot"]);
-		App.flash("Добавлено:"+ok+" строк");
-	    } else {
-		App.flash("Ошибка добавления строки");
-	    }
-	});	
     }
 };

@@ -115,15 +115,23 @@ class DocumentSell extends DocumentBase{
 	$curr_correction=$this->documentCurrencyCorrectionGet();
 	return round($price,2)/$doc_vat_ratio/$curr_correction;	
     }
-    public $entryAdd=['doc_id'=>'int','product_code'=>'escape','product_quantity'=>'int'];
+    public $entryAdd=['doc_id'=>'int','product_code'=>'string','product_quantity'=>'int'];
     public function entryAdd($doc_id,$product_code,$product_quantity){
-	$pcomp_id=$this->Hub->pcomp('company_id');
-	$doc_ratio=$this->doc('doc_ratio');
 	$this->documentSelect($doc_id);
+	$pcomp_id=$this->doc('passive_company_id');
+	$doc_ratio=$this->doc('doc_ratio');
 	$this->errtype='ok';
 	$this->query("START TRANSACTION");
-	$this->query("INSERT INTO document_entries SET product_code='$product_code',product_quantity='$product_quantity',invoice_price=GET_PRICE('$product_code',$pcomp_id,'$doc_ratio')");
+	$this->query("INSERT INTO document_entries SET doc_id=$doc_id,product_code='$product_code',product_quantity='$product_quantity',invoice_price=GET_PRICE('$product_code',$pcomp_id,'$doc_ratio')");
 	$doc_entry_id=$this->db->insert_id();
+	if( !$doc_entry_id ){
+	    return [
+		'errtype'=>'already_exists',
+		'errmsg'=>'',
+	    ];
+	}
+	
+	
 	$entry_commited=true;
 	if( $this->doc('is_commited') ){
 	    $entry_commited=$this->entryCommit($doc_entry_id);
@@ -317,6 +325,38 @@ class DocumentSell extends DocumentBase{
 		    ORDER BY fetch_count-DATEDIFF(NOW(),fetch_stamp) DESC, product_code
 	    LIMIT 15
 	    ";
+	return $this->get_list($sql);
+    }
+    
+    public $pickerListFetch=['parent_id'=>'int','offset'=>['int',0],'limit'=>['int',10],'sortby'=>'string','sortdir'=>'(ASC|DESC)','filter'=>'json'];
+    public function pickerListFetch($parent_id,$offset,$limit,$sortby,$sortdir,$filter){
+	$pcomp_id=$this->Hub->pcomp('company_id');
+	$doc_ratio=$this->Hub->pref('usd_ratio');
+	
+	$having=$this->makeFilter($filter);
+	$order='';
+	$where='';
+	if( $parent_id ){
+	    $branch_ids=$this->treeGetSub('stock_tree',$parent_id);
+	    $where="WHERE se.parent_id IN (".implode(',',$branch_ids).")";
+	}
+	if( $sortby ){
+	    $order="ORDER BY $sortby $sortdir";
+	}
+	$sql="SELECT 
+		pl.product_code,
+		ru,
+		product_quantity,
+		ROUND(GET_PRICE(product_code,'$pcomp_id','$doc_ratio'),2) price,
+		product_spack
+	    FROM 
+		stock_entries se
+		    JOIN
+		prod_list pl USING(product_code)
+	    $where 
+	    HAVING $having 
+	    $order
+	    LIMIT $limit OFFSET $offset";
 	return $this->get_list($sql);
     }
 }

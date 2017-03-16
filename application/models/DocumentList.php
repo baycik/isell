@@ -15,13 +15,13 @@ class DocumentList extends Catalog{
 	    throw new Exception("Invalid sortby fieldname: ".$sortby);
 	}
 	$andwhere='';
-//	if( $mode==='show_only_pcomp_docs' ){
+	if( $mode==='show_only_pcomp_docs' ){
 	    $pcomp_id=$this->Hub->pcomp('company_id');
             if( !$pcomp_id ){
                 return [];
             }
 	    $andwhere.=" AND passive_company_id=$pcomp_id";
-//	}	
+	}	
 	$assigned_path=  $this->Hub->svar('user_assigned_path');
 	if( $assigned_path ){
 	    $andwhere.=" AND path LIKE '$assigned_path%'";

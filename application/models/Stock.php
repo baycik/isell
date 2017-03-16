@@ -24,6 +24,10 @@ class Stock extends Catalog {
 	$deleted=$this->db->affected_rows();
 	return $deleted;
     }
+
+    
+    
+    
     public $listFetch=['int','int','int','string'];
     public function listFetch( $page=1, $rows=30, $parent_id=0, $having=null ){
 	$offset=($page-1)*$rows;

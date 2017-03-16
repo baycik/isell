@@ -14,12 +14,17 @@
 	if (options.enableFilter) {
 	    options.showHeaderRow = true;
 	}
-	remoteModel = new Slick.Data.RemoteModel(options.url,options.loader);
+	remoteModel = new Slick.Data.RemoteModel(options.url,options.params,options.loader);
 	grid = new Slick.Grid(node, remoteModel.data, columns, options);
 	grid.setSelectionModel(new Slick.RowSelectionModel());
 	grid.reload = function () {
+	    grid.scrollRowToTop(0);
 	    var vp = grid.getViewport();
 	    remoteModel.reloadData(vp.top, vp.bottom);
+	};
+	grid.updateOptions=function(new_options){
+	    options=$.extend(true, options, new_options);
+	    remoteModel.updateOptions(options.url,options.params,options.loader);
 	};
 	initLoader();
 	if (options.enableFilter) {
@@ -90,7 +95,7 @@ $.fn.slickgrid = function (settings) {
 
 
 (function ($) {
-    function RemoteModel(url,loader) {
+    function RemoteModel(url,def_params,loader) {
 	var PAGESIZE = 15;
 	var total_row_count = 0;
 	var data = {length: 0};
@@ -102,9 +107,15 @@ $.fn.slickgrid = function (settings) {
 	var table_finished=false;
 	
 	
+	function updateOptions(newurl,newdef_params,newloader){
+	    url=newurl||url;
+	    def_params=newdef_params||def_params;
+	    loader=newloader||loader;
+	}
+	
 	if( !loader ){
 	    loader=function(params,success){
-		return $.get(url, params, function (resp) {
+		return $.get(url, $.extend(true, def_params, params), function (resp) {
 			    var rows = App.json(resp);
 			    success(rows);
 
@@ -198,18 +209,18 @@ $.fn.slickgrid = function (settings) {
 		sortdir: ((sortdir > 0) ? "ASC" : "DESC"),
 		filter: JSON.stringify(filter)
 	    };
-	    function success(table){
-		var to = from + table.rows.length;
-		for (var i = 0; i < table.rows.length; i++) {
-		    data[from + i] = table.rows[i];
+	    function success(rows){
+		var to = from + rows.length;
+		for (var i = 0; i < rows.length; i++) {
+		    data[from + i] = rows[i];
 		    data[from + i].num = from + i;
 		}
 		total_row_count = Math.max(total_row_count, to);
 		data.length = total_row_count;
-		if( table.hasmorerows ){
-		    data.length+=1;
-		} else {
+		if( rows.length<limit ){
 		    table_finished=true;
+		} else {
+		    data.length+=1;
 		}
 		req = null;
 		onDataLoaded.notify({from: from, to: from + limit});
@@ -231,6 +242,7 @@ $.fn.slickgrid = function (settings) {
 	    "reloadData": reloadData,
 	    "setSort": setSort,
 	    "setFilter": setFilter,
+	    "updateOptions":updateOptions,
 	    // events
 	    "onDataLoading": onDataLoading,
 	    "onDataLoaded": onDataLoaded
