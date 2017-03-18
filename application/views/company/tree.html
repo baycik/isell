@@ -95,7 +95,7 @@
 	    var parent_target=parent_id>0?$('#Ctree_tree').tree('find', parent_id).target:null;
 	    var newlabel=(new_branch_type === 'leaf')?prompt("Введите Короткое название новой компании",'Новая компания'):prompt("Введите название новой группы",'Новая группа');
 	    if( newlabel && newlabel.indexOf(',')===-1 ){
-		App.post('Company/companyTreeCreate/'+App.uri(parent_id,newlabel,new_branch_type),function(company_id){
+		App.post('Company/companyTreeCreate/',{parent_id:parent_id,label:newlabel,branch_type:new_branch_type},function(company_id){
 		    if(new_branch_type === 'leaf' && confirm("Компания '"+newlabel+"' создана.\nВвести реквизиты сейчас?\n\n")){
 			Ctree.updateDetails(company_id,parent_target);
 		    }
@@ -110,7 +110,7 @@
 	    } else {
 		var newlabel=prompt("Введите новое название группы: "+node.label,node.label);
 		if( newlabel && newlabel!==node.label ){
-		    App.post('Company/companyTreeUpdate/'+App.uri(node.branch_id,'label',newlabel),function(ok){
+		    App.post('Company/companyTreeUpdate/',{branch_id:node.branch_id,field:'label',value:newlabel},function(ok){
 			if( ok*1 ){
 			    App.flash("Сохранено: название папки");
 			    $('#Ctree_tree').tree('update', {target: node.target,text: newlabel});
@@ -130,7 +130,7 @@
 	},
 	drop:function(target,source,point){
 	    var target_node=$("#Ctree_tree").tree('getNode',target);
-	    App.post('Company/companyTreeUpdate/'+App.uri(source.branch_id,'parent_id',target_node.branch_id),function(ok){
+	    App.post('Company/companyTreeUpdate/',{branch_id:source.branch_id,field:'parent_id',value:target_node.branch_id},function(ok){
 		if( ok*1 ){
 		    App.flash(source.label + " перемещен в " + target_node.label);
 		} else {
@@ -141,7 +141,7 @@
 	up:function(){
 	    if( confirm("Переместить выделенный элемент в корень дерева?") ){
 		var node=$('#Ctree_tree').tree('getSelected');
-		App.post('Company/companyTreeUpdate/'+App.uri(node.branch_id,'parent_id',0),function(ok){
+		App.post('Company/companyTreeUpdate/',{branch_id:node.branch_id,field:'parent_id',value:0},function(ok){
 		    if( ok*1 ){
 			App.flash(node.label + " перемещен в корень");
 		    } else {
@@ -171,7 +171,7 @@
 	    if( node ){
                 var level=prompt("Введите номер мин. уровня доступа пользователя, который может работать с этой компанией\n0 (Все)\n2 (Менеджер)\n3 (Бухгалтер)\n4 (Администратор)",node.level);
 		if( level!==null ){
-		    App.post('Company/companyTreeUpdate/'+App.uri(node.branch_id,'level',level),function(ok){
+		    App.post('Company/companyTreeUpdate/',{branch_id:node.branch_id,field:'level',value:level},function(ok){
 			if( ok*1 ){
 			    App.flash("Сохранено: уровень доступа");
                             Ctree.reload();

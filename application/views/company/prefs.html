@@ -30,7 +30,7 @@
 	    });
 	},
 	update:function(type, id, value, title){
-	    App.post( App.uri('Company','companyPrefsUpdate', type, id, value), function(ok){
+	    App.post( 'Company/companyPrefsUpdate',{type:type,field:id,value:value}, function(ok){
 		if( ok*1 ){
 		    App.flash("Сохранено: "+title);
 		} else {

@@ -120,37 +120,35 @@ class DocumentSell extends DocumentBase{
 	$this->documentSelect($doc_id);
 	$pcomp_id=$this->doc('passive_company_id');
 	$doc_ratio=$this->doc('doc_ratio');
-	$this->errtype='ok';
+	
 	$this->query("START TRANSACTION");
-	$this->query("INSERT INTO document_entries SET doc_id=$doc_id,product_code='$product_code',product_quantity='$product_quantity',invoice_price=GET_PRICE('$product_code',$pcomp_id,'$doc_ratio')");
+	$this->query("INSERT INTO document_entries SET doc_id=$doc_id,product_code='$product_code',invoice_price=COALESCE(GET_PRICE('$product_code',$pcomp_id,'$doc_ratio'),0)",false);
+	$error = $this->db->error();
+	if($error['code']==1452){
+	    $this->Hub->rcode("product_code_unknown");
+	    return false;
+	} else 
+	if($error['code']==1062){
+	    $this->Hub->rcode("already_exists");
+	    return false;
+	} else 
+	if($error['code']!=0){
+	    header("X-isell-type:error");
+	    show_error($error['message'].' '.$this->db->last_query(), 500);
+	}
 	$doc_entry_id=$this->db->insert_id();
-	if( !$doc_entry_id ){
-	    return [
-		'errtype'=>'already_exists',
-		'errmsg'=>'',
-	    ];
-	}
+	$update_ok=$this->entryUpdate($doc_id,$doc_entry_id,'product_quantity',$product_quantity);
 	
-	
-	$entry_commited=true;
-	if( $this->doc('is_commited') ){
-	    $entry_commited=$this->entryCommit($doc_entry_id);
+	if( !$update_ok ){
+	    return false;
 	}
-	if( $entry_commited && $this->errtype=='ok' ){
-	    $this->query("COMMIT");
-	}
-	return [
-	    'errtype'=>$this->errtype,
-	    'errmsg'=>$this->errmsg,
-	];
+	$this->query("COMMIT");
     }
     public $entryUpdate=['doc_id'=>'int','doc_entry_id'=>'int','field'=>'(product_price_total|product_quantity|product_sum_total)','value'=>'double'];
     public function entryUpdate($doc_id,$doc_entry_id,$field,$value){
 	$this->documentSelect($doc_id);
-	$this->errtype='ok';
-	$this->query("START TRANSACTION");
 	$entry_updated=[];
-	
+	$this->query("START TRANSACTION");	
 	if( $field=='product_sum_total' ){
 	    $entry_data=$this->entryGet($doc_entry_id);
 	    $product_price_vatless=$this->entryPriceNormalize($value);
@@ -161,43 +159,34 @@ class DocumentSell extends DocumentBase{
 	    $entry_updated['invoice_price']=$product_price_vatless;
 	} else
 	if( $field=='product_quantity' && $this->doc('is_commited') ){//IF document is already commited then commit entry. If commit is failed then abort update
-	    $entry_commited=$this->entryCommit($doc_entry_id,$value);
-	    if( !$entry_commited ){
-		return [
-		    'errtype'=>$this->errtype,
-		    'errmsg'=>$this->errmsg,
-		];
+	    $entry_calculated=$this->entryCommit($doc_entry_id,$value);
+	    if( !$entry_calculated ){
+		return false;
 	    }
 	    $entry_updated['product_quantity']=$value;
-	    $entry_updated['self_price']=$entry_commited->self_price;
-	    $entry_updated['party_label']=$entry_commited->first_party_label;
+	    $entry_updated['self_price']=$entry_calculated->self_price;
+	    $entry_updated['party_label']=$entry_calculated->first_party_label;
 	}
 	$update_ok=$this->update("document_entries",$entry_updated,['doc_entry_id'=>$doc_entry_id]);
-	if( $update_ok && $this->errtype=='ok' ){
-	    $this->query("COMMIT");
+	if( !$update_ok ){
+	    return false;
 	}
-	return [
-	    'errtype'=>$this->errtype,
-	    'errmsg'=>$this->errmsg,
-	];
+	$this->query("COMMIT");
+	return true;
     }
-    public $entryDelete=['doc_id'=>'int','doc_entry_id'=>'int'];
-    public function entryDelete($doc_id,$doc_entry_id){
+    public $entryDelete=['doc_id'=>'int','doc_entry_ids'=>'json'];
+    public function entryDelete($doc_id,$doc_entry_ids){
 	$this->documentSelect($doc_id);
-	$this->errtype='ok';
 	$this->query("START TRANSACTION");
-	$delete_ok=$this->delete('document_entries',['doc_id'=>$doc_id,'doc_entry_id'=>$doc_entry_id]);
-	$entry_commited=true;
-	if( $this->doc('is_commited') ){
-	    $entry_commited=$this->entryCommit($doc_entry_id,0);
+	foreach($doc_entry_ids as $doc_entry_id){
+	    $uncommit_ok=$this->entryCommit($doc_entry_id,0);
+	    $delete_ok=$this->delete('document_entries',['doc_id'=>$doc_id,'doc_entry_id'=>$doc_entry_id]);
+	    if( !$uncommit_ok || !$delete_ok ){
+		return false;
+	    }
 	}
-	if( $delete_ok && $entry_commited && $this->errtype=='ok' ){
-	    $this->query("COMMIT");
-	}
-	return [
-	    'errtype'=>$this->errtype,
-	    'errmsg'=>$this->errmsg,
-	];
+	$this->query("COMMIT");
+	return true;
     }    
     /*
      * COMMIT SECTION
@@ -213,27 +202,29 @@ class DocumentSell extends DocumentBase{
 	return $this->get_row($sql);
     }
     public  function entryCommit($doc_entry_id,$new_product_quantity=NULL){
+	if( !$this->doc('is_commited') ){
+	    return true;
+	}
 	$this->documentSetLevel(2);
 	$entry_data=$this->entryGet($doc_entry_id);
+	if( !$entry_data ){
+	    $this->Hub->msg("Строка уже удалена");
+	    return false;	    
+	}
 	$stock_lefover=$this->stockLeftoverGet($entry_data->product_code);
-	
 	$substract_quantity=$entry_data->product_quantity;
 	if( $new_product_quantity!==NULL ){
 	    $substract_quantity=$new_product_quantity;
 	    $stock_lefover=$stock_lefover+$entry_data->product_quantity;
 	}
 	if( $substract_quantity>$stock_lefover ){
-	    /*
-	     * Not enough product in stock
-	     */
-	    $this->errtype='not_enough';
-	    $this->errmsg=$substract_quantity-$stock_lefover;
-	    
+	    $this->Hub->rcode("not_enough");
+	    $this->Hub->msg($substract_quantity-$stock_lefover);
 	    return false;
 	}
+	$this->stockLeftoverSet($entry_data->product_code,$stock_lefover-$substract_quantity,0);
 	$this->entryOriginsFind($entry_data->product_code,$stock_lefover);
 	$entry_calculated=$this->entryOriginsCalc($substract_quantity);
-	$this->stockLeftoverSet($entry_data->product_code,$stock_lefover-$substract_quantity,0);
 	return $entry_calculated;
     }
     /*

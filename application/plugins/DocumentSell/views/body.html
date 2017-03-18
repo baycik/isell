@@ -1,20 +1,23 @@
-<div class="x-picker transp60">
+<hr>
+<div class="x-picker transp60" style="display: none">
     <div style="height:200px;width:300px;float:right;overflow: auto">
 	<button class="x-allcath tiny_button" type="button" style="width: 100%" title="Сбросить выделение">Все категории</button>
 	<div class="x-tree"></div>
     </div>
     <div class="x-stock" style="height:200px;"></div>
 </div>
-<div class="x-entrytools">
+<div>
     <div style="float:left;margin: 1px;margin-right: 10%" title="↑ для вывода предыдущего кода">
 	<input class="x-suggest" placeholder="код, название или штрихкод" style="width:300px;">
 	<input class="x-qty" placeholder="Кол-во" style="margin: 0px; padding-top: 0px; padding-bottom: 0px; height: 24px; line-height: 24px; width: 80px;vertical-align: middle;">
-	<button class="x-suggest-submit" type="button" title="Добавить строку в документ" style="padding: 2px;vertical-align: middle;">Добавить</button> | 
-	<button type="button" title="Подобрать товар со склада" style="padding: 2px;vertical-align: middle;">Подобрать</button>
+	<button class="x-suggest-submit" type="button" title="Добавить строку в документ" style="padding: 2px;vertical-align: middle;">Добавить</button>
     </div>
-    <span class="icon-24 icon-delete" title="Удалить стоку" data-action="delete"> </span>
-    <span class="icon-24 icon-calc" title="Перерасчитать цены" data-action="calc"> </span>
-    <span class="icon-24 icon-import" title="Импортировать" data-action="import"> </span>
+    <div class="x-body-tools">
+	<span class="icon-24 icon-delete" title="Удалить стоку" data-action="entryDelete"> </span>
+	<span class="icon-24 icon-calc" title="Перерасчитать цены" data-action="entryRecalc"> </span>
+	<span class="icon-24 icon-import" title="Импортировать" data-action="entryImport"> </span>
+	<button type="button" title="Подобрать товар со склада" class="x-picker-button" data-action="pickerToggle" style="padding: 2px;vertical-align: bottom;">Открыть подбор</button>
+    </div>
 </div>
 <div style="clear:both;"></div>
 <div class="x-entries"></div>

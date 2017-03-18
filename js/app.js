@@ -415,21 +415,10 @@ $(document).ajaxComplete(function (event, xhr, settings) {
 	    }
 	}
 	else if (!type || type.indexOf('error') > -1 || type.indexOf('OK') === -1) {
-	    console.log('error? response:',xhr.responseText);
-	    //alert( xhr.responseText );
-	    //
-	    //App.flash("<h3>url: " + settings.url + "</h3><big>" + xhr.responseText+"</big>", 'error');
+	    console.log('error',xhr.responseText);
 	}
     }
 });
-//$(document).ajaxError(function (event, xhr, settings) {
-//    $("#app_busy").hide();
-//    var type = xhr.getResponseHeader('X-isell-type');
-//    if (type && type.indexOf('OK') > -1 || settings.crossDomain===true) {
-//	return;
-//    }
-//    console.log("HTTP ERROR\n" + settings.url + "\n"+xhr.responseText);
-//});
 $(document).ajaxSend(function () {
     $("#app_busy").show();
 });

@@ -54,11 +54,11 @@ abstract class Catalog extends CI_Model {
 	}
         return false;
     }
-    protected function query( $query ){
+    protected function query( $query, $error_warn=true ){
 	if(is_string($query)){
 	    $query=$this->db->query($query);
 	}
-        if( $this->check_error() ){
+        if( $error_warn && $this->check_error() ){
             return NULL;
         }
         return $query;
