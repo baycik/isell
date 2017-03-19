@@ -174,38 +174,106 @@ abstract class DocumentBase extends Catalog{
      * Commits and uncommit document
      */
     protected function documentChangeCommit( $make_commited=false ){
-	if( $make_commited ){//It is needed to commit document
-	    if($this->doc('is_commited')){
-		return true;
-	    }
-	    return $this->documentCommitEntries();
-	} else {
-	    if( !$this->doc('is_commited') ){//if doc is uncommited then delete it
-		return $this->documentDelete();
-	    }
-	    return $this->documentUncommitEntries();
+	if( $make_commited && $this->doc('is_commited') || !$make_commited && !$this->doc('is_commited') ){
+	    return true;
 	}
+	$this->query("START TRANSACTION");	
+	$entries_ok=$this->documentChangeCommitEntries($make_commited);
+	$this->doc('is_commited',!$make_commited);
+	$this->documentFlush();
+	if( !$entries_ok ){
+	    return false;
+	}
+	$this->query("COMMIT");
+	return true;
     }
-    protected function documentCommitEntries(){
+    /*
+     * Commit or uncommit all entries in document
+     */
+    protected function documentChangeCommitEntries($make_commited){
 	$doc_id=$this->doc('doc_id');
-	$document_entries=$this->get_list("SELECT * FROM document_entries WHERE doc_id='$doc_id'");
+	$document_entries=$this->get_list("SELECT doc_entry_id FROM document_entries WHERE doc_id='$doc_id'");
 	foreach($document_entries as $entry){
-	    if(!$this->entryCommit($entry)){
-		return false;
+	    if( $make_commited && !$this->entryCommit($entry->doc_entry_id) ){
+		return false;//need to commit but it failed
+	    }
+	    if( !$make_commited && !$this->entryUncommit($entry->doc_entry_id) ){
+		return false;//need to uncommit but it failed
 	    }
 	}
 	return true;
     }
-    
-    
-    
-    protected function entryCommit($entry){
+    protected function entryCommit($doc_entry_id,$new_product_quantity=NULL){
+	return false;
+    }
+    protected function entryUncommit($doc_entry_id){
 	return false;
     }
     
     
-    public $entryListFetch=['doc_id'=>'int'];
-    public function entryListFetch($doc_id){
-	return [];
+    public function entryDelete($doc_id,$doc_entry_ids){
+	$this->documentSelect($doc_id);
+	$this->query("START TRANSACTION");
+	foreach($doc_entry_ids as $doc_entry_id){
+	    $uncommit_ok=$this->entryUncommit($doc_entry_id);
+	    $delete_ok=$this->delete('document_entries',['doc_id'=>$doc_id,'doc_entry_id'=>$doc_entry_id]);
+	    if( !$uncommit_ok || !$delete_ok ){
+		return false;
+	    }
+	}
+	$this->query("COMMIT");
+	return true;
+    }    
+    
+    
+
+    public $import=['doc_id'=>'int','label'=>'string'];
+    public function entryImport( $doc_id,$label ){
+	$this->documentSelect($doc_id);
+	$this->entriesTruncate();
+	$source = array_map('addslashes',$this->request('source','raw'));
+	$target = array_map('addslashes',$this->request('target','raw'));
+        $source[]=$this->doc('doc_id');
+        $target[]='doc_id';
+	$this->entryImportFromTable('document_entries', $source, $target, '/product_code/product_quantity/invoice_price/party_label/doc_id/', $label);
+	$this->query("DELETE FROM imported_data WHERE {$source[0]} IN (SELECT product_code FROM document_entries WHERE doc_id={$doc_id})");
+        return  $this->db->affected_rows();
+    }
+    private function entryImportTruncate(){
+	$doc_id=$this->doc('doc_id');
+	$doc_entry_ids=[];
+	$document_entries=$this->get_list("SELECT doc_entry_id FROM document_entries WHERE doc_id='$doc_id'");
+	foreach($document_entries as $entry){
+	    $doc_entry_ids[]=$entry->doc_entry_id;
+	}
+	$this->entryDelete($doc_id,$doc_entry_ids);
+    }
+    private function entryImportFromTable( $table, $src, $trg, $filter, $label ){
+	$target=[];
+	$source=[];
+	$doc_vat_ratio=1+$this->doc('vat_rate')/100;
+	$curr_correction=$this->documentCurrencyCorrectionGet();
+        $quantity_source_field='';
+	for( $i=0;$i<count($trg);$i++ ){
+            if( strpos($filter,"/{$trg[$i]}/")===false || empty($src[$i]) ){
+		continue;
+	    }
+	    if( $trg[$i]=='product_code' ){
+		$product_code_source=$src[$i];
+	    }
+	    if( $trg[$i]=='invoice_price' ){
+		$src[$i]=round($src[$i]/$curr_correction/$doc_vat_ratio,2);
+	    }
+	    if( $trg[$i]=='product_quantity' ){
+		$quantity_source_field=$src[$i];
+	    }
+            
+	    $target[]=$trg[$i];
+	    $source[]=$src[$i];
+	}
+	$target_list=  implode(',', $target);
+	$source_list=  implode(',', $source);
+	$this->query("INSERT INTO $table ($target_list) SELECT $source_list FROM imported_data WHERE label='$label' AND $product_code_source IN (SELECT product_code FROM stock_entries) ON DUPLICATE KEY UPDATE product_quantity=product_quantity+$quantity_source_field");
+	return $this->db->affected_rows();
     }
 }

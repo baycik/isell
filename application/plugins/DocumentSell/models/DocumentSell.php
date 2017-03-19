@@ -163,6 +163,10 @@ class DocumentSell extends DocumentBase{
 	    if( !$entry_calculated ){
 		return false;
 	    }
+	    if( $value<=0 ){//quantity must be more than zero
+		$this->Hub->rcode('quantity_wrong');
+		return false;
+	    }
 	    $entry_updated['product_quantity']=$value;
 	    $entry_updated['self_price']=$entry_calculated->self_price;
 	    $entry_updated['party_label']=$entry_calculated->first_party_label;
@@ -176,17 +180,7 @@ class DocumentSell extends DocumentBase{
     }
     public $entryDelete=['doc_id'=>'int','doc_entry_ids'=>'json'];
     public function entryDelete($doc_id,$doc_entry_ids){
-	$this->documentSelect($doc_id);
-	$this->query("START TRANSACTION");
-	foreach($doc_entry_ids as $doc_entry_id){
-	    $uncommit_ok=$this->entryCommit($doc_entry_id,0);
-	    $delete_ok=$this->delete('document_entries',['doc_id'=>$doc_id,'doc_entry_id'=>$doc_entry_id]);
-	    if( !$uncommit_ok || !$delete_ok ){
-		return false;
-	    }
-	}
-	$this->query("COMMIT");
-	return true;
+	return parent::entryDelete($doc_id, $doc_entry_ids);
     }    
     /*
      * COMMIT SECTION
@@ -201,7 +195,10 @@ class DocumentSell extends DocumentBase{
 	$sql="SELECT * FROM document_entries WHERE doc_entry_id='$doc_entry_id'";
 	return $this->get_row($sql);
     }
-    public  function entryCommit($doc_entry_id,$new_product_quantity=NULL){
+    private function entryUncommit($doc_entry_id){
+	return $this->entryCommit($doc_entry_id, 0);
+    }
+    private function entryCommit($doc_entry_id,$new_product_quantity=NULL){
 	if( !$this->doc('is_commited') ){
 	    return true;
 	}

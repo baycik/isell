@@ -188,7 +188,8 @@ body={
     responseCodes:{
 	not_enough:"На складе не хватает:",
 	already_exists:"Строка с таким кодом уже добавлена",
-	product_code_unknown:"Неизвестный товар"
+	product_code_unknown:"Неизвестный товар",
+	quantity_wrong:"Колличество должно быть больше нуля"
     },
     entryAdd:function(product_code,product_quantity){
 	var url=document_model+'/entryAdd';
@@ -217,7 +218,7 @@ body={
     },
     entryDelete:function(){
 	var selected_rows=body.entries_sg.getSelectedRows();
-	if(!selected_rows){
+	if(!selected_rows.length){
 	    App.flash("Ни одна строка не выбрана!");
 	    return;
 	}
@@ -236,6 +237,33 @@ body={
 		App.flash("Строка не удалена");
 	    }
 	    doc.reload(["body","foot"]);
+	});
+    },
+    productCard:function(){
+	var selected_rows=body.entries_sg.getSelectedRows();
+	if(!selected_rows.length){
+	    App.flash("Ни одна строка не выбрана!");
+	    return;
+	}
+	var row=body.entries_sg.getDataItem(selected_rows[0]);
+	App.loadWindow('page/stock/product_card',{product_code:row.product_code,loadProductByCode:true});
+    },
+    import:function(){
+	var config=[
+	    {name:'Код товара',field:'product_code',required:true},
+	    {name:'Кол-во',field:'product_quantity'},
+	    {name:'Цена',field:'invoice_price'},
+	    {name:'Партия',field:'party_label'}		    
+	];
+	App.loadWindow('page/dialog/importer',{label:'документ',fields_to_import:config}).progress(function(status,fvalue,Importer){
+	    if( status==='submit' ){
+		fvalue.doc_id=doc_id;
+		App.post("DocumentSell/import/",fvalue,function(ok){
+		    App.flash("Импортировано "+ok);
+		    Importer.reload();
+		    doc.reload(["body","foot"]);
+		});
+	    }
 	});
     }
 };

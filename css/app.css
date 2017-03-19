@@ -267,6 +267,7 @@ div .combobox-item-hover{
     background-size: 24px 24px;
     line-height: 26px;
     margin-top: 0px;
+    vertical-align: bottom;
 }
 .icon-24:hover {
     cursor: pointer;
