@@ -679,6 +679,8 @@ class Document extends Data {
 		$this->Base->msg('Сначала сохраните документ!');
 		return;
 	    }
+	    $view_num = $this->doc('doc_num');
+	    $efields = addslashes($this->getLastEfields($view_type_id));
         } else {
 	    $view_num = $this->doc('doc_num');
 	    $efields = addslashes($this->getLastEfields($view_type_id));
