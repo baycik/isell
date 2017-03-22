@@ -190,6 +190,10 @@ class Document extends Data {
 	    $this->Base->msg("Документ уже проведен!\n");
 	    return false;
 	}
+        if( $this->checkUserPermission( 'nocommit' ) ){
+            $this->Base->msg("Нет прав для операий по складу");
+            return false;
+        }
 	//if ($this->isDebtLimitExceeded()) {
 	//    return false;
 	//}
@@ -236,12 +240,24 @@ class Document extends Data {
 	$this->Base->query("COMMIT");
 	return true;
     }
+    
+    private function checkUserPermission( $right ){
+        $user_data=$this->Base->svar('user');
+        if( isset($user_data->user_permissions) && strpos($user_data->user_permissions, $right)!==false ){
+            return true;
+        }
+        return false;
+    }
 
     public function uncommit() {
 	if ($this->isCommited())
 	    $this->Base->set_level(2);
 	if (!$this->isCommited())
 	    return $this->delete();
+        if( $this->checkUserPermission( 'nocommit' ) ){
+            $this->Base->msg("Нет прав для операий по складу");
+            return false;
+        }
 	$doc_id = $this->doc('doc_id');
 	$company_lang = $this->Base->pcomp('language');
 
@@ -655,16 +671,6 @@ class Document extends Data {
 		$this->Base->msg('Сначала сохраните документ!');
 		return;
 	    }
-//	    if ($this->Base->pcomp('company_vat_id') && (
-//		    !$this->Base->pcomp('company_name') ||
-//		    !$this->Base->pcomp('company_jaddress') ||
-//		    !$this->Base->pcomp('company_phone') ||
-//		    !$this->Base->pcomp('company_agreement_num') ||
-//		    !$this->Base->pcomp('company_agreement_date'))
-//	    ) {
-//		$this->Base->response_wrn('Заполнены не все реквизиты!');
-//	    }
-	    //$this->checkInErnn();
 	    $view_num = $this->getViewNextNum($view_type_id);
             if ($this->Base->pcomp('company_vat_id')){
                 $efields = '{"sign":"' . $this->Base->acomp('company_director') . '"}';

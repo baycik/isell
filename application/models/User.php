@@ -26,6 +26,7 @@ class User extends Catalog {
 	    $this->Base->svar('user_position', $user_data->user_position);
             $this->Base->svar('user_assigned_stat',$user_data->user_assigned_stat);
             $this->Base->svar('user_assigned_path',$user_data->user_assigned_path);
+            $this->Base->svar('user',$user_data);
             
             $Company=$this->Base->load_model("Company");
 	    if( $user_data->company_id ){
@@ -87,7 +88,7 @@ class User extends Catalog {
 		user_id,user_login,user_level,user_sign,user_position,user_phone,
 		first_name,middle_name,last_name,nick,
 		id_type,id_serial,id_number,id_given_by,id_date,
-		user_assigned_path,
+		user_assigned_path,user_permissions,
 		CONCAT(last_name,' ',first_name,' ',middle_name) AS full_name 
 	    FROM user_list
 		$where 
@@ -122,6 +123,7 @@ class User extends Catalog {
 	if( $current_level>=4 ){
 	    $fields['user_level']=$this->request('user_level','int');
 	    $fields['user_assigned_path']=$this->request('user_assigned_path');
+	    $fields['user_permissions']=$this->request('user_permissions');
 	    
 	    $admin=$this->adminLastCheck($user_id);
 	    if( $admin==='last' && $fields['user_level']<4 ){
