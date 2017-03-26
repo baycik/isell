@@ -128,7 +128,7 @@ abstract class DocumentBase extends Catalog{
 	$next_num = $this->get_value($sql);
 	return $next_num ? $next_num : 1;
     }
-    public $documentUpdate=['doc_id'=>'int','field'=>'escape','value'=>'string'];
+    public $documentUpdate=['doc_id'=>'int','field'=>'string','value'=>'string'];
     public function documentUpdate($doc_id,$field,$value){
 	$this->Hub->set_level(2);
 	$this->documentSelect($doc_id);
@@ -137,13 +137,18 @@ abstract class DocumentBase extends Catalog{
 	switch($field){
 	    case 'is_commited':
 		$ok=$this->documentChangeCommit( (bool) $value );
+		break;
 	    case 'notcount':
 		$ok=$this->transChangeNotcount((bool) $value );
+		break;
 	    case 'use_vatless_price':
+		break;
 	    case 'doc_ratio':
 		$ok=$this->transChangeCurrRatio( $value );
+		break;
 	    case 'vat_rate':
 		$ok=$this->transChangeVatRate( $value );
+		break;
 	    case 'doc_num':
 		if( !is_int($value) ){
 		    return false;
@@ -177,15 +182,7 @@ abstract class DocumentBase extends Catalog{
 	if( $make_commited && $this->doc('is_commited') || !$make_commited && !$this->doc('is_commited') ){
 	    return true;
 	}
-	$this->query("START TRANSACTION");	
-	$entries_ok=$this->documentChangeCommitEntries($make_commited);
-	$this->doc('is_commited',!$make_commited);
-	$this->documentFlush();
-	if( !$entries_ok ){
-	    return false;
-	}
-	$this->query("COMMIT");
-	return true;
+	return $this->documentChangeCommitEntries($make_commited);
     }
     /*
      * Commit or uncommit all entries in document
@@ -193,7 +190,9 @@ abstract class DocumentBase extends Catalog{
     protected function documentChangeCommitEntries($make_commited){
 	$doc_id=$this->doc('doc_id');
 	$document_entries=$this->get_list("SELECT doc_entry_id FROM document_entries WHERE doc_id='$doc_id'");
+	
 	foreach($document_entries as $entry){
+	    $this->Hub->msg("$make_commited $entry->doc_entry_id --".$this->entryCommit($entry->doc_entry_id));
 	    if( $make_commited && !$this->entryCommit($entry->doc_entry_id) ){
 		return false;//need to commit but it failed
 	    }

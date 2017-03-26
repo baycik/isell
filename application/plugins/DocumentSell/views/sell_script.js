@@ -1,4 +1,4 @@
-/*global Slick,body,holderId,doc,document_model,App*/
+/*global Slick,body,holderId,doc,document_model,App,doc_id*/
 body={
     entries_sg:{},
     row_queue:1,
@@ -248,7 +248,7 @@ body={
 	var row=body.entries_sg.getDataItem(selected_rows[0]);
 	App.loadWindow('page/stock/product_card',{product_code:row.product_code,loadProductByCode:true});
     },
-    import:function(){
+    entryImport:function(){
 	var config=[
 	    {name:'Код товара',field:'product_code',required:true},
 	    {name:'Кол-во',field:'product_quantity'},
@@ -266,4 +266,7 @@ body={
 	    }
 	});
     }
+    /*
+     * @TODO add export entries
+     */
 };

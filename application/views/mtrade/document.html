@@ -104,6 +104,17 @@
 		document_data.head=head;
 		$("#"+holderId+" .x-head form").form('load',head);
 	    },
+	    update:function(field,value,succes_msg){
+		var url=document_model+'/documentUpdate';
+		return $.post(url,{doc_id:doc_id,field:field,value:value},function(ok){
+		    if(ok*1){
+			App.flash(succes_msg);
+		    } else {
+			App.flash("Изменения не сохранены");
+		    }
+		    doc.reload();
+		});
+	    },
 	    initToolbar:function(){
 		$("#"+holderId+" .x-head .x-toolbar").click(function(e){
 		    var action=$(e.target).data('action');
@@ -113,10 +124,16 @@
 		});
 	    },
 	    do:function( action ){
-		switch( action ){
-		    case 'reload':
-			doc.reload();
-		}
+		head[action] && head[action]();
+	    },
+	    reload:function(){
+		doc.reload();
+	    },
+	    commit:function(){
+		head.update('is_commited',1,'Документ проведен');
+	    },
+	    uncommit:function(){
+		head.update('is_commited',0,'Документ не проведен');
 	    },
 	    initControls:function(){
 		App.setupForm("#"+holderId+" .x-head form").change(function(){
@@ -224,6 +241,11 @@
 	<input name="passive_company_id" title="Покупатель">
 	<input class="easyui-datebox" name="doc_date" title="Дата">
 	<input class="easyui-numberspinner" name="doc_num" title="Номер">
+	    <select name="is_commited" title="Проведен">
+		<option value="1">да</option>
+		<option value="0">нет</option>    
+	    </select>
+	
 	<div style="float:right" class="x-toolbar">
 	    <span class="icon-24 icon-commit" title="Провести документ" data-action="commit"> </span>
 	    <span class="icon-24 icon-uncommit" title="Отменить документ" data-action="uncommit"> </span>

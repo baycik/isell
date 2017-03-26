@@ -16,7 +16,7 @@ abstract class Catalog extends CI_Model {
 		$var=(bool) $var;
 		break;
 	    case 'escape':
-		$var=$this->db->escape($var);
+		$var=$this->db->escape_identifiers($var);
 		break;
 	    case 'string':
                 $var=  addslashes( $var );

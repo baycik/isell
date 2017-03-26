@@ -209,7 +209,7 @@ class Hub  extends CI_Controller{
 	    }
 	}
     }
-    private function check( &$var, $type=null ){
+    public function check( &$var, $type=null ){
 	switch( $type ){
 	    case 'raw':
 		break;
@@ -223,7 +223,7 @@ class Hub  extends CI_Controller{
 		$var=(bool) $var;
 		break;
 	    case 'escape':
-		$var=$this->db->escape($var);
+		$var=$this->db->escape_identifiers($var);
 		break;
 	    case 'string':
                 $var=  addslashes( $var );

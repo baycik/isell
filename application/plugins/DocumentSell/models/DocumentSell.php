@@ -195,10 +195,10 @@ class DocumentSell extends DocumentBase{
 	$sql="SELECT * FROM document_entries WHERE doc_entry_id='$doc_entry_id'";
 	return $this->get_row($sql);
     }
-    private function entryUncommit($doc_entry_id){
+    protected function entryUncommit($doc_entry_id){
 	return $this->entryCommit($doc_entry_id, 0);
     }
-    private function entryCommit($doc_entry_id,$new_product_quantity=NULL){
+    protected function entryCommit($doc_entry_id,$new_product_quantity=NULL){
 	if( !$this->doc('is_commited') ){
 	    return true;
 	}
