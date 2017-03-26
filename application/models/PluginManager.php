@@ -60,18 +60,15 @@ class PluginManager extends Catalog{
     public function settingsDataFetch($plugin_system_name){
 	return json_decode($this->get_value("SELECT plugin_settings FROM plugin_list WHERE plugin_system_name='$plugin_system_name'"));
     }
-    public $settingsAllFetch=[];
-    public function settingsAllFetch(){
-	$plugin_system_name=$this->request('system_name');
+    public $settingsAllFetch=['system_name'=>'sting'];
+    public function settingsAllFetch($plugin_system_name){
 	$settings_file=$this->plugin_folder.$plugin_system_name."/settings.html";
 	$settings_html=file_exists($settings_file)?file_get_contents($settings_file):'';
 	$settings_data=$this->settingsDataFetch($plugin_system_name);
 	return ['html'=>$settings_html,'data'=>$settings_data];
     }
-    public $settingsSave=[];
-    public function settingsSave(){
-	$plugin_system_name=$this->request('plugin_system_name');
-	$settings_json=$this->request('settings_json');
+    public $settingsSave=['plugin_system_name'=>'string','settings_json'=>'string'];
+    public function settingsSave($plugin_system_name,$settings_json){
 	$sql="INSERT INTO 
 		plugin_list 
 	    SET 
@@ -81,5 +78,26 @@ class PluginManager extends Catalog{
 		plugin_settings='$settings_json'";
 	$this->query($sql);
 	return $this->db->affected_rows();
+    }
+    public $install=['plugin_system_name'=>'sting'];
+    public function install($plugin_system_name){
+	die($plugin_system_name);
+	
+	$headers=$this->get_plugin_headers( $plugin_system_name );
+	$data=[
+	    'plugin_system_name'=>$plugin_system_name,
+	    'trigger_before'=>$headers['trigger_before'],
+	    'is_installed'=>1,
+	    'is_activated'=>1
+	];
+	return $this->insert('plugin_list',$data);
+	//run install script
+    }
+    public $unistall=['plugin_system_name'=>'sting'];
+    public function uninstall($plugin_system_name){
+	return $this->delete('plugin_list',['plugin_system_name'=>$plugin_system_name]);
+    }
+    private function pluginUpdate($plugin_system_name,$data){
+	return $this->update('plugin_list',$data,['plugin_system_name'=>$plugin_system_name]);
     }
 }

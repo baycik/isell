@@ -1,5 +1,5 @@
 <?php
-/* Group Name: ВКонтакте
+/* Group Name: Синхронизация
  * User Level: 2
  * Plugin Name: VK Синхронизатор
  * Plugin URI: http://isellsoft.com

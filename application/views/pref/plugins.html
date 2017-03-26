@@ -52,6 +52,16 @@
 		    }
 		});
 	    });
+	},
+	install:function( on ){
+	    App.post('PluginManager/install',{plugin_system_name:Plugin.current_system_name},function(ok){
+		App.page_pref_plugins.tile.load();
+	    });
+	},
+	uninstall:function( on ){
+	    App.post('PluginManager/uninstall',{plugin_system_name:Plugin.current_system_name},function(ok){
+		App.page_pref_plugins.tile.load();
+	    });
 	}
     };
 </script>
@@ -123,6 +133,10 @@
 	<div>
 	    <h2>{{plugin_name}}</h2>
 	    {{plugin_description}}
+	</div>
+	<div>
+	    <button onclick="Plugins.install()">Install</button>
+	    <button onclick="Plugins.uninstall()">Unistall</button>
 	</div>
 	<div id="plugin_settings" style="clear:both"></div>
     </div>
