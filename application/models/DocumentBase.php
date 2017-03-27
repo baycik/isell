@@ -22,7 +22,7 @@ abstract class DocumentBase extends Catalog{
 	    }
 	    $this->document_properties=$this->get_row("SELECT * FROM document_list WHERE doc_id='$this->doc_id'");
 	}
-	if( $value!=null ){
+	if( isset($value) ){
 	    return $this->document_properties->$field=$value;
 	}
 	return isset($this->document_properties->$field)?$this->document_properties->$field:null;
@@ -136,7 +136,7 @@ abstract class DocumentBase extends Catalog{
 	$this->query("START TRANSACTION");
 	switch($field){
 	    case 'is_commited':
-		$ok=$this->documentChangeCommit( (bool) $value );
+		$ok=$this->documentChangeCommit( $value );
 		break;
 	    case 'notcount':
 		$ok=$this->transChangeNotcount((bool) $value );
@@ -192,7 +192,6 @@ abstract class DocumentBase extends Catalog{
 	$document_entries=$this->get_list("SELECT doc_entry_id FROM document_entries WHERE doc_id='$doc_id'");
 	
 	foreach($document_entries as $entry){
-	    $this->Hub->msg("$make_commited $entry->doc_entry_id --".$this->entryCommit($entry->doc_entry_id));
 	    if( $make_commited && !$this->entryCommit($entry->doc_entry_id) ){
 		return false;//need to commit but it failed
 	    }

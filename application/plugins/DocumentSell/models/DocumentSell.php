@@ -158,18 +158,24 @@ class DocumentSell extends DocumentBase{
 	    $product_price_vatless=$this->entryPriceNormalize($value);
 	    $entry_updated['invoice_price']=$product_price_vatless;
 	} else
-	if( $field=='product_quantity' && $this->doc('is_commited') ){//IF document is already commited then commit entry. If commit is failed then abort update
-	    $entry_calculated=$this->entryCommit($doc_entry_id,$value);
-	    if( !$entry_calculated ){
-		return false;
-	    }
+	if( $field=='product_quantity' ){//IF document is already commited then commit entry. If commit is failed then abort update
 	    if( $value<=0 ){//quantity must be more than zero
 		$this->Hub->rcode('quantity_wrong');
 		return false;
 	    }
+	    if( $this->doc('is_commited') ){
+		$entry_calculated=$this->entryCommit($doc_entry_id,$value);
+		if( !$entry_calculated ){
+		    return false;
+		}
+		$entry_updated['self_price']=$entry_calculated->self_price;
+		$entry_updated['party_label']=$entry_calculated->first_party_label;
+	    } else {
+		$entry_updated['self_price']=0;
+		$entry_updated['party_label']='';		
+	    }
+	    //$this->Hub->msg("entry_calculated $entry_calculated");
 	    $entry_updated['product_quantity']=$value;
-	    $entry_updated['self_price']=$entry_calculated->self_price;
-	    $entry_updated['party_label']=$entry_calculated->first_party_label;
 	}
 	$update_ok=$this->update("document_entries",$entry_updated,['doc_entry_id'=>$doc_entry_id]);
 	if( !$update_ok ){
