@@ -9,31 +9,25 @@ var App = {
 	App.onReady && App.onReady();
     },
     flash:function (msg, type) {
-	if (type === 'error') {
-	    if( App.user && App.user.props.user_login==='baycik' ){
-		$("#appStatus").html('<pre style="white-space: pre-wrap">'+msg+'</pre>');
-		$("#appStatus").window({
-		    title: 'Ошибка',
-		    width: 800,
-		    height: 300
-		});
-		$("#appStatus").window('move', {top: 0});		
-	    } else {
-		console.log(msg);
-	    }
-	}
-	else if (type === 'alert') {
-	    $.messager.alert('Внимание!', msg, 'error');
-	}
-	else {
-	    clearTimeout(App.flashClock);
-	    App.flashClock = setTimeout(function () {
-		$.messager.show({title: 'Сообщение', msg: App.msg, showType: 'show'});
-		App.msg = '';
-	    }, 300);
-	    App.msg = (App.msg || '') + msg + '<br>';
-	}
+	clearTimeout(App.flashClock);
+	App.flashClock = setTimeout(function () {
+	    $.messager.show({ msg: App.msg, showType: 'slide',width:300,height:150});
+	    App.msg = '';
+	}, 300);
+	App.msg = (App.msg || '') + App.translate(msg) + '<br>';
     },
+    translate:function(msg){
+	var translated=[];
+	var lines=msg.split("\n");
+	for(var i in lines){
+	    translated.push(App.lang(lines[i]));
+	}
+	return translated.join("\n");
+    },
+    lang:function(word){
+	return App.vocab[word] || word;
+    },
+    vocab:{},
     setTitle:function( title ){
         this.title = title||this.title||'';
         var title_data={

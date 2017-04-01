@@ -13,7 +13,6 @@ include APPPATH.'libraries/Plugins.php';
 class Hub  extends CI_Controller{
     public $level_names=["Нет доступа","Ограниченный","Менеджер","Бухгалтер","Администратор"];
     private $rtype='OK';
-    private $rcode='';
     private $msg='';
     function __construct(){
 	session_set_cookie_params(36000, '/');
@@ -259,10 +258,6 @@ class Hub  extends CI_Controller{
 	$this->msg.="$msg\n";
     }
     
-    public function rcode($code){
-	$this->rcode=$code;
-    }
-    
 
     public function db_msg(){
 	$error = $this->db->error();
@@ -289,7 +284,6 @@ class Hub  extends CI_Controller{
 	}
 	$this->output->set_header("X-isell-msg:".urlencode($this->msg));
 	$this->output->set_header("X-isell-type:".$this->rtype);
-	$this->output->set_header("X-isell-rcode:".$this->rcode);
 	
 	if( is_array($response) || is_object($response) ){
 	    $this->output->set_header("Content-type:text/plain;charset=utf8"); 

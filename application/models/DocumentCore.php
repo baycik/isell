@@ -1,10 +1,8 @@
 <?php
 require_once 'DocumentUtils.php';
 class DocumentCore extends DocumentUtils{
+    public $listFetch=['int','int','string'];
     public function listFetch( $page=1, $rows=30, $mode='' ){
-	$this->check($page,'int');
-	$this->check($rows,'int');
-	$this->check($mode);
 	$offset=($page-1)*$rows;
 	if( $offset<0 ){
 	    $offset=0;
@@ -63,6 +61,7 @@ class DocumentCore extends DocumentUtils{
 	$total_estimate=$offset+(count($result_rows)==$rows?$rows+1:count($result_rows));
 	return array('rows'=>$result_rows,'total'=>$total_estimate);
     }
+    public $createDocument=['string'];
     public function createDocument( $doc_type=null ){
 	$pcomp_id=$this->Hub->pcomp('company_id');
 	if( $pcomp_id ){
@@ -106,6 +105,7 @@ class DocumentCore extends DocumentUtils{
         $def_head['doc_num']=$this->getNextDocNum($def_head['doc_type']);
         return $def_head;
     }
+    public $headGet=['int'];
     public function headGet( $doc_id ){
         $this->check($doc_id,'int');
 	if( $doc_id==0 ){
@@ -156,14 +156,8 @@ class DocumentCore extends DocumentUtils{
 	}
 	return true;
     }
-    public function headUpdate( $field=null, $new_val=null ){
-        if( $field==null && $new_val==null ){
-            $field=$this->request('field');
-            $new_val=$this->request('new_val');
-        } else {
-            $this->check($field);
-            $this->check($new_val);
-        }
+    public $headUpdate=['field'=>'string','new_val'=>'string'];
+    public function headUpdate( $field, $new_val){
 	switch( $field ){
 	    case 'doc_ratio':
 		$field='ratio';

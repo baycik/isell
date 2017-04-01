@@ -1,5 +1,12 @@
 /*global Slick,body,holderId,doc,document_model,App,doc_id*/
 body={
+    vocab:{
+	not_enough:"На складе не хватает:",
+	already_exists:"Строка с таким кодом уже добавлена",
+	product_code_unknown:"Неизвестный товар",
+	quantity_wrong:"Колличество должно быть больше нуля",
+	entry_deleted_before:"Строка уже удалена"
+    },
     entries_sg:{},
     row_queue:1,
     init:function(){
@@ -41,6 +48,7 @@ body={
 	 */
 	body.suggestInit();
 	body.etoolsInit();
+	App.vocab=$.extend(App.vocab,this.vocab);
     },
     render:function(entries){
 	body.row_queue=1;
@@ -185,18 +193,10 @@ body={
 	    $(cellNode).css('color','red');
 	}
     },
-    responseCodes:{
-	not_enough:"На складе не хватает:",
-	already_exists:"Строка с таким кодом уже добавлена",
-	product_code_unknown:"Неизвестный товар",
-	quantity_wrong:"Колличество должно быть больше нуля"
-    },
     entryAdd:function(product_code,product_quantity){
 	var url=document_model+'/entryAdd';
-	$.post(url,{doc_id:doc_id,product_code:product_code,product_quantity:product_quantity},function(ok,status,xhr){
-	    var rcode = xhr.getResponseHeader('X-isell-rcode');
+	$.post(url,{doc_id:doc_id,product_code:product_code,product_quantity:product_quantity},function(ok){
 	    if( !(ok*1) ){
-		App.flash(body.responseCodes[rcode]||'');
 		App.flash("Строка не добавлена");
 	    }
 	    if( rcode==='product_code_unknown' && confirm("Добавить новый код "+product_code+" на склад?") ){
@@ -207,11 +207,9 @@ body={
     },
     entryUpdate:function(doc_entry_id,field,value){
 	var url=document_model+'/entryUpdate';
-	$.post(url,{doc_id:doc_id,doc_entry_id:doc_entry_id,field:field,value:value},function(ok,status,xhr){
-	    var rcode = xhr.getResponseHeader('X-isell-rcode');
+	$.post(url,{doc_id:doc_id,doc_entry_id:doc_entry_id,field:field,value:value},function(ok){
 	    if( !(ok*1) ){
 		App.flash("Строка не изменена");
-		App.flash(body.responseCodes[rcode]);
 	    }
 	    doc.reload(["body","foot"]);
 	});
@@ -230,10 +228,8 @@ body={
 	    entries_to_delete.push(body.entries_sg.getDataItem(selected_rows[i]).doc_entry_id);
 	}
 	var url=document_model+'/entryDelete';
-	$.post(url,{doc_id:doc_id,doc_entry_ids:JSON.stringify(entries_to_delete)},function(ok,status,xhr){
-	    var rcode = xhr.getResponseHeader('X-isell-rcode');
+	$.post(url,{doc_id:doc_id,doc_entry_ids:JSON.stringify(entries_to_delete)},function(ok){
 	    if( !(ok*1) ){
-		App.flash(body.responseCodes[rcode]||'');
 		App.flash("Строка не удалена");
 	    }
 	    doc.reload(["body","foot"]);

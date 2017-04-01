@@ -2,8 +2,8 @@
 require_once 'DocumentItems.php';
 class DocumentView extends DocumentItems{
     public $min_level=1;
+    public $viewListFetch=['int'];
     public function viewListFetch( $doc_id ){
-	$this->check($doc_id);
 	$blank_set=$this->Hub->pref('blank_set');
 	$acomp_id=$this->Hub->acomp('company_id');
 	if( $doc_id ){
@@ -40,12 +40,9 @@ class DocumentView extends DocumentItems{
 	}
 
     }
+    public $viewUpdate=['int','string','string','string'];
     public function viewUpdate($doc_view_id, $is_extra, $field, $value='') {
-	$this->check($doc_view_id,'int');
-	$this->check($field);
-	$this->check($value);
-	$this->check($is_extra);
-	
+
 	if ( $this->isCommited() ){
 	    $this->Hub->set_level(2);
 	}
@@ -74,10 +71,12 @@ class DocumentView extends DocumentItems{
 	$this->query("UPDATE document_view_list SET $field='$value',modified_by='$user_id' WHERE doc_view_id='$doc_view_id'");
 	return true;
     }
+    public $viewDelete=['int'];
     public function viewDelete( $doc_view_id ){
 	$Document2=$this->Hub->bridgeLoad('Document');
 	return $Document2->deleteView($doc_view_id);
     }
+    public $viewCreate=['int'];
     public function viewCreate( $view_type_id ){
 	$Document2=$this->Hub->bridgeLoad('Document');
 	$view_id= $Document2->insertView($view_type_id);
@@ -96,20 +95,19 @@ class DocumentView extends DocumentItems{
 		ON DUPLICATE KEY UPDATE pref_value=NOW(),pref_int=pref_int+1";
 	$this->query($sql);
     }
+    public $unfreezeView=['int'];
     public function unfreezeView($doc_view_id) {
 	$this->query("UPDATE document_view_list SET freezed=0, html='' WHERE doc_view_id='$doc_view_id'");
 	return true;
     }
-
+    public $freezeView=['int','string'];
     public function freezeView($doc_view_id, $html) {
 	$html = addslashes($html);
 	$this->query("UPDATE document_view_list SET freezed=1, html='$html' WHERE doc_view_id='$doc_view_id'");
 	return true;
     }
-    
-    public function documentViewGet(){
-        $doc_view_id=$this->request('doc_view_id', 'int');
-        $out_type=$this->request('out_type');
+    public $documentViewGet=['doc_view_id'=>'int','out_type'=>'string'];
+    public function documentViewGet($doc_view_id,$out_type){
         $dump=$this->fillDump($doc_view_id);
 	
 	//print_r($dump);

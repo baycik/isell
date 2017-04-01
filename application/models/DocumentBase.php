@@ -27,6 +27,9 @@ abstract class DocumentBase extends Catalog{
 	}
 	return isset($this->document_properties->$field)?$this->document_properties->$field:null;
     }
+    protected function isCommited(){
+	return $this->doc('is_commited')=='1';
+    }
     protected function documentCurrencyCorrectionGet(){
 	$native_curr=$this->Hub->pcomp('curr_code') && ($this->Hub->pcomp('curr_code') != $this->Hub->acomp('curr_code'))?0:1;
 	return $native_curr?1:1/$this->doc('doc_ratio');
@@ -190,6 +193,7 @@ abstract class DocumentBase extends Catalog{
     protected function documentChangeCommitEntries($make_commited){
 	$doc_id=$this->doc('doc_id');
 	$document_entries=$this->get_list("SELECT doc_entry_id FROM document_entries WHERE doc_id='$doc_id'");
+	//$this->Hub->msg("make_commited $make_commited");
 	
 	foreach($document_entries as $entry){
 	    if( $make_commited && !$this->entryCommit($entry->doc_entry_id) ){

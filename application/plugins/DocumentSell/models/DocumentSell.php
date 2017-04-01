@@ -125,11 +125,11 @@ class DocumentSell extends DocumentBase{
 	$this->query("INSERT INTO document_entries SET doc_id=$doc_id,product_code='$product_code',invoice_price=COALESCE(GET_PRICE('$product_code',$pcomp_id,'$doc_ratio'),0)",false);
 	$error = $this->db->error();
 	if($error['code']==1452){
-	    $this->Hub->rcode("product_code_unknown");
+	    $this->Hub->msg("product_code_unknown");
 	    return false;
 	} else 
 	if($error['code']==1062){
-	    $this->Hub->rcode("already_exists");
+	    $this->Hub->msg("already_exists");
 	    return false;
 	} else 
 	if($error['code']!=0){
@@ -144,7 +144,7 @@ class DocumentSell extends DocumentBase{
 	}
 	$this->query("COMMIT");
     }
-    public $entryUpdate=['doc_id'=>'int','doc_entry_id'=>'int','field'=>'(product_price_total|product_quantity|product_sum_total)','value'=>'double'];
+    public $entryUpdate=['doc_id'=>'int','doc_entry_id'=>'int','field'=>'(product_price_total|product_quantity|product_sum_total|party_label)','value'=>'string'];
     public function entryUpdate($doc_id,$doc_entry_id,$field,$value){
 	$this->documentSelect($doc_id);
 	$entry_updated=[];
@@ -158,18 +158,19 @@ class DocumentSell extends DocumentBase{
 	    $product_price_vatless=$this->entryPriceNormalize($value);
 	    $entry_updated['invoice_price']=$product_price_vatless;
 	} else
+	if( $field=='party_label' ){
+	    $entry_updated['party_label']=$value;
+	} else
 	if( $field=='product_quantity' ){//IF document is already commited then commit entry. If commit is failed then abort update
 	    if( $value<=0 ){//quantity must be more than zero
-		$this->Hub->rcode('quantity_wrong');
+		$this->Hub->msg('quantity_wrong');
 		return false;
 	    }
 	    if( $this->doc('is_commited') ){
-		$entry_calculated=$this->entryCommit($doc_entry_id,$value);
-		if( !$entry_calculated ){
+		$commit_ok=$this->entryCommit($doc_entry_id,$value);
+		if( !$commit_ok){
 		    return false;
 		}
-		$entry_updated['self_price']=$entry_calculated->self_price;
-		$entry_updated['party_label']=$entry_calculated->first_party_label;
 	    } else {
 		$entry_updated['self_price']=0;
 		$entry_updated['party_label']='';		
@@ -194,8 +195,8 @@ class DocumentSell extends DocumentBase{
     private function stockLeftoverGet($product_code){
 	return $this->get_value("SELECT product_quantity FROM stock_entries WHERE product_code='$product_code'");
     }
-    private function stockLeftoverSet($product_code,$leftover,$self_price){
-	return $this->update('stock_entries',['product_quantity'=>$leftover,'self_price'=>$self_price],['product_code'=>$product_code]);
+    private function stockLeftoverSet($product_code,$leftover,$self_price,$party_label){
+	return $this->update('stock_entries',['product_quantity'=>$leftover,'self_price'=>$self_price,'party_label'=>$party_label],['product_code'=>$product_code]);
     }
     private function entryGet($doc_entry_id){
 	$sql="SELECT * FROM document_entries WHERE doc_entry_id='$doc_entry_id'";
@@ -205,13 +206,10 @@ class DocumentSell extends DocumentBase{
 	return $this->entryCommit($doc_entry_id, 0);
     }
     protected function entryCommit($doc_entry_id,$new_product_quantity=NULL){
-	if( !$this->doc('is_commited') ){
-	    return true;
-	}
 	$this->documentSetLevel(2);
 	$entry_data=$this->entryGet($doc_entry_id);
 	if( !$entry_data ){
-	    $this->Hub->msg("Строка уже удалена");
+	    $this->Hub->msg("entry_deleted_before");
 	    return false;	    
 	}
 	$stock_lefover=$this->stockLeftoverGet($entry_data->product_code);
@@ -221,14 +219,18 @@ class DocumentSell extends DocumentBase{
 	    $stock_lefover=$stock_lefover+$entry_data->product_quantity;
 	}
 	if( $substract_quantity>$stock_lefover ){
-	    $this->Hub->rcode("not_enough");
+	    $this->Hub->msg("not_enough");
 	    $this->Hub->msg($substract_quantity-$stock_lefover);
 	    return false;
 	}
-	$this->stockLeftoverSet($entry_data->product_code,$stock_lefover-$substract_quantity,0);
 	$this->entryOriginsFind($entry_data->product_code,$stock_lefover);
 	$entry_calculated=$this->entryOriginsCalc($substract_quantity);
-	return $entry_calculated;
+	$this->update("document_entries",$entry_calculated,['doc_entry_id'=>$doc_entry_id]);
+	
+	$new_leftover=$stock_lefover-$substract_quantity;
+	$new_leftover_calculated=$this->entryOriginsCalc($new_leftover,'DESC');
+	$this->stockLeftoverSet($entry_data->product_code,$new_leftover,$new_leftover_calculated->self_price,$new_leftover_calculated->party_label);
+	return true;
     }
     /*
      * Find entries from buy documents wich are original (correspond) to commited sell entry. 
@@ -265,21 +267,21 @@ class DocumentSell extends DocumentBase{
      * Finds party_label from buy document origin entries and calculated avg self price.
      * Before orders entries from oldest to newest
      */
-    private function entryOriginsCalc($product_quantity){
+    private function entryOriginsCalc($product_quantity,$sort_order='ASC'){
 	$this->query("SET @sold_quantity:=$product_quantity,@total_sold:=0,@first_party_label:='';");
 	$sql="SELECT 
-		first_party_label, ROUND(SUM(self_sum) / @sold_quantity,2) self_price
+		first_party_label party_label, ROUND(SUM(self_sum) / @sold_quantity,2) self_price
 	    FROM
 		(SELECT 
 		    LEAST(@sold_quantity - @total_sold, party_quantity) * self_price self_sum,
 			@total_sold:=@total_sold + party_quantity ts,
-			@first_party_label:=IF(@first_party_label, @first_party_label, party_label) first_party_label
+			@first_party_label:=IF(@first_party_label<>'', @first_party_label, party_label) first_party_label
 		FROM
 		    (SELECT 
 		    *
 		FROM
 		    tmp_original_entries
-		ORDER BY cstamp) t
+		ORDER BY cstamp $sort_order) t
 		WHERE
 		    @sold_quantity > @total_sold) t2;";
 	return $this->get_row($sql);
