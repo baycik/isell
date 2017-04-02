@@ -244,20 +244,23 @@
 </style>
 <div class="x-head slim-input">
     <form>
-	<div class="inp_group" style="min-width: none;">
+
+	<input name="passive_company_id" title="Покупатель">
+	<input class="easyui-datebox" name="doc_date" title="Дата">
+	<input class="easyui-numberspinner" name="doc_num" title="Номер">
+	<div class="inp_group" style="min-width: inherit;">
 	    <b style="vertical-align: top">Проведен:</b>
 	    <label class="switch">
 		<input type="checkbox"  name="is_commited" title="Проведен" value="1" data-skip="1">
 		<div class="slider round"></div>
 	    </label>
 	</div>
-	<input name="passive_company_id" title="Покупатель">
-	<input class="easyui-datebox" name="doc_date" title="Дата">
-	<input class="easyui-numberspinner" name="doc_num" title="Номер">
 	<div style="float:right" class="x-toolbar">
+	    <!--
 	    <span class="icon-24 icon-commit" title="Провести документ" data-action="commit"> </span>
 	    <span class="icon-24 icon-uncommit" title="Отменить документ" data-action="uncommit"> </span>
 	    <span style="display: inline-block;width:26px"> </span>
+     -->
 	    <span class="icon-24 icon-lorry" title="Добавить в распорядок" data-action="addevent"> </span>
 	    <span class="icon-24 icon-duplicate" title="Копировать" data-action="duplicate"> </span>
 	    <span class="icon-24 icon-sms" title="Отправить СМС" data-action="sendsms"> </span>
