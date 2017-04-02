@@ -11,8 +11,8 @@ class Importer extends Catalog{
 	$entries=$this->get_list("SELECT * FROM imported_data $where LIMIT $rows OFFSET ".(($page-1)*$rows));
 	return ['rows'=>$entries,'total'=>$total];
     }
-    public $up=['label'=>'string'];
-    public function up( $label ){
+    public $Up=['label'=>'string'];
+    public function Up( $label ){
 	$f=['A','B','C','D','E','F','G','H','I','K','L','M','N','O','P','Q'];
 	if( $_FILES['upload_file'] && !$_FILES['upload_file']['error'] ){
 	    require_once "application/libraries/report/PHPExcel.php";

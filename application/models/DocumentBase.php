@@ -217,7 +217,11 @@ abstract class DocumentBase extends Catalog{
 	$this->documentSelect($doc_id);
 	$this->query("START TRANSACTION");
 	foreach($doc_entry_ids as $doc_entry_id){
-	    $uncommit_ok=$this->entryUncommit($doc_entry_id);
+	    if( $this->doc('is_commited') ){
+		$uncommit_ok=$this->entryUncommit($doc_entry_id);
+	    } else {
+		$uncommit_ok=false;
+	    }
 	    $delete_ok=$this->delete('document_entries',['doc_id'=>$doc_id,'doc_entry_id'=>$doc_entry_id]);
 	    if( !$uncommit_ok || !$delete_ok ){
 		return false;
@@ -229,26 +233,31 @@ abstract class DocumentBase extends Catalog{
     
     
 
-    public $import=['doc_id'=>'int','label'=>'string'];
+    public $entryImport=['doc_id'=>'int','label'=>'string'];
     public function entryImport( $doc_id,$label ){
 	$this->documentSelect($doc_id);
-	$this->entriesTruncate();
+	$doc_was_commited=$this->doc('is_commited');
+	$this->documentUpdate($doc_id,'is_commited',false);
+	
+	$this->entryImportTruncate();
 	$source = array_map('addslashes',$this->request('source','raw'));
 	$target = array_map('addslashes',$this->request('target','raw'));
-        $source[]=$this->doc('doc_id');
+        $source[]=$doc_id;
         $target[]='doc_id';
 	$this->entryImportFromTable('document_entries', $source, $target, '/product_code/product_quantity/invoice_price/party_label/doc_id/', $label);
 	$this->query("DELETE FROM imported_data WHERE {$source[0]} IN (SELECT product_code FROM document_entries WHERE doc_id={$doc_id})");
-        return  $this->db->affected_rows();
+	$imported_count=$this->db->affected_rows();
+	if( $doc_was_commited ){
+	    $this->documentUpdate($doc_id,'is_commited',true);
+	}
+        return  $imported_count;
     }
     private function entryImportTruncate(){
-	$doc_id=$this->doc('doc_id');
-	$doc_entry_ids=[];
-	$document_entries=$this->get_list("SELECT doc_entry_id FROM document_entries WHERE doc_id='$doc_id'");
-	foreach($document_entries as $entry){
-	    $doc_entry_ids[]=$entry->doc_entry_id;
+	if( $this->doc('is_commited') ){
+	    return false;
 	}
-	$this->entryDelete($doc_id,$doc_entry_ids);
+	$doc_id=$this->doc('doc_id');
+	return $this->delete('document_entries',['doc_id'=>$doc_id]);
     }
     private function entryImportFromTable( $table, $src, $trg, $filter, $label ){
 	$target=[];
@@ -264,12 +273,11 @@ abstract class DocumentBase extends Catalog{
 		$product_code_source=$src[$i];
 	    }
 	    if( $trg[$i]=='invoice_price' ){
-		$src[$i]=round($src[$i]/$curr_correction/$doc_vat_ratio,2);
+		$src[$i]="ROUND($src[$i]/$curr_correction/$doc_vat_ratio,2)";
 	    }
 	    if( $trg[$i]=='product_quantity' ){
 		$quantity_source_field=$src[$i];
 	    }
-            
 	    $target[]=$trg[$i];
 	    $source[]=$src[$i];
 	}

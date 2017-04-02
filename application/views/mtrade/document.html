@@ -103,6 +103,7 @@
 	    render:function(head){
 		document_data.head=head;
 		$("#"+holderId+" .x-head form").form('load',head);
+		$("#"+holderId+" .x-head form input[name=is_commited]").prop("checked",head.is_commited*1);
 	    },
 	    update:function(field,value,succes_msg){
 		var url=document_model+'/documentUpdate';
@@ -137,7 +138,12 @@
 	    },
 	    initControls:function(){
 		App.setupForm("#"+holderId+" .x-head form").change(function(){
-		    head.update( $(this).attr('name'), $(this).val(), $(this).attr('title') );
+		    if( $(this).attr('type')==='checkbox' ){
+			var value=$(this).prop('checked')?1:0;
+		    } else {
+			var value=$(this).val();
+		    }
+		    head.update( $(this).attr('name'), value, $(this).attr('title') );
 		});
 		$.parser.parse("#"+holderId+" .x-head form");//for easy ui
 		head.pcompComboInit();
@@ -238,14 +244,16 @@
 </style>
 <div class="x-head slim-input">
     <form>
+	<div class="inp_group" style="min-width: none;">
+	    <b style="vertical-align: top">Проведен:</b>
+	    <label class="switch">
+		<input type="checkbox"  name="is_commited" title="Проведен" value="1" data-skip="1">
+		<div class="slider round"></div>
+	    </label>
+	</div>
 	<input name="passive_company_id" title="Покупатель">
 	<input class="easyui-datebox" name="doc_date" title="Дата">
 	<input class="easyui-numberspinner" name="doc_num" title="Номер">
-	    <select name="is_commited" title="Проведен">
-		<option value="1">да</option>
-		<option value="0">нет</option>    
-	    </select>
-	
 	<div style="float:right" class="x-toolbar">
 	    <span class="icon-24 icon-commit" title="Провести документ" data-action="commit"> </span>
 	    <span class="icon-24 icon-uncommit" title="Отменить документ" data-action="uncommit"> </span>

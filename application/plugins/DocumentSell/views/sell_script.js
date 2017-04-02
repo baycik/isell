@@ -195,11 +195,12 @@ body={
     },
     entryAdd:function(product_code,product_quantity){
 	var url=document_model+'/entryAdd';
-	$.post(url,{doc_id:doc_id,product_code:product_code,product_quantity:product_quantity},function(ok){
+	$.post(url,{doc_id:doc_id,product_code:product_code,product_quantity:product_quantity},function(ok,status,xhr){
 	    if( !(ok*1) ){
 		App.flash("Строка не добавлена");
 	    }
-	    if( rcode==='product_code_unknown' && confirm("Добавить новый код "+product_code+" на склад?") ){
+	    var msg = xhr.getResponseHeader('X-isell-msg');
+	    if( msg && msg.indexOf('product_code_unknown')>-1 && confirm("Добавить новый код "+product_code+" на склад?") ){
 		App.loadWindow('page/stock/product_card',{product_code:product_code});
 	    }
 	    doc.reload(["body","foot"]);
@@ -254,7 +255,7 @@ body={
 	App.loadWindow('page/dialog/importer',{label:'документ',fields_to_import:config}).progress(function(status,fvalue,Importer){
 	    if( status==='submit' ){
 		fvalue.doc_id=doc_id;
-		App.post("DocumentSell/import/",fvalue,function(ok){
+		App.post("DocumentSell/entryImport/",fvalue,function(ok){
 		    App.flash("Импортировано "+ok);
 		    Importer.reload();
 		    doc.reload(["body","foot"]);

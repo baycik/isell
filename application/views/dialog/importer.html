@@ -69,7 +69,6 @@
 		var url = 'Importer/Up/';
 		var xhr = new XMLHttpRequest();
 		var fd = new FormData();
-		fd.label=App.page_dialog_importer.label;
 		xhr.open("POST", url, true);
 		xhr.onreadystatechange = function() {
 		    if (xhr.readyState === 4 && xhr.status === 200) {
@@ -82,6 +81,7 @@
                         App.page_dialog_importer.throbber(0);
 		    }
 		};
+		fd.append("label",App.page_dialog_importer.label);
 		fd.append("upload_file", filelist[0]);
 		xhr.send(fd);
 	    }

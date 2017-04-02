@@ -270,7 +270,7 @@ class DocumentSell extends DocumentBase{
     private function entryOriginsCalc($product_quantity,$sort_order='ASC'){
 	$this->query("SET @sold_quantity:=$product_quantity,@total_sold:=0,@first_party_label:='';");
 	$sql="SELECT 
-		first_party_label party_label, ROUND(SUM(self_sum) / @sold_quantity,2) self_price
+		@first_party_label party_label, ROUND(SUM(self_sum) / @sold_quantity,2) self_price
 	    FROM
 		(SELECT 
 		    LEAST(@sold_quantity - @total_sold, party_quantity) * self_price self_sum,
