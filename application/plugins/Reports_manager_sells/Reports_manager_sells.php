@@ -76,20 +76,20 @@ class Reports_manager_sells extends Catalog{
 	
 	$sum_fields='';
 	$discount_list=$this->get_value("SELECT GROUP_CONCAT(DISTINCT(discount_overall)) FROM tmp_manager_sells;");
+        $discounts= explode( ',',$discount_list);
 		
-	$discounts= explode( ',',$discount_list);
-	rsort($discounts);
-	foreach( $discounts as $i=>$dsc ){
-	    $sum_fields.=",IF(discount_overall=$dsc,sum,'') s$i";
-	}
-	$rows=$this->get_list("SELECT *$sum_fields FROM tmp_manager_sells");
-
-	//print_r($rows);
-	//exit;
-	$view=[
-		'd'=>$discounts,
-		'rows'=>count($rows)?$rows:[[]]
-		];
-	return $view;	
+        if( count($discounts)>0 ){
+            rsort($discounts);
+            foreach( $discounts as $i=>$dsc ){
+                $sum_fields.=",IF(discount_overall=$dsc,sum,'') s$i";
+            }
+            $rows=$this->get_list("SELECT *$sum_fields FROM tmp_manager_sells");  
+        } else {
+            $rows=[];
+        }
+        return [
+                'd'=>$discounts,
+                'rows'=>count($rows)?$rows:[[]]
+                ];
     }
 }
