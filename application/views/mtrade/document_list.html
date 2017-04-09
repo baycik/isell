@@ -57,14 +57,16 @@ App.page_mtrade_document_list=(function(){
 	docList=$("#doclist_sg").slickgrid(settings);
 	docList.onSelectedRowsChanged.subscribe(function(e,selection){
 	    var doclistRow=selection.grid.getDataItem(selection.rows[0]);
-	    //Document.load(doclistRow);
+	    App.Document.init(doclistRow.doc_type);
+	    App.Document.load(doclistRow.doc_id);
 	});
     }
     function init(){
-	//gridInit();
+	gridInit();
 	App.Topic('passiveCompanySelected').subscribe(function(company){
 	    docList.reload();
 	});
+	//return;
 	//Document.init({doc_type:'sell'});
 	//Document.load(7180);
 	$("#Document").load("page/mtrade/document.html",function(){

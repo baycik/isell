@@ -4,7 +4,7 @@
 	function init(){
 	    App.initTabs('mtrade_main_tabs');
 	    
-	    //showTree();
+	    showTree();
 	    App.Topic('passiveCompanySelected').subscribe(function(company){
 		$("#mtradePcompLabel").html(company.label);
 	    });
@@ -45,7 +45,6 @@
     <div style="height:40px;">
 	<img src="img/gray.png">  <span class="link_button" title="Сменить клиента" id="mtradePcompLabel"></span>
     </div>
-    
     <div id="mCtreeInline"></div>
 </div>
 <div id="mtrade_main_tabs" class="easyui-tabs" data-options="border:false,tabHeight:35">

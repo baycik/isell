@@ -1,4 +1,110 @@
 /*global Slick,body,holderId,doc,document_model,App,doc_id*/
+
+head={
+    pcompNode:null,
+    init:function(){
+	head.initControls();
+	head.initToolbar();
+    },
+    render:function(head){
+	document_data.head=head;
+	$("#"+holderId+" .x-head form").form('load',head);
+	$("#"+holderId+" .x-head form input[name=is_commited]").prop("checked",head.is_commited*1);
+	this.pcompNode && this.pcompNode.combobox("setText",head.label);
+    },
+    destroy:function(){
+	//this.pcompNode && this.pcompNode.combobox && this.pcompNode.combobox('destroy');
+    },
+    update:function(field,value,succes_msg){
+	var url=document_model+'/documentUpdate';
+	return $.post(url,{doc_id:doc_id,field:field,value:value},function(ok){
+	    if(ok*1){
+		App.flash(succes_msg);
+	    } else {
+		App.flash("Изменения не сохранены");
+	    }
+	    doc.reload();
+	});
+    },
+    initToolbar:function(){
+	$("#"+holderId+" .x-head .x-toolbar").click(function(e){
+	    var action=$(e.target).data('action');
+	    if( action ){
+		head.do( action );
+	    }
+	});
+    },
+    do:function( action ){
+	head[action] && head[action]();
+    },
+    reload:function(){
+	doc.reload();
+    },
+    commit:function(){
+	head.update('is_commited',1,'Документ проведен');
+    },
+    uncommit:function(){
+	head.update('is_commited',0,'Документ не проведен');
+    },
+    initControls:function(){
+	App.setupForm("#"+holderId+" .x-head form");
+	$("#"+holderId+" .x-head form").change(function(e){
+	    e.target;
+
+	    if( $(e.target).attr('type')==='checkbox' ){
+		var value=$(e.target).prop('checked')?1:0;
+	    } else {
+		var value=$(e.target).val();
+	    }
+	    console.log($(e.target).attr('name'));
+	    head.update( $(e.target).attr('name'), value, $(e.target).attr('title') );
+	});
+	$.parser.parse("#"+holderId+" .x-head form");//for easy ui
+	head.pcompComboInit();
+    },
+    pcompComboInit:function(){
+	if( this.pcompNode ){
+	    return;
+	}
+	this.pcompNode=$("#"+holderId+" .x-head input[name=passive_company_id]");
+	var options={
+	    valueField: 'company_id',
+	    textField: 'label',
+	    loader:head.pcompLoader,
+	    mode: 'remote',
+	    hasDownArrow:false,
+	    selectOnNavigation:false,
+	    formatter:head.pcompListfrm,
+	    width:220,
+	    icons: [
+		{iconCls:'icon-settings16',handler: App.user.pcompSelectionDialog},
+		{iconCls:'icon-change16',handler:head.pcompDetails}
+	     ]
+	};
+	this.pcompNode.combobox(options);
+    },
+    pcompLoader:function(param, success, error){
+	if( param.q===undefined ){
+	    success([{company_id:document_data.head.passive_company_id,label:document_data.head.label}]);
+	    return;
+	}
+	$.get('Company/listFetch/', param, function (xhr) {
+	    var resp = App.json(xhr);
+	    success(resp[0] ? resp : []);
+	});
+    },
+    pcompListfrm:function(row){
+	var label=row.label;
+	if( row.path ){
+	    var path_chunks=row.path.split('>');
+	    var label=path_chunks.slice(path_chunks.length-2).reverse().join('/ ');
+	}
+	return label;
+    },
+    pcompDetails:function(){
+	App.loadWindow('page/company/details',{company_id:document_data.head.passive_company_id});
+    }
+};
 body={
     vocab:{
 	not_enough:"На складе не хватает:",
@@ -54,6 +160,9 @@ body={
 	body.row_queue=1;
 	body.entries_sg.setData(entries);
 	body.entries_sg.render();
+    },
+    destroy:function(){
+	$("#"+holderId+" .x-body .x-suggest").combobox('destroy');
     },
     etoolsInit:function(){
 	$("#"+holderId+" .x-body .x-body-tools").click(function(e){

@@ -21,29 +21,37 @@
 	    function capitalize(s){
 		return s && s[0].toUpperCase() + s.slice(1);
 	    }
+	    var dmodel=null;
 	    if( $.isNumeric(doc_type) ){
 		switch(doc_type){
 		    case '1':
-			document_model='DocumentSell';
+			dmodel='DocumentSell';
 			break;
 		    case '2':
-			document_model='DocumentBuy';
+			//dmodel='DocumentBuy';
 			break;
 		    case '3':
-			document_model='DocumentServiceout';
+			//dmodel='DocumentServiceout';
 			break;
 		    case '4':
-			document_model='DocumentServicein';
+			//dmodel='DocumentServicein';
 			break;
 		}
 	    } else if( doc_type.length>2 ) {//doc_type name must be at least 3 signs
-		document_model='Document'+capitalize(doc_type);
-	    } else {
-		document_model=null;
+		dmodel='Document'+capitalize(doc_type);
 	    }
-	    initExtension();
+	    if( dmodel!==document_model ){
+		document_model=dmodel;
+		initExtension();
+	    }
 	}
 	function initExtension(){
+	    doc.destroy();
+	    if( !document_model ){
+		console.log('document_model is null');
+		App.flash("Не удалось загрузить плагин документа");
+		return false;
+	    }
 	    $.get(document_model+'/extensionGet',function(resp){
 		extension=App.json(resp);
 		if( extension && extension.head ){
@@ -61,7 +69,9 @@
 		if( extension && extension.script ){
 		    eval(extension.script);
 		}
-		doc.init();
+		doc.init();		
+	    }).fail(function(){
+		App.flash("Не удалось загрузить плагин документа");
 	    });
 	}
 	var doc={
@@ -71,7 +81,18 @@
 		foot.init();
 		views.init();
 	    },
+	    destroy:function(){
+		head.destroy();
+		body.destroy();
+		foot.destroy();
+		views.destroy();
+		$("#"+holderId).find(".x-head, .x-body, .x-foot, .x-views").html("");
+	    },
 	    load:function(id,parts_to_load){
+		if( !document_model ){
+		    console.log('document_model is null');
+		    return false;
+		}
 		parts_to_load= parts_to_load || ["head","body","foot","views"];
 		doc_id=id;
 		var url=document_model+'/documentGet';
@@ -97,98 +118,13 @@
 	};
 	var head={
 	    init:function(){
-		head.initControls();
-		head.initToolbar();
+		
 	    },
-	    render:function(head){
-		document_data.head=head;
-		$("#"+holderId+" .x-head form").form('load',head);
-		$("#"+holderId+" .x-head form input[name=is_commited]").prop("checked",head.is_commited*1);
+	    render:function(){
+		
 	    },
-	    update:function(field,value,succes_msg){
-		var url=document_model+'/documentUpdate';
-		return $.post(url,{doc_id:doc_id,field:field,value:value},function(ok){
-		    if(ok*1){
-			App.flash(succes_msg);
-		    } else {
-			App.flash("Изменения не сохранены");
-		    }
-		    doc.reload();
-		});
-	    },
-	    initToolbar:function(){
-		$("#"+holderId+" .x-head .x-toolbar").click(function(e){
-		    var action=$(e.target).data('action');
-		    if( action ){
-			head.do( action );
-		    }
-		});
-	    },
-	    do:function( action ){
-		head[action] && head[action]();
-	    },
-	    reload:function(){
-		doc.reload();
-	    },
-	    commit:function(){
-		head.update('is_commited',1,'Документ проведен');
-	    },
-	    uncommit:function(){
-		head.update('is_commited',0,'Документ не проведен');
-	    },
-	    initControls:function(){
-		App.setupForm("#"+holderId+" .x-head form").change(function(){
-		    if( $(this).attr('type')==='checkbox' ){
-			var value=$(this).prop('checked')?1:0;
-		    } else {
-			var value=$(this).val();
-		    }
-		    head.update( $(this).attr('name'), value, $(this).attr('title') );
-		});
-		$.parser.parse("#"+holderId+" .x-head form");//for easy ui
-		head.pcompComboInit();
-	    },
-	    pcompComboInit:function(){
-		var node=$("#"+holderId+" .x-head input[name=passive_company_id]");
-		if( !node ){
-		    return;
-		}
-		var options={
-		    valueField: 'company_id',
-		    textField: 'label',
-		    loader:head.pcompLoader,
-		    mode: 'remote',
-		    hasDownArrow:false,
-		    selectOnNavigation:false,
-		    formatter:head.pcompListfrm,
-		    width:220,
-		    icons: [
-			{iconCls:'icon-settings16',handler: App.user.pcompSelectionDialog},
-			{iconCls:'icon-change16',handler:head.pcompDetails}
-		     ]
-		};
-		node.combobox(options);		
-	    },
-	    pcompLoader:function(param, success, error){
-		if( param.q===undefined ){
-		    success([{company_id:document_data.head.passive_company_id,label:document_data.head.label}]);
-		    return;
-		}
-		$.get('Company/listFetch/', param, function (xhr) {
-		    var resp = App.json(xhr);
-		    success(resp[0] ? resp : []);
-		});
-	    },
-	    pcompListfrm:function(row){
-		var label=row.label;
-		if( row.path ){
-		    var path_chunks=row.path.split('>');
-		    var label=path_chunks.slice(path_chunks.length-2).reverse().join('/ ');
-		}
-		return label;
-	    },
-	    pcompDetails:function(){
-		App.loadWindow('page/company/details',{company_id:document_data.head.passive_company_id});
+	    destroy:function(){
+		
 	    }
 	};
 	var body={
@@ -196,6 +132,9 @@
 		
 	    },
 	    render:function(){
+		
+	    },
+	    destroy:function(){
 		
 	    }
 	};
@@ -205,6 +144,9 @@
 	    },
 	    render:function(){
 		
+	    },
+	    destroy:function(){
+		
 	    }
 	};
 	var views={
@@ -212,6 +154,9 @@
 		
 	    },
 	    render:function(){
+		
+	    },
+	    destroy:function(){
 		
 	    }
 	};
@@ -242,45 +187,7 @@
 	border: none;
     }
 </style>
-<div class="x-head slim-input">
-    <form>
-
-	<input name="passive_company_id" title="Покупатель">
-	<input class="easyui-datebox" name="doc_date" title="Дата">
-	<input class="easyui-numberspinner" name="doc_num" title="Номер">
-	<div class="inp_group" style="min-width: inherit;">
-	    <b style="vertical-align: top">Проведен:</b>
-	    <label class="switch">
-		<input type="checkbox"  name="is_commited" title="Проведен" value="1" data-skip="1">
-		<div class="slider round"></div>
-	    </label>
-	</div>
-	<div style="float:right" class="x-toolbar">
-	    <!--
-	    <span class="icon-24 icon-commit" title="Провести документ" data-action="commit"> </span>
-	    <span class="icon-24 icon-uncommit" title="Отменить документ" data-action="uncommit"> </span>
-	    <span style="display: inline-block;width:26px"> </span>
-     -->
-	    <span class="icon-24 icon-lorry" title="Добавить в распорядок" data-action="addevent"> </span>
-	    <span class="icon-24 icon-duplicate" title="Копировать" data-action="duplicate"> </span>
-	    <span class="icon-24 icon-sms" title="Отправить СМС" data-action="sendsms"> </span>
-	    <span class="icon-24 icon-utils" title="Дополнительные свойства" onclick="$('.x-utils').toggle('slow')"> </span>
-	    <span class="icon-24 icon-refresh" title="Обновить" data-action="reload"> </span> 
-	</div>
-	<div class="x-utils" style="display: none">
-	    <hr>
-	    <select name="use_vatless_price" title="Цена">
-		<option value="0">В том числе НДС</option>
-		<option value="1">Плюс НДС</option>
-	    </select>
-	    <select name="notcount" title="На складе">
-		<option value="0">Учитывать</option>
-		<option value="1">Не учитывать</option>    
-	    </select>
-	    <input class="easyui-numberbox" name="doc_ratio" title="Курс">
-	</div>
-    </form>
-</div>
+<div class="x-head slim-input"></div>
 <div class="x-body"></div>
 <div class="x-foot"></div>
 <div class="x-views"></div>

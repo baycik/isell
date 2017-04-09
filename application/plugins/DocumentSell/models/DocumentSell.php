@@ -35,6 +35,12 @@ class DocumentSell extends DocumentBase{
     }
     public $documentGet=['doc_id'=>'int','parts_to_load'=>'json'];
     public function documentGet($doc_id,$parts_to_load){
+	$this->documentSelect($doc_id);
+	$doc_type=$this->doc('doc_type');
+	if( $doc_type!='sell' && $doc_type!=1 ){
+	    $this->Hub->msg("wrong_doc_type");
+	    return false;
+	}
 	$document=[];
 	if( in_array("head",$parts_to_load) ){
 	    $document["head"]=$this->headGet($doc_id);
@@ -75,7 +81,7 @@ class DocumentSell extends DocumentBase{
      * Entries section 
      */
     private function entriesTmpCreate( $doc_id ){
-	$this->documentSelect($doc_id);
+	//$this->documentSelect($doc_id);
 	$doc_vat_ratio=1+$this->doc('vat_rate')/100;
 	//$signs_after_dot=$this->doc('signs_after_dot');
 	$curr_correction=$this->documentCurrencyCorrectionGet();
