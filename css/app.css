@@ -524,3 +524,30 @@ input:checked + .slider:before {
 .slider.round:before {
   border-radius: 50%;
 }
+
+
+
+
+
+.left_label{
+    padding: 3px;
+    margin-bottom: 5px;
+    margin-left: 5px;
+    padding-left: 10px;
+    border: 1px solid #9be;
+    border-right: none;
+    border-top-left-radius: 5px;
+    border-bottom-left-radius: 5px;
+    background: linear-gradient(90deg,rgba(255,255,255,1),rgba(255,255,255,0.5));
+    height: 25px;
+    line-height: 25px;
+    color: #025;
+}
+.left_label:hover{
+    background: linear-gradient(90deg,rgba(255,255,200,1),rgba(255,255,255,0.5));;
+    -border-color: #afa;
+    cursor: pointer;
+}
+.left_label_selected,.left_label_selected:hover{
+    background: #FF9;
+}

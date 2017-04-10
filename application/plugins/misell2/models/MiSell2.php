@@ -14,16 +14,29 @@
  */
 class MiSell2 extends Catalog{
     
-    public $doclistGet=['date'=>'string','compfilter'=>'string'];
-    public function doclistGet($date,$compfilter){
+    public $doclistGet=['date'=>'([0-9\-]+)','clientFilter'=>'string'];
+    public function doclistGet($date,$clientFilter){
+	return [
+	    'sell'=>$this->getList($date,$clientFilter,'1'),
+	    'buy'=>$this->getList($date,$clientFilter,'2')
+	];
+    }
+    private function getList($date,$clientFilter,$doc_type){
 	$sql="SELECT
-		*
+		dl.*,
+		label
 	    FROM
-		document_list
+		document_list dl
+		    JOIN 
+		companies_list ON company_id=passive_company_id
+		    JOIN 
+		companies_tree USING(branch_id)
 	    WHERE
-		SUBSTRING(cstamp,0,10)='$date'
-		AND (doc_type=1 OR doc_type=2)
-	    LIMIT 10";
+		cstamp LIKE '$date%'
+		AND doc_type='$doc_type'
+		AND label LIKE '%$clientFilter%'
+	    ORDER BY doc_type
+	    ";
 	return $this->get_list($sql);
     }
 }

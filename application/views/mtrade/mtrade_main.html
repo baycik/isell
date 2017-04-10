@@ -1,6 +1,6 @@
 
 <script>
-    (function(){
+    (function($){
 	function init(){
 	    App.initTabs('mtrade_main_tabs');
 	    
@@ -12,7 +12,7 @@
 		$("#mtradePcompLabel").html(company.label);
 	    });
 	    
-	    
+	    labelsInit("#mtrade_main_labels","#mtrade_main_content");
 	    
 	}
 	function showTree(){
@@ -28,8 +28,30 @@
 	    });
 	}
 	
+	function labelsInit(labels_id,content_id){
+	    $(labels_id).click(function(e){
+		$(labels_id).children().removeClass('left_label_selected');
+		$(e.target).addClass('left_label_selected');
+		
+		$(content_id).children().hide();
+		var path=$(e.target).data('href');
+		labelsContentLoad(content_id,path);
+	    });
+	}
+	function labelsContentLoad(content_id,path){
+	    var id = path.replace(/\//g, '_');
+	    if( $(content_id).find("#"+id).length<1 ){
+		$(content_id).append("<div id='"+id+"'></div>");
+	    }
+	    $(content_id).find("#"+id).show();
+	    if( !App[id] ){
+		App.loadModule(path);
+	    }
+	}
+	
+	
 	init();
-    })();
+    })(jQuery);
     
     
     
@@ -40,18 +62,20 @@
 
 </script>
 
-<div style="float: left;margin-right: 1px;" class="transp60">
-    <h2>Выбранный контрагент</h2>
-    <div style="height:40px;">
-	<img src="img/gray.png">  <span class="link_button" title="Сменить клиента" id="mtradePcompLabel"></span>
+<div style="float: left">
+    <div class="transp60" style="padding-bottom: 1px;margin-bottom: 2px;">
+	<h2>Выбранный контрагент</h2>
+	<div style="height:40px;">
+	    <img src="img/gray.png">  <span class="link_button" title="Сменить клиента" id="mtradePcompLabel"></span>
+	</div>
+	<div id="mtrade_main_labels">
+	    <div class="left_label" data-href="page/mtrade/document_list">Документы</div>
+	    <div class="left_label" data-href="page/trade/payments">Взаиморасчет</div>
+	    <div class="left_label" data-href="page/company/prefs">Настройки</div>
+	    <div class="left_label" data-href="page/trade/details">Реквизиты</div>	    
+	</div>
     </div>
-    <button>Торговые операции</button>
-    <button>Взаиморасчет</button>
-    <button>Настройки</button>
-    <div id="mCtreeInline"></div>
+
+    <div id="mCtreeInline" class="transp60"></div>
 </div>
-<div id="mtrade_main_tabs" class="easyui-tabs" data-options="border:false,tabHeight:35,tabPosition:'top'">
-    <div title="Торговые операции" href="page/mtrade/document_list.html"></div>
-    <div title="Взаиморасчет" href="page/mtrade/document_list.html" style="min-height: 500px;"></div>
-    <div title="Настройки" href="page/mtrade/document_list.html" style="min-height: 500px;"></div>
-</div>
+<div id="mtrade_main_content"></div>
