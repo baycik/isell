@@ -130,7 +130,7 @@ class Catalog extends CI_Model {
     ////////////////////////////////////////////////////
     // CORE TREE FUNCTIONS
     ////////////////////////////////////////////////////
-    protected function treeFetch( $table, $parent_id = null, $depth = 'all', $super_path='', $level=0 ) {
+    protected function treeFetch( $table, $parent_id = null, $depth = 'all', $super_path='', $level=0, $order="is_leaf,label" ) {
 	$where=array("level IS NULL OR level<=$level");
 	if( $super_path!=='' ){
 	    $where[]="path LIKE '$super_path".($parent_id===null?'':'%')."'";
@@ -139,7 +139,7 @@ class Catalog extends CI_Model {
 	    $where[]="parent_id=$parent_id";
 	}
 	$where=  implode(' AND ',$where);
-	$res = $this->db->query("SELECT * FROM $table WHERE $where ORDER BY is_leaf,label");
+	$res = $this->db->query("SELECT * FROM $table WHERE $where ORDER BY $order");
 	$branches = array();
 	foreach ($res->result() as $row) {
 	    //$this->treeUpdatePath($table, $row->branch_id);
