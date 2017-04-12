@@ -55,6 +55,9 @@ class Company extends Catalog{
 
     public $companyGet=['int'];
     public function companyGet( $company_id=0 ){
+	if( $company_id==0 ){
+	    return false;
+	}
 	$assigned_path=$this->Hub->svar('user_assigned_path');
 	$sql="SELECT
 		*
@@ -71,6 +74,7 @@ class Company extends Catalog{
 	return $this->get_row($sql);
     }
     
+    public $companyFindByCode=['int','int'];
     public function companyFindByCode( $company_code=null, $company_vat_id=null ){
         $sql="SELECT 
                 company_id 
@@ -81,6 +85,7 @@ class Company extends Catalog{
                 OR IF('$company_vat_id',company_vat_id='$company_vat_id',0)";
         return $this->get_value($sql);
     }
+    
     public $companyUpdate=['company_id'=>'int','field'=>'[a-z_]+','value'=>'string'];
     public function companyUpdate($company_id, $field, $value='') {
 	$this->Hub->set_level(2);
@@ -111,7 +116,8 @@ class Company extends Catalog{
 	    $this->selectPassiveCompany($company_id);
 	}
 	return $ok;
-    }    
+    }
+    
     public $companyTreeCreate=['parent_id'=>'int','label'=>'string','branch_type'=>'string'];
     public function companyTreeCreate($parent_id,$label,$branch_type){
 	$this->Hub->set_level(2);
@@ -128,11 +134,13 @@ class Company extends Catalog{
 	}
 	return 0;
     }
+    
     public $companyTreeUpdate=['branch_id'=>'int','field'=>'[a-z_]+','value'=>'string'];
     public function companyTreeUpdate($branch_id,$field,$value) {
 	$this->Hub->set_level(2);
 	return $this->treeUpdate('companies_tree', $branch_id, $field, $value);
     }
+    
     public $companyTreeDelete=['int'];
     public function companyTreeDelete( $branch_id ){
 	$this->Hub->set_level(4);
@@ -146,12 +154,14 @@ class Company extends Catalog{
 	$this->query("COMMIT");
 	return $deleted;
     }
+    
     public $selectPassiveCompany=['int'];
     public function selectPassiveCompany( $company_id ){
 	$company=$this->companyGet( $company_id );
 	$this->Hub->svar('pcomp',$company);
 	return $company;
     }
+    
     public $selectActiveCompany=['int'];
     public function selectActiveCompany( $company_id ){
 	$company=$this->companyGet( $company_id );
@@ -164,6 +174,7 @@ class Company extends Catalog{
 	}
 	return null;
     }
+    
     public $switchActiveCompany=[];
     public function switchActiveCompany(){
         $current_acomp_id=$this->Hub->acomp('company_id');
@@ -179,6 +190,7 @@ class Company extends Catalog{
         $company_id=$this->get_value($sql);
         return $this->selectActiveCompany($company_id);
     }
+    
     public $companyMakeActive=['int'];
     public function companyMakeActive( $company_id ){
 	$this->Hub->set_level(4);
@@ -187,6 +199,7 @@ class Company extends Catalog{
 	}
 	return false;
     }
+    
     public $companyPrefsGet=[];
     public function companyPrefsGet(){
 	$passive_company_id=$this->Hub->pcomp('company_id');
@@ -227,6 +240,7 @@ class Company extends Catalog{
 		'price_label_list'=>$Stock->getPriceLabels()
 		];
     }
+    
     public $companyPrefsUpdate=['type'=>'string','field'=>'[a-z_]+','value'=>'string'];
     public function companyPrefsUpdate( $type, $field, $value='' ){
 	$this->Hub->set_level(2);

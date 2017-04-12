@@ -379,7 +379,6 @@ div .combobox-item-hover{
     border-radius: 5px;
     background-color: #cef;
     cursor: pointer;
-    white-space: nowrap;
 }
 .covert{
     visibility: hidden;

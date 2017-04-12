@@ -531,14 +531,13 @@ Mark.pipes.format = function (str) {
 		    });
 		},
 		pcompSelect: function ( company ) {
-		    if ( company.company_id ) {
-			if( App.pcomp && App.pcomp.company_id===company.company_id ){
-			    return;
-			}
-			App.post('Company/selectPassiveCompany/' + company.company_id, function (xhr) {
-			    App.user.setPassiveCompany(App.json(xhr));
-			});
+		    var company_id=company.company_id||0;
+		    if( App.pcomp && App.pcomp.company_id===company_id ){
+			return;
 		    }
+		    App.post('Company/selectPassiveCompany/' + company_id, function (xhr) {
+			App.user.setPassiveCompany(App.json(xhr));
+		    });
 		},
 		setPassiveCompany:function( company, mode ){
                     var old_pcomp_id=App.pcomp?App.pcomp.company_id:0;
@@ -549,16 +548,17 @@ Mark.pipes.format = function (str) {
 			    App.Topic('passiveCompanyReloaded').publish(company);
                             return;
                         }
+			App.Topic('passiveCompanySelected').publish(company);
 			if( mode==='notify_init' ){
 			    App.handler.notify('passiveCompanyInited',company);
-			    App.Topic('passiveCompanyInited').publish(company);
+			    
                             return;
 			}
 			App.handler.notify('passiveCompanySelected',company);
-			App.Topic('passiveCompanySelected').publish(company);
 		    } else {
 			App.handler.notify('passiveCompanyReset');
 			App.Topic('passiveCompanyReset').publish();
+			App.Topic('passiveCompanySelected').unsubscribe();
 		    }
 		},
 		setActiveCompany:function( company, mode ){
@@ -572,13 +572,13 @@ Mark.pipes.format = function (str) {
 			setTimeout(function(){
 			    App.loadBg();
 			},0);
+			App.Topic('activeCompanySelected').publish(company);
 			if( mode==='notify_init' ){
 			    App.handler.notify('activeCompanyInited',company);
-			    App.Topic('activeCompanyInited').publish(company);
                             return;
 			}
 			App.handler.notify('activeCompanySelected',company);
-			App.Topic('activeCompanySelected').publish(company);
+			
 		    } else {
 			App.handler.notify('activeCompanyReset');
 			App.Topic('activeCompanyReset').publish();
@@ -591,7 +591,6 @@ Mark.pipes.format = function (str) {
 	    App.topics={};
 	    App.Topic = function (id) {
 		var callbacks, topic = id && App.topics[ id ];
-
 		if (!topic) {
 		    callbacks = jQuery.Callbacks("memory");
 		    topic = {

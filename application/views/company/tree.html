@@ -57,7 +57,7 @@
 	},
 	selectTree: function () {
 	    var branch=$('#Ctree_tree').tree('getSelected');
-	    if( branch.company_id ){
+	    if( branch.company_id!==undefined ){
 		Ctree.handler.notify('select', branch);
 		Ctree.unselectCombo();
 	    } else {
@@ -138,7 +138,7 @@
 		}
 	    });
 	},
-	up:function(){
+/*	up:function(){
 	    if( confirm("Переместить выделенный элемент в корень дерева?") ){
 		var node=$('#Ctree_tree').tree('getSelected');
 		App.post('Company/companyTreeUpdate/',{branch_id:node.branch_id,field:'parent_id',value:0},function(ok){
@@ -150,7 +150,7 @@
 		});
 		Ctree.reload();
 	    }
-	},
+	},*/
 	delete:function(){
 	    var node=$('#Ctree_tree').tree('getSelected');
 	    if( node && confirm("Удалить выделенные компании?")  && confirm("ВНИМАНИЕ ЭТОТ ПРОЦЕСС НЕ ОБРАТИМ!\n\nБУДУТ УДАЛЕНЫ ВСЕ ДОКУМЕНТЫ, ШАБЛОНЫ ПЕЧАТИ, ПРОВОДКИ, ОПЛАТЫ\nА ТАК ЖЕ ВСЯ ИНФОРМАЦИЯ СВЯЗАННАЯ С КОМПАНИЯМИ!\n\n") ){
@@ -194,12 +194,21 @@
                     data[i].text=data[i].label;
                     if(data[i].is_active*1){
                         data[i].iconCls='icon-home';
-                    } else if( data[i].level!=0 ){
+                    } else if( data[i].level>0 ){
                         data[i].iconCls='icon-lock';
                     } else if( data[i].is_leaf*1 ){
                         data[i].iconCls='icon-comp';
                     }
                 }
+		if( !param.id ){//requesting for root so add the root 
+		    data=[{
+			text:'Все контрагенты',
+			state: "opened",
+			id:0,
+			company_id:0,
+			children:data
+		    }];
+		}
                 success(data);
                 Ctree.handler.notify('treeLoaded');
             });
@@ -239,7 +248,7 @@
     <button class="folder tiny_button" disabled="disabled" onclick="Ctree.update()" title="Редактировать"><img src="img/Edit-24.png"></button>
     <button class="folder tiny_button" disabled="disabled" onclick="Ctree.delete()" title="Удалить"><img src="img/delete.png"></button>
     <button class="folder tiny_button" disabled="disabled" onclick="Ctree.lock()" title="Скрыть"><img src="img/lock.png"></button>
-    <button class="folder tiny_button" disabled="disabled" onclick="Ctree.up()" title="Переместить в корень"><img src="img/up.png"></button>
+    <button class="folder tiny_button" disabled="disabled" onclick="Ctree.up()" title="Переместить в корень" style="display: none"><img src="img/up.png"></button>
     <button class="tiny_button" onclick="Ctree.reload()" title="Обновить"><img src="img/reload.png"></button>
 </div>
 <div style="text-align: center;margin-top: 5px;">
