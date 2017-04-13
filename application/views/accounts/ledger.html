@@ -5,7 +5,8 @@
 	fdate: null,
 	acc_props: {},
 	initAfter: function () {
-	    this.date.initRange();this.fav.init();
+	    this.date.initRange();
+            this.fav.init();
 	    App.handler.progress(function(status){
 		if( status==="activeCompanySelected" ){
 		    Ledger.fav.init();
@@ -44,7 +45,7 @@
 	fav:{
             favs:[],
 	    init:function(){
-		if( Ledger.data.passive_filter && !App.pcomp.company_id ){
+		if( Ledger.data.passive_filter && !App.pcomp ){
 		    return;//Pcomp not yet selected
 		}
 		App.get("AccountsData/accountFavoritesFetch/"+(Ledger.data.passive_filter?1:0),function(resp){
@@ -373,7 +374,7 @@
     <div id="ledger_tnames" class="covert">
 	<img src="img/edit_add.png" style="width:16px;height:16px;margin-bottom: 2px;"> Операции по счету
 	{{tnames}}
-        <button style="text-align: left;margin-bottom: 3px;width: 177px" onclick="Ledger.addTransaction(this)" data-trans-type="{{trans_type}}" data-trans-name="{{trans_name|undollar}}"><div class="tag" style="font-weight: normal">{{trans_type}}</div><br>{{trans_name}}</button>
+        <button style="text-align: left;margin-bottom: 3px;width: 177px" onclick="Ledger.addTransaction(this)" data-trans-type="{{trans_type}}" data-trans-name="{{trans_name|undollar}}"><span class="tag" style="font-weight: normal">{{trans_type}}</span><br>{{trans_name}}</button>
 	{{/tnames}}
 	<div><a href="javascript:Ledger.tnames.show()"><img src="img/edit-16.png"> Изменить список</a></div>
     </div>

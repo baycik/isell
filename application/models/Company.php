@@ -15,7 +15,7 @@ class Company extends Catalog{
             $parent_id=null;
         }
 	$level=$this->Hub->svar('user_level');
-	return $this->treeFetch($table, $parent_id, 'top', $assigned_path, $level);
+	return $this->treeFetch($table, $parent_id, 'top', $assigned_path, $level, 'is_active,is_leaf,label');
     }
     
     public $listFetch=['string','q'=>['string',0]];
