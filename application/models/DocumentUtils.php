@@ -51,7 +51,16 @@ class DocumentUtils extends Catalog{
     }
     protected function getNextDocNum($doc_type) {//Util
 	$active_company_id = $this->Hub->acomp('company_id');
-	$next_num = $this->get_value("SELECT MAX(doc_num)+1 FROM document_list WHERE doc_type='$doc_type' AND active_company_id='$active_company_id' AND cstamp>DATE_FORMAT(NOW(),'%Y')");
+	$next_num = $this->get_value("
+	    SELECT 
+		MAX(doc_num)+1 
+	    FROM 
+		document_list 
+	    WHERE 
+	    IF('$doc_type'>0,doc_type='$doc_type' AND is_reclamation=0,doc_type=-'$doc_type' AND is_reclamation=1) 
+	    AND active_company_id='$active_company_id' 
+	    AND cstamp>DATE_FORMAT(NOW(),'%Y')
+	    ");
 	return $next_num ? $next_num : 1;
     }
     protected function calcCorrections($skip_vat_correction=false) {
