@@ -2,10 +2,9 @@
 require_once 'AccountsData.php';
 class AccountsBank extends AccountsData{
     public $min_level=3;
+    
+    public $clientBankGet=[ 'main_acc_code'=>['string',0], 'page'=>['int',1], 'rows'=>['int',30] ];
     public function clientBankGet( $main_acc_code=0, $page=1, $rows=30 ){
-        $this->check($main_acc_code);
-        $this->check($page,'int');
-        $this->check($rows,'int');
 	$active_company_id=$this->Hub->acomp('company_id');
         
 	$having=$this->decodeFilterRules();
@@ -36,8 +35,8 @@ class AccountsBank extends AccountsData{
 	return $totals;
     }
     
-    public function getCorrespondentStats(){
-	$check_id=$this->request('check_id','int',0);
+    public $getCorrespondentStats=['check_id'=>['int',0]];
+    public function getCorrespondentStats($check_id){
 	$check=$this->getCheck($check_id);
 	
         $Company=$this->Hub->load_model("Company");
@@ -87,8 +86,8 @@ class AccountsBank extends AccountsData{
 	return $acc;
     }
     
+    public $checkDelete=['check_id'=>'int'];
     public function checkDelete( $check_id ){
-	$this->check($check_id,'int');
 	$check=$this->getCheck($check_id);
 	if( $check->trans_id ){
 	    $this->transDelete($check->trans_id);
@@ -100,6 +99,7 @@ class AccountsBank extends AccountsData{
      * IMPORT OF FILE .csv
      */
     
+    public $up=['string'];
     public function up( $main_acc_code ){
 	if( $_FILES['upload_file'] && !$_FILES['upload_file']['error'] ){
 	    if ( strrpos($_FILES['upload_file']['name'], '.csv') ){
@@ -154,14 +154,9 @@ class AccountsBank extends AccountsData{
      * VIEW OUT
      */
 
-    public function cbankViewGet(){
-	$page=$this->request('page','int');
-	$rows=$this->request('rows','int');
-	$main_acc_code=$this->request('main_acc_code');
-	$out_type=$this->request('out_type');
-	
+    public $cbankViewGet=['page'=>'int','rows'=>'int','main_acc_code'=>'string','out_type'=>'string'];
+    public function cbankViewGet($page,$rows,$main_acc_code,$out_type){
 	$dump=$this->fillDump($main_acc_code, $page, $rows);
-	
 	$ViewManager=$this->Hub->load_model('ViewManager');
 	$ViewManager->store($dump);
 	$ViewManager->outRedirect($out_type);	

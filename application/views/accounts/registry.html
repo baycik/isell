@@ -24,12 +24,10 @@
 	loader:function(param, success, error, mode){
 	    var fvalue=App.collectForm('#acc_tax_bill_reg_frm');
 	    if( fvalue.year*1 ){
-		var uri=App.uri(
-			    fvalue.year+'-'+fvalue.month,
-			    fvalue.group_by_comp?'group_by_comp':'expanded',
-			    mode
-			);
-		App.get('AccountsRegistry/registryFetch/'+uri, param, function (xhr) {
+		param.period=fvalue.year+'-'+fvalue.month;
+		param.mode=fvalue.group_by_comp?'group_by_comp':'expanded';
+		param.direction=mode;
+		App.get('AccountsRegistry/registryFetch/', param, function (xhr) {
 		    var resp = App.json(xhr);
 		    if( resp ){
 			success(resp);

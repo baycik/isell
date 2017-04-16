@@ -477,7 +477,7 @@ h2{
 
 .switch input {display:none;}
 
-.slider {
+.switch .slider {
   position: absolute;
   cursor: pointer;
   top: 0;
@@ -489,7 +489,7 @@ h2{
   transition: .4s;
 }
 
-.slider:before {
+.switch .slider:before {
   position: absolute;
   content: "";
   height: 20px;
@@ -501,26 +501,26 @@ h2{
   transition: .4s;
 }
 
-input:checked + .slider {
+.switch input:checked + .slider {
   background-color: #2196F3;
 }
 
-input:focus + .slider {
+.switch input:focus + .slider {
   box-shadow: 0 0 1px #2196F3;
 }
 
-input:checked + .slider:before {
+.switch input:checked + .slider:before {
   -webkit-transform: translateX(26px);
   -ms-transform: translateX(26px);
   transform: translateX(26px);
 }
 
 /* Rounded sliders */
-.slider.round {
+.switch .slider.round {
   border-radius: 26px;
 }
 
-.slider.round:before {
+.switch .slider.round:before {
   border-radius: 50%;
 }
 
@@ -538,8 +538,7 @@ input:checked + .slider:before {
     border-top-left-radius: 5px;
     border-bottom-left-radius: 5px;
     background: linear-gradient(90deg,rgba(255,255,255,1),rgba(255,255,255,0.5));
-    height: 25px;
-    line-height: 25px;
+    min-height: 25px;
     color: #025;
 }
 .left_label:hover{

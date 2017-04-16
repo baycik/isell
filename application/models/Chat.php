@@ -2,6 +2,8 @@
 require_once 'Catalog.php';
 class Chat extends Catalog{
     public $min_level=1;
+    
+    public $getUserList=[];
     public function getUserList(){
 	$my_id = $this->Hub->svar('user_id');
         $sql="SELECT 
@@ -13,6 +15,7 @@ class Chat extends Catalog{
                 user_list";
         return $this->get_list($sql);
     }
+    
     public $sendRecieve=['his_id'=>'int'];
     public function sendRecieve( $his_id='all' ){
 	$msg=$this->request('message');
@@ -55,6 +58,7 @@ class Chat extends Catalog{
     private function setAsRead(){
 	$this->query("UPDATE event_list SET event_status='done' WHERE event_id=@undone_id;");
     }
+    
     public $getDialog=['int','int'];
     public function getDialog( $his_id, $limit=15 ){
 	$my_id = $this->Hub->svar('user_id');
@@ -85,6 +89,7 @@ class Chat extends Catalog{
 	$this->setAsRead();
         return ['dialog'=>$dialog,'has_new'=>$this->checkNew()];
     }
+    
     public $checkNew=[];
     public function checkNew(){
 	$my_id = $this->Hub->svar('user_id');

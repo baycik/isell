@@ -33,6 +33,8 @@ class ViewManager extends CI_Model{
 	}
 	return false;
     }
+    
+    public $out=['string','send_headers'];
     public function out( $out_type='.print', $header_mode='send_headers' ){
 	if( $this->dump ){
 	    $this->load->library('FileEngine');
@@ -102,6 +104,8 @@ class ViewManager extends CI_Model{
 	echo $this->out( $out_type, $header_mode );
 	exit;
     }
+    
+    public $outRedirect=['string'];
     public function outRedirect($out_type){
 	$chunks=explode('\\',FCPATH);
 	$url_base_folder=array_pop($chunks);
@@ -109,9 +113,10 @@ class ViewManager extends CI_Model{
 	
 	header("Location: /{$url_base_folder}ViewManager/export/?dump_id={$this->dump->dump_id}&out_type={$out_type}");
     }
-    public function export(){
-	$dump_id=$this->input->get_post('dump_id');
-	$out_type=$this->input->get_post('out_type');
+    
+    public $export=['dump_id'=>'string','out_type'=>'string'];
+    public function export($dump_id,$out_type){
+	set_time_limit(600);
 	if( $this->restore($dump_id) ){
 	    $this->flush($out_type);
 	}

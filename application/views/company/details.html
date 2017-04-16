@@ -66,7 +66,7 @@
 	    this.node.panel('setTitle','Реквизиты компании '+(Cdet.data.label==='null'?Cdet.data.label:'') );
 	},
 	updateField:function(field,value,title){
-	    App.post('Company/companyUpdate/',{company_id:Cdet.data.company_id,filed:field,value:value},function(ok){
+	    App.post('Company/companyUpdate/',{company_id:Cdet.data.company_id,field:field,value:value},function(ok){
 		if( ok*1 ){
 		    Cdet.data[field]=value;
 		    App.flash("Сохранено: " + title);

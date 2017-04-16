@@ -1,24 +1,34 @@
 <?php
 require_once 'AccountsCore.php';
 class AccountsView extends AccountsCore{
-    public function ledgerPaymentViewGet(){
-	$this->ledgerViewGet();
+    public $ledgerPaymentViewGet=[
+	'acc_code'=>'string',
+	'idate'=>'\d\d\d\d-\d\d-\d\d',
+	'fdate'=>'\d\d\d\d-\d\d-\d\d',
+	'out_type'=>'string',
+	'use_passive_filter'=>'bool',
+	'page'=>'int'
+	];
+    public function ledgerPaymentViewGet($acc_code,$idate,$fdate,$out_type,$use_passive_filter,$page){
+	$this->ledgerViewGet($acc_code,$idate,$fdate,$out_type,$use_passive_filter,$page);
     }
-    public function ledgerViewGet(){
-	$page=$this->request('page','int');
-	$rows=10000;//$this->request('rows','int');
-	$idate=$this->request('idate','\d\d\d\d-\d\d-\d\d');
-	$fdate=$this->request('fdate','\d\d\d\d-\d\d-\d\d');
-	$acc_code=$this->request('acc_code');
-	$out_type=$this->request('out_type');
-	$use_passive_filter=$this->request('use_passive_filter','bool');
-	
+    
+    public $ledgerViewGet=[
+	'acc_code'=>'string',
+	'idate'=>'\d\d\d\d-\d\d-\d\d',
+	'fdate'=>'\d\d\d\d-\d\d-\d\d',
+	'out_type'=>'string',
+	'use_passive_filter'=>'bool',
+	'page'=>'int'
+	];
+    public function ledgerViewGet($acc_code,$idate,$fdate,$out_type,$use_passive_filter,$page){
+	$rows=10000;
 	$dump=$this->fillDump($acc_code, $idate, $fdate, $page, $rows, $use_passive_filter);
-	
 	$ViewManager=$this->Hub->load_model('ViewManager');
 	$ViewManager->store($dump);
 	$ViewManager->outRedirect($out_type);
     }
+    
     private function fillDump($acc_code, $idate, $fdate, $page, $rows, $use_passive_filter){
         $Utils=$this->Hub->load_model('Utils');
 	$table=$this->ledgerFetch($acc_code, $idate, $fdate, $page, $rows, $use_passive_filter);

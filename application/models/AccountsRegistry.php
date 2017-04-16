@@ -1,9 +1,15 @@
 <?php
 require_once 'AccountsCore.php';
 class AccountsRegistry extends AccountsCore{
-    public function registryFetch($period='',$mode='', $direction='sell'){
-	$page=$this->request('page','int',1);
-	$rows=$this->request('rows','int',1000);
+    
+    
+    public $registryFetch=[
+	'period'=>'string',
+	'mode'=>'string',
+	'direction'=>'string',
+	'page'=>['int',1],
+	'rows'=>['int',1000]];
+    public function registryFetch($period='',$mode='', $direction='sell',$page=1,$rows=1000){
 	$offset=($page-1)*$rows;
 	if( $offset<0 ){
 	    $offset=0;
@@ -77,10 +83,9 @@ class AccountsRegistry extends AccountsCore{
 	    'total'=>$sub_totals->count
 	];
     }
-    public function registryViewGet(){
-	$period=$this->request('period');
-	$mode=$this->request('mode');
-	$out_type=$this->request('out_type','string','.print');
+    
+    public $registryViewGet=['period'=>'string','mode'=>'string','out_type'=>['string','.print']];
+    public function registryViewGet($period,$mode,$out_type){
 	$blank_set=$this->Hub->pref('blank_set');
 	$dump=[
 	    'tpl_files'=>$blank_set.'/AccDocumentRegistry.xlsx',

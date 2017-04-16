@@ -91,12 +91,18 @@ class AccountsCore extends Catalog{
                 WHERE $having";
 	return $this->get_row($sql);
     }
+    
+    
+    
+    public $ledgerFetch=[
+	'acc_code'=>'string',
+	'idate'=>'\d\d\d\d-\d\d-\d\d',
+	'fdate'=>'\d\d\d\d-\d\d-\d\d',
+	'page'=>['int',1],
+	'rows'=>['int',30],
+	'use_passive_filter'=>['int',0]
+	];
     public function ledgerFetch( $acc_code, $idate='', $fdate='', $page=1, $rows=30, $use_passive_filter=false ){
-	$this->check($idate,'\d\d\d\d-\d\d-\d\d');
-	$this->check($fdate,'\d\d\d\d-\d\d-\d\d');
-	$this->check($acc_code);
-	$this->check($page,'int');
-	$this->check($rows,'int');
 	$idate.=' 00:00:00';
 	$fdate.=' 23:59:59';
         
@@ -131,9 +137,25 @@ class AccountsCore extends Catalog{
 	$sub_totals=$this->ledgerGetSubtotals($idate, $fdate, $having);
 	return ['rows'=>$result_rows,'total'=>$total_estimate,'props'=>$props,'sub_totals'=>$sub_totals,'using_alt_currency'=>$using_alt_currency];
     }
+    
+    public $ledgerPaymentFetch=[
+	'acc_code'=>'string',
+	'idate'=>'\d\d\d\d-\d\d-\d\d',
+	'fdate'=>'\d\d\d\d-\d\d-\d\d',
+	'page'=>['int',1],
+	'rows'=>['int',30],
+	'use_passive_filter'=>['int',0]
+	];
     public function ledgerPaymentFetch( $acc_code, $idate='', $fdate='', $page=1, $rows=30 ){
 	return $this->ledgerFetch($acc_code, $idate, $fdate, $page, $rows, true);
     }
+    
+    public $accountBalanceTreeFetch=[
+	'parent_id'=>['int',0],
+	'idate'=>'\d\d\d\d-\d\d-\d\d',
+	'fdate'=>'\d\d\d\d-\d\d-\d\d',
+	'page'=>['show_unused',1]
+	];
     public function accountBalanceTreeFetch( $parent_id=0, $idate='', $fdate='', $show_unused=1 ){
 	$this->Hub->set_level(3);
 	$this->check($parent_id,'int');
@@ -194,6 +216,8 @@ class AccountsCore extends Catalog{
         $balance=$this->get_list($sql);
 	return $balance?$balance:[];
     }
+    
+    public $accountBalanceTreeCreate=['parent_id'=>'int','label'=>'string'];
     public function accountBalanceTreeCreate( $parent_id, $label ){
 	$this->Hub->set_level(3);
 	$this->treeUpdate('acc_tree',$parent_id,'is_leaf',0);
@@ -213,6 +237,7 @@ class AccountsCore extends Catalog{
 	return $acc_code;
     }
 
+    public $transFullGet=['trans_id'=>'int'];
     public function transFullGet( $trans_id ){
 	$this->check($trans_id,'int');
 	$curr_id=$this->Hub->acomp('curr_id');
@@ -238,16 +263,22 @@ class AccountsCore extends Catalog{
 		trans_id='$trans_id'";
 	return $this->get_row($sql);
     }
+    
+    public $transGet=['int'];
     public function transGet( $trans_id ){
 	$this->check($trans_id,'int');
 	$sql="SELECT * FROM acc_trans trans WHERE trans_id='$trans_id'";
 	return $this->get_row($sql);	
     }
+    
+    public $transGetDocId=['int'];
     public function transGetDocId( $trans_id ){
 	$this->check($trans_id,'int');
 	$sql="SELECT doc_id FROM document_trans WHERE trans_id='$trans_id'";
 	return $this->get_value($sql);	
     }
+    
+    public $transCheckLevel=['string'];
     public function transCheckLevel($trans_type){
 	$user_level=$this->Hub->svar('user_level');
 	if( $user_level>=3 ){
@@ -320,35 +351,21 @@ class AccountsCore extends Catalog{
 	    $this->update('acc_trans', ['trans_ref'=>0,'trans_status'=>0], ['trans_id'=>$trans_ref]);
 	}	
     }
-    private function transInnerCreateUpdate($trans_id,$trans){
-	$this->Hub->set_level(2);
-	if( $trans_id ){
-	    $this->update('acc_trans', $trans, ['trans_id'=>$trans_id,'editable'=>1]);
-	    $trans_id= $this->db->affected_rows()>0?$trans_id:false;
-	} else {
-	    $trans['editable']=1;
-	    $trans['active_company_id']=$this->Hub->acomp('company_id');
-	    $trans['created_by']=$trans['modified_by'];
-	    $this->create('acc_trans', $trans);
-	    $trans_id= $this->db->insert_id();
-	}
-	$this->checkTransLink($trans_id,$trans);
-	$this->transCrossLink($trans_id,$trans);
-	$this->transCheckCalculate($trans);
-	return $trans_id;	
-    }
-    public function transPostCreateUpdate(){
-	$trans_id=$this->request('trans_id','int',0);
-	$check_id=$this->request('check_id','int');
-	$passive_company_id=$this->request('passive_company_id','int');
-	$trans_type=$this->request('trans_type');
-	$trans_date=$this->request('trans_date','\d\d\d\d-\d\d-\d\d');
-	$trans_ref=$this->request('trans_ref','int',null);
-	$amount=$this->request('amount','double');
-	$amount_alt=$this->request('amount_alt','double');
-	$description=$this->request('description');
-	$user_id=$this->Hub->svar('user_id');
+    
+    public $transCreateUpdate=[
+	'trans_id'=>['int',0],
+	'check_id'=>'int',
+	'passive_company_id'=>'int',
+	'trans_type'=>'string',
+	'trans_date'=>'\d\d\d\d-\d\d-\d\d',
+	'trans_ref'=>['int',null],
+	'amount'=>'double',
+	'amount_alt'=>'double',
+	'description'=>'string',
 	
+    ];
+    public function transCreateUpdate($trans_id,$check_id,$passive_company_id,$trans_type,$trans_date,$trans_ref,$amount,$amount_alt,$description){
+	$user_id=$this->Hub->svar('user_id');
 	$acc_codes=  explode('_',$trans_type);
 	if( !$this->transCheckLevel($trans_type) ){
 	    $this->Hub->msg('access denied');
@@ -366,8 +383,25 @@ class AccountsCore extends Catalog{
 	    'description'=>$description,
 	    'modified_by'=>$user_id
 	];
-	return $this->transInnerCreateUpdate($trans_id,$trans);
+	
+	$this->Hub->set_level(2);
+	if( $trans_id ){
+	    $this->update('acc_trans', $trans, ['trans_id'=>$trans_id,'editable'=>1]);
+	    $trans_id= $this->db->affected_rows()>0?$trans_id:false;
+	} else {
+	    $trans['editable']=1;
+	    $trans['active_company_id']=$this->Hub->acomp('company_id');
+	    $trans['created_by']=$trans['modified_by'];
+	    $this->create('acc_trans', $trans);
+	    $trans_id= $this->db->insert_id();
+	}
+	$this->checkTransLink($trans_id,$trans);
+	$this->transCrossLink($trans_id,$trans);
+	$this->transCheckCalculate($trans);
+	return $trans_id;
     }
+    
+    public $transDelete=['int'];
     public function transDelete( $trans_id ){
 	$this->Hub->set_level(2);
 	$trans=$this->transGet($trans_id);

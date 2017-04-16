@@ -3,6 +3,8 @@ require_once 'Catalog.php';
 class ReportManager extends Catalog {
     private $plugin_folder='application/plugins/';
     private $current_info;
+    
+    public $listFetch=[];
     public function listFetch(){
 	$plugins=$this->scanFolder($this->plugin_folder);
 	$reports=[];
@@ -38,8 +40,8 @@ class ReportManager extends Catalog {
 	return $info;
     }
     
+    public $formGet=['\w+'];
     public function formGet( $report_id=null ){
-	$this->check($report_id,'\w+');
 	if( $report_id && file_exists($this->plugin_folder.$report_id.'/form.html') ){
 	    return file_get_contents($this->plugin_folder.$report_id.'/form.html');
 	}
@@ -54,6 +56,7 @@ class ReportManager extends Catalog {
 	return $Plugin;
     }
     
+    public $formSubmit=['\w+'];
     public function formSubmit( $report_id=null ){
 	$this->current_info=$this->infoGet($report_id);
 	$tpl_files=isset($this->current_info['template'])?$this->current_info['template']:$this->current_info['report_id'].'.xlsx';

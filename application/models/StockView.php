@@ -1,12 +1,10 @@
 <?php
 require_once 'Stock.php';
 class StockView extends Stock{
-    public function stockViewGet(){
-	$page=$this->request('page','int');
-	$rows=10000;;
-	$parent_id=$this->request('parent_id','int');
+    public $stockViewGet=['page'=>'int','parent_id'=>'int','out_type'=>'string'];
+    public function stockViewGet($page,$parent_id,$out_type){
+	$rows=10000;
 	$having=$this->decodeFilterRules();
-	$out_type=$this->request('out_type');
 	
         $blank_set=$this->Hub->pref('blank_set');
 	$table=$this->listFetch($page,$rows,$parent_id,$having);
@@ -32,12 +30,12 @@ class StockView extends Stock{
 	$ViewManager->store($dump);
 	$ViewManager->outRedirect($out_type);
     }
-    public function stockViewFileGet(){
+    
+    public $stockViewFileGet=['parent_id'=>'int','out_type'=>'string'];
+    public function stockViewFileGet($parent_id,$out_type){
 	$page=1;
-	$rows=10000;;
-	$parent_id=$this->request('parent_id','int');
+	$rows=10000;
 	$having=$this->decodeFilterRules();
-	$out_type=$this->request('out_type');
 	$blank_set=$this->Hub->pref('blank_set');
 	$table=$this->listFetch($page,$rows,$parent_id,$having);
 	foreach ($table['rows'] as $row) {
@@ -65,11 +63,10 @@ class StockView extends Stock{
 	$ViewManager->store($dump);
 	$ViewManager->outRedirect($out_type);
     }
-    public function stockMoveViewGet(){
-	$page=$this->request('page','int');
-	$rows=$this->request('rows','int');
+    
+    public $stockMoveViewGet=['page'=>'int','rows'=>'int','out_type'=>'string'];
+    public function stockMoveViewGet($page,$rows,$out_type){
 	$having=$this->decodeFilterRules();
-	$out_type=$this->request('out_type');
 	$blank_set=$this->Hub->pref('blank_set');
 	$dump=[
 	    'tpl_files'=>$blank_set.'/StockMovements.xlsx',

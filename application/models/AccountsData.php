@@ -2,8 +2,10 @@
 require_once 'AccountsCore.php';
 class AccountsData extends AccountsCore{
     public $min_level=1;
-    public function transNameListFetch($selected_acc=null){
-	$q=  str_replace(["_","%"], ["\_","\%"], $this->request('q'));
+    
+    public $transNameListFetch=['q'=>'string','selected_acc'=>['string',null]];
+    public function transNameListFetch( $q, $selected_acc=null ){
+	$q=  str_replace(["_","%"], ["\_","\%"], $q);
 	$this->check($selected_acc);
 	$user_level = $this->Hub->svar('user_level');
 	$curr_id=$this->Hub->acomp('curr_id');
@@ -27,31 +29,30 @@ class AccountsData extends AccountsCore{
 	    ORDER BY trans_name";
 	return $this->get_list($sql);
     }
+    
+    public $transNameUpdate=['trans_type'=>'[a-z0-9_]*','field'=>'[a-z0-9_]*','value'=>'string'];
     public function transNameUpdate($trans_type,$field,$value){
 	$this->Hub->set_level(3);
-	$this->check($trans_type,'[a-z0-9_]*');
-	$this->check($field,'[a-z0-9_]*');
-	$this->check($value);
 	$type=  explode('_', $trans_type);
 	$this->query("UPDATE acc_trans_names SET $field='$value' WHERE acc_debit_code='$type[0]' AND acc_credit_code='$type[1]'");
 	return $this->db->affected_rows()>0;
     }
+    
+    public $transNameCreate=['debit_code'=>'string','credit_code'=>'string'];
     public function transNameCreate($acc_debit_code,$acc_credit_code){
 	$this->Hub->set_level(3);
-	$this->check($acc_debit_code);
-	$this->check($acc_credit_code);
 	return $this->query("INSERT INTO acc_trans_names SET acc_debit_code='$acc_debit_code', acc_credit_code='$acc_credit_code', trans_name='---', user_level=3");
     }
+    
+    public $transNameDelete=['trans_type'=>'string'];
     public function transNameDelete($trans_type){
-	$this->check($trans_type);
 	$dc=  explode('_', $trans_type);
 	$this->query("DELETE FROM acc_trans_names WHERE acc_debit_code='$dc[0]' AND acc_credit_code='$dc[1]'");
 	return $this->db->affected_rows()>0;
     }
-    public function accountTreeFetch( $parent_id = null ) {
-	if( $parent_id == null ){
-	    $parent_id=$this->input->get('id') or $parent_id=0;
-	}
+    
+    public $accountTreeFetch=['id'=>['int',0]];
+    public function accountTreeFetch( $parent_id=0 ) {
 	$res = $this->query("SELECT *,CONCAT(acc_code,' ',label) text,branch_id id FROM acc_tree WHERE parent_id='$parent_id' ORDER BY acc_code");
 	$branches = array();
 	foreach ($res->result() as $row) {
@@ -61,17 +62,20 @@ class AccountsData extends AccountsCore{
 	$res->free_result();
 	return $branches;
     }
+    
+    public $accountTreeUpdate=['branch_id'=>'int','field'=>'[a-z0-9_]*','value'=>'string'];
     public function accountTreeUpdate($branch_id,$field,$value='') {
 	$this->Hub->set_level(3);
-	$this->check($branch_id,'int');
-	$this->check($field);
-	$this->check($value);
 	return $this->treeUpdate('acc_tree', $branch_id, $field, $value);
     }
+    
+    public $balanceTreeDelete=['branch_id'=>'int'];
     public function balanceTreeDelete( $branch_id ){
 	$this->Hub->set_level(3);
 	return $this->treeDelete('acc_tree',$branch_id);
     }
+    
+    public $accountFavoritesFetch=['use_passive_filter'=>['int',0],'get_client_bank_accs'=>['int',0]];
     public function accountFavoritesFetch( $use_passive_filter=false, $get_client_bank_accs=false ){
 	if( $use_passive_filter ){
 	    $acc_list=$this->Hub->pcomp('company_acc_list');
@@ -88,7 +92,9 @@ class AccountsData extends AccountsCore{
 	}
 	return $favs;
    }
-    public function accountFavoritesToggle( $acc_code, $is_favorite, $use_passive_filter=false ){
+   
+   public $accountFavoritesToggle=['acc_code'=>'string','is_favorite'=>'int','use_passive_filter'=>['int',0]];
+   public function accountFavoritesToggle( $acc_code, $is_favorite, $use_passive_filter=false ){
 	$this->Hub->set_level(3);
 	$this->check($acc_code);
 	$this->check($is_favorite,'bool');

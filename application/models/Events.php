@@ -8,6 +8,7 @@ class Events extends Catalog{
      * done
      * 
      */
+    public $activeDatesGet=[];
     public function activeDatesGet() {//must be optimized
 	$user_id = $this->Hub->svar('user_id');
 	$user_level = $this->Hub->svar('user_level');
@@ -22,9 +23,8 @@ class Events extends Catalog{
 	return $this->get_list($sql);
     }
     
+    public $listFetch=['\d\d\d\d-\d\d-\d\d','string'];
     public function listFetch( $date, $label=null ){
-	$this->check($date,'\d\d\d\d-\d\d-\d\d');
-	$this->check($label);
 	$label_filter=$label?" AND event_label='$label'":'';
 	$sql="
 	    SELECT
@@ -45,6 +45,8 @@ class Events extends Catalog{
 	    ORDER BY event_status='undone' AND DATE(event_date)<DATE(NOW()),event_label,event_priority IS NULL,event_priority,event_target";
 	return $this->get_list($sql);
     }
+    
+    public $eventGet=['int'];
     public function eventGet( $event_id ){
 	$this->check($event_id,'int');
 	$sql="SELECT
@@ -60,22 +62,20 @@ class Events extends Catalog{
 	return $this->get_row($sql);
     }
     
+    public $eventDelete=['int'];
     public function eventDelete( $event_id ){
-	$this->check($event_id,'int');
 	return $this->delete("event_list",['event_id'=>$event_id]);
     }
+    
+    public $eventUpdate=['int','\w+','raw'];
     public function eventUpdate( $event_id, $field, $value ){
 	$this->Hub->set_level(2);
-	$this->check($event_id,'int');
-	$this->check($field,'\w+');
-	$this->check($value,'raw');
 	return $this->update('event_list', [$field=>$value], ['event_id'=>$event_id]);
     }
     
-    
+    public $eventSave=['int'];
     public function eventSave( $event_id ){
 	$this->Hub->set_level(2);
-	$this->check($event_id,'int');
 	$event=[
 	    'event_date'=>$this->request('event_date'),
 	    'event_priority'=>$this->request('event_priority'),
@@ -98,22 +98,17 @@ class Events extends Catalog{
 	return $this->update('event_list', $event, ['event_id'=>$event_id]);
     }
     
+    public $eventMove=['int','\d\d\d\d-\d\d-\d\d','string','\d\d\d\d-\d\d-\d\d','string'];
     public function eventMove( $event_id, $newdate, $mode=null, $olddate=null, $label=null ){
-	$this->check($event_id,'int');
-	$this->check($olddate,'\d\d\d\d-\d\d-\d\d');
-	$this->check($newdate,'\d\d\d\d-\d\d-\d\d');
-	$this->check($label);
 	if( $mode=='all' ){
 	    $this->query("UPDATE event_list SET event_date='$newdate' WHERE DATE(event_date)='$olddate' AND event_label='$label'");
 	    return $this->db->affected_rows();
 	}
 	return $this->update('event_list',['event_date'=>$newdate],['event_id'=>$event_id]);
     }
-    public function eventViewGet(){
-	$label=$this->request('label');
-	$event_date=$this->request('event_date','\d\d\d\d-\d\d-\d\d');
-	$out_type=$this->request('out_type');
-	
+    
+    public $eventViewGet=['label'=>'string','event_date'=>'\d\d\d\d-\d\d-\d\d','out_type'=>'string'];
+    public function eventViewGet($label,$event_date,$out_type){	
 	$rows=$this->listFetch($event_date,$label);
 	$dump=[
 	    'tpl_files'=>$this->Hub->acomp('language').'/EventList.xlsx',

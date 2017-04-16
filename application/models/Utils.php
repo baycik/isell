@@ -5,6 +5,7 @@ class Utils extends Catalog{
     //////////////////////////////////////
     //FOLOWING FUNCTIONS ARE DEPRECATED
     //////////////////////////////////////
+    public $spellAmount=['string','int','int'];
     public function spellAmount($number, $return_cents = true, $return_currency = true) {
 	$blank_set=$this->Hub->pref('blank_set');
 	if( $blank_set=='ua' ){
@@ -37,6 +38,7 @@ class Utils extends Catalog{
 	return mb_strtoupper(mb_substr($str, 0, 1, 'utf-8'), 'utf-8') . mb_substr($str, 1, mb_strlen($str) - 1, 'utf-8');
     }
 
+    public $spellNumber=['string','string','int'];
     public function spellNumber($number, $units=null, $ret_number = false) {
 	$hundreds_i = $this->getNumberPosition($number, 100, 1);
 	$tens_i = $this->getNumberPosition($number, 10, 1);
@@ -87,6 +89,8 @@ class Utils extends Catalog{
 	$number-=$position * 10 * $range * floor($number / $position / 10 / $range);
 	return floor($number / $position);
     }
+    
+    public $getLocalDate=['string'];
     public function getLocalDate($tstamp) {
 	$time = strtotime($tstamp);
 	$months = array("січня", "лютого", "березня", "квітня", "травня", "червня", "липня", "серпня", "вересня", "жовтня", "листопада", "грудня");
@@ -179,9 +183,8 @@ class Utils extends Catalog{
     /////////////////////////////
     //SMS FUNCTIONS
     /////////////////////////////
+    public $sendSms=['to'=>'string','body'=>'string'];
    public function sendSms($number=null,$body=null) {
-	$number=$this->request('to','string',$number);
-	$body=$this->request('body','string',$body);
 	if (!$this->Hub->pref('SMS_SENDER') || !$this->Hub->pref('SMS_USER') || !$this->Hub->pref('SMS_PASS')) {
 	    $this->Hub->msg("Настройки для отправки смс не установленны");
 	    return false;
@@ -256,13 +259,9 @@ class Utils extends Catalog{
         }
         return $ok;
     }
-    public function postEmail(){
-	$to=$this->input->get_post('to');
-	$subject=$this->input->get_post('subject');
-	$body=$this->input->get_post('body');
-	$dump_id=$this->input->get_post('dump_id');
-        $out_type=$this->input->get_post('out_type');
-        $send_file=$this->input->get_post('send_file');
+    
+    public $postEmail=['to'=>'string','subject'=>'string','body'=>'string','dump_id'=>'string','out_type'=>'string','send_file'=>'int'];
+    public function postEmail($to,$subject,$body,$dump_id,$out_type,$send_file){
 	$file=$send_file?$this->generateFile($dump_id,$out_type,$subject):null;
 	return $this->sendEmail($to, $subject, $body, $file);
     }
@@ -289,6 +288,7 @@ class Utils extends Catalog{
     /////////////////////////////
     //TREE MAINTAINANCE FUNCTIONS
     /////////////////////////////
+    public $treeRecalculate=[];
     public function treeRecalculate(){
         foreach(['acc_tree','companies_tree','stock_tree'] as $table){
             $this->treePathRecalculate($table, 0);
@@ -317,6 +317,7 @@ class Utils extends Catalog{
     /////////////////////////////
     //SELF PRICE FUNCTIONS
     /////////////////////////////
+    public $stockQtyRecalculate=[];
     public function stockQtyRecalculate(){
 	$sql="
 	    UPDATE 
@@ -406,6 +407,7 @@ class Utils extends Catalog{
 	$this->db->query($sql_tbl_create);
     }
     
+    public $selfPriceInvoiceRecalculate=[];
     public function selfPriceInvoiceRecalculate($idatedmy,$fdatedmy,$active_mode=''){
 	set_time_limit(300);
 	$idate=$this->dmy2iso($idatedmy).' 00:00:00';
@@ -440,6 +442,7 @@ class Utils extends Catalog{
 	return $this->db->affected_rows();
     }
     
+    public $selfPriceStockRecalculate=[];
     public function selfPriceStockRecalculate($active_mode=''){   
         if( $active_mode=='all_active' ){
             $active_filter='';
@@ -454,10 +457,8 @@ class Utils extends Catalog{
     ////////////////////////////////////////////////////////////
     // STOCK UTILS FUNCTIONS
     ////////////////////////////////////////////////////////////
+    public $stockCalcMin=['int','int','int'];
     public function stockCalcMin( $parent_id, $sales_period, $reserve_period ){
-	$this->check($parent_id,'int');
-	$this->check($sales_period,'int');
-	$this->check($reserve_period,'int');
 	$branch_ids=$this->treeGetSub('stock_tree',$parent_id);
 	$stock_table="
 	    UPDATE
@@ -478,8 +479,8 @@ class Utils extends Catalog{
 	$this->query($stock_table);
 	return $this->db->affected_rows();
     }
+    public $stockCalcIncomeOrder=['int','string'];
     public function stockCalcIncomeOrder( $parent_id=0, $round_to='bpack' ){
-	$this->check($parent_id,'int');
 	$having=$this->decodeFilterRules();
         if( $round_to==='spack' ){
             $rounding_quantity='product_spack';

@@ -37,6 +37,7 @@ class User extends Catalog {
 	}
 	$this->Hub->pluginInitTriggers();
     }
+    public $SignOut=[];
     public function SignOut(){
         $_SESSION = array();
 	return true;

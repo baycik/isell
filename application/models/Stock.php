@@ -25,17 +25,36 @@ class Stock extends Catalog {
 	return $deleted;
     }
 
+    private function decodeStockFilter(){
+	$raw=$this->input->get_post('filterRules');
+	$filter=json_decode($raw);
+	if( !is_array($filter) || count($filter)===0 ){
+	    return [1,1];
+	}
+	$havingInner=[1];
+	$havingOuter=[1];
+	foreach( $filter as $rule ){
+	    if($rule->field=='m1' || $rule->field=='m3'){
+		$havingOuter[]="$rule->field LIKE '%$rule->value%'";
+	    } else {
+		$havingInner[]="$rule->field LIKE '%$rule->value%'";
+	    }
+	}
+	return [implode(' AND ',$havingInner),implode(' AND ',$havingOuter)];	
+    }
     
     
-    
-    public $listFetch=['int','int','int','string'];
-    public function listFetch( $page=1, $rows=30, $parent_id=0, $having=null ){
+    public $listFetch=['page'=>['int',1],'rows'=> ['int',30],'parent_id'=>['int',0],'string'];
+    public function listFetch( $page, $rows, $parent_id, $having=null ){
 	$offset=($page-1)*$rows;
 	if( $offset<0 ){
 	    $offset=0;
 	}
+	
 	if( !$having ){
-	    $having=$this->decodeFilterRules();
+	    $having=$this->decodeStockFilter();
+	} else {
+	    $having=[1,1];
 	}
 	$where='';
 	if( $parent_id ){
@@ -43,37 +62,62 @@ class Stock extends Catalog {
 	    $where="WHERE se.parent_id IN (".implode(',',$branch_ids).")";
 	}
 	$sql="SELECT
-		st.label parent_label,
-		ROUND( SUM(IF(TO_DAYS(NOW()) - TO_DAYS(dl.cstamp) <= 92,de.product_quantity,0))/3 ) m3,
+		parent_label,
+		t.product_code,
+		t.product_quantity,
+		ru,
+		product_wrn_quantity,
+		product_unit,
 		SUM(IF(TO_DAYS(NOW()) - TO_DAYS(dl.cstamp) <= 30,de.product_quantity,0)) m1,
-		pl.*,
-		pp.sell,
-		pp.buy,
-		pp.curr_code,
-		se.stock_entry_id,
-		se.parent_id,
-		se.party_label,
-		se.product_quantity,
-		se.product_wrn_quantity,
-		se.product_img,
-		se.self_price
+		ROUND( SUM(IF(TO_DAYS(NOW()) - TO_DAYS(dl.cstamp) <= 92,de.product_quantity,0))/3 ) m3,
+		t.self_price,
+		sell,
+		buy,		
+		curr_code,
+		product_bpack,
+		product_spack,
+		product_weight,
+		product_volume,
+		t.party_label,
+		product_uktzet,
+		barcode,
+		analyse_type,
+		analyse_group,
+		analyse_class,
+		analyse_section
 	    FROM
-		stock_entries se
-		    JOIN
-		prod_list pl ON pl.product_code=se.product_code
+		    (SELECT 
+			st.label parent_label,
+			pl.*,
+			pp.sell,
+			pp.buy,
+			pp.curr_code,
+			se.stock_entry_id,
+			se.parent_id,
+			se.party_label,
+			se.product_quantity,
+			se.product_wrn_quantity,
+			se.product_img,
+			se.self_price		
+		    FROM
+			stock_entries se
+			    JOIN
+			prod_list pl ON pl.product_code=se.product_code
+			    LEFT JOIN
+			price_list pp ON pp.product_code=se.product_code AND pp.label=''
+			    LEFT JOIN
+			stock_tree st ON se.parent_id=branch_id
+			$where
+			HAVING $having[0]
+			ORDER BY se.parent_id,se.product_code
+			LIMIT $rows OFFSET $offset) t
 		    LEFT JOIN
-		price_list pp ON pp.product_code=se.product_code AND pp.label=''
-		    LEFT JOIN
-		stock_tree st ON se.parent_id=branch_id
-		    LEFT JOIN
-		document_entries de ON de.product_code=se.product_code
+		document_entries de ON de.product_code=t.product_code
 		    LEFT JOIN
 		document_list dl ON de.doc_id=dl.doc_id AND dl.is_commited=1 AND dl.doc_type=1 AND notcount=0
-	    $where
-	    GROUP BY se.product_code
-	    HAVING $having
-            ORDER BY se.parent_id,se.product_code
-	    LIMIT $rows OFFSET $offset";
+	    GROUP BY t.product_code
+	    HAVING $having[1]
+            ";//HAVING $having
 	$result_rows=$this->get_list($sql);
 	$total_estimate=$offset+(count($result_rows)==$rows?$rows+1:count($result_rows));
 	return array('rows'=>$result_rows,'total'=>$total_estimate);

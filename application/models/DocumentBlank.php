@@ -1,10 +1,9 @@
 <?php
 require_once 'DocumentCore.php';
 class DocumentBlank extends DocumentCore {
+    
+    public $listFetch=['page'=>['int',1],'rows'=>['int',30],'mode'=>'string'];
     public function listFetch( $page=1, $rows=30, $mode='' ) {
-	$this->check($page,'int');
-	$this->check($rows,'int');
-	$this->check($mode);
 	$having=$this->decodeFilterRules();
 	$offset=($page-1)*$rows;
 	if( $offset<0 ){
@@ -52,6 +51,8 @@ class DocumentBlank extends DocumentCore {
 	$total_estimate=$offset+(count($result_rows)==$rows?$rows+1:count($result_rows));
 	return array('rows'=>$result_rows,'total'=>$total_estimate);
     }
+    
+    public $availFetch=[];
     public function availFetch() {
         $avail_docs = $this->get_list("SELECT * FROM document_types WHERE doc_type>=10");
         foreach ($avail_docs as &$doc) {
@@ -59,6 +60,8 @@ class DocumentBlank extends DocumentCore {
         }
         return $avail_docs;
     }
+    
+    public $blankCreate=['int','int'];
     public function blankCreate( $view_type_id, $register_only = false ){
 	if( $this->Hub->pcomp('company_id') ){
 	    $doc_types = $this->get_value("SELECT doc_types FROM document_view_types WHERE view_type_id='$view_type_id'");
@@ -76,6 +79,8 @@ class DocumentBlank extends DocumentCore {
 	}
 	return 0;
     }
+    
+    public $blankGet=['int'];
     public function blankGet($doc_id) {
         $this->Hub->svar('selectedBlankId',$doc_id);
         $this->selectDoc($this->Hub->svar('selectedBlankId'));
@@ -94,6 +99,8 @@ class DocumentBlank extends DocumentCore {
         $blank->doc_data = $this->doc('doc_data');
         return $blank;
     }
+    
+    public $getFillData=[];
     public function getFillData(){
 	$Company=$this->Hub->load_model('Company');
 	$Pref=$this->Hub->load_model('Pref');
@@ -103,11 +110,9 @@ class DocumentBlank extends DocumentCore {
 	$fillData->staff=$Pref->getStaffList();
 	return $fillData;
     }
-    public function save(){
-	$num=$this->input->post('num');
-	$date=$this->input->post('date');
-	$html=$this->input->post('html');
-	
+    
+    public $save=['num'=>'string','date'=>'string','html'=>'string'];
+    public function save($num,$date,$html){
 	$this->selectDoc($this->Hub->svar('selectedBlankId'));
 	$doc_id = $this->doc('doc_id');
 	$this->headUpdate('num', $num);
@@ -124,6 +129,8 @@ class DocumentBlank extends DocumentCore {
         }
 	return false;
     }
+    
+    public $blankDelete=[];
     public function blankDelete(){
 	$this->selectDoc($this->Hub->svar('selectedBlankId'));
 	$doc_id = $this->doc('doc_id');
@@ -131,6 +138,8 @@ class DocumentBlank extends DocumentCore {
 	$this->query("DELETE FROM document_list WHERE doc_id=$doc_id");
 	return true;
     }
+    
+    public $blankViewGet=[];
     public function blankViewGet(){
 	$doc_view_id=$this->request('doc_view_id');
 	

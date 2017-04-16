@@ -1,4 +1,4 @@
-<script type="text/javascript" src="js/jquery-easyui-1.4/treegrid-dnd.js"></script>
+<script type="text/javascript" src="js/jquery-easyui-1.5.1/treegrid-dnd.js"></script>
 <script type="text/javascript">
     /* global App */
     App.page_accounts_balance = {
@@ -72,25 +72,22 @@
     //CRUD
     App.page_accounts_balance.CRUD = {
 	create: function (parent_id, label) {
-	    $.ajax({
-		url: 'AccountsCore/accountBalanceTreeCreate/' + App.uri(parent_id, label),
-		complete: function (xhr) {
-		    if (xhr.responseText && xhr.responseText.split(',') && xhr.responseText.split(',')[0] * 1) {
-			var data = [{
-				branch_id: xhr.responseText.split(',')[0],
-				acc_code: xhr.responseText.split(',')[1],
-				label: label,
-				state: '',
-				is_leaf: 1
-			    }];
-			$('#page_accounts_balance_dg').treegrid('update', {id: parent_id, row: {is_leaf:0}});
-			$('#page_accounts_balance_dg').treegrid('expand', parent_id);
-			$('#page_accounts_balance_dg').treegrid('append', {parent: parent_id, data: data});
-			App.flash(label + ' добавлен');
-		    }
-		    else {
-			App.flash("Добавление не удалось");
-		    }
+	    $.post('AccountsCore/accountBalanceTreeCreate/',{parent_id:parent_id,label:label},function (xhr) {
+		if (xhr.responseText && xhr.responseText.split(',') && xhr.responseText.split(',')[0] * 1) {
+		    var data = [{
+			    branch_id: xhr.responseText.split(',')[0],
+			    acc_code: xhr.responseText.split(',')[1],
+			    label: label,
+			    state: '',
+			    is_leaf: 1
+			}];
+		    $('#page_accounts_balance_dg').treegrid('update', {id: parent_id, row: {is_leaf:0}});
+		    $('#page_accounts_balance_dg').treegrid('expand', parent_id);
+		    $('#page_accounts_balance_dg').treegrid('append', {parent: parent_id, data: data});
+		    App.flash(label + ' добавлен');
+		}
+		else {
+		    App.flash("Добавление не удалось");
 		}
 	    });
 	},
@@ -149,7 +146,7 @@
 	    return true;
 	},
 	delete: function (branch_id, label) {
-	    App.get('AccountsData/balanceTreeDelete/' + branch_id,function (resp) {
+	    App.get('AccountsData/balanceTreeDelete/',{branch_id:branch_id},function (resp) {
 		if ( resp > 0 ) {
 		    $('#page_accounts_balance_dg').treegrid('remove', branch_id);
 		    App.flash("Удалено: " + resp + " записей " + label);

@@ -313,7 +313,7 @@ class DocumentItems extends DocumentCore{
 	}
     }
     private function duplicateHead($new_doc_id,$old_doc_id){
-	$old_head=$this->get_row("SELECT cstamp,reg_stamp,doc_data,doc_ratio,notcount,inernn,use_vatless_price FROM document_list WHERE doc_id='$old_doc_id'");
+	$old_head=$this->get_row("SELECT cstamp,doc_data,doc_ratio,notcount,use_vatless_price FROM document_list WHERE doc_id='$old_doc_id'");
 	$this->update("document_list", $old_head, ['doc_id'=>$new_doc_id]);
     }
     public $duplicate=['int'];
