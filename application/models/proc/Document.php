@@ -190,10 +190,6 @@ class Document extends Data {
 	    $this->Base->msg("Документ уже проведен!\n");
 	    return false;
 	}
-        if( $this->checkUserPermission( 'nocommit' ) ){
-            $this->Base->msg("Нет прав для операий по складу");
-            return false;
-        }
 	//if ($this->isDebtLimitExceeded()) {
 	//    return false;
 	//}
@@ -254,10 +250,6 @@ class Document extends Data {
 	    $this->Base->set_level(2);
 	if (!$this->isCommited())
 	    return $this->delete();
-        if( $this->checkUserPermission( 'nocommit' ) ){
-            $this->Base->msg("Нет прав для операий по складу");
-            return false;
-        }
 	$doc_id = $this->doc('doc_id');
 	$company_lang = $this->Base->pcomp('language');
 
@@ -349,6 +341,10 @@ class Document extends Data {
 	if (!$amount) {
 	    return false;
 	}
+        if( $this->doc('notcount')==0 && $this->checkUserPermission( 'nocommit' ) ){
+            $this->Base->msg("Нет прав для операий по складу");
+            return false;
+        }
 	$doc_num = $this->doc('doc_num');
 	$this->Base->LoadClass('Stock');
 	if ($this->doc('doc_type') == 1) {//Sell Document
