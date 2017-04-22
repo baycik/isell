@@ -88,7 +88,7 @@ class UpdateInstaller {
 	    return true;//'admin_exists';
 	}
 	$file = str_replace("\\", "/", $this->dirWork . '/install/fresh_db_dump.sql');
-	$this->query("CREATE DATABASE IF NOT EXISTS " . BAY_DB_NAME);
+	$this->query("CREATE DATABASE IF NOT EXISTS " . BAY_DB_NAME." DEFAULT CHARACTER SET utf8");
 	return $this->backupImportExecute($file);
     }
     
