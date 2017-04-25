@@ -8,7 +8,6 @@
  * Author: baycik 2016
  * Author URI: http://isellsoft.com
  */
-include 'models/Catalog.php';
 class Stock_price_list extends Catalog{
     function __construct(){
 	add_action( 'stock_add_tab', function(){
@@ -109,9 +108,9 @@ class Stock_price_list extends Catalog{
 	if( $block->type!='category' ){
 	    return $block;
 	}
-	$pcomp_id=$this->Base->pcomp('company_id');
-	$dollar_ratio=$this->Base->pref('usd_ratio');
-	$main_curr_code=$this->Base->acomp('curr_code');
+	$pcomp_id=$this->Hub->pcomp('company_id');
+	$dollar_ratio=$this->Hub->pref('usd_ratio');
+	$main_curr_code=$this->Hub->acomp('curr_code');
         $sql="SELECT
 		se.product_code,
 		ru product_name,
@@ -172,7 +171,7 @@ class Stock_price_list extends Catalog{
 	    }
 	}
 	$this->price_label=$deployment['deployment']->price_label;
-	$this->Base->load_model('Storage');
+	$this->Hub->load_model('Storage');
 	$price_blocks=[];
 	foreach( $deployment['deployment']->items as $block ){
 	    $price_blocks[]=$this->fillPriceBlocks($block);
@@ -183,13 +182,13 @@ class Stock_price_list extends Catalog{
 	    'title'=>"Прайс Лист",
 	    'view'=>[
 		'price_blocks'=>$price_blocks,
-		'pcomp_label'=>$this->Base->pcomp('label'),
-		'dollar_ratio'=>$this->Base->pref('usd_ratio'),
+		'pcomp_label'=>$this->Hub->pcomp('label'),
+		'dollar_ratio'=>$this->Hub->pref('usd_ratio'),
 		'date'=>date('d.m.Y')
 	    ]
 	];
 	
-	$ViewManager=$this->Base->load_model('ViewManager');
+	$ViewManager=$this->Hub->load_model('ViewManager');
 	$ViewManager->store($dump);
 	$ViewManager->outRedirect($out_type);
     }

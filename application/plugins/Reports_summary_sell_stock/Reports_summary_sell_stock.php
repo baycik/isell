@@ -21,7 +21,7 @@ class Reports_summary_sell_stock extends Catalog{
 	return "$chunks[2]-$chunks[1]-$chunks[0]";
     }
     public function viewGet(){
-	$active_filter=$this->all_active?'':' AND active_company_id='.$this->Base->acomp('company_id');
+	$active_filter=$this->all_active?'':' AND active_company_id='.$this->Hub->acomp('company_id');
 	$reclamation_filter=$this->count_reclamations?'':' AND is_reclamation=0';
         $having=$this->group_by_filter?"HAVING group_by LIKE '%$this->group_by_filter%'":"";
         $sell_buy_table="

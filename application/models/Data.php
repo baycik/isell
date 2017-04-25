@@ -5,6 +5,8 @@ class Data extends Catalog {
     function __construct(){
 	$this->permited_tables = json_decode(file_get_contents('application/config/permited_tables.json', true));
     }
+    
+    public $import=['string'];
     public function import($table_name){
 	if( !$this->checkTable($table_name) ){
 	    return false;
@@ -41,7 +43,7 @@ class Data extends Catalog {
 
     private function checkTable($table_name) {
 	foreach ($this->permited_tables as $table) {
-	    if ( isset($table->level) && $this->Base->svar('user_level') < $table->level){
+	    if ( isset($table->level) && $this->Hub->svar('user_level') < $table->level){
 		continue;
             }
 	    if ($table_name == $table->table_name){
@@ -51,10 +53,11 @@ class Data extends Catalog {
 	return false;
     }
 
+    public $permitedTableList=[];
     public function permitedTableList() {
 	$table_list = [];
 	foreach ($this->permited_tables as $table) {
-	    if (isset($table->level) && $this->Base->svar('user_level') < $table->level || isset($table->hidden) && $table->hidden){
+	    if (isset($table->level) && $this->Hub->svar('user_level') < $table->level || isset($table->hidden) && $table->hidden){
 		continue;
             }
 	    $table_list[] = $table;
@@ -62,12 +65,15 @@ class Data extends Catalog {
 	return $table_list;
     }
     
+    public $tableStructure=['string'];
     public function tableStructure($table_name){
 	if( !$this->checkTable($table_name) ){
 	    return false;
 	}
 	return $this->get_list("SHOW FULL COLUMNS FROM $table_name");
     }
+    
+    public $tableData=['string'];
     public function tableData($table_name,$having=null){
 	if( !$this->checkTable($table_name) ){
 	    return false;
@@ -86,8 +92,10 @@ class Data extends Catalog {
 		    'total'=>$this->get_value("SELECT COUNT(*) FROM $table_name WHERE $having")
 		];
     }
+    
+    public $tableRowsDelete=['string'];
     public function tableRowsDelete($table_name){
-	$this->Base->set_level(3);
+	$this->Hub->set_level(3);
 	if( !$this->checkTable($table_name) ){
 	    return false;
 	}
@@ -98,8 +106,10 @@ class Data extends Catalog {
 	}
 	return $deleted;
     }
+    
+    public $tableRowCreateUpdate=['string'];
     public function tableRowCreateUpdate($table_name){
-	$this->Base->set_level(3);
+	$this->Hub->set_level(3);
 	if( !$this->checkTable($table_name) ){
 	    return false;
 	}
@@ -114,6 +124,8 @@ class Data extends Catalog {
 	}
 	return $this->update($table_name, $data, $rowKey) || $ok_created;
     }
+    
+    public $tableViewGet=['string'];
     public function tableViewGet($table_name){
 	$out_type=$this->request('out_type');
 	
@@ -124,7 +136,7 @@ class Data extends Catalog {
 	    'tpl_files'=>'/GridTpl.xlsx',
 	    'title'=>"Экспорт таблицы",
 	    'user_data'=>[
-		'email'=>$this->Base->svar('pcomp')?$this->Base->svar('pcomp')->company_email:'',
+		'email'=>$this->Hub->svar('pcomp')?$this->Hub->svar('pcomp')->company_email:'',
 		'text'=>'Доброго дня'
 	    ],
 	    'struct'=>$this->tableStructure($table_name),
@@ -132,7 +144,7 @@ class Data extends Catalog {
 		'rows'=>$table['rows']
 	    ]
 	];
-	$ViewManager=$this->Base->load_model('ViewManager');
+	$ViewManager=$this->Hub->load_model('ViewManager');
 	$ViewManager->store($dump);
 	$ViewManager->outRedirect($out_type);
     }

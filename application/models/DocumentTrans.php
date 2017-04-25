@@ -1,73 +1,31 @@
 <?php
-require_once 'DocumentUtils.php';
-class DocumentTrans extends DocumentUtils{
-    ///////////////////////////////////////
-    //EXPERIMENTAL
-    ///////////////////////////////////////
-    private $docTypeConfig=[
-	1=>[
-	    'name'	=>"Расходный документ",
-	    'total'	=>'361_702',
-	    'vat'	=>'702_641',
-	    'vatless'	=>'702_791',
-	    'self'	=>'791_281',
-	    'profit'	=>'791_441'
-	],
-	2=>[
-	    'name'	=>"Приходный документ",
-	    'total'	=>'63_631',
-	    'vat'	=>'641_63',
-	    'vatless'	=>'',
-	    'self'	=>'281_63',
-	    'profit'	=>''
-	]
-    ];
-    ///////////////////////////////////////
-    //EXPERIMENTAL
-    ///////////////////////////////////////
-    private function docTotalsGet(){
+require_once 'DocumentBase.php';
+class DocumentTrans extends DocumentBase{
+    private function transSelfCorrect(){
+	
+	do_action("document_".$this->doc('doc_type')."_update_trans",$this);
+    }
+    private function transChangeCurrRatio( $new_ratio ){
 	$doc_id=$this->doc('doc_id');
-	$doc_vat_rate=$this->doc('vat_rate');
-	$sql="
-	    SELECT
-		total,
-		vatless,
-		self,
-		total-vatless vat,
-		vatless-self profit
-	    FROM
-		(SELECT
-		    SUM(ROUND(product_quantity*invoice_price*(1+$doc_vat_rate/100),2)) total,
-		    SUM(ROUND(product_quantity*invoice_price,2)) vatless,
-		    SUM(ROUND(product_quantity*self_price,2)) self
-		FROM
-		    document_entries
-		WHERE doc_id='$doc_id') t";
-	return $this->get_row($sql);
+	$old_ratio=$this->doc('doc_ratio');
+	$change_ratio=$new_ratio/$old_ratio;
+	$default_currency=$this->Hub->acomp('curr_code');
+	$price_label=$this->Hub->pcomp('price_label');
+	$sql="UPDATE
+		document_entries de
+		    JOIN
+		price_list pl ON de.product_code=pl.product_code AND price_label='$price_label' AND curr_code<>'' AND curr_code<>'$default_currency'
+	    SET
+		invoice_price=ROUND(invoice_price*$change_ratio,2)
+	    WHERE
+		doc_id=$doc_id";
+	$this->query($sql);
+	$this->transCorrectSelf();
     }
-    ///////////////////////////////////////
-    //EXPERIMENTAL
-    ///////////////////////////////////////
-    private function docTransGet(){
-	$doc_id=$this->doc('doc_id');
-	$sql="
-	    SELECT
-		trans_id,
-		type
-	    FROM
-		document_trans";
-	return $this->get_row($sql);	
+    private function transChangeVatRate( $new_rate ){
+	do_action("document_".$this->doc('doc_type')."_update_trans",$this);
     }
-    ///////////////////////////////////////
-    //EXPERIMENTAL
-    ///////////////////////////////////////
-    public function docTransUpdate( $doc_id ){
-	$this->selectDoc($doc_id);
-	if( !$this->isCommited() ){
-	    return false;
-	}
-	$totals=$this->docTotalsGet();
-	$docTrans=$this->docTransGet();
+    private function transChangeNotcount($value){
+	
     }
-
 }

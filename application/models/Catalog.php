@@ -1,6 +1,6 @@
 <?php
 
-class Catalog extends CI_Model {
+abstract class Catalog extends CI_Model {
     public $min_level=1;
     protected function check( &$var, $type=null ){
 	switch( $type ){
@@ -16,7 +16,7 @@ class Catalog extends CI_Model {
 		$var=(bool) $var;
 		break;
 	    case 'escape':
-		$var=$this->db->escape($var);
+		$var=$this->db->escape_identifiers($var);
 		break;
 	    case 'string':
                 $var=  addslashes( $var );
@@ -34,7 +34,7 @@ class Catalog extends CI_Model {
 		}
 	}
     }
-    protected function request( $name, $type=null, $default=null ){
+    public function request( $name, $type=null, $default=null ){
 	$value=$this->input->get_post($name);
 	if( $value!==null ){
 	    $this->check($value,$type);
@@ -49,16 +49,16 @@ class Catalog extends CI_Model {
     private function check_error(){
 	$error = $this->db->error();
 	if( $error['code'] ){
-	    $this->Base->db_msg();
+	    $this->Hub->db_msg();
 	    return true;
 	}
         return false;
     }
-    protected function query( $query ){
+    protected function query( $query, $error_warn=true ){
 	if(is_string($query)){
 	    $query=$this->db->query($query);
 	}
-        if( $this->check_error() ){
+        if( $error_warn && $this->check_error() ){
             return NULL;
         }
         return $query;
@@ -98,7 +98,7 @@ class Catalog extends CI_Model {
     protected function create($table,$data) {
 	$this->db->insert($table, $data);
 	$newid=$this->db->insert_id();
-	$ok=!!$this->db->affected_rows();
+	$ok=$this->db->affected_rows()>0;
         $this->check_error();
 	return $newid?$newid:$ok;
     }
@@ -168,7 +168,7 @@ class Catalog extends CI_Model {
     protected function treeUpdate($table,$branch_id,$field,$value,$calc_top_id=false) {
 	if( $field=='parent_id' && $this->treeisLeaf($table,$value) || $field=='label' && !$value ){
 	    /*parent must be not leaf and label should not be empty*/
-            $this->Base->msg($field=='parent_id'?"Not folder":"Label should not be empty");
+            $this->Hub->msg($field=='parent_id'?"Not folder":"Label should not be empty");
 	    return false;
 	}
 	if( $field=='parent_id' && $branch_id==$value ){
@@ -238,10 +238,20 @@ class Catalog extends CI_Model {
 	if( !is_array($filter) || count($filter)===0 ){
 	    return 1;
 	}
-	$having=array();
+	$having=[];
 	foreach( $filter as $rule ){
 	    $having[]="$rule->field LIKE '%$rule->value%'";
 	}
-	return implode(' AND ',$having);
+	return implode(' AND ',$having);	
+    }
+    protected function makeFilter($filter){
+	if( !$filter ){
+	    return 1;
+	}
+	$having=[];
+	foreach( $filter as $field=>$value ){
+	    $having[]="$field LIKE '%$value%'";
+	}
+	return implode(' AND ',$having);	
     }
 }

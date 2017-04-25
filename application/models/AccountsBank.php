@@ -2,11 +2,10 @@
 require_once 'AccountsData.php';
 class AccountsBank extends AccountsData{
     public $min_level=3;
+    
+    public $clientBankGet=[ 'main_acc_code'=>['string',0], 'page'=>['int',1], 'rows'=>['int',30] ];
     public function clientBankGet( $main_acc_code=0, $page=1, $rows=30 ){
-        $this->check($main_acc_code);
-        $this->check($page,'int');
-        $this->check($rows,'int');
-	$active_company_id=$this->Base->acomp('company_id');
+	$active_company_id=$this->Hub->acomp('company_id');
         
 	$having=$this->decodeFilterRules();
 	$offset=$page>0?($page-1)*$rows:0;
@@ -36,11 +35,11 @@ class AccountsBank extends AccountsData{
 	return $totals;
     }
     
-    public function getCorrespondentStats(){
-	$check_id=$this->request('check_id','int',0);
+    public $getCorrespondentStats=['check_id'=>['int',0]];
+    public function getCorrespondentStats($check_id){
 	$check=$this->getCheck($check_id);
 	
-        $Company=$this->Base->load_model("Company");
+        $Company=$this->Hub->load_model("Company");
         $company_id=$Company->companyFindByCode( $check->correspondent_code, $check->correspondent_code );
 	if( !$company_id ){
 	    return null;
@@ -63,8 +62,8 @@ class AccountsBank extends AccountsData{
     }
     
     private function appendSuggestions( &$acc, $check ){
-	$active_company_id=$this->Base->acomp('company_id');
-	$passive_company_id=$this->Base->pcomp('company_id');
+	$active_company_id=$this->Hub->acomp('company_id');
+	$passive_company_id=$this->Hub->pcomp('company_id');
 	$sql="SELECT 
 		    at.*,
                     ROUND(at.amount,2) amount, 
@@ -87,8 +86,8 @@ class AccountsBank extends AccountsData{
 	return $acc;
     }
     
+    public $checkDelete=['check_id'=>'int'];
     public function checkDelete( $check_id ){
-	$this->check($check_id,'int');
 	$check=$this->getCheck($check_id);
 	if( $check->trans_id ){
 	    $this->transDelete($check->trans_id);
@@ -100,6 +99,7 @@ class AccountsBank extends AccountsData{
      * IMPORT OF FILE .csv
      */
     
+    public $up=['string'];
     public function up( $main_acc_code ){
 	if( $_FILES['upload_file'] && !$_FILES['upload_file']['error'] ){
 	    if ( strrpos($_FILES['upload_file']['name'], '.csv') ){
@@ -114,7 +114,7 @@ class AccountsBank extends AccountsData{
 	$csv = iconv('Windows-1251', 'UTF-8', $csv_raw);
 	$csv_lines = explode("\n", $csv);
 	array_shift($csv_lines);
-	$csv_sequence=explode(',',str_replace( '-', '_', $this->Base->pref('clientbank_fields') ));
+	$csv_sequence=explode(',',str_replace( '-', '_', $this->Hub->pref('clientbank_fields') ));
 	foreach ($csv_lines as $line) {
 	    if ( !$line ){
 		continue;
@@ -132,7 +132,7 @@ class AccountsBank extends AccountsData{
     
     private function addCheckDocument($check, $main_acc_code) {
 	error_reporting(E_ERROR | E_WARNING | E_PARSE);
-	$active_company_id=$this->Base->acomp('company_id');
+	$active_company_id=$this->Hub->acomp('company_id');
         $fields = ['number','date','value_date','debit_amount','credit_amount','assumption_date','currency','transaction_date','client_name','client_code','client_account','client_bank_name','client_bank_code','correspondent_name','correspondent_code','correspondent_account','correspondent_bank_name','correspondent_bank_code','assignment'];
         $set = ["active_company_id='$active_company_id'","main_acc_code='$main_acc_code'"];
         foreach ($fields as $field) {
@@ -154,30 +154,25 @@ class AccountsBank extends AccountsData{
      * VIEW OUT
      */
 
-    public function cbankViewGet(){
-	$page=$this->request('page','int');
-	$rows=$this->request('rows','int');
-	$main_acc_code=$this->request('main_acc_code');
-	$out_type=$this->request('out_type');
-	
+    public $cbankViewGet=['page'=>'int','rows'=>'int','main_acc_code'=>'string','out_type'=>'string'];
+    public function cbankViewGet($page,$rows,$main_acc_code,$out_type){
 	$dump=$this->fillDump($main_acc_code, $page, $rows);
-	
-	$ViewManager=$this->Base->load_model('ViewManager');
+	$ViewManager=$this->Hub->load_model('ViewManager');
 	$ViewManager->store($dump);
 	$ViewManager->outRedirect($out_type);	
     }
     private function fillDump($main_acc_code, $page, $rows){
 	$table=$this->clientBankGet($main_acc_code, $page, $rows);
 	$dump=[
-	    'tpl_files'=>$this->Base->acomp('language').'/CheckList.xlsx',
+	    'tpl_files'=>$this->Hub->acomp('language').'/CheckList.xlsx',
 	    'title'=>"Платежные поручения",
 	    'user_data'=>[
-		'email'=>$this->Base->svar('pcomp')?$this->Base->svar('pcomp')->company_email:'',
+		'email'=>$this->Hub->svar('pcomp')?$this->Hub->svar('pcomp')->company_email:'',
 		'text'=>'Доброго дня'
 	    ],
 	    'view'=>[
-		'a'=>$this->Base->svar('acomp'),
-		'user_sign'=>$this->Base->svar('user_sign'),
+		'a'=>$this->Hub->svar('acomp'),
+		'user_sign'=>$this->Hub->svar('user_sign'),
 		'table'=>$table
 	    ]
 	];

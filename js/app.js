@@ -9,31 +9,25 @@ var App = {
 	App.onReady && App.onReady();
     },
     flash:function (msg, type) {
-	if (type === 'error') {
-	    if( App.user && App.user.props.user_login==='baycik' ){
-		$("#appStatus").html('<pre style="white-space: pre-wrap">'+msg+'</pre>');
-		$("#appStatus").window({
-		    title: 'Ошибка',
-		    width: 800,
-		    height: 300
-		});
-		$("#appStatus").window('move', {top: 0});		
-	    } else {
-		console.log(msg);
-	    }
-	}
-	else if (type === 'alert') {
-	    $.messager.alert('Внимание!', msg, 'error');
-	}
-	else {
-	    clearTimeout(App.flashClock);
-	    App.flashClock = setTimeout(function () {
-		$.messager.show({title: 'Сообщение', msg: App.msg, showType: 'show'});
-		App.msg = '';
-	    }, 300);
-	    App.msg = (App.msg || '') + msg + '<br>';
-	}
+	clearTimeout(App.flashClock);
+	App.flashClock = setTimeout(function () {
+	    $.messager.show({ msg: App.msg, showType: 'slide',width:300,height:150});
+	    App.msg = '';
+	}, 300);
+	App.msg = (App.msg || '') + App.translate(msg) + '<br>';
     },
+    translate:function(msg){
+	var translated=[];
+	var lines=msg.split("\n");
+	for(var i in lines){
+	    translated.push(App.lang(lines[i]));
+	}
+	return translated.join("\n");
+    },
+    lang:function(word){
+	return App.vocab[word] || word;
+    },
+    vocab:{},
     setTitle:function( title ){
         this.title = title||this.title||'';
         var title_data={
@@ -58,14 +52,13 @@ var App = {
 		if( href ){
 		    var id = href.replace(/\//g, '_').replace('.html', '');
 		    if( App[id] ){
-			if( !$("#" + id).length ){
-			    panel.wrapInner('<div id="'+id+'" style="padding:0px"></div>');
-			    panel.css('padding','5px');
-			}
-			App[id].data={inline:true};
-			App[id].node=$("#" + id);
-			App[id].init && App[id].init();
-			App[id].initAfter && App[id].initAfter();
+//			if( !$("#" + id).length ){
+//			    panel.wrapInner('<div id="'+id+'" style="padding:0px"></div>');
+//			    panel.css('padding','5px');
+//			}
+			App.require(App[id].require,function(){
+			    App.initModule(id,{inline:true},null);
+			});
 		    }
 		}
 	    }
@@ -81,7 +74,7 @@ var App = {
 	    App[id].parsed=true;
 	}
 	App[id].initAfter ? App[id].initAfter(data, handler) : '';
-	handler.notify('inited',App[id]);
+	handler&&handler.notify('inited',App[id]);
     },
     loadModule: function ( path, data, id_new, id_search, id_replace ) {
 	var id = id_new?id_new:path.replace(/\//g, '_');
@@ -91,11 +84,15 @@ var App = {
 	} else {
 	    App[id] = {};
 	    $.get(path + '.html',function(html){
-		//var id_replace=id_replace||(id_new+"$2");
 		html=id_search?html.replace(id_search,id_replace):html;
-		//console.log(html);
 		App.setHTML("#"+id,html);
-		App.initModule(id,data,handler);
+		if(App[id].require){
+		    App.require(App[id].require,function(){
+			App.initModule(id,data,handler);
+		    });
+		} else {
+		    App.initModule(id,data,handler);
+		}
 	    });   
 	}
 	return handler.promise();	
@@ -129,6 +126,46 @@ var App = {
     post:function(){
 	this.sequence.push({type:'post',args:arguments});
 	this.seqNext();
+    },
+    loadedScripts:[],
+    require:function(urls,callback){
+	if(!urls){
+	    callback&&callback();
+	    return false;
+	}
+	var filesLeft=urls.length;
+	function ok(){
+	    if( --filesLeft<=0){
+		callback&&callback();
+	    }
+	}
+	for(var i in urls){
+	    var url=urls[i];
+	    if( App.loadedScripts.indexOf(url)>-1 ){
+		ok();
+	    }
+	    App.loadedScripts.push(url);
+	    $.ajax({url: url,dataType: "script",cache: true,async:true}).done(ok);
+	}
+    },
+    include:function(urls,callback){
+	var filesLeft=urls.length;
+	function ok(){
+	    if( --filesLeft<=0){
+		callback&&callback();
+	    }
+	}
+	for(var i in urls){
+	    var url=urls[i];
+	    if( App.loadedScripts.indexOf(url)>-1 ){
+		ok();
+	    }
+	    App.loadedScripts.push(url);
+	    var script = document.createElement('script');
+	    script.src = url;
+	    script.onload = ok;
+	    document.head.appendChild(script); //or something of the likes
+	}	
     }
 };
 
@@ -355,7 +392,7 @@ $(document).ajaxComplete(function (event, xhr, settings) {
     if( xhr.statusText==='error' ){
 
     }
-    else if( settings.crossDomain===false ){
+    else if( settings.crossDomain===false && settings.dataType!=='script' ){
 	var type = xhr.getResponseHeader('X-isell-type');
 	var msg = xhr.getResponseHeader('X-isell-msg');
 	if (msg) {
@@ -372,18 +409,9 @@ $(document).ajaxComplete(function (event, xhr, settings) {
 	    }
 	}
 	else if (!type || type.indexOf('error') > -1 || type.indexOf('OK') === -1) {
-	    //alert( xhr.responseText );
-	    App.flash("<h3>url: " + settings.url + "</h3><big>" + xhr.responseText+"</big>", 'error');
+	    console.log('error',xhr.responseText);
 	}
     }
-});
-$(document).ajaxError(function (event, xhr, settings) {
-    $("#app_busy").hide();
-    var type = xhr.getResponseHeader('X-isell-type');
-    if (type && type.indexOf('OK') > -1 || settings.crossDomain===true) {
-	return;
-    }
-    console.log("HTTP ERROR\n" + settings.url + "\n"+xhr.responseText);
 });
 $(document).ajaxSend(function () {
     $("#app_busy").show();
@@ -414,6 +442,255 @@ $.fn.datebox.defaults.parser = function (input) {
 Mark.pipes.format = function (str) {
     return App.formatNum(str);
 };
+
+
+	    App.user = {
+		props: {},
+		signedIn:false,
+		getData: function () {
+		    App.get("User/getUserData", function (resp) {
+			App.user.setProps( App.json(resp) );
+		    });
+		},
+		setProps:function( userProps ){
+		    App.user.props=userProps;
+		    App.user.setActiveCompany(userProps.acomp,'notify_init');
+		    App.user.setPassiveCompany(userProps.pcomp,'notify_init');
+		    if( userProps && userProps.user_level>0 ){
+			App.renderTpl('div_user_panel', App.user.props || '');	
+			App.renderTpl('div_module_list', App.user.props || '');
+			this.signedIn=true;
+			this.loginFormHide();
+			App.module.init();
+		    } else {
+			this.signedIn=false;
+			this.loginFormShow();
+		    }
+		},
+		getLevel:function(){
+		    return App.user.props && App.user.props.user_level>0?App.user.props.user_level:0;
+		},
+		signIn: function () {
+		    var user_login=$("#user_login").val();
+		    var user_pass=$("#user_pass").val();
+		    App.post("User/SignIn",{login:user_login,pass:user_pass},function(resp){
+			var props=App.json(resp);
+			if( props ){
+			    $("#SeqDialogMsg").html("");
+			    App.user.setProps( props );
+			} else {
+			    $("#SeqDialogMsg").html("Логин или пароль не верны!").css('color','red').css('font-size','14px');
+			}
+		    });
+		},
+		signOut: function () {
+		    App.get("User/SignOut");
+		    this.setProps({});
+		},
+                edit:function(){
+                    App.post("User/userFetch",function(resp){
+                        var props=App.json(resp);
+                        App.user.promptEditor(props);
+                    });
+                },
+                promptEditor:function( user ){
+                    App.loadWindow('page/dialog/user_edit',user).progress(function(status,user_data){
+                        if( status==='submit' ){
+                            App.post("User/save",user_data,function(ok){
+                                if( ok*1 ){
+                                    App.user.getData();
+                                    App.flash("Свойства пользователя сохранены");
+                                } else {
+                                    if( ok==='LAST_ADMIN' ){
+                                        alert("Должен остаться хотя бы один администратор.");
+                                    }
+                                    App.flash("Свойства пользователя не изменены");
+                                }
+                            });
+                        }
+                    });
+                },
+                loginFormShow: function () {
+		    $("#loginScreen,#loginOverlay").show();
+		    $("#user_login").focus();
+		},
+		loginFormHide: function () {
+		    $("#loginScreen,#loginOverlay").hide();
+		},
+                acompSwitch:function(){
+                    App.get("Company/switchActiveCompany",function(resp){
+                        var company=App.json(resp);
+			App.user.setActiveCompany(company);
+                    });
+                },
+		pcompSelectionDialog:function(){
+		    App.loadWindow('page/company/tree',{}).progress(function(status,comp){
+			if( status==='select' ){
+			    App.user.pcompSelect(comp);
+			}
+		    });
+		},
+		pcompSelect: function ( company ) {
+		    var company_id=company.company_id||0;
+		    if( App.pcomp && App.pcomp.company_id===company_id ){
+			return;
+		    }
+		    App.post('Company/selectPassiveCompany/' + company_id, function (xhr) {
+			App.user.setPassiveCompany(App.json(xhr));
+		    });
+		},
+		setPassiveCompany:function( company, mode ){
+                    var old_pcomp_id=App.pcomp?App.pcomp.company_id:0;
+		    App.pcomp=company;
+		    if( company ){
+                        if( company.company_id===old_pcomp_id ){
+                            App.handler.notify('passiveCompanyReloaded',company);
+			    App.Topic('passiveCompanyReloaded').publish(company);
+                            return;
+                        }
+			App.Topic('passiveCompanySelected').publish(company);
+			if( mode==='notify_init' ){
+			    App.handler.notify('passiveCompanyInited',company);
+			    
+                            return;
+			}
+			App.handler.notify('passiveCompanySelected',company);
+		    } else {
+			App.handler.notify('passiveCompanyReset');
+			App.Topic('passiveCompanyReset').publish();
+			App.Topic('passiveCompanySelected').unsubscribe();
+		    }
+		},
+		setActiveCompany:function( company, mode ){
+                    var old_acomp_id=App.acomp?App.acomp.company_id:0;
+		    App.acomp=company;
+		    if( company ){
+                        if( company.company_id===old_acomp_id ){
+                            App.handler.notify('activeCompanyReloaded',company);
+                            return;
+                        }
+			setTimeout(function(){
+			    App.loadBg();
+			},0);
+			App.Topic('activeCompanySelected').publish(company);
+			if( mode==='notify_init' ){
+			    App.handler.notify('activeCompanyInited',company);
+                            return;
+			}
+			App.handler.notify('activeCompanySelected',company);
+			
+		    } else {
+			App.handler.notify('activeCompanyReset');
+			App.Topic('activeCompanyReset').publish();
+		    }
+		}
+	    };
+	    App.handler.progress(function(status){
+		//console.log(status);
+	    });
+	    App.topics={};
+	    App.Topic = function (id) {
+		var callbacks, topic = id && App.topics[ id ];
+		if (!topic) {
+		    callbacks = jQuery.Callbacks("memory");
+		    topic = {
+			publish: callbacks.fire,
+			subscribe: callbacks.add,
+			unsubscribe: callbacks.remove
+		    };
+		    if (id) {
+			App.topics[ id ] = topic;
+		    }
+		}
+		return topic;
+	    };
+	    
+	    App.module={
+		init:function(){
+		    $(window).bind( 'hashchange', function(e) {
+			App.module.load(location.hash.substring(1));
+		    });
+		    if( !location.hash ){
+			location.hash="#"+App.user.props.module_list[0].name;
+		    }
+		    App.module.load(location.hash.substring(1));
+		},
+		load:function(name){
+		    if( this.current === name ){
+			return false;
+		    }
+		    //$("#holder"+this.current).hide();
+                    $("#holder"+this.current).css('height','0px');
+                    $("#holder"+this.current).css('overflow','hidden');
+		    this.current=name;
+		    var holder=$("#holder"+this.current);
+		    if( !holder.length ){
+			$("#ModuleContainer").append('<div id="holder' + this.current + '"></div>');
+			holder=$("#holder"+this.current);
+		    }
+		    //holder.show();
+                    holder.css('height','auto');
+		    this.loadHTML(holder);
+		    this.findTitle();
+		    this.selectButton();
+		},
+		loadHTML:function(holder){
+		    var url="page/"+this.current+"/"+this.current+"_main.html";
+		    if( !holder.html() ){
+			holder.load(url,function(){
+			    App.module.initHTML();
+			});
+		    }	
+		},
+		initHTML:function(){
+		    setTimeout(function(){
+			App.module.parseHTML();
+			$("#holder"+this.current).find("script").each(function() { eval(this.text);} );
+			window[App.module.current + 'Js'] && window[App.module.current + 'Js'].init && window[App.module.current + 'Js'].init(); 		    
+		    },0);
+		},
+		parseHTML:function(){
+		    $.parser.parse("#holder"+App.module.current);//for easy ui   
+		},
+		findTitle:function(){
+		    App.user.props.module_list.forEach(function(item){
+			if( item.name===App.module.current ){
+			    App.setTitle(item.label);
+			    return false;
+			}
+		    });
+		},
+		selectButton:function(){
+		    $(".ModuleButtonSelected").removeClass("ModuleButtonSelected");
+		    $("#"+this.current+"Button").addClass("ModuleButtonSelected");
+		}
+	    };
+	    App.onReady = function () {
+		App.user.getData();
+                App.handler.progress(function(status){
+                    if( status==='passiveCompanySelected' || status==='activeCompanySelected' ){
+                        App.setTitle();
+                    }
+                });
+	    };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -478,3 +755,8 @@ $.extend($.fn.datagrid.defaults, {
 	}
     }
 });
+
+
+
+
+

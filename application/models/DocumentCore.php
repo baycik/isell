@@ -1,10 +1,8 @@
 <?php
 require_once 'DocumentUtils.php';
 class DocumentCore extends DocumentUtils{
+    public $listFetch=['int','int','string'];
     public function listFetch( $page=1, $rows=30, $mode='' ){
-	$this->check($page,'int');
-	$this->check($rows,'int');
-	$this->check($mode);
 	$offset=($page-1)*$rows;
 	if( $offset<0 ){
 	    $offset=0;
@@ -12,17 +10,17 @@ class DocumentCore extends DocumentUtils{
 	$having=$this->decodeFilterRules();
 	$andwhere='';
 	if( $mode==='show_only_pcomp_docs' ){
-	    $pcomp_id=$this->Base->pcomp('company_id');
+	    $pcomp_id=$this->Hub->pcomp('company_id');
             if( !$pcomp_id ){
                 return [];
             }
 	    $andwhere.=" AND passive_company_id=$pcomp_id";
 	}
-	$assigned_path=  $this->Base->svar('user_assigned_path');
+	$assigned_path=  $this->Hub->svar('user_assigned_path');
 	if( $assigned_path ){
 	    $andwhere.=" AND path LIKE '$assigned_path%'";
 	}
-	$active_company_id=$this->Base->acomp('company_id');
+	$active_company_id=$this->Hub->acomp('company_id');
 	$sql="
 	    SELECT 
 		doc_id,
@@ -63,28 +61,29 @@ class DocumentCore extends DocumentUtils{
 	$total_estimate=$offset+(count($result_rows)==$rows?$rows+1:count($result_rows));
 	return array('rows'=>$result_rows,'total'=>$total_estimate);
     }
+    public $createDocument=['string'];
     public function createDocument( $doc_type=null ){
-	$pcomp_id=$this->Base->pcomp('company_id');
+	$pcomp_id=$this->Hub->pcomp('company_id');
 	if( $pcomp_id ){
-	    $Document2=$this->Base->bridgeLoad('Document');
+	    $Document2=$this->Hub->bridgeLoad('Document');
 	    return $Document2->add($doc_type);
 	}
 	return 0;
     }
     protected function headDefGet() {
         $this->selectDoc(0);
-	$active_company_id=$this->Base->acomp('company_id');
-	$passive_company_id = $this->Base->pcomp('company_id');
+	$active_company_id=$this->Hub->acomp('company_id');
+	$passive_company_id = $this->Hub->pcomp('company_id');
         $def_head=[
 	    'doc_id'=>0,
             'doc_date'=>date('d.m.Y'),
             'doc_num'=>0,
             'doc_data'=>'',
-            'doc_ratio'=>$this->Base->pref('usd_ratio'),
-            'label'=>$this->Base->pcomp('label'),
+            'doc_ratio'=>$this->Hub->pref('usd_ratio'),
+            'label'=>$this->Hub->pcomp('label'),
             'passive_company_id'=>$passive_company_id,
-            'curr_code'=>$this->Base->pcomp('curr_code'),
-            'vat_rate'=>$this->Base->acomp('company_vat_rate'),
+            'curr_code'=>$this->Hub->pcomp('curr_code'),
+            'vat_rate'=>$this->Hub->acomp('company_vat_rate'),
             'doc_type'=>1,
             'signs_after_dot'=>3
         ];
@@ -106,6 +105,7 @@ class DocumentCore extends DocumentUtils{
         $def_head['doc_num']=$this->getNextDocNum($def_head['doc_type']);
         return $def_head;
     }
+    public $headGet=['int'];
     public function headGet( $doc_id ){
         $this->check($doc_id,'int');
 	if( $doc_id==0 ){
@@ -156,14 +156,8 @@ class DocumentCore extends DocumentUtils{
 	}
 	return true;
     }
-    public function headUpdate( $field=null, $new_val=null ){
-        if( $field==null && $new_val==null ){
-            $field=$this->request('field');
-            $new_val=$this->request('new_val');
-        } else {
-            $this->check($field);
-            $this->check($new_val);
-        }
+    public $headUpdate=['field'=>'string','new_val'=>'string'];
+    public function headUpdate( $field, $new_val){
 	switch( $field ){
 	    case 'doc_ratio':
 		$field='ratio';
@@ -191,7 +185,7 @@ class DocumentCore extends DocumentUtils{
 		return $this->setExtraExpenses($new_val);
 	}
 	//$new_val=  rawurldecode($new_val);
-	$Document2=$this->Base->bridgeLoad('Document');
+	$Document2=$this->Hub->bridgeLoad('Document');
 	return $Document2->updateHead($new_val,$field);
     }
     private function setExtraExpenses($expense){//not beautifull function at all

@@ -131,7 +131,8 @@
 	},
 	fav:{
 	    load:function(){
-		App.get("AccountsData/accountFavoritesFetch/0/1",function(resp){
+		var param={use_passive_filter:0,get_client_bank_accs:1};
+		App.get("AccountsData/accountFavoritesFetch",param,function(resp){
 		    var favs=App.json(resp);
 		    if( favs[0] ){
 			App.renderTpl('cbank_favorites',{favs:favs});	
@@ -159,8 +160,9 @@
 		if( Cbank.main_acc_code ){
 		    Cbank.current_page=param.page;
 		    Cbank.current_rows=param.rows;
-		    Cbank.filterRules=param.filterRules,
-		    App.get(App.uri('AccountsBank', 'clientBankGet', Cbank.main_acc_code, Cbank.current_page, Cbank.current_rows), {filterRules: param.filterRules}, function (xhr) {
+		    Cbank.filterRules=param.filterRules;
+		    param.main_acc_code=Cbank.main_acc_code;
+		    App.get('AccountsBank/clientBankGet',param, function (xhr) {
 			var resp = App.json(xhr);
 			var rows=Cbank.list.addBalanceRows(resp);
 			success(rows);

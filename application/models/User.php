@@ -3,53 +3,54 @@
 require_once 'Catalog.php';
 class User extends Catalog {
     public $min_level=0;
-    public function SignIn($login=null,$pass=null){
-	if( !$login || !$pass ){
-	    $login=$this->input->post('login');
-	    $pass=$this->input->post('pass');
-	}
-	$this->check($login,'^[a-zA-Z_0-9]*$');
-	$this->check($pass,'^[a-zA-Z_0-9]*$');
+    public $SignIn=['login'=>'^[a-zA-Z_0-9]*$','pass'=>'^[a-zA-Z_0-9]*$'];
+    public function SignIn($login,$pass){
 	if( !$login || !$pass ){
 	    //allow empty pass
-	    $this->Base->kick_out();
+	    $this->Hub->kick_out();
 	    return false;
 	}
 	$pass_hash = md5($pass);
 	$user_data = $this->get_row("SELECT * FROM user_list WHERE user_login='$login' AND user_pass='$pass_hash'");
 	if ($user_data && $user_data->user_id) {
-	    $this->Base->svar('user_id', $user_data->user_id);
-	    $this->Base->svar('user_level', $user_data->user_level);
-	    $this->Base->svar('user_level_name', $this->Base->level_names[$user_data->user_level]);
-	    $this->Base->svar('user_login', $user_data->user_login);
-	    $this->Base->svar('user_sign', $user_data->user_sign);
-	    $this->Base->svar('user_position', $user_data->user_position);
-            $this->Base->svar('user_assigned_stat',$user_data->user_assigned_stat);
-            $this->Base->svar('user_assigned_path',$user_data->user_assigned_path);
-            $this->Base->svar('user',$user_data);
-            
-            $Company=$this->Base->load_model("Company");
-	    if( $user_data->company_id ){
-		$Company->selectActiveCompany($user_data->company_id);
-	    } else {
-		$Company->switchActiveCompany();
-	    }
+	    $this->initLoggedUser($user_data);
 	    return $this->getUserData();
 	}
 	return false;
     }
+    
+    private function initLoggedUser($user_data){
+	$this->Hub->svar('user_id', $user_data->user_id);
+	$this->Hub->svar('user_level', $user_data->user_level);
+	$this->Hub->svar('user_level_name', $this->Hub->level_names[$user_data->user_level]);
+	$this->Hub->svar('user_login', $user_data->user_login);
+	$this->Hub->svar('user_sign', $user_data->user_sign);
+	$this->Hub->svar('user_position', $user_data->user_position);
+	$this->Hub->svar('user_assigned_stat',$user_data->user_assigned_stat);
+	$this->Hub->svar('user_assigned_path',$user_data->user_assigned_path);
+
+	$Company=$this->Hub->load_model("Company");
+	if( $user_data->company_id ){
+	    $Company->selectActiveCompany($user_data->company_id);
+	} else {
+	    $Company->switchActiveCompany();
+	}
+	$this->Hub->pluginInitTriggers();
+    }
+    public $SignOut=[];
     public function SignOut(){
         $_SESSION = array();
 	return true;
     }
+    public $getUserData=[];
     public function getUserData(){
 	return [
-	    'user_id'=>$this->Base->svar('user_id'),
-	    'user_login'=>$this->Base->svar('user_login'),
-	    'user_level'=>$this->Base->svar('user_level'),
-	    'user_level_name'=>$this->Base->svar('user_level_name'),
-	    'acomp'=>$this->Base->svar('acomp'),
-	    'pcomp'=>$this->Base->svar('pcomp'),
+	    'user_id'=>$this->Hub->svar('user_id'),
+	    'user_login'=>$this->Hub->svar('user_login'),
+	    'user_level'=>$this->Hub->svar('user_level'),
+	    'user_level_name'=>$this->Hub->svar('user_level_name'),
+	    'acomp'=>$this->Hub->svar('acomp'),
+	    'pcomp'=>$this->Hub->svar('pcomp'),
 	    'module_list'=>$this->getModuleList()
 	];
     }
@@ -57,20 +58,15 @@ class User extends Catalog {
 	$mods=json_decode(file_get_contents('application/config/modules.json',true));//not very reliable way to check, modules can be loaded anyway by hand
 	$alowed=array();
 	foreach( $mods as $mod ){
-	    if( $this->Base->svar('user_level')>=$mod->level ){// && strpos(BAY_ACTIVE_MODULES, "/{$mod->name}/")!==false 
+	    if( $this->Hub->svar('user_level')>=$mod->level ){// && strpos(BAY_ACTIVE_MODULES, "/{$mod->name}/")!==false 
 		$alowed[]=$mod;
 	    }
 	}
 	return $alowed;
     }
-    private function initLoggedUser($user_data){
-	$Company=$this->Base->load_model("Company");
-	$Company->selectActiveCompany($user_data->company_id);
-        $this->Base->svar('user_assigned_stat',$user_data->user_assigned_stat);
-        $this->Base->svar('user_assigned_path',$user_data->user_assigned_path);
-    }
+    public $userFetch=[];
     public function userFetch(){
-	$user_id = $this->Base->svar('user_id');
+	$user_id = $this->Hub->svar('user_id');
         $sql="SELECT
 		user_id,user_login,user_level,user_sign,user_position,user_phone,
 		first_name,middle_name,last_name,nick,
@@ -81,9 +77,10 @@ class User extends Catalog {
 		WHERE user_id='$user_id'";
         return $this->get_row($sql);
     }
+    public $listFetch=[];
     public function listFetch(){
-	$user_id = $this->Base->svar('user_id');
-        $where = ($this->Base->svar('user_level') < 4) ? "WHERE user_id='$user_id'" : "";
+	$user_id = $this->Hub->svar('user_id');
+        $where = ($this->Hub->svar('user_level') < 4) ? "WHERE user_id='$user_id'" : "";
         $sql="SELECT
 		user_id,user_login,user_level,user_sign,user_position,user_phone,
 		first_name,middle_name,last_name,nick,
@@ -95,11 +92,12 @@ class User extends Catalog {
 	    ORDER BY user_id<>'$user_id', user_level DESC";
         return $this->get_list($sql);
     }
+    public $save=[];
     public function save(){
 	$fields=[];
 	$user_id=$this->request('user_id','int');
-	$current_level=$this->Base->svar('user_level');
-	if( $current_level>=1 && $this->Base->svar('user_id')==$user_id || $current_level>=4){
+	$current_level=$this->Hub->svar('user_level');
+	if( $current_level>=1 && $this->Hub->svar('user_id')==$user_id || $current_level>=4){
 	    $fields['user_login']=$this->request('user_login','^[a-zA-Z_0-9]*$');
 	    $new_pass=$this->request('new_pass','^[a-zA-Z_0-9]*$',false);
 	    if( $new_pass ){
@@ -136,8 +134,9 @@ class User extends Catalog {
 	    return $this->update("user_list", $fields,['user_id'=>$user_id]);
 	}
     }
+    public $remove=['int'];
     public function remove( $user_id ){
-	$this->Base->set_level(4);
+	$this->Hub->set_level(4);
 	$this->check($user_id,'int');
 	$admin=$this->adminLastCheck($user_id);
 	if( $admin==='last' ){

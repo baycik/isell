@@ -26,7 +26,8 @@
 	    loader:function( param, success, error ){
 		Leftovers.list.filterRules=param.filterRules;
 		Leftovers.list.currPage=param.page;
-		App.get("Stock/listFetch/"+App.uri(param.page,param.rows,Leftovers.list.parent_id), {filterRules: Leftovers.list.filterRules},function( xhr ){
+		param.parent_id=Leftovers.list.parent_id;
+		App.get("Stock/listFetch/",param,function( xhr ){
 		    var resp=App.json(xhr);
 		    resp=Leftovers.list.calc.calcTable(resp);
 		    success(resp);

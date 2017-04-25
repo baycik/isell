@@ -1,236 +1,30 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
     <head>
-	<title>iSell 4.2</title>
+	<title>iSell 5.0</title>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 	<link rel="icon" type="image/png" href="/favicon.png" />
-	<link rel="stylesheet" type="text/css" href="js/jquery-easyui-1.4/themes/default/easyui.css"/>
-	<link rel="stylesheet" type="text/css" href="js/jquery-easyui-1.4/themes/icon.css"/>
-	<link rel="stylesheet" type="text/css" href="js/jquery-easyui-1.4/themes/color.css"/>
+	<link rel="stylesheet" type="text/css" href="js/jquery-easyui-1.5.1/themes/default/easyui.css"/>
+	<link rel="stylesheet" type="text/css" href="js/jquery-easyui-1.5.1/themes/icon.css"/>
+	<link rel="stylesheet" type="text/css" href="js/jquery-easyui-1.5.1/themes/color.css"/>
+	<link rel="stylesheet" type="text/css" href="js/slick/slick.grid.css"/>
+	<link rel="stylesheet" type="text/css" href="js/slick/slick-isell-theme.css"/>
 	<link rel="stylesheet" type="text/css" href="css/app.css" />
 	<script type="text/javascript" src="js/markup.min.js"></script>
 	<script type="text/javascript" src="js/jquery-2.1.1.min.js"></script>
-	<script type="text/javascript" src="js/jquery-easyui-1.4/jquery.easyui.min.js"></script>
-	<script type="text/javascript" src="js/jquery-easyui-1.4/locale/easyui-lang-ru.js"></script>
-	<script type="text/javascript" src="js/jquery-easyui-1.4/datagridfilter/datagrid-filter.js"></script>
+	<script type="text/javascript" src="js/jquery-easyui-1.5.1/jquery.easyui.min.js"></script>
+	<script type="text/javascript" src="js/jquery-easyui-1.5.1/jquery.easyui.mobile.js"></script>
+	<script type="text/javascript" src="js/jquery-easyui-1.5.1/locale/easyui-lang-ru.js"></script>
+	<script type="text/javascript" src="js/jquery-easyui-1.5.1/datagridfilter/datagrid-filter.js"></script>
 	<script type="text/javascript" src="js/app.js"></script>
-	<script type="text/javascript">
-	    App.user = {
-		props: {},
-		signedIn:false,
-		getData: function () {
-		    App.get("User/getUserData", function (resp) {
-			App.user.setProps( App.json(resp) );
-		    });
-		},
-		setProps:function( userProps ){
-		    App.user.props=userProps;
-		    App.user.setActiveCompany(userProps.acomp,'notify_init');
-		    App.user.setPassiveCompany(userProps.pcomp,'notify_init');
-		    if( userProps && userProps.user_level>0 ){
-			App.renderTpl('div_user_panel', App.user.props || '');	
-			App.renderTpl('div_module_list', App.user.props || '');
-			this.signedIn=true;
-			this.loginFormHide();
-			App.module.init();
-		    } else {
-			this.signedIn=false;
-			this.loginFormShow();
-		    }
-		},
-		getLevel:function(){
-		    return App.user.props && App.user.props.user_level>0?App.user.props.user_level:0;
-		},
-		signIn: function () {
-		    var user_login=$("#user_login").val();
-		    var user_pass=$("#user_pass").val();
-		    App.post("User/SignIn",{login:user_login,pass:user_pass},function(resp){
-			var props=App.json(resp);
-			if( props ){
-			    $("#SeqDialogMsg").html("");
-			    App.user.setProps( props );
-			} else {
-			    $("#SeqDialogMsg").html("Логин или пароль не верны!").css('color','red').css('font-size','14px');
-			}
-		    });
-		},
-		signOut: function () {
-		    App.get("User/SignOut");
-		    this.setProps({});
-		},
-                edit:function(){
-                    App.post("User/userFetch",function(resp){
-                        var props=App.json(resp);
-                        App.user.promptEditor(props);
-                    });
-                },
-                promptEditor:function( user ){
-                    App.loadWindow('page/dialog/user_edit',user).progress(function(status,user_data){
-                        if( status==='submit' ){
-                            App.post("User/save",user_data,function(ok){
-                                if( ok*1 ){
-                                    App.user.getData();
-                                    App.flash("Свойства пользователя сохранены");
-                                } else {
-                                    if( ok==='LAST_ADMIN' ){
-                                        alert("Должен остаться хотя бы один администратор.");
-                                    }
-                                    App.flash("Свойства пользователя не изменены");
-                                }
-                            });
-                        }
-                    });
-                },
-                loginFormShow: function () {
-		    $("#loginScreen,#loginOverlay").show();
-		    $("#user_login").focus();
-		},
-		loginFormHide: function () {
-		    $("#loginScreen,#loginOverlay").hide();
-		},
-                acompSwitch:function(){
-                    App.get("Company/switchActiveCompany",function(resp){
-                        var company=App.json(resp);
-			App.user.setActiveCompany(company);
-                    });
-                },
-		pcompSelectionDialog:function(){
-		    App.loadWindow('page/company/tree',{}).progress(function(status,comp){
-			if( status==='select' ){
-			    App.user.pcompSelect(comp);
-			}
-		    });
-		},
-		pcompSelect: function ( company ) {
-		    if ( company.company_id ) {
-			if( App.pcomp && App.pcomp.company_id===company.company_id ){
-			    return;
-			}
-			App.post('Company/selectPassiveCompany/' + company.company_id, function (xhr) {
-			    App.user.setPassiveCompany(App.json(xhr));
-			});
-		    }
-		},
-		setPassiveCompany:function( company, mode ){
-                    var old_pcomp_id=App.pcomp?App.pcomp.company_id:0;
-		    App.pcomp=company;
-		    if( company ){
-                        if( company.company_id===old_pcomp_id ){
-                            App.handler.notify('passiveCompanyReloaded',company);
-                            return;
-                        }
-			if( mode==='notify_init' ){
-			    App.handler.notify('passiveCompanyInited',company);
-                            return;
-			}
-			App.handler.notify('passiveCompanySelected',company);
-		    } else {
-			App.handler.notify('passiveCompanyReset');
-		    }
-		},
-		setActiveCompany:function( company, mode ){
-                    var old_acomp_id=App.acomp?App.acomp.company_id:0;
-		    App.acomp=company;
-		    if( company ){
-                        if( company.company_id===old_acomp_id ){
-                            App.handler.notify('activeCompanyReloaded',company);
-                            return;
-                        }
-			setTimeout(function(){
-			    App.loadBg();
-			},0);
-			if( mode==='notify_init' ){
-			    App.handler.notify('activeCompanyInited',company);
-                            return;
-			}
-			App.handler.notify('activeCompanySelected',company);
-		    } else {
-			App.handler.notify('activeCompanyReset');
-		    }
-		}
-	    };
-	    App.handler.progress(function(status){
-		console.log(status);
-	    });
-	    
-	    App.module={
-		init:function(){
-		    $(window).bind( 'hashchange', function(e) {
-			App.module.load(location.hash.substring(1));
-		    });
-		    if( !location.hash ){
-			location.hash="#"+App.user.props.module_list[0].name;
-		    }
-		    App.module.load(location.hash.substring(1));
-		},
-		load:function(name){
-		    if( this.current === name ){
-			return false;
-		    }
-		    //$("#holder"+this.current).hide();
-                    $("#holder"+this.current).css('left','-5000px');
-		    this.current=name;
-		    var holder=$("#holder"+this.current);
-		    if( !holder.length ){
-			$("#ModuleContainer").append('<div id="holder' + this.current + '" style="position:absolute;left:0px;top:0px;min-width:1200px;"></div>');
-			holder=$("#holder"+this.current);
-		    }
-		    //holder.show();
-                    $("#holder"+this.current).css('left','0px');
-		    this.loadHTML(holder);
-		    this.findTitle();
-		    this.selectButton();
-		},
-		loadHTML:function(holder){
-		    var url="page/"+this.current+"/"+this.current+"_main.php";
-		    if( !holder.html() ){
-			holder.load(url,function(){
-			    App.module.initHTML();
-			});
-		    }	
-		},
-		initHTML:function(){
-		    setTimeout(function(){
-			App.module.parseHTML();
-			$("#holder"+this.current).find("script").each(function() { eval(this.text);} );
-		    },0);
-		},
-		parseHTML:function(){
-		    $.parser.parse("#holder"+App.module.current);//for easy ui   
-		    window[App.module.current + 'Js'] && window[App.module.current + 'Js'].init && window[App.module.current + 'Js'].init(); 		    
-		},
-		findTitle:function(){
-		    App.user.props.module_list.forEach(function(item){
-			if( item.name===App.module.current ){
-			    App.setTitle(item.label);
-			    return false;
-			}
-		    });
-		},
-		selectButton:function(){
-		    $(".ModuleButtonSelected").removeClass("ModuleButtonSelected");
-		    $("#"+this.current+"Button").addClass("ModuleButtonSelected");
-		}
-	    };
-	    App.onReady = function () {
-		App.user.getData();
-                App.handler.progress(function(status){
-                    if( status==='passiveCompanySelected' || status==='activeCompanySelected' ){
-                        App.setTitle();
-                    }
-                });
-	    };
-	</script>
+	<script type="text/javascript" src="js/slick/slickwrapper.js"></script>
     </head>
-    <body class=" claro ">
+    <body>
 	<div id="ApplicationBar" class="transparent">
 	    <img src="img/logo.png" style="vertical-align:top;height: 40px;width:auto;margin: 1px;" />
 	    <div style="color:#009;margin-top:10px;display: inline-block;font-size: 18px;white-space: nowrap;" class="covert" id="module_title">
                 {{module_name}}: 
                 <img src="img/home.png" style="margin-top: -4px;"> <span class="link_button" onclick="App.user.acompSwitch()" title="Сменить активную компанию">{{acomp_name}}</span>
-                {{if pcomp_name}}
-                / <img src="img/gray.png">  <span class="link_button" onclick="App.user.pcompSelectionDialog();" title="Сменить клиента">{{pcomp_name}}</span>
-                {{/if}}
             </div>
 	    <div id="holder_user_panel">
 		<img src="img/user-32.png" style="margin: 4px;"/>
@@ -262,27 +56,23 @@
 	    </span>
             <span id="app_busy" style="margin: 12px;float:right;display: none"><img src="img/loading_16.gif"></span>
 	</div>
-	<table style="border-spacing: 0px;border-collapse: separate;">
-	    <tr>
-		<td style="width:60px;vertical-align: top;padding: 0px;">
-		    <div id="div_module_list" class="covert transparent">
-			{{module_list}}
-			    <div class="ModuleButton" id="{{name}}Button" title="{{label}}">
-				<a href="#{{name}}">
-				    <!--<img src="img/Mods/{{icon}}" width="45" height="45" />-->
-				</a>
-			    </div>
-			{{/module_list}}
-			<img src="img/personalize-icon.png" style="width:48px;height:48px;cursor: pointer;" onclick="App.setBg()" title="Установить обои" />
+	<div>
+	    <div id="div_module_list" style="display: inline-block;width:60px" class="covert transparent">
+		{{module_list}}
+		    <div class="ModuleButton" id="{{name}}Button" title="{{label}}">
+			<a href="#{{name}}">
+			    <!--<img src="img/Mods/{{icon}}" width="45" height="45" />-->
+			</a>
 		    </div>
-		</td>
-		<td style="vertical-align: top;padding: 0px;">
-		    <div id="ModuleContainer" style="margin: 1px;vertical-align: top;position: relative;"></div>
-		</td>
-	    </tr>
-	</table>
+		{{/module_list}}
+		<img src="img/personalize-icon.png" style="width:48px;height:48px;cursor: pointer;" onclick="App.setBg()" title="Установить обои" />
+	    </div>
+	    
+		<div id="ModuleContainer" style="display: inline-block;vertical-align: top;width:calc(100% - 75px)"></div>
+	    
+	    
+	</div>
 	<div id="appWindowContainer"></div>
-	<div id="dojoloader"></div>
 	<div id="appStatus"></div>
 	<div id="loginScreen" class="rounded">
 	    <div style="color:#fff" id="SeqDialogMsg"></div>

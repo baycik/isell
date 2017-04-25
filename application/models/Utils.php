@@ -5,8 +5,9 @@ class Utils extends Catalog{
     //////////////////////////////////////
     //FOLOWING FUNCTIONS ARE DEPRECATED
     //////////////////////////////////////
+    public $spellAmount=['string','int','int'];
     public function spellAmount($number, $return_cents = true, $return_currency = true) {
-	$blank_set=$this->Base->pref('blank_set');
+	$blank_set=$this->Hub->pref('blank_set');
 	if( $blank_set=='ua' ){
 	    $unit=[
 		['копійка', 'копійки', 'копійок'],
@@ -37,6 +38,7 @@ class Utils extends Catalog{
 	return mb_strtoupper(mb_substr($str, 0, 1, 'utf-8'), 'utf-8') . mb_substr($str, 1, mb_strlen($str) - 1, 'utf-8');
     }
 
+    public $spellNumber=['string','string','int'];
     public function spellNumber($number, $units=null, $ret_number = false) {
 	$hundreds_i = $this->getNumberPosition($number, 100, 1);
 	$tens_i = $this->getNumberPosition($number, 10, 1);
@@ -62,7 +64,7 @@ class Utils extends Catalog{
 	    $unit='';
 	}
 
-        $blank_set=$this->Base->pref('blank_set');
+        $blank_set=$this->Hub->pref('blank_set');
         if( $blank_set=='ua' ){
             $ones = ["", "одна", "дві", "три", "чотири", "п'ять", "шість", "сім", "вісім", "дев'ять"];
             $tens = ["", "десять", "двадцять", "тридцять", "сорок", "п'ятдесят", "шістдесят", "сімдесят", "вісімдесят", "дев'яносто"];
@@ -87,6 +89,8 @@ class Utils extends Catalog{
 	$number-=$position * 10 * $range * floor($number / $position / 10 / $range);
 	return floor($number / $position);
     }
+    
+    public $getLocalDate=['string'];
     public function getLocalDate($tstamp) {
 	$time = strtotime($tstamp);
 	$months = array("січня", "лютого", "березня", "квітня", "травня", "червня", "липня", "серпня", "вересня", "жовтня", "листопада", "грудня");
@@ -179,29 +183,28 @@ class Utils extends Catalog{
     /////////////////////////////
     //SMS FUNCTIONS
     /////////////////////////////
-    public function sendSms($number=null,$body=null) {
-	$number=$this->request('to','string',$number);
-	$body=$this->request('body','string',$body);
-	if (!$this->Base->pref('SMS_SENDER') || !$this->Base->pref('SMS_USER') || !$this->Base->pref('SMS_PASS')) {
-	    $this->Base->msg("Настройки для отправки смс не установленны");
+    public $sendSms=['to'=>'string','body'=>'string'];
+   public function sendSms($number=null,$body=null) {
+	if (!$this->Hub->pref('SMS_SENDER') || !$this->Hub->pref('SMS_USER') || !$this->Hub->pref('SMS_PASS')) {
+	    $this->Hub->msg("Настройки для отправки смс не установленны");
 	    return false;
 	}
 	if (!in_array('https', stream_get_wrappers())) {
-	    $this->Base->msg("Sms can not be sent. https is not available");
+	    $this->Hub->msg("Sms can not be sent. https is not available");
 	    return false;
 	}
-	if (time() - $this->Base->svar('smsSessionTime') * 1 > 24*60) {
-	    $sid = json_decode(file_get_contents("https://integrationapi.net/rest/user/sessionId?login=" . $this->Base->pref('SMS_USER') . "&password=" . $this->Base->pref('SMS_PASS')));
+	if (time() - $this->Hub->svar('smsSessionTime') * 1 > 24*60) {
+	    $sid = json_decode(file_get_contents("https://integrationapi.net/rest/user/sessionId?login=" . $this->Hub->pref('SMS_USER') . "&password=" . $this->Hub->pref('SMS_PASS')));
 	    if( !$sid ){
-		$this->Base->msg('Authorization to SMS service failed');
+		$this->Hub->msg('Authorization to SMS service failed');
 		return false;
 	    }
-	    $this->Base->svar('smsSessionId', $sid);
-	    $this->Base->svar('smsSessionTime', time());
+	    $this->Hub->svar('smsSessionId', $sid);
+	    $this->Hub->svar('smsSessionTime', time());
 	}
 	$post_vars = array(
-	    'SessionID' => $this->Base->svar('smsSessionId'),
-	    'SourceAddress' => $this->Base->pref('SMS_SENDER'),
+	    'SessionID' => $this->Hub->svar('smsSessionId'),
+	    'SourceAddress' => $this->Hub->pref('SMS_SENDER'),
 	    'DestinationAddresses' => $number,
 	    'Data' => $body
 	);
@@ -215,8 +218,8 @@ class Utils extends Catalog{
 	$response=file_get_contents('https://integrationapi.net/rest/Sms/SendBulk/', false, stream_context_create($opts));
 	$msg_ids = json_decode($response);            
 	if (!$msg_ids[0]){
-	    $this->Base->msg('Sending SMS is failed');
-	    $this->Base->svar('smsSessionTime', 0);
+	    $this->Hub->msg('Sending SMS is failed');
+	    $this->Hub->svar('smsSessionTime', 0);
 	    return false;
 	}
 	return true;
@@ -225,24 +228,24 @@ class Utils extends Catalog{
     //EMAIL FUNCTIONS
     /////////////////////////////
     public function sendEmail($to,$subject,$body,$file=null){
-        $this->Base->set_level(1);
+        $this->Hub->set_level(1);
         $this->load->library('email');
         $this->email->initialize([
             'useragent'=>'iSell',
             'protocol'=>'smtp',
             'charset'=>'utf8',
 	    'smtp_timeout'=>10,
-            'smtp_host'=>$this->Base->pref('SMTP_SERVER'),
-            'smtp_user'=>$this->Base->pref('SMTP_USER'),
-            'smtp_pass'=>$this->Base->pref('SMTP_PASS'),
-	    'smtp_port'=>$this->Base->pref('SMTP_PORT'),
-	    'smtp_crypto'=>$this->Base->pref('SMTP_CRYPTO')
+            'smtp_host'=>$this->Hub->pref('SMTP_SERVER'),
+            'smtp_user'=>$this->Hub->pref('SMTP_USER'),
+            'smtp_pass'=>$this->Hub->pref('SMTP_PASS'),
+	    'smtp_port'=>$this->Hub->pref('SMTP_PORT'),
+	    'smtp_crypto'=>$this->Hub->pref('SMTP_CRYPTO')
         ]);
 	$this->email->set_newline("\r\n");
-        $this->email->from($this->Base->pref('SMTP_SENDER_MAIL'),$this->Base->pref('SMTP_SENDER_NAME'));
+        $this->email->from($this->Hub->pref('SMTP_SENDER_MAIL'),$this->Hub->pref('SMTP_SENDER_NAME'));
         $this->email->to($to);
-	if( $this->Base->pref('SMTP_SEND_COPY') ){
-	    $this->email->cc($this->Base->pref('SMTP_SENDER_MAIL'));
+	if( $this->Hub->pref('SMTP_SEND_COPY') ){
+	    $this->email->cc($this->Hub->pref('SMTP_SENDER_MAIL'));
 	}
         $this->email->subject($subject);
         $this->email->message($body);
@@ -252,17 +255,13 @@ class Utils extends Catalog{
         $ok=$this->email->send(false);
         if( !$ok ){
             $err=$this->email->print_debugger(['headers', 'subject', 'body']);
-            $this->Base->msg($err);
+            $this->Hub->msg($err);
         }
         return $ok;
     }
-    public function postEmail(){
-	$to=$this->input->get_post('to');
-	$subject=$this->input->get_post('subject');
-	$body=$this->input->get_post('body');
-	$dump_id=$this->input->get_post('dump_id');
-        $out_type=$this->input->get_post('out_type');
-        $send_file=$this->input->get_post('send_file');
+    
+    public $postEmail=['to'=>'string','subject'=>'string','body'=>'string','dump_id'=>'string','out_type'=>'string','send_file'=>'int'];
+    public function postEmail($to,$subject,$body,$dump_id,$out_type,$send_file){
 	$file=$send_file?$this->generateFile($dump_id,$out_type,$subject):null;
 	return $this->sendEmail($to, $subject, $body, $file);
     }
@@ -274,7 +273,7 @@ class Utils extends Catalog{
         '.xml'=>'text/xml'
         ];
     private function generateFile($dump_id,$out_type='.xlsx',$subject='file'){
-        $ViewManager=$this->Base->load_model('ViewManager');
+        $ViewManager=$this->Hub->load_model('ViewManager');
 	$file_data=$ViewManager->getFile($dump_id,$out_type);
 	if( $file_data ){
 	    return [
@@ -283,12 +282,13 @@ class Utils extends Catalog{
 		'name'=>str_replace(' ', '_', $subject).$out_type
 	    ];
 	}
-	$this->Base->response(0);
+	$this->Hub->response(0);
         return null;
     }
     /////////////////////////////
     //TREE MAINTAINANCE FUNCTIONS
     /////////////////////////////
+    public $treeRecalculate=[];
     public function treeRecalculate(){
         foreach(['acc_tree','companies_tree','stock_tree'] as $table){
             $this->treePathRecalculate($table, 0);
@@ -317,6 +317,7 @@ class Utils extends Catalog{
     /////////////////////////////
     //SELF PRICE FUNCTIONS
     /////////////////////////////
+    public $stockQtyRecalculate=[];
     public function stockQtyRecalculate(){
 	$sql="
 	    UPDATE 
@@ -336,13 +337,13 @@ class Utils extends Catalog{
 	return $this->db->affected_rows();
     }
     private function selfPriceOldApiRecalculate($idate,$fdate,$active_filter){
-	$Document2=$this->Base->bridgeLoad('Document');
+	$Document2=$this->Hub->bridgeLoad('Document');
 	$res = $this->db->query("SELECT doc_id,passive_company_id FROM document_list WHERE is_commited=1 AND doc_type=1 AND '$idate'<=cstamp AND cstamp<='$fdate' $active_filter ORDER BY passive_company_id");
 	echo "SELECT doc_id,passive_company_id FROM document_list WHERE is_commited=1 AND doc_type=1 AND '$idate'<=cstamp AND cstamp<='$fdate' $active_filter ORDER BY passive_company_id";
 	if( $res ){
 	    foreach ($res->result() as $row) {
-		if ($Document2->Base->pcomp('company_id') != $row->passive_company_id){
-		    $Document2->Base->selectPassiveCompany($row->passive_company_id);
+		if ($Document2->Hub->pcomp('company_id') != $row->passive_company_id){
+		    $Document2->Hub->selectPassiveCompany($row->passive_company_id);
 		    echo " pcomp_id".$row->passive_company_id;
 		}
 		$doc_id = $row->doc_id;
@@ -406,6 +407,7 @@ class Utils extends Catalog{
 	$this->db->query($sql_tbl_create);
     }
     
+    public $selfPriceInvoiceRecalculate=[];
     public function selfPriceInvoiceRecalculate($idatedmy,$fdatedmy,$active_mode=''){
 	set_time_limit(300);
 	$idate=$this->dmy2iso($idatedmy).' 00:00:00';
@@ -413,7 +415,7 @@ class Utils extends Catalog{
         if( $active_mode=='all_active' ){
             $active_filter='';
         } else {
-            $active_filter=" AND active_company_id='".$this->Base->acomp('company_id')."'";
+            $active_filter=" AND active_company_id='".$this->Hub->acomp('company_id')."'";
         }
 	$this->selfPriceCreateTable($active_filter);
 	$this->selfPriceCorrectEntries();
@@ -440,11 +442,12 @@ class Utils extends Catalog{
 	return $this->db->affected_rows();
     }
     
+    public $selfPriceStockRecalculate=[];
     public function selfPriceStockRecalculate($active_mode=''){   
         if( $active_mode=='all_active' ){
             $active_filter='';
         } else {
-            $active_filter=" AND active_company_id='".$this->Base->acomp('company_id')."'";
+            $active_filter=" AND active_company_id='".$this->Hub->acomp('company_id')."'";
         }
 	$this->selfPriceCreateTable($active_filter);
  	return $this->selfPriceStockAssign();
@@ -454,10 +457,8 @@ class Utils extends Catalog{
     ////////////////////////////////////////////////////////////
     // STOCK UTILS FUNCTIONS
     ////////////////////////////////////////////////////////////
+    public $stockCalcMin=['int','int','int'];
     public function stockCalcMin( $parent_id, $sales_period, $reserve_period ){
-	$this->check($parent_id,'int');
-	$this->check($sales_period,'int');
-	$this->check($reserve_period,'int');
 	$branch_ids=$this->treeGetSub('stock_tree',$parent_id);
 	$stock_table="
 	    UPDATE
@@ -478,8 +479,8 @@ class Utils extends Catalog{
 	$this->query($stock_table);
 	return $this->db->affected_rows();
     }
+    public $stockCalcIncomeOrder=['int','string'];
     public function stockCalcIncomeOrder( $parent_id=0, $round_to='bpack' ){
-	$this->check($parent_id,'int');
 	$having=$this->decodeFilterRules();
         if( $round_to==='spack' ){
             $rounding_quantity='product_spack';
@@ -501,7 +502,7 @@ class Utils extends Catalog{
 	    WHERE $where
 	    HAVING $having";
 	$buy_order=$this->get_list($sql);
-	$DocumentItems=$this->Base->load_model("DocumentItems");
+	$DocumentItems=$this->Hub->load_model("DocumentItems");
 	$doc_id=$DocumentItems->createDocument(2);//create buy document
 	foreach($buy_order as $row){
 	   $DocumentItems->entryAdd($row->product_code,$row->qty);

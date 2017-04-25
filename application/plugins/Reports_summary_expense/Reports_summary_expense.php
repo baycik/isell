@@ -15,7 +15,7 @@ class Reports_summary_expense extends Catalog{
 	return "$chunks[2]-$chunks[1]-$chunks[0]";
     }
     public function viewGet(){
-	$active_filter=$this->all_active?'':' AND active_company_id='.$this->Base->acomp('company_id');
+	$active_filter=$this->all_active?'':' AND active_company_id='.$this->Hub->acomp('company_id');
         $acc_debit_filter="acc_debit_code LIKE '9%' OR acc_debit_code LIKE '8%'";
         $acc_credit_filter="acc_credit_code LIKE '9%' OR acc_credit_code LIKE '8%'";
         

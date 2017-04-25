@@ -66,7 +66,7 @@
 	up:function(filelist){
 	    if( filelist.length ){
                 App.page_dialog_importer.throbber(1);
-		var url = 'Importer/Up/'+App.page_dialog_importer.label;
+		var url = 'Importer/Up/';
 		var xhr = new XMLHttpRequest();
 		var fd = new FormData();
 		xhr.open("POST", url, true);
@@ -81,6 +81,7 @@
                         App.page_dialog_importer.throbber(0);
 		    }
 		};
+		fd.append("label",App.page_dialog_importer.label);
 		fd.append("upload_file", filelist[0]);
 		xhr.send(fd);
 	    }
@@ -108,7 +109,7 @@
 	},
 	deleteAll:function(){
 	    if( confirm("Удалить строчки с меткой '"+App.page_dialog_importer.label+"'?") ){
-		App.post("Importer/deleteAll/"+App.page_dialog_importer.label,function(ok){
+		App.post("Importer/deleteAll/",{label:App.page_dialog_importer.label},function(ok){
 		    if( ok*1 ){
 			App.flash("Удалено строчки с меткой '"+App.page_dialog_importer.label+"'");
 			$('#page_dialog_importer_dg').datagrid('reload');
@@ -122,11 +123,9 @@
 	    App.page_dialog_importer.label=node.value||'';
 	    App.page_dialog_importer.reload();
 	},
-	reload:function(){
-	    $('#page_dialog_importer_dg').datagrid('reload');
-	},
 	loader:function(param, success, error){
-	    App.post('Importer/getRows/'+App.page_dialog_importer.label,param,function(xhr){
+	    param.label=App.page_dialog_importer.label;
+	    App.post('Importer/getRows/',param,function(xhr){
 		success(App.json(xhr));
 	    });
 	},

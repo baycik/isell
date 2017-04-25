@@ -8,7 +8,7 @@ class Maintain extends CI_Model {
     function __construct(){
 	$this->dirWork = realpath('.');
     }
-    
+    public $getCurrentVersionStamp=[];
     public function getCurrentVersionStamp(){
 	if( file_exists($this->dirWork.'/.git') ){
 	    return ['stamp'=>date ("Y-m-d\TH:i:s\Z", time()),'branch'=>$this->getGitBranch()];
@@ -86,7 +86,7 @@ class Maintain extends CI_Model {
     }
     
     public function backupImport(){
-	$this->Base->set_level(4);
+	$this->Hub->set_level(4);
         $file=$this->input->post('filename');
 	if( file_exists($this->dirDbBackup.$file) ){
 	    return $this->backupImportExecute($this->dirDbBackup.$file);
@@ -95,7 +95,7 @@ class Maintain extends CI_Model {
     }
     
     public function backupDump(){
-        $this->Base->set_level(4);
+        $this->Hub->set_level(4);
         $path_to_mysql=$this->db->query("SHOW VARIABLES LIKE 'basedir'")->row()->Value;
 	if( !file_exists ($this->dirDbBackup) ){
 	    mkdir($this->dirDbBackup);
@@ -111,14 +111,14 @@ class Maintain extends CI_Model {
     }
     
     public function backupList(){
-	$this->Base->set_level(4);
+	$this->Hub->set_level(4);
 	$files = array_diff(scandir($this->dirDbBackup), array('.', '..'));
 	arsort($files);
 	return array_values ($files);
     }
     
     public function backupListNamed(){
-	$this->Base->set_level(4);
+	$this->Hub->set_level(4);
 	$named=[];
 	$list=$this->backupList();
 	foreach($list as $file){
@@ -128,7 +128,7 @@ class Maintain extends CI_Model {
     }
     
     public function backupDown( $file ){
-	$this->Base->set_level(4);
+	$this->Hub->set_level(4);
 	if( file_exists ($this->dirDbBackup.$file) ){
 	    header('Content-type: application/force-download');
 	    header('Content-Disposition: attachment; filename="'.$file.'"');
@@ -149,7 +149,7 @@ class Maintain extends CI_Model {
     }
     
     public function backupDelete(){
-	$this->Base->set_level(4);
+	$this->Hub->set_level(4);
         $file=$this->input->post('filename');
 	return unlink($this->dirDbBackup.$file);
     }

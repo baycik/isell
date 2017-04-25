@@ -18,7 +18,7 @@
 	    if( this.data.transIsNew ){
 		Tedit.initWidgets();
 	    } else {
-		App.post("AccountsCore/transFullGet/"+Tedit.data.trans_id,function(xhr){
+		App.post("AccountsCore/transFullGet/",{trans_id:Tedit.data.trans_id},function(xhr){
 		    Tedit.data = App.json(xhr);
 		    Tedit.data.trans_date=App.toDmy(Tedit.data.cstamp.substr(0,10));
 		    Tedit.initWidgets();
@@ -84,7 +84,7 @@
 	    }
 	    Tedit.waitingForResponse=true;
 	    Tedit.data.trans_date=App.toIso(Tedit.data.trans_date);
-	    App.post("AccountsCore/transPostCreateUpdate/",Tedit.data,function(trans_id){
+	    App.post("AccountsCore/transCreateUpdate/",Tedit.data,function(trans_id){
 		Tedit.waitingForResponse=false;
 		if( trans_id*1 ){
 		    Tedit.data.trans_id=trans_id;
@@ -119,7 +119,9 @@
 	    }
 	    if( param.q || Tedit.data.transIsNew ){
 		Tedit.preventLoopOnChange=true;
-		App.get('AccountsData/transNameListFetch/'+(Tedit.data.current_acc_code||''), param, function (xhr) {
+		
+		param.selected_acc=Tedit.data.current_acc_code||'';
+		App.get('AccountsData/transNameListFetch/', param, function (xhr) {
 		    var resp = App.json(xhr);
 		    success(resp[0] ? resp : []);
 		    if( !Tedit.data.trans_type && resp[0] ){
@@ -158,7 +160,8 @@
 		return;
 	    }
 	    var trans_type=debit_code+'_'+credit_code;
-	    App.get('AccountsData/transNameListFetch/?q='+trans_type,function(resp){
+	    var param={q:trans_type};
+	    App.get('AccountsData/transNameListFetch/',param,function(resp){
 		var tname=App.json(resp);
 		if( tname[0] ){
 		    $('#tedit_trans_type_cmb').combobox('loadData',tname);

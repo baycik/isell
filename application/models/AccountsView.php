@@ -1,26 +1,36 @@
 <?php
 require_once 'AccountsCore.php';
 class AccountsView extends AccountsCore{
-    public function ledgerPaymentViewGet(){
-	$this->ledgerViewGet();
+    public $ledgerPaymentViewGet=[
+	'acc_code'=>'string',
+	'idate'=>'\d\d\d\d-\d\d-\d\d',
+	'fdate'=>'\d\d\d\d-\d\d-\d\d',
+	'out_type'=>'string',
+	'use_passive_filter'=>'bool',
+	'page'=>'int'
+	];
+    public function ledgerPaymentViewGet($acc_code,$idate,$fdate,$out_type,$use_passive_filter,$page){
+	$this->ledgerViewGet($acc_code,$idate,$fdate,$out_type,$use_passive_filter,$page);
     }
-    public function ledgerViewGet(){
-	$page=$this->request('page','int');
-	$rows=10000;//$this->request('rows','int');
-	$idate=$this->request('idate','\d\d\d\d-\d\d-\d\d');
-	$fdate=$this->request('fdate','\d\d\d\d-\d\d-\d\d');
-	$acc_code=$this->request('acc_code');
-	$out_type=$this->request('out_type');
-	$use_passive_filter=$this->request('use_passive_filter','bool');
-	
+    
+    public $ledgerViewGet=[
+	'acc_code'=>'string',
+	'idate'=>'\d\d\d\d-\d\d-\d\d',
+	'fdate'=>'\d\d\d\d-\d\d-\d\d',
+	'out_type'=>'string',
+	'use_passive_filter'=>'bool',
+	'page'=>'int'
+	];
+    public function ledgerViewGet($acc_code,$idate,$fdate,$out_type,$use_passive_filter,$page){
+	$rows=10000;
 	$dump=$this->fillDump($acc_code, $idate, $fdate, $page, $rows, $use_passive_filter);
-	
-	$ViewManager=$this->Base->load_model('ViewManager');
+	$ViewManager=$this->Hub->load_model('ViewManager');
 	$ViewManager->store($dump);
 	$ViewManager->outRedirect($out_type);
     }
+    
     private function fillDump($acc_code, $idate, $fdate, $page, $rows, $use_passive_filter){
-        $Utils=$this->Base->load_model('Utils');
+        $Utils=$this->Hub->load_model('Utils');
 	$table=$this->ledgerFetch($acc_code, $idate, $fdate, $page, $rows, $use_passive_filter);
         foreach ($table['rows'] as $row) {
             $arr = explode(' ', $row->trans_status);
@@ -29,7 +39,7 @@ class AccountsView extends AccountsCore{
             $row->credit==0?$row->credit='':'';
         }
         
-        $blank_set=$this->Base->pref('blank_set');
+        $blank_set=$this->Hub->pref('blank_set');
         if ( $use_passive_filter ){
 	    $tpl_files=$blank_set.'/LedgerPayments.xlsx';
 	    $title="Акт Сверки на".date('d.m.Y', strtotime($fdate));
@@ -42,20 +52,20 @@ class AccountsView extends AccountsCore{
 	    'tpl_files'=>$tpl_files,
 	    'title'=>$title,
 	    'user_data'=>[
-		'email'=>$this->Base->svar('pcomp')?$this->Base->svar('pcomp')->company_email:'',
+		'email'=>$this->Hub->svar('pcomp')?$this->Hub->svar('pcomp')->company_email:'',
 		'text'=>'Доброго дня'
 	    ],
 	    'view'=>[
-		'a'=>$this->Base->svar('acomp'),
-		'p'=>$this->Base->svar('pcomp'),
-		'user_sign'=>$this->Base->svar('user_sign'),
+		'a'=>$this->Hub->svar('acomp'),
+		'p'=>$this->Hub->svar('pcomp'),
+		'user_sign'=>$this->Hub->svar('user_sign'),
 		'idate_dmy'=>date('d.m.Y', strtotime($idate)),
 		'fdate_dmy'=>date('d.m.Y', strtotime($fdate)),
 		'spell'=>$Utils->spellAmount( abs($table['sub_totals']->fbal) ),
 		'ilocalDate'=>$Utils->getLocalDate($idate),
 		'localDate'=>$Utils->getLocalDate($fdate),
-                'director_name'=>$this->Base->pref('director_name'),
-                'accountant_name'=>$this->Base->pref('accountant_name'),
+                'director_name'=>$this->Hub->pref('director_name'),
+                'accountant_name'=>$this->Hub->pref('accountant_name'),
 		'ledger'=>$table
 	    ]
 	];

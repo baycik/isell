@@ -1,0 +1,42 @@
+<script>
+    App.DocumentSell = (function () {
+	function init(node) {
+
+	}
+
+	return {
+	    init: init
+	};
+    })();
+</script>
+
+<h2>Реализация товара</h2>
+<form>
+    <input name="passive_company_id" title="Покупатель">
+    <input class="easyui-datebox" name="doc_date" title="Дата">
+    <input class="easyui-numberspinner" name="doc_num" title="Номер">
+    <div style="float:right" class="document_toolbar">
+	<span class="icon-24 icon-commit" title="Провести документ" data-action="commit"> </span>
+	<span class="icon-24 icon-uncommit" title="Отменить документ"  data-action="uncommit"> </span>
+	<span style="display: inline-block;width:26px"> </span>
+	<span class="icon-24 icon-lorry" title="Добавить в распорядок"  data-action="addevent"> </span>
+	<span class="icon-24 icon-duplicate" title="Копировать"  data-action="duplicate"> </span>
+	<span class="icon-24 icon-sms" title="Отправить СМС"  data-action="sendsms"> </span>
+	<span class="icon-24 icon-utils" title="Дополнительные свойства" onclick="$('.doc_utils').toggle('slow')"> </span>
+    </div>
+    <div class="doc_utils" style="display: none">
+	<hr>
+	<select name="use_vatless_price" title="Цена">
+	    <option value="0">В том числе НДС</option>
+	    <option value="1">Плюс НДС</option>
+	</select>
+	<select name="notcount" title="На складе">
+	    <option value="0">Учитывать</option>
+	    <option value="1">Не учитывать</option>    
+	</select>
+	<input class="easyui-numberbox" name="doc_ratio" title="Курс">
+    </div>
+    <div class="doc_entries_utils">выапывпа
+	<span class="icon-24 icon-delete" title="Удалить"  data-action="delete"> </span>
+    </div>
+</form>

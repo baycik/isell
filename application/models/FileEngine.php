@@ -1,6 +1,6 @@
 <?php
 error_reporting(E_ERROR | E_WARNING | E_PARSE);
-class FileEngine {
+class FileEngine extends CI_Model {
     private $conversion_table = [
 	'.html' => ['.doc' => 'Word Документ','.html' => 'Веб Страница'],
 	'.xlsx' => ['.xlsx' => 'Excel', '.xls' => 'Excel 2003', '.html' => 'Веб Страница'],

@@ -1,10 +1,10 @@
 <?php
 require_once 'DocumentCore.php';
 class DocumentItems extends DocumentCore{
-    public function suggestFetch(){
-	$q=$this->request('q');
+    public $suggestFetch=['q'=>'string'];
+    public function suggestFetch($q){
 	$clues=  explode(' ', $q);
-	$company_lang = $this->Base->pcomp('language');
+	$company_lang = $this->Hub->pcomp('language');
 	$where=array();
 	foreach ($clues as $clue) {
             if ($clue == ''){
@@ -34,8 +34,8 @@ class DocumentItems extends DocumentCore{
     }
     protected function footerGet(){
 	//$doc_id=$this->doc('doc_id');
-	//$curr_symbol=$this->Base->pcomp('curr_symbol');
-	//$use_total_as_base=$this->Base->pref('use_total_as_base');
+	//$curr_symbol=$this->Hub->pcomp('curr_symbol');
+	//$use_total_as_base=$this->Hub->pref('use_total_as_base');
         
         $this->entriesTmpCreate();
         $sql="SELECT
@@ -97,9 +97,9 @@ class DocumentItems extends DocumentCore{
     private function entriesTmpCreate( $skip_vat_correction=false ){
 	$doc_id=$this->doc('doc_id');
 	$this->calcCorrections( $skip_vat_correction );
-        $curr_code=$this->Base->acomp('curr_code');
-	$company_lang = $this->Base->pcomp('language');
-        $use_total_as_base=$this->Base->pref('use_total_as_base');
+        $curr_code=$this->Hub->acomp('curr_code');
+	$company_lang = $this->Hub->pcomp('language');
+        $use_total_as_base=$this->Hub->pref('use_total_as_base');
 
         $this->query("DROP TEMPORARY TABLE IF EXISTS tmp_doc_entries");
         $sql="CREATE TEMPORARY TABLE tmp_doc_entries ( INDEX(product_code) ) ENGINE=MyISAM AS (
@@ -152,9 +152,9 @@ class DocumentItems extends DocumentCore{
         
 //	$doc_id=$this->doc('doc_id');
 //	$this->calcCorrections( $skip_vat_correction );
-//        $curr_code=$this->Base->acomp('curr_code');
-//	$company_lang = $this->Base->pcomp('language');
-//        $use_total_as_base=$this->Base->pref('use_total_as_base');
+//        $curr_code=$this->Hub->acomp('curr_code');
+//	$company_lang = $this->Hub->pcomp('language');
+//        $use_total_as_base=$this->Hub->pref('use_total_as_base');
 //	$sql = "SELECT
 //                doc_entry_id,
 //                pl.product_code,
@@ -184,9 +184,10 @@ class DocumentItems extends DocumentCore{
 //	return $this->get_list($sql);
     }
     public function entryAdd( $code, $quantity ){
-	$Document2=$this->Base->bridgeLoad('Document');
+	$Document2=$this->Hub->bridgeLoad('Document');
 	return $Document2->addEntry( $code, $quantity );
     }
+    public $entryPostAdd=[];
     public function entryPostAdd(){
 	$doc_id=$this->request('doc_id','int');
 	$code=$this->request('code');
@@ -194,14 +195,14 @@ class DocumentItems extends DocumentCore{
 	$this->selectDoc($doc_id);
 	return $this->entryAdd($code, $quantity);
     }
+    public $entryUpdate=['int','int','string','string'];
     public function entryUpdate( $doc_id, $doc_entry_id, $name=null, $value=null ){
-	$this->check($doc_id,'int');
         if( $name==null && $value==null ){
             $name=$this->request('name');
             $value=$this->request('value');
         }
 	$this->selectDoc($doc_id);
-	$Document2=$this->Base->bridgeLoad('Document');
+	$Document2=$this->Hub->bridgeLoad('Document');
 	switch( $name ){
 	    case 'product_quantity':
                 $ok=$Document2->updateEntry($doc_entry_id, $value, NULL);
@@ -216,17 +217,18 @@ class DocumentItems extends DocumentCore{
 		return true;
 	}
     }
+    public $entryDelete=['int','string'];
     public function entryDelete( $doc_id, $ids ){
-	$this->check($doc_id,'int');
 	$this->selectDoc($doc_id);
 	$ids_arr=  json_decode('[['.str_replace(',', '],[', rawurldecode($ids)).']]');
-	$Document2=$this->Base->bridgeLoad('Document');
+	$Document2=$this->Hub->bridgeLoad('Document');
 	return $Document2->deleteEntry($ids_arr);
     }
+    public $entryStatsGet=['int','string'];
     public function entryStatsGet( $doc_id, $product_code ){
 	$this->check($doc_id,'int');
 	$this->selectDoc($doc_id);
-	$curr=$this->get_row("SELECT curr_symbol FROM curr_list WHERE curr_code='".$this->Base->pcomp('curr_code')."'");
+	$curr=$this->get_row("SELECT curr_symbol FROM curr_list WHERE curr_code='".$this->Hub->pcomp('curr_code')."'");
 	$sql="SELECT 
 	    product_quantity,
 	    product_spack
@@ -242,7 +244,7 @@ class DocumentItems extends DocumentCore{
 	return $stats;
     }
     private function entryPriceGet( $product_code ){
-	$Document2=$this->Base->bridgeLoad('Document');
+	$Document2=$this->Hub->bridgeLoad('Document');
 	$invoice=$Document2->getProductInvoicePrice($product_code);
         $this->calcCorrections();
         return $this->get_value("SELECT REPLACE(FORMAT('$invoice' * @vat_correction * @curr_correction,".$this->doc('signs_after_dot')."),',','') AS product_price");
@@ -252,6 +254,7 @@ class DocumentItems extends DocumentCore{
 //	}
 //	return round($invoice,$this->doc('signs_after_dot'));
     }
+    public $entryDocumentGet=['int'];
     public function entryDocumentGet( $doc_id ){
 	$this->check($doc_id,'int');
 	$this->selectDoc($doc_id);
@@ -262,7 +265,7 @@ class DocumentItems extends DocumentCore{
     }
     
     private function documentDiscountsSave(){
-	$pcomp_id=$this->Base->pcomp("company_id");
+	$pcomp_id=$this->Hub->pcomp("company_id");
 	$discount_list=$this->get_list("SELECT branch_id,discount FROM companies_discounts WHERE company_id='$pcomp_id'");
 	$discount_obj=new stdClass();
 	foreach($discount_list as $dsc ){
@@ -279,24 +282,26 @@ class DocumentItems extends DocumentCore{
 	$doc_id=$this->doc('doc_id');
 	return $this->get_value("SELECT JSON_EXTRACT(doc_settings,'$key') FROM document_list WHERE doc_id='$doc_id'");	
     }
-    
+    public $entryDocumentCommit=['int'];
     public function entryDocumentCommit( $doc_id ){
 	$this->check($doc_id,'int');
 	$this->selectDoc($doc_id);
 	$this->documentDiscountsSave();
-	$Document2=$this->Base->bridgeLoad('Document');
+	$Document2=$this->Hub->bridgeLoad('Document');
 	return $Document2->commit();
     }
+    public $entryDocumentUncommit=['int'];
     public function entryDocumentUncommit( $doc_id ){
 	$this->check($doc_id,'int');
 	$this->selectDoc($doc_id);
-	$Document2=$this->Base->bridgeLoad('Document');
+	$Document2=$this->Hub->bridgeLoad('Document');
 	return $Document2->uncommit();
     }
+    public $recalc=['int','double'];
     public function recalc( $doc_id, $proc=0 ){
 	$this->check($doc_id,'int');
 	$this->selectDoc($doc_id);
-	$Document2=$this->Base->bridgeLoad('Document');
+	$Document2=$this->Hub->bridgeLoad('Document');
 	$Document2->selectDoc($doc_id);
 	$Document2->recalc($proc);
     }
@@ -308,12 +313,13 @@ class DocumentItems extends DocumentCore{
 	}
     }
     private function duplicateHead($new_doc_id,$old_doc_id){
-	$old_head=$this->get_row("SELECT cstamp,reg_stamp,doc_data,doc_ratio,notcount,inernn,use_vatless_price FROM document_list WHERE doc_id='$old_doc_id'");
+	$old_head=$this->get_row("SELECT cstamp,doc_data,doc_ratio,notcount,use_vatless_price FROM document_list WHERE doc_id='$old_doc_id'");
 	$this->update("document_list", $old_head, ['doc_id'=>$new_doc_id]);
     }
+    public $duplicate=['int'];
     public function duplicate( $old_doc_id ){
 	$this->check($old_doc_id,'int');
-	$this->Base->set_level(2);
+	$this->Hub->set_level(2);
 	$this->selectDoc($old_doc_id);
 	$old_doc_type = $this->doc('doc_type');
 	$new_doc_id=$this->createDocument($old_doc_type);
@@ -321,6 +327,7 @@ class DocumentItems extends DocumentCore{
 	$this->duplicateHead($new_doc_id, $old_doc_id);
 	return $new_doc_id;
     }
+    public $import=['int'];
     public function import( $doc_id ){
 	$this->check($doc_id,'int');
 	$this->selectDoc($doc_id);

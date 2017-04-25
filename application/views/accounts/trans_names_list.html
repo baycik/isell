@@ -52,7 +52,8 @@
 	    if( !row || !confirm("Удалить этот тип проводки?") ){
 		return;
 	    }
-	    App.post("AccountsData/transNameDelete/"+row.trans_type,function(ok){
+	    var params={trans_type:row.trans_type};
+	    App.post("AccountsData/transNameDelete/",params,function(ok){
 		if(ok*1){
 		    App.flash("Тип проводки удален!");
 		    Tnames_list.handler.notify('delete');

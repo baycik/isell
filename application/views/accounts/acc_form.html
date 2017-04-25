@@ -13,7 +13,8 @@
 	    });
 	    App.setupForm("#page_accounts_acc_form_frm", App.page_accounts_acc_form.data).change(function () {
 		var node=this;
-		App.post('AccountsData/accountTreeUpdate/'+App.uri(data.branch_id,node.name,App.val(node)),function(ok){
+		var param={branch_id:data.branch_id,field:node.name,value:App.val(node)};
+		App.post('AccountsData/accountTreeUpdate/',param,function(ok){
 		    if( ok*1 ){
 			App.page_accounts_acc_form.data[node.name]=App.val(node);
 			App.page_accounts_acc_form.handler.notify('change',App.page_accounts_acc_form.data);

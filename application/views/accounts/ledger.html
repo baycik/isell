@@ -48,7 +48,8 @@
 		if( Ledger.data.passive_filter && !App.pcomp ){
 		    return;//Pcomp not yet selected
 		}
-		App.get("AccountsData/accountFavoritesFetch/"+(Ledger.data.passive_filter?1:0),function(resp){
+		var param={use_passive_filter:Ledger.data.passive_filter*1};
+		App.get("AccountsData/accountFavoritesFetch/",param,function(resp){
 		    var favs=App.json(resp);
 		    if( favs[0] ){
                         Ledger.fav.favs=favs;
@@ -73,7 +74,9 @@
 	    },
 	    toggle:function(){
 		Ledger.acc_props.is_favorite=Ledger.acc_props.is_favorite*1?0:1;
-		App.post("AccountsData/accountFavoritesToggle/"+App.uri(Ledger.acc_props.acc_code,Ledger.acc_props.is_favorite,Ledger.data.passive_filter?1:0),function(ok){
+		
+		var props={acc_code:Ledger.acc_props.acc_code,is_favorite:Ledger.acc_props.is_favorite, use_passive_filter:Ledger.data.passive_filter*1};
+		App.post("AccountsData/accountFavoritesToggle/",props,function(ok){
 		    Ledger.fav.init();
 		    App.renderTpl('Ledger_acc_props',Ledger.acc_props);
 		});
@@ -94,7 +97,8 @@
                     return str.replace('$','&#36;');
                 };
 		if( Ledger.current_acc_code ){
-		    App.get("AccountsData/transNameListFetch/"+Ledger.current_acc_code,function(resp){
+		    var param={selected_acc:Ledger.current_acc_code};
+		    App.get("AccountsData/transNameListFetch/",param,function(resp){
 			App.renderTpl('ledger_tnames',{tnames:App.json(resp)});
 		    });
 		}
@@ -176,7 +180,17 @@
 		if( Ledger.current_acc_code && Ledger.idate && Ledger.fdate ){
 		    Ledger.current_page=param.page;
 		    Ledger.current_rows=param.rows;
-		    App.get(App.uri('AccountsCore', 'ledgerFetch', Ledger.current_acc_code, App.toIso(Ledger.idate), App.toIso(Ledger.fdate), Ledger.current_page, Ledger.current_rows), {filterRules: param.filterRules}, function (xhr) {
+		    
+		    
+		    var params={
+			acc_code:Ledger.current_acc_code,
+			idate:App.toIso(Ledger.idate),
+			fdate:App.toIso(Ledger.fdate),
+			page:Ledger.current_page,
+			rows:Ledger.current_rows,
+			filterRules:param.filterRules
+		    };
+		    App.post('AccountsCore/ledgerFetch', params, function (xhr) {
 			var resp = App.json(xhr);
 			if( resp.sub_totals ){
 			    Ledger.sub_totals = resp.sub_totals;
@@ -351,21 +365,6 @@
     };
 </script>
 <style>
-    .left_label{
-	padding: 3px;
-	margin-bottom: 5px;
-	border: 1px solid #999;
-	border-right: none;
-	background: linear-gradient(90deg,rgba(255,255,255,1),rgba(255,255,255,0.5));
-    }
-    .left_label:hover{
-	background: linear-gradient(90deg,rgba(255,255,200,1),rgba(255,255,255,0.5));;
-	-border-color: #afa;
-	cursor: pointer;
-    }
-    .left_label_selected,.left_label_selected:hover{
-	background: #FF9;
-    }
     #Ledger_acc_props{
 	width:200px;
 	min-height:60px;
@@ -379,7 +378,7 @@
 	display: inline;
     }
 </style>
-<div style="width:180px;display: inline-block;vertical-align: top;border-right:1px solid #999;">
+<div style="width:180px;display: inline-block;vertical-align: top;border-right:1px solid #999;" class="transp60">
     <div id="ledger_favorites" class="covert">
 	<img src="img/heart2.png" style="width:16px;height:16px;margin-bottom: 2px;"> Избранные счета
 	{{favs}}
