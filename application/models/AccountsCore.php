@@ -151,10 +151,10 @@ class AccountsCore extends Catalog{
     }
     
     public $accountBalanceTreeFetch=[
-	'parent_id'=>['int',0],
-	'idate'=>'\d\d\d\d-\d\d-\d\d',
-	'fdate'=>'\d\d\d\d-\d\d-\d\d',
-	'page'=>['show_unused',1]
+	'int',
+	'\d\d\d\d-\d\d-\d\d',
+	'\d\d\d\d-\d\d-\d\d',
+	'int'
 	];
     public function accountBalanceTreeFetch( $parent_id=0, $idate='', $fdate='', $show_unused=1 ){
 	$this->Hub->set_level(3);
