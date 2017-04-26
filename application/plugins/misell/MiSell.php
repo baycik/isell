@@ -8,7 +8,7 @@
  * Author: baycik 2016
  * Author URI: isellsoft.com
  */
-require_once 'models/PluginManager.php';
+//require_once 'application/models/PluginManager.php';
 class MiSell extends PluginManager{
     function __construct($Base){
 	ob_start('ob_gzhandler');
@@ -26,7 +26,7 @@ class MiSell extends PluginManager{
     }
     public function index(){
 	$this->Hub->set_level(1);
-	include_once 'libraries/report/RainTpl.php';
+	include_once 'application/libraries/report/RainTpl.php';
 	raintpl::configure( 'tpl_dir', 'application/plugins/MiSell/' );
 	raintpl::configure( 'cache_dir', 'application/plugins/MiSell/cache/' );
 	$tplData=$this->getTplData();
