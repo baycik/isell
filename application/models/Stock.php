@@ -63,6 +63,7 @@ class Stock extends Catalog {
 	}
 	$sql="SELECT
 		parent_label,
+                t.parent_id,
 		t.product_code,
 		t.product_quantity,
 		ru,
