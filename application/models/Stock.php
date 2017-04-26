@@ -117,6 +117,7 @@ class Stock extends Catalog {
 		document_list dl ON de.doc_id=dl.doc_id AND dl.is_commited=1 AND dl.doc_type=1 AND notcount=0
 	    GROUP BY t.product_code
 	    HAVING $having[1]
+            ORDER BY parent_label
             ";//HAVING $having
 	$result_rows=$this->get_list($sql);
 	$total_estimate=$offset+(count($result_rows)==$rows?$rows+1:count($result_rows));
