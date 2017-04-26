@@ -99,8 +99,8 @@ class AccountsBank extends AccountsData{
      * IMPORT OF FILE .csv
      */
     
-    public $up=['string'];
-    public function up( $main_acc_code ){
+    public $Up=['string'];
+    public function Up( $main_acc_code ){
 	if( $_FILES['upload_file'] && !$_FILES['upload_file']['error'] ){
 	    if ( strrpos($_FILES['upload_file']['name'], '.csv') ){
 		return $this->parseCSV( $_FILES['upload_file']['tmp_name'], $main_acc_code );
