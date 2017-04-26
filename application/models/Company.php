@@ -241,7 +241,7 @@ class Company extends Catalog{
 		];
     }
     
-    public $companyPrefsUpdate=['type'=>'string','field'=>'[a-z_]+','value'=>'string'];
+    public $companyPrefsUpdate=['type'=>'string','field'=>'[0-9a-z_]+','value'=>'string'];
     public function companyPrefsUpdate( $type, $field, $value='' ){
 	$this->Hub->set_level(2);
 	switch( $type ){
