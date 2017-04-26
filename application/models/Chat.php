@@ -16,7 +16,7 @@ class Chat extends Catalog{
         return $this->get_list($sql);
     }
     
-    public $sendRecieve=['his_id'=>'int'];
+    public $sendRecieve=['int'];
     public function sendRecieve( $his_id='all' ){
 	$msg=$this->request('message');
 	$this->check($his_id,'int');
