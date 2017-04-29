@@ -133,7 +133,7 @@ class Maintain extends CI_Model {
 	return $named;
     }
     
-    public $backupDown=[];
+    public $backupDown=['string'];
     public function backupDown( $file ){
 	$this->Hub->set_level(4);
 	if( file_exists ($this->dirDbBackup.$file) ){
