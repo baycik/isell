@@ -96,6 +96,8 @@ class Hub  extends CI_Controller{
 	}
 	$plugin_method=isset($args[1])?$args[1]:'index';
 	$plugin_method_args = array_slice($args, 2);
+        require_once 'application/libraries/Plugins.php';
+        
 	Plugins::instance()->Hub=$this;
 	$response=Plugins::instance()->call_method($plugin_name, $plugin_method, $plugin_method_args);
 	$this->response($response);

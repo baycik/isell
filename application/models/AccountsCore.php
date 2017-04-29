@@ -151,17 +151,13 @@ class AccountsCore extends Catalog{
     }
     
     public $accountBalanceTreeFetch=[
-	'parent_id'=>['int',0],
-	'idate'=>'\d\d\d\d-\d\d-\d\d',
-	'fdate'=>'\d\d\d\d-\d\d-\d\d',
-	'page'=>['show_unused',1]
+	'int',
+	'\d\d\d\d-\d\d-\d\d',
+	'\d\d\d\d-\d\d-\d\d',
+	'int'
 	];
     public function accountBalanceTreeFetch( $parent_id=0, $idate='', $fdate='', $show_unused=1 ){
 	$this->Hub->set_level(3);
-	$this->check($parent_id,'int');
-	$this->check($idate,'\d\d\d\d-\d\d-\d\d');
-	$this->check($fdate,'\d\d\d\d-\d\d-\d\d');
-	$this->check($show_unused,'bool');
 	$active_company_id=$this->Hub->acomp('company_id');
 	$this->db->query("SET @idate='$idate 00:00:00', @fdate='$fdate 23:59:59', @parent_id='$parent_id';");
 	$sql=
