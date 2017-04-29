@@ -107,11 +107,12 @@ class ViewManager extends CI_Model{
     
     public $outRedirect=['string'];
     public function outRedirect($out_type){
-	$chunks=explode('\\',FCPATH);
-	$url_base_folder=array_pop($chunks);
+	$app_folder=array_pop( explode('\\',FCPATH) );;
+	$full_uri=$_SERVER['REQUEST_URI'];
+	$pos=strpos($full_uri,$app_folder);
+	$url_base_folder=substr($full_uri,0,$pos).$app_folder;
 	
-	
-	header("Location: /{$url_base_folder}ViewManager/export/?dump_id={$this->dump->dump_id}&out_type={$out_type}");
+	header("Location: {$url_base_folder}ViewManager/export/?dump_id={$this->dump->dump_id}&out_type={$out_type}");
     }
     
     public $export=['dump_id'=>'string','out_type'=>'string'];

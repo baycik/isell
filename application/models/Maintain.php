@@ -8,6 +8,7 @@ class Maintain extends CI_Model {
     function __construct(){
 	$this->dirWork = realpath('.');
     }
+    
     public $getCurrentVersionStamp=[];
     public function getCurrentVersionStamp(){
 	if( file_exists($this->dirWork.'/.git') ){
@@ -22,6 +23,7 @@ class Maintain extends CI_Model {
 	return $matches[1];
     }
     
+    public $updateInstall=[];
     public function updateInstall(){
 	$this->updateConfigurator();
 	$this->updateDb();
@@ -85,6 +87,7 @@ class Maintain extends CI_Model {
 	return true;
     }
     
+    public $backupImport=[];
     public function backupImport(){
 	$this->Hub->set_level(4);
         $file=$this->input->post('filename');
@@ -94,6 +97,7 @@ class Maintain extends CI_Model {
         return false;
     }
     
+    public $backupDump=[];
     public function backupDump(){
         $this->Hub->set_level(4);
         $path_to_mysql=$this->db->query("SHOW VARIABLES LIKE 'basedir'")->row()->Value;
@@ -110,6 +114,7 @@ class Maintain extends CI_Model {
         return true;
     }
     
+    public $backupList=[];
     public function backupList(){
 	$this->Hub->set_level(4);
 	$files = array_diff(scandir($this->dirDbBackup), array('.', '..'));
@@ -117,6 +122,7 @@ class Maintain extends CI_Model {
 	return array_values ($files);
     }
     
+    public $backupListNamed=[];
     public function backupListNamed(){
 	$this->Hub->set_level(4);
 	$named=[];
@@ -127,6 +133,7 @@ class Maintain extends CI_Model {
 	return $named;
     }
     
+    public $backupDown=[];
     public function backupDown( $file ){
 	$this->Hub->set_level(4);
 	if( file_exists ($this->dirDbBackup.$file) ){
@@ -138,6 +145,7 @@ class Maintain extends CI_Model {
 	}
     }
     
+    public $backupUp=[];
     public function backupUp(){
 	if( !file_exists ($this->dirDbBackup) ){
 	    mkdir($this->dirDbBackup);
@@ -148,6 +156,7 @@ class Maintain extends CI_Model {
         return 'error'.$_FILES['upload_file']['error'];
     }
     
+    public $backupDelete=[];
     public function backupDelete(){
 	$this->Hub->set_level(4);
         $file=$this->input->post('filename');
