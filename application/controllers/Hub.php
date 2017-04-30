@@ -7,7 +7,7 @@ spl_autoload_register(function ($class_name) {
 	require_once $filename;
     }
 });
-include APPPATH.'libraries/Plugins.php';
+//include APPPATH.'libraries/Plugins.php';
 
 
 class Hub  extends CI_Controller{
@@ -19,7 +19,21 @@ class Hub  extends CI_Controller{
 	session_name('baycikSid' . BAY_COOKIE_NAME);
 	session_start();
 	parent::__construct();
+    
+	$user_id=$this->svar('user_id');
+	if( !$user_id ){
+	    $user_login=$this->request('user_login');
+	    $user_pass=$this->request('user_pass');
+	    $User=$this->load_model('User');
+	    if( $user_login && $user_pass && $User->SignIn($user_login,$user_pass) ){
+		return;
+	    }
+	    include APPPATH.'views/login.html';
+	    exit;
+	}	
     }
+    
+    
     public function index(){
 	include "index.html";
     }
@@ -89,6 +103,9 @@ class Hub  extends CI_Controller{
      * So to method comes the plugin_name in $args[0] and method name in $args[1]
      */
     public function plugin(){
+	
+	die(9999);
+	
 	$args=func_get_args();
 	$plugin_name=$args[0];
 	if( !$plugin_name ){
@@ -96,10 +113,8 @@ class Hub  extends CI_Controller{
 	}
 	$plugin_method=isset($args[1])?$args[1]:'index';
 	$plugin_method_args = array_slice($args, 2);
-        require_once 'application/libraries/Plugins.php';
-        
-	Plugins::instance()->Hub=$this;
-	$response=Plugins::instance()->call_method($plugin_name, $plugin_method, $plugin_method_args);
+	$PluginManager=$this->load_model('PluginManager');
+	$response=$PluginManager->plugin_do($plugin_name,$plugin_method,$plugin_method_args);
 	$this->response($response);
     }    
     public function pluginInitTriggers(){
@@ -195,14 +210,19 @@ class Hub  extends CI_Controller{
 	    $this->set_level($this->{$name}->min_level);
 	}
 	$this->{$name}->Hub=$this;
+	if( method_exists($this->{$name}, 'init') ){
+	    //call_user_func_array([$this->{$name},'init'],[]);
+	    $this->{$name}->init();
+	}
+
 	return $this->{$name};
     }
     
     public function set_level($allowed_level) {
 	if ($this->svar('user_level') < $allowed_level) {
 	    if ($this->svar('user_level') == 0) {
-		$this->msg("Текущий уровень <b>" . $this->level_names[$this->svar('user_level') * 1] . "</b><br>");
-		$this->msg("Необходим уровень доступа <b>" . $this->level_names[$allowed_level] . "</b>");
+		$this->msg("Текущий уровень " . $this->level_names[$this->svar('user_level') * 1]);
+		$this->msg("Необходим уровень доступа " . $this->level_names[$allowed_level]);
 		$this->kick_out();
 	    } else {
 		$this->msg("Необходим мин. уровень доступа '{$this->level_names[$allowed_level]}'");

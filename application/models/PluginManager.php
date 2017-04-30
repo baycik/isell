@@ -1,6 +1,7 @@
 <?php
 require_once 'Catalog.php';
 class PluginManager extends Catalog{
+    public $min_level=4;
     private $plugin_folder='application/plugins/';
     
     public $listFetch=[];
@@ -63,15 +64,22 @@ class PluginManager extends Catalog{
     }
     public $settingsDataFetch=[];
     public function settingsDataFetch($plugin_system_name){
-	return json_decode($this->get_value("SELECT plugin_settings FROM plugin_list WHERE plugin_system_name='$plugin_system_name'"));
+	$settings_data=$this->get_row("SELECT * FROM plugin_list WHERE plugin_system_name='$plugin_system_name'");
+	if( $settings_data && $settings_data->plugin_settings ){
+	    $settings_data->plugin_settings=  json_decode($settings_data->plugin_settings);
+	} else {
+	    $settings_data=new stdClass;
+	}
+	return $settings_data;
     }
     public $settingsAllFetch=['system_name'=>'string'];
     public function settingsAllFetch($plugin_system_name){
 	$settings_file=$this->plugin_folder.$plugin_system_name."/settings.html";
-	$settings_html=file_exists($settings_file)?file_get_contents($settings_file):'';
 	$settings_data=$this->settingsDataFetch($plugin_system_name);
-	return ['html'=>$settings_html,'data'=>$settings_data];
+	$settings_data->html=file_exists($settings_file)?file_get_contents($settings_file):'';
+	return $settings_data;
     }
+    
     public $settingsSave=['plugin_system_name'=>'string','settings_json'=>'string'];
     public function settingsSave($plugin_system_name,$settings_json){
 	$sql="INSERT INTO 
@@ -85,7 +93,31 @@ class PluginManager extends Catalog{
 	return $this->db->affected_rows();
     }
     
-    public $install=['plugin_system_name'=>'sting'];
+    public $activate=['plugin_system_name'=>'string'];
+    public function activate($plugin_system_name){
+	$data=[
+	    'plugin_system_name'=>$plugin_system_name,
+	    'is_activated'=>1
+	];
+	$ok=$this->pluginUpdate($plugin_system_name,$data);
+	$this->Hub->pluginInitTriggers();
+	$this->plugin_do($plugin_system_name, 'activate');
+	return $ok;
+    }
+    
+    public $deactivate=['plugin_system_name'=>'string'];
+    public function deactivate($plugin_system_name){
+	$data=[
+	    'plugin_system_name'=>$plugin_system_name,
+	    'is_activated'=>0
+	];
+	$ok=$this->pluginUpdate($plugin_system_name,$data);
+	$this->Hub->pluginInitTriggers();
+	$this->plugin_do($plugin_system_name, 'deactivate');
+	return $ok;
+    }
+    
+    public $install=['plugin_system_name'=>'string'];
     public function install($plugin_system_name){
 	$headers=$this->get_plugin_headers( $plugin_system_name );
 	$data=[
@@ -94,15 +126,43 @@ class PluginManager extends Catalog{
 	    'is_installed'=>1,
 	    'is_activated'=>1
 	];
-	return $this->insert('plugin_list',$data);
-	//run install script
+	$ok=$this->insert('plugin_list',$data);
+	$this->Hub->pluginInitTriggers();
+	$this->plugin_do($plugin_system_name, 'install');
+	return $ok;
     }
     
     public $uninstall=['plugin_system_name'=>'string'];
     public function uninstall($plugin_system_name){
-	return $this->delete('plugin_list',['plugin_system_name'=>$plugin_system_name]);
+	$ok=$this->delete('plugin_list',['plugin_system_name'=>$plugin_system_name]);
+	$this->plugin_do($plugin_system_name, 'uninstall');
+	$this->Hub->pluginInitTriggers();
+	return $ok;
     }
+    
     private function pluginUpdate($plugin_system_name,$data){
 	return $this->update('plugin_list',$data,['plugin_system_name'=>$plugin_system_name]);
+    }
+    
+    public function plugin_do($plugin_system_name, $plugin_method, $plugin_method_args=[]){
+	$path=$this->plugin_folder.$plugin_system_name."/models/".$plugin_system_name.".php";
+	if( !file_exists($path) ){
+	    $path=$this->plugin_folder.$plugin_system_name."/".$plugin_system_name.".php";// Support for older plugins
+	    if( !file_exists($path) ){
+		return [];
+	    }
+	}
+	require_once $path;
+	
+	//new MiSell($this->Hub);
+	
+	    $Plugin=$this->Hub->load_model($plugin_system_name);
+
+	//$Plugin=new $plugin_system_name();
+	//$Plugin->Hub=$this->Hub;
+	if( method_exists($Plugin, $plugin_method) ){
+	    return call_user_func_array([$Plugin,$plugin_method], $plugin_method_args);
+	}
+	return null;
     }
 }

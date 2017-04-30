@@ -9,21 +9,25 @@
  * Author URI: isellsoft.com
  */
 //require_once 'application/models/PluginManager.php';
-class MiSell extends PluginManager{
-    function __construct($Base){
+class MiSell extends Catalog{
+    function __construct(){
 	ob_start('ob_gzhandler');
-	$user_id=$Base->svar('user_id');
-	if( !$user_id ){
-	    $user_login=$this->request('user_login');
-	    $user_pass=$this->request('user_pass');
-	    $User=$Base->load_model('User');
-	    if( $user_login && $user_pass && $User->SignIn($user_login,$user_pass) ){
-		return;
-	    }
-	    include 'login.html';
-	    exit;
-	}
     }
+//    public function init(){
+//	$user_id=$this->Hub->svar('user_id');
+//	if( !$user_id ){
+//	    $user_login=$this->request('user_login');
+//	    $user_pass=$this->request('user_pass');
+//	    $User=$this->Hub->load_model('User');
+//	    if( $user_login && $user_pass && $User->SignIn($user_login,$user_pass) ){
+//		return;
+//	    }
+//	    include 'login.html';
+//	    exit;
+//	}	
+//    }
+    
+    public $index=[];
     public function index(){
 	$this->Hub->set_level(1);
 	include_once 'application/libraries/report/RainTpl.php';
@@ -36,12 +40,16 @@ class MiSell extends PluginManager{
 	$this->rain->assign('scripts', file_get_contents('application/plugins/MiSell/scripts.html') );
 	$this->rain->draw('MiSell');
     }
+    
+    public $logout=[];
     public function logout(){
 	$User=$this->Hub->load_model('User');
 	$User->SignOut();
 	header("Location: ./");
 	exit();
     }
+    
+    public $getTplData=[];
     public function getTplData(){
         $d=array();
         $d['stock_tree']=$this->treeFetch('stock_tree',0);
@@ -49,6 +57,8 @@ class MiSell extends PluginManager{
         $d['user_sign']=$this->Hub->svar('user_sign');
         return $d;
     }
+    
+    public $getCompaniesTree=[];
     public function getCompaniesTree(){
 	$level=$this->Hub->svar('user_level');
 	$assigned_path=  $this->Hub->svar('user_assigned_path');
@@ -85,6 +95,8 @@ class MiSell extends PluginManager{
 		    AND IF( {$branch_id},parent_id='{$branch_id}',path ='$assigned_path')";
 	return $this->get_list($sql);	
     }
+    
+    public $suggest=[];
     public function suggest(){
 	$q=$this->request('q');
 	$parent_id=$this->request('parent_id');
@@ -121,6 +133,8 @@ class MiSell extends PluginManager{
                 LIMIT 20) t";
         return $this->get_list($sql);
     }
+    
+    public $orderSend=[];
     public function orderSend(){
 	$order=$this->request('order','json');
 	$company_id=$this->request('company_id');
@@ -140,6 +154,8 @@ class MiSell extends PluginManager{
         }
         return true;
     }
+    
+    public $orderAnnounceRecieved=['string'];
     public function orderAnnounceRecieved($comment){
 	$this->settings=$this->settingsDataFetch('misell');
         $pcomp_name=$this->Hub->pcomp('label');

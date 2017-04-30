@@ -10,12 +10,8 @@
  * @author Baycik
  */
 class Storage extends CI_Model {
-
     private $storageFolder = '../storage';
     
-    
-    
-
     public function file_store($path, $data) {
 	$parts = explode('/', $path);
 	$filename = array_pop($parts);
@@ -70,10 +66,10 @@ class Storage extends CI_Model {
 	    call_user_func_array(array($this, 'image_flush'),$args);
 	return ob_get_contents();
     }
-    public function image_flush(){
-	$args = func_get_args();
-	$size_x = array_shift($args);
-	$path = $this->storageFolder . "/" . implode('/', $args);
+    
+    public $image_flush=['size'=>'string','path'=>'string'];
+    public function image_flush( $size_x, $path ){
+	$path = $this->storageFolder . "/" . $path;
 	$cache=$path . "_{$size_x}";
 	if (is_dir($path) || !file_exists($path)) {
 	    $path='img/notfound.jpg';

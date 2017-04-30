@@ -2,6 +2,7 @@
     Plugins=App.page_pref_plugins = {
 	init: function () {
 	    this.tile.load();
+	    Plugins.initButtons();
 	},
 	tile:{
 	    plugin_list:[],
@@ -36,11 +37,12 @@
 	    $.get('PluginManager/settingsAllFetch',{system_name:system_name},function(resp){
 		var all=App.json(resp);
 		Plugins.renderSettings(all);
+		Plugins.renderButtons(all);
 	    });
 	},
 	renderSettings:function(all){
 	    $('#plugin_settings').html(all.html);
-	    App.setupForm('#plugin_settings form',all.data,'use_inp_values');
+	    App.setupForm('#plugin_settings form',all.plugin_settings,'use_inp_values');
 	    $('#plugin_settings form').submit(function(e){
 		e.preventDefault();
 		var settings=App.collectForm('#plugin_settings form');
@@ -53,46 +55,37 @@
 		});
 	    });
 	},
-	install:function( on ){
-	    App.post('PluginManager/install',{plugin_system_name:Plugin.current_system_name},function(ok){
-		App.page_pref_plugins.tile.load();
-	    });
+	renderButtons:function(all){
+	    $(".x-plugins-buttons button").attr('disabled',true);
+	    if( all.is_installed*1 ){
+		if( all.is_activated*1 ){
+		    $('.x-plugins-buttons button[data-action="deactivate"]').attr('disabled',false);
+		} else {
+		    $('.x-plugins-buttons button[data-action="activate"]').attr('disabled',false);
+		    $('.x-plugins-buttons button[data-action="uninstall"]').attr('disabled',false);
+		}
+	    } else {
+		$('.x-plugins-buttons button[data-action="install"]').attr('disabled',false);
+	    }
 	},
-	uninstall:function( on ){
-	    App.post('PluginManager/uninstall',{plugin_system_name:Plugin.current_system_name},function(ok){
+	do:function(action){
+	    App.post('PluginManager/'+action,{plugin_system_name:Plugin.current_system_name},function(ok){
 		App.page_pref_plugins.tile.load();
+	    });	    
+	},
+	initButtons:function(){
+	    $(".x-plugins-buttons").click(function(e){
+		var action=$(e.target).data('action');
+		if( action ){
+		    Plugins.do(action);
+		}
 	    });
 	}
     };
 </script>
 <style>
-    .left_label{
-	padding: 3px;
-	margin-bottom: 5px;
-	border: 1px solid #999;
-	border-right: none;
-	background: linear-gradient(90deg,rgba(255,255,255,1),rgba(255,255,255,0.5));
-    }
-    .left_label:hover{
-	background: linear-gradient(90deg,rgba(255,255,200,1),rgba(255,255,255,0.5));;
-	-border-color: #afa;
-	cursor: pointer;
-    }
     .left_label_selected,.left_label_selected:hover{
 	background: #FF9;
-    }
-    #plugins_tile{
-	width:210px;
-	float:left;
-	border-right: 1px solid #ccc;
-	padding-right: 2px;
-    }
-    #plugins_tile .left_label{
-	min-height: 30px;
-	width:200px;
-	float:left;
-	border: 1px solid #999;
-	margin: 2px;
     }
     #plugin_info{
 	padding: 2px;
@@ -106,6 +99,11 @@
     }
     #plugin_settings .inp_group b{
 	width:140px;
+    }
+    .x-plugins-buttons{
+	background-color: rgba(0,0,0,.2);
+	padding: 2px;
+	margin: 2px;
     }
 
 </style>
@@ -121,6 +119,12 @@
     {{/plugins}}
 </div>
 <div style="overflow: auto">
+    <div class="x-plugins-buttons">
+	<button data-action="uninstall">Удалить</button>
+	<button data-action="install">Установить</button> | 
+	<button data-action="deactivate">Отключить</button>
+	<button data-action="activate">Активировать</button>
+    </div>
     <div id="plugin_info" class="covert">
 	<img src="img/plugin.png" style="float:left;width:auto;height: 70px;">
 	<div style="float: right">
@@ -133,10 +137,6 @@
 	<div>
 	    <h2>{{plugin_name}}</h2>
 	    {{plugin_description}}
-	</div>
-	<div>
-	    <button onclick="Plugins.install()">Install</button>
-	    <button onclick="Plugins.uninstall()">Unistall</button>
 	</div>
 	<div id="plugin_settings" style="clear:both"></div>
     </div>
