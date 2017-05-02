@@ -20,7 +20,7 @@ class Hub  extends CI_Controller{
 	session_start();
 	parent::__construct();
     
-        if( isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest' ){
+        if( isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) != 'xmlhttprequest' ){
             $user_id=$this->svar('user_id');
             if( !$user_id ){
                 $user_login=$this->request('user_login');
