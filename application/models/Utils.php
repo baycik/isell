@@ -342,8 +342,8 @@ class Utils extends Catalog{
 	echo "SELECT doc_id,passive_company_id FROM document_list WHERE is_commited=1 AND doc_type=1 AND '$idate'<=cstamp AND cstamp<='$fdate' $active_filter ORDER BY passive_company_id";
 	if( $res ){
 	    foreach ($res->result() as $row) {
-		if ($Document2->Hub->pcomp('company_id') != $row->passive_company_id){
-		    $Document2->Hub->selectPassiveCompany($row->passive_company_id);
+		if ($Document2->Base->pcomp('company_id') != $row->passive_company_id){
+		    $Document2->Base->selectPassiveCompany($row->passive_company_id);
 		    echo " pcomp_id".$row->passive_company_id;
 		}
 		$doc_id = $row->doc_id;
