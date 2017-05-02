@@ -304,9 +304,7 @@
                         </p>
                     </div>
                 </div>
-                <a href="#" onclick="$.get('./logout').then(function () {
-                    location.reload()
-                })" class="ui-btn ui-btn-icon-left ui-icon-power">Выход</a>
+                <a href="#" onclick="location.href='./logout';" class="ui-btn ui-btn-icon-left ui-icon-power">Выход</a>
             </div>
         </div>
         <!-- 
