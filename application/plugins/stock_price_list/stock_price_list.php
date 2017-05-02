@@ -1,7 +1,7 @@
 <?php
 /* Group Name: Склад
  * User Level: 2
- * Plugin Name: Price list creator
+ * Plugin Name: Прайс-лист менеджер
  * Plugin URI: http://isellsoft.com
  * Version: 1.1
  * Description: Tool for creating price list 
@@ -10,15 +10,7 @@
  */
 class Stock_price_list extends Catalog{
     function __construct(){
-	add_action( 'stock_add_tab', function(){
-	    return $this->get_tab();
-	});
-    }
-    private function get_tab(){
-	return [
-	    'title'=>'Прайс лист',
-	    'href'=>'page/plugins/stock_price_list/stock_price_list.html'
-	];
+
     }
     public function save(){
 	$deployment_id=$this->input->post('deployment_id');
