@@ -20,17 +20,19 @@ class Hub  extends CI_Controller{
 	session_start();
 	parent::__construct();
     
-	$user_id=$this->svar('user_id');
-	if( !$user_id ){
-	    $user_login=$this->request('user_login');
-	    $user_pass=$this->request('user_pass');
-	    $User=$this->load_model('User');
-	    if( $user_login && $user_pass && $User->SignIn($user_login,$user_pass) ){
-		return;
-	    }
-	    include APPPATH.'views/login.html';
-	    exit;
-	}	
+        if( isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest' ){
+            $user_id=$this->svar('user_id');
+            if( !$user_id ){
+                $user_login=$this->request('user_login');
+                $user_pass=$this->request('user_pass');
+                $User=$this->load_model('User');
+                if( $user_login && $user_pass && $User->SignIn($user_login,$user_pass) ){
+                    return;
+                }
+                include APPPATH.'views/login.html';
+                exit;
+            }
+        }
     }
     
     
