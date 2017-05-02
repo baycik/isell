@@ -1,5 +1,4 @@
 <?php
-require_once 'Catalog.php';
 class PluginManager extends Catalog{
     public $min_level=4;
     private $plugin_folder='application/plugins/';
@@ -46,12 +45,16 @@ class PluginManager extends Catalog{
 	preg_match ('|User Level:(.*)$|mi', $plugin_data, $user_level);
 	preg_match ('|Plugin Name:(.*)$|mi', $plugin_data, $name);
 	preg_match ('|Plugin URI:(.*)$|mi', $plugin_data, $uri);
+	preg_match ('|Trigger before:(.*)$|mi', $plugin_data, $trigger_before);
+	preg_match ('|Trigger after:(.*)$|mi', $plugin_data, $trigger_after);
 	preg_match ('|Version:(.*)|i', $plugin_data, $version);
 	preg_match ('|Description:(.*)$|mi', $plugin_data, $description);
 	preg_match ('|Author:(.*)$|mi', $plugin_data, $author_name);
 	preg_match ('|Author URI:(.*)$|mi', $plugin_data, $author_uri);
 	return [
 	    'system_name'=>$plugin_system_name,
+	    'trigger_before'=>isset($trigger_before[1])?trim($trigger_before[1]):$plugin_system_name,
+	    'trigger_after'=>isset($trigger_after[1])?trim($trigger_after[1]):'',
 	    'group_name'=>isset($group_name[1])?trim($group_name[1]):null,
 	    'user_level'=>isset($user_level[1])?trim($user_level[1]):2,
 	    'plugin_name'=>isset($name[1])?trim($name[1]):null,
@@ -65,8 +68,8 @@ class PluginManager extends Catalog{
     public $settingsDataFetch=[];
     public function settingsDataFetch($plugin_system_name){
 	$settings_data=$this->get_row("SELECT * FROM plugin_list WHERE plugin_system_name='$plugin_system_name'");
-	if( $settings_data && $settings_data->plugin_settings ){
-	    $settings_data->plugin_settings=  json_decode($settings_data->plugin_settings);
+	if( $settings_data ){
+	    $settings_data->plugin_settings=  $settings_data->plugin_settings?json_decode($settings_data->plugin_settings):[];
 	} else {
 	    $settings_data=new stdClass;
 	}
@@ -74,8 +77,9 @@ class PluginManager extends Catalog{
     }
     public $settingsAllFetch=['system_name'=>'string'];
     public function settingsAllFetch($plugin_system_name){
-	$settings_file=$this->plugin_folder.$plugin_system_name."/settings.html";
 	$settings_data=$this->settingsDataFetch($plugin_system_name);
+	
+	$settings_file=$this->plugin_folder.$plugin_system_name."/settings.html";
 	$settings_data->html=file_exists($settings_file)?file_get_contents($settings_file):'';
 	return $settings_data;
     }
@@ -120,13 +124,14 @@ class PluginManager extends Catalog{
     public $install=['plugin_system_name'=>'string'];
     public function install($plugin_system_name){
 	$headers=$this->get_plugin_headers( $plugin_system_name );
-	$data=[
-	    'plugin_system_name'=>$plugin_system_name,
-	    'trigger_before'=>$headers['trigger_before'],
-	    'is_installed'=>1,
-	    'is_activated'=>1
-	];
-	$ok=$this->insert('plugin_list',$data);
+	$sql="REPLACE INTO 
+		plugin_list 
+	    SET
+		plugin_system_name='$plugin_system_name',
+		trigger_before='{$headers['trigger_before']}',
+		is_installed=1,
+		is_activated=0";
+	$ok=$this->query($sql);
 	$this->Hub->pluginInitTriggers();
 	$this->plugin_do($plugin_system_name, 'install');
 	return $ok;
@@ -152,14 +157,9 @@ class PluginManager extends Catalog{
 		return [];
 	    }
 	}
+	
 	require_once $path;
-	
-	//new MiSell($this->Hub);
-	
-	    $Plugin=$this->Hub->load_model($plugin_system_name);
-
-	//$Plugin=new $plugin_system_name();
-	//$Plugin->Hub=$this->Hub;
+	$Plugin=$this->Hub->load_model($plugin_system_name);
 	if( method_exists($Plugin, $plugin_method) ){
 	    return call_user_func_array([$Plugin,$plugin_method], $plugin_method_args);
 	}
