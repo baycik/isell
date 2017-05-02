@@ -407,7 +407,7 @@ class Utils extends Catalog{
 	$this->db->query($sql_tbl_create);
     }
     
-    public $selfPriceInvoiceRecalculate=[];
+    public $selfPriceInvoiceRecalculate=['string','string','string'];
     public function selfPriceInvoiceRecalculate($idatedmy,$fdatedmy,$active_mode=''){
 	set_time_limit(300);
 	$idate=$this->dmy2iso($idatedmy).' 00:00:00';
