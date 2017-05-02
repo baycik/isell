@@ -339,7 +339,7 @@ class Utils extends Catalog{
     private function selfPriceOldApiRecalculate($idate,$fdate,$active_filter){
 	$Document2=$this->Hub->bridgeLoad('Document');
 	$res = $this->db->query("SELECT doc_id,passive_company_id FROM document_list WHERE is_commited=1 AND doc_type=1 AND '$idate'<=cstamp AND cstamp<='$fdate' $active_filter ORDER BY passive_company_id");
-	echo "SELECT doc_id,passive_company_id FROM document_list WHERE is_commited=1 AND doc_type=1 AND '$idate'<=cstamp AND cstamp<='$fdate' $active_filter ORDER BY passive_company_id";
+	//echo "SELECT doc_id,passive_company_id FROM document_list WHERE is_commited=1 AND doc_type=1 AND '$idate'<=cstamp AND cstamp<='$fdate' $active_filter ORDER BY passive_company_id";
 	if( $res ){
 	    foreach ($res->result() as $row) {
 		if ($Document2->Base->pcomp('company_id') != $row->passive_company_id){
