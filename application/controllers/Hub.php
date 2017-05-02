@@ -20,17 +20,20 @@ class Hub  extends CI_Controller{
 	session_start();
 	parent::__construct();
     
-	$user_id=$this->svar('user_id');
-	if( !$user_id ){
-	    $user_login=$this->request('user_login');
-	    $user_pass=$this->request('user_pass');
-	    $User=$this->load_model('User');
-	    if( $user_login && $user_pass && $User->SignIn($user_login,$user_pass) ){
-		return;
-	    }
-	    include APPPATH.'views/login.html';
-	    exit;
-	}	
+	
+	if( !$this->svar('user_id') && empty($_SERVER['HTTP_X_REQUESTED_WITH']) ) {
+	    $this->loginform();
+	}
+    }
+    private function loginform(){
+	$user_login=$this->request('user_login');
+	$user_pass=$this->request('user_pass');
+	$User=$this->load_model('User');
+	if( $user_login && $user_pass && $User->SignIn($user_login,$user_pass) ){
+	    return;
+	}
+	include APPPATH.'views/login.html';
+	exit;
     }
     
     
@@ -50,10 +53,10 @@ class Hub  extends CI_Controller{
 	    if( !method_exists($model_name, $method) ){
 		show_error("X-isell-error: No such method '$method' in $model_name", 500);
 	    }
-	    $method_args_config=isset($Model->$method)?$Model->$method:NULL;
-	    if( $method_args_config===NULL ){
+	    if( !isset($Model->$method) ){
 		show_error("X-isell-error: '$method' config for arguments is not set. Access denied", 500);
 	    }
+	    $method_args_config=$Model->$method;
 	    $method_args=$this->parseMethodArguments($method_args_config, $route_args);
 	    $response=call_user_func_array([$Model, $method],$method_args);
 	    if( !is_null($response) ){
@@ -77,9 +80,7 @@ class Hub  extends CI_Controller{
 		}
 	    }
 	    return $method_args;
-	} 
-	$method_args=array_map("rawurldecode",$route_args);//this behavior is deprecated
-	return $method_args;
+	}
     }
     
     public function page( $parent_folder=null ){
@@ -139,7 +140,7 @@ class Hub  extends CI_Controller{
 	    $active_plugin_triggers->free_result();
 	}
 	$this->svar('trigger_before',$before);
-	$this->svar('trigger_after',$after);
+	//$this->svar('trigger_after',$after);
     }
     private function pluginParseTriggers( &$registry, $triggers, $plugin_system_name ){
 	$trigger_list=explode(',',$triggers);
