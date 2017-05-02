@@ -155,9 +155,9 @@ class Hub  extends CI_Controller{
 	$trigger_before=$this->svar('trigger_before');
 	if( isset($trigger_before[$model_name]) ){
 	    $model_override=$trigger_before[$model_name];
-	    //$this->load->add_package_path(APPPATH.'plugins/'.$model_override, FALSE);
-	    require_once APPPATH."plugins/{$model_override}/{$model_override}.php";
-	    
+	    $this->load->add_package_path(APPPATH.'plugins/'.$model_override, FALSE);
+	    //require_once APPPATH."plugins/{$model_override}/{$model_override}.php";
+	    //echo APPPATH."plugins/{$model_override}/{$model_override}.php";
 	    
 	    if( $model_override===$model_name ){//if plugin ovverides it self then adding package is enough
 		return false;

@@ -12,37 +12,42 @@ class Stock_price_list extends Catalog{
     function __construct(){
 
     }
-    public function save(){
-	$deployment_id=$this->input->post('deployment_id');
-	$deployment_data=$this->input->post('deployment_data');
+    
+    public $save=['deployment_id'=>'string','deployment_data'=>'string'];
+    public function save($deployment_id,$deployment_data){
 	$this->load->model('Storage');
 	return $this->Storage->file_store('stock_price_list/deployments/'.$deployment_id.'.json',$deployment_data);
     }
-    public function open(){
-	$deployment_id=$this->input->get_post('deployment_id');
+    
+    public $open=['deployment_id'=>'string'];
+    public function open($deployment_id){
 	$this->load->model('Storage');
 	return $this->Storage->file_restore('stock_price_list/deployments/'.$deployment_id.'.json');	
     }
-    public function remove(){
-	$deployment_id=$this->input->get_post('deployment_id');
+    
+    public $remove=['deployment_id'=>'string'];
+    public function remove($deployment_id){
 	$this->load->model('Storage');
 	return $this->Storage->file_remove('stock_price_list/deployments/'.$deployment_id.'.json');	
     }
+    
+    public $listFetch=[];
     public function listFetch(){
 	$this->load->model('Storage');
 	$dep_files=$this->Storage->file_list('stock_price_list/deployments/');
 	$dep_list=[];
 	foreach ($dep_files as $dep_file){
 	    $deployment=$this->Storage->json_restore('stock_price_list/deployments/'.$dep_file);
+	    if(!$deployment){
+		continue;
+	    }
 	    $dep_list[]=['id'=>$deployment->id,'date'=>date('d.m.Y',substr($deployment->id,0,10)),'name'=>$deployment->name];
 	}
 	return $dep_list;
     }
-    public function getDeployment( $deployment_id=null ){
-	if( !$deployment_id ){
-	    $deployment_id=$this->input->get_post('deployment_id');
-	}
-	
+    
+    public $getDeployment=['deployment_id'=>'string'];
+    public function getDeployment( $deployment_id){
 	$this->load->model('Storage');
 	$availables=$this->getAvailables();
 	$deployment=$this->Storage->json_restore('stock_price_list/deployments/'.$deployment_id.'.json');
@@ -149,9 +154,8 @@ class Stock_price_list extends Catalog{
         return $this->get_list($img_sql);
     }
     
-    public function printout(){
-	$deployment_id=$this->input->get_post('deployment_id');
-	$out_type=$this->input->get_post('out_type');
+    public $printout=['deployment_id'=>'string','out_type'=>'string'];
+    public function printout($deployment_id,$out_type){
 	$deployment=$this->getDeployment($deployment_id);
 	if( !$deployment['deployment'] ){
 	    return 'price is empty';

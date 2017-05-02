@@ -69,8 +69,11 @@
 	    $("#price_list_notloaded").hide();
 	    $("#price_list_loaded").show();
 	    $("#price_list_loaded_connected").show();
-	    $.post("stock_price_list/getDeployment/", {deployment_id: deployment_id}, function (resp) {
+	    $.post("Stock_price_list/getDeployment/", {deployment_id: deployment_id}, function (resp) {
 		var deployment=App.json(resp);
+		if(!deployment){
+		    return;
+		}
 		$("#price_list_name").html(deployment.deployment.name);
 		App.renderTpl('price_list_availables',deployment);
 		App.renderTpl('price_list_deployment',deployment.deployment);
@@ -101,7 +104,7 @@
 		    text: $(this).find('span').html()
 		});
 	    });
-	    return $.post("stock_price_list/save/", {deployment_id: deployment_id, deployment_data: JSON.stringify(App.price_list.deployment_data)}, function (ok) {
+	    return $.post("Stock_price_list/save/", {deployment_id: deployment_id, deployment_data: JSON.stringify(App.price_list.deployment_data)}, function (ok) {
 		if(ok*1){
 		    App.flash(App.price_list.deployment_data.name+ " сохранен");
 		}
@@ -132,7 +135,7 @@
 	    });
 	},
 	print:function(){
-	    window.open("stock_price_list/printout/?out_type=.print&deployment_id="+this.current_dpl_id,'print_tab');
+	    window.open("Stock_price_list/printout/?out_type=.print&deployment_id="+this.current_dpl_id,'print_tab');
 	},
 	list: {
 	    create: function () {
@@ -150,7 +153,7 @@
 	    remove: function(){
 		var row=$("#price_list_dg").datagrid('getSelected');
 		if( row && row.id && confirm("Удалить прайс-лист?") ){
-		    $.post("stock_price_list/remove/", {deployment_id: row.id}, function (ok) {
+		    $.post("Stock_price_list/remove/", {deployment_id: row.id}, function (ok) {
 			App.price_list.clear();
 			$('#price_list_dg').datagrid('reload');
 		    });
@@ -182,7 +185,7 @@
 		<span class="icon-24 icon-refresh" title="Обновить" onclick="$('#price_list_dg').datagrid('reload')"> </span>
 	    </div>
 	    <table class="easyui-datagrid" style="width:100%" id="price_list_dg" title="Сохраненные прайсы" data-options="
-		   url:'stock_price_list/listFetch',
+		   url:'Stock_price_list/listFetch',
 		   onSelect:App.price_list.list.select">
 		<thead>
 		    <tr>
