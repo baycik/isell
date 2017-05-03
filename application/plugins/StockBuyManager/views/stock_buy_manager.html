@@ -1,0 +1,15 @@
+<script>
+    var holder_node_id = document.scripts[document.scripts.length - 1].parentNode.id;
+    App[holder_node_id]=(function($){
+	var holderId;
+	function setHolderId(id){
+	    holderId=id;
+	}
+	
+	return {
+	    init:init,
+	    load:doc.load,
+	    setHolderId:setHolderId
+	};	
+    })(jQuery);
+</script>
