@@ -7,6 +7,7 @@
  * Description: Tool for creating price list 
  * Author: baycik 2016
  * Author URI: http://isellsoft.com
+ * Trigger before: Stock_price_list
  */
 class Stock_price_list extends Catalog{
     function __construct(){
