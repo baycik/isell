@@ -74,7 +74,7 @@ class Maintain extends CI_Model {
 	return $conf_file;
     }
     
-    private function backupImportExecute( $file ){
+    public function backupImportExecute( $file ){
 	$output=[];
 	$conf_file=$this->setupConf();
         $path_to_mysql=$this->db->query("SHOW VARIABLES LIKE 'basedir'")->row()->Value;
@@ -87,10 +87,9 @@ class Maintain extends CI_Model {
 	return true;
     }
     
-    public $backupImport=[];
-    public function backupImport(){
+    public $backupImport=['filename'=>'string'];
+    public function backupImport($file){
 	$this->Hub->set_level(4);
-        $file=$this->input->post('filename');
 	if( file_exists($this->dirDbBackup.$file) ){
 	    return $this->backupImportExecute($this->dirDbBackup.$file);
 	}

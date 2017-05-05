@@ -9,5 +9,38 @@
  * Author URI: http://isellsoft.com
  */
 class StockBuyManager extends Catalog{
+    public $listFetch=['offset'=>'int','limit'=>'int','sortby'=>'string','sortdir'=>'(ASC|DESC)','filter'=>'json'];
+    public function listFetch($offset,$limit,$sortby,$sortdir,$filter=null){
+	$fields=['cstamp','doc_num','label'];
+	if( empty($sortby) ){
+	    $sortby='cstamp';
+	}
+	if( !in_array($sortby,$fields) ){
+	    throw new Exception("Invalid sortby fieldname: ".$sortby);
+	}
+	$where='1';
+	
+	$having=$this->makeFilter($filter);
+	$sql="
+	    SELECT 
+		*
+	    FROM 
+		supply_list
+	    WHERE $where
+	    HAVING $having
+	    ORDER BY $sortby $sortdir
+	    LIMIT $limit OFFSET $offset";
+	return $this->get_list($sql);
+    }
     
+    public function install(){
+	$install_file=__DIR__."/install.sql";
+	$this->load->model('Maintain');
+	return $this->Maintain->backupImportExecute($install_file);
+    }
+    public function uninstall(){
+	$uninstall_file=__DIR__."/uninstall.sql";
+	$this->load->model('Maintain');
+	return $this->Maintain->backupImportExecute($uninstall_file);
+    }
 }
