@@ -11,12 +11,8 @@
 class StockBuyManager extends Catalog{
     public $listFetch=['offset'=>'int','limit'=>'int','sortby'=>'string','sortdir'=>'(ASC|DESC)','filter'=>'json'];
     public function listFetch($offset,$limit,$sortby,$sortdir,$filter=null){
-	$fields=['cstamp','doc_num','label'];
 	if( empty($sortby) ){
-	    $sortby='cstamp';
-	}
-	if( !in_array($sortby,$fields) ){
-	    throw new Exception("Invalid sortby fieldname: ".$sortby);
+	    $sortby='supply_modified';
 	}
 	$where='1';
 	
@@ -42,5 +38,10 @@ class StockBuyManager extends Catalog{
 	$uninstall_file=__DIR__."/uninstall.sql";
 	$this->load->model('Maintain');
 	return $this->Maintain->backupImportExecute($uninstall_file);
+    }
+    public $views=['string'];
+    public function views($path){
+	header("X-isell-type:OK");
+	$this->load->view($path);
     }
 }

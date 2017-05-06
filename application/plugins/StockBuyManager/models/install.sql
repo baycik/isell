@@ -17,7 +17,11 @@ CREATE TABLE `supply_list` (
   `supply_volume` DOUBLE NULL,
   `supply_weight` DOUBLE NULL,
   `supply_unit` VARCHAR(5) NULL,
+  `supply_modified` DATETIME NULL DEFAULT current_timestamp,
   PRIMARY KEY (`supply_id`));
+
+
+
 
 CREATE TABLE `supplier_list` (
   `supplier_company_id` INT NOT NULL,

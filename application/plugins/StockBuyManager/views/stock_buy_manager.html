@@ -22,27 +22,30 @@
 		}
 		else{
 		    return '';
-		}	    
-	    }
+		}
+	    }	    
 	    var settings={
 		columns:[
-		    {id:"pcomp_label", field: "pcomp_label",name: "Контрагент", width: 120 },
-		    {id:"doc_type_icon", field: "doc_type_icon",name: "", width: 25,formatter:tooltip},
-		    {id:"cstamp", field: "cstamp",name: "Дата",  width: 70, sortable: true,formatter:dateFormatter },
-		    {id:"doc_num", field: "doc_num",name: "Номер", width: 50, sortable: true,cssClass:'slick-align-right' },
-		    {id:"doc_total", field: "doc_total",name: "Сумма", width: 70, sortable: true },
-		    {id:"trans_status", field: "trans_status",name: "Оплачен", width: 25, sortable: true,formatter:tooltip},
-		    {id:"is_commited", field: "is_commited",name: "Проведен", width: 25,formatter:tooltip},
-		    {id:"doc_type_name", field: "doc_type_name",name: "Тип документа", sortable: true, width: 150 },
-		    {id:"views", field: "views",name: "Напечатано", width: 70}
-
+		    {id:"supplier_company", field: "supplier_company",name: "Поставщик", width: 70 },
+		    {id:"product_code", field: "product_code",name: "Код", width: 50, sortable: true},
+		    {id:"supply_code", field: "supply_code",name: "Код поставщика",  width: 50, sortable: true},
+		    {id:"supply_name", field: "supply_name",name: "Название поставщика", width: 200, sortable: true },
+		    {id:"supply_buy", field: "supply_buy",name: "Закупка", width: 30, sortable: true,cssClass:'slick-align-right' },
+		    {id:"supply_self", field: "supply_self",name: "Себестоимость", width: 30, sortable: true,cssClass:'slick-align-right'},
+		    {id:"supply_comment", field: "supply_comment",name: "Комментарий", width: 150},
+		    {id:"supply_modified", field: "supply_modified",name: "Изменено", sortable: true, width: 30 },
+		    {id:"supply_spack", field: "supply_spack",name: "В Коробке", sortable: true, width: 30 },
+		    {id:"supply_bpack", field: "supply_bpack",name: "В Ящике", sortable: true, width: 30 },
+		    {id:"supply_volume", field: "supply_volume",name: "Объем", sortable: true, width: 30 },
+		    {id:"supply_weight", field: "supply_weight",name: "Вес", sortable: true, width: 30 },
+		    {id:"supply_unit", field: "supply_unit",name: "Единица", sortable: true, width: 30}
 		],
 		options:{
 		    enableCellNavigation: true,
 		    enableColumnReorder: false,
 		    enableFilter:true,
 		    multiSelect :true,
-		    url:'DocumentList/listFetch'
+		    url:'StockBuyManager/listFetch'
 		}
 	    };
 	    var h = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
