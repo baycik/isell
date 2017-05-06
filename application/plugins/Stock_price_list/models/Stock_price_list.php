@@ -14,7 +14,7 @@ class Stock_price_list extends Catalog{
 
     }
     
-    public $save=['deployment_id'=>'string','deployment_data'=>'string'];
+    public $save=['deployment_id'=>'string','deployment_data'=>'raw'];
     public function save($deployment_id,$deployment_data){
 	$this->load->model('Storage');
 	return $this->Storage->file_store('stock_price_list/deployments/'.$deployment_id.'.json',$deployment_data);
@@ -161,13 +161,20 @@ class Stock_price_list extends Catalog{
 	if( !$deployment['deployment'] ){
 	    return 'price is empty';
 	}
-	if( $deployment['deployment']->sort_by ){
+	if( isset($deployment['deployment']->sort_by) ){
 	    $this->sort_by=$deployment['deployment']->sort_by;
 	    if( $this->sort_by=='fetch_count' ){
 		$this->sort_by.=" DESC";
 	    }
+	} else {
+	    $this->sort_by.="product_code";
 	}
-	$this->price_label=$deployment['deployment']->price_label;
+	if( isset($deployment['deployment']->price_label) ){
+	    $this->price_label=$deployment['deployment']->price_label;
+	} else {
+	    $this->price_label='';
+	}
+	
 	$this->Hub->load_model('Storage');
 	$price_blocks=[];
 	foreach( $deployment['deployment']->items as $block ){

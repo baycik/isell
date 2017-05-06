@@ -28,7 +28,7 @@
             $.get("Stock/getPriceLabels",function(resp){
                 var price_label_list=App.json(resp);
                 App.renderTpl("price_list_frm",{price_label_list:price_label_list});
-                App.setupForm("#price_list_frm",{pcomp_name:App.pcomp.label});
+                App.setupForm("#price_list_frm",{pcomp_name:App.pcomp?App.pcomp.label:''});
             });
         },
 	sortUpdate: function () {
@@ -77,8 +77,8 @@
 		$("#price_list_name").html(deployment.deployment.name);
 		App.renderTpl('price_list_availables',deployment);
 		App.renderTpl('price_list_deployment',deployment.deployment);
-		App.price_list.node.find("select[name=sort_by]").val(deployment.deployment.sort_by||'product_code');
-		App.price_list.node.find("select[name=price_label]").val(deployment.deployment.price_label||'');
+		$("select[name=sort_by]").val(deployment.deployment.sort_by||'product_code');
+		$("select[name=price_label]").val(deployment.deployment.price_label||'');
 		App.price_list.current_dpl_id=deployment_id;
 		App.price_list.restoreLeftHeaders();
 		App.price_list.initDrag();
@@ -94,8 +94,9 @@
 	save: function () {
 	    var deployment_id = this.current_dpl_id;
 	    this.deployment_data = {items: [], name: $("#price_list_name").html(), id: deployment_id};
-	    this.deployment_data.sort_by=App.price_list.node.find("select[name=sort_by]").val();
-	    this.deployment_data.price_label=App.price_list.node.find("select[name=price_label]").val();
+	    this.deployment_data.sort_by=$("select[name=sort_by]").val();
+	    console.log(this.deployment_data.sort_by);
+	    this.deployment_data.price_label=$("select[name=price_label]").val();
 	    $("#price_list_drag_msg").remove();
 	    $(".used_items li").each(function () {
 		App.price_list.deployment_data.items.push({
@@ -212,7 +213,7 @@
 		    <input title="Для клиента" name="pcomp_name" value="не выбран" readonly="readonly" />
 		    <button type="button" class="tiny_button" onclick="App.price_list.select_pcomp()"><img src="img/settings.png"> Изменить</button>
 		    <select name="sort_by" title="Сортировать по" onchange="App.price_list.save()">
-			<option value="product_code" selected="selected">Код товра</option>
+			<option value="product_code" selected="selected">Код товара</option>
 			<option value="fetch_count DESC">Популярность</option>
 			<option value="product_name">Название</option>
 		    </select>

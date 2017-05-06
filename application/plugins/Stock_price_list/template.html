@@ -55,7 +55,7 @@
                             {loop name="$value1->imgs"}
                             <div style="position: relative;margin: 1px;">
                                 <div style="position:absolute;left:3px;top:3px;background-color: rgba(255,255,255,.5)">{$value->product_code}</div>
-                                <img src="../../Storage/image_flush/140x{$value1->img_height}/dynImg/{$value->product_img}#">
+                                <img src="../../Storage/image_flush/?size=140x{$value1->img_height}&path=/dynImg/{$value->product_img}#" />
                             </div>
                             {/loop}
                             </div>
