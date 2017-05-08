@@ -1,7 +1,7 @@
 /*global App,Slick*/
 
 (function ($) {
-    function SlickWrapper(node, settings) {
+    function SlickInfinite(node, settings) {
 	var grid = {};
 	var remoteModel;
 	var columns = settings.columns;
@@ -81,11 +81,11 @@
 	return grid;
     }
     ;
-    window.SlickWrapper = SlickWrapper;
+    window.SlickInfinite = SlickInfinite;
 })(jQuery);
 
 $.fn.slickgrid = function (settings) {
-    return new SlickWrapper(this, settings);
+    return new SlickInfinite(this, settings);
 };
 
 

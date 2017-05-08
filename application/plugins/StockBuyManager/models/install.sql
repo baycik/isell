@@ -4,21 +4,23 @@
  */
 
 CREATE TABLE `supply_list` (
-  `supply_id` INT NOT NULL AUTO_INCREMENT,
-  `supplier_company_id` INT NULL,
-  `product_code` VARCHAR(45) NULL,
-  `supply_code` VARCHAR(45) NULL,
-  `supply_name` VARCHAR(255) NULL,
-  `supply_buy` DOUBLE NULL,
-  `supply_sell` DOUBLE NULL,
-  `supply_comment` VARCHAR(255) NULL,
-  `supply_spack` INT NULL,
-  `supply_bpack` INT NULL,
-  `supply_volume` DOUBLE NULL,
-  `supply_weight` DOUBLE NULL,
-  `supply_unit` VARCHAR(5) NULL,
-  `supply_modified` DATETIME NULL DEFAULT current_timestamp,
-  PRIMARY KEY (`supply_id`));
+  `supply_id` int(11) NOT NULL AUTO_INCREMENT,
+  `supplier_company_id` int(11) DEFAULT NULL,
+  `product_code` varchar(45) DEFAULT NULL,
+  `supply_code` varchar(45) DEFAULT NULL,
+  `supply_name` varchar(255) DEFAULT NULL,
+  `supply_buy` double DEFAULT NULL,
+  `supply_sell` double DEFAULT NULL,
+  `supply_comment` varchar(255) DEFAULT NULL,
+  `supply_spack` int(11) DEFAULT NULL,
+  `supply_bpack` int(11) DEFAULT NULL,
+  `supply_volume` double DEFAULT NULL,
+  `supply_weight` double DEFAULT NULL,
+  `supply_unit` varchar(5) DEFAULT NULL,
+  `supply_modified` datetime DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`supply_id`),
+  UNIQUE KEY `supplier_company_id_UNIQUE` (`supplier_company_id`,`supply_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
 
