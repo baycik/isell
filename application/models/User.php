@@ -28,6 +28,7 @@ class User extends Catalog {
 	$this->Hub->svar('user_position', $user_data->user_position);
 	$this->Hub->svar('user_assigned_stat',$user_data->user_assigned_stat);
 	$this->Hub->svar('user_assigned_path',$user_data->user_assigned_path);
+        $this->Hub->svar('user',$user_data);
 
 	$Company=$this->Hub->load_model("Company");
 	if( $user_data->company_id ){
