@@ -167,7 +167,7 @@
 		    }
 		    var file_name=(new Date()).getTime()+'.'+filelist[0].name.split('.').pop();//filelist[0].name;
 		    
-		    var url = 'Storage/upload/dynImg/'+file_name;
+		    var url = 'Storage/upload/?dir=dynImg&filename='+file_name;
 		    var xhr = new XMLHttpRequest();
 		    var fd = new FormData();
 		    xhr.open("POST", url, true);

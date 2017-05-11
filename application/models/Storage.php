@@ -50,6 +50,7 @@ class Storage extends CI_Model {
 	return json_decode($this->file_restore($path));
     }
 
+    public $upload=['dir'=>'raw','filename'=>'raw'];
     public function upload($dir = '', $filename = null) {
 	if (!file_exists($this->storageFolder . "/" . $dir)) {
 	    mkdir($this->storageFolder . "/" . $dir);
