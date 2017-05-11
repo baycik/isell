@@ -71,17 +71,16 @@ class Storage extends CI_Model {
     public $image_flush=['size'=>'string','path'=>'string'];
     public function image_flush( $size_x, $path ){
 	$path = $this->storageFolder . "/" . $path;
-	$cache=$path . "_{$size_x}";
+	$cache=$path . "_{$size_x}.png";
 	if (is_dir($path) || !file_exists($path)) {
 	    $path='img/notfound.jpg';
 	}
 	if( !file_exists($cache) ){
 	    $size = explode('x', $size_x);
 	    $thumb=$this->image_resize($path, $size[0], $size[1]);
-	    imagejpeg($thumb,$cache,90);
+	    imagepng($thumb,$cache);
 	}
-	header("Content-type: image/jpeg");
-	//echo file_get_contents($cache);
+	header("Content-type: image/png");
         exit(file_get_contents($cache));
     }
 
@@ -105,6 +104,12 @@ class Storage extends CI_Model {
 	$srch = imagesy($src);
 	$ratio = ( $width / $srcw < $height / $srch ) ? $width / $srcw : $height / $srch;
 	$thumb = imagecreatetruecolor($srcw * $ratio, $srch * $ratio);
+	switch ($info[2]) {
+	    case IMAGETYPE_PNG:
+		imagealphablending($thumb, false);
+                imagesavealpha($thumb, true);
+		break;
+	}
 	imagecopyresampled($thumb, $src, 0, 0, 0, 0, $srcw * $ratio, $srch * $ratio, $srcw, $srch);
 	return $thumb;
     }
