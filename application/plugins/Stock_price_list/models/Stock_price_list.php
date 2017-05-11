@@ -112,6 +112,7 @@ class Stock_price_list extends Catalog{
         $sql="SELECT
 		se.product_code,
 		ru product_name,
+                CEIL(CHAR_LENGTH(ru)/50) rows_occupied, 
 		product_quantity<>0 in_stock,
 		product_img,
 		ROUND(
@@ -133,9 +134,18 @@ class Stock_price_list extends Catalog{
 		se.parent_id='{$block->id}'
 	    ORDER BY $this->sort_by";
 	$block->rows=$this->get_list($sql);
-	$block->imgs=$this->getBlockImg($block->id,count($block->rows));
-        $block->img_height=count($block->imgs)>0?(count($block->rows)*25/count($block->imgs)):0;
+        $rows_count=$this->countImageOnBlock($block->rows);
+	$block->imgs=$this->getBlockImg($block->id,$rows_count);
+        $block->img_height=count($block->imgs)>0?($rows_count*25/$rows_count):0;
 	return $block;
+    }
+    
+    private function countImageOnBlock($rows){
+        $real_rows_count=0;
+        foreach($rows as $row){
+            $real_rows_count+=$row->rows_occupied;
+        }
+        return $real_rows_count;
     }
     
     private function getBlockImg( $block_id,$block_rows ){
