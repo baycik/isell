@@ -153,7 +153,7 @@
 	},
 	img:{
 	    load:function(){
-		var file_name=$("input[name=product_img]").val()?'Storage/image_flush/130x120/dynImg/'+$("input[name=product_img]").val():"img/product.png";
+		var file_name=$("input[name=product_img]").val()?'Storage/image_flush/?size=130x120&path=dynImg/'+$("input[name=product_img]").val():"img/product.png";
 		$("#page_stock_product_card_thumb").attr('src',file_name);
 	    },
 	    up:function(filelist){
@@ -167,7 +167,7 @@
 		    }
 		    var file_name=(new Date()).getTime()+'.'+filelist[0].name.split('.').pop();//filelist[0].name;
 		    
-		    var url = 'Storage/upload/dynImg/'+file_name;
+		    var url = 'Storage/upload/?dir=dynImg&filename='+file_name;
 		    var xhr = new XMLHttpRequest();
 		    var fd = new FormData();
 		    xhr.open("POST", url, true);

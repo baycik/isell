@@ -72,6 +72,7 @@ class Stock extends Catalog {
 		SUM(IF(TO_DAYS(NOW()) - TO_DAYS(dl.cstamp) <= 30,de.product_quantity,0)) m1,
 		ROUND( SUM(IF(TO_DAYS(NOW()) - TO_DAYS(dl.cstamp) <= 92,de.product_quantity,0))/3 ) m3,
 		t.self_price,
+                product_img,
 		sell,
 		buy,		
 		curr_code,
