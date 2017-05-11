@@ -36,16 +36,33 @@ class StockBuyManager extends Catalog{
 	$having=$this->makeFilter($filter);
 	$sql="
 	    SELECT 
-		*
+		supply_id,
+		supplier_company_id,
+		product_code,
+		supply_code,
+		supply_name,
+		ROUND(supply_buy,2) supply_buy,
+		supply_sell,
+		supply_comment,
+		supply_spack,
+		supply_bpack,
+		supply_volume,
+		supply_weight,
+		supply_unit,
+		supply_modified,
+		supplier_name,
+		ROUND(supply_buy*(1-supplier_discount/100)*(1+supplier_expense/100),2) supply_self,
+		supplier_delivery
 	    FROM 
 		supply_list
+		    LEFT JOIN
+		supplier_list USING(supplier_company_id)
 	    WHERE $where
 	    HAVING $having
 	    ORDER BY $sortby $sortdir
 	    LIMIT $limit OFFSET $offset";
 	return $this->get_list($sql);
     }
-    
     public $entryImport=['supplier_company_id'=>'int','label'=>'string'];
     public function entryImport( $supplier_company_id,$label ){
 	$source = array_map('addslashes',$this->request('source','raw'));
@@ -85,21 +102,39 @@ class StockBuyManager extends Catalog{
     public $supplierListFetch=['offset'=>'int','limit'=>'int','sortby'=>'string','sortdir'=>'(ASC|DESC)','filter'=>'json'];
     public function supplierListFetch($offset,$limit,$sortby,$sortdir,$filter=null){
 	if( empty($sortby) ){
-	    $sortby='supply_modified';
+	    $sortby='supplier_name';
 	}
-	$where='1';
 	
-	$having=$this->makeFilter($filter);
 	$sql="
 	    SELECT 
 		*
 	    FROM 
-		supply_list
-	    WHERE $where
-	    HAVING $having
+		supplier_list
 	    ORDER BY $sortby $sortdir
 	    LIMIT $limit OFFSET $offset";
-	return $this->get_list($sql);
+	$all=[['supplier_name'=>'Все поставщики','supplier_company_id'=>0]];
+	$suppliers=array_merge($all,$this->get_list($sql));
+	return $suppliers;
+    }
+    
+    public $supplierCreate=['supplier_company_id'=>'int','label'=>'string'];
+    public function supplierCreate($supplier_company_id,$label){
+	return $this->create('supplier_list',['supplier_company_id'=>$supplier_company_id,'supplier_name'=>$label]);
+    }
+    
+    public $supplierUpdate=['supplier_company_id'=>'int','field'=>'string','value'=>'string'];
+    public function supplierUpdate($supplier_company_id,$field,$value){
+	return $this->update('supplier_list',[$field=>$value],['supplier_company_id'=>$supplier_company_id]);
+    }
+
+    public $supplierDelete=['supplier_company_id'=>'int','also_products'=>'bool'];
+    public function supplierDelete($supplier_company_id,$also_products){
+	if( $also_products ){
+	    $this->delete('supply_list',['supplier_company_id'=>$supplier_company_id]);
+	} else {
+	    $this->update('supply_list',['supplier_company_id'=>0],['supplier_company_id'=>$supplier_company_id]);
+	}
+	return $this->delete('supplier_list',['supplier_company_id'=>$supplier_company_id]);
     }
 
 }

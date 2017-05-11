@@ -182,7 +182,7 @@ button img{
     border: none;
 }
 .tabs li a.tabs-inner{
-    border-radius: 0px;
+    
 }
 .tabs-panels{
     border: none !important;
@@ -191,8 +191,7 @@ button img{
 
 
 .tabs-panels>.panel>.panel-body{
-    background: none !important;
-    
+    background-color: rgba(255,255,255,0.15);
 }
 
 .transp_grad{
@@ -548,4 +547,14 @@ h2{
 }
 .left_label_selected,.left_label_selected:hover{
     background: #FF9;
+}
+
+
+
+
+#main_grid{
+  display: grid;
+  width: 100%;
+  grid-template-columns: 60px auto;
+  grid-auto-rows: minmax(100px, auto);
 }

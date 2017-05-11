@@ -170,6 +170,7 @@ $.fn.slickgrid = function (settings) {
 		return;
 	    }
 	    cancelRequest();
+	    from=Math.max(from,0);
 	    var rows_to_load = [];
 	    for (var i = from; i <= to + 10; i++) {
 		if (data[i] === undefined) {
