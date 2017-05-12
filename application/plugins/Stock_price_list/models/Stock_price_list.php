@@ -134,9 +134,9 @@ class Stock_price_list extends Catalog{
 		se.parent_id='{$block->id}'
 	    ORDER BY $this->sort_by";
 	$block->rows=$this->get_list($sql);
-        $rows_count=$this->countRowsOnBlock($block->rows);
-	$block->imgs=$this->getBlockImg($block->id,$rows_count);
-        $block->img_height=count($block->imgs)>0?($rows_count*25/count($block->imgs)):0;
+        $block->rows_count=$this->countRowsOnBlock($block->rows);
+	$block->imgs=$this->getBlockImg($block->id,$block->rows_count);
+        $block->img_height=count($block->imgs)>0?($block->rows_count*23/count($block->imgs)):0;
 	return $block;
     }
     
