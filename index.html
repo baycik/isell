@@ -55,8 +55,8 @@
 	    </span>
             <span id="app_busy" style="margin: 12px;float:right;display: none"><img src="img/loading_16.gif"></span>
 	</div>
-	<div>
-	    <div id="div_module_list" style="display: inline-block;width:60px" class="covert transparent">
+	<div id="main_grid">
+	    <div id="div_module_list" class="covert transparent">
 		{{module_list}}
 		    <div class="ModuleButton" id="{{name}}Button" title="{{label}}">
 			<a href="#{{name}}">
@@ -66,10 +66,7 @@
 		{{/module_list}}
 		<img src="img/personalize-icon.png" style="width:48px;height:48px;cursor: pointer;" onclick="App.setBg()" title="Установить обои" />
 	    </div>
-	    
-		<div id="ModuleContainer" style="display: inline-block;vertical-align: top;width:calc(100% - 75px)"></div>
-	    
-	    
+	    <div id="ModuleContainer" style="vertical-align: top;"></div>
 	</div>
 	<div id="appWindowContainer"></div>
 	<div id="appStatus"></div>
