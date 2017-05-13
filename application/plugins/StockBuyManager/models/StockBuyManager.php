@@ -68,6 +68,28 @@ class StockBuyManager extends Catalog{
 	    LIMIT $limit OFFSET $offset";
 	return $this->get_list($sql);
     }
+    public $viewGet=['sortby'=>'string','sortdir'=>'(ASC|DESC)','filter'=>'json','out_type'=>'string'];
+    public function viewGet($sortby,$sortdir,$filter,$out_type){
+	
+	$table=$this->listFetch(0,10000,$sortby,$sortdir,$filter);
+	$dump=[
+	    'tpl_files_folder'=>__DIR__.'/../views/',
+	    'tpl_files'=>'StockBuyExport.xlsx',
+	    'title'=>"Товары поставщиков",
+	    'user_data'=>[
+		'email'=>$this->Hub->svar('pcomp')?$this->Hub->svar('pcomp')->company_email:'',
+		'text'=>'Доброго дня'
+	    ],
+	    'view'=>[
+		'date'=>date('d.m.Y'),
+		'filter'=>$filter,
+		'rows'=>$table
+	    ]
+	];
+	$ViewManager=$this->Hub->load_model('ViewManager');
+	$ViewManager->store($dump);
+	$ViewManager->outRedirect($out_type);
+    }
     public $entryImport=['supplier_company_id'=>'int','label'=>'string'];
     public function entryImport( $supplier_company_id,$label ){
 	$source = array_map('addslashes',$this->request('source','raw'));

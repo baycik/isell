@@ -67,6 +67,9 @@
 		}
 		grid.reload();
 	    };
+	    grid.getFilter=function(){
+		return columnFilters;
+	    };
 	}
 	function initLoader() {
 	    grid.onViewportChanged.subscribe(function (e, args) {

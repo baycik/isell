@@ -265,6 +265,22 @@
 	    },
 	    entryCreate: function () {
 
+	    },
+	    out:function( out_type ){
+		var sorted=supplylist.getSortColumns();
+		var params={
+		    sortby:sorted.columnId,
+		    sortdir:sorted.sortAsc?'ASC':'DESC',
+		    filter:supplylist.getFilter(),
+		    out_type:(out_type||'.xlsx')
+		};
+		var url='StockBuyManager/viewGet/?'+$.param( params );
+		if( out_type==='.print' ){
+		    window.open(url,'print_tab');
+		}
+	    },
+	    print:function(){
+		this.out('.print');
 	    }
 	};
 	function initSupplyTableTools() {
@@ -339,6 +355,8 @@
 	<span class="icon-24 icon-create" title="Добавить стоку" data-action="entryCreate"> </span>
 	<span class="icon-24 icon-delete" title="Удалить стоку" data-action="entryDelete"> </span>
 	<span class="icon-24 icon-import" title="Импортировать" data-action="entryImport"> </span> 
+	<span class="icon-24 icon-download" title="Скачать таблицу" data-action="out"> </span> 
+	<span class="icon-24 icon-print" title="Напечатать" data-action="print"> </span> 
 	<span class="icon-24 icon-refresh" title="Обновить" data-action="reload"> </span> 
     </div>
 
