@@ -26,10 +26,13 @@ CREATE TABLE `supply_list` (
 
 
 CREATE TABLE `supplier_list` (
-  `supplier_company_id` INT NOT NULL,
-  `supplier_name` VARCHAR(45) NULL,
-  `supplier_discount` DOUBLE NULL,
-  `supplier_defferment` INT NULL,
-  `supplier_expense` DOUBLE NULL,
-  `supplier_delivery` INT NULL,
-  PRIMARY KEY (`supplier_company_id`));
+  `supplier_company_id` int(11) NOT NULL,
+  `supplier_name` varchar(45) DEFAULT NULL,
+  `supplier_defferment` int(11) DEFAULT NULL,
+  `supplier_delivery` int(11) DEFAULT NULL,
+  `supplier_buy_expense` double DEFAULT NULL,
+  `supplier_buy_discount` double DEFAULT NULL,
+  `supplier_sell_discount` double DEFAULT NULL,
+  `supplier_sell_gain` double DEFAULT NULL,
+  PRIMARY KEY (`supplier_company_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;

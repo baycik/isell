@@ -29,7 +29,7 @@ class StockBuyManager extends Catalog{
     public $listFetch=['offset'=>'int','limit'=>'int','sortby'=>'string','sortdir'=>'(ASC|DESC)','filter'=>'json'];
     public function listFetch($offset,$limit,$sortby,$sortdir,$filter=null){
 	if( empty($sortby) ){
-	    $sortby='supply_modified';
+	    $sortby='supply_code';
 	}
 	$where='1';
 	
@@ -51,8 +51,13 @@ class StockBuyManager extends Catalog{
 		supply_unit,
 		supply_modified,
 		supplier_name,
-		ROUND(supply_buy*(1-supplier_discount/100)*(1+supplier_expense/100),2) supply_self,
-		supplier_delivery
+		supplier_delivery,
+		ROUND(supply_buy*(1-supplier_buy_discount/100)*(1+supplier_buy_expense/100),2) supply_self,
+		ROUND(
+		    IF(supplier_sell_gain,
+		    supply_buy*(1-supplier_buy_discount/100)*(1+supplier_buy_expense/100)*(1+supplier_sell_gain/100),
+		    supply_buy*(1-supplier_sell_discount/100))
+		,2) supply_sell
 	    FROM 
 		supply_list
 		    LEFT JOIN
@@ -97,6 +102,35 @@ class StockBuyManager extends Catalog{
 	$this->query("INSERT INTO $table ($target_list) SELECT $source_list FROM imported_data WHERE label='$label' AND $supply_code_source<>'' ON DUPLICATE KEY UPDATE $set_list");
 	return $this->db->affected_rows();
     }
+    public $supplyUpdate=['supply_id'=>'int','field'=>'string','value'=>'string'];
+    public function supplyUpdate($supply_id,$field,$value){
+	if( $field=='supplier_name' ){
+	    $field='supplier_company_id';
+	    $value=$this->get_value("SELECT supplier_company_id FROM supplier_list WHERE supplier_name='$value'");
+	}
+	if( $field=='product_code' ){
+	    $value=$this->get_value("SELECT product_code FROM prod_list WHERE product_code='$value'");
+	}
+	$data=[$field=>$value];
+	return $this->update('supply_list',$data,['supply_id'=>$supply_id]);
+    }
+ 
+    public $supplyDelete=['supply_ids'=>'raw'];
+    public function supplyDelete($supply_ids){
+	return $this->delete('supply_list','supply_id',$supply_ids);
+    }
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     
     
     public $supplierListFetch=['offset'=>'int','limit'=>'int','sortby'=>'string','sortdir'=>'(ASC|DESC)','filter'=>'json'];
@@ -107,7 +141,9 @@ class StockBuyManager extends Catalog{
 	
 	$sql="
 	    SELECT 
-		*
+		*,
+		(SELECT COUNT(*) FROM supply_list WHERE supply_list.supplier_company_id=supplier_list.supplier_company_id) supplier_product_count
+		
 	    FROM 
 		supplier_list
 	    ORDER BY $sortby $sortdir
@@ -124,7 +160,16 @@ class StockBuyManager extends Catalog{
     
     public $supplierUpdate=['supplier_company_id'=>'int','field'=>'string','value'=>'string'];
     public function supplierUpdate($supplier_company_id,$field,$value){
-	return $this->update('supplier_list',[$field=>$value],['supplier_company_id'=>$supplier_company_id]);
+	$data=[$field=>$value];
+	if( $field =='supplier_sell_discount' ){
+	    $data['supplier_sell_gain']=0;
+	} else
+	if( $field =='supplier_sell_gain' ){
+	    $data['supplier_sell_discount']=0;
+	}
+	
+	
+	return $this->update('supplier_list',$data,['supplier_company_id'=>$supplier_company_id]);
     }
 
     public $supplierDelete=['supplier_company_id'=>'int','also_products'=>'bool'];
