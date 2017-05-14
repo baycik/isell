@@ -17,7 +17,7 @@ class FileEngine extends CI_Model {
     public $user_data;
     public $file_name_override;
     public $tplModifier;
-    public $tpl_files_folder='rpt/';
+    public $tpl_files_folder='application/views/rpt/';
     
     
     private function header($text){
@@ -60,10 +60,10 @@ class FileEngine extends CI_Model {
     }
     
     private function compile($tpl_file) {
-        $this->loadFileTpl('views/'.$this->tpl_files_folder. $tpl_file);
-	if( file_exists('application/views/' .$this->tpl_files_folder. $tpl_file.'.php') ){
+        $this->loadFileTpl($this->tpl_files_folder. $tpl_file);
+	if( file_exists($this->tpl_files_folder. $tpl_file.'.php') ){
 	    /*Script for custom processing of templates*/
-	    include 'application/views/' .$this->tpl_files_folder. $tpl_file.'.php';
+	    include $this->tpl_files_folder. $tpl_file.'.php';
 	}
         if ($this->compilator == 'PHPExcel') {
             if (isset($this->tplModifier)){
