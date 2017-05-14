@@ -68,9 +68,9 @@ class StockBuyManager extends Catalog{
 	    LIMIT $limit OFFSET $offset";
 	return $this->get_list($sql);
     }
+    
     public $viewGet=['sortby'=>'string','sortdir'=>'(ASC|DESC)','filter'=>'json','out_type'=>'string'];
     public function viewGet($sortby,$sortdir,$filter,$out_type){
-	
 	$table=$this->listFetch(0,10000,$sortby,$sortdir,$filter);
 	$dump=[
 	    'tpl_files_folder'=>__DIR__.'/../views/',
@@ -90,6 +90,7 @@ class StockBuyManager extends Catalog{
 	$ViewManager->store($dump);
 	$ViewManager->outRedirect($out_type);
     }
+    
     public $entryImport=['supplier_company_id'=>'int','label'=>'string'];
     public function entryImport( $supplier_company_id,$label ){
 	$source = array_map('addslashes',$this->request('source','raw'));
@@ -101,6 +102,7 @@ class StockBuyManager extends Catalog{
 	$imported_count=$this->db->affected_rows();
         return  $imported_count;
     }
+    
     private function entryImportFromTable( $table, $src, $trg, $filter, $label ){
 	$set=[];
 	$target=[];
@@ -124,6 +126,7 @@ class StockBuyManager extends Catalog{
 	$this->query("INSERT INTO $table ($target_list) SELECT $source_list FROM imported_data WHERE label='$label' AND $supply_code_source<>'' ON DUPLICATE KEY UPDATE $set_list");
 	return $this->db->affected_rows();
     }
+    
     public $supplyUpdate=['supply_id'=>'int','field'=>'string','value'=>'string'];
     public function supplyUpdate($supply_id,$field,$value){
 	if( $field=='supplier_name' ){

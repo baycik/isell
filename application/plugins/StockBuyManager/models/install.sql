@@ -17,10 +17,11 @@ CREATE TABLE `supply_list` (
   `supply_volume` double DEFAULT NULL,
   `supply_weight` double DEFAULT NULL,
   `supply_unit` varchar(5) DEFAULT NULL,
-  `supply_modified` datetime DEFAULT CURRENT_TIMESTAMP,
+  `supply_modified` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`supply_id`),
   UNIQUE KEY `supplier_company_id_UNIQUE` (`supplier_company_id`,`supply_code`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
 
 
 

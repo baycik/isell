@@ -269,14 +269,16 @@
 	    out:function( out_type ){
 		var sorted=supplylist.getSortColumns();
 		var params={
-		    sortby:sorted.columnId,
-		    sortdir:sorted.sortAsc?'ASC':'DESC',
-		    filter:supplylist.getFilter(),
+		    sortby:sorted.length?sorted[0].columnId:'',
+		    sortdir:sorted.length?(sorted[0].sortAsc?'ASC':'DESC'):'',
+		    filter:JSON.stringify(supplylist.getFilter()),
 		    out_type:(out_type||'.xlsx')
 		};
 		var url='StockBuyManager/viewGet/?'+$.param( params );
 		if( out_type==='.print' ){
 		    window.open(url,'print_tab');
+		} else {
+		    location.href=url;
 		}
 	    },
 	    print:function(){
