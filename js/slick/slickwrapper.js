@@ -61,10 +61,11 @@
 	    });
 	    grid.setFilter=function(filter){
 		columnFilters=filter;
+		$('.slick-headerrow-columns .slick-headerrow-column input', node).each(function () {
+		    var field = $(this).data('field');
+		    $(this).val( columnFilters[field]||'' );
+		});
 		remoteModel.setFilter(columnFilters);
-		for(var i in columnFilters){
-		    $('.slick-headerrow-columns .slick-headerrow-column input[data-field='+i+']', node).val(columnFilters[i]);
-		}
 		grid.reload();
 	    };
 	    grid.getFilter=function(){
@@ -172,6 +173,11 @@ $.fn.slickgrid = function (settings) {
 	}
 
 	function setFilter(flt) {
+	    for(var i in flt){
+		if(flt[i]==""){
+		    delete flt[i];
+		}
+	    }
 	    filter = flt;
 	    clear();
 	}

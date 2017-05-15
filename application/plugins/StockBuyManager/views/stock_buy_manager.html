@@ -2,6 +2,7 @@
     (function ($) {
 	var supplylist;
 	var supplierlist;
+	var selectedSupplier;
 	function init() {
 	    initSupplyTable();
 	    initSupplyTableTools();
@@ -43,8 +44,8 @@
 		supplierTableEntryUpdate(updatedEntry.supplier_company_id, field, value);
 	    });
 	    supplierlist.onSelectedRowsChanged.subscribe(function(e,selection){
-		var selectedRow=supplierlist.getDataItem(selection.rows[0]);
-		var name=selectedRow.supplier_company_id?selectedRow.supplier_name:'';
+		selectedSupplier=supplierlist.getDataItem(selection.rows[0]);
+		var name=selectedSupplier.supplier_company_id?selectedSupplier.supplier_name:'';
 		supplylist.setFilter({supplier_name:name});
 	    });
 	}
@@ -175,7 +176,7 @@
 		    {id: "supplier_name", field: "supplier_name", name: "Поставщик", width: 110, editor: AutoCompleteEditor},
 		    {id: "supply_code", field: "supply_code", name: "Код поставщика", width: 100, sortable: true, editor: Slick.Editors.Text},
 		    {id: "supply_name", field: "supply_name", name: "Название поставщика", width: 300, sortable: true, editor: Slick.Editors.Text},
-		    {id: "supply_buy", field: "supply_buy", name: "Закупка", width: 70, sortable: true, editor: Slick.Editors.Float, cssClass: 'slick-align-right'},
+		    {id: "supply_buy", field: "supply_buy", name: "Закупка база", width: 70, sortable: true, editor: Slick.Editors.Float, cssClass: 'slick-align-right'},
 		    {id: "supply_self", field: "supply_self", name: "Себестоимость", width: 70, sortable: true, cssClass: 'slick-align-right'},
 		    {id: "supply_sell", field: "supply_sell", name: "Продажа", width: 70, sortable: true, cssClass: 'slick-align-right'},
 		    {id: "supply_comment", field: "supply_comment", name: "Комментарий", width: 150, editor: Slick.Editors.Text},
@@ -218,24 +219,31 @@
 	    entryImport: function () {
 		var config = [
 		    {field: "supply_code", name: "Код пост.", required: true},
-		    {field: "product_code", name: "Код"},
 		    {field: "supply_name", name: "Название"},
-		    {field: "supply_buy", name: "Закупка"},
+		    {field: "supply_buy", name: "Закупка база"},
 		    {field: "supply_comment", name: "Комментарий"},
+		    {field: "product_code", name: "Код наш"},
 		    {field: "supply_spack", name: "В Коробке"},
 		    {field: "supply_bpack", name: "В Ящике"},
-		    {field: "supply_volume", name: "Объем"},
 		    {field: "supply_weight", name: "Вес"},
+		    {field: "supply_volume", name: "Объем"},
 		    {field: "supply_unit", name: "Единица"}
 		];
 		App.loadWindow('page/dialog/importer', {label: 'закуп', fields_to_import: config}).progress(function (status, fvalue, Importer) {
 		    if (status === 'submit') {
-			fvalue.supplier_company_id = 11;
-			App.post("StockBuyManager/entryImport/", fvalue, function (ok) {
-			    App.flash("Импортировано " + ok);
-			    Importer.reload();
-			    supplyTableTools.reload();
-			});
+			var question="Импортировать эти строчки без указания поставщика?";
+			fvalue.supplier_company_id=0;
+			if( selectedSupplier && selectedSupplier.supplier_company_id ){
+			    question="Импортировать эти строчки поставщику '"+selectedSupplier.supplier_name+"'?";
+			    fvalue.supplier_company_id = selectedSupplier.supplier_company_id;
+			}
+			if( confirm(question) ){
+			    App.post("StockBuyManager/entryImport/", fvalue, function (ok) {
+				App.flash("Импортировано " + ok);
+				Importer.reload();
+				supplyTableTools.reload();
+			    });
+			}
 		    }
 		});
 	    },
@@ -264,7 +272,15 @@
 		});
 	    },
 	    entryCreate: function () {
-
+		var supplier_company_id=0;
+		if( selectedSupplier && selectedSupplier.supplier_company_id ){
+		    supplier_company_id = selectedSupplier.supplier_company_id;
+		}
+		$.post('StockBuyManager/supplyCreate',{supplier_company_id:supplier_company_id},function(insert_id){
+		    if( insert_id*1 ){
+			supplylist.setFilter({supply_code:insert_id});
+		    }
+		});
 	    },
 	    out:function( out_type ){
 		var sorted=supplylist.getSortColumns();

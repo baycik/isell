@@ -29,7 +29,7 @@ class StockBuyManager extends Catalog{
     public $listFetch=['offset'=>'int','limit'=>'int','sortby'=>'string','sortdir'=>'(ASC|DESC)','filter'=>'json'];
     public function listFetch($offset,$limit,$sortby,$sortdir,$filter=null){
 	if( empty($sortby) ){
-	    $sortby='supply_code';
+	    $sortby='supplier_company_id';
 	}
 	$where='1';
 	
@@ -50,7 +50,7 @@ class StockBuyManager extends Catalog{
 		supply_weight,
 		supply_unit,
 		supply_modified,
-		supplier_name,
+		IF(supplier_name IS NULL,'*',supplier_name) supplier_name,
 		supplier_delivery,
 		ROUND(supply_buy*(1-supplier_buy_discount/100)*(1+supplier_buy_expense/100),2) supply_self,
 		ROUND(
@@ -62,7 +62,6 @@ class StockBuyManager extends Catalog{
 		supply_list
 		    LEFT JOIN
 		supplier_list USING(supplier_company_id)
-	    WHERE $where
 	    HAVING $having
 	    ORDER BY $sortby $sortdir
 	    LIMIT $limit OFFSET $offset";
@@ -127,6 +126,13 @@ class StockBuyManager extends Catalog{
 	return $this->db->affected_rows();
     }
     
+    public $supplyCreate=['supplier_company_id'=>'int'];
+    public function supplyCreate($supplier_company_id){
+	$insert_id=$this->create('supply_list',['supplier_company_id'=>$supplier_company_id]);
+	$this->update('supply_list',['supply_code'=>$insert_id],['supply_id'=>$insert_id]);
+	return $insert_id;
+    }
+    
     public $supplyUpdate=['supply_id'=>'int','field'=>'string','value'=>'string'];
     public function supplyUpdate($supply_id,$field,$value){
 	if( $field=='supplier_name' ){
@@ -173,7 +179,7 @@ class StockBuyManager extends Catalog{
 		supplier_list
 	    ORDER BY $sortby $sortdir
 	    LIMIT $limit OFFSET $offset";
-	$all=[['supplier_name'=>'Все поставщики','supplier_company_id'=>0]];
+	$all=[['supplier_name'=>'* Все поставщики','supplier_company_id'=>0]];
 	$suppliers=array_merge($all,$this->get_list($sql));
 	return $suppliers;
     }
