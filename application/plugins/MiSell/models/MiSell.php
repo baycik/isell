@@ -9,7 +9,7 @@
  * Author URI: isellsoft.com
  */
 //require_once 'application/models/PluginManager.php';
-class MiSell extends Catalog{
+class MiSell extends PluginManager{
     function __construct(){
 	ob_start('ob_gzhandler');
     }
