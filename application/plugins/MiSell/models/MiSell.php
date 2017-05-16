@@ -157,16 +157,16 @@ class MiSell extends PluginManager{
     
     public $orderAnnounceRecieved=['string'];
     public function orderAnnounceRecieved($comment){
-	$this->settings=$this->settingsDataFetch('misell');
+	$this->settings=$this->settingsDataFetch('MiSell');
         $pcomp_name=$this->Hub->pcomp('label');
         $user_sign=$this->Hub->svar('user_sign');
 	$Utils=$this->Hub->load_model('Utils');
-        $text="Пользователем $user_sign, был прислан заказ для $pcomp_name в ".date("d.m.Y H:i");
-	if( isset($this->settings->email) ){
-	    $Utils->sendEmail( $this->settings->email, "Мобильный заказ от $user_sign для $pcomp_name ", $text, NULL, 'nocopy' );
+        $text="Пользователем $user_sign, был прислан заказ для $pcomp_name в ".date("d.m.Y H:i"); 
+	if( isset($this->settings->plugin_settings->email) ){
+	    $Utils->sendEmail( $this->settings->plugin_settings->email, "Мобильный заказ от $user_sign для $pcomp_name ", $text, NULL, 'nocopy' );
 	}
 	if( isset($this->settings->phone) ){
-	    $phones=  explode(',',preg_replace('|[^\d,]|', '', $this->settings->phone));
+	    $phones=  explode(',',preg_replace('|[^\d,]|', '', $this->settings->plugin_settings->phone));
 	    foreach($phones as $phone){
 		$Utils->sendSms($phone,"$text $comment");
 	    }
