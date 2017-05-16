@@ -165,7 +165,7 @@ class MiSell extends PluginManager{
 	if( isset($this->settings->plugin_settings->email) ){
 	    $Utils->sendEmail( $this->settings->plugin_settings->email, "Мобильный заказ от $user_sign для $pcomp_name ", $text, NULL, 'nocopy' );
 	}
-	if( isset($this->settings->phone) ){
+	if( isset($this->settings->plugin_settings->phone) ){
 	    $phones=  explode(',',preg_replace('|[^\d,]|', '', $this->settings->plugin_settings->phone));
 	    foreach($phones as $phone){
 		$Utils->sendSms($phone,"$text $comment");
