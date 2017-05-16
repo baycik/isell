@@ -17,7 +17,7 @@ class FileEngine{
     public $user_data;
     public $file_name_override;
     public $tplModifier;
-    public $tpl_files_folder='rpt/';
+    public $tpl_files_folder='application/views/rpt/';
     
     private function header($text){
         if( $this->header_mode==='send_headers' ){
@@ -41,7 +41,7 @@ class FileEngine{
             $this->compilator = 'PHPExcel';
             include "application/libraries/report/PHPExcel.php";
             try {
-                $this->PHPexcel = PHPExcel_IOFactory::load('application/'.$file_name);
+                $this->PHPexcel = PHPExcel_IOFactory::load($file_name);
             } catch (Exception $e) {
                 die("Can't load the template of view! $file_name");
             }
@@ -59,10 +59,10 @@ class FileEngine{
     }
     
     private function compile($tpl_file) {
-        $this->loadFileTpl('views/'.$this->tpl_files_folder. $tpl_file);
-	if( file_exists('application/views/' .$this->tpl_files_folder. $tpl_file.'.php') ){
+        $this->loadFileTpl($this->tpl_files_folder. $tpl_file);
+	if( file_exists($this->tpl_files_folder. $tpl_file.'.php') ){
 	    /*Script for custom processing of templates*/
-	    include 'application/views/' .$this->tpl_files_folder. $tpl_file.'.php';
+	    include $this->tpl_files_folder. $tpl_file.'.php';
 	}
         if ($this->compilator == 'PHPExcel') {
             if (isset($this->tplModifier)){

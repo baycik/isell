@@ -371,6 +371,9 @@ div .combobox-item-hover{
 .icon-upload{
     background: url('../img/file_upload.png') no-repeat center center;
 }
+.icon-download{
+    background: url('../img/file_download.png') no-repeat center center;
+}
 .link_button:hover{
     padding: 5px;
     margin: -6px;

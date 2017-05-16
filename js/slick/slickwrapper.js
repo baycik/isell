@@ -1,7 +1,8 @@
 /*global App,Slick*/
 
 (function ($) {
-    function SlickInfinite(node, settings) {
+    function SlickInfinite(query, settings) {
+	var node=$(query);
 	var grid = {};
 	var remoteModel;
 	var columns = settings.columns;
@@ -38,7 +39,7 @@
 	    $('.slick-headerrow-columns .slick-headerrow-column', node).each(function () {
 		var column_field = $(this).data('column').field;
 		$(this).empty();
-		$("<input type='text'>")
+		$("<input data-field='"+column_field+"'>")
 			.data("field", column_field)
 			.appendTo(this);
 	    });
@@ -58,6 +59,18 @@
 		    do_filter(input_node);
 		}, 500);
 	    });
+	    grid.setFilter=function(filter){
+		columnFilters=filter;
+		$('.slick-headerrow-columns .slick-headerrow-column input', node).each(function () {
+		    var field = $(this).data('field');
+		    $(this).val( columnFilters[field]||'' );
+		});
+		remoteModel.setFilter(columnFilters);
+		grid.reload();
+	    };
+	    grid.getFilter=function(){
+		return columnFilters;
+	    };
 	}
 	function initLoader() {
 	    grid.onViewportChanged.subscribe(function (e, args) {
@@ -79,8 +92,7 @@
 	    grid.reload();
 	}
 	return grid;
-    }
-    ;
+    };
     window.SlickInfinite = SlickInfinite;
 })(jQuery);
 
@@ -161,6 +173,11 @@ $.fn.slickgrid = function (settings) {
 	}
 
 	function setFilter(flt) {
+	    for(var i in flt){
+		if(flt[i]==""){
+		    delete flt[i];
+		}
+	    }
 	    filter = flt;
 	    clear();
 	}
