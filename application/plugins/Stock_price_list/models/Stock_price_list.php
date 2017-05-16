@@ -191,7 +191,7 @@ class Stock_price_list extends Catalog{
 	    $price_blocks[]=$this->fillPriceBlocks($block);
 	}
 	$dump=[
-	    'tpl_files_folder'=>"../plugins/stock_price_list/",
+	    'tpl_files_folder'=>"plugins/stock_price_list/",
 	    'tpl_files'=>"template.html",
 	    'title'=>"Прайс Лист",
 	    'view'=>[
