@@ -343,6 +343,11 @@ div .combobox-item-hover{
 }
 .icon-import{
     background:url('../img/import.png') no-repeat center center;
+    background-size: 24px 24px;
+}
+.icon-export{
+    background:url('../img/export.png') no-repeat center center;
+    background-size: 24px 24px;
 }
 .icon-duplicate{
     background:url('../img/copy.png') no-repeat center center;
