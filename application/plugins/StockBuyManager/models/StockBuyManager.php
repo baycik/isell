@@ -97,7 +97,7 @@ class StockBuyManager extends Catalog{
 	$target = array_map('addslashes',$this->request('target','raw'));
         $source[]=$supplier_company_id;
         $target[]='supplier_company_id';
-	$this->entryImportFromTable('supply_list', $source, $target, '/supplier_company_id/product_code/supply_code/supply_name/supply_buy/supply_self/supply_delivery/supply_comment/supply_spack/supply_bpack/supply_volume/supply_weight/supply_unit', $label);
+	$this->entryImportFromTable('supply_list', $source, $target, '/supplier_company_id/product_code/supply_code/supply_name/supply_buy/supply_sell_ratio/supply_comment/supply_spack/supply_bpack/supply_volume/supply_weight/supply_unit/', $label);
 	$this->query("DELETE FROM imported_data WHERE {$source[0]} IN (SELECT supply_code FROM supply_list WHERE supplier_company_id={$supplier_company_id})");
 	$imported_count=$this->db->affected_rows();
         return  $imported_count;
@@ -122,7 +122,7 @@ class StockBuyManager extends Catalog{
 	$target_list=  implode(',', $target);
 	$source_list=  implode(',', $source);
 	$set_list=  implode(',', $set);
-	//die("INSERT INTO $table ($target_list) SELECT $source_list FROM imported_data WHERE label='$label' AND $supply_code_source<>''");
+	//die("INSERT INTO $table ($target_list) SELECT $source_list FROM imported_data WHERE label='$label' AND $supply_code_source<>'' ON DUPLICATE KEY UPDATE $set_list");
 	$this->query("INSERT INTO $table ($target_list) SELECT $source_list FROM imported_data WHERE label='$label' AND $supply_code_source<>'' ON DUPLICATE KEY UPDATE $set_list");
 	return $this->db->affected_rows();
     }
