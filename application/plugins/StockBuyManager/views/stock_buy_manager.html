@@ -176,9 +176,9 @@
 		    {id: "supplier_name", field: "supplier_name", name: "Поставщик", width: 110, editor: AutoCompleteEditor},
 		    {id: "supply_code", field: "supply_code", name: "Код поставщика", width: 100, sortable: true, editor: Slick.Editors.Text},
 		    {id: "supply_name", field: "supply_name", name: "Название поставщика", width: 300, sortable: true, editor: Slick.Editors.Text},
-		    {id: "supply_buy", field: "supply_buy", name: "Закупка база", width: 70, sortable: true, editor: Slick.Editors.Float, cssClass: 'slick-align-right'},
-		    {id: "supply_self", field: "supply_self", name: "Себестоимость", width: 70, sortable: true, cssClass: 'slick-align-right'},
-		    {id: "supply_sell_ratio", field: "supply_sell_ratio", name: "Корр. %", width: 70, editor: Slick.Editors.Integer, sortable: true, cssClass: 'slick-align-right'},
+		    {id: "supply_buy", field: "supply_buy", name: "Закупка база", width: 80, sortable: true, editor: Slick.Editors.Float, cssClass: 'slick-align-right'},
+		    {id: "supply_self", field: "supply_self", name: "Себестоимость", width: 90, sortable: true, cssClass: 'slick-align-right'},
+		    {id: "supply_sell_ratio", field: "supply_sell_ratio", name: "Коррект. %", width: 80, editor: Slick.Editors.Integer, sortable: true, cssClass: 'slick-align-right'},
 		    {id: "supply_sell", field: "supply_sell", name: "Продажа", width: 70, sortable: true, cssClass: 'slick-align-right'},
 		    {id: "supply_comment", field: "supply_comment", name: "Комментарий", width: 150, editor: Slick.Editors.Text},
 		    {id: "product_code", field: "product_code", name: "Код", width: 100, sortable: true, editor: Slick.Editors.Text},
@@ -187,7 +187,7 @@
 		    {id: "supply_bpack", field: "supply_bpack", name: "В Ящике", sortable: true, width: 70, editor: Slick.Editors.Integer, cssClass: 'slick-align-right'},
 		    {id: "supply_volume", field: "supply_volume", name: "Объем", sortable: true, width: 70, editor: Slick.Editors.Float, cssClass: 'slick-align-right'},
 		    {id: "supply_weight", field: "supply_weight", name: "Вес", sortable: true, width: 70, editor: Slick.Editors.Float, cssClass: 'slick-align-right'},
-		    {id: "supply_unit", field: "supply_unit", name: "Единица", sortable: true, width: 30, editor: Slick.Editors.Text, cssClass: 'slick-align-right'}
+		    {id: "supply_unit", field: "supply_unit", name: "Единица", sortable: true, width: 80, editor: Slick.Editors.Text, cssClass: 'slick-align-right'}
 		],
 		options: {
 		    editable: true,
@@ -210,7 +210,7 @@
 	}
 	function calcDimensions( query ){
 	    var wheight = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
-	    var height=(wheight - $(query).position().top - 30) + 'px';
+	    var height=(wheight - $(query).position().top - 0) + 'px';
 	    var width=$(query).parent().width();
 	    $(query).css('height', height);
 	    $(query).css('width', width);	    
@@ -378,6 +378,6 @@
 	<span class="icon-24 icon-refresh" title="Обновить" data-action="reload"> </span> 
     </div>
 
-    <div id="supplylist_sg" style="clear: both;width: 100%"></div>
+    <div id="supplylist_sg" style="clear: both;width: 100%;overflow-x: auto;"></div>
 </div>
 

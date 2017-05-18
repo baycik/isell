@@ -42,7 +42,7 @@ class StockBuyManager extends Catalog{
 		supply_code,
 		supply_name,
 		ROUND(supply_buy,2) supply_buy,
-		supply_sell,
+		supply_sell_ratio,
 		supply_comment,
 		supply_spack,
 		supply_bpack,
@@ -57,6 +57,7 @@ class StockBuyManager extends Catalog{
 		    IF(supplier_sell_gain,
 		    supply_buy*(1-supplier_buy_discount/100)*(1+supplier_buy_expense/100)*(1+supplier_sell_gain/100),
 		    supply_buy*(1-supplier_sell_discount/100))
+                    *(1+supply_sell_ratio/100)
 		,2) supply_sell
 	    FROM 
 		supply_list
