@@ -178,6 +178,7 @@
 		    {id: "supply_name", field: "supply_name", name: "Название поставщика", width: 300, sortable: true, editor: Slick.Editors.Text},
 		    {id: "supply_buy", field: "supply_buy", name: "Закупка база", width: 70, sortable: true, editor: Slick.Editors.Float, cssClass: 'slick-align-right'},
 		    {id: "supply_self", field: "supply_self", name: "Себестоимость", width: 70, sortable: true, cssClass: 'slick-align-right'},
+		    {id: "supply_sell_ratio", field: "supply_sell_ratio", name: "Корр. %", width: 70, editor: Slick.Editors.Integer, sortable: true, cssClass: 'slick-align-right'},
 		    {id: "supply_sell", field: "supply_sell", name: "Продажа", width: 70, sortable: true, cssClass: 'slick-align-right'},
 		    {id: "supply_comment", field: "supply_comment", name: "Комментарий", width: 150, editor: Slick.Editors.Text},
 		    {id: "product_code", field: "product_code", name: "Код", width: 100, sortable: true, editor: Slick.Editors.Text},
@@ -195,7 +196,6 @@
 		    enableColumnReorder: false,
 		    enableFilter: true,
 		    multiSelect: true,
-		    forceFitColumns:true,
 		    url: 'StockBuyManager/listFetch'
 		}
 	    };
