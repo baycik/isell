@@ -40,7 +40,11 @@ class AccountsBank extends AccountsData{
 	$check=$this->getCheck($check_id);
 	
         $Company=$this->Hub->load_model("Company");
-        $company_id=$Company->companyFindByCode( $check->correspondent_code, $check->correspondent_code );
+        $company_id=$Company->companyFindByCode( 
+                isset($check->correspondent_code)?$check->correspondent_code:null, 
+                isset($check->correspondent_code)?$check->correspondent_code:null, 
+                isset($check->company_bank_account)?$check->company_bank_account:null
+                );
 	if( !$company_id ){
 	    return null;
 	}

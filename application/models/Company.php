@@ -75,18 +75,19 @@ class Company extends Catalog{
     }
     
     public $companyFindByCode=['int','int'];
-    public function companyFindByCode( $company_code=null, $company_vat_id=null ){
+    public function companyFindByCode( $company_code=null, $company_vat_id=null, $company_bank_account=null ){
         $sql="SELECT 
                 company_id 
             FROM 
                 companies_list 
             WHERE 
                 IF('$company_code',company_code='$company_code',0) 
-                OR IF('$company_vat_id',company_vat_id='$company_vat_id',0)";
+                OR IF('$company_vat_id',company_vat_id='$company_vat_id',0)
+                OR IF('$company_bank_account',company_bank_account='$company_bank_account',0)";
         return $this->get_value($sql);
     }
     
-    public $companyUpdate=['company_id'=>'int','field'=>'[a-z_]+','value'=>'string'];
+    public $companyUpdate=['company_id'=>'int','field'=>'[a-z_0-9]+','value'=>'string'];
     public function companyUpdate($company_id, $field, $value='') {
 	$this->Hub->set_level(2);
 	$assigned_path=$this->Hub->svar('user_assigned_path');

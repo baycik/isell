@@ -24,7 +24,7 @@
            this.renderCorrespondent();
         },
         renderCorrespondent:function(){
-            App.post("AccountsBank/getCorrespondentStats/",{check_id:this.current_check.check_id},function(resp){
+            $.post("AccountsBank/getCorrespondentStats/",{check_id:this.current_check.check_id},function(resp){
 		var corr_data=App.json(resp);
 		if( corr_data ){
 		    App.user.setPassiveCompany(corr_data.pcomp);
@@ -121,7 +121,7 @@
             });
 	},
 	updateField:function(company_id,field,value,title){
-	    App.post('Company/companyUpdate/'+App.uri(company_id,field,value),function(ok){
+	    $.post('Company/companyUpdate/',{company_id:company_id,field:field,value:value},function(ok){
 		if( ok*1 ){
 		    App.flash("Сохранено: " + title);
 		} else {
@@ -132,7 +132,7 @@
 	fav:{
 	    load:function(){
 		var param={use_passive_filter:0,get_client_bank_accs:1};
-		App.get("AccountsData/accountFavoritesFetch",param,function(resp){
+		$.get("AccountsData/accountFavoritesFetch",param,function(resp){
 		    var favs=App.json(resp);
 		    if( favs[0] ){
 			App.renderTpl('cbank_favorites',{favs:favs});	
@@ -162,7 +162,7 @@
 		    Cbank.current_rows=param.rows;
 		    Cbank.filterRules=param.filterRules;
 		    param.main_acc_code=Cbank.main_acc_code;
-		    App.get('AccountsBank/clientBankGet',param, function (xhr) {
+		    $.get('AccountsBank/clientBankGet',param, function (xhr) {
 			var resp = App.json(xhr);
 			var rows=Cbank.list.addBalanceRows(resp);
 			success(rows);
@@ -244,7 +244,7 @@
 	    rowDelete:function(){
 		var row=$('#account_clientbank_dg').datagrid('getSelected');
 		if( row && confirm("Удалить платежное поручение?\nВнимание связанная проводка будет также удалена") ){
-		    App.post("AccountsBank/checkDelete/"+row.check_id,function(ok){
+		    $.post("AccountsBank/checkDelete/"+row.check_id,function(ok){
 			if( ok*1 ){
 			    App.flash("Платежное поручение удалено");
 			    $('#account_clientbank_dg').datagrid('reload');
