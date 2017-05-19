@@ -180,9 +180,10 @@
 		    {id: "supply_self", field: "supply_self", name: "Себестоимость", width: 90, sortable: true, cssClass: 'slick-align-right'},
 		    {id: "supply_sell_ratio", field: "supply_sell_ratio", name: "Коррект. %", width: 80, editor: Slick.Editors.Integer, sortable: true, cssClass: 'slick-align-right'},
 		    {id: "supply_sell", field: "supply_sell", name: "Продажа", width: 70, sortable: true, cssClass: 'slick-align-right'},
-		    {id: "supply_comment", field: "supply_comment", name: "Комментарий", width: 150, editor: Slick.Editors.Text},
 		    {id: "product_code", field: "product_code", name: "Код", width: 100, sortable: true, editor: Slick.Editors.Text},
-		    {id: "supply_modified", field: "supply_modified", name: "Изменено", sortable: true, width: 70, formatter: dateFormatter},
+		    {id: "supply_stock_path", field: "supply_stock_path", name: "Категория на складе", sortable: true, width: 150},
+		    {id: "supply_comment", field: "supply_comment", name: "Комментарий", width: 150, editor: Slick.Editors.Text},
+                    {id: "supply_modified", field: "supply_modified", name: "Изменено", sortable: true, width: 70, formatter: dateFormatter},
 		    {id: "supply_spack", field: "supply_spack", name: "В Коробке", sortable: true, width: 70, editor: Slick.Editors.Integer, cssClass: 'slick-align-right'},
 		    {id: "supply_bpack", field: "supply_bpack", name: "В Ящике", sortable: true, width: 70, editor: Slick.Editors.Integer, cssClass: 'slick-align-right'},
 		    {id: "supply_volume", field: "supply_volume", name: "Объем", sortable: true, width: 70, editor: Slick.Editors.Float, cssClass: 'slick-align-right'},
@@ -210,8 +211,8 @@
 	}
 	function calcDimensions( query ){
 	    var wheight = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
-	    var height=(wheight - $(query).position().top - 0) + 'px';
-	    var width=$(query).parent().width();
+	    var height=(wheight - $(query).position().top) + 'px';// - $(query).position().top - 0
+	    var width=$(query).parent().width()-30;
 	    $(query).css('height', height);
 	    $(query).css('width', width);	    
 	}
@@ -336,7 +337,8 @@
 <style>
     .bman_wrapper{
 	display: grid;
-	grid-template-columns: 750px auto;
+        width:1050px;
+	grid-template-columns: 750px 300px;
 	grid-gap: 10px;
 	grid-auto-rows: minmax(100px, auto);
     }
@@ -381,7 +383,6 @@
 	<span class="icon-24 icon-print" title="Напечатать" data-action="print"> </span> 
 	<span class="icon-24 icon-refresh" title="Обновить" data-action="reload"> </span> 
     </div>
-
-    <div id="supplylist_sg" style="clear: both;width: 100%;overflow-x: auto;"></div>
+    <div id="supplylist_sg" style="clear: both;overflow-x: auto;"></div>
 </div>
 

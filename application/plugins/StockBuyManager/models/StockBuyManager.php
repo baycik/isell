@@ -58,9 +58,10 @@ class StockBuyManager extends Catalog{
 		    supply_buy*(1-supplier_buy_discount/100)*(1+supplier_buy_expense/100)*(1+supplier_sell_gain/100),
 		    supply_buy*(1-supplier_sell_discount/100))
                     *(1+supply_sell_ratio/100)
-		,2) supply_sell
+		,2) supply_sell,
+                (SELECT path FROM stock_tree JOIN stock_entries se ON se.parent_id=branch_id WHERE se.product_code=sl.product_code) supply_stock_path
 	    FROM 
-		supply_list
+		supply_list sl
 		    LEFT JOIN
 		supplier_list USING(supplier_company_id)
 	    HAVING $having
