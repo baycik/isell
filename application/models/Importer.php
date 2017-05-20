@@ -38,7 +38,7 @@ class Importer extends Catalog{
     
     public $Up=['label'=>'string'];
     public function Up( $label ){
-	$f=['A','B','C','D','E','F','G','H','I','K','L','M','N','O','P','Q'];
+	$f=['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q'];
 	if( $_FILES['upload_file'] && !$_FILES['upload_file']['error'] ){
 	    require_once "application/libraries/report/PHPExcel.php";
 	    $this->PHPexcel = PHPExcel_IOFactory::load($_FILES['upload_file']["tmp_name"]);
@@ -78,4 +78,26 @@ class Importer extends Catalog{
 	return $this->db->affected_rows();
     }
     
+    public $viewGet=['label'=>'string','out_type'=>'string'];
+    public function viewGet($label,$out_type){
+	$table=$this->get_list("SELECT * FROM imported_data WHERE IF('$label',label='$label',1)");
+	$struct=$this->get_list("SHOW FULL COLUMNS FROM imported_data");
+	array_shift($struct);
+	array_shift($struct);
+	$dump=[
+	    'tpl_files'=>'/GridTpl.xlsx',
+	    'title'=>"Экспорт таблицы",
+	    'user_data'=>[
+		'email'=>$this->Hub->svar('pcomp')?$this->Hub->svar('pcomp')->company_email:'',
+		'text'=>'Доброго дня'
+	    ],
+	    'struct'=>$struct,
+	    'view'=>[
+		'rows'=>$table
+	    ]
+	];
+	$ViewManager=$this->Hub->load_model('ViewManager');
+	$ViewManager->store($dump);
+	$ViewManager->outRedirect($out_type);
+    }
 }

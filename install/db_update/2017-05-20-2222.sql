@@ -1,0 +1,2 @@
+ALTER TABLE `imported_data` 
+ADD COLUMN `J` TEXT NOT NULL AFTER `I`;

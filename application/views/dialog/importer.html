@@ -114,8 +114,8 @@
 		    url: 'Importer/listFetch/'
 		}
 	    };
-	    var cols="ABCDEFGHIKLMNOPQ";
-	    for(var i=0;i<16;i++){
+	    var cols="ABCDEFGHIJKLMNOPQ";
+	    for(var i=0;i<17;i++){
 		settings.columns.push({id: cols[i], field: cols[i], name: cols[i], sortable: true, width: 150, editor: Slick.Editors.Text});
 	    }
 	    var grid_sg=App.page_dialog_importer.grid_sg = new SlickInfinite("#page_dialog_importer_dg", settings);
@@ -178,6 +178,21 @@
 		},
 		upload:function(){
 		    $('#page_dialog_importer_file').click();
+		},
+		out:function( out_type ){
+		    var params={
+			label:App.page_dialog_importer.label,
+			out_type:(out_type||'.xlsx')
+		    };
+		    var url='Importer/viewGet/?'+$.param( params );
+		    if( out_type==='.print' ){
+			window.open(url,'print_tab');
+		    } else {
+			location.href=url;
+		    }
+		},
+		print:function(){
+		    this.out('.print');
 		}
 	    };
 	    $(".x-importer-tools").click(function (e) {
@@ -190,6 +205,9 @@
 	filter:function( node ){
 	    App.page_dialog_importer.label=node.value||'';
 	    App.page_dialog_importer.reload();
+	},
+	reload:function(){
+	    App.page_dialog_importer.grid_sg.reload();
 	}
     };
 </script>
@@ -221,6 +239,7 @@
 	    <option>G</option>
 	    <option>H</option>
 	    <option>I</option>
+	    <option>J</option>
 	    <option>K</option>
 	    <option>L</option>
 	    <option>M</option>
@@ -241,6 +260,8 @@
     <span class="icon-24 icon-create" title="Добавить" data-action="entryCreate"> </span>
     <span class="icon-24 icon-delete" title="Удалить выбранные строчки" data-action="entryDelete"> </span>
     <span class="icon-24 icon-upload" title="Отправить файл" data-action="upload"> </span>
+    <span class="icon-24 icon-download" title="Скачать таблицу" data-action="out"> </span> 
+    <span class="icon-24 icon-print" title="Напечатать" data-action="print"> </span> 
     <span class="icon-24 icon-refresh" title="Обновить" data-action="reload"> </span>
 </div>
 

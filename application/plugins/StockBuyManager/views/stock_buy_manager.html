@@ -271,8 +271,9 @@
 	    },
             entryExport:function(){
 		var selected_rows = supplylist.getSelectedRows();
-
-		
+		if (!selected_rows.length) {
+		    App.flash("Выберите строчки для экспорта");
+		}
 		var supply_ids=[];
 		for(var i in selected_rows){
 		    supply_ids.push(supplylist.getDataItem(selected_rows[i]).supply_id);
