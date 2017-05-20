@@ -143,9 +143,10 @@ var App = {
 	    var url=urls[i];
 	    if( App.loadedScripts.indexOf(url)>-1 ){
 		ok();
+	    } else {
+		App.loadedScripts.push(url);
+		$.ajax({url: url,dataType: "script",cache: true,async:true}).done(ok);
 	    }
-	    App.loadedScripts.push(url);
-	    $.ajax({url: url,dataType: "script",cache: true,async:true}).done(ok);
 	}
     },
     include:function(urls,callback){
