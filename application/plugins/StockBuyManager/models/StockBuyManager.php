@@ -152,6 +152,33 @@ class StockBuyManager extends Catalog{
     public function supplyDelete($supply_ids){
 	return $this->delete('supply_list','supply_id',$supply_ids);
     }
+    
+    public $supplyExport=['supply_ids'=>'raw'];
+    public function supplyExport($supply_ids){
+	if( empty($supply_ids) ){
+	    return 0;
+	}
+	$ids=implode(',',$supply_ids);
+	$sql="INSERT INTO
+		imported_data (label,A,B,C,D,E,F,G,H,I)
+	    (SELECT 
+		'склад' label,
+		IF(product_code,product_code,supply_code) A,
+		supply_name B,
+		supply_sell C,
+		supply_spack D,
+		supply_bpack E,
+		supply_weight F,
+		supply_volume G,
+		supply_unit H,
+		supply_comment I
+	    FROM
+		supply_list
+	    WHERE
+		supply_id IN ($ids))";
+	$this->query($sql);
+	return count($supply_ids);
+    }
 
     
     

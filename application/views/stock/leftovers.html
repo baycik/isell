@@ -120,7 +120,7 @@
 		    if( status==='submit' ){
 			fvalue.parent_id=Leftovers.list.parent_id;
 			App.post("Stock/import/",fvalue,function(ok){
-			    App.flash("Добавлено "+ok);
+			    App.flash("Добавлено/Изменено "+ok);
 			    Leftovers.list.reload();
 			    Importer.reload();
 			});

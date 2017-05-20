@@ -248,7 +248,41 @@
 		    }
 		});
 	    },
+	    importIntoStockTable:function(){
+		var config=[
+		    {name:'Код товара',field:'product_code',required:true,assigned:'A'},
+		    {name:'Название Рус.',field:'ru'},
+		    {name:'Продажа',field:'sell',assigned:'C'},
+		    {name:'В коробке',field:'product_spack'},
+		    {name:'В ящике',field:'product_bpack'},
+		    {name:'Вес кг',field:'product_weight'},
+		    {name:'Объем м3',field:'product_volume'},
+		    {name:'Единица',field:'product_unit'}
+		];
+		App.loadWindow('page/dialog/importer',{label:'склад',fields_to_import:config}).progress(function(status,fvalue,Importer){
+		    if( status==='submit' ){
+			fvalue.parent_id=0;
+			App.post("Stock/import/",fvalue,function(ok){
+			    App.flash("Добавлено/Изменено "+ok);
+			    Importer.reload();
+			});
+		    }
+		});
+	    },
             entryExport:function(){
+		var selected_rows = supplylist.getSelectedRows();
+
+		
+		var supply_ids=[];
+		for(var i in selected_rows){
+		    supply_ids.push(supplylist.getDataItem(selected_rows[i]).supply_id);
+		}
+		$.post('StockBuyManager/supplyExport', {supply_ids: supply_ids}, function (ok) {
+		    if (ok * 1) {
+			App.flash("В таблицу Импортера добавлено строк: "+ok);
+		    }
+		    supplyTableTools.importIntoStockTable();
+		});
                 
             },
 	    reload: function () {
