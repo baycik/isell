@@ -1,16 +1,41 @@
 <?php
 class Importer extends Catalog{
-    public $getRows=['label'=>'string','page'=>['int',1],'rows'=>['int',50]];
-    public function getRows( $label,$page,$rows ){
-	if( $label ){
-	    $where="WHERE label LIKE '%$label%'";
-	} else {
-	    $where='';
+
+    public $listFetch=['offset'=>'int','limit'=>'int','sortby'=>'string','sortdir'=>'(ASC|DESC)','filter'=>'json'];
+    public function listFetch($offset,$limit,$sortby,$sortdir,$filter=null){
+	if( empty($sortby) ){
+	    $sortby='A';
 	}
-	$total=$this->get_value("SELECT COUNT(*) FROM imported_data WHERE label LIKE '%$label%'");
-	$entries=$this->get_list("SELECT * FROM imported_data $where LIMIT $rows OFFSET ".(($page-1)*$rows));
-	return ['rows'=>$entries,'total'=>$total];
+	$having=$this->makeFilter($filter);
+	$sql="
+	    SELECT 
+		*
+	    FROM 
+		imported_data
+	    HAVING $having
+	    ORDER BY $sortby $sortdir
+	    LIMIT $limit OFFSET $offset";
+	return $this->get_list($sql);
     }
+    
+    public $entryUpdate=['row_id'=>'int','field'=>'string','value'=>'string'];
+    public function entryUpdate($row_id,$field,$value){
+	$data=[$field=>$value];
+	return $this->update('imported_data',$data,['row_id'=>$row_id]);
+    }
+
+    public $entryDelete=['import_ids'=>'raw'];
+    public function entryDelete($row_ids){
+	return $this->delete('imported_data','row_id',$row_ids);
+    }
+    
+    public $entryCreate=['label'=>'string'];
+    public function entryCreate($label){
+	$insert_id=$this->create('imported_data',['label'=>$label]);
+	$this->update('imported_data',['A'=>$insert_id],['row_id'=>$insert_id]);
+	return $insert_id;
+    }
+    
     public $Up=['label'=>'string'];
     public function Up( $label ){
 	$f=['A','B','C','D','E','F','G','H','I','K','L','M','N','O','P','Q'];
