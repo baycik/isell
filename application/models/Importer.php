@@ -1,19 +1,44 @@
 <?php
 class Importer extends Catalog{
-    public $getRows=['label'=>'string','page'=>['int',1],'rows'=>['int',50]];
-    public function getRows( $label,$page,$rows ){
-	if( $label ){
-	    $where="WHERE label LIKE '%$label%'";
-	} else {
-	    $where='';
+
+    public $listFetch=['offset'=>'int','limit'=>'int','sortby'=>'string','sortdir'=>'(ASC|DESC)','filter'=>'json'];
+    public function listFetch($offset,$limit,$sortby,$sortdir,$filter=null){
+	if( empty($sortby) ){
+	    $sortby='A';
 	}
-	$total=$this->get_value("SELECT COUNT(*) FROM imported_data WHERE label LIKE '%$label%'");
-	$entries=$this->get_list("SELECT * FROM imported_data $where LIMIT $rows OFFSET ".(($page-1)*$rows));
-	return ['rows'=>$entries,'total'=>$total];
+	$having=$this->makeFilter($filter);
+	$sql="
+	    SELECT 
+		*
+	    FROM 
+		imported_data
+	    HAVING $having
+	    ORDER BY $sortby $sortdir
+	    LIMIT $limit OFFSET $offset";
+	return $this->get_list($sql);
     }
+    
+    public $entryUpdate=['row_id'=>'int','field'=>'string','value'=>'string'];
+    public function entryUpdate($row_id,$field,$value){
+	$data=[$field=>$value];
+	return $this->update('imported_data',$data,['row_id'=>$row_id]);
+    }
+
+    public $entryDelete=['import_ids'=>'raw'];
+    public function entryDelete($row_ids){
+	return $this->delete('imported_data','row_id',$row_ids);
+    }
+    
+    public $entryCreate=['label'=>'string'];
+    public function entryCreate($label){
+	$insert_id=$this->create('imported_data',['label'=>$label]);
+	$this->update('imported_data',['A'=>$insert_id],['row_id'=>$insert_id]);
+	return $insert_id;
+    }
+    
     public $Up=['label'=>'string'];
     public function Up( $label ){
-	$f=['A','B','C','D','E','F','G','H','I','K','L','M','N','O','P','Q'];
+	$f=['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q'];
 	if( $_FILES['upload_file'] && !$_FILES['upload_file']['error'] ){
 	    require_once "application/libraries/report/PHPExcel.php";
 	    $this->PHPexcel = PHPExcel_IOFactory::load($_FILES['upload_file']["tmp_name"]);
@@ -53,4 +78,26 @@ class Importer extends Catalog{
 	return $this->db->affected_rows();
     }
     
+    public $viewGet=['label'=>'string','out_type'=>'string'];
+    public function viewGet($label,$out_type){
+	$table=$this->get_list("SELECT * FROM imported_data WHERE IF('$label',label='$label',1)");
+	$struct=$this->get_list("SHOW FULL COLUMNS FROM imported_data");
+	array_shift($struct);
+	array_shift($struct);
+	$dump=[
+	    'tpl_files'=>'/GridTpl.xlsx',
+	    'title'=>"Экспорт таблицы",
+	    'user_data'=>[
+		'email'=>$this->Hub->svar('pcomp')?$this->Hub->svar('pcomp')->company_email:'',
+		'text'=>'Доброго дня'
+	    ],
+	    'struct'=>$struct,
+	    'view'=>[
+		'rows'=>$table
+	    ]
+	];
+	$ViewManager=$this->Hub->load_model('ViewManager');
+	$ViewManager->store($dump);
+	$ViewManager->outRedirect($out_type);
+    }
 }

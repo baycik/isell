@@ -5,7 +5,7 @@
  * Plugin URI: http://isellsoft.com
  * Version: 1.0
  * Description: Tool for managing income buyes
- * Author: baycik 2011
+ * Author: baycik 2017
  * Author URI: http://isellsoft.com
  */
 class StockBuyManager extends Catalog{
@@ -29,7 +29,8 @@ class StockBuyManager extends Catalog{
     public $listFetch=['offset'=>'int','limit'=>'int','sortby'=>'string','sortdir'=>'(ASC|DESC)','filter'=>'json'];
     public function listFetch($offset,$limit,$sortby,$sortdir,$filter=null){
 	if( empty($sortby) ){
-	    $sortby='supplier_company_id';
+	    $sortby="product_code IS NULL,product_code";
+	    //$sortdir="DESC";
 	}
 	$where='1';
 	
@@ -151,6 +152,40 @@ class StockBuyManager extends Catalog{
     public $supplyDelete=['supply_ids'=>'raw'];
     public function supplyDelete($supply_ids){
 	return $this->delete('supply_list','supply_id',$supply_ids);
+    }
+    
+    public $supplyExport=['supply_ids'=>'raw'];
+    public function supplyExport($supply_ids){
+	if( empty($supply_ids) ){
+	    return 0;
+	}
+	$ids=implode(',',$supply_ids);
+	$sql="INSERT INTO
+		imported_data (label,A,B,C,D,E,F,G,H,I)
+	    (SELECT 
+		'склад' label,
+		IF(product_code IS NOT NULL,product_code,supply_code) A,
+		supply_name B,
+		ROUND(
+		    IF(supplier_sell_gain,
+		    supply_buy*(1-supplier_buy_discount/100)*(1+supplier_buy_expense/100)*(1+supplier_sell_gain/100),
+		    supply_buy*(1-supplier_sell_discount/100))
+                    *(1+supply_sell_ratio/100)
+		,2) C,
+		supply_spack D,
+		supply_bpack E,
+		supply_weight F,
+		supply_volume G,
+		supply_unit H,
+		supply_comment I
+	    FROM
+		supply_list sl
+		    LEFT JOIN
+		supplier_list USING(supplier_company_id)
+	    WHERE
+		supply_id IN ($ids))";
+	$this->query($sql);
+	return count($supply_ids);
     }
 
     

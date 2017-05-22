@@ -1,11 +1,12 @@
 <script>
     /*global App*/
     App.page_dialog_importer={
+	grid_sg:null,
 	label:'',
 	init:function(){
 	    this.node.window({
 		width: 800,
-		title: 'Импорт таблицы',
+		title: 'Импортер таблицы',
 		height: 600,
 		top:50,
 		shadow:false,
@@ -20,14 +21,22 @@
 	    this.label=this.data.label||'';
 	    $("#page_dialog_importer_label").val(this.label);
 	    this.initSelector();
+	    App.require([
+		"js/slick/lib/jquery.event.drag-2.3.0.js",
+		"js/slick/slick.core.js",
+		"js/slick/slick.grid.js",
+		"js/slick/plugins/slick.rowselectionmodel.js",
+		"js/slick/slick.editors.js",
+		"js/slick/slickwrapper.js"
+	    ], this.gridSetup);
 	},
 	initSelector:function(){
 	    this.assigned={};
 	    App.renderTpl('page_dialog_importer_selector',this.data);
-	    this.initRequired();
 	    App.setupForm("#page_dialog_importer_frm").change(function(){
 		App.page_dialog_importer.assigned[this.name]=this.value;
 	    });
+	    this.initRequired();
             $("#page_dialog_importer_frm").submit(function(e){
                 e.preventDefault();
                 App.page_dialog_importer.submit();
@@ -38,6 +47,9 @@
 	    for(var i in config){
 		if( config[i].required ){
 		    $("#page_dialog_importer_frm select[name="+config[i].field+"]").prop('required','required');
+		}
+		if( config[i].assigned ){
+		    $("#page_dialog_importer_frm select[name="+config[i].field+"]").val(config[i].assigned);
 		}
 	    }
 	},
@@ -73,7 +85,7 @@
 		xhr.onreadystatechange = function() {
 		    if (xhr.readyState === 4 && xhr.status === 200) {
 			if( xhr.responseText==='imported' ){
-			    $('#page_dialog_importer_dg').datagrid('reload');
+			    App.page_dialog_importer.grid_sg.reload();
                             App.flash("Файл загружен.");
 			} else {
 			    App.flash("Не удалось загрузить "+xhr.responseText);
@@ -89,49 +101,114 @@
         throbber:function(show){
             show?$("#page_dialog_importer_throbber").show():$("#page_dialog_importer_throbber").hide();
         },
-	delete:function(){
-	    var rows=$('#page_dialog_importer_dg').datagrid('getSelections');
-	    if( rows && confirm("Удалить выбранные строчки?") ){
-		var row_ids=[];
-		for(var i in rows){
-		    row_ids.push(rows[i].row_id);
+	gridSetup:function(){
+	    var settings = {
+		columns: [],
+		options: {
+		    editable: true,
+		    autoedit: false,
+		    enableCellNavigation: true,
+		    enableColumnReorder: false,
+		    enableFilter: true,
+		    multiSelect: true,
+		    url: 'Importer/listFetch/'
 		}
-		App.post("Importer/deleteRows/",{row_ids:row_ids.join(',')},function(ok){
-		    if( ok*1 ){
-			App.flash("Удалено "+ok+" строк");
-			$('#page_dialog_importer_dg').datagrid('reload');
-		    } else {
-			App.flash("Не удалось удалить строки");
-		    }
-		});
+	    };
+	    var cols="ABCDEFGHIJKLMNOPQ";
+	    for(var i=0;i<17;i++){
+		settings.columns.push({id: cols[i], field: cols[i], name: cols[i], sortable: true, width: 150, editor: Slick.Editors.Text});
 	    }
+	    var grid_sg=App.page_dialog_importer.grid_sg = new SlickInfinite("#page_dialog_importer_dg", settings);
+	    grid_sg.onCellChange.subscribe(function (e, data) {
+		var updatedEntry = data.item;
+		var field = settings.columns[data.cell].field;
+		var value = updatedEntry[field];
+		importTableTools.entryUpdate(updatedEntry.row_id, field, value);
+	    });
 	    
-	},
-	deleteAll:function(){
-	    if( confirm("Удалить строчки с меткой '"+App.page_dialog_importer.label+"'?") ){
-		App.post("Importer/deleteAll/",{label:App.page_dialog_importer.label},function(ok){
-		    if( ok*1 ){
-			App.flash("Удалено строчки с меткой '"+App.page_dialog_importer.label+"'");
-			$('#page_dialog_importer_dg').datagrid('reload');
-		    } else {
-			App.flash("Не удалось удалить строки");
+	    var importTableTools={
+		entryCreate: function () {
+		    $.post('Importer/entryCreate',{label:App.page_dialog_importer.label},function(insert_id){
+			if( insert_id*1 ){
+			    grid_sg.setFilter({A:insert_id});
+			}
+		    });
+		},
+		entryDelete:function(){
+		    var selected_rows = grid_sg.getSelectedRows();
+		    if (!selected_rows.length) {
+			App.flash("Ни одна строка не выбрана!");
+			return;
 		    }
-		});
-	    }
+		    if (!confirm("Удалить выделенные строчки?")) {
+			return;
+		    }
+
+		    var import_ids=[];
+		    for(var i in selected_rows){
+			import_ids.push(grid_sg.getDataItem(selected_rows[i]).row_id);
+		    }
+		    $.post('Importer/entryDelete', {import_ids: import_ids}, function (ok) {
+			if (ok * 1) {
+			    grid_sg.reload();
+			}
+		    });
+		},
+		entryDeleteAll:function(){
+		    if( confirm("Удалить строчки с меткой '"+App.page_dialog_importer.label+"'?") ){
+			App.post("Importer/deleteAll/",{label:App.page_dialog_importer.label},function(ok){
+			    if( ok*1 ){
+				App.flash("Удалено строчки с меткой '"+App.page_dialog_importer.label+"'");
+				grid_sg.reload();
+			    } else {
+				App.flash("Не удалось удалить строки");
+			    }
+			});
+		    }
+		},
+		entryUpdate:function(row_id,field,value){
+		    $.post('Importer/entryUpdate', {row_id: row_id, field: field, value: value}, function (ok) {
+			if (ok<1) {
+			    grid_sg.reload();
+			}
+		    });
+		},
+		reload:function(){
+		    grid_sg.reload();
+		},
+		upload:function(){
+		    $('#page_dialog_importer_file').click();
+		},
+		out:function( out_type ){
+		    var params={
+			label:App.page_dialog_importer.label,
+			out_type:(out_type||'.xlsx')
+		    };
+		    var url='Importer/viewGet/?'+$.param( params );
+		    if( out_type==='.print' ){
+			window.open(url,'print_tab');
+		    } else {
+			location.href=url;
+		    }
+		},
+		print:function(){
+		    this.out('.print');
+		}
+	    };
+	    $(".x-importer-tools").click(function (e) {
+		var action = $(e.target).data('action');
+		if (action) {
+		    importTableTools[action] && importTableTools[action]();
+		}
+	    });
 	},
 	filter:function( node ){
 	    App.page_dialog_importer.label=node.value||'';
 	    App.page_dialog_importer.reload();
 	},
-	loader:function(param, success, error){
-	    param.label=App.page_dialog_importer.label;
-	    App.post('Importer/getRows/',param,function(xhr){
-		success(App.json(xhr));
-	    });
-	},
-        reload:function(){
-	    $('#page_dialog_importer_dg').datagrid('reload');
-        }
+	reload:function(){
+	    App.page_dialog_importer.grid_sg.reload();
+	}
     };
 </script>
 <style>
@@ -152,8 +229,8 @@
             <img src="img/database.png" style="height: 90px;width: auto;"><br>Импортировать
         </button>
         {{fields_to_import}}
-	<select name="{{field}}" title="{{name}} " style="width:50px;">
-	    <option>A</option>
+	<select name="{{field}}" title="{{name}}" style="width:50px;">
+	    <option value="A">A</option>
 	    <option>B</option>
 	    <option>C</option>
 	    <option>D</option>
@@ -162,6 +239,7 @@
 	    <option>G</option>
 	    <option>H</option>
 	    <option>I</option>
+	    <option>J</option>
 	    <option>K</option>
 	    <option>L</option>
 	    <option>M</option>
@@ -174,42 +252,17 @@
     </form>
 </div>
 <div style="clear: both;border-bottom: 1px solid #999;margin-top: 4px;"></div>
-<div style="text-align: right;padding: 3px;clear: left;">
+<div style="text-align: right;padding: 3px;clear: left;" class="x-importer-tools">
     <div style="display: inline-block;line-height: 26px;margin-top: 0px;float: left">
 	Выбранная метка: <input id="page_dialog_importer_label" style="width: 50px;" title="Выбранная метка" onkeyup="App.page_dialog_importer.filter(this)">
     </div>
-    <span class="icon-24" style="background-image: url(img/truncate.png);background-repeat: no-repeat" title="Очистить таблицу" onclick="App.page_dialog_importer.deleteAll();"> </span>
-    <span class="icon-24 icon-delete" title="Удалить выбранные строчки" onclick="App.page_dialog_importer.delete();"> </span>
-    <span class="icon-24 icon-upload" title="Отправить файл" onclick="$('#page_dialog_importer_file').click();"> </span>
-    <span class="icon-24 icon-refresh" title="Обновить" onclick="$('#page_dialog_importer_dg').datagrid('reload')"> </span>
+    <span class="icon-24" style="background-image: url(img/truncate.png);background-repeat: no-repeat" title="Очистить таблицу" data-action="entryDeleteAll"> </span>
+    <span class="icon-24 icon-create" title="Добавить" data-action="entryCreate"> </span>
+    <span class="icon-24 icon-delete" title="Удалить выбранные строчки" data-action="entryDelete"> </span>
+    <span class="icon-24 icon-upload" title="Отправить файл" data-action="upload"> </span>
+    <span class="icon-24 icon-download" title="Скачать таблицу" data-action="out"> </span> 
+    <span class="icon-24 icon-print" title="Напечатать" data-action="print"> </span> 
+    <span class="icon-24 icon-refresh" title="Обновить" data-action="reload"> </span>
 </div>
-<table id="page_dialog_importer_dg" class="easyui-datagrid" data-options="
-	loader:App.page_dialog_importer.loader,
-	height:400,
-	rownumbers:true,
-	autoRowHeight:false,
-	pagination:true,
-	pageSize:100,
-	pageList:[100,500]">
-    <thead>
-	<tr>
-	    <th data-options="field:'label',width:50">метка</th>
-	    <th data-options="field:'A',width:180">A</th>
-	    <th data-options="field:'B',width:180">B</th>
-	    <th data-options="field:'C',width:180">C</th>
-	    <th data-options="field:'D',width:180">D</th>
-	    <th data-options="field:'E',width:180">E</th>
-	    <th data-options="field:'F',width:180">F</th>
-	    <th data-options="field:'G',width:180">G</th>
-	    <th data-options="field:'H',width:180">H</th>
-	    <th data-options="field:'I',width:180">I</th>
-	    <th data-options="field:'K',width:180">K</th>
-	    <th data-options="field:'L',width:180">L</th>
-	    <th data-options="field:'M',width:180">M</th>
-	    <th data-options="field:'N',width:180">N</th>
-	    <th data-options="field:'O',width:180">O</th>
-	    <th data-options="field:'P',width:180">P</th>
-	    <th data-options="field:'Q',width:180">Q</th>
-	</tr>
-    </thead>
-</table>
+
+<div id="page_dialog_importer_dg" style="height:400px"></div>
