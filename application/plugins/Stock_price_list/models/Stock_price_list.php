@@ -78,28 +78,38 @@ class Stock_price_list extends Catalog{
     
     
     private function removeFromAvailables( &$availables, $id ){
-	for($i=0;$i<count($availables);$i++){
-	    $item=$availables[$i];
-	    if( $item->id==$id ){
-		array_splice($availables, $i, 1);
-		return $item;
-	    }
-	}
+        for($i=0;$i<count($availables);$i++){
+            $item=$availables[$i];
+            if( isset($item->top_id) ){
+                continue;
+            }
+            if( $item->id==$id ){
+                array_splice($availables, $i, 1);
+                return $item;
+            }
+        }
 	return null;
     }
     private function getAvailables(){
-	$sql="
-	    SELECT
-		branch_id id,
-		label text,
-		path,
-		(SELECT COUNT(*) FROM stock_entries WHERE parent_id=branch_id) product_count
-	    FROM
-		stock_tree
-	    HAVING
-		product_count<>0
-	    ORDER BY path";
-	return $this->get_list($sql);
+        $avails=[];
+        $tops=$this->get_list("SELECT top_id,label FROM stock_tree WHERE parent_id=0");
+        foreach($tops as $top){
+            $sql="
+                SELECT
+                    branch_id id,
+                    label text,
+                    path,
+                    (SELECT COUNT(*) FROM stock_entries WHERE parent_id=branch_id) product_count
+                FROM
+                    stock_tree
+                WHERE top_id='{$top->top_id}'
+                HAVING product_count<>0
+                ORDER BY path";
+            $children=$this->get_list($sql);
+            $avails[]=$top;
+            $avails=array_merge($avails,$children);
+        }
+        return $avails;
     }
     
     private function fillPriceBlocks( $block ){

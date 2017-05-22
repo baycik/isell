@@ -237,10 +237,14 @@
 	    </div>
 	    <ul id="price_list_availables" class="connected available_items" style="width:435px;">
 		{{availables}}
-		<li data-id="{{id}}" data-type="category" title="{{path}}">
-		    <span>{{text}}</span> ({{product_count}}) 
-		    <i>{{path}}</i>
-		</li>
+                    {{if top_id}}
+                        <div style="clear:both">{{label}}<hr></div>
+                    {{else}}
+                        <li data-id="{{id}}" data-type="category" title="{{path}}">
+                            <span>{{text}}</span> ({{product_count}}) 
+                            <i>{{path}}</i>
+                        </li>
+                    {{/if}}
 		{{/availables}}
 	    </ul>	    
 	</td>
