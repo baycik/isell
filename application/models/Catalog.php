@@ -157,10 +157,12 @@ class Catalog extends CI_Model {
 	if( $this->treeisLeaf($table,$parent_id) || !$label ){
 	    return false;
 	}
+        $parent_top_id=$this->get_value("SELECT top_id FROM $table WHERE branch_id='$parent_id'");
 	$branch_id=$this->create($table,[
 	    'parent_id'=>$parent_id,
 	    'is_leaf'=>($type=='leaf'),
-	    'path'=>'/-newbranch-/'
+	    'path'=>'/-newbranch-/',
+            'top_id'=>$parent_top_id
 	    ]);
 	$this->treeUpdate($table, $branch_id, 'label', $label, $calc_top_id);
 	return $branch_id;
