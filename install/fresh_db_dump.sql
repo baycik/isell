@@ -985,7 +985,7 @@ DELIMITER ;;
 CREATE DEFINER=`root`@`localhost` FUNCTION `CHK_ENTRY`( _entry_id INT ) RETURNS varchar(100) CHARSET utf8
     READS SQL DATA
 BEGIN
-DECLARE _product_code VARCHAR(100);
+DECLARE _product_code VARCHAR(100) CHARSET utf8;
 DECLARE _entry_count INT;
 DECLARE _stock_count INT;
 DECLARE _doc_id INT;

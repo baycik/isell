@@ -1,3 +1,7 @@
+
+
+
+
 ALTER TABLE `acc_check_list` 
 CHANGE COLUMN `date` `date` DATETIME NULL DEFAULT NULL ,
 CHANGE COLUMN `value_date` `value_date` DATETIME NULL DEFAULT NULL ,
