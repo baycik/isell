@@ -11,7 +11,7 @@ CREATE TABLE `supply_list` (
   `supply_name` varchar(255) DEFAULT NULL,
   `supply_buy` double DEFAULT '0',
   `supply_sell` double DEFAULT '0',
-  `supply_sell_ratio` int(11) DEFAULT '0',
+  `supply_sell_ratio` double DEFAULT '0',
   `supply_comment` varchar(255) DEFAULT NULL,
   `supply_spack` int(11) DEFAULT '1',
   `supply_bpack` int(11) DEFAULT '1',
