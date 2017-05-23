@@ -206,15 +206,16 @@ class Utils extends Catalog{
 	}
 	$res->free_result();        
     }
-    private function treePathRecalculate( $table, $parent_id = 0) {
+    private function treePathRecalculate( $table, $parent_id = 0, $parent_path='/' ) {
 	$where="";
 	if( $parent_id!==null ){
 	    $where="parent_id=$parent_id";
 	}
 	$res = $this->db->query("SELECT * FROM $table WHERE $where");
 	foreach ($res->result() as $row) {
-	    $this->treeUpdatePath($table, $row->branch_id);
-            $this->treePathRecalculate($table, $row->branch_id);
+            $current_path=$parent_path."{$row->label}/";
+	    $this->update($table,['path'=>$current_path],['branch_id'=>$row->branch_id]);
+            $this->treePathRecalculate($table, $row->branch_id,$current_path);
 	}
 	$res->free_result();
     }
