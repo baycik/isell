@@ -1,7 +1,34 @@
 <?php
-    $this->view->spell=  num2str(abs($this->view->ledger->sub_totals->fbal));
+    $this->view->spell=  mb_convert_case(num2str(abs($this->view->ledger->sub_totals->fbal)), MB_CASE_TITLE, "UTF-8");
     $this->view->ilocalDate=russian_date($this->view->idate_dmy);
-    $this->view->localDate=russian_date($this->view->fdate_dmy);
+    $this->view->flocalDate=russian_date($this->view->fdate_dmy);
+    
+    
+    
+    $this->view->ledger->rows = array_reverse($this->view->ledger->rows);
+    $this->view->ledger->sub_totals->ibal_debit='';
+    $this->view->ledger->sub_totals->ibal_credit='';
+    if( $this->view->ledger->sub_totals->ibal>0 ){
+        $this->view->ledger->sub_totals->ibal_debit=$this->view->ledger->sub_totals->ibal;
+    } else {
+        $this->view->ledger->sub_totals->ibal_credit=-$this->view->ledger->sub_totals->ibal;
+    }
+    
+    $this->view->ledger->sub_totals->fbal_debit='';
+    $this->view->ledger->sub_totals->fbal_credit='';
+    if( $this->view->ledger->sub_totals->fbal>0 ){
+        $this->view->ledger->sub_totals->fbal_debit=$this->view->ledger->sub_totals->fbal;
+        $this->view->beneficiary="Сальдо в пользу ".$this->view->a->company_name;
+    } else {
+        $this->view->ledger->sub_totals->fbal_credit=-$this->view->ledger->sub_totals->fbal;
+        $this->view->beneficiary=$this->view->ledger->sub_totals->fbal!=0?"Сальдо в пользу ".$this->view->p->company_name:"";
+    }
+    
+    
+    
+    
+    
+    
     
     
     
