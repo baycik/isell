@@ -18,11 +18,6 @@
 	remoteModel = new Slick.Data.RemoteModel(options.url,options.params,options.loader);
 	grid = new Slick.Grid(node, remoteModel.data, columns, options);
 	grid.setSelectionModel(new Slick.RowSelectionModel());
-	grid.reload = function () {
-	    grid.scrollRowToTop(0);
-	    var vp = grid.getViewport();
-	    remoteModel.reloadData(vp.top, vp.bottom);
-	};
 	grid.updateOptions=function(new_options){
 	    options=$.extend(true, options, new_options);
 	    remoteModel.updateOptions(options.url,options.params,options.loader);
@@ -73,6 +68,14 @@
 	    };
 	}
 	function initLoader() {
+	    grid.rowReload=function(index){
+		remoteModel.reloadRow(index);
+	    };
+	    grid.reload = function () {
+		var vp = grid.getViewport();
+		remoteModel.reloadData(vp.top, vp.bottom);
+		//grid.scrollRowToTop(0);
+	    };
 	    grid.onViewportChanged.subscribe(function (e, args) {
 		var vp = grid.getViewport();
 		remoteModel.ensureData(vp.top, vp.bottom);
@@ -218,6 +221,9 @@ $.fn.slickgrid = function (settings) {
 		}
 	    }
 	}
+	function reloadRow(index){
+	    makeRequest(index, 1);
+	}
 
 	function makeRequest(from, limit) {
 	    var params = {
@@ -258,6 +264,7 @@ $.fn.slickgrid = function (settings) {
 	    "isDataLoaded": isDataLoaded,
 	    "ensureData": ensureData,
 	    "reloadData": reloadData,
+	    "reloadRow":reloadRow,
 	    "setSort": setSort,
 	    "setFilter": setFilter,
 	    "updateOptions":updateOptions,

@@ -161,23 +161,26 @@ class StockBuyManager extends Catalog{
 	}
 	$ids=implode(',',$supply_ids);
 	$sql="INSERT INTO
-		imported_data (label,A,B,C,D,E,F,G,H,I)
+		imported_data (label,A,B,C,D,E,F,G,H,I,J)
 	    (SELECT 
 		'склад' label,
 		IF(product_code IS NOT NULL,product_code,supply_code) A,
 		supply_name B,
 		ROUND(
+		    supply_buy*(1-supplier_buy_discount/100)
+		,2) C,
+		ROUND(
 		    IF(supplier_sell_gain,
 		    supply_buy*(1-supplier_buy_discount/100)*(1+supplier_buy_expense/100)*(1+supplier_sell_gain/100),
 		    supply_buy*(1-supplier_sell_discount/100))
                     *(1+supply_sell_ratio/100)
-		,2) C,
-		supply_spack D,
-		supply_bpack E,
-		supply_weight F,
-		supply_volume G,
-		supply_unit H,
-		supply_comment I
+		,2) D,
+		supply_spack E,
+		supply_bpack F,
+		supply_weight G,
+		supply_volume H,
+		supply_unit I,
+		supply_comment J
 	    FROM
 		supply_list sl
 		    LEFT JOIN

@@ -9,22 +9,34 @@
 	    initSupplierTable();
 	    initSupplierTools();
 	}
+	function day(row, cell, value, columnDef, dataContext) {
+	    if(!value || value<1){
+		return "";
+	    }
+	    return value+" дн";
+	}
+	function perc(row, cell, value, columnDef, dataContext) {
+	    if(!value || value<1){
+		return "";
+	    }
+	    return value+" %";
+	}
 	function initSupplierTable() {
 	    var settings = {
 		columns: [
 		    {id: "supplier_name", field: "supplier_name", name: "Поставщик", width: 110, sortable: true},
-		    {id: "supplier_product_count", field: "supplier_product_count", name: "Товаров", width: 60, sortable: true, cssClass: 'slick-align-right'},
-		    {id: "supplier_defferment", field: "supplier_defferment", name: "Отсрочка дней", width: 60, sortable: true, editor: Slick.Editors.Integer, cssClass: 'slick-align-right'},
-		    {id: "supplier_delivery", field: "supplier_delivery", name: "Доставка дней", width: 60, sortable: true, editor: Slick.Editors.Integer, cssClass: 'slick-align-right'},
-		    {id: "supplier_buy_discount", field: "supplier_buy_discount", name: "Покупка % скидка от базы", width: 110, sortable: true, editor: Slick.Editors.Float, cssClass: 'slick-align-right',headerCssClass:'header_buy'},
-		    {id: "supplier_buy_expense", field: "supplier_buy_expense", name: "Покупка % затраты", width: 110, sortable: true, editor: Slick.Editors.Float, cssClass: 'slick-align-right',headerCssClass:'header_buy'},
-		    {id: "supplier_sell_discount", field: "supplier_sell_discount", name: "Продажа % скидка от базы", width: 110, sortable: true, editor: Slick.Editors.Float, cssClass: 'slick-align-right',headerCssClass:'header_sell'},
-		    {id: "supplier_sell_gain", field: "supplier_sell_gain", name: "Продажа % наценка к себест", width: 110, sortable: true, editor: Slick.Editors.Float, cssClass: 'slick-align-right',headerCssClass:'header_sell'}
+		    {id: "supplier_product_count", field: "supplier_product_count", name: "Товаров",toolTip:"Колличество товаров загруженных для поставщика", width: 60, sortable: true, cssClass: 'slick-align-right'},
+		    {id: "supplier_defferment", field: "supplier_defferment",formatter:day, name: "Отсрочка",toolTip:"Отсрочка оплаты поставщику", width: 60, sortable: true, editor: Slick.Editors.Integer, cssClass: 'slick-align-right'},
+		    {id: "supplier_delivery", field: "supplier_delivery",formatter:day, name: "Доставка",toolTip:"Колличество дней на доставку", width: 60, sortable: true, editor: Slick.Editors.Integer, cssClass: 'slick-align-right'},
+		    {id: "supplier_buy_discount", field: "supplier_buy_discount",formatter:perc, name: "Скидка от базы",toolTip:"Процент скидки для рассчета закупочной цены", width: 100, sortable: true, editor: Slick.Editors.Float, cssClass: 'slick-align-right',headerCssClass:'header_buy'},
+		    {id: "supplier_buy_expense", field: "supplier_buy_expense",formatter:perc, name: "Затраты",toolTip:"Процент затрат при покупке для рассчета продажной цены", width: 100, sortable: true, editor: Slick.Editors.Float, cssClass: 'slick-align-right',headerCssClass:'header_buy'},
+		    {id: "supplier_sell_discount", field: "supplier_sell_discount",formatter:perc, name: "Cкидка от базы",toolTip:"Процент скидки для рассчета продажной цены", width: 100, sortable: true, editor: Slick.Editors.Float, cssClass: 'slick-align-right',headerCssClass:'header_sell'},
+		    {id: "supplier_sell_gain", field: "supplier_sell_gain",formatter:perc, name: "Наценка к себестоимости",toolTip:"Процент наценки к себестоимости для расчета продажной цены", width: 100, sortable: true, editor: Slick.Editors.Float, cssClass: 'slick-align-right',headerCssClass:'header_sell'}
 		],
 		options: {
 		    editable: true,
-		    autoedit: true,
-		    enableCellNavigation: true,
+		    autoEdit: false,
+		    //enableCellNavigation: true,
 		    enableColumnReorder: false,
 		    forceFitColumns:false,
 		    url: 'StockBuyManager/supplierListFetch'
@@ -41,9 +53,14 @@
 		var updatedEntry = data.item;
 		var field = settings.columns[data.cell].field;
 		var value = updatedEntry[field];
-		supplierTableEntryUpdate(updatedEntry.supplier_company_id, field, value);
+		supplierTableEntryUpdate(updatedEntry.supplier_company_id, field, value).done(function(){
+		    supplierlist.rowReload(data.row);
+		});;
 	    });
 	    supplierlist.onSelectedRowsChanged.subscribe(function(e,selection){
+		if( selectedSupplier===supplierlist.getDataItem(selection.rows[0]) ){
+		    return false;
+		}
 		selectedSupplier=supplierlist.getDataItem(selection.rows[0]);
 		var name=selectedSupplier.supplier_company_id?selectedSupplier.supplier_name:'';
 		supplylist.setFilter({supplier_name:name});
@@ -91,7 +108,7 @@
 	    });
 	}
 	function supplierTableEntryUpdate(supplier_company_id, field, value) {
-	    $.post('StockBuyManager/supplierUpdate', {supplier_company_id: supplier_company_id, field: field, value: value}, function (ok) {
+	    return $.post('StockBuyManager/supplierUpdate', {supplier_company_id: supplier_company_id, field: field, value: value}, function (ok) {
 		if (ok * 1) {
 		    supplierlist.reload();
 		    supplylist.reload();
@@ -178,7 +195,7 @@
 		    {id: "supply_name", field: "supply_name", name: "Название поставщика", width: 300, sortable: true, editor: Slick.Editors.Text},
 		    {id: "supply_buy", field: "supply_buy", name: "Закупка база", width: 80, sortable: true, editor: Slick.Editors.Float, cssClass: 'slick-align-right'},
 		    {id: "supply_self", field: "supply_self", name: "Себестоимость", width: 90, sortable: true, cssClass: 'slick-align-right'},
-		    {id: "supply_sell_ratio", field: "supply_sell_ratio", name: "Коррект. %", width: 80, editor: Slick.Editors.Float, sortable: true, cssClass: 'slick-align-right'},
+		    {id: "supply_sell_ratio", field: "supply_sell_ratio",formatter:perc, name: "Корректировка", width: 80, editor: Slick.Editors.Float, sortable: true, cssClass: 'slick-align-right'},
 		    {id: "supply_sell", field: "supply_sell", name: "Продажа", width: 70, sortable: true, cssClass: 'slick-align-right'},
 		    {id: "product_code", field: "product_code", name: "Код", width: 100, sortable: true, editor: Slick.Editors.Text},
 		    {id: "supply_stock_path", field: "supply_stock_path", name: "Категория на складе", sortable: true, width: 150},
@@ -193,7 +210,7 @@
 		options: {
 		    editable: true,
 		    autoedit: true,
-		    enableCellNavigation: true,
+		    //enableCellNavigation: true,
 		    enableColumnReorder: false,
 		    enableFilter: true,
 		    multiSelect: true,
@@ -206,7 +223,9 @@
 		var updatedEntry = data.item;
 		var field = settings.columns[data.cell].field;
 		var value = updatedEntry[field];
-		supplyTableEntryUpdate(updatedEntry.supply_id, field, value);
+		supplyTableEntryUpdate(updatedEntry.supply_id, field, value).done(function(){
+		    supplylist.rowReload(data.row);
+		});
 	    });
 	}
 	function calcDimensions( query ){
@@ -252,7 +271,8 @@
 		var config=[
 		    {name:'Код товара',field:'product_code',required:true,assigned:'A'},
 		    {name:'Название Рус.',field:'ru'},
-		    {name:'Продажа',field:'sell',assigned:'C'},
+		    {name:'Покупка',field:'buy'},
+		    {name:'Продажа',field:'sell',assigned:'D'},
 		    {name:'В коробке',field:'product_spack'},
 		    {name:'В ящике',field:'product_bpack'},
 		    {name:'Вес кг',field:'product_weight'},
@@ -349,7 +369,7 @@
 	    });
 	}
 	function supplyTableEntryUpdate(supply_id, field, value) {
-	    $.post('StockBuyManager/supplyUpdate', {supply_id: supply_id, field: field, value: value}, function (ok) {
+	    return $.post('StockBuyManager/supplyUpdate', {supply_id: supply_id, field: field, value: value}, function (ok) {
 		if (ok<1) {
 		    supplylist.reload();
 		}
@@ -365,7 +385,7 @@
 	    "js/slick/slick.grid.js",
 	    "js/slick/plugins/slick.rowselectionmodel.js",
 	    "js/slick/slick.editors.js",
-	    "js/slick/slickwrapper.js"
+	    "js/slick/slickinfinite.js"
 	], init);
     })(jQuery);
 </script>
@@ -373,15 +393,9 @@
     .bman_wrapper{
 	display: grid;
         width:1050px;
-	grid-template-columns: 750px 300px;
+	grid-template-columns: 710px 300px;
 	grid-gap: 10px;
 	grid-auto-rows: minmax(100px, auto);
-    }
-    #supplierlist_sg .slick-header-column,#supplierlist_sg .slick-header-columns{
-	white-space: normal;
-	height: 38px !important;
-	background-size: 100% 100%;
-	text-align: left;
     }
     .header_buy{
 	color: magenta;
