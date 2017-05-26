@@ -210,7 +210,7 @@
     };
 
     this.serializeValue = function () {
-      var rtn = parseFloat($input.val()) || 0;
+      var rtn = parseFloat($input.val().replace(",",".")) || 0;
 
       var decPlaces = getDecimalPlaces();
       if (decPlaces !== null
@@ -231,7 +231,7 @@
     };
 
     this.validate = function () {
-      if (isNaN($input.val())) {
+      if (isNaN($input.val().replace(",","."))) {
         return {
           valid: false,
           msg: "Please enter a valid number"
@@ -239,7 +239,7 @@
       }
 
       if (args.column.validator) {
-        var validationResults = args.column.validator($input.val());
+        var validationResults = args.column.validator($input.val().replace(",","."));
         if (!validationResults.valid) {
           return validationResults;
         }
