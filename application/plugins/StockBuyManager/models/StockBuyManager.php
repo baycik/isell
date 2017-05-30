@@ -210,6 +210,13 @@ class StockBuyManager extends Catalog{
 	    $sortby='supplier_name';
 	}
 	
+        if($offset==0){
+            $all_count=$this->get_value("SELECT COUNT(*) FROM supply_list");
+            $all=[['supplier_name'=>'* Все поставщики','supplier_company_id'=>0,'supplier_product_count'=>$all_count]];
+        } else {
+            $all=[];
+            $offset--;
+        }
 	$sql="
 	    SELECT 
 		*,
@@ -219,8 +226,6 @@ class StockBuyManager extends Catalog{
 		supplier_list
 	    ORDER BY $sortby $sortdir
 	    LIMIT $limit OFFSET $offset";
-	$all_count=$this->get_value("SELECT COUNT(*) FROM supply_list");
-	$all=[['supplier_name'=>'* Все поставщики','supplier_company_id'=>0,'supplier_product_count'=>$all_count]];
 	$suppliers=array_merge($all,$this->get_list($sql));
 	return $suppliers;
     }

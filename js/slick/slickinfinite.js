@@ -186,9 +186,7 @@ $.fn.slickgrid = function (settings) {
 	}
 
 	function ensureData(from, to) {
-	    if( table_finished ){
-		return;
-	    }
+            
 	    cancelRequest();
 	    from=Math.max(from,0);
 	    var rows_to_load = [];
@@ -203,7 +201,11 @@ $.fn.slickgrid = function (settings) {
 		onDataLoaded.notify({from: skipped_from, to: skipped_to});
 		return;
 	    }
-	    var limit = skipped_to - skipped_from + 1;
+	    if( table_finished && skipped_from>=total_row_count ){
+		onDataLoaded.notify({from: skipped_from, to: skipped_to});
+		return;
+	    }
+            var limit = skipped_to - skipped_from + 1;
 	    if (skipped_to > total_row_count) {//rows are loaded at end of table 
 		limit = Math.max(limit, PAGESIZE);
 	    }
