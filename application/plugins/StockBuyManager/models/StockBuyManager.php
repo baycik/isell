@@ -125,7 +125,7 @@ class StockBuyManager extends Catalog{
 	$source_list=  implode(',', $source);
 	$set_list=  implode(',', $set);
 	//die("INSERT INTO $table ($target_list) SELECT $source_list FROM imported_data WHERE label='$label' AND $supply_code_source<>'' ON DUPLICATE KEY UPDATE $set_list");
-	$this->query("INSERT INTO $table ($target_list) SELECT $source_list FROM imported_data WHERE label='$label' AND $supply_code_source<>'' ON DUPLICATE KEY UPDATE $set_list");
+	$this->query("INSERT INTO $table ($target_list) SELECT $source_list FROM imported_data WHERE label LIKE '%$label%' AND $supply_code_source<>'' ON DUPLICATE KEY UPDATE $set_list");
 	return $this->db->affected_rows();
     }
     
