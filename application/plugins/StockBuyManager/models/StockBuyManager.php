@@ -60,7 +60,7 @@ class StockBuyManager extends Catalog{
 		    supply_buy*(1-supplier_sell_discount/100))
                     *(1+supply_sell_ratio/100)
 		,2) supply_sell,
-                (SELECT path FROM stock_tree JOIN stock_entries se ON se.parent_id=branch_id WHERE se.product_code=sl.product_code OR se.product_code=sl.supply_code) supply_stock_path
+                (SELECT path FROM stock_tree JOIN stock_entries se ON se.parent_id=branch_id WHERE se.product_code=IF(sl.product_code IS NULL,sl.supply_code,sl.product_code) ) supply_stock_path
 	    FROM 
 		supply_list sl
 		    LEFT JOIN
