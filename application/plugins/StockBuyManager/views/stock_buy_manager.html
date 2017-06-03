@@ -5,8 +5,8 @@
 	var selectedSupplier;
 	function init() {
             initTableHolders();
-	    initSupplyTable();
-	    initSupplyTableTools();
+	    //initSupplyTable();
+	    //initSupplyTableTools();
             initSupplierAccordion();
 	    //initSupplierTable();
 	    //initSupplierTools();
@@ -37,15 +37,27 @@
 	}
         
         function initSupplierAccordion(){
-            $("#suppliers_acc").accordion();
+            $("#suppliers_acc").accordion({
+		onSelect:function(title,index){
+		    var node=$("#suppliers_acc").accordion('getPanel',index).panel('body');
+		    var form=node.find('form');
+		    if( form ){
+			var supplier_index=$(node).attr('id').split('_')[1];
+			$(node).form('load',supplierlist[supplier_index]);
+			console.log(node);
+		    }
+		}
+	    });
+	    
             function loadSuppliers(){
                 $.get('StockBuyManager/supplierListFetch',{offset:0,limit:1000},function(resp){
-                    var slist=App.json(resp);
-                    for(var i in slist){
+                    supplierlist=App.json(resp);
+                    for(var i in supplierlist){
                         $("#suppliers_acc").accordion('add',{
-                            title: slist[i].supplier_name+' ('+slist[i].supplier_product_count+')',
-                            content: 'New Content',
-                            selected: false
+                            title: supplierlist[i].supplier_name+' ('+supplierlist[i].supplier_product_count+')',
+                            content: i!=0?$("#supplier_frm_tpl form").html():'',
+                            selected: false,
+			    id:'s_'+i
                         });
                     }
                     
@@ -53,8 +65,10 @@
             }
             loadSuppliers();
         }
-        
-        
+        /*
+	 * 
+	 * Supplier section
+	 */
 	function initSupplierTable() {
 	    var settings = {
 		columns: [
@@ -148,26 +162,9 @@
 		}
 	    });
 	}
-
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
+	/*
+	 * Supply section
+	 */
 	function initSupplyTable() {
 	    function AutoCompleteEditor(args) {
 		var $input;
@@ -421,10 +418,36 @@
     .header_sell{
 	color: green;
     }
+    #suppliers_acc{
+	text-align: center;
+    }
+    #suppliers_acc input{
+	ofloat:right;
+	width: 80px;
+	margin-left: 5px;
+    }
+    #suppliers_acc label{
+	display: block;
+	clear: both;
+	margin: 4px;
+	text-align: right;
+    }
+    .accordion{
+	border: none;
+	background: none;
+    }
 </style>
-
-<div id="supplier_frm_tpl">
-    
+<div id="supplier_frm_tpl" style="display: none">
+    <form>
+	<label>Отсрочка: <input name="supplier_defferment"></label>
+	<label>Доставка: <input name="supplier_delivery"></label>
+	<div style="background: rgba(255,255,255,.6);padding: 3px;">Расчет себестоимости</div>
+	<label>Скидка от базы: <input name="supplier_buy_discount"></label>
+	<label>Затраты: <input name="supplier_buy_expense"></label>
+	<div style="background:  rgba(255,255,255,.6);padding: 3px;">Расчет цены продажи</div>
+	<label>Cкидка от базы: <input name="supplier_sell_discount"></label>
+	<label>Наценка: <input name="supplier_sell_gain"></label>
+    </form>
 </div>
 
 
@@ -434,8 +457,6 @@
             <div id="suppliers_acc">
                 
             </div>
-                <table id="pg" class="easyui-propertygrid" style="width:300px"
-            data-options="url:'get_data.php',showGroup:true,scrollbarSize:0"></table>
             
             
                 <div style="display: none;float: left;font-weight: bold;padding-top: 8px;">
