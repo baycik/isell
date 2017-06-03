@@ -4,10 +4,12 @@
 	var supplierlist;
 	var selectedSupplier;
 	function init() {
+            initTableHolders();
 	    initSupplyTable();
 	    initSupplyTableTools();
 	    initSupplierTable();
 	    initSupplierTools();
+            $( window ).on("resize",initTableHolders);
 	}
 	function day(row, cell, value, columnDef, dataContext) {
 	    if(!value || value<1){
@@ -21,6 +23,19 @@
 	    }
 	    return value+" %";
 	}
+        function initTableHolders(){
+            calcDimensions( "#supplierlist_sg" );
+            calcDimensions( "#supplylist_sg" );
+        }
+	function calcDimensions( query,dw ){
+	    var wheight = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
+	    var height=(wheight - $(query).position().top-20) + 'px';// - $(query).position().top - 0
+	    var width=$(query).parent().width();
+	    $(query).css('height', height);
+	    $(query).css('width', width);	    
+	}
+        
+        
 	function initSupplierTable() {
 	    var settings = {
 		columns: [
@@ -42,7 +57,6 @@
 		    url: 'StockBuyManager/supplierListFetch'
 		}
 	    };
-	    //supplierlist = new SlickInfinite("#supplierlist_sg", settings);
 	    supplierlist=new SlickInfinite("#supplierlist_sg", settings);
 	    supplierlist.onBeforeEditCell.subscribe(function (e, data) {
 		if (data.row < 1) {
@@ -217,7 +231,6 @@
 		    url: 'StockBuyManager/listFetch'
 		}
 	    };
-	    calcDimensions( "#supplylist_sg" );
 	    supplylist = new SlickInfinite("#supplylist_sg", settings);
 	    supplylist.onCellChange.subscribe(function (e, data) {
 		var updatedEntry = data.item;
@@ -227,13 +240,6 @@
 		    supplylist.rowReload(data.row);
 		});
 	    });
-	}
-	function calcDimensions( query ){
-	    var wheight = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
-	    var height=(wheight - $(query).position().top) + 'px';// - $(query).position().top - 0
-	    var width=$(query).parent().width()-30;
-	    $(query).css('height', height);
-	    $(query).css('width', width);	    
 	}
 	var supplyTableTools = {
 	    entryImport: function () {
@@ -405,33 +411,37 @@
     }
 </style>
 
-<div class="bman_wrapper">
-    <div>
-	<div style="float: left;font-weight: bold;padding-top: 8px;">
-	    <img src="img/table16.png" style="width:16px;height: 16px;"> Поставщики
-	</div>
-	<div style="float: right" class="x-stock-buy-manager-suplier-tools">
-	    <span class="icon-24 icon-create" title="Добавить стоку" data-action="entryCreate"> </span>
-	    <span class="icon-24 icon-delete" title="Удалить стоку" data-action="entryDelete"> </span>
-	    <span class="icon-24 icon-refresh" title="Обновить" data-action="reload"> </span> 
-	</div>
-	<div id="supplierlist_sg" style="height: 150px;clear: both"></div>
-    </div>
+<table style="width:100%">
+    <tr>
+        <td style="width:200px;vertical-align: top">
+                <div style="float: left;font-weight: bold;padding-top: 8px;">
+                    <img src="img/table16.png" style="width:16px;height: 16px;"> Поставщики
+                </div>
+                <div style="float: right;margin-right: 20px" class="x-stock-buy-manager-suplier-tools">
+                    <span class="icon-24 icon-create" title="Добавить стоку" data-action="entryCreate"> </span>
+                    <span class="icon-24 icon-delete" title="Удалить стоку" data-action="entryDelete"> </span>
+                    <span class="icon-24 icon-refresh" title="Обновить" data-action="reload"> </span> 
+                </div>
+                <div id="supplierlist_sg" style="clear: both;overflow-x: auto;"></div>
+        </td>
+        <td style="vertical-align: top">
+            <div>
+                <div style="float: left;font-weight: bold;padding-top: 8px;">
+                    <img src="img/table16.png" style="width:16px;height: 16px;"> Товары поставщиков
+                </div>
+                <div style="float: right;margin-right: 20px" class="x-stock-buy-manager-tools">
+                    <span class="icon-24 icon-create" title="Добавить стоку" data-action="entryCreate"> </span>
+                    <span class="icon-24 icon-delete" title="Удалить стоку" data-action="entryDelete"> </span>
+                    <span class="icon-24 icon-export" title="Экспорт" data-action="entryExport"> </span> 
+                    <span class="icon-24 icon-import" title="Импортировать" data-action="entryImport"> </span> 
+                    <span class="icon-24 icon-download" title="Скачать таблицу" data-action="out"> </span> 
+                    <span class="icon-24 icon-print" title="Напечатать" data-action="print"> </span> 
+                    <span class="icon-24 icon-refresh" title="Обновить" data-action="reload"> </span> 
+                </div>
+                <div id="supplylist_sg" style="clear: both;overflow-x: auto;"></div>
+            </div>
+        </td>
+    </tr>
+</table>
 
-</div>   
-<div>
-    <div style="float: left;font-weight: bold;padding-top: 8px;">
-	<img src="img/table16.png" style="width:16px;height: 16px;"> Товары поставщиков
-    </div>
-    <div style="float: right;margin-right: 20px" class="x-stock-buy-manager-tools">
-	<span class="icon-24 icon-create" title="Добавить стоку" data-action="entryCreate"> </span>
-	<span class="icon-24 icon-delete" title="Удалить стоку" data-action="entryDelete"> </span>
-	<span class="icon-24 icon-export" title="Экспорт" data-action="entryExport"> </span> 
-	<span class="icon-24 icon-import" title="Импортировать" data-action="entryImport"> </span> 
-	<span class="icon-24 icon-download" title="Скачать таблицу" data-action="out"> </span> 
-	<span class="icon-24 icon-print" title="Напечатать" data-action="print"> </span> 
-	<span class="icon-24 icon-refresh" title="Обновить" data-action="reload"> </span> 
-    </div>
-    <div id="supplylist_sg" style="clear: both;overflow-x: auto;"></div>
-</div>
 
