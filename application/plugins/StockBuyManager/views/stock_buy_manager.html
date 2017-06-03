@@ -7,8 +7,9 @@
             initTableHolders();
 	    initSupplyTable();
 	    initSupplyTableTools();
-	    initSupplierTable();
-	    initSupplierTools();
+            initSupplierAccordion();
+	    //initSupplierTable();
+	    //initSupplierTools();
             $( window ).on("resize",initTableHolders);
 	}
 	function day(row, cell, value, columnDef, dataContext) {
@@ -24,7 +25,7 @@
 	    return value+" %";
 	}
         function initTableHolders(){
-            calcDimensions( "#supplierlist_sg" );
+            //calcDimensions( "#supplierlist_sg" );
             calcDimensions( "#supplylist_sg" );
         }
 	function calcDimensions( query,dw ){
@@ -34,6 +35,24 @@
 	    $(query).css('height', height);
 	    $(query).css('width', width);	    
 	}
+        
+        function initSupplierAccordion(){
+            $("#suppliers_acc").accordion();
+            function loadSuppliers(){
+                $.get('StockBuyManager/supplierListFetch',{offset:0,limit:1000},function(resp){
+                    var slist=App.json(resp);
+                    for(var i in slist){
+                        $("#suppliers_acc").accordion('add',{
+                            title: slist[i].supplier_name+' ('+slist[i].supplier_product_count+')',
+                            content: 'New Content',
+                            selected: false
+                        });
+                    }
+                    
+                });
+            }
+            loadSuppliers();
+        }
         
         
 	function initSupplierTable() {
@@ -396,13 +415,6 @@
     })(jQuery);
 </script>
 <style>
-    .bman_wrapper{
-	display: grid;
-        width:1050px;
-	grid-template-columns: 710px 300px;
-	grid-gap: 10px;
-	grid-auto-rows: minmax(100px, auto);
-    }
     .header_buy{
 	color: magenta;
     }
@@ -411,18 +423,30 @@
     }
 </style>
 
+<div id="supplier_frm_tpl">
+    
+</div>
+
+
 <table style="width:100%">
     <tr>
         <td style="width:200px;vertical-align: top">
-                <div style="float: left;font-weight: bold;padding-top: 8px;">
+            <div id="suppliers_acc">
+                
+            </div>
+                <table id="pg" class="easyui-propertygrid" style="width:300px"
+            data-options="url:'get_data.php',showGroup:true,scrollbarSize:0"></table>
+            
+            
+                <div style="display: none;float: left;font-weight: bold;padding-top: 8px;">
                     <img src="img/table16.png" style="width:16px;height: 16px;"> Поставщики
                 </div>
-                <div style="float: right;margin-right: 20px" class="x-stock-buy-manager-suplier-tools">
+                <div style="display: none;float: right;margin-right: 20px" class="x-stock-buy-manager-suplier-tools">
                     <span class="icon-24 icon-create" title="Добавить стоку" data-action="entryCreate"> </span>
                     <span class="icon-24 icon-delete" title="Удалить стоку" data-action="entryDelete"> </span>
                     <span class="icon-24 icon-refresh" title="Обновить" data-action="reload"> </span> 
                 </div>
-                <div id="supplierlist_sg" style="clear: both;overflow-x: auto;"></div>
+                <div id="supplierlist_sg" style="display: none;clear: both;overflow-x: auto;"></div>
         </td>
         <td style="vertical-align: top">
             <div>
