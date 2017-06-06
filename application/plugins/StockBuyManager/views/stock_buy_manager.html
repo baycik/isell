@@ -68,12 +68,19 @@
                 };
             }
             $("#suppliers_ac input").change(function(e){
-                var supplier_company_id=$(this).parent().parent().data('sci');
+                var formholder=$(this).parent().parent();
+                var supplier_company_id=formholder.data('sci');
                 var field=$(this).attr('name');
                 var value=$(this).val();
                 $.post('StockBuyManager/supplierUpdate', {supplier_company_id: supplier_company_id, field: field, value: value}, function (ok) {
                     if (ok * 1) {
                         supplylist.reload();
+                        if( field==='supplier_sell_discount' ){
+                            formholder.find('input[name=supplier_sell_gain]').val('');
+                        }
+                        if( field==='supplier_sell_gain' ){
+                            formholder.find('input[name=supplier_sell_discount]').val('');
+                        }
                     }
                 });
             });
@@ -374,7 +381,7 @@
 <style>
     #suppliers_ac input{
 	ofloat:right;
-	width: 60px;
+	width: 40px;
 	margin-left: 5px;
     }
     #suppliers_ac label{
@@ -398,7 +405,7 @@
     }
 
     button.accordion.active, button.accordion:hover {
-        background-color: #ffc; 
+        background-color: #Fe9; 
     }
 
     div.panel {
