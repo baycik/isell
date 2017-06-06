@@ -2,14 +2,13 @@
     (function ($) {
 	var supplylist;
 	var supplierlist;
-	var selectedSupplier;
+	var selectedSupplierId;
 	function init() {
             initTableHolders();
-	    //initSupplyTable();
-	    //initSupplyTableTools();
-            initSupplierAccordion();
-	    //initSupplierTable();
-	    //initSupplierTools();
+	    initSupplyTable();
+	    initSupplyTableTools();
+            supplierAccordionLoad();
+	    initSupplierTools();
             $( window ).on("resize",initTableHolders);
 	}
 	function day(row, cell, value, columnDef, dataContext) {
@@ -25,112 +24,81 @@
 	    return value+" %";
 	}
         function initTableHolders(){
-            //calcDimensions( "#supplierlist_sg" );
+            calcDimensions( "#suppliers_ac",-25 );
             calcDimensions( "#supplylist_sg" );
         }
-	function calcDimensions( query,dw ){
+	function calcDimensions( query,dh ){
 	    var wheight = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
-	    var height=(wheight - $(query).position().top-20) + 'px';// - $(query).position().top - 0
+	    var height=(wheight - $(query).position().top-20+(dh||0)) + 'px';// - $(query).position().top - 0
 	    var width=$(query).parent().width();
 	    $(query).css('height', height);
 	    $(query).css('width', width);	    
 	}
         
-        function initSupplierAccordion(){
-            $("#suppliers_acc").accordion({
-		onSelect:function(title,index){
-		    var node=$("#suppliers_acc").accordion('getPanel',index).panel('body');
-		    var form=node.find('form');
-		    if( form ){
-			var supplier_index=$(node).attr('id').split('_')[1];
-			$(node).form('load',supplierlist[supplier_index]);
-			console.log(node);
-		    }
-		}
-	    });
-	    
-            function loadSuppliers(){
-                $.get('StockBuyManager/supplierListFetch',{offset:0,limit:1000},function(resp){
-                    supplierlist=App.json(resp);
-                    for(var i in supplierlist){
-                        $("#suppliers_acc").accordion('add',{
-                            title: supplierlist[i].supplier_name+' ('+supplierlist[i].supplier_product_count+')',
-                            content: i!=0?$("#supplier_frm_tpl form").html():'',
-                            selected: false,
-			    id:'s_'+i
-                        });
-                    }
-                    
-                });
+        function supplierAccordionLoad(){
+            $.get('StockBuyManager/supplierListFetch',{offset:0,limit:1000},function(resp){
+                supplierlist=App.json(resp);
+                App.renderTpl('suppliers_ac',{suppliers:supplierlist});
+                supplierAccordionLoadInit();
+            });
+        }
+        
+        function supplierAccordionLoadInit(){
+            var acc = document.getElementsByClassName("accordion");
+            selectedSupplierId=0;
+            function collapse(){
+                for (var i = 0; i < acc.length; i++) {
+                    acc[i].classList.remove("active");
+                    var panel = acc[i].nextElementSibling;
+                    panel.style.display = "none";
+                }                
             }
-            loadSuppliers();
+            for (var i = 0; i < acc.length; i++) {
+                acc[i].onclick = function(){
+                    collapse();
+                    this.classList.add("active");
+                    var panel = this.nextElementSibling;
+                    panel.style.display = "block";
+                    var name='';
+                    if( $(panel).data('sci') ){
+                        var name=$(this).html();
+                    }
+                    selectedSupplierId=$(panel).data('sci');
+                    supplylist.setFilter({supplier_name:name});
+                };
+            }
+            $("#suppliers_ac input").change(function(e){
+                var supplier_company_id=$(this).parent().parent().data('sci');
+                var field=$(this).attr('name');
+                var value=$(this).val();
+                $.post('StockBuyManager/supplierUpdate', {supplier_company_id: supplier_company_id, field: field, value: value}, function (ok) {
+                    if (ok * 1) {
+                        supplylist.reload();
+                    }
+                });
+            });
         }
         /*
 	 * 
 	 * Supplier section
 	 */
-	function initSupplierTable() {
-	    var settings = {
-		columns: [
-		    {id: "supplier_name", field: "supplier_name", name: "Поставщик", width: 110, sortable: true},
-		    {id: "supplier_product_count", field: "supplier_product_count", name: "Товаров",toolTip:"Колличество товаров загруженных для поставщика", width: 60, sortable: true, cssClass: 'slick-align-right'},
-		    {id: "supplier_defferment", field: "supplier_defferment",formatter:day, name: "Отсрочка",toolTip:"Отсрочка оплаты поставщику", width: 60, sortable: true, editor: Slick.Editors.Integer, cssClass: 'slick-align-right'},
-		    {id: "supplier_delivery", field: "supplier_delivery",formatter:day, name: "Доставка",toolTip:"Колличество дней на доставку", width: 60, sortable: true, editor: Slick.Editors.Integer, cssClass: 'slick-align-right'},
-		    {id: "supplier_buy_discount", field: "supplier_buy_discount",formatter:perc, name: "Скидка от базы",toolTip:"Процент скидки для рассчета закупочной цены", width: 100, sortable: true, editor: Slick.Editors.Float, cssClass: 'slick-align-right',headerCssClass:'header_buy'},
-		    {id: "supplier_buy_expense", field: "supplier_buy_expense",formatter:perc, name: "Затраты",toolTip:"Процент затрат при покупке для рассчета продажной цены", width: 100, sortable: true, editor: Slick.Editors.Float, cssClass: 'slick-align-right',headerCssClass:'header_buy'},
-		    {id: "supplier_sell_discount", field: "supplier_sell_discount",formatter:perc, name: "Cкидка от базы",toolTip:"Процент скидки для рассчета продажной цены", width: 100, sortable: true, editor: Slick.Editors.Float, cssClass: 'slick-align-right',headerCssClass:'header_sell'},
-		    {id: "supplier_sell_gain", field: "supplier_sell_gain",formatter:perc, name: "Наценка к себестоимости",toolTip:"Процент наценки к себестоимости для расчета продажной цены", width: 100, sortable: true, editor: Slick.Editors.Float, cssClass: 'slick-align-right',headerCssClass:'header_sell'}
-		],
-		options: {
-		    editable: true,
-		    autoEdit: false,
-		    //enableCellNavigation: true,
-		    enableColumnReorder: false,
-		    forceFitColumns:false,
-		    url: 'StockBuyManager/supplierListFetch'
-		}
-	    };
-	    supplierlist=new SlickInfinite("#supplierlist_sg", settings);
-	    supplierlist.onBeforeEditCell.subscribe(function (e, data) {
-		if (data.row < 1) {
-		    return false;
-		}
-	    });
-	    supplierlist.onCellChange.subscribe(function (e, data) {
-		var updatedEntry = data.item;
-		var field = settings.columns[data.cell].field;
-		var value = updatedEntry[field];
-		supplierTableEntryUpdate(updatedEntry.supplier_company_id, field, value).done(function(){
-		    supplierlist.rowReload(data.row);
-		});;
-	    });
-	    supplierlist.onSelectedRowsChanged.subscribe(function(e,selection){
-		if( selectedSupplier===supplierlist.getDataItem(selection.rows[0]) ){
-		    return false;
-		}
-		selectedSupplier=supplierlist.getDataItem(selection.rows[0]);
-		var name=selectedSupplier.supplier_company_id?selectedSupplier.supplier_name:'';
-		supplylist.setFilter({supplier_name:name});
-	    });
-	}
 	var supplierTableTools = {
 	    reload: function () {
-		supplierlist.reload();
+		supplierAccordionLoad();
 	    },
 	    entryDelete: function () {
-		var selected_rows = supplierlist.getSelectedRows();
-		if (!selected_rows.length) {
-		    App.flash("Ни одна строка не выбрана!");
+		if (!selectedSupplierId) {
+		    App.flash("Поставщик не выбран!");
 		    return;
 		}
 		if (!confirm("Удалить выделенных поставщиков?")) {
 		    return;
 		}
 		var also_products = confirm("Удалить товары этого поставщика?");
-		var supplier_company_id = supplierlist.getDataItem(selected_rows[0]).supplier_company_id;
-		$.post('StockBuyManager/supplierDelete', {supplier_company_id: supplier_company_id, also_products: also_products}, function (ok) {
+		$.post('StockBuyManager/supplierDelete', {supplier_company_id: selectedSupplierId, also_products: also_products}, function (ok) {
 		    if (ok * 1) {
-			supplierlist.reload();
+			supplierAccordionLoad();
+                        supplylist.reload();
 		    }
 		});
 	    },
@@ -139,7 +107,7 @@
 		    if (status === 'select') {
 			$.post('StockBuyManager/supplierCreate', {supplier_company_id: comp.company_id, label: comp.label}, function (ok) {
 			    if (ok * 1) {
-				supplierlist.reload();
+				supplierAccordionLoad();
 			    }
 			});
 		    }
@@ -151,14 +119,6 @@
 		var action = $(e.target).data('action');
 		if (action) {
 		    supplierTableTools[action] && supplierTableTools[action]();
-		}
-	    });
-	}
-	function supplierTableEntryUpdate(supplier_company_id, field, value) {
-	    return $.post('StockBuyManager/supplierUpdate', {supplier_company_id: supplier_company_id, field: field, value: value}, function (ok) {
-		if (ok * 1) {
-		    supplierlist.reload();
-		    supplylist.reload();
 		}
 	    });
 	}
@@ -412,62 +372,70 @@
     })(jQuery);
 </script>
 <style>
-    .header_buy{
-	color: magenta;
-    }
-    .header_sell{
-	color: green;
-    }
-    #suppliers_acc{
-	text-align: center;
-    }
-    #suppliers_acc input{
+    #suppliers_ac input{
 	ofloat:right;
-	width: 80px;
+	width: 60px;
 	margin-left: 5px;
     }
-    #suppliers_acc label{
+    #suppliers_ac label{
 	display: block;
 	clear: both;
 	margin: 4px;
 	text-align: right;
     }
-    .accordion{
-	border: none;
-	background: none;
+    button.accordion {
+        color: #444;
+        cursor: pointer;
+        padding: 5px;
+        margin-bottom: 1px;
+        width: 100%;
+        border: none;
+        border-radius: 0px;
+        text-align: left;
+        outline: none;
+        font-size: 12px;
+        transition: 0.8s;
+    }
+
+    button.accordion.active, button.accordion:hover {
+        background-color: #ffc; 
+    }
+
+    div.panel {
+        display: none;
+        background-color: rgba(255,255,255,.3);
+        transition: 0.8s;
     }
 </style>
-<div id="supplier_frm_tpl" style="display: none">
-    <form>
-	<label>Отсрочка: <input name="supplier_defferment"></label>
-	<label>Доставка: <input name="supplier_delivery"></label>
-	<div style="background: rgba(255,255,255,.6);padding: 3px;">Расчет себестоимости</div>
-	<label>Скидка от базы: <input name="supplier_buy_discount"></label>
-	<label>Затраты: <input name="supplier_buy_expense"></label>
-	<div style="background:  rgba(255,255,255,.6);padding: 3px;">Расчет цены продажи</div>
-	<label>Cкидка от базы: <input name="supplier_sell_discount"></label>
-	<label>Наценка: <input name="supplier_sell_gain"></label>
-    </form>
-</div>
-
 
 <table style="width:100%">
     <tr>
         <td style="width:200px;vertical-align: top">
-            <div id="suppliers_acc">
-                
+            <div style="float: left;font-weight: bold;padding-top: 8px;">
+                <img src="img/table16.png" style="width:16px;height: 16px;"> Поставщики
             </div>
-            
-            
-                <div style="display: none;float: left;font-weight: bold;padding-top: 8px;">
-                    <img src="img/table16.png" style="width:16px;height: 16px;"> Поставщики
+            <div style="float: right;" class="x-stock-buy-manager-suplier-tools">
+                <span class="icon-24 icon-create" title="Добавить стоку" data-action="entryCreate"> </span>
+                <span class="icon-24 icon-delete" title="Удалить стоку" data-action="entryDelete"> </span>
+                <span class="icon-24 icon-refresh" title="Обновить" data-action="reload"> </span> 
+            </div>
+            <div id="suppliers_ac" style="overflow-y: auto;">
+                {{suppliers}}
+                <button class="accordion">{{supplier_name}}</button>
+                <div class="panel" data-sci="{{supplier_company_id}}">
+                    {{if supplier_company_id}}
+                    <label>Отсрочка дн: <input name="supplier_defferment" value="{{supplier_defferment|blank>}}"></label>
+                    <label>Доставка дн: <input name="supplier_delivery" value="{{supplier_delivery|blank>}}"></label>
+                    <div style="background: rgba(255,255,255,.6);padding: 3px;">Расчет себестоимости</div>
+                    <label>Скидка от базы %: <input name="supplier_buy_discount" value="{{supplier_buy_discount|blank>}}"></label>
+                    <label>Затраты %: <input name="supplier_buy_expense" value="{{supplier_buy_expense|blank>}}"></label>
+                    <div style="background:  rgba(255,255,255,.6);padding: 3px;">Расчет цены продажи</div>
+                    <label>Cкидка от базы %: <input name="supplier_sell_discount" value="{{supplier_sell_discount|blank>}}"></label>
+                    <label>Наценка %: <input name="supplier_sell_gain" value="{{supplier_sell_gain|blank>}}"></label>
+                    {{/if}}
                 </div>
-                <div style="display: none;float: right;margin-right: 20px" class="x-stock-buy-manager-suplier-tools">
-                    <span class="icon-24 icon-create" title="Добавить стоку" data-action="entryCreate"> </span>
-                    <span class="icon-24 icon-delete" title="Удалить стоку" data-action="entryDelete"> </span>
-                    <span class="icon-24 icon-refresh" title="Обновить" data-action="reload"> </span> 
-                </div>
-                <div id="supplierlist_sg" style="display: none;clear: both;overflow-x: auto;"></div>
+                {{/suppliers}}
+            </div>
         </td>
         <td style="vertical-align: top">
             <div>
