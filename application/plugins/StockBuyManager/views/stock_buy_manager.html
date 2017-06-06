@@ -43,14 +43,16 @@
             });
         }
         
-        function supplierAccordionLoadInit(){
+        function accordion(){
             var acc = document.getElementsByClassName("accordion");
-            selectedSupplierId=0;
+            var observer={
+                onselect:function(){}
+            };
             function collapse(){
                 for (var i = 0; i < acc.length; i++) {
                     acc[i].classList.remove("active");
                     var panel = acc[i].nextElementSibling;
-                    panel.style.display = "none";
+                    panel.classList.add("hidden");
                 }                
             }
             for (var i = 0; i < acc.length; i++) {
@@ -58,15 +60,27 @@
                     collapse();
                     this.classList.add("active");
                     var panel = this.nextElementSibling;
-                    panel.style.display = "block";
-                    var name='';
-                    if( $(panel).data('sci') ){
-                        var name=$(this).html();
-                    }
-                    selectedSupplierId=$(panel).data('sci');
-                    supplylist.setFilter({supplier_name:name});
+                    panel.classList.remove("hidden");
+                    observer.onselect(this);
                 };
             }
+            return observer;
+        }
+        
+        function supplierAccordionLoadInit(){
+            var acc = document.getElementsByClassName("accordion");
+            selectedSupplierId=0;
+            var acc=new accordion();
+            acc.onselect=function( header_node ){
+                var panel = header_node.nextElementSibling;
+                var name='';
+                if( $(panel).data('sci') ){
+                    var name=$(header_node).html();
+                }
+                selectedSupplierId=$(panel).data('sci');
+                supplylist.setFilter({supplier_name:name});
+            };
+            
             $("#suppliers_ac input").change(function(e){
                 var formholder=$(this).parent().parent();
                 var supplier_company_id=formholder.data('sci');
@@ -407,8 +421,7 @@
         background-color: #Fe9; 
     }
 
-    div.panel {
-        display: none;
+    .accordion_panel {
         background-color: rgba(255,255,255,.3);
         transition: 0.8s;
     }
@@ -425,10 +438,10 @@
                 <span class="icon-24 icon-delete" title="Удалить стоку" data-action="entryDelete"> </span>
                 <span class="icon-24 icon-refresh" title="Обновить" data-action="reload"> </span> 
             </div>
-            <div id="suppliers_ac" style="overflow-y: auto;">
+            <div id="suppliers_ac" class="covert" style="overflow-y: auto;">
                 {{suppliers}}
                 <button class="accordion">{{supplier_name}}</button>
-                <div class="panel" data-sci="{{supplier_company_id}}">
+                <div class="accordion_panel hidden" data-sci="{{supplier_company_id}}">
                     {{if supplier_company_id}}
                     <label>Отсрочка дн: <input name="supplier_defferment" value="{{supplier_defferment|blank>}}"></label>
                     <label>Доставка дн: <input name="supplier_delivery" value="{{supplier_delivery|blank>}}"></label>
@@ -443,21 +456,26 @@
                 {{/suppliers}}
             </div>
         </td>
-        <td style="vertical-align: top">
-            <div>
-                <div style="float: left;font-weight: bold;padding-top: 8px;">
-                    <img src="img/table16.png" style="width:16px;height: 16px;"> Товары поставщиков
+        <td style="vertical-align: top">xcvxvc
+            <div class="">
+                <div title="Формирование заказа">
+                    
                 </div>
-                <div style="float: right;margin-right: 20px" class="x-stock-buy-manager-tools">
-                    <span class="icon-24 icon-create" title="Добавить стоку" data-action="entryCreate"> </span>
-                    <span class="icon-24 icon-delete" title="Удалить стоку" data-action="entryDelete"> </span>
-                    <span class="icon-24 icon-export" title="Экспорт" data-action="entryExport"> </span> 
-                    <span class="icon-24 icon-import" title="Импортировать" data-action="entryImport"> </span> 
-                    <span class="icon-24 icon-download" title="Скачать таблицу" data-action="out"> </span> 
-                    <span class="icon-24 icon-print" title="Напечатать" data-action="print"> </span> 
-                    <span class="icon-24 icon-refresh" title="Обновить" data-action="reload"> </span> 
+                <div title="Справочник товаров поставщиков">
+                    <div style="float: left;font-weight: bold;padding-top: 8px;">
+                        <img src="img/table16.png" style="width:16px;height: 16px;"> Товары поставщиков
+                    </div>
+                    <div style="float: right;margin-right: 20px" class="x-stock-buy-manager-tools">
+                        <span class="icon-24 icon-create" title="Добавить стоку" data-action="entryCreate"> </span>
+                        <span class="icon-24 icon-delete" title="Удалить стоку" data-action="entryDelete"> </span>
+                        <span class="icon-24 icon-export" title="Экспорт" data-action="entryExport"> </span> 
+                        <span class="icon-24 icon-import" title="Импортировать" data-action="entryImport"> </span> 
+                        <span class="icon-24 icon-download" title="Скачать таблицу" data-action="out"> </span> 
+                        <span class="icon-24 icon-print" title="Напечатать" data-action="print"> </span> 
+                        <span class="icon-24 icon-refresh" title="Обновить" data-action="reload"> </span> 
+                    </div>
+                    <div id="supplylist_sg" style="clear: both;overflow-x: auto;"></div>
                 </div>
-                <div id="supplylist_sg" style="clear: both;overflow-x: auto;"></div>
             </div>
         </td>
     </tr>

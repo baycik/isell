@@ -388,8 +388,13 @@ div .combobox-item-hover{
     cursor: pointer;
 }
 .covert{
-    visibility: hidden;
     display: none;
+}
+.hidden{
+    display: none;
+    -position: absolute;
+    -top: -9999px;
+    -left: -9999px;    
 }
 img{
     vertical-align: middle;
