@@ -388,6 +388,7 @@ div .combobox-item-hover{
     cursor: pointer;
 }
 .covert{
+    visibility: none;
     display: none;
 }
 .hidden{
