@@ -1,6 +1,6 @@
 <?php
 class PluginManager extends Catalog{
-    public $min_level=4;
+    public $min_level=1;
     private $plugin_folder='application/plugins/';
     
     public $listFetch=[];
