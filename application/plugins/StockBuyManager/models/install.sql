@@ -39,3 +39,11 @@ CREATE TABLE `supplier_list` (
   `supplier_sell_gain` double DEFAULT '0',
   PRIMARY KEY (`supplier_company_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+
+CREATE TABLE `isell_db`.`supply_order_list` (
+  `entry_id` INT NOT NULL AUTO_INCREMENT,
+  `product_code` VARCHAR(45) NULL,
+  `product_quantity` INT NULL,
+  `product_comment` VARCHAR(45) NULL,
+  PRIMARY KEY (`entry_id`));
