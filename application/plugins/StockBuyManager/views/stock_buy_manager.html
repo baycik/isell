@@ -2,17 +2,20 @@
     (function ($) {
         var supplylist;
         var supplierlist;
+        var supplyorder;
         var selectedSupplierId;
         function init() {
             initTableHolders();
-
+            $(window).on("resize", initTableHolders);
+            
             initSupplyTable();
             initSupplyTableTools();
-            supplierAccordionLoad();
+            
             initSupplierTools();
-            $(window).on("resize", initTableHolders);
-
+            supplierAccordionLoad();
             new Accordion("#bmanager_main_ac");
+            
+            initOrderTable();
         }
         function perc(row, cell, value, columnDef, dataContext) {
             if (!value || value == 0) {
@@ -387,6 +390,49 @@
                 }
             });
         }
+        /*
+         * Order section
+         */
+        function initOrderTable() {
+            var settings = {
+                columns: [
+                    {id: "product_code", field: "product_code", name: "Код", width: 110},
+                    {id: "product_name", field: "product_name", name: "Название", width: 100, sortable: true},
+                    {id: "product_quantity", field: "product_quantity", name: "Количество", width: 300, sortable: true, editor: Slick.Editors.Integer, cssClass: 'slick-align-right'},
+                    {id: "product_comment", field: "product_comment", name: "Коментарий", width: 80, sortable: true, editor: Slick.Editors.Text}
+                ],
+                options: {
+                    editable: true,
+                    autoedit: true,
+                    //enableCellNavigation: true,
+                    enableColumnReorder: false,
+                    enableFilter: true,
+                    multiSelect: true,
+                    url: 'StockBuyManager/listFetch'
+                }
+            };
+            supplyorder = new SlickInfinite("#supplyorder_sg", settings);
+            supplyorder.onCellChange.subscribe(function (e, data) {
+                var updatedEntry = data.item;
+                var field = settings.columns[data.cell].field;
+                var value = updatedEntry[field];
+                supplyOrderEntryUpdate(updatedEntry.entry_id, field, value).done(function () {
+                    supplylist.rowReload(data.row);
+                });
+            });
+        }
+        function supplyOrderEntryUpdate(supply_id, field, value) {
+            return $.post('StockBuyManager/orderUpdate', {supply_id: supply_id, field: field, value: value}, function (ok) {
+                if (ok < 1) {
+                    supplyorder.reload();
+                }
+            });
+        }
+
+
+
+
+
 
         App.require([
             "js/slick/lib/jquery.event.drag-2.3.0.js",
@@ -488,11 +534,7 @@
         </div>
 
         <div class="accordion_panel" id="supply_order_section">
-            knsbgsdfg
-            sdfg
-            sdfg
-            sdfg
-            ds
+            <div id="supply_order_sg" style="clear: both;overflow-x: auto;"></div>
         </div>
     </div>
 </div>
