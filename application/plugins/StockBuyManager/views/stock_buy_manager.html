@@ -408,10 +408,10 @@
                     enableColumnReorder: false,
                     enableFilter: true,
                     multiSelect: true,
-                    url: 'StockBuyManager/listFetch'
+                    url: 'StockBuyManager/orderFetch'
                 }
             };
-            supplyorder = new SlickInfinite("#supplyorder_sg", settings);
+            supplyorder = new SlickInfinite("#supply_order_sg", settings);
             supplyorder.onCellChange.subscribe(function (e, data) {
                 var updatedEntry = data.item;
                 var field = settings.columns[data.cell].field;

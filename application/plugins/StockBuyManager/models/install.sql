@@ -41,7 +41,7 @@ CREATE TABLE `supplier_list` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
-CREATE TABLE `isell_db`.`supply_order_list` (
+CREATE TABLE `isell_db`.`supply_order` (
   `entry_id` INT NOT NULL AUTO_INCREMENT,
   `product_code` VARCHAR(45) NULL,
   `product_quantity` INT NULL,

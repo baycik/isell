@@ -259,4 +259,27 @@ class StockBuyManager extends Catalog{
 	return $this->delete('supplier_list',['supplier_company_id'=>$supplier_company_id]);
     }
 
+    
+    
+    
+    
+    public $orderFetch=['offset'=>'int','limit'=>'int','sortby'=>'string','sortdir'=>'(ASC|DESC)','filter'=>'json'];
+    public function orderFetch($offset,$limit,$sortby,$sortdir,$filter=null){
+	if( empty($sortby) ){
+	    $sortby="product_code IS NULL,product_code";
+	    //$sortdir="DESC";
+	}
+	$where='1';
+	
+	$having=$this->makeFilter($filter);
+        $sql="
+	    SELECT 
+		*
+	    FROM 
+		supply_order
+            HAVING $having
+	    ORDER BY $sortby $sortdir
+	    LIMIT $limit OFFSET $offset";
+	return $this->get_list($sql);
+    }
 }
