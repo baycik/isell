@@ -16,6 +16,7 @@
             new Accordion("#bmanager_main_ac");
             
             initOrderTable();
+            initSupplyOrderTableTools();
         }
         function perc(row, cell, value, columnDef, dataContext) {
             if (!value || value == 0) {
@@ -159,12 +160,10 @@
             function AutoCompleteEditor(args) {
                 var $input;
                 var defaultValue;
-                var scope = this;
-                var calendarOpen = false;
                 this.keyCaptureList = [Slick.keyCode.UP, Slick.keyCode.DOWN, Slick.keyCode.ENTER];
                 this.init = function () {
                     var html = "<select style='width:100%'>";
-                    var suppliers = supplierlist.getData();
+                    var suppliers = supplierlist;
                     for (var i in suppliers) {
                         html += suppliers[i].supplier_name ? "<option>" + suppliers[i].supplier_name + "</option>" : "";
                     }
@@ -338,7 +337,6 @@
                 $.post('StockBuyManager/supplyDelete', {supply_ids: supply_ids}, function (ok) {
                     if (ok * 1) {
                         supplylist.reload();
-                        supplierlist.reload();
                     }
                 });
             },
@@ -385,9 +383,6 @@
                 if (ok < 1) {
                     supplylist.reload();
                 }
-                if (field === 'supplier_name') {
-                    supplierlist.reload();
-                }
             });
         }
         /*
@@ -396,15 +391,20 @@
         function initOrderTable() {
             var settings = {
                 columns: [
-                    {id: "product_code", field: "product_code", name: "Код", width: 110},
-                    {id: "product_name", field: "product_name", name: "Название", width: 100, sortable: true},
-                    {id: "product_quantity", field: "product_quantity", name: "Количество", width: 300, sortable: true, editor: Slick.Editors.Integer, cssClass: 'slick-align-right'},
-                    {id: "product_comment", field: "product_comment", name: "Коментарий", width: 80, sortable: true, editor: Slick.Editors.Text}
+                    {id: "product_comment", field: "product_comment", name: "Коментарий", width: 150, sortable: true, editor: Slick.Editors.Text},
+                    {id: "product_code", field: "product_code", name: "Код", width: 100, sortable: true, editor: Slick.Editors.Text},
+                    {id: "product_name", field: "product_name", name: "Название", width: 300, sortable: true},
+                    {id: "product_quantity", field: "product_quantity", name: "Количество", width: 80, sortable: true, editor: Slick.Editors.Integer, cssClass: 'slick-align-right'},
+                    {id: "option1", field: "option1", name: "Вариант 1", width: 80, sortable: true},
+                    {id: "option2", field: "option2", name: "Вариант 2", width: 80, sortable: true},
+                    {id: "option3", field: "option3", name: "Вариант 3", width: 80, sortable: true},
+                    {id: "option4", field: "option4", name: "Вариант 4", width: 80, sortable: true},
+                    {id: "option5", field: "option5", name: "Вариант 5", width: 80, sortable: true}
                 ],
                 options: {
                     editable: true,
                     autoedit: true,
-                    //enableCellNavigation: true,
+                    fitWidth:true,
                     enableColumnReorder: false,
                     enableFilter: true,
                     multiSelect: true,
@@ -417,12 +417,138 @@
                 var field = settings.columns[data.cell].field;
                 var value = updatedEntry[field];
                 supplyOrderEntryUpdate(updatedEntry.entry_id, field, value).done(function () {
-                    supplylist.rowReload(data.row);
+                    supplyorder.rowReload(data.row);
                 });
             });
         }
-        function supplyOrderEntryUpdate(supply_id, field, value) {
-            return $.post('StockBuyManager/orderUpdate', {supply_id: supply_id, field: field, value: value}, function (ok) {
+        var supplyOrderTableTools = {
+/*            entryImport: function () {
+                var config = [
+                    {field: "supply_code", name: "Код пост.", required: true},
+                    {field: "supply_name", name: "Название"},
+                    {field: "supply_buy", name: "Закупка база"},
+                    {field: "supply_comment", name: "Комментарий"},
+                    {field: "product_code", name: "Код наш"},
+                    {field: "supply_spack", name: "В Коробке"},
+                    {field: "supply_bpack", name: "В Ящике"},
+                    {field: "supply_weight", name: "Вес"},
+                    {field: "supply_volume", name: "Объем"},
+                    {field: "supply_unit", name: "Единица"}
+                ];
+                App.loadWindow('page/dialog/importer', {label: 'закуп', fields_to_import: config}).progress(function (status, fvalue, Importer) {
+                    if (status === 'submit') {
+                        var question = "Импортировать эти строчки без указания поставщика?";
+                        fvalue.supplier_company_id = 0;
+                        if (selectedSupplier && selectedSupplier.supplier_company_id) {
+                            question = "Импортировать эти строчки поставщику '" + selectedSupplier.supplier_name + "'?";
+                            fvalue.supplier_company_id = selectedSupplier.supplier_company_id;
+                        }
+                        if (confirm(question)) {
+                            App.post("StockBuyManager/entryImport/", fvalue, function (ok) {
+                                App.flash("Импортировано " + ok);
+                                Importer.reload();
+                                supplyTableTools.reload();
+                            });
+                        }
+                    }
+                });
+            },
+            importIntoStockTable: function () {
+                var config = [
+                    {name: 'Код товара', field: 'product_code', required: true, assigned: 'A'},
+                    {name: 'Название Рус.', field: 'ru'},
+                    {name: 'Покупка', field: 'buy'},
+                    {name: 'Продажа', field: 'sell', assigned: 'D'},
+                    {name: 'В коробке', field: 'product_spack'},
+                    {name: 'В ящике', field: 'product_bpack'},
+                    {name: 'Вес кг', field: 'product_weight'},
+                    {name: 'Объем м3', field: 'product_volume'},
+                    {name: 'Единица', field: 'product_unit'}
+                ];
+                App.loadWindow('page/dialog/importer', {label: 'склад', fields_to_import: config}).progress(function (status, fvalue, Importer) {
+                    if (status === 'submit') {
+                        fvalue.parent_id = 0;
+                        App.post("Stock/import/", fvalue, function (ok) {
+                            App.flash("Добавлено/Изменено " + ok);
+                            Importer.reload();
+                        });
+                    }
+                });
+            },
+            entryExport: function () {
+                var selected_rows = supplylist.getSelectedRows();
+                if (!selected_rows.length) {
+                    App.flash("Выберите строчки для экспорта");
+                }
+                var supply_ids = [];
+                for (var i in selected_rows) {
+                    supply_ids.push(supplylist.getDataItem(selected_rows[i]).supply_id);
+                }
+                $.post('StockBuyManager/supplyExport', {supply_ids: supply_ids}, function (ok) {
+                    if (ok * 1) {
+                        App.flash("В таблицу Импортера добавлено строк: " + ok);
+                    }
+                    supplyOrderTableTools.importIntoStockTable();
+                });
+
+            },
+*/            reload: function () {
+                supplyorder.reload();
+            },
+            entryDelete: function () {
+                var selected_rows = supplyorder.getSelectedRows();
+                if (!selected_rows.length) {
+                    App.flash("Ни одна строка не выбрана!");
+                    return;
+                }
+                if (!confirm("Удалить выделенные товары?")) {
+                    return;
+                }
+
+                var entry_ids = [];
+                for (var i in selected_rows) {
+                    entry_ids.push(supplyorder.getDataItem(selected_rows[i]).entry_id);
+                }
+                $.post('StockBuyManager/orderDelete', {entry_ids: entry_ids}, function (ok) {
+                    if (ok * 1) {
+                        supplyorder.reload();
+                    }
+                });
+            },
+            entryCreate: function () {
+                $.post('StockBuyManager/orderCreate', function (insert_id) {
+                    supplyorder.reload();
+                });
+            },
+            out: function (out_type) {
+                var sorted = supplyorder.getSortColumns();
+                var params = {
+                    sortby: sorted.length ? sorted[0].columnId : '',
+                    sortdir: sorted.length ? (sorted[0].sortAsc ? 'ASC' : 'DESC') : '',
+                    filter: JSON.stringify(supplyorder.getFilter()),
+                    out_type: (out_type || '.xlsx')
+                };
+                var url = 'StockBuyManager/viewOrderGet/?' + $.param(params);
+                if (out_type === '.print') {
+                    window.open(url, 'print_tab');
+                } else {
+                    location.href = url;
+                }
+            },
+            print: function () {
+                this.out('.print');
+            }
+        };
+        function initSupplyOrderTableTools() {
+            $(".x-stock-buy-manager-order-tools").click(function (e) {
+                var action = $(e.target).data('action');
+                if (action) {
+                    supplyOrderTableTools[action] && supplyOrderTableTools[action]();
+                }
+            });
+        }
+        function supplyOrderEntryUpdate(entry_id, field, value) {
+            return $.post('StockBuyManager/orderUpdate', {entry_id: entry_id, field: field, value: value}, function (ok) {
                 if (ok < 1) {
                     supplyorder.reload();
                 }
@@ -495,7 +621,7 @@
         </div>
         <div id="suppliers_ac" style="overflow-y: auto;">
             {{suppliers}}
-            <button class="accordion">{{supplier_name}}</button>
+            <button class="accordion">{{supplier_name}} ({{supplier_product_count}})</button>
             <div class="accordion_panel hidden" data-sci="{{supplier_company_id}}">
                 {{if supplier_company_id}}
                 <label>Отсрочка дн: <input name="supplier_defferment" value="{{supplier_defferment|blank>}}"></label>
@@ -534,7 +660,19 @@
         </div>
 
         <div class="accordion_panel" id="supply_order_section">
-            <div id="supply_order_sg" style="clear: both;overflow-x: auto;"></div>
+            <div style="width: 700px;margin-right: 20px" class="x-stock-buy-manager-order-tools">
+                <img src="img/table16.png" style="width:16px;height: 16px;"> Заказ
+                <div style="float: right;font-weight: bold;padding-top: 8px;">
+                <span class="icon-24 icon-create" title="Добавить стоку" data-action="entryCreate"> </span>
+                <span class="icon-24 icon-delete" title="Удалить стоку" data-action="entryDelete"> </span>
+                <span class="icon-24 icon-export" title="Экспорт" data-action="entryExport"> </span> 
+                <span class="icon-24 icon-import" title="Импортировать" data-action="entryImport"> </span> 
+                <span class="icon-24 icon-download" title="Скачать таблицу" data-action="out"> </span> 
+                <span class="icon-24 icon-print" title="Напечатать" data-action="print"> </span> 
+                <span class="icon-24 icon-refresh" title="Обновить" data-action="reload"> </span>
+                </div>
+            </div>
+            <div id="supply_order_sg" style="clear: both;height: 500px;width:700px"></div>
         </div>
     </div>
 </div>

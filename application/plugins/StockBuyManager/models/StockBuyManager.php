@@ -266,7 +266,7 @@ class StockBuyManager extends Catalog{
     public $orderFetch=['offset'=>'int','limit'=>'int','sortby'=>'string','sortdir'=>'(ASC|DESC)','filter'=>'json'];
     public function orderFetch($offset,$limit,$sortby,$sortdir,$filter=null){
 	if( empty($sortby) ){
-	    $sortby="product_code IS NULL,product_code";
+	    $sortby="entry_id";
 	    //$sortdir="DESC";
 	}
 	$where='1';
@@ -274,12 +274,44 @@ class StockBuyManager extends Catalog{
 	$having=$this->makeFilter($filter);
         $sql="
 	    SELECT 
-		*
+		entry_id,
+                product_code,
+                ru product_name,
+                product_quantity,
+                product_comment,
+                (SELECT 
+                    GROUP_CONCAT(
+                            supplier_name
+            ) 
+            FROM 
+                    supplier_list spl
+                            JOIN
+                    supply_list sl USING(supplier_company_id)
+            WHERE 
+                    so.product_code=sl.product_code
+            ORDER BY)
 	    FROM 
 		supply_order
+                    LEFT JOIN
+                prod_list USING(product_code)
             HAVING $having
 	    ORDER BY $sortby $sortdir
 	    LIMIT $limit OFFSET $offset";
 	return $this->get_list($sql);
+    }
+    
+    public $orderCreate=[];
+    public function orderCreate(){
+	return $this->create('supply_order',['product_code'=>'']);
+    }
+    
+    public $orderUpdate=['entry_id'=>'int','field'=>'string','value'=>'string'];
+    public function orderUpdate($entry_id,$field,$value){
+	return $this->update('supply_order',[$field=>$value],['entry_id'=>$entry_id]);
+    }
+ 
+    public $orderDelete=['entry_ids'=>'raw'];
+    public function orderDelete($entry_ids){
+	return $this->delete('supply_order','entry_id',$entry_ids);
     }
 }
