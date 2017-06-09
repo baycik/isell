@@ -314,4 +314,21 @@ class StockBuyManager extends Catalog{
     public function orderDelete($entry_ids){
 	return $this->delete('supply_order','entry_id',$entry_ids);
     }
+    
+    /*
+DROP TEMPORARY TABLE IF EXISTS supply_order_chart;
+CREATE TEMPORARY TABLE supply_order_chart AS (SELECT 
+	product_code,
+	ROUND(supply_buy*(1-supplier_buy_discount/100)*(1+supplier_buy_expense/100),2) self,
+	supplier_name
+FROM 
+	supplier_list spl
+		JOIN
+	supply_list sl USING(supplier_company_id)
+WHERE 
+	product_code IN (SELECT product_code FROM supply_order) );
+SELECT * FROM supply_order_chart;
+     */
+    
+    
 }
