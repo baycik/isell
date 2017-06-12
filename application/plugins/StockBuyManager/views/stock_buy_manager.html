@@ -70,10 +70,9 @@
             }
             $("#suppliers_ac input").change(function(e){
                 var formholder=$(this).parent().parent();
-                var supplier_company_id=formholder.data('sci');
                 var field=$(this).attr('name');
                 var value=$(this).val();
-                $.post('StockBuyManager/supplierUpdate', {supplier_company_id: supplier_company_id, field: field, value: value}, function (ok) {
+                $.post('StockBuyManager/supplierUpdate', {supplier_company_id: selectedSupplier.supplier_company_id, field: field, value: value}, function (ok) {
                     if (ok * 1) {
                         supplylist.reload();
                         if( field==='supplier_sell_discount' ){
