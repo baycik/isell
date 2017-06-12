@@ -67,7 +67,7 @@ class AccountsRegistry extends AccountsCore{
 		document_view_list dvl ON dl.doc_id=dvl.doc_id AND view_role='tax_bill'
 	    WHERE
 		active_company_id='$active_company_id'
-                AND $period_filter
+                AND ($period_filter)
 		AND is_commited=1
 		AND $direction_filter
 	    HAVING $having
