@@ -20,6 +20,28 @@ class AccountsRegistry extends AccountsCore{
 	} else {
 	    $direction_filter="(doc_type=2 OR doc_type=4)";
 	}
+        
+        $period_parts= explode('-', $period);
+        if( is_numeric($period_parts[1]) ){
+            $period_filter = "dl.cstamp LIKE '{$period}%'";
+        } else {
+            switch( $period_parts[1] ){
+                case 'I':
+                    $period_filter = "dl.cstamp LIKE '{$period_parts[0]}-01%' OR dl.cstamp LIKE '{$period_parts[0]}-02%' OR dl.cstamp LIKE '{$period_parts[0]}-03%'";
+                    break;
+                case 'II':
+                    $period_filter = "dl.cstamp LIKE '{$period_parts[0]}-04%' OR dl.cstamp LIKE '{$period_parts[0]}-05%' OR dl.cstamp LIKE '{$period_parts[0]}-06%'";
+                    break;
+                case 'III':
+                    $period_filter = "dl.cstamp LIKE '{$period_parts[0]}-07%' OR dl.cstamp LIKE '{$period_parts[0]}-08%' OR dl.cstamp LIKE '{$period_parts[0]}-09%'";
+                    break;
+                case 'IV':
+                    $period_filter = "dl.cstamp LIKE '{$period_parts[0]}-10%' OR dl.cstamp LIKE '{$period_parts[0]}-11%' OR dl.cstamp LIKE '{$period_parts[0]}-12%'";
+                    break;
+            }
+        }
+        
+        
 	$active_company_id=$this->Hub->acomp('company_id');
 	$this->query("DROP TEMPORARY TABLE IF EXISTS tax_bill_reg");
 	$tmp_sql="CREATE TEMPORARY TABLE tax_bill_reg ( INDEX(doc_view_id) ) ENGINE=MyISAM AS ( SELECT
@@ -45,7 +67,7 @@ class AccountsRegistry extends AccountsCore{
 		document_view_list dvl ON dl.doc_id=dvl.doc_id AND view_role='tax_bill'
 	    WHERE
 		active_company_id='$active_company_id'
-                AND SUBSTRING(dl.cstamp,1,7)='{$period}'
+                AND $period_filter
 		AND is_commited=1
 		AND $direction_filter
 	    HAVING $having

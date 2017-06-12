@@ -4,7 +4,7 @@
 	sub_totals:{sell:{},buy:{}},
 	init:function(){
 	    var today=App.today().split('.');
-	    this.data.month=today[1];
+	    this.data.month=["0","I","II","III","IV"][Math.ceil(today[1]/3)];
 	    this.data.year=today[2];
 	    App.setupForm('#acc_tax_bill_reg_frm',this.data).change(function(){
 		$('#acc_tax_bill_reg_sell_dg').datagrid('reload');
@@ -128,6 +128,10 @@
 		<fieldset style="width:270px">
 		    <legend>Настройки реестра</legend>
 		    <select name="month" title="Месяц" style="width:110px">
+			<option value="I">I Квартал</option>
+			<option value="II">II Квартал</option>
+			<option value="III">III Квартал</option>
+			<option value="IV">IV Квартал</option>
 			<option value="0">ВЕСЬ ГОД</option>
 			<option value="01">Январь</option>
 			<option value="02">Февраль</option>
