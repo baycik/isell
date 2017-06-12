@@ -407,7 +407,7 @@
         background-color: #Fe9; 
     }
 
-    div.panel {
+    div.accordion_panel {
         display: none;
         background-color: rgba(255,255,255,.3);
         transition: 0.8s;
@@ -428,7 +428,7 @@
             <div id="suppliers_ac" style="overflow-y: auto;">
                 {{suppliers}}
                 <button class="accordion">{{supplier_name}}</button>
-                <div class="panel" data-sci="{{supplier_company_id}}">
+                <div class="accordion_panel" data-sci="{{supplier_company_id}}">
                     {{if supplier_company_id}}
                     <label>Отсрочка дн: <input name="supplier_defferment" value="{{supplier_defferment|blank>}}"></label>
                     <label>Доставка дн: <input name="supplier_delivery" value="{{supplier_delivery|blank>}}"></label>
