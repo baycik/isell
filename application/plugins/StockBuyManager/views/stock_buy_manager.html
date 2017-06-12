@@ -59,12 +59,12 @@
                     this.classList.add("active");
                     var panel = this.nextElementSibling;
                     panel.style.display = "block";
-                    var name='';
-                    if( $(panel).data('sci') ){
-                        var name=$(this).html();
-                    }
                     var index=$(panel).data('index');
                     selectedSupplier=supplierlist[index];
+                    var name='';
+                    if( selectedSupplier.supplier_company_id ){
+                        var name=selectedSupplier.supplier_name;
+                    }
                     supplylist.setFilter({supplier_name:name});
                 };
             }
