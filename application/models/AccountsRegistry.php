@@ -74,13 +74,6 @@ class AccountsRegistry extends AccountsCore{
             ORDER BY SUBSTRING(dl.cstamp,1,10),doc_view_id )";
 	$this->query($tmp_sql);
 	
-	$sql_sub="SELECT 
-		COUNT(*) count,
-		SUM(total) sum_total,
-		SUM(vatless) sum_vatless,
-		SUM(vat) sum_vat
-	    FROM tax_bill_reg";
-	$sub_totals=$this->get_row($sql_sub);
 	if( $mode=='group_by_comp' ){
 	    $sql="SELECT 
 		    company_name,
@@ -92,10 +85,27 @@ class AccountsRegistry extends AccountsCore{
 		    tax_bill_reg 
 		GROUP BY company_tax_id
 		LIMIT $rows OFFSET $offset";
-	} else {
+            $sql_sub="SELECT 
+                    *,
+                    COUNT(*) count
+                FROM
+                    (SELECT
+                        SUM(total) sum_total,
+                        SUM(vatless) sum_vatless,
+                        SUM(vat) sum_vat
+                    FROM tax_bill_reg
+                    GROUP BY company_tax_id) t";
+        } else {
 	    $sql="SELECT * FROM tax_bill_reg LIMIT $rows OFFSET $offset";
+            $sql_sub="SELECT 
+                    COUNT(*) count,
+                    SUM(total) sum_total,
+                    SUM(vatless) sum_vatless,
+                    SUM(vat) sum_vat
+                FROM tax_bill_reg";
 	}
 	$rows=$this->get_list($sql);
+        $sub_totals=$this->get_row($sql_sub);
 	if( !count($rows) ){
 	    $rows=[[]];
 	}
