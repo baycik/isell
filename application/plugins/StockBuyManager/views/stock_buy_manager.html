@@ -2,7 +2,7 @@
     (function ($) {
 	var supplylist;
 	var supplierlist;
-	var selectedSupplierId;
+	var selectedSupplier;
 	function init() {
             initTableHolders();
 	    initSupplyTable();
@@ -45,7 +45,7 @@
         
         function supplierAccordionLoadInit(){
             var acc = document.getElementsByClassName("accordion");
-            selectedSupplierId=0;
+            selectedSupplier=null;
             function collapse(){
                 for (var i = 0; i < acc.length; i++) {
                     acc[i].classList.remove("active");
@@ -63,7 +63,8 @@
                     if( $(panel).data('sci') ){
                         var name=$(this).html();
                     }
-                    selectedSupplierId=$(panel).data('sci');
+                    var index=$(panel).data('index');
+                    selectedSupplier=supplierlist[index];
                     supplylist.setFilter({supplier_name:name});
                 };
             }
@@ -94,7 +95,7 @@
 		supplierAccordionLoad();
 	    },
 	    entryDelete: function () {
-		if (!selectedSupplierId) {
+		if (!selectedSupplier) {
 		    App.flash("Поставщик не выбран!");
 		    return;
 		}
@@ -102,7 +103,7 @@
 		    return;
 		}
 		var also_products = confirm("Удалить товары этого поставщика?");
-		$.post('StockBuyManager/supplierDelete', {supplier_company_id: selectedSupplierId, also_products: also_products}, function (ok) {
+		$.post('StockBuyManager/supplierDelete', {supplier_company_id: selectedSupplier.supplier_company_id, also_products: also_products}, function (ok) {
 		    if (ok * 1) {
 			supplierAccordionLoad();
                         supplylist.reload();
@@ -242,9 +243,9 @@
 		    if (status === 'submit') {
 			var question="Импортировать эти строчки без указания поставщика?";
 			fvalue.supplier_company_id=0;
-			if( selectedSupplierId ){
-			    question="Импортировать эти строчки поставщику ?";
-			    fvalue.supplier_company_id = selectedSupplierId;
+			if( selectedSupplier && selectedSupplier.supplier_company_id ){
+			    question="Импортировать эти строчки поставщику '"+selectedSupplier.supplier_name+"'?";
+			    fvalue.supplier_company_id = selectedSupplier.supplier_company_id;
 			}
 			if( confirm(question) ){
 			    App.post("StockBuyManager/entryImport/", fvalue, function (ok) {
@@ -428,7 +429,7 @@
             <div id="suppliers_ac" style="overflow-y: auto;">
                 {{suppliers}}
                 <button class="accordion">{{supplier_name}}</button>
-                <div class="accordion_panel" data-sci="{{supplier_company_id}}">
+                <div class="accordion_panel" data-index="{{#}}">
                     {{if supplier_company_id}}
                     <label>Отсрочка дн: <input name="supplier_defferment" value="{{supplier_defferment|blank>}}"></label>
                     <label>Доставка дн: <input name="supplier_delivery" value="{{supplier_delivery|blank>}}"></label>
