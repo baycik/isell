@@ -242,8 +242,8 @@
 		    if (status === 'submit') {
 			var question="Импортировать эти строчки без указания поставщика?";
 			fvalue.supplier_company_id=0;
-			if( selectedSupplier && selectedSupplier.supplier_company_id ){
-			    question="Импортировать эти строчки поставщику '"+selectedSupplier.supplier_name+"'?";
+			if( selectedSupplierId ){
+			    question="Импортировать эти строчки поставщику ?";
 			    fvalue.supplier_company_id = selectedSupplier.supplier_company_id;
 			}
 			if( confirm(question) ){
