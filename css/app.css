@@ -391,6 +391,11 @@ div .combobox-item-hover{
     visibility: hidden;
     display: none;
 }
+.hidden{
+    position: absolute;
+    top: -9999px;
+    left: -9999px;
+}
 img{
     vertical-align: middle;
 }
