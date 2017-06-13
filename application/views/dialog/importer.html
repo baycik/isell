@@ -7,7 +7,7 @@
 	    this.node.window({
 		width: 800,
 		title: 'Импортер таблицы',
-		height: 600,
+		height: 530,
 		top:50,
 		shadow:false,
 		onClose: function () {
@@ -223,7 +223,7 @@
     <img src="img/throbber_1.gif">
 </div>
 <input type="file" id="page_dialog_importer_file" style="display:none" onchange="App.page_dialog_importer.up(this.files)">
-<div id="page_dialog_importer_selector" style="padding: 3px;">
+<div id="page_dialog_importer_selector" style="padding: 3px;text-align: right">
     <form id="page_dialog_importer_frm">
         <button style="float:left;" type="submit">
             <img src="img/database.png" style="height: 90px;width: auto;"><br>Импортировать
@@ -265,4 +265,4 @@
     <span class="icon-24 icon-refresh" title="Обновить" data-action="reload"> </span>
 </div>
 
-<div id="page_dialog_importer_dg" style="height:390px"></div>
+<div id="page_dialog_importer_dg" style="height:300px"></div>
