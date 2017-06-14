@@ -329,7 +329,14 @@
 		<div style="background-color: #dfd;padding: 5px; margin-bottom: 5px; border: 1px solid #ccc;text-align: center">
 		    Платежное поручение проведено<br>
 		    <button data-trans-id="{{trans_id}}" onclick="Cbank.transEdit(this.dataset.transId)">Редактировать проводку</button>
-		</div>
+                    
+                    <hr>
+                    {{favs}}
+                    <div class="rounded" style="text-align: left">
+                        <b class="tag">{{acc_code}}</b> {{label}} {{if balance}}(<b>{{balance}}</b>){{/if}} 
+                    </div>
+                    {{/favs}}
+                </div>
 	    {{else}}
 		{{favs}}
 		<div class="rounded">
