@@ -20,6 +20,28 @@ class AccountsRegistry extends AccountsCore{
 	} else {
 	    $direction_filter="(doc_type=2 OR doc_type=4)";
 	}
+        
+        $period_parts= explode('-', $period);
+        if( is_numeric($period_parts[1]) ){
+            $period_filter = "dl.cstamp LIKE '{$period}%'";
+        } else {
+            switch( $period_parts[1] ){
+                case 'I':
+                    $period_filter = "dl.cstamp LIKE '{$period_parts[0]}-01%' OR dl.cstamp LIKE '{$period_parts[0]}-02%' OR dl.cstamp LIKE '{$period_parts[0]}-03%'";
+                    break;
+                case 'II':
+                    $period_filter = "dl.cstamp LIKE '{$period_parts[0]}-04%' OR dl.cstamp LIKE '{$period_parts[0]}-05%' OR dl.cstamp LIKE '{$period_parts[0]}-06%'";
+                    break;
+                case 'III':
+                    $period_filter = "dl.cstamp LIKE '{$period_parts[0]}-07%' OR dl.cstamp LIKE '{$period_parts[0]}-08%' OR dl.cstamp LIKE '{$period_parts[0]}-09%'";
+                    break;
+                case 'IV':
+                    $period_filter = "dl.cstamp LIKE '{$period_parts[0]}-10%' OR dl.cstamp LIKE '{$period_parts[0]}-11%' OR dl.cstamp LIKE '{$period_parts[0]}-12%'";
+                    break;
+            }
+        }
+        
+        
 	$active_company_id=$this->Hub->acomp('company_id');
 	$this->query("DROP TEMPORARY TABLE IF EXISTS tax_bill_reg");
 	$tmp_sql="CREATE TEMPORARY TABLE tax_bill_reg ( INDEX(doc_view_id) ) ENGINE=MyISAM AS ( SELECT
@@ -45,20 +67,13 @@ class AccountsRegistry extends AccountsCore{
 		document_view_list dvl ON dl.doc_id=dvl.doc_id AND view_role='tax_bill'
 	    WHERE
 		active_company_id='$active_company_id'
-                AND SUBSTRING(dl.cstamp,1,7)='{$period}'
+                AND ($period_filter)
 		AND is_commited=1
 		AND $direction_filter
 	    HAVING $having
             ORDER BY SUBSTRING(dl.cstamp,1,10),doc_view_id )";
 	$this->query($tmp_sql);
 	
-	$sql_sub="SELECT 
-		COUNT(*) count,
-		SUM(total) sum_total,
-		SUM(vatless) sum_vatless,
-		SUM(vat) sum_vat
-	    FROM tax_bill_reg";
-	$sub_totals=$this->get_row($sql_sub);
 	if( $mode=='group_by_comp' ){
 	    $sql="SELECT 
 		    company_name,
@@ -70,10 +85,27 @@ class AccountsRegistry extends AccountsCore{
 		    tax_bill_reg 
 		GROUP BY company_tax_id
 		LIMIT $rows OFFSET $offset";
-	} else {
+            $sql_sub="SELECT 
+                    *,
+                    COUNT(*) count
+                FROM
+                    (SELECT
+                        SUM(total) sum_total,
+                        SUM(vatless) sum_vatless,
+                        SUM(vat) sum_vat
+                    FROM tax_bill_reg
+                    GROUP BY company_tax_id) t";
+        } else {
 	    $sql="SELECT * FROM tax_bill_reg LIMIT $rows OFFSET $offset";
+            $sql_sub="SELECT 
+                    COUNT(*) count,
+                    SUM(total) sum_total,
+                    SUM(vatless) sum_vatless,
+                    SUM(vat) sum_vat
+                FROM tax_bill_reg";
 	}
 	$rows=$this->get_list($sql);
+        $sub_totals=$this->get_row($sql_sub);
 	if( !count($rows) ){
 	    $rows=[[]];
 	}

@@ -621,7 +621,7 @@
         <div id="suppliers_ac" style="overflow-y: auto;">
             {{suppliers}}
             <button class="accordion">{{supplier_name}} ({{supplier_product_count}})</button>
-            <div class="accordion_panel hidden" data-sci="{{supplier_company_id}}">
+            <div class="accordion_panel hidden" data-index="{{#}}">
                 {{if supplier_company_id}}
                 <label>Отсрочка дн: <input name="supplier_defferment" value="{{supplier_defferment|blank>}}"></label>
                 <label>Доставка дн: <input name="supplier_delivery" value="{{supplier_delivery|blank>}}"></label>
