@@ -3,7 +3,7 @@
         var supplylist;
         var supplierlist;
         var supplyorder;
-        var selectedSupplierId;
+        var selectedSupplier;
         function init() {
             initTableHolders();
             $(window).on("resize", initTableHolders);
@@ -78,19 +78,18 @@
         }
 
         function supplierAccordionLoadInit() {
-            selectedSupplierId = 0;
-
             var acc = new Accordion("#suppliers_ac");
+            selectedSupplier=null;
             acc.onselect = function (header_node) {
                 var panel = header_node.nextElementSibling;
-                var name = '';
-                if ($(panel).data('sci')) {
-                    var name = $(header_node).html();
+                var index=$(panel).data('index');
+                var name='';
+                selectedSupplier=supplierlist[index];
+                if( selectedSupplier.supplier_company_id ){
+                    var name=selectedSupplier.supplier_name;
                 }
-                selectedSupplierId = $(panel).data('sci');
-                supplylist.setFilter({supplier_name: name});
+                supplylist.setFilter({supplier_name:name});
             };
-
             $("#suppliers_ac input").change(function (e) {
                 var formholder = $(this).parent().parent();
                 var supplier_company_id = formholder.data('sci');
@@ -118,7 +117,7 @@
                 supplierAccordionLoad();
             },
             entryDelete: function () {
-                if (!selectedSupplierId) {
+                if (!selectedSupplier) {
                     App.flash("Поставщик не выбран!");
                     return;
                 }
@@ -126,7 +125,7 @@
                     return;
                 }
                 var also_products = confirm("Удалить товары этого поставщика?");
-                $.post('StockBuyManager/supplierDelete', {supplier_company_id: selectedSupplierId, also_products: also_products}, function (ok) {
+                $.post('StockBuyManager/supplierDelete', {supplier_company_id: selectedSupplier.supplier_company_id, also_products: also_products}, function (ok) {
                     if (ok * 1) {
                         supplierAccordionLoad();
                         supplylist.reload();
