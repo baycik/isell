@@ -90,13 +90,26 @@ class AccountsBank extends AccountsData{
 	return $acc;
     }
     
-    public $checkDelete=['check_id'=>'int'];
-    public function checkDelete( $check_id ){
-	$check=$this->getCheck($check_id);
-	if( $check->trans_id ){
-	    $this->transDelete($check->trans_id);
-	}
-	return $this->delete('acc_check_list',['check_id'=>$check_id]);
+    public $checkDelete=['check_ids'=>'raw'];
+    public function checkDelete( $check_ids ){
+        $this->query("START TRANSACTION");
+        foreach ($check_ids as $check_id){
+            $check=$this->getCheck($check_id);
+            $ok=true;
+            if( $check->trans_id ){
+                $ok=$this->transDelete($check->trans_id);
+            }
+            if( !$ok ){
+                return false;
+            }
+        }
+        $check_list=implode(',',$check_ids);
+        $this->query("DELETE FROM acc_check_list WHERE check_id IN ($check_list)");
+        if( $this->db->affected_rows()>0 ){
+            $this->query("COMMIT");
+            return true;
+        }
+        return false;
     }
     
     /*

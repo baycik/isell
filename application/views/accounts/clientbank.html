@@ -242,9 +242,13 @@
 		$('body').css('cursor',is?'pointer':'');
 	    },
 	    rowDelete:function(){
-		var row=$('#account_clientbank_dg').datagrid('getSelected');
-		if( row && confirm("Удалить платежное поручение?\nВнимание связанная проводка будет также удалена") ){
-		    $.post("AccountsBank/checkDelete/"+row.check_id,function(ok){
+		var rows=$("#account_clientbank_dg").datagrid('getSelections');
+                var check_ids=[];
+                for(var i=0;i<rows.length;i++){
+                    check_ids.push(rows[i].check_id);
+                }
+		if( check_ids.length && confirm("Удалить платежное поручение?\nВнимание связанная проводка будет также удалена!") ){
+		    $.post("AccountsBank/checkDelete/",{check_ids:check_ids},function(ok){
 			if( ok*1 ){
 			    App.flash("Платежное поручение удалено");
 			    $('#account_clientbank_dg').datagrid('reload');
@@ -430,7 +434,6 @@
 	   pagination:true,
 	   pageSize:25,
 	   pageList:[25,50,100,500,1000],
-	   singleSelect:true,
 	   remoteFilter:true,
 	   onSelect:Cbank.list.onSelect,
 	   onLoadSuccess:function(){$('#account_clientbank_dg').datagrid('resize');}">
