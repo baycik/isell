@@ -272,32 +272,40 @@ class StockBuyManager extends Catalog{
 	$where='1';
 	
 	$having=$this->makeFilter($filter);
-        $sql="
+        $sql_clear="DROP TEMPORARY TABLE IF EXISTS supply_order_chart;";
+        $sql_prepare="CREATE TEMPORARY TABLE supply_order_chart AS (SELECT 
+                        product_code,
+                        supplier_company_id,
+                        ROUND(supply_buy*(1-supplier_buy_discount/100)*(1+supplier_buy_expense/100),2) self,
+                        supplier_name
+                    FROM 
+                        supplier_list spl
+                            JOIN
+                        supply_list sl USING(supplier_company_id)
+                    WHERE 
+                        product_code IN (SELECT product_code FROM supply_order) );";
+        $sql_fetch="
 	    SELECT 
-		entry_id,
+                entry_id,
                 product_code,
                 ru product_name,
                 product_quantity,
                 product_comment,
                 (SELECT 
-                    GROUP_CONCAT(
-                            supplier_name
-            ) 
-            FROM 
-                    supplier_list spl
-                            JOIN
-                    supply_list sl USING(supplier_company_id)
-            WHERE 
-                    so.product_code=sl.product_code
-            ORDER BY)
-	    FROM 
-		supply_order
-                    LEFT JOIN
-                prod_list USING(product_code)
+                    GROUP_CONCAT(CONCAT(supplier_company_id,':',supplier_name,':',self) ORDER BY self SEPARATOR '|') 
+                FROM 
+                    supply_order_chart soc 
+                WHERE soc.product_code=so.product_code) suggestion
+                FROM 
+                    supply_order so
+                        LEFT JOIN
+                    prod_list USING(product_code)
             HAVING $having
 	    ORDER BY $sortby $sortdir
 	    LIMIT $limit OFFSET $offset";
-	return $this->get_list($sql);
+        $this->query($sql_clear);
+        $this->query($sql_prepare);
+	return $this->get_list($sql_fetch);
     }
     
     public $orderCreate=[];

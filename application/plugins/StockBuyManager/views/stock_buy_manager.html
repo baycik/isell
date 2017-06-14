@@ -389,17 +389,16 @@
          * Order section
          */
         function initOrderTable() {
+            function SelectorFormatter(row, cell, value, columnDef, dataContext) {
+
+            }
             var settings = {
                 columns: [
-                    {id: "product_comment", field: "product_comment", name: "Коментарий", width: 150, sortable: true, editor: Slick.Editors.Text},
+                    {id: "product_comment", field: "product_comment", name: "Коментарий", width: 120, sortable: true, editor: Slick.Editors.Text},
                     {id: "product_code", field: "product_code", name: "Код", width: 100, sortable: true, editor: Slick.Editors.Text},
                     {id: "product_name", field: "product_name", name: "Название", width: 300, sortable: true},
                     {id: "product_quantity", field: "product_quantity", name: "Количество", width: 80, sortable: true, editor: Slick.Editors.Integer, cssClass: 'slick-align-right'},
-                    {id: "option1", field: "option1", name: "Вариант 1", width: 80, sortable: true},
-                    {id: "option2", field: "option2", name: "Вариант 2", width: 80, sortable: true},
-                    {id: "option3", field: "option3", name: "Вариант 3", width: 80, sortable: true},
-                    {id: "option4", field: "option4", name: "Вариант 4", width: 80, sortable: true},
-                    {id: "option5", field: "option5", name: "Вариант 5", width: 80, sortable: true}
+                    {id: "suggestion", field: "suggestion", name: "Варианты", width: 480, sortable: true, formatter: SelectorFormatter}
                 ],
                 options: {
                     editable: true,
