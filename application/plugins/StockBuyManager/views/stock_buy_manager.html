@@ -389,7 +389,17 @@
          */
         function initOrderTable() {
             function SelectorFormatter(row, cell, value, columnDef, dataContext) {
-
+                var controller="";
+                var options=value.split("|");
+                for(var i in options){
+                    var option=options[i].split(":");
+                    controller+='<div style="display:inline-block;width:100px;border:solid 1px black">';
+                    controller+='<div style="overflow:hidden;display:inline-block;width:20px">'+option[2]+'</div>';
+                    controller+='<div style="overflow:hidden;display:inline-block;width:60px">'+option[1]+'</div>';
+                    controller+='<input type="checkbox">';
+                    controller+='</div>';
+                }
+                return controller;
             }
             var settings = {
                 columns: [
@@ -420,77 +430,7 @@
             });
         }
         var supplyOrderTableTools = {
-/*            entryImport: function () {
-                var config = [
-                    {field: "supply_code", name: "Код пост.", required: true},
-                    {field: "supply_name", name: "Название"},
-                    {field: "supply_buy", name: "Закупка база"},
-                    {field: "supply_comment", name: "Комментарий"},
-                    {field: "product_code", name: "Код наш"},
-                    {field: "supply_spack", name: "В Коробке"},
-                    {field: "supply_bpack", name: "В Ящике"},
-                    {field: "supply_weight", name: "Вес"},
-                    {field: "supply_volume", name: "Объем"},
-                    {field: "supply_unit", name: "Единица"}
-                ];
-                App.loadWindow('page/dialog/importer', {label: 'закуп', fields_to_import: config}).progress(function (status, fvalue, Importer) {
-                    if (status === 'submit') {
-                        var question = "Импортировать эти строчки без указания поставщика?";
-                        fvalue.supplier_company_id = 0;
-                        if (selectedSupplier && selectedSupplier.supplier_company_id) {
-                            question = "Импортировать эти строчки поставщику '" + selectedSupplier.supplier_name + "'?";
-                            fvalue.supplier_company_id = selectedSupplier.supplier_company_id;
-                        }
-                        if (confirm(question)) {
-                            App.post("StockBuyManager/entryImport/", fvalue, function (ok) {
-                                App.flash("Импортировано " + ok);
-                                Importer.reload();
-                                supplyTableTools.reload();
-                            });
-                        }
-                    }
-                });
-            },
-            importIntoStockTable: function () {
-                var config = [
-                    {name: 'Код товара', field: 'product_code', required: true, assigned: 'A'},
-                    {name: 'Название Рус.', field: 'ru'},
-                    {name: 'Покупка', field: 'buy'},
-                    {name: 'Продажа', field: 'sell', assigned: 'D'},
-                    {name: 'В коробке', field: 'product_spack'},
-                    {name: 'В ящике', field: 'product_bpack'},
-                    {name: 'Вес кг', field: 'product_weight'},
-                    {name: 'Объем м3', field: 'product_volume'},
-                    {name: 'Единица', field: 'product_unit'}
-                ];
-                App.loadWindow('page/dialog/importer', {label: 'склад', fields_to_import: config}).progress(function (status, fvalue, Importer) {
-                    if (status === 'submit') {
-                        fvalue.parent_id = 0;
-                        App.post("Stock/import/", fvalue, function (ok) {
-                            App.flash("Добавлено/Изменено " + ok);
-                            Importer.reload();
-                        });
-                    }
-                });
-            },
-            entryExport: function () {
-                var selected_rows = supplylist.getSelectedRows();
-                if (!selected_rows.length) {
-                    App.flash("Выберите строчки для экспорта");
-                }
-                var supply_ids = [];
-                for (var i in selected_rows) {
-                    supply_ids.push(supplylist.getDataItem(selected_rows[i]).supply_id);
-                }
-                $.post('StockBuyManager/supplyExport', {supply_ids: supply_ids}, function (ok) {
-                    if (ok * 1) {
-                        App.flash("В таблицу Импортера добавлено строк: " + ok);
-                    }
-                    supplyOrderTableTools.importIntoStockTable();
-                });
-
-            },
-*/            reload: function () {
+            reload: function () {
                 supplyorder.reload();
             },
             entryDelete: function () {
