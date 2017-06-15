@@ -267,18 +267,14 @@ class StockBuyManager extends Catalog{
     public function orderFetch($offset,$limit,$sortby,$sortdir,$filter=null){
 	if( empty($sortby) ){
 	    $sortby="entry_id";
-	    //$sortdir="DESC";
 	}
-	$where='1';
-	
 	$having=$this->makeFilter($filter);
         $sql_clear="DROP TEMPORARY TABLE IF EXISTS supply_order_chart;";
         $sql_prepare="CREATE TEMPORARY TABLE supply_order_chart AS (SELECT 
                         product_code,
                         supplier_company_id,
                         ROUND(supply_buy*(1-supplier_buy_discount/100)*(1+supplier_buy_expense/100),2) self,
-                        supplier_name,
-                        SUBSTRING(MD5(supplier_name),1,6) color
+                        supplier_name
                     FROM 
                         supplier_list spl
                             JOIN
@@ -292,8 +288,9 @@ class StockBuyManager extends Catalog{
                 ru product_name,
                 product_quantity,
                 product_comment,
+                supplier_company_id,
                 (SELECT 
-                    GROUP_CONCAT(CONCAT(supplier_company_id,':',supplier_name,':',self,':',color) ORDER BY self SEPARATOR '|') 
+                    GROUP_CONCAT(CONCAT(supplier_company_id,':',supplier_name,':',self) ORDER BY soc.supplier_company_id=so.supplier_company_id DESC ,self SEPARATOR '|') 
                 FROM 
                     supply_order_chart soc 
                 WHERE soc.product_code=so.product_code) suggestion

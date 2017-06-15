@@ -27,6 +27,7 @@
         function initTableHolders() {
             calcDimensions("#suppliers_ac", 0, -25);
             calcDimensions("#supplylist_sg");
+            //calcDimensions("#supply_order_sg");
         }
         function calcDimensions(query, dw, dh) {
             var wheight = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
@@ -389,13 +390,20 @@
          */
         function initOrderTable() {
             function SelectorFormatter(row, cell, value, columnDef, dataContext) {
+                if( !value ){
+                    return '';
+                }
                 var controller="";
                 var options=value.split("|");
                 for(var i in options){
                     var option=options[i].split(":");
-                    controller+='<div class="selector_token selector_tag" title="'+option[1]+'"><label>';
+                    var checked='';
+                    if( i==0 ){
+                        checked='checked';
+                    }
+                    controller+='<div class="selector_token selector_tag selector_'+checked+'" title="'+option[1]+'"><label>';
                     controller+='<div class="selector_token" style="width:60px;">'+option[2]+'</div>';
-                    controller+='<div class="selector_token" style="height:16px;width:16px;"><input type="radio" name="r_'+row+'"></div>';
+                    controller+='<div class="selector_token" style="height:16px;width:16px;"><input type="radio" value="'+option[0]+'" name="r_'+row+'" '+checked+'></div>';
                     controller+='<div class="selector_token" >'+option[1]+'</div>';
                     controller+='</label></div>';
                 }
@@ -427,6 +435,27 @@
                 supplyOrderEntryUpdate(updatedEntry.entry_id, field, value).done(function () {
                     supplyorder.rowReload(data.row);
                 });
+            });
+            
+            
+            
+            function switchSelectedSupplier( row_index, supplier_company_id ){
+                var row=supplyorder.getDataItem(row_index);
+                
+                console.log(row,supplier_company_id);
+                if( row.supplier_company_id!==supplier_company_id ){
+                    supplyOrderEntryUpdate(row.entry_id, 'supplier_company_id', supplier_company_id).done(function () {
+                        supplyorder.reload();
+                    });
+                }
+            }
+            
+            
+            $("#supply_order_sg").on("click",function(e){
+                var type=e.target.type;
+                if( type==='radio' ){
+                    switchSelectedSupplier( e.target.name.split("_")[1], e.target.value );
+                }
             });
         }
         var supplyOrderTableTools = {
@@ -561,6 +590,9 @@
         height:20px;
         font-size: 12px;
     }
+    .selector_checked{
+        background:#9e9;
+    }
 </style>
 <div id="bmanager-grid">
     <div>
@@ -624,8 +656,8 @@
                 <span class="icon-24 icon-print" title="Напечатать" data-action="print"> </span> 
                 <span class="icon-24 icon-refresh" title="Обновить" data-action="reload"> </span>
                 </div>
-            <div id="supply_order_sg" style="clear: both;height: 500px;"></div>
             </div>
+            <div id="supply_order_sg" style="clear: both;height: 500px;"></div>
         </div>
     </div>
 </div>
