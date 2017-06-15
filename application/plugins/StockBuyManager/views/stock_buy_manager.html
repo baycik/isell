@@ -393,11 +393,11 @@
                 var options=value.split("|");
                 for(var i in options){
                     var option=options[i].split(":");
-                    controller+='<div style="display:inline-block;width:100px;border:solid 1px black">';
-                    controller+='<div style="overflow:hidden;display:inline-block;width:20px">'+option[2]+'</div>';
-                    controller+='<div style="overflow:hidden;display:inline-block;width:60px">'+option[1]+'</div>';
-                    controller+='<input type="checkbox">';
-                    controller+='</div>';
+                    controller+='<div class="selector_token selector_tag" title="'+option[1]+'"><label>';
+                    controller+='<div class="selector_token" style="width:60px;">'+option[2]+'</div>';
+                    controller+='<div class="selector_token" style="height:16px;width:16px;"><input type="radio" name="r_'+row+'"></div>';
+                    controller+='<div class="selector_token" >'+option[1]+'</div>';
+                    controller+='</label></div>';
                 }
                 return controller;
             }
@@ -406,8 +406,8 @@
                     {id: "product_comment", field: "product_comment", name: "Коментарий", width: 120, sortable: true, editor: Slick.Editors.Text},
                     {id: "product_code", field: "product_code", name: "Код", width: 100, sortable: true, editor: Slick.Editors.Text},
                     {id: "product_name", field: "product_name", name: "Название", width: 300, sortable: true},
-                    {id: "product_quantity", field: "product_quantity", name: "Количество", width: 80, sortable: true, editor: Slick.Editors.Integer, cssClass: 'slick-align-right'},
-                    {id: "suggestion", field: "suggestion", name: "Варианты", width: 480, sortable: true, formatter: SelectorFormatter}
+                    {id: "product_quantity", field: "product_quantity", name: "Кол-во", width: 60, sortable: true, editor: Slick.Editors.Integer, cssClass: 'slick-align-right'},
+                    {id: "suggestion", field: "suggestion", name: "Варианты", width: 500, sortable: true, formatter: SelectorFormatter}
                 ],
                 options: {
                     editable: true,
@@ -546,6 +546,21 @@
         grid-template-columns:200px auto;
         grid-gap:2px;
     }
+    .selector_token{
+        display: inline-block;
+        overflow: hidden;
+        white-space: nowrap;
+    }
+    .selector_tag{
+        width:150px;
+        background:#bcd;
+        border-radius:5px;
+        margin:-2px;
+        margin-right: 4px;
+        padding:0px 2px 2px 2px; 
+        height:20px;
+        font-size: 12px;
+    }
 </style>
 <div id="bmanager-grid">
     <div>
@@ -598,7 +613,7 @@
         </div>
 
         <div class="accordion_panel" id="supply_order_section">
-            <div style="width: 700px;margin-right: 20px" class="x-stock-buy-manager-order-tools">
+            <div style="width: 1080px;margin-right: 20px" class="x-stock-buy-manager-order-tools">
                 <img src="img/table16.png" style="width:16px;height: 16px;"> Заказ
                 <div style="float: right;font-weight: bold;padding-top: 8px;">
                 <span class="icon-24 icon-create" title="Добавить стоку" data-action="entryCreate"> </span>
@@ -609,8 +624,8 @@
                 <span class="icon-24 icon-print" title="Напечатать" data-action="print"> </span> 
                 <span class="icon-24 icon-refresh" title="Обновить" data-action="reload"> </span>
                 </div>
+            <div id="supply_order_sg" style="clear: both;height: 500px;"></div>
             </div>
-            <div id="supply_order_sg" style="clear: both;height: 500px;width:700px"></div>
         </div>
     </div>
 </div>

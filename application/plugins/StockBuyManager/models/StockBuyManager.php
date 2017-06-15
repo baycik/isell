@@ -277,7 +277,8 @@ class StockBuyManager extends Catalog{
                         product_code,
                         supplier_company_id,
                         ROUND(supply_buy*(1-supplier_buy_discount/100)*(1+supplier_buy_expense/100),2) self,
-                        supplier_name
+                        supplier_name,
+                        SUBSTRING(MD5(supplier_name),1,6) color
                     FROM 
                         supplier_list spl
                             JOIN
@@ -292,7 +293,7 @@ class StockBuyManager extends Catalog{
                 product_quantity,
                 product_comment,
                 (SELECT 
-                    GROUP_CONCAT(CONCAT(supplier_company_id,':',supplier_name,':',self) ORDER BY self SEPARATOR '|') 
+                    GROUP_CONCAT(CONCAT(supplier_company_id,':',supplier_name,':',self,':',color) ORDER BY self SEPARATOR '|') 
                 FROM 
                     supply_order_chart soc 
                 WHERE soc.product_code=so.product_code) suggestion
