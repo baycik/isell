@@ -319,7 +319,7 @@
 		$.post('StockBuyManager/supplyDelete', {supply_ids: supply_ids}, function (ok) {
 		    if (ok * 1) {
 			supplylist.reload();
-			supplierlist.reload();
+			supplierAccordionLoad();
 		    }
 		});
 	    },
@@ -367,7 +367,7 @@
 		    supplylist.reload();
 		}
 		if( field==='supplier_name' ){
-		    supplierlist.reload();
+		    supplierAccordionLoad();
 		}
 	    });
 	}	
