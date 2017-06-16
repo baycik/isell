@@ -29,6 +29,7 @@ CREATE TABLE `supply_list` (
 
 
 CREATE TABLE `supplier_list` (
+  `supplier_id` int(11) NOT NULL AUTO_INCREMENT,
   `supplier_company_id` int(11) NOT NULL,
   `supplier_name` varchar(45) DEFAULT NULL,
   `supplier_defferment` int(11) DEFAULT NULL,
@@ -37,5 +38,5 @@ CREATE TABLE `supplier_list` (
   `supplier_buy_discount` double DEFAULT '0',
   `supplier_sell_discount` double DEFAULT '0',
   `supplier_sell_gain` double DEFAULT '0',
-  PRIMARY KEY (`supplier_company_id`)
+  PRIMARY KEY (`supplier_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
