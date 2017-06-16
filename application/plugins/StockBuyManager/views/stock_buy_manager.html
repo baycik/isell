@@ -86,17 +86,17 @@
                 var index=$(panel).data('index');
                 var name='';
                 selectedSupplier=supplierlist[index];
-                if( selectedSupplier.supplier_company_id ){
+                if( selectedSupplier.supplier_id ){
                     var name=selectedSupplier.supplier_name;
                 }
                 supplylist.setFilter({supplier_name:name});
             };
             $("#suppliers_ac input").change(function (e) {
                 var formholder = $(this).parent().parent();
-                var supplier_company_id = formholder.data('sci');
+                var supplier_id = formholder.data('sci');
                 var field = $(this).attr('name');
                 var value = $(this).val();
-                $.post('StockBuyManager/supplierUpdate', {supplier_company_id: supplier_company_id, field: field, value: value}, function (ok) {
+                $.post('StockBuyManager/supplierUpdate', {supplier_id: supplier_id, field: field, value: value}, function (ok) {
                     if (ok * 1) {
                         supplylist.reload();
                         if (field === 'supplier_sell_discount') {
@@ -104,6 +104,9 @@
                         }
                         if (field === 'supplier_sell_gain') {
                             formholder.find('input[name=supplier_sell_discount]').val('');
+                        }
+                        if (field === 'supplier_name') {
+                            supplierAccordionLoad();
                         }
                     }
                 });
@@ -118,7 +121,7 @@
                 supplierAccordionLoad();
             },
             entryDelete: function () {
-                if (!selectedSupplier) {
+                if (!selectedSupplier || !selectedSupplier.supplier_id) {
                     App.flash("Поставщик не выбран!");
                     return;
                 }
@@ -126,10 +129,10 @@
                     return;
                 }
                 var also_products = confirm("Удалить товары этого поставщика?");
-                $.post('StockBuyManager/supplierDelete', {supplier_company_id: selectedSupplier.supplier_company_id, also_products: also_products}, function (ok) {
+                $.post('StockBuyManager/supplierDelete', {supplier_id: selectedSupplier.supplier_id, also_products: also_products}, function (ok) {
                     if (ok * 1) {
                         supplierAccordionLoad();
-                        supplylist.reload();
+                        supplylist.setFilter({supplier_name:name});
                     }
                 });
             },
@@ -263,10 +266,10 @@
                 App.loadWindow('page/dialog/importer', {label: 'закуп', fields_to_import: config}).progress(function (status, fvalue, Importer) {
                     if (status === 'submit') {
                         var question = "Импортировать эти строчки без указания поставщика?";
-                        fvalue.supplier_company_id = 0;
-                        if (selectedSupplier && selectedSupplier.supplier_company_id) {
+                        fvalue.supplier_id = 0;
+                        if (selectedSupplier && selectedSupplier.supplier_id) {
                             question = "Импортировать эти строчки поставщику '" + selectedSupplier.supplier_name + "'?";
-                            fvalue.supplier_company_id = selectedSupplier.supplier_company_id;
+                            fvalue.supplier_id = selectedSupplier.supplier_id;
                         }
                         if (confirm(question)) {
                             App.post("StockBuyManager/entryImport/", fvalue, function (ok) {
@@ -341,11 +344,11 @@
                 });
             },
             entryCreate: function () {
-                var supplier_company_id = 0;
-                if (selectedSupplier && selectedSupplier.supplier_company_id) {
-                    supplier_company_id = selectedSupplier.supplier_company_id;
+                var supplier_id = 0;
+                if (selectedSupplier && selectedSupplier.supplier_id) {
+                    supplier_id = selectedSupplier.supplier_id;
                 }
-                $.post('StockBuyManager/supplyCreate', {supplier_company_id: supplier_company_id}, function (insert_id) {
+                $.post('StockBuyManager/supplyCreate', {supplier_id: supplier_id}, function (insert_id) {
                     if (insert_id * 1) {
                         supplylist.setFilter({supply_code: insert_id});
                     }
@@ -439,12 +442,12 @@
             
             
             
-            function switchSelectedSupplier( row_index, supplier_company_id ){
+            function switchSelectedSupplier( row_index, supplier_id ){
                 var row=supplyorder.getDataItem(row_index);
                 
-                console.log(row,supplier_company_id);
-                if( row.supplier_company_id!==supplier_company_id ){
-                    supplyOrderEntryUpdate(row.entry_id, 'supplier_company_id', supplier_company_id).done(function () {
+                console.log(row,supplier_id);
+                if( row.supplier_id!==supplier_id ){
+                    supplyOrderEntryUpdate(row.entry_id, 'supplier_id', supplier_id).done(function () {
                         supplyorder.reload();
                     });
                 }
@@ -606,19 +609,22 @@
         </div>
         <div id="suppliers_ac" style="overflow-y: auto;">
             {{suppliers}}
-            <button class="accordion">{{supplier_name}} ({{supplier_product_count}})</button>
-            <div class="accordion_panel hidden" data-index="{{#}}">
-                {{if supplier_company_id}}
-                <label>Отсрочка дн: <input name="supplier_defferment" value="{{supplier_defferment|blank>}}"></label>
-                <label>Доставка дн: <input name="supplier_delivery" value="{{supplier_delivery|blank>}}"></label>
-                <div style="background: rgba(255,255,255,.6);padding: 3px;">Расчет себестоимости</div>
-                <label>Скидка от базы %: <input name="supplier_buy_discount" value="{{supplier_buy_discount|blank>}}"></label>
-                <label>Затраты %: <input name="supplier_buy_expense" value="{{supplier_buy_expense|blank>}}"></label>
-                <div style="background:  rgba(255,255,255,.6);padding: 3px;">Расчет цены продажи</div>
-                <label>Cкидка от базы %: <input name="supplier_sell_discount" value="{{supplier_sell_discount|blank>}}"></label>
-                <label>Наценка %: <input name="supplier_sell_gain" value="{{supplier_sell_gain|blank>}}"></label>
-                {{/if}}
-            </div>
+                <button class="accordion">{{supplier_name}} ({{supplier_product_count}})</button>
+                <div class="accordion_panel" data-index="{{#}}">
+                    {{if supplier_id}}
+                    <div style="background: rgba(255,255,255,.6);padding: 3px;">{{real_name}}</div>
+                    <label title="Псевдоним">Ник: <input name="supplier_name" value="{{supplier_name|blank>}}" style="width:120px"/></label>
+                    <div style="background: rgba(255,255,255,.6);padding: 3px;">Расчет себестоимости</div>
+                    <label>Доставка дн: <input name="supplier_delivery" value="{{supplier_delivery|blank>}}"></label>
+                    <label>Отсрочка дн: <input name="supplier_defferment" value="{{supplier_defferment|blank>}}"></label>
+                    <div style="background: rgba(255,255,255,.6);padding: 3px;">Расчет себестоимости</div>
+                    <label>Скидка от базы %: <input name="supplier_buy_discount" value="{{supplier_buy_discount|blank>}}"></label>
+                    <label>Затраты %: <input name="supplier_buy_expense" value="{{supplier_buy_expense|blank>}}"></label>
+                    <div style="background:  rgba(255,255,255,.6);padding: 3px;">Расчет цены продажи</div>
+                    <label>Cкидка от базы %: <input name="supplier_sell_discount" value="{{supplier_sell_discount|blank>}}"></label>
+                    <label>Наценка %: <input name="supplier_sell_gain" value="{{supplier_sell_gain|blank>}}"></label>
+                    {{/if}}
+                </div>
             {{/suppliers}}
         </div>
     </div>

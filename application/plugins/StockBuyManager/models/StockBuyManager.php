@@ -270,13 +270,13 @@ class StockBuyManager extends Catalog{
         $sql_clear="DROP TEMPORARY TABLE IF EXISTS supply_order_chart;";
         $sql_prepare="CREATE TEMPORARY TABLE supply_order_chart AS (SELECT 
                         product_code,
-                        supplier_company_id,
+                        supplier_id,
                         ROUND(supply_buy*(1-supplier_buy_discount/100)*(1+supplier_buy_expense/100),2) self,
                         supplier_name
                     FROM 
                         supplier_list spl
                             JOIN
-                        supply_list sl USING(supplier_company_id)
+                        supply_list sl USING(supplier_id)
                     WHERE 
                         product_code IN (SELECT product_code FROM supply_order) );";
         $sql_fetch="
@@ -286,9 +286,9 @@ class StockBuyManager extends Catalog{
                 ru product_name,
                 product_quantity,
                 product_comment,
-                supplier_company_id,
+                supplier_id,
                 (SELECT 
-                    GROUP_CONCAT(CONCAT(supplier_company_id,':',supplier_name,':',self) ORDER BY soc.supplier_company_id=so.supplier_company_id DESC ,self SEPARATOR '|') 
+                    GROUP_CONCAT(CONCAT(supplier_id,':',supplier_name,':',self) ORDER BY soc.supplier_id=so.supplier_id DESC ,self SEPARATOR '|') 
                 FROM 
                     supply_order_chart soc 
                 WHERE soc.product_code=so.product_code) suggestion
@@ -328,7 +328,7 @@ CREATE TEMPORARY TABLE supply_order_chart AS (SELECT
 FROM 
 	supplier_list spl
 		JOIN
-	supply_list sl USING(supplier_company_id)
+	supply_list sl USING(supplier_id)
 WHERE 
 	product_code IN (SELECT product_code FROM supply_order) );
 SELECT * FROM supply_order_chart;
