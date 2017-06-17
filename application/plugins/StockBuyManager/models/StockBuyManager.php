@@ -204,19 +204,10 @@ class StockBuyManager extends Catalog{
     
     
     
-    public $supplierListFetch=['offset'=>'int','limit'=>'int','sortby'=>'string','sortdir'=>'(ASC|DESC)','filter'=>'json'];
-    public function supplierListFetch($offset,$limit,$sortby,$sortdir,$filter=null){
-	if( empty($sortby) ){
-	    $sortby='supplier_name';
-	}
-	
-        if($offset==0){
-            $all_count=$this->get_value("SELECT COUNT(*) FROM supply_list");
-            $all=[['supplier_name'=>'* Все поставщики','supplier_id'=>0,'supplier_product_count'=>$all_count]];
-        } else {
-            $all=[];
-            $offset--;
-        }
+    public $supplierListFetch=[];
+    public function supplierListFetch(){
+	$all_count=$this->get_value("SELECT COUNT(*) FROM supply_list");
+	$all=[['supplier_name'=>'* Все поставщики','supplier_id'=>0,'supplier_product_count'=>$all_count]];
 	$sql="
 	    SELECT 
 		*,
@@ -224,10 +215,8 @@ class StockBuyManager extends Catalog{
 		(SELECT COUNT(*) FROM supply_list WHERE supply_list.supplier_id=supplier_list.supplier_id) supplier_product_count
 	    FROM 
 		supplier_list
-	    ORDER BY $sortby $sortdir
-	    LIMIT $limit OFFSET $offset";
-	$suppliers=array_merge($all,$this->get_list($sql));
-	return $suppliers;
+	    ORDER BY supplier_name";
+	return array_merge($all,$this->get_list($sql));
     }
     
     public $supplierCreate=['supplier_company_id'=>'int','label'=>'string'];
