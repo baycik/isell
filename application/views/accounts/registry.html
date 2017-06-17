@@ -4,7 +4,7 @@
 	sub_totals:{sell:{},buy:{}},
 	init:function(){
 	    var today=App.today().split('.');
-	    this.data.month=today[1];
+	    this.data.month=["0","I","II","III","IV"][Math.ceil(today[1]/3)];
 	    this.data.year=today[2];
 	    App.setupForm('#acc_tax_bill_reg_frm',this.data).change(function(){
 		$('#acc_tax_bill_reg_sell_dg').datagrid('reload');
@@ -40,14 +40,14 @@
 	},
 	renderSubtotals:function( mode, sub_totals ){
 	    this.sub_totals[mode]=sub_totals;
-	    this.sub_totals.sell.sum_vatless=this.sub_totals.sell.sum_vatless||0;
-	    this.sub_totals.sell.sum_vat=this.sub_totals.sell.sum_vat||0;
-	    this.sub_totals.sell.sum_total=this.sub_totals.sell.sum_total||0;
-	    this.sub_totals.buy.sum_vatless=this.sub_totals.buy.sum_vatless||0;
-	    this.sub_totals.buy.sum_vat=this.sub_totals.buy.sum_vat||0;
-	    this.sub_totals.buy.sum_total=this.sub_totals.buy.sum_total||0;
+	    this.sub_totals.sell.sum_vatless=App.formatNum(this.sub_totals.sell.sum_vatless||0);
+	    this.sub_totals.sell.sum_vat=App.formatNum(this.sub_totals.sell.sum_vat||0);
+	    this.sub_totals.sell.sum_total=App.formatNum(this.sub_totals.sell.sum_total||0);
+	    this.sub_totals.buy.sum_vatless=App.formatNum(this.sub_totals.buy.sum_vatless||0);
+	    this.sub_totals.buy.sum_vat=App.formatNum(this.sub_totals.buy.sum_vat||0);
+	    this.sub_totals.buy.sum_total=App.formatNum(this.sub_totals.buy.sum_total||0);
 	    
-	    this.sub_totals.pay_vat=(this.sub_totals.sell.sum_vat-this.sub_totals.buy.sum_vat).toFixed(2);
+	    this.sub_totals.pay_vat=App.formatNum( (this.sub_totals.sell.sum_vat.replace(" ",'')-this.sub_totals.buy.sum_vat.replace(" ",'')).toFixed(2) );
 	    App.renderTpl('acc_tax_bill_reg_footer',this.sub_totals);
 	},
 	docTooltip:function(value, row){
@@ -128,6 +128,10 @@
 		<fieldset style="width:270px">
 		    <legend>Настройки реестра</legend>
 		    <select name="month" title="Месяц" style="width:110px">
+			<option value="I">I Квартал</option>
+			<option value="II">II Квартал</option>
+			<option value="III">III Квартал</option>
+			<option value="IV">IV Квартал</option>
 			<option value="0">ВЕСЬ ГОД</option>
 			<option value="01">Январь</option>
 			<option value="02">Февраль</option>

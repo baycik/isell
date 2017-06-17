@@ -38,7 +38,7 @@ class StockBuyManager extends Catalog{
 	$sql="
 	    SELECT 
 		supply_id,
-		supplier_company_id,
+		supplier_id,
 		product_code,
 		supply_code,
 		supply_name,
@@ -64,7 +64,7 @@ class StockBuyManager extends Catalog{
 	    FROM 
 		supply_list sl
 		    LEFT JOIN
-		supplier_list USING(supplier_company_id)
+		supplier_list USING(supplier_id)
 	    HAVING $having
 	    ORDER BY $sortby $sortdir
 	    LIMIT $limit OFFSET $offset";
@@ -93,14 +93,14 @@ class StockBuyManager extends Catalog{
 	$ViewManager->outRedirect($out_type);
     }
     
-    public $entryImport=['supplier_company_id'=>'int','label'=>'string'];
-    public function entryImport( $supplier_company_id,$label ){
+    public $entryImport=['supplier_id'=>'int','label'=>'string'];
+    public function entryImport( $supplier_id,$label ){
 	$source = array_map('addslashes',$this->request('source','raw'));
 	$target = array_map('addslashes',$this->request('target','raw'));
-        $source[]=$supplier_company_id;
-        $target[]='supplier_company_id';
-	$this->entryImportFromTable('supply_list', $source, $target, '/supplier_company_id/product_code/supply_code/supply_name/supply_buy/supply_sell_ratio/supply_comment/supply_spack/supply_bpack/supply_volume/supply_weight/supply_unit/', $label);
-	$this->query("DELETE FROM imported_data WHERE {$source[0]} IN (SELECT supply_code FROM supply_list WHERE supplier_company_id={$supplier_company_id})");
+        $source[]=$supplier_id;
+        $target[]='supplier_id';
+	$this->entryImportFromTable('supply_list', $source, $target, '/supplier_id/product_code/supply_code/supply_name/supply_buy/supply_sell_ratio/supply_comment/supply_spack/supply_bpack/supply_volume/supply_weight/supply_unit/', $label);
+	$this->query("DELETE FROM imported_data WHERE {$source[0]} IN (SELECT supply_code FROM supply_list WHERE supplier_id={$supplier_id})");
 	$imported_count=$this->db->affected_rows();
         return  $imported_count;
     }
@@ -129,9 +129,9 @@ class StockBuyManager extends Catalog{
 	return $this->db->affected_rows();
     }
     
-    public $supplyCreate=['supplier_company_id'=>'int'];
-    public function supplyCreate($supplier_company_id){
-	$insert_id=$this->create('supply_list',['supplier_company_id'=>$supplier_company_id]);
+    public $supplyCreate=['supplier_id'=>'int'];
+    public function supplyCreate($supplier_id){
+	$insert_id=$this->create('supply_list',['supplier_id'=>$supplier_id]);
 	$this->update('supply_list',['supply_code'=>$insert_id],['supply_id'=>$insert_id]);
 	return $insert_id;
     }
@@ -139,8 +139,8 @@ class StockBuyManager extends Catalog{
     public $supplyUpdate=['supply_id'=>'int','field'=>'string','value'=>'string'];
     public function supplyUpdate($supply_id,$field,$value){
 	if( $field=='supplier_name' ){
-	    $field='supplier_company_id';
-	    $value=$this->get_value("SELECT supplier_company_id FROM supplier_list WHERE supplier_name='$value'");
+	    $field='supplier_id';
+	    $value=$this->get_value("SELECT supplier_id FROM supplier_list WHERE supplier_name='$value'");
 	}
 	if( $field=='product_code' ){
 	    $value=$this->get_value("SELECT product_code FROM prod_list WHERE product_code='$value'");
@@ -184,7 +184,7 @@ class StockBuyManager extends Catalog{
 	    FROM
 		supply_list sl
 		    LEFT JOIN
-		supplier_list USING(supplier_company_id)
+		supplier_list USING(supplier_id)
 	    WHERE
 		supply_id IN ($ids))";
 	$this->query($sql);
@@ -212,7 +212,7 @@ class StockBuyManager extends Catalog{
 	
         if($offset==0){
             $all_count=$this->get_value("SELECT COUNT(*) FROM supply_list");
-            $all=[['supplier_name'=>'* Все поставщики','supplier_company_id'=>0,'supplier_product_count'=>$all_count]];
+            $all=[['supplier_name'=>'* Все поставщики','supplier_id'=>0,'supplier_product_count'=>$all_count]];
         } else {
             $all=[];
             $offset--;
@@ -220,8 +220,8 @@ class StockBuyManager extends Catalog{
 	$sql="
 	    SELECT 
 		*,
-		(SELECT COUNT(*) FROM supply_list WHERE supply_list.supplier_company_id=supplier_list.supplier_company_id) supplier_product_count
-		
+                (SELECT label FROM companies_tree JOIN companies_list USING(branch_id) WHERE company_id=supplier_company_id) real_name,
+		(SELECT COUNT(*) FROM supply_list WHERE supply_list.supplier_id=supplier_list.supplier_id) supplier_product_count
 	    FROM 
 		supplier_list
 	    ORDER BY $sortby $sortdir
@@ -235,8 +235,8 @@ class StockBuyManager extends Catalog{
 	return $this->create('supplier_list',['supplier_company_id'=>$supplier_company_id,'supplier_name'=>$label]);
     }
     
-    public $supplierUpdate=['supplier_company_id'=>'int','field'=>'string','value'=>'string'];
-    public function supplierUpdate($supplier_company_id,$field,$value){
+    public $supplierUpdate=['supplier_id'=>'int','field'=>'string','value'=>'string'];
+    public function supplierUpdate($supplier_id,$field,$value){
 	$data=[$field=>$value];
 	if( $field =='supplier_sell_discount' ){
 	    $data['supplier_sell_gain']=0;
@@ -244,19 +244,17 @@ class StockBuyManager extends Catalog{
 	if( $field =='supplier_sell_gain' ){
 	    $data['supplier_sell_discount']=0;
 	}
-	
-	
-	return $this->update('supplier_list',$data,['supplier_company_id'=>$supplier_company_id]);
+	return $this->update('supplier_list',$data,['supplier_id'=>$supplier_id]);
     }
 
-    public $supplierDelete=['supplier_company_id'=>'int','also_products'=>'bool'];
-    public function supplierDelete($supplier_company_id,$also_products){
+    public $supplierDelete=['supplier_id'=>'int','also_products'=>'bool'];
+    public function supplierDelete($supplier_id,$also_products){
 	if( $also_products ){
-	    $this->delete('supply_list',['supplier_company_id'=>$supplier_company_id]);
+	    $this->delete('supply_list',['supplier_id'=>$supplier_id]);
 	} else {
-	    $this->update('supply_list',['supplier_company_id'=>0],['supplier_company_id'=>$supplier_company_id]);
+	    $this->update('supply_list',['supplier_id'=>0],['supplier_id'=>$supplier_id]);
 	}
-	return $this->delete('supplier_list',['supplier_company_id'=>$supplier_company_id]);
+	return $this->delete('supplier_list',['supplier_id'=>$supplier_id]);
     }
 
     
@@ -267,37 +265,43 @@ class StockBuyManager extends Catalog{
     public function orderFetch($offset,$limit,$sortby,$sortdir,$filter=null){
 	if( empty($sortby) ){
 	    $sortby="entry_id";
-	    //$sortdir="DESC";
 	}
-	$where='1';
-	
 	$having=$this->makeFilter($filter);
-        $sql="
+        $sql_clear="DROP TEMPORARY TABLE IF EXISTS supply_order_chart;";
+        $sql_prepare="CREATE TEMPORARY TABLE supply_order_chart AS (SELECT 
+                        product_code,
+                        supplier_id,
+                        ROUND(supply_buy*(1-supplier_buy_discount/100)*(1+supplier_buy_expense/100),2) self,
+                        supplier_name
+                    FROM 
+                        supplier_list spl
+                            JOIN
+                        supply_list sl USING(supplier_id)
+                    WHERE 
+                        product_code IN (SELECT product_code FROM supply_order) );";
+        $sql_fetch="
 	    SELECT 
-		entry_id,
+                entry_id,
                 product_code,
                 ru product_name,
                 product_quantity,
                 product_comment,
+                supplier_id,
                 (SELECT 
-                    GROUP_CONCAT(
-                            supplier_name
-            ) 
-            FROM 
-                    supplier_list spl
-                            JOIN
-                    supply_list sl USING(supplier_company_id)
-            WHERE 
-                    so.product_code=sl.product_code
-            ORDER BY)
-	    FROM 
-		supply_order
-                    LEFT JOIN
-                prod_list USING(product_code)
+                    GROUP_CONCAT(CONCAT(supplier_id,':',supplier_name,':',self) ORDER BY soc.supplier_id=so.supplier_id DESC ,self SEPARATOR '|') 
+                FROM 
+                    supply_order_chart soc 
+                WHERE soc.product_code=so.product_code) suggestion
+                FROM 
+                    supply_order so
+                        LEFT JOIN
+                    prod_list USING(product_code)
             HAVING $having
 	    ORDER BY $sortby $sortdir
 	    LIMIT $limit OFFSET $offset";
-	return $this->get_list($sql);
+        $this->query($sql_clear);
+        $this->query($sql_prepare);
+	return $this->get_list($sql_fetch);
     }
     
     public $orderCreate=[];
@@ -324,7 +328,7 @@ CREATE TEMPORARY TABLE supply_order_chart AS (SELECT
 FROM 
 	supplier_list spl
 		JOIN
-	supply_list sl USING(supplier_company_id)
+	supply_list sl USING(supplier_id)
 WHERE 
 	product_code IN (SELECT product_code FROM supply_order) );
 SELECT * FROM supply_order_chart;

@@ -3,7 +3,7 @@
         var supplylist;
         var supplierlist;
         var supplyorder;
-        var selectedSupplierId;
+        var selectedSupplier;
         function init() {
             initTableHolders();
             $(window).on("resize", initTableHolders);
@@ -27,6 +27,7 @@
         function initTableHolders() {
             calcDimensions("#suppliers_ac", 0, -25);
             calcDimensions("#supplylist_sg");
+            //calcDimensions("#supply_order_sg");
         }
         function calcDimensions(query, dw, dh) {
             var wheight = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
@@ -78,25 +79,24 @@
         }
 
         function supplierAccordionLoadInit() {
-            selectedSupplierId = 0;
-
             var acc = new Accordion("#suppliers_ac");
+            selectedSupplier=null;
             acc.onselect = function (header_node) {
                 var panel = header_node.nextElementSibling;
-                var name = '';
-                if ($(panel).data('sci')) {
-                    var name = $(header_node).html();
+                var index=$(panel).data('index');
+                var name='';
+                selectedSupplier=supplierlist[index];
+                if( selectedSupplier.supplier_id ){
+                    var name=selectedSupplier.supplier_name;
                 }
-                selectedSupplierId = $(panel).data('sci');
-                supplylist.setFilter({supplier_name: name});
+                supplylist.setFilter({supplier_name:name});
             };
-
             $("#suppliers_ac input").change(function (e) {
                 var formholder = $(this).parent().parent();
-                var supplier_company_id = formholder.data('sci');
+                var supplier_id = formholder.data('sci');
                 var field = $(this).attr('name');
                 var value = $(this).val();
-                $.post('StockBuyManager/supplierUpdate', {supplier_company_id: supplier_company_id, field: field, value: value}, function (ok) {
+                $.post('StockBuyManager/supplierUpdate', {supplier_id: supplier_id, field: field, value: value}, function (ok) {
                     if (ok * 1) {
                         supplylist.reload();
                         if (field === 'supplier_sell_discount') {
@@ -104,6 +104,9 @@
                         }
                         if (field === 'supplier_sell_gain') {
                             formholder.find('input[name=supplier_sell_discount]').val('');
+                        }
+                        if (field === 'supplier_name') {
+                            supplierAccordionLoad();
                         }
                     }
                 });
@@ -118,7 +121,7 @@
                 supplierAccordionLoad();
             },
             entryDelete: function () {
-                if (!selectedSupplierId) {
+                if (!selectedSupplier || !selectedSupplier.supplier_id) {
                     App.flash("Поставщик не выбран!");
                     return;
                 }
@@ -126,10 +129,10 @@
                     return;
                 }
                 var also_products = confirm("Удалить товары этого поставщика?");
-                $.post('StockBuyManager/supplierDelete', {supplier_company_id: selectedSupplierId, also_products: also_products}, function (ok) {
+                $.post('StockBuyManager/supplierDelete', {supplier_id: selectedSupplier.supplier_id, also_products: also_products}, function (ok) {
                     if (ok * 1) {
                         supplierAccordionLoad();
-                        supplylist.reload();
+                        supplylist.setFilter({supplier_name:name});
                     }
                 });
             },
@@ -263,10 +266,10 @@
                 App.loadWindow('page/dialog/importer', {label: 'закуп', fields_to_import: config}).progress(function (status, fvalue, Importer) {
                     if (status === 'submit') {
                         var question = "Импортировать эти строчки без указания поставщика?";
-                        fvalue.supplier_company_id = 0;
-                        if (selectedSupplier && selectedSupplier.supplier_company_id) {
+                        fvalue.supplier_id = 0;
+                        if (selectedSupplier && selectedSupplier.supplier_id) {
                             question = "Импортировать эти строчки поставщику '" + selectedSupplier.supplier_name + "'?";
-                            fvalue.supplier_company_id = selectedSupplier.supplier_company_id;
+                            fvalue.supplier_id = selectedSupplier.supplier_id;
                         }
                         if (confirm(question)) {
                             App.post("StockBuyManager/entryImport/", fvalue, function (ok) {
@@ -341,11 +344,11 @@
                 });
             },
             entryCreate: function () {
-                var supplier_company_id = 0;
-                if (selectedSupplier && selectedSupplier.supplier_company_id) {
-                    supplier_company_id = selectedSupplier.supplier_company_id;
+                var supplier_id = 0;
+                if (selectedSupplier && selectedSupplier.supplier_id) {
+                    supplier_id = selectedSupplier.supplier_id;
                 }
-                $.post('StockBuyManager/supplyCreate', {supplier_company_id: supplier_company_id}, function (insert_id) {
+                $.post('StockBuyManager/supplyCreate', {supplier_id: supplier_id}, function (insert_id) {
                     if (insert_id * 1) {
                         supplylist.setFilter({supply_code: insert_id});
                     }
@@ -389,17 +392,33 @@
          * Order section
          */
         function initOrderTable() {
+            function SelectorFormatter(row, cell, value, columnDef, dataContext) {
+                if( !value ){
+                    return '';
+                }
+                var controller="";
+                var options=value.split("|");
+                for(var i in options){
+                    var option=options[i].split(":");
+                    var checked='';
+                    if( i==0 ){
+                        checked='checked';
+                    }
+                    controller+='<div class="selector_token selector_tag selector_'+checked+'" title="'+option[1]+'"><label>';
+                    controller+='<div class="selector_token" style="width:60px;">'+option[2]+'</div>';
+                    controller+='<div class="selector_token" style="height:16px;width:16px;"><input type="radio" value="'+option[0]+'" name="r_'+row+'" '+checked+'></div>';
+                    controller+='<div class="selector_token" >'+option[1]+'</div>';
+                    controller+='</label></div>';
+                }
+                return controller;
+            }
             var settings = {
                 columns: [
-                    {id: "product_comment", field: "product_comment", name: "Коментарий", width: 150, sortable: true, editor: Slick.Editors.Text},
+                    {id: "product_comment", field: "product_comment", name: "Коментарий", width: 120, sortable: true, editor: Slick.Editors.Text},
                     {id: "product_code", field: "product_code", name: "Код", width: 100, sortable: true, editor: Slick.Editors.Text},
                     {id: "product_name", field: "product_name", name: "Название", width: 300, sortable: true},
-                    {id: "product_quantity", field: "product_quantity", name: "Количество", width: 80, sortable: true, editor: Slick.Editors.Integer, cssClass: 'slick-align-right'},
-                    {id: "option1", field: "option1", name: "Вариант 1", width: 80, sortable: true},
-                    {id: "option2", field: "option2", name: "Вариант 2", width: 80, sortable: true},
-                    {id: "option3", field: "option3", name: "Вариант 3", width: 80, sortable: true},
-                    {id: "option4", field: "option4", name: "Вариант 4", width: 80, sortable: true},
-                    {id: "option5", field: "option5", name: "Вариант 5", width: 80, sortable: true}
+                    {id: "product_quantity", field: "product_quantity", name: "Кол-во", width: 60, sortable: true, editor: Slick.Editors.Integer, cssClass: 'slick-align-right'},
+                    {id: "suggestion", field: "suggestion", name: "Варианты", width: 500, sortable: true, formatter: SelectorFormatter}
                 ],
                 options: {
                     editable: true,
@@ -420,79 +439,30 @@
                     supplyorder.rowReload(data.row);
                 });
             });
+            
+            
+            
+            function switchSelectedSupplier( row_index, supplier_id ){
+                var row=supplyorder.getDataItem(row_index);
+                
+                console.log(row,supplier_id);
+                if( row.supplier_id!==supplier_id ){
+                    supplyOrderEntryUpdate(row.entry_id, 'supplier_id', supplier_id).done(function () {
+                        supplyorder.reload();
+                    });
+                }
+            }
+            
+            
+            $("#supply_order_sg").on("click",function(e){
+                var type=e.target.type;
+                if( type==='radio' ){
+                    switchSelectedSupplier( e.target.name.split("_")[1], e.target.value );
+                }
+            });
         }
         var supplyOrderTableTools = {
-/*            entryImport: function () {
-                var config = [
-                    {field: "supply_code", name: "Код пост.", required: true},
-                    {field: "supply_name", name: "Название"},
-                    {field: "supply_buy", name: "Закупка база"},
-                    {field: "supply_comment", name: "Комментарий"},
-                    {field: "product_code", name: "Код наш"},
-                    {field: "supply_spack", name: "В Коробке"},
-                    {field: "supply_bpack", name: "В Ящике"},
-                    {field: "supply_weight", name: "Вес"},
-                    {field: "supply_volume", name: "Объем"},
-                    {field: "supply_unit", name: "Единица"}
-                ];
-                App.loadWindow('page/dialog/importer', {label: 'закуп', fields_to_import: config}).progress(function (status, fvalue, Importer) {
-                    if (status === 'submit') {
-                        var question = "Импортировать эти строчки без указания поставщика?";
-                        fvalue.supplier_company_id = 0;
-                        if (selectedSupplier && selectedSupplier.supplier_company_id) {
-                            question = "Импортировать эти строчки поставщику '" + selectedSupplier.supplier_name + "'?";
-                            fvalue.supplier_company_id = selectedSupplier.supplier_company_id;
-                        }
-                        if (confirm(question)) {
-                            App.post("StockBuyManager/entryImport/", fvalue, function (ok) {
-                                App.flash("Импортировано " + ok);
-                                Importer.reload();
-                                supplyTableTools.reload();
-                            });
-                        }
-                    }
-                });
-            },
-            importIntoStockTable: function () {
-                var config = [
-                    {name: 'Код товара', field: 'product_code', required: true, assigned: 'A'},
-                    {name: 'Название Рус.', field: 'ru'},
-                    {name: 'Покупка', field: 'buy'},
-                    {name: 'Продажа', field: 'sell', assigned: 'D'},
-                    {name: 'В коробке', field: 'product_spack'},
-                    {name: 'В ящике', field: 'product_bpack'},
-                    {name: 'Вес кг', field: 'product_weight'},
-                    {name: 'Объем м3', field: 'product_volume'},
-                    {name: 'Единица', field: 'product_unit'}
-                ];
-                App.loadWindow('page/dialog/importer', {label: 'склад', fields_to_import: config}).progress(function (status, fvalue, Importer) {
-                    if (status === 'submit') {
-                        fvalue.parent_id = 0;
-                        App.post("Stock/import/", fvalue, function (ok) {
-                            App.flash("Добавлено/Изменено " + ok);
-                            Importer.reload();
-                        });
-                    }
-                });
-            },
-            entryExport: function () {
-                var selected_rows = supplylist.getSelectedRows();
-                if (!selected_rows.length) {
-                    App.flash("Выберите строчки для экспорта");
-                }
-                var supply_ids = [];
-                for (var i in selected_rows) {
-                    supply_ids.push(supplylist.getDataItem(selected_rows[i]).supply_id);
-                }
-                $.post('StockBuyManager/supplyExport', {supply_ids: supply_ids}, function (ok) {
-                    if (ok * 1) {
-                        App.flash("В таблицу Импортера добавлено строк: " + ok);
-                    }
-                    supplyOrderTableTools.importIntoStockTable();
-                });
-
-            },
-*/            reload: function () {
+            reload: function () {
                 supplyorder.reload();
             },
             entryDelete: function () {
@@ -608,6 +578,24 @@
         grid-template-columns:200px auto;
         grid-gap:2px;
     }
+    .selector_token{
+        display: inline-block;
+        overflow: hidden;
+        white-space: nowrap;
+    }
+    .selector_tag{
+        width:150px;
+        background:#bcd;
+        border-radius:5px;
+        margin:-2px;
+        margin-right: 4px;
+        padding:0px 2px 2px 2px; 
+        height:20px;
+        font-size: 12px;
+    }
+    .selector_checked{
+        background:#9e9;
+    }
 </style>
 <div id="bmanager-grid">
     <div>
@@ -621,19 +609,22 @@
         </div>
         <div id="suppliers_ac" style="overflow-y: auto;">
             {{suppliers}}
-            <button class="accordion">{{supplier_name}} ({{supplier_product_count}})</button>
-            <div class="accordion_panel hidden" data-sci="{{supplier_company_id}}">
-                {{if supplier_company_id}}
-                <label>Отсрочка дн: <input name="supplier_defferment" value="{{supplier_defferment|blank>}}"></label>
-                <label>Доставка дн: <input name="supplier_delivery" value="{{supplier_delivery|blank>}}"></label>
-                <div style="background: rgba(255,255,255,.6);padding: 3px;">Расчет себестоимости</div>
-                <label>Скидка от базы %: <input name="supplier_buy_discount" value="{{supplier_buy_discount|blank>}}"></label>
-                <label>Затраты %: <input name="supplier_buy_expense" value="{{supplier_buy_expense|blank>}}"></label>
-                <div style="background:  rgba(255,255,255,.6);padding: 3px;">Расчет цены продажи</div>
-                <label>Cкидка от базы %: <input name="supplier_sell_discount" value="{{supplier_sell_discount|blank>}}"></label>
-                <label>Наценка %: <input name="supplier_sell_gain" value="{{supplier_sell_gain|blank>}}"></label>
-                {{/if}}
-            </div>
+                <button class="accordion">{{supplier_name}} ({{supplier_product_count}})</button>
+                <div class="accordion_panel" data-index="{{#}}">
+                    {{if supplier_id}}
+                    <div style="background: rgba(255,255,255,.6);padding: 3px;">{{real_name}}</div>
+                    <label title="Псевдоним">Ник: <input name="supplier_name" value="{{supplier_name|blank>}}" style="width:120px"/></label>
+                    <div style="background: rgba(255,255,255,.6);padding: 3px;">Расчет себестоимости</div>
+                    <label>Доставка дн: <input name="supplier_delivery" value="{{supplier_delivery|blank>}}"></label>
+                    <label>Отсрочка дн: <input name="supplier_defferment" value="{{supplier_defferment|blank>}}"></label>
+                    <div style="background: rgba(255,255,255,.6);padding: 3px;">Расчет себестоимости</div>
+                    <label>Скидка от базы %: <input name="supplier_buy_discount" value="{{supplier_buy_discount|blank>}}"></label>
+                    <label>Затраты %: <input name="supplier_buy_expense" value="{{supplier_buy_expense|blank>}}"></label>
+                    <div style="background:  rgba(255,255,255,.6);padding: 3px;">Расчет цены продажи</div>
+                    <label>Cкидка от базы %: <input name="supplier_sell_discount" value="{{supplier_sell_discount|blank>}}"></label>
+                    <label>Наценка %: <input name="supplier_sell_gain" value="{{supplier_sell_gain|blank>}}"></label>
+                    {{/if}}
+                </div>
             {{/suppliers}}
         </div>
     </div>
@@ -660,7 +651,7 @@
         </div>
 
         <div class="accordion_panel" id="supply_order_section">
-            <div style="width: 700px;margin-right: 20px" class="x-stock-buy-manager-order-tools">
+            <div style="width: 1080px;margin-right: 20px" class="x-stock-buy-manager-order-tools">
                 <img src="img/table16.png" style="width:16px;height: 16px;"> Заказ
                 <div style="float: right;font-weight: bold;padding-top: 8px;">
                 <span class="icon-24 icon-create" title="Добавить стоку" data-action="entryCreate"> </span>
@@ -672,7 +663,7 @@
                 <span class="icon-24 icon-refresh" title="Обновить" data-action="reload"> </span>
                 </div>
             </div>
-            <div id="supply_order_sg" style="clear: both;height: 500px;width:700px"></div>
+            <div id="supply_order_sg" style="clear: both;height: 500px;"></div>
         </div>
     </div>
 </div>
