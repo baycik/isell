@@ -24,11 +24,6 @@ CREATE TABLE `supply_list` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
-
-
-
-
-
 CREATE TABLE `supplier_list` (
   `supplier_id` int(11) NOT NULL AUTO_INCREMENT,
   `supplier_company_id` int(11) NOT NULL,
@@ -43,9 +38,11 @@ CREATE TABLE `supplier_list` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
-CREATE TABLE `isell_db`.`supply_order` (
-  `entry_id` INT NOT NULL AUTO_INCREMENT,
-  `product_code` VARCHAR(45) NULL,
-  `product_quantity` INT NULL,
-  `product_comment` VARCHAR(45) NULL,
-  PRIMARY KEY (`entry_id`));
+CREATE TABLE `supply_order` (
+  `entry_id` int(11) NOT NULL AUTO_INCREMENT,
+  `supplier_id` int(11) DEFAULT NULL,
+  `product_code` varchar(45) DEFAULT NULL,
+  `product_quantity` int(11) DEFAULT NULL,
+  `product_comment` varchar(45) DEFAULT NULL,
+  PRIMARY KEY (`entry_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;

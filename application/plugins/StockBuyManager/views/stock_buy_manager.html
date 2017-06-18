@@ -393,6 +393,7 @@
 	var Order={
 	    grid:null,
 	    init:function(){
+		Order.tableInit();
 		Order.selector.init();
 		$(".x-stock-buy-manager-order-tools").click(function (e) {
 		    var action = $(e.target).data('action');
@@ -449,14 +450,14 @@
 		    this.out('.print');
 		}
 	    },
-	    initTable:function(){
+	    tableInit:function(){
 		var settings = {
 		    columns: [
 			{id: "product_comment", field: "product_comment", name: "Коментарий", width: 120, sortable: true, editor: Slick.Editors.Text},
 			{id: "product_code", field: "product_code", name: "Код", width: 100, sortable: true, editor: Slick.Editors.Text},
 			{id: "product_name", field: "product_name", name: "Название", width: 300, sortable: true},
 			{id: "product_quantity", field: "product_quantity", name: "Кол-во", width: 60, sortable: true, editor: Slick.Editors.Integer, cssClass: 'slick-align-right'},
-			{id: "suggestion", field: "suggestion", name: "Варианты", width: 500, sortable: true, formatter: Order.selector.make}
+			{id: "suggestion", field: "suggestion", name: "Варианты цен поставщиков", width: 500, sortable: true, formatter: Order.selector.make}
 		    ],
 		    options: {
 			editable: true,
@@ -494,13 +495,19 @@
 		    var controller="";
 		    var options=value.split("|");
 		    for(var i in options){
+			var red_ratio=0;
+			var green_ratio=0;
+			if( i!=0 ){
+			    red_ratio=i/options.length;
+			    green_ratio=1-red_ratio;
+			}
 			var option=options[i].split(":");
 			var checked='';
 			if( i==0 ){
 			    checked='checked';
 			}
-			controller+='<div class="selector_token selector_tag selector_'+checked+'" title="'+option[1]+'"><label>';
-			controller+='<div class="selector_token" style="width:60px;">'+option[2]+'</div>';
+			controller+='<div class="selector_token selector_tag" title="'+option[1]+'" style="color:rgb('+255*red_ratio+','+200*green_ratio+',0)"><label>';
+			controller+='<div class="selector_token" style="width:60px;color:rgb('+255*red_ratio+','+200*green_ratio+',0)">'+option[2]+'</div>';
 			controller+='<div class="selector_token" style="height:16px;width:16px;"><input type="radio" value="'+option[0]+'" name="r_'+row+'" '+checked+'></div>';
 			controller+='<div class="selector_token" >'+option[1]+'</div>';
 			controller+='</label></div>';
@@ -509,7 +516,6 @@
 		},
 		swap:function( row_index, supplier_id ){
 		    var row=Order.grid.getDataItem(row_index);
-		    console.log(row,supplier_id);
 		    if( row.supplier_id!==supplier_id ){
 			Order.entryUpdate(row.entry_id, 'supplier_id', supplier_id).done(function () {
 			    Order.grid.reload();
@@ -517,7 +523,7 @@
 		    }
 		}
 	    },
-	    entryUpdate:function(){
+	    entryUpdate:function(entry_id, field, value){
 		return $.post('StockBuyManager/orderUpdate', {entry_id: entry_id, field: field, value: value}, function (ok) {
 		    if (ok < 1) {
 			Order.grid.reload();
@@ -582,8 +588,7 @@
     }
     .selector_tag{
         width:150px;
-        background:#bcd;
-        border-radius:5px;
+	border-right:1px dotted black;
         margin:-2px;
         margin-right: 4px;
         padding:0px 2px 2px 2px; 
@@ -628,8 +633,8 @@
 
     <div id="bmanager_main_ac">
         <div style="background-color: rgba(200,200,200,.5);padding: 3px;">
-            <button class="accordion" style="width:250px" data-for="supply_list_section">Справочник товаров поставщиков</button>
             <button class="accordion" style="width:250px" data-for="supply_order_section">Формирование заказа</button>
+            <button class="accordion" style="width:250px" data-for="supply_list_section">Справочник товаров поставщиков</button>
         </div>
         <div class="accordion_panel" id="supply_list_section">
             <div style="float: left;font-weight: bold;padding-top: 8px;">
