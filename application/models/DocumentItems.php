@@ -20,7 +20,8 @@ class DocumentItems extends DocumentCore{
 		product_code,
 		$company_lang label,
 		product_spack,
-		product_quantity
+		product_quantity,
+                product_img
 	    FROM
 		prod_list
 		    JOIN
