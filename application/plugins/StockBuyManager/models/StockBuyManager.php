@@ -204,19 +204,10 @@ class StockBuyManager extends Catalog{
     
     
     
-    public $supplierListFetch=['offset'=>'int','limit'=>'int','sortby'=>'string','sortdir'=>'(ASC|DESC)','filter'=>'json'];
-    public function supplierListFetch($offset,$limit,$sortby,$sortdir,$filter=null){
-	if( empty($sortby) ){
-	    $sortby='supplier_name';
-	}
-	
-        if($offset==0){
-            $all_count=$this->get_value("SELECT COUNT(*) FROM supply_list");
-            $all=[['supplier_name'=>'* Все поставщики','supplier_id'=>0,'supplier_product_count'=>$all_count]];
-        } else {
-            $all=[];
-            $offset--;
-        }
+    public $supplierListFetch=[];
+    public function supplierListFetch(){
+	$all_count=$this->get_value("SELECT COUNT(*) FROM supply_list");
+	$all=[['supplier_name'=>'* Все поставщики','supplier_id'=>0,'supplier_product_count'=>$all_count]];
 	$sql="
 	    SELECT 
 		*,
@@ -224,10 +215,8 @@ class StockBuyManager extends Catalog{
 		(SELECT COUNT(*) FROM supply_list WHERE supply_list.supplier_id=supplier_list.supplier_id) supplier_product_count
 	    FROM 
 		supplier_list
-	    ORDER BY $sortby $sortdir
-	    LIMIT $limit OFFSET $offset";
-	$suppliers=array_merge($all,$this->get_list($sql));
-	return $suppliers;
+	    ORDER BY supplier_name";
+	return array_merge($all,$this->get_list($sql));
     }
     
     public $supplierCreate=['supplier_company_id'=>'int','label'=>'string'];
@@ -257,4 +246,82 @@ class StockBuyManager extends Catalog{
 	return $this->delete('supplier_list',['supplier_id'=>$supplier_id]);
     }
 
+    
+    
+    
+    
+    public $orderFetch=['offset'=>'int','limit'=>'int','sortby'=>'string','sortdir'=>'(ASC|DESC)','filter'=>'json'];
+    public function orderFetch($offset,$limit,$sortby,$sortdir,$filter=null){
+	if( empty($sortby) ){
+	    $sortby="entry_id";
+	}
+	$having=$this->makeFilter($filter);
+        $sql_clear="DROP TEMPORARY TABLE IF EXISTS supply_order_chart;";
+        $sql_prepare="CREATE TEMPORARY TABLE supply_order_chart AS (SELECT 
+                        product_code,
+                        supplier_id,
+                        ROUND(supply_buy*(1-supplier_buy_discount/100)*(1+supplier_buy_expense/100),2) self,
+                        supplier_name
+                    FROM 
+                        supplier_list spl
+                            JOIN
+                        supply_list sl USING(supplier_id)
+                    WHERE 
+                        product_code IN (SELECT product_code FROM supply_order) );";
+        $sql_fetch="
+	    SELECT 
+                entry_id,
+                product_code,
+                ru product_name,
+                product_quantity,
+                product_comment,
+                supplier_id,
+                (SELECT 
+                    GROUP_CONCAT(CONCAT(supplier_id,':',supplier_name,':',self) ORDER BY soc.supplier_id=so.supplier_id DESC ,self SEPARATOR '|') 
+                FROM 
+                    supply_order_chart soc 
+                WHERE soc.product_code=so.product_code) suggestion
+                FROM 
+                    supply_order so
+                        LEFT JOIN
+                    prod_list USING(product_code)
+            HAVING $having
+	    ORDER BY $sortby $sortdir
+	    LIMIT $limit OFFSET $offset";
+        $this->query($sql_clear);
+        $this->query($sql_prepare);
+	return $this->get_list($sql_fetch);
+    }
+    
+    public $orderCreate=[];
+    public function orderCreate(){
+	return $this->create('supply_order',['product_code'=>'']);
+    }
+    
+    public $orderUpdate=['entry_id'=>'int','field'=>'string','value'=>'string'];
+    public function orderUpdate($entry_id,$field,$value){
+	return $this->update('supply_order',[$field=>$value],['entry_id'=>$entry_id]);
+    }
+ 
+    public $orderDelete=['entry_ids'=>'raw'];
+    public function orderDelete($entry_ids){
+	return $this->delete('supply_order','entry_id',$entry_ids);
+    }
+    
+    /*
+DROP TEMPORARY TABLE IF EXISTS supply_order_chart;
+CREATE TEMPORARY TABLE supply_order_chart AS (SELECT 
+	product_code,
+	ROUND(supply_buy*(1-supplier_buy_discount/100)*(1+supplier_buy_expense/100),2) self,
+	supplier_name
+FROM 
+	supplier_list spl
+		JOIN
+	supply_list sl USING(supplier_id)
+WHERE 
+	product_code IN (SELECT product_code FROM supply_order) );
+SELECT * FROM supply_order_chart;
+     */
+    
+    
 }

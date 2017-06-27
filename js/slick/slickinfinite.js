@@ -15,6 +15,10 @@
 	if (options.enableFilter) {
 	    options.showHeaderRow = true;
 	}
+        if( options.fitWidth ){
+            var width = $(query).parent().width();
+            $(query).css('width', width);
+        }
 	remoteModel = new Slick.Data.RemoteModel(options.url,options.params,options.loader);
 	grid = new Slick.Grid(node, remoteModel.data, columns, options);
 	grid.setSelectionModel(new Slick.RowSelectionModel());
