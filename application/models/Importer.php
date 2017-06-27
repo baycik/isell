@@ -67,7 +67,7 @@ class Importer extends Catalog{
 	$this->query("DELETE FROM imported_data WHERE row_id IN ($row_ids)");
 	return $this->db->affected_rows();
     }
-    public $deleteAll=['label'=>'[\w_\d]+'];
+    public $deleteAll=['label'=>'string'];
     public function deleteAll( $label ){
 	if( $label ){
 	    $where="WHERE label='$label'";
