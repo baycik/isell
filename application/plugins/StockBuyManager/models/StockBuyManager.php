@@ -277,7 +277,7 @@ class StockBuyManager extends Catalog{
                 product_comment,
                 supplier_id,
                 (SELECT 
-                    GROUP_CONCAT(CONCAT(supplier_id,':',supplier_name,':',self) ORDER BY soc.supplier_id=so.supplier_id DESC ,self SEPARATOR '|') 
+                    GROUP_CONCAT(CONCAT(supplier_id,':',supplier_name,':',self,':',soc.supplier_id=so.supplier_id) ORDER BY self SEPARATOR '|') 
                 FROM 
                     supply_order_chart soc 
                 WHERE soc.product_code=so.product_code) suggestion
@@ -308,20 +308,24 @@ class StockBuyManager extends Catalog{
 	return $this->delete('supply_order','entry_id',$entry_ids);
     }
     
-    /*
-DROP TEMPORARY TABLE IF EXISTS supply_order_chart;
-CREATE TEMPORARY TABLE supply_order_chart AS (SELECT 
-	product_code,
-	ROUND(supply_buy*(1-supplier_buy_discount/100)*(1+supplier_buy_expense/100),2) self,
-	supplier_name
-FROM 
-	supplier_list spl
-		JOIN
-	supply_list sl USING(supplier_id)
-WHERE 
-	product_code IN (SELECT product_code FROM supply_order) );
-SELECT * FROM supply_order_chart;
-     */
-    
-    
+    public $orderFromStock=['parent_id'=>'int'];
+    public function orderFromStock( $parent_id ){
+        $stock_cat=$this->get_value("SELECT label FROM stock_tree WHERE branch_id='$parent_id'");
+        
+	if( $parent_id ){
+	    $branch_ids=$this->treeGetSub('stock_tree',$parent_id);
+	    $where="parent_id IN (".implode(',',$branch_ids).")";
+	}
+        $sql="INSERT supply_order (product_code,product_quantity,product_comment) 
+            SELECT 
+                product_code,
+                product_wrn_quantity-product_quantity,
+                'Склад [$stock_cat]'
+            FROM
+                stock_entries
+            WHERE 
+                product_wrn_quantity>product_quantity
+                AND $where";
+        return $this->query($sql);
+    }
 }

@@ -288,6 +288,15 @@
 		    }
 		});
 	    },
+            send_to_buy_manager:function(){
+                App.post("StockBuyManager/orderFromStock/",{filterRules: Leftovers.list.filterRules,parent_id:Leftovers.list.parent_id},function(ok){
+                    if( ok*1 ){
+                        App.flash("Заказ загружен в менеджер закупок");
+                    } else {
+                        App.flash("Заказ не сформирован");
+                    }
+                });
+            },
 	    calc_buy_order:function(){
 		App.loadWindow("page/stock/calc_buy_order",{parent_label:Leftovers.list.parent_label}).progress(function(status, fvalue){
 		    if( status==='submit' ){
@@ -317,7 +326,8 @@
 	    Инструменты
 	    <hr>
 	    <button style="width:100%;margin: 2px;text-align: left" onclick="Leftovers.utils.calc_min()"><img src="img/calc.png" style="width:24px;height: 24px;"> Рассчитать минимумы</button><br>
-	    <button style="width:100%;margin: 2px;text-align: left" onclick="Leftovers.utils.calc_buy_order()"><img src="img/docnew.png" style="width:24px;height: 24px;"> Сформировать заказ</button>
+	    <button style="width:100%;margin: 2px;text-align: left" onclick="Leftovers.utils.calc_buy_order()"><img src="img/docnew.png" style="width:24px;height: 24px;"> Сформировать заказ</button><br>
+	    <button style="width:100%;margin: 2px;text-align: left" onclick="Leftovers.utils.send_to_buy_manager()"><img src="img/docnew.png" style="width:24px;height: 24px;"> Загрузить в менеджер</button>
 	</td>
 	<td style="vertical-align: top">
 	    <div style="float: left;font-weight: bold;padding-top: 8px;">
