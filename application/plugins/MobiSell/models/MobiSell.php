@@ -1,18 +1,22 @@
 <?php
 /* User Level: 1
  * Group Name: Мобильное
- * Plugin Name: MiSell2
+ * Plugin Name: MobiSell
  * Version: 2017-03-26
  * Description: Мобильное приложение
  * Author: baycik 2017
  * Author URI: isellsoft.com
- * Trigger before: MiSell2
+ * Trigger before: MobiSell
  * 
  * Description of DocumentSell
  * This class handles all of sell documents
  * @author Baycik
  */
-class MiSell2 extends Catalog{
+class MobiSell extends Catalog{
+    public $index=['file'=>'string'];
+    public function index($file){
+	$this->load->view($file);
+    }
     
     public $doclistGet=['date'=>'([0-9\-]+)','clientFilter'=>'string'];
     public function doclistGet($date,$clientFilter){
