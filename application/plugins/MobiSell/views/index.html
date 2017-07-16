@@ -1,16 +1,38 @@
 <!DOCTYPE html>
-<!--
-To change this license header, choose License Headers in Project Properties.
-To change this template file, choose Tools | Templates
-and open the template in the editor.
--->
 <html>
-    <head>
-	<title>TODO supply a title</title>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-    </head>
-    <body>
-	<div>TODO write content</div>
-    </body>
+<head>
+  <link rel="stylesheet" href="../js/Semantic-UI/semantic.min.css">
+  <script type="text/javascript" src="../js/jquery-2.1.1.min.js"></script>
+  <script type="text/javascript" src="../js/Semantic-UI/semantic.min.js"></script>
+  <script>
+      App={
+	  init:function(){
+	      $('.ui.labeled.icon.sidebar').sidebar('toggle');
+	  }
+      };
+      
+      
+      
+      $(App.init);
+  </script>
+</head>
+<body>
+<div class="ui left demo vertical inverted sidebar labeled icon menu">
+  <a class="item">
+    <i class="home icon"></i>
+    Home
+  </a>
+  <a class="item">
+    <i class="block layout icon"></i>
+    Topics
+  </a>
+  <a class="item">
+    <i class="smile icon"></i>
+    Friends
+  </a>
+</div>
+  <div class="pusher">
+    <!-- Site content !-->
+  </div>
+</body>
 </html>

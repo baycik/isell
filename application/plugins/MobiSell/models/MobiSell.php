@@ -13,9 +13,18 @@
  * @author Baycik
  */
 class MobiSell extends Catalog{
-    public $index=['file'=>'string'];
-    public function index($file){
-	$this->load->view($file);
+    public $index=[];
+    public function index(){
+	$this->view('index.html');
+    }
+    
+    public $view=[];
+    public function view(){
+	$path = '';
+	foreach (func_get_args() as $chunk) {
+	    $path.= $chunk;
+	}
+	$this->load->view($path);
     }
     
     public $doclistGet=['date'=>'([0-9\-]+)','clientFilter'=>'string'];
