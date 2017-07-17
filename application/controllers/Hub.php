@@ -158,7 +158,7 @@ class Hub  extends CI_Controller{
 	    $this->load->add_package_path(APPPATH.'plugins/'.$model_override, FALSE);
 	    //require_once APPPATH."plugins/{$model_override}/{$model_override}.php";
 	    //echo APPPATH."plugins/{$model_override}/{$model_override}.php";
-	    
+	     
 	    if( $model_override===$model_name ){//if plugin ovverides it self then adding package is enough
 		return false;
 	    }
