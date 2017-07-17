@@ -625,8 +625,7 @@ Mark.pipes.format = function (str) {
 			return false;
 		    }
 		    //$("#holder"+this.current).hide();
-                    $("#holder"+this.current).css('height','0px');
-                    $("#holder"+this.current).css('overflow','hidden');
+                    $("#holder"+this.current).addClass('hidden');
 		    this.current=name;
 		    var holder=$("#holder"+this.current);
 		    if( !holder.length ){
@@ -634,7 +633,7 @@ Mark.pipes.format = function (str) {
 			holder=$("#holder"+this.current);
 		    }
 		    //holder.show();
-                    holder.css('height','auto');
+                    holder.removeClass('hidden');
 		    this.loadHTML(holder);
 		    this.findTitle();
 		    this.selectButton();
