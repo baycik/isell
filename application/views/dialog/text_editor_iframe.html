@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script src="../../js/tinymce/tinymce.min.js"></script>
+<script type="text/javascript">
+function init() {
+    document.getElementById('myeditablediv').innerHTML = html;
+    tinymce.init({
+        selector: 'textarea',
+        language: 'ru',
+        menubar: true,
+        statusbar: false,
+        paste_data_images: true,
+        images_upload_handler: function (blobInfo, success, failure) {
+            success("data:" + blobInfo.blob().type + ";base64," + blobInfo.base64());
+        },
+        height: 400,
+        plugins: [
+            'advlist autolink lists link image charmap print preview anchor',
+            'searchreplace visualblocks code fullscreen',
+            'insertdatetime media table contextmenu paste code',
+            'textcolor colorpicker',
+            'bdesk_photo'
+        ],
+        toolbar: 'styleselect | forecolor backcolor | bdesk_photo | bold italic fontselect fontsizeselect | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent',
+    });
+}
+function getContent(){
+    return tinymce.activeEditor.getContent();
+}
+</script>
+<style>
+    html,body{
+        padding: 0px;
+        margin: 0px;
+    }
+</style>
+</head>
+<body onload="init()">
+    <textarea id="myeditablediv">Click here to edit!</textarea>
+</body>
+</html>

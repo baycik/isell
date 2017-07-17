@@ -178,33 +178,53 @@ abstract class Catalog extends CI_Model {
 	    return false;
 	}
 	$this->update($table, [$field => $value],['branch_id' => $branch_id]);
-	$this->treeUpdatePath($table, $branch_id);
-        if( $calc_top_id ){
-            $this->treeUpdateTopId($table, $branch_id);
-        }
+//	$this->treeUpdatePath($table, $branch_id);
+//        if( $calc_top_id ){
+//            $this->treeUpdateTopId($table, $branch_id);
+//        }
+        $this->treeRecalculate($table);
 	return true;
     }
-    protected function treeUpdatePath($table, $branch_id) {
-	$this->query("SET @old_path:='',@new_path:='';");
-	$this->query(
-		"SELECT @old_path:=COALESCE(t1.path, ''),@new_path:=CONCAT(COALESCE(t2.path, '/'), t1.label, '/')
-		FROM (SELECT * FROM $table) t1
-			LEFT JOIN
-		    (SELECT * FROM $table) t2 ON t1.parent_id = t2.branch_id 
-		WHERE
-		    t1.branch_id = $branch_id");
-	$this->query(
-		"UPDATE $table 
-		SET 
-		    path = IF(@old_path<>'',REPLACE(path, @old_path, @new_path),@new_path)
-		WHERE
-		    IF(@old_path<>'',path LIKE CONCAT(@old_path, '%'),branch_id=$branch_id)");
+//    private function treeTopRecalculate($table){
+//        $res = $this->db->query("SELECT branch_id,path FROM $table WHERE parent_id=0");
+//	foreach ($res->result() as $row) {
+//            $this->db->query("UPDATE $table SET top_id='{$row->branch_id}' WHERE path LIKE '{$row->path}%'");
+//	}
+//	$res->free_result();        
+//    }
+    private function treeRecalculate( $table, $parent_id = 0, $parent_path='/', $top_id=0 ) {
+	$res = $this->db->query("SELECT * FROM $table WHERE parent_id='$parent_id'");
+	foreach ($res->result() as $row) {
+            $current_path=$parent_path."{$row->label}/";
+            if($parent_id == 0){
+                $top_id=$row->branch_id;
+            }
+	    $this->update($table,['path'=>$current_path,'top_id'=>$top_id],['branch_id'=>$row->branch_id]);
+            $this->treeRecalculate($table, $row->branch_id,$current_path,$top_id);
+	}
+	$res->free_result();
     }
-    private function treeUpdateTopId($table_name, $branch_id){
-	$branch_ids=implode(',',$this->treeGetSub($table_name, $branch_id));
-	$this->query("UPDATE $table_name SET top_id='$branch_id' WHERE branch_id IN ($branch_ids)");
-        return $this->db->affected_rows();
-    }
+//    protected function treeUpdatePath($table, $branch_id) {
+//	$this->query("SET @old_path:='',@new_path:='';");
+//	$this->query(
+//		"SELECT @old_path:=COALESCE(t1.path, ''),@new_path:=CONCAT(COALESCE(t2.path, '/'), t1.label, '/')
+//		FROM (SELECT * FROM $table) t1
+//			LEFT JOIN
+//		    (SELECT * FROM $table) t2 ON t1.parent_id = t2.branch_id 
+//		WHERE
+//		    t1.branch_id = $branch_id");
+//	$this->query(
+//		"UPDATE $table 
+//		SET 
+//		    path = IF(@old_path<>'',REPLACE(path, @old_path, @new_path),@new_path)
+//		WHERE
+//		    IF(@old_path<>'',path LIKE CONCAT(@old_path, '%'),branch_id=$branch_id)");
+//    }
+//    private function treeUpdateTopId($table_name, $branch_id){
+//	$branch_ids=implode(',',$this->treeGetSub($table_name, $branch_id));
+//	$this->query("UPDATE $table_name SET top_id='$branch_id' WHERE branch_id IN ($branch_ids)");
+//        return $this->db->affected_rows();
+//    }
     protected function treeDelete($table,$branch_id){
 	$branch_ids=$this->treeGetSub($table, $branch_id);
 	$in=implode(',', $branch_ids);
