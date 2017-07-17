@@ -256,8 +256,8 @@ class StockBuyManager extends Catalog{
 	    $sortby="entry_id";
 	}
 	$having=$this->makeFilter($filter);
-        $sql_clear="DROP TEMPORARY TABLE IF EXISTS supply_order_chart;";
-        $sql_prepare="CREATE TEMPORARY TABLE supply_order_chart AS (SELECT 
+        $sql_clear="DROP TABLE IF EXISTS supply_order_chart;";# TEMPORARY
+        $sql_prepare="CREATE TABLE supply_order_chart AS (SELECT 
                         product_code,
                         supplier_id,
                         ROUND(supply_buy*(1-supplier_buy_discount/100)*(1+supplier_buy_expense/100),2) self,
@@ -277,7 +277,7 @@ class StockBuyManager extends Catalog{
                 product_comment,
                 supplier_id,
                 (SELECT 
-                    GROUP_CONCAT(CONCAT(supplier_id,':',supplier_name,':',self,':',soc.supplier_id=so.supplier_id) ORDER BY self SEPARATOR '|') 
+                    GROUP_CONCAT(CONCAT(supplier_id,':',supplier_name,':',self,':',COALESCE(soc.supplier_id=so.supplier_id,0)) ORDER BY self SEPARATOR '|') 
                 FROM 
                     supply_order_chart soc 
                 WHERE soc.product_code=so.product_code) suggestion

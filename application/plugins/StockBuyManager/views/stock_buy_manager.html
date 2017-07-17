@@ -457,7 +457,7 @@
 			{id: "product_code", field: "product_code", name: "Код", width: 100, sortable: true, editor: Slick.Editors.Text},
 			{id: "product_name", field: "product_name", name: "Название", width: 300, sortable: true},
 			{id: "product_quantity", field: "product_quantity", name: "Кол-во", width: 60, sortable: true, editor: Slick.Editors.Integer, cssClass: 'slick-align-right'},
-			{id: "suggestion", field: "suggestion", name: "Варианты цен поставщиков", width: 500, sortable: true, formatter: Order.selector.make}
+			{id: "suggestion", field: "suggestion", name: "Варианты цен поставщиков", width: 520, sortable: true, formatter: Order.selector.make}
 		    ],
 		    options: {
 			editable: true,
@@ -492,27 +492,29 @@
 		    if( !value ){
 			return '';
 		    }
-		    var controller="";
-		    var options=value.split("|");
-		    for(var i in options){
-			var red_ratio=0;
-			var green_ratio=0;
-			if( i!=0 ){
-			    red_ratio=i/options.length;
-			    green_ratio=1-red_ratio;
-			}
-			var option=options[i].split(":");
-			var checked='';
-			if( i==0 ){
-			    checked='checked';
-			}
-			controller+='<div class="selector_token selector_tag" title="'+option[1]+'" style="color:rgb('+255*red_ratio+','+200*green_ratio+',0)"><label>';
-			controller+='<div class="selector_token" style="width:60px;color:rgb('+255*red_ratio+','+200*green_ratio+',0)">'+option[2]+'</div>';
+		    function controller_render(option,checked){
+			var controller="";
+			controller+='<div class="selector_token selector_tag" title="'+option[1]+'" style="border-left:solid 8px rgb('+255*red_ratio+','+200*green_ratio+',0)"><label>';
+			controller+='<div class="selector_token" style="width:60px;">'+option[2]+'</div>';
 			controller+='<div class="selector_token" style="height:16px;width:16px;"><input type="radio" value="'+option[0]+'" name="r_'+row+'" '+checked+'></div>';
 			controller+='<div class="selector_token" >'+option[1]+'</div>';
 			controller+='</label></div>';
+			return controller;	
 		    }
-		    return controller;
+		    var selected_controller='';
+		    var rest_controllers='';
+		    var options=value.split("|");
+		    for(var i in options){
+			var red_ratio=i/options.length;
+			var green_ratio=1-red_ratio;
+			var option=options[i].split(":");
+			if( option[3]==1 || options.length==1 ){
+			    selected_controller=controller_render(option,'checked');
+			} else {
+			    rest_controllers+=controller_render(option,'');
+			}
+		    }
+		    return selected_controller+rest_controllers;
 		},
 		swap:function( row_index, supplier_id ){
 		    var row=Order.grid.getDataItem(row_index);
@@ -595,8 +597,8 @@
         height:20px;
         font-size: 12px;
     }
-    .selector_checked{
-        background:#9e9;
+    .active .selector_tag{
+        background: white;
     }
 </style>
 <div id="bmanager-grid">
@@ -609,7 +611,7 @@
             <span class="icon-24 icon-delete" title="Удалить стоку" data-action="entryDelete"> </span>
             <span class="icon-24 icon-refresh" title="Обновить" data-action="reload"> </span> 
         </div>
-        <div id="suppliers_ac" style="overflow-y: auto;">
+        <div id="suppliers_ac" style="overflow-y: auto;" class="covert">
             {{suppliers}}
                 <button class="accordion">{{supplier_name}} ({{supplier_product_count}})</button>
                 <div class="accordion_panel" data-index="{{#}}">
@@ -633,8 +635,8 @@
 
     <div id="bmanager_main_ac">
         <div style="background-color: rgba(200,200,200,.5);padding: 3px;">
-            <button class="accordion" style="width:250px" data-for="supply_list_section">Справочник товаров поставщиков</button>
             <button class="accordion" style="width:250px" data-for="supply_order_section">Формирование заказа</button>
+            <button class="accordion" style="width:250px" data-for="supply_list_section">Справочник товаров поставщиков</button>
         </div>
         <div class="accordion_panel" id="supply_list_section">
             <div style="float: left;font-weight: bold;padding-top: 8px;">
