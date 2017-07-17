@@ -1,4 +1,3 @@
-<script src="js/tinymce/tinymce.min.js"></script>
 <script>
     App.page_dialog_text_editor={
 	init:function(){
@@ -6,50 +5,27 @@
 		title: 'Редактор текста',
 		closable:true,
 		collapsible:true,
-		width: 730,
+		width: 770,
                 shadow:0,
-		top:50,
+		top:30,
 		height: 'auto',
 		onClose: function () {
 		    App.page_dialog_text_editor.handler.notify('close');
-                    tinymce.execCommand('mceRemoveControl', true, '#page_dialog_text_editor textarea');
                     App.page_dialog_text_editor.node.remove();
 		    delete App.page_dialog_text_editor;
 		}
 	    });
 	    this.node.window('window').css('position','fixed');
-	    $('#page_dialog_text_editor textarea').text(App.page_dialog_text_editor.data.html);
-	    tinymce.init({
-		selector: '#page_dialog_text_editor textarea',
-		language: 'ru',
-		menubar:true,
-		statusbar: false,
-		paste_data_images: true,
-		images_upload_handler: function (blobInfo, success, failure) {
-		    success("data:" + blobInfo.blob().type + ";base64," + blobInfo.base64());
-		},
-		height: 400,
-		plugins: [
-		  'advlist autolink lists link image charmap print preview anchor',
-		  'searchreplace visualblocks code fullscreen',
-		  'insertdatetime media table contextmenu paste code',
-		  'textcolor colorpicker',
-		  'bdesk_photo'
-		],
-		toolbar: 'styleselect | forecolor backcolor | bdesk_photo | bold italic fontselect fontsizeselect | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent',
-		setup : function(editor) {
-		    //editor.setContent(App.page_dialog_text_editor.data.html);
-		 }
-	      });
+            window.frames['editor_iframe'].html=App.page_dialog_text_editor.data.html;
 	},
 	save:function(){
-	    this.data.html=tinymce.activeEditor.getContent();
+	    this.data.html=window.frames['editor_iframe'].getContent();
 	    App.page_dialog_text_editor.handler.notify('save',this.data);
 	    App.page_dialog_text_editor.node.window('close');
 	}
     };
 </script>
-<textarea></textarea>
+<iframe name="editor_iframe" style="height:520px;width: 100%;border: none;" src="page/dialog/text_editor_iframe.html"></iframe>
 <div style="text-align: center">
     <button onclick="App.page_dialog_text_editor.save();"><img src="img/save-24.png"> Сохранить</button>
 </div>
