@@ -509,7 +509,7 @@
 			var green_ratio=1-red_ratio;
 			var option=options[i].split(":");
 			if( option[3]==1 || options.length==1 ){
-			    selected_controller=controller_render(option,'checked');
+			    selected_controller+=controller_render(option,'checked');
 			} else {
 			    rest_controllers+=controller_render(option,'');
 			}

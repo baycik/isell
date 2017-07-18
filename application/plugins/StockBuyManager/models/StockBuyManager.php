@@ -277,7 +277,7 @@ class StockBuyManager extends Catalog{
                 product_comment,
                 supplier_id,
                 (SELECT 
-                    GROUP_CONCAT(CONCAT(supplier_id,':',supplier_name,':',self,':',COALESCE(soc.supplier_id=so.supplier_id,0)) ORDER BY self SEPARATOR '|') 
+                    CONCAT(IF(so.supplier_id IS NOT NULL,'#',''),GROUP_CONCAT(CONCAT(supplier_id,':',CONCAT(IF(soc.supplier_id=so.supplier_id,'#',''),supplier_name),':',self,':',COALESCE(soc.supplier_id=so.supplier_id,0)) ORDER BY self SEPARATOR '|')) 
                 FROM 
                     supply_order_chart soc 
                 WHERE soc.product_code=so.product_code) suggestion
