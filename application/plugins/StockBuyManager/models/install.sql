@@ -40,7 +40,7 @@ CREATE TABLE `supplier_list` (
 
 CREATE TABLE `supply_order` (
   `entry_id` int(11) NOT NULL AUTO_INCREMENT,
-  `supplier_id` int(11) DEFAULT NULL,
+  `supply_id` int(11) DEFAULT NULL,
   `product_code` varchar(45) DEFAULT NULL,
   `product_quantity` int(11) DEFAULT NULL,
   `product_comment` varchar(45) DEFAULT NULL,

@@ -85,6 +85,7 @@
 			    var name=Supplier.selected.supplier_name;
 			}
 			Supply.grid.setFilter({supplier_name:name});
+                        Order.grid.setFilter({suggestion:(name?'#'+name:'')});
 		    };
 		    $("#suppliers_ac input").change(function (e) {
 			var formholder = $(this).parent().parent();
@@ -494,10 +495,10 @@
 		    }
 		    function controller_render(option,checked){
 			var controller="";
-			controller+='<div class="selector_token selector_tag" title="'+option[1]+'" style="border-left:solid 8px rgb('+255*red_ratio+','+200*green_ratio+',0)"><label>';
+			controller+='<div class="selector_token selector_tag" title="'+option[0]+'" style="border-left:solid 8px rgb('+255*red_ratio+','+200*green_ratio+',0)"><label>';
 			controller+='<div class="selector_token" style="width:60px;">'+option[2]+'</div>';
-			controller+='<div class="selector_token" style="height:16px;width:16px;"><input type="radio" value="'+option[0]+'" name="r_'+row+'" '+checked+'></div>';
-			controller+='<div class="selector_token" >'+option[1]+'</div>';
+			controller+='<div class="selector_token" style="height:16px;width:16px;"><input type="radio" value="'+option[1]+'" name="r_'+row+'" '+checked+'></div>';
+			controller+='<div class="selector_token" >'+option[0]+'</div>';
 			controller+='</label></div>';
 			return controller;	
 		    }
@@ -508,7 +509,7 @@
 			var red_ratio=i/options.length;
 			var green_ratio=1-red_ratio;
 			var option=options[i].split(":");
-			if( option[3]==1 || options.length==1 ){
+			if( option[0][0]=='#' ){
 			    selected_controller+=controller_render(option,'checked');
 			} else {
 			    rest_controllers+=controller_render(option,'');
@@ -516,10 +517,10 @@
 		    }
 		    return selected_controller+rest_controllers;
 		},
-		swap:function( row_index, supplier_id ){
+		swap:function( row_index, supply_id ){
 		    var row=Order.grid.getDataItem(row_index);
-		    if( row.supplier_id!==supplier_id ){
-			Order.entryUpdate(row.entry_id, 'supplier_id', supplier_id).done(function () {
+		    if( row.supply_id!==supply_id ){
+			Order.entryUpdate(row.entry_id, 'supply_id', supply_id).done(function () {
 			    Order.grid.reload();
 			});
 		    }

@@ -256,12 +256,13 @@ class StockBuyManager extends Catalog{
 	    $sortby="entry_id";
 	}
 	$having=$this->makeFilter($filter);
-        $sql_clear="DROP TABLE IF EXISTS supply_order_chart;";# TEMPORARY
-        $sql_prepare="CREATE TABLE supply_order_chart AS (SELECT 
+        $sql_clear="DROP TEMPORARY TABLE IF EXISTS supply_order_chart;";# TEMPORARY
+        $sql_prepare="CREATE TEMPORARY TABLE supply_order_chart AS (SELECT 
                         product_code,
                         supplier_id,
-                        ROUND(supply_buy*(1-supplier_buy_discount/100)*(1+supplier_buy_expense/100),2) self,
-                        supplier_name
+                        supplier_name,
+                        supply_id,
+                        ROUND(supply_buy*(1-supplier_buy_discount/100)*(1+supplier_buy_expense/100),2) self
                     FROM 
                         supplier_list spl
                             JOIN
@@ -275,9 +276,9 @@ class StockBuyManager extends Catalog{
                 ru product_name,
                 product_quantity,
                 product_comment,
-                supplier_id,
+                supply_id,
                 (SELECT 
-                    CONCAT(IF(so.supplier_id IS NOT NULL,'#',''),GROUP_CONCAT(CONCAT(supplier_id,':',CONCAT(IF(soc.supplier_id=so.supplier_id,'#',''),supplier_name),':',self,':',COALESCE(soc.supplier_id=so.supplier_id,0)) ORDER BY self SEPARATOR '|')) 
+                    CONCAT(IF(so.supply_id IS NULL,'#',''),GROUP_CONCAT(CONCAT_WS(':',CONCAT(IF(soc.supply_id=so.supply_id,'#',''),supplier_name),supply_id,self) ORDER BY self SEPARATOR '|')) 
                 FROM 
                     supply_order_chart soc 
                 WHERE soc.product_code=so.product_code) suggestion
