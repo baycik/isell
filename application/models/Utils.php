@@ -288,8 +288,8 @@ class Utils extends Catalog{
     /////////////////////////////
     //TREE MAINTAINANCE FUNCTIONS
     /////////////////////////////
-    public $treeRecalculate=[];
-    public function treeRecalculate(){
+    public $treesRecalculate=[];
+    public function treesRecalculate(){
         foreach(['acc_tree','companies_tree','stock_tree'] as $table){
             $this->treePathRecalculate($table, 0);
             $this->treeTopRecalculate($table);
