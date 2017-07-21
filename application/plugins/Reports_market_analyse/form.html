@@ -1,0 +1,21 @@
+<script>
+    function reports_market_analyse(){
+        var config=[
+            {name:'Артикул',field:'article'},
+            {name:'Филиал',field:'affiliate'},
+            {name:'Продано шт',field:'sold'},
+            {name:'Остаток шт',field:'left'}	    
+        ];
+        App.loadWindow('page/dialog/importer',{label:'маркет',fields_to_import:config}).progress(function(status,fvalue,Importer){
+            if( status==='submit' ){
+                $("#report_form_wrapper form").submit();
+            }
+        });
+    }
+</script>
+
+<form>
+    <div style="text-align: center">
+        <button type="button" onclick="reports_market_analyse()"><img src="img/report24.png" style="width:24px;height: auto"> Загрузить</button>
+    </div>
+</form>
