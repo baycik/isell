@@ -247,15 +247,7 @@ class StockBuyManager extends Catalog{
     }
 
     
-    
-    
-    
-    public $orderFetch=['offset'=>'int','limit'=>'int','sortby'=>'string','sortdir'=>'(ASC|DESC)','filter'=>'json'];
-    public function orderFetch($offset,$limit,$sortby,$sortdir,$filter=null){
-	if( empty($sortby) ){
-	    $sortby="entry_id";
-	}
-	$having=$this->makeFilter($filter);
+    private function orderTmpCreate(){
         $sql_clear="DROP TEMPORARY TABLE IF EXISTS supply_order_chart;";# TEMPORARY
         $sql_prepare="CREATE TEMPORARY TABLE supply_order_chart AS (SELECT 
                         product_code,
@@ -269,6 +261,19 @@ class StockBuyManager extends Catalog{
                         supply_list sl USING(supplier_id)
                     WHERE 
                         product_code IN (SELECT product_code FROM supply_order) );";
+	
+        $this->query($sql_clear);
+        $this->query($sql_prepare);
+    }
+    
+    
+    public $orderFetch=['offset'=>'int','limit'=>'int','sortby'=>'string','sortdir'=>'(ASC|DESC)','filter'=>'json'];
+    public function orderFetch($offset,$limit,$sortby,$sortdir,$filter=null){
+	if( empty($sortby) ){
+	    $sortby="entry_id";
+	}
+	$having=$this->makeFilter($filter);
+	$this->orderTmpCreate();
         $sql_fetch="
 	    SELECT 
                 entry_id,
@@ -289,8 +294,32 @@ class StockBuyManager extends Catalog{
             HAVING $having
 	    ORDER BY $sortby $sortdir
 	    LIMIT $limit OFFSET $offset";
-        $this->query($sql_clear);
-        $this->query($sql_prepare);
+	return $this->get_list($sql_fetch);
+    }
+
+    public $orderSummaryFetch=['offset'=>'int','limit'=>'int','sortby'=>'string','sortdir'=>'(ASC|DESC)','filter'=>'json'];
+    public function orderSummaryFetch($offset,$limit,$sortby,$sortdir,$filter=null){
+	if( empty($sortby) ){
+	    $sortby="supplier_name";
+	}
+	$this->orderTmpCreate();
+        $sql_fetch="
+	    SELECT 
+                entry_id,
+                product_code,
+                ru product_name,
+                product_quantity,
+                product_comment,
+                supply_id,
+                (SELECT 
+                    CONCAT(IF(so.supply_id IS NULL,'#',''),GROUP_CONCAT(CONCAT_WS(':',CONCAT(IF(soc.supply_id=so.supply_id,'#',''),supplier_name),supply_id,self) ORDER BY self SEPARATOR '|')) 
+                FROM 
+                    supply_order_chart soc 
+                WHERE soc.product_code=so.product_code) suggestion
+                FROM 
+                    supply_order so
+	    ORDER BY $sortby $sortdir
+	    LIMIT $limit OFFSET $offset";
 	return $this->get_list($sql_fetch);
     }
     
@@ -333,8 +362,6 @@ class StockBuyManager extends Catalog{
     public $viewOrderGet=['sortby'=>'string','sortdir'=>'(ASC|DESC)','filter'=>'json','out_type'=>'string'];
     public function viewOrderGet($sortby,$sortdir,$filter,$out_type){
 	$table=$this->orderFetch(0,10000,$sortby,$sortdir,$filter);
-	
-	
 	foreach($table as $row){
 	    $first='';
 	    $other='';
@@ -350,12 +377,6 @@ class StockBuyManager extends Catalog{
 	    }
 	    $row->suggestion=$first.$other;
 	}
-	
-	
-	
-	
-	
-	
 	$dump=[
 	    'tpl_files_folder'=>__DIR__.'/../views/',
 	    'tpl_files'=>'StockBuyOrderExport.xlsx',
