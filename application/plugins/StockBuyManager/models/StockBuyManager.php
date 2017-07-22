@@ -248,20 +248,20 @@ class StockBuyManager extends Catalog{
 
     
     private function orderTmpCreate(){
-        $sql_clear="DROP TEMPORARY TABLE IF EXISTS supply_order_chart;";# TEMPORARY
-        $sql_prepare="CREATE TEMPORARY TABLE supply_order_chart AS (SELECT 
+        $sql_clear="DROP  TABLE IF EXISTS supply_order_chart;";# TEMPORARY
+        $sql_prepare="CREATE  TABLE supply_order_chart AS (SELECT 
                         product_code,
                         supplier_id,
                         supplier_name,
                         supply_id,
-                        ROUND(supply_buy*(1-supplier_buy_discount/100)*(1+supplier_buy_expense/100),2) self
+                        ROUND(supply_buy*(1-supplier_buy_discount/100)*(1+supplier_buy_expense/100),2) self,
+			supply_buy
                     FROM 
                         supplier_list spl
                             JOIN
                         supply_list sl USING(supplier_id)
                     WHERE 
                         product_code IN (SELECT product_code FROM supply_order) );";
-	
         $this->query($sql_clear);
         $this->query($sql_prepare);
     }
@@ -305,19 +305,25 @@ class StockBuyManager extends Catalog{
 	$this->orderTmpCreate();
         $sql_fetch="
 	    SELECT 
-                entry_id,
-                product_code,
-                ru product_name,
-                product_quantity,
-                product_comment,
-                supply_id,
-                (SELECT 
-                    CONCAT(IF(so.supply_id IS NULL,'#',''),GROUP_CONCAT(CONCAT_WS(':',CONCAT(IF(soc.supply_id=so.supply_id,'#',''),supplier_name),supply_id,self) ORDER BY self SEPARATOR '|')) 
-                FROM 
-                    supply_order_chart soc 
-                WHERE soc.product_code=so.product_code) suggestion
-                FROM 
-                    supply_order so
+		supplier_name,
+		summary_volume,
+		summary_weight,
+		summary_sum
+
+                FROM
+		    (SELECT
+			supplier_name,
+			product_volume,
+			product_weight,
+			supply_buy
+		    FROM 
+			supply_order so
+			    JOIN
+			prod_list USING(product_code)
+			    JOIN
+			supply_order_chart soc 
+		    ) t
+		GROUP BY supplier_id
 	    ORDER BY $sortby $sortdir
 	    LIMIT $limit OFFSET $offset";
 	return $this->get_list($sql_fetch);
