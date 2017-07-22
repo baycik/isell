@@ -329,4 +329,50 @@ class StockBuyManager extends Catalog{
                 AND $where";
         return $this->query($sql);
     }
+    
+    public $viewOrderGet=['sortby'=>'string','sortdir'=>'(ASC|DESC)','filter'=>'json','out_type'=>'string'];
+    public function viewOrderGet($sortby,$sortdir,$filter,$out_type){
+	$table=$this->orderFetch(0,10000,$sortby,$sortdir,$filter);
+	
+	
+	foreach($table as $row){
+	    $first='';
+	    $other='';
+	    $options=explode('|',$row->suggestion);
+	    foreach($options as $option){
+		$option_arr=explode(':',$option);
+		if($option_arr[0][0]=='#'){
+		    $first=$option_arr[2]." $option_arr[0] | ";
+		    $row->product_price=$option_arr[2];
+		} else {
+		    $other.=$option_arr[2]." $option_arr[0] | ";
+		}
+	    }
+	    $row->suggestion=$first.$other;
+	}
+	
+	
+	
+	
+	
+	
+	$dump=[
+	    'tpl_files_folder'=>__DIR__.'/../views/',
+	    'tpl_files'=>'StockBuyOrderExport.xlsx',
+	    'title'=>"Заказ поставщикам",
+	    'user_data'=>[
+		'email'=>$this->Hub->svar('pcomp')?$this->Hub->svar('pcomp')->company_email:'',
+		'text'=>'Доброго дня'
+	    ],
+	    'view'=>[
+		'date'=>date('d.m.Y'),
+		'filter'=>$filter,
+		'rows'=>$table
+	    ]
+	];
+	$ViewManager=$this->Hub->load_model('ViewManager');
+	$ViewManager->store($dump);
+	$ViewManager->outRedirect($out_type);
+    }
+
 }
