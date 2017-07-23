@@ -248,8 +248,39 @@ class StockBuyManager extends Catalog{
 
     
     private function orderTmpCreate(){
-        $sql_clear="DROP  TABLE IF EXISTS supply_order_chart;";# TEMPORARY
-        $sql_prepare="CREATE  TABLE supply_order_chart AS (SELECT 
+	$this->orderChartTmpCreate();
+        $sql_clear="DROP TEMPORARY TABLE IF EXISTS tmp_supply_order;";# TEMPORARY
+        $sql_prepare="CREATE TEMPORARY TABLE tmp_supply_order AS (SELECT
+	    entry_id,
+	    t.product_code,
+	    product_quantity,
+	    supply_buy,
+	    supplier_id,
+	    supplier_name,
+	    product_volume,
+	    product_weight
+	FROM
+	    (SELECT
+		entry_id,
+		product_code,
+		product_quantity,
+		supply_id selected_supply_id,
+		(SELECT supply_id FROM tmp_supply_order_chart soc WHERE soc.product_code=so.product_code ORDER BY self LIMIT 1) cheapest_supply_id
+	    FROM 
+		supply_order so
+	    ) t
+	    JOIN
+	    supply_list ON supply_id=IF(selected_supply_id,selected_supply_id,cheapest_supply_id)
+		JOIN
+	    supplier_list USING(supplier_id)
+		JOIN
+	    prod_list pl ON pl.product_code=t.product_code);";
+	$this->query($sql_clear);
+        $this->query($sql_prepare);
+    }
+    private function orderChartTmpCreate(){
+        $sql_clear="DROP TEMPORARY TABLE IF EXISTS tmp_supply_order_chart;";# TEMPORARY
+        $sql_prepare="CREATE TEMPORARY TABLE tmp_supply_order_chart AS (SELECT 
                         product_code,
                         supplier_id,
                         supplier_name,
@@ -273,7 +304,7 @@ class StockBuyManager extends Catalog{
 	    $sortby="entry_id";
 	}
 	$having=$this->makeFilter($filter);
-	$this->orderTmpCreate();
+	$this->orderChartTmpCreate();
         $sql_fetch="
 	    SELECT 
                 entry_id,
@@ -285,8 +316,9 @@ class StockBuyManager extends Catalog{
                 (SELECT 
                     CONCAT(IF(so.supply_id IS NULL,'#',''),GROUP_CONCAT(CONCAT_WS(':',CONCAT(IF(soc.supply_id=so.supply_id,'#',''),supplier_name),supply_id,self) ORDER BY self SEPARATOR '|')) 
                 FROM 
-                    supply_order_chart soc 
-                WHERE soc.product_code=so.product_code) suggestion
+                    tmp_supply_order_chart soc 
+                WHERE soc.product_code=so.product_code
+		) suggestion
                 FROM 
                     supply_order so
                         LEFT JOIN
@@ -306,24 +338,14 @@ class StockBuyManager extends Catalog{
         $sql_fetch="
 	    SELECT 
 		supplier_name,
-		summary_volume,
-		summary_weight,
-		summary_sum
-
-                FROM
-		    (SELECT
-			supplier_name,
-			product_volume,
-			product_weight,
-			supply_buy
-		    FROM 
-			supply_order so
-			    JOIN
-			prod_list USING(product_code)
-			    JOIN
-			supply_order_chart soc 
-		    ) t
-		GROUP BY supplier_id
+		ROUND(SUM(product_volume*product_quantity),2) summary_volume,
+		ROUND(SUM(product_weight*product_quantity),2) summary_weight,
+		MAX(IF(product_volume>0,0,1)) volume_more,
+		MAX(IF(product_weight>0,0,1)) weight_more,
+		ROUND(SUM(supply_buy*product_quantity),2) summary_sum
+	    FROM
+		tmp_supply_order
+	    GROUP BY supplier_id
 	    ORDER BY $sortby $sortdir
 	    LIMIT $limit OFFSET $offset";
 	return $this->get_list($sql_fetch);

@@ -89,7 +89,6 @@
 			    var name=Supplier.selected.supplier_name;
 			}
 			Supply.grid.setFilter({supplier_name:name});
-                        Order.grid.setFilter({suggestion:(name?'#'+name:'')});
 		    };
 		    $("#suppliers_ac input").change(function (e) {
 			var formholder = $(this).parent().parent();
@@ -540,12 +539,24 @@
 	    },
 	    summary:{
 		tableInit:function(){
+		    function volume_more(row, cell, value, columnDef, dataContext) {
+			if (dataContext.volume_more > 0) {
+			    return "> "+value;
+			}
+			return value;
+		    }
+		    function weight_more(row, cell, value, columnDef, dataContext) {
+			if (dataContext.weight_more > 0) {
+			    return "> "+value;
+			}
+			return value;
+		    }
 		    var settings = {
 			columns: [
 			    {id: "supplier_name", field: "supplier_name", name: "Поставщик", width: 100, sortable: true},
 			    {id: "summary_count", field: "summary_count", name: "Наименований", width: 80, sortable: true, cssClass: 'slick-align-right'},
-			    {id: "summary_volume", field: "summary_volume", name: "Объем", width: 80, sortable: true, cssClass: 'slick-align-right'},
-			    {id: "summary_weight", field: "summary_weight", name: "Вес", width: 80, sortable: true, cssClass: 'slick-align-right'},
+			    {id: "summary_volume", field: "summary_volume", name: "Объем", width: 80, sortable: true, cssClass: 'slick-align-right',formatter:volume_more},
+			    {id: "summary_weight", field: "summary_weight", name: "Вес", width: 80, sortable: true, cssClass: 'slick-align-right',formatter:weight_more},
 			    {id: "summary_sum", field: "summary_sum", name: "Сумма", width: 80, sortable: true, cssClass: 'slick-align-right'}
 			],
 			options: {
@@ -560,7 +571,12 @@
 			    Order.summary.tools[action] && Order.summary.tools[action]();
 			}
 		    });
-
+		    Order.summary.grid.onSelectedRowsChanged.subscribe(function(){
+			var selected_rows = Order.summary.grid.getSelectedRows();
+			
+			var supplier_name=Order.summary.grid.getDataItem(selected_rows[0]).supplier_name;
+			Order.grid.setFilter({suggestion:(supplier_name?'#'+supplier_name:'')});
+		    });
 		},
 		tools:{
 		    reload: function () {
