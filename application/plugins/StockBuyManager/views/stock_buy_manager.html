@@ -2,7 +2,7 @@
     (function ($) {
         function init() {
 	    Layout.init();
-            Supplier.init();
+	    Supplier.init();
 	    Supply.init();
 	    Order.init();
         }
@@ -10,26 +10,26 @@
 	var Layout={
 	    init:function(){
 		$(window).on("resize", Layout.adjustHolders);
-		new Layout.Accordion("#bmanager_main_ac");
+		//new Layout.Accordion("#bmanager_main_ac");
 		Layout.adjustHolders();
 		setTimeout(function(){
 		    Layout.adjustHolders();
 		},1000);
-		
+
 	    },
 	    adjustHolders:function(){
+                //Layout.calcDimensions("#bmanager-grid", 0, -25);
+		Layout.calcDimensions(".x-stock-buy-manager-supply-holder", -50);
+		Layout.calcDimensions(".x-stock-buy-manager-order-holder", -50);                
                 
-                Layout.calcDimensions("#bmanager-grid", 0, -25);
-                
-                
-		Layout.calcDimensions("#suppliers_ac", 0, -25);
+		//Layout.calcDimensions("#suppliers_ac", 0, -25);
 		Layout.calcDimensions("#supply_list_sg");
 	    },
 	    calcDimensions:function(query, dw, dh){
 		var wheight = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
 		var height = (wheight - $(query).position().top - 20 + (dh || 0)) + 'px';// - $(query).position().top - 0
 		var width = $(query).parent().width() + (dw || 0);
-		$(query).css('height', height);
+		$(query).css('min-height', height);
 		$(query).css('width', width);
 	    },
 	    Accordion:function(query){
@@ -602,89 +602,97 @@
         ], init);
     })(jQuery);
 </script>
-<div id="bmanager-grid">
-    <div id="bmanager_main_ac">
-        <div style="background-color: rgba(200,200,200,.5);padding: 3px;">
-            <button class="accordion" style="width:250px" data-for="supply_order_section">Формирование заказа</button>
-            <button class="accordion" style="width:250px" data-for="supply_list_section">Справочник товаров поставщиков</button>
-        </div>
-        <div class="accordion_panel" id="supply_list_section">
-	    <div>
-		<div style="float: left;font-weight: bold;padding-top: 8px;">
-		    <img src="img/table16.png" style="width:16px;height: 16px;"> Поставщики
+<style>
+    .x-stock-buy-manager-supply-holder{
+        display: grid;
+        grid-template-columns:200px auto;
+        grid-gap:2px;
+    }
+    .x-stock-buy-manager-order-holder{
+        display: grid;
+        grid-template-columns:450px auto;
+        grid-gap:2px;	
+    }
+    
+</style>
+<div style="overflow-y: scroll;background-color: yellow">
+<div class="x-stock-buy-manager-supply-holder">
+    <div>
+	<div style="float: left;font-weight: bold;padding-top: 8px;">
+	    <img src="img/table16.png" style="width:16px;height: 16px;"> Поставщики
+	</div>
+	<div style="float: right;" class="x-stock-buy-manager-suplier-tools">
+	    <span class="icon-24 icon-create" title="Добавить стоку" data-action="entryCreate"> </span>
+	    <span class="icon-24 icon-delete" title="Удалить стоку" data-action="entryDelete"> </span>
+	    <span class="icon-24 icon-refresh" title="Обновить" data-action="reload"> </span> 
+	</div>
+	<div id="suppliers_ac" style="overflow-y: auto;clear: both;" class="covert">
+	    {{suppliers}}
+		<button class="accordion">{{supplier_name}} ({{supplier_product_count}})</button>
+		<div class="accordion_panel" data-index="{{#}}">
+		    {{if supplier_id}}
+		    <div style="background: rgba(255,255,255,.6);padding: 3px;">{{real_name}}</div>
+		    <label title="Псевдоним">Ник: <input name="supplier_name" value="{{supplier_name|blank>}}" style="width:120px"/></label>
+		    <div style="background: rgba(255,255,255,.6);padding: 3px;">Расчет себестоимости</div>
+		    <label>Доставка дн: <input name="supplier_delivery" value="{{supplier_delivery|blank>}}"></label>
+		    <label>Отсрочка дн: <input name="supplier_defferment" value="{{supplier_defferment|blank>}}"></label>
+		    <div style="background: rgba(255,255,255,.6);padding: 3px;">Расчет себестоимости</div>
+		    <label>Скидка от базы %: <input name="supplier_buy_discount" value="{{supplier_buy_discount|blank>}}"></label>
+		    <label>Затраты %: <input name="supplier_buy_expense" value="{{supplier_buy_expense|blank>}}"></label>
+		    <div style="background:  rgba(255,255,255,.6);padding: 3px;">Расчет цены продажи</div>
+		    <label>Cкидка от базы %: <input name="supplier_sell_discount" value="{{supplier_sell_discount|blank>}}"></label>
+		    <label>Наценка %: <input name="supplier_sell_gain" value="{{supplier_sell_gain|blank>}}"></label>
+		    {{/if}}
 		</div>
-		<div style="float: right;" class="x-stock-buy-manager-suplier-tools">
-		    <span class="icon-24 icon-create" title="Добавить стоку" data-action="entryCreate"> </span>
-		    <span class="icon-24 icon-delete" title="Удалить стоку" data-action="entryDelete"> </span>
-		    <span class="icon-24 icon-refresh" title="Обновить" data-action="reload"> </span> 
-		</div>
-		<div id="suppliers_ac" style="overflow-y: auto;" class="covert">
-		    {{suppliers}}
-			<button class="accordion">{{supplier_name}} ({{supplier_product_count}})</button>
-			<div class="accordion_panel" data-index="{{#}}">
-			    {{if supplier_id}}
-			    <div style="background: rgba(255,255,255,.6);padding: 3px;">{{real_name}}</div>
-			    <label title="Псевдоним">Ник: <input name="supplier_name" value="{{supplier_name|blank>}}" style="width:120px"/></label>
-			    <div style="background: rgba(255,255,255,.6);padding: 3px;">Расчет себестоимости</div>
-			    <label>Доставка дн: <input name="supplier_delivery" value="{{supplier_delivery|blank>}}"></label>
-			    <label>Отсрочка дн: <input name="supplier_defferment" value="{{supplier_defferment|blank>}}"></label>
-			    <div style="background: rgba(255,255,255,.6);padding: 3px;">Расчет себестоимости</div>
-			    <label>Скидка от базы %: <input name="supplier_buy_discount" value="{{supplier_buy_discount|blank>}}"></label>
-			    <label>Затраты %: <input name="supplier_buy_expense" value="{{supplier_buy_expense|blank>}}"></label>
-			    <div style="background:  rgba(255,255,255,.6);padding: 3px;">Расчет цены продажи</div>
-			    <label>Cкидка от базы %: <input name="supplier_sell_discount" value="{{supplier_sell_discount|blank>}}"></label>
-			    <label>Наценка %: <input name="supplier_sell_gain" value="{{supplier_sell_gain|blank>}}"></label>
-			    {{/if}}
-			</div>
-		    {{/suppliers}}
-		</div>
-	    </div>
-	    <div>
-		<div style="float: left;font-weight: bold;padding-top: 8px;">
-		    <img src="img/table16.png" style="width:16px;height: 16px;"> Товары поставщиков
-		</div>
-		<div style="float: right;margin-right: 20px" class="x-stock-buy-manager-tools">
-		    <span class="icon-24 icon-create" title="Добавить стоку" data-action="entryCreate"> </span>
-		    <span class="icon-24 icon-delete" title="Удалить стоку" data-action="entryDelete"> </span>
-		    <span class="icon-24 icon-export" title="Экспорт" data-action="entryExport"> </span> 
-		    <span class="icon-24 icon-import" title="Импортировать" data-action="entryImport"> </span> 
-		    <span class="icon-24 icon-download" title="Скачать таблицу" data-action="out"> </span> 
-		    <span class="icon-24 icon-print" title="Напечатать" data-action="print"> </span> 
-		    <span class="icon-24 icon-refresh" title="Обновить" data-action="reload"> </span> 
-		</div>
-		<div id="supply_list_sg" style="clear: both;overflow-x: auto;"></div>
-	    </div>
-        </div>
-
-        <div class="accordion_panel" id="supply_order_section">
-	    <div class="bmanager-order-suppliers">
-		<div style="margin-right: 20px" class="x-stock-buy-manager-order-summary-tools">
-		    <div style="float: left;font-weight: bold;padding-top: 8px;">
-			<img src="img/table16.png" style="width:16px;height: 16px;"> Итоги
-		    </div>
-		    <div style="float: right;font-weight: bold;padding-top: 8px;">
-		    <span class="icon-24 icon-refresh" title="Обновить" data-action="reload"> </span>
-		    </div>
-		</div>
-		<div id="supply_order_summary_sg" style="clear: both;height: 500px;"></div>
-	    </div>
-	    <div class="bmanager-order-entries">
-		<div style="width: 1080px;margin-right: 20px" class="x-stock-buy-manager-order-tools">
-		    <div style="float: left;font-weight: bold;padding-top: 8px;">
-			<img src="img/table16.png" style="width:16px;height: 16px;"> Заказ
-		    </div>
-		    <div style="float: right;font-weight: bold;padding-top: 8px;">
-		    <span class="icon-24 icon-create" title="Добавить стоку" data-action="entryCreate"> </span>
-		    <span class="icon-24 icon-delete" title="Удалить стоку" data-action="entryDelete"> </span>
-		    <span class="icon-24 icon-download" title="Скачать таблицу" data-action="out"> </span> 
-		    <span class="icon-24 icon-print" title="Напечатать" data-action="print"> </span> 
-		    <span class="icon-24 icon-refresh" title="Обновить" data-action="reload"> </span>
-		    </div>
-		</div>
-		<div id="supply_order_sg" style="clear: both;height: 500px;"></div>		
-	    </div>
-        </div>
+	    {{/suppliers}}
+	</div>
     </div>
+    <div>
+	<div style="margin-right: 20px">
+	    <div style="float: left;font-weight: bold;padding-top: 8px;">
+		<img src="img/table16.png" style="width:16px;height: 16px;"> Товары поставщиков
+	    </div>
+	    <div style="float: right;margin-right: 20px" class="x-stock-buy-manager-tools">
+		<span class="icon-24 icon-create" title="Добавить стоку" data-action="entryCreate"> </span>
+		<span class="icon-24 icon-delete" title="Удалить стоку" data-action="entryDelete"> </span>
+		<span class="icon-24 icon-export" title="Экспорт" data-action="entryExport"> </span> 
+		<span class="icon-24 icon-import" title="Импортировать" data-action="entryImport"> </span> 
+		<span class="icon-24 icon-download" title="Скачать таблицу" data-action="out"> </span> 
+		<span class="icon-24 icon-print" title="Напечатать" data-action="print"> </span> 
+		<span class="icon-24 icon-refresh" title="Обновить" data-action="reload"> </span> 
+	    </div>
+	</div>
+	<div id="supply_list_sg" style="clear: both;height: 500px;"></div>
+    </div>
+</div>
+<div class="x-stock-buy-manager-order-holder">
+    <div class="bmanager-order-suppliers">
+	<div style="margin-right: 20px" class="x-stock-buy-manager-order-summary-tools">
+	    <div style="float: left;font-weight: bold;padding-top: 8px;">
+		<img src="img/table16.png" style="width:16px;height: 16px;"> Итоги
+	    </div>
+	    <div style="float: right;font-weight: bold;padding-top: 8px;">
+	    <span class="icon-24 icon-refresh" title="Обновить" data-action="reload"> </span>
+	    </div>
+	</div>
+	<div id="supply_order_summary_sg" style="clear: both;height: 500px;"></div>
+    </div>
+    <div class="bmanager-order-entries">
+	<div style="margin-right: 20px" class="x-stock-buy-manager-order-tools">
+	    <div style="float: left;font-weight: bold;padding-top: 8px;">
+		<img src="img/table16.png" style="width:16px;height: 16px;"> Заказ
+	    </div>
+	    <div style="float: right;font-weight: bold;padding-top: 8px;">
+	    <span class="icon-24 icon-create" title="Добавить стоку" data-action="entryCreate"> </span>
+	    <span class="icon-24 icon-delete" title="Удалить стоку" data-action="entryDelete"> </span>
+	    <span class="icon-24 icon-download" title="Скачать таблицу" data-action="out"> </span> 
+	    <span class="icon-24 icon-print" title="Напечатать" data-action="print"> </span> 
+	    <span class="icon-24 icon-refresh" title="Обновить" data-action="reload"> </span>
+	    </div>
+	</div>
+	<div id="supply_order_sg" style="clear: both;height: 500px;"></div>		
+    </div>
+</div>
 </div>
 <style>
     #suppliers_ac input{
