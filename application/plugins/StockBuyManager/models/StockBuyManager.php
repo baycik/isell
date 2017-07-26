@@ -331,7 +331,10 @@ class StockBuyManager extends Catalog{
 
     public $orderSummaryFetch=[];
     public function orderSummaryFetch(){
-	$this->orderTmpCreate();
+    	$this->orderTmpCreate();
+	
+	$all_count=$this->get_value("SELECT COUNT(*) FROM tmp_supply_order");
+	$all=[['supplier_name'=>'* Все товары','supplier_id'=>0,'summary_count'=>$all_count]];
         $sql_fetch="
 	    SELECT 
 		supplier_id,
@@ -345,7 +348,7 @@ class StockBuyManager extends Catalog{
 	    FROM
 		tmp_supply_order
 	    GROUP BY supplier_id";
-	return $this->get_list($sql_fetch);
+	return array_merge($all,$this->get_list($sql_fetch));
     }
     
     public $orderCreate=[];

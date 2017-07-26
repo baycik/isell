@@ -763,6 +763,8 @@
 		    <div style="background: rgba(255,255,255,.6);padding: 3px;">Характаристики заказа</div>
 		    <label>Объем м3: <input name="summary_volume" value="{{if volume_more|more>0}}>{{/if}} {{summary_volume|blank>}}"></label>
 		    <label>Вес м3: <input name="summary_weight" value="{{if weight_more|more>0}}>{{/if}} {{summary_weight|blank>}}"></label>
+		    <div style="background: rgba(255,255,255,.6);padding: 3px;"> </div>
+		    <button>сформировать заказ</button>
 		    {{/if}}
 		</div>
 	    {{/summary}}
