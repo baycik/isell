@@ -4,32 +4,25 @@
 	    Layout.init();
 	    Supplier.init();
 	    Supply.init();
-	    Order.init();
         }
 
 	var Layout={
 	    init:function(){
-		$(window).on("resize", Layout.adjustHolders);
-		//new Layout.Accordion("#bmanager_main_ac");
 		Layout.adjustHolders();
 		setTimeout(function(){
 		    Layout.adjustHolders();
 		},1000);
-
+		
 	    },
 	    adjustHolders:function(){
-                //Layout.calcDimensions("#bmanager-grid", 0, -25);
-		Layout.calcDimensions("#suppliers_ac", 0, -25);
-		Layout.calcDimensions("#supply_list_sg");
-		Layout.calcDimensions(".x-stock-buy-manager-supply-holder", -50);
-		Layout.calcDimensions(".x-stock-buy-manager-order-holder", -50);                
-                
+		Layout.calcDimensions("#suppliers_ac",0,-30);
+		Layout.calcDimensions("#supply_list_sg",0,-30);
 	    },
 	    calcDimensions:function(query, dw, dh){
 		var wheight = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
 		var height = (wheight - $(query).position().top - 20 + (dh || 0)) + 'px';// - $(query).position().top - 0
 		var width = $(query).parent().width() + (dw || 0);
-		$(query).css('min-height', height);
+		$(query).css('height', height);
 		$(query).css('width', width);
 	    },
 	    Accordion:function(query){
@@ -394,202 +387,6 @@
 		});
 	    }
 	};
-	
-	/////////////////////////////////////////////////////////
-	// ORDER SECTION
-	/////////////////////////////////////////////////////////
-	var Order={
-	    grid:null,
-	    init:function(){
-		Order.tableInit();
-		Order.summary.tableInit();
-		Order.selector.init();
-	    },
-	    tools:{
-		reload: function () {
-		    Order.grid.reload();
-		},
-		entryDelete: function () {
-		    var selected_rows = Order.grid.getSelectedRows();
-		    if (!selected_rows.length) {
-			App.flash("Ни одна строка не выбрана!");
-			return;
-		    }
-		    if (!confirm("Удалить выделенные товары?")) {
-			return;
-		    }
-
-		    var entry_ids = [];
-		    for (var i in selected_rows) {
-			entry_ids.push(Order.grid.getDataItem(selected_rows[i]).entry_id);
-		    }
-		    $.post('StockBuyManager/orderDelete', {entry_ids: entry_ids}, function (ok) {
-			if (ok * 1) {
-			    Order.grid.reload();
-			}
-		    });
-		},
-		entryCreate: function () {
-		    $.post('StockBuyManager/orderCreate', function (insert_id) {
-			Order.grid.reload();
-		    });
-		},
-		out: function (out_type) {
-		    var sorted = Order.grid.getSortColumns();
-		    var params = {
-			sortby: sorted.length ? sorted[0].columnId : '',
-			sortdir: sorted.length ? (sorted[0].sortAsc ? 'ASC' : 'DESC') : '',
-			filter: JSON.stringify(Order.grid.getFilter()),
-			out_type: (out_type || '.xlsx')
-		    };
-		    var url = 'StockBuyManager/viewOrderGet/?' + $.param(params);
-		    if (out_type === '.print') {
-			window.open(url, 'print_tab');
-		    } else {
-			location.href = url;
-		    }
-		},
-		print: function () {
-		    this.out('.print');
-		}
-	    },
-	    tableInit:function(){
-		var settings = {
-		    columns: [
-			{id: "product_comment", field: "product_comment", name: "Коментарий", width: 120, sortable: true, editor: Slick.Editors.Text},
-			{id: "product_code", field: "product_code", name: "Код", width: 100, sortable: true, editor: Slick.Editors.Text},
-			{id: "product_name", field: "product_name", name: "Название", width: 300, sortable: true},
-			{id: "product_quantity", field: "product_quantity", name: "Кол-во", width: 60, sortable: true, editor: Slick.Editors.Integer, cssClass: 'slick-align-right'},
-			{id: "suggestion", field: "suggestion", name: "Варианты цен поставщиков", width: 520, sortable: true, formatter: Order.selector.make}
-		    ],
-		    options: {
-			editable: true,
-			autoedit: true,
-			fitWidth:true,
-			enableColumnReorder: false,
-			enableFilter: true,
-			multiSelect: true,
-			url: 'StockBuyManager/orderFetch'
-		    }
-		};
-		Order.grid = new SlickInfinite("#supply_order_sg", settings);
-		Order.grid.onCellChange.subscribe(function (e, data) {
-		    var updatedEntry = data.item;
-		    var field = settings.columns[data.cell].field;
-		    var value = updatedEntry[field];
-		    Order.entryUpdate(updatedEntry.entry_id, field, value).done(function () {
-			Order.grid.rowReload(data.row);
-		    });
-		});
-		$(".x-stock-buy-manager-order-tools").click(function (e) {
-		    var action = $(e.target).data('action');
-		    if (action) {
-			Order.tools[action] && Order.tools[action]();
-		    }
-		});
-	    },
-	    selector:{
-		init:function(){
-		    $("#supply_order_sg").on("click",function(e){
-			var type=e.target.type;
-			if( type==='radio' ){
-			    Order.selector.swap( e.target.name.split("_")[1], e.target.value );
-			}
-		    });
-		},
-		make:function(row, cell, value, columnDef, dataContext) {
-		    if( !value ){
-			return '';
-		    }
-		    function controller_render(option,checked){
-			var controller="";
-			controller+='<div class="selector_token selector_tag" title="'+option[0]+'" style="border-left:solid 8px rgb('+255*red_ratio+','+200*green_ratio+',0)"><label>';
-			controller+='<div class="selector_token" style="width:60px;">'+option[2]+'</div>';
-			controller+='<div class="selector_token" style="height:16px;width:16px;"><input type="radio" value="'+option[1]+'" name="r_'+row+'" '+checked+'></div>';
-			controller+='<div class="selector_token" >'+option[0]+'</div>';
-			controller+='</label></div>';
-			return controller;	
-		    }
-		    var selected_controller='';
-		    var rest_controllers='';
-		    var options=value.split("|");
-		    for(var i in options){
-			var red_ratio=i/options.length;
-			var green_ratio=1-red_ratio;
-			var option=options[i].split(":");
-			if( option[0][0]=='#' ){
-			    selected_controller+=controller_render(option,'checked');
-			} else {
-			    rest_controllers+=controller_render(option,'');
-			}
-		    }
-		    return selected_controller+rest_controllers;
-		},
-		swap:function( row_index, supply_id ){
-		    var row=Order.grid.getDataItem(row_index);
-		    if( row.supply_id!==supply_id ){
-			Order.entryUpdate(row.entry_id, 'supply_id', supply_id).done(function () {
-			    Order.grid.reload();
-			});
-		    }
-		}
-	    },
-	    entryUpdate:function(entry_id, field, value){
-		return $.post('StockBuyManager/orderUpdate', {entry_id: entry_id, field: field, value: value}, function (ok) {
-		    if (ok < 1) {
-			Order.grid.reload();
-		    }
-		});
-	    },
-	    summary:{
-		tableInit:function(){
-		    function volume_more(row, cell, value, columnDef, dataContext) {
-			if (dataContext.volume_more > 0) {
-			    return "> "+value;
-			}
-			return value;
-		    }
-		    function weight_more(row, cell, value, columnDef, dataContext) {
-			if (dataContext.weight_more > 0) {
-			    return "> "+value;
-			}
-			return value;
-		    }
-		    var settings = {
-			columns: [
-			    {id: "supplier_name", field: "supplier_name", name: "Поставщик", width: 100, sortable: true},
-			    {id: "summary_count", field: "summary_count", name: "Наименований", width: 80, sortable: true, cssClass: 'slick-align-right'},
-			    {id: "summary_volume", field: "summary_volume", name: "Объем", width: 80, sortable: true, cssClass: 'slick-align-right',formatter:volume_more},
-			    {id: "summary_weight", field: "summary_weight", name: "Вес", width: 80, sortable: true, cssClass: 'slick-align-right',formatter:weight_more},
-			    {id: "summary_sum", field: "summary_sum", name: "Сумма", width: 80, sortable: true, cssClass: 'slick-align-right'}
-			],
-			options: {
-			    enableColumnReorder: false,
-			    url: 'StockBuyManager/orderSummaryFetch'
-			}
-		    };
-		    Order.summary.grid = new SlickInfinite("#supply_order_summary_sg", settings);
-		    $(".x-stock-buy-manager-order-summary-tools").click(function (e) {
-			var action = $(e.target).data('action');
-			if (action) {
-			    Order.summary.tools[action] && Order.summary.tools[action]();
-			}
-		    });
-		    Order.summary.grid.onSelectedRowsChanged.subscribe(function(){
-			var selected_rows = Order.summary.grid.getSelectedRows();
-			
-			var supplier_name=Order.summary.grid.getDataItem(selected_rows[0]).supplier_name;
-			Order.grid.setFilter({suggestion:(supplier_name?'#'+supplier_name:'')});
-		    });
-		},
-		tools:{
-		    reload: function () {
-			Order.summary.grid.reload();
-		    }
-		}
-	    }
-	    
-	};
         App.require(["js/slick/lib/jquery.event.drag-2.3.0.js"],function(){
             App.require([
                 "js/slick/slick.core.js",
@@ -625,57 +422,18 @@
         font-size: 12px;
         transition: 0.8s;
     }
-
     button.accordion.active, button.accordion:hover {
         background-color: #Fe9; 
     }
-
     .accordion_panel {
         display: block;
         background-color: rgba(255,255,255,.3);
     }
-    #supply_list_section {
-        display: grid;
-        grid-template-columns:200px auto;
-        grid-gap:2px;
-    }
-    #supply_order_section{
-        display: grid;
-        grid-template-columns:450px auto;
-        grid-gap:2px;	
-    }
-    .selector_token{
-        display: inline-block;
-        overflow: hidden;
-        white-space: nowrap;
-    }
-    .selector_tag{
-        width:150px;
-	border-right:1px dotted black;
-        margin:-2px;
-        margin-right: 4px;
-        padding:0px 2px 2px 2px; 
-        height:20px;
-        font-size: 12px;
-    }
-    .active .selector_tag{
-        background: white;
-    }
-    
-    
-    
-    
     .x-stock-buy-manager-supply-holder{
         display: grid;
         grid-template-columns:200px auto;
         grid-gap:2px;
     }
-    .x-stock-buy-manager-order-holder{
-        display: grid;
-        grid-template-columns:450px auto;
-        grid-gap:2px;	
-    }
-    
 </style>
 <div class="x-stock-buy-manager-supply-holder">
     <div>
@@ -723,34 +481,6 @@
 		<span class="icon-24 icon-refresh" title="Обновить" data-action="reload"> </span> 
 	    </div>
 	</div>
-	<div id="supply_list_sg" style="clear: both;height: 500px;"></div>
-    </div>
-</div>
-<div class="x-stock-buy-manager-order-holder">
-    <div class="bmanager-order-suppliers">
-	<div style="margin-right: 20px" class="x-stock-buy-manager-order-summary-tools">
-	    <div style="float: left;font-weight: bold;padding-top: 8px;">
-		<img src="img/table16.png" style="width:16px;height: 16px;"> Итоги
-	    </div>
-	    <div style="float: right;font-weight: bold;padding-top: 8px;">
-	    <span class="icon-24 icon-refresh" title="Обновить" data-action="reload"> </span>
-	    </div>
-	</div>
-	<div id="supply_order_summary_sg" style="clear: both;height: 500px;"></div>
-    </div>
-    <div class="bmanager-order-entries">
-	<div style="margin-right: 20px" class="x-stock-buy-manager-order-tools">
-	    <div style="float: left;font-weight: bold;padding-top: 8px;">
-		<img src="img/table16.png" style="width:16px;height: 16px;"> Заказ
-	    </div>
-	    <div style="float: right;font-weight: bold;padding-top: 8px;">
-	    <span class="icon-24 icon-create" title="Добавить стоку" data-action="entryCreate"> </span>
-	    <span class="icon-24 icon-delete" title="Удалить стоку" data-action="entryDelete"> </span>
-	    <span class="icon-24 icon-download" title="Скачать таблицу" data-action="out"> </span> 
-	    <span class="icon-24 icon-print" title="Напечатать" data-action="print"> </span> 
-	    <span class="icon-24 icon-refresh" title="Обновить" data-action="reload"> </span>
-	    </div>
-	</div>
-	<div id="supply_order_sg" style="clear: both;height: 500px;"></div>		
+	<div id="supply_list_sg" style="clear: both;width:calc(100%);"></div>
     </div>
 </div>

@@ -1,0 +1,689 @@
+<script>
+    (function ($) {
+        function init() {
+	    Layout.init();
+	    Order.init();
+        }
+
+	var Layout={
+	    init:function(){
+		Layout.adjustHolders();
+		setTimeout(function(){
+		    Layout.adjustHolders();
+		},1000);
+	    },
+	    adjustHolders:function(){
+		//Layout.calcDimensions("#supply_order_sg");
+	    },
+	    calcDimensions:function(query, dw, dh){
+		var wheight = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
+		var height = (wheight - $(query).position().top - 20 + (dh || 0)) + 'px';// - $(query).position().top - 0
+		var width = $(query).parent().width() + (dw || 0);
+		$(query).css('min-height', height);
+		$(query).css('width', width);
+	    },
+	    Accordion:function(query){
+		var container = $(query);
+		var observer = {
+		    onselect: function () {}
+		};
+		function collapse(mode) {
+		    container.find(".accordion").each(function (i) {
+			if( mode==='first_is_open' && i===0 ){
+			    $(this).addClass("active");
+			    return;
+			}
+			$(this).removeClass("active");
+			if ($(this).data('for')) {
+			    $("#" + $(this).data('for')).addClass("hidden");
+			} else {
+			    $(this).next().addClass("hidden");
+			}
+		    });
+		}
+		collapse('first_is_open');
+		container.find(".accordion").on("click", function () {
+		    collapse();
+		    $(this).addClass("active");
+		    if ($(this).data('for')) {
+			$("#" + $(this).data('for')).removeClass("hidden");
+		    } else {
+			$(this).next().removeClass("hidden");
+		    }
+		    observer.onselect(this);
+		});
+		return observer;
+	    }
+	};
+	/////////////////////////////////////////////////////////
+	// SUPPLIER SECTION
+	/////////////////////////////////////////////////////////
+	var Supplier={
+	    selected:{},
+	    list:{},
+	    init:function(){
+		Supplier.accordion.load();
+		$(".x-stock-buy-manager-suplier-tools").click(function (e) {
+		    var action = $(e.target).data('action');
+		    if (action) {
+			Supplier.tools[action] && Supplier.tools[action]();
+		    }
+		});		
+	    },
+	    accordion:{
+		render:function(){
+		    var acc = new Layout.Accordion("#suppliers_ac");
+		    Supplier.selected=null;
+		    acc.onselect = function (header_node) {
+			var panel = header_node.nextElementSibling;
+			var index=$(panel).data('index');
+			var name='';
+			Supplier.selected=Supplier.list[index];
+			if( Supplier.selected.supplier_id ){
+			    var name=Supplier.selected.supplier_name;
+			}
+			Supply.grid.setFilter({supplier_name:name});
+		    };
+		    $("#suppliers_ac input").change(function (e) {
+			var formholder = $(this).parent().parent();
+			var index = formholder.data('index');
+			var field = $(this).attr('name');
+			var value = $(this).val();
+			$.post('StockBuyManager/supplierUpdate', {supplier_id: Supplier.list[index].supplier_id, field: field, value: value}, function (ok) {
+			    if (ok * 1) {
+				Supply.grid.reload();
+				if (field === 'supplier_sell_discount') {
+				    formholder.find('input[name=supplier_sell_gain]').val('');
+				}
+				if (field === 'supplier_sell_gain') {
+				    formholder.find('input[name=supplier_sell_discount]').val('');
+				}
+				if (field === 'supplier_name') {
+				    Supplier.accordion.load();
+				}
+			    }
+			});
+		    });
+		},
+		load:function(){
+		    $.get('StockBuyManager/supplierListFetch', function (resp) {
+			Supplier.list = App.json(resp);
+			App.renderTpl('suppliers_ac', {suppliers: Supplier.list});
+			Supplier.accordion.render();
+		    });
+		}
+	    },
+	    tools:{
+		reload: function () {
+		    Supplier.accordion.load();
+		},
+		entryDelete: function () {
+		    if (!Supplier.selected || !Supplier.selected.supplier_id) {
+			App.flash("Поставщик не выбран!");
+			return;
+		    }
+		    if (!confirm("Удалить выделенных поставщиков?")) {
+			return;
+		    }
+		    var also_products = confirm("Удалить товары этого поставщика?");
+		    $.post('StockBuyManager/supplierDelete', {supplier_id: Supplier.selected.supplier_id, also_products: also_products?1:0}, function (ok) {
+			if (ok * 1) {
+			    Supplier.accordion.load();
+			    Supply.grid.setFilter({supplier_name:''});
+			}
+		    });
+		},
+		entryCreate: function () {
+		    App.loadWindow('page/company/tree', {}).progress(function (status, comp) {
+			if (status === 'select') {
+			    $.post('StockBuyManager/supplierCreate', {supplier_company_id: comp.company_id, label: comp.label}, function (ok) {
+				if (ok * 1) {
+				    Supplier.accordion.load();
+				    App.flash("Поставщик "+comp.label+" добавлен");
+				}
+			    });
+			}
+		    });
+		}		
+	    }
+	};
+	/////////////////////////////////////////////////////////
+	// SUPPLY DATA BASE SECTION
+	/////////////////////////////////////////////////////////
+	var Supply={
+	    grid:null,
+	    init:function(){
+		Supply.initTable();
+		$(".x-stock-buy-manager-tools").click(function (e) {
+		    var action = $(e.target).data('action');
+		    if (action) {
+			Supply.tools[action] && Supply.tools[action]();
+		    }
+		});
+	    },
+	    tools:{
+		entryImport: function () {
+		    var config = [
+			{field: "supply_code", name: "Код пост.", required: true},
+			{field: "supply_name", name: "Название"},
+			{field: "supply_buy", name: "Закупка база"},
+			{field: "supply_comment", name: "Комментарий"},
+			{field: "product_code", name: "Код наш"},
+			{field: "supply_spack", name: "В Коробке"},
+			{field: "supply_bpack", name: "В Ящике"},
+			{field: "supply_weight", name: "Вес"},
+			{field: "supply_volume", name: "Объем"},
+			{field: "supply_unit", name: "Единица"}
+		    ];
+		    App.loadWindow('page/dialog/importer', {label: 'закуп', fields_to_import: config}).progress(function (status, fvalue, Importer) {
+			if (status === 'submit') {
+			    var question = "Импортировать эти строчки без указания поставщика?";
+			    fvalue.supplier_id = 0;
+			    if (Supplier.selected && Supplier.selected.supplier_id) {
+				question = "Импортировать эти строчки поставщику '" + Supplier.selected.supplier_name + "'?";
+				fvalue.supplier_id = Supplier.selected.supplier_id;
+			    }
+			    if (confirm(question)) {
+				App.post("StockBuyManager/entryImport/", fvalue, function (ok) {
+				    App.flash("Импортировано " + ok);
+				    Importer.reload();
+				    Supply.tools.reload();
+				});
+			    }
+			}
+		    });
+		},
+		importIntoStockTable: function () {
+		    var config = [
+			{name: 'Код товара', field: 'product_code', required: true, assigned: 'A'},
+			{name: 'Название Рус.', field: 'ru'},
+			{name: 'Покупка', field: 'buy'},
+			{name: 'Продажа', field: 'sell', assigned: 'D'},
+			{name: 'В коробке', field: 'product_spack'},
+			{name: 'В ящике', field: 'product_bpack'},
+			{name: 'Вес кг', field: 'product_weight'},
+			{name: 'Объем м3', field: 'product_volume'},
+			{name: 'Единица', field: 'product_unit'}
+		    ];
+		    App.loadWindow('page/dialog/importer', {label: 'склад', fields_to_import: config}).progress(function (status, fvalue, Importer) {
+			if (status === 'submit') {
+			    fvalue.parent_id = 0;
+			    $.post("Stock/import/", fvalue, function (ok) {
+				App.flash("Добавлено/Изменено " + ok);
+				Importer.reload();
+			    });
+			}
+		    });
+		},
+		entryExport: function () {
+		    var selected_rows = Supply.grid.getSelectedRows();
+		    if (!selected_rows.length) {
+			App.flash("Выберите строчки для экспорта");
+		    }
+		    var supply_ids = [];
+		    for (var i in selected_rows) {
+			supply_ids.push(Supply.grid.getDataItem(selected_rows[i]).supply_id);
+		    }
+		    $.post('StockBuyManager/supplyExport', {supply_ids: supply_ids}, function (ok) {
+			if (ok * 1) {
+			    App.flash("В таблицу Импортера добавлено строк: " + ok);
+			}
+			Supply.tools.importIntoStockTable();
+		    });
+
+		},
+		reload: function () {
+		    Supply.grid.reload();
+		},
+		entryDelete: function () {
+		    var selected_rows = Supply.grid.getSelectedRows();
+		    if (!selected_rows.length) {
+			App.flash("Ни одна строка не выбрана!");
+			return;
+		    }
+		    if (!confirm("Удалить выделенные товары?")) {
+			return;
+		    }
+
+		    var supply_ids = [];
+		    for (var i in selected_rows) {
+			supply_ids.push(Supply.grid.getDataItem(selected_rows[i]).supply_id);
+		    }
+		    $.post('StockBuyManager/supplyDelete', {supply_ids: supply_ids}, function (ok) {
+			if (ok * 1) {
+			    Supply.grid.reload();
+			}
+		    });
+		},
+		entryCreate: function () {
+		    var supplier_id = 0;
+		    if (Supplier.selected && Supplier.selected.supplier_id) {
+			supplier_id = Supplier.selected.supplier_id;
+		    }
+		    $.post('StockBuyManager/supplyCreate', {supplier_id: supplier_id}, function (insert_id) {
+			if (insert_id * 1) {
+			    Supply.grid.setFilter({supply_code: insert_id});
+			}
+		    });
+		},
+		out: function (out_type) {
+		    var sorted = Supply.grid.getSortColumns();
+		    var params = {
+			sortby: sorted.length ? sorted[0].columnId : '',
+			sortdir: sorted.length ? (sorted[0].sortAsc ? 'ASC' : 'DESC') : '',
+			filter: JSON.stringify(Supply.grid.getFilter()),
+			out_type: (out_type || '.xlsx')
+		    };
+		    var url = 'StockBuyManager/viewGet/?' + $.param(params);
+		    if (out_type === '.print') {
+			window.open(url, 'print_tab');
+		    } else {
+			location.href = url;
+		    }
+		},
+		print: function () {
+		    this.out('.print');
+		}
+	    },
+	    initTable:function(){
+		function AutoCompleteEditor(args) {
+		    var $input;
+		    var defaultValue;
+		    this.keyCaptureList = [Slick.keyCode.UP, Slick.keyCode.DOWN, Slick.keyCode.ENTER];
+		    this.init = function () {
+			var html = "<select style='width:100%'>";
+			for (var i in Supplier.list) {
+			    html += Supplier.list[i].supplier_name ? "<option>" + Supplier.list[i].supplier_name + "</option>" : "";
+			}
+			html += "</select>";
+			$input = $(html);
+			$input.appendTo(args.container);
+			$input.focus();
+		    };
+		    this.destroy = function () {
+			$input.remove();
+		    };
+		    this.focus = function () {
+			$input.focus();
+		    };
+		    this.loadValue = function (item) {
+			defaultValue = item[args.column.field];
+			$input.val(defaultValue);
+		    };
+		    this.serializeValue = function () {
+			return $input.val();
+		    };
+		    this.applyValue = function (item, state) {
+			item[args.column.field] = state;
+		    };
+		    this.isValueChanged = function () {
+			return (!($input.val() == "" && defaultValue == null)) && ($input.val() != defaultValue);
+		    };
+		    this.validate = function () {
+			return {
+			    valid: true,
+			    msg: null
+			};
+		    };
+		    this.init();
+		}
+		function perc(row, cell, value, columnDef, dataContext) {
+		    if (!value || value == 0) {
+			return "";
+		    }
+		    return value + " %";
+		}
+		function dateFormatter(row, cell, value, columnDef, dataContext) {
+		    var date = value.split(' ');
+		    return '<span title="' + value + '">' + date[0] + '</span>';
+		}
+		var settings = {
+		    columns: [
+			{id: "supplier_name", field: "supplier_name", name: "Поставщик", width: 110, editor: AutoCompleteEditor},
+			{id: "supply_code", field: "supply_code", name: "Артикул", width: 100, sortable: true, editor: Slick.Editors.Text},
+			{id: "supply_name", field: "supply_name", name: "Название", width: 300, sortable: true, editor: Slick.Editors.Text},
+			{id: "supply_buy", field: "supply_buy", name: "Закупка база", width: 80, sortable: true, editor: Slick.Editors.Float, cssClass: 'slick-align-right'},
+			{id: "supply_self", field: "supply_self", name: "Себестоимость", width: 90, sortable: true, cssClass: 'slick-align-right'},
+			{id: "supply_sell_ratio", field: "supply_sell_ratio", formatter: perc, name: "Корректировка", width: 80, editor: Slick.Editors.Float, sortable: true, cssClass: 'slick-align-right'},
+			{id: "supply_sell", field: "supply_sell", name: "Продажа", width: 70, sortable: true, cssClass: 'slick-align-right'},
+			{id: "product_code", field: "product_code", name: "Код", width: 100, sortable: true, editor: Slick.Editors.Text},
+			{id: "supply_stock_path", field: "supply_stock_path", name: "Категория на складе", sortable: true, width: 150},
+			{id: "supply_comment", field: "supply_comment", name: "Комментарий", width: 150, editor: Slick.Editors.Text},
+			{id: "supply_modified", field: "supply_modified", name: "Изменено", sortable: true, width: 70, formatter: dateFormatter},
+			{id: "supply_spack", field: "supply_spack", name: "В Коробке", sortable: true, width: 70, editor: Slick.Editors.Integer, cssClass: 'slick-align-right'},
+			{id: "supply_bpack", field: "supply_bpack", name: "В Ящике", sortable: true, width: 70, editor: Slick.Editors.Integer, cssClass: 'slick-align-right'},
+			{id: "supply_volume", field: "supply_volume", name: "Объем", sortable: true, width: 70, editor: Slick.Editors.Float, cssClass: 'slick-align-right'},
+			{id: "supply_weight", field: "supply_weight", name: "Вес", sortable: true, width: 70, editor: Slick.Editors.Float, cssClass: 'slick-align-right'},
+			{id: "supply_unit", field: "supply_unit", name: "Единица", sortable: true, width: 80, editor: Slick.Editors.Text, cssClass: 'slick-align-right'}
+		    ],
+		    options: {
+			editable: true,
+			autoedit: true,
+			//enableCellNavigation: true,
+			enableColumnReorder: false,
+			enableFilter: true,
+			multiSelect: true,
+			url: 'StockBuyManager/listFetch'
+		    }
+		};
+		function supplyTableEntryUpdate(supply_id, field, value) {
+		    return $.post('StockBuyManager/supplyUpdate', {supply_id: supply_id, field: field, value: value}, function (ok) {
+			if (ok < 1) {
+			    Supply.grid.reload();
+			}
+		    });
+		}
+		Supply.grid = new SlickInfinite("#supply_list_sg", settings);
+		Supply.grid.onCellChange.subscribe(function (e, data) {
+		    var updatedEntry = data.item;
+		    var field = settings.columns[data.cell].field;
+		    var value = updatedEntry[field];
+		    supplyTableEntryUpdate(updatedEntry.supply_id, field, value).done(function () {
+			//Supply.grid.rowReload(data.row);
+		    });
+		});
+	    }
+	};
+	
+	/////////////////////////////////////////////////////////
+	// ORDER SECTION
+	/////////////////////////////////////////////////////////
+	var Order={
+	    grid:null,
+	    init:function(){
+		Order.tableInit();
+		Order.summary.tableInit();
+		Order.selector.init();
+	    },
+	    tools:{
+		reload: function () {
+		    Order.grid.reload();
+		},
+		entryDelete: function () {
+		    var selected_rows = Order.grid.getSelectedRows();
+		    if (!selected_rows.length) {
+			App.flash("Ни одна строка не выбрана!");
+			return;
+		    }
+		    if (!confirm("Удалить выделенные товары?")) {
+			return;
+		    }
+
+		    var entry_ids = [];
+		    for (var i in selected_rows) {
+			entry_ids.push(Order.grid.getDataItem(selected_rows[i]).entry_id);
+		    }
+		    $.post('StockBuyManager/orderDelete', {entry_ids: entry_ids}, function (ok) {
+			if (ok * 1) {
+			    Order.grid.reload();
+			}
+		    });
+		},
+		entryCreate: function () {
+		    $.post('StockBuyManager/orderCreate', function (insert_id) {
+			Order.grid.reload();
+		    });
+		},
+		out: function (out_type) {
+		    var sorted = Order.grid.getSortColumns();
+		    var params = {
+			sortby: sorted.length ? sorted[0].columnId : '',
+			sortdir: sorted.length ? (sorted[0].sortAsc ? 'ASC' : 'DESC') : '',
+			filter: JSON.stringify(Order.grid.getFilter()),
+			out_type: (out_type || '.xlsx')
+		    };
+		    var url = 'StockBuyManager/viewOrderGet/?' + $.param(params);
+		    if (out_type === '.print') {
+			window.open(url, 'print_tab');
+		    } else {
+			location.href = url;
+		    }
+		},
+		print: function () {
+		    this.out('.print');
+		}
+	    },
+	    tableInit:function(){
+		var settings = {
+		    columns: [
+			{id: "product_comment", field: "product_comment", name: "Коментарий", width: 120, sortable: true, editor: Slick.Editors.Text},
+			{id: "product_code", field: "product_code", name: "Код", width: 100, sortable: true, editor: Slick.Editors.Text},
+			{id: "product_name", field: "product_name", name: "Название", width: 300, sortable: true},
+			{id: "product_quantity", field: "product_quantity", name: "Кол-во", width: 60, sortable: true, editor: Slick.Editors.Integer, cssClass: 'slick-align-right'},
+			{id: "suggestion", field: "suggestion", name: "Варианты цен поставщиков", width: 520, sortable: true, formatter: Order.selector.make}
+		    ],
+		    options: {
+			editable: true,
+			autoedit: true,
+			fitWidth:true,
+			enableColumnReorder: false,
+			enableFilter: true,
+			multiSelect: true,
+			url: 'StockBuyManager/orderFetch'
+		    }
+		};
+		Order.grid = new SlickInfinite("#supply_order_sg", settings);
+		Order.grid.onCellChange.subscribe(function (e, data) {
+		    var updatedEntry = data.item;
+		    var field = settings.columns[data.cell].field;
+		    var value = updatedEntry[field];
+		    Order.entryUpdate(updatedEntry.entry_id, field, value).done(function () {
+			Order.grid.rowReload(data.row);
+		    });
+		});
+		$(".x-stock-buy-manager-order-tools").click(function (e) {
+		    var action = $(e.target).data('action');
+		    if (action) {
+			Order.tools[action] && Order.tools[action]();
+		    }
+		});
+	    },
+	    selector:{
+		init:function(){
+		    $("#supply_order_sg").on("click",function(e){
+			var type=e.target.type;
+			if( type==='radio' ){
+			    Order.selector.swap( e.target.name.split("_")[1], e.target.value );
+			}
+		    });
+		},
+		make:function(row, cell, value, columnDef, dataContext) {
+		    if( !value ){
+			return '';
+		    }
+		    function controller_render(option,checked){
+			var controller="";
+			controller+='<div class="selector_token selector_tag" title="'+option[0]+'" style="border-left:solid 8px rgb('+255*red_ratio+','+200*green_ratio+',0)"><label>';
+			controller+='<div class="selector_token" style="width:60px;">'+option[2]+'</div>';
+			controller+='<div class="selector_token" style="height:16px;width:16px;"><input type="radio" value="'+option[1]+'" name="r_'+row+'" '+checked+'></div>';
+			controller+='<div class="selector_token" >'+option[0]+'</div>';
+			controller+='</label></div>';
+			return controller;	
+		    }
+		    var selected_controller='';
+		    var rest_controllers='';
+		    var options=value.split("|");
+		    for(var i in options){
+			var red_ratio=i/options.length;
+			var green_ratio=1-red_ratio;
+			var option=options[i].split(":");
+			if( option[0][0]=='#' ){
+			    selected_controller+=controller_render(option,'checked');
+			} else {
+			    rest_controllers+=controller_render(option,'');
+			}
+		    }
+		    return selected_controller+rest_controllers;
+		},
+		swap:function( row_index, supply_id ){
+		    var row=Order.grid.getDataItem(row_index);
+		    if( row.supply_id!==supply_id ){
+			Order.entryUpdate(row.entry_id, 'supply_id', supply_id).done(function () {
+			    Order.grid.reload();
+			});
+		    }
+		}
+	    },
+	    entryUpdate:function(entry_id, field, value){
+		return $.post('StockBuyManager/orderUpdate', {entry_id: entry_id, field: field, value: value}, function (ok) {
+		    if (ok < 1) {
+			Order.grid.reload();
+		    }
+		});
+	    },
+	    summary:{
+		tableInit:function(){
+		    function volume_more(row, cell, value, columnDef, dataContext) {
+			if (dataContext.volume_more > 0) {
+			    return "> "+value;
+			}
+			return value;
+		    }
+		    function weight_more(row, cell, value, columnDef, dataContext) {
+			if (dataContext.weight_more > 0) {
+			    return "> "+value;
+			}
+			return value;
+		    }
+		    var settings = {
+			columns: [
+			    {id: "supplier_name", field: "supplier_name", name: "Поставщик", width: 100, sortable: true},
+			    {id: "summary_count", field: "summary_count", name: "Наименований", width: 80, sortable: true, cssClass: 'slick-align-right'},
+			    {id: "summary_volume", field: "summary_volume", name: "Объем", width: 80, sortable: true, cssClass: 'slick-align-right',formatter:volume_more},
+			    {id: "summary_weight", field: "summary_weight", name: "Вес", width: 80, sortable: true, cssClass: 'slick-align-right',formatter:weight_more},
+			    {id: "summary_sum", field: "summary_sum", name: "Сумма", width: 80, sortable: true, cssClass: 'slick-align-right'}
+			],
+			options: {
+			    enableColumnReorder: false,
+			    url: 'StockBuyManager/orderSummaryFetch'
+			}
+		    };
+		    Order.summary.grid = new SlickInfinite("#supply_order_summary_sg", settings);
+		    $(".x-stock-buy-manager-order-summary-tools").click(function (e) {
+			var action = $(e.target).data('action');
+			if (action) {
+			    Order.summary.tools[action] && Order.summary.tools[action]();
+			}
+		    });
+		    Order.summary.grid.onSelectedRowsChanged.subscribe(function(){
+			var selected_rows = Order.summary.grid.getSelectedRows();
+			
+			var supplier_name=Order.summary.grid.getDataItem(selected_rows[0]).supplier_name;
+			Order.grid.setFilter({suggestion:(supplier_name?'#'+supplier_name:'')});
+		    });
+		},
+		tools:{
+		    reload: function () {
+			Order.summary.grid.reload();
+		    }
+		}
+	    }
+	    
+	};
+        App.require(["js/slick/lib/jquery.event.drag-2.3.0.js"],function(){
+            App.require([
+                "js/slick/slick.core.js",
+                "js/slick/plugins/slick.rowselectionmodel.js",
+                "js/slick/slick.editors.js",
+                "js/slick/slickinfinite.js",
+                "js/slick/slick.grid.js"
+            ], init);
+        });
+    })(jQuery);
+</script>
+<style>
+    #suppliers_ac input{
+        width: 40px;
+        margin-left: 5px;
+    }
+    #suppliers_ac label{
+        display: block;
+        clear: both;
+        padding: 2px;
+        text-align: right;
+    }
+    button.accordion {
+        color: #444;
+        cursor: pointer;
+        padding: 5px;
+        margin-bottom: 1px;
+        width: 100%;
+        border: none;
+        border-radius: 0px;
+        text-align: left;
+        outline: none;
+        font-size: 12px;
+        transition: 0.8s;
+    }
+
+    button.accordion.active, button.accordion:hover {
+        background-color: #Fe9; 
+    }
+
+    .accordion_panel {
+        display: block;
+        background-color: rgba(255,255,255,.3);
+    }
+    #supply_list_section {
+        display: grid;
+        grid-template-columns:200px auto;
+        grid-gap:2px;
+    }
+    #supply_order_section{
+        display: grid;
+        grid-template-columns:450px auto;
+        grid-gap:2px;	
+    }
+    .selector_token{
+        display: inline-block;
+        overflow: hidden;
+        white-space: nowrap;
+    }
+    .selector_tag{
+        width:150px;
+	border-right:1px dotted black;
+        margin:-2px;
+        margin-right: 4px;
+        padding:0px 2px 2px 2px; 
+        height:20px;
+        font-size: 12px;
+    }
+    .active .selector_tag{
+        background: white;
+    }
+    
+    .x-stock-buy-manager-order-holder{
+        display: grid;
+        grid-template-columns:450px auto;
+        grid-gap:2px;	
+    }
+    
+</style>
+<div class="x-stock-buy-manager-order-holder">
+    <div class="bmanager-order-suppliers">
+	<div style="margin-right: 20px" class="x-stock-buy-manager-order-summary-tools">
+	    <div style="float: left;font-weight: bold;padding-top: 8px;">
+		<img src="img/table16.png" style="width:16px;height: 16px;"> Итоги
+	    </div>
+	    <div style="float: right;font-weight: bold;padding-top: 8px;">
+	    <span class="icon-24 icon-refresh" title="Обновить" data-action="reload"> </span>
+	    </div>
+	</div>
+	<div id="supply_order_summary_sg" style="clear: both;height: 500px;"></div>
+    </div>
+    <div class="bmanager-order-entries">
+	<div style="margin-right: 20px" class="x-stock-buy-manager-order-tools">
+	    <div style="float: left;font-weight: bold;padding-top: 8px;">
+		<img src="img/table16.png" style="width:16px;height: 16px;"> Заказ
+	    </div>
+	    <div style="float: right;font-weight: bold;padding-top: 8px;">
+	    <span class="icon-24 icon-create" title="Добавить стоку" data-action="entryCreate"> </span>
+	    <span class="icon-24 icon-delete" title="Удалить стоку" data-action="entryDelete"> </span>
+	    <span class="icon-24 icon-download" title="Скачать таблицу" data-action="out"> </span> 
+	    <span class="icon-24 icon-print" title="Напечатать" data-action="print"> </span> 
+	    <span class="icon-24 icon-refresh" title="Обновить" data-action="reload"> </span>
+	    </div>
+	</div>
+	<div id="supply_order_sg" style="clear: both;height: 500px;"></div>		
+    </div>
+</div>
