@@ -143,13 +143,14 @@ var App = {
 	    var url=urls[i];
 	    if( App.loadedScripts.indexOf(url)>-1 ){
 		ok();
-		console.log(filesLeft,urls[i]);
 	    } else {
 		App.loadedScripts.push(url);
-		$.ajax({url: url,dataType: "script",cache: true,async:true}).done(function(){
+		$.ajax({url: url,dataType: "script",cache: true,async:true}).done(function(a,b,c){
 		    ok();
-		    console.log(filesLeft,urls[i]);
-		});
+		}).fail(function(a,b,c){
+                    ok();
+                    console.log('failed',b,c);
+                });
 	    }
 	}
     },
