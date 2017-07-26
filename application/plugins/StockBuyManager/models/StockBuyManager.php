@@ -329,15 +329,14 @@ class StockBuyManager extends Catalog{
 	return $this->get_list($sql_fetch);
     }
 
-    public $orderSummaryFetch=['offset'=>'int','limit'=>'int','sortby'=>'string','sortdir'=>'(ASC|DESC)','filter'=>'json'];
-    public function orderSummaryFetch($offset,$limit,$sortby,$sortdir,$filter=null){
-	if( empty($sortby) ){
-	    $sortby="supplier_name";
-	}
+    public $orderSummaryFetch=[];
+    public function orderSummaryFetch(){
 	$this->orderTmpCreate();
         $sql_fetch="
 	    SELECT 
+		supplier_id,
 		supplier_name,
+		COUNT(*) summary_count,
 		ROUND(SUM(product_volume*product_quantity),2) summary_volume,
 		ROUND(SUM(product_weight*product_quantity),2) summary_weight,
 		MAX(IF(product_volume>0,0,1)) volume_more,
@@ -345,9 +344,7 @@ class StockBuyManager extends Catalog{
 		ROUND(SUM(supply_buy*product_quantity),2) summary_sum
 	    FROM
 		tmp_supply_order
-	    GROUP BY supplier_id
-	    ORDER BY $sortby $sortdir
-	    LIMIT $limit OFFSET $offset";
+	    GROUP BY supplier_id";
 	return $this->get_list($sql_fetch);
     }
     
