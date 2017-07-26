@@ -19,11 +19,11 @@
 	    },
 	    adjustHolders:function(){
                 //Layout.calcDimensions("#bmanager-grid", 0, -25);
+		Layout.calcDimensions("#suppliers_ac", 0, -25);
+		Layout.calcDimensions("#supply_list_sg");
 		Layout.calcDimensions(".x-stock-buy-manager-supply-holder", -50);
 		Layout.calcDimensions(".x-stock-buy-manager-order-holder", -50);                
                 
-		//Layout.calcDimensions("#suppliers_ac", 0, -25);
-		Layout.calcDimensions("#supply_list_sg");
 	    },
 	    calcDimensions:function(query, dw, dh){
 		var wheight = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
@@ -590,19 +590,81 @@
 	    }
 	    
 	};
-
-
-        App.require([
-            "js/slick/lib/jquery.event.drag-2.3.0.js",
-            "js/slick/slick.core.js",
-            "js/slick/slick.grid.js",
-            "js/slick/plugins/slick.rowselectionmodel.js",
-            "js/slick/slick.editors.js",
-            "js/slick/slickinfinite.js"
-        ], init);
+        App.require(["js/slick/lib/jquery.event.drag-2.3.0.js"],function(){
+            App.require([
+                "js/slick/slick.core.js",
+                "js/slick/plugins/slick.rowselectionmodel.js",
+                "js/slick/slick.editors.js",
+                "js/slick/slickinfinite.js",
+                "js/slick/slick.grid.js"
+            ], init);
+        });
     })(jQuery);
 </script>
 <style>
+    #suppliers_ac input{
+        width: 40px;
+        margin-left: 5px;
+    }
+    #suppliers_ac label{
+        display: block;
+        clear: both;
+        padding: 2px;
+        text-align: right;
+    }
+    button.accordion {
+        color: #444;
+        cursor: pointer;
+        padding: 5px;
+        margin-bottom: 1px;
+        width: 100%;
+        border: none;
+        border-radius: 0px;
+        text-align: left;
+        outline: none;
+        font-size: 12px;
+        transition: 0.8s;
+    }
+
+    button.accordion.active, button.accordion:hover {
+        background-color: #Fe9; 
+    }
+
+    .accordion_panel {
+        display: block;
+        background-color: rgba(255,255,255,.3);
+    }
+    #supply_list_section {
+        display: grid;
+        grid-template-columns:200px auto;
+        grid-gap:2px;
+    }
+    #supply_order_section{
+        display: grid;
+        grid-template-columns:450px auto;
+        grid-gap:2px;	
+    }
+    .selector_token{
+        display: inline-block;
+        overflow: hidden;
+        white-space: nowrap;
+    }
+    .selector_tag{
+        width:150px;
+	border-right:1px dotted black;
+        margin:-2px;
+        margin-right: 4px;
+        padding:0px 2px 2px 2px; 
+        height:20px;
+        font-size: 12px;
+    }
+    .active .selector_tag{
+        background: white;
+    }
+    
+    
+    
+    
     .x-stock-buy-manager-supply-holder{
         display: grid;
         grid-template-columns:200px auto;
@@ -615,7 +677,6 @@
     }
     
 </style>
-<div style="overflow-y: scroll;background-color: yellow">
 <div class="x-stock-buy-manager-supply-holder">
     <div>
 	<div style="float: left;font-weight: bold;padding-top: 8px;">
@@ -693,65 +754,3 @@
 	<div id="supply_order_sg" style="clear: both;height: 500px;"></div>		
     </div>
 </div>
-</div>
-<style>
-    #suppliers_ac input{
-        width: 40px;
-        margin-left: 5px;
-    }
-    #suppliers_ac label{
-        display: block;
-        clear: both;
-        padding: 2px;
-        text-align: right;
-    }
-    button.accordion {
-        color: #444;
-        cursor: pointer;
-        padding: 5px;
-        margin-bottom: 1px;
-        width: 100%;
-        border: none;
-        border-radius: 0px;
-        text-align: left;
-        outline: none;
-        font-size: 12px;
-        transition: 0.8s;
-    }
-
-    button.accordion.active, button.accordion:hover {
-        background-color: #Fe9; 
-    }
-
-    .accordion_panel {
-        display: block;
-        background-color: rgba(255,255,255,.3);
-    }
-    #supply_list_section {
-        display: grid;
-        grid-template-columns:200px auto;
-        grid-gap:2px;
-    }
-    #supply_order_section{
-        display: grid;
-        grid-template-columns:450px auto;
-        grid-gap:2px;	
-    }
-    .selector_token{
-        display: inline-block;
-        overflow: hidden;
-        white-space: nowrap;
-    }
-    .selector_tag{
-        width:150px;
-	border-right:1px dotted black;
-        margin:-2px;
-        margin-right: 4px;
-        padding:0px 2px 2px 2px; 
-        height:20px;
-        font-size: 12px;
-    }
-    .active .selector_tag{
-        background: white;
-    }
-</style>
