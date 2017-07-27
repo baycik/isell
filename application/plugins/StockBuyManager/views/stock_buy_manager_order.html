@@ -57,336 +57,6 @@
 	    }
 	};
 	/////////////////////////////////////////////////////////
-	// SUPPLIER SECTION
-	/////////////////////////////////////////////////////////
-	var Summary={
-	    selected:{},
-	    list:{},
-	    init:function(){
-		Summary.accordion.load();
-		$(".x-stock-buy-manager-suplier-tools").click(function (e) {
-		    var action = $(e.target).data('action');
-		    if (action) {
-			Summary.tools[action] && Summary.tools[action]();
-		    }
-		});		
-	    },
-	    accordion:{
-		render:function(){
-		    var acc = new Layout.Accordion("#supply_order_summary_ac");
-		    Summary.selected=null;
-		    acc.onselect = function (header_node) {
-			var panel = header_node.nextElementSibling;
-			var index=$(panel).data('index');
-			var name='';
-			Summary.selected=Summary.list[index];
-			if( Summary.selected.supplier_id ){
-			    var name=Summary.selected.supplier_name;
-			}
-			Supply.grid.setFilter({supplier_name:name});
-		    };
-		    $("#supply_order_summary_ac input").change(function (e) {
-			var formholder = $(this).parent().parent();
-			var index = formholder.data('index');
-			var field = $(this).attr('name');
-			var value = $(this).val();
-			$.post('StockBuyManager/supplierUpdate', {supplier_id: Summary.list[index].supplier_id, field: field, value: value}, function (ok) {
-			    if (ok * 1) {
-				Supply.grid.reload();
-				if (field === 'supplier_sell_discount') {
-				    formholder.find('input[name=supplier_sell_gain]').val('');
-				}
-				if (field === 'supplier_sell_gain') {
-				    formholder.find('input[name=supplier_sell_discount]').val('');
-				}
-				if (field === 'supplier_name') {
-				    Summary.accordion.load();
-				}
-			    }
-			});
-		    });
-		},
-		load:function(){
-		    $.get('StockBuyManager/supplierListFetch', function (resp) {
-			Summary.list = App.json(resp);
-			App.renderTpl('supply_order_summary_ac', {suppliers: Summary.list});
-			Summary.accordion.render();
-		    });
-		}
-	    },
-	    tools:{
-		reload: function () {
-		    Summary.accordion.load();
-		},
-		entryDelete: function () {
-		    if (!Summary.selected || !Summary.selected.supplier_id) {
-			App.flash("Поставщик не выбран!");
-			return;
-		    }
-		    if (!confirm("Удалить выделенных поставщиков?")) {
-			return;
-		    }
-		    var also_products = confirm("Удалить товары этого поставщика?");
-		    $.post('StockBuyManager/supplierDelete', {supplier_id: Summary.selected.supplier_id, also_products: also_products?1:0}, function (ok) {
-			if (ok * 1) {
-			    Summary.accordion.load();
-			    Supply.grid.setFilter({supplier_name:''});
-			}
-		    });
-		},
-		entryCreate: function () {
-		    App.loadWindow('page/company/tree', {}).progress(function (status, comp) {
-			if (status === 'select') {
-			    $.post('StockBuyManager/supplierCreate', {supplier_company_id: comp.company_id, label: comp.label}, function (ok) {
-				if (ok * 1) {
-				    Summary.accordion.load();
-				    App.flash("Поставщик "+comp.label+" добавлен");
-				}
-			    });
-			}
-		    });
-		}		
-	    }
-	};
-	/////////////////////////////////////////////////////////
-	// SUPPLY DATA BASE SECTION
-	/////////////////////////////////////////////////////////
-	var Supply={
-	    grid:null,
-	    init:function(){
-		Supply.initTable();
-		$(".x-stock-buy-manager-tools").click(function (e) {
-		    var action = $(e.target).data('action');
-		    if (action) {
-			Supply.tools[action] && Supply.tools[action]();
-		    }
-		});
-	    },
-	    tools:{
-		entryImport: function () {
-		    var config = [
-			{field: "supply_code", name: "Код пост.", required: true},
-			{field: "supply_name", name: "Название"},
-			{field: "supply_buy", name: "Закупка база"},
-			{field: "supply_comment", name: "Комментарий"},
-			{field: "product_code", name: "Код наш"},
-			{field: "supply_spack", name: "В Коробке"},
-			{field: "supply_bpack", name: "В Ящике"},
-			{field: "supply_weight", name: "Вес"},
-			{field: "supply_volume", name: "Объем"},
-			{field: "supply_unit", name: "Единица"}
-		    ];
-		    App.loadWindow('page/dialog/importer', {label: 'закуп', fields_to_import: config}).progress(function (status, fvalue, Importer) {
-			if (status === 'submit') {
-			    var question = "Импортировать эти строчки без указания поставщика?";
-			    fvalue.supplier_id = 0;
-			    if (Summary.selected && Summary.selected.supplier_id) {
-				question = "Импортировать эти строчки поставщику '" + Summary.selected.supplier_name + "'?";
-				fvalue.supplier_id = Summary.selected.supplier_id;
-			    }
-			    if (confirm(question)) {
-				App.post("StockBuyManager/entryImport/", fvalue, function (ok) {
-				    App.flash("Импортировано " + ok);
-				    Importer.reload();
-				    Supply.tools.reload();
-				});
-			    }
-			}
-		    });
-		},
-		importIntoStockTable: function () {
-		    var config = [
-			{name: 'Код товара', field: 'product_code', required: true, assigned: 'A'},
-			{name: 'Название Рус.', field: 'ru'},
-			{name: 'Покупка', field: 'buy'},
-			{name: 'Продажа', field: 'sell', assigned: 'D'},
-			{name: 'В коробке', field: 'product_spack'},
-			{name: 'В ящике', field: 'product_bpack'},
-			{name: 'Вес кг', field: 'product_weight'},
-			{name: 'Объем м3', field: 'product_volume'},
-			{name: 'Единица', field: 'product_unit'}
-		    ];
-		    App.loadWindow('page/dialog/importer', {label: 'склад', fields_to_import: config}).progress(function (status, fvalue, Importer) {
-			if (status === 'submit') {
-			    fvalue.parent_id = 0;
-			    $.post("Stock/import/", fvalue, function (ok) {
-				App.flash("Добавлено/Изменено " + ok);
-				Importer.reload();
-			    });
-			}
-		    });
-		},
-		entryExport: function () {
-		    var selected_rows = Supply.grid.getSelectedRows();
-		    if (!selected_rows.length) {
-			App.flash("Выберите строчки для экспорта");
-		    }
-		    var supply_ids = [];
-		    for (var i in selected_rows) {
-			supply_ids.push(Supply.grid.getDataItem(selected_rows[i]).supply_id);
-		    }
-		    $.post('StockBuyManager/supplyExport', {supply_ids: supply_ids}, function (ok) {
-			if (ok * 1) {
-			    App.flash("В таблицу Импортера добавлено строк: " + ok);
-			}
-			Supply.tools.importIntoStockTable();
-		    });
-
-		},
-		reload: function () {
-		    Supply.grid.reload();
-		},
-		entryDelete: function () {
-		    var selected_rows = Supply.grid.getSelectedRows();
-		    if (!selected_rows.length) {
-			App.flash("Ни одна строка не выбрана!");
-			return;
-		    }
-		    if (!confirm("Удалить выделенные товары?")) {
-			return;
-		    }
-
-		    var supply_ids = [];
-		    for (var i in selected_rows) {
-			supply_ids.push(Supply.grid.getDataItem(selected_rows[i]).supply_id);
-		    }
-		    $.post('StockBuyManager/supplyDelete', {supply_ids: supply_ids}, function (ok) {
-			if (ok * 1) {
-			    Supply.grid.reload();
-			}
-		    });
-		},
-		entryCreate: function () {
-		    var supplier_id = 0;
-		    if (Summary.selected && Summary.selected.supplier_id) {
-			supplier_id = Summary.selected.supplier_id;
-		    }
-		    $.post('StockBuyManager/supplyCreate', {supplier_id: supplier_id}, function (insert_id) {
-			if (insert_id * 1) {
-			    Supply.grid.setFilter({supply_code: insert_id});
-			}
-		    });
-		},
-		out: function (out_type) {
-		    var sorted = Supply.grid.getSortColumns();
-		    var params = {
-			sortby: sorted.length ? sorted[0].columnId : '',
-			sortdir: sorted.length ? (sorted[0].sortAsc ? 'ASC' : 'DESC') : '',
-			filter: JSON.stringify(Supply.grid.getFilter()),
-			out_type: (out_type || '.xlsx')
-		    };
-		    var url = 'StockBuyManager/viewGet/?' + $.param(params);
-		    if (out_type === '.print') {
-			window.open(url, 'print_tab');
-		    } else {
-			location.href = url;
-		    }
-		},
-		print: function () {
-		    this.out('.print');
-		}
-	    },
-	    initTable:function(){
-		function AutoCompleteEditor(args) {
-		    var $input;
-		    var defaultValue;
-		    this.keyCaptureList = [Slick.keyCode.UP, Slick.keyCode.DOWN, Slick.keyCode.ENTER];
-		    this.init = function () {
-			var html = "<select style='width:100%'>";
-			for (var i in Summary.list) {
-			    html += Summary.list[i].supplier_name ? "<option>" + Summary.list[i].supplier_name + "</option>" : "";
-			}
-			html += "</select>";
-			$input = $(html);
-			$input.appendTo(args.container);
-			$input.focus();
-		    };
-		    this.destroy = function () {
-			$input.remove();
-		    };
-		    this.focus = function () {
-			$input.focus();
-		    };
-		    this.loadValue = function (item) {
-			defaultValue = item[args.column.field];
-			$input.val(defaultValue);
-		    };
-		    this.serializeValue = function () {
-			return $input.val();
-		    };
-		    this.applyValue = function (item, state) {
-			item[args.column.field] = state;
-		    };
-		    this.isValueChanged = function () {
-			return (!($input.val() == "" && defaultValue == null)) && ($input.val() != defaultValue);
-		    };
-		    this.validate = function () {
-			return {
-			    valid: true,
-			    msg: null
-			};
-		    };
-		    this.init();
-		}
-		function perc(row, cell, value, columnDef, dataContext) {
-		    if (!value || value == 0) {
-			return "";
-		    }
-		    return value + " %";
-		}
-		function dateFormatter(row, cell, value, columnDef, dataContext) {
-		    var date = value.split(' ');
-		    return '<span title="' + value + '">' + date[0] + '</span>';
-		}
-		var settings = {
-		    columns: [
-			{id: "supplier_name", field: "supplier_name", name: "Поставщик", width: 110, editor: AutoCompleteEditor},
-			{id: "supply_code", field: "supply_code", name: "Артикул", width: 100, sortable: true, editor: Slick.Editors.Text},
-			{id: "supply_name", field: "supply_name", name: "Название", width: 300, sortable: true, editor: Slick.Editors.Text},
-			{id: "supply_buy", field: "supply_buy", name: "Закупка база", width: 80, sortable: true, editor: Slick.Editors.Float, cssClass: 'slick-align-right'},
-			{id: "supply_self", field: "supply_self", name: "Себестоимость", width: 90, sortable: true, cssClass: 'slick-align-right'},
-			{id: "supply_sell_ratio", field: "supply_sell_ratio", formatter: perc, name: "Корректировка", width: 80, editor: Slick.Editors.Float, sortable: true, cssClass: 'slick-align-right'},
-			{id: "supply_sell", field: "supply_sell", name: "Продажа", width: 70, sortable: true, cssClass: 'slick-align-right'},
-			{id: "product_code", field: "product_code", name: "Код", width: 100, sortable: true, editor: Slick.Editors.Text},
-			{id: "supply_stock_path", field: "supply_stock_path", name: "Категория на складе", sortable: true, width: 150},
-			{id: "supply_comment", field: "supply_comment", name: "Комментарий", width: 150, editor: Slick.Editors.Text},
-			{id: "supply_modified", field: "supply_modified", name: "Изменено", sortable: true, width: 70, formatter: dateFormatter},
-			{id: "supply_spack", field: "supply_spack", name: "В Коробке", sortable: true, width: 70, editor: Slick.Editors.Integer, cssClass: 'slick-align-right'},
-			{id: "supply_bpack", field: "supply_bpack", name: "В Ящике", sortable: true, width: 70, editor: Slick.Editors.Integer, cssClass: 'slick-align-right'},
-			{id: "supply_volume", field: "supply_volume", name: "Объем", sortable: true, width: 70, editor: Slick.Editors.Float, cssClass: 'slick-align-right'},
-			{id: "supply_weight", field: "supply_weight", name: "Вес", sortable: true, width: 70, editor: Slick.Editors.Float, cssClass: 'slick-align-right'},
-			{id: "supply_unit", field: "supply_unit", name: "Единица", sortable: true, width: 80, editor: Slick.Editors.Text, cssClass: 'slick-align-right'}
-		    ],
-		    options: {
-			editable: true,
-			autoedit: true,
-			//enableCellNavigation: true,
-			enableColumnReorder: false,
-			enableFilter: true,
-			multiSelect: true,
-			url: 'StockBuyManager/listFetch'
-		    }
-		};
-		function supplyTableEntryUpdate(supply_id, field, value) {
-		    return $.post('StockBuyManager/supplyUpdate', {supply_id: supply_id, field: field, value: value}, function (ok) {
-			if (ok < 1) {
-			    Supply.grid.reload();
-			}
-		    });
-		}
-		Supply.grid = new SlickInfinite("#supply_list_sg", settings);
-		Supply.grid.onCellChange.subscribe(function (e, data) {
-		    var updatedEntry = data.item;
-		    var field = settings.columns[data.cell].field;
-		    var value = updatedEntry[field];
-		    supplyTableEntryUpdate(updatedEntry.supply_id, field, value).done(function () {
-			//Supply.grid.rowReload(data.row);
-		    });
-		});
-	    }
-	};
-	
-	/////////////////////////////////////////////////////////
 	// ORDER SECTION
 	/////////////////////////////////////////////////////////
 	var Order={
@@ -532,7 +202,10 @@
 		    }
 		});
 	    },
-	    summary:{
+	    prepare:function(supplier_company_id){
+		alert(supplier_company_id);
+	    }
+	    /*summary:{
 		tableInit:function(){
 		    function volume_more(row, cell, value, columnDef, dataContext) {
 			if (dataContext.volume_more > 0) {
@@ -578,7 +251,7 @@
 			Order.summary.grid.reload();
 		    }
 		}
-	    }
+	    }*/
 	};
 	/////////////////////////////////////////////////////////
 	// SUMMARY SECTION
@@ -593,7 +266,13 @@
 		    if (action) {
 			Summary.tools[action] && Summary.tools[action]();
 		    }
-		});		
+		});
+		$("#supply_order_summary_ac").click(function (e) {
+		    var supplier_company_id = $(e.target).data('supplier-company-id');
+		    if (supplier_company_id) {
+			Order.prepare(supplier_company_id);
+		    }
+		});
 	    },
 	    accordion:{
 		render:function(){
@@ -602,33 +281,13 @@
 		    acc.onselect = function (header_node) {
 			var panel = header_node.nextElementSibling;
 			var index=$(panel).data('index');
-			var supplier_name='';
+			var supplier_company_label='';
 			Summary.selected=Summary.list[index];
-			if( Summary.selected.supplier_id ){
-			    supplier_name=Summary.selected.supplier_name;
+			if( Summary.selected.supplier_company_id ){
+			    supplier_company_label=Summary.selected.supplier_company_label;
 			}
-			Order.grid.setFilter({suggestion:(supplier_name?'#'+supplier_name:'')});
+			Order.grid.setFilter({suggestion:(supplier_company_label?'#'+supplier_company_label:'')});
 		    };
-		    $("#supply_order_summary_ac input").change(function (e) {
-			var formholder = $(this).parent().parent();
-			var index = formholder.data('index');
-			var field = $(this).attr('name');
-			var value = $(this).val();
-			$.post('StockBuyManager/summaryUpdate', {supplier_id: Summary.list[index].supplier_id, field: field, value: value}, function (ok) {
-			    if (ok * 1) {
-				Supply.grid.reload();
-				if (field === 'supplier_sell_discount') {
-				    formholder.find('input[name=supplier_sell_gain]').val('');
-				}
-				if (field === 'supplier_sell_gain') {
-				    formholder.find('input[name=supplier_sell_discount]').val('');
-				}
-				if (field === 'supplier_name') {
-				    Summary.accordion.load();
-				}
-			    }
-			});
-		    });
 		},
 		load:function(){
 		    $.get('StockBuyManager/orderSummaryFetch', function (resp) {
@@ -641,22 +300,6 @@
 	    tools:{
 		reload: function () {
 		    Summary.accordion.load();
-		},
-		entryDelete: function () {
-		    if (!Summary.selected || !Summary.selected.supplier_id) {
-			App.flash("Поставщик не выбран!");
-			return;
-		    }
-		    if (!confirm("Удалить выделенных поставщиков?")) {
-			return;
-		    }
-		    var also_products = confirm("Удалить товары этого поставщика?");
-		    $.post('StockBuyManager/supplierDelete', {supplier_id: Summary.selected.supplier_id, also_products: also_products?1:0}, function (ok) {
-			if (ok * 1) {
-			    Summary.accordion.load();
-			    Order.grid.setFilter({suggestion:''});
-			}
-		    });
 		}
 	    }
 	};
@@ -677,7 +320,7 @@
 </script>
 <style>
     #supply_order_summary_ac input{
-        width: 60px;
+        width: 80px;
         margin-left: 5px;
     }
     #supply_order_summary_ac label{
@@ -754,17 +397,17 @@
 	</div>
 	<div id="supply_order_summary_ac" style="overflow-y: auto;clear: both;" class="covert">
 	    {{summary}}
-		<button class="accordion">{{supplier_name}} ({{summary_count}})</button>
+		<button class="accordion">{{supplier_company_label}} ({{summary_count}})</button>
 		<div class="accordion_panel" data-index="{{#}}">
-		    {{if supplier_id}}
+		    {{if supplier_company_id}}
 		    <div style="background: rgba(255,255,255,.6);padding: 3px;">Стоимость заказа</div>
 		    <label>Сумма: <input name="summary_sum" value="{{summary_sum|blank>}}"></label>
-		    <label>Ожидаемые затраты: <input name="summary_sum" value="{{summary_sum|blank>}}"></label>
 		    <div style="background: rgba(255,255,255,.6);padding: 3px;">Характаристики заказа</div>
-		    <label>Объем м3: <input name="summary_volume" value="{{if volume_more|more>0}}>{{/if}} {{summary_volume|blank>}}"></label>
-		    <label>Вес м3: <input name="summary_weight" value="{{if weight_more|more>0}}>{{/if}} {{summary_weight|blank>}}"></label>
-		    <div style="background: rgba(255,255,255,.6);padding: 3px;"> </div>
-		    <button>сформировать заказ</button>
+		    <label>Объем м3: <span style="font-size:14px">{{if volume_more|more>0}}>{{/if}}</span><input name="summary_volume" value="{{summary_volume|blank>}}"></label>
+		    <label>Вес м3: <span style="font-size:14px">{{if weight_more|more>0}}>{{/if}}</span><input name="summary_weight" value="{{summary_weight|blank>}}"></label>
+		    <div style="background: rgba(255,255,255,.6);padding: 3px;"> 
+		    <button style="width:180px;margin: 5px;text-align: left" data-supplier-company-id="{{supplier_company_id}}"><img src="img/docnew.png" style="width:24px;height: 24px;"> Сформировать заказ</button>
+		    </div>
 		    {{/if}}
 		</div>
 	    {{/summary}}

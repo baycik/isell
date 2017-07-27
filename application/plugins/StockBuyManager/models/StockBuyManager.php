@@ -255,8 +255,8 @@ class StockBuyManager extends Catalog{
 	    t.product_code,
 	    product_quantity,
 	    supply_buy,
-	    supplier_id,
-	    supplier_name,
+	    supplier_company_id,
+	    (SELECT label FROM companies_tree JOIN companies_list USING(branch_id) WHERE company_id=supplier_company_id) supplier_company_label,
 	    product_volume,
 	    product_weight
 	FROM
@@ -283,7 +283,7 @@ class StockBuyManager extends Catalog{
         $sql_prepare="CREATE TEMPORARY TABLE tmp_supply_order_chart AS (SELECT 
                         product_code,
                         supplier_id,
-                        supplier_name,
+                        (SELECT label FROM companies_tree JOIN companies_list USING(branch_id) WHERE company_id=spl.supplier_company_id) supplier_company_label,
                         supply_id,
                         ROUND(supply_buy*(1-supplier_buy_discount/100)*(1+supplier_buy_expense/100),2) self,
 			supply_buy
@@ -314,7 +314,7 @@ class StockBuyManager extends Catalog{
                 product_comment,
                 supply_id,
                 (SELECT 
-                    CONCAT(IF(so.supply_id IS NULL,'#',''),GROUP_CONCAT(CONCAT_WS(':',CONCAT(IF(soc.supply_id=so.supply_id,'#',''),supplier_name),supply_id,self) ORDER BY self SEPARATOR '|')) 
+                    CONCAT(IF(so.supply_id IS NULL,'#',''),GROUP_CONCAT(CONCAT_WS(':',CONCAT(IF(soc.supply_id=so.supply_id,'#',''),supplier_company_label),supply_id,self) ORDER BY self SEPARATOR '|')) 
                 FROM 
                     tmp_supply_order_chart soc 
                 WHERE soc.product_code=so.product_code
@@ -334,11 +334,11 @@ class StockBuyManager extends Catalog{
     	$this->orderTmpCreate();
 	
 	$all_count=$this->get_value("SELECT COUNT(*) FROM tmp_supply_order");
-	$all=[['supplier_name'=>'* Все товары','supplier_id'=>0,'summary_count'=>$all_count]];
+	$all=[['supplier_company_label'=>'* Все товары','supplier_company_id'=>0,'summary_count'=>$all_count]];
         $sql_fetch="
 	    SELECT 
-		supplier_id,
-		supplier_name,
+		supplier_company_id,
+		supplier_company_label,
 		COUNT(*) summary_count,
 		ROUND(SUM(product_volume*product_quantity),2) summary_volume,
 		ROUND(SUM(product_weight*product_quantity),2) summary_weight,
@@ -347,7 +347,7 @@ class StockBuyManager extends Catalog{
 		ROUND(SUM(supply_buy*product_quantity),2) summary_sum
 	    FROM
 		tmp_supply_order
-	    GROUP BY supplier_id";
+	    GROUP BY supplier_company_id";
 	return array_merge($all,$this->get_list($sql_fetch));
     }
     
