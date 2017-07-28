@@ -254,7 +254,7 @@ class StockBuyManager extends Catalog{
 	    entry_id,
 	    t.product_code,
 	    product_quantity,
-	    supply_buy,
+	    ROUND(supply_buy*(1-supplier_buy_discount/100),2) supply_buy,
 	    supplier_company_id,
 	    (SELECT label FROM companies_tree JOIN companies_list USING(branch_id) WHERE company_id=supplier_company_id) supplier_company_label,
 	    product_volume,
@@ -286,7 +286,7 @@ class StockBuyManager extends Catalog{
                         (SELECT label FROM companies_tree JOIN companies_list USING(branch_id) WHERE company_id=spl.supplier_company_id) supplier_company_label,
                         supply_id,
                         ROUND(supply_buy*(1-supplier_buy_discount/100)*(1+supplier_buy_expense/100),2) self,
-			supply_buy
+			ROUND(supply_buy*(1-supplier_buy_discount/100),2) supply_buy
                     FROM 
                         supplier_list spl
                             JOIN
@@ -423,5 +423,30 @@ class StockBuyManager extends Catalog{
 	$ViewManager->store($dump);
 	$ViewManager->outRedirect($out_type);
     }
+
+    public $orderSubmit=['supplier_company_id'=>'int'];
+    public function orderSubmit($supplier_company_id){
+	$this->orderTmpCreate();
+	$buy_order=$this->get_list("SELECT 
+	    GROUP_CONCAT(entry_id) entry_ids,product_code,SUM(product_quantity) product_quantity,MIN(supply_buy)  supply_buy
+	    FROM 
+		tmp_supply_order 
+	    WHERE 
+		supplier_company_id='$supplier_company_id'
+	    GROUP BY product_code");
+	
+	
+	$Company=$this->Hub->load_model('Company');
+	$Company->selectPassiveCompany($supplier_company_id);
+	$DocumentItems=$this->Hub->load_model("DocumentItems");
+	$doc_id=$DocumentItems->createDocument(2);//create buy document
+	$vat_correction=$DocumentItems->headGet( $doc_id )->vat_rate/100+1;
+	foreach($buy_order as $row){
+	   $DocumentItems->entryAdd($row->product_code,$row->product_quantity,$row->supply_buy/$vat_correction);
+	   $this->query("DELETE FROM supply_order WHERE entry_id IN ($row->entry_ids)");
+	}
+	return $doc_id;
+    }
+    
 
 }

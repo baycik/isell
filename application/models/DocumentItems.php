@@ -184,9 +184,9 @@ class DocumentItems extends DocumentCore{
 //            ORDER BY pl.product_code";
 //	return $this->get_list($sql);
     }
-    public function entryAdd( $code, $quantity ){
+    public function entryAdd( $code, $quantity, $price=NULL ){
 	$Document2=$this->Hub->bridgeLoad('Document');
-	return $Document2->addEntry( $code, $quantity );
+	return $Document2->addEntry( $code, $quantity, $price );
     }
     public $entryPostAdd=[];
     public function entryPostAdd(){

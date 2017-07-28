@@ -385,7 +385,7 @@ class Document extends Data {
 	return true;
     }
 
-    public function addEntry($product_code, $product_quantity) {
+    public function addEntry($product_code, $product_quantity, $invoice_price=NULL) {
 	$this->Base->LoadClass('Stock');
 	if ($this->isCommited()) {
 	    $this->Base->set_level(2);
@@ -408,7 +408,10 @@ class Document extends Data {
         /*
          *  bugfix getInvoicePrice accepts stripslashed product_code
          */
-	$invoice_price = $this->getProductInvoicePrice( stripslashes($product_code) );
+	if( $invoice_price===NULL ){
+	    $invoice_price = $this->getProductInvoicePrice( stripslashes($product_code) );
+	}
+	
 	if (!$this->alterEntry('update', $doc_entry_id, $product_quantity, $invoice_price)) {//update not ok
 	    $this->Base->query("DELETE FROM document_entries WHERE doc_entry_id=$doc_entry_id");
 	    $this->Base->query("ROLLBACK");

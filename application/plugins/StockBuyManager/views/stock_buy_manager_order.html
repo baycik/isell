@@ -199,59 +199,23 @@
 		return $.post('StockBuyManager/orderUpdate', {entry_id: entry_id, field: field, value: value}, function (ok) {
 		    if (ok < 1) {
 			Order.grid.reload();
+			Summary.accordion.load();
 		    }
 		});
 	    },
-	    prepare:function(supplier_company_id){
-		alert(supplier_company_id);
+	    submit:function(supplier_company_id){
+		$.post('StockBuyManager/orderSubmit',{supplier_company_id:supplier_company_id},function(doc_id){
+		    if( doc_id*1 ){
+			App.flash("Заказ сформирован");
+			App.loadWindow('page/trade/document',{doc_id:doc_id});
+			Order.grid.reload();
+			Summary.accordion.load();
+			Order.grid.setFilter({suggestion:''});
+		    } else {
+			App.flash("Заказ не сформирован");
+		    }
+		});
 	    }
-	    /*summary:{
-		tableInit:function(){
-		    function volume_more(row, cell, value, columnDef, dataContext) {
-			if (dataContext.volume_more > 0) {
-			    return "> "+value;
-			}
-			return value;
-		    }
-		    function weight_more(row, cell, value, columnDef, dataContext) {
-			if (dataContext.weight_more > 0) {
-			    return "> "+value;
-			}
-			return value;
-		    }
-		    var settings = {
-			columns: [
-			    {id: "supplier_name", field: "supplier_name", name: "Поставщик", width: 100, sortable: true},
-			    {id: "summary_count", field: "summary_count", name: "Наименований", width: 80, sortable: true, cssClass: 'slick-align-right'},
-			    {id: "summary_volume", field: "summary_volume", name: "Объем", width: 80, sortable: true, cssClass: 'slick-align-right',formatter:volume_more},
-			    {id: "summary_weight", field: "summary_weight", name: "Вес", width: 80, sortable: true, cssClass: 'slick-align-right',formatter:weight_more},
-			    {id: "summary_sum", field: "summary_sum", name: "Сумма", width: 80, sortable: true, cssClass: 'slick-align-right'}
-			],
-			options: {
-			    enableColumnReorder: false,
-			    url: 'StockBuyManager/orderSummaryFetch'
-			}
-		    };
-		    Order.summary.grid = new SlickInfinite("#supply_order_summary_sg", settings);
-		    $(".x-stock-buy-manager-order-summary-tools").click(function (e) {
-			var action = $(e.target).data('action');
-			if (action) {
-			    Order.summary.tools[action] && Order.summary.tools[action]();
-			}
-		    });
-		    Order.summary.grid.onSelectedRowsChanged.subscribe(function(){
-			var selected_rows = Order.summary.grid.getSelectedRows();
-			
-			var supplier_name=Order.summary.grid.getDataItem(selected_rows[0]).supplier_name;
-			Order.grid.setFilter({suggestion:(supplier_name?'#'+supplier_name:'')});
-		    });
-		},
-		tools:{
-		    reload: function () {
-			Order.summary.grid.reload();
-		    }
-		}
-	    }*/
 	};
 	/////////////////////////////////////////////////////////
 	// SUMMARY SECTION
@@ -270,7 +234,7 @@
 		$("#supply_order_summary_ac").click(function (e) {
 		    var supplier_company_id = $(e.target).data('supplier-company-id');
 		    if (supplier_company_id) {
-			Order.prepare(supplier_company_id);
+			Order.submit(supplier_company_id);
 		    }
 		});
 	    },
