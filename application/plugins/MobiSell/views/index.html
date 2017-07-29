@@ -1,38 +1,44 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <link rel="stylesheet" href="../js/Semantic-UI/semantic.min.css">
-  <script type="text/javascript" src="../js/jquery-2.1.1.min.js"></script>
-  <script type="text/javascript" src="../js/Semantic-UI/semantic.min.js"></script>
-  <script>
-      App={
-	  init:function(){
-	      $('.ui.labeled.icon.sidebar').sidebar('toggle');
-	  }
-      };
-      
-      
-      
-      $(App.init);
-  </script>
-</head>
-<body>
-<div class="ui left demo vertical inverted sidebar labeled icon menu">
-  <a class="item">
-    <i class="home icon"></i>
-    Home
-  </a>
-  <a class="item">
-    <i class="block layout icon"></i>
-    Topics
-  </a>
-  <a class="item">
-    <i class="smile icon"></i>
-    Friends
-  </a>
-</div>
-  <div class="pusher">
-    <!-- Site content !-->
-  </div>
-</body>
+    <head>
+	<link rel="stylesheet" href="../js/Semantic-UI/semantic.min.css">
+    </head>
+    <body>
+	<div class="ui left demo vertical inverted sidebar labeled icon menu">
+	    <a class="item">
+		<i class="home icon"></i>
+		Home
+	    </a>
+	    <a class="item">
+		<i class="file outline icon"></i>
+		Документы
+	    </a>
+	</div>
+	<div class="ui basic icon top fixed menu">
+	    <a id="toggle" class="item">
+		<i class="sidebar icon"></i>
+		Menu
+	    </a>
+	</div>
+	<div class="pusher">
+	    <!-- Site content !-->
+	</div>
+	
+	<script type="text/javascript" src="../js/jquery-2.1.1.min.js"></script>
+	<script type="text/javascript" src="../js/Semantic-UI/semantic.min.js"></script>
+	<script>
+	    App = {
+		init: function () {
+		    $('.ui.labeled.icon.sidebar').sidebar('toggle');
+		    $("#toggle").click(function(){
+			$(".ui.sidebar").sidebar('toggle');
+		    });
+		}
+	    };
+	    
+
+
+	    $(App.init);
+	</script>
+    </body>
 </html>
