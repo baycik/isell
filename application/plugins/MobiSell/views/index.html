@@ -1,15 +1,14 @@
 <!DOCTYPE html>
 <html>
     <head>
+	<link rel="icon" type="image/png" href="/favicon.png" />
 	<link rel="stylesheet" href="../js/Semantic-UI/semantic.min.css">
+	<title>MobiSell beta</title>
     </head>
     <body>
 	<div class="ui left demo vertical inverted sidebar labeled icon menu">
-	    <a class="item">
-		<i class="home icon"></i>
-		Home
-	    </a>
-	    <a class="item">
+
+	    <a href="#view/documents.html" class="item">
 		<i class="file outline icon"></i>
 		Документы
 	    </a>
@@ -20,8 +19,8 @@
 		Menu
 	    </a>
 	</div>
-	<div class="pusher">
-	    <!-- Site content !-->
+	<div id="main_container" class="pusher">
+	    sdgfsdgf
 	</div>
 	
 	<script type="text/javascript" src="../js/jquery-2.1.1.min.js"></script>
@@ -29,15 +28,32 @@
 	<script>
 	    App = {
 		init: function () {
-		    $('.ui.labeled.icon.sidebar').sidebar('toggle');
-		    $("#toggle").click(function(){
-			$(".ui.sidebar").sidebar('toggle');
-		    });
+		    App.sidebar.init();
+		    App.holder.init();
+		},
+		sidebar:{
+		    init:function(){
+			$("#toggle").click(function(){
+			    $(".ui.sidebar").sidebar('toggle');
+			});
+		    }
+		},
+		holder:{
+		    init:function(){
+			$(window).bind( 'hashchange', function(e) {
+			    App.holder.load(location.hash.substring(1));
+			});
+			if( location.hash ){
+			    App.holder.load(location.hash.substring(1));
+			}
+		    },
+		    load:function(url){
+			$("#main_container").load(url,function(){
+			    console.log(arguments);
+			});
+		    }
 		}
 	    };
-	    
-
-
 	    $(App.init);
 	</script>
     </body>

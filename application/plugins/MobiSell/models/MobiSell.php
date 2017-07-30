@@ -18,12 +18,8 @@ class MobiSell extends Catalog{
 	$this->view('index.html');
     }
     
-    public $view=[];
-    public function view(){
-	$path = '';
-	foreach (func_get_args() as $chunk) {
-	    $path.= $chunk;
-	}
+    public $view=['string'];
+    public function view($path){
 	$this->load->view($path);
     }
     
