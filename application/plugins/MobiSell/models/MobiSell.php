@@ -32,7 +32,14 @@ class MobiSell extends Catalog{
     }
     private function getList($date,$clientFilter,$doc_type){
 	$sql="SELECT
-		dl.*,
+		dl.doc_num,
+		(SELECT amount 
+		    FROM 
+			acc_trans 
+			    JOIN 
+			document_trans dt USING(trans_id)
+		    WHERE dt.doc_id=dl.doc_id 
+		    ORDER BY trans_id LIMIT 1) amount,
 		label
 	    FROM
 		document_list dl

@@ -1,1 +1,46 @@
-dfhdfh
+<div id="doc_list">
+    <h2 class="ui header">Расходные накладные</h2>
+    <table class="ui green selectable fixed table ">
+	<thead>
+	    <tr>
+		<th style="width:8em">№</th>
+		<th>Клиент</th>
+		<th style="width:10em">Сумма</th>
+	    </tr>
+	</thead>
+	<tbody>
+	    <!-- {{sell}} -->
+	    <tr>
+		<td><i class="green icon arrow left"></i>{{doc_num}}</td>
+		<td>{{label}}</td>
+		<td>{{amount}}</td>
+	    </tr>
+	    <!-- {{/sell}} -->
+	</tbody>
+    </table>
+    <h2 class="ui header">Приходные накладные</h2>
+    <table class="ui purple selectable fixed table ">
+	<thead>
+	    <tr>
+		<th style="width:8em">№</th>
+		<th>Поставщик</th>
+		<th style="width:10em">Сумма</th>
+	    </tr>
+	</thead>
+	<tbody>
+	    <!-- {{sell}} -->
+	    <tr>
+		<td><i class="purple icon arrow right"></i>{{doc_num}}</td>
+		<td>{{label}}</td>
+		<td>{{amount}}</td>
+	    </tr>
+	    <!-- {{/sell}} -->
+	</tbody>
+    </table>
+</div>
+<script>
+    $.post('doclistGet', {date: '2017-01-25'}, function (resp) {
+	var doc_list = App.json(resp);
+	App.renderTpl('doc_list', doc_list);
+    });
+</script>

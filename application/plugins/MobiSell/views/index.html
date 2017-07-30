@@ -19,13 +19,14 @@
 		Menu
 	    </a>
 	</div>
-	<div id="main_container" class="pusher">
+	<div id="main_container" class="pusher" style="margin-top: 42px;">
 	    sdgfsdgf
 	</div>
 	
 	<script type="text/javascript" src="../js/jquery-2.1.1.min.js"></script>
 	<script type="text/javascript" src="../js/Semantic-UI/semantic.min.js"></script>
-	<script>
+	<script type="text/javascript" src="../js/markup.min.js"></script>
+	<script type="text/javascript">
 	    App = {
 		init: function () {
 		    App.sidebar.init();
@@ -52,7 +53,24 @@
 			    console.log(arguments);
 			});
 		    }
-		}
+		},
+		tplcache:{},
+		renderTpl:function( id, data, mode ){
+		    if( !this.tplcache[id] || mode==='nocache' ){
+			this.tplcache[id]=$('#'+id).html().replace('&gt;','>').replace(/<!--/g,'').replace(/-->/g,'');
+		    }
+		    $('#'+id).html( Mark.up(App.tplcache[id], data) );
+		    $('#'+id).removeClass('covert');
+		},
+		json:function( text ){
+		    try{
+			return text===''?null:JSON.parse(text);
+		    }
+		    catch(e){
+			console.log('isell-app-json-err: '+e+text);
+			return null;
+		    }
+		},
 	    };
 	    $(App.init);
 	</script>
