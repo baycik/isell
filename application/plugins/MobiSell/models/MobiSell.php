@@ -33,6 +33,7 @@ class MobiSell extends Catalog{
     private function getList($date,$clientFilter,$doc_type){
 	$sql="SELECT
 		dl.doc_num,
+		is_commited,
 		(SELECT amount 
 		    FROM 
 			acc_trans 

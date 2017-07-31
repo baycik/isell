@@ -1,11 +1,29 @@
+<form class="ui form">
+    <h4 class="ui dividing header">Фильтр накладных</h4>
+    <div class="field">
+	<label>Клиент</label>
+	<div class="field">
+	    <input name="company_filter" placeholder="Название клиента" type="text">
+	</div>
+    </div>
+    <div class="field">
+	<label>Дата</label>
+	<div class="field">
+	    <input name="company_filter" placeholder="Дата" type="date" class="datepicker">
+	</div>
+    </div>
+</form>
+
+
 <div id="doc_list">
     <h2 class="ui header">Расходные накладные</h2>
-    <table class="ui green selectable fixed table ">
+    <table class="ui green selectable  table unstackable">
 	<thead>
 	    <tr>
-		<th style="width:8em">№</th>
+		<th>№</th>
 		<th>Клиент</th>
-		<th style="width:10em">Сумма</th>
+		<th>Сумма</th>
+		<th>!</th>
 	    </tr>
 	</thead>
 	<tbody>
@@ -14,17 +32,19 @@
 		<td><i class="green icon arrow left"></i>{{doc_num}}</td>
 		<td>{{label}}</td>
 		<td>{{amount}}</td>
+		<td>{{if is_commited|more>0}}<i class="checkmark box icon"></i>{{else}}<i class="square outline icon"></i>{{/if}}</td>
 	    </tr>
 	    <!-- {{/sell}} -->
 	</tbody>
     </table>
     <h2 class="ui header">Приходные накладные</h2>
-    <table class="ui purple selectable fixed table ">
+    <table class="ui purple selectable unstackable table ">
 	<thead>
 	    <tr>
 		<th style="width:8em">№</th>
 		<th>Поставщик</th>
 		<th style="width:10em">Сумма</th>
+		<th>!</th>
 	    </tr>
 	</thead>
 	<tbody>
@@ -33,14 +53,20 @@
 		<td><i class="purple icon arrow right"></i>{{doc_num}}</td>
 		<td>{{label}}</td>
 		<td>{{amount}}</td>
+		<td>{{if is_commited|more>0}}<i class="gray checkmark box icon"></i>{{else}}<i class="yellow square outline icon"></i>{{/if}}</td>
 	    </tr>
 	    <!-- {{/sell}} -->
 	</tbody>
     </table>
 </div>
 <script>
-    $.post('doclistGet', {date: '2017-01-25'}, function (resp) {
-	var doc_list = App.json(resp);
-	App.renderTpl('doc_list', doc_list);
-    });
+    (function(){
+	$.post('doclistGet', {date: '2017-01-25'}, function (resp) {
+	    var doc_list = App.json(resp);
+	    App.renderTpl('doc_list', doc_list);
+
+	});
+	var picker = $('.datepicker').pickadate();
+	picker.set('select', new Date());
+    })();
 </script>
