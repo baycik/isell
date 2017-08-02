@@ -1,22 +1,34 @@
-<form class="ui form">
-    <h4 class="ui dividing header">Фильтр накладных</h4>
-    <div class="field">
-	<label>Клиент</label>
-	<div class="field">
-	    <input name="company_filter" placeholder="Название клиента" type="text">
-	</div>
+<div class="ui accordion field">
+    <div class="title">
+        <i class="icon dropdown"></i>
+        Фильтр накладных
     </div>
-    <div class="field">
-	<label>Дата</label>
-	<div class="field">
-	    <input name="company_filter" placeholder="Дата" type="date" class="datepicker">
-	</div>
+    <div class="content ">
+	<form class="ui form">
+	    <div class="field">
+		<label>Клиент</label>
+		<div class="field">
+		    <input name="company_filter" placeholder="Название клиента" type="text">
+		</div>
+	    </div>
+	    <div class="field">
+		<label>Дата</label>
+		<div class="field">
+		    <input name="company_filter" placeholder="Дата" type="date" class="datepicker">
+		</div>
+	    </div>
+	</form>
     </div>
-</form>
+</div>
 
 
-<div id="doc_list">
-    <h2 class="ui header">Расходные накладные</h2>
+
+
+<div class="ui top attached tabular menu">
+    <a class="active item" data-tab="sell">Расход</a>
+    <a class="item" data-tab="buy">Приход</a>
+</div>
+<div class="ui bottom attached  tab segment" data-tab="sell" id="documents_sell">
     <table class="ui green selectable  table unstackable">
 	<thead>
 	    <tr>
@@ -27,17 +39,18 @@
 	    </tr>
 	</thead>
 	<tbody>
-	    <!-- {{sell}} -->
+	    <!-- {{doc_list}} -->
 	    <tr>
 		<td><i class="green icon arrow left"></i>{{doc_num}}</td>
 		<td>{{label}}</td>
 		<td>{{amount}}</td>
 		<td>{{if is_commited|more>0}}<i class="checkmark box icon"></i>{{else}}<i class="square outline icon"></i>{{/if}}</td>
 	    </tr>
-	    <!-- {{/sell}} -->
+	    <!-- {{/doc_list}} -->
 	</tbody>
     </table>
-    <h2 class="ui header">Приходные накладные</h2>
+</div>
+<div class="ui bottom attached tab segment" data-tab="buy" id="documents_buy">
     <table class="ui purple selectable unstackable table ">
 	<thead>
 	    <tr>
@@ -48,25 +61,80 @@
 	    </tr>
 	</thead>
 	<tbody>
-	    <!-- {{sell}} -->
+	    <!-- {{doc_list}} -->
 	    <tr>
 		<td><i class="purple icon arrow right"></i>{{doc_num}}</td>
 		<td>{{label}}</td>
 		<td>{{amount}}</td>
 		<td>{{if is_commited|more>0}}<i class="gray checkmark box icon"></i>{{else}}<i class="yellow square outline icon"></i>{{/if}}</td>
 	    </tr>
-	    <!-- {{/sell}} -->
+	    <!-- {{/doc_list}} -->
 	</tbody>
     </table>
 </div>
+<button class="ui primary loading fluid button" onclick="App.documents.loadMore()">Показать еще накладные...</button>
 <script>
-    (function(){
-	$.post('doclistGet', {date: '2017-01-25'}, function (resp) {
-	    var doc_list = App.json(resp);
-	    App.renderTpl('doc_list', doc_list);
+    App.documents = {
+	init: function () {
+	    App.documents.initPicker();
+	    App.documents.initTab();
+	},
+	initPicker: function () {
+	    var $input = $('.datepicker').pickadate();
+	    App.documents.picker = $input.pickadate('picker');
+	    App.documents.picker.set('select', new Date());
+	    App.documents.picker.on({
+		set: function () {
+		    App.documents.reload();
+		}
+	    });
+	},
+	initTab:function(){
+	    $('.menu .item').tab({
+		onVisible:function( type ){
+		    App.documents.load(type);
+		    console.log(type);
+		}
+	    });
+	    $('.menu .item').tab('change tab', 'sell');
+	},
+	docTypeConfig:{
+	    sell:{
+		entries:[]
+	    },
+	    buy:{
+		entries:[]
+	    }
+	},
+	load: function (type,offset,limit) {
+	    App.documents.lastLoadedtype=type;
+	    var date=App.documents.picker.get('select', 'yyyy-mm-dd');
+	    if( offset===undefined ){
+		offset= App.documents.docTypeConfig[type].entries.length;
+	    }
+	    $.post('doclistGet', {type:type,date: date,offset:offset,limit:limit}, function (resp) {
+		var doc_list = App.json(resp);
+		App.documents.docTypeConfig[type].entries=App.documents.docTypeConfig[type].entries.concat(doc_list);
+		App.documents.render(type,App.documents.docTypeConfig[type].entries);
+	    });
+	},
+	reload:function(){
+	    App.documents.load(App.documents.lastLoadedtype);
+	},
+	render:function( type, doc_list ){
+	    App.renderTpl('documents_'+type, {doc_list:doc_list});
+	},
+	loadMore:function(){
+	    App.documents.load(App.documents.lastLoadedtype);
+	}
+    };
+    
 
-	});
-	var picker = $('.datepicker').pickadate();
-	picker.set('select', new Date());
-    })();
+
+    $(function () {
+
+App.documents.init();
+
+	$('.ui.accordion').accordion();
+    });
 </script>

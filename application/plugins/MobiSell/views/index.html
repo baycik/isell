@@ -1,12 +1,65 @@
 <!DOCTYPE html>
 <html>
     <head>
+	<title>MobiSell beta</title>
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<link rel="icon" type="image/png" href="/favicon.png" />
 	<link rel="stylesheet" href="../js/Semantic-UI/semantic.min.css">
 	<link rel="stylesheet" href="../js/picker/themes/default.css">
 	<link rel="stylesheet" href="../js/picker/themes/default.date.css">
-	<title>MobiSell beta</title>
+	<script type="text/javascript" src="../js/jquery-2.1.1.min.js"></script>
+	<script type="text/javascript" src="../js/Semantic-UI/semantic.min.js"></script>
+	<script type="text/javascript" src="../js/markup.min.js"></script>
+	<script src="../js/picker/picker.js"></script>
+	<script src="../js/picker/picker.date.js"></script>
+	<script src="../js/picker/translations/ru_RU.js"></script>
+	<script>
+	    App={
+		init: function () {
+		    App.sidebar.init();
+		    App.holder.init();
+		},
+		holder: {
+		    init: function () {
+			$(window).bind('hashchange', function (e) {
+			    App.holder.load(location.hash.substring(1));
+			});
+			if (location.hash) {
+			    App.holder.load(location.hash.substring(1));
+			}
+		    },
+		    load: function (url) {
+			$("#main_container").load(url, function () {
+			    //console.log(arguments);
+			});
+		    }
+		},
+		sidebar:{
+		    init:function () {
+			$("#toggle").click(function(){
+			    $(".ui.sidebar").sidebar('toggle');
+			});
+		    }
+		}, 
+		tplcache: {},
+		json: function (text) {
+		    try {
+			return text === '' ? null : JSON.parse(text);
+		    } catch (e) {
+			console.log('isell-app-json-err: ' + e + text);
+			return null;
+		    }
+		},
+		renderTpl: function (id, data, mode) {
+		    if (!this.tplcache[id] || mode === 'nocache') {
+			this.tplcache[id] = $('#' + id).html().replace('&gt;', '>').replace(/<!--/g,'').replace(/-->/g,'');
+		    }
+		    $('#' + id).html(Mark.up(App.tplcache[id], data));
+		    $('#' + id).removeClass('covert');
+		}
+	    };
+	    $(App.init);
+	</script>
     </head>
     <body>
 	<div class="ui left demo vertical inverted sidebar labeled icon menu">
@@ -25,60 +78,5 @@
 	<div id="main_container" class="pusher" style="margin-top: 42px;">
 	    sdgfsdgf
 	</div>
-
-	<script type="text/javascript" src="../js/jquery-2.1.1.min.js"></script>
-	<script type="text/javascript" src="../js/Semantic-UI/semantic.min.js"></script>
-	<script type="text/javascript" src="../js/markup.min.js"></script>
-	<script src="../js/picker/picker.js"></script>
-	<script src="../js/picker/picker.date.js"></script>
-	<script src="../js/picker/translations/ru_RU.js"></script>
-	<script type="text/javascript">
-	    App = {
-	    init: function () {
-			    App.sidebar.init();
-			    App.holder.init();
-	    },
-		    sidebar:{
-				    init:function () {
-			    $("#toggle").click(function () {
-			    $(".ui.sidebar").sidebar('toggle');
-			});
-		    }
-		    },
-		    holder:{
-			    init:function () {
-			    $(window).bind('hashchange', function (e) {
-			    App.holder.load(location.hash.substring(1));
-			});
-			if (location.hash) {
-			    App.holder.load(location.hash.substring(1));
-			}
-		    },
-			    load:function (url) {
-				$("#main_container").load(url, function () {
-				    console.log(arguments);
-				});
-			    }
-		    },
-		    tplcache:{},
-		    renderTpl:function(id, data, mode){
-		    if (!this.tplcache[id] || mode === 'nocache'){
-		    this.tplcache[id] = $('#' + id).html().replace('&gt;', '>').replace(/<!--/g,'').replace(/-->/g,'');
-		    }
-		    $('#'+id).html( Mark.up(App.tplcache[id], data) );
-		    $('#'+id).removeClass('covert');
-		},
-		json:function( text ){
-		    try{
-			return text===''?null:JSON.parse(text);
-		    }
-		    catch(e){
-			console.log('isell-app-json-err: '+e+text);
-			return null;
-		    }
-		},
-	    };
-	    $(App.init);
-	</script>
     </body>
 </html>

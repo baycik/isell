@@ -23,24 +23,22 @@ class MobiSell extends Catalog{
 	$this->load->view($path);
     }
     
-    public $doclistGet=['date'=>'([0-9\-]+)','clientFilter'=>'string'];
-    public function doclistGet($date,$clientFilter){
-	return [
-	    'sell'=>$this->getList($date,$clientFilter,'1'),
-	    'buy'=>$this->getList($date,$clientFilter,'2')
-	];
-    }
-    private function getList($date,$clientFilter,$doc_type){
+    public $doclistGet=['type'=>'string','date'=>'([0-9\-]+)','offset'=>['int',0],'limit'=>['int',3], 'clientFilter'=>'string'];
+    public function doclistGet($type,$date,$offset,$limit,$clientFilter){
+	$doc_type=($type=='sell'?1:2);
 	$sql="SELECT
 		dl.doc_num,
 		is_commited,
-		(SELECT amount 
-		    FROM 
-			acc_trans 
-			    JOIN 
-			document_trans dt USING(trans_id)
-		    WHERE dt.doc_id=dl.doc_id 
-		    ORDER BY trans_id LIMIT 1) amount,
+		COALESCE(
+		    (SELECT amount 
+			FROM 
+			    acc_trans 
+				JOIN 
+			    document_trans dt USING(trans_id)
+			WHERE dt.doc_id=dl.doc_id 
+			ORDER BY trans_id LIMIT 1
+		    ),
+		    '') amount,
 		label
 	    FROM
 		document_list dl
@@ -53,7 +51,11 @@ class MobiSell extends Catalog{
 		AND doc_type='$doc_type'
 		AND label LIKE '%$clientFilter%'
 	    ORDER BY doc_type
+	    LIMIT $limit OFFSET $offset
 	    ";
 	return $this->get_list($sql);
+    }
+    private function getList($date,$clientFilter,$doc_type){
+
     }
 }
