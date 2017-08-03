@@ -1,26 +1,17 @@
-<div class="ui accordion field">
-    <div class="title">
-        <i class="icon dropdown"></i>
-        Фильтр накладных
+<form class="ui form">
+    <div class="field">
+	<label>Клиент</label>
+	<div class="field">
+	    <input name="company_filter" placeholder="Название клиента" type="text" onkeyup="App.documents.compSearch(this.value)">
+	</div>
     </div>
-    <div class="content ">
-	<form class="ui form">
-	    <div class="field">
-		<label>Клиент</label>
-		<div class="field">
-		    <input name="company_filter" placeholder="Название клиента" type="text">
-		</div>
-	    </div>
-	    <div class="field">
-		<label>Дата</label>
-		<div class="field">
-		    <input name="company_filter" placeholder="Дата" type="date" class="datepicker">
-		</div>
-	    </div>
-	</form>
+    <div class="field">
+	<label>Дата</label>
+	<div class="field">
+	    <input name="company_filter" placeholder="Дата" type="date" class="datepicker">
+	</div>
     </div>
-</div>
-
+</form>
 
 
 
@@ -39,14 +30,18 @@
 	    </tr>
 	</thead>
 	<tbody>
-	    <!-- {{doc_list}} -->
+	    <!-- {{if doc_list}} {{doc_list}} -->
 	    <tr>
 		<td><i class="green icon arrow left"></i>{{doc_num}}</td>
 		<td>{{label}}</td>
 		<td>{{amount}}</td>
-		<td>{{if is_commited|more>0}}<i class="checkmark box icon"></i>{{else}}<i class="square outline icon"></i>{{/if}}</td>
+		<td>{{if is_commited|more>0}}<i class="gray checkmark box icon"></i>{{else}}<i class="square outline icon"></i>{{/if}}</td>
 	    </tr>
-	    <!-- {{/doc_list}} -->
+	    <!-- {{/doc_list}} {{else}}-->
+	    <tr>
+		<td colspan="4"><i class="green icon arrow left"></i>Ничего не найдено</td>
+	    </tr>
+	    <!--{{/if}}-->
 	</tbody>
     </table>
 </div>
@@ -61,18 +56,22 @@
 	    </tr>
 	</thead>
 	<tbody>
-	    <!-- {{doc_list}} -->
+	    <!-- {{if doc_list}} {{doc_list}} -->
 	    <tr>
 		<td><i class="purple icon arrow right"></i>{{doc_num}}</td>
 		<td>{{label}}</td>
 		<td>{{amount}}</td>
-		<td>{{if is_commited|more>0}}<i class="gray checkmark box icon"></i>{{else}}<i class="yellow square outline icon"></i>{{/if}}</td>
+		<td>{{if is_commited|more>0}}<i class="gray checkmark box icon"></i>{{else}}<i class="square outline icon"></i>{{/if}}</td>
 	    </tr>
-	    <!-- {{/doc_list}} -->
+	    <!-- {{/doc_list}} {{else}}-->
+	    <tr>
+		<td colspan="4"><i class="purple icon arrow right"></i>Ничего не найдено</td>
+	    </tr>
+	    <!--{{/if}}-->
 	</tbody>
     </table>
 </div>
-<button class="ui primary loading fluid button" onclick="App.documents.loadMore()">Показать еще накладные...</button>
+<button class="ui primary loading fluid button" onclick="App.documents.loadMore()">Показать еще...</button>
 <script>
     App.documents = {
 	init: function () {
@@ -82,7 +81,7 @@
 	initPicker: function () {
 	    var $input = $('.datepicker').pickadate();
 	    App.documents.picker = $input.pickadate('picker');
-	    App.documents.picker.set('select', new Date());
+	    App.documents.picker.set('select', new Date('2017-08-02'));
 	    App.documents.picker.on({
 		set: function () {
 		    App.documents.reload();
@@ -92,11 +91,14 @@
 	initTab:function(){
 	    $('.menu .item').tab({
 		onVisible:function( type ){
-		    App.documents.load(type);
-		    console.log(type);
+		    App.documents.currentType=type;
+		    App.documents.loadIfEmpty(type);
 		}
 	    });
 	    $('.menu .item').tab('change tab', 'sell');
+	},
+	render:function( type, doc_list ){
+	    App.renderTpl('documents_'+type, {doc_list:doc_list});
 	},
 	docTypeConfig:{
 	    sell:{
@@ -106,35 +108,40 @@
 		entries:[]
 	    }
 	},
-	load: function (type,offset,limit) {
-	    App.documents.lastLoadedtype=type;
+	compFilter:'',
+	currentType:'',
+	load: function (type,offset) {
 	    var date=App.documents.picker.get('select', 'yyyy-mm-dd');
 	    if( offset===undefined ){
-		offset= App.documents.docTypeConfig[type].entries.length;
+		offset= App.documents.docTypeConfig[type].entries.length||0;
 	    }
-	    $.post('doclistGet', {type:type,date: date,offset:offset,limit:limit}, function (resp) {
+	    $.post('doclistGet', {type:type,date: date,offset:offset,compFilter:App.documents.compFilter}, function (resp) {
 		var doc_list = App.json(resp);
 		App.documents.docTypeConfig[type].entries=App.documents.docTypeConfig[type].entries.concat(doc_list);
 		App.documents.render(type,App.documents.docTypeConfig[type].entries);
 	    });
 	},
 	reload:function(){
-	    App.documents.load(App.documents.lastLoadedtype);
-	},
-	render:function( type, doc_list ){
-	    App.renderTpl('documents_'+type, {doc_list:doc_list});
+	    var type=App.documents.currentType;
+	    App.documents.docTypeConfig[type].entries=[];
+	    App.documents.load(type);
 	},
 	loadMore:function(){
-	    App.documents.load(App.documents.lastLoadedtype);
+	    var type=App.documents.currentType;
+	    App.documents.load(type);
+	},
+	loadIfEmpty:function(type){
+	    if( !App.documents.docTypeConfig[type].entries.length ){
+		App.documents.load(type,0);
+	    }
+	},
+	compSearch:function( q ){
+	    clearTimeout(App.documents.clock);
+	    App.documents.clock=setTimeout(function(){
+		App.documents.compFilter=q;
+		App.documents.reload();
+	    },800);
 	}
     };
-    
-
-
-    $(function () {
-
-App.documents.init();
-
-	$('.ui.accordion').accordion();
-    });
+    App.documents.init();
 </script>

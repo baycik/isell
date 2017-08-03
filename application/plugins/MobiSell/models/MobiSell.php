@@ -23,8 +23,8 @@ class MobiSell extends Catalog{
 	$this->load->view($path);
     }
     
-    public $doclistGet=['type'=>'string','date'=>'([0-9\-]+)','offset'=>['int',0],'limit'=>['int',3], 'clientFilter'=>'string'];
-    public function doclistGet($type,$date,$offset,$limit,$clientFilter){
+    public $doclistGet=['type'=>'string','date'=>'([0-9\-]+)','offset'=>['int',0],'limit'=>['int',10], 'compFilter'=>'string'];
+    public function doclistGet($type,$date,$offset,$limit,$compFilter){
 	$doc_type=($type=='sell'?1:2);
 	$sql="SELECT
 		dl.doc_num,
@@ -49,7 +49,7 @@ class MobiSell extends Catalog{
 	    WHERE
 		cstamp LIKE '$date%'
 		AND doc_type='$doc_type'
-		AND label LIKE '%$clientFilter%'
+		AND label LIKE '%$compFilter%'
 	    ORDER BY doc_type
 	    LIMIT $limit OFFSET $offset
 	    ";
