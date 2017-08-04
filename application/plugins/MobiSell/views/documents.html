@@ -31,7 +31,7 @@
 	</thead>
 	<tbody>
 	    <!-- {{if doc_list}} {{doc_list}} -->
-	    <tr>
+	    <tr data-doc-id="{{doc_id}}" onclick="App.documents.handleClick(this)">
 		<td><i class="green icon arrow left"></i>{{doc_num}}</td>
 		<td>{{label}}</td>
 		<td>{{amount}}</td>
@@ -57,7 +57,7 @@
 	</thead>
 	<tbody>
 	    <!-- {{if doc_list}} {{doc_list}} -->
-	    <tr>
+	    <tr data-doc-id="{{doc_id}}" onclick="App.documents.handleClick(this)">
 		<td><i class="purple icon arrow right"></i>{{doc_num}}</td>
 		<td>{{label}}</td>
 		<td>{{amount}}</td>
@@ -96,6 +96,10 @@
 		}
 	    });
 	    $('.menu .item').tab('change tab', 'sell');
+	},
+	handleClick:function(node){
+	    var doc_id=$(node).data('doc-id');
+	    location.hash="#view/order.html#doc_id="+doc_id;
 	},
 	render:function( type, doc_list ){
 	    App.renderTpl('documents_'+type, {doc_list:doc_list});
@@ -145,3 +149,8 @@
     };
     App.documents.init();
 </script>
+<style>
+    #documents_sell tr,#documents_buy tr{
+	cursor: pointer;
+    }
+</style>

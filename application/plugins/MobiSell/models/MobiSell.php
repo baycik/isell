@@ -27,6 +27,7 @@ class MobiSell extends Catalog{
     public function doclistGet($type,$date,$offset,$limit,$compFilter){
 	$doc_type=($type=='sell'?1:2);
 	$sql="SELECT
+		doc_id,
 		dl.doc_num,
 		is_commited,
 		COALESCE(

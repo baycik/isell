@@ -15,6 +15,7 @@
 	<script src="../js/picker/translations/ru_RU.js"></script>
 	<script>
 	    App={
+		state:{},
 		init: function () {
 		    App.sidebar.init();
 		    App.holder.init();
@@ -29,9 +30,9 @@
 			}
 		    },
 		    load: function (url) {
-			$("#main_container").load(url, function () {
-			    //console.log(arguments);
-			});
+			var url_chunks=url.split("#");
+			$("#main_container").load(url_chunks[0]);
+			App.parseState(url_chunks[1]);
 		    }
 		},
 		sidebar:{
@@ -56,6 +57,17 @@
 		    }
 		    $('#' + id).html(Mark.up(App.tplcache[id], data));
 		    $('#' + id).removeClass('covert');
+		},
+		parseState:function(text){
+		    var newstate={};
+		    if( text ){
+			var pairs=text.split(',');
+			for(var i in pairs){
+			    var keyval=pairs[i].split('=');
+			    newstate[keyval[0]]=keyval[1];
+			}
+		    }
+		    App.state=newstate;
 		}
 	    };
 	    $(App.init);
