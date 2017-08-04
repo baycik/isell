@@ -30,6 +30,7 @@ class Hub  extends CI_Controller{
 	$user_pass=$this->request('user_pass');
 	$User=$this->load_model('User');
 	if( $user_login && $user_pass && $User->SignIn($user_login,$user_pass) ){
+	    header("Location: ./");
 	    return;
 	}
 	include APPPATH.'views/login.html';
