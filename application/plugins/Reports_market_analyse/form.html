@@ -1,10 +1,10 @@
 <script>
     function reports_market_analyse(){
         var config=[
-            {name:'Артикул',field:'article'},
-            {name:'Филиал',field:'affiliate'},
-            {name:'Продано шт',field:'sold'},
-            {name:'Остаток шт',field:'left'}	    
+            {name:'Артикул',field:'article', assigned: 'B'},
+            {name:'Филиал',field:'affiliate', assigned: 'C'},
+            {name:'Продано шт',field:'sold', assigned: 'D'},
+            {name:'Остаток шт',field:'left', assigned: 'E'}	    
         ];
         App.loadWindow('page/dialog/importer',{label:'маркет',fields_to_import:config}).progress(function(status,fvalue,Importer){
             if( status==='submit' ){
@@ -15,6 +15,21 @@
 </script>
 
 <form>
+    <div class="inp_group" style="width: 230px;">
+	<input style="width:95px" class="easyui-datebox" name="fdate" title="Конечная дата" value="{{today}}" data-options="required:true">
+
+    </div>
+    <div class="inp_group" style="width: 350px;">
+	<select name="group_by" title="Группировать по">
+	    <option value="store_code">Филиал</option>
+	    <option value="analyse_type">Тип</option>
+	    <option value="analyse_group">Бренд</option>
+	    <option value="analyse_class">Класс</option>
+	    <option value="product_code">Код товара</option>
+	    <option value="analyse_section">Артикул</option>
+	</select>
+	<input name="group_by_filter" title="Фильтр группы">
+    </div>
     <div style="text-align: center">
         <button type="button" onclick="reports_market_analyse()"><img src="img/report24.png" style="width:24px;height: auto"> Загрузить</button>
     </div>
