@@ -1,0 +1,66 @@
+<script>
+    App.document={
+	doc:{},
+	init:function(){
+	    App.document.initTab();
+	    App.document.load(App.state.doc_id);
+	},
+	load:function( doc_id ){
+	    $.post("documentGet/",{doc_id:doc_id},function(resp){
+		App.document.doc=App.json(resp);
+		App.document.render();
+	    });
+	},
+	render:function(){
+	    App.renderTpl('document_entries',App.document.doc);
+	},
+	initTab:function(){
+	    $('.menu .item').tab({
+		onVisible:function( type ){
+		    
+		}
+	    });
+	    $('.menu .item').tab('change tab', 'entries');
+	}
+    };
+    App.document.init();
+</script>
+
+
+
+
+
+
+
+
+<div class="ui top attached tabular menu">
+    <a class="active item" data-tab="entries">Накладная</a>
+    <a class="item" data-tab="prefs">Настройки</a>
+</div>
+<div class="ui bottom attached  tab segment" data-tab="entries" id="document_entries">
+    <table class="ui green selectable  table  stackable">
+	<thead>
+	    <tr>
+		<th>№/Название</th>
+		<th>Код/Кол-во/Цена</th>
+	    </tr>
+	</thead>
+	<tbody>
+	    <!-- {{if entries}} {{entries}} -->
+	    <tr data-doc-id="{{doc_entry_id}}" onclick="App.document.handleClick(this)">
+		<td>{{##}} {{product_name}}</td>
+		<td><b>{{product_code}}</b> 
+		    {{product_quantity}}{{product_unit}}
+		    <span style="color:gray">x</span> {{product_price_total}} = {{product_sum_total}}</td>
+	    </tr>
+	    <!-- {{/entries}} {{else}}-->
+	    <tr>
+		<td colspan="4">Ничего не найдено</td>
+	    </tr>
+	    <!--{{/if}}-->
+	</tbody>
+    </table>
+</div>
+<div class="ui bottom attached tab segment" data-tab="prefs" id="">
+
+</div>

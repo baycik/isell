@@ -2,7 +2,7 @@
     <div class="field">
 	<label>Клиент</label>
 	<div class="field">
-	    <input name="company_filter" placeholder="Название клиента" type="text" onkeyup="App.documents.compSearch(this.value)">
+	    <input name="company_filter" placeholder="Название клиента" type="text" onkeyup="App.document_list.compSearch(this.value)">
 	</div>
     </div>
     <div class="field">
@@ -31,7 +31,7 @@
 	</thead>
 	<tbody>
 	    <!-- {{if doc_list}} {{doc_list}} -->
-	    <tr data-doc-id="{{doc_id}}" onclick="App.documents.handleClick(this)">
+	    <tr data-doc-id="{{doc_id}}" onclick="App.document_list.handleClick(this)">
 		<td><i class="green icon arrow left"></i>{{doc_num}}</td>
 		<td>{{label}}</td>
 		<td>{{amount}}</td>
@@ -57,7 +57,7 @@
 	</thead>
 	<tbody>
 	    <!-- {{if doc_list}} {{doc_list}} -->
-	    <tr data-doc-id="{{doc_id}}" onclick="App.documents.handleClick(this)">
+	    <tr data-doc-id="{{doc_id}}" onclick="App.document_list.handleClick(this)">
 		<td><i class="purple icon arrow right"></i>{{doc_num}}</td>
 		<td>{{label}}</td>
 		<td>{{amount}}</td>
@@ -71,35 +71,35 @@
 	</tbody>
     </table>
 </div>
-<button class="ui primary loading fluid button" onclick="App.documents.loadMore()">Показать еще...</button>
+<button class="ui primary loading fluid button" onclick="App.document_list.loadMore()">Показать еще...</button>
 <script>
-    App.documents = {
+    App.document_list = {
 	init: function () {
-	    App.documents.initPicker();
-	    App.documents.initTab();
+	    App.document_list.initPicker();
+	    App.document_list.initTab();
 	},
 	initPicker: function () {
 	    var $input = $('.datepicker').pickadate();
-	    App.documents.picker = $input.pickadate('picker');
-	    App.documents.picker.set('select', new Date('2017-08-02'));
-	    App.documents.picker.on({
+	    App.document_list.picker = $input.pickadate('picker');
+	    App.document_list.picker.set('select', new Date('2017-08-02'));
+	    App.document_list.picker.on({
 		set: function () {
-		    App.documents.reload();
+		    App.document_list.reload();
 		}
 	    });
 	},
 	initTab:function(){
 	    $('.menu .item').tab({
 		onVisible:function( type ){
-		    App.documents.currentType=type;
-		    App.documents.loadIfEmpty(type);
+		    App.document_list.currentType=type;
+		    App.document_list.loadIfEmpty(type);
 		}
 	    });
 	    $('.menu .item').tab('change tab', 'sell');
 	},
 	handleClick:function(node){
 	    var doc_id=$(node).data('doc-id');
-	    location.hash="#view/order.html#doc_id="+doc_id;
+	    location.hash="#view/document.html#doc_id="+doc_id;
 	},
 	render:function( type, doc_list ){
 	    App.renderTpl('documents_'+type, {doc_list:doc_list});
@@ -115,39 +115,39 @@
 	compFilter:'',
 	currentType:'',
 	load: function (type,offset) {
-	    var date=App.documents.picker.get('select', 'yyyy-mm-dd');
+	    var date=App.document_list.picker.get('select', 'yyyy-mm-dd');
 	    if( offset===undefined ){
-		offset= App.documents.docTypeConfig[type].entries.length||0;
+		offset= App.document_list.docTypeConfig[type].entries.length||0;
 	    }
-	    $.post('doclistGet', {type:type,date: date,offset:offset,compFilter:App.documents.compFilter}, function (resp) {
+	    $.post('doclistGet', {type:type,date: date,offset:offset,compFilter:App.document_list.compFilter}, function (resp) {
 		var doc_list = App.json(resp);
-		App.documents.docTypeConfig[type].entries=App.documents.docTypeConfig[type].entries.concat(doc_list);
-		App.documents.render(type,App.documents.docTypeConfig[type].entries);
+		App.document_list.docTypeConfig[type].entries=App.document_list.docTypeConfig[type].entries.concat(doc_list);
+		App.document_list.render(type,App.document_list.docTypeConfig[type].entries);
 	    });
 	},
 	reload:function(){
-	    var type=App.documents.currentType;
-	    App.documents.docTypeConfig[type].entries=[];
-	    App.documents.load(type);
+	    var type=App.document_list.currentType;
+	    App.document_list.docTypeConfig[type].entries=[];
+	    App.document_list.load(type);
 	},
 	loadMore:function(){
-	    var type=App.documents.currentType;
-	    App.documents.load(type);
+	    var type=App.document_list.currentType;
+	    App.document_list.load(type);
 	},
 	loadIfEmpty:function(type){
-	    if( !App.documents.docTypeConfig[type].entries.length ){
-		App.documents.load(type,0);
+	    if( !App.document_list.docTypeConfig[type].entries.length ){
+		App.document_list.load(type,0);
 	    }
 	},
 	compSearch:function( q ){
-	    clearTimeout(App.documents.clock);
-	    App.documents.clock=setTimeout(function(){
-		App.documents.compFilter=q;
-		App.documents.reload();
+	    clearTimeout(App.document_list.clock);
+	    App.document_list.clock=setTimeout(function(){
+		App.document_list.compFilter=q;
+		App.document_list.reload();
 	    },800);
 	}
     };
-    App.documents.init();
+    App.document_list.init();
 </script>
 <style>
     #documents_sell tr,#documents_buy tr{

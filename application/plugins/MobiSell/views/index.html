@@ -61,7 +61,7 @@
 		parseState:function(text){
 		    var newstate={};
 		    if( text ){
-			var pairs=text.split(',');
+			var pairs=text.split('&');
 			for(var i in pairs){
 			    var keyval=pairs[i].split('=');
 			    newstate[keyval[0]]=keyval[1];
@@ -75,11 +75,11 @@
     </head>
     <body>
 	<div class="ui left demo vertical inverted sidebar labeled icon menu">
-	    <a href="#view/documents.html" class="item">
+	    <a href="#view/document_list.html" class="item">
 		<i class="list layout icon"></i>
 		Список Документов
 	    </a>
-	    <a href="#view/order.html" class="item">
+	    <a href="#view/document.html" class="item">
 		<i class="file outline icon"></i>
 		Накладная
 	    </a>

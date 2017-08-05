@@ -56,7 +56,10 @@ class MobiSell extends Catalog{
 	    ";
 	return $this->get_list($sql);
     }
-    private function getList($date,$clientFilter,$doc_type){
-
+    
+    public $documentGet=["doc_id"=>"int"];
+    public function documentGet($doc_id){
+	$DocumentItems=$this->Hub->load_model("DocumentItems");
+	return $DocumentItems->entryDocumentGet( $doc_id );
     }
 }

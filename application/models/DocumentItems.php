@@ -257,7 +257,6 @@ class DocumentItems extends DocumentCore{
     }
     public $entryDocumentGet=['int'];
     public function entryDocumentGet( $doc_id ){
-	$this->check($doc_id,'int');
 	$this->selectDoc($doc_id);
 	$document=array();
 	$document['entries']=$this->entriesFetch();
