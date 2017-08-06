@@ -1,26 +1,34 @@
 <script>
-    App.document={
-	doc:{},
-	init:function(){
+    App.document = {
+	doc: {},
+	init: function () {
 	    App.document.initTab();
+	    App.document.initCompDropdowns();
 	    App.document.load(App.state.doc_id);
 	},
-	load:function( doc_id ){
-	    $.post("documentGet/",{doc_id:doc_id},function(resp){
-		App.document.doc=App.json(resp);
+	load: function (doc_id) {
+	    $.post("documentGet/", {doc_id: doc_id}, function (resp) {
+		App.document.doc = App.json(resp);
 		App.document.render();
 	    });
 	},
-	render:function(){
-	    App.renderTpl('document_entries',App.document.doc);
+	render: function () {
+	    App.renderTpl('document_entries', App.document.doc);
 	},
-	initTab:function(){
+	initTab: function () {
 	    $('.menu .item').tab({
-		onVisible:function( type ){
-		    
+		onVisible: function (type) {
+
 		}
 	    });
 	    $('.menu .item').tab('change tab', 'entries');
+	},
+	initCompDropdowns: function () {
+	    $('.activecomp').dropdown({
+		apiSettings: {
+		    url: '../Company/listFetch/?q={query}'
+		}
+	    });
 	}
     };
     App.document.init();
@@ -28,7 +36,12 @@
 
 
 
-
+<div class="ui dropdown remote filter activecomp">
+    <input name="country" type="hidden">
+    <i class="dropdown icon"></i>
+    <div class="default text">Select Country</div>
+    <div class="menu"></div>
+</div>
 
 
 
@@ -41,17 +54,35 @@
     <table class="ui green selectable  table  stackable">
 	<thead>
 	    <tr>
-		<th>№/Название</th>
-		<th>Код/Кол-во/Цена</th>
+		<th>
+		    <div class="ui grid">
+			<div class="two wide column">№</div>
+			<div class="fourteen wide column">Название</div>
+		    </div>
+		</th>
+		<th>
+		    <div class="ui grid">
+			<div class="four wide column">Код</div>
+			<div class="four wide column">Кол-во</div>
+			<div class="four wide column">Цена</div>
+			<div class="four wide column">Сумма</div>
+		    </div>
+		</th>
 	    </tr>
 	</thead>
 	<tbody>
 	    <!-- {{if entries}} {{entries}} -->
 	    <tr data-doc-id="{{doc_entry_id}}" onclick="App.document.handleClick(this)">
-		<td>{{##}} {{product_name}}</td>
-		<td><b>{{product_code}}</b> 
-		    {{product_quantity}}{{product_unit}}
-		    <span style="color:gray">x</span> {{product_price_total}} = {{product_sum_total}}</td>
+		<td>{{##}}) {{product_name}}
+		</td>
+		<td>
+		    <div class="ui grid">
+			<div class="four wide column">{{product_code}}</div>
+			<div class="four wide column">{{product_quantity}}{{product_unit}}</div>
+			<div class="four wide column">{{product_price_total}}</div>
+			<div class="four wide column">{{product_sum_total}}</div>
+		    </div>
+		</td>
 	    </tr>
 	    <!-- {{/entries}} {{else}}-->
 	    <tr>
@@ -59,8 +90,27 @@
 	    </tr>
 	    <!--{{/if}}-->
 	</tbody>
+	<tfoot class="full-width">
+	    <tr>
+		<td>
+		    <div class="ui grid">
+			<div class="eight wide column">{{footer.total_weight}}кг </div>
+			<div class="eight wide column">{{footer.total_volume}}м<sup>3</sup></div>
+		    </div>
+		</td>
+		<td style="text-align: right;">{{footer.total}}{{footer.curr_symbol}}</td>
+	    </tr>
+	</tfoot>
     </table>
 </div>
 <div class="ui bottom attached tab segment" data-tab="prefs" id="">
 
 </div>
+
+
+
+<style>
+    #document_entries .four.wide.column{
+	text-align: right;
+    }
+</style>
