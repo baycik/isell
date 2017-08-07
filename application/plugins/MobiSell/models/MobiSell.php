@@ -62,4 +62,13 @@ class MobiSell extends Catalog{
 	$DocumentItems=$this->Hub->load_model("DocumentItems");
 	return $DocumentItems->entryDocumentGet( $doc_id );
     }
+    
+    public $compListFetch=['q'=>'string'];
+    public function compListFetch($q){
+	return [
+	    'success'=>true,
+	    'results'=>$this->Hub->load_model('Company')->listFetchAll('',$q)
+	    ];
+	
+    }
 }

@@ -52,6 +52,26 @@ class Company extends Catalog{
 	}
 	return $companies;
     }
+    
+    public function listFetchAll(){
+	$assigned_path=$this->Hub->svar('user_assigned_path');
+	$level=$this->Hub->svar('user_level');
+	$sql="SELECT 
+		company_id,
+		label,
+		path
+	    FROM
+		companies_tree
+	    JOIN 
+		companies_list USING(branch_id)
+	    WHERE
+		is_leaf=1
+		    AND
+		path LIKE '$assigned_path%'
+		    AND
+		level<=$level";
+	return $this->get_list( $sql );
+    }
 
     public $companyGet=['int'];
     public function companyGet( $company_id=0 ){
