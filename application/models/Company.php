@@ -53,9 +53,13 @@ class Company extends Catalog{
 	return $companies;
     }
     
-    public function listFetchAll(){
+    public function listFetchAll($mode){
 	$assigned_path=$this->Hub->svar('user_assigned_path');
 	$level=$this->Hub->svar('user_level');
+	$where='';
+	if( $mode=='active_only' ){
+	    $where.='AND is_active=1';
+	}
 	$sql="SELECT 
 		company_id,
 		label,
@@ -69,7 +73,8 @@ class Company extends Catalog{
 		    AND
 		path LIKE '$assigned_path%'
 		    AND
-		level<=$level";
+		level<=$level
+		$where";
 	return $this->get_list( $sql );
     }
 

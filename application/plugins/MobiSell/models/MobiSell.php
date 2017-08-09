@@ -60,15 +60,20 @@ class MobiSell extends Catalog{
     public $documentGet=["doc_id"=>"int"];
     public function documentGet($doc_id){
 	$DocumentItems=$this->Hub->load_model("DocumentItems");
-	return $DocumentItems->entryDocumentGet( $doc_id );
+	$document=$DocumentItems->entryDocumentGet( $doc_id );
+	$document['head']=$DocumentItems->headGet( $doc_id );
+	$document['head']->acomp_id=$this->Hub->acomp('company_id');
+	$document['head']->acomp_label=$this->Hub->acomp('label');
+	return $document;
     }
     
-    public $compListFetch=['q'=>'string'];
-    public function compListFetch($q){
+    public $compListFetch=['mode'=>'string','q'=>'string'];
+    public function compListFetch($mode,$q){
 	return [
 	    'success'=>true,
-	    'results'=>$this->Hub->load_model('Company')->listFetchAll('',$q)
+	    'results'=>$this->Hub->load_model('Company')->listFetchAll($mode,$q)
 	    ];
-	
     }
+    
+    
 }

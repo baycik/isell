@@ -4,6 +4,7 @@
 	init: function () {
 	    App.document.initTab();
 	    App.document.initCompDropdowns();
+	    App.document.initPicker();
 	    App.document.load(App.state.doc_id);
 	},
 	load: function (doc_id) {
@@ -14,6 +15,12 @@
 	},
 	render: function () {
 	    App.renderTpl('document_entries', App.document.doc);
+	    $('.activecomp').dropdown('set value', App.document.doc.head.acomp_id);
+	    $('.activecomp').dropdown('set text', App.document.doc.head.acomp_label);
+	    $('.passivecomp').dropdown('set value', App.document.doc.head.passive_company_id);
+	    $('.passivecomp').dropdown('set text', App.document.doc.head.label);
+	    $('.doc_num').val(App.document.doc.head.doc_num);
+	    App.document.picker.set('select', new Date(App.toIso(App.document.doc.head.doc_date)) );
 	},
 	initTab: function () {
 	    $('.menu .item').tab({
@@ -26,29 +33,68 @@
 	initCompDropdowns: function () {
 	    $('.activecomp').dropdown({
 		apiSettings: {
+		    url: 'compListFetch/?mode=active_only'
+		},
+		fields: {
+		    value: 'company_id',
+		    name: 'label',
+		    text: 'label'
+		},
+		filterRemoteData: true,
+		fullTextSearch: true
+	    });
+	    $('.passivecomp').dropdown({
+		apiSettings: {
 		    url: 'compListFetch/'
 		},
 		fields: {
 		    value: 'company_id',
 		    name: 'label',
-		    text:'path'
+		    text: 'label'
 		},
-		filterRemoteData:true,
-		fullTextSearch:true
+		filterRemoteData: true,
+		fullTextSearch: true
+	    });
+	},
+	initPicker: function () {
+	    var $input = $('.docdatepicker').pickadate();
+	    App.document.picker = $input.pickadate('picker');
+	    App.document.picker.on({
+		set: function () {
+		}
 	    });
 	}
     };
     $(App.document.init);
 </script>
-
-
-<h5 class="ui header">Клиент</h5>
-<div class="ui fluid search selection remote dropdown activecomp">
-    <input name="country" type="hidden">
-    <i class="dropdown icon"></i>
-    <div class="default text">Select Country</div>
-    <div class="menu">
-	<div class="item" data-value="af"><i class="af flag"></i>Afghanistan</div>
+<div class="ui form">
+    <div class="four fields">
+	<div class="field">
+	    <label>Наша фирма</label>
+	    <div class="ui search selection remote dropdown activecomp">
+		<input name="activecomp" type="hidden">
+		<i class="dropdown icon"></i>
+		<div class="default text"></div>
+		<div class="menu"></div>
+	    </div>
+	</div>
+	<div class="field">
+	    <label>Клиент</label>
+	    <div class="ui search selection remote dropdown passivecomp">
+		<input name="passivecomp" type="hidden">
+		<i class="dropdown icon"></i>
+		<div class="default text"></div>
+		<div class="menu"></div>
+	    </div>
+	</div>
+	<div class="field">
+	    <label>Номер</label>
+	    <input placeholder="Номер" type="text" readonly="" class="doc_num">
+	</div>
+	<div class="field">
+	    <label>Дата</label>
+	    <input name="company_filter" placeholder="Дата" type="date" class="docdatepicker">
+	</div>
     </div>
 </div>
 
