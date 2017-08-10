@@ -14,8 +14,8 @@
 	<script src="../js/picker/picker.date.js"></script>
 	<script src="../js/picker/translations/ru_RU.js"></script>
 	<script>
-	    App={
-		state:{},
+	    App = {
+		state: {},
 		init: function () {
 		    App.sidebar.init();
 		    App.holder.init();
@@ -30,18 +30,18 @@
 			}
 		    },
 		    load: function (url) {
-			var url_chunks=url.split("#");
+			var url_chunks = url.split("#");
 			$("#main_container").load(url_chunks[0]);
 			App.parseState(url_chunks[1]);
 		    }
 		},
-		sidebar:{
-		    init:function () {
-			$("#toggle").click(function(){
+		sidebar: {
+		    init: function () {
+			$("#toggle").click(function () {
 			    $(".ui.sidebar").sidebar('toggle');
 			});
 		    }
-		}, 
+		},
 		tplcache: {},
 		json: function (text) {
 		    try {
@@ -51,27 +51,37 @@
 			return null;
 		    }
 		},
-		toIso:function(dmy){
-		    var chunks=dmy.split('.');
-		    return chunks[2]+'-'+chunks[1]+'-'+chunks[0];
+		toIso: function (dmy) {
+		    if( !dmy ){
+			return null;
+		    }
+		    var chunks = dmy.split('.');
+		    return chunks[2] + '-' + chunks[1] + '-' + chunks[0];
 		},
 		renderTpl: function (id, data, mode) {
 		    if (!this.tplcache[id] || mode === 'nocache') {
-			this.tplcache[id] = $('#' + id).html().replace('&gt;', '>').replace(/<!--/g,'').replace(/-->/g,'');
+			this.tplcache[id] = $('#' + id).html().replace(/&gt;/g, '>').replace(/<!--/g,'').replace(/-->/g,'');
 		    }
 		    $('#' + id).html(Mark.up(App.tplcache[id], data));
 		    $('#' + id).removeClass('covert');
 		},
-		parseState:function(text){
-		    var newstate={};
-		    if( text ){
-			var pairs=text.split('&');
-			for(var i in pairs){
-			    var keyval=pairs[i].split('=');
-			    newstate[keyval[0]]=keyval[1];
+		parseState: function (text) {
+		    var newstate = {};
+		    if (text) {
+			var pairs = text.split('&');
+			for (var i in pairs) {
+			    var keyval = pairs[i].split('=');
+			    newstate[keyval[0]] = keyval[1];
 			}
 		    }
-		    App.state=newstate;
+		    App.state = newstate;
+		},
+		flash:function( msg ){
+		    $("#status").html(msg).show();
+		    clearTimeout(App.flashClock);
+		    App.flashClock=setTimeout(function(){
+			$("#status").hide();
+		    },1500);
 		}
 	    };
 	    $(App.init);
@@ -93,6 +103,7 @@
 		<i class="sidebar icon"></i>
 		Menu
 	    </a>
+	    <div class="ui warning message" id="status"></div>
 	</div>
 	<div id="main_container" class="pusher" style="margin-top: 42px;">
 	    sdgfsdgf

@@ -3,8 +3,7 @@
 	doc: {},
 	init: function () {
 	    App.document.initTab();
-	    App.document.initCompDropdowns();
-	    App.document.initPicker();
+	    App.document.head.init();
 	    App.document.load(App.state.doc_id);
 	},
 	load: function (doc_id) {
@@ -15,12 +14,7 @@
 	},
 	render: function () {
 	    App.renderTpl('document_entries', App.document.doc);
-	    $('.activecomp').dropdown('set value', App.document.doc.head.acomp_id);
-	    $('.activecomp').dropdown('set text', App.document.doc.head.acomp_label);
-	    $('.passivecomp').dropdown('set value', App.document.doc.head.passive_company_id);
-	    $('.passivecomp').dropdown('set text', App.document.doc.head.label);
-	    $('.doc_num').val(App.document.doc.head.doc_num);
-	    App.document.picker.set('select', new Date(App.toIso(App.document.doc.head.doc_date)) );
+	    App.document.head.set(App.document.doc.head);
 	},
 	initTab: function () {
 	    $('.menu .item').tab({
@@ -30,39 +24,55 @@
 	    });
 	    $('.menu .item').tab('change tab', 'entries');
 	},
-	initCompDropdowns: function () {
-	    $('.activecomp').dropdown({
-		apiSettings: {
-		    url: 'compListFetch/?mode=active_only'
-		},
-		fields: {
-		    value: 'company_id',
-		    name: 'label',
-		    text: 'label'
-		},
-		filterRemoteData: true,
-		fullTextSearch: true
-	    });
-	    $('.passivecomp').dropdown({
-		apiSettings: {
-		    url: 'compListFetch/'
-		},
-		fields: {
-		    value: 'company_id',
-		    name: 'label',
-		    text: 'label'
-		},
-		filterRemoteData: true,
-		fullTextSearch: true
-	    });
+	head: {
+	    init: function () {
+		$('.activecomp').dropdown({
+		    apiSettings: {
+			url: 'compListFetch/?mode=active_only'
+		    },
+		    fields: {
+			value: 'company_id',
+			name: 'label',
+			text: 'label'
+		    },
+		    filterRemoteData: true,
+		    fullTextSearch: true
+		});
+		$('.passivecomp').dropdown({
+		    apiSettings: {
+			url: 'compListFetch/'
+		    },
+		    fields: {
+			value: 'company_id',
+			name: 'label',
+			text: 'label'
+		    },
+		    filterRemoteData: true,
+		    fullTextSearch: true
+		});
+		var $input = $('.docdatepicker').pickadate();
+		App.document.picker = $input.pickadate('picker');
+		App.document.picker.on({
+		    set: function ( val ) {
+			var date=App.document.picker.get('select', 'yyyy-mm-dd');
+			App.document.head.update('doc_date',date);
+		    }
+		});
+	    },
+	    set:function( head ){
+		$('.activecomp').dropdown('set value', head.acomp_id);
+		$('.activecomp').dropdown('set text', head.acomp_label);
+		$('.passivecomp').dropdown('set value', head.passive_company_id);
+		$('.passivecomp').dropdown('set text', head.label);
+		$('.doc_num').val(head.doc_num);
+		App.document.picker.set('select', new Date( App.toIso(head.doc_date) ));
+	    },
+	    update:function(field,value){
+		App.document.doc.head[field]=value;
+	    }
 	},
-	initPicker: function () {
-	    var $input = $('.docdatepicker').pickadate();
-	    App.document.picker = $input.pickadate('picker');
-	    App.document.picker.on({
-		set: function () {
-		}
-	    });
+	save:function(){
+	    
 	}
     };
     $(App.document.init);
@@ -159,7 +169,17 @@
 <div class="ui bottom attached tab segment" data-tab="prefs" id="">
 
 </div>
-
+<div class="ui grid">
+    <div class="eight wide column">
+	<div class="ui fluid primary button">Сохранить</div>
+    </div>
+    <div class="four wide column">
+	<div class="ui fluid button">Провести</div>
+    </div>
+    <div class="four wide column">
+	<div class="ui fluid negative button">Удалить</div>
+    </div>
+</div>
 
 
 <style>

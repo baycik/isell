@@ -67,6 +67,10 @@ class MobiSell extends Catalog{
 	return $document;
     }
     
+    public function documentSave(){
+	
+    }
+    
     public $compListFetch=['mode'=>'string','q'=>'string'];
     public function compListFetch($mode,$q){
 	return [
