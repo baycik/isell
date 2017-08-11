@@ -1058,3 +1058,8 @@ DELIMITER ;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
 -- Dump completed on 2016-10-13 11:02:29
+
+
+
+ALTER TABLE `stock_tree` 
+CHANGE COLUMN `top_id` `top_id` INT(10) UNSIGNED NULL ;
