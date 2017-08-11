@@ -33,6 +33,7 @@
 			var url_chunks = url.split("#");
 			$("#main_container").load(url_chunks[0]);
 			App.parseState(url_chunks[1]);
+			$(".ui.sidebar").sidebar('hide');
 		    }
 		},
 		sidebar: {

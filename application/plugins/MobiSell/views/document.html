@@ -5,6 +5,7 @@
 	    App.document.initTab();
 	    App.document.head.init();
 	    App.document.load(App.state.doc_id);
+	    App.document.suggestion.init();
 	},
 	load: function (doc_id) {
 	    $.post("documentGet/", {doc_id: doc_id}, function (resp) {
@@ -53,30 +54,45 @@
 		var $input = $('.docdatepicker').pickadate();
 		App.document.picker = $input.pickadate('picker');
 		App.document.picker.on({
-		    set: function ( val ) {
-			var date=App.document.picker.get('select', 'yyyy-mm-dd');
-			App.document.head.update('doc_date',date);
+		    set: function (val) {
+			var date = App.document.picker.get('select', 'yyyy-mm-dd');
+			App.document.head.update('doc_date', date);
 		    }
 		});
 	    },
-	    set:function( head ){
+	    set: function (head) {
 		$('.activecomp').dropdown('set value', head.acomp_id);
 		$('.activecomp').dropdown('set text', head.acomp_label);
 		$('.passivecomp').dropdown('set value', head.passive_company_id);
 		$('.passivecomp').dropdown('set text', head.label);
 		$('.doc_num').val(head.doc_num);
-		App.document.picker.set('select', new Date( App.toIso(head.doc_date) ));
+		App.document.picker.set('select', new Date(App.toIso(head.doc_date)));
 	    },
-	    update:function(field,value){
-		App.document.doc.head[field]=value;
+	    update: function (field, value) {
+		App.document.doc.head[field] = value;
 	    }
 	},
-	save:function(){
-	    
+	save: function () {
+
+	},
+	suggestion: {
+	    init: function () {
+		$("#doc_suggestion").accordion({
+		    onOpen:function(){
+			
+		    }
+		});
+	    }
 	}
     };
     $(App.document.init);
 </script>
+
+<style>
+    #document_entries .four.wide.column{
+	text-align: right;
+    }
+</style>
 <div class="ui form">
     <div class="four fields">
 	<div class="field">
@@ -167,23 +183,29 @@
     </table>
 </div>
 <div class="ui bottom attached tab segment" data-tab="prefs" id="">
-
-</div>
-<div class="ui grid">
-    <div class="eight wide column">
-	<div class="ui fluid primary button">Сохранить</div>
-    </div>
-    <div class="four wide column">
-	<div class="ui fluid button">Провести</div>
-    </div>
-    <div class="four wide column">
-	<div class="ui fluid negative button">Удалить</div>
+    <div class="ui buttons">
+	<button class="ui primary button">Провести</button>
+	<button class="ui button">Удалить</button>
+	<button class="ui negative button">Удалить</button>
     </div>
 </div>
 
+<div class="ui fluid primary button"><i class="icon save"></i> Сохранить</div>
 
-<style>
-    #document_entries .four.wide.column{
-	text-align: right;
-    }
-</style>
+<div class="ui styled fluid accordion" id="doc_suggestion">
+    <div class="active title"><i class="add icon"></i>Добавить товар</div>
+    <div class="active content">
+	<table>
+	    <!-- {{if entries}} {{entries}} -->
+	    <tr>
+		<td></td>
+		<td></td>
+	    </tr>
+	    <!-- {{/entries}} {{else}}-->
+	    <tr>
+		<td colspan="2">Ничего не найдено</td>
+	    </tr>
+	    <!--{{/if}}-->
+	</table>
+    </div>
+</div>

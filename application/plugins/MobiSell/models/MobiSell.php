@@ -57,6 +57,49 @@ class MobiSell extends Catalog{
 	return $this->get_list($sql);
     }
     
+    public $compListFetch=['mode'=>'string','q'=>'string'];
+    public function compListFetch($mode,$q){
+	return [
+	    'success'=>true,
+	    'results'=>$this->Hub->load_model('Company')->listFetchAll($mode,$q)
+	    ];
+    }
+    
+    public $suggest=['q'=>'string','parent_id'=>['int',0],'company_id'=>['int',0]];
+    public function suggest($q,$parent_id,$company_id){
+        $clues=explode(' ',$q);
+	$usd_ratio=$this->Hub->pref('usd_ratio');
+	$cases=[];
+	if($parent_id){
+	    $parent_ids=$this->treeGetSub('stock_tree',$parent_id);
+	    $cases[]="(parent_id='".implode("' OR parent_id='",$parent_ids)."')";
+	}
+        foreach($clues as $clue){
+            $cases[]="(product_code LIKE '%$clue%' OR ru LIKE '%$clue%')";
+        }
+        $where=implode(' AND ',$cases);
+        $sql="
+		SELECT
+		    *,
+		    GET_PRICE(code,$company_id,$usd_ratio) product_price
+		FROM
+		(SELECT 
+                    product_code,
+                    ru product_name,
+                    product_spack,
+                    product_quantity,
+                    product_unit,
+		    product_img
+                FROM
+                    prod_list
+                JOIN
+                    stock_entries se USING (product_code)
+                WHERE $where
+                ORDER BY fetch_count - DATEDIFF(NOW(), fetch_stamp) DESC, product_code
+                LIMIT 20) t";
+        return $this->get_list($sql);
+    }
+        
     public $documentGet=["doc_id"=>"int"];
     public function documentGet($doc_id){
 	$DocumentItems=$this->Hub->load_model("DocumentItems");
@@ -67,17 +110,9 @@ class MobiSell extends Catalog{
 	return $document;
     }
     
-    public function documentSave(){
+    public $documentSave=['document'=>'json'];
+    public function documentSave( $document ){
 	
     }
-    
-    public $compListFetch=['mode'=>'string','q'=>'string'];
-    public function compListFetch($mode,$q){
-	return [
-	    'success'=>true,
-	    'results'=>$this->Hub->load_model('Company')->listFetchAll($mode,$q)
-	    ];
-    }
-    
     
 }
