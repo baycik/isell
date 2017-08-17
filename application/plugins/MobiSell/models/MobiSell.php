@@ -115,4 +115,33 @@ class MobiSell extends Catalog{
 	
     }
     
+    public $documentSuggest=['q'=>'string','offset'=>['int',0]];
+    public function documentSuggest($q,$offset){
+	$clues=  explode(' ', $q);
+	$company_lang = $this->Hub->pcomp('language');
+	$where=array();
+	foreach ($clues as $clue) {
+            if ($clue == ''){
+                continue;
+	    }
+            $where[]="(product_code LIKE '%$clue%' OR $company_lang LIKE '%$clue%')";
+        }
+	$sql="
+	    SELECT
+		product_code,
+		$company_lang product_name,
+		product_spack,
+		product_quantity,
+                product_img
+	    FROM
+		prod_list
+		    JOIN
+		stock_entries USING(product_code)
+	    WHERE
+		".( implode(' AND ',$where) )."
+		    ORDER BY fetch_count-DATEDIFF(NOW(),fetch_stamp) DESC, product_code
+	    LIMIT 15 OFFSET $offset
+	    ";
+	return $this->get_list($sql);	
+    }
 }
