@@ -111,7 +111,10 @@
 		    enableColumnReorder: false,
 		    enableFilter: true,
 		    multiSelect: true,
-		    url: 'Importer/listFetch/'
+		    url: 'Importer/listFetch/',
+                    params:{
+                        label:App.page_dialog_importer.label
+                    }
 		}
 	    };
 	    var cols="ABCDEFGHIJKLMNOPQ";
