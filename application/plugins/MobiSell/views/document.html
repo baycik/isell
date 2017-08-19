@@ -67,6 +67,9 @@
 		$('.passivecomp').dropdown('set text', head.label);
 		$('.doc_num').val(head.doc_num);
 		App.document.picker.set('select', new Date(App.toIso(head.doc_date)));
+
+
+		App.document.suggestion.search('24111');
 	    },
 	    update: function (field, value) {
 		App.document.doc.head[field] = value;
@@ -76,37 +79,37 @@
 
 	},
 	suggestion: {
-	    q:'',
-	    entries:[],
+	    q: '',
+	    entries: [],
 	    init: function () {
 		$("#doc_suggestion").accordion({
 		    onOpen: function () {
 
 		    }
 		});
-		$("#doc_suggestion input").on('change',function(){
+		$("#doc_suggestion input").on('change', function () {
 		    App.document.suggestion.search($(this).val());
 		});
-		App.document.suggestion.search('24111');
 	    },
-	    search:function(q){
+	    search: function (q) {
 		clearTimeout(this.clock);
-		this.clock=setTimeout(function(){
-		    App.document.suggestion.q=q;
-		    App.document.suggestion.entries=[];
+		this.clock = setTimeout(function () {
+		    App.document.suggestion.q = q;
+		    App.document.suggestion.entries = [];
 		    App.document.suggestion.load();
-		},500);
+		}, 500);
 	    },
 	    load: function () {
-		var offset= App.document.suggestion.entries.length||0;
-		$.post('documentSuggest', {offset:offset,q:App.document.suggestion.q}, function (resp) {
+		var offset = App.document.suggestion.entries.length || 0;
+		console.log(App.document.doc);
+		$.post('documentSuggest', {offset: offset, q: App.document.suggestion.q, doc_id: App.document.doc.head.doc_id}, function (resp) {
 		    var suggestion = App.json(resp);
-		    App.document.suggestion.entries=App.document.suggestion.entries.concat(suggestion);
+		    App.document.suggestion.entries = App.document.suggestion.entries.concat(suggestion);
 		    App.document.suggestion.render();
 		});
 	    },
-	    render:function(){
-		App.renderTpl('doc_suggestion_entries',{entries:App.document.suggestion.entries});
+	    render: function () {
+		App.renderTpl('doc_suggestion_entries', {entries: App.document.suggestion.entries});
 	    }
 	}
     };
@@ -224,20 +227,36 @@
 	    <input placeholder="Search..." type="text">
 	    <i class="circular search link icon"></i>
 	</div>
-	<div id="doc_suggestion_entries">
-	    <table>
-		<!-- {{if entries}} {{entries}} -->
-		<tr>
-		    <td style="width:100px"><img src="../Storage/image_flush/?size=100x100&path=/dynImg/{{product_img}}"></td>
-		    <td>{{product_name}} {{product_spack}}</td>
-		</tr>
-		<!-- {{/entries}} {{else}}-->
-		<tr>
-		    <td colspan="2">Ничего не найдено</td>
-		</tr>
-		<!--{{/if}}-->
-	    </table>
-	</div>
-	<button class="ui button fluid">Показать еще</button>
+
+	<button class="ui button fluid" onclick="App.document.suggestion.load();">Показать еще</button>
     </div>
+</div>
+
+<div id="doc_suggestion_entries">
+    <table class="ui very compact table unstackable">
+	<!-- {{if entries}} {{entries}} -->
+	<tbody>
+	    <tr>
+		<td><img style="width:50px" src="../Storage/image_flush/?size=50x50&path=/dynImg/{{product_img}}"></td>
+		<td style="border-bottom: 1px #ccc solid">
+		    <div class="ui grid stackable">
+			<div class="eight wide column">{{product_name}}</div>
+			<div class="eight wide column">
+			    <div class="ui grid">
+				<div class="six wide column">{{product_code}}</div>
+				<div class="four wide column right aligned">{{product_price}}р</div>
+				<div class="three wide column right aligned">{{product_quantity}}</div>
+				<div class="three wide column right aligned">{{product_spack}}</div>
+			    </div>
+			</div>
+		    </div>
+		</td>
+	    </tr>
+	</tbody>
+	<!-- {{/entries}} {{else}}-->
+	<tr>
+	    <td colspan="2">Ничего не найдено</td>
+	</tr>
+	<!--{{/if}}-->
+    </table>
 </div>
