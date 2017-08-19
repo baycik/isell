@@ -1,8 +1,8 @@
 <?php
 class Importer extends Catalog{
 
-    public $listFetch=['offset'=>'int','limit'=>'int','sortby'=>'string','sortdir'=>'(ASC|DESC)','filter'=>'json'];
-    public function listFetch($offset,$limit,$sortby,$sortdir,$filter=null){
+    public $listFetch=['label'=>'string', 'offset'=>'int','limit'=>'int','sortby'=>'string','sortdir'=>'(ASC|DESC)','filter'=>'json'];
+    public function listFetch($label, $offset,$limit,$sortby,$sortdir,$filter=null){
 	if( empty($sortby) ){
 	    $sortby='A';
 	}
@@ -12,6 +12,7 @@ class Importer extends Catalog{
 		*
 	    FROM 
 		imported_data
+            WHERE label LIKE '%$label%'
 	    HAVING $having
 	    ORDER BY $sortby $sortdir
 	    LIMIT $limit OFFSET $offset";
