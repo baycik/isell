@@ -73,7 +73,16 @@
     };
     //CompPrefs.init();
 </script>
-
+<style type="text/css">
+    .discount_inp{
+	text-align:right;
+	width:50px;
+    }
+    .panel_block{
+	display:inline-block;
+	vertical-align: top;
+    }
+</style>
 <div class="panel_block">
     <div class="easyui-panel" title="Скидки и надбавки" style="width:260px;padding: 3px;">
 	<div id="CompPrefs_markup" class="covert">
@@ -122,15 +131,7 @@
 	    <option value="ua">Українська</option>
 	    <option value="ru">Русский</option>
 	</select>
+        <div class="inp_rule">Другое</div>
+        <input name="path" title="Путь" readonly="readonly">
     </div>
 </div>
-<style type="text/css">
-    .discount_inp{
-	text-align:right;
-	width:50px;
-    }
-    .panel_block{
-	display:inline-block;
-	vertical-align: top;
-    }
-</style>
