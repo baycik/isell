@@ -21,11 +21,11 @@ class Reports_market_analyse extends Catalog{
                 B article,
                 product_code,
                 ru product_name,
+                1 product_price,
                 analyse_type,
                 analyse_group,
                 C store_code,
                 D sold,
-                1 product_price,
                 E leftover
             FROM
                 imported_data
@@ -36,26 +36,34 @@ class Reports_market_analyse extends Catalog{
                 AND label='маркет'
             $having)";
         
-            $sql_price_clear="DROP TEMPORARY TABLE tmp_market_report_price";
-            $sql_price_prepare="CREATE TEMPORARY TABLE tmp_market_report_price ( INDEX(product_code) ) ENGINE=MyISAM AS (
-                SELECT 
-                    invoice_price*(dl.vat_rate/100+1)
-                FROM 
-                    document_entries de
-                        JOIN 
-                    document_list dl USING(doc_id)
-                        JOIN
-                    tmp_market_report USING(product_code)
-                WHERE 
-                    passive_company_id='$pcomp_id' 
-                    AND doc_type=1 
-                    AND is_commited=1
-                    AND cstamp<'$this->fdate'
-                    AND de.product_code=pl.product_code
-                ORDER BY cstamp DESC
+        $sql_sum_clear="DROP  TABLE IF EXISTS tmp_market_report_sumqty";
+        $sql_sum_prepare="CREATE  TABLE tmp_market_report_sumqty ( INDEX(product_code) ) ENGINE=MyISAM AS (
+            SELECT 
+                product_code,SUM(sold)+SUM(leftover) sumqty
+            FROM 
+                tmp_market_report
+            GROUP BY product_code)";
+        
+        $sql_price_setup="SET @current_qty:=0;";
+        $sql_price_clear="DROP  TABLE IF EXISTS tmp_market_report_price";
+        $sql_price_prepare="CREATE  TABLE tmp_market_report_price ( INDEX(product_code) ) ENGINE=MyISAM AS (
+            SELECT 
+                product_code,
+                
 
-
-)";
+            FROM 
+                tmp_market_report_sumqty
+            )";        
+        
+        
+        
+        
+        
+        
+        $this->query($sql_clear);
+        $this->query($sql_prepare);
+        $this->query($sql_sum_clear);
+        $this->query($sql_sum_prepare);
         
         
         
