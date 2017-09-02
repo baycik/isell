@@ -266,4 +266,38 @@
 	
     </div>
 </div>
+<div>
+    <a href="document.html" class="ui button">Hello baby</a>
+
+</div>
+
+
+
+<div id="doc_suggestion_entries">
+    <table class="ui very compact table unstackable">
+	<!-- {{if entries}} {{entries}} -->
+	<tbody>
+	    <tr>
+		<td><img style="width:50px" src="../Storage/image_flush/?size=50x50&path=/dynImg/{{product_img}}"></td>
+		<td style="border-bottom: 1px #ccc solid">
+		    <div class="ui grid stackable">
+			<div class="eight wide column">{{product_name}}</div>
+			<div class="eight wide column">
+			    <div class="ui grid">
+				<div class="six wide column">{{product_code}}</div>
+				<div class="four wide column right aligned">{{product_price}}р</div>
+				<div class="three wide column right aligned">{{product_quantity}}</div>
+				<div class="three wide column right aligned">{{product_spack}}</div>
+			    </div>
+			</div>
+		    </div>
+		</td>
+	    </tr>
+	</tbody>
+	<!-- {{/entries}} {{else}}-->
+	<tr>
+	    <td colspan="2">Ничего не найдено</td>
+	</tr>
+	<!--{{/if}}-->
+    </table>
 </div>
