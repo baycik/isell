@@ -105,7 +105,7 @@
 		    var suggestion = App.json(resp);
 		    App.document.suggestion.entries = App.document.suggestion.entries.concat(suggestion);
 		    App.document.suggestion.render();
-		    if( suggestion && suggestion.length>0 ){
+		    if (suggestion && suggestion.length > 0) {
 			$("#load_suggestions_button").show();
 		    } else {
 			$("#load_suggestions_button").hide();
@@ -115,9 +115,9 @@
 	    render: function () {
 		App.renderTpl('doc_suggestion_entries', {entries: App.document.suggestion.entries});
 	    },
-	    handleClick:function(row_node){
-		var index=$(row_node).data('row-index');
-		
+	    handleClick: function (row_node) {
+		var index = $(row_node).data('row-index');
+
 	    }
 	}
     };
@@ -228,76 +228,40 @@
 
 <div class="ui fluid primary button"><i class="icon save"></i> Сохранить</div>
 <div class="ui inverted segment">
-<div class="ui inverted fluid accordion" id="doc_suggestion">
-    <div class="active title"><i class="add icon"></i>Добавить товар</div>
-    <div class="active content">
-	<div class="ui icon input fluid">
-	    <input placeholder="Поиск по коду или названию" type="text">
-	    <i class="circular search link icon"></i>
-	</div>
-	<div id="doc_suggestion_entries">
-	    <table class="ui very compact table unstackable">
-		<tbody>
-		<!-- {{if entries}} {{entries}} -->
-		    <tr data-row-index="{{#}}" onclick="App.document.suggestion.handleClick(this)">
-			<td><img style="width:50px" src="../Storage/image_flush/?size=50x50&path=/dynImg/{{product_img}}"></td>
-			<td>
-			    <div class="ui grid stackable">
-				<div class="eight wide column" style="padding: .5rem !important">{{product_name}}</div>
-				<div class="eight wide column" style="padding: .5rem !important">
-				    <div class="ui grid" style="color:grey">
-					<div class="eight wide ">{{product_code}}</div>
-					<div class="four wide right aligned">{{product_price}}р</div>
-					<div class="four wide right aligned">{{product_quantity}}{{product_unit}}</div>
+    <div class="ui inverted fluid accordion" id="doc_suggestion">
+	<div class="active title"><i class="add icon"></i>Добавить товар</div>
+	<div class="active content">
+	    <div class="ui icon input fluid">
+		<input placeholder="Поиск по коду или названию" type="text">
+		<i class="circular search link icon"></i>
+	    </div>
+	    <div id="doc_suggestion_entries">
+		<table class="ui very compact table unstackable">
+		    <tbody>
+			<!-- {{if entries}} {{entries}} -->
+			<tr data-row-index="{{#}}" onclick="App.document.suggestion.handleClick(this)">
+			    <td><img style="width:50px" src="../Storage/image_flush/?size=50x50&path=/dynImg/{{product_img}}"></td>
+			    <td>
+				<div class="ui grid stackable" style="{{if product_quantity|less>1}} color:red !important {{/if}}">
+				    <div class="eight wide column" style="padding: .5rem !important">{{product_name}}</div>
+				    <div class="eight wide column" style="padding: .5rem !important">
+					<div class="ui grid" style="opacity:0.7">
+					    <div class="six wide column">{{product_code}}</div>
+					    <div class="five wide column right aligned">{{product_price}}р</div>
+					    <div class="five wide column right aligned">{{product_quantity}}{{product_unit}}</div>
+					</div>
 				    </div>
 				</div>
-			    </div>
-			</td>
-		    </tr>
-		<!-- {{/entries}} {{else}}-->
-		    <tr>
-			<td colspan="2">Ничего не найдено</td>
-		    </tr>
-		<!--{{/if}}-->
-		</tbody>
-	    </table>
-	    <button class="ui button fluid" id="load_suggestions_button" onclick="App.document.suggestion.load();">Показать еще</button>
+			    </td>
+			</tr>
+			<!-- {{/entries}} {{else}}-->
+			<tr>
+			    <td colspan="2">Ничего не найдено</td>
+			</tr>
+			<!--{{/if}}-->
+		    </tbody>
+		</table>
+		<button class="ui button fluid" id="load_suggestions_button" onclick="App.document.suggestion.load();">Показать еще</button>
+	    </div>
 	</div>
-	
     </div>
-</div>
-<div>
-    <a href="document.html" class="ui button">Hello baby</a>
-
-</div>
-
-
-
-<div id="doc_suggestion_entries">
-    <table class="ui very compact table unstackable">
-	<!-- {{if entries}} {{entries}} -->
-	<tbody>
-	    <tr>
-		<td><img style="width:50px" src="../Storage/image_flush/?size=50x50&path=/dynImg/{{product_img}}"></td>
-		<td style="border-bottom: 1px #ccc solid">
-		    <div class="ui grid stackable">
-			<div class="eight wide column">{{product_name}}</div>
-			<div class="eight wide column">
-			    <div class="ui grid">
-				<div class="six wide column">{{product_code}}</div>
-				<div class="four wide column right aligned">{{product_price}}р</div>
-				<div class="three wide column right aligned">{{product_quantity}}</div>
-				<div class="three wide column right aligned">{{product_spack}}</div>
-			    </div>
-			</div>
-		    </div>
-		</td>
-	    </tr>
-	</tbody>
-	<!-- {{/entries}} {{else}}-->
-	<tr>
-	    <td colspan="2">Ничего не найдено</td>
-	</tr>
-	<!--{{/if}}-->
-    </table>
-</div>
