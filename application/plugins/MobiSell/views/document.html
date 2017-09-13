@@ -75,6 +75,41 @@
 		App.document.doc.head[field] = value;
 	    }
 	},
+	entries: {
+	    add: function (suggest_entry) {
+		suggest_entry.product_quantity=suggest_entry.product_spack;
+		App.document.doc.entries.push(suggest_entry);
+		App.document.render();
+		App.document.entries.edit(suggest_entry);
+	    },
+	    edit:function(entry){
+		App.renderTpl('document_entry_dialog', entry);		
+		$('#document_entry_dialog').modal('show');
+		
+		$('#document_entry_dialog')
+		.modal({
+		  onDeny    : function(){
+		    window.alert('Wait not yet!');
+		    return false;
+		  },
+		  onApprove : function() {
+		    window.alert('Approved!');
+		  }
+		})
+		.modal('show');
+		
+		
+		setTimeout(function(){
+		    $("#document_entry_dialog input").val(entry.product_quantity).select();
+		},0);
+	    },
+	    save:function(){
+		
+	    },
+	    remove:function(){
+		
+	    }
+	},
 	save: function () {
 
 	},
@@ -117,7 +152,8 @@
 	    },
 	    handleClick: function (row_node) {
 		var index = $(row_node).data('row-index');
-
+		var suggest_entry = App.document.suggestion.entries[index];
+		App.document.entries.add(suggest_entry);
 	    }
 	}
     };
@@ -226,7 +262,6 @@
     </div>
 </div>
 
-<div class="ui fluid primary button"><i class="icon save"></i> Сохранить</div>
 <div class="ui inverted segment">
     <div class="ui inverted fluid accordion" id="doc_suggestion">
 	<div class="active title"><i class="add icon"></i>Добавить товар</div>
@@ -242,13 +277,13 @@
 			<tr data-row-index="{{#}}" onclick="App.document.suggestion.handleClick(this)">
 			    <td><img style="width:50px" src="../Storage/image_flush/?size=50x50&path=/dynImg/{{product_img}}"></td>
 			    <td>
-				<div class="ui grid stackable" style="{{if product_quantity|less>1}} color:red !important {{/if}}">
+				<div class="ui grid stackable" style="{{if leftover|less>1}} color:red !important {{/if}}">
 				    <div class="eight wide column" style="padding: .5rem !important">{{product_name}}</div>
 				    <div class="eight wide column" style="padding: .5rem !important">
 					<div class="ui grid" style="opacity:0.7">
 					    <div class="six wide column">{{product_code}}</div>
-					    <div class="five wide column right aligned">{{product_price}}р</div>
-					    <div class="five wide column right aligned">{{product_quantity}}{{product_unit}}</div>
+					    <div class="five wide column right aligned">{{product_price_total}}р</div>
+					    <div class="five wide column right aligned">{{leftover}}{{product_unit}}</div>
 					</div>
 				    </div>
 				</div>
@@ -265,3 +300,25 @@
 	    </div>
 	</div>
     </div>
+</div>
+<div class="ui modal" id="document_entry_dialog">
+    <div class="header">Редактирование строки</div>
+    <div class="content">
+	<div class="ui stackable grid">
+	    <div class="eight wide column"><span style="opacity:.7">{{product_code}}</span> {{product_name}}</div>
+	    <div class="eight wide column">
+		<div class="ui right labeled fluid input">
+		    <input placeholder="Колличество" type="number">
+		    <div class="ui basic label">{{product_unit}}</div>
+		</div>
+	    </div>
+	</div>
+    </div>
+    <div class="actions">
+	<div class="ui stackable grid">
+	    <div class="six wide column"><div class="ui positive approve fluid button">Ок</div></div>
+	    <div class="six wide column"><div class="ui secondary close fluid button">Отменить</div></div>
+	    <div class="four wide column"><div class="ui negative deny fluid button">Удалить</div></div>
+	</div>
+    </div>
+</div>

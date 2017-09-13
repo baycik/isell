@@ -133,10 +133,10 @@ class MobiSell extends Catalog{
 		product_code,
 		ru product_name,
 		product_spack,
-		product_quantity,
+		product_quantity leftover,
                 product_img,
 		product_unit,
-		GET_PRICE(product_code,{$head->passive_company_id},{$head->doc_ratio}) product_price
+		GET_PRICE(product_code,{$head->passive_company_id},{$head->doc_ratio}) product_price_total
 	    FROM
 		prod_list
 		    JOIN
