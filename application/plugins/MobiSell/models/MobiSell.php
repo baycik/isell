@@ -65,40 +65,40 @@ class MobiSell extends Catalog{
 	    ];
     }
     
-    public $suggest=['q'=>'string','parent_id'=>['int',0],'company_id'=>['int',0]];
-    public function suggest($q,$parent_id,$company_id){
-        $clues=explode(' ',$q);
-	$usd_ratio=$this->Hub->pref('usd_ratio');
-	$cases=[];
-	if($parent_id){
-	    $parent_ids=$this->treeGetSub('stock_tree',$parent_id);
-	    $cases[]="(parent_id='".implode("' OR parent_id='",$parent_ids)."')";
-	}
-        foreach($clues as $clue){
-            $cases[]="(product_code LIKE '%$clue%' OR ru LIKE '%$clue%')";
-        }
-        $where=implode(' AND ',$cases);
-        $sql="
-		SELECT
-		    *,
-		    GET_PRICE(code,$company_id,$usd_ratio) product_price
-		FROM
-		(SELECT 
-                    product_code,
-                    ru product_name,
-                    product_spack,
-                    product_quantity,
-                    product_unit,
-		    product_img
-                FROM
-                    prod_list
-                JOIN
-                    stock_entries se USING (product_code)
-                WHERE $where
-                ORDER BY fetch_count - DATEDIFF(NOW(), fetch_stamp) DESC, product_code
-                LIMIT 20) t";
-        return $this->get_list($sql);
-    }
+//    public $suggest=['q'=>'string','parent_id'=>['int',0],'company_id'=>['int',0]];
+//    public function suggest($q,$parent_id,$company_id){
+//        $clues=explode(' ',$q);
+//	$usd_ratio=$this->Hub->pref('usd_ratio');
+//	$cases=[];
+//	if($parent_id){
+//	    $parent_ids=$this->treeGetSub('stock_tree',$parent_id);
+//	    $cases[]="(parent_id='".implode("' OR parent_id='",$parent_ids)."')";
+//	}
+//        foreach($clues as $clue){
+//            $cases[]="(product_code LIKE '%$clue%' OR ru LIKE '%$clue%')";
+//        }
+//        $where=implode(' AND ',$cases);
+//        $sql="
+//		SELECT
+//		    *,
+//		    GET_PRICE(code,$company_id,$usd_ratio) product_price
+//		FROM
+//		(SELECT 
+//                    product_code,
+//                    ru product_name,
+//                    product_spack,
+//                    product_quantity,
+//                    product_unit,
+//		    product_img
+//                FROM
+//                    prod_list
+//                JOIN
+//                    stock_entries se USING (product_code)
+//                WHERE $where
+//                ORDER BY fetch_count - DATEDIFF(NOW(), fetch_stamp) DESC, product_code
+//                LIMIT 20) t";
+//        return $this->get_list($sql);
+//    }
         
     public $documentGet=["doc_id"=>"int"];
     public function documentGet($doc_id){
@@ -115,24 +115,27 @@ class MobiSell extends Catalog{
 	
     }
     
-    public $documentSuggest=['q'=>'string','offset'=>['int',0]];
-    public function documentSuggest($q,$offset){
+    public $documentSuggest=['q'=>'string','offset'=>['int',0],'doc_id'=>['int',0]];
+    public function documentSuggest($q,$offset,$doc_id){
 	$clues=  explode(' ', $q);
-	$company_lang = $this->Hub->pcomp('language');
+	
+	$DocumentCore=$this->Hub->load_model("DocumentCore");
+	$head=$DocumentCore->headGet( $doc_id );
 	$where=array();
 	foreach ($clues as $clue) {
             if ($clue == ''){
                 continue;
 	    }
-            $where[]="(product_code LIKE '%$clue%' OR $company_lang LIKE '%$clue%')";
+            $where[]="(product_code LIKE '%$clue%' OR ru LIKE '%$clue%')";
         }
 	$sql="
 	    SELECT
 		product_code,
-		$company_lang product_name,
+		ru product_name,
 		product_spack,
 		product_quantity,
-                product_img
+                product_img,
+		GET_PRICE(product_code,{$head->passive_company_id},{$head->doc_ratio}) product_price
 	    FROM
 		prod_list
 		    JOIN
