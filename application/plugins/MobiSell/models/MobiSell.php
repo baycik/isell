@@ -133,9 +133,10 @@ class MobiSell extends Catalog{
 		product_code,
 		ru product_name,
 		product_spack,
-		product_quantity,
+		product_quantity leftover,
                 product_img,
-		GET_PRICE(product_code,{$head->passive_company_id},{$head->doc_ratio}) product_price
+		product_unit,
+		GET_PRICE(product_code,{$head->passive_company_id},{$head->doc_ratio}) product_price_total
 	    FROM
 		prod_list
 		    JOIN
@@ -143,7 +144,7 @@ class MobiSell extends Catalog{
 	    WHERE
 		".( implode(' AND ',$where) )."
 		    ORDER BY fetch_count-DATEDIFF(NOW(),fetch_stamp) DESC, product_code
-	    LIMIT 15 OFFSET $offset
+	    LIMIT 10 OFFSET $offset
 	    ";
 	return $this->get_list($sql);	
     }
