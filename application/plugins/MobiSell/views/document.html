@@ -76,40 +76,54 @@
 	    }
 	},
 	row: {
-	    current_entry: 0,
 	    add: function (suggest_entry) {
 		suggest_entry.product_quantity = suggest_entry.product_spack;
-		App.document.doc.entries.push(suggest_entry);
-		App.document.row.edit(App.document.doc.entries.length-1);
+		App.document.row.edit(suggest_entry,null);
 	    },
-	    edit: function (index) {
-		App.document.row.current_entry=index;
-		var entry=App.document.doc.entries[index];
+	    edit: function (entry,index) {
 		App.renderTpl('document_entry_dialog', entry);
 		$('#document_entry_dialog').modal({
-			    onDeny: function () {
-				App.document.row.remove();
-			    },
-			    onApprove: function () {
-				App.document.row.save();
-			    },
-			    onVisible:function(){
-				$("#document_entry_dialog input").select();
-			    }
-			}).modal('show');
+		    onDeny: function () {
+			App.document.row.remove(index);
+		    },
+		    onApprove: function () {
+			entry.product_quantity=$("#document_entry_dialog input").val();
+			App.document.row.save(entry,index);
+		    },
+		    onVisible:function(){
+			$("#document_entry_dialog input").select();
+		    }
+		}).modal('show');
 		$("#document_entry_dialog input").val(entry.product_quantity);
-		
 	    },
-	    save: function () {
-		App.document.doc.entries[App.document.row.current_entry].product_quantity = $("#document_entry_dialog input").val();
-		App.document.doc.entries.sort();
+	    save: function (entry,index) {
+		if( index===null ){//new entry
+		    var merged=App.document.row.merge_if_code_exists(entry);
+		    entry=merged.entry;
+		    index=merged.index;
+		}
+		entry.product_sum_total=entry.product_quantity*entry.product_price_total;
+		App.document.doc.entries[index]=entry;
+		//App.document.doc.entries.sort();
 		App.document.render();
 	    },
-	    remove: function () {
-		delete App.document.doc.entries[App.document.row.current_entry];
+	    merge_if_code_exists:function(entry_to_merge){
+		for(var index in App.document.doc.entries){
+		    var entry=App.document.doc.entries[index];
+		    if( entry.product_code===entry_to_merge.product_code ){
+			entry.product_quantity=entry.product_quantity*1+entry_to_merge.product_quantity*1;
+			return {entry:entry,index:index};
+		    }
+		}
+		App.document.doc.entries.push(entry_to_merge);
+		var index=App.document.doc.entries.length-1;
+		return {entry:entry_to_merge,index:index};
+	    },
+	    remove: function (index) {
+		App.document.doc.entries.splice(index,1);
 		App.document.render();
 	    },
-	    sort: function () {
+/*	    sort: function () {
 		function compare(a, b) {
 		    if (a.product_code < b.product_code)
 			return -1;
@@ -118,10 +132,11 @@
 		    return 0;
 		}
 		App.document.doc.entries.sort(compare);
-	    },
+	    },*/
 	    handleClick: function (row_node) {
 		var index = $(row_node).data('row-index');
-		App.document.row.edit(index);
+		var entry=App.document.doc.entries[index];
+		App.document.row.edit(entry,index);
 	    }
 	},
 	save: function () {
@@ -321,12 +336,10 @@
 	<div class="ui stackable grid">
 	    <div class="eight wide column"><span style="opacity:.7">{{product_code}}</span> {{product_name}}</div>
 	    <div class="eight wide column">
-		<form onsubmit="App.document.row.save();$('#document_entry_dialog').modal('hide')">
 		<div class="ui right labeled fluid input">
 		    <input placeholder="Колличество" type="number">
 		    <div class="ui basic label">{{product_unit}}</div>
 		</div>
-		</form>
 	    </div>
 	</div>
     </div>
