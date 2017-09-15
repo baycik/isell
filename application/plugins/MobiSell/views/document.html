@@ -75,39 +75,53 @@
 		App.document.doc.head[field] = value;
 	    }
 	},
-	entries: {
+	row: {
+	    current_entry: 0,
 	    add: function (suggest_entry) {
-		suggest_entry.product_quantity=suggest_entry.product_spack;
+		suggest_entry.product_quantity = suggest_entry.product_spack;
 		App.document.doc.entries.push(suggest_entry);
+		App.document.row.edit(App.document.doc.entries.length-1);
+	    },
+	    edit: function (index) {
+		App.document.row.current_entry=index;
+		var entry=App.document.doc.entries[index];
+		App.renderTpl('document_entry_dialog', entry);
+		$('#document_entry_dialog').modal({
+			    onDeny: function () {
+				App.document.row.remove();
+			    },
+			    onApprove: function () {
+				App.document.row.save();
+			    },
+			    onVisible:function(){
+				$("#document_entry_dialog input").select();
+			    }
+			}).modal('show');
+		$("#document_entry_dialog input").val(entry.product_quantity);
+		
+	    },
+	    save: function () {
+		App.document.doc.entries[App.document.row.current_entry].product_quantity = $("#document_entry_dialog input").val();
+		App.document.doc.entries.sort();
 		App.document.render();
-		App.document.entries.edit(suggest_entry);
 	    },
-	    edit:function(entry){
-		App.renderTpl('document_entry_dialog', entry);		
-		$('#document_entry_dialog').modal('show');
-		
-		$('#document_entry_dialog')
-		.modal({
-		  onDeny    : function(){
-		    window.alert('Wait not yet!');
-		    return false;
-		  },
-		  onApprove : function() {
-		    window.alert('Approved!');
-		  }
-		})
-		.modal('show');
-		
-		
-		setTimeout(function(){
-		    $("#document_entry_dialog input").val(entry.product_quantity).select();
-		},0);
+	    remove: function () {
+		delete App.document.doc.entries[App.document.row.current_entry];
+		App.document.render();
 	    },
-	    save:function(){
-		
+	    sort: function () {
+		function compare(a, b) {
+		    if (a.product_code < b.product_code)
+			return -1;
+		    if (a.product_code > b.product_code)
+			return 1;
+		    return 0;
+		}
+		App.document.doc.entries.sort(compare);
 	    },
-	    remove:function(){
-		
+	    handleClick: function (row_node) {
+		var index = $(row_node).data('row-index');
+		App.document.row.edit(index);
 	    }
 	},
 	save: function () {
@@ -153,7 +167,7 @@
 	    handleClick: function (row_node) {
 		var index = $(row_node).data('row-index');
 		var suggest_entry = App.document.suggestion.entries[index];
-		App.document.entries.add(suggest_entry);
+		App.document.row.add(suggest_entry);
 	    }
 	}
     };
@@ -223,7 +237,7 @@
 	</thead>
 	<tbody>
 	    <!-- {{if entries}} {{entries}} -->
-	    <tr data-doc-id="{{doc_entry_id}}" onclick="App.document.handleClick(this)">
+	    <tr data-row-index="{{#}}" onclick="App.document.row.handleClick(this)">
 		<td>{{##}}) {{product_name}}
 		</td>
 		<td>
@@ -307,18 +321,20 @@
 	<div class="ui stackable grid">
 	    <div class="eight wide column"><span style="opacity:.7">{{product_code}}</span> {{product_name}}</div>
 	    <div class="eight wide column">
+		<form onsubmit="App.document.row.save();$('#document_entry_dialog').modal('hide')">
 		<div class="ui right labeled fluid input">
 		    <input placeholder="Колличество" type="number">
 		    <div class="ui basic label">{{product_unit}}</div>
 		</div>
+		</form>
 	    </div>
 	</div>
     </div>
     <div class="actions">
 	<div class="ui stackable grid">
-	    <div class="six wide column"><div class="ui positive approve fluid button">Ок</div></div>
-	    <div class="six wide column"><div class="ui secondary close fluid button">Отменить</div></div>
-	    <div class="four wide column"><div class="ui negative deny fluid button">Удалить</div></div>
+	    <div class="six wide column"><div class="ui positive actions approve fluid button">Ок</div></div>
+	    <div class="six wide column"><div class="ui secondary close fluid button" onclick="$('#document_entry_dialog').modal('hide');">Отменить</div></div>
+	    <div class="four wide column"><div class="ui negative actions deny fluid button">Удалить</div></div>
 	</div>
     </div>
 </div>
