@@ -9,9 +9,12 @@
 	},
 	load: function (doc_id) {
 	    $.post("documentGet/", {doc_id: doc_id}, function (resp) {
-		App.document.doc = App.json(resp);
-		App.document.render();
+		App.document.set( App.json(resp) );
 	    });
+	},
+	set:function(doc){
+	    App.document.doc=doc;
+	    App.document.render();
 	},
 	render: function () {
 	    App.renderTpl('document_entries', App.document.doc);
@@ -102,10 +105,22 @@
 		    entry=merged.entry;
 		    index=merged.index;
 		}
-		entry.product_sum_total=entry.product_quantity*entry.product_price_total;
+		App.document.row.save_on_server(entry);
+		entry.product_sum_total=(entry.product_quantity*entry.product_price_total).toFixed(2);
 		App.document.doc.entries[index]=entry;
-		//App.document.doc.entries.sort();
+		App.document.row.sort();
 		App.document.render();
+	    },
+	    save_on_server:function(entry){
+		var params={
+		    doc_id:App.document.doc.head.doc_id,
+		    doc_entry_id:entry.doc_entry_id,
+		    product_code:entry.product_code,
+		    product_quantity:entry.product_quantity
+		};
+		$.post('documentEntryUpdate/',params,function(resp){
+		    App.document.set( App.json(resp) );
+		});
 	    },
 	    merge_if_code_exists:function(entry_to_merge){
 		for(var index in App.document.doc.entries){
@@ -120,10 +135,22 @@
 		return {entry:entry_to_merge,index:index};
 	    },
 	    remove: function (index) {
-		App.document.doc.entries.splice(index,1);
+		var removed=App.document.doc.entries.splice(index,1);
+		if( removed && removed[0].doc_entry_id ){
+		    App.document.row.remove_on_server(removed[0].doc_entry_id);
+		}
 		App.document.render();
 	    },
-/*	    sort: function () {
+	    remove_on_server:function(doc_entry_id){
+		var params={
+		    doc_id:App.document.doc.head.doc_id,
+		    doc_entry_id:doc_entry_id
+		};
+		$.post('documentEntryRemove/',params,function(resp){
+		    App.document.set( App.json(resp) );
+		});
+	    },
+	    sort: function () {
 		function compare(a, b) {
 		    if (a.product_code < b.product_code)
 			return -1;
@@ -132,7 +159,7 @@
 		    return 0;
 		}
 		App.document.doc.entries.sort(compare);
-	    },*/
+	    },
 	    handleClick: function (row_node) {
 		var index = $(row_node).data('row-index');
 		var entry=App.document.doc.entries[index];

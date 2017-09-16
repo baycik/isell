@@ -220,11 +220,17 @@ class DocumentItems extends DocumentCore{
     }
     public $entryDelete=['int','string'];
     public function entryDelete( $doc_id, $ids ){
-	$this->selectDoc($doc_id);
 	$ids_arr=  json_decode('[['.str_replace(',', '],[', rawurldecode($ids)).']]');
+	
+	return $this->entryDeleteArray($doc_id, $ids_arr);
+    }
+    
+    public function entryDeleteArray($doc_id,$ids_arr){
+	$this->selectDoc($doc_id);
 	$Document2=$this->Hub->bridgeLoad('Document');
 	return $Document2->deleteEntry($ids_arr);
     }
+    
     public $entryStatsGet=['int','string'];
     public function entryStatsGet( $doc_id, $product_code ){
 	$this->check($doc_id,'int');

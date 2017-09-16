@@ -13,6 +13,12 @@
  * @author Baycik
  */
 class MobiSell extends Catalog{
+    function __construct() {
+	ini_set('zlib.output_compression_level', 6);
+	ob_start("ob_gzhandler");
+	parent::__construct();
+    }
+    
     public $index=[];
     public function index(){
 	$this->view('index.html');
@@ -65,41 +71,6 @@ class MobiSell extends Catalog{
 	    ];
     }
     
-//    public $suggest=['q'=>'string','parent_id'=>['int',0],'company_id'=>['int',0]];
-//    public function suggest($q,$parent_id,$company_id){
-//        $clues=explode(' ',$q);
-//	$usd_ratio=$this->Hub->pref('usd_ratio');
-//	$cases=[];
-//	if($parent_id){
-//	    $parent_ids=$this->treeGetSub('stock_tree',$parent_id);
-//	    $cases[]="(parent_id='".implode("' OR parent_id='",$parent_ids)."')";
-//	}
-//        foreach($clues as $clue){
-//            $cases[]="(product_code LIKE '%$clue%' OR ru LIKE '%$clue%')";
-//        }
-//        $where=implode(' AND ',$cases);
-//        $sql="
-//		SELECT
-//		    *,
-//		    GET_PRICE(code,$company_id,$usd_ratio) product_price
-//		FROM
-//		(SELECT 
-//                    product_code,
-//                    ru product_name,
-//                    product_spack,
-//                    product_quantity,
-//                    product_unit,
-//		    product_img
-//                FROM
-//                    prod_list
-//                JOIN
-//                    stock_entries se USING (product_code)
-//                WHERE $where
-//                ORDER BY fetch_count - DATEDIFF(NOW(), fetch_stamp) DESC, product_code
-//                LIMIT 20) t";
-//        return $this->get_list($sql);
-//    }
-        
     public $documentGet=["doc_id"=>"int"];
     public function documentGet($doc_id){
 	$DocumentItems=$this->Hub->load_model("DocumentItems");
@@ -110,9 +81,22 @@ class MobiSell extends Catalog{
 	return $document;
     }
     
-    public $documentSave=['document'=>'json'];
-    public function documentSave( $document ){
-	
+    public $documentEntryUpdate=['doc_id'=>'int','doc_entry_id'=>'int','product_code'=>'string','product_quantity'=>'int'];
+    public function documentEntryUpdate( $doc_id, $doc_entry_id, $product_code, $product_quantity ){
+	$DocumentItems=$this->Hub->load_model("DocumentItems");
+	if( $doc_entry_id ){
+	    $DocumentItems->entryUpdate($doc_id, $doc_entry_id, 'product_quantity', $product_quantity);
+	} else {
+	    $DocumentItems->entryAdd($product_code,$product_quantity);
+	}
+	return $this->documentGet($doc_id);
+    }
+    
+    public $documentEntryRemove=['doc_id'=>'int', 'doc_entry_id'=>'int'];
+    public function documentEntryRemove($doc_id, $doc_entry_id){
+	$DocumentItems=$this->Hub->load_model("DocumentItems");
+	$DocumentItems->entryDeleteArray($doc_id,[[$doc_entry_id]]);
+	return $this->documentGet($doc_id);
     }
     
     public $documentSuggest=['q'=>'string','offset'=>['int',0],'doc_id'=>['int',0]];
