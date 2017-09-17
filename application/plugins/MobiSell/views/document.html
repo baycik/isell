@@ -201,11 +201,7 @@
 		App.renderTpl('doc_suggestion_entries', {entries: []});
 		$("#doc_suggestion").accordion({
 		    onOpen: function () {
-			//App.renderTpl('doc_suggestion_entries', {entries: []});
-			//$("#load_suggestions_button").hide();
-			//$("#doc_suggestion input").val("");
 			App.document.suggestion.search("");
-			//$("#doc_suggestion_inp").addClass('loading');
 		    }
 		});
 		$("#doc_suggestion input").on('keyup', function () {
@@ -265,7 +261,7 @@
     }
 </style>
 <div class="ui form">
-    <div class="four fields">
+    <div class="five fields">
 	<div class="field">
 	    <label>Наша фирма</label>
 	    <div class="ui search selection remote dropdown activecomp">
@@ -299,6 +295,12 @@
 	      <label></label>
 	    </div>
 	</div>
+    </div>
+    <div>
+	<div class="field">
+	<label>Комментарий</label>
+	<textarea rows="2" name="doc_data"></textarea>
+      </div>
     </div>
 </div>
 
@@ -372,7 +374,7 @@
     <div class="ui inverted fluid accordion" id="doc_suggestion"> 
 	<div class="title"><i class="add icon"></i>Добавить товар</div>
 	<div class="content ">
-	    <div class="ui icon input fluid" id="doc_suggestion_inp">
+	    <div class="ui icon input fluid">
 		<input placeholder="Поиск по коду или названию" type="text">
 		<i class="circular search link icon"></i>
 	    </div>

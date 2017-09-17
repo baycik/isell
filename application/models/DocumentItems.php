@@ -23,9 +23,9 @@ class DocumentItems extends DocumentCore{
 		product_quantity,
                 product_img
 	    FROM
-		prod_list
+		stock_entries
 		    JOIN
-		stock_entries USING(product_code)
+		prod_list USING(product_code)
 	    WHERE
 		".( implode(' AND ',$where) )."
 		    ORDER BY fetch_count-DATEDIFF(NOW(),fetch_stamp) DESC, product_code
