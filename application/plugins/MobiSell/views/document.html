@@ -17,6 +17,7 @@
 	    App.document.render();
 	},
 	render: function () {
+	    App.document.row.parseStatus();
 	    App.renderTpl('document_entries', App.document.doc);
 	    App.document.head.set(App.document.doc.head);
 	},
@@ -164,6 +165,12 @@
 		var index = $(row_node).data('row-index');
 		var entry=App.document.doc.entries[index];
 		App.document.row.edit(entry,index);
+	    },
+	    parseStatus:function(){
+		for( var i in App.document.doc.entries ){
+		    App.document.doc.entries[i].status_icon=App.document.doc.entries[i].row_status.split(" ")[0].replace(["ok","wrn","err"],["check","exclamation","error"]);
+		    //App.document.doc.entries[i].status_message=App.document.doc.entries[i].row_status.split(" ").shift().join(" ");
+		}
 	    }
 	},
 	save: function () {
@@ -210,6 +217,17 @@
 		var index = $(row_node).data('row-index');
 		var suggest_entry = App.document.suggestion.entries[index];
 		App.document.row.add(suggest_entry);
+	    },
+	    popImage: function (row_node) {
+		var index = $(row_node).data('row-index');
+		var suggest_entry = App.document.suggestion.entries[index];
+		
+		suggest_entry.size_x=$( document ).width();
+		suggest_entry.size_y=$( document ).height();
+		
+		
+		App.renderTpl('document_product_image',suggest_entry);
+		$("#document_product_image").modal('show');
 	    }
 	}
     };
@@ -280,7 +298,7 @@
 	<tbody>
 	    <!-- {{if entries}} {{entries}} -->
 	    <tr data-row-index="{{#}}" onclick="App.document.row.handleClick(this)">
-		<td>{{##}}) {{product_name}}
+		<td>{{##}}) {{product_name}} {{status_icon}} | {{status_message}}
 		</td>
 		<td>
 		    <div class="ui grid">
@@ -330,9 +348,11 @@
 		<table class="ui very compact table unstackable">
 		    <tbody>
 			<!-- {{if entries}} {{entries}} -->
-			<tr data-row-index="{{#}}" onclick="App.document.suggestion.handleClick(this)">
-			    <td><img style="width:50px" src="../Storage/image_flush/?size=50x50&path=/dynImg/{{product_img}}"></td>
-			    <td>
+			<tr>
+			    <td data-row-index="{{#}}" onclick="App.document.suggestion.popImage(this)">
+				<img style="width:50px" src="../Storage/image_flush/?size=50x50&path=/dynImg/{{product_img}}">
+			    </td>
+			    <td data-row-index="{{#}}" onclick="App.document.suggestion.handleClick(this)">
 				<div class="ui grid stackable" style="{{if leftover|less>1}} color:red !important {{/if}}">
 				    <div class="eight wide column" style="padding: .5rem !important">{{product_name}}</div>
 				    <div class="eight wide column" style="padding: .5rem !important">
@@ -372,9 +392,23 @@
     </div>
     <div class="actions">
 	<div class="ui stackable grid">
-	    <div class="six wide column"><div class="ui positive actions approve fluid button">Ок</div></div>
-	    <div class="six wide column"><div class="ui secondary close fluid button" onclick="$('#document_entry_dialog').modal('hide');">Отменить</div></div>
-	    <div class="four wide column"><div class="ui negative actions deny fluid button">Удалить</div></div>
+	    <div class="six wide column"><div class="ui positive approve fluid button"><i class="icon save"></i> Ок</div></div>
+	    <div class="six wide column"><div class="ui secondary close fluid button" onclick="$('#document_entry_dialog').modal('hide');"><i class="icon close"></i> Закрыть</div></div>
+	    <div class="four wide column"><div class="ui negative deny fluid button"><i class="icon remove circle"></i> Удалить</div></div>
 	</div>
     </div>
+</div>
+
+<div class="ui fullscreen modal" id="document_product_image">
+    <div class="header">{{product_code}}</div>
+    <div class="image content" style="height: {{size_x}}px;">
+	<img class="image"  src="../Storage/image_flush/?size={{size_x}}x{{size_y}}&path=/dynImg/{{product_img}}" style="height:auto;width:100%">
+    </div>
+    <div class="description">
+	{{product_name}}
+    </div>
+    <div class="actions">
+	<div class="ui secondary close button"  onclick="$('#document_product_image').modal('hide');"><i class="icon close"></i> Закрыть</div>
+    </div>
+    
 </div>
