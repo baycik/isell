@@ -105,7 +105,7 @@ class MobiSell extends Catalog{
 	
 	$DocumentCore=$this->Hub->load_model("DocumentCore");
 	$head=$DocumentCore->headGet( $doc_id );
-	$where=array();
+	$where=[1];
 	foreach ($clues as $clue) {
             if ($clue == ''){
                 continue;
@@ -122,9 +122,9 @@ class MobiSell extends Catalog{
 		product_unit,
 		GET_PRICE(product_code,{$head->passive_company_id},{$head->doc_ratio}) product_price_total
 	    FROM
-		prod_list
+		stock_entries
 		    JOIN
-		stock_entries USING(product_code)
+		prod_list USING(product_code)
 	    WHERE
 		".( implode(' AND ',$where) )."
 		    ORDER BY fetch_count-DATEDIFF(NOW(),fetch_stamp) DESC, product_code

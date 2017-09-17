@@ -9,11 +9,11 @@
 	},
 	load: function (doc_id) {
 	    $.post("documentGet/", {doc_id: doc_id}, function (resp) {
-		App.document.set( App.json(resp) );
+		App.document.set(App.json(resp));
 	    });
 	},
-	set:function(doc){
-	    App.document.doc=doc;
+	set: function (doc) {
+	    App.document.doc = doc;
 	    App.document.render();
 	},
 	render: function () {
@@ -73,7 +73,7 @@
 		App.document.picker.set('select', new Date(App.toIso(head.doc_date)));
 
 
-		App.document.suggestion.search('24111');
+		//App.document.suggestion.search('24111');
 	    },
 	    update: function (field, value) {
 		App.document.doc.head[field] = value;
@@ -82,73 +82,73 @@
 	row: {
 	    add: function (suggest_entry) {
 		suggest_entry.product_quantity = suggest_entry.product_spack;
-		App.document.row.edit(suggest_entry,null);
+		App.document.row.edit(suggest_entry, null);
 	    },
-	    edit: function (entry,index) {
+	    edit: function (entry, index) {
 		App.renderTpl('document_entry_dialog', entry);
 		$('#document_entry_dialog').modal({
 		    onDeny: function () {
 			App.document.row.remove(index);
 		    },
 		    onApprove: function () {
-			entry.product_quantity=$("#document_entry_dialog input").val();
-			App.document.row.save(entry,index);
+			entry.product_quantity = $("#document_entry_dialog input").val();
+			App.document.row.save(entry, index);
 		    },
-		    onVisible:function(){
+		    onVisible: function () {
 			$("#document_entry_dialog input").select();
 		    }
 		}).modal('show');
 		$("#document_entry_dialog input").val(entry.product_quantity);
 	    },
-	    save: function (entry,index) {
-		if( index===null ){//new entry
-		    var merged=App.document.row.merge_if_code_exists(entry);
-		    entry=merged.entry;
-		    index=merged.index;
+	    save: function (entry, index) {
+		if (index === null) {//new entry
+		    var merged = App.document.row.merge_if_code_exists(entry);
+		    entry = merged.entry;
+		    index = merged.index;
 		}
 		App.document.row.save_on_server(entry);
-		entry.product_sum_total=(entry.product_quantity*entry.product_price_total).toFixed(2);
-		App.document.doc.entries[index]=entry;
+		entry.product_sum_total = (entry.product_quantity * entry.product_price_total).toFixed(2);
+		App.document.doc.entries[index] = entry;
 		App.document.row.sort();
 		App.document.render();
 	    },
-	    save_on_server:function(entry){
-		var params={
-		    doc_id:App.document.doc.head.doc_id,
-		    doc_entry_id:entry.doc_entry_id,
-		    product_code:entry.product_code,
-		    product_quantity:entry.product_quantity
+	    save_on_server: function (entry) {
+		var params = {
+		    doc_id: App.document.doc.head.doc_id,
+		    doc_entry_id: entry.doc_entry_id,
+		    product_code: entry.product_code,
+		    product_quantity: entry.product_quantity
 		};
-		$.post('documentEntryUpdate/',params,function(resp){
-		    App.document.set( App.json(resp) );
+		$.post('documentEntryUpdate/', params, function (resp) {
+		    App.document.set(App.json(resp));
 		});
 	    },
-	    merge_if_code_exists:function(entry_to_merge){
-		for(var index in App.document.doc.entries){
-		    var entry=App.document.doc.entries[index];
-		    if( entry.product_code===entry_to_merge.product_code ){
-			entry.product_quantity=entry.product_quantity*1+entry_to_merge.product_quantity*1;
-			return {entry:entry,index:index};
+	    merge_if_code_exists: function (entry_to_merge) {
+		for (var index in App.document.doc.entries) {
+		    var entry = App.document.doc.entries[index];
+		    if (entry.product_code === entry_to_merge.product_code) {
+			entry.product_quantity = entry.product_quantity * 1 + entry_to_merge.product_quantity * 1;
+			return {entry: entry, index: index};
 		    }
 		}
 		App.document.doc.entries.push(entry_to_merge);
-		var index=App.document.doc.entries.length-1;
-		return {entry:entry_to_merge,index:index};
+		var index = App.document.doc.entries.length - 1;
+		return {entry: entry_to_merge, index: index};
 	    },
 	    remove: function (index) {
-		var removed=App.document.doc.entries.splice(index,1);
-		if( removed && removed[0].doc_entry_id ){
+		var removed = App.document.doc.entries.splice(index, 1);
+		if (removed && removed[0].doc_entry_id) {
 		    App.document.row.remove_on_server(removed[0].doc_entry_id);
 		}
 		App.document.render();
 	    },
-	    remove_on_server:function(doc_entry_id){
-		var params={
-		    doc_id:App.document.doc.head.doc_id,
-		    doc_entry_id:doc_entry_id
+	    remove_on_server: function (doc_entry_id) {
+		var params = {
+		    doc_id: App.document.doc.head.doc_id,
+		    doc_entry_id: doc_entry_id
 		};
-		$.post('documentEntryRemove/',params,function(resp){
-		    App.document.set( App.json(resp) );
+		$.post('documentEntryRemove/', params, function (resp) {
+		    App.document.set(App.json(resp));
 		});
 	    },
 	    sort: function () {
@@ -163,13 +163,31 @@
 	    },
 	    handleClick: function (row_node) {
 		var index = $(row_node).data('row-index');
-		var entry=App.document.doc.entries[index];
-		App.document.row.edit(entry,index);
+		var entry = App.document.doc.entries[index];
+		App.document.row.edit(entry, index);
 	    },
-	    parseStatus:function(){
-		for( var i in App.document.doc.entries ){
-		    App.document.doc.entries[i].status_icon=App.document.doc.entries[i].row_status.split(" ")[0].replace(["ok","wrn","err"],["check","exclamation","error"]);
-		    //App.document.doc.entries[i].status_message=App.document.doc.entries[i].row_status.split(" ").shift().join(" ");
+	    parseStatus: function () {
+		for (var i in App.document.doc.entries) {
+		    if (App.document.doc.entries[i].row_status) {
+			var status_chunks = App.document.doc.entries[i].row_status.split(" ");
+			var status = status_chunks.shift();
+			var message = status_chunks.join(" ");
+			if (status == 'ok' || status == 'info') {
+			    App.document.doc.entries[i].status_icon = "check";
+			    App.document.doc.entries[i].status_color = "green";
+			    App.document.doc.entries[i].status_message = "";
+			}
+			if (status == 'wrn') {
+			    App.document.doc.entries[i].status_icon = "warning sign";
+			    App.document.doc.entries[i].status_color = "orange";
+			    App.document.doc.entries[i].status_message = message;
+			}
+			if (status == 'err') {
+			    App.document.doc.entries[i].status_icon = "warning circle";
+			    App.document.doc.entries[i].status_color = "red";
+			    App.document.doc.entries[i].status_message = message;
+			}
+		    }
 		}
 	    }
 	},
@@ -180,9 +198,14 @@
 	    q: '',
 	    entries: [],
 	    init: function () {
+		App.renderTpl('doc_suggestion_entries', {entries: []});
 		$("#doc_suggestion").accordion({
 		    onOpen: function () {
-
+			//App.renderTpl('doc_suggestion_entries', {entries: []});
+			//$("#load_suggestions_button").hide();
+			//$("#doc_suggestion input").val("");
+			App.document.suggestion.search("");
+			//$("#doc_suggestion_inp").addClass('loading');
 		    }
 		});
 		$("#doc_suggestion input").on('keyup', function () {
@@ -198,6 +221,8 @@
 		}, 200);
 	    },
 	    load: function () {
+		
+		
 		var offset = App.document.suggestion.entries.length || 0;
 		$.post('documentSuggest', {offset: offset, q: App.document.suggestion.q, doc_id: App.document.doc.head.doc_id}, function (resp) {
 		    var suggestion = App.json(resp);
@@ -221,12 +246,12 @@
 	    popImage: function (row_node) {
 		var index = $(row_node).data('row-index');
 		var suggest_entry = App.document.suggestion.entries[index];
-		
-		suggest_entry.size_x=$( document ).width();
-		suggest_entry.size_y=$( document ).height();
-		
-		
-		App.renderTpl('document_product_image',suggest_entry);
+
+		suggest_entry.size_x = $(document).width();
+		suggest_entry.size_y = $(document).height();
+
+
+		App.renderTpl('document_product_image', suggest_entry);
 		$("#document_product_image").modal('show');
 	    }
 	}
@@ -267,6 +292,13 @@
 	    <label>Дата</label>
 	    <input name="company_filter" placeholder="Дата" type="date" class="docdatepicker">
 	</div>
+	<div class="field">
+	    <label>Проведен</label>
+	    <div class="ui slider checkbox">
+	      <input name="is_commited" type="checkbox">
+	      <label></label>
+	    </div>
+	</div>
     </div>
 </div>
 
@@ -298,7 +330,7 @@
 	<tbody>
 	    <!-- {{if entries}} {{entries}} -->
 	    <tr data-row-index="{{#}}" onclick="App.document.row.handleClick(this)">
-		<td>{{##}}) {{product_name}} {{status_icon}} | {{status_message}}
+		<td><span style="color:{{status_color}}"><i class="icon {{status_icon}} {{status_color}}"></i> {{status_message}}</span> {{##}}) {{product_name}}
 		</td>
 		<td>
 		    <div class="ui grid">
@@ -337,17 +369,17 @@
 </div>
 
 <div class="ui inverted segment">
-    <div class="ui inverted fluid accordion" id="doc_suggestion">
-	<div class="active title"><i class="add icon"></i>Добавить товар</div>
-	<div class="active content">
-	    <div class="ui icon input fluid">
+    <div class="ui inverted fluid accordion" id="doc_suggestion"> 
+	<div class="title"><i class="add icon"></i>Добавить товар</div>
+	<div class="content ">
+	    <div class="ui icon input fluid" id="doc_suggestion_inp">
 		<input placeholder="Поиск по коду или названию" type="text">
 		<i class="circular search link icon"></i>
 	    </div>
 	    <div id="doc_suggestion_entries">
 		<table class="ui very compact table unstackable">
 		    <tbody>
-			<!-- {{if entries}} {{entries}} -->
+			<!-- {{if entries|size}} {{entries}} -->
 			<tr>
 			    <td data-row-index="{{#}}" onclick="App.document.suggestion.popImage(this)">
 				<img style="width:50px" src="../Storage/image_flush/?size=50x50&path=/dynImg/{{product_img}}">
@@ -410,5 +442,5 @@
     <div class="actions">
 	<div class="ui secondary close button"  onclick="$('#document_product_image').modal('hide');"><i class="icon close"></i> Закрыть</div>
     </div>
-    
+
 </div>
