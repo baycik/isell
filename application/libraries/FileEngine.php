@@ -2,8 +2,8 @@
 error_reporting(E_ERROR | E_WARNING | E_PARSE);
 class FileEngine{
     private $conversion_table = [
-	'.html' => ['.doc' => 'Word Документ','.html' => 'Веб Страница'],
-	'.xlsx' => ['.xlsx' => 'Excel', '.xls' => 'Excel 2003', '.html' => 'Веб Страница'],
+	'.html' => ['.doc' => 'Word Документ','.html' => 'Веб Страница','.pdf' => 'PDF'],
+	'.xlsx' => ['.xlsx' => 'Excel', '.xls' => 'Excel 2003', '.html' => 'Веб Страница','.pdf' => 'PDF'],
 	'.xml'  => ['.xml' => 'XML Экспорт Данных']
     ];
     private $view;
@@ -99,7 +99,30 @@ class FileEngine{
         if ($out_extension == '.print') {
             $out_extension = '.html';
             $is_printpage = true;
-        } else {
+        } else if ($out_extension == '.pdf') {
+	    $this->header_mode='noheaders';
+	    $full_html=$this->fetch("hello.html");
+	    
+	    $parent=realpath('../storage/wkhtml/');
+	    $rnd=rand(10,1000000);
+	    
+	    $tmphtml = $parent."/html-tmp$rnd.html";
+	    $tmppdf = $parent."/pdf-tmp$rnd.pdf";
+	    $pdfengine = $parent.'/wkhtmltopdf.exe';
+	    
+	    
+	    
+	    file_put_contents($tmphtml,$full_html);
+	    exec("$pdfengine $tmphtml $tmppdf 2>&1",$output);
+	    if( count($output) ){
+		file_put_contents($parent.'/pdferror.log', implode( "\n", $output ));
+	    }
+	    header("Content-type: application/pdf");
+	    echo file_get_contents($tmppdf);
+	    unlink($tmphtml);
+	    unlink($tmppdf);
+	    exit;
+	} else {
             $this->header('Content-Disposition: attachment;filename="' .$file_name . '"');
             $this->header('Cache-Control: max-age=0');
             $this->show_controls = false;
@@ -112,6 +135,11 @@ class FileEngine{
 
 	    $this->setup_compilator($out_extension);
 	}
+	
+	
+	
+	
+	
 	    
         if ($this->compilator == 'PHPExcel') {
             if ($out_extension == '.html' || $is_printpage) {
