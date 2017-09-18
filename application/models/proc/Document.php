@@ -871,7 +871,193 @@ class Document extends Data {
                 doc_id = '$doc_id'";
 	return $this->Base->get_row($sql);
     }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    ////////////////////////////////////////////
+    //NEW FUNCTIONS
+    ////////////////////////////////////////////
+    private function calcCorrections($skip_vat_correction=false) {
+	$doc_id=$this->doc('doc_id');
+	$curr_code=$this->Base->pcomp('curr_code');
+	$native_curr=($this->Base->pcomp('curr_code') == $this->Base->acomp('curr_code'))?1:0;
+	$sql="SELECT 
+		@vat_ratio:=1+vat_rate/100,
+		@vat_correction:=IF(use_vatless_price OR '$skip_vat_correction',1,@vat_ratio),
+		@curr_correction:=IF($native_curr,1,1/doc_ratio),
+		@curr_symbol:=(SELECT curr_symbol FROM curr_list WHERE curr_code='$curr_code'),
+                @signs_after_dot:=signs_after_dot
+	    FROM
+		document_list
+	    WHERE
+		doc_id='$doc_id'";
+	$this->Base->query($sql);
+    }
+    private function entriesTmpCreate( $skip_vat_correction=false ){
+	$doc_id=$this->doc('doc_id');
+	$this->calcCorrections( $skip_vat_correction );
+        $curr_code=$this->Base->acomp('curr_code');
+	$company_lang = $this->Base->pcomp('language');
+        
+         $this->Base->LoadClass("PrefOld");
+        $pref=$this->Base->PrefOld->prefGet();
+        
+        $use_total_as_base=$pref['use_total_as_base'];
 
+        $this->Base->query("DROP TEMPORARY TABLE IF EXISTS tmp_doc_entries");
+        $sql="CREATE TEMPORARY TABLE tmp_doc_entries ( INDEX(product_code) ) ENGINE=MyISAM AS (
+                SELECT 
+                    *,
+                    ROUND(product_price_vatless*product_quantity,2) product_sum_vatless,
+                    ROUND(product_price_total*product_quantity,2) product_sum_total
+                FROM
+                (SELECT
+                    doc_entry_id,
+                    pl.product_code,
+                    $company_lang product_name,
+                    product_quantity,
+                    ROUND(invoice_price * @curr_correction, @signs_after_dot) AS product_price_vatless,
+                    ROUND(invoice_price * @curr_correction * @vat_ratio, @signs_after_dot) AS product_price_total,
+                    product_quantity*product_weight weight,
+                    product_quantity*product_volume volume,
+                    CHK_ENTRY(doc_entry_id) AS row_status,
+                    product_unit,
+                    party_label,
+                    analyse_section,
+                    product_uktzet,
+                    self_price,
+                    IF(doc_type=1,invoice_price<self_price-0.01,invoice_price-0.01>self_price) is_loss
+                FROM
+                    document_list
+                        JOIN
+                    document_entries de USING(doc_id)
+                        JOIN 
+                    prod_list pl USING(product_code)
+                WHERE
+                    doc_id='$doc_id'
+                ORDER BY pl.product_code) t
+                )";
+        $this->Base->query($sql);
+    }
+    protected function footerGet(){
+        $this->entriesTmpCreate();
+        $sql="SELECT
+                ROUND(SUM(weight),2) total_weight,
+                ROUND(SUM(volume),2) total_volume,
+                SUM(product_sum_vatless) vatless,
+                SUM(product_sum_total) total,
+                SUM(product_sum_total-product_sum_vatless) vat,
+                SUM(ROUND(product_quantity*self_price,2)) self,
+                @curr_symbol curr_symbol
+            FROM tmp_doc_entries";
+	return $this->Base->get_row($sql);
+    }
+    protected function entriesFetch( $skip_vat_correction=false ){
+        $this->entriesTmpCreate();
+        if( $this->doc('use_vatless_price') ){
+            $sql="SELECT *, product_price_vatless product_price, product_sum_vatless product_sum FROM tmp_doc_entries";
+        } else {
+            $sql="SELECT *, product_price_total product_price, product_sum_total product_sum FROM tmp_doc_entries";
+        }
+        return $this->Base->get_list($sql);
+    }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    public function fetchEntries($vatless = true, $dot = '.') {
+	/* DEPRECATED, USE FETCHGRIDENTRIES INTEAD */
+	$curr_correction = $this->getCurrCorrection();
+	$vat_correction = $vatless ? 1 : $this->vat_rate;
+	$sql = $this->getEntriesSqlParts();
+	$document_entries = $this->getTableData($sql['table'], NULL, $sql['select'], $sql['where'], 'ORDER BY product_code');
+
+	$signs_after_dot = $this->doc('signs_after_dot');
+	$row_num = count($document_entries['rows']);
+	for ($i = 0; $i < $row_num; $i++) {
+	    $document_entries['rows'][$i][6] = number_format($document_entries['rows'][$i][6] * $vat_correction * $curr_correction, $signs_after_dot, $dot, '');
+	    $document_entries['rows'][$i][7] = number_format($document_entries['rows'][$i][7] * $vat_correction * $curr_correction, 2, $dot, '');
+	    if ($this->doc('doc_type') == 2 && $this->doc('is_commited') == 0) {
+		$price = $this->getRawProductPrice($document_entries['rows'][$i][1], $this->doc('doc_ratio'));
+		$current_price = round($price['buy'] * $vat_correction * $curr_correction, $signs_after_dot);
+		$document_entries['rows'][$i][9] = $current_price;
+	    } else {
+		$document_entries['rows'][$i][9] = '';
+	    }
+	}
+	return $document_entries;
+    }
+
+    protected function getEntriesSqlParts() {
+	$doc_id = $this->doc('doc_id');
+	$signs_after_dot = $this->doc('signs_after_dot');
+	$company_lang = $this->Base->pcomp('language');
+	$sql = array();
+	$sql['select'] = "
+            de.doc_entry_id,
+            pl.product_code,
+            pl.$company_lang,
+            product_uktzet,
+            de.product_quantity,
+            pl.product_unit,
+            ROUND(invoice_price,$signs_after_dot) AS product_price,
+            ROUND(de.product_quantity*invoice_price,2) AS product_sum,
+            CHK_ENTRY(de.doc_entry_id) AS row_status,
+            '',
+            party_label";
+	$sql['table'] = "document_entries de JOIN prod_list pl USING(product_code)";
+	$sql['where'] = "doc_id='$doc_id'";
+	return $sql;
+    }
+
+    public function fetchGridEntries($vatless = true, $dot = '.') {
+	$curr_correction = $this->getCurrCorrection();
+	$vat_correction = $vatless ? 1 : $this->vat_rate;
+	$doc_id = $this->doc('doc_id');
+	$signs_after_dot = $this->doc('signs_after_dot');
+	$company_lang = $this->Base->pcomp('language');
+	$sql = "SELECT
+                doc_entry_id,
+                pl.product_code,
+                $company_lang product_name,
+                product_quantity,
+                product_unit,
+                ROUND(invoice_price * $vat_correction * $curr_correction,$signs_after_dot) AS product_price,
+                ROUND(invoice_price * $vat_correction * $curr_correction * product_quantity,2) AS product_sum,
+                CHK_ENTRY(doc_entry_id) AS row_status,
+                party_label,
+                product_uktzet
+            FROM
+                document_entries JOIN prod_list pl USING(product_code)
+            WHERE
+                doc_id='$doc_id'
+            ORDER BY pl.product_code";
+	return array('rows' => $this->Base->get_list($sql));
+    }
     public function fetchFooter($mode = 'total_in_def_curr') {
 	$doc_id = $this->doc('doc_id');
 
@@ -909,6 +1095,21 @@ class Document extends Data {
 	$footer['curr_symbol'] = $this->Base->pcomp('curr_symbol');
 	return $footer;
     }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
 
     public function setType($doc_type) {
 	if ($this->isCommited())
@@ -986,75 +1187,7 @@ class Document extends Data {
 	return true;
     }
 
-    public function fetchEntries($vatless = true, $dot = '.') {
-	/* DEPRECATED, USE FETCHGRIDENTRIES INTEAD */
-	$curr_correction = $this->getCurrCorrection();
-	$vat_correction = $vatless ? 1 : $this->vat_rate;
-	$sql = $this->getEntriesSqlParts();
-	$document_entries = $this->getTableData($sql['table'], NULL, $sql['select'], $sql['where'], 'ORDER BY product_code');
 
-	$signs_after_dot = $this->doc('signs_after_dot');
-	$row_num = count($document_entries['rows']);
-	for ($i = 0; $i < $row_num; $i++) {
-	    $document_entries['rows'][$i][6] = number_format($document_entries['rows'][$i][6] * $vat_correction * $curr_correction, $signs_after_dot, $dot, '');
-	    $document_entries['rows'][$i][7] = number_format($document_entries['rows'][$i][7] * $vat_correction * $curr_correction, 2, $dot, '');
-	    if ($this->doc('doc_type') == 2 && $this->doc('is_commited') == 0) {
-		$price = $this->getRawProductPrice($document_entries['rows'][$i][1], $this->doc('doc_ratio'));
-		$current_price = round($price['buy'] * $vat_correction * $curr_correction, $signs_after_dot);
-		$document_entries['rows'][$i][9] = $current_price;
-	    } else {
-		$document_entries['rows'][$i][9] = '';
-	    }
-	}
-	return $document_entries;
-    }
-
-    protected function getEntriesSqlParts() {
-	$doc_id = $this->doc('doc_id');
-	$signs_after_dot = $this->doc('signs_after_dot');
-	$company_lang = $this->Base->pcomp('language');
-	$sql = array();
-	$sql['select'] = "
-            de.doc_entry_id,
-            pl.product_code,
-            pl.$company_lang,
-            product_uktzet,
-            de.product_quantity,
-            pl.product_unit,
-            ROUND(invoice_price,$signs_after_dot) AS product_price,
-            ROUND(de.product_quantity*invoice_price,2) AS product_sum,
-            CHK_ENTRY(de.doc_entry_id) AS row_status,
-            '',
-            party_label";
-	$sql['table'] = "document_entries de JOIN prod_list pl USING(product_code)";
-	$sql['where'] = "doc_id='$doc_id'";
-	return $sql;
-    }
-
-    public function fetchGridEntries($vatless = true, $dot = '.') {
-	$curr_correction = $this->getCurrCorrection();
-	$vat_correction = $vatless ? 1 : $this->vat_rate;
-	$doc_id = $this->doc('doc_id');
-	$signs_after_dot = $this->doc('signs_after_dot');
-	$company_lang = $this->Base->pcomp('language');
-	$sql = "SELECT
-                doc_entry_id,
-                pl.product_code,
-                $company_lang product_name,
-                product_quantity,
-                product_unit,
-                ROUND(invoice_price * $vat_correction * $curr_correction,$signs_after_dot) AS product_price,
-                ROUND(invoice_price * $vat_correction * $curr_correction * product_quantity,2) AS product_sum,
-                CHK_ENTRY(doc_entry_id) AS row_status,
-                party_label,
-                product_uktzet
-            FROM
-                document_entries JOIN prod_list pl USING(product_code)
-            WHERE
-                doc_id='$doc_id'
-            ORDER BY pl.product_code";
-	return array('rows' => $this->Base->get_list($sql));
-    }
 
     ///////////////////////////////////
     // TRANS
@@ -1063,7 +1196,7 @@ class Document extends Data {
     public function updateTrans( $mode=null ) {
 	$doc_num = $this->doc('doc_num');
 	if ($this->isCommited()) {
-	    $sum = $this->fetchFooter('total_in_uah');
+	    $sum = $this->footerGet();
 	    $sum['profit'] = $sum['vatless'] - $sum['self'];
 	} else {
 	    return false;
