@@ -55,7 +55,8 @@
                             {loop name="$value1->imgs"}
                             <div style="position: relative;margin: 1px;">
                                 <div style="position:absolute;left:3px;top:3px;background-color: rgba(255,255,255,.5)">{$value->product_code}</div>
-                                <img src="../../Storage/image_flush/?size=140x{$value1->img_height}&path=/dynImg/{$value->product_img}&nologin#" />
+                                <img src="../../Storage/image_flush/?size=140x{$value1->img_height}&path=/dynImg/{$value->product_img}#"
+				     onerror="this.onerror=null;this.src='../dynImg/{$value->product_img}_140x{$value1->img_height}.png';" />
                             </div>
                             {/loop}
                             </div>
