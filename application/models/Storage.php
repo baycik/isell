@@ -10,7 +10,6 @@
  * @author Baycik
  */
 class Storage extends CI_Model {
-    public $min_level=0;
     private $storageFolder = '../storage';
     
     public function file_store($path, $data) {

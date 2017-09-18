@@ -101,7 +101,7 @@ class FileEngine{
             $is_printpage = true;
         } else if ($out_extension == '.pdf') {
 	    $this->header_mode='noheaders';
-	    $full_html=$this->fetch("hello.html");
+	    $full_html=$this->fetch(".html");
 	    
 	    $parent=realpath('../storage/wkhtml/');
 	    $rnd=rand(10,1000000);
@@ -118,6 +118,7 @@ class FileEngine{
 		file_put_contents($parent.'/pdferror.log', implode( "\n", $output ));
 	    }
 	    header("Content-type: application/pdf");
+            header('Content-Disposition: attachment;filename="' .$file_name . '"');
 	    echo file_get_contents($tmppdf);
 	    unlink($tmphtml);
 	    unlink($tmppdf);
