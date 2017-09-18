@@ -1,10 +1,11 @@
 <style>
     .product_code{
-	width:70px;
+	width:90px;
+	color:#999;
+	padding: 3px;
     }
     .product_name{
-	font-size: 16px;
-        font-family: Calibri,Arial;
+        padding: 3px;
     }
     .product_price{
 	width:60px;
@@ -35,6 +36,8 @@
 	border-collapse: collapse;
 	width:100%;
 	max-width:18.5cm;
+	font-size: 16px;
+	font-family: Calibri,Arial;
     }
 </style>
 <div class="page">
@@ -46,13 +49,13 @@
         {loop name="v->price_blocks"}
             {if="$value->type=='category' && $num=count($value->rows)"}
                 {loop name="$value->rows"}
-                    <tr style="height: 25px;">
-                        <td class="product_code" {if="$value->in_stock"}style="font-weight:bold"{/if}>{$value->product_code}</td>
+                    <tr style="height: {$value1->rows_height}px;">
+                        <td class="product_code" {if="$value->in_stock"}style="color:black"{/if}>{$value->product_code}</td>
                         <td class="product_name">{$value->product_name}</td>
                         <td class="product_price"> {$value->product_price}</td>
                         {if="$counter==0"}
                         <td class="product_imgs" rowspan="{$num}">
-                            <div style="overflow: hidden;height:{$value1->rows_count*23}px;">
+                            <div style="overflow: hidden;height1:{$value1->rows_count*23}px;">
                             {loop name="$value1->imgs"}
                             <div style="position: relative;margin: 1px;">
                                 <div style="position:absolute;left:3px;top:3px;background-color: rgba(255,255,255,.5)">{$value->product_code}</div>
