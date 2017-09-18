@@ -217,8 +217,8 @@
 		}, 200);
 	    },
 	    load: function () {
-		
-		
+
+
 		var offset = App.document.suggestion.entries.length || 0;
 		$.post('documentSuggest', {offset: offset, q: App.document.suggestion.q, doc_id: App.document.doc.head.doc_id}, function (resp) {
 		    var suggestion = App.json(resp);
@@ -261,8 +261,8 @@
     }
 </style>
 <div class="ui form">
-    <div class="five fields">
-	<div class="field">
+    <div class="fields">
+	<div class="two wide field">
 	    <label>Наша фирма</label>
 	    <div class="ui search selection remote dropdown activecomp">
 		<input name="activecomp" type="hidden">
@@ -271,7 +271,7 @@
 		<div class="menu"></div>
 	    </div>
 	</div>
-	<div class="field">
+	<div class="two wide field">
 	    <label>Клиент</label>
 	    <div class="ui search selection remote dropdown passivecomp">
 		<input name="passivecomp" type="hidden">
@@ -280,27 +280,25 @@
 		<div class="menu"></div>
 	    </div>
 	</div>
-	<div class="field">
+	<div class="two wide field">
 	    <label>Номер</label>
 	    <input placeholder="Номер" type="text" readonly="" class="doc_num">
 	</div>
-	<div class="field">
+	<div class="two wide field">
 	    <label>Дата</label>
 	    <input name="company_filter" placeholder="Дата" type="date" class="docdatepicker">
 	</div>
-	<div class="field">
+	<div class="two wide field">
 	    <label>Проведен</label>
 	    <div class="ui slider checkbox">
-	      <input name="is_commited" type="checkbox">
-	      <label></label>
+		<input name="is_commited" type="checkbox">
+		<label></label>
 	    </div>
 	</div>
-    </div>
-    <div>
-	<div class="field">
-	<label>Комментарий</label>
-	<textarea rows="2" name="doc_data"></textarea>
-      </div>
+	<div class="six wide field">
+	    <label>Комментарий</label>
+	    <textarea rows="2" name="doc_data"></textarea>
+	</div>
     </div>
 </div>
 
