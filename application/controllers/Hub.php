@@ -21,7 +21,7 @@ class Hub  extends CI_Controller{
 	parent::__construct();
     
 	
-	if( !$this->svar('user_id') && empty($_SERVER['HTTP_X_REQUESTED_WITH']) ) {
+	if( !$this->svar('user_id') && !isset($_REQUEST['nologin']) && empty($_SERVER['HTTP_X_REQUESTED_WITH']) ) {
 	    $this->loginform();
 	}
     }
