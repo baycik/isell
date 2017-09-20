@@ -8,7 +8,6 @@
  * Author: baycik 2017
  * Author URI: http://isellsoft.com
  */
-require_once 'models/PluginManager.php';
 class OpencartSync extends PluginManager{
     public $settings;
     function __construct(){
@@ -21,7 +20,7 @@ class OpencartSync extends PluginManager{
             SELECT
                     product_code,
                     ru product_name,
-                    GET_PRICE(product_code,'{$this->settings->pcomp_id}','{$this->settings->dollar_ratio}') product_price,
+                    GET_PRICE(product_code,'{$this->settings->plugin_settings->pcomp_id}','{$this->settings->plugin_settings->dollar_ratio}') product_price,
                     product_quantity,
                     product_volume,
                     product_weight,
@@ -44,27 +43,28 @@ class OpencartSync extends PluginManager{
         
     }
     
+    public $send=['int'];
     public function send( $page=0 ) {
         $data=$this->getProducts($page);
         $postdata = array(
             'json_data' => json_encode($data),
             'page'=>$page,
-            'login' => $this->settings->login,
-            'key' => $this->settings->key
+            'login' => $this->settings->plugin_settings->login,
+            'key' => $this->settings->plugin_settings->key
         );
-        $this->sendToGateway($postdata,$this->settings->gateway_url.'/accept');
+        $this->sendToGateway($postdata,$this->settings->plugin_settings->gateway_url.'/accept');
     }
 
     private function sendToGateway($postdata,$url) {
         set_time_limit(120);
         $context = stream_context_create(
-                array(
-                    'http' => array(
+                [
+                    'http' => [
                         'method' => 'POST',
                         'header' => 'Content-type: application/x-www-form-urlencoded',
                         'content' => http_build_query($postdata)
-                    )
-                )
+                    ]
+                ]
         );
         echo file_get_contents($url, false, $context);
     }
