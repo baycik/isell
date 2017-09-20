@@ -47,7 +47,7 @@
 	    this.sub_totals.buy.sum_vat=App.formatNum(this.sub_totals.buy.sum_vat||0);
 	    this.sub_totals.buy.sum_total=App.formatNum(this.sub_totals.buy.sum_total||0);
 	    
-	    this.sub_totals.pay_vat=App.formatNum( (this.sub_totals.sell.sum_vat.replace(" ",'')-this.sub_totals.buy.sum_vat.replace(" ",'')).toFixed(2) );
+	    this.sub_totals.pay_vat=App.formatNum( (this.sub_totals.sell.sum_vat.replace(/\s/g,'')-this.sub_totals.buy.sum_vat.replace(/\s/g,'')).toFixed(2) );
 	    App.renderTpl('acc_tax_bill_reg_footer',this.sub_totals);
 	},
 	docTooltip:function(value, row){
