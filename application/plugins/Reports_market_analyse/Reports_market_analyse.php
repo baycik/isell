@@ -21,7 +21,6 @@ class Reports_market_analyse extends Catalog{
                 B article,
                 product_code,
                 ru product_name,
-                1 product_price,
                 analyse_type,
                 analyse_group,
                 C store_code,
@@ -36,60 +35,62 @@ class Reports_market_analyse extends Catalog{
                 AND label='маркет'
             $having)";
         
-        $sql_sum_clear="DROP  TABLE IF EXISTS tmp_market_report_sumqty";
-        $sql_sum_prepare="CREATE  TABLE tmp_market_report_sumqty ( INDEX(product_code) ) ENGINE=MyISAM AS (
-            SELECT 
-                product_code,SUM(sold)+SUM(leftover) sumqty
-            FROM 
-                tmp_market_report
-            GROUP BY product_code)";
-        
-        $sql_price_setup="SET @current_qty:=0;";
+        $sql_price_setup="SET @_product_code:='',@_acomp_id:=2,@_pcomp_id:=222,@_to_cstamp:='{$this->fdate}';";
         $sql_price_clear="DROP  TABLE IF EXISTS tmp_market_report_price";
         $sql_price_prepare="CREATE  TABLE tmp_market_report_price ( INDEX(product_code) ) ENGINE=MyISAM AS (
+            SELECT product_code,ROUND(SUM(qty*invoice_price)/SUM(qty),2) avg_price FROM(
             SELECT 
                 product_code,
-                
-
-            FROM 
-                tmp_market_report_sumqty
-            )";        
-        
-        
-        
-        
-        
-        
+                invoice_price,
+                @_quantity:=IF(product_code<>@_product_code AND @_product_code:=product_code,total,@_quantity)-product_quantity q,
+                product_quantity+LEAST(0,@_quantity) qty
+            FROM
+                (SELECT 
+                    product_code,
+                    product_quantity,
+                    invoice_price,
+                    total
+                FROM
+                    (SELECT product_code,SUM(sold)+SUM(leftover) total FROM tmp_market_report GROUP BY product_code) tmr
+                        JOIN
+                    document_entries de USING(product_code)
+                        JOIN
+                    document_list USING (doc_id)
+                WHERE
+                    cstamp < @_to_cstamp
+                    AND active_company_id=@_acomp_id
+                    AND passive_company_id=@_pcomp_id
+                ORDER BY product_code,cstamp DESC) sub
+            ) sub2
+            WHERE qty>0
+            GROUP BY product_code)";
         $this->query($sql_clear);
         $this->query($sql_prepare);
-        $this->query($sql_sum_clear);
-        $this->query($sql_sum_prepare);
-        
-        
-        
-        
-        
-        
-        
-        
-        
+        $this->query($sql_price_setup);
+        $this->query($sql_price_clear);
+        $this->query($sql_price_prepare);
         
         $sql_fetch="
             SELECT
                 *,
-                product_price*sold sold_sum,
-                product_price*leftover leftover_sum
+                avg_price,
+                avg_price*sold sold_sum,
+                avg_price*leftover leftover_sum
             FROM
-                tmp_market_report";
+                tmp_market_report
+                    JOIN
+                tmp_market_report_price USING(product_code)";
         $sql_summary_type_fetch="
             SELECT
                 $this->group_by group_by,
                 SUM(sold) sold,
-                SUM(product_price*sold) sold_sum,
+                SUM(avg_price*sold) sold_sum,
                 SUM(leftover) leftover,
-                SUM(product_price*leftover) leftover_sum
+                SUM(avg_price*leftover) leftover_sum
             FROM
-                tmp_market_report
+                tmp_market_report  
+                JOIN
+                tmp_market_report_price USING(product_code)
             GROUP BY $this->group_by";
         $this->query($sql_clear);
         $this->query($sql_prepare);
