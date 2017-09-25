@@ -82,6 +82,7 @@ class Reports_market_analyse extends Catalog{
                 tmp_market_report
                     LEFT JOIN
                 tmp_market_report_price USING(product_code)
+            ORDER BY sold_sum<>0,leftover_sum<>0,sold_sum DESC,leftover_sum DESC
 	    #GROUP BY product_code,$this->group_by
             #$having
 	    )";
@@ -101,7 +102,8 @@ class Reports_market_analyse extends Catalog{
                 SUM(avg_price*leftover) leftover_sum
             FROM
                 plugin_rpt_market_result
-		GROUP BY $this->group_by";
+            GROUP BY $this->group_by 
+            ORDER BY sold_sum DESC";
         $this->query($sql_clear);
         $this->query($sql_prepare);
 	$rows=$this->get_list($sql_fetch);
