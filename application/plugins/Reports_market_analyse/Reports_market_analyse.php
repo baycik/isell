@@ -35,15 +35,15 @@ class Reports_market_analyse extends Catalog{
                 AND label='маркет')";
         
         $sql_price_setup="SET @_product_code:='',@_acomp_id:=2,@_pcomp_id:=222,@_to_cstamp:='{$this->fdate}';";
-        $sql_price_clear="DROP  TABLE IF EXISTS tmp_market_report_price";
-        $sql_price_prepare="CREATE  TABLE tmp_market_report_price ( INDEX(product_code) ) ENGINE=MyISAM AS (
+        $sql_price_clear="DROP TEMPORARY TABLE IF EXISTS tmp_market_report_price";
+        $sql_price_prepare="CREATE TEMPORARY TABLE tmp_market_report_price ( INDEX(product_code) ) ENGINE=MyISAM AS (
             SELECT 
 		product_code,ROUND(SUM(qty*invoice_price)/SUM(qty),2) avg_price 
 	    FROM
 		(SELECT 
 		    product_code,
 		    invoice_price,
-		    @_quantity:=IF(product_code<>@_product_code AND @_product_code:=product_code,total,@_quantity)-product_quantity q,
+		    @_quantity:=IF(product_code<>@_product_code AND @_product_code:=product_code OR 1,total,@_quantity)-product_quantity q,
 		    product_quantity+LEAST(0,@_quantity) qty
 		FROM
 		    (SELECT 
@@ -71,8 +71,8 @@ class Reports_market_analyse extends Catalog{
         $this->query($sql_price_clear);
         $this->query($sql_price_prepare);
 	
-        $sql_clear="DROP TEMPORARY TABLE IF EXISTS rpt_market_result";#TEMPORARY
-        $sql_prepare="CREATE TEMPORARY TABLE rpt_market_result ( INDEX(product_code) ) ENGINE=MyISAM AS (
+        $sql_clear="DROP  TABLE IF EXISTS plugin_rpt_market_result";#TEMPORARY
+        $sql_prepare="CREATE  TABLE plugin_rpt_market_result ( INDEX(product_code) ) ENGINE=MyISAM AS (
 	    SELECT
 		*,
 		{$this->group_by} group_by,
@@ -91,7 +91,7 @@ class Reports_market_analyse extends Catalog{
             SELECT
 		*
             FROM
-                rpt_market_result";
+                plugin_rpt_market_result";
         $sql_summary_type_fetch="
             SELECT
 		group_by,
@@ -100,7 +100,7 @@ class Reports_market_analyse extends Catalog{
                 SUM(leftover) leftover,
                 SUM(avg_price*leftover) leftover_sum
             FROM
-                rpt_market_result
+                plugin_rpt_market_result
 		GROUP BY $this->group_by";
         $this->query($sql_clear);
         $this->query($sql_prepare);
