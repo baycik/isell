@@ -4,6 +4,8 @@ class Reports_market_analyse extends Catalog{
 	$this->fdate=$this->dmy2iso( $this->request('fdate','\d\d.\d\d.\d\d\d\d') ).' 23:59:59';
         $this->group_by_filter=$this->request('group_by_filter');
 	$this->group_by=$this->request('group_by','\w+');
+        $this->pcomp_id=222;
+        $this->acomp_id=2;
 	parent::__construct();
     }
     private function dmy2iso( $dmy ){
@@ -13,10 +15,11 @@ class Reports_market_analyse extends Catalog{
 
     public function viewGet(){
         $having=$this->group_by_filter?"HAVING group_by LIKE '%$this->group_by_filter%'":"";
+        $this->usd_ratio=$this->Hub->pref('usd_ratio');
         
         $pcomp_id=$this->Hub->pcomp('company_id');
-        $sql_clear="DROP TEMPORARY TABLE IF EXISTS tmp_market_report";#TEMPORARY
-        $sql_prepare="CREATE TEMPORARY TABLE tmp_market_report ( INDEX(product_code) ) ENGINE=MyISAM AS (
+        $sql_clear="DROP  TABLE IF EXISTS tmp_market_report";#TEMPORARY
+        $sql_prepare="CREATE  TABLE tmp_market_report ( INDEX(product_code) ) ENGINE=MyISAM AS (
             SELECT
                 B article,
                 product_code,
@@ -34,9 +37,9 @@ class Reports_market_analyse extends Catalog{
                 B<>'' 
                 AND label='маркет')";
         
-        $sql_price_setup="SET @_product_code:='',@_acomp_id:=2,@_pcomp_id:=222,@_to_cstamp:='{$this->fdate}';";
-        $sql_price_clear="DROP TEMPORARY TABLE IF EXISTS tmp_market_report_price";
-        $sql_price_prepare="CREATE TEMPORARY TABLE tmp_market_report_price ( INDEX(product_code) ) ENGINE=MyISAM AS (
+        $sql_price_setup="SET @_product_code:='',@_acomp_id:=$this->acomp_id,@_pcomp_id:=$this->pcomp_id,@_to_cstamp:='{$this->fdate}';";
+        $sql_price_clear="DROP  TABLE IF EXISTS tmp_market_report_price";
+        $sql_price_prepare="CREATE  TABLE tmp_market_report_price ( INDEX(product_code) ) ENGINE=MyISAM AS (
             SELECT 
 		product_code,ROUND(SUM(qty*invoice_price)/SUM(qty),2) avg_price 
 	    FROM
@@ -65,11 +68,18 @@ class Reports_market_analyse extends Catalog{
 		) sub2
             WHERE qty>0
             GROUP BY product_code)";
+        $sql_price_complete="
+            INSERT INTO tmp_market_report_price 
+                SELECT product_code,GET_PRICE(product_code,$this->usd_ratio,$this->pcomp_id) avg_price
+                FROM tmp_market_report
+                WHERE product_code NOT IN (SELECT product_code FROM tmp_market_report_price)";
+        
         $this->query($sql_clear);
         $this->query($sql_prepare);
         $this->query($sql_price_setup);
         $this->query($sql_price_clear);
         $this->query($sql_price_prepare);
+        $this->query($sql_price_complete);
 	
         $sql_clear="DROP  TABLE IF EXISTS plugin_rpt_market_result";#TEMPORARY
         $sql_prepare="CREATE  TABLE plugin_rpt_market_result ( INDEX(product_code) ) ENGINE=MyISAM AS (
@@ -82,12 +92,11 @@ class Reports_market_analyse extends Catalog{
                 tmp_market_report
                     LEFT JOIN
                 tmp_market_report_price USING(product_code)
-            ORDER BY sold_sum<>0,leftover_sum<>0,sold_sum DESC,leftover_sum DESC
+            ORDER BY sold_sum<>0,sold_sum DESC,leftover_sum DESC
 	    #GROUP BY product_code,$this->group_by
             #$having
 	    )";
-		
-		
+
         $sql_fetch="
             SELECT
 		*
