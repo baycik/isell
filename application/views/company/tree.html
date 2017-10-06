@@ -15,13 +15,13 @@
 	    }
 	},
 	init: function () {
-	    if (!this.data.inline) {
+	    if (!Ctree.data.inline) {
 		this.node.window(Ctree.properties);
                 this.node.window('hcenter');
                 this.node.window('window').css('position','fixed');
                 this.node.window('window').css('top','40px');
             }
-	    if( this.data.clickselect ){
+	    if( Ctree.data.clickselect ){
 		this.node.find('button.ok').hide();
 	    }
 	},
@@ -31,12 +31,12 @@
             });
 	},
 	close:function(){
-	    if (!this.data.inline) {
+	    if (!Ctree.data.inline) {
 		this.node.window('close');
 	    }
 	},
 	enableButtons:function( leaf ){
-	    if( leaf || this.data.enable_folder_select ){
+	    if( leaf || Ctree.data.enable_folder_select ){
 		Ctree.node.find('.ok').prop('disabled',false);
 	    }
 	    Ctree.node.find('.folder').prop('disabled',false);
@@ -71,7 +71,7 @@
 	    if( company.company_id ){
 		Ctree.handler.notify('select', company);
 		Ctree.unselectTree();
-                if (!this.data.inline) {
+                if (!Ctree.data.inline) {
                     this.node.window("close");
                 }
 	    }
