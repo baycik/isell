@@ -63,8 +63,10 @@
 	init: function () {
 	},
 	load:function(){
-	    $('#document_list_dg').datagrid('reload');
-	    $("#doc_list_pcompname").text(App.pcomp.label);	    
+            if( App.pcomp ){
+                $('#document_list_dg').datagrid('reload');
+                $("#doc_list_pcompname").text(App.pcomp.label);
+            }
 	},
 	loader: function (param, success, error) {
             if( DocList.list.readyToLoad ){
