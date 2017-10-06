@@ -18,8 +18,8 @@ class Reports_market_analyse extends Catalog{
         $this->usd_ratio=$this->Hub->pref('usd_ratio');
         
         $pcomp_id=$this->Hub->pcomp('company_id');
-        $sql_clear="DROP  TABLE IF EXISTS tmp_market_report";#TEMPORARY
-        $sql_prepare="CREATE  TABLE tmp_market_report ( INDEX(product_code) ) ENGINE=MyISAM AS (
+        $sql_clear="DROP TEMPORARY TABLE IF EXISTS tmp_market_report";#TEMPORARY
+        $sql_prepare="CREATE TEMPORARY TABLE tmp_market_report ( INDEX(product_code) ) ENGINE=MyISAM AS (
             SELECT
                 B article,
                 product_code,
@@ -38,8 +38,8 @@ class Reports_market_analyse extends Catalog{
                 AND label='маркет')";
         
         $sql_price_setup="SET @_product_code:='',@_acomp_id:=$this->acomp_id,@_pcomp_id:=$this->pcomp_id,@_to_cstamp:='{$this->fdate}';";
-        $sql_price_clear="DROP  TABLE IF EXISTS tmp_market_report_price";
-        $sql_price_prepare="CREATE  TABLE tmp_market_report_price ( INDEX(product_code) ) ENGINE=MyISAM AS (
+        $sql_price_clear="DROP TEMPORARY TABLE IF EXISTS tmp_market_report_price";
+        $sql_price_prepare="CREATE TEMPORARY TABLE tmp_market_report_price ( INDEX(product_code) ) ENGINE=MyISAM AS (
             SELECT 
 		product_code,ROUND(SUM(qty*invoice_price)/SUM(qty),2) avg_price 
 	    FROM
@@ -82,8 +82,8 @@ class Reports_market_analyse extends Catalog{
         $this->query($sql_price_prepare);
         $this->query($sql_price_complete);
 	
-        $sql_clear="DROP  TABLE IF EXISTS plugin_rpt_market_result";#TEMPORARY
-        $sql_prepare="CREATE  TABLE plugin_rpt_market_result ( INDEX(product_code) ) ENGINE=MyISAM AS (
+        $sql_clear="DROP TEMPORARY TABLE IF EXISTS plugin_rpt_market_result";#TEMPORARY
+        $sql_prepare="CREATE TEMPORARY TABLE plugin_rpt_market_result ( INDEX(product_code) ) ENGINE=MyISAM AS (
 	    SELECT
 		*,
 		{$this->group_by} group_by,
