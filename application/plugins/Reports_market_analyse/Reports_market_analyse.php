@@ -70,9 +70,10 @@ class Reports_market_analyse extends Catalog{
             GROUP BY product_code)";
         $sql_price_complete="
             INSERT INTO tmp_market_report_price 
-                SELECT product_code,GET_PRICE(product_code,$this->usd_ratio,$this->pcomp_id) avg_price
+                SELECT product_code,GET_PRICE(product_code,$this->pcomp_id,$this->usd_ratio) avg_price
                 FROM tmp_market_report
-                WHERE product_code NOT IN (SELECT product_code FROM tmp_market_report_price)";
+                WHERE product_code NOT IN (SELECT product_code FROM tmp_market_report_price)
+                GROUP BY product_code";
         
         $this->query($sql_clear);
         $this->query($sql_prepare);
