@@ -70,10 +70,8 @@
 		$('.passivecomp').dropdown('set value', head.passive_company_id);
 		$('.passivecomp').dropdown('set text', head.label);
 		$('.doc_num').val(head.doc_num);
+		$('.is_commited').checkbox( "set "+(head.is_commited>0?"checked":"unchecked") );
 		App.document.picker.set('select', new Date(App.toIso(head.doc_date)));
-
-
-		//App.document.suggestion.search('24111');
 	    },
 	    update: function (field, value) {
 		App.document.doc.head[field] = value;
@@ -262,7 +260,14 @@
 </style>
 <div class="ui form">
     <div class="fields">
-	<div class="two wide field">
+	<div class="one wide field">
+	    <label>Проведен</label>
+	    <div class="ui slider checkbox is_commited">
+		<input name="is_commited" class="" type="checkbox">
+		<label></label>
+	    </div>
+	</div>
+	<div class="three wide field">
 	    <label>Наша фирма</label>
 	    <div class="ui search selection remote dropdown activecomp">
 		<input name="activecomp" type="hidden">
@@ -271,7 +276,7 @@
 		<div class="menu"></div>
 	    </div>
 	</div>
-	<div class="two wide field">
+	<div class="three wide field">
 	    <label>Клиент</label>
 	    <div class="ui search selection remote dropdown passivecomp">
 		<input name="passivecomp" type="hidden">
@@ -288,14 +293,7 @@
 	    <label>Дата</label>
 	    <input name="company_filter" placeholder="Дата" type="date" class="docdatepicker">
 	</div>
-	<div class="two wide field">
-	    <label>Проведен</label>
-	    <div class="ui slider checkbox">
-		<input name="is_commited" type="checkbox">
-		<label></label>
-	    </div>
-	</div>
-	<div class="six wide field">
+	<div class="five wide field">
 	    <label>Комментарий</label>
 	    <textarea rows="2" name="doc_data"></textarea>
 	</div>
