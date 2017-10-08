@@ -19,7 +19,7 @@
 	render: function () {
 	    App.document.row.parseStatus();
 	    App.renderTpl('document_entries', App.document.doc);
-	    App.document.head.set(App.document.doc.head);
+	    App.document.head.switchView(App.document.doc.head);
 	},
 	initTab: function () {
 	    $('.menu .item').tab({
@@ -70,8 +70,19 @@
 		$('.passivecomp').dropdown('set value', head.passive_company_id);
 		$('.passivecomp').dropdown('set text', head.label);
 		$('.doc_num').val(head.doc_num);
-		$('.is_commited').checkbox( "set "+(head.is_commited>0?"checked":"unchecked") );
+		$('.is_commited').checkbox("set " + (head.is_commited > 0 ? "checked" : "unchecked"));
 		App.document.picker.set('select', new Date(App.toIso(head.doc_date)));
+	    },
+	    switchView: function (head) {
+		if( head.is_commited*1 ){
+		    App.renderTpl('document_header',head);
+		    $("#document_header").show();
+		    $("#document_header_controls").hide();
+		} else {
+		    App.document.head.set(head);
+		    $("#document_header").hide();
+		    $("#document_header_controls").show();
+		}
 	    },
 	    update: function (field, value) {
 		App.document.doc.head[field] = value;
@@ -258,25 +269,41 @@
 	text-align: right;
     }
 </style>
-<div class="ui form">
+
+  
+<div class="ui attached message">
+  <div class="header">
+    Документ
+  </div>
+  <p>Fill out the form below to sign-up for a new account</p>
+</div>
+
+<form class="ui form attached fluid segment">
+    <div class="field">
+	<label>Проведен</label>
+	<div class="ui slider checkbox is_commited">
+	    <input name="is_commited" class="" type="checkbox">
+	    <label></label>
+	</div>
+    </div>
+    <div class="field">
+	<label>Комментарий</label>
+	<textarea name="doc_data" placeholder="Комментарий" rows="1"></textarea>
+    </div>
+</form>
+
+
+<div class="ui form attached fluid segment" id="document_header_controls">
     <div class="fields">
-	<div class="one wide field">
-	    <label>Проведен</label>
-	    <div class="ui slider checkbox is_commited">
-		<input name="is_commited" class="" type="checkbox">
-		<label></label>
-	    </div>
+	<div class="four wide field">
+	    <label>Дата</label>
+	    <input name="company_filter" placeholder="Дата" type="date" class="docdatepicker">
 	</div>
-	<div class="three wide field">
-	    <label>Наша фирма</label>
-	    <div class="ui search selection remote dropdown activecomp">
-		<input name="activecomp" type="hidden">
-		<i class="dropdown icon"></i>
-		<div class="default text"></div>
-		<div class="menu"></div>
-	    </div>
+	<div class="four wide field">
+	    <label>Номер</label>
+	    <input placeholder="Номер" type="text" readonly="" class="doc_num">
 	</div>
-	<div class="three wide field">
+	<div class="four wide field">
 	    <label>Клиент</label>
 	    <div class="ui search selection remote dropdown passivecomp">
 		<input name="passivecomp" type="hidden">
@@ -285,18 +312,30 @@
 		<div class="menu"></div>
 	    </div>
 	</div>
-	<div class="two wide field">
-	    <label>Номер</label>
-	    <input placeholder="Номер" type="text" readonly="" class="doc_num">
+	<div class="four wide field">
+	    <label>Наша фирма</label>
+	    <div class="ui search selection remote dropdown activecomp">
+		<input name="activecomp" type="hidden">
+		<i class="dropdown icon"></i>
+		<div class="default text"></div>
+		<div class="menu"></div>
+	    </div>
 	</div>
-	<div class="two wide field">
-	    <label>Дата</label>
-	    <input name="company_filter" placeholder="Дата" type="date" class="docdatepicker">
-	</div>
-	<div class="five wide field">
-	    <label>Комментарий</label>
-	    <textarea rows="2" name="doc_data"></textarea>
-	</div>
+    </div>
+</div>
+
+<div id="document_header" class="ui grid bottom attached green message">
+    <div class="four wide column">
+	<b>Дата:</b> {{doc_date}} 
+    </div>
+    <div class="four wide column">
+	<b>Номер:</b> {{doc_num}} 
+    </div>
+    <div class="four wide column">
+	<b>Клиент:</b> {{label}} 
+    </div>
+    <div class="four wide column">
+	<b>Наша фирма:</b> {{acomp_label}} 
     </div>
 </div>
 
