@@ -19,7 +19,7 @@
 	render: function () {
 	    App.document.row.parseStatus();
 	    App.renderTpl('document_entries', App.document.doc);
-	    App.document.head.set(App.document.doc.head);
+	    App.document.head.switchView(App.document.doc.head);
 	},
 	initTab: function () {
 	    $('.menu .item').tab({
@@ -71,9 +71,19 @@
 		$('.passivecomp').dropdown('set text', head.label);
 		$('.doc_num').val(head.doc_num);
 		App.document.picker.set('select', new Date(App.toIso(head.doc_date)));
-
-
-		//App.document.suggestion.search('24111');
+	    },
+	    switchView: function (head) {
+		var hilight=(Math.abs(head.doc_type)===1)?'green':'purple';
+		if (head.is_commited * 1) {
+		    $("#document_header").addClass(hilight);
+		    $("#document_header_controls").hide();
+		} else {
+		    App.document.head.set(head);
+		    $("#document_header").removeClass(hilight);
+		    $("#document_header_controls").show();
+		}
+		App.renderTpl('document_header', head);
+		$('.is_commited').checkbox("set " + (head.is_commited > 0 ? "checked" : "unchecked"));
 	    },
 	    update: function (field, value) {
 		App.document.doc.head[field] = value;
@@ -260,18 +270,43 @@
 	text-align: right;
     }
 </style>
-<div class="ui form">
-    <div class="fields">
-	<div class="two wide field">
-	    <label>Наша фирма</label>
-	    <div class="ui search selection remote dropdown activecomp">
-		<input name="activecomp" type="hidden">
-		<i class="dropdown icon"></i>
-		<div class="default text"></div>
-		<div class="menu"></div>
+<div id="document_header" class="ui attached message covert">
+    <div class="header">
+	{{if doc_type|equals>1}}Продажа{{/if}}
+	{{if doc_type|equals>2}}Покупка{{/if}}
+	{{if doc_type|equals>-1}}Возврат от клиента{{/if}}
+	{{if doc_type|equals>-2}}Возврат поставщику{{/if}}
+    </div>
+    {{label}} 
+    {{if doc_type|divisible>2}}<i class="purple icon arrow right"></i>{{else}}<i class="green icon arrow left"></i>{{/if}}
+    {{acomp_label}}
+    <b>от</b> {{doc_date}} <b>№</b>{{doc_num}} 
+    <div class="ui fitted divider"></div>
+    <form class="ui form">
+	<div class="field">
+	    <label>Документ проведен</label>
+	    <div class="ui slider checkbox is_commited">
+		<input name="is_commited" class="" type="checkbox">
+		<label></label>
 	    </div>
 	</div>
-	<div class="two wide field">
+	<div class="field">
+	    <label>Комментарий</label>
+	    <textarea name="doc_data" placeholder="Комментарий" rows="1">{{doc_data}}</textarea>
+	</div>
+    </form>
+</div>
+<div class="ui form attached fluid segment" id="document_header_controls">
+    <div class="fields">
+	<div class="four wide field">
+	    <label>Дата</label>
+	    <input name="company_filter" placeholder="Дата" type="date" class="docdatepicker">
+	</div>
+	<div class="four wide field">
+	    <label>Номер</label>
+	    <input placeholder="Номер" type="text" readonly="" class="doc_num">
+	</div>
+	<div class="four wide field">
 	    <label>Клиент</label>
 	    <div class="ui search selection remote dropdown passivecomp">
 		<input name="passivecomp" type="hidden">
@@ -280,27 +315,19 @@
 		<div class="menu"></div>
 	    </div>
 	</div>
-	<div class="two wide field">
-	    <label>Номер</label>
-	    <input placeholder="Номер" type="text" readonly="" class="doc_num">
-	</div>
-	<div class="two wide field">
-	    <label>Дата</label>
-	    <input name="company_filter" placeholder="Дата" type="date" class="docdatepicker">
-	</div>
-	<div class="two wide field">
-	    <label>Проведен</label>
-	    <div class="ui slider checkbox">
-		<input name="is_commited" type="checkbox">
-		<label></label>
+	<div class="four wide field">
+	    <label>Наша фирма</label>
+	    <div class="ui search selection remote dropdown activecomp">
+		<input name="activecomp" type="hidden">
+		<i class="dropdown icon"></i>
+		<div class="default text"></div>
+		<div class="menu"></div>
 	    </div>
-	</div>
-	<div class="six wide field">
-	    <label>Комментарий</label>
-	    <textarea rows="2" name="doc_data"></textarea>
 	</div>
     </div>
 </div>
+
+
 
 
 <div class="ui top attached tabular menu">
