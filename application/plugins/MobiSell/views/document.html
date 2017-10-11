@@ -19,7 +19,7 @@
 	render: function () {
 	    App.document.row.parseStatus();
 	    App.renderTpl('document_entries', App.document.doc);
-	    App.document.head.switchView(App.document.doc.head);
+	    App.document.head.set(App.document.doc.head);
 	},
 	initTab: function () {
 	    $('.menu .item').tab({
@@ -41,7 +41,10 @@
 			text: 'label'
 		    },
 		    filterRemoteData: true,
-		    fullTextSearch: true
+		    fullTextSearch: true,
+		    onChange:function(value, text, $choice){
+			App.document.head.update('active_company_id', value);
+		    }
 		});
 		$('.passivecomp').dropdown({
 		    apiSettings: {
@@ -53,7 +56,10 @@
 			text: 'label'
 		    },
 		    filterRemoteData: true,
-		    fullTextSearch: true
+		    fullTextSearch: true,
+		    onChange:function(value, text, $choice){
+			App.document.head.update('passive_company_id', value);
+		    }
 		});
 		var $input = $('.docdatepicker').pickadate();
 		App.document.picker = $input.pickadate('picker');
@@ -65,28 +71,34 @@
 		});
 	    },
 	    set: function (head) {
-		$('.activecomp').dropdown('set value', head.acomp_id);
-		$('.activecomp').dropdown('set text', head.acomp_label);
+		$('.activecomp').dropdown('set value', head.active_company_id);
+		$('.activecomp').dropdown('set text', head.active_company_label);
 		$('.passivecomp').dropdown('set value', head.passive_company_id);
 		$('.passivecomp').dropdown('set text', head.label);
 		$('.doc_num').val(head.doc_num);
 		App.document.picker.set('select', new Date(App.toIso(head.doc_date)));
+		App.document.head.switchView(head);
 	    },
 	    switchView: function (head) {
 		var hilight=(Math.abs(head.doc_type)===1)?'green':'purple';
 		if (head.is_commited * 1) {
 		    $("#document_header").addClass(hilight);
-		    $("#document_header_controls").hide();
+		    $('.activecomp').addClass('disabled');
+		    $('.passivecomp').addClass('disabled');
 		} else {
-		    App.document.head.set(head);
 		    $("#document_header").removeClass(hilight);
-		    $("#document_header_controls").show();
+		    $('.activecomp').removeClass('disabled');
+		    $('.passivecomp').removeClass('disabled');
 		}
 		App.renderTpl('document_header', head);
 		$('.is_commited').checkbox("set " + (head.is_commited > 0 ? "checked" : "unchecked"));
 	    },
 	    update: function (field, value) {
 		App.document.doc.head[field] = value;
+		$.post("documentHeadUpdate/",{doc_id:App.document.doc.head.doc_id,field:field,value:value},function(resp){
+		    var doc=App.json(resp);
+		    App.document.set(doc);
+		});
 	    }
 	},
 	row: {
@@ -279,7 +291,7 @@
     </div>
     {{label}} 
     {{if doc_type|divisible>2}}<i class="purple icon arrow right"></i>{{else}}<i class="green icon arrow left"></i>{{/if}}
-    {{acomp_label}}
+    {{active_company_label}}
     <b>от</b> {{doc_date}} <b>№</b>{{doc_num}} 
     <div class="ui fitted divider"></div>
     <form class="ui form">
@@ -292,40 +304,11 @@
 	</div>
 	<div class="field">
 	    <label>Комментарий</label>
-	    <textarea name="doc_data" placeholder="Комментарий" rows="1">{{doc_data}}</textarea>
+	    <textarea name="doc_data" placeholder="Комментарий" rows="1" style="background-color: #FFd">{{doc_data}}</textarea>
 	</div>
     </form>
 </div>
-<div class="ui form attached fluid segment" id="document_header_controls">
-    <div class="fields">
-	<div class="four wide field">
-	    <label>Дата</label>
-	    <input name="company_filter" placeholder="Дата" type="date" class="docdatepicker">
-	</div>
-	<div class="four wide field">
-	    <label>Номер</label>
-	    <input placeholder="Номер" type="text" readonly="" class="doc_num">
-	</div>
-	<div class="four wide field">
-	    <label>Клиент</label>
-	    <div class="ui search selection remote dropdown passivecomp">
-		<input name="passivecomp" type="hidden">
-		<i class="dropdown icon"></i>
-		<div class="default text"></div>
-		<div class="menu"></div>
-	    </div>
-	</div>
-	<div class="four wide field">
-	    <label>Наша фирма</label>
-	    <div class="ui search selection remote dropdown activecomp">
-		<input name="activecomp" type="hidden">
-		<i class="dropdown icon"></i>
-		<div class="default text"></div>
-		<div class="menu"></div>
-	    </div>
-	</div>
-    </div>
-</div>
+
 
 
 
@@ -388,6 +371,36 @@
     </table>
 </div>
 <div class="ui bottom attached tab segment" data-tab="prefs" id="">
+    <div class="ui form fluid segment" id="document_header_controls">
+	<div class="fields">
+	    <div class="four wide field">
+		<label>Дата</label>
+		<input name="company_filter" placeholder="Дата" type="date" class="docdatepicker">
+	    </div>
+	    <div class="four wide field">
+		<label>Номер</label>
+		<input placeholder="Номер" type="text" readonly="" class="doc_num">
+	    </div>
+	    <div class="four wide field">
+		<label>Клиент</label>
+		<div class="ui search selection remote dropdown passivecomp">
+		    <input name="passivecomp" type="hidden">
+		    <i class="dropdown icon"></i>
+		    <div class="default text"></div>
+		    <div class="menu"></div>
+		</div>
+	    </div>
+	    <div class="four wide field">
+		<label>Наша фирма</label>
+		<div class="ui search selection remote dropdown activecomp">
+		    <input name="activecomp" type="hidden">
+		    <i class="dropdown icon"></i>
+		    <div class="default text"></div>
+		    <div class="menu"></div>
+		</div>
+	    </div>
+	</div>
+    </div>
     <div class="ui buttons">
 	<button class="ui primary button">Провести</button>
 	<button class="ui button">Удалить</button>

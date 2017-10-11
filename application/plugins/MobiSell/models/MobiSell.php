@@ -76,9 +76,14 @@ class MobiSell extends Catalog{
 	$DocumentItems=$this->Hub->load_model("DocumentItems");
 	$document=$DocumentItems->entryDocumentGet( $doc_id );
 	$document['head']=$DocumentItems->headGet( $doc_id );
-	$document['head']->acomp_id=$this->Hub->acomp('company_id');
-	$document['head']->acomp_label=$this->Hub->acomp('label');
+	$document['head']->active_company_id=$this->Hub->acomp('company_id');
+	$document['head']->active_company_label=$this->Hub->acomp('label');
 	return $document;
+    }
+    
+    public $documentHeadUpdate=["doc_id"=>"int","field"=>"string","value"=>"string"];
+    public function documentHeadUpdate($doc_id,$field,$value){
+	return $this->documentGet($doc_id);
     }
     
     public $documentEntryUpdate=['doc_id'=>'int','doc_entry_id'=>'int','product_code'=>'string','product_quantity'=>'int'];
