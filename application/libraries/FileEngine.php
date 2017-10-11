@@ -113,7 +113,7 @@ class FileEngine{
 	    
 	    
 	    file_put_contents($tmphtml,$full_html);
-	    exec("$pdfengine $tmphtml $tmppdf 2>&1",$output);
+	    exec("$pdfengine --zoom 1.2 $tmphtml $tmppdf  2>&1",$output);
 	    if( count($output) ){
 		file_put_contents($parent.'/pdferror.log', implode( "\n", $output ));
 	    }
