@@ -354,7 +354,11 @@
 		Importer.reload();
 		Doc.entries.reload();
 	    });
-	}
+	},
+        download:function(){
+            window.open("./DocumentItems/documentOut/?out_type=.xlsx&doc_id="+Doc.head.props.doc_id);
+            //location.href="./DocumentItems/documentOut/?out_type=.xlsx&doc_id="+Doc.head.props.doc_id;
+        }
     };
     /////////////////////////////////////////////
     // ENTRIES
@@ -813,6 +817,7 @@
 		<span class="icon-24 icon-sms" title="Отправить СМС" onclick="Doc.head.sendSms();"> </span>
 		<span class="icon-24 icon-calc" title="Перерасчитать цены" onclick="Doc.entries.initRecalculate();"> </span>
 		<span class="icon-24 icon-import" title="Импортировать" onclick="Doc.head.import();"> </span>
+		<span class="icon-24 icon-download" title="Скачать Excel" onclick="Doc.head.download();"> </span>
 		<span class="icon-24 icon-duplicate" title="Копировать" onclick="Doc.head.duplicate();"> </span>
 		<span class="icon-24 icon-utils" title="Дополнительные свойства" onclick="$('#Doc_utils').toggle('slow')"> </span>
 		<span class="icon-24 icon-refresh" title="Обновить" onclick="Doc.entries.reload();"> </span>
