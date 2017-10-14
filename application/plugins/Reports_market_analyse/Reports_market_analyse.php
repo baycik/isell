@@ -68,18 +68,22 @@ class Reports_market_analyse extends Catalog{
 		) sub2
             WHERE qty>0
             GROUP BY product_code)";
-        $sql_price_complete="
-            INSERT INTO tmp_market_report_price 
-                SELECT product_code,GET_PRICE(product_code,$this->pcomp_id,$this->usd_ratio) avg_price
+        
+        $sql_price_missing_clear="DROP TEMPORARY TABLE IF EXISTS tmp_market_report_missing";
+        $sql_price_missing_fill="CREATE TEMPORARY TABLE tmp_market_report_missing ( INDEX(product_code) ) AS 
+            (SELECT product_code,GET_PRICE(product_code,$this->pcomp_id,$this->usd_ratio) avg_price
                 FROM tmp_market_report
                 WHERE product_code NOT IN (SELECT product_code FROM tmp_market_report_price)
-                GROUP BY product_code";
+                GROUP BY product_code)";
+        $sql_price_complete="INSERT INTO tmp_market_report_price SELECT * FROM tmp_market_report_missing";
         
         $this->query($sql_clear);
         $this->query($sql_prepare);
         $this->query($sql_price_setup);
         $this->query($sql_price_clear);
         $this->query($sql_price_prepare);
+        $this->query($sql_price_missing_clear);
+        $this->query($sql_price_missing_fill);
         $this->query($sql_price_complete);
 	
         $sql_clear="DROP TEMPORARY TABLE IF EXISTS plugin_rpt_market_result";#TEMPORARY
@@ -94,8 +98,6 @@ class Reports_market_analyse extends Catalog{
                     LEFT JOIN
                 tmp_market_report_price USING(product_code)
             ORDER BY sold_sum<>0,sold_sum DESC,leftover_sum DESC
-	    #GROUP BY product_code,$this->group_by
-            #$having
 	    )";
 
         $sql_fetch="

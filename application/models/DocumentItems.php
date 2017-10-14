@@ -75,6 +75,7 @@ class DocumentItems extends DocumentCore{
                     product_unit,
                     party_label,
                     analyse_section,
+                    analyse_section product_article,
                     product_uktzet,
                     self_price,
                     IF(doc_type=1,invoice_price<self_price-0.01,invoice_price-0.01>self_price) is_loss
@@ -297,5 +298,21 @@ class DocumentItems extends DocumentCore{
 	$set_list=  implode(',', $set);
 	$this->query("INSERT INTO $table ($target_list) SELECT $source_list FROM imported_data WHERE label='$label' AND $product_code_source IN (SELECT product_code FROM stock_entries) ON DUPLICATE KEY UPDATE product_quantity=product_quantity+$quantity_source_field");
 	return $this->db->affected_rows();
+    }
+    
+    public $documentOut=["doc_id"=>"int","out_type"=>"string"];
+    public function documentOut($doc_id,$out_type){
+        $dump=[
+            'tpl_files'=>'DocumentOut.xlsx',
+	    'title'=>"Document",
+            'view'=>[
+                'head'=>$this->headGet($doc_id),
+                'rows'=>$this->entriesFetch(),
+                'footer'=>$this->footerGet()
+            ]
+        ];
+	$ViewManager=$this->Hub->load_model('ViewManager');
+	$ViewManager->store($dump);
+	$ViewManager->outRedirect($out_type);
     }
 }

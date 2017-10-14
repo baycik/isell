@@ -141,7 +141,6 @@ class FileEngine{
 	
 	
 	
-	    
         if ($this->compilator == 'PHPExcel') {
             if ($out_extension == '.html' || $is_printpage) {
                 $this->header('Content-Type: text/html; charset="utf-8"');
@@ -216,6 +215,9 @@ class FileEngine{
 		    if( $currentLoopRow!==$row ){
 			$currentLoopRow=$row;
 			$insertedRowCount=$this->loopInsertRows($col, $row, $cellRawValue);
+                        if( !$insertedRowCount ){//loop not found
+                            break;
+                        }
 			$highestRow+=$insertedRowCount;
 		    }
 		    $this->loopColFill($col, $row, $cellRawValue, $insertedRowCount);
