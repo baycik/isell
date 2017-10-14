@@ -115,6 +115,8 @@ class DocumentCore extends DocumentUtils{
 	$sql="
 	    SELECT
 		doc_id,
+		active_company_id,
+                (SELECT label FROM companies_tree JOIN companies_list USING(branch_id) WHERE company_id=active_company_id) active_company_label,
 		passive_company_id,
                 (SELECT label FROM companies_tree JOIN companies_list USING(branch_id) WHERE company_id=passive_company_id) label,
 		IF(is_reclamation,-doc_type,doc_type) doc_type,
@@ -172,12 +174,19 @@ class DocumentCore extends DocumentUtils{
 		if( $this->isCommited() ){
 		    return false;
 		}
-		else{
-		    $doc_id=$this->doc('doc_id');
-		    $passive_company_id=$new_val;
-		    $this->db->query("UPDATE document_list SET passive_company_id=$passive_company_id WHERE doc_id=$doc_id");
-		    return true;
+		$doc_id=$this->doc('doc_id');
+		$passive_company_id=$new_val;
+		$this->db->query("UPDATE document_list SET passive_company_id=$passive_company_id WHERE doc_id=$doc_id");
+		return true;
+		break;
+	    case 'active_company_id':
+		if( $this->isCommited() ){
+		    return false;
 		}
+		$doc_id=$this->doc('doc_id');
+		$active_company_id=$new_val;
+		$this->db->query("UPDATE document_list SET active_company_id=$active_company_id WHERE doc_id=$doc_id");
+		return true;
 		break;
 	    case 'doc_type':
 		return $this->setType($new_val);
