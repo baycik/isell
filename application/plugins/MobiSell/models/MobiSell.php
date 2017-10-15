@@ -82,8 +82,16 @@ class MobiSell extends Catalog{
     public $documentHeadUpdate=["doc_id"=>"int","field"=>"string","value"=>"string"];
     public function documentHeadUpdate($doc_id,$field,$value){
 	$DocumentItems=$this->Hub->load_model("DocumentItems");
-	$DocumentItems->headUpdate($field,$value);
-	
+	if( $field=='is_commited' ){
+	    if( $value==1 ){
+		$DocumentItems->entryDocumentCommit( $doc_id );
+	    } else {
+		$DocumentItems->entryDocumentUncommit( $doc_id );
+	    }
+	    
+	} else {
+	    $DocumentItems->headUpdate($field,$value);
+	}
 	return $this->documentGet($doc_id);
     }
     

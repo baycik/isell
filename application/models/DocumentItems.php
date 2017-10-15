@@ -209,7 +209,6 @@ class DocumentItems extends DocumentCore{
     }
     public $entryDocumentCommit=['int'];
     public function entryDocumentCommit( $doc_id ){
-	$this->check($doc_id,'int');
 	$this->selectDoc($doc_id);
 	$this->documentDiscountsSave();
 	$Document2=$this->Hub->bridgeLoad('Document');
