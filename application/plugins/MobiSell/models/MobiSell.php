@@ -146,4 +146,11 @@ class MobiSell extends Catalog{
 	    ";
 	return $this->get_list($sql);	
     }
+    
+    public $documentDiscountsGet=['passive_company_id'=>['int',0]];
+    public function documentDiscountsGet($passive_company_id){
+	$Company=$this->Hub->load_model("Company");
+	$Company->selectPassiveCompany($passive_company_id);
+	return $Company->companyPrefsGet();
+    }
 }

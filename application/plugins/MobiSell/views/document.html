@@ -24,7 +24,9 @@
 	initTab: function () {
 	    $('.menu .item').tab({
 		onVisible: function (type) {
-
+		    if( type=='discounts' ){
+			App.document.prefs.init();
+		    }
 		}
 	    });
 	    $('.menu .item').tab('change tab', 'entries');
@@ -127,8 +129,54 @@
 		});
 	    },
 	    remove:function(){
-		App.document.head.update('is_commited', 0);
-		location.hash='#view/document_list.html';
+		if( confirm("Удалить документ?") ){
+		    App.document.head.update('is_commited', 0);
+		    location.hash='#view/document_list.html';
+		}
+	    }
+	},
+	prefs:{
+	    init:function(){
+		App.document.prefs.load();
+	    },
+	    load:function(){
+		$.get('./documentDiscountsGet',{passive_company_id:App.document.doc.head.passive_company_id},function(resp){
+		    var prefs=App.json(resp);
+		    if( prefs && prefs.discounts ){
+			App.document.prefs.discountSet(prefs);
+		    }
+		});
+	    },
+	    discountSet:function(data){
+		for(var i in data.discounts){
+		    if( data.discounts[i].discount=== null ){
+			data.discounts[i].plus='';
+			data.discounts[i].minus='';
+			continue;
+		    }
+		    var discount=(data.discounts[i].discount*100-100).toFixed(2);
+		    if( discount>0 ){
+			data.discounts[i].plus=discount;
+			data.discounts[i].minus='';
+		    } else {
+			data.discounts[i].plus='';
+			data.discounts[i].minus=-discount;
+		    }
+		}
+		App.renderTpl('document_discounts',data);
+		$("#document_discounts input").on("change",function(){
+		    var branch_id=$(this).attr('name').split('_')[1];
+		    var sign=( $(this).attr('name').split('_')[0]==='minus' )?-1:1;
+		    var ratio=1+sign*$(this).val()/100;
+		    var pair_name=(sign>0?'minus_':'plus_')+branch_id;
+		    $("#document_discounts input[name="+pair_name+"]").val('');
+		    App.document.prefs.update('discount',branch_id,ratio);
+		});
+	    },
+	    update:function(type,id,value){
+		$.post( '../Company/companyPrefsUpdate',{type:type,field:id,value:value}, function(ok){
+
+		});
 	    }
 	},
 	row: {
@@ -311,6 +359,14 @@
     #document_entries .four.wide.column{
 	text-align: right;
     }
+    .discount_minus input{
+	width:80px;
+	color: #dfd;
+    }
+    .discount_plus input{
+	width:80px;
+	background-color: #fdd;
+    }
 </style>
 
 <div id="document_header_segment" class="ui message">
@@ -434,8 +490,8 @@
     </div>
     <button id="document_delete_button" class="ui negative button" onclick="App.document.head.remove()">Удалить документ</button>
 </div>
-<div class="ui tab segment" data-tab="discounts">
-    <table class="ui table stackable">
+<div class="ui tab segment" data-tab="discounts" id="document_discounts">
+    <table class="ui table unstackable">
 	<thead>
 	    <tr>
 		<th>Категория</th>
@@ -444,29 +500,22 @@
 	    </tr>
 	</thead>
 	<tbody>
-	    <!-- {{if entries}} {{entries}} -->
-	    <tr data-row-index="{{#}}" onclick="App.document.discounts.handleClick(this)">
-		<td></td>
-		<td></td>
-		<td></td>
-	    </tr>
-	    <!-- {{/entries}} {{else}}-->
-	    <tr>
-		<td colspan="4">Ничего не найдено</td>
-	    </tr>
-	    <!--{{/if}}-->
-	</tbody>
-	<tfoot class="full-width">
-	    <tr>
+	    <!-- {{discounts}} -->
+	    <tr data-row-index="{{#}}">
+		<td>{{label}}</td>
 		<td>
-		    <div class="ui grid">
-			<div class="eight wide column">{{footer.total_weight}}кг </div>
-			<div class="eight wide column">{{footer.total_volume}}м<sup>3</sup></div>
+		    <div class="ui input discount_minus">
+			<input type="number" value="{{minus}}" name="minus_{{branch_id}}">
 		    </div>
 		</td>
-		<td style="text-align: right;">{{footer.total}}{{footer.curr_symbol}}</td>
+		<td>
+		    <div class="ui input discount_plus">
+			<input type="number" value="{{plus}}" name="plus_{{branch_id}}">
+		    </div>
+		</td>
 	    </tr>
-	</tfoot>
+	    <!-- {{/discounts}} -->
+	</tbody>
     </table>    
 </div>
 
