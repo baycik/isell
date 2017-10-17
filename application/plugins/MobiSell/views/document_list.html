@@ -20,6 +20,10 @@
     <a class="item" data-tab="buy">Приход</a>
 </div>
 <div class="ui bottom attached  tab segment" data-tab="sell" id="documents_sell">
+    <button class="ui compact labeled icon button">
+	<i class="plus icon"></i>
+	<a href="#view/document.html">Добавить</a>
+    </button>
     <table class="ui green selectable  table unstackable">
 	<thead>
 	    <tr>
@@ -88,63 +92,65 @@
 		}
 	    });
 	},
-	initTab:function(){
+	initTab: function () {
 	    $('.menu .item').tab({
-		onVisible:function( type ){
-		    App.document_list.currentType=type;
+		onVisible: function (type) {
+		    App.document_list.currentType = type;
 		    App.document_list.loadIfEmpty(type);
 		}
 	    });
 	    $('.menu .item').tab('change tab', 'sell');
 	},
-	handleClick:function(node){
-	    var doc_id=$(node).data('doc-id');
-	    location.hash="#view/document.html#doc_id="+doc_id;
+	handleClick: function (node) {
+	    var doc_id = $(node).data('doc-id');
+	    location.hash = "#view/document.html#doc_id=" + doc_id;
 	},
-	render:function( type, doc_list ){
-	    App.renderTpl('documents_'+type, {doc_list:doc_list});
+	render: function (type, doc_list) {
+	    App.renderTpl('documents_' + type, {doc_list: doc_list});
 	},
-	docTypeConfig:{
-	    sell:{
-		entries:[]
+	docTypeConfig: {
+	    sell: {
+		entries: []
 	    },
-	    buy:{
-		entries:[]
+	    buy: {
+		entries: []
 	    }
 	},
-	compFilter:'',
-	currentType:'',
-	load: function (type,offset) {
-	    var date=App.document_list.picker.get('select', 'yyyy-mm-dd');
-	    if( offset===undefined ){
-		offset= App.document_list.docTypeConfig[type].entries.length||0;
+	compFilter: '',
+	currentType: '',
+	load: function (type, offset) {
+	    var date = App.document_list.picker.get('select', 'yyyy-mm-dd');
+	    if (offset === undefined) {
+		offset = App.document_list.docTypeConfig[type].entries.length || 0;
 	    }
-	    $.post('doclistGet', {type:type,date: date,offset:offset,compFilter:App.document_list.compFilter}, function (resp) {
+	    App.flash('Список документов: загрузка...');
+	    $.post('doclistGet', {type: type, date: date, offset: offset, compFilter: App.document_list.compFilter}, function (resp) {
 		var doc_list = App.json(resp);
-		App.document_list.docTypeConfig[type].entries=App.document_list.docTypeConfig[type].entries.concat(doc_list);
-		App.document_list.render(type,App.document_list.docTypeConfig[type].entries);
+		App.document_list.docTypeConfig[type].entries = App.document_list.docTypeConfig[type].entries.concat(doc_list);
+		App.document_list.render(type, App.document_list.docTypeConfig[type].entries);
+		App.flash('Список документов: ОК');
 	    });
 	},
-	reload:function(){
-	    var type=App.document_list.currentType;
-	    App.document_list.docTypeConfig[type].entries=[];
+	reload: function () {
+	    var type = App.document_list.currentType;
+	    App.document_list.docTypeConfig[type].entries = [];
 	    App.document_list.load(type);
 	},
-	loadMore:function(){
-	    var type=App.document_list.currentType;
+	loadMore: function () {
+	    var type = App.document_list.currentType;
 	    App.document_list.load(type);
 	},
-	loadIfEmpty:function(type){
-	    if( !App.document_list.docTypeConfig[type].entries.length ){
-		App.document_list.load(type,0);
+	loadIfEmpty: function (type) {
+	    if (!App.document_list.docTypeConfig[type].entries.length) {
+		App.document_list.load(type, 0);
 	    }
 	},
-	compSearch:function( q ){
+	compSearch: function (q) {
 	    clearTimeout(App.document_list.clock);
-	    App.document_list.clock=setTimeout(function(){
-		App.document_list.compFilter=q;
+	    App.document_list.clock = setTimeout(function () {
+		App.document_list.compFilter = q;
 		App.document_list.reload();
-	    },800);
+	    }, 800);
 	}
     };
     App.document_list.init();

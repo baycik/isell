@@ -59,14 +59,7 @@
 		    var chunks = dmy.split('.');
 		    return chunks[2] + '-' + chunks[1] + '-' + chunks[0];
 		},
-/*		toDmy: function (iso) {
-		    if( !iso ){
-			return null;
-		    }
-		    var chunks = iso.split('-');
-		    return chunks[2] + '.' + chunks[1] + '.' + chunks[0];
-		},
-*/		renderTpl: function (id, data, mode) {
+		renderTpl: function (id, data, mode) {
 		    if (!this.tplcache[id] || mode === 'nocache') {
 			this.tplcache[id] = $('#' + id).html().replace(/&gt;/g, '>').replace(/<!--/g,'').replace(/-->/g,'');
 		    }
@@ -114,12 +107,15 @@
 	<div class="ui basic icon top fixed menu">
 	    <a id="toggle" class="item">
 		<i class="sidebar icon"></i>
-		Menu
+		Меню
 	    </a>
-	    <div class="ui warning message" id="status"></div>
+	    <div id="status" style="padding: .5em;color:green"></div>
 	</div>
 	<div id="main_container" class="pusher" style="margin-top: 42px;">
-	    sdgfsdgf
+	    <a href="#view/document_list.html" class="item">
+		<i class="list layout icon"></i>
+		Список Документов
+	    </a>
 	</div>
     </body>
 </html>
