@@ -8,8 +8,14 @@
 	    App.document.suggestion.init();
 	},
 	load: function (doc_id) {
+	    if (!doc_id) {
+		App.document.create();
+		return false;
+	    }
+	    App.flash('Документ: загрузка...');
 	    $.post("documentGet/", {doc_id: doc_id}, function (resp) {
 		App.document.set(App.json(resp));
+		App.flash('Документ: ОК');
 	    });
 	},
 	set: function (doc) {
@@ -21,15 +27,25 @@
 	    App.renderTpl('document_entries', App.document.doc);
 	    App.document.head.set(App.document.doc.head);
 	},
+	create: function () {
+	    $("#document_create_dialog").modal({
+		onApprove:function(){
+		    console.log('ok');
+		}
+	    }).modal('show');
+	},
 	initTab: function () {
 	    $('.menu .item').tab({
 		onVisible: function (type) {
-
+		    if (type === 'discounts') {
+			App.document.prefs.init();
+		    }
 		}
 	    });
 	    $('.menu .item').tab('change tab', 'entries');
 	},
 	head: {
+	    suppressUpdate: false,
 	    init: function () {
 		$('.activecomp').dropdown({
 		    apiSettings: {
@@ -42,7 +58,7 @@
 		    },
 		    filterRemoteData: true,
 		    fullTextSearch: true,
-		    onChange:function(value, text, $choice){
+		    onChange: function (value, text, $choice) {
 			App.document.head.update('active_company_id', value);
 		    }
 		});
@@ -57,47 +73,126 @@
 		    },
 		    filterRemoteData: true,
 		    fullTextSearch: true,
-		    onChange:function(value, text, $choice){
+		    onChange: function (value, text, $choice) {
 			App.document.head.update('passive_company_id', value);
 		    }
 		});
+		$('.doc_num').on('change', function () {
+		    App.document.head.update('doc_num', $(this).val());
+		});
+		$('.doc_data').on('change', function () {
+		    App.document.head.update('doc_data', $(this).val());
+		});
+		$('.is_commited').checkbox({
+		    onChecked: function () {
+			App.document.head.update('is_commited', 1);
+		    },
+		    onUnchecked: function () {
+			App.document.head.update('is_commited', 0);
+		    }
+		});
+
 		var $input = $('.docdatepicker').pickadate();
 		App.document.picker = $input.pickadate('picker');
 		App.document.picker.on({
 		    set: function (val) {
-			var date = App.document.picker.get('select', 'yyyy-mm-dd');
+			var date = App.document.picker.get('select', 'dd.mm.yyyy');
 			App.document.head.update('doc_date', date);
 		    }
 		});
 	    },
 	    set: function (head) {
+		App.document.head.suppressUpdate = true;
+		App.renderTpl('document_header', head);
 		$('.activecomp').dropdown('set value', head.active_company_id);
 		$('.activecomp').dropdown('set text', head.active_company_label);
 		$('.passivecomp').dropdown('set value', head.passive_company_id);
 		$('.passivecomp').dropdown('set text', head.label);
 		$('.doc_num').val(head.doc_num);
+		$('.doc_data').val(head.doc_data);
+		$('.is_commited').checkbox("set " + (head.is_commited > 0 ? "checked" : "unchecked"));
 		App.document.picker.set('select', new Date(App.toIso(head.doc_date)));
+		App.document.head.suppressUpdate = false;
 		App.document.head.switchView(head);
 	    },
 	    switchView: function (head) {
-		var hilight=(Math.abs(head.doc_type)===1)?'green':'purple';
+		var hilight = (Math.abs(head.doc_type) === 1) ? 'green' : 'purple';
 		if (head.is_commited * 1) {
-		    $("#document_header").addClass(hilight);
+		    $("#document_header_segment").addClass(hilight);
+		    $("#document_header_form").addClass(hilight);
 		    $('.activecomp').addClass('disabled');
 		    $('.passivecomp').addClass('disabled');
+		    $('#document_delete_button').addClass('disabled');
 		} else {
-		    $("#document_header").removeClass(hilight);
+		    $("#document_header_segment").removeClass(hilight);
+		    $("#document_header_form").removeClass(hilight);
 		    $('.activecomp').removeClass('disabled');
 		    $('.passivecomp').removeClass('disabled');
+		    $('#document_delete_button').removeClass('disabled');
 		}
-		App.renderTpl('document_header', head);
-		$('.is_commited').checkbox("set " + (head.is_commited > 0 ? "checked" : "unchecked"));
 	    },
 	    update: function (field, value) {
+		if (App.document.head.suppressUpdate) {
+		    return;
+		}
+		App.flash('Документ: сохранение...');
 		App.document.doc.head[field] = value;
-		$.post("documentHeadUpdate/",{doc_id:App.document.doc.head.doc_id,field:field,value:value},function(resp){
-		    var doc=App.json(resp);
+		$.post("documentHeadUpdate/", {doc_id: App.document.doc.head.doc_id, field: field, value: value}, function (resp) {
+		    var doc = App.json(resp);
 		    App.document.set(doc);
+		    App.flash('Документ: сохранен');
+		});
+	    },
+	    remove: function () {
+		if (confirm("Удалить документ?")) {
+		    App.document.head.update('is_commited', 0);
+		    location.hash = '#view/document_list.html';
+		}
+	    }
+	},
+	prefs: {
+	    init: function () {
+		App.document.prefs.load();
+	    },
+	    load: function () {
+		App.flash('Скидки: загрузка...');
+		$.get('./documentDiscountsGet', {passive_company_id: App.document.doc.head.passive_company_id}, function (resp) {
+		    var prefs = App.json(resp);
+		    if (prefs && prefs.discounts) {
+			App.document.prefs.discountSet(prefs);
+			App.flash('Скидки: ОК');
+		    }
+		});
+	    },
+	    discountSet: function (data) {
+		for (var i in data.discounts) {
+		    if (data.discounts[i].discount === null) {
+			data.discounts[i].plus = '';
+			data.discounts[i].minus = '';
+			continue;
+		    }
+		    var discount = (data.discounts[i].discount * 100 - 100).toFixed(2);
+		    if (discount > 0) {
+			data.discounts[i].plus = discount;
+			data.discounts[i].minus = '';
+		    } else {
+			data.discounts[i].plus = '';
+			data.discounts[i].minus = -discount;
+		    }
+		}
+		App.renderTpl('document_discounts', data);
+		$("#document_discounts input").on("change", function () {
+		    var branch_id = $(this).attr('name').split('_')[1];
+		    var sign = ($(this).attr('name').split('_')[0] === 'minus') ? -1 : 1;
+		    var ratio = 1 + sign * $(this).val() / 100;
+		    var pair_name = (sign > 0 ? 'minus_' : 'plus_') + branch_id;
+		    $("#document_discounts input[name=" + pair_name + "]").val('');
+		    App.document.prefs.update('discount', branch_id, ratio);
+		});
+	    },
+	    update: function (type, id, value) {
+		$.post('../Company/companyPrefsUpdate', {type: type, field: id, value: value}, function (ok) {
+
 		});
 	    }
 	},
@@ -239,8 +334,7 @@
 		}, 200);
 	    },
 	    load: function () {
-
-
+		App.flash('Подсказки: загрузка...');
 		var offset = App.document.suggestion.entries.length || 0;
 		$.post('documentSuggest', {offset: offset, q: App.document.suggestion.q, doc_id: App.document.doc.head.doc_id}, function (resp) {
 		    var suggestion = App.json(resp);
@@ -251,6 +345,7 @@
 		    } else {
 			$("#load_suggestions_button").hide();
 		    }
+		    App.flash('Подсказки: ОК');
 		});
 	    },
 	    render: function () {
@@ -281,20 +376,30 @@
     #document_entries .four.wide.column{
 	text-align: right;
     }
+    .discount_minus input{
+	width:80px;
+	color: #dfd;
+    }
+    .discount_plus input{
+	width:80px;
+	background-color: #fdd;
+    }
 </style>
-<div id="document_header" class="ui attached message covert">
-    <div class="header">
-	{{if doc_type|equals>1}}Продажа{{/if}}
-	{{if doc_type|equals>2}}Покупка{{/if}}
-	{{if doc_type|equals>-1}}Возврат от клиента{{/if}}
-	{{if doc_type|equals>-2}}Возврат поставщику{{/if}}
+
+<div id="document_header_segment" class="ui message">
+    <div id="document_header" class="ui attached segment covert">
+	<div class="header">
+	    {{if doc_type|equals>1}}Продажа{{/if}}
+	    {{if doc_type|equals>2}}Покупка{{/if}}
+	    {{if doc_type|equals>-1}}Возврат от клиента{{/if}}
+	    {{if doc_type|equals>-2}}Возврат поставщику{{/if}}
+	</div>
+	{{label}} 
+	{{if doc_type|divisible>2}}<i class="purple icon arrow right"></i>{{else}}<i class="green icon arrow left"></i>{{/if}}
+	{{active_company_label}}
+	<b>от</b> {{doc_date}} <b>№</b>{{doc_num}}
     </div>
-    {{label}} 
-    {{if doc_type|divisible>2}}<i class="purple icon arrow right"></i>{{else}}<i class="green icon arrow left"></i>{{/if}}
-    {{active_company_label}}
-    <b>от</b> {{doc_date}} <b>№</b>{{doc_num}} 
-    <div class="ui fitted divider"></div>
-    <form class="ui form">
+    <form class="ui form ">
 	<div class="field">
 	    <label>Документ проведен</label>
 	    <div class="ui slider checkbox is_commited">
@@ -304,17 +409,16 @@
 	</div>
 	<div class="field">
 	    <label>Комментарий</label>
-	    <textarea name="doc_data" placeholder="Комментарий" rows="1" style="background-color: #FFd">{{doc_data}}</textarea>
+	    <textarea class="doc_data" placeholder="Комментарий" rows="1">{{doc_data}}</textarea>
 	</div>
     </form>
+
 </div>
 
 
-
-
-
 <div class="ui top attached tabular menu">
-    <a class="active item" data-tab="entries">Накладная</a>
+    <a class=" item" data-tab="entries">Накладная</a>
+    <a class="active item" data-tab="discounts">Скидки</a>
     <a class="item" data-tab="prefs">Настройки</a>
 </div>
 <div class="ui bottom attached  tab segment" data-tab="entries" id="document_entries">
@@ -379,7 +483,7 @@
 	    </div>
 	    <div class="four wide field">
 		<label>Номер</label>
-		<input placeholder="Номер" type="text" readonly="" class="doc_num">
+		<input placeholder="Номер" type="text" class="doc_num">
 	    </div>
 	    <div class="four wide field">
 		<label>Клиент</label>
@@ -401,11 +505,35 @@
 	    </div>
 	</div>
     </div>
-    <div class="ui buttons">
-	<button class="ui primary button">Провести</button>
-	<button class="ui button">Удалить</button>
-	<button class="ui negative button">Удалить</button>
-    </div>
+    <button id="document_delete_button" class="ui negative button" onclick="App.document.head.remove()">Удалить документ</button>
+</div>
+<div class="ui tab segment" data-tab="discounts" id="document_discounts">
+    <table class="ui table unstackable">
+	<thead>
+	    <tr>
+		<th>Категория</th>
+		<th>Скидка</th>
+		<th>Наценка</th>
+	    </tr>
+	</thead>
+	<tbody>
+	    <!-- {{discounts}} -->
+	    <tr data-row-index="{{#}}">
+		<td>{{label}}</td>
+		<td>
+		    <div class="ui input discount_minus">
+			<input type="number" value="{{minus}}" name="minus_{{branch_id}}">
+		    </div>
+		</td>
+		<td>
+		    <div class="ui input discount_plus">
+			<input type="number" value="{{plus}}" name="plus_{{branch_id}}">
+		    </div>
+		</td>
+	    </tr>
+	    <!-- {{/discounts}} -->
+	</tbody>
+    </table>    
 </div>
 
 <div class="ui inverted segment">
@@ -449,6 +577,52 @@
 	</div>
     </div>
 </div>
+
+<div class="ui modal"  id="document_create_dialog">
+    <div class="header">Создать документ</div>
+    <div class="content">
+        <div class="ui form">
+	    <div class="fields">
+		<div class="field">
+		    <label>Дата</label>
+		    <div class="ui selection dropdown">
+			<i class="dropdown icon"></i>
+			<span class="default text">Select Type</span>
+			<div class="menu">
+			    <div class="item">
+				<i class="attention right floated icon"></i>
+				Important
+			    </div>
+			    <div class="item">
+				<i class="comment right floated icon"></i>
+				Announcement
+			    </div>
+			    <div class="item">
+				<i class="conversation right floated icon"></i>
+				Discussion
+			    </div>
+			</div>
+		    </div>
+		</div>
+		<div class="field">
+		    <label>Клиент</label>
+		    <div class="ui search selection remote dropdown">
+			<input name="passivecomp" type="hidden">
+			<i class="dropdown icon"></i>
+			<div class="default text"></div>
+			<div class="menu"></div>
+		    </div>
+		</div>
+	    </div>
+	</div>
+    </div>
+    <div class="actions">
+	<div class="ui approve button">Approve</div>
+	<div class="ui button">Neutral</div>
+	<div class="ui cancel button">Cancel</div>
+    </div>
+</div>
+
 <div class="ui modal" id="document_entry_dialog">
     <div class="header">Редактирование строки</div>
     <div class="content">

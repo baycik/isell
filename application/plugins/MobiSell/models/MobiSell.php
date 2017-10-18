@@ -76,13 +76,22 @@ class MobiSell extends Catalog{
 	$DocumentItems=$this->Hub->load_model("DocumentItems");
 	$document=$DocumentItems->entryDocumentGet( $doc_id );
 	$document['head']=$DocumentItems->headGet( $doc_id );
-	$document['head']->active_company_id=$this->Hub->acomp('company_id');
-	$document['head']->active_company_label=$this->Hub->acomp('label');
 	return $document;
     }
     
     public $documentHeadUpdate=["doc_id"=>"int","field"=>"string","value"=>"string"];
     public function documentHeadUpdate($doc_id,$field,$value){
+	$DocumentItems=$this->Hub->load_model("DocumentItems");
+	if( $field=='is_commited' ){
+	    if( $value==1 ){
+		$DocumentItems->entryDocumentCommit( $doc_id );
+	    } else {
+		$DocumentItems->entryDocumentUncommit( $doc_id );
+	    }
+	    
+	} else {
+	    $DocumentItems->headUpdate($field,$value);
+	}
 	return $this->documentGet($doc_id);
     }
     
@@ -136,5 +145,12 @@ class MobiSell extends Catalog{
 	    LIMIT 10 OFFSET $offset
 	    ";
 	return $this->get_list($sql);	
+    }
+    
+    public $documentDiscountsGet=['passive_company_id'=>['int',0]];
+    public function documentDiscountsGet($passive_company_id){
+	$Company=$this->Hub->load_model("Company");
+	$Company->selectPassiveCompany($passive_company_id);
+	return $Company->companyPrefsGet();
     }
 }
