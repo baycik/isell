@@ -8,13 +8,15 @@
 	    plugin_list:[],
 	    load:function(){
 		App.get("PluginManager/listFetch/",function(resp){
-		    Plugins.tile.plugin_list=App.json(resp);
+		    var plugin_list=App.json(resp);
 		    var group_name='';
-		    for(var i=0;i<Plugins.tile.plugin_list.length;i++){
-			if( Plugins.tile.plugin_list[i].group_name!==group_name ){
-			    group_name=Plugins.tile.plugin_list[i].group_name||'';
-			    Plugins.tile.plugin_list.splice(i,0,{header:group_name});
+                    Plugins.tile.plugin_list=[];
+		    for(var i=0;i<plugin_list.length;i++){
+			if( plugin_list[i].group_name!==group_name ){
+			    group_name=plugin_list[i].group_name;
+                            Plugins.tile.plugin_list.push({header:(group_name||'Другие')});
 			}
+                        Plugins.tile.plugin_list.push(plugin_list[i]);
 		    }
 		    App.renderTpl('plugins_tile',{plugins:Plugins.tile.plugin_list});
 		    var last_index=App.store('last_plugin_i')||1;
@@ -127,6 +129,7 @@
     </div>
     <div id="plugin_info" class="covert">
 	<img src="img/plugin.png" style="float:left;width:auto;height: 70px;">
+        {{if plugin_author|notempty}}
 	<div style="float: right">
 	    <b>Автор:</b> {{plugin_author}}<br>
 	    <b>Версия:</b> {{plugin_version}}<br>
@@ -134,9 +137,10 @@
 	    <b>Группа:</b> {{group_name}}<br>
 	    <b>Доступ:</b> {{user_level_name}}<br>
 	</div>
+        {{/if}}
 	<div>
 	    <h2>{{plugin_name}}</h2>
-	    {{plugin_description}}
+	    {{plugin_description|blank>}}
 	</div>
 	<div id="plugin_settings" style="clear:both"></div>
     </div>

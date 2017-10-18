@@ -30,6 +30,9 @@
 		"js/slick/slickinfinite.js"
 	    ], this.gridSetup);
 	},
+        close:function(){
+            this.node.window('close');
+        },
 	initSelector:function(){
 	    this.assigned={};
 	    App.renderTpl('page_dialog_importer_selector',this.data);

@@ -1,34 +1,65 @@
 <?php
+/* Group Name: Продажи
+ * User Level: 2
+ * Plugin Name: Анализ отчетов маркетов
+ * Plugin URI: http://isellsoft.com
+ * Version: 0.1
+ * Description: Анализ отчетов маркетов
+ * Author: baycik 2017
+ * Author URI: http://isellsoft.com
+ * Trigger before: Reports_market_analyse
+ */
 class Reports_market_analyse extends Catalog{
     public function __construct() {
-	$this->fdate=$this->dmy2iso( $this->request('fdate','\d\d.\d\d.\d\d\d\d') ).' 23:59:59';
+	//$this->fdate=$this->dmy2iso( $this->request('fdate','\d\d.\d\d.\d\d\d\d') ).' 23:59:59';
         $this->group_by_filter=$this->request('group_by_filter');
 	$this->group_by=$this->request('group_by','\w+');
         $this->pcomp_id=222;
         $this->acomp_id=2;
 	parent::__construct();
     }
+    public function install(){
+	$install_file=__DIR__."/install.sql";
+	$this->load->model('Maintain');
+	return $this->Maintain->backupImportExecute($install_file);
+    }
+    public function uninstall(){
+	$uninstall_file=__DIR__."/uninstall.sql";
+	$this->load->model('Maintain');
+	return $this->Maintain->backupImportExecute($uninstall_file);
+    }
+    public $views=['string'];
+    public function views($path){
+	header("X-isell-type:OK");
+	$this->load->view($path);
+    }
     private function dmy2iso( $dmy ){
 	$chunks=  explode('.', $dmy);
 	return "$chunks[2]-$chunks[1]-$chunks[0]";
     }
-
-    public function viewGet(){
-        $having=$this->group_by_filter?"HAVING group_by LIKE '%$this->group_by_filter%'":"";
+    
+    public $reportImport=[
+        'pcomp_id'=>'passive_company_id',
+        'idate'=>'string',
+        'fdate'=>'string',
+        'label'=>'string',
+        'affiliate'=>'string',
+        'article'=>'string',
+        'left'=>'int',
+        'sold'=>'int'];
+    public function reportImport($pcomp_id,$idate,$fdate,$label,$affiliate,$article,$left,$sold){
         $this->usd_ratio=$this->Hub->pref('usd_ratio');
-        
-        $pcomp_id=$this->Hub->pcomp('company_id');
         $sql_clear="DROP TEMPORARY TABLE IF EXISTS tmp_market_report";#TEMPORARY
         $sql_prepare="CREATE TEMPORARY TABLE tmp_market_report ( INDEX(product_code) ) ENGINE=MyISAM AS (
             SELECT
-                B article,
+                $article article,
                 product_code,
                 ru product_name,
                 analyse_type,
                 analyse_group,
-                C store_code,
-                D sold,
-                E leftover
+                $affiliate store_code,
+                $sold sold,
+                $left leftover
             FROM
                 imported_data
                     LEFT JOIN
@@ -84,8 +115,11 @@ class Reports_market_analyse extends Catalog{
         $this->query($sql_price_prepare);
         $this->query($sql_price_missing_clear);
         $this->query($sql_price_missing_fill);
-        $this->query($sql_price_complete);
-	
+        $this->query($sql_price_complete);        
+    }
+    
+    private function reportFill(){
+	$this->reportPrepare();
         $sql_clear="DROP TEMPORARY TABLE IF EXISTS plugin_rpt_market_result";#TEMPORARY
         $sql_prepare="CREATE TEMPORARY TABLE plugin_rpt_market_result ( INDEX(product_code) ) ENGINE=MyISAM AS (
 	    SELECT
@@ -99,7 +133,12 @@ class Reports_market_analyse extends Catalog{
                 tmp_market_report_price USING(product_code)
             ORDER BY sold_sum<>0,sold_sum DESC,leftover_sum DESC
 	    )";
-
+        $this->query($sql_clear);
+        $this->query($sql_prepare);        
+    }
+    
+    public function viewGet(){
+        $this->reportFill();
         $sql_fetch="
             SELECT
 		*
@@ -116,8 +155,7 @@ class Reports_market_analyse extends Catalog{
                 plugin_rpt_market_result
             GROUP BY $this->group_by 
             ORDER BY sold_sum DESC";
-        $this->query($sql_clear);
-        $this->query($sql_prepare);
+
 	$rows=$this->get_list($sql_fetch);
 	$sum_rows=$this->get_list($sql_summary_type_fetch);
 	return [

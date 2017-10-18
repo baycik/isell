@@ -45,12 +45,19 @@ class ReportManager extends Catalog {
 	if( $report_id && file_exists($this->plugin_folder.$report_id.'/form.html') ){
 	    return file_get_contents($this->plugin_folder.$report_id.'/form.html');
 	}
+	if( $report_id && file_exists($this->plugin_folder.$report_id.'/views/form.html') ){
+	    return file_get_contents($this->plugin_folder.$report_id.'/views/form.html');
+	}
 	show_error('X-isell-error: Form not found!', 500);
     }
     
     
     private function load_report( $plugin_name ){
-	require_once "application/plugins/$plugin_name/$plugin_name.php";
+        if( file_exists("application/plugins/$plugin_name/models/$plugin_name.php") ){
+            require_once "application/plugins/$plugin_name/models/$plugin_name.php";
+        } else {
+            require_once "application/plugins/$plugin_name/$plugin_name.php";
+        }
 	$Plugin=new $plugin_name();
 	$Plugin->Hub=$this->Hub;
 	return $Plugin;
@@ -61,8 +68,13 @@ class ReportManager extends Catalog {
 	$this->current_info=$this->infoGet($report_id);
 	$tpl_files=isset($this->current_info['template'])?$this->current_info['template']:$this->current_info['report_id'].'.xlsx';
 	$Plugin=$this->load_report($report_id);
+        if( file_exists("application/plugins/{$this->current_info['report_id']}/views/") ){
+            $template_folder="application/plugins/{$this->current_info['report_id']}/views/";
+        } else {
+            $template_folder="application/plugins/{$this->current_info['report_id']}/";
+        }
 	$dump=[
-	    'tpl_files_folder'=>"application/plugins/{$this->current_info['report_id']}/",
+	    'tpl_files_folder'=>$template_folder,
 	    'tpl_files'=>$tpl_files,
 	    'title'=>$this->current_info['title'],
 	    'user_data'=>[

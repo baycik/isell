@@ -9,10 +9,13 @@ class PluginManager extends Catalog{
 	$plugins=[];
 	foreach($plugins_folders as $plugin_folder){
 	    if( strpos($plugin_folder, 'Reports')!==false ){
-		continue;
+		//continue;
 	    }
 	    $headers=$this->get_plugin_headers($plugin_folder);
 	    if( isset($headers['user_level']) && $headers['user_level']<=$this->Hub->svar('user_level') ){
+                if( !isset($headers['plugin_name']) ){
+                    $headers['plugin_name']=$plugin_folder;
+                }
 		$plugins[]=$headers;
 	    }
 	}
