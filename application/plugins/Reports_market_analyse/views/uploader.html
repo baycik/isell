@@ -1,0 +1,63 @@
+<script>
+    App.Reports_market_analyse_views_uploader={
+        init:function(){
+	    this.node.window({
+		title:'Загрузка файла отчета в базу данных',
+		width: 500,
+		height: 'auto',
+		top:50,
+		shadow:false,
+		onClose: function(){
+		    App.Reports_market_analyse_views_uploader.handler.notify('close');
+		    App.Reports_market_analyse_views_uploader.destroy();
+		}		
+	    });
+	    this.node.window('window').css('position','fixed');
+            
+            App.setupForm("#Reports_market_analyse_views_uploader_frm",{pcomp_name:App.pcomp?App.pcomp.label:''});
+            
+	    App.handler.progress(function(status){
+		if( status==='passiveCompanySelected' ){
+		    $("input[name=pcomp_name]").val(App.pcomp.label);
+		}
+	    });
+        },
+	destroy:function () {
+	    this.node.window('destroy');
+	    this.node.remove();
+	    delete App.Reports_market_analyse_views_uploader;
+	},
+        import:function(){
+            var head_fvalue=App.collectForm("#Reports_market_analyse_views_uploader_frm");
+            if( !App.pcomp ){
+                alert("Не выбран клиент");
+                return;
+            }
+            head_fvalue.passive_company_id=App.pcomp.company_id;
+            var config=[
+                {name:'Артикул',field:'article', assigned: 'B'},
+                {name:'Филиал',field:'affiliate', assigned: 'C'},
+                {name:'Продано шт',field:'sold', assigned: 'D'},
+                {name:'Остаток шт',field:'left', assigned: 'E'}	    
+            ];
+            App.loadWindow('page/dialog/importer',{label:'маркет',fields_to_import:config}).progress(function(status,table_fvalue,Importer){
+                if( status==='submit' ){
+                    App.Reports_market_analyse_views_uploader.handler.notify('submit',$.extend(head_fvalue,table_fvalue));
+                    //Importer.close();
+                    //App.Reports_market_analyse_views_uploader.node.window('close')
+                }
+            });
+        }
+    };
+</script>
+<form id="Reports_market_analyse_views_uploader_frm" onsubmit="event.preventDefault();App.Reports_market_analyse_views_uploader.import()">
+    <input required="required" class="easyui-datebox" name="idate" title="Начальная дата">
+    <input required="required" class="easyui-datebox" name="fdate" title="Конечная дата">
+    <input required="required" title="Клиента" name="pcomp_name" value="" readonly="readonly" />
+    <button type="button" class="tiny_button" onclick="App.user.pcompSelectionDialog();"><img src="img/settings.png"> Выбрать</button>
+    <hr>
+    <div style="text-align: center">
+        <button><img src="img/import.png" style="width:24px;height: auto"> Импортировать</button>
+    </div>
+</form>
+    

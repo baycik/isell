@@ -12,16 +12,24 @@
             }
         });
     }
-    function report_market_load(){
-        App.loadWindow('');
+    function report_market_import(){
+        App.loadWindow('Reports_market_analyse/views/uploader').progress(function(status,fvalue){
+            if( status==='submit' ){
+                $.post('Reports_market_analyse/reportImport',fvalue,function(ok){
+                    
+                });
+            }
+            console.log(status,fvalue);
+        });
     }
 </script>
 
 <form>
-    <div class="inp_group" style="width: 230px;">
-	<input style="width:95px" class="easyui-datebox" name="fdate" title="Конечная дата" value="{{today}}" data-options="required:true">
-
+    <div style="text-align: center">
+        <button type="button" onclick="report_market_import()"><img src="img/file_upload.png" style="width:24px;height: auto">  Загрузить файл</button>
     </div>
+    
+    <div class="inp_rule"></div>
     <div class="inp_group" style="width: 350px;">
 	<select name="group_by" title="Группировать по">
 	    <option value="store_code">Филиал</option>
@@ -32,8 +40,5 @@
 	    <option value="analyse_section">Артикул</option>
 	</select>
 	<input name="group_by_filter" title="Фильтр группы">
-    </div>
-    <div style="text-align: center">
-        <button type="button" onclick="reports_market_analyse()"><img src="img/report24.png" style="width:24px;height: auto"> Загрузить</button>
     </div>
 </form>
