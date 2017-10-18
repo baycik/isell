@@ -45,12 +45,15 @@ class ReportManager extends Catalog {
 	if( $report_id && file_exists($this->plugin_folder.$report_id.'/form.html') ){
 	    return file_get_contents($this->plugin_folder.$report_id.'/form.html');
 	}
+	if( $report_id && file_exists($this->plugin_folder.$report_id.'/views/form.html') ){
+	    return file_get_contents($this->plugin_folder.$report_id.'/views/form.html');
+	}
 	show_error('X-isell-error: Form not found!', 500);
     }
     
     
     private function load_report( $plugin_name ){
-	require_once "application/plugins/$plugin_name/$plugin_name.php";
+        require_once "application/plugins/$plugin_name/$plugin_name.php";
 	$Plugin=new $plugin_name();
 	$Plugin->Hub=$this->Hub;
 	return $Plugin;

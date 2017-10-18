@@ -12,11 +12,14 @@ class Reports_market_analyse extends Catalog{
 	$chunks=  explode('.', $dmy);
 	return "$chunks[2]-$chunks[1]-$chunks[0]";
     }
+    
+    public function reportLoad(){
+        
+    }
 
-    public function viewGet(){
+    private function reportPrepare(){
         $having=$this->group_by_filter?"HAVING group_by LIKE '%$this->group_by_filter%'":"";
         $this->usd_ratio=$this->Hub->pref('usd_ratio');
-        
         $pcomp_id=$this->Hub->pcomp('company_id');
         $sql_clear="DROP TEMPORARY TABLE IF EXISTS tmp_market_report";#TEMPORARY
         $sql_prepare="CREATE TEMPORARY TABLE tmp_market_report ( INDEX(product_code) ) ENGINE=MyISAM AS (
@@ -84,8 +87,11 @@ class Reports_market_analyse extends Catalog{
         $this->query($sql_price_prepare);
         $this->query($sql_price_missing_clear);
         $this->query($sql_price_missing_fill);
-        $this->query($sql_price_complete);
-	
+        $this->query($sql_price_complete);        
+    }
+    
+    private function reportFill(){
+	$this->reportPrepare();
         $sql_clear="DROP TEMPORARY TABLE IF EXISTS plugin_rpt_market_result";#TEMPORARY
         $sql_prepare="CREATE TEMPORARY TABLE plugin_rpt_market_result ( INDEX(product_code) ) ENGINE=MyISAM AS (
 	    SELECT
@@ -99,7 +105,12 @@ class Reports_market_analyse extends Catalog{
                 tmp_market_report_price USING(product_code)
             ORDER BY sold_sum<>0,sold_sum DESC,leftover_sum DESC
 	    )";
-
+        $this->query($sql_clear);
+        $this->query($sql_prepare);        
+    }
+    
+    public function viewGet(){
+        $this->reportFill();
         $sql_fetch="
             SELECT
 		*
@@ -116,8 +127,7 @@ class Reports_market_analyse extends Catalog{
                 plugin_rpt_market_result
             GROUP BY $this->group_by 
             ORDER BY sold_sum DESC";
-        $this->query($sql_clear);
-        $this->query($sql_prepare);
+
 	$rows=$this->get_list($sql_fetch);
 	$sum_rows=$this->get_list($sql_summary_type_fetch);
 	return [
