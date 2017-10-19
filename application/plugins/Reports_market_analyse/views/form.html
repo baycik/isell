@@ -30,6 +30,104 @@
             }
         });
     }
+    App.require([
+        "js/slick/lib/jquery.event.drag-2.3.0.js",
+        "js/slick/slick.core.js",
+        "js/slick/slick.grid.js",
+        "js/slick/plugins/slick.rowselectionmodel.js",
+        "js/slick/slick.editors.js",
+        "js/slick/slickinfinite.js"
+    ], function(){
+        var settings = {
+            columns: [],
+            options: {
+                editable: true,
+                autoedit: false,
+                enableCellNavigation: false,
+                enableColumnReorder: false,
+                enableFilter: false,
+                multiSelect: false,
+                url: 'Reports_market_analyse/listFetch/'
+            }
+        };
+        var grid_sg=App.page_dialog_importer.grid_sg = new SlickInfinite("#report_market_rpt_sg", settings);
+
+        var importTableTools={
+            entryCreate: function () {
+                $.post('Importer/entryCreate',{label:App.page_dialog_importer.label},function(insert_id){
+                    if( insert_id*1 ){
+                        grid_sg.setFilter({A:insert_id});
+                    }
+                });
+            },
+            entryDelete:function(){
+                var selected_rows = grid_sg.getSelectedRows();
+                if (!selected_rows.length) {
+                    App.flash("Ни одна строка не выбрана!");
+                    return;
+                }
+                if (!confirm("Удалить выделенные строчки?")) {
+                    return;
+                }
+
+                var import_ids=[];
+                for(var i in selected_rows){
+                    import_ids.push(grid_sg.getDataItem(selected_rows[i]).row_id);
+                }
+                $.post('Importer/entryDelete', {import_ids: import_ids}, function (ok) {
+                    if (ok * 1) {
+                        grid_sg.reload();
+                    }
+                });
+            },
+            entryDeleteAll:function(){
+                if( confirm("Удалить строчки с меткой '"+App.page_dialog_importer.label+"'?") ){
+                    App.post("Importer/deleteAll/",{label:App.page_dialog_importer.label},function(ok){
+                        if( ok*1 ){
+                            App.flash("Удалено строчки с меткой '"+App.page_dialog_importer.label+"'");
+                            grid_sg.reload();
+                        } else {
+                            App.flash("Не удалось удалить строки");
+                        }
+                    });
+                }
+            },
+            entryUpdate:function(row_id,field,value){
+                $.post('Importer/entryUpdate', {row_id: row_id, field: field, value: value}, function (ok) {
+                    if (ok<1) {
+                        grid_sg.reload();
+                    }
+                });
+            },
+            reload:function(){
+                grid_sg.reload();
+            },
+            upload:function(){
+                $('#page_dialog_importer_file').click();
+            },
+            out:function( out_type ){
+                var params={
+                    label:App.page_dialog_importer.label,
+                    out_type:(out_type||'.xlsx')
+                };
+                var url='Importer/viewGet/?'+$.param( params );
+                if( out_type==='.print' ){
+                    window.open(url,'print_tab');
+                } else {
+                    location.href=url;
+                }
+            },
+            print:function(){
+                this.out('.print');
+            }
+        };
+        $(".x-importer-tools").click(function (e) {
+            var action = $(e.target).data('action');
+            if (action) {
+                importTableTools[action] && importTableTools[action]();
+            }
+        });        
+    });
 </script>
 <div id="report_market_rpt_sg"></div>
 <form>
