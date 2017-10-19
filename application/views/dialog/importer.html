@@ -234,9 +234,12 @@
         <button style="float:left;" type="submit">
             <img src="img/database.png" style="height: 90px;width: auto;"><br>Импортировать
         </button>
+        {{if extra_html}}
+            {{extra_html}}<hr>
+        {{/if}}
         {{fields_to_import}}
 	<select name="{{field}}" title="{{name}}" style="width:50px;">
-	    <option value="A">A</option>
+	    <option>A</option>
 	    <option>B</option>
 	    <option>C</option>
 	    <option>D</option>

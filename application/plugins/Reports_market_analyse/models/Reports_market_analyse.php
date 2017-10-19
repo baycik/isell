@@ -39,17 +39,19 @@ class Reports_market_analyse extends Catalog{
     }
     
     public $reportImport=[
-        'pcomp_id'=>'passive_company_id',
+        'pcomp_id'=>'int',
         'idate'=>'string',
         'fdate'=>'string',
+        'comment'=>'string',
         'label'=>'string',
         'affiliate'=>'string',
         'article'=>'string',
         'left'=>'int',
         'sold'=>'int'];
-    public function reportImport($pcomp_id,$idate,$fdate,$label,$affiliate,$article,$left,$sold){
-        $this->usd_ratio=$this->Hub->pref('usd_ratio');
-        $sql_clear="DROP TEMPORARY TABLE IF EXISTS tmp_market_report";#TEMPORARY
+    public function reportImport($pcomp_id,$idate,$fdate,$comment,$label,$affiliate,$article,$left,$sold){
+        $usd_ratio=$this->Hub->pref('usd_ratio');
+        $acomp_id=$this->Hub->acomp('company_id');
+        $sql_clear="DROP TEMPORARY TABLE IF EXISTS tmp_market_report";
         $sql_prepare="CREATE TEMPORARY TABLE tmp_market_report ( INDEX(product_code) ) ENGINE=MyISAM AS (
             SELECT
                 $article article,
@@ -68,7 +70,7 @@ class Reports_market_analyse extends Catalog{
                 B<>'' 
                 AND label='маркет')";
         
-        $sql_price_setup="SET @_product_code:='',@_acomp_id:=$this->acomp_id,@_pcomp_id:=$this->pcomp_id,@_to_cstamp:='{$this->fdate}';";
+        $sql_price_setup="SET @_product_code:='',@_acomp_id:=$acomp_id,@_pcomp_id:=$pcomp_id,@_to_cstamp:='{$fdate}';";
         $sql_price_clear="DROP TEMPORARY TABLE IF EXISTS tmp_market_report_price";
         $sql_price_prepare="CREATE TEMPORARY TABLE tmp_market_report_price ( INDEX(product_code) ) ENGINE=MyISAM AS (
             SELECT 
@@ -102,7 +104,7 @@ class Reports_market_analyse extends Catalog{
         
         $sql_price_missing_clear="DROP TEMPORARY TABLE IF EXISTS tmp_market_report_missing";
         $sql_price_missing_fill="CREATE TEMPORARY TABLE tmp_market_report_missing ( INDEX(product_code) ) AS 
-            (SELECT product_code,GET_PRICE(product_code,$this->pcomp_id,$this->usd_ratio) avg_price
+            (SELECT product_code,GET_PRICE(product_code,$pcomp_id,$usd_ratio) avg_price
                 FROM tmp_market_report
                 WHERE product_code NOT IN (SELECT product_code FROM tmp_market_report_price)
                 GROUP BY product_code)";
@@ -115,16 +117,30 @@ class Reports_market_analyse extends Catalog{
         $this->query($sql_price_prepare);
         $this->query($sql_price_missing_clear);
         $this->query($sql_price_missing_fill);
-        $this->query($sql_price_complete);        
+        $this->query($sql_price_complete);
+        
+        $this->query("START TRANSACTION");
+        $this->query("INSERT INTO plugin_market_rpt_list SET idate='$idate',fdate='$fdate',comment='$comment',pcomp_id='$pcomp_id'");
+        $report_id=$this->db->insert_id();
+        $this->reportSave($report_id);
+        $this->query("COMMIT");
+        return true;
     }
     
-    private function reportFill(){
-	$this->reportPrepare();
-        $sql_clear="DROP TEMPORARY TABLE IF EXISTS plugin_rpt_market_result";#TEMPORARY
-        $sql_prepare="CREATE TEMPORARY TABLE plugin_rpt_market_result ( INDEX(product_code) ) ENGINE=MyISAM AS (
+    private function reportSave($report_id){
+        $sql_prepare="INSERT INTO plugin_market_rpt_entries (
 	    SELECT
-		*,
-		{$this->group_by} group_by,
+                $report_id AS report_id,
+                product_code,
+                article,
+                product_name,
+                analyse_type,
+                analyse_group,
+                store_code,
+                sold,
+                leftover,
+                '' group_by,
+                avg_price,
                 avg_price*sold sold_sum,
                 avg_price*leftover leftover_sum
             FROM
@@ -133,7 +149,6 @@ class Reports_market_analyse extends Catalog{
                 tmp_market_report_price USING(product_code)
             ORDER BY sold_sum<>0,sold_sum DESC,leftover_sum DESC
 	    )";
-        $this->query($sql_clear);
         $this->query($sql_prepare);        
     }
     

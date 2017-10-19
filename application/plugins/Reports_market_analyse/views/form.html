@@ -1,34 +1,41 @@
 <script>
-    function reports_market_analyse(){
+    function report_market_import(){
+        var report_market_frm_tpl='<input required="required" class="easyui-datebox" name="idate" title="Начальная дата">';
+        report_market_frm_tpl   +='<input required="required" class="easyui-datebox" name="fdate" title="Конечная дата">';
+        report_market_frm_tpl   +='<textarea title="Коментарий" name="comment" style="width:513px;"></textarea>';
         var config=[
             {name:'Артикул',field:'article', assigned: 'B'},
             {name:'Филиал',field:'affiliate', assigned: 'C'},
             {name:'Продано шт',field:'sold', assigned: 'D'},
             {name:'Остаток шт',field:'left', assigned: 'E'}	    
         ];
-        App.loadWindow('page/dialog/importer',{label:'маркет',fields_to_import:config}).progress(function(status,fvalue,Importer){
+        App.loadWindow('page/dialog/importer',{label:'маркет',fields_to_import:config,extra_html:report_market_frm_tpl}).progress(function(status,fvalue,Importer){
             if( status==='submit' ){
-                $("#report_form_wrapper form").submit();
+                if( !App.pcomp ){
+                    alert("Выберите клиента!");
+                    App.user.pcompSelectionDialog();
+                    return;
+                }
+                fvalue.pcomp_id=App.pcomp.company_id;
+                var msg="Загрузить отчет для '"+App.pcomp.label+"'?\n\n";
+                msg+="Начальная дата: "+fvalue.idate+"\n";
+                msg+="Конечная дата: "+fvalue.fdate+"\n";
+                if( confirm(msg) ){
+                    $.post('Reports_market_analyse/reportImport',fvalue,function(ok){
+                        if(ok*1){
+                            Importer.close();
+                        }
+                    });
+                }
             }
-        });
-    }
-    function report_market_import(){
-        App.loadWindow('Reports_market_analyse/views/uploader').progress(function(status,fvalue){
-            if( status==='submit' ){
-                $.post('Reports_market_analyse/reportImport',fvalue,function(ok){
-                    
-                });
-            }
-            console.log(status,fvalue);
         });
     }
 </script>
-
+<div id="report_market_rpt_sg"></div>
 <form>
     <div style="text-align: center">
-        <button type="button" onclick="report_market_import()"><img src="img/file_upload.png" style="width:24px;height: auto">  Загрузить файл</button>
+        <button type="button" onclick="report_market_import()"><img src="img/import.png" style="width:24px;height: auto">  Загрузить файл</button>
     </div>
-    
     <div class="inp_rule"></div>
     <div class="inp_group" style="width: 350px;">
 	<select name="group_by" title="Группировать по">
