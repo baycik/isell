@@ -28,9 +28,25 @@
 	    App.document.head.set(App.document.doc.head);
 	},
 	create: function () {
+	    $('#document_create_dialog .ui.form').form({
+		fields: {
+		  doc_type: 'empty',
+		  pcomp_id: 'empty'
+		}
+	    });
+	    $('#document_create_dialog .ui.form').form('set value', 'doc_type', 1);
+	    
+	    
+	    $('#document_create_dialog .ui.form').on('submit',function(){
+		var fvalue=$('#document_create_dialog.ui.form').form('get values');
+		console.log( fvalue );
+	    });
+	    
+	    
+	    
 	    $("#document_create_dialog").modal({
 		onApprove:function(){
-		    console.log('ok');
+		    return false;
 		}
 	    }).modal('show');
 	},
@@ -308,9 +324,6 @@
 		}
 	    }
 	},
-	save: function () {
-
-	},
 	suggestion: {
 	    q: '',
 	    entries: [],
@@ -582,31 +595,35 @@
     <div class="header">Создать документ</div>
     <div class="content">
         <div class="ui form">
-	    <div class="fields">
-		<div class="field">
-		    <label>Дата</label>
-		    <div class="ui selection dropdown">
+	    <div class="fields ">
+		<div class="eight wide field">
+		    <label>Тип документа</label>
+		    <div class="ui selection dropdown doc_type" name="doc_type">
 			<i class="dropdown icon"></i>
-			<span class="default text">Select Type</span>
+			<span class="default text">Выберите тип</span>
 			<div class="menu">
-			    <div class="item">
-				<i class="attention right floated icon"></i>
-				Important
+			    <div class="item" data-value="1">
+				<i class="green icon arrow left"></i>
+				Продажа клиенту
 			    </div>
-			    <div class="item">
-				<i class="comment right floated icon"></i>
-				Announcement
+			    <div class="item" data-value="-1">
+				<i class="purple icon arrow right"></i>
+				Возврат от клиента
 			    </div>
-			    <div class="item">
-				<i class="conversation right floated icon"></i>
-				Discussion
+			    <div class="item" data-value="2">
+				<i class="purple icon arrow right"></i>
+				Покупка у поставщика
+			    </div>
+			    <div class="item" data-value="-2">
+				<i class="green icon arrow left"></i>
+				Возврат поставщику
 			    </div>
 			</div>
 		    </div>
 		</div>
-		<div class="field">
+		<div class="eight wide field">
 		    <label>Клиент</label>
-		    <div class="ui search selection remote dropdown">
+		    <div class="ui search selection remote dropdown passivecomp">
 			<input name="passivecomp" type="hidden">
 			<i class="dropdown icon"></i>
 			<div class="default text"></div>
@@ -614,13 +631,13 @@
 		    </div>
 		</div>
 	    </div>
+	    <div class="actions">
+		<div class="ui button approve positive submit">Создать</div>
+		<div class="ui button cancel">Закрыть</div>
+	    </div>
 	</div>
     </div>
-    <div class="actions">
-	<div class="ui approve button">Approve</div>
-	<div class="ui button">Neutral</div>
-	<div class="ui cancel button">Cancel</div>
-    </div>
+
 </div>
 
 <div class="ui modal" id="document_entry_dialog">
