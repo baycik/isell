@@ -276,18 +276,21 @@ class Stock extends Catalog {
     }
     public $productDelete=['product_code'=>'raw'];
     public function productDelete($product_codes){
+        $this->Hub->set_level(2);
         $product_codes_in= "'".implode("','", array_map('addslashes',$product_codes))."'";
         $this->query("DELETE FROM stock_entries WHERE product_quantity=0 AND product_code IN ($product_codes_in)");
         return $this->db->affected_rows();
     }
     public $productMove=['parent_id'=>'int','product_code'=>'raw'];
     public function productMove($parent_id,$product_codes){
+        $this->Hub->set_level(2);
         $product_codes_in= "'".implode("','", array_map('addslashes',$product_codes))."'";
         $this->query("UPDATE stock_entries SET parent_id='$parent_id' WHERE product_code IN ($product_codes_in)");
         return $this->db->affected_rows();
     }
     public $movementsFetch=['int','int','string'];
     public function movementsFetch( $page=1, $rows=30, $having=null ){
+        $this->Hub->set_level(2);
 	$offset=($page-1)*$rows;
 	if( $offset<0 ){
 	    $offset=0;

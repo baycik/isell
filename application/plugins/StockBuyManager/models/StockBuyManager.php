@@ -9,7 +9,7 @@
  * Author URI: http://isellsoft.com
  */
 class StockBuyManager extends Catalog{
-    
+    public $min_level=2;
     public function install(){
 	$install_file=__DIR__."/install.sql";
 	$this->load->model('Maintain');
