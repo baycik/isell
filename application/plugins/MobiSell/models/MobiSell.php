@@ -71,6 +71,15 @@ class MobiSell extends Catalog{
 	    ];
     }
     
+    public $documentCreate=["doc_type"=>"int","pcomp_id"=>"int"];
+    public function documentCreate($doc_type,$pcomp_id){
+	$Company=$this->Hub->load_model("Company");
+	$Company->selectPassiveCompany($pcomp_id);
+	
+	$DocumentItems=$this->Hub->load_model("DocumentItems");
+	return $DocumentItems->createDocument($doc_type);
+    }
+    
     public $documentGet=["doc_id"=>"int"];
     public function documentGet($doc_id){
 	$DocumentItems=$this->Hub->load_model("DocumentItems");
