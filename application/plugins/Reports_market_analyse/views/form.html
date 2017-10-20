@@ -1,35 +1,41 @@
 <script>
-    function report_market_import(){
-        var report_market_frm_tpl='<input required="required" class="easyui-datebox" name="idate" title="Начальная дата">';
-        report_market_frm_tpl   +='<input required="required" class="easyui-datebox" name="fdate" title="Конечная дата">';
-        report_market_frm_tpl   +='<textarea title="Коментарий" name="comment" style="width:513px;"></textarea>';
-        var config=[
-            {name:'Артикул',field:'article', assigned: 'B'},
-            {name:'Филиал',field:'affiliate', assigned: 'C'},
-            {name:'Продано шт',field:'sold', assigned: 'D'},
-            {name:'Остаток шт',field:'left', assigned: 'E'}	    
-        ];
-        App.loadWindow('page/dialog/importer',{label:'маркет',fields_to_import:config,extra_html:report_market_frm_tpl}).progress(function(status,fvalue,Importer){
-            if( status==='submit' ){
-                if( !App.pcomp ){
-                    alert("Выберите клиента!");
-                    App.user.pcompSelectionDialog();
-                    return;
+    App.plugin_report_market={
+        report_market_import:function (){
+            var report_market_frm_tpl='<input required="required" class="easyui-datebox" name="idate" title="Начальная дата">';
+            report_market_frm_tpl   +='<input required="required" class="easyui-datebox" name="fdate" title="Конечная дата">';
+            report_market_frm_tpl   +='<textarea title="Коментарий" name="comment" style="width:513px;"></textarea>';
+            var config=[
+                {name:'Артикул',field:'article', assigned: 'B'},
+                {name:'Филиал',field:'affiliate', assigned: 'C'},
+                {name:'Продано шт',field:'sold', assigned: 'D'},
+                {name:'Остаток шт',field:'left', assigned: 'E'}	    
+            ];
+            App.loadWindow('page/dialog/importer',{label:'маркет',fields_to_import:config,extra_html:report_market_frm_tpl}).progress(function(status,fvalue,Importer){
+                if( status==='submit' ){
+                    if( !App.pcomp ){
+                        alert("Выберите клиента!");
+                        App.user.pcompSelectionDialog();
+                        return;
+                    }
+                    fvalue.pcomp_id=App.pcomp.company_id;
+                    var msg="Загрузить отчет для '"+App.pcomp.label+"'?\n\n";
+                    msg+="Начальная дата: "+fvalue.idate+"\n";
+                    msg+="Конечная дата: "+fvalue.fdate+"\n";
+                    if( confirm(msg) ){
+                        $.post('Reports_market_analyse/reportImport',fvalue,function(ok){
+                            if(ok*1){
+                                Importer.close();
+                            }
+                        });
+                    }
                 }
-                fvalue.pcomp_id=App.pcomp.company_id;
-                var msg="Загрузить отчет для '"+App.pcomp.label+"'?\n\n";
-                msg+="Начальная дата: "+fvalue.idate+"\n";
-                msg+="Конечная дата: "+fvalue.fdate+"\n";
-                if( confirm(msg) ){
-                    $.post('Reports_market_analyse/reportImport',fvalue,function(ok){
-                        if(ok*1){
-                            Importer.close();
-                        }
-                    });
-                }
-            }
-        });
-    }
+            });
+        }
+    };
+    
+    
+    
+    
     App.require([
         "js/slick/lib/jquery.event.drag-2.3.0.js",
         "js/slick/slick.core.js",
@@ -50,9 +56,9 @@
                 url: 'Reports_market_analyse/listFetch/'
             }
         };
-        var grid_sg=App.page_dialog_importer.grid_sg = new SlickInfinite("#report_market_rpt_sg", settings);
+        var grid_sg=App.plugin_report_market.grid_sg = new SlickInfinite("#report_market_rpt_sg", settings);
 
-        var importTableTools={
+        var tableTools={
             entryCreate: function () {
                 $.post('Importer/entryCreate',{label:App.page_dialog_importer.label},function(insert_id){
                     if( insert_id*1 ){
@@ -80,56 +86,26 @@
                     }
                 });
             },
-            entryDeleteAll:function(){
-                if( confirm("Удалить строчки с меткой '"+App.page_dialog_importer.label+"'?") ){
-                    App.post("Importer/deleteAll/",{label:App.page_dialog_importer.label},function(ok){
-                        if( ok*1 ){
-                            App.flash("Удалено строчки с меткой '"+App.page_dialog_importer.label+"'");
-                            grid_sg.reload();
-                        } else {
-                            App.flash("Не удалось удалить строки");
-                        }
-                    });
-                }
-            },
-            entryUpdate:function(row_id,field,value){
-                $.post('Importer/entryUpdate', {row_id: row_id, field: field, value: value}, function (ok) {
-                    if (ok<1) {
-                        grid_sg.reload();
-                    }
-                });
-            },
             reload:function(){
                 grid_sg.reload();
-            },
-            upload:function(){
-                $('#page_dialog_importer_file').click();
-            },
-            out:function( out_type ){
-                var params={
-                    label:App.page_dialog_importer.label,
-                    out_type:(out_type||'.xlsx')
-                };
-                var url='Importer/viewGet/?'+$.param( params );
-                if( out_type==='.print' ){
-                    window.open(url,'print_tab');
-                } else {
-                    location.href=url;
-                }
-            },
-            print:function(){
-                this.out('.print');
             }
         };
-        $(".x-importer-tools").click(function (e) {
+        $(".x-plugin-market-tools").click(function (e) {
             var action = $(e.target).data('action');
             if (action) {
-                importTableTools[action] && importTableTools[action]();
+                tableTools[action] && tableTools[action]();
             }
-        });        
+        });
+        return grid_sg;
     });
 </script>
+<div style="text-align: right;padding: 3px;clear: left;" class="x-plugin-market-tools">
+    <span class="icon-24 icon-create" title="Добавить" data-action="entryCreate"> </span>
+    <span class="icon-24 icon-delete" title="Удалить выбранные строчки" data-action="entryDelete"> </span>
+    <span class="icon-24 icon-refresh" title="Обновить" data-action="reload"> </span>
+</div>
 <div id="report_market_rpt_sg"></div>
+
 <form>
     <div style="text-align: center">
         <button type="button" onclick="report_market_import()"><img src="img/import.png" style="width:24px;height: auto">  Загрузить файл</button>
