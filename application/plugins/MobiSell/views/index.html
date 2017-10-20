@@ -31,8 +31,10 @@
 		    },
 		    load: function (url) {
 			var url_chunks = url.split("#");
-			$("#main_container").load(url_chunks[0]);
-			App.parseState(url_chunks[1]);
+			App.url_file=url_chunks[0];
+			App.url_query=url_chunks[1];
+			App.parseState(App.url_query);
+			$("#main_container").load(App.url_file);
 			$(".ui.sidebar").sidebar('hide');
 		    }
 		},

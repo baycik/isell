@@ -28,27 +28,39 @@
 	    App.document.head.set(App.document.doc.head);
 	},
 	create: function () {
+	    $('.pcomp_id').dropdown({
+		apiSettings: {
+		    url: 'compListFetch/'
+		},
+		fields: {
+		    value: 'company_id',
+		    name: 'label',
+		    text: 'label'
+		},
+		filterRemoteData: true,
+		fullTextSearch: true
+	    });
 	    $('#document_create_dialog .ui.form').form({
 		fields: {
 		  doc_type: 'empty',
 		  pcomp_id: 'empty'
+		},
+		onSuccess:function(){
+		    var fvalue=$('#document_create_dialog .ui.form').form('get values');
+		    $.post("documentCreate/",fvalue,function(resp){
+			var new_doc_id=resp*1;
+			if( new_doc_id ){
+			    location.hash="#"+App.url_file+"#doc_id="+new_doc_id;
+			}
+		    });
+		    $("#document_create_dialog").modal('hide');
 		}
-	    });
-	    $('#document_create_dialog .ui.form').form('set value', 'doc_type', 1);
-	    
-	    
-	    $('#document_create_dialog .ui.form').on('submit',function(){
-		var fvalue=$('#document_create_dialog.ui.form').form('get values');
-		console.log( fvalue );
-	    });
-	    
-	    
-	    
-	    $("#document_create_dialog").modal({
+	    }).form('set value', 'doc_type', 1);
+	    $("#document_create_dialog").modal('show').modal({
 		onApprove:function(){
 		    return false;
 		}
-	    }).modal('show');
+	    });
 	},
 	initTab: function () {
 	    $('.menu .item').tab({
@@ -435,7 +447,7 @@
     <a class="item" data-tab="prefs">Настройки</a>
 </div>
 <div class="ui bottom attached  tab segment" data-tab="entries" id="document_entries">
-    <table class="ui green selectable  table  stackable">
+    <table class="ui gray selectable  table  stackable">
 	<thead>
 	    <tr>
 		<th>
@@ -478,11 +490,11 @@
 	    <tr>
 		<td>
 		    <div class="ui grid">
-			<div class="eight wide column">{{footer.total_weight}}кг </div>
-			<div class="eight wide column">{{footer.total_volume}}м<sup>3</sup></div>
+			<div class="eight wide column">{{footer.total_weight|blank>0}}кг </div>
+			<div class="eight wide column">{{footer.total_volume|blank>0}}м<sup>3</sup></div>
 		    </div>
 		</td>
-		<td style="text-align: right;">{{footer.total}}{{footer.curr_symbol}}</td>
+		<td style="text-align: right;">{{footer.total|blank>0}}{{footer.curr_symbol}}</td>
 	    </tr>
 	</tfoot>
     </table>
@@ -598,9 +610,10 @@
 	    <div class="fields ">
 		<div class="eight wide field">
 		    <label>Тип документа</label>
-		    <div class="ui selection dropdown doc_type" name="doc_type">
+		    <div class="ui selection dropdown">
+			<input name="doc_type" type="hidden">
 			<i class="dropdown icon"></i>
-			<span class="default text">Выберите тип</span>
+			<span class="default text">Выбрать тип</span>
 			<div class="menu">
 			    <div class="item" data-value="1">
 				<i class="green icon arrow left"></i>
@@ -623,16 +636,16 @@
 		</div>
 		<div class="eight wide field">
 		    <label>Клиент</label>
-		    <div class="ui search selection remote dropdown passivecomp">
-			<input name="passivecomp" type="hidden">
+		    <div class="ui search selection remote dropdown pcomp_id">
+			<input name="pcomp_id" type="hidden">
 			<i class="dropdown icon"></i>
-			<div class="default text"></div>
+			<div class="default text">Выбрать клиента</div>
 			<div class="menu"></div>
 		    </div>
 		</div>
 	    </div>
 	    <div class="actions">
-		<div class="ui button approve positive submit">Создать</div>
+		<div class="ui button positive submit">Создать</div>
 		<div class="ui button cancel">Закрыть</div>
 	    </div>
 	</div>
