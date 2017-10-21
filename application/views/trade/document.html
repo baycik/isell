@@ -530,7 +530,7 @@
 	    }
 	},
 	formatter:function(row){
-	    return '<div style="width:24px;height:24px;display:inline-block"><img src="Storage/image_flush/?size=24x24&path=/dynImg/'+row['product_img']+'"></div> <b>'+row['product_code']+'</b> '+row['label']+' <b>[x'+row['product_spack']+']'+' <font color=green>'+row['product_quantity']+'</font></b>';
+	    return '<div style="width:24px;height:24px;display:inline-block"><img src="Storage/image_flush/?size=24x24&path=/dynImg/'+row['product_img']+'"></div> <b>'+row['product_code']+'</b> <font color='+(row['leftover']>0?'black':'red')+'>'+row['product_name']+'</font> <b>'+row['product_price_total']+'</b> <font color=green>'+row['leftover']+row['product_unit']+'</font>';
 	},
 	findSPack:function( code ){
 	    for( var i in Doc.suggest.rows ){
@@ -800,7 +800,7 @@
 			   mode: 'remote',
 			   method:'get',
 			   hasDownArrow:false,
-			   panelWidth:400,
+			   panelWidth:550,
 			   panelMinWidth:400,
 			   prompt:'код, название или штрихкод',
 			   onSelect: Doc.suggest.select

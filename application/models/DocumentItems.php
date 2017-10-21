@@ -1,38 +1,49 @@
 <?php
 require_once 'DocumentCore.php';
 class DocumentItems extends DocumentCore{
-    public $suggestFetch=['q'=>'string'];
-    public function suggestFetch($q){
-	$clues=  explode(' ', $q);
-	$company_lang = $this->Hub->pcomp('language');
-	$where=array();
-	foreach ($clues as $clue) {
-            if ($clue == ''){
-                continue;
+    public $suggestFetch=['q'=>'string','offset'=>['int',0],'doc_id'=>['int',0]];
+    public function suggestFetch($q,$offset,$doc_id){
+	$price_query="0";
+	if( $doc_id || $this->doc('doc_id') ){
+	    $pcomp_id=$this->doc('passive_company_id');
+	    $doc_ratio=$this->doc('doc_ratio');
+	    $price_query="GET_PRICE(product_code,{$pcomp_id},{$doc_ratio})";
+	} else if( $this->Hub->pcomp('company_id') ){
+	    $pcomp_id=$this->Hub->pcomp('company_id');
+	    $doc_ratio=$this->Hub->pref('usd_ratio');
+	    $price_query="GET_PRICE(product_code,{$pcomp_id},{$doc_ratio})";
+	}
+	$where="1";
+	if( $q ){
+	    $cases=[];
+	    $clues=  explode(' ', $q);
+	    foreach ($clues as $clue) {
+		if ($clue == ''){
+		    continue;
+		}
+		$cases[]="(product_code LIKE '%$clue%' OR ru LIKE '%$clue%')";
 	    }
-            $where[]="(product_code LIKE '%$clue%' OR $company_lang LIKE '%$clue%')";
-        }
-	if( $this->isServiceDoc() ){
-	    $where[]='is_service=1';
+	    $where=implode(' AND ',$cases);
 	}
 	$sql="
 	    SELECT
 		product_code,
-		$company_lang label,
+		ru product_name,
 		product_spack,
-		product_quantity,
-                product_img
+		product_quantity leftover,
+                product_img,
+		product_unit,
+		$price_query product_price_total
 	    FROM
 		stock_entries
 		    JOIN
 		prod_list USING(product_code)
-	    WHERE
-		".( implode(' AND ',$where) )."
-		    ORDER BY fetch_count-DATEDIFF(NOW(),fetch_stamp) DESC, product_code
-	    LIMIT 15
-	    ";
-	return $this->get_list($sql);
+	    WHERE $where
+	    ORDER BY fetch_count-DATEDIFF(NOW(),fetch_stamp) DESC, product_code
+	    LIMIT 10 OFFSET $offset";
+	return $this->get_list($sql);	
     }
+
     protected function footerGet(){
         $this->entriesTmpCreate();
         $sql="SELECT
