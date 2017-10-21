@@ -9,9 +9,11 @@
 	},
 	load: function (doc_id) {
 	    if (!doc_id) {
+		$("#document").hide();
 		App.document.create();
 		return false;
 	    }
+	    $("#document").show();
 	    App.flash('Документ: загрузка...');
 	    $.post("documentGet/", {doc_id: doc_id}, function (resp) {
 		App.document.set(App.json(resp));
@@ -21,13 +23,17 @@
 	set: function (doc) {
 	    App.document.doc = doc;
 	    App.document.render();
+	    localStorage.setItem('acomp_id',doc.head.active_company_id);
+	    localStorage.setItem('acomp_label',doc.head.active_company_label);
+	    localStorage.setItem('pcomp_id',doc.head.passive_company_id);
+	    localStorage.setItem('pcomp_label',doc.head.label);
 	},
 	render: function () {
 	    App.document.row.parseStatus();
 	    App.renderTpl('document_entries', App.document.doc);
 	    App.document.head.set(App.document.doc.head);
 	},
-	create: function () {
+	createModalInit:function(){
 	    $('.pcomp_id').dropdown({
 		apiSettings: {
 		    url: 'compListFetch/'
@@ -40,13 +46,26 @@
 		filterRemoteData: true,
 		fullTextSearch: true
 	    });
-	    $('#document_create_dialog .ui.form').form({
+	    $('.acomp_id').dropdown({
+		apiSettings: {
+		    url: 'compListFetch/?mode=active_only'
+		},
+		fields: {
+		    value: 'company_id',
+		    name: 'label',
+		    text: 'label'
+		},
+		filterRemoteData: true,
+		fullTextSearch: true
+	    });
+	    $('#document_create_dialog_frm').form({
 		fields: {
 		  doc_type: 'empty',
+		  acomp_id: 'empty',
 		  pcomp_id: 'empty'
 		},
 		onSuccess:function(){
-		    var fvalue=$('#document_create_dialog .ui.form').form('get values');
+		    var fvalue=$('#document_create_dialog_frm').form('get values');
 		    $.post("documentCreate/",fvalue,function(resp){
 			var new_doc_id=resp*1;
 			if( new_doc_id ){
@@ -55,12 +74,24 @@
 		    });
 		    $("#document_create_dialog").modal('hide');
 		}
-	    }).form('set value', 'doc_type', 1);
-	    $("#document_create_dialog").modal('show').modal({
+	    });
+	    $("#document_create_dialog").modal({
 		onApprove:function(){
 		    return false;
 		}
 	    });
+	},
+	create: function () {
+	    App.document.createModalInit();
+	    $('.pcomp_id')
+		    .dropdown("set text",localStorage.getItem('pcomp_label'))
+		    .dropdown('set value',localStorage.getItem('pcomp_id'));
+	    $('.acomp_id')
+		    .dropdown("set text",localStorage.getItem('acomp_label'))
+		    .dropdown('set value',localStorage.getItem('acomp_id'));
+	    $(".doc_type")
+		    .dropdown("set selected",1);
+	    $("#document_create_dialog").modal('show');
 	},
 	initTab: function () {
 	    $('.menu .item').tab({
@@ -396,7 +427,7 @@
     };
     $(App.document.init);
 </script>
-
+<div id="document">
 <style>
     #document_entries .four.wide.column{
 	text-align: right;
@@ -410,7 +441,6 @@
 	background-color: #fdd;
     }
 </style>
-
 <div id="document_header_segment" class="ui message">
     <div id="document_header" class="ui attached segment covert">
 	<div class="header">
@@ -439,8 +469,6 @@
     </form>
 
 </div>
-
-
 <div class="ui top attached tabular menu">
     <a class=" item" data-tab="entries">Накладная</a>
     <a class="active item" data-tab="discounts">Скидки</a>
@@ -560,7 +588,6 @@
 	</tbody>
     </table>    
 </div>
-
 <div class="ui inverted segment">
     <div class="ui inverted fluid accordion" id="doc_suggestion"> 
 	<div class="title"><i class="add icon"></i>Добавить товар</div>
@@ -602,15 +629,16 @@
 	</div>
     </div>
 </div>
+</div>
 
 <div class="ui modal"  id="document_create_dialog">
     <div class="header">Создать документ</div>
     <div class="content">
-        <div class="ui form">
+        <div class="ui form" id="document_create_dialog_frm">
 	    <div class="fields ">
-		<div class="eight wide field">
+		<div class="six wide field">
 		    <label>Тип документа</label>
-		    <div class="ui selection dropdown">
+		    <div class="ui selection dropdown doc_type">
 			<input name="doc_type" type="hidden">
 			<i class="dropdown icon"></i>
 			<span class="default text">Выбрать тип</span>
@@ -634,12 +662,21 @@
 			</div>
 		    </div>
 		</div>
-		<div class="eight wide field">
+		<div class="five wide field">
 		    <label>Клиент</label>
 		    <div class="ui search selection remote dropdown pcomp_id">
 			<input name="pcomp_id" type="hidden">
 			<i class="dropdown icon"></i>
 			<div class="default text">Выбрать клиента</div>
+			<div class="menu"></div>
+		    </div>
+		</div>
+		<div class="five wide field">
+		    <label>Наша фирма</label>
+		    <div class="ui search selection remote dropdown acomp_id">
+			<input name="acomp_id" type="hidden">
+			<i class="dropdown icon"></i>
+			<div class="default text">Выбрать нашу фирму</div>
 			<div class="menu"></div>
 		    </div>
 		</div>

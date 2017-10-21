@@ -1,0 +1,40 @@
+{
+    "name": "Mobile iSell",
+    "icons": [
+	{
+	    "src": "img/36logo.png",
+	    "sizes": "36x36",
+	    "type": "image/png"
+	},
+	{
+	    "src": "img/48logo.png",
+	    "sizes": "48x48",
+	    "type": "image/png"
+	},
+	{
+	    "src": "img/72logo.png",
+	    "sizes": "72x72",
+	    "type": "image/png"
+	},
+	{
+	    "src": "img/96logo.png",
+	    "sizes": "96x96",
+	    "type": "image/png"
+	},
+	{
+	    "src": "img/144logo.png",
+	    "sizes": "144x144",
+	    "type": "image/png"
+	},
+	{
+	    "src": "img/192logo.png",
+	    "sizes": "192x192",
+	    "type": "image/png"
+	}
+    ],
+    "theme_color": "#00A3D8",
+    "background_color": "#fff",
+    "start_url": "index.html",
+    "display": "standalone",
+    "orientation": "portrait"
+}
