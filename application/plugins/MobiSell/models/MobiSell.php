@@ -31,6 +31,8 @@ class MobiSell extends Catalog{
     
     public $doclistGet=['type'=>'string','date'=>'([0-9\-]+)','offset'=>['int',0],'limit'=>['int',10], 'compFilter'=>'string'];
     public function doclistGet($type,$date,$offset,$limit,$compFilter){
+	$assigned_path=$this->Hub->svar('user_assigned_path');
+	$level=$this->Hub->svar('user_level');
 	$doc_type=($type=='sell'?1:2);
 	$sql="SELECT
 		doc_id,
@@ -57,6 +59,8 @@ class MobiSell extends Catalog{
 		cstamp LIKE '$date%'
 		AND doc_type='$doc_type'
 		AND label LIKE '%$compFilter%'
+		AND path LIKE '$assigned_path%'
+		AND level<=$level
 	    ORDER BY doc_type
 	    LIMIT $limit OFFSET $offset
 	    ";
@@ -120,40 +124,6 @@ class MobiSell extends Catalog{
 	$DocumentItems=$this->Hub->load_model("DocumentItems");
 	$DocumentItems->entryDeleteArray($doc_id,[[$doc_entry_id]]);
 	return $this->documentGet($doc_id);
-    }
-    
-    public $documentSuggest=['q'=>'string','offset'=>['int',0],'doc_id'=>['int',0]];
-    public function documentSuggest($q,$offset,$doc_id){
-	$clues=  explode(' ', $q);
-	
-	$DocumentCore=$this->Hub->load_model("DocumentCore");
-	$head=$DocumentCore->headGet( $doc_id );
-	$where=[1];
-	foreach ($clues as $clue) {
-            if ($clue == ''){
-                continue;
-	    }
-            $where[]="(product_code LIKE '%$clue%' OR ru LIKE '%$clue%')";
-        }
-	$sql="
-	    SELECT
-		product_code,
-		ru product_name,
-		product_spack,
-		product_quantity leftover,
-                product_img,
-		product_unit,
-		GET_PRICE(product_code,{$head->passive_company_id},{$head->doc_ratio}) product_price_total
-	    FROM
-		stock_entries
-		    JOIN
-		prod_list USING(product_code)
-	    WHERE
-		".( implode(' AND ',$where) )."
-		    ORDER BY fetch_count-DATEDIFF(NOW(),fetch_stamp) DESC, product_code
-	    LIMIT 10 OFFSET $offset
-	    ";
-	return $this->get_list($sql);	
     }
     
     public $documentDiscountsGet=['passive_company_id'=>['int',0]];
