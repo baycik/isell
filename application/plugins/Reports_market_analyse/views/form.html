@@ -1,6 +1,62 @@
 <script>
     App.plugin_report_market={
-        report_market_import:function (){
+	init:function(){
+	    this.listInit();
+	},
+	listInit:function(){
+	    var settings = {
+		columns: [],
+		options: {
+		    editable: true,
+		    autoedit: false,
+		    enableCellNavigation: false,
+		    enableColumnReorder: false,
+		    enableFilter: false,
+		    multiSelect: false,
+		    url: 'Reports_market_analyse/listFetch/'
+		}
+	    };
+	    var grid_sg= new SlickInfinite("#report_market_rpt_sg", settings);
+/*	    var tableTools={
+		entryCreate: function () {
+		    $.post('Importer/entryCreate',{label:App.page_dialog_importer.label},function(insert_id){
+			if( insert_id*1 ){
+			    grid_sg.setFilter({A:insert_id});
+			}
+		    });
+		},
+		entryDelete:function(){
+		    var selected_rows = grid_sg.getSelectedRows();
+		    if (!selected_rows.length) {
+			App.flash("Ни одна строка не выбрана!");
+			return;
+		    }
+		    if (!confirm("Удалить выделенные строчки?")) {
+			return;
+		    }
+
+		    var import_ids=[];
+		    for(var i in selected_rows){
+			import_ids.push(grid_sg.getDataItem(selected_rows[i]).row_id);
+		    }
+		    $.post('Importer/entryDelete', {import_ids: import_ids}, function (ok) {
+			if (ok * 1) {
+			    grid_sg.reload();
+			}
+		    });
+		},
+		reload:function(){
+		    grid_sg.reload();
+		}
+	    };
+	    $(".x-plugin-market-tools").click(function (e) {
+		var action = $(e.target).data('action');
+		if (action) {
+		    tableTools[action] && tableTools[action]();
+		}
+	    });*/
+	},
+        import:function (){
             var report_market_frm_tpl='<input required="required" class="easyui-datebox" name="idate" title="Начальная дата">';
             report_market_frm_tpl   +='<input required="required" class="easyui-datebox" name="fdate" title="Конечная дата">';
             report_market_frm_tpl   +='<textarea title="Коментарий" name="comment" style="width:513px;"></textarea>';
@@ -33,71 +89,20 @@
         }
     };
     
-    
-    
-    
-    App.require([
-        "js/slick/lib/jquery.event.drag-2.3.0.js",
-        "js/slick/slick.core.js",
-        "js/slick/slick.grid.js",
-        "js/slick/plugins/slick.rowselectionmodel.js",
-        "js/slick/slick.editors.js",
-        "js/slick/slickinfinite.js"
-    ], function(){
-        var settings = {
-            columns: [],
-            options: {
-                editable: true,
-                autoedit: false,
-                enableCellNavigation: false,
-                enableColumnReorder: false,
-                enableFilter: false,
-                multiSelect: false,
-                url: 'Reports_market_analyse/listFetch/'
-            }
-        };
-        var grid_sg=App.plugin_report_market.grid_sg = new SlickInfinite("#report_market_rpt_sg", settings);
-
-        var tableTools={
-            entryCreate: function () {
-                $.post('Importer/entryCreate',{label:App.page_dialog_importer.label},function(insert_id){
-                    if( insert_id*1 ){
-                        grid_sg.setFilter({A:insert_id});
-                    }
-                });
-            },
-            entryDelete:function(){
-                var selected_rows = grid_sg.getSelectedRows();
-                if (!selected_rows.length) {
-                    App.flash("Ни одна строка не выбрана!");
-                    return;
-                }
-                if (!confirm("Удалить выделенные строчки?")) {
-                    return;
-                }
-
-                var import_ids=[];
-                for(var i in selected_rows){
-                    import_ids.push(grid_sg.getDataItem(selected_rows[i]).row_id);
-                }
-                $.post('Importer/entryDelete', {import_ids: import_ids}, function (ok) {
-                    if (ok * 1) {
-                        grid_sg.reload();
-                    }
-                });
-            },
-            reload:function(){
-                grid_sg.reload();
-            }
-        };
-        $(".x-plugin-market-tools").click(function (e) {
-            var action = $(e.target).data('action');
-            if (action) {
-                tableTools[action] && tableTools[action]();
-            }
-        });
-        return grid_sg;
-    });
+    App.require(["js/slick/lib/jquery.event.drag-2.3.0.js"],function(){
+	App.require([
+	    "js/slick/slick.core.js",
+	    "js/slick/plugins/slick.rowselectionmodel.js",
+	    "js/slick/slick.editors.js",
+	    "js/slick/slickinfinite.js",
+	    "js/slick/slick.grid.js"
+	], function(){
+	    setTimeout(function(){
+		App.plugin_report_market.listInit();
+	    },1000);
+	    //App.plugin_report_market.listInit();
+	});
+    })
 </script>
 <div style="text-align: right;padding: 3px;clear: left;" class="x-plugin-market-tools">
     <span class="icon-24 icon-create" title="Добавить" data-action="entryCreate"> </span>

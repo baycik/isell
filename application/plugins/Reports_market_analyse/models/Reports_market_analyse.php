@@ -194,4 +194,10 @@ class Reports_market_analyse extends Catalog{
 	}
 	return $sum;
     }
+    
+    
+    public $listFetch=[];
+    public function listFetch(){
+	return [];
+    }
 }
