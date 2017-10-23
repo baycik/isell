@@ -83,7 +83,7 @@
 	initPicker: function () {
 	    var $input = $('.datepicker').pickadate();
 	    App.document_list.picker = $input.pickadate('picker');
-	    App.document_list.picker.set('select', new Date('2017-08-02'));
+	    App.document_list.picker.set('select', new Date());
 	    App.document_list.picker.on({
 		set: function () {
 		    App.document_list.reload();
