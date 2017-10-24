@@ -125,8 +125,13 @@ class Reports_market_analyse extends Catalog{
         $report_id=$this->reportCreate($idate,$fdate,$comment,$pcomp_id,$pcomp_label);
         $this->reportSave($report_id);
         $this->reportFillSummaries($report_id);
+        $this->importerClear($label);
         $this->query("COMMIT");
-        return false;
+        return true;
+    }
+    
+    private function importerClear($label){
+        $this->query("DELETE FROM imported_data WHERE label='$label'");
     }
     
     private function reportCreate($idate,$fdate,$comment,$pcomp_id,$pcomp_label){

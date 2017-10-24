@@ -22,7 +22,7 @@
 		    url: 'Reports_market_analyse/listFetch/'
 		}
 	    };
-	    var grid_sg= new SlickInfinite("#report_market_rpt_sg", settings);
+	    var grid_sg=App.plugin_report_market.grid_sg= new SlickInfinite("#report_market_rpt_sg", settings);
             grid_sg.onSelectedRowsChanged.subscribe(function(e,selection){
                 var selectedRow=selection.grid.getDataItem(selection.rows[0]);
                 $("#plugin_report_market_repid").val(selectedRow.report_id);
@@ -82,6 +82,7 @@
                     if( confirm(msg) ){
                         $.post('Reports_market_analyse/reportImport',fvalue,function(ok){
                             if(ok*1){
+                                App.plugin_report_market.grid_sg.reload();
                                 Importer.close();
                             }
                         });
