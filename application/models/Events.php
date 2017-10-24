@@ -18,7 +18,7 @@ class Events extends Catalog{
 		event_list 
 	    WHERE 
 		event_label<>'chat' 
-		AND ( NOT event_is_private OR event_is_private AND (event_user_id='$user_id' OR $user_level>=3) )
+		AND ( NOT event_is_private OR event_is_private AND (event_creator_user_id='$user_id' OR $user_level>=3) )
 	    ORDER BY event_date DESC";
 	return $this->get_list($sql);
     }
@@ -87,7 +87,7 @@ class Events extends Catalog{
 	    'event_descr'=>$this->request('event_descr','raw'),
 	    'event_repeat'=>$this->request('event_repeat'),
 	    'event_status'=>$this->request('event_status'),
-	    'event_user_liable'=>$this->request('event_user_liable'),
+	    'event_liable_user_id'=>$this->request('event_liable_user_id'),
 	    'event_is_private'=>$this->request('event_is_private'),
 	    'modified_by'=>$this->Hub->svar('user_id')
 	];

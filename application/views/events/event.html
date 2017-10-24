@@ -38,7 +38,7 @@
 	    App.get("Pref/getStaffList",function(resp){
 		var staff=App.json(resp);
 		App.renderTpl('page_events_event_frm_liable',{staff_list:staff});
-		$("select[name=event_user_liable]").val(App.page_events_event.data.event_user_liable);
+		$("select[name=event_liable_user_id]").val(App.page_events_event.data.event_liable_user_id);
 	    });
 	},
         saveEvent: function (fvalue) {
@@ -75,7 +75,7 @@
     };
 </script>
 <form id="page_events_event_frm" onsubmit="return false;" style="-moz-user-select:none;">
-    <input type="hidden" name="event_user_id"/>
+    <input type="hidden" name="event_creator_user_id"/>
     <input type="hidden" name="event_id"/>
     <img src="img/event.png" style="float:left;margin: 5px;" />
     <div style="display: inline-block;width: 320px;">
@@ -102,7 +102,7 @@
 	    <option value="undone" style="color: red">Не выполнено</option>
 	    <option value="done" style="color: green">Выполнено</option>
 	</select>
-	<select name="event_user_liable" id="page_events_event_frm_liable" title="Закреплено за">
+	<select name="event_liable_user_id" id="page_events_event_frm_liable" title="Закреплено за">
 	    {{staff_list}}
 	    <option value="{{user_id}}">{{full_name}}</option>
 	    {{/staff_list}}

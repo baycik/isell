@@ -14,7 +14,7 @@ EventsJs={
 	});
     },
     show_dialog:function(fvalue){
-	fvalue.event_user_id = App.user.props.user_id;
+	fvalue.event_creator_user_id = App.user.props.user_id;
 	fvalue.event_date=App.toDmy(EventsJs.selectedDay);
 	App.loadWindow('page/events/event', fvalue).progress(function (status, fvalue) {
 	    if (status === 'update' || status === 'create' || status === 'delete') {

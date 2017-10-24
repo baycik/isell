@@ -13,7 +13,7 @@ class Lists extends Data {
 
     public function addEvent() {
 	$user_id = $this->Base->svar('user_id');
-	$this->Base->query("INSERT INTO " . BAY_DB_MAIN . ".event_list SET event_date=NOW(),event_user_id=$user_id");
+	$this->Base->query("INSERT INTO " . BAY_DB_MAIN . ".event_list SET event_date=NOW(),event_creator_user_id=$user_id");
 	return mysqli_insert_id($this->Base->db_link);
     }
     public function deleteEvent( $delIds ){
@@ -23,13 +23,13 @@ class Lists extends Data {
     public function getEventLabels($selected_day) {
 	$user_id = $this->Base->svar('user_id');
 	$user_level = $this->Base->svar('user_level');
-	return $this->Base->get_list("SELECT event_label,COUNT(event_label) AS count FROM " . BAY_DB_MAIN . ".event_list WHERE event_status<1 AND DATE(event_date)='$selected_day' AND IF(event_is_private,IF(event_user_id='$user_id' OR $user_level=3,1,0),1) GROUP BY event_label");
+	return $this->Base->get_list("SELECT event_label,COUNT(event_label) AS count FROM " . BAY_DB_MAIN . ".event_list WHERE event_status<1 AND DATE(event_date)='$selected_day' AND IF(event_is_private,IF(event_creator_user_id='$user_id' OR $user_level=3,1,0),1) GROUP BY event_label");
     }
 
     public function getEventDates() {//must be optimized
 	$user_id = $this->Base->svar('user_id');
 	$user_level = $this->Base->svar('user_level');
-	return $this->Base->get_list("SELECT DATE_FORMAT(event_date,'%Y-%m-%d') AS event_date FROM " . BAY_DB_MAIN . ".event_list WHERE event_status<1 AND IF(event_is_private,IF(event_user_id='$user_id' OR $user_level=3,1,0),1) GROUP BY event_date");
+	return $this->Base->get_list("SELECT DATE_FORMAT(event_date,'%Y-%m-%d') AS event_date FROM " . BAY_DB_MAIN . ".event_list WHERE event_status<1 AND IF(event_is_private,IF(event_creator_user_id='$user_id' OR $user_level=3,1,0),1) GROUP BY event_date");
     }
 
     public function eventListData($selected_label, $selected_date, $table_query) {
@@ -48,7 +48,7 @@ class Lists extends Data {
 	$select[] = "event_descr";
 	$select[] = "IF(event_status=0,'time Не выполнено','ok Выполнено') AS event_status";
 	$select = implode(',', $select);
-	$where = "event_status<1 AND DATE(event_date)='$selected_date' AND event_label='$selected_label' AND IF(event_is_private,IF(event_user_id='$user_id' OR $user_level>3,1,0),1)";
+	$where = "event_status<1 AND DATE(event_date)='$selected_date' AND event_label='$selected_label' AND IF(event_is_private,IF(event_creator_user_id='$user_id' OR $user_level>3,1,0),1)";
 	$order = 'ORDER BY event_date DESC';
 	return $this->getGridData(BAY_DB_MAIN.'.event_list', $table_query, $select, $where, $order);
     }
