@@ -32,8 +32,6 @@ class StockBuyManager extends Catalog{
 	    $sortby="product_code IS NULL,product_code";
 	    //$sortdir="DESC";
 	}
-	$where='1';
-	
 	$having=$this->makeFilter($filter);
 	$sql="
 	    SELECT 

@@ -5,11 +5,17 @@
 	},
 	listInit:function(){
 	    var settings = {
-		columns: [],
+		columns: [
+                    {id:'idate',field:'idate',name:'Начало'},
+                    {id:'fdate',field:'fdate',name:'Конец'},
+                    {id:'pcomp_label',field:'pcomp_label',name:'Клиент',width:150},
+                    {id:'sold_sum',field:'sold_sum',name:'Продано'},
+                    {id:'leftover_sum',field:'leftover_sum',name:'Остаток'},
+                    {id:'comment',field:'comment',name:'Коментарий',width:320}
+                ],
 		options: {
-		    editable: true,
 		    autoedit: false,
-		    enableCellNavigation: false,
+		    enableCellNavigation: true,
 		    enableColumnReorder: false,
 		    enableFilter: false,
 		    multiSelect: false,
@@ -17,13 +23,13 @@
 		}
 	    };
 	    var grid_sg= new SlickInfinite("#report_market_rpt_sg", settings);
-/*	    var tableTools={
+            grid_sg.onSelectedRowsChanged.subscribe(function(e,selection){
+                var selectedRow=selection.grid.getDataItem(selection.rows[0]);
+                $("#plugin_report_market_repid").val(selectedRow.report_id);
+            });
+            var tableTools={
 		entryCreate: function () {
-		    $.post('Importer/entryCreate',{label:App.page_dialog_importer.label},function(insert_id){
-			if( insert_id*1 ){
-			    grid_sg.setFilter({A:insert_id});
-			}
-		    });
+		    App.plugin_report_market.import();
 		},
 		entryDelete:function(){
 		    var selected_rows = grid_sg.getSelectedRows();
@@ -34,12 +40,8 @@
 		    if (!confirm("Удалить выделенные строчки?")) {
 			return;
 		    }
-
-		    var import_ids=[];
-		    for(var i in selected_rows){
-			import_ids.push(grid_sg.getDataItem(selected_rows[i]).row_id);
-		    }
-		    $.post('Importer/entryDelete', {import_ids: import_ids}, function (ok) {
+                    var report_id=grid_sg.getDataItem(selected_rows[0]).report_id;
+		    $.post('Reports_market_analyse/reportDelete', {report_id:report_id}, function (ok) {
 			if (ok * 1) {
 			    grid_sg.reload();
 			}
@@ -54,7 +56,7 @@
 		if (action) {
 		    tableTools[action] && tableTools[action]();
 		}
-	    });*/
+	    });
 	},
         import:function (){
             var report_market_frm_tpl='<input required="required" class="easyui-datebox" name="idate" title="Начальная дата">';
@@ -99,24 +101,25 @@
 	], function(){
 	    setTimeout(function(){
 		App.plugin_report_market.listInit();
-	    },1000);
+	    },0);
 	    //App.plugin_report_market.listInit();
 	});
     })
 </script>
-<div style="text-align: right;padding: 3px;clear: left;" class="x-plugin-market-tools">
-    <span class="icon-24 icon-create" title="Добавить" data-action="entryCreate"> </span>
-    <span class="icon-24 icon-delete" title="Удалить выбранные строчки" data-action="entryDelete"> </span>
-    <span class="icon-24 icon-refresh" title="Обновить" data-action="reload"> </span>
-</div>
-<div id="report_market_rpt_sg"></div>
-
-<form>
-    <div style="text-align: center">
-        <button type="button" onclick="report_market_import()"><img src="img/import.png" style="width:24px;height: auto">  Загрузить файл</button>
+<div style="width:800px;display: inline-block">
+    <div style="text-align: right;padding: 3px;clear: left;" class="x-plugin-market-tools">
+        <span class="icon-24 icon-create" title="Добавить" data-action="entryCreate"> </span>
+        <span class="icon-24 icon-delete" title="Удалить выбранные строчки" data-action="entryDelete"> </span>
+        <span class="icon-24 icon-refresh" title="Обновить" data-action="reload"> </span>
     </div>
+    <div id="report_market_rpt_sg" style="height:100px;"></div>
+    <div style="text-align: center">
+        <button type="button" onclick="App.plugin_report_market.import()"><img src="img/import.png" style="width:24px;height: auto">  Загрузить файл</button>
+    </div>
+</div>
+<form>
     <div class="inp_rule"></div>
-    <div class="inp_group" style="width: 350px;">
+    <input type="hidden" name="report_id" id="plugin_report_market_repid">
 	<select name="group_by" title="Группировать по">
 	    <option value="store_code">Филиал</option>
 	    <option value="analyse_type">Тип</option>
@@ -126,5 +129,7 @@
 	    <option value="analyse_section">Артикул</option>
 	</select>
 	<input name="group_by_filter" title="Фильтр группы">
-    </div>
+        <div style="text-align: center">
+            <button><img src="img/report24.png" style="width:24px;height: auto"> Сформировать</button>
+        </div>
 </form>

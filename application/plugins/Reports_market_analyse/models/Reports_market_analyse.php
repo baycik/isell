@@ -11,11 +11,8 @@
  */
 class Reports_market_analyse extends Catalog{
     public function __construct() {
-	//$this->fdate=$this->dmy2iso( $this->request('fdate','\d\d.\d\d.\d\d\d\d') ).' 23:59:59';
         $this->group_by_filter=$this->request('group_by_filter');
 	$this->group_by=$this->request('group_by','\w+');
-        $this->pcomp_id=222;
-        $this->acomp_id=2;
 	parent::__construct();
     }
     public function install(){
@@ -46,12 +43,16 @@ class Reports_market_analyse extends Catalog{
         'label'=>'string',
         'affiliate'=>'string',
         'article'=>'string',
-        'left'=>'int',
-        'sold'=>'int'];
+        'left'=>'string',
+        'sold'=>'string'];
     public function reportImport($pcomp_id,$idate,$fdate,$comment,$label,$affiliate,$article,$left,$sold){
+        $Company=$this->Hub->load_model("Company");
+        $Company->selectPassiveCompany($pcomp_id);
+        
         $usd_ratio=$this->Hub->pref('usd_ratio');
         $acomp_id=$this->Hub->acomp('company_id');
-        $sql_clear="DROP TEMPORARY TABLE IF EXISTS tmp_market_report";
+        $pcomp_label=$this->Hub->pcomp('label');
+        $sql_clear="DROP TEMPORARY TABLE IF EXISTS tmp_market_report";#TEMPORARY
         $sql_prepare="CREATE TEMPORARY TABLE tmp_market_report ( INDEX(product_code) ) ENGINE=MyISAM AS (
             SELECT
                 $article article,
@@ -65,14 +66,15 @@ class Reports_market_analyse extends Catalog{
             FROM
                 imported_data
                     LEFT JOIN
-                prod_list pl ON analyse_section=B
+                prod_list pl ON analyse_section=$article
             WHERE
-                B<>'' 
-                AND label='маркет')";
+                $article<>'' 
+                AND label='$label')";
+        
         
         $sql_price_setup="SET @_product_code:='',@_acomp_id:=$acomp_id,@_pcomp_id:=$pcomp_id,@_to_cstamp:='{$fdate}';";
-        $sql_price_clear="DROP TEMPORARY TABLE IF EXISTS tmp_market_report_price";
-        $sql_price_prepare="CREATE TEMPORARY TABLE tmp_market_report_price ( INDEX(product_code) ) ENGINE=MyISAM AS (
+        $sql_price_clear="DROP  TABLE IF EXISTS tmp_market_report_price";#TEMPORARY
+        $sql_price_prepare="CREATE  TABLE tmp_market_report_price ( INDEX(product_code) ) ENGINE=MyISAM AS (
             SELECT 
 		product_code,ROUND(SUM(qty*invoice_price)/SUM(qty),2) avg_price 
 	    FROM
@@ -102,7 +104,7 @@ class Reports_market_analyse extends Catalog{
             WHERE qty>0
             GROUP BY product_code)";
         
-        $sql_price_missing_clear="DROP TEMPORARY TABLE IF EXISTS tmp_market_report_missing";
+        $sql_price_missing_clear="DROP TEMPORARY TABLE IF EXISTS tmp_market_report_missing";#TEMPORARY
         $sql_price_missing_fill="CREATE TEMPORARY TABLE tmp_market_report_missing ( INDEX(product_code) ) AS 
             (SELECT product_code,GET_PRICE(product_code,$pcomp_id,$usd_ratio) avg_price
                 FROM tmp_market_report
@@ -120,13 +122,28 @@ class Reports_market_analyse extends Catalog{
         $this->query($sql_price_complete);
         
         $this->query("START TRANSACTION");
-        $this->query("INSERT INTO plugin_market_rpt_list SET idate='$idate',fdate='$fdate',comment='$comment',pcomp_id='$pcomp_id'");
-        $report_id=$this->db->insert_id();
+        $report_id=$this->reportCreate($idate,$fdate,$comment,$pcomp_id,$pcomp_label);
         $this->reportSave($report_id);
+        $this->reportFillSummaries($report_id);
         $this->query("COMMIT");
-        return true;
+        return false;
     }
     
+    private function reportCreate($idate,$fdate,$comment,$pcomp_id,$pcomp_label){
+        $this->query("INSERT INTO plugin_market_rpt_list SET idate='$idate',fdate='$fdate',comment='$comment',pcomp_id='$pcomp_id',pcomp_label='$pcomp_label'");
+        return $this->db->insert_id();
+    }
+    
+    private function reportFillSummaries($report_id){
+        $sql_summary_update="UPDATE 
+                plugin_market_rpt_list ml
+            JOIN
+                (SELECT ROUND(SUM(sold_sum),2) sold_sum, ROUND(SUM(leftover_sum),2) leftover_sum FROM plugin_market_rpt_entries WHERE report_id='$report_id') summary
+            SET ml.sold_sum=summary.sold_sum,ml.leftover_sum=summary.leftover_sum
+            WHERE report_id='$report_id'";
+        $this->query($sql_summary_update);
+    }
+
     private function reportSave($report_id){
         $sql_prepare="INSERT INTO plugin_market_rpt_entries (
 	    SELECT
@@ -139,8 +156,8 @@ class Reports_market_analyse extends Catalog{
                 store_code,
                 sold,
                 leftover,
-                '' group_by,
                 avg_price,
+                '' group_by,
                 avg_price*sold sold_sum,
                 avg_price*leftover leftover_sum
             FROM
@@ -152,22 +169,39 @@ class Reports_market_analyse extends Catalog{
         $this->query($sql_prepare);        
     }
     
+    public $reportDelete=['report_id'=>'int'];
+    public function reportDelete( $report_id ){
+        $this->query("START TRANSACTION");
+        $this->query("DELETE FROM plugin_market_rpt_entries WHERE report_id='$report_id'");
+        $this->query("DELETE FROM plugin_market_rpt_list WHERE report_id='$report_id'");
+        $this->query("COMMIT");
+        return true;
+    }
+    
+
     public function viewGet(){
-        $this->reportFill();
+        $report_id=$this->request('report_id','int');
+        if( !$report_id ){
+            return [];
+        }
         $sql_fetch="
             SELECT
 		*
             FROM
-                plugin_rpt_market_result";
+                plugin_market_rpt_entries
+            WHERE
+                report_id='$report_id'";
         $sql_summary_type_fetch="
             SELECT
-		group_by,
+		$this->group_by group_by,
                 SUM(sold) sold,
                 SUM(avg_price*sold) sold_sum,
                 SUM(leftover) leftover,
                 SUM(avg_price*leftover) leftover_sum
             FROM
-                plugin_rpt_market_result
+                plugin_market_rpt_entries
+            WHERE
+                report_id='$report_id'
             GROUP BY $this->group_by 
             ORDER BY sold_sum DESC";
 
@@ -196,8 +230,19 @@ class Reports_market_analyse extends Catalog{
     }
     
     
-    public $listFetch=[];
-    public function listFetch(){
-	return [];
+    public $listFetch=['offset'=>'int','limit'=>'int','sortby'=>'string','sortdir'=>'(ASC|DESC)','filter'=>'json'];
+    public function listFetch($offset,$limit,$sortby,$sortdir,$filter=null){
+	if( empty($sortby) ){
+	    $sortby="idate";
+	}
+	$having=$this->makeFilter($filter);
+        $sql="SELECT
+                *
+            FROM
+                plugin_market_rpt_list
+            HAVING $having
+	    ORDER BY $sortby $sortdir
+	    LIMIT $limit OFFSET $offset";
+	return $this->get_list($sql);
     }
 }
