@@ -64,7 +64,7 @@
 	    var parent_target=parent_id>0?$('#Stree_tree').tree('find', parent_id).target:null;
 	    var newlabel=prompt("Введите название категории",'Новая категория');
 	    if( newlabel ){
-		$.post('Stock/stockTreeCreate/'+App.uri(parent_id,newlabel),function(branch_id){
+		$.post('Stock/stockTreeCreate/',{parent_id:parent_id,label:newlabel},function(branch_id){
 		    $('#Stree_tree').tree('reload',parent_target);
 		});
 	    }
@@ -72,13 +72,14 @@
 	update:function(){
 	    var node=$('#Stree_tree').tree('getSelected');
 	    var newlabel=prompt("Введите новое название категории: "+node.label,node.label);
+	    console.log(node);
 	    if( newlabel && newlabel!==node.label ){
-		$.post('Stock/stockTreeUpdate/'+App.uri(node.branch_id,'label',newlabel),function(ok){
+		$.post('Stock/stockTreeUpdate/',{branch_id:node.branch_id,field:'label',value:newlabel},function(ok){
 		    if( ok*1 ){
 			App.flash("Сохранено: название папки");
-			$('#Stree_tree').tree('update', {target: node.target,text: newlabel});
+			$('#Stree_tree').tree('update', {target: node.target,text: newlabel,label:newlabel});
 		    } else {
-			App.flash("Сохраненние не удалось: название папки");
+			App.flash("Не удалось сохранить название папки");
 		    }
 		});
 	    }

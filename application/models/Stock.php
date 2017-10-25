@@ -5,12 +5,12 @@ class Stock extends Catalog {
     public function branchFetch($parent_id=0) {
 	return $this->treeFetch("stock_tree", $parent_id, 'top');
     }
-    public $stockTreeCreate=['int','string'];
+    public $stockTreeCreate=['parent_id'=> 'int','label'=> 'string'];
     public function stockTreeCreate($parent_id,$label){
 	$this->Hub->set_level(2);
 	return $this->treeCreate('stock_tree', 'folder', $parent_id, $label, 'calc_top_id');
     }
-    public $stockTreeUpdate=['int','string','string'];
+    public $stockTreeUpdate=['branch_id'=>'int','field'=>'string','value'=> 'string'];
     public function stockTreeUpdate($branch_id,$field,$value) {
 	$this->Hub->set_level(2);
 	return $this->treeUpdate('stock_tree', $branch_id, $field, $value, 'calc_top_id');
@@ -274,11 +274,10 @@ class Stock extends Catalog {
 	//print("INSERT INTO $table ($target_list) SELECT $source_list FROM imported_data WHERE label='$label' ON DUPLICATE KEY UPDATE $set_list");
 	return $this->db->affected_rows();
     }
-    public $productDelete=['product_code'=>'raw'];
+    public $productDelete=['product_code'=>'string'];
     public function productDelete($product_codes){
         $this->Hub->set_level(2);
-        $product_codes_in= "'".implode("','", array_map('addslashes',$product_codes))."'";
-        $this->query("DELETE FROM stock_entries WHERE product_quantity=0 AND product_code IN ($product_codes_in)");
+        $this->query("DELETE FROM stock_entries WHERE product_quantity=0 AND product_code IN ($product_codes)");
         return $this->db->affected_rows();
     }
     public $productMove=['parent_id'=>'int','product_code'=>'raw'];

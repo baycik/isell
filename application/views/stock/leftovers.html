@@ -1,230 +1,529 @@
 <script type="text/javascript">
+    (function ($) {
+	function init() {
+	    Leftovers.init();
+	    ProductCard.init();
+	    Tree.init();
+	}
+
+	var Tree = {
+	    init: function () {
+
+	    }
+	};
+
+
+	var ProductCard = {
+	    init: function () {
+
+	    },
+	    open: function (fvalue) {
+		return
+	    }
+	};
+	/////////////////////////////////////////////////////////
+	// Leftovers DATA BASE SECTION
+	/////////////////////////////////////////////////////////
+	var Leftovers = {
+	    grid: null,
+	    init: function () {
+		Leftovers.initGrid();
+		$(".x-stock-leftovers-tools").click(function (e) {
+		    var action = $(e.target).data('action');
+		    if (action) {
+			Leftovers.tools[action] && Leftovers.tools[action]();
+		    }
+		});
+	    },
+	    showProductCard: function (fvalue) {
+		if (App.user.props.user_level < 2) {
+		    alert("Доступ ограничен");
+		    return;
+		}
+		fvalue.enablePrevnext = true;
+		App.loadWindow('page/stock/product_card', fvalue).progress(function (status, fvalue) {
+		    if (status === 'save') {
+			Leftovers.grid.reload();
+		    }
+		    if (status === 'prev') {
+			Leftovers.prev();
+		    }
+		    if (status === 'next') {
+			Leftovers.next();
+		    }
+		});
+	    },
+	    tools: {
+		entryImport: function () {
+		    var config = [
+			{field: "supply_code", name: "Код пост.", required: true},
+			{field: "supply_name", name: "Название"},
+			{field: "supply_buy", name: "Закупка база"},
+			{field: "supply_comment", name: "Комментарий"},
+			{field: "product_code", name: "Код наш"},
+			{field: "supply_spack", name: "В Коробке"},
+			{field: "supply_bpack", name: "В Ящике"},
+			{field: "supply_weight", name: "Вес"},
+			{field: "supply_volume", name: "Объем"},
+			{field: "supply_unit", name: "Единица"}
+		    ];
+		    App.loadWindow('page/dialog/importer', {label: 'закуп', fields_to_import: config}).progress(function (status, fvalue, Importer) {
+			if (status === 'submit') {
+			    var question = "Импортировать эти строчки без указания поставщика?";
+			    fvalue.supplier_id = 0;
+			    if (Supplier.selected && Supplier.selected.supplier_id) {
+				question = "Импортировать эти строчки поставщику '" + Supplier.selected.supplier_name + "'?";
+				fvalue.supplier_id = Supplier.selected.supplier_id;
+			    }
+			    if (confirm(question)) {
+				App.post("StockBuyManager/entryImport/", fvalue, function (ok) {
+				    App.flash("Импортировано " + ok);
+				    Importer.reload();
+				    Supply.tools.reload();
+				});
+			    }
+			}
+		    });
+		},
+		reload: function () {
+		    Leftovers.grid.reload();
+		},
+		entryDelete: function () {
+		    var selected_rows = Leftovers.grid.getSelectedRows();
+		    if (!selected_rows.length) {
+			App.flash("Ни одна строка не выбрана!");
+			return;
+		    }
+		    if (!confirm("Удалить выделенные товары?")) {
+			return;
+		    }
+
+		    var product_codes = [];
+		    for (var i in selected_rows) {
+			product_codes.push(Leftovers.grid.getDataItem(selected_rows[i]).product_code);
+		    }
+		    $.post('Stock/productDelete', {product_codes: product_codes.join(',')}, function (ok) {
+			if (ok * 1) {
+			    Leftovers.grid.reload();
+			}
+		    });
+		},
+		entryCreate: function () {
+		    var supplier_id = 0;
+		    if (Supplier.selected && Supplier.selected.supplier_id) {
+			supplier_id = Supplier.selected.supplier_id;
+		    }
+		    $.post('StockBuyManager/supplyCreate', {supplier_id: supplier_id}, function (insert_id) {
+			if (insert_id * 1) {
+			    Supply.grid.setFilter({supply_code: insert_id});
+			}
+		    });
+		},
+		edit: function (index, field, value) {
+		    $("#stock_dg").datagrid('unselectAll');
+		    $("#stock_dg").datagrid('selectRow', index);
+		    var row = $("#stock_dg").datagrid('getSelected');
+		    if (row) {
+			row.focus = field;
+			Leftovers.list.showProductCard(row);
+		    }
+		},
+		create: function () {
+		    var fvalue = {
+			parent_id: Leftovers.parent_id,
+			parent_label: Leftovers.parent_label,
+			product_code: ''
+		    };
+		    Leftovers.showProductCard(fvalue);
+		},
+		entryEdit: function () {
+
+		},
+		out: function (out_type) {
+		    var sorted = Leftovers.grid.getSortColumns();
+		    var params = {
+			sortby: sorted.length ? sorted[0].columnId : '',
+			sortdir: sorted.length ? (sorted[0].sortAsc ? 'ASC' : 'DESC') : '',
+			filter: JSON.stringify(Leftovers.grid.getFilter()),
+			out_type: (out_type || '.xlsx')
+		    };
+		    var url = 'StockBuyManager/viewGet/?' + $.param(params);
+		    if (out_type === '.print') {
+			window.open(url, 'print_tab');
+		    } else {
+			location.href = url;
+		    }
+		},
+		print: function () {
+		    this.out('.print');
+		}
+	    },
+	    initGrid: function () {
+		function AutoCompleteEditor(args) {
+		    var $input;
+		    var defaultValue;
+		    this.keyCaptureList = [Slick.keyCode.UP, Slick.keyCode.DOWN, Slick.keyCode.ENTER];
+		    this.init = function () {
+			var html = "<select style='width:100%'>";
+			for (var i in Supplier.list) {
+			    html += Supplier.list[i].supplier_name ? "<option>" + Supplier.list[i].supplier_name + "</option>" : "";
+			}
+			html += "</select>";
+			$input = $(html);
+			$input.appendTo(args.container);
+			$input.focus();
+		    };
+		    this.destroy = function () {
+			$input.remove();
+		    };
+		    this.focus = function () {
+			$input.focus();
+		    };
+		    this.loadValue = function (item) {
+			defaultValue = item[args.column.field];
+			$input.val(defaultValue);
+		    };
+		    this.serializeValue = function () {
+			return $input.val();
+		    };
+		    this.applyValue = function (item, state) {
+			item[args.column.field] = state;
+		    };
+		    this.isValueChanged = function () {
+			return (!($input.val() == "" && defaultValue == null)) && ($input.val() != defaultValue);
+		    };
+		    this.validate = function () {
+			return {
+			    valid: true,
+			    msg: null
+			};
+		    };
+		    this.init();
+		}
+		function perc(row, cell, value, columnDef, dataContext) {
+		    if (!value || value == 0) {
+			return "";
+		    }
+		    return value + " %";
+		}
+		function dateFormatter(row, cell, value, columnDef, dataContext) {
+		    var date = value.split(' ');
+		    return '<span title="' + value + '">' + date[0] + '</span>';
+		}	
+	var settings = {
+		    columns: [
+			{id: "parent_label", field: "parent_label", name: "Категория", width: 120, editor: AutoCompleteEditor},
+			{id: "product_code", field: "product_code", name: "Код", width: 80, sortable: true, editor: Slick.Editors.Text},
+			{id: "ru", field: "ru", name: "Название", width: 330, sortable: true, editor: Slick.Editors.Text},
+			{id: "product_quantity", field: "product_quantity", name: "Ед", width: 30, sortable: true, editor: Slick.Editors.Text, cssClass: 'slick-align-right'},
+			{id: "product_unit", field: "product_unit", name: "Себестоимость", width: 90, sortable: true, cssClass: 'slick-align-right'},
+			{id: "product_wrn_quantity", field: "product_wrn_quantity",  name: "Мин", width: 80, editor: Slick.Editors.Integer, sortable: true, cssClass: 'slick-align-right'},
+			{id: "m1", field: "m1", name: "1м", formatter: perc, width: 50, sortable: true},
+			{id: "m3", field: "m3", name: "3м", width: 50, sortable: true},
+			{id: "self_price", field: "self_price", name: "Учетная цена", sortable: true, width: 50},
+			{id: "sell", field: "sell", name: "Продажа", width: 150, editor: Slick.Editors.Float},
+			{id: "buy", field: "buy", name: "Покупка", width: 70, editor: Slick.Editors.Float},
+			{id: "curr_code", field: "curr_code", name: "Валюта", sortable: true, width: 50, cssClass: 'slick-align-right'},
+			{id: "product_spack", field: "product_spack", name: "М. упак", sortable: true, width: 50, editor: Slick.Editors.Integer, cssClass: 'slick-align-right'},
+			{id: "product_bpack", field: "product_bpack", name: "Б. упак", sortable: true, width: 50, editor: Slick.Editors.Integer, cssClass: 'slick-align-right'},
+			{id: "product_weight", field: "product_weight", name: "Вес кг", sortable: true, width: 70, editor: Slick.Editors.Float, cssClass: 'slick-align-right'},
+			{id: "product_volume", field: "product_volume", name: "Объем м3", sortable: true, width: 70, editor: Slick.Editors.Float, cssClass: 'slick-align-right'},
+			
+			{id: "product_uktzet", field: "product_uktzet", name: "Таможенный код", sortable: true, width: 100, editor: Slick.Editors.Text, cssClass: 'slick-align-right'},
+			{id: "barcode", field: "barcode", name: "Штрихкод", sortable: true, width: 50, editor: Slick.Editors.Text, cssClass: 'slick-align-right'},
+			{id: "analyse_type", field: "analyse_type", name: "Тип", sortable: true, width: 100, editor: Slick.Editors.Text},
+			{id: "analyse_group", field: "analyse_group", name: "Бренд", sortable: true, width: 100, editor: Slick.Editors.Text},
+			{id: "analyse_class", field: "analyse_class", name: "Класс", sortable: true, width: 100, editor: Slick.Editors.Text},
+			{id: "analyse_section", field: "analyse_section", name: "Раздел", sortable: true, width: 100, editor: Slick.Editors.Text}
+		    ],
+		    options: {
+			editable: true,
+			autoedit: true,
+			//enableCellNavigation: true,
+			enableColumnReorder: false,
+			enableFilter: true,
+			multiSelect: true,
+			url: 'StockBuyManager/listFetch'
+		    }
+		};
+		function supplyTableEntryUpdate(supply_id, field, value) {
+		    return $.post('StockBuyManager/supplyUpdate', {supply_id: supply_id, field: field, value: value}, function (ok) {
+			if (ok < 1) {
+			    Supply.grid.reload();
+			}
+		    });
+		}
+		Supply.grid = new SlickInfinite("#supply_list_sg", settings);
+		Supply.grid.onCellChange.subscribe(function (e, data) {
+		    var updatedEntry = data.item;
+		    var field = settings.columns[data.cell].field;
+		    var value = updatedEntry[field];
+		    supplyTableEntryUpdate(updatedEntry.supply_id, field, value).done(function () {
+			//Supply.grid.rowReload(data.row);
+		    });
+		});
+	    }
+	};
+	App.require(["js/slick/lib/jquery.event.drag-2.3.0.js"], function () {
+	    App.require([
+		"js/slick/slick.core.js",
+		"js/slick/plugins/slick.rowselectionmodel.js",
+		"js/slick/slick.editors.js",
+		"js/slick/slickinfinite.js",
+		"js/slick/slick.grid.js"
+	    ], init);
+	});
+    })(jQuery);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     /* global App */
-    Leftovers=App.page_stock_leftovers={
-	init:function(){
+    Leftovers = App.page_stock_leftovers = {
+	init: function () {
 	    this.initTree();
-	    Leftovers.list.toggleFilter();
+	    //Leftovers.list.toggleFilter();
 	},
-	initTree:function(){
-	    App.loadModule('page/stock/tree',{inline:true,clickselect:true},'StreeInline',/(Stree|page_stock_tree)([^\w]|_)/g,"StreeInline$2").progress(function(status,branch){
-		if( status==='select' ){
-		    Leftovers.list.loadParent(branch?branch.branch_id:0,branch?branch.label:'Все');
+	initTree: function () {
+	    App.loadModule('page/stock/tree', {inline: true, clickselect: true}, 'StreeInline', /(Stree|page_stock_tree)([^\w]|_)/g, "StreeInline$2").progress(function (status, branch) {
+		if (status === 'select') {
+		    //Leftovers.list.loadParent(branch?branch.branch_id:0,branch?branch.label:'Все');
 		}
 	    });
 	},
-        initAfter:function(){
-            this.list.checkHide();
-        },
-	focus:function(){
-	    Leftovers.list.reload();
+	initAfter: function () {
+	    //this.list.checkHide();
 	},
-	list:{
-	    parent_id:0,
-	    parent_label:'Все',
-	    filterRules:{},
-	    currPage:1,
-	    loader:function( param, success, error ){
-		Leftovers.list.filterRules=param.filterRules;
-		Leftovers.list.currPage=param.page;
-		param.parent_id=Leftovers.list.parent_id;
-		App.get("Stock/listFetch/",param,function( xhr ){
-		    var resp=App.json(xhr);
-		    resp=Leftovers.list.calc.calcTable(resp);
+	focus: function () {
+	    //Leftovers.list.reload();
+	},
+	table: {
+	    init: function () {
+
+	    }
+	},
+	list: {
+	    parent_id: 0,
+	    parent_label: 'Все',
+	    filterRules: {},
+	    currPage: 1,
+	    loader: function (param, success, error) {
+		Leftovers.list.filterRules = param.filterRules;
+		Leftovers.list.currPage = param.page;
+		param.parent_id = Leftovers.list.parent_id;
+		App.get("Stock/listFetch/", param, function (xhr) {
+		    var resp = App.json(xhr);
+		    resp = Leftovers.list.calc.calcTable(resp);
 		    success(resp);
-                    $("#stock_dg").datagrid('selectRow', Leftovers.list.lastSelectedIndex);
+		    $("#stock_dg").datagrid('selectRow', Leftovers.list.lastSelectedIndex);
 		});
 	    },
-	    calc:{
-		calcTable:function( resp ){
-		    for(var i in resp.rows ){
-			resp.rows[i].m1=this.clear(resp.rows[i].m1);
-			resp.rows[i].m3=this.clear(resp.rows[i].m3);
-			resp.rows[i].product_spack=this.clear(resp.rows[i].product_spack);
-			resp.rows[i].product_bpack=this.clear(resp.rows[i].product_bpack);
-			resp.rows[i].product_quantity=this.clear(resp.rows[i].product_quantity);
-			resp.rows[i].product_wrn_quantity=this.clear(resp.rows[i].product_wrn_quantity);
-			resp.rows[i].product_weight=this.round(resp.rows[i].product_weight,5);
-			resp.rows[i].product_volume=this.round(resp.rows[i].product_volume,5);
-			resp.rows[i].self_price=this.round(resp.rows[i].self_price,2);
-			resp.rows[i].sell=this.round(resp.rows[i].sell,2);
-			resp.rows[i].buy=this.round(resp.rows[i].buy,2);
+	    calc: {
+		calcTable: function (resp) {
+		    for (var i in resp.rows) {
+			resp.rows[i].m1 = this.clear(resp.rows[i].m1);
+			resp.rows[i].m3 = this.clear(resp.rows[i].m3);
+			resp.rows[i].product_spack = this.clear(resp.rows[i].product_spack);
+			resp.rows[i].product_bpack = this.clear(resp.rows[i].product_bpack);
+			resp.rows[i].product_quantity = this.clear(resp.rows[i].product_quantity);
+			resp.rows[i].product_wrn_quantity = this.clear(resp.rows[i].product_wrn_quantity);
+			resp.rows[i].product_weight = this.round(resp.rows[i].product_weight, 5);
+			resp.rows[i].product_volume = this.round(resp.rows[i].product_volume, 5);
+			resp.rows[i].self_price = this.round(resp.rows[i].self_price, 2);
+			resp.rows[i].sell = this.round(resp.rows[i].sell, 2);
+			resp.rows[i].buy = this.round(resp.rows[i].buy, 2);
 		    }
 		    return resp;
 		},
-		clear:function(value){
-		    return value*1||'';
+		clear: function (value) {
+		    return value * 1 || '';
 		},
-		round:function(value,precision){
+		round: function (value, precision) {
 		    return Number(value).toFixed(precision);
 		},
-		left:function(value,row){
-		    if( row.product_quantity*2<row.product_wrn_quantity ){
+		left: function (value, row) {
+		    if (row.product_quantity * 2 < row.product_wrn_quantity) {
 			return 'background-color:#f9f';
-		    } 
-		    if( row.product_quantity<row.product_wrn_quantity ){
+		    }
+		    if (row.product_quantity < row.product_wrn_quantity) {
 			return 'background-color:#fcf';
-		    } 
+		    }
 		},
-		m1:function(value,row){
-		    if( row.m1*1<row.m3*1 ){
+		m1: function (value, row) {
+		    if (row.m1 * 1 < row.m3 * 1) {
 			return 'color:red';
 		    }
 		    return 'color:green';
 		}
 	    },
-            checkHide: function(){
-                if ( App.user.props.user_level>=3 ) {
-                    $('#stock_dg').datagrid('showColumn','sell');
-                    $('#stock_dg').datagrid('showColumn','buy');
-                    $('#stock_dg').datagrid('showColumn','curr_code');
-                    $('#stock_dg').datagrid('showColumn','self_price');
-                }
-                else {
-                    $('#stock_dg').datagrid('hideColumn','sell');
-                    $('#stock_dg').datagrid('hideColumn','buy');
-                    $('#stock_dg').datagrid('hideColumn','curr_code');
-                    $('#stock_dg').datagrid('hideColumn','self_price');
-                }	    
-            },
-	    reload:function(){
-                var selected=$("#stock_dg").datagrid('getSelected');
-                if( selected ){
-                    this.lastSelectedIndex = $("#stock_dg").datagrid('getRowIndex', selected);
-                }
+	    checkHide: function () {
+		if (App.user.props.user_level >= 3) {
+		    $('#stock_dg').datagrid('showColumn', 'sell');
+		    $('#stock_dg').datagrid('showColumn', 'buy');
+		    $('#stock_dg').datagrid('showColumn', 'curr_code');
+		    $('#stock_dg').datagrid('showColumn', 'self_price');
+		} else {
+		    $('#stock_dg').datagrid('hideColumn', 'sell');
+		    $('#stock_dg').datagrid('hideColumn', 'buy');
+		    $('#stock_dg').datagrid('hideColumn', 'curr_code');
+		    $('#stock_dg').datagrid('hideColumn', 'self_price');
+		}
+	    },
+	    reload: function () {
+		var selected = $("#stock_dg").datagrid('getSelected');
+		if (selected) {
+		    this.lastSelectedIndex = $("#stock_dg").datagrid('getRowIndex', selected);
+		}
 		$("#stock_dg").datagrid('reload');
 	    },
-	    import:function(){
-		var config=[
-		    {name:'Код товара',field:'product_code',required:true},
-		    {name:'Название Рус.',field:'ru'},
-		    {name:'Название Укр.',field:'ua'},
-		    {name:'Название Анг.',field:'en'},
-		    {name:'Единица',field:'product_unit'},
-		    {name:'В коробке',field:'product_spack'},
-		    {name:'В ящике',field:'product_bpack'},
-		    {name:'Вес кг',field:'product_weight'},
-		    {name:'Объем м3',field:'product_volume'},
-		    {name:'Тамож. код',field:'product_uktzet'},
-		    {name:'Штрихкод',field:'barcode'},
-		    {name:'Партия',field:'party_label'},
-		    {name:'Тип',field:'analyse_type'},
-		    {name:'Бренд',field:'analyse_group'},
-		    {name:'Класс',field:'analyse_class'},
-		    {name:'Раздел',field:'analyse_section'},
-		    {name:'Продажа',field:'sell'},
-		    {name:'Покупка',field:'buy'},
-		    {name:'Валюта',field:'curr_code'},	    
-		    {name:'Категория цен',field:'label'}		    
+	    import: function () {
+		var config = [
+		    {name: 'Код товара', field: 'product_code', required: true},
+		    {name: 'Название Рус.', field: 'ru'},
+		    {name: 'Название Укр.', field: 'ua'},
+		    {name: 'Название Анг.', field: 'en'},
+		    {name: 'Единица', field: 'product_unit'},
+		    {name: 'В коробке', field: 'product_spack'},
+		    {name: 'В ящике', field: 'product_bpack'},
+		    {name: 'Вес кг', field: 'product_weight'},
+		    {name: 'Объем м3', field: 'product_volume'},
+		    {name: 'Тамож. код', field: 'product_uktzet'},
+		    {name: 'Штрихкод', field: 'barcode'},
+		    {name: 'Партия', field: 'party_label'},
+		    {name: 'Тип', field: 'analyse_type'},
+		    {name: 'Бренд', field: 'analyse_group'},
+		    {name: 'Класс', field: 'analyse_class'},
+		    {name: 'Раздел', field: 'analyse_section'},
+		    {name: 'Продажа', field: 'sell'},
+		    {name: 'Покупка', field: 'buy'},
+		    {name: 'Валюта', field: 'curr_code'},
+		    {name: 'Категория цен', field: 'label'}
 		];
-		App.loadWindow('page/dialog/importer',{label:'склад',fields_to_import:config}).progress(function(status,fvalue,Importer){
-		    if( status==='submit' ){
-			fvalue.parent_id=Leftovers.list.parent_id;
-			App.post("Stock/import/",fvalue,function(ok){
-			    App.flash("Добавлено/Изменено "+ok);
+		App.loadWindow('page/dialog/importer', {label: 'склад', fields_to_import: config}).progress(function (status, fvalue, Importer) {
+		    if (status === 'submit') {
+			fvalue.parent_id = Leftovers.list.parent_id;
+			App.post("Stock/import/", fvalue, function (ok) {
+			    App.flash("Добавлено/Изменено " + ok);
 			    Leftovers.list.reload();
 			    Importer.reload();
 			});
 		    }
 		});
 	    },
-	    out:function( out_type ){
-		var params={
-		    page:Leftovers.list.currPage,
-		    parent_id:Leftovers.list.parent_id,
-		    filterRules:Leftovers.list.filterRules,
-		    out_type:out_type
+	    out: function (out_type) {
+		var params = {
+		    page: Leftovers.list.currPage,
+		    parent_id: Leftovers.list.parent_id,
+		    filterRules: Leftovers.list.filterRules,
+		    out_type: out_type
 		};
-		var url='StockView/stockViewGet/?'+$.param( params );
-		if( out_type==='.print' ){
-		    window.open(url,'print_tab');
+		var url = 'StockView/stockViewGet/?' + $.param(params);
+		if (out_type === '.print') {
+		    window.open(url, 'print_tab');
 		}
 	    },
-            outfile:function( out_type ){
-		var params={
-		    page:1,
-		    parent_id:Leftovers.list.parent_id,
-		    filterRules:Leftovers.list.filterRules,
-		    out_type:out_type
+	    outfile: function (out_type) {
+		var params = {
+		    page: 1,
+		    parent_id: Leftovers.list.parent_id,
+		    filterRules: Leftovers.list.filterRules,
+		    out_type: out_type
 		};
-		var url='StockView/stockViewFileGet/?'+$.param( params );
-		location.href=url;
+		var url = 'StockView/stockViewFileGet/?' + $.param(params);
+		location.href = url;
 	    },
-	    edit:function(index,field,value){
+	    edit: function (index, field, value) {
 		$("#stock_dg").datagrid('unselectAll');
-		$("#stock_dg").datagrid('selectRow',index);
-		var row=$("#stock_dg").datagrid('getSelected');
-		if( row ){
-		    row.focus=field;
+		$("#stock_dg").datagrid('selectRow', index);
+		var row = $("#stock_dg").datagrid('getSelected');
+		if (row) {
+		    row.focus = field;
 		    Leftovers.list.showProductCard(row);
 		}
 	    },
-	    create:function(){
-		var fvalue={
-		    parent_id:Leftovers.list.parent_id,
-		    parent_label:Leftovers.list.parent_label,
-		    product_code:''
+	    create: function () {
+		var fvalue = {
+		    parent_id: Leftovers.list.parent_id,
+		    parent_label: Leftovers.list.parent_label,
+		    product_code: ''
 		};
 		Leftovers.list.showProductCard(fvalue);
 	    },
-	    showProductCard:function( fvalue ){
-		if( App.user.props.user_level<2 ){
+	    showProductCard: function (fvalue) {
+		if (App.user.props.user_level < 2) {
 		    alert("Доступ ограничен");
 		    return;
 		}
-                fvalue.enablePrevnext=true;
-		App.loadWindow('page/stock/product_card',fvalue).progress(function(status,fvalue){
-		    if( status==='save' ){
+		fvalue.enablePrevnext = true;
+		App.loadWindow('page/stock/product_card', fvalue).progress(function (status, fvalue) {
+		    if (status === 'save') {
 			Leftovers.list.reload();
 		    }
-		    if( status==='prev' ){
+		    if (status === 'prev') {
 			Leftovers.list.prev();
 		    }
-		    if( status==='next' ){
+		    if (status === 'next') {
 			Leftovers.list.next();
 		    }
 		});
 	    },
-            prev:function(){
-                var selected = $("#stock_dg").datagrid('getSelected');
-                var index = $("#stock_dg").datagrid('getRowIndex', selected);
-                $("#stock_dg").datagrid('unselectRow',index);
-                if (selected && index>0) {
-                    $("#stock_dg").datagrid('selectRow', index - 1);
-                } else {
-                    var rows = $("#stock_dg").datagrid('getRows');
-                    $("#stock_dg").datagrid('selectRow', rows.length - 1);
-                }
-                var row = $("#stock_dg").datagrid('getSelected');
-                Leftovers.list.showProductCard(row);
-            },
-            next:function(){
-                var selected = $("#stock_dg").datagrid('getSelected');
-                var index = $("#stock_dg").datagrid('getRowIndex', selected);
-                $("#stock_dg").datagrid('unselectRow',index);
-                var rows = $("#stock_dg").datagrid('getRows');
-                if (selected && rows.length-1>index) {
-                    $("#stock_dg").datagrid('selectRow', index + 1);
-                } else {
-                    $("#stock_dg").datagrid('selectRow', 0);
-                }
-                var row = $("#stock_dg").datagrid('getSelected');
-                Leftovers.list.showProductCard(row);
-            },
-	    delete:function(){
-		var rows=$("#stock_dg").datagrid('getSelections');
-                var prod_codes=[];
-                for(var i=0;i<rows.length;i++){
-                    var row=rows[i];
-                    if( row && row.product_quantity>0 ){
-                        alert("Остаток '"+row.ru+"' должен быть нулевым");
-                        return;
-                    }
-                    prod_codes.push(row.product_code);
-                }
-		if( row && confirm("Удалить '"+prod_codes.join(' , ')+"' со списка склада?") ){
-		    App.post('Stock/productDelete/',{product_code:prod_codes},function(ok){
-			if( ok*1 ){
-			    App.flash("Товар удален: "+prod_codes.join(' , '));
+	    prev: function () {
+		var selected = $("#stock_dg").datagrid('getSelected');
+		var index = $("#stock_dg").datagrid('getRowIndex', selected);
+		$("#stock_dg").datagrid('unselectRow', index);
+		if (selected && index > 0) {
+		    $("#stock_dg").datagrid('selectRow', index - 1);
+		} else {
+		    var rows = $("#stock_dg").datagrid('getRows');
+		    $("#stock_dg").datagrid('selectRow', rows.length - 1);
+		}
+		var row = $("#stock_dg").datagrid('getSelected');
+		Leftovers.list.showProductCard(row);
+	    },
+	    next: function () {
+		var selected = $("#stock_dg").datagrid('getSelected');
+		var index = $("#stock_dg").datagrid('getRowIndex', selected);
+		$("#stock_dg").datagrid('unselectRow', index);
+		var rows = $("#stock_dg").datagrid('getRows');
+		if (selected && rows.length - 1 > index) {
+		    $("#stock_dg").datagrid('selectRow', index + 1);
+		} else {
+		    $("#stock_dg").datagrid('selectRow', 0);
+		}
+		var row = $("#stock_dg").datagrid('getSelected');
+		Leftovers.list.showProductCard(row);
+	    },
+	    delete: function () {
+		var rows = $("#stock_dg").datagrid('getSelections');
+		var prod_codes = [];
+		for (var i = 0; i < rows.length; i++) {
+		    var row = rows[i];
+		    if (row && row.product_quantity > 0) {
+			alert("Остаток '" + row.ru + "' должен быть нулевым");
+			return;
+		    }
+		    prod_codes.push(row.product_code);
+		}
+		if (row && confirm("Удалить '" + prod_codes.join(' , ') + "' со списка склада?")) {
+		    App.post('Stock/productDelete/', {product_code: prod_codes}, function (ok) {
+			if (ok * 1) {
+			    App.flash("Товар удален: " + prod_codes.join(' , '));
 			    Leftovers.list.reload();
 			} else {
 			    App.flash("Товар не удален");
@@ -232,33 +531,32 @@
 		    });
 		}
 	    },
-            move:function(){
-		var rows=$("#stock_dg").datagrid('getSelections');
-                var prod_codes=[];
-                if( rows.length ){
-                    for(var i=0;i<rows.length;i++){
-                        prod_codes.push(rows[i].product_code);
-                    }
-                }
-                else{
-                    return;
-                }
-                App.loadWindow('page/stock/tree').progress(function(status,category){
-                    if( status==='select' ){
-                        App.post('Stock/productMove/',{product_code:prod_codes,parent_id:category.branch_id},function(ok){
-                            if( ok*1 ){
-                                App.flash("Товар перемещен в "+category.label+": "+prod_codes.join(' , '));
-                                Leftovers.list.reload();
-                            } else {
-                                App.flash("Товар не перемещен");
-                            }
-                        });
-                    }
-                });
-            },
-	    loadParent:function( parent_id,label ){
-		this.parent_id=parent_id;
-		this.parent_label=label;
+	    move: function () {
+		var rows = $("#stock_dg").datagrid('getSelections');
+		var prod_codes = [];
+		if (rows.length) {
+		    for (var i = 0; i < rows.length; i++) {
+			prod_codes.push(rows[i].product_code);
+		    }
+		} else {
+		    return;
+		}
+		App.loadWindow('page/stock/tree').progress(function (status, category) {
+		    if (status === 'select') {
+			App.post('Stock/productMove/', {product_code: prod_codes, parent_id: category.branch_id}, function (ok) {
+			    if (ok * 1) {
+				App.flash("Товар перемещен в " + category.label + ": " + prod_codes.join(' , '));
+				Leftovers.list.reload();
+			    } else {
+				App.flash("Товар не перемещен");
+			    }
+			});
+		    }
+		});
+	    },
+	    loadParent: function (parent_id, label) {
+		this.parent_id = parent_id;
+		this.parent_label = label;
 		$("#stock_cat_name").html(this.parent_label);
 		this.reload();
 	    },
@@ -266,21 +564,20 @@
 		if (this.filterEnabled) {
 		    $('#stock_dg').datagrid('disableFilter');
 		    this.filterEnabled = false;
-		}
-		else {
+		} else {
 		    $('#stock_dg').datagrid('enableFilter');
 		    this.filterEnabled = true;
 		}
 	    }
 	},
-	utils:{
-	    calc_min:function(){
-		App.loadWindow("page/stock/calc_min",{parent_label:Leftovers.list.parent_label}).progress(function(status, fvalue){
-		    if( status==='submit' ){
-			App.post("Utils/stockCalcMin/"+App.uri(Leftovers.list.parent_id,fvalue.sales_period,fvalue.reserve_period),function(ok){
-			    if( ok*1 ){
+	utils: {
+	    calc_min: function () {
+		App.loadWindow("page/stock/calc_min", {parent_label: Leftovers.list.parent_label}).progress(function (status, fvalue) {
+		    if (status === 'submit') {
+			App.post("Utils/stockCalcMin/" + App.uri(Leftovers.list.parent_id, fvalue.sales_period, fvalue.reserve_period), function (ok) {
+			    if (ok * 1) {
 				Leftovers.list.reload();
-				App.flash("Минимумы расчитаны у "+ok+" товаров");
+				App.flash("Минимумы расчитаны у " + ok + " товаров");
 			    } else {
 				App.flash("Минимумы не изменились");
 			    }
@@ -288,25 +585,25 @@
 		    }
 		});
 	    },
-            send_to_buy_manager:function(){
-                App.post("StockBuyManager/orderFromStock/",{filterRules: Leftovers.list.filterRules,parent_id:Leftovers.list.parent_id},function(ok){
-                    if( ok*1 ){
-                        App.flash("Заказ загружен в менеджер закупок");
-                    } else {
-                        App.flash("Заказ не сформирован");
-                    }
-                });
-            },
-	    calc_buy_order:function(){
-		App.loadWindow("page/stock/calc_buy_order",{parent_label:Leftovers.list.parent_label}).progress(function(status, fvalue){
-		    if( status==='submit' ){
-			if( !confirm('Сформировать заказ поставщику "'+App.pcomp.label+'" по категории "'+Leftovers.list.parent_label+'"?') ){
+	    send_to_buy_manager: function () {
+		App.post("StockBuyManager/orderFromStock/", {filterRules: Leftovers.list.filterRules, parent_id: Leftovers.list.parent_id}, function (ok) {
+		    if (ok * 1) {
+			App.flash("Заказ загружен в менеджер закупок");
+		    } else {
+			App.flash("Заказ не сформирован");
+		    }
+		});
+	    },
+	    calc_buy_order: function () {
+		App.loadWindow("page/stock/calc_buy_order", {parent_label: Leftovers.list.parent_label}).progress(function (status, fvalue) {
+		    if (status === 'submit') {
+			if (!confirm('Сформировать заказ поставщику "' + App.pcomp.label + '" по категории "' + Leftovers.list.parent_label + '"?')) {
 			    return false;
 			}
-			App.post("Utils/stockCalcIncomeOrder/"+Leftovers.list.parent_id+"/"+fvalue.round_to,{filterRules: Leftovers.list.filterRules},function(doc_id){
-			    if( doc_id*1 ){
+			App.post("Utils/stockCalcIncomeOrder/" + Leftovers.list.parent_id + "/" + fvalue.round_to, {filterRules: Leftovers.list.filterRules}, function (doc_id) {
+			    if (doc_id * 1) {
 				App.flash("Заказ сформирован");
-				App.loadWindow('page/trade/document',{doc_id:doc_id});
+				App.loadWindow('page/trade/document', {doc_id: doc_id});
 			    } else {
 				App.flash("Заказ не сформирован");
 			    }
@@ -330,6 +627,19 @@
 	    <button style="width:100%;margin: 2px;text-align: left" onclick="Leftovers.utils.send_to_buy_manager()"><img src="img/docnew.png" style="width:24px;height: 24px;"> Загрузить в менеджер</button>
 	</td>
 	<td style="vertical-align: top">
+	    <div></div>
+
+
+
+
+
+
+
+
+
+
+
+
 	    <div style="float: left;font-weight: bold;padding-top: 8px;">
 		<img src="img/table16.png" style="width:16px;height: 16px;"> Остатки в категории: "<span id="stock_cat_name">Все</span>"
 	    </div>
@@ -344,16 +654,16 @@
 		<span class="icon-24" style="background-image: url(img/file_download.png);background-repeat: no-repeat" title="Скачать таблицу" onclick="Leftovers.list.outfile('.xlsx');"> </span>
 		<span class="icon-24 icon-print" title="Печать" onclick="Leftovers.list.out('.print')"> </span>
 	    </div>
-	    <table class="easyui-datagrid" id="stock_dg" style="width:780px" data-options="
-		    loader:Leftovers.list.loader,
-		    pagination:true,
-		    pageSize:30,
-		    pageList:[30,60,120,600],
-		    singleSelect:false,
-		    autoRowHeight:false,
-		    remoteFilter:true,
-		    onSelect:function(){$('#stock_dg').datagrid('resize');},
-		    onDblClickCell:Leftovers.list.edit">
+	    <table class="easyui-datagrid1" id="stock_dg" style="width:780px" data-options="
+		   loader:Leftovers.list.loader,
+		   pagination:true,
+		   pageSize:30,
+		   pageList:[30,60,120,600],
+		   singleSelect:false,
+		   autoRowHeight:false,
+		   remoteFilter:true,
+		   onSelect:function(){$('#stock_dg').datagrid('resize');},
+		   onDblClickCell:Leftovers.list.edit">
 		<thead data-options="frozen:true">
 		    <tr>
 			<th data-options="field:'parent_label',width:120">Категория</th>
