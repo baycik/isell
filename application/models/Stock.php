@@ -41,24 +41,24 @@ class Stock extends Catalog {
 	return ['inner'=>implode(' AND ',$havingInner),'outer'=>implode(' AND ',$havingOuter)];	
     }
 
-    private function columnsGet(){
+    private function columnsGet($mode){
 	$lvl1="parent_id,parent_label,t.product_code,ru,t.product_quantity,product_unit";
 	$lvl2=",product_wrn_quantity,SUM(IF(TO_DAYS(NOW()) - TO_DAYS(dl.cstamp) <= 30,de.product_quantity,0)) m1,ROUND( SUM(IF(TO_DAYS(NOW()) - TO_DAYS(dl.cstamp) <= 92,de.product_quantity,0))/3 ) m3";
 	$adv=",t.self_price,sell,buy,curr_code,product_spack,product_bpack,product_weight,product_volume,analyse_origin,product_barcode,analyse_type,analyse_brand,analyse_class,product_article";
 	if( $this->Hub->svar('user_level')<2 ){
 	    return $lvl1;
 	}
-	return $lvl1.$lvl2.$adv;
+	return $lvl1.($mode=="advanced"?$lvl2.$adv:$lvl2);
     }
     
-    public $listFetch=['parent_id'=>'int','offset'=>'int','limit'=>'int','sortby'=>'string','sortdir'=>'(ASC|DESC)','filter'=>'json'];
-    public function listFetch($parent_id,$offset,$limit,$sortby,$sortdir,$filter=null){
+    public $listFetch=['parent_id'=>'int','offset'=>'int','limit'=>'int','sortby'=>'string','sortdir'=>'(ASC|DESC)','filter'=>'json','mode'=>'string'];
+    public function listFetch($parent_id,$offset,$limit,$sortby,$sortdir,$filter=null,$mode="simple"){
 	if( empty($sortby) ){
 	    $sortby="product_code";
 	    $sortdir="ASC";
 	}
 	$having=$this->makeStockFilter($filter);
-	$columns=$this->columnsGet();
+	$columns=$this->columnsGet($mode);
 	$where='';
 	if( $parent_id ){
 	    $branch_ids=$this->treeGetSub('stock_tree',$parent_id);

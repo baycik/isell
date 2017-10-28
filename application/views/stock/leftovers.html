@@ -159,17 +159,17 @@
 		}
 	    },
 	    table:{
-		columnMode:'advanced',
+		columnMode:'simple',
 		columnsGet:function(){
 		    var columns_lev1=[
 			{id: "parent_label", field: "parent_label", name: "Категория", width: 120},
 			{id: "product_code", field: "product_code", name: "Код", width: 80, sortable: true},
 			{id: "ru", field: "ru", name: "Название", width: 330, sortable: true},
 			{id: "product_unit", field: "product_unit", name: "Ед", width: 30, sortable: true, cssClass: 'slick-align-right'},
-			{id: "product_quantity", field: "product_quantity", name: "Остаток", width: 60, sortable: true, cssClass: 'slick-align-right'}
+			{id: "product_quantity", field: "product_quantity", name: "Остаток", width: 60, sortable: true,formatter:Leftovers.table.frm.int, cssClass: 'slick-align-right'}
 		    ];
 		    var columns_lev2=[
-			{id: "product_wrn_quantity", field: "product_wrn_quantity",  name: "Мин", width: 60, editor: Slick.Editors.Integer, sortable: true, cssClass: 'slick-align-right'},
+			{id: "product_wrn_quantity", field: "product_wrn_quantity",  name: "Мин", width: 60, editor: Slick.Editors.Integer, sortable: true,formatter:Leftovers.table.frm.int, cssClass: 'slick-align-right'},
 			{id: "m1", field: "m1", name: "1м", width: 60, sortable: true,formatter:Leftovers.table.frm.m1, cssClass: 'slick-align-right'},
 			{id: "m3", field: "m3", name: "3м", width: 60, sortable: true,formatter:Leftovers.table.frm.int, cssClass: 'slick-align-right'}
 		    ];
@@ -278,9 +278,10 @@
 			    enableColumnReorder: false,
 			    enableFilter: true,
 			    multiSelect: true,
-			    url: 'Stock/listFetch'
+			    url: 'Stock/listFetch/?mode='+Leftovers.table.columnMode
 			}
 		    };
+		    Leftovers.table.calcDimensions("#stock_leftovers_sg",0,-30);
 		    Leftovers.grid = new SlickInfinite("#stock_leftovers_sg", settings);
 		    Leftovers.grid.onCellChange.subscribe(function (e, data) {
 			var updatedEntry = data.item;
@@ -290,6 +291,14 @@
 			    //Supply.grid.rowReload(data.row);
 			});
 		    });
+		},
+		calcDimensions:function(query, dw, dh){
+		    var wheight = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
+		    var height = (wheight - $(query).position().top - 20 + (dh || 0)) + 'px';// - $(query).position().top - 0
+		    var wwidth = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
+		    var width = (wwidth - $(query).position().left - 20 + (dw || 0)) + 'px';;
+		    $(query).css('height', height);
+		    $(query).css('width', width);
 		}
 	    }  
 	};
@@ -650,7 +659,7 @@
 	    <button style="width:100%;margin: 2px;text-align: left" onclick="Leftovers.utils.send_to_buy_manager()"><img src="img/docnew.png" style="width:24px;height: 24px;"> Загрузить в менеджер</button>
 	</td>
 	<td style="vertical-align: top">
-	    <div class="x-stock-leftovers-tools" style="text-align: right;padding-right: 5px;">
+	    <div class="x-stock-leftovers-tools" style="text-align: center;">
 		<span data-action="create" class="icon-24 icon-create" title="Добавить"> </span>
 		<span data-action="edit" class="icon-24 icon-change" title="Изменить"> </span>
 		<span data-action="delete" class="icon-24 icon-delete" title="Удалить"> </span>
@@ -660,7 +669,7 @@
 		<span data-action="out" class="icon-24 icon-download" title="Скачать таблицу"> </span>
 		<span data-action="print" class="icon-24 icon-print" title="Печать"> </span>
 	    </div>
-	    <div id="stock_leftovers_sg" style="width:1000px;height:700px;"></div>
+	    <div id="stock_leftovers_sg" style="height:700px;"></div>
 	</td>
     </tr>
 </table>
