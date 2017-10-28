@@ -209,18 +209,22 @@
 		function dateFormatter(row, cell, value, columnDef, dataContext) {
 		    var date = value.split(' ');
 		    return '<span title="' + value + '">' + date[0] + '</span>';
-		}	
-	var settings = {
-		    columns: [
-			{id: "parent_label", field: "parent_label", name: "Категория", width: 120, editor: AutoCompleteEditor},
-			{id: "product_code", field: "product_code", name: "Код", width: 80, sortable: true, editor: Slick.Editors.Text},
-			{id: "ru", field: "ru", name: "Название", width: 330, sortable: true, editor: Slick.Editors.Text},
-			{id: "product_quantity", field: "product_quantity", name: "Ед", width: 30, sortable: true, editor: Slick.Editors.Text, cssClass: 'slick-align-right'},
-			{id: "product_unit", field: "product_unit", name: "Себестоимость", width: 90, sortable: true, cssClass: 'slick-align-right'},
-			{id: "product_wrn_quantity", field: "product_wrn_quantity",  name: "Мин", width: 80, editor: Slick.Editors.Integer, sortable: true, cssClass: 'slick-align-right'},
+		}
+                
+                var columns_lev1=[
+                    {id: "parent_label", field: "parent_label", name: "Категория", width: 120, editor: AutoCompleteEditor},
+                    {id: "product_code", field: "product_code", name: "Код", width: 80, sortable: true, editor: Slick.Editors.Text},
+                    {id: "ru", field: "ru", name: "Название", width: 330, sortable: true, editor: Slick.Editors.Text},
+                    {id: "product_quantity", field: "product_quantity", name: "Ед", width: 30, sortable: true, editor: Slick.Editors.Text, cssClass: 'slick-align-right'},
+                    {id: "product_unit", field: "product_unit", name: "Себестоимость", width: 90, sortable: true, cssClass: 'slick-align-right'}
+                ];
+                var columns_lev2=[
+                        {id: "product_wrn_quantity", field: "product_wrn_quantity",  name: "Мин", width: 80, editor: Slick.Editors.Integer, sortable: true, cssClass: 'slick-align-right'},
 			{id: "m1", field: "m1", name: "1м", formatter: perc, width: 50, sortable: true},
-			{id: "m3", field: "m3", name: "3м", width: 50, sortable: true},
-			{id: "self_price", field: "self_price", name: "Учетная цена", sortable: true, width: 50},
+			{id: "m3", field: "m3", name: "3м", width: 50, sortable: true}
+                ];
+                var columns_adv=[
+                        {id: "self_price", field: "self_price", name: "Учетная цена", sortable: true, width: 50},
 			{id: "sell", field: "sell", name: "Продажа", width: 150, editor: Slick.Editors.Float},
 			{id: "buy", field: "buy", name: "Покупка", width: 70, editor: Slick.Editors.Float},
 			{id: "curr_code", field: "curr_code", name: "Валюта", sortable: true, width: 50, cssClass: 'slick-align-right'},
@@ -228,14 +232,15 @@
 			{id: "product_bpack", field: "product_bpack", name: "Б. упак", sortable: true, width: 50, editor: Slick.Editors.Integer, cssClass: 'slick-align-right'},
 			{id: "product_weight", field: "product_weight", name: "Вес кг", sortable: true, width: 70, editor: Slick.Editors.Float, cssClass: 'slick-align-right'},
 			{id: "product_volume", field: "product_volume", name: "Объем м3", sortable: true, width: 70, editor: Slick.Editors.Float, cssClass: 'slick-align-right'},
-			
 			{id: "product_uktzet", field: "product_uktzet", name: "Таможенный код", sortable: true, width: 100, editor: Slick.Editors.Text, cssClass: 'slick-align-right'},
 			{id: "barcode", field: "barcode", name: "Штрихкод", sortable: true, width: 50, editor: Slick.Editors.Text, cssClass: 'slick-align-right'},
 			{id: "analyse_type", field: "analyse_type", name: "Тип", sortable: true, width: 100, editor: Slick.Editors.Text},
 			{id: "analyse_group", field: "analyse_group", name: "Бренд", sortable: true, width: 100, editor: Slick.Editors.Text},
 			{id: "analyse_class", field: "analyse_class", name: "Класс", sortable: true, width: 100, editor: Slick.Editors.Text},
-			{id: "analyse_section", field: "analyse_section", name: "Раздел", sortable: true, width: 100, editor: Slick.Editors.Text}
-		    ],
+			{id: "analyse_section", field: "analyse_section", name: "Раздел", sortable: true, width: 100, editor: Slick.Editors.Text}                    
+                ];
+                var settings = {
+		    columns: [],
 		    options: {
 			editable: true,
 			autoedit: true,
@@ -246,6 +251,9 @@
 			url: 'StockBuyManager/listFetch'
 		    }
 		};
+                function switchColumnMod(){
+                    
+                }
 		function supplyTableEntryUpdate(supply_id, field, value) {
 		    return $.post('StockBuyManager/supplyUpdate', {supply_id: supply_id, field: field, value: value}, function (ok) {
 			if (ok < 1) {
