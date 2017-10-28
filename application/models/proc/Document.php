@@ -391,7 +391,7 @@ class Document extends Data {
 	    $this->Base->set_level(2);
 	}
 	if (strlen($product_code) == 13 && preg_match('/\d{13}/', $product_code)) {//
-	    $product_code = $this->Base->get_row("SELECT product_code FROM prod_list WHERE barcode='$product_code'", 0);
+	    $product_code = $this->Base->get_row("SELECT product_code FROM prod_list WHERE product_barcode='$product_code'", 0);
 	}
 	$doc_id = $this->doc('doc_id');
 	$this->Base->query("START TRANSACTION");

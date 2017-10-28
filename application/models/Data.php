@@ -15,7 +15,7 @@ class Data extends Catalog {
 	$source = array_map('addslashes',$this->request('source','raw'));
 	$target = array_map('addslashes',$this->request('target','raw'));
 	if( $table_name=='prod_list' ){
-	    $this->importInTable('prod_list', $source, $target, '/product_code/ru/ua/en/product_spack/product_bpack/product_weight/product_volume/product_unit/analyse_origin/barcode/analyse_type/analyse_brand/analyse_class/product_article/', $label);
+	    $this->importInTable('prod_list', $source, $target, '/product_code/ru/ua/en/product_spack/product_bpack/product_weight/product_volume/product_unit/analyse_origin/product_barcode/analyse_type/analyse_brand/analyse_class/product_article/', $label);
 	} else if( $table_name=='price_list' ){
 	    $this->importInTable('prod_list', $source, $target, '/product_code/', $label);
 	    $this->importInTable('price_list', $source, $target, '/product_code/sell/buy/curr_code/label/', $label);
