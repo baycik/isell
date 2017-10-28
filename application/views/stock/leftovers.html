@@ -182,7 +182,6 @@
 			{id: "product_bpack", field: "product_bpack", name: "Б. упак", sortable: true,formatter:Leftovers.table.frm.int, width: 60, editor: Slick.Editors.Integer, cssClass: 'slick-align-right'},
 			{id: "product_weight", field: "product_weight", name: "Вес кг", sortable: true,formatter:Leftovers.table.frm.float5, width: 70, editor: Slick.Editors.Float, cssClass: 'slick-align-right'},
 			{id: "product_volume", field: "product_volume", name: "Объем м3", sortable: true,formatter:Leftovers.table.frm.float5, width: 70, editor: Slick.Editors.Float, cssClass: 'slick-align-right'},
-			
 			{id: "product_uktzet", field: "product_uktzet", name: "Таможенный код", sortable: true, width: 100, editor: Slick.Editors.Text, cssClass: 'slick-align-right'},
 			{id: "barcode", field: "barcode", name: "Штрихкод", sortable: true, width: 100, editor: Slick.Editors.Text, cssClass: 'slick-align-right'},
 			{id: "analyse_type", field: "analyse_type", name: "Тип", sortable: true, width: 100, editor: Slick.Editors.Text},
@@ -213,7 +212,7 @@
 		    },
 		    float5:function(row, cell, value, columnDef, dataContext) {
 			return value>0?(value*1).toFixed(5):"";
-		    },
+		    }
 		},
 		editorAutocomplete:function(args){
 		    var $input;
