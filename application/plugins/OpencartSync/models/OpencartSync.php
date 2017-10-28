@@ -25,7 +25,7 @@ class OpencartSync extends PluginManager{
                     product_volume,
                     product_weight,
                     barcode,
-                    analyse_group
+                    analyse_brand
                 FROM
                     stock_entries se
                         JOIN

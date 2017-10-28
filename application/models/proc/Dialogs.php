@@ -42,7 +42,7 @@ class Dialogs extends Data {
 	ua='$product_data[ua]',
 	en='$product_data[en]',
 	product_code='{$product_data['new_product_code']}',
-	product_uktzet='$product_data[product_uktzet]',
+	analyse_origin='$product_data[analyse_origin]',
 	product_spack='$product_data[product_spack]',
 	product_bpack='$product_data[product_bpack]',
 	product_weight='$product_data[product_weight]',

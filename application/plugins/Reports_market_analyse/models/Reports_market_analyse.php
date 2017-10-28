@@ -59,14 +59,14 @@ class Reports_market_analyse extends Catalog{
                 product_code,
                 ru product_name,
                 analyse_type,
-                analyse_group,
+                analyse_brand,
                 $affiliate store_code,
                 $sold sold,
                 $left leftover
             FROM
                 imported_data
                     LEFT JOIN
-                prod_list pl ON analyse_section=$article
+                prod_list pl ON product_article=$article
             WHERE
                 $article<>'' 
                 AND label='$label')";
@@ -157,7 +157,7 @@ class Reports_market_analyse extends Catalog{
                 article,
                 product_name,
                 analyse_type,
-                analyse_group,
+                analyse_brand,
                 store_code,
                 sold,
                 leftover,

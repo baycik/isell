@@ -104,7 +104,7 @@ class DocumentSell extends DocumentBase{
                     product_quantity*product_volume volume,
                     CHK_ENTRY(doc_entry_id) AS row_status,
                     product_unit,
-                    product_uktzet
+                    analyse_origin
                 FROM
                     document_list
                         JOIN

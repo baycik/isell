@@ -117,7 +117,7 @@ class Document extends Data {
 
 //    public function checkInErnn() {
 //	$doc_id = $this->doc('doc_id');
-//	$has_uktzed = $this->Base->get_row("SELECT 1 FROM document_entries JOIN prod_list USING(product_code) WHERE doc_id=$doc_id AND product_uktzet");
+//	$has_uktzed = $this->Base->get_row("SELECT 1 FROM document_entries JOIN prod_list USING(product_code) WHERE doc_id=$doc_id AND analyse_origin");
 //	if (!$has_uktzed && $this->doc('inernn')) {
 //	    $this->updateHead(NULL, 'inernn');
 //	} else
@@ -930,8 +930,8 @@ class Document extends Data {
                     CHK_ENTRY(doc_entry_id) AS row_status,
                     product_unit,
                     party_label,
-                    analyse_section,
-                    product_uktzet,
+                    product_article,
+                    analyse_origin,
                     self_price,
                     IF(doc_type=1,invoice_price<self_price-0.01,invoice_price-0.01>self_price) is_loss
                 FROM
@@ -1021,7 +1021,7 @@ class Document extends Data {
             de.doc_entry_id,
             pl.product_code,
             pl.$company_lang,
-            product_uktzet,
+            analyse_origin,
             de.product_quantity,
             pl.product_unit,
             ROUND(invoice_price,$signs_after_dot) AS product_price,
@@ -1050,7 +1050,7 @@ class Document extends Data {
                 ROUND(invoice_price * $vat_correction * $curr_correction * product_quantity,2) AS product_sum,
                 CHK_ENTRY(doc_entry_id) AS row_status,
                 party_label,
-                product_uktzet
+                analyse_origin
             FROM
                 document_entries JOIN prod_list pl USING(product_code)
             WHERE

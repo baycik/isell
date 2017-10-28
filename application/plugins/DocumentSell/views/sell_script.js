@@ -127,7 +127,7 @@ body={
 		{id:"product_sum_total", field: "product_sum_total",name: "Сумма", sortable: true, width: 80,cssClass:'slick-align-right', editor: Slick.Editors.Float},
 		{id:"row_status", field: "row_status",name: "!",sortable: true, width: 25,formatter:body.tooltip },
 		{id:"party_label",field:"party_label",name:"Партия",width:120, editor: Slick.Editors.Text},
-		{id:"product_uktzet",field:'product_uktzet',name:"Происхождение",width:70},
+		{id:"analyse_origin",field:'analyse_origin',name:"Происхождение",width:70},
 		{id:"self_price",field:'self_price',name:"maliyet",width:60,cssClass:'slick-align-right'}
 	    ],
 	    options:{

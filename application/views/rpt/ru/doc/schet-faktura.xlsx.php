@@ -27,7 +27,7 @@ foreach($this->view->rows as &$row){
     $row->product_sum_vat = $row->product_sum_total-$row->product_sum_vatless;
     $row->product_accis='без акциза';
     
-    $row->origin_name=$row->product_uktzet;
+    $row->origin_name=$row->analyse_origin;
     $row->origin_code=$countries[$row->origin_name];
     
     //$row->product_price=format($row->product_price*$vat_ratio);

@@ -52,7 +52,7 @@
     <RXXXXG3S ROWNUM="{$counter+1}">{$value->product_name}</RXXXXG3S>
 {/loop}
 {loop name="v->rows"}
-    <RXXXXG4 ROWNUM="{$counter+1}">{$value->product_uktzet}</RXXXXG4>
+    <RXXXXG4 ROWNUM="{$counter+1}">{$value->analyse_origin}</RXXXXG4>
 {/loop}
 {loop name="v->rows"}
     <RXXXXG4S ROWNUM="{$counter+1}">{$value->product_unit}</RXXXXG4S>

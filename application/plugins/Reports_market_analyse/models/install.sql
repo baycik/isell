@@ -15,7 +15,7 @@ CREATE TABLE `plugin_market_rpt_entries` (
   `article` varchar(45) DEFAULT NULL,
   `product_name` varchar(255) DEFAULT NULL COMMENT 'Название Рус.',
   `analyse_type` varchar(45) DEFAULT NULL COMMENT 'Тип',
-  `analyse_group` varchar(45) DEFAULT NULL COMMENT 'Группа',
+  `analyse_brand` varchar(45) DEFAULT NULL COMMENT 'Группа',
   `store_code` varchar(45) DEFAULT NULL,
   `sold` int(11) NOT NULL,
   `leftover` int(11) NOT NULL,

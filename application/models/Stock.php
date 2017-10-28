@@ -44,7 +44,7 @@ class Stock extends Catalog {
     private function columnsGet(){
 	$lvl1="parent_id,parent_label,t.product_code,ru,t.product_quantity,product_unit";
 	$lvl2=",product_wrn_quantity,SUM(IF(TO_DAYS(NOW()) - TO_DAYS(dl.cstamp) <= 30,de.product_quantity,0)) m1,ROUND( SUM(IF(TO_DAYS(NOW()) - TO_DAYS(dl.cstamp) <= 92,de.product_quantity,0))/3 ) m3";
-	$adv=",t.self_price,sell,buy,curr_code,product_spack,product_bpack,product_weight,product_volume,product_uktzet,barcode,analyse_type,analyse_group,analyse_class,analyse_section";
+	$adv=",t.self_price,sell,buy,curr_code,product_spack,product_bpack,product_weight,product_volume,analyse_origin,barcode,analyse_type,analyse_brand,analyse_class,product_article";
 	if( $this->Hub->svar('user_level')<2 ){
 	    return $lvl1;
 	}
@@ -140,12 +140,12 @@ class Stock extends Catalog {
 		product_weight,
 		product_volume,
 		t.party_label,
-		product_uktzet,
+		analyse_origin,
 		barcode,
 		analyse_type,
-		analyse_group,
+		analyse_brand,
 		analyse_class,
-		analyse_section
+		product_article
 	    FROM
 		    (SELECT 
 			st.label parent_label,
@@ -249,11 +249,11 @@ class Stock extends Catalog {
 	    'product_bpack'=>$this->request('product_bpack','int'),
 	    'product_weight'=>$this->request('product_weight','double'),
 	    'product_volume'=>$this->request('product_volume','double'),
-	    'product_uktzet'=>$this->request('product_uktzet'),
+	    'analyse_origin'=>$this->request('analyse_origin'),
 	    'analyse_type'=>$this->request('analyse_type'),
-	    'analyse_group'=>$this->request('analyse_group'),
+	    'analyse_brand'=>$this->request('analyse_brand'),
 	    'analyse_class'=>$this->request('analyse_class'),
-	    'analyse_section'=>$this->request('analyse_section'),            
+	    'product_article'=>$this->request('product_article'),            
 	    'barcode'=>$this->request('barcode'),
             'is_service'=>$this->request('is_service','bool')
 	];
@@ -307,7 +307,7 @@ class Stock extends Catalog {
             $source[]=$parent_id;
             $target[]='parent_id';
         }
-	$this->importInTable('prod_list', $source, $target, '/product_code/ru/ua/en/product_spack/product_bpack/product_weight/product_volume/product_unit/product_uktzet/barcode/analyse_type/analyse_group/analyse_class/analyse_section/', $label);
+	$this->importInTable('prod_list', $source, $target, '/product_code/ru/ua/en/product_spack/product_bpack/product_weight/product_volume/product_unit/analyse_origin/barcode/analyse_type/analyse_brand/analyse_class/product_article/', $label);
 	$this->importInTable('price_list', $source, $target, '/product_code/sell/buy/curr_code/label/', $label);
 	$this->importInTable('stock_entries', $source, $target, '/product_code/party_label/parent_id/', $label);
 	$this->query("DELETE FROM imported_data WHERE label LIKE '%$label%' AND {$source[0]} IN (SELECT product_code FROM stock_entries)");

@@ -11,7 +11,7 @@ class Reports_summary_sell_stock extends Catalog{
 	$this->in_alt_currency=$this->request('in_alt_currency','bool',0);
 	$this->group_by_filter=$this->request('group_by_filter');
 	$this->group_by=$this->request('group_by','\w+');
-	if( !in_array($this->group_by, ['parent_id','product_code','analyse_type','analyse_group','analyse_class','analyse_section']) ){
+	if( !in_array($this->group_by, ['parent_id','product_code','analyse_type','analyse_brand','analyse_class','product_article']) ){
 	    $this->group_by='parent_id';
 	}
 	parent::__construct();
