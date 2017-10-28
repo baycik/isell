@@ -25,27 +25,86 @@ class Stock extends Catalog {
 	return $deleted;
     }
 
-    private function decodeStockFilter(){
-	$raw=$this->input->get_post('filterRules');
-	$filter=json_decode($raw);
-	if( !is_array($filter) || count($filter)===0 ){
-	    return [1,1];
+    private function makeStockFilter($filter){
+	if( !$filter ){
+	    return ['inner'=>1,'outer'=>1];
 	}
 	$havingInner=[1];
 	$havingOuter=[1];
-	foreach( $filter as $rule ){
-	    if($rule->field=='m1' || $rule->field=='m3'){
-		$havingOuter[]="$rule->field LIKE '%$rule->value%'";
+	foreach( $filter as $field=>$value ){
+	    if($field=='m1' || $field=='m3'){
+		$havingOuter[]="$field LIKE '%$value%'";
 	    } else {
-		$havingInner[]="$rule->field LIKE '%$rule->value%'";
+		$havingInner[]="$field LIKE '%$value%'";
 	    }
 	}
-	return [implode(' AND ',$havingInner),implode(' AND ',$havingOuter)];	
+	return ['inner'=>implode(' AND ',$havingInner),'outer'=>implode(' AND ',$havingOuter)];	
+    }
+
+    private function columnsGet(){
+	$lvl1="parent_id,parent_label,t.product_code,ru,t.product_quantity,product_unit";
+	$lvl2=",product_wrn_quantity,SUM(IF(TO_DAYS(NOW()) - TO_DAYS(dl.cstamp) <= 30,de.product_quantity,0)) m1,ROUND( SUM(IF(TO_DAYS(NOW()) - TO_DAYS(dl.cstamp) <= 92,de.product_quantity,0))/3 ) m3";
+	$adv=",t.self_price,sell,buy,curr_code,product_spack,product_bpack,product_weight,product_volume,product_uktzet,barcode,analyse_type,analyse_group,analyse_class,analyse_section";
+	if( $this->Hub->svar('user_level')<2 ){
+	    return $lvl1;
+	}
+	return $lvl1.$lvl2.$adv;
+    }
+    
+    public $listFetch=['parent_id'=>'int','offset'=>'int','limit'=>'int','sortby'=>'string','sortdir'=>'(ASC|DESC)','filter'=>'json'];
+    public function listFetch($parent_id,$offset,$limit,$sortby,$sortdir,$filter=null){
+	if( empty($sortby) ){
+	    $sortby="product_code";
+	    $sortdir="ASC";
+	}
+	$having=$this->makeStockFilter($filter);
+	$columns=$this->columnsGet();
+	$where='';
+	if( $parent_id ){
+	    $branch_ids=$this->treeGetSub('stock_tree',$parent_id);
+	    $where="WHERE se.parent_id IN (".implode(',',$branch_ids).")";
+	}
+	$sql="SELECT
+		$columns
+	    FROM
+		    (SELECT 
+			st.label parent_label,
+			pl.*,
+			pp.sell,
+			pp.buy,
+			pp.curr_code,
+			se.stock_entry_id,
+			se.parent_id,
+			se.party_label,
+			se.product_quantity,
+			se.product_wrn_quantity,
+			se.product_img,
+			se.self_price		
+		    FROM
+			stock_entries se
+			    JOIN
+			prod_list pl ON pl.product_code=se.product_code
+			    LEFT JOIN
+			price_list pp ON pp.product_code=se.product_code AND pp.label=''
+			    LEFT JOIN
+			stock_tree st ON se.parent_id=branch_id
+			$where
+			HAVING {$having['inner']}
+			ORDER BY se.parent_id,se.product_code
+			LIMIT $limit OFFSET $offset) t		
+ 		    LEFT JOIN
+		document_entries de ON de.product_code=t.product_code
+		    LEFT JOIN
+		document_list dl ON de.doc_id=dl.doc_id AND dl.is_commited=1 AND dl.doc_type=1 AND notcount=0
+	    GROUP BY t.product_code
+	    HAVING {$having['outer']}
+	    ORDER BY $sortby $sortdir";
+	return $this->get_list($sql);
     }
     
     
-    public $listFetch=['page'=>['int',1],'rows'=> ['int',30],'parent_id'=>['int',0],'string'];
-    public function listFetch( $page, $rows, $parent_id, $having=null ){
+    public $_listFetch=['page'=>['int',1],'rows'=> ['int',30],'parent_id'=>['int',0],'string'];
+    public function _listFetch( $page, $rows, $parent_id, $having=null ){
 	$offset=($page-1)*$rows;
 	if( $offset<0 ){
 	    $offset=0;

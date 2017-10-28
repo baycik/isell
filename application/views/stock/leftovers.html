@@ -27,7 +27,7 @@
 	var Leftovers = {
 	    grid: null,
 	    init: function () {
-		Leftovers.initGrid();
+		Leftovers.table.init();
 		$(".x-stock-leftovers-tools").click(function (e) {
 		    var action = $(e.target).data('action');
 		    if (action) {
@@ -158,8 +158,64 @@
 		    this.out('.print');
 		}
 	    },
-	    initGrid: function () {
-		function AutoCompleteEditor(args) {
+	    table:{
+		columnMode:'advanced',
+		columnsGet:function(){
+		    var columns_lev1=[
+			{id: "parent_label", field: "parent_label", name: "Категория", width: 120},
+			{id: "product_code", field: "product_code", name: "Код", width: 80, sortable: true},
+			{id: "ru", field: "ru", name: "Название", width: 330, sortable: true},
+			{id: "product_unit", field: "product_unit", name: "Ед", width: 30, sortable: true, cssClass: 'slick-align-right'},
+			{id: "product_quantity", field: "product_quantity", name: "Остаток", width: 60, sortable: true, cssClass: 'slick-align-right'}
+		    ];
+		    var columns_lev2=[
+			{id: "product_wrn_quantity", field: "product_wrn_quantity",  name: "Мин", width: 60, editor: Slick.Editors.Integer, sortable: true, cssClass: 'slick-align-right'},
+			{id: "m1", field: "m1", name: "1м", width: 60, sortable: true,formatter:Leftovers.table.frm.m1, cssClass: 'slick-align-right'},
+			{id: "m3", field: "m3", name: "3м", width: 60, sortable: true,formatter:Leftovers.table.frm.int, cssClass: 'slick-align-right'}
+		    ];
+		    var columns_adv=[
+			{id: "self_price", field: "self_price", name: "Учетная цена", sortable: true,formatter:Leftovers.table.frm.float2, width: 70, cssClass: 'slick-align-right'},
+			{id: "sell", field: "sell", name: "Продажа", sortable: true,formatter:Leftovers.table.frm.float2, width: 70, cssClass: 'slick-align-right', editor: Slick.Editors.Float},
+			{id: "buy", field: "buy", name: "Покупка", sortable: true,formatter:Leftovers.table.frm.float2, width: 70, cssClass: 'slick-align-right', editor: Slick.Editors.Float},
+			{id: "curr_code", field: "curr_code", name: "Валюта", sortable: true, width: 50, cssClass: 'slick-align-right'},
+			{id: "product_spack", field: "product_spack", name: "М. упак", sortable: true,formatter:Leftovers.table.frm.int, width: 60, editor: Slick.Editors.Integer, cssClass: 'slick-align-right'},
+			{id: "product_bpack", field: "product_bpack", name: "Б. упак", sortable: true,formatter:Leftovers.table.frm.int, width: 60, editor: Slick.Editors.Integer, cssClass: 'slick-align-right'},
+			{id: "product_weight", field: "product_weight", name: "Вес кг", sortable: true,formatter:Leftovers.table.frm.float5, width: 70, editor: Slick.Editors.Float, cssClass: 'slick-align-right'},
+			{id: "product_volume", field: "product_volume", name: "Объем м3", sortable: true,formatter:Leftovers.table.frm.float5, width: 70, editor: Slick.Editors.Float, cssClass: 'slick-align-right'},
+			
+			{id: "product_uktzet", field: "product_uktzet", name: "Таможенный код", sortable: true, width: 100, editor: Slick.Editors.Text, cssClass: 'slick-align-right'},
+			{id: "barcode", field: "barcode", name: "Штрихкод", sortable: true, width: 100, editor: Slick.Editors.Text, cssClass: 'slick-align-right'},
+			{id: "analyse_type", field: "analyse_type", name: "Тип", sortable: true, width: 100, editor: Slick.Editors.Text},
+			{id: "analyse_group", field: "analyse_group", name: "Бренд", sortable: true, width: 100, editor: Slick.Editors.Text},
+			{id: "analyse_class", field: "analyse_class", name: "Класс", sortable: true, width: 100, editor: Slick.Editors.Text},
+			{id: "analyse_section", field: "analyse_section", name: "Раздел", sortable: true, width: 100, editor: Slick.Editors.Text}                    
+		    ];
+		    if( App.user.props.level<2 ){
+			return columns_lev1;
+		    }
+		    if( Leftovers.table.columnMode==='advanced' ){
+			return columns_lev1.concat(columns_lev2).concat(columns_adv);
+		    }
+		    return columns_lev1.concat(columns_lev2);
+		},
+		frm:{
+		    m1:function(row, cell, value, columnDef, dataContext) {
+			if( dataContext.m1<dataContext.m3 ){
+			    return "<span style=color:red>"+(value*1||"")+"</span>";
+			}
+			return "<span style=color:green>"+(value*1||"")+"</span>";
+		    },
+		    int:function(row, cell, value, columnDef, dataContext) {
+			return (value*1||"");
+		    },
+		    float2:function(row, cell, value, columnDef, dataContext) {
+			return value>0?(value*1).toFixed(2):"";
+		    },
+		    float5:function(row, cell, value, columnDef, dataContext) {
+			return value>0?(value*1).toFixed(5):"";
+		    },
+		},
+		editorAutocomplete:function(args){
 		    var $input;
 		    var defaultValue;
 		    this.keyCaptureList = [Slick.keyCode.UP, Slick.keyCode.DOWN, Slick.keyCode.ENTER];
@@ -198,79 +254,45 @@
 			    msg: null
 			};
 		    };
-		    this.init();
-		}
-		function perc(row, cell, value, columnDef, dataContext) {
-		    if (!value || value == 0) {
-			return "";
-		    }
-		    return value + " %";
-		}
-		function dateFormatter(row, cell, value, columnDef, dataContext) {
-		    var date = value.split(' ');
-		    return '<span title="' + value + '">' + date[0] + '</span>';
-		}
-                
-                var columns_lev1=[
-                    {id: "parent_label", field: "parent_label", name: "Категория", width: 120, editor: AutoCompleteEditor},
-                    {id: "product_code", field: "product_code", name: "Код", width: 80, sortable: true, editor: Slick.Editors.Text},
-                    {id: "ru", field: "ru", name: "Название", width: 330, sortable: true, editor: Slick.Editors.Text},
-                    {id: "product_quantity", field: "product_quantity", name: "Ед", width: 30, sortable: true, editor: Slick.Editors.Text, cssClass: 'slick-align-right'},
-                    {id: "product_unit", field: "product_unit", name: "Себестоимость", width: 90, sortable: true, cssClass: 'slick-align-right'}
-                ];
-                var columns_lev2=[
-                        {id: "product_wrn_quantity", field: "product_wrn_quantity",  name: "Мин", width: 80, editor: Slick.Editors.Integer, sortable: true, cssClass: 'slick-align-right'},
-			{id: "m1", field: "m1", name: "1м", formatter: perc, width: 50, sortable: true},
-			{id: "m3", field: "m3", name: "3м", width: 50, sortable: true}
-                ];
-                var columns_adv=[
-                        {id: "self_price", field: "self_price", name: "Учетная цена", sortable: true, width: 50},
-			{id: "sell", field: "sell", name: "Продажа", width: 150, editor: Slick.Editors.Float},
-			{id: "buy", field: "buy", name: "Покупка", width: 70, editor: Slick.Editors.Float},
-			{id: "curr_code", field: "curr_code", name: "Валюта", sortable: true, width: 50, cssClass: 'slick-align-right'},
-			{id: "product_spack", field: "product_spack", name: "М. упак", sortable: true, width: 50, editor: Slick.Editors.Integer, cssClass: 'slick-align-right'},
-			{id: "product_bpack", field: "product_bpack", name: "Б. упак", sortable: true, width: 50, editor: Slick.Editors.Integer, cssClass: 'slick-align-right'},
-			{id: "product_weight", field: "product_weight", name: "Вес кг", sortable: true, width: 70, editor: Slick.Editors.Float, cssClass: 'slick-align-right'},
-			{id: "product_volume", field: "product_volume", name: "Объем м3", sortable: true, width: 70, editor: Slick.Editors.Float, cssClass: 'slick-align-right'},
-			{id: "product_uktzet", field: "product_uktzet", name: "Таможенный код", sortable: true, width: 100, editor: Slick.Editors.Text, cssClass: 'slick-align-right'},
-			{id: "barcode", field: "barcode", name: "Штрихкод", sortable: true, width: 50, editor: Slick.Editors.Text, cssClass: 'slick-align-right'},
-			{id: "analyse_type", field: "analyse_type", name: "Тип", sortable: true, width: 100, editor: Slick.Editors.Text},
-			{id: "analyse_group", field: "analyse_group", name: "Бренд", sortable: true, width: 100, editor: Slick.Editors.Text},
-			{id: "analyse_class", field: "analyse_class", name: "Класс", sortable: true, width: 100, editor: Slick.Editors.Text},
-			{id: "analyse_section", field: "analyse_section", name: "Раздел", sortable: true, width: 100, editor: Slick.Editors.Text}                    
-                ];
-                var settings = {
-		    columns: [],
-		    options: {
-			editable: true,
-			autoedit: true,
-			//enableCellNavigation: true,
-			enableColumnReorder: false,
-			enableFilter: true,
-			multiSelect: true,
-			url: 'StockBuyManager/listFetch'
-		    }
-		};
-                function switchColumnMod(){
-                    
-                }
-		function supplyTableEntryUpdate(supply_id, field, value) {
-		    return $.post('StockBuyManager/supplyUpdate', {supply_id: supply_id, field: field, value: value}, function (ok) {
+		    this.init();		    
+		},
+		update:function(supply_id, field, value) {
+		    return $.post('Stock/entryUpdate', {supply_id: supply_id, field: field, value: value}, function (ok) {
 			if (ok < 1) {
-			    Supply.grid.reload();
+			    Leftovers.grid.reload();
 			}
 		    });
-		}
-		Supply.grid = new SlickInfinite("#supply_list_sg", settings);
-		Supply.grid.onCellChange.subscribe(function (e, data) {
-		    var updatedEntry = data.item;
-		    var field = settings.columns[data.cell].field;
-		    var value = updatedEntry[field];
-		    supplyTableEntryUpdate(updatedEntry.supply_id, field, value).done(function () {
-			//Supply.grid.rowReload(data.row);
+		},
+		init:function(){
+		    function perc(row, cell, value, columnDef, dataContext) {
+			if (!value || value == 0) {
+			    return "";
+			}
+			return value + " %";
+		    }
+		    var settings = {
+			columns:  Leftovers.table.columnsGet(),
+			options: {
+			    editable: true,
+			    autoedit: true,
+			    enableCellNavigation: true,
+			    enableColumnReorder: false,
+			    enableFilter: true,
+			    multiSelect: true,
+			    url: 'Stock/listFetch'
+			}
+		    };
+		    Leftovers.grid = new SlickInfinite("#stock_leftovers_sg", settings);
+		    Leftovers.grid.onCellChange.subscribe(function (e, data) {
+			var updatedEntry = data.item;
+			var field = settings.columns[data.cell].field;
+			var value = updatedEntry[field];
+			Leftovers.table.update(updatedEntry.supply_id, field, value).done(function () {
+			    //Supply.grid.rowReload(data.row);
+			});
 		    });
-		});
-	    }
+		}
+	    }  
 	};
 	App.require(["js/slick/lib/jquery.event.drag-2.3.0.js"], function () {
 	    App.require([
@@ -297,13 +319,7 @@
 
 
 
-
-
-
-
-
-    /* global App */
-    Leftovers = App.page_stock_leftovers = {
+/*    Leftovers = App.page_stock_leftovers = {
 	init: function () {
 	    this.initTree();
 	    //Leftovers.list.toggleFilter();
@@ -620,7 +636,7 @@
 		});
 	    }
 	}
-    };
+    };*/
 </script>
 <table style="min-width:500px">
     <tr>
@@ -635,76 +651,17 @@
 	    <button style="width:100%;margin: 2px;text-align: left" onclick="Leftovers.utils.send_to_buy_manager()"><img src="img/docnew.png" style="width:24px;height: 24px;"> Загрузить в менеджер</button>
 	</td>
 	<td style="vertical-align: top">
-	    <div></div>
-
-
-
-
-
-
-
-
-
-
-
-
-	    <div style="float: left;font-weight: bold;padding-top: 8px;">
-		<img src="img/table16.png" style="width:16px;height: 16px;"> Остатки в категории: "<span id="stock_cat_name">Все</span>"
+	    <div class="x-stock-leftovers-tools" style="text-align: right;padding-right: 5px;">
+		<span data-action="create" class="icon-24 icon-create" title="Добавить"> </span>
+		<span data-action="edit" class="icon-24 icon-change" title="Изменить"> </span>
+		<span data-action="delete" class="icon-24 icon-delete" title="Удалить"> </span>
+		<span data-action="move" class="icon-24 icon-move" title="Перенести в другую категорию"> </span>
+		<span data-action="import" class="icon-24 icon-import" title="Импорт"> </span>
+		<span data-action="reload" class="icon-24 icon-refresh" title="Обновить"> </span>
+		<span data-action="out" class="icon-24 icon-download" title="Скачать таблицу"> </span>
+		<span data-action="print" class="icon-24 icon-print" title="Печать"> </span>
 	    </div>
-	    <div style="text-align: right;padding-right: 5px;">
-		<span class="icon-24 icon-create" title="Добавить" onclick="Leftovers.list.create();"> </span>
-		<span class="icon-24 icon-change" title="Изменить" onclick="Leftovers.list.edit();"> </span>
-		<span class="icon-24 icon-delete" title="Удалить" onclick="Leftovers.list.delete();"> </span>
-		<span class="icon-24" style="background-image: url(img/big_rightarrow.png);background-repeat: no-repeat;background-size: 24px 24px;" title="Перенести в другую категорию" onclick="Leftovers.list.move();"> </span>
-		<span class="icon-24 icon-import" title="Импорт" onclick="Leftovers.list.import();"> </span>
-		<span class="icon-24 icon-tablefilter" title="Фильтр таблицы" onclick="Leftovers.list.toggleFilter()"> </span>
-		<span class="icon-24 icon-refresh" title="Обновить" onclick="Leftovers.list.reload()"> </span>
-		<span class="icon-24" style="background-image: url(img/file_download.png);background-repeat: no-repeat" title="Скачать таблицу" onclick="Leftovers.list.outfile('.xlsx');"> </span>
-		<span class="icon-24 icon-print" title="Печать" onclick="Leftovers.list.out('.print')"> </span>
-	    </div>
-	    <table class="easyui-datagrid1" id="stock_dg" style="width:780px" data-options="
-		   loader:Leftovers.list.loader,
-		   pagination:true,
-		   pageSize:30,
-		   pageList:[30,60,120,600],
-		   singleSelect:false,
-		   autoRowHeight:false,
-		   remoteFilter:true,
-		   onSelect:function(){$('#stock_dg').datagrid('resize');},
-		   onDblClickCell:Leftovers.list.edit">
-		<thead data-options="frozen:true">
-		    <tr>
-			<th data-options="field:'parent_label',width:120">Категория</th>
-			<th data-options="field:'product_code',width:80">Код</th>
-		    </tr>
-		</thead>
-		<thead>
-		    <tr>
-			<th data-options="field:'ru',width:330">Название</th>
-			<th data-options="field:'product_quantity',width:70,align:'right',styler:Leftovers.list.calc.left">Остаток</th>
-			<th data-options="field:'product_unit',width:30,align:'left'">Ед</th>
-			<th data-options="field:'product_wrn_quantity',width:50,align:'right'">Мин</th>
-			<th data-options="field:'m1',width:50,align:'right',styler:Leftovers.list.calc.m1">1м</th>
-			<th data-options="field:'m3',width:50,align:'right'">3м</th>
-			<th data-options="field:'self_price',width:50,align:'right',hidden:true">Учетная ц.</th>
-			<th data-options="field:'sell',width:50,align:'right',hidden:true">Продажа</th>
-			<th data-options="field:'buy',width:50,align:'right',hidden:true">Покупка</th>
-			<th data-options="field:'curr_code',width:50,align:'right',hidden:true">Валюта</th>
-			<th data-options="field:'product_spack',width:50,align:'right'">М. упак</th>
-			<th data-options="field:'product_bpack',width:50,align:'right',">Б. упак</th>
-			<th data-options="field:'product_weight',width:70,align:'right'">Вес кг</th>
-			<th data-options="field:'product_volume',width:70,align:'right'">Объем м3</th>
-			<th data-options="field:'party_label',width:100">Партия</th>
-			<th data-options="field:'product_uktzet',width:100,align:'right'">Таможенный код</th>
-			<th data-options="field:'barcode',width:100,align:'right'">Штрихкод</th>
-
-                        <th data-options="field:'analyse_type',width:100">Тип</th>
-			<th data-options="field:'analyse_group',width:100">Бренд</th>
-			<th data-options="field:'analyse_class',width:100">Класс</th>
-			<th data-options="field:'analyse_section',width:100">Раздел</th>
-                    </tr>
-		</thead>
-	    </table>
+	    <div id="stock_leftovers_sg" style="width:1000px;height:700px;"></div>
 	</td>
     </tr>
 </table>

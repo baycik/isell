@@ -379,6 +379,9 @@ div .combobox-item-hover{
 .icon-download{
     background: url('../img/file_download.png') no-repeat center center;
 }
+.icon-move{
+    background: url('../img/big_rightarrow.png') no-repeat center center;background-size: 24px 24px;
+}
 .link_button:hover{
     padding: 5px;
     margin: -6px;
