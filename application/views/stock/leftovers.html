@@ -28,10 +28,27 @@
 	    grid: null,
 	    init: function () {
 		Leftovers.table.init();
+		Leftovers.initTree();
 		$(".x-stock-leftovers-tools").click(function (e) {
 		    var action = $(e.target).data('action');
 		    if (action) {
 			Leftovers.tools[action] && Leftovers.tools[action]();
+		    }
+		});
+	    },
+	    initTree: function () {
+		App.loadModule('page/stock/tree', {inline: true, clickselect: true}, 'StreeInline', /(Stree|page_stock_tree)([^\w]|_)/g, "StreeInline$2").progress(function (status, branch) {
+		    if (status === 'select') {
+			var parent_id=branch?branch.branch_id:0;
+			var parent_label=branch?branch.parent_label:0;
+			$("#stock_cat_name").html(parent_label);
+			Leftovers.grid.scrollRowToTop(0);
+			Leftovers.grid.updateOptions({
+			    params:{
+				parent_id:parent_id
+			    }
+			});
+			Leftovers.grid.reload();
 		    }
 		});
 	    },
@@ -139,6 +156,9 @@
 		entryEdit: function () {
 
 		},
+		widen:function(){
+		    
+		},
 		out: function (out_type) {
 		    var sorted = Leftovers.grid.getSortColumns();
 		    var params = {
@@ -160,13 +180,14 @@
 	    },
 	    table:{
 		columnMode:'simple',
+		columnSummaryWidth:0,
 		columnsGet:function(){
 		    var columns_lev1=[
 			{id: "parent_label", field: "parent_label", name: "Категория", width: 120},
 			{id: "product_code", field: "product_code", name: "Код", width: 80, sortable: true},
 			{id: "ru", field: "ru", name: "Название", width: 330, sortable: true},
 			{id: "product_unit", field: "product_unit", name: "Ед", width: 30, sortable: true, cssClass: 'slick-align-right'},
-			{id: "product_quantity", field: "product_quantity", name: "Остаток", width: 60, sortable: true,formatter:Leftovers.table.frm.int, cssClass: 'slick-align-right'}
+			{id: "product_quantity", field: "product_quantity", name: "Остаток", width: 60, sortable: true,formatter:Leftovers.table.frm.min, cssClass: 'slick-align-right'}
 		    ];
 		    var columns_lev2=[
 			{id: "product_wrn_quantity", field: "product_wrn_quantity",  name: "Мин", width: 60, editor: Slick.Editors.Integer, sortable: true,formatter:Leftovers.table.frm.int, cssClass: 'slick-align-right'},
@@ -189,17 +210,31 @@
 			{id: "analyse_class", field: "analyse_class", name: "Класс", sortable: true, width: 100, editor: Slick.Editors.Text},
 			{id: "product_article", field: "product_article", name: "Раздел", sortable: true, width: 100, editor: Slick.Editors.Text}                    
 		    ];
-		    if( App.user.props.level<2 ){
-			return columns_lev1;
+		    var columns=columns_lev1;
+		    if( App.user.props.user_level>1 ){
+			columns=columns.concat(columns_lev2);
+			if( Leftovers.table.columnMode==='advanced' ){
+			    columns=columns.concat(columns_adv);
+			}
 		    }
-		    if( Leftovers.table.columnMode==='advanced' ){
-			return columns_lev1.concat(columns_lev2).concat(columns_adv);
+		    Leftovers.table.columnSummaryWidth=0;
+		    for( var i in columns ){
+			Leftovers.table.columnSummaryWidth+=columns[i].width;
 		    }
-		    return columns_lev1.concat(columns_lev2);
+		    return columns;
 		},
 		frm:{
+		    min:function(row, cell, value, columnDef, dataContext) {
+			if(dataContext.product_quantity*1>=dataContext.product_wrn_quantity*1){
+			    return (value*1||"");
+			}
+			if( dataContext.product_quantity*1<dataContext.product_wrn_quantity*1/2 ){
+			    return "<div style='background-color:#f9f;margin:-3px -3px -4px -5px;padding:2px;height:25px'>"+(value*1||"")+"</div>";
+			}
+			return "<div style='background-color:#fcf;margin:-3px -3px -4px -5px;padding:3px;height:25px'>"+(value*1||"")+"</div>";
+		    },
 		    m1:function(row, cell, value, columnDef, dataContext) {
-			if( dataContext.m1<dataContext.m3 ){
+			if( dataContext.m1*1<dataContext.m3*1 ){
 			    return "<span style=color:red>"+(value*1||"")+"</span>";
 			}
 			return "<span style=color:green>"+(value*1||"")+"</span>";
@@ -263,12 +298,6 @@
 		    });
 		},
 		init:function(){
-		    function perc(row, cell, value, columnDef, dataContext) {
-			if (!value || value == 0) {
-			    return "";
-			}
-			return value + " %";
-		    }
 		    var settings = {
 			columns:  Leftovers.table.columnsGet(),
 			options: {
@@ -281,7 +310,8 @@
 			    url: 'Stock/listFetch/?mode='+Leftovers.table.columnMode
 			}
 		    };
-		    Leftovers.table.calcDimensions("#stock_leftovers_sg",0,-30);
+		    Leftovers.table.calcDimensions("#stock_leftovers_sg",20,0);
+		    
 		    Leftovers.grid = new SlickInfinite("#stock_leftovers_sg", settings);
 		    Leftovers.grid.onCellChange.subscribe(function (e, data) {
 			var updatedEntry = data.item;
@@ -294,11 +324,12 @@
 		},
 		calcDimensions:function(query, dw, dh){
 		    var wheight = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
-		    var height = (wheight - $(query).position().top - 20 + (dh || 0)) + 'px';// - $(query).position().top - 0
+		    var height = (wheight - $(query).position().top - 20 + (dh || 0));// - $(query).position().top - 0
 		    var wwidth = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
-		    var width = (wwidth - $(query).position().left - 20 + (dw || 0)) + 'px';;
-		    $(query).css('height', height);
-		    $(query).css('width', width);
+		    var width = (wwidth - $(query).position().left - 20 + (dw || 0));
+		    var col_width = Leftovers.table.columnSummaryWidth+ (dw || 0);
+		    $(query).css('height', height + 'px');
+		    $(query).css('width', Math.min(width,col_width) + 'px');
 		}
 	    }  
 	};
@@ -654,15 +685,19 @@
             <div id="StreeInline" class="transp60"></div>
 	    Инструменты
 	    <hr>
+	    
+	    
+	    
 	    <button style="width:100%;margin: 2px;text-align: left" onclick="Leftovers.utils.calc_min()"><img src="img/calc.png" style="width:24px;height: 24px;"> Рассчитать минимумы</button><br>
 	    <button style="width:100%;margin: 2px;text-align: left" onclick="Leftovers.utils.calc_buy_order()"><img src="img/docnew.png" style="width:24px;height: 24px;"> Сформировать заказ</button><br>
 	    <button style="width:100%;margin: 2px;text-align: left" onclick="Leftovers.utils.send_to_buy_manager()"><img src="img/docnew.png" style="width:24px;height: 24px;"> Загрузить в менеджер</button>
 	</td>
 	<td style="vertical-align: top">
-	    <div class="x-stock-leftovers-tools" style="text-align: center;">
+	    <div class="x-stock-leftovers-tools" style="text-align: right;">
 		<span data-action="create" class="icon-24 icon-create" title="Добавить"> </span>
 		<span data-action="edit" class="icon-24 icon-change" title="Изменить"> </span>
 		<span data-action="delete" class="icon-24 icon-delete" title="Удалить"> </span>
+		<span data-action="widen" class="icon-24 icon-eye" title="Расширить"> </span>
 		<span data-action="move" class="icon-24 icon-move" title="Перенести в другую категорию"> </span>
 		<span data-action="import" class="icon-24 icon-import" title="Импорт"> </span>
 		<span data-action="reload" class="icon-24 icon-refresh" title="Обновить"> </span>
