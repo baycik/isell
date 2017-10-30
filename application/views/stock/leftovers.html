@@ -156,9 +156,7 @@
 		entryEdit: function () {
 
 		},
-		widen:function(){
-		    
-		},
+
 		out: function (out_type) {
 		    var sorted = Leftovers.grid.getSortColumns();
 		    var params = {
@@ -179,7 +177,7 @@
 		}
 	    },
 	    table:{
-		columnMode:'simple',
+		columnMode:App.store('stock_leftover_table_mode'),
 		columnSummaryWidth:0,
 		columnsGet:function(){
 		    var columns_lev1=[
@@ -195,6 +193,8 @@
 			{id: "m3", field: "m3", name: "3м", width: 60, sortable: true,formatter:Leftovers.table.frm.int, cssClass: 'slick-align-right'}
 		    ];
 		    var columns_adv=[
+			{id: "analyse_class", field: "analyse_class", name: "Класс", sortable: true, width: 100, editor: Slick.Editors.Text},
+			{id: "product_article", field: "product_article", name: "Артикул", sortable: true, width: 100, editor: Slick.Editors.Text} ,
 			{id: "self_price", field: "self_price", name: "Учетная цена", sortable: true,formatter:Leftovers.table.frm.float2, width: 70, cssClass: 'slick-align-right'},
 			{id: "sell", field: "sell", name: "Продажа", sortable: true,formatter:Leftovers.table.frm.float2, width: 70, cssClass: 'slick-align-right', editor: Slick.Editors.Float},
 			{id: "buy", field: "buy", name: "Покупка", sortable: true,formatter:Leftovers.table.frm.float2, width: 70, cssClass: 'slick-align-right', editor: Slick.Editors.Float},
@@ -203,12 +203,10 @@
 			{id: "product_bpack", field: "product_bpack", name: "Б. упак", sortable: true,formatter:Leftovers.table.frm.int, width: 60, editor: Slick.Editors.Integer, cssClass: 'slick-align-right'},
 			{id: "product_weight", field: "product_weight", name: "Вес кг", sortable: true,formatter:Leftovers.table.frm.float5, width: 70, editor: Slick.Editors.Float, cssClass: 'slick-align-right'},
 			{id: "product_volume", field: "product_volume", name: "Объем м3", sortable: true,formatter:Leftovers.table.frm.float5, width: 70, editor: Slick.Editors.Float, cssClass: 'slick-align-right'},
-			{id: "analyse_origin", field: "analyse_origin", name: "Таможенный код", sortable: true, width: 100, editor: Slick.Editors.Text, cssClass: 'slick-align-right'},
 			{id: "product_barcode", field: "product_barcode", name: "Штрихкод", sortable: true, width: 100, editor: Slick.Editors.Text, cssClass: 'slick-align-right'},
 			{id: "analyse_type", field: "analyse_type", name: "Тип", sortable: true, width: 100, editor: Slick.Editors.Text},
 			{id: "analyse_brand", field: "analyse_brand", name: "Бренд", sortable: true, width: 100, editor: Slick.Editors.Text},
-			{id: "analyse_class", field: "analyse_class", name: "Класс", sortable: true, width: 100, editor: Slick.Editors.Text},
-			{id: "product_article", field: "product_article", name: "Раздел", sortable: true, width: 100, editor: Slick.Editors.Text}                    
+			{id: "analyse_origin", field: "analyse_origin", name: "Таможенный код", sortable: true, width: 100, editor: Slick.Editors.Text, cssClass: 'slick-align-right'}                   
 		    ];
 		    var columns=columns_lev1;
 		    if( App.user.props.user_level>1 ){
@@ -299,7 +297,7 @@
 		},
 		init:function(){
 		    var settings = {
-			columns:  Leftovers.table.columnsGet(),
+			columns:  [],
 			options: {
 			    editable: true,
 			    autoedit: true,
@@ -307,11 +305,10 @@
 			    enableColumnReorder: false,
 			    enableFilter: true,
 			    multiSelect: true,
-			    url: 'Stock/listFetch/?mode='+Leftovers.table.columnMode
+			    url: 'Stock/listFetch/',
+			    explicitInitialization: true
 			}
 		    };
-		    Leftovers.table.calcDimensions("#stock_leftovers_sg",20,0);
-		    
 		    Leftovers.grid = new SlickInfinite("#stock_leftovers_sg", settings);
 		    Leftovers.grid.onCellChange.subscribe(function (e, data) {
 			var updatedEntry = data.item;
@@ -321,8 +318,31 @@
 			    //Supply.grid.rowReload(data.row);
 			});
 		    });
+		    Leftovers.table.render();
+		    Leftovers.grid.init();
+		    Leftovers.grid.reload();
+		     $("#stock_leftovers_adv_check").switchbutton({
+			 checked:(Leftovers.table.columnMode=='simple')?0:1,
+			 onChange:function( is_on ){
+			    if( is_on ){
+				Leftovers.table.columnMode='advanced';
+				App.store('stock_leftover_table_mode','advanced');
+			    } else {
+				Leftovers.table.columnMode='simple';
+				App.store('stock_leftover_table_mode','simple');
+			    }
+			    Leftovers.table.render();
+			    Leftovers.grid.reload();
+			 }
+		     });
 		},
-		calcDimensions:function(query, dw, dh){
+		render:function(){
+		    Leftovers.grid.updateOptions({params:{mode:Leftovers.table.columnMode}});
+		    var cols=Leftovers.table.columnsGet();
+		    Leftovers.grid.setColumns(cols);
+		    Leftovers.table.setDimensions("#stock_leftovers_sg",20,0);
+		},
+		setDimensions:function(query, dw, dh){
 		    var wheight = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
 		    var height = (wheight - $(query).position().top - 20 + (dh || 0));// - $(query).position().top - 0
 		    var wwidth = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
@@ -472,7 +492,7 @@
 		    {name: 'Тип', field: 'analyse_type'},
 		    {name: 'Бренд', field: 'analyse_brand'},
 		    {name: 'Класс', field: 'analyse_class'},
-		    {name: 'Раздел', field: 'product_article'},
+		    {name: 'Артикул', field: 'product_article'},
 		    {name: 'Продажа', field: 'sell'},
 		    {name: 'Покупка', field: 'buy'},
 		    {name: 'Валюта', field: 'curr_code'},
@@ -694,10 +714,10 @@
 	</td>
 	<td style="vertical-align: top">
 	    <div class="x-stock-leftovers-tools" style="text-align: right;">
+		Полный режим <input id="stock_leftovers_adv_check" class="easyui-switchbutton" onText="Да" offText="Нет">
 		<span data-action="create" class="icon-24 icon-create" title="Добавить"> </span>
 		<span data-action="edit" class="icon-24 icon-change" title="Изменить"> </span>
 		<span data-action="delete" class="icon-24 icon-delete" title="Удалить"> </span>
-		<span data-action="widen" class="icon-24 icon-eye" title="Расширить"> </span>
 		<span data-action="move" class="icon-24 icon-move" title="Перенести в другую категорию"> </span>
 		<span data-action="import" class="icon-24 icon-import" title="Импорт"> </span>
 		<span data-action="reload" class="icon-24 icon-refresh" title="Обновить"> </span>
