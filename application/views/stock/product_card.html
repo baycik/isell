@@ -16,10 +16,12 @@
 	    });
 	    this.node.window('window').css('position','fixed');
 	    
-	    if( this.data.loadProductByCode ){
+	    if( this.data.product_code ){
 		App.get("Stock/productGet",{product_code:App.page_stock_product_card.data.product_code},function(resp){
 		    App.page_stock_product_card.data=App.json(resp);
 		    App.page_stock_product_card.initWidgets();
+		    App.page_stock_product_card.img.load();
+		    App.page_stock_product_card.price.load();
 		});
 	    }
 	    else if( !this.data ){//new product
@@ -33,9 +35,7 @@
 		};
 		App.page_stock_product_card.unpackPrices();
 	    }
-	    App.page_stock_product_card.initWidgets();		
-	    //App.page_stock_product_card.initWidgets();// Init card with existing data but get new anyway
-	    
+	    App.page_stock_product_card.initWidgets();
             if( this.data.enablePrevnext ){
                 $("#stock_prod_card_prevnext").css('visibility','visible');   
             }
@@ -97,8 +97,6 @@
 	    $("#Stock_parent_id").combobox('setValue',App.page_stock_product_card.data.parent_id);
 	    $("#Stock_parent_id").combobox('setText',App.page_stock_product_card.data.parent_label);
 	    this.serviceCheck();
-	    this.img.load();
-	    this.price.load();
 	},
 	categoryLoader:function(param, success, error){
 	    if( param.q===undefined ){
@@ -153,7 +151,7 @@
 	},
 	img:{
 	    load:function(){
-		var file_name=$("input[name=product_img]").val()?'Storage/image_flush/?size=130x120&path=dynImg/'+$("input[name=product_img]").val():"img/product.png";
+		var file_name=$("input[name=product_img]").val()?'Storage/image_flush/?size=150x140&path=dynImg/'+$("input[name=product_img]").val():"img/product.png";
 		$("#page_stock_product_card_thumb").attr('src',file_name);
 	    },
 	    up:function(filelist){
@@ -204,10 +202,10 @@
     <input type="hidden" name="product_img">
     <input type="hidden" name="product_code">
     <div class="inp_group" style="width: 450px;vertical-align: top">
-	<div style="position: relative;float:left;width:130px;height:120px;">
+	<div style="position: relative;float:left;width:130px;height:140px;">
 	    <input type="file" id="page_stock_product_card_file" accept="image/*" style="display:none" onchange="App.page_stock_product_card.img.up(this.files)">
 	    <div style="text-align: center">
-		<img src="img/product.png" id="page_stock_product_card_thumb" style="cursor:pointer" onclick="window.open(this.src.replace('130x120','1200x1200'))" />
+		<img src="img/product.png" id="page_stock_product_card_thumb" style="cursor:pointer" onclick="window.open(this.src.replace('150x140','1200x1200'))" />
 	    </div>
 	    <div style="position: absolute;bottom:1px;right:2px;">
 		<button class="tiny_button" type="button" title="Отправить файл" onclick="$('#page_stock_product_card_file').click();">Загрузить</button>
@@ -231,9 +229,12 @@
 		">
 	<input name="product_code_new" title="Код" required="required">
 	<input name="product_unit" title="Единица" required="required">
+	<input name="product_wrn_quantity" title="Мин. кол-во">
 	<input name="ru" title="Название Рус" style="width:330px" required="required">
-	<input name="ua" title="Название Укр" style="width:330px">
-	<input name="en" title="Название Англ" style="width:330px">
+	<div class="easyui-panel" title="Другие названия" data-options="collapsible:true,collapsed:true">
+	    <input name="ua" title="Название Укр" style="width:330px">
+	    <input name="en" title="Название Англ" style="width:330px">
+	</div>
 	<div class="inp_rule">Цены на товар</div>
 	<div>
 	    <div style="font-weight: bold">
@@ -286,27 +287,30 @@
 	</div>
     </div>
     <div class="inp_group only_product_props" style="width: 320px;vertical-align: top">
-	<input name="product_wrn_quantity" title="Мин. кол-во">
-	<input name="product_spack" title="В коробке">
-	<input name="product_bpack" title="В ящике">
-	<input name="product_weight" title="Вес кг">
-	<input name="product_volume" title="Объем м3">
-	<input name="analyse_origin" title="Тамож. код">
-	<input name="product_barcode" title="Штрихкод">
-	<input name="party_label" title="Партия">
-	
-	<div class="inp_rule">Аналитика</div>
-	<input name="analyse_type" title="Тип">
-	<input name="analyse_brand" title="Бренд">
-	<input name="analyse_class" title="Класс">
-	<input name="product_article" title="Артикул">
+	<div class="easyui-panel" title="Упаковка вес объем" data-options="collapsible:true">
+	    <input name="product_spack" title="В коробке">
+	    <input name="product_bpack" title="В ящике">
+	    <input name="product_weight" title="Вес кг">
+	    <input name="product_volume" title="Объем м3">
+	</div>
+	<div class="easyui-panel" title="Кода" data-options="collapsible:true,collapsed:true">
+	    <input name="analyse_origin" title="Тамож. код">
+	    <input name="product_barcode" title="Штрихкод">
+	    <input name="party_label" title="Партия">
+	    <input name="product_article" title="Артикул">
+	</div>
+	<div class="easyui-panel" title="Аналитика" data-options="collapsible:true,collapsed:true">
+	    <input name="analyse_type" title="Тип">
+	    <input name="analyse_brand" title="Бренд">
+	    <input name="analyse_class" title="Класс">
+	</div>
     </div>
     <div style="text-align: center;margin-top: 15px;clear: both">
         <button type="submit" onclick="App.page_stock_product_card.closeOnSave=true;"><img src="img/Save-24.png" /> Сохранить</button>
 	<button type="button" onclick="App.page_stock_product_card.node.window('close')"><img src="img/close24.png" /> Закрыть</button>
         <span id="stock_prod_card_prevnext" style="visibility: hidden">
-            | <button type="button" onclick="App.page_stock_product_card.next(-1)" title="Сохранить и открыть предидущий">&lt;&lt;&lt; Пред.</button>
-            <button type="button" onclick="App.page_stock_product_card.next(1)" title="Сохранить и открыть следующий">&gt;&gt;&gt; След.</button>
+            | <button type="button" onclick="App.page_stock_product_card.next(-1)" title="Сохранить и открыть предидущий"><img src="img/2leftarrow.png" style="width:24px;height: auto;"/> Пред.</button>
+            <button type="button" onclick="App.page_stock_product_card.next(1)" title="Сохранить и открыть следующий"><img src="img/2rightarrow.png" style="width:24px;height: auto;"/> След.</button>
         </span>
     </div>
 </form>

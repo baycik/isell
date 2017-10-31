@@ -70,6 +70,16 @@
 		    }
 		});
 	    },
+	    prev:function(){
+		if( Leftovers.grid.navigateUp() ){
+		    Leftovers.tools.entryEdit();
+		}
+	    },
+	    next:function(){
+		if( Leftovers.grid.navigateDown() ){
+		    Leftovers.tools.entryEdit();
+		}
+	    },
 	    tools: {
 		entryImport: function () {
 		    var config = [
@@ -107,45 +117,33 @@
 		},
 		entryDelete: function () {
 		    var selected_rows = Leftovers.grid.getSelectedRows();
+		    var product_codes = [];
 		    if (!selected_rows.length) {
 			App.flash("Ни одна строка не выбрана!");
 			return;
+		    }
+		    for (var i in selected_rows) {
+			var row_data=Leftovers.grid.getDataItem(selected_rows[i]);
+			if(row_data && row_data.product_quantity > 0){
+			    alert("Остаток '" + row_data.ru + "' должен быть нулевым");
+			    return;			    
+			}
+			product_codes.push(row_data.product_code);
 		    }
 		    if (!confirm("Удалить выделенные товары?")) {
 			return;
 		    }
 
-		    var product_codes = [];
-		    for (var i in selected_rows) {
-			product_codes.push(Leftovers.grid.getDataItem(selected_rows[i]).product_code);
-		    }
-		    $.post('Stock/productDelete', {product_codes: product_codes.join(',')}, function (ok) {
+		    $.post('Stock/productDelete', {product_code: product_codes.join(',')}, function (ok) {
 			if (ok * 1) {
+			    App.flash("Товар удален: " + product_codes.join(' , '));
 			    Leftovers.grid.reload();
+			} else {
+			    App.flash("Товар не удален");
 			}
 		    });
 		},
 		entryCreate: function () {
-		    var supplier_id = 0;
-		    if (Supplier.selected && Supplier.selected.supplier_id) {
-			supplier_id = Supplier.selected.supplier_id;
-		    }
-		    $.post('StockBuyManager/supplyCreate', {supplier_id: supplier_id}, function (insert_id) {
-			if (insert_id * 1) {
-			    Supply.grid.setFilter({supply_code: insert_id});
-			}
-		    });
-		},
-		edit: function (index, field, value) {
-		    $("#stock_dg").datagrid('unselectAll');
-		    $("#stock_dg").datagrid('selectRow', index);
-		    var row = $("#stock_dg").datagrid('getSelected');
-		    if (row) {
-			row.focus = field;
-			Leftovers.list.showProductCard(row);
-		    }
-		},
-		create: function () {
 		    var fvalue = {
 			parent_id: Leftovers.parent_id,
 			parent_label: Leftovers.parent_label,
@@ -154,7 +152,16 @@
 		    Leftovers.showProductCard(fvalue);
 		},
 		entryEdit: function () {
-
+		    var selected_rows = Leftovers.grid.getSelectedRows();
+		    if (!selected_rows.length) {
+			App.flash("Ни одна строка не выбрана!");
+			return;
+		    }
+		    var row_data=Leftovers.grid.getDataItem(selected_rows[0]);
+		    if( row_data ){
+			row_data.focus='product_code';
+			Leftovers.showProductCard(row_data);
+		    }
 		},
 
 		out: function (out_type) {
@@ -317,6 +324,9 @@
 			Leftovers.table.update(updatedEntry.supply_id, field, value).done(function () {
 			    //Supply.grid.rowReload(data.row);
 			});
+		    });
+		    Leftovers.grid.onDblClick.subscribe(function (e, data) {
+			Leftovers.tools.entryEdit();
 		    });
 		    Leftovers.table.render();
 		    Leftovers.grid.init();
@@ -715,9 +725,9 @@
 	<td style="vertical-align: top">
 	    <div class="x-stock-leftovers-tools" style="text-align: right;">
 		Полный режим <input id="stock_leftovers_adv_check" class="easyui-switchbutton" onText="Да" offText="Нет">
-		<span data-action="create" class="icon-24 icon-create" title="Добавить"> </span>
+		<span data-action="entryCreate" class="icon-24 icon-create" title="Добавить"> </span>
 		<span data-action="edit" class="icon-24 icon-change" title="Изменить"> </span>
-		<span data-action="delete" class="icon-24 icon-delete" title="Удалить"> </span>
+		<span data-action="entryDelete" class="icon-24 icon-delete" title="Удалить"> </span>
 		<span data-action="move" class="icon-24 icon-move" title="Перенести в другую категорию"> </span>
 		<span data-action="import" class="icon-24 icon-import" title="Импорт"> </span>
 		<span data-action="reload" class="icon-24 icon-refresh" title="Обновить"> </span>

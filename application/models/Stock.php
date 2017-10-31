@@ -70,8 +70,8 @@ class Stock extends Catalog {
 		    (SELECT 
 			st.label parent_label,
 			pl.*,
-			pp.sell,
-			pp.buy,
+			ROUND(pp.sell,5) sell,
+			ROUND(pp.buy,5) buy,
 			pp.curr_code,
 			se.stock_entry_id,
 			se.parent_id,
@@ -102,107 +102,40 @@ class Stock extends Catalog {
 	return $this->get_list($sql);
     }
     
-    
-    public $_listFetch=['page'=>['int',1],'rows'=> ['int',30],'parent_id'=>['int',0],'string'];
-    public function _listFetch( $page, $rows, $parent_id, $having=null ){
-	$offset=($page-1)*$rows;
-	if( $offset<0 ){
-	    $offset=0;
-	}
-	
-	if( !$having ){
-	    $having=$this->decodeStockFilter();
-	} else {
-	    $having=[1,1];
-	}
-	$where='';
-	if( $parent_id ){
-	    $branch_ids=$this->treeGetSub('stock_tree',$parent_id);
-	    $where="WHERE se.parent_id IN (".implode(',',$branch_ids).")";
-	}
-	$sql="SELECT
-		parent_label,
-                t.parent_id,
-		t.product_code,
-		t.product_quantity,
-		ru,
-		product_wrn_quantity,
-		product_unit,
-		SUM(IF(TO_DAYS(NOW()) - TO_DAYS(dl.cstamp) <= 30,de.product_quantity,0)) m1,
-		ROUND( SUM(IF(TO_DAYS(NOW()) - TO_DAYS(dl.cstamp) <= 92,de.product_quantity,0))/3 ) m3,
-		t.self_price,
-                product_img,
-		sell,
-		buy,		
-		curr_code,
-		product_bpack,
-		product_spack,
-		product_weight,
-		product_volume,
-		t.party_label,
-		analyse_origin,
-		product_barcode,
-		analyse_type,
-		analyse_brand,
-		analyse_class,
-		product_article
-	    FROM
-		    (SELECT 
-			st.label parent_label,
-			pl.*,
-			pp.sell,
-			pp.buy,
-			pp.curr_code,
-			se.stock_entry_id,
-			se.parent_id,
-			se.party_label,
-			se.product_quantity,
-			se.product_wrn_quantity,
-			se.product_img,
-			se.self_price		
-		    FROM
-			stock_entries se
-			    JOIN
-			prod_list pl ON pl.product_code=se.product_code
-			    LEFT JOIN
-			price_list pp ON pp.product_code=se.product_code AND pp.label=''
-			    LEFT JOIN
-			stock_tree st ON se.parent_id=branch_id
-			$where
-			HAVING $having[0]
-			ORDER BY se.parent_id,se.product_code
-			LIMIT $rows OFFSET $offset) t
-		    LEFT JOIN
-		document_entries de ON de.product_code=t.product_code
-		    LEFT JOIN
-		document_list dl ON de.doc_id=dl.doc_id AND dl.is_commited=1 AND dl.doc_type=1 AND notcount=0
-	    GROUP BY t.product_code
-	    HAVING $having[1]
-            ORDER BY parent_label,t.product_code
-            ";//HAVING $having
-	$result_rows=$this->get_list($sql);
-	$total_estimate=$offset+(count($result_rows)==$rows?$rows+1:count($result_rows));
-	return array('rows'=>$result_rows,'total'=>$total_estimate);
-    }
     public $labelFetch=['q'=>'string'];
     public function labelFetch($q=0){
 	return $this->get_list("SELECT branch_id,label FROM stock_tree WHERE label LIKE '%$q%'");
     }
+    
     public $productGet=['product_code'=>'string'];
     public function productGet($product_code){
 	$sql="SELECT
-		    *
+		    st.label parent_label,
+		    pl.*,
+		    ROUND(pp.sell,5) sell,
+		    ROUND(pp.buy,5) buy,
+		    pp.curr_code,
+		    se.stock_entry_id,
+		    se.parent_id,
+		    se.party_label,
+		    se.product_quantity,
+		    se.product_wrn_quantity,
+		    se.product_img,
+		    se.self_price
 		FROM
 		    stock_entries se
 			JOIN
-		    prod_list USING(product_code)
+		    prod_list pl ON pl.product_code=se.product_code
 			LEFT JOIN
-		    price_list USING(product_code)
+		    price_list pp ON pp.product_code=se.product_code AND pp.label=''
+			LEFT JOIN
+		    stock_tree st ON se.parent_id=branch_id
 		WHERE 
-		    product_code='{$product_code}'";
+		    se.product_code='{$product_code}'";
 	$product_data=$this->get_row($sql);
 	return $product_data;
     }
+    
     public $productGetLabeledPrices=['product_code'=>'string'];
     public function productGetLabeledPrices($product_code){
 	$sql_price="
@@ -217,14 +150,17 @@ class Stock extends Catalog {
 		product_code='{$product_code}' AND label<>''";
 	return $this->get_list($sql_price);
     }
+    
     public $productLabeledPriceRemove=['product_code'=>'string','label'=>'string'];
     public function productLabeledPriceRemove($product_code,$label){
 	return $this->delete("price_list",['product_code'=>$product_code,'label'=>$label]);
     }
+    
     public $productLabeledPriceAdd=['product_code'=>'string','label'=>'string'];
     public function productLabeledPriceAdd($product_code,$label){
 	return $this->create("price_list",['product_code'=>$product_code,'label'=>$label]);
     }
+    
     public $productSave=[];
     public function productSave(){
 	$this->Hub->set_level(2);
@@ -291,6 +227,7 @@ class Stock extends Catalog {
 	}
 	return $affected_rows;
     }
+    
     private function makeSet( $array ){
 	$set=[];
 	foreach( $array as $key=>$val ){
