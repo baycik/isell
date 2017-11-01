@@ -29,8 +29,8 @@ class Storage extends CI_Model {
 	return file_get_contents($this->storageFolder . "/" . $path);
     }
 
-    public function file_remove() {
-	$path = implode('/', func_get_args());
+    public $file_remove=['path'=>'string'];
+    public function file_remove($path) {
 	if (!file_exists($this->storageFolder . "/" . $path)) {
 	    return null;
 	}

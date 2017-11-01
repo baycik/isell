@@ -17,8 +17,10 @@
 	    this.node.window('window').css('position','fixed');
 	    
 	    if( this.data.product_code ){
+		var focus=this.data.focus;
 		App.get("Stock/productGet",{product_code:App.page_stock_product_card.data.product_code},function(resp){
 		    App.page_stock_product_card.data=App.json(resp);
+		    App.page_stock_product_card.data.focus=focus;
 		    App.page_stock_product_card.initWidgets();
 		    App.page_stock_product_card.img.load();
 		    App.page_stock_product_card.price.load();
@@ -187,7 +189,7 @@
 	    remove:function(){
 		var file_name=$("input[name=product_img]").val();
 		$("input[name=product_img]").val('');
-		$.post('Storage/file_remove/dynImg/'+file_name,function(ok){
+		$.post('Storage/file_remove/?path=dynImg/'+file_name,function(ok){
 		    if(ok*1){
 			App.flash("Файл удален");
 			App.page_stock_product_card.img.load();

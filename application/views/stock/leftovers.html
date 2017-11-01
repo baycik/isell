@@ -25,6 +25,8 @@
 	// Leftovers DATA BASE SECTION
 	/////////////////////////////////////////////////////////
 	var Leftovers = {
+	    parent_id:0,
+	    parent_label:'',
 	    grid: null,
 	    init: function () {
 		Leftovers.table.init();
@@ -39,13 +41,13 @@
 	    initTree: function () {
 		App.loadModule('page/stock/tree', {inline: true, clickselect: true}, 'StreeInline', /(Stree|page_stock_tree)([^\w]|_)/g, "StreeInline$2").progress(function (status, branch) {
 		    if (status === 'select') {
-			var parent_id=branch?branch.branch_id:0;
-			var parent_label=branch?branch.parent_label:0;
-			$("#stock_cat_name").html(parent_label);
+			Leftovers.parent_id=branch?branch.branch_id:0;
+			Leftovers.parent_label=branch?branch.label:'';
+			$("#stock_cat_name").html(Leftovers.parent_label);
 			Leftovers.grid.scrollRowToTop(0);
 			Leftovers.grid.updateOptions({
 			    params:{
-				parent_id:parent_id
+				parent_id:Leftovers.parent_id
 			    }
 			});
 			Leftovers.grid.reload();
@@ -151,7 +153,7 @@
 		    };
 		    Leftovers.showProductCard(fvalue);
 		},
-		entryEdit: function () {
+		entryEdit: function (focus) {
 		    var selected_rows = Leftovers.grid.getSelectedRows();
 		    if (!selected_rows.length) {
 			App.flash("Ни одна строка не выбрана!");
@@ -159,7 +161,7 @@
 		    }
 		    var row_data=Leftovers.grid.getDataItem(selected_rows[0]);
 		    if( row_data ){
-			row_data.focus='product_code';
+			row_data.focus=focus;
 			Leftovers.showProductCard(row_data);
 		    }
 		},
@@ -295,8 +297,8 @@
 		    };
 		    this.init();		    
 		},
-		update:function(supply_id, field, value) {
-		    return $.post('Stock/entryUpdate', {supply_id: supply_id, field: field, value: value}, function (ok) {
+		update:function(product_code, field, value) {
+		    return $.post('Stock/productUpdate', {product_code: product_code, field: field, value: value}, function (ok) {
 			if (ok < 1) {
 			    Leftovers.grid.reload();
 			}
@@ -319,32 +321,38 @@
 		    Leftovers.grid = new SlickInfinite("#stock_leftovers_sg", settings);
 		    Leftovers.grid.onCellChange.subscribe(function (e, data) {
 			var updatedEntry = data.item;
-			var field = settings.columns[data.cell].field;
+			var field = Leftovers.grid.getColumns()[data.cell].field;
 			var value = updatedEntry[field];
-			Leftovers.table.update(updatedEntry.supply_id, field, value).done(function () {
-			    //Supply.grid.rowReload(data.row);
+			Leftovers.table.update(updatedEntry.product_code, field, value).done(function () {
+			    //Leftovers.grid.rowReload(data.row);
 			});
 		    });
 		    Leftovers.grid.onDblClick.subscribe(function (e, data) {
-			Leftovers.tools.entryEdit();
+			var focus='';
+			try{
+			    focus=Leftovers.grid.getColumns()[data.cell].field;
+			} catch(e){
+			    
+			}
+			Leftovers.tools.entryEdit(focus);
 		    });
 		    Leftovers.table.render();
 		    Leftovers.grid.init();
 		    Leftovers.grid.reload();
-		     $("#stock_leftovers_adv_check").switchbutton({
-			 checked:(Leftovers.table.columnMode=='simple')?0:1,
-			 onChange:function( is_on ){
-			    if( is_on ){
-				Leftovers.table.columnMode='advanced';
-				App.store('stock_leftover_table_mode','advanced');
-			    } else {
-				Leftovers.table.columnMode='simple';
-				App.store('stock_leftover_table_mode','simple');
-			    }
-			    Leftovers.table.render();
-			    Leftovers.grid.reload();
-			 }
-		     });
+		    $("#stock_leftovers_adv_check").switchbutton({
+			checked:(Leftovers.table.columnMode=='simple')?0:1,
+			onChange:function( is_on ){
+			   if( is_on ){
+			       Leftovers.table.columnMode='advanced';
+			       App.store('stock_leftover_table_mode','advanced');
+			   } else {
+			       Leftovers.table.columnMode='simple';
+			       App.store('stock_leftover_table_mode','simple');
+			   }
+			   Leftovers.table.render();
+			   Leftovers.grid.reload();
+			}
+		    });
 		},
 		render:function(){
 		    Leftovers.grid.updateOptions({params:{mode:Leftovers.table.columnMode}});
@@ -726,7 +734,7 @@
 	    <div class="x-stock-leftovers-tools" style="text-align: right;">
 		Полный режим <input id="stock_leftovers_adv_check" class="easyui-switchbutton" onText="Да" offText="Нет">
 		<span data-action="entryCreate" class="icon-24 icon-create" title="Добавить"> </span>
-		<span data-action="edit" class="icon-24 icon-change" title="Изменить"> </span>
+		<span data-action="entryEdit" class="icon-24 icon-change" title="Изменить"> </span>
 		<span data-action="entryDelete" class="icon-24 icon-delete" title="Удалить"> </span>
 		<span data-action="move" class="icon-24 icon-move" title="Перенести в другую категорию"> </span>
 		<span data-action="import" class="icon-24 icon-import" title="Импорт"> </span>

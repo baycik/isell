@@ -112,6 +112,8 @@ class Stock extends Catalog {
 	$sql="SELECT
 		    st.label parent_label,
 		    pl.*,
+		    ROUND(product_volume,5) product_volume,
+		    ROUND(product_weight,5) product_weight,
 		    ROUND(pp.sell,5) sell,
 		    ROUND(pp.buy,5) buy,
 		    pp.curr_code,
@@ -159,6 +161,13 @@ class Stock extends Catalog {
     public $productLabeledPriceAdd=['product_code'=>'string','label'=>'string'];
     public function productLabeledPriceAdd($product_code,$label){
 	return $this->create("price_list",['product_code'=>$product_code,'label'=>$label]);
+    }
+    
+    public $productUpdate=['product_code'=>'string','field'=>'string','value'=>'string'];
+    public function productUpdate($product_code,$field,$value){
+	$this->Hub->set_level(2);
+	$this->query("UPDATE stock_entries JOIN prod_list USING(product_code) JOIN price_list USING(product_code) SET $field='$value' WHERE product_code='$product_code'");
+	return $this->db->affected_rows();
     }
     
     public $productSave=[];
