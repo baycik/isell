@@ -2,23 +2,60 @@
     (function ($) {
 	function init() {
 	    Leftovers.init();
-	    ProductCard.init();
-	    Tree.init();
+	    Utils.init();
 	}
 
-	var Tree = {
-	    init: function () {
-
-	    }
-	};
-
-
-	var ProductCard = {
-	    init: function () {
-
+	var Utils = {
+	    init:function(){
+		$(".x-stock-leftovers-utils").click(function (e) {
+		    var action = $(e.target).data('action');
+		    if (action) {
+			Utils[action] && Utils[action]();
+		    }
+		});
 	    },
-	    open: function (fvalue) {
-		return
+	    calc_min: function () {
+		App.loadWindow("page/stock/calc_min", {parent_label: Leftovers.parent_label}).progress(function (status, fvalue) {
+		    if (status === 'submit') {
+			$.post("Utils/stockCalcMin/" + App.uri(Leftovers.parent_id, fvalue.sales_period, fvalue.reserve_period), function (ok) {
+			    if (ok * 1) {
+				Leftovers.grid.reload();
+				App.flash("Минимумы расчитаны у " + ok + " товаров");
+			    } else {
+				App.flash("Минимумы не изменились");
+			    }
+			});
+		    }
+		});
+	    },
+	    send_to_buy_manager: function () {
+		var params = Leftovers.table.currentParamsGet();
+		$.post("StockBuyManager/orderFromStock/", params, function (ok) {
+		    if (ok * 1) {
+			App.flash("Заказ загружен в менеджер закупок");
+		    } else {
+			App.flash("Заказ не сформирован");
+		    }
+		});
+	    },
+	    calc_buy_order: function () {
+		App.loadWindow("page/stock/calc_buy_order", {parent_label: Leftovers.parent_label}).progress(function (status, fvalue) {
+		    if (status === 'submit') {
+			if (!confirm('Сформировать заказ поставщику "' + App.pcomp.label + '" по категории "' + Leftovers.parent_label + '"?')) {
+			    return false;
+			}
+			var params = Leftovers.table.currentParamsGet();
+			params.round_to=fvalue.round_to;
+			$.post("Utils/stockCalcIncomeOrder/",params, function (doc_id) {
+			    if (doc_id * 1) {
+				App.flash("Заказ сформирован");
+				App.loadWindow('page/trade/document', {doc_id: doc_id});
+			    } else {
+				App.flash("Заказ не сформирован");
+			    }
+			});
+		    }
+		});
 	    }
 	};
 	/////////////////////////////////////////////////////////
@@ -165,16 +202,68 @@
 			Leftovers.showProductCard(row_data);
 		    }
 		},
-
+		move: function () {
+		    var selected_rows = Leftovers.grid.getSelectedRows();
+		    var product_codes = [];
+		    if (!selected_rows.length) {
+			App.flash("Ни одна строка не выбрана!");
+			return;
+		    }
+		    for (var i in selected_rows) {
+			var row_data=Leftovers.grid.getDataItem(selected_rows[i]);
+			product_codes.push(row_data.product_code);
+		    }
+		    App.loadWindow('page/stock/tree').progress(function (status, category) {
+			if (status === 'select') {
+			    App.post('Stock/productMove/', {product_code: product_codes.join(','), parent_id: category.branch_id}, function (ok) {
+				if (ok * 1) {
+				    App.flash("Следующие строки " + product_codes.join(' , ') +" перемещены в"+ category.label);
+				    Leftovers.grid.reload();
+				} else {
+				    App.flash("Товар не перемещен");
+				}
+			    });
+			}
+		    });
+		},
+		import: function () {
+		    var config = [
+			{name: 'Код товара', field: 'product_code', required: true},
+			{name: 'Название Рус.', field: 'ru'},
+			{name: 'Название Укр.', field: 'ua'},
+			{name: 'Название Анг.', field: 'en'},
+			{name: 'Единица', field: 'product_unit'},
+			{name: 'В коробке', field: 'product_spack'},
+			{name: 'В ящике', field: 'product_bpack'},
+			{name: 'Вес кг', field: 'product_weight'},
+			{name: 'Объем м3', field: 'product_volume'},
+			{name: 'Тамож. код', field: 'analyse_origin'},
+			{name: 'Штрихкод', field: 'product_barcode'},
+			{name: 'Партия', field: 'party_label'},
+			{name: 'Тип', field: 'analyse_type'},
+			{name: 'Бренд', field: 'analyse_brand'},
+			{name: 'Класс', field: 'analyse_class'},
+			{name: 'Артикул', field: 'product_article'},
+			{name: 'Продажа', field: 'sell'},
+			{name: 'Покупка', field: 'buy'},
+			{name: 'Валюта', field: 'curr_code'},
+			{name: 'Категория цен', field: 'label'}
+		    ];
+		    App.loadWindow('page/dialog/importer', {label: 'склад', fields_to_import: config}).progress(function (status, fvalue, Importer) {
+			if (status === 'submit') {
+			    fvalue.parent_id = Leftovers.parent_id;
+			    App.post("Stock/import/", fvalue, function (ok) {
+				App.flash("Добавлено/Изменено " + ok);
+				Leftovers.grid.reload();
+				Importer.reload();
+			    });
+			}
+		    });
+		},
 		out: function (out_type) {
-		    var sorted = Leftovers.grid.getSortColumns();
-		    var params = {
-			sortby: sorted.length ? sorted[0].columnId : '',
-			sortdir: sorted.length ? (sorted[0].sortAsc ? 'ASC' : 'DESC') : '',
-			filter: JSON.stringify(Leftovers.grid.getFilter()),
-			out_type: (out_type || '.xlsx')
-		    };
-		    var url = 'StockBuyManager/viewGet/?' + $.param(params);
+		    var params = Leftovers.table.currentParamsGet();
+		    params.out_type=(out_type || '.xlsx');
+		    var url = 'StockView/stockViewGet/?' + $.param(params);
 		    if (out_type === '.print') {
 			window.open(url, 'print_tab');
 		    } else {
@@ -188,6 +277,16 @@
 	    table:{
 		columnMode:App.store('stock_leftover_table_mode'),
 		columnSummaryWidth:0,
+		currentParamsGet:function(){
+		    var sorted = Leftovers.grid.getSortColumns();
+		    return {
+			parent_id: Leftovers.parent_id,
+			sortby: sorted.length ? sorted[0].columnId : '',
+			sortdir: sorted.length ? (sorted[0].sortAsc ? 'ASC' : 'DESC') : '',
+			filter: JSON.stringify(Leftovers.grid.getFilter()),
+			mode:Leftovers.table.columnMode
+		    };
+		},
 		columnsGet:function(){
 		    var columns_lev1=[
 			{id: "parent_label", field: "parent_label", name: "Категория", width: 120},
@@ -202,7 +301,7 @@
 			{id: "m3", field: "m3", name: "3м", width: 60, sortable: true,formatter:Leftovers.table.frm.int, cssClass: 'slick-align-right'}
 		    ];
 		    var columns_adv=[
-			{id: "analyse_class", field: "analyse_class", name: "Класс", sortable: true, width: 100, editor: Slick.Editors.Text},
+			{id: "analyse_class", field: "analyse_class", name: "Класс", sortable: true,formatter:Leftovers.table.frm.abc, width: 60, editor: Slick.Editors.Text},
 			{id: "product_article", field: "product_article", name: "Артикул", sortable: true, width: 100, editor: Slick.Editors.Text} ,
 			{id: "self_price", field: "self_price", name: "Учетная цена", sortable: true,formatter:Leftovers.table.frm.float2, width: 70, cssClass: 'slick-align-right'},
 			{id: "sell", field: "sell", name: "Продажа", sortable: true,formatter:Leftovers.table.frm.float2, width: 70, cssClass: 'slick-align-right', editor: Slick.Editors.Float},
@@ -236,9 +335,21 @@
 			    return (value*1||"");
 			}
 			if( dataContext.product_quantity*1<dataContext.product_wrn_quantity*1/2 ){
-			    return "<div style='background-color:#f9f;margin:-3px -3px -4px -5px;padding:2px;height:25px'>"+(value*1||"")+"</div>";
+			    return "<div  class='sg_cell_bg' style='background-color:#f9f;'>"+(value*1||"")+"</div>";
 			}
-			return "<div style='background-color:#fcf;margin:-3px -3px -4px -5px;padding:3px;height:25px'>"+(value*1||"")+"</div>";
+			return "<div class='sg_cell_bg' style='background-color:#fcf;'>"+(value*1||"")+"</div>";
+		    },
+		    abc:function(row, cell, value, columnDef, dataContext) {
+			if(value==="A"){
+			    return "<div class='sg_cell_bg' style='background-color:rgba(0,255,0,.3);text-align:center'>A</div>";
+			}
+			if(value==="B"){
+			    return "<div class='sg_cell_bg' style='background-color:rgba(255,255,0,.3);text-align:center'>B</div>";
+			}
+			if(value==="C"){
+			    return "<div class='sg_cell_bg' style='background-color:rgba(255,0,0,.3);text-align:center'>C</div>";
+			}
+			return value;
 		    },
 		    m1:function(row, cell, value, columnDef, dataContext) {
 			if( dataContext.m1*1<dataContext.m3*1 ){
@@ -255,47 +366,6 @@
 		    float5:function(row, cell, value, columnDef, dataContext) {
 			return value>0?(value*1).toFixed(5):"";
 		    }
-		},
-		editorAutocomplete:function(args){
-		    var $input;
-		    var defaultValue;
-		    this.keyCaptureList = [Slick.keyCode.UP, Slick.keyCode.DOWN, Slick.keyCode.ENTER];
-		    this.init = function () {
-			var html = "<select style='width:100%'>";
-			for (var i in Supplier.list) {
-			    html += Supplier.list[i].supplier_name ? "<option>" + Supplier.list[i].supplier_name + "</option>" : "";
-			}
-			html += "</select>";
-			$input = $(html);
-			$input.appendTo(args.container);
-			$input.focus();
-		    };
-		    this.destroy = function () {
-			$input.remove();
-		    };
-		    this.focus = function () {
-			$input.focus();
-		    };
-		    this.loadValue = function (item) {
-			defaultValue = item[args.column.field];
-			$input.val(defaultValue);
-		    };
-		    this.serializeValue = function () {
-			return $input.val();
-		    };
-		    this.applyValue = function (item, state) {
-			item[args.column.field] = state;
-		    };
-		    this.isValueChanged = function () {
-			return (!($input.val() == "" && defaultValue == null)) && ($input.val() != defaultValue);
-		    };
-		    this.validate = function () {
-			return {
-			    valid: true,
-			    msg: null
-			};
-		    };
-		    this.init();		    
 		},
 		update:function(product_code, field, value) {
 		    return $.post('Stock/productUpdate', {product_code: product_code, field: field, value: value}, function (ok) {
@@ -369,7 +439,7 @@
 		    $(query).css('height', height + 'px');
 		    $(query).css('width', Math.min(width,col_width) + 'px');
 		}
-	    }  
+	    }
 	};
 	App.require(["js/slick/lib/jquery.event.drag-2.3.0.js"], function () {
 	    App.require([
@@ -493,62 +563,6 @@
 		}
 		$("#stock_dg").datagrid('reload');
 	    },
-	    import: function () {
-		var config = [
-		    {name: 'Код товара', field: 'product_code', required: true},
-		    {name: 'Название Рус.', field: 'ru'},
-		    {name: 'Название Укр.', field: 'ua'},
-		    {name: 'Название Анг.', field: 'en'},
-		    {name: 'Единица', field: 'product_unit'},
-		    {name: 'В коробке', field: 'product_spack'},
-		    {name: 'В ящике', field: 'product_bpack'},
-		    {name: 'Вес кг', field: 'product_weight'},
-		    {name: 'Объем м3', field: 'product_volume'},
-		    {name: 'Тамож. код', field: 'analyse_origin'},
-		    {name: 'Штрихкод', field: 'product_barcode'},
-		    {name: 'Партия', field: 'party_label'},
-		    {name: 'Тип', field: 'analyse_type'},
-		    {name: 'Бренд', field: 'analyse_brand'},
-		    {name: 'Класс', field: 'analyse_class'},
-		    {name: 'Артикул', field: 'product_article'},
-		    {name: 'Продажа', field: 'sell'},
-		    {name: 'Покупка', field: 'buy'},
-		    {name: 'Валюта', field: 'curr_code'},
-		    {name: 'Категория цен', field: 'label'}
-		];
-		App.loadWindow('page/dialog/importer', {label: 'склад', fields_to_import: config}).progress(function (status, fvalue, Importer) {
-		    if (status === 'submit') {
-			fvalue.parent_id = Leftovers.list.parent_id;
-			App.post("Stock/import/", fvalue, function (ok) {
-			    App.flash("Добавлено/Изменено " + ok);
-			    Leftovers.list.reload();
-			    Importer.reload();
-			});
-		    }
-		});
-	    },
-	    out: function (out_type) {
-		var params = {
-		    page: Leftovers.list.currPage,
-		    parent_id: Leftovers.list.parent_id,
-		    filterRules: Leftovers.list.filterRules,
-		    out_type: out_type
-		};
-		var url = 'StockView/stockViewGet/?' + $.param(params);
-		if (out_type === '.print') {
-		    window.open(url, 'print_tab');
-		}
-	    },
-	    outfile: function (out_type) {
-		var params = {
-		    page: 1,
-		    parent_id: Leftovers.list.parent_id,
-		    filterRules: Leftovers.list.filterRules,
-		    out_type: out_type
-		};
-		var url = 'StockView/stockViewFileGet/?' + $.param(params);
-		location.href = url;
-	    },
 	    edit: function (index, field, value) {
 		$("#stock_dg").datagrid('unselectAll');
 		$("#stock_dg").datagrid('selectRow', index);
@@ -671,50 +685,18 @@
 		}
 	    }
 	},
-	utils: {
-	    calc_min: function () {
-		App.loadWindow("page/stock/calc_min", {parent_label: Leftovers.list.parent_label}).progress(function (status, fvalue) {
-		    if (status === 'submit') {
-			App.post("Utils/stockCalcMin/" + App.uri(Leftovers.list.parent_id, fvalue.sales_period, fvalue.reserve_period), function (ok) {
-			    if (ok * 1) {
-				Leftovers.list.reload();
-				App.flash("Минимумы расчитаны у " + ok + " товаров");
-			    } else {
-				App.flash("Минимумы не изменились");
-			    }
-			});
-		    }
-		});
-	    },
-	    send_to_buy_manager: function () {
-		App.post("StockBuyManager/orderFromStock/", {filterRules: Leftovers.list.filterRules, parent_id: Leftovers.list.parent_id}, function (ok) {
-		    if (ok * 1) {
-			App.flash("Заказ загружен в менеджер закупок");
-		    } else {
-			App.flash("Заказ не сформирован");
-		    }
-		});
-	    },
-	    calc_buy_order: function () {
-		App.loadWindow("page/stock/calc_buy_order", {parent_label: Leftovers.list.parent_label}).progress(function (status, fvalue) {
-		    if (status === 'submit') {
-			if (!confirm('Сформировать заказ поставщику "' + App.pcomp.label + '" по категории "' + Leftovers.list.parent_label + '"?')) {
-			    return false;
-			}
-			App.post("Utils/stockCalcIncomeOrder/" + Leftovers.list.parent_id + "/" + fvalue.round_to, {filterRules: Leftovers.list.filterRules}, function (doc_id) {
-			    if (doc_id * 1) {
-				App.flash("Заказ сформирован");
-				App.loadWindow('page/trade/document', {doc_id: doc_id});
-			    } else {
-				App.flash("Заказ не сформирован");
-			    }
-			});
-		    }
-		});
-	    }
-	}
     };*/
 </script>
+<style>
+    .x-stock-leftovers-utils button{
+	width:100%;margin: 2px;text-align: left
+    }
+    .sg_cell_bg{
+	margin:-3px -3px -4px -5px;
+	padding:2px;
+	height:25px
+    }
+</style>
 <table style="min-width:500px">
     <tr>
 	<td style="vertical-align: top">
@@ -723,12 +705,11 @@
             <div id="StreeInline" class="transp60"></div>
 	    Инструменты
 	    <hr>
-	    
-	    
-	    
-	    <button style="width:100%;margin: 2px;text-align: left" onclick="Leftovers.utils.calc_min()"><img src="img/calc.png" style="width:24px;height: 24px;"> Рассчитать минимумы</button><br>
-	    <button style="width:100%;margin: 2px;text-align: left" onclick="Leftovers.utils.calc_buy_order()"><img src="img/docnew.png" style="width:24px;height: 24px;"> Сформировать заказ</button><br>
-	    <button style="width:100%;margin: 2px;text-align: left" onclick="Leftovers.utils.send_to_buy_manager()"><img src="img/docnew.png" style="width:24px;height: 24px;"> Загрузить в менеджер</button>
+	    <div  class="x-stock-leftovers-utils">
+		<button data-action="calc_min"><img src="img/calc.png" style="width:24px;height: 24px;"> Рассчитать минимумы</button><br>
+		<button data-action="calc_buy_order"><img src="img/docnew.png" style="width:24px;height: 24px;"> Сформировать заказ</button><br>
+		<button data-action="send_to_buy_manager"><img src="img/docnew.png" style="width:24px;height: 24px;"> Загрузить в менеджер</button>		
+	    </div>
 	</td>
 	<td style="vertical-align: top">
 	    <div class="x-stock-leftovers-tools" style="text-align: right;">

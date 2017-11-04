@@ -157,7 +157,10 @@ abstract class Catalog extends CI_Model {
 	if( $this->treeisLeaf($table,$parent_id) || !$label ){
 	    return false;
 	}
-        $parent_top_id=$this->get_value("SELECT top_id FROM $table WHERE branch_id='$parent_id'");
+	$parent_top_id=0;
+	if( $parent_id!=0 ){
+	    $parent_top_id=$this->get_value("SELECT top_id FROM $table WHERE branch_id='$parent_id'");
+	}
 	$branch_id=$this->create($table,[
 	    'parent_id'=>$parent_id,
 	    'is_leaf'=>($type=='leaf'),

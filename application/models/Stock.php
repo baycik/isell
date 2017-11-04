@@ -44,14 +44,14 @@ class Stock extends Catalog {
     private function columnsGet($mode){
 	$lvl1="parent_id,parent_label,t.product_code,ru,t.product_quantity,product_unit";
 	$lvl2=",product_wrn_quantity,SUM(IF(TO_DAYS(NOW()) - TO_DAYS(dl.cstamp) <= 30,de.product_quantity,0)) m1,ROUND( SUM(IF(TO_DAYS(NOW()) - TO_DAYS(dl.cstamp) <= 92,de.product_quantity,0))/3 ) m3";
-	$adv=",t.self_price,sell,buy,curr_code,product_spack,product_bpack,product_weight,product_volume,analyse_origin,product_barcode,analyse_type,analyse_brand,analyse_class,product_article";
+	$adv=",t.self_price,sell,buy,curr_code,product_spack,product_bpack,product_weight,product_volume,analyse_origin,analyse_origin,product_barcode,analyse_type,analyse_brand,analyse_class,product_article";
 	if( $this->Hub->svar('user_level')<2 ){
 	    return $lvl1;
 	}
 	return $lvl1.($mode=="advanced"?$lvl2.$adv:$lvl2);
     }
     
-    public $listFetch=['parent_id'=>'int','offset'=>'int','limit'=>'int','sortby'=>'string','sortdir'=>'(ASC|DESC)','filter'=>'json','mode'=>'string'];
+    public $listFetch=['parent_id'=>'int','offset'=>['int',0],'limit'=>['int',0],'sortby'=>'string','sortdir'=>'(ASC|DESC)','filter'=>'json','mode'=>'string'];
     public function listFetch($parent_id,$offset,$limit,$sortby,$sortdir,$filter=null,$mode="simple"){
 	if( empty($sortby) ){
 	    $sortby="product_code";
@@ -285,11 +285,10 @@ class Stock extends Catalog {
         $this->query("DELETE FROM stock_entries WHERE product_quantity=0 AND product_code IN ($product_codes)");
         return $this->db->affected_rows();
     }
-    public $productMove=['parent_id'=>'int','product_code'=>'raw'];
+    public $productMove=['parent_id'=>'int','product_code'=>'string'];
     public function productMove($parent_id,$product_codes){
         $this->Hub->set_level(2);
-        $product_codes_in= "'".implode("','", array_map('addslashes',$product_codes))."'";
-        $this->query("UPDATE stock_entries SET parent_id='$parent_id' WHERE product_code IN ($product_codes_in)");
+        $this->query("UPDATE stock_entries SET parent_id='$parent_id' WHERE product_code IN ($product_codes)");
         return $this->db->affected_rows();
     }
     public $movementsFetch=['int','int','string'];

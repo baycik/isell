@@ -367,7 +367,7 @@ class StockBuyManager extends Catalog{
     public $orderFromStock=['parent_id'=>'int'];
     public function orderFromStock( $parent_id ){
         $stock_cat=$this->get_value("SELECT label FROM stock_tree WHERE branch_id='$parent_id'");
-        
+	$where="1";
 	if( $parent_id ){
 	    $branch_ids=$this->treeGetSub('stock_tree',$parent_id);
 	    $where="parent_id IN (".implode(',',$branch_ids).")";

@@ -480,9 +480,10 @@ class Utils extends Catalog{
 	$this->query($stock_table);
 	return $this->db->affected_rows();
     }
-    public $stockCalcIncomeOrder=['int','string'];
-    public function stockCalcIncomeOrder( $parent_id=0, $round_to='bpack' ){
-	$having=$this->decodeFilterRules();
+
+    public $stockCalcIncomeOrder=['parent_id'=>['int',0],'filter'=>'json','round_to'=>['string','bpack']];
+    public function stockCalcIncomeOrder( $parent_id=0,$filter=null, $round_to='bpack' ){
+	$having=$this->makeFilter($filter);
         if( $round_to==='spack' ){
             $rounding_quantity='product_spack';
         } else if( $round_to==='piece' ){

@@ -1,18 +1,21 @@
 <?php
 require_once 'Stock.php';
 class StockView extends Stock{
-    public $stockViewGet=['page'=>'int','parent_id'=>'int','out_type'=>'string'];
-    public function stockViewGet($page,$parent_id,$out_type){
-	$rows=10000;
-	$having=$this->decodeFilterRules();
-	
+    public $stockViewGet=['parent_id'=>'int','sortby'=>'string','sortdir'=>'(ASC|DESC)','filter'=>'json','mode'=>'string','out_type'=>'string'];
+    public function stockViewGet($parent_id,$sortby,$sortdir,$filter=null,$mode="simple",$out_type){
+	$this->Hub->set_level(2);
         $blank_set=$this->Hub->pref('blank_set');
-	$table=$this->listFetch($page,$rows,$parent_id,$having);
-	foreach ($table['rows'] as $row) {
+	$table=$this->listFetch($parent_id,0,10000,$sortby,$sortdir,$filter=null,$mode);
+	foreach ($table as $row) {
             $row->product_quantity==0?$row->product_quantity='':'';
         }
+	if( $mode=="simple" ){
+	    $template_file='/StockValidation.xlsx';
+	} else {
+	    $template_file='/StockTable.xlsx';
+	}
 	$dump=[
-	    'tpl_files'=>$blank_set.'/StockValidation.xlsx',
+	    'tpl_files'=>$blank_set.$template_file,
 	    'title'=>"Залишки на складі",
 	    'user_data'=>[
 		'email'=>$this->Hub->svar('pcomp')?$this->Hub->svar('pcomp')->company_email:'',
@@ -23,7 +26,7 @@ class StockView extends Stock{
 		'date'=>date('d.m.Y H:i'),
 		'user_sign'=>$this->Hub->svar('user_sign'),
 		'cat_name'=>$this->get_value("SELECT label FROM stock_tree WHERE branch_id='{$parent_id}'"),
-		'stock'=>$table
+		'stock'=>['rows'=>$table]
 	    ]
 	];
 	$ViewManager=$this->Hub->load_model('ViewManager');

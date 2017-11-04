@@ -86,7 +86,6 @@ class DocumentItems extends DocumentCore{
                     product_unit,
                     party_label,
                     product_article,
-                    product_article product_article,
                     analyse_origin,
                     self_price,
                     IF(doc_type=1,invoice_price<self_price-0.01,invoice_price-0.01>self_price) is_loss
