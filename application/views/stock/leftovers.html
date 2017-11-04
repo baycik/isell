@@ -28,6 +28,21 @@
 		    }
 		});
 	    },
+	    calc_abc: function () {
+		var params = Leftovers.table.currentParamsGet();
+		App.loadWindow("page/stock/calc_abc", {parent_label: Leftovers.parent_label}).progress(function (status, fvalue) {
+		    if (status === 'submit') {
+			$.post("Stock/calcABC/",params, function (ok) {
+			    if (ok * 1) {
+				Leftovers.grid.reload();
+				App.flash(ok + " товаров Классифицировано");
+			    } else {
+				App.flash("Классы не изменились");
+			    }
+			});
+		    }
+		});
+	    },
 	    send_to_buy_manager: function () {
 		var params = Leftovers.table.currentParamsGet();
 		$.post("StockBuyManager/orderFromStock/", params, function (ok) {
@@ -341,13 +356,13 @@
 		    },
 		    abc:function(row, cell, value, columnDef, dataContext) {
 			if(value==="A"){
-			    return "<div class='sg_cell_bg' style='background-color:rgba(0,255,0,.3);text-align:center'>A</div>";
+			    return "<div class='sg_round' style='background-color:rgba(0,255,0,.3);text-align:center'>A</div>";
 			}
 			if(value==="B"){
-			    return "<div class='sg_cell_bg' style='background-color:rgba(255,255,0,.3);text-align:center'>B</div>";
+			    return "<div class='sg_round' style='background-color:rgba(255,255,0,.3);text-align:center'>B</div>";
 			}
 			if(value==="C"){
-			    return "<div class='sg_cell_bg' style='background-color:rgba(255,0,0,.3);text-align:center'>C</div>";
+			    return "<div class='sg_round' style='background-color:rgba(255,0,0,.3);text-align:center'>C</div>";
 			}
 			return value;
 		    },
@@ -451,241 +466,6 @@
 	    ], init);
 	});
     })(jQuery);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*    Leftovers = App.page_stock_leftovers = {
-	init: function () {
-	    this.initTree();
-	    //Leftovers.list.toggleFilter();
-	},
-	initTree: function () {
-	    App.loadModule('page/stock/tree', {inline: true, clickselect: true}, 'StreeInline', /(Stree|page_stock_tree)([^\w]|_)/g, "StreeInline$2").progress(function (status, branch) {
-		if (status === 'select') {
-		    //Leftovers.list.loadParent(branch?branch.branch_id:0,branch?branch.label:'Все');
-		}
-	    });
-	},
-	initAfter: function () {
-	    //this.list.checkHide();
-	},
-	focus: function () {
-	    //Leftovers.list.reload();
-	},
-	table: {
-	    init: function () {
-
-	    }
-	},
-	list: {
-	    parent_id: 0,
-	    parent_label: 'Все',
-	    filterRules: {},
-	    currPage: 1,
-	    loader: function (param, success, error) {
-		Leftovers.list.filterRules = param.filterRules;
-		Leftovers.list.currPage = param.page;
-		param.parent_id = Leftovers.list.parent_id;
-		App.get("Stock/listFetch/", param, function (xhr) {
-		    var resp = App.json(xhr);
-		    resp = Leftovers.list.calc.calcTable(resp);
-		    success(resp);
-		    $("#stock_dg").datagrid('selectRow', Leftovers.list.lastSelectedIndex);
-		});
-	    },
-	    calc: {
-		calcTable: function (resp) {
-		    for (var i in resp.rows) {
-			resp.rows[i].m1 = this.clear(resp.rows[i].m1);
-			resp.rows[i].m3 = this.clear(resp.rows[i].m3);
-			resp.rows[i].product_spack = this.clear(resp.rows[i].product_spack);
-			resp.rows[i].product_bpack = this.clear(resp.rows[i].product_bpack);
-			resp.rows[i].product_quantity = this.clear(resp.rows[i].product_quantity);
-			resp.rows[i].product_wrn_quantity = this.clear(resp.rows[i].product_wrn_quantity);
-			resp.rows[i].product_weight = this.round(resp.rows[i].product_weight, 5);
-			resp.rows[i].product_volume = this.round(resp.rows[i].product_volume, 5);
-			resp.rows[i].self_price = this.round(resp.rows[i].self_price, 2);
-			resp.rows[i].sell = this.round(resp.rows[i].sell, 2);
-			resp.rows[i].buy = this.round(resp.rows[i].buy, 2);
-		    }
-		    return resp;
-		},
-		clear: function (value) {
-		    return value * 1 || '';
-		},
-		round: function (value, precision) {
-		    return Number(value).toFixed(precision);
-		},
-		left: function (value, row) {
-		    if (row.product_quantity * 2 < row.product_wrn_quantity) {
-			return 'background-color:#f9f';
-		    }
-		    if (row.product_quantity < row.product_wrn_quantity) {
-			return 'background-color:#fcf';
-		    }
-		},
-		m1: function (value, row) {
-		    if (row.m1 * 1 < row.m3 * 1) {
-			return 'color:red';
-		    }
-		    return 'color:green';
-		}
-	    },
-	    checkHide: function () {
-		if (App.user.props.user_level >= 3) {
-		    $('#stock_dg').datagrid('showColumn', 'sell');
-		    $('#stock_dg').datagrid('showColumn', 'buy');
-		    $('#stock_dg').datagrid('showColumn', 'curr_code');
-		    $('#stock_dg').datagrid('showColumn', 'self_price');
-		} else {
-		    $('#stock_dg').datagrid('hideColumn', 'sell');
-		    $('#stock_dg').datagrid('hideColumn', 'buy');
-		    $('#stock_dg').datagrid('hideColumn', 'curr_code');
-		    $('#stock_dg').datagrid('hideColumn', 'self_price');
-		}
-	    },
-	    reload: function () {
-		var selected = $("#stock_dg").datagrid('getSelected');
-		if (selected) {
-		    this.lastSelectedIndex = $("#stock_dg").datagrid('getRowIndex', selected);
-		}
-		$("#stock_dg").datagrid('reload');
-	    },
-	    edit: function (index, field, value) {
-		$("#stock_dg").datagrid('unselectAll');
-		$("#stock_dg").datagrid('selectRow', index);
-		var row = $("#stock_dg").datagrid('getSelected');
-		if (row) {
-		    row.focus = field;
-		    Leftovers.list.showProductCard(row);
-		}
-	    },
-	    create: function () {
-		var fvalue = {
-		    parent_id: Leftovers.list.parent_id,
-		    parent_label: Leftovers.list.parent_label,
-		    product_code: ''
-		};
-		Leftovers.list.showProductCard(fvalue);
-	    },
-	    showProductCard: function (fvalue) {
-		if (App.user.props.user_level < 2) {
-		    alert("Доступ ограничен");
-		    return;
-		}
-		fvalue.enablePrevnext = true;
-		App.loadWindow('page/stock/product_card', fvalue).progress(function (status, fvalue) {
-		    if (status === 'save') {
-			Leftovers.list.reload();
-		    }
-		    if (status === 'prev') {
-			Leftovers.list.prev();
-		    }
-		    if (status === 'next') {
-			Leftovers.list.next();
-		    }
-		});
-	    },
-	    prev: function () {
-		var selected = $("#stock_dg").datagrid('getSelected');
-		var index = $("#stock_dg").datagrid('getRowIndex', selected);
-		$("#stock_dg").datagrid('unselectRow', index);
-		if (selected && index > 0) {
-		    $("#stock_dg").datagrid('selectRow', index - 1);
-		} else {
-		    var rows = $("#stock_dg").datagrid('getRows');
-		    $("#stock_dg").datagrid('selectRow', rows.length - 1);
-		}
-		var row = $("#stock_dg").datagrid('getSelected');
-		Leftovers.list.showProductCard(row);
-	    },
-	    next: function () {
-		var selected = $("#stock_dg").datagrid('getSelected');
-		var index = $("#stock_dg").datagrid('getRowIndex', selected);
-		$("#stock_dg").datagrid('unselectRow', index);
-		var rows = $("#stock_dg").datagrid('getRows');
-		if (selected && rows.length - 1 > index) {
-		    $("#stock_dg").datagrid('selectRow', index + 1);
-		} else {
-		    $("#stock_dg").datagrid('selectRow', 0);
-		}
-		var row = $("#stock_dg").datagrid('getSelected');
-		Leftovers.list.showProductCard(row);
-	    },
-	    delete: function () {
-		var rows = $("#stock_dg").datagrid('getSelections');
-		var prod_codes = [];
-		for (var i = 0; i < rows.length; i++) {
-		    var row = rows[i];
-		    if (row && row.product_quantity > 0) {
-			alert("Остаток '" + row.ru + "' должен быть нулевым");
-			return;
-		    }
-		    prod_codes.push(row.product_code);
-		}
-		if (row && confirm("Удалить '" + prod_codes.join(' , ') + "' со списка склада?")) {
-		    App.post('Stock/productDelete/', {product_code: prod_codes}, function (ok) {
-			if (ok * 1) {
-			    App.flash("Товар удален: " + prod_codes.join(' , '));
-			    Leftovers.list.reload();
-			} else {
-			    App.flash("Товар не удален");
-			}
-		    });
-		}
-	    },
-	    move: function () {
-		var rows = $("#stock_dg").datagrid('getSelections');
-		var prod_codes = [];
-		if (rows.length) {
-		    for (var i = 0; i < rows.length; i++) {
-			prod_codes.push(rows[i].product_code);
-		    }
-		} else {
-		    return;
-		}
-		App.loadWindow('page/stock/tree').progress(function (status, category) {
-		    if (status === 'select') {
-			App.post('Stock/productMove/', {product_code: prod_codes, parent_id: category.branch_id}, function (ok) {
-			    if (ok * 1) {
-				App.flash("Товар перемещен в " + category.label + ": " + prod_codes.join(' , '));
-				Leftovers.list.reload();
-			    } else {
-				App.flash("Товар не перемещен");
-			    }
-			});
-		    }
-		});
-	    },
-	    loadParent: function (parent_id, label) {
-		this.parent_id = parent_id;
-		this.parent_label = label;
-		$("#stock_cat_name").html(this.parent_label);
-		this.reload();
-	    },
-	    toggleFilter: function () {
-		if (this.filterEnabled) {
-		    $('#stock_dg').datagrid('disableFilter');
-		    this.filterEnabled = false;
-		} else {
-		    $('#stock_dg').datagrid('enableFilter');
-		    this.filterEnabled = true;
-		}
-	    }
-	},
-    };*/
 </script>
 <style>
     .x-stock-leftovers-utils button{
@@ -695,6 +475,12 @@
 	margin:-3px -3px -4px -5px;
 	padding:2px;
 	height:25px
+    }
+    .sg_round{
+	border-radius: 25px;
+	width: 25px;
+	margin-left: auto;
+	margin-right: auto;
     }
 </style>
 <table style="min-width:500px">
@@ -707,6 +493,7 @@
 	    <hr>
 	    <div  class="x-stock-leftovers-utils">
 		<button data-action="calc_min"><img src="img/calc.png" style="width:24px;height: 24px;"> Рассчитать минимумы</button><br>
+		<button data-action="calc_abc"><img src="img/calc.png" style="width:24px;height: 24px;"> Рассчитать ABC</button><br>
 		<button data-action="calc_buy_order"><img src="img/docnew.png" style="width:24px;height: 24px;"> Сформировать заказ</button><br>
 		<button data-action="send_to_buy_manager"><img src="img/docnew.png" style="width:24px;height: 24px;"> Загрузить в менеджер</button>		
 	    </div>
