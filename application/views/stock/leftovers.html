@@ -442,7 +442,7 @@
 		render:function(){
 		    Leftovers.grid.updateOptions({params:{mode:Leftovers.table.columnMode}});
 		    var cols=Leftovers.table.columnsGet();
-		    Leftovers.grid.setColumns(cols);
+		    Leftovers.grid.setColumnsAndFilters(cols);
 		    Leftovers.table.setDimensions("#stock_leftovers_sg",20,0);
 		},
 		setDimensions:function(query, dw, dh){

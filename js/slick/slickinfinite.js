@@ -98,6 +98,12 @@
 	    });
 	    grid.reload();
 	}
+	grid.setColumnsAndFilters=function(cols){
+	    grid.setColumns(cols);
+	    setTimeout(function(){
+		initFilter();
+	    },0);
+	};
 	return grid;
     };
     window.SlickInfinite = SlickInfinite;
