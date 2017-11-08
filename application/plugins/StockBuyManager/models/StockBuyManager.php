@@ -29,7 +29,7 @@ class StockBuyManager extends Catalog{
     public $listFetch=['offset'=>'int','limit'=>'int','sortby'=>'string','sortdir'=>'(ASC|DESC)','filter'=>'json'];
     public function listFetch($offset,$limit,$sortby,$sortdir,$filter=null){
 	if( empty($sortby) ){
-	    $sortby="product_code IS NULL,product_code";
+	    $sortby="sl.product_code IS NULL,sl.product_code";
 	    //$sortdir="DESC";
 	}
 	$having=$this->makeFilter($filter);
@@ -37,7 +37,7 @@ class StockBuyManager extends Catalog{
 	    SELECT 
 		supply_id,
 		supplier_id,
-		product_code,
+		sl.product_code,
 		supply_code,
 		supply_name,
 		ROUND(supply_buy,2) supply_buy,
@@ -58,11 +58,15 @@ class StockBuyManager extends Catalog{
 		    supply_buy*(1-supplier_sell_discount/100))
                     *(1+supply_sell_ratio/100)
 		,2) supply_sell,
-                (SELECT path FROM stock_tree JOIN stock_entries se ON se.parent_id=branch_id WHERE se.product_code=IF(sl.product_code IS NULL,sl.supply_code,sl.product_code) ) supply_stock_path
+                path supply_stock_path
 	    FROM 
 		supply_list sl
 		    LEFT JOIN
 		supplier_list USING(supplier_id)
+                    LEFT JOIN
+                stock_entries se  ON se.product_code=IF(sl.product_code IS NULL,sl.supply_code,sl.product_code)
+                    LEFT JOIN 
+                stock_tree ON se.parent_id=branch_id 
 	    HAVING $having
 	    ORDER BY $sortby $sortdir
 	    LIMIT $limit OFFSET $offset";
