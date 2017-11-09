@@ -86,7 +86,7 @@
 	},
 	drop:function(target,source,point){
 	    var target_node=$("#Stree_tree").tree('getNode',target);
-	    $.post('Stock/stockTreeUpdate/'+App.uri(source.branch_id,'parent_id',target_node.branch_id),function(ok){
+	    $.post('Stock/stockTreeUpdate/',{branch_id:source.branch_id,field:'parent_id',value:target_node.branch_id},function(ok){
 		if( ok*1 ){
 		    App.flash(source.label + " перемещен в " + target_node.label);
 		} else {
@@ -97,7 +97,7 @@
 	up:function(){
 	    if( confirm("Переместить выделенный элемент в корень дерева?") ){
 		var node=$('#Stree_tree').tree('getSelected');
-		$.post('Stock/stockTreeUpdate/'+App.uri(node.branch_id,'parent_id',0),function(ok){
+		$.post('Stock/stockTreeUpdate/',{branch_id:node.branch_id,field:'parent_id',value:0},function(ok){
 		    if( ok*1 ){
 			App.flash(node.label + " перемещен в корень");
 		    } else {
