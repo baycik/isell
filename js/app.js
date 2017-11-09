@@ -141,6 +141,10 @@ var App = {
 	}
 	for(var i in urls){
 	    var url=urls[i];
+	    if( url.indexOf('.css')>-1 ){
+		$('head').append( $('<link rel="stylesheet" type="text/css" />').attr('href', url) );
+		ok();
+	    } else
 	    if( App.loadedScripts.indexOf(url)>-1 ){
 		ok();
 	    } else {

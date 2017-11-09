@@ -1,30 +1,64 @@
 <script type="text/javascript">
     /*global App */
     App.page_stock_calc_abc = {
-	parsed:true,
+	parsed: true,
 	init: function () {
 	    this.node.window({
 		title: 'Расчет Классов',
-		width: 550,
-                top:50,
+		width: 570,
+		top: 50,
 		height: 'auto',
-		shadow:false,
-		onClose:function(){
-                    delete App.page_stock_calc_abc;
+		shadow: false,
+		onClose: function () {
+		    delete App.page_stock_calc_abc;
+		    pickmeup('.three-calendars').destroy();
 		}
 	    });
 	    this.node.window('hcenter');
-	    this.node.window('window').css('position','fixed');
-            
-	    $("#stock_calc_abc_label").html(this.data.parent_label||"Все");
-	    App.setupForm("#page_stock_calc_abc_frm",{},"use_inp_values");
+	    this.node.window('window').css('position', 'fixed');
+
+	    $("#stock_calc_abc_label").html(this.data.parent_label || "Все");
+	    App.setupForm("#page_stock_calc_abc_frm", {}, "use_inp_values");
+	    
+	    App.require(['js/pickmeup/pickmeup.min.js','js/pickmeup/pickmeup.css'],function(){
+		App.page_stock_calc_abc.rangePicker();
+	    });
+	    
 	},
-	submit:function(e){
+	submit: function (e) {
 	    e.preventDefault();
-	    var fvalue=App.collectForm("#page_stock_calc_min_frm");
-	    fvalue.reserve_period=fvalue.reserve_period1*1+fvalue.reserve_period2*1;
-	    this.handler.notify('submit',fvalue);
-	    this.node.window('window','close');
+	    var fvalue = App.collectForm("#page_stock_calc_min_frm");
+	    fvalue.reserve_period = fvalue.reserve_period1 * 1 + fvalue.reserve_period2 * 1;
+	    this.handler.notify('submit', fvalue);
+	    this.node.window('window', 'close');
+	},
+	rangePicker: function () {
+	    pickmeup.defaults.locales['ru'] = {
+		    days: ['Воскресенье', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'],
+		    daysShort: ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'],
+		    daysMin: ['Вс', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'],
+		    months: ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'],
+		    monthsShort: ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек']
+	    };
+	    var idate = new Date;
+	    idate.setMonth(idate.getMonth() -3);
+	    pickmeup('.three-calendars', {
+		locale    : 'ru',
+		format	  : 'd.m.Y',
+		flat      : false,
+		date      : [idate,new Date],
+		mode      : 'range',
+		calendars : 2,
+		position  : 'bottom',
+		hide_on_select : true,
+		render : function (date) {
+		    var now = new Date;
+		    if (date > now) {
+			return {disabled : true};
+		    }
+		    return {};
+		} 
+	    });
 	}
     };
 </script>
@@ -32,45 +66,20 @@
     #page_stock_calc_abc_frm .inp_group b{
 	width:120px;
     }
+    .daterangepicker{
+	z-index: 10000;
+    }
 </style>
 <form id="page_stock_calc_abc_frm" onsubmit="App.page_stock_calc_abc.submit(event)">
     <img src="img/calc.png" style="float:left" /> 
     <p style="padding: 5px">
     <big>Классификация по продаваемости товаров категории:"<b id="stock_calc_abc_label"></b>"</big><br>
-	A - 80% продаж<br>
-	B - 15% продаж<br>
-	C - 5% продаж<br>
+    A - 80% продаж<br>
+    B - 15% продаж<br>
+    C - 5% продаж<br>
     </p>
     <input type="checkbox" title="Все наши фирмы" name="all_active" checked="checked" />
-    
-    
-    
-    <select name="sales_period" title="Среднемесячные продажи за">
-	<option value="30">1 месяц</option>
-	<option value="92" selected="selected">3 месяца</option>
-    </select>
-    <select name="reserve_period1" title="Мин. запас на" style="width:103px;">
-	<option value="0">0 месяцев</option>
-	<option value="30" selected="selected">1 месяц</option>
-	<option value="61">2 месяца</option>
-	<option value="92">3 месяца</option>
-	<option value="122">4 месяца</option>
-	<option value="153">5 месяцев</option>
-	<option value="183">6 месяцев</option>
-	<option value="214">7 месяцев</option>
-	<option value="243">8 месяцев</option>
-	<option value="275">9 месяцев</option>
-	<option value="304">10 месяцев</option>
-	<option value="335">11 месяцев</option>
-	<option value="365">1 год</option>
-    </select>
-    <select name="reserve_period2" style="width:103px;">
-	<option value="0">0 недель</option>
-	<option value="7">1 неделя</option>
-	<option value="14">2 недели</option>
-	<option value="21">3 недели</option>
-	<option value="28">4 недели</option>
-    </select>
+    <input class="three-calendars" title="Период рассчета">
     <div style="text-align: center;margin-top: 15px;">
 	<button type="submit"><img src="img/calc.png" style="width:24px;height: 24px;" /> Рассчитать</button>
 	<button type="button" onclick="App.page_stock_calc_min.node.window('close')"><img src="img/close24.png" /> Закрыть</button>
