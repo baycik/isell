@@ -58,7 +58,7 @@ class StockBuyManager extends Catalog{
 		    supply_buy*(1-supplier_sell_discount/100))
                     *(1+supply_sell_ratio/100)
 		,2) supply_sell,
-                path supply_stock_path
+                path
 	    FROM 
 		supply_list sl
 		    LEFT JOIN
