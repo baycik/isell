@@ -107,6 +107,20 @@
 			    }
 			});
 		    });
+                    $("#suppliers_ac .accordion_panel button").click(function (e) {
+                        if( !confirm("Обновить цены закупки/продажи на товары от этого поставщика?") ){
+                            return;
+                        }
+			var formholder = $(this).parent();
+			var index = formholder.data('index');
+                        var action = $(this).data('action');
+                        console.log(Supplier.list,index);
+                        $.post("StockBuyManager/supplierUpdatePrices",{supplier_id: Supplier.list[index].supplier_id},function(ok){
+                            if (ok * 1) {
+                                App.flash("Справочник цен обновлен");
+                            }
+                        });
+                    });
 		},
 		load:function(){
 		    $.get('StockBuyManager/supplierListFetch', function (resp) {
@@ -461,6 +475,7 @@
 		    <div style="background:  rgba(255,255,255,.6);padding: 3px;">Расчет цены продажи</div>
 		    <label>Cкидка от базы %: <input name="supplier_sell_discount" value="{{supplier_sell_discount|blank>}}"></label>
 		    <label>Наценка %: <input name="supplier_sell_gain" value="{{supplier_sell_gain|blank>}}"></label>
+                    <button>Обновить цены на складе</button>
 		    {{/if}}
 		</div>
 	    {{/suppliers}}

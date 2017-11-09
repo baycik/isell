@@ -237,6 +237,32 @@ class StockBuyManager extends Catalog{
 	}
 	return $this->update('supplier_list',$data,['supplier_id'=>$supplier_id]);
     }
+    
+    public $supplierUpdatePrices=['supplier_id'=>'int'];
+    public function supplierUpdatePrices($supplier_id){
+        $sql="UPDATE 
+                price_list pl
+                    JOIN
+                stock_entries USING(product_code)
+                    JOIN
+                supply_list sl ON pl.product_code=IF(sl.product_code IS NOT NULL,sl.product_code,sl.supply_code)
+		    JOIN
+		supplier_list USING(supplier_id)
+            SET 
+                buy=ROUND(
+                    supply_buy*(1-supplier_buy_discount/100)
+                ,2),
+                sell=ROUND(
+		    IF(supplier_sell_gain,
+		    supply_buy*(1-supplier_buy_discount/100)*(1+supplier_buy_expense/100)*(1+supplier_sell_gain/100),
+		    supply_buy*(1-supplier_sell_discount/100))
+                    *(1+supply_sell_ratio/100)
+                ,2)
+            WHERE 
+                supplier_id='$supplier_id'";
+	$this->query($sql);
+        return  $this->db->affected_rows();
+    }
 
     public $supplierDelete=['supplier_id'=>'int','also_products'=>'bool'];
     public function supplierDelete($supplier_id,$also_products){
