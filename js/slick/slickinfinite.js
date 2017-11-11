@@ -37,10 +37,12 @@
 	function initFilter() {
 	    $('.slick-headerrow-columns .slick-headerrow-column', node).each(function () {
 		var column_field = $(this).data('column').field;
-		$(this).empty();
-		$("<input data-field='"+column_field+"'>")
-			.data("field", column_field)
-			.appendTo(this);
+		if(column_field){
+		    $(this).empty();
+		    $("<input data-field='"+column_field+"'>")
+			    .data("field", column_field)
+			    .appendTo(this);
+		}
 	    });
 	    var filterClock;
 	    function do_filter(input_node) {
@@ -121,7 +123,7 @@ $.fn.slickgrid = function (settings) {
 
 (function ($) {
     function RemoteModel(url,def_params,loader) {
-	var PAGESIZE = 15;
+	var PAGESIZE = 30;
 	var total_row_count = 0;
 	var data = {length: 0};
 	var filter = {};

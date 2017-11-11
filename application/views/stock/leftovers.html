@@ -29,10 +29,10 @@
 		});
 	    },
 	    calc_abc: function () {
-		var params = Leftovers.table.currentParamsGet();
 		App.loadWindow("page/stock/calc_abc", {parent_label: Leftovers.parent_label}).progress(function (status, fvalue) {
 		    if (status === 'submit') {
-			$.post("Stock/calcABC/",params, function (ok) {
+			fvalue.parent_id=Leftovers.parent_id;
+			$.post("Stock/calcABC/",fvalue, function (ok) {
 			    if (ok * 1) {
 				Leftovers.grid.reload();
 				App.flash(ok + " товаров Классифицировано");
@@ -304,6 +304,7 @@
 		},
 		columnsGet:function(){
 		    var columns_lev1=[
+			{id: "", field: "", name: "#", width: 30,formatter:Leftovers.table.frm.queue, cssClass: 'slick-align-right'},
 			{id: "parent_label", field: "parent_label", name: "Категория", width: 120},
 			{id: "product_code", field: "product_code", name: "Код", width: 80, sortable: true},
 			{id: "ru", field: "ru", name: "Название", width: 330, sortable: true},
@@ -345,6 +346,9 @@
 		    return columns;
 		},
 		frm:{
+		    queue:function(row, cell, value, columnDef, dataContext){
+			return row+1;
+		    },
 		    min:function(row, cell, value, columnDef, dataContext) {
 			if(dataContext.product_quantity*1>=dataContext.product_wrn_quantity*1){
 			    return (value*1||"");
