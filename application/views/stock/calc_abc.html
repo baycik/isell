@@ -11,7 +11,7 @@
 		shadow: false,
 		onClose: function () {
 		    delete App.page_stock_calc_abc;
-		    pickmeup('.three-calendars').destroy();
+		    //pickmeup('.three-calendars').destroy();
 		}
 	    });
 	    this.node.window('hcenter');
@@ -20,18 +20,19 @@
 	    $("#stock_calc_abc_label").html(this.data.parent_label || "Все");
 	    App.setupForm("#page_stock_calc_abc_frm", {}, "use_inp_values");
 	    
-	    App.require(['js/pickmeup/pickmeup.min.js','js/pickmeup/pickmeup.css'],function(){
+	    /*App.require(['js/pickmeup/pickmeup.min.js','js/pickmeup/pickmeup.css'],function(){
 		App.page_stock_calc_abc.rangePicker();
-	    });
-	    
+	    });*/
 	},
 	submit: function (e) {
 	    e.preventDefault();
-	    var fvalue = App.collectForm("#page_stock_calc_min_frm");
-	    fvalue.reserve_period = fvalue.reserve_period1 * 1 + fvalue.reserve_period2 * 1;
-	    this.handler.notify('submit', fvalue);
-	    this.node.window('window', 'close');
-	},
+	    var fvalue = App.collectForm("#page_stock_calc_abc_frm");
+	    if( confirm("Классифицировать товар по ABC в категории '"+this.data.parent_label+"'") ){
+		this.handler.notify('submit', fvalue);
+		this.node.window('window', 'close');
+	    }
+	    
+	}/*,
 	rangePicker: function () {
 	    pickmeup.defaults.locales['ru'] = {
 		    days: ['Воскресенье', 'Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'],
@@ -59,29 +60,28 @@
 		    return {};
 		} 
 	    });
-	}
+	}*/
     };
 </script>
 <style>
     #page_stock_calc_abc_frm .inp_group b{
 	width:120px;
     }
-    .daterangepicker{
-	z-index: 10000;
-    }
 </style>
 <form id="page_stock_calc_abc_frm" onsubmit="App.page_stock_calc_abc.submit(event)">
     <img src="img/calc.png" style="float:left" /> 
     <p style="padding: 5px">
     <big>Классификация по продаваемости товаров категории:"<b id="stock_calc_abc_label"></b>"</big><br>
-    A - 80% продаж<br>
-    B - 15% продаж<br>
-    C - 5% продаж<br>
+    A - 80% продаж | B - 15% продаж | C - 5% продаж
     </p>
     <input type="checkbox" title="Все наши фирмы" name="all_active" checked="checked" />
-    <input class="three-calendars" title="Период рассчета">
+    <select name="period" title="Период рассчета">
+	<option value="30">месяц</option>
+	<option value="91" selected="selected">3 месяца</option>
+	<option value="365">год</option>
+    </select>
     <div style="text-align: center;margin-top: 15px;">
 	<button type="submit"><img src="img/calc.png" style="width:24px;height: 24px;" /> Рассчитать</button>
-	<button type="button" onclick="App.page_stock_calc_min.node.window('close')"><img src="img/close24.png" /> Закрыть</button>
+	<button type="button" onclick="App.page_stock_calc_abc.node.window('close')"><img src="img/close24.png" /> Закрыть</button>
     </div>
 </form>
