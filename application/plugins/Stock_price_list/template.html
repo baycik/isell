@@ -29,8 +29,7 @@
         font-weight: bold;
     }
     .price_page{
-	padding: 5px;
-	border: none;
+	padding: 0px;
     }
     table{
 	border-collapse: collapse;
@@ -42,7 +41,7 @@
 </style>
 <div class="page">
     <div>
-        <div style="font-size:30px;text-align: left;float: left;">ПРАЙС ЛИСТ ОТ {$v->date}</div>  <div style="float:right">{$v->pcomp_label} {$v->dollar_ratio}$</div>        
+        <div style="font-size:24px;text-align: left;float: left;">ПРАЙС ЛИСТ ОТ {$v->date}</div>  <div style="float:right">{$v->pcomp_label} {$v->dollar_ratio}$</div>        
     </div>
     <table border>
         <tbody>
@@ -69,17 +68,30 @@
                     </tr>	
                 {/loop}
             {else}
-            </tbody></table><table border><tbody>
-                <tr>
-                    <td colspan="4" class="price_{$value->type}">{$value->text}</td>
-                </tr>
+            </tbody></table>
+                {if="$value->type=='page'"}
+                    <table style="border-collapse: collapse"><tbody>
+                    <tr>
+                        <td colspan="4" class="price_page">{$value->text}</td>
+                    </tr>
+                {/if}
+                {if="$value->type=='h1'"}
+                    <table border><tbody>
+                    <tr>
+                        <td colspan="4" class="price_h1">{$value->text}</td>
+                    </tr>
+                {/if}
                 {if="$value->type=='h2'"}
-                <tr>
-                    <th>Код</th>
-                    <th>Название</th>
-                    <th>Цена</th>
-                    <th>Изображение</th>
-                </tr>
+                    <table border><tbody>
+                    <tr>
+                        <td colspan="4" class="price_h2">{$value->text}</td>
+                    </tr>
+                    <tr>
+                        <th>Код</th>
+                        <th>Название</th>
+                        <th>Цена</th>
+                        <th>Изображение</th>
+                    </tr>                
                 {/if}
             {/if}
         {/loop}
