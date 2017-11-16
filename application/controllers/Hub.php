@@ -69,7 +69,7 @@ class Hub  extends CI_Controller{
     }
 
     private function parseMethodArguments($method_args_config,$route_args){
-	if( isset($method_args_config) ){
+	if( is_array($method_args_config) ){
 	    $method_args=[];
 	    foreach( $method_args_config as $var_name=>$var_type ){
 		if( is_numeric($var_name) && isset($route_args[$var_name]) ){
@@ -82,6 +82,9 @@ class Hub  extends CI_Controller{
 	    }
 	    return $method_args;
 	}
+//	if( $method_args_config==="path") {
+//	    return implode("/",$route_args);
+//	}
     }
     
     public function page( $parent_folder=null ){
