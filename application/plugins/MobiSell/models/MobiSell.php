@@ -21,12 +21,12 @@ class MobiSell extends Catalog{
     
     public $index=[];
     public function index(){
-	$this->view('index.html');
-    }
-    
-    public $view=['string'];
-    public function view($path){
-	$this->load->view($path);
+	$pages=[
+	    ' '
+	];
+	
+	
+	$this->load->view('index.html');
     }
     
     public $doclistGet=['type'=>'string','date'=>'([0-9\-]+)','offset'=>['int',0],'limit'=>['int',10], 'compFilter'=>'string'];

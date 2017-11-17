@@ -3,22 +3,22 @@
     "short_name": "MobiSell",
     "icons": [
 	{
-	    "src": "96logo.png",
+	    "src": "logo/96logo.png",
 	    "sizes": "96x96",
 	    "type": "image/png"
 	},
 	{
-	    "src": "144logo.png",
+	    "src": "logo/144logo.png",
 	    "sizes": "144x144",
 	    "type": "image/png"
 	},
 	{
-	    "src": "192logo.png",
+	    "src": "logo/192logo.png",
 	    "sizes": "192x192",
 	    "type": "image/png"
 	},
 	{
-	    "src": "512logo.png",
+	    "src": "logo/512logo.png",
 	    "sizes": "512x512",
 	    "type": "image/png"
 	}

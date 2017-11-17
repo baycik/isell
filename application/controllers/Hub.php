@@ -103,25 +103,7 @@ class Hub  extends CI_Controller{
 	exit;
     }
     
-    /*
-     * Here the url call to plugin goes as /plugin/plugin_name/plugin_method/args/...
-     * So to method comes the plugin_name in $args[0] and method name in $args[1]
-     */
-//    public function plugin(){
-//	
-//	die(9999);
-//	
-//	$args=func_get_args();
-//	$plugin_name=$args[0];
-//	if( !$plugin_name ){
-//	    return;
-//	}
-//	$plugin_method=isset($args[1])?$args[1]:'index';
-//	$plugin_method_args = array_slice($args, 2);
-//	$PluginManager=$this->load_model('PluginManager');
-//	$response=$PluginManager->plugin_do($plugin_name,$plugin_method,$plugin_method_args);
-//	$this->response($response);
-//    }    
+
     public function pluginInitTriggers(){
 	$before=[];
 	$after=[];
@@ -158,6 +140,7 @@ class Hub  extends CI_Controller{
     private function pluginTrigger($model_name,$method,$route_args){
 	$trigger_before=$this->svar('trigger_before');
 	if( isset($trigger_before[$model_name]) ){
+	    $this->pluginCheckIfPublicFile($model_name,$method,$route_args);
 	    $model_override=$trigger_before[$model_name];
 	    $this->load->add_package_path(APPPATH.'plugins/'.$model_override, FALSE);
 	    //require_once APPPATH."plugins/{$model_override}/{$model_override}.php";
@@ -167,6 +150,13 @@ class Hub  extends CI_Controller{
 		return false;
 	    }
 	    $this->execute($model_override, $method, $route_args);
+	}
+    }
+    private function pluginCheckIfPublicFile($model_name,$method,$route_args){
+	$public_file_path=APPPATH."plugins/{$model_name}/public/$method".($route_args?implode("/",$route_args):"");
+	if (file_exists($public_file_path)) {
+	    readfile($public_file_path);
+	    exit;
 	}
     }
     /*
