@@ -153,9 +153,11 @@ class Hub  extends CI_Controller{
 	}
     }
     private function pluginCheckIfPublicFile($model_name,$method,$route_args){
-	$public_file_path=APPPATH."plugins/{$model_name}/public/$method".($route_args?implode("/",$route_args):"");
+	$public_file_path=APPPATH."plugins/{$model_name}/public/$method".($route_args?"/".implode("/",$route_args):"");
 	if (file_exists($public_file_path)) {
-	    readfile($public_file_path);
+	    $this->load->helper('download');
+	    force_download($public_file_path, null, true);
+	    //readfile($public_file_path);
 	    exit;
 	}
     }

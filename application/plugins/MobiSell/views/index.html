@@ -6,6 +6,8 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#00A3D8">
+    
+    <script type="text/javascript" src="sw.js"></script>
     <link rel="manifest" href="manifest.json" crossOrigin="use-credentials">
     <link rel="shortcut icon" type="image/png" href="/favicon.png" />
 
@@ -110,7 +112,16 @@
 		}
 	    }
 	};
-	$(App.init);	
+	$(App.init);
+	
+	if ('serviceWorker' in navigator) {
+	    navigator.serviceWorker.register('../MobiSell/sw.js', {scope: '../MobiSell/'})
+	    .then(function(reg) {
+	      console.log('serviceWorker Registration succeeded. Scope is ' + reg.scope);
+	    }).catch(function(error) {
+	      console.log('serviceWorker Registration failed with ' + error);
+	    });
+	}
     </script>
     <style>
 	.covert{
@@ -119,7 +130,7 @@
     </style>
 </head>
 <body>
-    <div class="ui left demo vertical inverted sidebar labeled icon menu">
+    <div class="ui left vertical inverted sidebar labeled icon menu">
 	<a href="#" class="item">
 	    <i class="home icon"></i>
 	    Главная
@@ -146,7 +157,7 @@
     </div>
     <div id="main_container" class="pusher" style="margin-top: 42px;">
 	<div style="text-align: center">
-	    <img src="../img/logo/144logo.png">
+	    <img src="logo/144logo.png">
 	    <h1 class="ui header">MobiSell 1.0</h1>
 	</div>
 	<div id="user_info" class="ui blue segment raised " style="margin: 10px;">
