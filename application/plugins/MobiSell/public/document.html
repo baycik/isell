@@ -416,8 +416,8 @@
 		var index = $(row_node).data('row-index');
 		var suggest_entry = App.document.suggestion.entries[index];
 
-		suggest_entry.size_x = $(document).width();
-		suggest_entry.size_y = $(document).height();
+		suggest_entry.size_x = Math.min($(document).width(),300);
+		suggest_entry.size_y = Math.min($(document).height(),300);
 
 
 		App.renderTpl('document_product_image', suggest_entry);
@@ -711,10 +711,10 @@
     </div>
 </div>
 
-<div class="ui fullscreen modal" id="document_product_image">
+<div class="ui modal" id="document_product_image" style="height: calc( 50 + {{size_x}}px);width: calc( 50 + {{size_y}}px);">
     <div class="header">{{product_code}}</div>
-    <div class="image content" style="height: {{size_x}}px;">
-	<img class="image" src="../Storage/image_flush/?size={{size_x}}x{{size_y}}&path=/dynImg/{{product_img}}" style="height:auto;width:100%" />
+    <div class="image content">
+	<img class="image" src="../Storage/image_flush/?size={{size_x}}x{{size_y}}&path=/dynImg/{{product_img}}" />
     </div>
     <div class="description">
 	{{product_name}}
