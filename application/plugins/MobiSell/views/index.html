@@ -118,15 +118,15 @@
 	if ('serviceWorker' in navigator) {
 	    navigator.serviceWorker.register('../MobiSell/sw.js', {scope: '../MobiSell/'})
 	    .then(function(reg) {
-	      console.log('serviceWorker Registration succeeded. Scope is ' + reg.scope);
+		console.log('serviceWorker Registration succeeded. Scope is ' + reg.scope);
 	    }).catch(function(error) {
-	      console.log('serviceWorker Registration failed with ' + error);
+		console.log('serviceWorker Registration failed with ' + error);
 	    });
 	    
 	    $.post('./version',function(current_version){
 		var stored_version=localStorage.getItem("stored_version");
 		if( current_version !== stored_version ){
-		    navigator.serviceWorker.controller.postMessage('clear_cache');
+		    navigator.serviceWorker.controller && navigator.serviceWorker.controller.postMessage('clear_cache');
 		    localStorage.setItem("stored_version",current_version);
 		}
 	    });
