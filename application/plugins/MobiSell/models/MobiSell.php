@@ -39,14 +39,14 @@ class MobiSell extends Catalog{
 		dl.doc_num,
 		is_commited,
 		COALESCE(
-		    (SELECT amount 
+		    ROUND((SELECT amount 
 			FROM 
 			    acc_trans 
 				JOIN 
 			    document_trans dt USING(trans_id)
 			WHERE dt.doc_id=dl.doc_id 
 			ORDER BY trans_id LIMIT 1
-		    ),
+		    ),2),
 		    '') amount,
 		label
 	    FROM

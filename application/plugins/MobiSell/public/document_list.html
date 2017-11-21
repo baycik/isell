@@ -19,7 +19,7 @@
     <a class="active item" data-tab="sell">Расход</a>
     <a class="item" data-tab="buy">Приход</a>
 </div>
-<div class="ui bottom attached  tab segment" data-tab="sell" id="documents_sell">
+<div class="ui bottom attached  tab segment covert" data-tab="sell" id="documents_sell">
     <a href="#document.html"><i class="plus icon"></i> Добавить документ</a>
     <table class="ui green selectable  table unstackable">
 	<thead>
@@ -35,7 +35,7 @@
 	    <tr data-doc-id="{{doc_id}}" onclick="App.document_list.handleClick(this)">
 		<td><i class="green icon arrow left"></i>{{doc_num}}</td>
 		<td>{{label}}</td>
-		<td>{{amount}}</td>
+		<td style="text-align:right">{{amount}}</td>
 		<td>{{if is_commited|more>0}}<i class="gray checkmark box icon"></i>{{else}}<i class="square outline icon"></i>{{/if}}</td>
 	    </tr>
 	    <!-- {{/doc_list}} {{else}}-->
@@ -46,7 +46,7 @@
 	</tbody>
     </table>
 </div>
-<div class="ui bottom attached tab segment" data-tab="buy" id="documents_buy">
+<div class="ui bottom attached tab segment covert" data-tab="buy" id="documents_buy">
     <a href="#document.html"><i class="plus icon"></i> Добавить документ</a>
     <table class="ui purple selectable unstackable table ">
 	<thead>
@@ -62,7 +62,7 @@
 	    <tr data-doc-id="{{doc_id}}" onclick="App.document_list.handleClick(this)">
 		<td><i class="purple icon arrow right"></i>{{doc_num}}</td>
 		<td>{{label}}</td>
-		<td>{{amount}}</td>
+		<td style="text-align:right">{{amount}}</td>
 		<td>{{if is_commited|more>0}}<i class="gray checkmark box icon"></i>{{else}}<i class="square outline icon"></i>{{/if}}</td>
 	    </tr>
 	    <!-- {{/doc_list}} {{else}}-->
