@@ -530,7 +530,7 @@
 	    }
 	},
 	formatter:function(row){
-	    return '<div style="width:24px;height:24px;display:inline-block"><img src="Storage/image_flush/?size=24x24&path=/dynImg/'+row['product_img']+'"></div> <b>'+row['product_code']+'</b> <font color='+(row['leftover']>0?'black':'red')+'>'+row['product_name']+'</font> <b>'+row['product_price_total']+'</b> <font color=green>'+row['leftover']+row['product_unit']+'</font>';
+	    return '<div class="img"><img src="Storage/image_flush/?size=30x30&path=/dynImg/'+row['product_img']+'"></div> <b>'+row['product_code']+'</b> <font color='+(row['leftover']>0?'black':'red')+'>'+row['product_name']+'</font> <div class="props">[x'+row['product_spack']+'] '+row['product_price_total']+' <font color=green>'+row['leftover']+row['product_unit']+'</font></div>';
 	},
 	findSPack:function( code ){
 	    for( var i in Doc.suggest.rows ){
@@ -620,6 +620,18 @@
 	cursor: default;
 	background-color: #fff;
     }
+    .combobox-item{
+	clear: both;
+    }
+    .combobox-item .img{
+	width:30px;
+	height:30px;
+	display: inline-block;
+    }
+    .combobox-item .props{
+	float:right;
+    }
+
     .document_comment{
 	width: 660px;
 	height:30px;
