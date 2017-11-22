@@ -304,7 +304,7 @@
 		},
 		columnsGet:function(){
                     var columns_lev1=[
-                        {id: "row_num", field: "", name: "#", width: 30,cssClass: 'slick-align-right'},
+                        {id: "row_num", field: "",formatter:Leftovers.table.frm.queue, name: "#", width: 30,cssClass: 'slick-align-right'},
                         {id: "parent_label", field: "parent_label", name: "Категория", width: 120},
                         {id: "product_code", field: "product_code", name: "Код", width: 80, sortable: true},
                         {id: "ru", field: "ru", name: "Название", width: 330, sortable: true},
@@ -340,12 +340,8 @@
                         }
                     }
                     //App.store('leftovers_cols_order_'+Leftovers.table.columnMode,JSON.stringify(columns));
-                    if( !App.store('leftovers_cols_order_'+Leftovers.table.columnMode) ){
-                        var column_order=[];
-                        for(var i in columns){
-                            column_order.push(columns['id']);
-                        }
-                        App.store('leftovers_columns_order_'+Leftovers.table.columnMode,column_order.join(','));
+                    if( !App.store('leftovers_columns_order_'+Leftovers.table.columnMode) ){
+                        Leftovers.table.columnsStore(columns);
                     }
                     var filtered_columns=[];
                     var column_order=App.store('leftovers_columns_order_'+Leftovers.table.columnMode).split(',');
@@ -358,6 +354,13 @@
                     }
                     return filtered_columns;
 		},
+                columnsStore:function(columns){
+                    var column_order=[];
+                    for(var i in columns){
+                        column_order.push(columns[i]['id']);
+                    }
+                    App.store('leftovers_columns_order_'+Leftovers.table.columnMode,column_order.join(','));                    
+                },
 		frm:{
 		    queue:function(row, cell, value, columnDef, dataContext){
 			return row+1;
@@ -439,7 +442,7 @@
 			Leftovers.tools.entryEdit(focus);
 		    });
                     Leftovers.grid.onColumnsReordered.subscribe(function(e,data){
-                        App.store('leftovers_cols_order_'+Leftovers.table.columnMode,JSON.stringify(Leftovers.grid.getColumns()));
+                        Leftovers.table.columnsStore(Leftovers.grid.getColumns());
                     });
 		    Leftovers.table.render();
 		    Leftovers.grid.init();
@@ -462,14 +465,10 @@
 		render:function(){
 		    Leftovers.grid.updateOptions({params:{mode:Leftovers.table.columnMode}});
 		    var cols=Leftovers.table.columnsGet();
+                    console.log(cols);
                     Leftovers.table.columnSummaryWidth=0;
                     for( var i in cols ){
                         Leftovers.table.columnSummaryWidth+=cols[i].width;
-                        if( !cols[i].field ){
-                            cols[i].formatter=function(row){
-                                return row+1;
-                            }
-                        }
                     }
 		    Leftovers.grid.setColumnsAndFilters(cols);
 		    Leftovers.table.setDimensions("#stock_leftovers_sg",20,0);
