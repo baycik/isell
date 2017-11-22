@@ -1,0 +1,56 @@
+<script type="text/javascript">
+    /* global App */
+    App.page_dialog_document_selector={
+        init:function (data, handler) {
+            this.node.window({
+                title: 'Выбрать документ',
+                width: 400,
+                height: 300,
+                onClose:function(){
+		    App.page_dialog_document_selector.handler.notify('close',App.page_dialog_document_selector.data);
+		    App.page_dialog_document_selector.destroy();
+		}
+            });
+            App.require(["js/slick/lib/jquery.event.drag-2.3.0.js"],function(){
+                App.require([
+                    "js/slick/slick.core.js",
+                    "js/slick/plugins/slick.rowselectionmodel.js",
+                    "js/slick/slick.editors.js",
+                    "js/slick/slickinfinite.js",
+                    "js/slick/slick.grid.js"
+                ], App.page_dialog_document_selector.tableInit);
+            });
+        },
+        destroy:function(){
+            this.node.window('destroy');
+	    this.node.remove();
+	    delete App.page_dialog_document_selector;
+        },
+        tableInit:function(){
+            
+        }
+    };
+
+
+</script>
+<form id="page_dialog_move_doc_frm" action="" method="post">
+    <input type="hidden" name="copy" value="0" />
+    <table align="center">
+        <tr>
+            <td>Контрагент:<br />
+                <input name="passive_company_id" class="easyui-combobox" style="width:250px" data-options="
+		       loader: App.page_dialog_move_doc.data_loader,
+		       mode: 'remote',
+		       valueField: 'company_id',
+		       textField: 'label'
+		       ">
+            </td>
+        </tr>
+	<tr>
+            <td align="center">
+                <button name="moveDoc" type="submit">Перенести</button>
+                <button type="submit" onClick="$('input[name=\'copy\']').val(1)">Копировать</button>
+            </td>
+        </tr>
+    </table>
+</form>

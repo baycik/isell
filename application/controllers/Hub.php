@@ -143,9 +143,6 @@ class Hub  extends CI_Controller{
 	    $this->pluginCheckIfPublicFile($model_name,$method,$route_args);
 	    $model_override=$trigger_before[$model_name];
 	    $this->load->add_package_path(APPPATH.'plugins/'.$model_override, FALSE);
-	    //require_once APPPATH."plugins/{$model_override}/{$model_override}.php";
-	    //echo APPPATH."plugins/{$model_override}/{$model_override}.php";
-	     
 	    if( $model_override===$model_name ){//if plugin ovverides it self then adding package is enough
 		return false;
 	    }
@@ -155,9 +152,9 @@ class Hub  extends CI_Controller{
     private function pluginCheckIfPublicFile($model_name,$method,$route_args){
 	$public_file_path=APPPATH."plugins/{$model_name}/public/$method".($route_args?"/".implode("/",$route_args):"");
 	if (file_exists($public_file_path)) {
+            header("X-isell-type: OK");
 	    $this->load->helper('download');
 	    force_download($public_file_path, null, true);
-	    //readfile($public_file_path);
 	    exit;
 	}
     }
