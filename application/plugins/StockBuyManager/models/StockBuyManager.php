@@ -259,7 +259,9 @@ class StockBuyManager extends Catalog{
                     *(1+supply_sell_ratio/100)
                 ,2)
             WHERE 
-                supplier_id='$supplier_id'";
+                supplier_id='$supplier_id'
+                AND label=''
+                ";
 	$this->query($sql);
         return  $this->db->affected_rows();
     }
