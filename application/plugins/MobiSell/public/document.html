@@ -178,7 +178,7 @@
 		App.document.head.switchView(head);
 	    },
 	    switchView: function (head) {
-		var hilight = (Math.abs(head.doc_type) === 1) ? 'green' : 'purple';
+		var hilight = (Math.abs(head.doc_type) == 1) ? 'green' : 'purple';
 		if (head.is_commited * 1) {
 		    $("#document_header_segment").addClass(hilight);
 		    $("#document_header_form").addClass(hilight);
