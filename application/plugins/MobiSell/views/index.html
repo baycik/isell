@@ -35,6 +35,8 @@
 		    });
 		    if (location.hash) {
 			App.holder.load(location.hash.substring(1));
+		    } else {
+			App.holder.load('home.html');
 		    }
 		},
 		load: function (url) {
@@ -42,14 +44,24 @@
 		    App.url_file = url_chunks[0];
 		    App.url_query = url_chunks[1];
 		    App.parseState(App.url_query);
-		    $("#main_container").load(App.url_file);
+		    
+		    
 		    $(".ui.sidebar").sidebar('hide');
+		    
+		    var holder_id=App.url_file.split('.')[0];
+		    if( !$("#"+holder_id).length ){
+			$("#main_container").append("<div id='"+holder_id+"'></div>");
+			$("#"+holder_id).load(App.url_file);
+		    } 
+		    $("#main_container>div").hide();
+		    $("#"+holder_id).show();
+		    App[holder_id] && App[holder_id].focus && App[holder_id].focus();
 		}
 	    },
 	    sidebar: {
 		init: function () {
 		    $("#toggle").click(function () {
-			$(".ui.sidebar").sidebar('toggle');
+			$(".ui.sidebar").sidebar('setting', 'transition', 'overlay').sidebar('toggle');
 		    });
 		}
 	    },
@@ -109,6 +121,10 @@
 			location.reload();
 		    });
 		}
+	    },
+	    clearCache:function(){
+		navigator.serviceWorker.controller && navigator.serviceWorker.controller.postMessage('clear_cache');
+		location.reload();
 	    }
 	};
 	$(App.init);
@@ -126,8 +142,8 @@
 	    $.post('./version',function(current_version){
 		var stored_version=localStorage.getItem("stored_version");
 		if( current_version !== stored_version ){
-		    navigator.serviceWorker.controller && navigator.serviceWorker.controller.postMessage('clear_cache');
 		    localStorage.setItem("stored_version",current_version);
+		    App.clearCache();
 		}
 	    });
 	}
@@ -141,7 +157,7 @@
 </head>
 <body>
     <div class="ui left vertical inverted sidebar labeled icon menu">
-	<a href="#" class="item">
+	<a href="#home.html" class="item">
 	    <i class="home icon"></i>
 	    Главная
 	</a>
@@ -166,29 +182,7 @@
 	<div id="status" style="padding: .5em;color:green"></div>
     </div>
     <div id="main_container" class="pusher" style="margin-top: 42px;">
-	<div style="text-align: center">
-	    <img src="logo/144logo.png">
-	    <h1 class="ui header">MobiSell 1.0</h1>
-	</div>
-	<div id="user_info" class="ui blue segment raised " style="margin: 10px;">
-	    <div class="ui header">Добро пожаловать</div>
-	    <div>
-		<div class="ui vertical menu fluid">
-		    <a href="#document_list.html" class="item">
-			<i class="list layout icon"></i>
-			Список Документов
-		    </a>
-		    <a href="#document.html" class="item">
-			<i class="file outline icon"></i>
-			Создать документ
-		    </a>
-		    <a href="javascript:App.user.signOut()" class="inverted item">
-			<i class="sign out icon"></i>
-			Выход
-		    </a>
-		</div>
-	    </div>
-	</div>
+
     </div>
 </body>
 </html>

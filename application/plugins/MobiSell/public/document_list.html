@@ -15,7 +15,7 @@
 
 
 
-<div class="ui top attached tabular menu">
+<div class="ui top attached tabular menu doclist_tabs">
     <a class="active item" data-tab="sell">Расход</a>
     <a class="item" data-tab="buy">Приход</a>
 </div>
@@ -80,6 +80,9 @@
 	    App.document_list.initPicker();
 	    App.document_list.initTab();
 	},
+	focus:function(){
+	    App.document_list.reload();
+	},
 	initPicker: function () {
 	    var $input = $('.datepicker').pickadate();
 	    App.document_list.picker = $input.pickadate('picker');
@@ -91,13 +94,13 @@
 	    });
 	},
 	initTab: function () {
-	    $('.menu .item').tab({
+	    $('.doclist_tabs .item').tab({
 		onVisible: function (type) {
 		    App.document_list.currentType = type;
 		    App.document_list.loadIfEmpty(type);
 		}
 	    });
-	    $('.menu .item').tab('change tab', 'sell');
+	    $('.doclist_tabs .item').tab('change tab', 'sell');
 	},
 	handleClick: function (node) {
 	    var doc_id = $(node).data('doc-id');

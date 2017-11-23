@@ -4,8 +4,11 @@
 	init: function () {
 	    App.document.initTab();
 	    App.document.head.init();
-	    App.document.load(App.state.doc_id);
+	    App.document.focus();
 	    App.document.suggestion.init();
+	},
+	focus:function(){
+	    App.document.load(App.state.doc_id);
 	},
 	load: function (doc_id) {
 	    if (!doc_id) {
