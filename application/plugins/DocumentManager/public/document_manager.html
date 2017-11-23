@@ -1,14 +1,84 @@
 <script>
+    App.document_manager_document_manager={
+        
+    };
+    //App.loadWindow('page/dialog/document_selector').progress(function(status){});
     
+    
+    
+    (function($){
+        function init(){
+            table.init();
+        }
+        
+        
+        
+        
+        
+        
+        var table={
+            frm:{
+                queue:function(row, cell, value, columnDef, dataContext){
+                    return row+1;
+                },
+                dateFormatter:function(row, cell, value, columnDef, dataContext){
+                    var date_parts=value.split(' ')[0].split('-');
+                    var date=date_parts[2]+'.'+date_parts[1]+'.'+date_parts[0];
+                    return '<span title="'+value.split(' ')[1]+'">'+date+'</span>';
+                },
+                tooltip:function(row, cell, value, columnDef, dataContext){
+                    if( !value ){
+                        return '';
+                    }
+                    var parts = value.split(' ');
+                    var cmd = parts.shift();
+                    if (cmd){
+                        var style='max-width:16px;height:auto';
+                        return '<img src="img/' + cmd + '.png" style="'+style+'" title="' + parts.join(' ') + '">';
+                    }
+                    else{
+                        return '';
+                    }	    
+                }
+            },
+            init:function(){
+                var settings={
+                    columns:[
+                        {id:"action", field: "action",name: "Действия", width: 110 },
+                        {id:"pcomp_label", field: "pcomp_label",name: "Контрагент", width: 120 },
+                        {id:"doc_type_icon", field: "doc_type_icon",name: "", width: 25,formatter:table.frm.tooltip},
+                        {id:"acomp_label", field: "acomp_label",name: "Наша фирма", width: 120 },
+                        {id:"cstamp", field: "cstamp",name: "Дата",  width: 80, sortable: true,formatter:table.frm.dateFormatter },
+                        {id:"doc_num", field: "doc_num",name: "Номер", width: 50, sortable: true,cssClass:'slick-align-right' },
+                        {id:"doc_total", field: "doc_total",name: "Сумма", width: 70, sortable: true }
+                    ],
+                    options:{
+                        enableCellNavigation: true,
+                        enableColumnReorder: false,
+                        enableFilter:true,
+                        multiSelect :false,
+                        url:'DocumentList/listFetch/',
+                    }
+                };
+                table.grid = new SlickInfinite("#document_manager_sg", settings);
+                table.grid.setFilter({doc_id:"86|115|88|125"});
+            }
+        };
+        App.require(["js/slick/lib/jquery.event.drag-2.3.0.js"],function(){
+            App.require([
+                "js/slick/slick.core.js",
+                "js/slick/plugins/slick.rowselectionmodel.js",
+                "js/slick/slick.editors.js",
+                "js/slick/slickinfinite.js",
+                "js/slick/slick.grid.js"
+            ], init);
+        });        
+    })(jQuery);
 </script>
 <table>
     <tr>
-        <td class="transp60" style="width:400px">
-            <select>
-                <option>игнор</option>
-                <option>добавить</option>
-                <option>отнять</option>
-            </select>
+        <td class="transp60" style="">
+            <div id="document_manager_sg" style="height: 400px;width:600px"></div>
         </td>
         <td>
             sdgsdfg

@@ -295,9 +295,13 @@ abstract class Catalog extends CI_Model {
         }
         $having = [];
         foreach ($filter as $field => $value) {
-            $having[] = "$field LIKE '%$value%'";
+            if( strpos($value,'|')===false ){
+                $having[] = "$field LIKE '%$value%'";
+            } else {
+                $having[] = "($field = '".str_replace('|', "' OR $field = '", $value)."')";
+            }
         }
-        return implode(' AND ', $having);
+        return  implode(' AND ', $having);
     }
 
 }

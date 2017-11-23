@@ -4,8 +4,8 @@
         init:function (data, handler) {
             this.node.window({
                 title: 'Выбрать документ',
-                width: 400,
-                height: 300,
+                width: 620,
+                height: 370,
                 onClose:function(){
 		    App.page_dialog_document_selector.handler.notify('close',App.page_dialog_document_selector.data);
 		    App.page_dialog_document_selector.destroy();
@@ -27,30 +27,93 @@
 	    delete App.page_dialog_document_selector;
         },
         tableInit:function(){
-            
-        }
+            function dateFormatter(row, cell, value, columnDef, dataContext){
+                var date_parts=value.split(' ')[0].split('-');
+                var date=date_parts[2]+'.'+date_parts[1]+'.'+date_parts[0];
+                return '<span title="'+value.split(' ')[1]+'">'+date+'</span>';
+            }
+            function tooltip(row, cell, value, columnDef, dataContext){
+                if( !value ){
+                    return '';
+                }
+                var parts = value.split(' ');
+                var cmd = parts.shift();
+                if (cmd){
+                    var style='max-width:16px;height:auto';
+                    return '<img src="img/' + cmd + '.png" style="'+style+'" title="' + parts.join(' ') + '">';
+                }
+                else{
+                    return '';
+                }	    
+            }
+            function edit_doc(){
+                return '<img src="img/document.png">';
+            }
+            var settings={
+                columns:[
+                    {id:"edit_doc", field: "",name: "", width: 30,formatter:edit_doc },
+                    {id:"pcomp_label", field: "pcomp_label",name: "Контрагент", width: 120 },
+                    {id:"doc_type_icon", field: "doc_type_icon",name: "", width: 25,formatter:tooltip},
+                    {id:"cstamp", field: "cstamp",name: "Дата",  width: 80, sortable: true,formatter:dateFormatter },
+                    {id:"doc_num", field: "doc_num",name: "Номер", width: 50, sortable: true,cssClass:'slick-align-right' },
+                    {id:"doc_total", field: "doc_total",name: "Сумма", width: 70, sortable: true },
+                    {id:"trans_status", field: "trans_status",name: "Оплачен", width: 25, sortable: true,formatter:tooltip},
+                    {id:"is_commited", field: "is_commited",name: "Проведен", width: 25,formatter:tooltip},
+                    {id:"doc_type_name", field: "doc_type_name",name: "Тип документа", sortable: true, width: 150 }
+                ],
+                options:{
+                    enableCellNavigation: true,
+                    enableColumnReorder: false,
+                    enableFilter:true,
+                    multiSelect :false,
+                    url:'DocumentList/listFetch/'
+                }
+            };
+            App.page_dialog_document_selector.grid = new SlickInfinite("#document_selector_sg", settings);
+            App.page_dialog_document_selector.grid.setFilter({doc_type:'1|2'});
+            App.page_dialog_document_selector.grid.onClick.subscribe(function(event,data){
+                var doc_id=data.grid.getDataItem(data.row).doc_id;
+                if( data.cell==0 ){
+                    App.page_dialog_document_selector.openDoc(doc_id);
+                } else{
+                    App.page_dialog_document_selector.handler.notify('selected',doc_id);
+                    App.page_dialog_document_selector.node.window('close');
+                }
+            });
+            App.Topic('activeCompanySelected').subscribe(function(company){
+                App.page_dialog_document_selector.grid.reload();
+            });
+            App.Topic('passiveCompanySelected').subscribe(function(company){
+                App.page_dialog_document_selector.grid.setFilter({pcomp_label:App.pcomp.label});
+                //App.page_dialog_document_selector.grid.reload();
+                
+            });
+            $(".x-document-selector-tools").click(function (e) {
+                var action = $(e.target).data('action');
+                if (action) {
+                    App.page_dialog_document_selector.tools[action] && App.page_dialog_document_selector.tools[action]();
+                }
+            });
+        },
+        tools:{
+            reload:function(){
+                App.page_dialog_document_selector.grid.reload();
+            }
+        },
+        openDoc:function(doc_id){
+	    App.loadWindow('page/trade/document',{doc_id:doc_id}).progress(function(status){
+		if( status!=='inited' ){
+		    $("#Stock_movements_dg").datagrid('reload');
+		}
+	    });
+	}
     };
 
 
 </script>
 <form id="page_dialog_move_doc_frm" action="" method="post">
-    <input type="hidden" name="copy" value="0" />
-    <table align="center">
-        <tr>
-            <td>Контрагент:<br />
-                <input name="passive_company_id" class="easyui-combobox" style="width:250px" data-options="
-		       loader: App.page_dialog_move_doc.data_loader,
-		       mode: 'remote',
-		       valueField: 'company_id',
-		       textField: 'label'
-		       ">
-            </td>
-        </tr>
-	<tr>
-            <td align="center">
-                <button name="moveDoc" type="submit">Перенести</button>
-                <button type="submit" onClick="$('input[name=\'copy\']').val(1)">Копировать</button>
-            </td>
-        </tr>
-    </table>
+	<div style="float: right;" class="x-document-selector-tools">
+	    <span class="icon-24 icon-refresh" title="Обновить" data-action="reload"> </span> 
+	</div>
+        <div id="document_selector_sg" style="height: 300px;width:100%;"></div>
 </form>

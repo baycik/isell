@@ -5,7 +5,7 @@
  * @author Baycik
  */
 class DocumentList extends Catalog{
-    public $listFetch=['offset'=>'int','limit'=>'int','sortby'=>'string','sortdir'=>'(ASC|DESC)','filter'=>'json'];
+    public $listFetch=['offset'=>'int','limit'=>'int','sortby'=>'string','sortdir'=>'(ASC|DESC)','filter'=>'json','mode'=>'string'];
     public function listFetch($offset=0,$limit=50,$sortby='cstamp',$sortdir='DESC',$filter=null,$mode=''){
 	$fields=['cstamp','doc_num','label'];
 	if( empty($sortby) ){
@@ -15,13 +15,16 @@ class DocumentList extends Catalog{
 	    throw new Exception("Invalid sortby fieldname: ".$sortby);
 	}
 	$andwhere='';
-	if( $mode==='show_only_pcomp_docs' ){
+	if( strpos($mode,'show_only_pcomp_docs')!==FALSE ){
 	    $pcomp_id=$this->Hub->pcomp('company_id');
             if( !$pcomp_id ){
                 return [];
             }
 	    $andwhere.=" AND passive_company_id=$pcomp_id";
-	}	
+	}
+        if( strpos($mode,'only_trade_docs')!==FALSE ){
+	    $andwhere.=" AND (doc_type=1 OR doc_type=2)";
+	}
 	$assigned_path=  $this->Hub->svar('user_assigned_path');
 	if( $assigned_path ){
 	    $andwhere.=" AND path LIKE '$assigned_path%'";
