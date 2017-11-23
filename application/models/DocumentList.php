@@ -22,9 +22,6 @@ class DocumentList extends Catalog{
             }
 	    $andwhere.=" AND passive_company_id=$pcomp_id";
 	}
-        if( strpos($mode,'only_trade_docs')!==FALSE ){
-	    $andwhere.=" AND (doc_type=1 OR doc_type=2)";
-	}
 	$assigned_path=  $this->Hub->svar('user_assigned_path');
 	if( $assigned_path ){
 	    $andwhere.=" AND path LIKE '$assigned_path%'";
