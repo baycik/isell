@@ -26,7 +26,7 @@ class Hub  extends CI_Controller{
 		if( $model_name=='User' && $method=='SignIn' ){
 		    return;
 		}
-		show_error('X-isell-error: Access denied!!!');
+		die('X-isell-error: Access denied!!!');
 	    }
 	}
     }
