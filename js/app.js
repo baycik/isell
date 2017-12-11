@@ -403,23 +403,17 @@ $(document).ajaxComplete(function (event, xhr, settings) {
 
     }
     else if( settings.crossDomain===false && settings.dataType!=='script' ){
-	var type = xhr.getResponseHeader('X-isell-type');
+	switch(xhr.status){
+	    case 401:
+		App.user.loginFormShow();
+		break;
+	    case 500:
+		console.log('iSellServer error: ',xhr.responseText);
+	}
 	var msg = xhr.getResponseHeader('X-isell-msg');
 	if (msg) {
 	    var msg = decodeURIComponent(msg.replace(/\+/g, " "));
-	    switch( type ){
-		case 'error':
-		    App.flash(msg, 'error');
-		    break;
-		case 'kickout':
-		    App.user.loginFormShow();
-		    break;
-		default:
-		    App.flash(msg);
-	    }
-	}
-	else if (!type || type.indexOf('error') > -1 || type.indexOf('OK') === -1) {
-	    console.log('error',xhr.responseText);
+	    App.flash(msg);
 	}
     }
 });
@@ -483,7 +477,7 @@ Mark.pipes.format = function (str) {
 		signIn: function () {
 		    var user_login=$("#user_login").val();
 		    var user_pass=$("#user_pass").val();
-		    App.post("User/SignIn",{login:user_login,pass:user_pass},function(resp){
+		    App.post("User/SignIn",{login:user_login,pass:user_pass,mode:'get_user_data'},function(resp){
 			var props=App.json(resp);
 			if( props ){
 			    $("#SeqDialogMsg").html("");

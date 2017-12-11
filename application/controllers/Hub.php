@@ -1,13 +1,11 @@
 <?php
 date_default_timezone_set('Europe/Kiev');
-//set_include_path('.'.PATH_SEPARATOR.'application/');
 spl_autoload_register(function ($class_name) {
     $filename=APPPATH.'models/'.$class_name . '.php';
     if( file_exists($filename) ){
 	require_once $filename;
     }
 });
-//include APPPATH.'libraries/Plugins.php';
 
 
 class Hub  extends CI_Controller{
@@ -15,16 +13,24 @@ class Hub  extends CI_Controller{
     private $rtype='OK';
     private $msg='';
     function __construct(){
-	session_set_cookie_params(36000, '/');
-	session_name('baycikSid' . BAY_COOKIE_NAME);
+	session_name('baycikSid');
 	session_start();
 	parent::__construct();
-    
-	
-	if( !$this->svar('user_id') && !isset($_REQUEST['nologin']) && empty($_SERVER['HTTP_X_REQUESTED_WITH']) ) {
-	    $this->loginform();
+    }
+    private function checkAnonymousAccess($model_name,$method){
+	if( !$this->svar('user_id') ){
+	    header("HTTP/1.1 401 Unauthorized");
+	    if( empty($_SERVER['HTTP_X_REQUESTED_WITH']) ){
+		$this->loginform();
+	    } else {
+		if( $model_name=='User' && $method=='SignIn' ){
+		    return;
+		}
+		show_error('X-isell-error: Access denied!!!');
+	    }
 	}
     }
+    
     private function loginform(){
 	$user_login=$this->request('user_login');
 	$user_pass=$this->request('user_pass');
@@ -43,6 +49,7 @@ class Hub  extends CI_Controller{
     }
     
     public function on( $model_name, $method='index' ){
+	$this->checkAnonymousAccess($model_name,$method);
 	$route_args =array_slice(func_get_args(), 2);
 	$this->pluginTrigger($model_name,$method,$route_args);
 	$this->execute($model_name, $method, $route_args);
@@ -82,9 +89,6 @@ class Hub  extends CI_Controller{
 	    }
 	    return $method_args;
 	}
-//	if( $method_args_config==="path") {
-//	    return implode("/",$route_args);
-//	}
     }
     
     public function page( $parent_folder=null ){
@@ -102,41 +106,7 @@ class Hub  extends CI_Controller{
 	}
 	exit;
     }
-    
 
-    public function pluginInitTriggers(){
-	$before=[];
-	$after=[];
-	$sql="SELECT 
-		plugin_system_name,trigger_before
-	    FROM 
-		plugin_list 
-	    WHERE 
-		is_activated AND (trigger_before IS NOT NULL)";
-	$active_plugin_triggers=$this->db->query($sql);
-	if($active_plugin_triggers){
-	    foreach( $active_plugin_triggers->result() as $trigger ){
-		if( $trigger->trigger_before ){
-		    $this->pluginParseTriggers($before, $trigger->trigger_before, $trigger->plugin_system_name);
-		}
-//		if( $trigger->trigger_after ){
-//		    $this->pluginParseTriggers($after, $trigger->trigger_after, $trigger->plugin_system_name);
-//		}
-	    }
-	    $active_plugin_triggers->free_result();
-	}
-	$this->svar('trigger_before',$before);
-	//$this->svar('trigger_after',$after);
-    }
-    private function pluginParseTriggers( &$registry, $triggers, $plugin_system_name ){
-	$trigger_list=explode(',',$triggers);
-	foreach($trigger_list as $trigger){
-	    if( !isset($registry[$trigger]) ){
-		$registry[$trigger]=[];
-	    }
-	    $registry[$trigger]=$plugin_system_name;
-	}
-    }
     private function pluginTrigger($model_name,$method,$route_args){
 	$trigger_before=$this->svar('trigger_before');
 	if( isset($trigger_before[$model_name]) ){
@@ -208,7 +178,6 @@ class Hub  extends CI_Controller{
 	}
 	$this->{$name}->Hub=$this;
 	if( method_exists($this->{$name}, 'init') ){
-	    //call_user_func_array([$this->{$name},'init'],[]);
 	    $this->{$name}->init();
 	}
 
@@ -269,8 +238,8 @@ class Hub  extends CI_Controller{
     }
     
     public function kick_out() {
-	$this->rtype = 'kickout';
-	$this->response('');
+	header("HTTP/1.1 401 Unauthorized");
+	die();
     }
     
     public function msg($msg) {

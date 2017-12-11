@@ -3,19 +3,22 @@
 require_once 'Catalog.php';
 class User extends Catalog {
     public $min_level=0;
-    public $SignIn=['login'=>'^[a-zA-Z_0-9]*$','pass'=>'^[a-zA-Z_0-9]*$'];
-    public function SignIn($login,$pass){
-	if( !$login || !$pass ){
-	    //allow empty pass
-	    $this->Hub->kick_out();
-	    return false;
+    public $SignIn=['login'=>'^[a-zA-Z_0-9]*$','pass'=>'^[a-zA-Z_0-9]*$','mode'=>'string'];
+    public function SignIn($login,$pass,$mode=''){
+	if( $login && $pass ){
+	    //don't allow empty pass
+	    $pass_hash = md5($pass);
+	    $user_data = $this->get_row("SELECT * FROM user_list WHERE user_login='$login' AND user_pass='$pass_hash'");
+	    if ($user_data && $user_data->user_id) {
+		$this->initLoggedUser($user_data);
+		header("HTTP/1.1 200 OK");
+		if( $mode==='get_user_data' ){
+		    return $this->getUserData();
+		}
+		return true;
+	    }
 	}
-	$pass_hash = md5($pass);
-	$user_data = $this->get_row("SELECT * FROM user_list WHERE user_login='$login' AND user_pass='$pass_hash'");
-	if ($user_data && $user_data->user_id) {
-	    $this->initLoggedUser($user_data);
-	    return $this->getUserData();
-	}
+	header("HTTP/1.1 401 Unauthorized");
 	return false;
     }
     
@@ -36,7 +39,8 @@ class User extends Catalog {
 	} else {
 	    $Company->switchActiveCompany();
 	}
-	$this->Hub->pluginInitTriggers();
+	$PluginManager=$this->Hub->load_model("PluginManager");
+	$PluginManager->pluginInitTriggers();
     }
     public $SignOut=[];
     public function SignOut(){

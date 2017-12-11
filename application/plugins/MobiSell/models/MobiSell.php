@@ -27,7 +27,7 @@ class MobiSell extends Catalog{
     public $version=[];
     public function version(){
 	return date ("Y-m-d-Hi", filemtime(__FILE__));
-    }
+    } 
     
     public $doclistGet=['type'=>'string','date'=>'([0-9\-]+)','offset'=>['int',0],'limit'=>['int',10], 'compFilter'=>'string'];
     public function doclistGet($type,$date,$offset,$limit,$compFilter){

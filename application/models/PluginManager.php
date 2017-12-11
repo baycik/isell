@@ -107,7 +107,7 @@ class PluginManager extends Catalog{
 	    'is_activated'=>1
 	];
 	$ok=$this->pluginUpdate($plugin_system_name,$data);
-	$this->Hub->pluginInitTriggers();
+	$this->pluginInitTriggers();
 	$this->plugin_do($plugin_system_name, 'activate');
 	return $ok;
     }
@@ -119,7 +119,7 @@ class PluginManager extends Catalog{
 	    'is_activated'=>0
 	];
 	$ok=$this->pluginUpdate($plugin_system_name,$data);
-	$this->Hub->pluginInitTriggers();
+	$this->pluginInitTriggers();
 	$this->plugin_do($plugin_system_name, 'deactivate');
 	return $ok;
     }
@@ -135,7 +135,7 @@ class PluginManager extends Catalog{
 		is_installed=1,
 		is_activated=0";
 	$ok=$this->query($sql);
-	$this->Hub->pluginInitTriggers();
+	$this->pluginInitTriggers();
 	$this->plugin_do($plugin_system_name, 'install');
 	return $ok;
     }
@@ -144,10 +144,43 @@ class PluginManager extends Catalog{
     public function uninstall($plugin_system_name){
 	$ok=$this->delete('plugin_list',['plugin_system_name'=>$plugin_system_name]);
 	$this->plugin_do($plugin_system_name, 'uninstall');
-	$this->Hub->pluginInitTriggers();
+	$this->pluginInitTriggers();
 	return $ok;
     }
     
+    public function pluginInitTriggers(){
+	$before=[];
+	$after=[];
+	$sql="SELECT 
+		plugin_system_name,trigger_before
+	    FROM 
+		plugin_list 
+	    WHERE 
+		is_activated AND (trigger_before IS NOT NULL)";
+	$active_plugin_triggers=$this->db->query($sql);
+	if($active_plugin_triggers){
+	    foreach( $active_plugin_triggers->result() as $trigger ){
+		if( $trigger->trigger_before ){
+		    $this->pluginParseTriggers($before, $trigger->trigger_before, $trigger->plugin_system_name);
+		}
+//		if( $trigger->trigger_after ){
+//		    $this->pluginParseTriggers($after, $trigger->trigger_after, $trigger->plugin_system_name);
+//		}
+	    }
+	    $active_plugin_triggers->free_result();
+	}
+	$this->Hub->svar('trigger_before',$before);
+	//$this->Hub->svar('trigger_after',$after);
+    }
+    private function pluginParseTriggers( &$registry, $triggers, $plugin_system_name ){
+	$trigger_list=explode(',',$triggers);
+	foreach($trigger_list as $trigger){
+	    if( !isset($registry[$trigger]) ){
+		$registry[$trigger]=[];
+	    }
+	    $registry[$trigger]=$plugin_system_name;
+	}
+    }
     private function pluginUpdate($plugin_system_name,$data){
 	return $this->update('plugin_list',$data,['plugin_system_name'=>$plugin_system_name]);
     }

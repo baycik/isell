@@ -1,5 +1,10 @@
+"use strict";
 this.addEventListener('install', function (event) {
-
+    caches.open('mobisellCache').then(function(cache) {
+	return cache.addAll([
+	    'offline.html'
+	]);
+    });
 });
 
 this.addEventListener('message', function(event){
@@ -10,7 +15,13 @@ this.addEventListener('message', function(event){
 	});
     }
 });
-
+function postClientMessage( msg ){
+    clients.matchAll().then(function(clients){
+	clients.forEach(function(client){
+	    client.postMessage(msg);
+	});
+    });
+}
 this.addEventListener('fetch', function (event) {
     event.respondWith(
 	caches.match(event.request).then(function (resp) {
@@ -18,8 +29,15 @@ this.addEventListener('fetch', function (event) {
 		return resp;
 	    } else {
 		return fetch(event.request).then(function (response) {
-		    var resp2 = response.clone();
+		    if( response.status!=200 ){
+			postClientMessage( {
+			    msg: "Something is wrong!!!",
+			    url: event.request.url,
+			    status: response.status
+			});
+		    } else 
 		    if (event.request.method === 'GET') {
+			var resp2 = response.clone();
 			caches.open('mobisellCache').then(function (cache) {
 			    //console.log(" saved to mobisellCache: " + event.request.url);
 			    cache.put(event.request, resp2);
@@ -28,8 +46,9 @@ this.addEventListener('fetch', function (event) {
 		    return response;
 		});
 	    }
-	}).catch(function () {
-	    console.log("offline file not found!");
+	}).catch(function (e) {
+	    console.log(e);
+	    return caches.match('offline.html')||new Response();
 	})
     );
 });

@@ -5,7 +5,6 @@
         <meta name="mobile-web-app-capable" content="yes">
         <link rel="icon" type="image/png" href="/favicon.png" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<link rel="stylesheet" href="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.css" />
 	<script>
 	    window.onload=function(){
 		var location_with_slash= location.href.replace(/\/?(\?|#|$)/, '/$1');
@@ -14,13 +13,35 @@
 		}
 	    };
 	</script>
+	<style>
+	    button{
+		padding:10px;
+		background-color: #33bbFF;
+		width: 100%;
+		border-radius: 5px;
+		border: none;
+		margin: 3px;
+		font-size: 1em;
+	    }
+	    input{
+		width: 100%;
+		margin: 3px;
+		padding: 10px;
+		font-size: 1em;
+		border: 1px #666 solid;
+		border-radius: 5px;
+	    }
+	    body{
+		font-family: Arial;
+	    }
+	</style>
     </head>
     <body>
 	<h3>Вход в систему iSell</h3>
 	<form action="./?"  method="post" enctype="multipart/form-data">
-	    <input name="user_login" class="ui-input-text" style="width: 100%">
-	    <input name="user_pass" class="ui-input-text" style="width: 100%" type="password">
-	    <button class="ui-btn ui-bar-b ui-btn-corner-all">Вход в приложение</button>
+	    <input name="user_login" placeholder="Логин">
+	    <input name="user_pass" type="password" placeholder="Пароль">
+	    <button style="">Вход в приложение</button>
 	</form>
     </body>
 </html>
