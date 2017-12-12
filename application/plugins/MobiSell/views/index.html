@@ -34,19 +34,14 @@
 		    $(window).bind('hashchange', function (e) {
 			App.holder.load(location.hash.substring(1));
 		    });
-		    if (location.hash) {
-			App.holder.load(location.hash.substring(1));
-		    } else {
-			App.holder.load('home.html');
-		    }
+		    App.holder.load(location.hash.substring(1));
 		},
 		load: function (url) {
+		    url=url||'home.html';
 		    var url_chunks = url.split("#");
 		    App.url_file = url_chunks[0];
 		    App.url_query = url_chunks[1];
 		    App.parseState(App.url_query);
-		    
-		    
 		    $(".ui.sidebar").sidebar('hide');
 		    
 		    var holder_id=App.url_file.split('.')[0];
@@ -63,6 +58,9 @@
 		init: function () {
 		    $("#toggle").click(function () {
 			$(".ui.sidebar").sidebar('setting', 'transition', 'overlay').sidebar('toggle');
+		    });
+		    $("#backbutton").click(function(){
+			history.back();
 		    });
 		}
 	    },
@@ -180,7 +178,7 @@
     </style>
 </head>
 <body>
-    <div class="ui left vertical inverted sidebar labeled icon menu">
+    <div class="ui right vertical inverted sidebar labeled icon menu">
 	<a href="#home.html" class="item">
 	    <i class="home icon"></i>
 	    Главная
@@ -199,15 +197,21 @@
 	</a>
     </div>
     <div class="ui basic icon top fixed menu">
-	<a id="toggle" class="item">
-	    <i class="sidebar icon"></i>
-	    Меню
+	<a href="#home.html" class="item">
+	    <i class="home icon"></i>
 	</a>
 	<div id="status" style="padding: .5em;color:green"></div>
+	<div class="right menu">
+	    <a id="toggle" class="item">
+		<i class="sidebar icon"></i>
+		Меню
+	    </a>
+	</div>
+	
     </div>
     <div id="main_container" class="pusher" style="margin-top: 42px;">
 
-    </div>
+	</div>
     <div class="ui modal" id="signInModal">
 	<div class="header"><i class="sign in icon"></i>Вход в систему</div>
 	<div class="content">
