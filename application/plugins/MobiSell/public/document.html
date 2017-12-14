@@ -7,16 +7,16 @@
 	    App.document.focus();
 	    App.document.suggestion.init();
 	},
-	focus:function(){
+	focus: function () {
 	    App.document.load(App.state.doc_id);
 	},
 	load: function (doc_id) {
 	    if (!doc_id) {
-		$("#document").hide();
+		$("#document_container").hide();
 		App.document.create();
 		return false;
 	    }
-	    $("#document").show();
+	    $("#document_container").show();
 	    App.flash('Документ: загрузка...');
 	    $.post("documentGet/", {doc_id: doc_id}, function (resp) {
 		App.document.set(App.json(resp));
@@ -26,17 +26,17 @@
 	set: function (doc) {
 	    App.document.doc = doc;
 	    App.document.render();
-	    localStorage.setItem('acomp_id',doc.head.active_company_id);
-	    localStorage.setItem('acomp_label',doc.head.active_company_label);
-	    localStorage.setItem('pcomp_id',doc.head.passive_company_id);
-	    localStorage.setItem('pcomp_label',doc.head.label);
+	    localStorage.setItem('acomp_id', doc.head.active_company_id);
+	    localStorage.setItem('acomp_label', doc.head.active_company_label);
+	    localStorage.setItem('pcomp_id', doc.head.passive_company_id);
+	    localStorage.setItem('pcomp_label', doc.head.label);
 	},
 	render: function () {
 	    App.document.row.parseStatus();
 	    App.renderTpl('document_entries', App.document.doc);
 	    App.document.head.set(App.document.doc.head);
 	},
-	createModalInit:function(){
+	createModalInit: function () {
 	    $('.pcomp_id').dropdown({
 		apiSettings: {
 		    url: 'compListFetch/'
@@ -63,38 +63,34 @@
 	    });
 	    $('#document_create_dialog_frm').form({
 		fields: {
-		  doc_type: 'empty',
-		  acomp_id: 'empty',
-		  pcomp_id: 'empty'
+		    doc_type: 'empty',
+		    acomp_id: 'empty',
+		    pcomp_id: 'empty'
 		},
-		onSuccess:function(){
-		    var fvalue=$('#document_create_dialog_frm').form('get values');
-		    $.post("documentCreate/",fvalue,function(resp){
-			var new_doc_id=resp*1;
-			if( new_doc_id ){
-			    location.hash="#"+App.url_file+"#doc_id="+new_doc_id;
+		onSuccess: function () {
+		    var fvalue = $('#document_create_dialog_frm').form('get values');
+		    $.post("documentCreate/", fvalue, function (resp) {
+			var new_doc_id = resp * 1;
+			if (new_doc_id) {
+			    location.hash = "#" + App.url_file + "#doc_id=" + new_doc_id;
 			}
 		    });
-		    $("#document_create_dialog").modal('hide');
+		    $("#document_create_dialog").hide();
 		}
 	    });
-	    $("#document_create_dialog").modal({
-		onApprove:function(){
-		    return false;
-		}
-	    });
+	    $("#document_create_dialog").show();
 	},
 	create: function () {
 	    App.document.createModalInit();
 	    $('.pcomp_id')
-		    .dropdown("set text",localStorage.getItem('pcomp_label'))
-		    .dropdown('set value',localStorage.getItem('pcomp_id'));
+		    .dropdown("set text", localStorage.getItem('pcomp_label'))
+		    .dropdown('set value', localStorage.getItem('pcomp_id'));
 	    $('.acomp_id')
-		    .dropdown("set text",localStorage.getItem('acomp_label'))
-		    .dropdown('set value',localStorage.getItem('acomp_id'));
+		    .dropdown("set text", localStorage.getItem('acomp_label'))
+		    .dropdown('set value', localStorage.getItem('acomp_id'));
 	    $(".doc_type")
-		    .dropdown("set selected",1);
-	    $("#document_create_dialog").modal('show');
+		    .dropdown("set selected", 1);
+	    //$("#document_create_dialog").show();
 	},
 	initTab: function () {
 	    $('.menu .item').tab({
@@ -178,7 +174,7 @@
 		App.document.head.switchView(head);
 	    },
 	    switchView: function (head) {
-		var hilight = (Math.abs(head.doc_type) == 1) ? 'green' : 'purple';
+		var hilight = (Math.abs(head.doc_type) === 1) ? 'green' : 'purple';
 		if (head.is_commited * 1) {
 		    $("#document_header_segment").addClass(hilight);
 		    $("#document_header_form").addClass(hilight);
@@ -419,8 +415,8 @@
 		var index = $(row_node).data('row-index');
 		var suggest_entry = App.document.suggestion.entries[index];
 
-		suggest_entry.size_x = Math.min($(document).width(),300);
-		suggest_entry.size_y = Math.min($(document).height(),300);
+		suggest_entry.size_x = Math.min($(document).width(), 300);
+		suggest_entry.size_y = Math.min($(document).height(), 300);
 
 
 		App.renderTpl('document_product_image', suggest_entry);
@@ -430,7 +426,6 @@
     };
     $(App.document.init);
 </script>
-<div id="document">
 <style>
     #document_entries .four.wide.column{
 	text-align: right;
@@ -444,197 +439,198 @@
 	background-color: #fdd;
     }
 </style>
-<div id="document_header_segment" class="ui message">
-    <div id="document_header" class="ui attached segment covert">
-	<div class="header">
-	    {{if doc_type|equals>1}}Продажа{{/if}}
-	    {{if doc_type|equals>2}}Покупка{{/if}}
-	    {{if doc_type|equals>-1}}Возврат от клиента{{/if}}
-	    {{if doc_type|equals>-2}}Возврат поставщику{{/if}}
-	</div>
-	{{label}} 
-	{{if doc_type|divisible>2}}<i class="purple icon arrow right"></i>{{else}}<i class="green icon arrow left"></i>{{/if}}
-	{{active_company_label}}
-	<b>от</b> {{doc_date}} <b>№</b>{{doc_num}}
-    </div>
-    <form class="ui form ">
-	<div class="field">
-	    <label>Документ проведен</label>
-	    <div class="ui slider checkbox is_commited">
-		<input name="is_commited" class="" type="checkbox">
-		<label></label>
+<div id="document_container">
+    <div id="document_header_segment" class="ui message">
+	<div id="document_header" class="ui attached segment covert">
+	    <div class="header">
+		{{if doc_type|equals>1}}Продажа{{/if}}
+		{{if doc_type|equals>2}}Покупка{{/if}}
+		{{if doc_type|equals>-1}}Возврат от клиента{{/if}}
+		{{if doc_type|equals>-2}}Возврат поставщику{{/if}}
 	    </div>
+	    {{label}} 
+	    {{if doc_type|divisible>2}}<i class="purple icon arrow right"></i>{{else}}<i class="green icon arrow left"></i>{{/if}}
+	    {{active_company_label}}
+	    <b>от</b> {{doc_date}} <b>№</b>{{doc_num}}
 	</div>
-	<div class="field">
-	    <label>Комментарий</label>
-	    <textarea class="doc_data" placeholder="Комментарий" rows="1">{{doc_data}}</textarea>
-	</div>
-    </form>
-</div>
-<div class="ui top attached tabular menu">
-    <a class=" item" data-tab="entries">Накладная</a>
-    <a class="active item" data-tab="discounts">Скидки</a>
-    <a class="item" data-tab="prefs">Настройки</a>
-</div>
-<div class="ui bottom attached  tab segment covert" data-tab="entries" id="document_entries">
-    <table class="ui gray selectable  table  stackable blue">
-	<thead>
-	    <tr>
-		<th>
-		    <div class="ui grid">
-			<div class="two wide column">№</div>
-			<div class="fourteen wide column">Название</div>
-		    </div>
-		</th>
-		<th>
-		    <div class="ui grid">
-			<div class="four wide column">Код</div>
-			<div class="four wide column">Кол-во</div>
-			<div class="four wide column">Цена</div>
-			<div class="four wide column">Сумма</div>
-		    </div>
-		</th>
-	    </tr>
-	</thead>
-	<tbody>
-	    <!-- {{if entries}} {{entries}} -->
-	    <tr data-row-index="{{#}}" onclick="App.document.row.handleClick(this)">
-		<td><span style="color:{{status_color}}"><i class="icon {{status_icon}} {{status_color}}"></i> {{status_message}}</span> {{##}}) {{product_name}}
-		</td>
-		<td>
-		    <div class="ui grid">
-			<div class="four wide column">{{product_code}}</div>
-			<div class="four wide column">{{product_quantity}}{{product_unit}}</div>
-			<div class="four wide column">{{product_price_total}}</div>
-			<div class="four wide column">{{product_sum_total}}</div>
-		    </div>
-		</td>
-	    </tr>
-	    <!-- {{/entries}} {{else}}-->
-	    <tr>
-		<td colspan="4">Документ пуст</td>
-	    </tr>
-	    <!--{{/if}}-->
-	</tbody>
-	<tfoot class="full-width">
-	    <tr>
-		<td>
-		    <div class="ui grid">
-			<div class="eight wide column">{{footer.total_weight|blank>0}}кг </div>
-			<div class="eight wide column">{{footer.total_volume|blank>0}}м<sup>3</sup></div>
-		    </div>
-		</td>
-		<td style="text-align: right;">{{footer.total|blank>0}}{{footer.curr_symbol}}</td>
-	    </tr>
-	</tfoot>
-    </table>
-</div>
-<div class="ui bottom attached tab segment" data-tab="prefs" id="">
-    <div class="ui form fluid segment" id="document_header_controls">
-	<div class="fields">
-	    <div class="four wide field">
-		<label>Дата</label>
-		<input name="company_filter" placeholder="Дата" type="date" class="docdatepicker">
-	    </div>
-	    <div class="four wide field">
-		<label>Номер</label>
-		<input placeholder="Номер" type="text" class="doc_num">
-	    </div>
-	    <div class="four wide field">
-		<label>Клиент</label>
-		<div class="ui search selection remote dropdown passivecomp">
-		    <input name="passivecomp" type="hidden">
-		    <i class="dropdown icon"></i>
-		    <div class="default text"></div>
-		    <div class="menu"></div>
+	<form class="ui form ">
+	    <div class="field">
+		<label>Документ проведен</label>
+		<div class="ui slider checkbox is_commited">
+		    <input name="is_commited" class="" type="checkbox">
+		    <label></label>
 		</div>
 	    </div>
-	    <div class="four wide field">
-		<label>Наша фирма</label>
-		<div class="ui search selection remote dropdown activecomp">
-		    <input name="activecomp" type="hidden">
-		    <i class="dropdown icon"></i>
-		    <div class="default text"></div>
-		    <div class="menu"></div>
+	    <div class="field">
+		<label>Комментарий</label>
+		<textarea class="doc_data" placeholder="Комментарий" rows="1">{{doc_data}}</textarea>
+	    </div>
+	</form>
+    </div>
+    <div class="ui top attached tabular menu">
+	<a class=" item" data-tab="entries">Накладная</a>
+	<a class="active item" data-tab="discounts">Скидки</a>
+	<a class="item" data-tab="prefs">Настройки</a>
+    </div>
+    <div class="ui bottom attached  tab segment covert" data-tab="entries" id="document_entries">
+	<table class="ui gray selectable  table  stackable blue">
+	    <thead>
+		<tr>
+		    <th>
+			<div class="ui grid">
+			    <div class="two wide column">№</div>
+			    <div class="fourteen wide column">Название</div>
+			</div>
+		    </th>
+		    <th>
+			<div class="ui grid">
+			    <div class="four wide column">Код</div>
+			    <div class="four wide column">Кол-во</div>
+			    <div class="four wide column">Цена</div>
+			    <div class="four wide column">Сумма</div>
+			</div>
+		    </th>
+		</tr>
+	    </thead>
+	    <tbody>
+		<!-- {{if entries}} {{entries}} -->
+		<tr data-row-index="{{#}}" onclick="App.document.row.handleClick(this)">
+		    <td><span style="color:{{status_color}}"><i class="icon {{status_icon}} {{status_color}}"></i> {{status_message}}</span> {{##}}) {{product_name}}
+		    </td>
+		    <td>
+			<div class="ui grid">
+			    <div class="four wide column">{{product_code}}</div>
+			    <div class="four wide column">{{product_quantity}}{{product_unit}}</div>
+			    <div class="four wide column">{{product_price_total}}</div>
+			    <div class="four wide column">{{product_sum_total}}</div>
+			</div>
+		    </td>
+		</tr>
+		<!-- {{/entries}} {{else}}-->
+		<tr>
+		    <td colspan="4">Документ пуст</td>
+		</tr>
+		<!--{{/if}}-->
+	    </tbody>
+	    <tfoot class="full-width">
+		<tr>
+		    <td>
+			<div class="ui grid">
+			    <div class="eight wide column">{{footer.total_weight|blank>0}}кг </div>
+			    <div class="eight wide column">{{footer.total_volume|blank>0}}м<sup>3</sup></div>
+			</div>
+		    </td>
+		    <td style="text-align: right;">{{footer.total|blank>0}}{{footer.curr_symbol}}</td>
+		</tr>
+	    </tfoot>
+	</table>
+    </div>
+    <div class="ui bottom attached tab segment" data-tab="prefs" id="">
+	<div class="ui form fluid segment" id="document_header_controls">
+	    <div class="fields">
+		<div class="four wide field">
+		    <label>Дата</label>
+		    <input name="company_filter" placeholder="Дата" type="date" class="docdatepicker">
+		</div>
+		<div class="four wide field">
+		    <label>Номер</label>
+		    <input placeholder="Номер" type="text" class="doc_num">
+		</div>
+		<div class="four wide field">
+		    <label>Клиент</label>
+		    <div class="ui search selection remote dropdown passivecomp">
+			<input name="passivecomp" type="hidden">
+			<i class="dropdown icon"></i>
+			<div class="default text"></div>
+			<div class="menu"></div>
+		    </div>
+		</div>
+		<div class="four wide field">
+		    <label>Наша фирма</label>
+		    <div class="ui search selection remote dropdown activecomp">
+			<input name="activecomp" type="hidden">
+			<i class="dropdown icon"></i>
+			<div class="default text"></div>
+			<div class="menu"></div>
+		    </div>
 		</div>
 	    </div>
 	</div>
+	<button id="document_delete_button" class="ui negative button" onclick="App.document.head.remove()">Удалить документ</button>
     </div>
-    <button id="document_delete_button" class="ui negative button" onclick="App.document.head.remove()">Удалить документ</button>
-</div>
-<div class="ui tab segment" data-tab="discounts" id="document_discounts">
-    <table class="ui table unstackable">
-	<thead>
-	    <tr>
-		<th>Категория</th>
-		<th>Скидка</th>
-		<th>Наценка</th>
-	    </tr>
-	</thead>
-	<tbody>
-	    <!-- {{discounts}} -->
-	    <tr data-row-index="{{#}}">
-		<td>{{label}}</td>
-		<td>
-		    <div class="ui input discount_minus">
-			<input type="number" value="{{minus}}" name="minus_{{branch_id}}">
-		    </div>
-		</td>
-		<td>
-		    <div class="ui input discount_plus">
-			<input type="number" value="{{plus}}" name="plus_{{branch_id}}">
-		    </div>
-		</td>
-	    </tr>
-	    <!-- {{/discounts}} -->
-	</tbody>
-    </table>    
-</div>
-<div class="ui inverted segment blue">
-    <div class="ui inverted fluid accordion " id="doc_suggestion"> 
-	<div class="title"><i class="add icon"></i>Добавить товар</div>
-	<div class="content ">
-	    <div class="ui icon input fluid">
-		<input placeholder="Поиск по коду или названию" type="text">
-		<i class="circular search link icon"></i>
-	    </div>
-	    <div class="covert" id="doc_suggestion_entries">
-		<table class="ui very compact table unstackable">
-		    <tbody>
-			<!-- {{if entries|size}} {{entries}} -->
-			<tr>
-			    <td data-row-index="{{#}}" onclick="App.document.suggestion.popImage(this)">
-				<img style="width:50px" src="../Storage/image_flush/?size=50x50&path=/dynImg/{{product_img}}">
-			    </td>
-			    <td data-row-index="{{#}}" onclick="App.document.suggestion.handleClick(this)">
-				<div class="ui grid stackable" style="{{if leftover|less>1}} color:red !important {{/if}}">
-				    <div class="eight wide column" style="padding: .5rem !important">{{product_name}}</div>
-				    <div class="eight wide column" style="padding: .5rem !important">
-					<div class="ui grid" style="opacity:0.7">
-					    <div class="six wide column">{{product_code}}</div>
-					    <div class="five wide column right aligned">{{product_price_total}}р</div>
-					    <div class="five wide column right aligned">{{leftover}}{{product_unit}}</div>
+    <div class="ui tab segment" data-tab="discounts" id="document_discounts">
+	<table class="ui table unstackable">
+	    <thead>
+		<tr>
+		    <th>Категория</th>
+		    <th>Скидка</th>
+		    <th>Наценка</th>
+		</tr>
+	    </thead>
+	    <tbody>
+		<!-- {{discounts}} -->
+		<tr data-row-index="{{#}}">
+		    <td>{{label}}</td>
+		    <td>
+			<div class="ui input discount_minus">
+			    <input type="number" value="{{minus}}" name="minus_{{branch_id}}">
+			</div>
+		    </td>
+		    <td>
+			<div class="ui input discount_plus">
+			    <input type="number" value="{{plus}}" name="plus_{{branch_id}}">
+			</div>
+		    </td>
+		</tr>
+		<!-- {{/discounts}} -->
+	    </tbody>
+	</table>    
+    </div>
+    <div class="ui inverted segment blue">
+	<div class="ui inverted fluid accordion " id="doc_suggestion"> 
+	    <div class="title"><i class="add icon"></i>Добавить товар</div>
+	    <div class="content ">
+		<div class="ui icon input fluid">
+		    <input placeholder="Поиск по коду или названию" type="text">
+		    <i class="circular search link icon"></i>
+		</div>
+		<div class="covert" id="doc_suggestion_entries">
+		    <table class="ui very compact table unstackable">
+			<tbody>
+			    <!-- {{if entries|size}} {{entries}} -->
+			    <tr>
+				<td data-row-index="{{#}}" onclick="App.document.suggestion.popImage(this)">
+				    <img style="width:50px" src="../Storage/image_flush/?size=50x50&path=/dynImg/{{product_img}}">
+				</td>
+				<td data-row-index="{{#}}" onclick="App.document.suggestion.handleClick(this)">
+				    <div class="ui grid stackable" style="{{if leftover|less>1}} color:red !important {{/if}}">
+					<div class="eight wide column" style="padding: .5rem !important">{{product_name}}</div>
+					<div class="eight wide column" style="padding: .5rem !important">
+					    <div class="ui grid" style="opacity:0.7">
+						<div class="six wide column">{{product_code}}</div>
+						<div class="five wide column right aligned">{{product_price_total}}р</div>
+						<div class="five wide column right aligned">{{leftover}}{{product_unit}}</div>
+					    </div>
 					</div>
 				    </div>
-				</div>
-			    </td>
-			</tr>
-			<!-- {{/entries}} {{else}}-->
-			<tr>
-			    <td colspan="2">Ничего не найдено</td>
-			</tr>
-			<!--{{/if}}-->
-		    </tbody>
-		</table>
-		<button class="ui button fluid" id="load_suggestions_button" onclick="App.document.suggestion.load();">Показать еще</button>
+				</td>
+			    </tr>
+			    <!-- {{/entries}} {{else}}-->
+			    <tr>
+				<td colspan="2">Ничего не найдено</td>
+			    </tr>
+			    <!--{{/if}}-->
+			</tbody>
+		    </table>
+		    <button class="ui button fluid" id="load_suggestions_button" onclick="App.document.suggestion.load();">Показать еще</button>
+		</div>
 	    </div>
 	</div>
     </div>
 </div>
-</div>
 
-<div class="ui modal"  id="document_create_dialog">
-    <div class="header">Создать документ</div>
+<div class="ui raised segment"  id="document_create_dialog">
+    <h2>Создать документ</h2>
     <div class="content">
         <div class="ui form" id="document_create_dialog_frm">
 	    <div class="fields ">
@@ -685,7 +681,7 @@
 	    </div>
 	    <div class="actions">
 		<div class="ui button positive submit"><i class="file outline icon"></i>Создать</div>
-		<div class="ui button cancel" onclick="location.hash=''"><i class="home icon"></i>Главная</div>
+		<div class="ui button cancel" onclick="location.hash = ''"><i class="home icon"></i>Главная</div>
 	    </div>
 	</div>
     </div>

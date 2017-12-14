@@ -1,94 +1,23 @@
-<form class="ui form">
-    <div class="field">
-	<label>Клиент</label>
-	<div class="field">
-	    <input name="company_filter" placeholder="Название клиента" type="text" onkeyup="App.document_list.compSearch(this.value)">
-	</div>
-    </div>
-    <div class="field">
-	<label>Дата</label>
-	<div class="field">
-	    <input name="company_filter" placeholder="Дата" type="date" class="datepicker">
-	</div>
-    </div>
-</form>
-
-
-
-<div class="ui top attached tabular menu doclist_tabs">
-    <a class="active item" data-tab="sell">Расход</a>
-    <a class="item" data-tab="buy">Приход</a>
-</div>
-<div class="ui bottom attached  tab segment covert" data-tab="sell" id="documents_sell">
-    <a href="#document.html"><i class="plus icon"></i> Добавить документ</a>
-    <table class="ui green selectable  table unstackable">
-	<thead>
-	    <tr>
-		<th>№</th>
-		<th>Клиент</th>
-		<th>Сумма</th>
-		<th>!</th>
-	    </tr>
-	</thead>
-	<tbody>
-	    <!-- {{if doc_list}} {{doc_list}} -->
-	    <tr data-doc-id="{{doc_id}}" onclick="App.document_list.handleClick(this)">
-		<td><i class="green icon arrow left"></i>{{doc_num}}</td>
-		<td>{{label}}</td>
-		<td style="text-align:right">{{amount}}</td>
-		<td>{{if is_commited|more>0}}<i class="gray checkmark box icon"></i>{{else}}<i class="square outline icon"></i>{{/if}}</td>
-	    </tr>
-	    <!-- {{/doc_list}} {{else}}-->
-	    <tr>
-		<td colspan="4"><i class="green icon arrow left"></i>Ничего не найдено</td>
-	    </tr>
-	    <!--{{/if}}-->
-	</tbody>
-    </table>
-</div>
-<div class="ui bottom attached tab segment covert" data-tab="buy" id="documents_buy">
-    <a href="#document.html"><i class="plus icon"></i> Добавить документ</a>
-    <table class="ui purple selectable unstackable table ">
-	<thead>
-	    <tr>
-		<th style="width:8em">№</th>
-		<th>Поставщик</th>
-		<th style="width:10em">Сумма</th>
-		<th>!</th>
-	    </tr>
-	</thead>
-	<tbody>
-	    <!-- {{if doc_list}} {{doc_list}} -->
-	    <tr data-doc-id="{{doc_id}}" onclick="App.document_list.handleClick(this)">
-		<td><i class="purple icon arrow right"></i>{{doc_num}}</td>
-		<td>{{label}}</td>
-		<td style="text-align:right">{{amount}}</td>
-		<td>{{if is_commited|more>0}}<i class="gray checkmark box icon"></i>{{else}}<i class="square outline icon"></i>{{/if}}</td>
-	    </tr>
-	    <!-- {{/doc_list}} {{else}}-->
-	    <tr>
-		<td colspan="4"><i class="purple icon arrow right"></i>Ничего не найдено</td>
-	    </tr>
-	    <!--{{/if}}-->
-	</tbody>
-    </table>
-</div>
-<button class="ui primary loading fluid button" onclick="App.document_list.loadMore()">Показать еще...</button>
 <script>
     App.document_list = {
 	init: function () {
 	    App.document_list.initPicker();
 	    App.document_list.initTab();
 	},
-	focus:function(){
+	focus: function () {
 	    App.document_list.reload();
 	},
 	initPicker: function () {
 	    var $input = $('.datepicker').pickadate();
 	    App.document_list.picker = $input.pickadate('picker');
-	    App.document_list.picker.set('select', new Date());
+	    //App.document_list.picker.set('select', new Date());
+	    App.document_list.current_date = App.document_list.picker.get('select', 'yyyy-mm-dd');
 	    App.document_list.picker.on({
-		set: function () {
+		set: function (thingSet) {
+		    if( App.document_list.current_date === App.document_list.picker.get('select', 'yyyy-mm-dd') ){
+			return;
+		    }
+		    App.document_list.current_date = App.document_list.picker.get('select', 'yyyy-mm-dd');
 		    App.document_list.reload();
 		}
 	    });
@@ -151,7 +80,15 @@
 	    App.document_list.clock = setTimeout(function () {
 		App.document_list.compFilter = q;
 		App.document_list.reload();
-	    }, 800);
+	    }, 500);
+	},
+	clearComp:function(){
+	    $('input[name=\'company_filter\']').val('');
+	    App.document_list.compFilter ='';
+	    App.document_list.reload();
+	},
+	clearDate:function(){
+	    App.document_list.picker.clear();
 	}
     };
     App.document_list.init();
@@ -161,3 +98,87 @@
 	cursor: pointer;
     }
 </style>
+<form class="ui form">
+    <div class="field">
+	<label>Клиент</label>
+	<div class="field">
+	    <div class="ui left icon right labeled input">
+		<i class="search icon"></i>
+		<input name="company_filter" placeholder="Название клиента" type="text" onkeyup="App.document_list.compSearch(this.value)">
+		<div class="ui basic label" onclick="App.document_list.clearComp()"><i class="close icon"></i></div>
+	    </div>
+	</div>
+    </div>
+    <div class="field">
+	<label>Дата</label>
+	<div class="field">
+	    <div class="ui left icon right labeled input">
+		<i class="calendar icon"></i>
+		<input name="date_filter" placeholder="Дата" type="date" class="datepicker">
+		<div class="ui basic label" onclick="App.document_list.clearDate()"><i class="close icon"></i></div>
+	    </div>
+	</div>
+    </div>
+</form>
+
+
+
+<div class="ui top attached tabular menu doclist_tabs">
+    <a class="active item" data-tab="sell">Расход</a>
+    <a class="item" data-tab="buy">Приход</a>
+</div>
+<div class="ui bottom attached  tab segment covert" data-tab="sell" id="documents_sell">
+    <a href="#document.html"><i class="plus icon"></i> Добавить документ</a>
+    <table class="ui green selectable  table unstackable">
+	<thead>
+	    <tr>
+		<th>№</th>
+		<th>Клиент</th>
+		<th>Сумма</th>
+		<th>!</th>
+	    </tr>
+	</thead>
+	<tbody>
+	    <!-- {{if doc_list}} {{doc_list}} -->
+	    <tr data-doc-id="{{doc_id}}" onclick="App.document_list.handleClick(this)">
+		<td><i class="green icon arrow left"></i>{{doc_date}} <i style="color:#999">№{{doc_num}}</i></td>
+		<td>{{label}}</td>
+		<td style="text-align:right">{{amount}}</td>
+		<td style="text-align:right">{{if is_commited|more>0}}<i class="gray checkmark box icon"></i>{{else}}<i class="square outline icon"></i>{{/if}}</td>
+	    </tr>
+	    <!-- {{/doc_list}} {{else}}-->
+	    <tr>
+		<td colspan="4"><i class="red icon question"></i>Ничего не найдено</td>
+	    </tr>
+	    <!--{{/if}}-->
+	</tbody>
+    </table>
+</div>
+<div class="ui bottom attached tab segment covert" data-tab="buy" id="documents_buy">
+    <a href="#document.html"><i class="plus icon"></i> Добавить документ</a>
+    <table class="ui purple selectable unstackable table ">
+	<thead>
+	    <tr>
+		<th>№</th>
+		<th>Поставщик</th>
+		<th>Сумма</th>
+		<th>!</th>
+	    </tr>
+	</thead>
+	<tbody>
+	    <!-- {{if doc_list}} {{doc_list}} -->
+	    <tr data-doc-id="{{doc_id}}" onclick="App.document_list.handleClick(this)">
+		<td><i class="purple icon arrow right"></i>{{doc_date}} <i style="color:#999">№{{doc_num}}</i></td>
+		<td>{{label}}</td>
+		<td style="text-align:right">{{amount}}</td>
+		<td style="text-align:right">{{if is_commited|more>0}}<i class="gray checkmark box icon"></i>{{else}}<i class="square outline icon"></i>{{/if}}</td>
+	    </tr>
+	    <!-- {{/doc_list}} {{else}}-->
+	    <tr>
+		<td colspan="4"><i class="red icon question"></i>Ничего не найдено</td>
+	    </tr>
+	    <!--{{/if}}-->
+	</tbody>
+    </table>
+</div>
+<button class="ui loading fluid button" onclick="App.document_list.loadMore()">Показать еще...</button>

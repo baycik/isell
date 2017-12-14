@@ -37,6 +37,7 @@ class MobiSell extends Catalog{
 	$sql="SELECT
 		doc_id,
 		dl.doc_num,
+		DATE_FORMAT(cstamp,'%d.%m.%Y') doc_date,
 		is_commited,
 		COALESCE(
 		    ROUND((SELECT amount 
@@ -61,7 +62,7 @@ class MobiSell extends Catalog{
 		AND label LIKE '%$compFilter%'
 		AND path LIKE '$assigned_path%'
 		AND level<=$level
-	    ORDER BY doc_type
+	    ORDER BY cstamp DESC, doc_type
 	    LIMIT $limit OFFSET $offset
 	    ";
 	return $this->get_list($sql);
