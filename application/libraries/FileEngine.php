@@ -102,27 +102,22 @@ class FileEngine{
         } else if ($out_extension == '.pdf') {
 	    $this->header_mode='noheaders';
 	    $full_html=$this->fetch(".html");
-	    
+	    $this->header_mode='send_headers';
 	    $parent=realpath('../storage/wkhtml/');
 	    $rnd=rand(10,1000000);
-	    
 	    $tmphtml = $parent."/html-tmp$rnd.html";
 	    $tmppdf = $parent."/pdf-tmp$rnd.pdf";
 	    $pdfengine = $parent.'/wkhtmltopdf.exe';
-	    
-	    
-	    
 	    file_put_contents($tmphtml,$full_html);
 	    exec("$pdfengine --zoom 1.2 $tmphtml $tmppdf  2>&1",$output);
 	    if( count($output) ){
 		file_put_contents($parent.'/pdferror.log', implode( "\n", $output ));
 	    }
-	    header("Content-type: application/pdf");
-            header('Content-Disposition: attachment;filename="' .$file_name . '"');
+	    $this->header("Content-type: application/pdf");
+            $this->header('Content-Disposition: attachment;filename="' .$file_name . '"');
 	    echo file_get_contents($tmppdf);
 	    unlink($tmphtml);
 	    unlink($tmppdf);
-	    exit;
 	} else {
             $this->header('Content-Disposition: attachment;filename="' .$file_name . '"');
             $this->header('Cache-Control: max-age=0');
