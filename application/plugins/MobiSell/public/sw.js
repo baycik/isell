@@ -1,10 +1,5 @@
-"use strict";
 this.addEventListener('install', function (event) {
-    caches.open('mobisellCache').then(function(cache) {
-	return cache.addAll([
-	    'offline.html'
-	]);
-    });
+
 });
 
 this.addEventListener('message', function(event){
