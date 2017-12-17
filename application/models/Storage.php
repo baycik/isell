@@ -68,8 +68,26 @@ class Storage extends CI_Model {
 	return ob_get_contents();
     }
     
+    private function cache_control(){
+	if( rand(0,100)<2 ){//chance 1%
+	    $allfiles=scandir ( $this->storageFolder.'/dynImg' );
+	    $treshold=time()-30*24*60*60;
+	    foreach($allfiles as $file){
+		if(strpos($file,'x')===false || $file=='..' || $file=='.'){
+		    continue;
+		}
+		if( filemtime($this->storageFolder .'/dynImg/'.$file)<$treshold ){
+		    unlink($this->storageFolder .'/dynImg/'.$file);
+		}
+	    }
+	    return true;
+	}
+	return false;
+    }
+    
     public $image_flush=['size'=>'string','path'=>'string'];
     public function image_flush( $size_x, $path ){
+	$this->cache_control();
 	$path = $this->storageFolder . "/" . $path;
 	$cache=$path . "_{$size_x}.png";
 	if (is_dir($path) || !file_exists($path)) {
