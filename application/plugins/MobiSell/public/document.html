@@ -13,10 +13,12 @@
 	load: function (doc_id) {
 	    if (!doc_id) {
 		$("#document_container").hide();
+		$("#document_create_dialog").show();
 		App.document.create();
 		return false;
 	    }
 	    $("#document_container").show();
+	    $("#document_create_dialog").hide();
 	    App.flash('Документ: загрузка...');
 	    $.post("documentGet/", {doc_id: doc_id}, function (resp) {
 		App.document.set(App.json(resp));
@@ -75,10 +77,8 @@
 			    location.hash = "#" + App.url_file + "#doc_id=" + new_doc_id;
 			}
 		    });
-		    $("#document_create_dialog").hide();
 		}
 	    });
-	    $("#document_create_dialog").show();
 	},
 	create: function () {
 	    App.document.createModalInit();
@@ -403,6 +403,10 @@
 		    App.flash('Подсказки: ОК');
 		});
 	    },
+	    clear:function(){
+		$("#doc_suggestion input").val('');
+		App.document.suggestion.search('');
+	    },
 	    render: function () {
 		App.renderTpl('doc_suggestion_entries', {entries: App.document.suggestion.entries});
 	    },
@@ -414,11 +418,8 @@
 	    popImage: function (row_node) {
 		var index = $(row_node).data('row-index');
 		var suggest_entry = App.document.suggestion.entries[index];
-
-		suggest_entry.size_x = Math.min($(document).width(), 300);
-		suggest_entry.size_y = Math.min($(document).height(), 300);
-
-
+		suggest_entry.size_x = Math.min($(document).width(), 500);
+		suggest_entry.size_y = Math.min($(document).height(), 500);
 		App.renderTpl('document_product_image', suggest_entry);
 		$("#document_product_image").modal('show');
 	    }
@@ -590,16 +591,17 @@
 	<div class="ui inverted fluid accordion " id="doc_suggestion"> 
 	    <div class="title"><i class="add icon"></i>Добавить товар</div>
 	    <div class="content ">
-		<div class="ui icon input fluid">
+		<div class="ui left icon right labeled input fluid" style="margin-bottom: 5px;">
+		    <i class="search icon"></i>
 		    <input placeholder="Поиск по коду или названию" type="text">
-		    <i class="circular search link icon"></i>
+		    <div class="ui basic label" onclick="App.document.suggestion.clear()"><i class="close icon"></i></div>
 		</div>
 		<div class="covert" id="doc_suggestion_entries">
 		    <table class="ui very compact table unstackable">
 			<tbody>
-			    <!-- {{if entries|size}} {{entries}} -->
+			    <!-- {{if entries}} {{entries}} -->
 			    <tr>
-				<td data-row-index="{{#}}" onclick="App.document.suggestion.popImage(this)">
+				<td  style="height:50px" data-row-index="{{#}}" onclick="App.document.suggestion.popImage(this)">
 				    <img style="width:50px" src="../Storage/image_flush/?size=50x50&path=/dynImg/{{product_img}}">
 				</td>
 				<td data-row-index="{{#}}" onclick="App.document.suggestion.handleClick(this)">
@@ -622,14 +624,14 @@
 			    <!--{{/if}}-->
 			</tbody>
 		    </table>
-		    <button class="ui button fluid" id="load_suggestions_button" onclick="App.document.suggestion.load();">Показать еще</button>
+		    <button class="ui button fluid" id="load_suggestions_button" onclick="App.document.suggestion.load();">Показать еще ...</button>
 		</div>
 	    </div>
 	</div>
     </div>
 </div>
 
-<div class="ui raised segment"  id="document_create_dialog">
+<div class="ui raised segment"  id="document_create_dialog" style="display: none">
     <h2>Создать документ</h2>
     <div class="content">
         <div class="ui form" id="document_create_dialog_frm">
@@ -713,7 +715,7 @@
 <div class="ui modal" id="document_product_image" style="height: calc( 50 + {{size_x}}px);width: calc( 50 + {{size_y}}px);">
     <div class="header">{{product_code}}</div>
     <div class="image content">
-	<img class="image" src="../Storage/image_flush/?size={{size_x}}x{{size_y}}&path=/dynImg/{{product_img}}" />
+	<img class="image" src="../Storage/image_flush/?size={{size_x}}x{{size_y}}&path=/dynImg/{{product_img}}" onload='$("#document_product_image").modal("show");' style="margin-left: auto;margin-right: auto" />
     </div>
     <div class="description">
 	{{product_name}}
