@@ -106,11 +106,17 @@
 		App.state = newstate;
 	    },
 	    flash: function (msg) {
+		if(!msg){
+		    return;
+		}
 		$("#status").html(msg).show();
 		clearTimeout(App.flashClock);
 		App.flashClock = setTimeout(function () {
 		    $("#status").hide();
 		}, 1500);
+	    },
+	    title:function(msg){
+		$("#title").html(msg);
 	    },
 	    user: {
 		props: {},
@@ -182,6 +188,15 @@
 	    display: none;
 	    visibility: hidden;
 	}
+	#status{
+	    padding: .5em;
+	    color:#fff;
+	    position: absolute;
+	    right: 0px;
+	    margin: 3px;
+	    background-color: rgba(0,0,0,.8);
+	    border-radius: .3em;
+	}
     </style>
 </head>
 <body>
@@ -208,15 +223,16 @@
 	    <a href="javascript:history.back();" class="item ">
 		<i class="left arrow icon"></i>
 	    </a>
+	    <span class="ui tiny header item" id="title"></span>
 	</div>
 	
-	<div id="status" style="padding: .5em;color:green"></div>
 	<div class="right menu">
 	    <a id="toggle" class="item">
 		<i class="sidebar icon"></i>
 		Меню
 	    </a>
 	</div>
+	<div id="status" style="display: none;"></div>
 	
     </div>
     <div id="main_container" class="pusher" style="margin-top: 42px;">

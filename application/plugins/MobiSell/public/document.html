@@ -9,6 +9,7 @@
 	},
 	focus: function () {
 	    App.document.load(App.state.doc_id);
+	    App.title("Документ");
 	},
 	load: function (doc_id) {
 	    if (!doc_id) {
@@ -204,7 +205,7 @@
 	    remove: function () {
 		if (confirm("Удалить документ?")) {
 		    App.document.head.update('is_commited', 0);
-		    location.hash = '#view/document_list.html';
+		    location.hash = '#home.html';
 		}
 	    }
 	},

@@ -3,9 +3,11 @@
 	init: function () {
 	    App.document_list.initPicker();
 	    App.document_list.initTab();
+	    App.title("Список документов");
 	},
 	focus: function () {
 	    App.document_list.reload();
+	    App.title("Список документов");
 	},
 	initPicker: function () {
 	    var $input = $('.datepicker').pickadate();
