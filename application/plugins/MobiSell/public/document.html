@@ -196,16 +196,20 @@
 		}
 		App.flash('Документ: сохранение...');
 		App.document.doc.head[field] = value;
-		$.post("documentHeadUpdate/", {doc_id: App.document.doc.head.doc_id, field: field, value: value}, function (resp) {
+		return $.post("documentHeadUpdate/", {doc_id: App.document.doc.head.doc_id, field: field, value: value}, function (resp) {
 		    var doc = App.json(resp);
-		    App.document.set(doc);
-		    App.flash('Документ: сохранен');
+		    if(doc){
+			App.document.set(doc);
+			App.flash('Документ: сохранен');
+		    }
 		});
 	    },
 	    remove: function () {
 		if (confirm("Удалить документ?")) {
-		    App.document.head.update('is_commited', 0);
-		    location.hash = '#home.html';
+		    App.document.head.update('is_commited', 0).done(function(){
+			alert("Документ удален");
+			location.hash = '#home.html';
+		    });
 		}
 	    }
 	},

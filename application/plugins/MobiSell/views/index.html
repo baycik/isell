@@ -152,6 +152,14 @@
 	    clearCache:function(){
 		navigator.serviceWorker.controller && navigator.serviceWorker.controller.postMessage('clear_cache');
 		location.reload();
+	    },
+	    retryConnection:function(){
+		$('#offline_popup').modal('hide');
+		if( navigator.onLine ){
+		    location.reload();
+		} else {
+		    $('#offline_popup').modal('show');
+		}
 	    }
 	};
 	$(App.init);
@@ -171,6 +179,9 @@
 		if(msg.status=='401'){
 		    App.user.signInPopup();
 		}
+		if(msg.status=='408'){
+		    $("#offline_popup").modal('show');
+		}
 		console.log(event.data);
 	    });
 	    
@@ -182,6 +193,19 @@
 		}
 	    });
 	}
+	window.addEventListener('load', function() {
+	    function updateOnlineStatus(event) {
+		return;
+		if( navigator.onLine ){
+		    $('#offline_popup').modal('hide');
+		} else {
+		    $('#offline_popup').modal('show');
+		}
+	    }
+
+	    window.addEventListener('online',  updateOnlineStatus);
+	    window.addEventListener('offline', updateOnlineStatus);
+	});
     </script>
     <style>
 	.covert{
@@ -233,11 +257,11 @@
 	    </a>
 	</div>
 	<div id="status" style="display: none;"></div>
-	
     </div>
-    <div id="main_container" class="pusher" style="margin-top: 42px;">
-
-	</div>
+    
+    
+    <div id="main_container" class="pusher" style="margin-top: 42px;"></div>
+    
     <div class="ui modal" id="signInModal">
 	<div class="header"><i class="sign in icon"></i>Вход в систему</div>
 	<div class="content">
@@ -256,9 +280,18 @@
 	    <div class="ui primary button"  onclick="App.user.signIn()"><i class="icon sign in"></i> Вход</div>
 	    <div class="ui secondary close button"  onclick="$('#signInModal').modal('hide');"><i class="icon close"></i> Закрыть</div>
 	</div>
-
     </div>
     
+    <div class="ui modal" id="offline_popup">
+	<div class="header"><i class="ban icon"></i>Нет связи с сервером</div>
+	<div class="content">
+	    Интернет соединение отсутствует или сервер в данный момент не отвечает
+	</div>
+	<div class="actions">
+	    <div class="ui primary button" onclick="App.retryConnection()"><i class="icon repeat"></i> Попробовать снова</div>
+	    <div class="ui secondary close button" onclick="$('#offline_popup').modal('hide');"><i class="icon close"></i> Закрыть</div>
+	</div>
+    </div>
     
     
     

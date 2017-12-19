@@ -26,7 +26,6 @@ this.addEventListener('fetch', function (event) {
 		return fetch(event.request).then(function (response) {
 		    if( response.status!=200 ){
 			postClientMessage( {
-			    msg: "Something is wrong!!!",
 			    url: event.request.url,
 			    status: response.status
 			});
@@ -39,11 +38,15 @@ this.addEventListener('fetch', function (event) {
 			});
 		    }
 		    return response;
+		}).catch(function (e) {
+		    postClientMessage( {
+			url: event.request.url,
+			status: 408
+		    });
+		    console.log('isell-error',e);
+		    return new Response('');
 		});
 	    }
-	}).catch(function (e) {
-	    console.log(e);
-	    return caches.match('offline.html')||new Response();
 	})
     );
 });
