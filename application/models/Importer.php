@@ -51,7 +51,7 @@ class Importer extends Catalog{
 		    foreach ($row->getCellIterator() as $cell) {
 			$value = $cell->getValue();
 			$set[$f[$i++]]=$value==null?"":$value;
-			if( $i>15 ){
+			if( $i>16 ){
 			    break;
 			}
 		    }
