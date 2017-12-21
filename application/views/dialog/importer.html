@@ -87,9 +87,9 @@
 		xhr.open("POST", url, true);
 		xhr.onreadystatechange = function() {
 		    if (xhr.readyState === 4 && xhr.status === 200) {
-			if( xhr.responseText==='imported' ){
+			if( xhr.responseText.indexOf('imported')>-1 ){
 			    App.page_dialog_importer.grid_sg.reload();
-                            App.flash("Файл загружен.");
+                            App.flash("Файл загружен. Добавлено строк: "+(xhr.responseText.split(" ")[1]) );
 			} else {
 			    App.flash("Не удалось загрузить "+xhr.responseText);
 			}

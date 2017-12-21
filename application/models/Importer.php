@@ -44,20 +44,30 @@ class Importer extends Catalog{
 	    require_once "application/libraries/report/PHPExcel.php";
 	    $this->PHPexcel = PHPExcel_IOFactory::load($_FILES['upload_file']["tmp_name"]);
 	    if ($this->PHPexcel) {
+                $row_count=0;
 		$this->Worksheet = $this->PHPexcel->getActiveSheet();
 		foreach ($this->Worksheet->getRowIterator() as $row) {
 		    $i = 0;
+                    $skip_this_row=true;
 		    $set=['label'=>$label];
 		    foreach ($row->getCellIterator() as $cell) {
-			$value = $cell->getValue();
-			$set[$f[$i++]]=$value==null?"":$value;
+                        $i++;
 			if( $i>16 ){
 			    break;
 			}
+                        $value = $cell->getValue();
+                        if( $value==null || $value=='' || $value==' ' ){
+                            continue;
+                        }
+                        $set[$f[$i]]=$value;
+                        $skip_this_row=false;
 		    }
-		    $this->create('imported_data',$set);
+                    if( !$skip_this_row ){
+                        $this->create('imported_data',$set);
+                        $row_count++;
+                    }
 		}
-		return 'imported';
+		return 'imported '.$row_count;
 	    }
 	    return 'phpexcel not loaded';
 	}
