@@ -150,6 +150,14 @@
 			App.document.head.update('is_commited', 0);
 		    }
 		});
+		$('.is_event_created').checkbox({
+		    onChecked: function () {
+			App.document.head.update('is_event_created', 1);
+		    },
+		    onUnchecked: function () {
+			App.document.head.update('is_event_created', 0);
+		    }
+		});
 
 		var $input = $('.docdatepicker').pickadate();
 		App.document.picker = $input.pickadate('picker');
@@ -170,6 +178,7 @@
 		$('.doc_num').val(head.doc_num);
 		$('.doc_data').val(head.doc_data);
 		$('.is_commited').checkbox("set " + (head.is_commited > 0 ? "checked" : "unchecked"));
+		$('.is_event_created').checkbox("set " + (head.is_event_created > 0 ? "checked" : "unchecked"));
 		App.document.picker.set('select', new Date(App.toIso(head.doc_date)));
 		App.document.head.suppressUpdate = false;
 		App.document.head.switchView(head);
@@ -464,6 +473,13 @@
 		<label>Документ проведен</label>
 		<div class="ui slider checkbox is_commited">
 		    <input name="is_commited" class="" type="checkbox">
+		    <label></label>
+		</div>
+	    </div>
+	    <div class="field">
+		<label>В списке доставки</label>
+		<div class="ui slider checkbox is_event_created">
+		    <input name="is_event_created" class="" type="checkbox">
 		    <label></label>
 		</div>
 	    </div>

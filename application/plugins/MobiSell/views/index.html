@@ -193,19 +193,6 @@
 		}
 	    });
 	}
-	window.addEventListener('load', function() {
-	    function updateOnlineStatus(event) {
-		return;
-		if( navigator.onLine ){
-		    $('#offline_popup').modal('hide');
-		} else {
-		    $('#offline_popup').modal('show');
-		}
-	    }
-
-	    window.addEventListener('online',  updateOnlineStatus);
-	    window.addEventListener('offline', updateOnlineStatus);
-	});
     </script>
     <style>
 	.covert{

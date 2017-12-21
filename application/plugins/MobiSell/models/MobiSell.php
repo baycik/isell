@@ -13,6 +13,7 @@
  * @author Baycik
  */
 class MobiSell extends Catalog{
+    public $min_level=1;
     function __construct() {
 	ini_set('zlib.output_compression_level', 6);
 	ob_start("ob_gzhandler");
@@ -90,21 +91,60 @@ class MobiSell extends Catalog{
 	$DocumentItems=$this->Hub->load_model("DocumentItems");
 	$document=$DocumentItems->entryDocumentGet( $doc_id );
 	$document['head']=$DocumentItems->headGet( $doc_id );
+	$document['head']->is_event_created= $this->documentShipmentEventId($doc_id);
 	return $document;
+    }
+    
+    private function documentShipmentEventId($doc_id){
+	$sql="SELECT event_id FROM event_list WHERE doc_id='$doc_id' AND event_label LIKE '%Доставка%'";
+	return $this->get_value($sql);
+    }
+    
+
+    private function documentShipmentEventAdd($doc_id){
+	$DocumentItems=$this->Hub->load_model("DocumentItems");
+	$head=$DocumentItems->headGet( $doc_id );
+	$event=[
+	    'doc_id'=>$doc_id,
+	    'event_id'=>0,
+	    'event_date'=>date("Y-m-d"),
+	    'event_label'=>'Доставка',
+	    'event_creator_user_id'=>$this->Hub->svar('user_id'),
+	    'event_name'=>'Документ №'.$head->doc_num,
+	    'event_descr'=>$head->doc_data,
+	    'event_target'=>$this->Hub->pcomp('company_person')." (".$this->Hub->pcomp('label').")",
+	    'event_place'=>$this->Hub->pcomp('company_address'),
+	    'event_note'=>$this->Hub->pcomp('company_mobile'),
+	    'event_status'=>'undone'
+	];
+	return $this->create('event_list', $event);
+    }
+    
+    private function documentShipmentEventDelete( $doc_id ){
+	$this->query("DELETE FROM event_list WHERE doc_id='$doc_id'  AND event_label LIKE '%Доставка%'");
     }
     
     public $documentHeadUpdate=["doc_id"=>"int","field"=>"string","value"=>"string"];
     public function documentHeadUpdate($doc_id,$field,$value){
 	$DocumentItems=$this->Hub->load_model("DocumentItems");
-	if( $field=='is_commited' ){
-	    if( $value==1 ){
-		$DocumentItems->entryDocumentCommit( $doc_id );
-	    } else {
-		$DocumentItems->entryDocumentUncommit( $doc_id );
-	    }
-	    
-	} else {
-	    $DocumentItems->headUpdate($field,$value);
+	switch($field){
+	    case 'is_commited':
+		if( $value==1 ){
+		    $DocumentItems->entryDocumentCommit( $doc_id );
+		} else {
+		    $DocumentItems->entryDocumentUncommit( $doc_id );
+		}
+		break;
+	    case 'is_event_created':
+		if( $value==1 ){
+		    $this->documentShipmentEventAdd( $doc_id );
+		} else {
+		    $this->documentShipmentEventDelete( $doc_id );
+		}
+		break;
+	    default:
+		$DocumentItems->headUpdate($field,$value);
+		break;
 	}
 	return $this->documentGet($doc_id);
     }

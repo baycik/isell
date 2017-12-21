@@ -252,6 +252,7 @@
 	    $.get("Company/companyGet/"+Doc.head.props.passive_company_id, function ( xhr ) {
 		var passive_data=App.json(xhr);
 		var fvalue={
+		    doc_id:Doc.head.props.doc_id,
 		    event_id:0,
 		    event_label:'Доставка',
 		    event_creator_user_id: App.user.props.user_id,

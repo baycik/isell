@@ -105,9 +105,9 @@ class DocumentCore extends DocumentUtils{
         $def_head['doc_num']=$this->getNextDocNum($def_head['doc_type']);
         return $def_head;
     }
+    
     public $headGet=['int'];
     public function headGet( $doc_id ){
-        $this->check($doc_id,'int');
 	if( $doc_id==0 ){
 	    return $this->headDefGet();
 	}

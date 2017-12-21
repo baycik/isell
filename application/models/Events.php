@@ -77,6 +77,7 @@ class Events extends Catalog{
     public function eventSave( $event_id ){
 	$this->Hub->set_level(2);
 	$event=[
+	    'doc_id'=>$this->request('doc_id','int'),
 	    'event_date'=>$this->request('event_date'),
 	    'event_priority'=>$this->request('event_priority'),
 	    'event_name'=>$this->request('event_name','raw'),
