@@ -1,12 +1,5 @@
 <script>
-    App.document_manager_document_manager={
-        
-    };
-    //App.loadWindow('page/dialog/document_selector').progress(function(status){});
-    
-    
-    
-    (function($){
+    App.document_manager=(function($){
         function init(){
             table.init();
         }
@@ -18,18 +11,20 @@
         
         var table={
             frm:{
-		AutoCompleteEditor:function (args) {
+		actionEditor:function (args) {
 		    var $input;
 		    var defaultValue;
 		    this.keyCaptureList = [Slick.keyCode.UP, Slick.keyCode.DOWN, Slick.keyCode.ENTER];
 		    this.init = function () {
-			var html = "<select style='width:100%'>";
-			for (var i in Supplier.list) {
-			    html += Supplier.list[i].supplier_name ? "<option>" + Supplier.list[i].supplier_name + "</option>" : "";
+			var html = "<select style='width:100%' data-docid='"+args.item.doc_id+"'>";
+			for(var action in table.actionDictionary){
+			    var actionName=table.actionDictionary[action];
+			    html += "<option value='"+action+"'>"+actionName+"</option>";
 			}
 			html += "</select>";
 			$input = $(html);
 			$input.appendTo(args.container);
+			$input.val(args.item.action);
 			$input.focus();
 		    };
 		    this.destroy = function () {
@@ -39,8 +34,8 @@
 			$input.focus();
 		    };
 		    this.loadValue = function (item) {
-			defaultValue = item[args.column.field];
-			$input.val(defaultValue);
+			var initialAction=table.actionConfig[args.item.doc_id];
+			$input.val(initialAction);
 		    };
 		    this.serializeValue = function () {
 			return $input.val();
@@ -80,30 +75,64 @@
                     else{
                         return '';
                     }	    
-                }
+                },
+		action:function(row,cell,value, columnDef, dataContext){
+		    var action='skip';
+		    if(dataContext.doc_id&&table.actionConfig[dataContext.doc_id]){
+			action=table.actionConfig[dataContext.doc_id];
+		    }
+		    return table.actionDictionary[action];
+		}
             },
+	    actionDictionary:{
+		skip:'✖ Игнор',
+		add:'➕ Прибавить',
+		extract:'➖ Вычесть'
+	    },
+	    actionConfig:{
+		86:'skip',
+		115:'add',
+		88:'extract',
+		125:'add'
+	    },
             init:function(){
                 var settings={
                     columns:[
-                        {id:"action", field: "action",name: "Действия", width: 110 },
+                        {id:"action", name: "Действия", width: 100, editor: table.frm.actionEditor,formatter:table.frm.action },
+                        {id:"cstamp", field: "cstamp",name: "Дата",  width: 70, sortable: true,formatter:table.frm.dateFormatter },
+                        {id:"doc_num", field: "doc_num",name: "Номер", width: 50, sortable: true,cssClass:'slick-align-right' },
                         {id:"pcomp_label", field: "pcomp_label",name: "Контрагент", width: 120 },
                         {id:"doc_type_icon", field: "doc_type_icon",name: "", width: 25,formatter:table.frm.tooltip},
                         {id:"acomp_label", field: "acomp_label",name: "Наша фирма", width: 120 },
-                        {id:"cstamp", field: "cstamp",name: "Дата",  width: 80, sortable: true,formatter:table.frm.dateFormatter },
-                        {id:"doc_num", field: "doc_num",name: "Номер", width: 50, sortable: true,cssClass:'slick-align-right' },
                         {id:"doc_total", field: "doc_total",name: "Сумма", width: 70, sortable: true }
                     ],
                     options:{
+			editable: true,
                         enableCellNavigation: true,
                         enableColumnReorder: false,
                         enableFilter:true,
                         multiSelect :false,
-                        url:'DocumentList/listFetch/',
+                        url:'DocumentList/listFetch/'
                     }
                 };
                 table.grid = new SlickInfinite("#document_manager_sg", settings);
+		
+		//table.load();
+		table.setupActionEvent();
+		
+		
                 table.grid.setFilter({doc_id:"86|115|88|125"});
-            }
+            },
+	    setupActionEvent:function(){
+		$("#document_manager_sg").change(function(e){
+		    var doc_id=$(e.target).data('docid');
+		    var value=$(e.target).val();
+		    if( doc_id && value ){
+			table.actionConfig[doc_id]=value;
+		    }
+		    console.log(value,doc_id);
+		});
+	    }
         };
         App.require(["js/slick/lib/jquery.event.drag-2.3.0.js"],function(){
             App.require([
@@ -113,13 +142,16 @@
                 "js/slick/slickinfinite.js",
                 "js/slick/slick.grid.js"
             ], init);
-        });        
+        });
+	return {
+	    
+	};
     })(jQuery);
 </script>
 <table>
     <tr>
         <td class="transp60" style="">
-            <div id="document_manager_sg" style="height: 400px;width:600px"></div>
+            <div id="document_manager_sg" style="height: 400px;width:580px"></div>
         </td>
         <td>
             sdgsdfg
