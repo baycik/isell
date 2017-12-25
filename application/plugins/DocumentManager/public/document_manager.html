@@ -98,8 +98,8 @@
             init:function(){
                 var settings={
                     columns:[
-                        {id:"action", name: "Действия", width: 100, editor: table.frm.actionEditor,formatter:table.frm.action },
-                        {id:"cstamp", field: "cstamp",name: "Дата",  width: 70, sortable: true,formatter:table.frm.dateFormatter },
+                        {id:"action", name: "Действия", width: 95, editor: table.frm.actionEditor,formatter:table.frm.action },
+                        {id:"cstamp", field: "cstamp",name: "Дата",  width: 75, sortable: true,formatter:table.frm.dateFormatter },
                         {id:"doc_num", field: "doc_num",name: "Номер", width: 50, sortable: true,cssClass:'slick-align-right' },
                         {id:"pcomp_label", field: "pcomp_label",name: "Контрагент", width: 120 },
                         {id:"doc_type_icon", field: "doc_type_icon",name: "", width: 25,formatter:table.frm.tooltip},
@@ -151,7 +151,19 @@
 <table>
     <tr>
         <td class="transp60" style="">
-            <div id="document_manager_sg" style="height: 400px;width:580px"></div>
+            <div>
+            	<div style="margin-right: 20px">
+                    <div style="float: left;font-weight: bold;padding-top: 8px;">
+                        <img src="img/table16.png" style="width:16px;height: 16px;"> Накладные
+                    </div>
+                    <div style="float: right;margin-right: 20px" class="x-stock-buy-manager-tools">
+                        <span class="icon-24 icon-create" title="Добавить стоку" data-action="entryCreate"> </span>
+                        <span class="icon-24 icon-delete" title="Удалить стоку" data-action="entryDelete"> </span>
+                        <span class="icon-24 icon-refresh" title="Обновить" data-action="reload"> </span> 
+                    </div>
+                </div>
+                <div id="document_manager_sg" style="clear: both;height: 400px;width:365px"></div>
+            </div>
         </td>
         <td>
             sdgsdfg
