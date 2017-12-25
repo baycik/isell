@@ -9,5 +9,8 @@
  * Author URI: http://isellsoft.ru
  */
 class DocumentManager extends Catalog{
-    //put your code here
+    public $result=['config'=>'json'];
+    public function result($config){
+	return [];
+    }
 }

@@ -1,14 +1,45 @@
 <script>
     App.document_manager=(function($){
         function init(){
+	    doclist.open();
             table.init();
+	    result_table.init();
         }
         
+	var result_table={
+	    init:function(){
+		var settings={
+                    columns:[
+                        {id:"product_code", field: "product_code", name: "Код", width: 95 },
+                        {id:"product_name", field: "product_name", name: "Название", width: 95 },
+                        {id:"product_quantity", field: "product_quantity", name: "Кол-во", width: 95 },
+                        {id:"product_price", field: "product_price", name: "Ср Цена", width: 95 }
+                    ],
+                    options:{
+			editable: true,
+                        enableCellNavigation: true,
+                        enableColumnReorder: false,
+                        enableFilter:true,
+                        multiSelect :false,
+                        url:'DocumentManager/result/'
+                    }
+                };
+                result_table.grid = new SlickInfinite("#document_manager_result_sg", settings);
+		result_table.grid.updateOptions({params:{config:JSON.stringify(doclist.data)}});
+	    }
+	    
+	};
         
-        
-        
-        
-        
+        var doclist={
+	    data:{},
+	    open:function(){
+		var json=localStorage.getItem('docmanager_doclist');
+		this.data=App.json(json)||{};
+	    },
+	    save:function(){
+		localStorage.setItem('docmanager_doclist',JSON.stringify(this.data));
+	    }
+	};
         var table={
             frm:{
 		actionEditor:function (args) {
@@ -34,7 +65,7 @@
 			$input.focus();
 		    };
 		    this.loadValue = function (item) {
-			var initialAction=table.actionConfig[args.item.doc_id];
+			var initialAction=doclist.data[args.item.doc_id];
 			$input.val(initialAction);
 		    };
 		    this.serializeValue = function () {
@@ -78,8 +109,8 @@
                 },
 		action:function(row,cell,value, columnDef, dataContext){
 		    var action='skip';
-		    if(dataContext.doc_id&&table.actionConfig[dataContext.doc_id]){
-			action=table.actionConfig[dataContext.doc_id];
+		    if(dataContext.doc_id&&doclist.data[dataContext.doc_id]){
+			action=doclist.data[dataContext.doc_id];
 		    }
 		    return table.actionDictionary[action];
 		}
@@ -89,11 +120,35 @@
 		add:'➕ Прибавить',
 		extract:'➖ Вычесть'
 	    },
-	    actionConfig:{
-		86:'skip',
-		115:'add',
-		88:'extract',
-		125:'add'
+	    tools:{
+		reload: function () {
+		    table.grid.reload();
+		},
+		entryDelete: function () {
+		    var selected_rows = table.grid.getSelectedRows();
+		    if (!selected_rows.length) {
+			App.flash("Ни одна строка не выбрана!");
+			return;
+		    }
+		    if (!confirm("Удалить выделенные накладные?")) {
+			return;
+		    }
+		    for (var i in selected_rows) {
+			var doc_id=table.grid.getDataItem(selected_rows[i]).doc_id;
+			delete doclist.data[doc_id];
+			doclist.save();
+			table.reload();
+		    }
+		},
+		entryCreate: function () {
+		    App.loadWindow("page/dialog/document_selector").progress(function(status,doc_id){
+			if(status==='selected'){
+			    doclist.data[doc_id]='skip';
+			    doclist.save();
+			    table.reload();
+			}
+		    });
+		}
 	    },
             init:function(){
                 var settings={
@@ -111,24 +166,30 @@
                         enableCellNavigation: true,
                         enableColumnReorder: false,
                         enableFilter:true,
-                        multiSelect :false,
+                        multiSelect :true,
                         url:'DocumentList/listFetch/'
                     }
                 };
+		
                 table.grid = new SlickInfinite("#document_manager_sg", settings);
-		
-		//table.load();
 		table.setupActionEvent();
-		
-		
-                table.grid.setFilter({doc_id:"86|115|88|125"});
+		table.grid.setFilter({doc_id:Object.keys(doclist.data).join("|")});
+		$(".x-document-manager").click(function (e) {
+		    var action = $(e.target).data('action');
+		    if (action) {
+			table.tools[action] && table.tools[action]();
+		    }
+		});
             },
+	    reload:function(){
+		table.grid.setFilter({doc_id:Object.keys(doclist.data).join("|")});
+	    },
 	    setupActionEvent:function(){
 		$("#document_manager_sg").change(function(e){
 		    var doc_id=$(e.target).data('docid');
 		    var value=$(e.target).val();
 		    if( doc_id && value ){
-			table.actionConfig[doc_id]=value;
+			doclist.data[doc_id]=value;
 		    }
 		    console.log(value,doc_id);
 		});
@@ -156,7 +217,7 @@
                     <div style="float: left;font-weight: bold;padding-top: 8px;">
                         <img src="img/table16.png" style="width:16px;height: 16px;"> Накладные
                     </div>
-                    <div style="float: right;margin-right: 20px" class="x-stock-buy-manager-tools">
+                    <div style="float: right;margin-right: 20px" class="x-document-manager">
                         <span class="icon-24 icon-create" title="Добавить стоку" data-action="entryCreate"> </span>
                         <span class="icon-24 icon-delete" title="Удалить стоку" data-action="entryDelete"> </span>
                         <span class="icon-24 icon-refresh" title="Обновить" data-action="reload"> </span> 
@@ -165,8 +226,9 @@
                 <div id="document_manager_sg" style="clear: both;height: 400px;width:365px"></div>
             </div>
         </td>
-        <td>
-            sdgsdfg
+        <td style="vertical-align: top">
+            <div id="document_manager_result_sg"></div>
+	    <button>calculate</button>
         </td>
     </tr>
 </table>
