@@ -142,7 +142,7 @@ $.fn.slickgrid = function (settings) {
 	
 	if( !loader ){
 	    loader=function(params,success){
-		return $.get(url, $.extend(true, def_params, params), function (resp) {
+		return $.post(url, $.extend(true, def_params, params), function (resp) {
 			    var rows = App.json(resp);
 			    success(rows);
 

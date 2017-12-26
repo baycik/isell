@@ -2,18 +2,18 @@
     App.document_manager=(function($){
         function init(){
 	    doclist.open();
-            table.init();
 	    result_table.init();
+            table.init();
         }
         
 	var result_table={
 	    init:function(){
 		var settings={
                     columns:[
-                        {id:"product_code", field: "product_code", name: "Код", width: 95 },
-                        {id:"product_name", field: "product_name", name: "Название", width: 95 },
-                        {id:"product_quantity", field: "product_quantity", name: "Кол-во", width: 95 },
-                        {id:"product_price", field: "product_price", name: "Ср Цена", width: 95 }
+                        {id:"product_code", field: "product_code", name: "Код", width: 90 },
+                        {id:"product_name", field: "product_name", name: "Название", width: 300 },
+                        {id:"product_quantity", field: "product_quantity", name: "Кол-во", width: 70 },
+                        {id:"product_price", field: "product_price", name: "Ср Цена", width: 70 }
                     ],
                     options:{
 			editable: true,
@@ -26,8 +26,59 @@
                 };
                 result_table.grid = new SlickInfinite("#document_manager_result_sg", settings);
 		result_table.grid.updateOptions({params:{config:JSON.stringify(doclist.data)}});
+		$(".x-document-manager-result").click(function (e) {
+		    var action = $(e.target).data('action');
+		    if (action) {
+			result_table.tools[action] && result_table.tools[action]();
+		    }
+		});
+	    },
+	    reload:function(){
+		result_table.grid.updateOptions({params:{config:JSON.stringify(doclist.data)}});
+		result_table.grid.reload();
+	    },
+	    import:function(){
+		if( !Doc.isCreated ){
+		    Doc.create().progress(function(status){
+			if( status==='created' ){
+			    Doc.isCreated=true;
+			    Doc.head.import();
+			}
+		    });
+		    return;
+		}
+		var config=[
+		    {name:'Код товара',field:'product_code',required:true, assigned: 'A'},
+		    {name:'Кол-во',field:'product_quantity', assigned: 'C'},
+		    {name:'Цена',field:'invoice_price'},
+		    {name:'Партия',field:'party_label'}
+		];
+		App.loadWindow('page/dialog/importer',{label:'документ',fields_to_import:config}).progress(function(status,fvalue,Importer){
+		    if( status==='submit' ){
+			if( Doc.head.props.doc_id>0 ){
+			    Doc.head.importDo(fvalue,Importer);
+			} else {
+			    Doc.create().progress(function(status){
+				if( status==='created' ){
+				    Doc.head.importDo(fvalue,Importer);
+				}
+			    });
+			}
+		    }
+		});
+	    },	    
+	    tools:{
+		reload: function () {
+		    result_table.reload();
+		},
+		export: function () {
+		    $.post("DocumentManager/export/",{config:JSON.stringify(doclist.data),label:'документ'},function(ok){
+			if(ok*1){
+			    App.flash("Результат экспортирован!");
+			}
+		    });
+		}
 	    }
-	    
 	};
         
         var doclist={
@@ -113,6 +164,12 @@
 			action=doclist.data[dataContext.doc_id];
 		    }
 		    return table.actionDictionary[action];
+		},
+		doc_open:function(row,cell,value, columnDef, dataContext){
+		    return '<img src="img/document.png" style="max-width:16px;height:auto" title="Открыть документ" onclick="App.document_manager.openDoc('+dataContext.doc_id+')">';
+		},
+		acomp:function(){
+		    return App.acomp.label;
 		}
             },
 	    actionDictionary:{
@@ -153,13 +210,14 @@
             init:function(){
                 var settings={
                     columns:[
+                        { name: "!", width: 30, formatter:table.frm.doc_open },
                         {id:"action", name: "Действия", width: 95, editor: table.frm.actionEditor,formatter:table.frm.action },
                         {id:"cstamp", field: "cstamp",name: "Дата",  width: 75, sortable: true,formatter:table.frm.dateFormatter },
                         {id:"doc_num", field: "doc_num",name: "Номер", width: 50, sortable: true,cssClass:'slick-align-right' },
                         {id:"pcomp_label", field: "pcomp_label",name: "Контрагент", width: 120 },
                         {id:"doc_type_icon", field: "doc_type_icon",name: "", width: 25,formatter:table.frm.tooltip},
-                        {id:"acomp_label", field: "acomp_label",name: "Наша фирма", width: 120 },
-                        {id:"doc_total", field: "doc_total",name: "Сумма", width: 70, sortable: true }
+                        {id:"acomp_label", field: "acomp_label",name: "Наша фирма", width: 120,formatter:table.frm.acomp },
+                        {id:"doc_total", field: "amount",name: "Сумма", width: 70, sortable: true }
                     ],
                     options:{
 			editable: true,
@@ -173,7 +231,7 @@
 		
                 table.grid = new SlickInfinite("#document_manager_sg", settings);
 		table.setupActionEvent();
-		table.grid.setFilter({doc_id:Object.keys(doclist.data).join("|")});
+		table.reload();
 		$(".x-document-manager").click(function (e) {
 		    var action = $(e.target).data('action');
 		    if (action) {
@@ -183,6 +241,7 @@
             },
 	    reload:function(){
 		table.grid.setFilter({doc_id:Object.keys(doclist.data).join("|")});
+		result_table.reload();
 	    },
 	    setupActionEvent:function(){
 		$("#document_manager_sg").change(function(e){
@@ -191,10 +250,22 @@
 		    if( doc_id && value ){
 			doclist.data[doc_id]=value;
 		    }
-		    console.log(value,doc_id);
+		    doclist.save();
+		    table.reload();
 		});
 	    }
         };
+	
+	
+	
+	function openDoc(doc_id){
+	    App.loadWindow('page/trade/document',{doc_id:doc_id}).progress(function(status){
+		if( status!=='inited' ){
+		    $("#Stock_movements_dg").datagrid('reload');
+		}
+	    });
+	}
+	
         App.require(["js/slick/lib/jquery.event.drag-2.3.0.js"],function(){
             App.require([
                 "js/slick/slick.core.js",
@@ -205,13 +276,13 @@
             ], init);
         });
 	return {
-	    
+	    openDoc:openDoc
 	};
     })(jQuery);
 </script>
 <table>
     <tr>
-        <td class="transp60" style="">
+        <td class="transp60" style="vertical-align: top">
             <div>
             	<div style="margin-right: 20px">
                     <div style="float: left;font-weight: bold;padding-top: 8px;">
@@ -223,12 +294,20 @@
                         <span class="icon-24 icon-refresh" title="Обновить" data-action="reload"> </span> 
                     </div>
                 </div>
-                <div id="document_manager_sg" style="clear: both;height: 400px;width:365px"></div>
+                <div id="document_manager_sg" style="clear: both;height: 600px;width:590px"></div>
             </div>
         </td>
         <td style="vertical-align: top">
-            <div id="document_manager_result_sg"></div>
-	    <button>calculate</button>
+	    <div style="margin-right: 20px">
+		<div style="float: left;font-weight: bold;padding-top: 8px;">
+		    <img src="img/table16.png" style="width:16px;height: 16px;"> Результат
+		</div>
+		<div style="float: right;margin-right: 20px" class="x-document-manager-result">
+		    <span class="icon-24 icon-export" title="Экспортировать результат" data-action="export"> </span>
+		    <span class="icon-24 icon-refresh" title="Обновить" data-action="reload"> </span> 
+		</div>
+	    </div>
+            <div id="document_manager_result_sg" style="height: 600px;width: 530px"></div>
         </td>
     </tr>
 </table>

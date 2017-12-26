@@ -40,7 +40,14 @@ class DocumentList extends Catalog{
 		CONCAT(icon_name,' ',doc_type_name) doc_type_icon,
 		doc_type_name,
 		GROUP_CONCAT(CONCAT(' ',LEFT(view_name,3),view_num)) views,
-		IF(is_commited,'ok Проведен','') as is_commited
+		IF(is_commited,'ok Проведен','') as is_commited,
+		(SELECT amount 
+		    FROM 
+			acc_trans 
+			    JOIN 
+			document_trans dt USING(trans_id)
+		    WHERE dt.doc_id=dl.doc_id 
+		    ORDER BY trans_id LIMIT 1) amount
 	    FROM 
 		document_list dl
 		    JOIN
