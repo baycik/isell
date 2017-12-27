@@ -12,8 +12,7 @@
                     columns:[
                         {id:"product_code", field: "product_code", name: "Код", width: 90 },
                         {id:"product_name", field: "product_name", name: "Название", width: 300 },
-                        {id:"product_quantity", field: "product_quantity", name: "Кол-во", width: 70 },
-                        {id:"product_price", field: "product_price", name: "Ср Цена", width: 70 }
+                        {id:"product_quantity", field: "product_quantity", name: "Кол-во", width: 70 }
                     ],
                     options:{
 			editable: true,
@@ -37,36 +36,6 @@
 		result_table.grid.updateOptions({params:{config:JSON.stringify(doclist.data)}});
 		result_table.grid.reload();
 	    },
-	    import:function(){
-		if( !Doc.isCreated ){
-		    Doc.create().progress(function(status){
-			if( status==='created' ){
-			    Doc.isCreated=true;
-			    Doc.head.import();
-			}
-		    });
-		    return;
-		}
-		var config=[
-		    {name:'Код товара',field:'product_code',required:true, assigned: 'A'},
-		    {name:'Кол-во',field:'product_quantity', assigned: 'C'},
-		    {name:'Цена',field:'invoice_price'},
-		    {name:'Партия',field:'party_label'}
-		];
-		App.loadWindow('page/dialog/importer',{label:'документ',fields_to_import:config}).progress(function(status,fvalue,Importer){
-		    if( status==='submit' ){
-			if( Doc.head.props.doc_id>0 ){
-			    Doc.head.importDo(fvalue,Importer);
-			} else {
-			    Doc.create().progress(function(status){
-				if( status==='created' ){
-				    Doc.head.importDo(fvalue,Importer);
-				}
-			    });
-			}
-		    }
-		});
-	    },	    
 	    tools:{
 		reload: function () {
 		    result_table.reload();
@@ -75,8 +44,40 @@
 		    $.post("DocumentManager/export/",{config:JSON.stringify(doclist.data),label:'документ'},function(ok){
 			if(ok*1){
 			    App.flash("Результат экспортирован!");
+			    result_table.tools.import();
 			}
 		    });
+		},
+		import:function(){
+		    var config={
+			fields_to_import:[
+			    {name:'Код товара',field:'product_code',required:true, assigned: 'A'},
+			    {name:'Кол-во',field:'product_quantity', assigned: 'C'},
+			    {name:'Цена',field:'invoice_price'},
+			    {name:'Партия',field:'party_label'}
+			],
+			button_label:'Создать документ и импортировать',
+			label:'документ'
+		    };
+		    App.loadWindow('page/dialog/importer',config).progress(function(status,fvalue,Importer){
+			if( status==='submit' ){
+			    App.post('DocumentItems/createDocument',function(doc_id){
+				if( doc_id*1 ){
+				    result_table.tools.importDo(doc_id,fvalue,Importer);
+				    App.flash("Документ создан");
+				} else {
+				    App.flash("Не удалось создать документ");
+				}
+			    });
+			}
+		    });
+		},
+		importDo:function(doc_id,fvalue,Importer){
+		    App.post("DocumentItems/import/"+doc_id,fvalue,function(ok){
+			openDoc(doc_id);
+			App.flash("Импортировано "+ok);
+			Importer.reload();
+		    });		    
 		}
 	    }
 	};
@@ -85,7 +86,7 @@
 	    data:{},
 	    open:function(){
 		var json=localStorage.getItem('docmanager_doclist');
-		this.data=App.json(json)||{};
+		this.data=App.json(json) || {'-':'skip'};
 	    },
 	    save:function(){
 		localStorage.setItem('docmanager_doclist',JSON.stringify(this.data));
@@ -240,7 +241,9 @@
 		});
             },
 	    reload:function(){
-		table.grid.setFilter({doc_id:Object.keys(doclist.data).join("|")});
+		var filter=table.grid.getFilter();
+		filter=$.extend({doc_id:Object.keys(doclist.data).join("|")},filter);
+		table.grid.setFilter(filter);
 		result_table.reload();
 	    },
 	    setupActionEvent:function(){
@@ -294,7 +297,7 @@
                         <span class="icon-24 icon-refresh" title="Обновить" data-action="reload"> </span> 
                     </div>
                 </div>
-                <div id="document_manager_sg" style="clear: both;height: 600px;width:590px"></div>
+                <div id="document_manager_sg" style="clear: both;height: 600px;width:610px"></div>
             </div>
         </td>
         <td style="vertical-align: top">
@@ -307,7 +310,7 @@
 		    <span class="icon-24 icon-refresh" title="Обновить" data-action="reload"> </span> 
 		</div>
 	    </div>
-            <div id="document_manager_result_sg" style="height: 600px;width: 530px"></div>
+            <div id="document_manager_result_sg" style="height: 600px;width: 480px"></div>
         </td>
     </tr>
 </table>

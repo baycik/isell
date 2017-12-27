@@ -9,8 +9,8 @@
  * Author URI: http://isellsoft.ru
  */
 class DocumentManager extends Catalog{
-    public $result=['config'=>'json'];
-    public function result($config){
+    public $result=['offset'=>'int','limit'=>'int','sortby'=>'string','sortdir'=>'(ASC|DESC)','filter'=>'json','config'=>'json'];
+    public function result($offset,$limit,$sortby,$sortdir,$filter=null,$config){
 	$add=[0];
 	$extract=[0];
 	foreach($config as $doc_id=>$action){
@@ -23,6 +23,10 @@ class DocumentManager extends Catalog{
 	}
 	$add_in=  implode(',', $add);
 	$extract_in=  implode(',', $extract);
+	if( empty($sortby) ){
+	    $sortby="product_code";
+	}
+	$having=$this->makeFilter($filter);
 	$sql="SELECT
 		    product_code,
 		    ru product_name,
@@ -34,13 +38,16 @@ class DocumentManager extends Catalog{
 		WHERE
 		    doc_id IN ($add_in)
 		    OR doc_id IN ($extract_in)
-		GROUP BY product_code";
+		GROUP BY product_code
+		HAVING $having
+		ORDER BY $sortby $sortdir
+		LIMIT $limit OFFSET $offset";
 	return $this->get_list($sql);
     }
     
     public $export=['config'=>'json','label'=>'string'];
     public function export($config,$label=''){
-	$result_table=$this->result($config);
+	$result_table=$this->result(0,1000,null,null,null,$config);
 	foreach ($result_table as $row){
 	    $this->create('imported_data', ['label'=>$label,'A'=>$row->product_code,'B'=>$row->product_name,'C'=>$row->product_quantity]);
 	}
