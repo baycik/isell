@@ -14,7 +14,9 @@ class DocumentItems extends DocumentCore{
 	    $price_query="GET_PRICE(product_code,{$pcomp_id},{$doc_ratio})";
 	}
 	$where="1";
-	if( $q ){
+	if( strlen($q)==13 && is_numeric($q) ){
+	    $where="product_barcode=$q";
+	} else if( $q ){
 	    $cases=[];
 	    $clues=  explode(' ', $q);
 	    foreach ($clues as $clue) {
@@ -23,7 +25,9 @@ class DocumentItems extends DocumentCore{
 		}
 		$cases[]="(product_code LIKE '%$clue%' OR ru LIKE '%$clue%')";
 	    }
-	    $where=implode(' AND ',$cases);
+	    if( count($cases)>0 ){
+		$where=implode(' AND ',$cases);
+	    }
 	}
 	$sql="
 	    SELECT
@@ -57,7 +61,6 @@ class DocumentItems extends DocumentCore{
             FROM tmp_doc_entries";
 	return $this->get_row($sql);
     }
-    
     
     private function entriesTmpCreate( $skip_vat_correction=false ){
 	$doc_id=$this->doc('doc_id');
@@ -115,7 +118,8 @@ class DocumentItems extends DocumentCore{
     }
     public function entryAdd( $code, $quantity, $price=NULL ){
 	$Document2=$this->Hub->bridgeLoad('Document');
-	return $Document2->addEntry( $code, $quantity, $price );
+	$add_duplicate_rows=(bool) $this->Hub->pref('add_duplicate_rows');
+	return $Document2->addEntry( $code, $quantity, $price, $add_duplicate_rows );
     }
     public $entryPostAdd=[];
     public function entryPostAdd(){

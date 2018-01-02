@@ -1,0 +1,106 @@
+<script type="text/javascript">
+    /*global App */
+    App.page_stock_barcode_link = {
+	parsed: true,
+	initAfter: function () {
+	    this.node.window({
+		title: 'Привязка штрихкода к товару',
+		width: 500,
+		top: 50,
+		height: 'auto',
+		shadow: false,
+		onClose: function () {
+		    delete App.page_stock_barcode_link;
+		}
+	    });
+	    this.node.window('hcenter');
+	    this.node.window('window').css('position', 'fixed');
+	    App.setupForm("#page_stock_barcode_link_frm",this.data,'use_inp_values');
+	    $("#page_stock_barcode_link_frm").submit(App.page_stock_barcode_link.submit);
+	    $('#barcode_link_cmb').combobox();
+	    $("#page_stock_barcode_link_frm textarea").val("Товар не выбран").css('background-color','#fdd');
+	},
+	formatter:function(row){
+	    return '<div class="img"><img src="Storage/image_flush/?size=30x30&path=/dynImg/'+row['product_img']+'"></div> <b>'+row['product_code']+'</b> <font color='+(row['leftover']>0?'black':'red')+'>'+row['product_name']+'</font> <div class="props">[x'+row['product_spack']+'] '+row['product_price_total']+' <font color=green>'+row['leftover']+row['product_unit']+'</font></div>';
+	},
+	loader:function(param, success, error){
+	    if( param.q ){
+		$.get("DocumentItems/suggestFetch/",param, function ( xhr ) {
+		    App.page_stock_barcode_link.rows=App.json(xhr) || [];
+		    success( App.page_stock_barcode_link.rows );
+		});		
+	    } else {
+		success([]);
+	    }
+	},
+	select:function( row ){
+	    App.page_stock_barcode_link.data.selectedProduct=row;
+	    console.log(row);
+	    $("#page_stock_barcode_link_frm textarea").val(row.product_code+" "+row.product_name).css('background-color','#dfd');
+	    $("#page_stock_barcode_link_frm button[type=submit]").prop('disabled',false);
+	},
+	submit: function (e) {
+	    e.preventDefault();
+	    if(App.page_stock_barcode_link.data.selectedProduct){
+		var fvalue={
+		    product_code:App.page_stock_barcode_link.data.selectedProduct.product_code,
+		    field:'product_barcode',
+		    value:App.page_stock_barcode_link.data.barcode
+		};
+		$.post("Stock/productUpdate/",fvalue,function(ok){
+		    if(ok){
+			App.page_stock_barcode_link.handler.resolve();
+			App.flash("Штрихкод привязан");
+			App.page_stock_barcode_link.node.window('close');
+		    } else {
+			App.page_stock_barcode_link.handler.reject();
+		    }
+		});
+	    }
+	},
+	createNew:function(){
+	    App.loadWindow('page/stock/product_card',{product_barcode:App.page_stock_barcode_link.data.barcode}).progress(function(status,d){
+		if( status==='save' ){
+		    App.page_stock_barcode_link.handler.resolve();
+		    App.flash("Штрихкод привязан");
+		    App.page_stock_barcode_link.node.window('close');
+		}
+	    });
+	}
+    };
+</script>
+<style>
+    #page_stock_barcode_link_frm .inp_group b{
+	width:120px;
+    }
+</style>
+<img src="img/barcode.png" style="float:left;width:128px;height: auto;" /> 
+<form id="page_stock_barcode_link_frm">
+    <input title="Штрихкод" name="barcode" readonly="1"/>
+    <textarea title="Товар" name="product" readonly="1" rows="4"></textarea>
+    <div class="inp_rule">Привязать к существующему товару</div>
+    <input class="easyui-combobox" id="barcode_link_cmb" title="Товар со склада" data-options="
+	valueField: 'product_code',
+	textField: 'product_code',
+	formatter:App.page_stock_barcode_link.formatter,
+	loader:App.page_stock_barcode_link.loader,
+	selectOnNavigation:false,
+	url: 'DocumentItems/suggestFetch/',
+	panelHeight:'auto',
+	mode: 'remote',
+	method:'get',
+	hasDownArrow:false,
+	panelWidth:550,
+	panelMinWidth:400,
+	prompt:'код или название',
+	onSelect: App.page_stock_barcode_link.select
+	">
+    <div class="inp_rule">Привязать к новому товару</div>
+    <div class="inp_group" style="padding-left: 10px;">
+	<button type="button" onclick="App.page_stock_barcode_link.createNew()"><img src="img/edit_add.png"/> Создать новый товар</button>
+    </div>
+    <div style="text-align: center;margin-top: 15px;">
+	<button type="submit" disabled="1"><img src="img/ok.png" style="width:24px;height: 24px;" /> Привязать</button>
+	<button type="button" onclick="App.page_stock_barcode_link.node.window('close')"><img src="img/close24.png" /> Закрыть</button>
+    </div>
+</form>

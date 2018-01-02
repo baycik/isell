@@ -382,6 +382,9 @@ div .combobox-item-hover{
 .icon-move{
     background: url('../img/big_rightarrow.png') no-repeat center center;background-size: 24px 24px;
 }
+.icon-wallet{
+    background: url('../img/wallet.png') no-repeat center center;background-size: 24px 24px;
+}
 .link_button:hover{
     padding: 5px;
     margin: -6px;

@@ -1,0 +1,85 @@
+<script>
+    App.page_accounts_document_pay={
+	init:function(){
+	    this.node.window({
+		title: 'Оплата документа',
+		width: 450,
+		onClose: function(){
+		    App.page_accounts_document_pay.handler.reject();
+		    App.page_accounts_document_pay.node.window('destroy');
+		    App.page_accounts_document_pay.node.remove();
+		    delete App.page_accounts_document_pay;
+		}
+	    });
+	    App.setupForm("#acc_doc_pay_frm",this.data);
+	    $("#acc_doc_pay_frm").submit(App.page_accounts_document_pay.submit);
+	    this.getCashAccounts();
+	},
+	calc:function(){
+	    var given_amount=$("#acc_doc_pay_frm input[name=given_amount]").val()*1;
+	    var remain_amount=Number(given_amount-this.data.total).toFixed(2);
+	    $("#acc_doc_pay_frm input[name=remain_amount]").val(remain_amount);
+	},
+	getCashAccounts:function(){
+	    $.get("AccountsData/accountCashGet/",function(resp){
+		var accs=App.json(resp);
+		App.renderTpl('acc_doc_pay_select',{cash_accounts:accs});
+		var default_cash_acc=localStorage.getItem("acc_doc_pay_default_acc")||'';
+		$("#acc_doc_pay_select").val(default_cash_acc);
+	    });
+	},
+	submit:function(e){
+	    e.preventDefault();
+	    var fvalue=App.collectForm("#acc_doc_pay_frm");
+	    if( fvalue.given_amount*1<fvalue.total*1 ){
+		App.flash("Внесено не достаточно денег!");
+		return false;
+	    }
+	    localStorage.setItem("acc_doc_pay_default_acc",fvalue.cash_account);
+	    App.page_accounts_document_pay.savePayment(App.page_accounts_document_pay.data.doc_id,fvalue);
+	},
+	savePayment:function(doc_id,fvalue){
+	    var params={
+		doc_id:doc_id,
+		acc_debit_code:fvalue.cash_account,
+		amount:fvalue.total,
+		description:'Оплата наличными'
+	    };
+	    $.post("AccountsCore/documentPay/",params,function(ok){
+		if(ok*1){
+		    App.flash("Выдать сдачу: "+fvalue.remain_amount);
+		    App.page_accounts_document_pay.handler.resolve();
+		    App.page_accounts_document_pay.node.window('close');
+		} else {
+		    alert("Оплата не удалась! Возможно накладная уже оплачена");
+		}
+	    });
+	}
+    };
+</script>
+<style>
+    #acc_doc_pay_frm input{
+	font-size: 2em;
+	width:7em;
+	text-align: right;
+    }
+    #acc_doc_pay_frm select{
+	width: 15em;
+	font-size: 1em;
+    }
+</style>
+<img src="img/wallet.png" style="float: left;">
+<form id="acc_doc_pay_frm">
+    <input name="given_amount" title="Наличные" onkeyup="App.page_accounts_document_pay.calc()" pattern="[\.0-9]+" required="1">
+    <input name="total" title="К Оплате" readonly="1">
+    <input name="remain_amount" title="Сдача" readonly="1" style="color: green">
+    <select name="cash_account" title="Касса" id="acc_doc_pay_select" required="1">
+	{{cash_accounts}}
+	<option value="{{acc_code}}">{{label}}</option>
+	{{/cash_accounts}}
+    </select>
+    <div style="text-align: center">
+    <button type="submit"><img src="img/wallet.png" style="width:24px;height: auto;"/> Оплатить</button>
+    <button type="button" onclick="App.page_accounts_document_pay.node.window('close');"><img src="img/close24.png" style="width:24px;height: auto;"/> Закрыть</button>
+    </div>
+</form>

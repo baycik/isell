@@ -50,7 +50,7 @@ class FileEngine{
             $this->compilator = 'Rain';
             include 'application/libraries/report/RainTPL.php';
             $this->tpl_file = substr($file_name, strrpos($file_name, '/') + 1, strrpos($file_name, '.') - strrpos($file_name, '/') - 1);
-            $this->tpl_dir = 'application/'.substr($file_name, 0, strrpos($file_name, '/') + 1);
+            $this->tpl_dir = substr($file_name, 0, strrpos($file_name, '/') + 1);
             $this->rain = new RainTPL();
             $this->rain->configure('tpl_dir', $this->tpl_dir);
             $this->rain->configure('tpl_ext', substr($this->tpl_ext, 1));

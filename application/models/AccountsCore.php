@@ -342,6 +342,9 @@ class AccountsCore extends Catalog{
 	    $this->update('acc_trans', ['trans_ref'=>$trans_id,'trans_status'=>4], ['trans_id'=>$trans['trans_ref']]);
 	}
     }
+    private function transAlreadyLinked( $trans_id ){
+	return $this->get_value("SELECT trans_ref FROM acc_trans WHERE trans_id='$trans_id'");
+    }
     private function transBreakLink($trans_ref){
 	if( isset($trans_ref) ){
 	    $this->update('acc_trans', ['trans_ref'=>0,'trans_status'=>0], ['trans_id'=>$trans_ref]);
@@ -388,6 +391,9 @@ class AccountsCore extends Catalog{
 	    $trans['editable']=1;
 	    $trans['active_company_id']=$this->Hub->acomp('company_id');
 	    $trans['created_by']=$trans['modified_by'];
+	    if( $trans['trans_ref'] && $this->transAlreadyLinked($trans['trans_ref']) ){//Check whether referenced trans is already linked
+		return false;
+	    }
 	    $this->create('acc_trans', $trans);
 	    $trans_id= $this->db->insert_id();
 	}
@@ -415,4 +421,26 @@ class AccountsCore extends Catalog{
 	return false;
     }
 
+    public $documentPay=['doc_id'=>'int','acc_debit_code'=>'string','amount'=>'double','description'=>'string'];
+    public function documentPay( $doc_id, $acc_debit_code, $amount, $description ){
+	$sql="SELECT 
+		trans_id,
+		type
+	    FROM 
+		document_trans 
+		    JOIN 
+		acc_trans USING(trans_id) 
+	    WHERE 
+		doc_id='$doc_id' 
+		AND trans_role='total' 
+		AND amount='$amount'";
+	$trans=$this->get_row($sql);
+	if( $trans->trans_id ){
+	    $trans_accs=explode('_',$trans->type);
+	    $trans_type="{$acc_debit_code}_$trans_accs[0]";
+	    $passive_company_id=$this->Hub->pcomp('company_id');
+	    return $this->transCreateUpdate(0,0,$passive_company_id,$trans_type,date("Y-m-d"),$trans->trans_id,$amount,0,$description);
+	}
+	return false;
+    }
 }

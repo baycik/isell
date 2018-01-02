@@ -120,6 +120,22 @@
 	    }
 	    DocList.list.selectedDocId=row.doc_id;
 	    DocList.doc.load(row.doc_id);
+	},
+	rowPayTooltip:function(value,row){
+	    return App.datagrid.tooltip(value,row,'DocList.list.payTrans()');
+	},
+	payTrans:function(){
+	    var row=$('#document_list_dg').datagrid('getSelected');
+	    if( row.trans_status ){
+		var status=row.trans_status.split(' ')[0];
+		if( "unpayed partly payed".indexOf(status)>-1 ){
+		    App.loadWindow("page/accounts/document_pay",{doc_id:row.doc_id,total:row.amount}).done(function(fvalue){
+			$('#document_list_dg').datagrid('reload');
+		    });
+		} else if( "closing closed".indexOf(status)>-1 ){
+		    App.flash("Документ уже оплачен");
+		}
+	    }
 	}
 	/*,
 	createDoc: function () {
@@ -166,7 +182,7 @@
 			<th data-options="width:65,field:'doc_date'">Дата</th>
 			<th data-options="width:70,field:'amount',align:'right',formatter:function(num){ return isNaN(num*1)?'':App.formatNum( (num*1).toFixed(2)); }">Сумма</th>
 			<th data-options="width:25,field:'commited',align:'center',formatter:App.datagrid.tooltip"></th>
-			<th data-options="width:25,field:'trans_status',align:'center',formatter:App.datagrid.tooltip"></th>
+			<th data-options="width:25,field:'trans_status',align:'center',formatter:DocList.list.rowPayTooltip"></th>
 		    </tr>
 		</thead>
 	    </table>

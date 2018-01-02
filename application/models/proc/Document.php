@@ -385,7 +385,7 @@ class Document extends Data {
 	return true;
     }
 
-    public function addEntry($product_code, $product_quantity, $invoice_price=NULL) {
+    public function addEntry($product_code, $product_quantity, $invoice_price=NULL, $add_duplicated_rows =false) {
 	$this->Base->LoadClass('Stock');
 	if ($this->isCommited()) {
 	    $this->Base->set_level(2);
@@ -399,9 +399,15 @@ class Document extends Data {
 	//$this->Base->msg($party_label);
 	$this->Base->query("INSERT INTO document_entries SET doc_id='$doc_id', product_code='$product_code',party_label='$party_label'", false);
 	if (mysqli_errno($this->Base->db_link) == 1062) {//Duplicate entry
-	    $this->Base->response_wrn("Строка с кодом '$product_code' уже добавлена!");
+	    $this->Base->query("ROLLBACK");
+	    if( $add_duplicated_rows ){
+		return $this->addDuplicatedEntry($product_code,$product_quantity);
+	    } else {
+		$this->Base->response_wrn("Строка с кодом '$product_code' уже добавлена!");
+	    }
 	} else
 	if (mysqli_errno($this->Base->db_link) == 1452) {//Constraint fails
+	    $this->Base->query("ROLLBACK");
 	    $this->Base->response_wrn("Артикул '$product_code' не существует!");
 	}
 	$doc_entry_id = mysqli_insert_id($this->Base->db_link);
@@ -414,14 +420,19 @@ class Document extends Data {
 	
 	if (!$this->alterEntry('update', $doc_entry_id, $product_quantity, $invoice_price)) {//update not ok
 	    $this->Base->query("DELETE FROM document_entries WHERE doc_entry_id=$doc_entry_id");
-	    $this->Base->query("ROLLBACK");
-	    return false;
+       	    return false;
 	}
 	$this->Base->query("COMMIT");
 	$this->updateTrans();
 	$this->Base->Stock->increaseFetchCount($product_code);
 	$this->setDocumentModifyingUser();
 	return $doc_entry_id;
+    }
+    private function addDuplicatedEntry($product_code,$additional_product_quantity){
+	$doc_id = $this->doc('doc_id');
+	$entry=$this->Base->get_row("SELECT doc_entry_id, product_quantity FROM document_entries WHERE doc_id='$doc_id' AND product_code='$product_code'");
+	$new_quantity=$entry['product_quantity']+$additional_product_quantity;
+	return $this->alterEntry('update', $entry['doc_entry_id'], $new_quantity);
     }
 
     public function deleteEntry($delete_ids) {

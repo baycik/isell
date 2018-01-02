@@ -117,4 +117,10 @@ class AccountsData extends AccountsCore{
 	    return $this->update('acc_tree',['is_favorite'=>$is_favorite],['acc_code'=>$acc_code]);
 	}
     }
+    
+    public $accountCashGet=[];
+    public function accountCashGet(){
+	$sql="SELECT acc_code,label FROM acc_tree WHERE acc_code LIKE '301%'";
+	return $this->get_list($sql);
+    }
 }

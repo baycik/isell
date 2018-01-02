@@ -30,6 +30,7 @@
 	    }
 	    App.setupForm("#Doc_head_frm", {},'use_inp_values');
 	    this.head.load(this.data.doc_id);
+	    this.toolbarToggleDisabled();
 	},
 	initAfter:function(){
 	    this.suggest.init();
@@ -49,6 +50,7 @@
 		    Doc.head.load(doc_id,true,createDef);
                     createDef.notify('created');
                     Doc.handler.notify('created',doc_id);
+		    Doc.toolbarToggleDisabled();
 		} else {
 		    App.flash("Не удалось создать документ");
 		}
@@ -62,6 +64,20 @@
 		    Doc.entries.add( code, qty );
 		}
 	    });
+	},
+	toolbarToggleDisabled:function(){
+	    var selector=$("#Doc_tool_bar").find(".icon-uncommit,.icon-commit,.icon-wallet,.icon-lorry,.icon-calc,.icon-sms,.icon-change,.icon-delete");
+	    var selector2=$("#Doc_utils").find(".icon-download,.icon-duplicate");
+	    if( Doc.isCreated ){
+		selector.fadeIn();
+		selector2.fadeIn();
+		if( Doc.head.is_commited ){
+		    $("#Doc_tool_bar").find(".icon-commit").fadeOut();
+		}
+	    } else {
+		selector.fadeOut();
+		selector2.fadeOut();
+	    }
 	}
     };
     /////////////////////////////////////////////
@@ -102,7 +118,7 @@
 	    Doc.head.typeComboFormatterIcon(Doc.head.props.doc_type);
 	},
 	hightlightCommited:function(){
-	    $('#Doc_commit_btn').css('display',(Doc.head.props.is_commited*1?"none":""));
+	    //$('#Doc_commit_btn').css('display',(Doc.head.props.is_commited*1?"none":""));
 	    $('#Doc_type_cmb,#Doc_notcount_cmb,#Doc_pci').combobox(Doc.head.props.is_commited*1?'disable':'enable');//
 	    var color='';
 	    if( Doc.head.props.is_commited*1 ){
@@ -396,13 +412,27 @@
 			    Doc.entries.reload();
 			}
 			else{
-			    App.flash("Строка не добавлена!");
+			    if( Doc.head.props.is_commited==1 ){
+				App.flash("Строка не добавлена! Возможно недостаточное колличество.");
+			    } else {
+				App.flash("Строка не добавлена! Неизвесный код.");
+				if( Doc.suggest.isBarcode(code) ){
+				    Doc.entries.linkBarcodeToProduct(code, qty);
+				}
+			    }
 			}
 		    });
 		} else {//if this added entry is the first in new doc then reload head of new created doc
 		    Doc.createThenAddEntry(code, qty);
 		}
 	    }
+	},
+	linkBarcodeToProduct:function(barcode,qty){
+	    App.loadWindow('page/stock/barcode_link',{barcode:barcode}).done(function(data){
+		Doc.entries.add(barcode,qty);
+	    }).fail(function(){
+		
+	    });
 	},
 	edit:function(index,field,value){
 	    var row=$("#Doc_entry_dg").datagrid('getSelected');
@@ -457,14 +487,16 @@
 		top: e.pageY
 	    });
 	},
-	renderFooter:function( data ){
-	    data.total_weight=data.total_weight||0;
-	    data.total_volume=data.total_volume||0;
-	    data.vatless=data.vatless||0;
-	    data.vat=data.vat||0;
-	    data.total=data.total||0;
-	    data.curr_symbol=data.curr_symbol||'-';
-	    App.renderTpl('Doc_footer',data);
+	renderFooter:function( footer ){
+	    footer.total_weight=footer.total_weight||0;
+	    footer.total_volume=footer.total_volume||0;
+	    footer.vatless=footer.vatless||0;
+	    footer.vat=footer.vat||0;
+	    footer.total=footer.total||0;
+	    footer.curr_symbol=footer.curr_symbol||'-';
+	    Doc.entries.footer=footer;
+	    
+	    App.renderTpl('Doc_footer',footer);
 	},
 	initRecalculate:function(){
 	    if( !Doc.isCreated ){
@@ -504,9 +536,25 @@
 	    qty.bind('keydown', function(e){
 		if ( e.keyCode===13 ){	// when press ENTER key, accept the inputed value.
 		    Doc.suggest.qtySubmit();
+		} else if( Doc.suggest.isBarcode(qty.val()) ){
+		    var barcode=qty.val();
+		    qty.val(1);
+		    Doc.suggest.qtySubmit();
+		    //$($('#Doc_suggest_cmb').combobox('textbox')).val(barcode);
+		    $('#Doc_suggest_cmb').combobox('setValue',barcode);
+		    $('#Doc_suggest_cmb').combobox('reload');
+		}
+	    });
+	    qty.bind('focus',function(){
+		if( !qty.val() ){
+		    qty.val(1);
+		    qty.select();
 		}
 	    });
 	    cmb.select();
+	},
+	isBarcode:function( code ){
+	    return String(code).length===13 && $.isNumeric(code);
 	},
 	qtySubmit:function(){
 	    var qty = $('#Doc_sugg_qty').textbox('textbox');
@@ -516,33 +564,29 @@
 	    if( quantity*1>0 ){
 		Doc.entries.add(code,quantity);
 		$(qty).val('');
+		$(cmb).val('');
 		cmb.select();	    
 	    }
 	},
 	loader:function(param, success, error){
-	    if( param.q ){
-		$.get("DocumentItems/suggestFetch/",param, function ( xhr ) {
+	    var query=param.q || $('#Doc_suggest_cmb').combobox('getValue');
+	    if( query ){
+		$.get("DocumentItems/suggestFetch/",{q:query}, function ( xhr ) {
 		    Doc.suggest.rows=App.json(xhr) || [];
 		    success( Doc.suggest.rows );
 		});		
 	    }
 	    else{
+		console.log('empty-combo');
 		success([]);
 	    }
 	},
 	formatter:function(row){
 	    return '<div class="img"><img src="Storage/image_flush/?size=30x30&path=/dynImg/'+row['product_img']+'"></div> <b>'+row['product_code']+'</b> <font color='+(row['leftover']>0?'black':'red')+'>'+row['product_name']+'</font> <div class="props">[x'+row['product_spack']+'] '+row['product_price_total']+' <font color=green>'+row['leftover']+row['product_unit']+'</font></div>';
 	},
-	findSPack:function( code ){
-	    for( var i in Doc.suggest.rows ){
-		if( Doc.suggest.rows[i].product_code===code ){
-		    return Doc.suggest.rows[i].product_spack;
-		}
-	    }
-	},
-	select:function(){
+	select:function(row){
 	    var code=Doc.suggest.prevCode=$('#Doc_suggest_cmb').combobox('getValue');
-	    var spack=Doc.suggest.findSPack(code);
+	    var spack=row.product_spack;
 	    $('#Doc_sugg_qty').textbox('setValue',spack);
 	    $('#Doc_sugg_qty').textbox('textbox').select();
 	}
@@ -612,6 +656,16 @@
 	    $('.view_is_hidden').css('display',(this.showhidden?'inline-block':'none'));
 	}
     };
+    /////////////////////////////////////////////
+    // TRANS
+    /////////////////////////////////////////////    
+    Doc.trans={
+	pay:function(){
+	    App.loadWindow("page/accounts/document_pay",{doc_id:Doc.head.props.doc_id,total:Doc.entries.footer.total}).done(function(fvalue){
+		Doc.handler.notify('head_changed');
+	    });
+	}
+    }
 </script>
 <style>
     .force_center .panel{
@@ -798,10 +852,16 @@
 		   onChange:function(val,old){Doc.head.update('vat_rate',val,old)}
 		   ">
 	    <input name="extra_expenses" title="Доп. расходы" onchange="Doc.head.update('extra_expenses',this.value)">
+	    <div style="padding:1px;text-align: right;" class="transp60">
+		Дополнительные инструменты: 
+		<span class="icon-24 icon-import" title="Импортировать" onclick="Doc.head.import();"> </span>
+		<span class="icon-24 icon-download" title="Скачать Excel" onclick="Doc.head.download();"> </span>
+		<span class="icon-24 icon-duplicate" title="Копировать" onclick="Doc.head.duplicate();"> </span>
+	    </div>
 	</div>
 	<div>
-	    <div id="Doc_tool_bar" class="" style="padding:1px;text-align: right;border-top:1px #fff solid;">
-		<div style="float:left;" title="↑ для вывода предыдущего кода">
+	    <div id="Doc_tool_bar" class="" style="padding:1px;text-align: right;border-top:1px #fff solid;position: relative">
+		<div style="display: inline-block;left:0px;top:-5px;position: absolute;" title="↑ для вывода предыдущего кода">
 		    <input class="easyui-combobox" id="Doc_suggest_cmb" style="width:190px;" data-options="
 			   valueField: 'product_code',
 			   textField: 'product_code',
@@ -819,21 +879,20 @@
 			   onSelect: Doc.suggest.select
 			   ">
 		    <input type="text" class="easyui-numberbox" id="Doc_sugg_qty" style="width:50px;" data-options="min:1,precision:0,prompt:'Кол-во'">
-		    <button type="button" title="Добавить строку в документ" style="margin:4px;padding: 0px;" onclick="Doc.suggest.qtySubmit();">+</button>
+		    <button type="button" title="Добавить строку в документ" style="margin:4px;margin-bottom:0px;padding: 3px;" onclick="Doc.suggest.qtySubmit();">+</button>
 		</div>
 		<span class="icon-24 icon-commit" title="Провести документ" id="Doc_commit_btn" onclick="Doc.head.commit();"> </span>
 		<span class="icon-24 icon-uncommit" title="Отменить документ" onclick="Doc.head.uncommit();"> </span>
 		<span style="display: inline-block;width:26px"> </span>
-		<span class="icon-24 icon-change" title="Изменить строку" onclick="Doc.entries.edit();"> </span>
-		<span class="icon-24 icon-delete" title="Удалить строку" onclick="Doc.entries.delete();"> </span>
+		<span class="icon-24 icon-wallet" title="Внести оплату" onclick="Doc.trans.pay();"> </span>
 		<span class="icon-24 icon-lorry" title="Добавить в распорядок" onclick="Doc.head.addEvent();"> </span>
 		<span class="icon-24 icon-sms" title="Отправить СМС" onclick="Doc.head.sendSms();"> </span>
 		<span class="icon-24 icon-calc" title="Перерасчитать цены" onclick="Doc.entries.initRecalculate();"> </span>
-		<span class="icon-24 icon-import" title="Импортировать" onclick="Doc.head.import();"> </span>
-		<span class="icon-24 icon-download" title="Скачать Excel" onclick="Doc.head.download();"> </span>
-		<span class="icon-24 icon-duplicate" title="Копировать" onclick="Doc.head.duplicate();"> </span>
-		<span class="icon-24 icon-utils" title="Дополнительные свойства" onclick="$('#Doc_utils').toggle('slow')"> </span>
+		<span style="display: inline-block;width:26px"> </span>
+		<span class="icon-24 icon-change" title="Изменить строку" onclick="Doc.entries.edit();"> </span>
+		<span class="icon-24 icon-delete" title="Удалить строку" onclick="Doc.entries.delete();"> </span>
 		<span class="icon-24 icon-refresh" title="Обновить" onclick="Doc.entries.reload();"> </span>
+		<span class="icon-24 icon-utils" title="Дополнительные свойства" onclick="$('#Doc_utils').toggle('slow')"> </span>
 	    </div>
 	</div>
 	<!-- 
