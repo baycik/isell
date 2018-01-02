@@ -1337,6 +1337,9 @@ class Document extends Data {
             WHERE product_code='$product_code' AND (label='$pcomp_price_label' OR label='')
             ORDER BY label='$pcomp_price_label' DESC
             LIMIT 1");
+	if( !$price ){
+	    return ['sell'=>0,'buy'=>0];
+	}
         if( !$price['is_rightlabel'] ){
             $this->Base->msg("Была использована категория цен по умолчанию!");
         }
