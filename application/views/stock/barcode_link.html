@@ -35,7 +35,7 @@
 	},
 	select:function( row ){
 	    App.page_stock_barcode_link.data.selectedProduct=row;
-	    console.log(row);
+	    //console.log(row);
 	    $("#page_stock_barcode_link_frm textarea").val(row.product_code+" "+row.product_name).css('background-color','#dfd');
 	    $("#page_stock_barcode_link_frm button[type=submit]").prop('disabled',false);
 	},

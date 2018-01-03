@@ -403,12 +403,12 @@ class Document extends Data {
 	    if( $add_duplicated_rows ){
 		return $this->addDuplicatedEntry($product_code,$product_quantity);
 	    } else {
-		$this->Base->response_wrn("Строка с кодом '$product_code' уже добавлена!");
+		return 'code_duplicated';
 	    }
 	} else
 	if (mysqli_errno($this->Base->db_link) == 1452) {//Constraint fails
 	    $this->Base->query("ROLLBACK");
-	    $this->Base->response_wrn("Артикул '$product_code' не существует!");
+	    return 'code_unknown';
 	}
 	$doc_entry_id = mysqli_insert_id($this->Base->db_link);
         /*

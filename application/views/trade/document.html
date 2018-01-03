@@ -407,19 +407,23 @@
 	add:function( code, qty ){
 	    if( code && qty ){
 		if( Doc.isCreated ){
-		    App.post("DocumentItems/entryPostAdd/",{doc_id:Doc.head.props.doc_id,code:code,quantity:qty},function(ok){
-			if( ok*1 ){
-			    Doc.entries.reload();
-			}
-			else{
-			    if( Doc.head.props.is_commited==1 ){
-				App.flash("Строка не добавлена! Возможно недостаточное колличество.");
-			    } else {
-				App.flash("Строка не добавлена! Неизвесный код.");
+		    App.post("DocumentItems/entryPostAdd/",{doc_id:Doc.head.props.doc_id,code:code,quantity:qty},function(response_code){
+			switch( response_code ){
+			    case false:
+				App.flash("Строка не добавлена!");
+				break;
+			    case 'code_duplicated':
+				App.flash("Строка не добавлена! Такой товар уже добавлен");
+				break;
+			    case 'code_unknown':
+				App.flash("Строка не добавлена! Неизвестный код");
 				if( Doc.suggest.isBarcode(code) ){
 				    Doc.entries.linkBarcodeToProduct(code, qty);
 				}
-			    }
+				break;
+			    default:
+				Doc.entries.reload();
+				break;
 			}
 		    });
 		} else {//if this added entry is the first in new doc then reload head of new created doc
@@ -577,7 +581,7 @@
 		});		
 	    }
 	    else{
-		console.log('empty-combo');
+		//console.log('empty-combo');
 		success([]);
 	    }
 	},
