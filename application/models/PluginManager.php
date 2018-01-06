@@ -72,7 +72,7 @@ class PluginManager extends Catalog{
     public function settingsDataFetch($plugin_system_name){
 	$settings_data=$this->get_row("SELECT * FROM plugin_list WHERE plugin_system_name='$plugin_system_name'");
 	if( $settings_data ){
-	    $settings_data->plugin_settings=  $settings_data->plugin_settings?json_decode($settings_data->plugin_settings):[];
+	    $settings_data->plugin_settings=  $settings_data->plugin_settings?json_decode($settings_data->plugin_settings):new stdClass;
 	} else {
 	    $settings_data=new stdClass;
 	}

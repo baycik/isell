@@ -1,0 +1,72 @@
+<script>
+    App.StockSellPriceCalculate_dialog = {
+        init: function () {
+            this.node.window({
+                title: 'Расчет Цены Продажи',
+                width: 570,
+                top: 50,
+                height: 'auto',
+                shadow: false,
+                onClose: function () {
+                    delete App.StockSellPriceCalculate_dialog;
+                    //pickmeup('.three-calendars').destroy();
+                }
+            });
+            this.node.window('hcenter');
+            this.node.window('window').css('position', 'fixed');
+            this.formLoad();
+            
+        },
+        formLoad: function () {
+            $.post("StockSellPriceCalculate/discountsGet/").done(function (resp) {
+                var disc=App.json(resp);
+                App.renderTpl('sell_price_calculate_frm',{discounts:disc});
+                App.setupForm("#sell_price_calculate_frm", {}, "use_inp_values").change(function(){
+                    var top_id=$(this).attr('name').split('_')[1];
+                    var value=$(this).val();
+                    App.StockSellPriceCalculate_dialog.formSave(top_id,value);
+                });
+                App.StockSellPriceCalculate_dialog.formListen();
+            });
+        },
+        formSave:function( top_id, value ){
+            $.post("StockSellPriceCalculate/discountsSave/",{top_id:top_id,value:value}).done(function(ok){
+                App.flash("Saved: "+(ok*1?'OK':'ERROR'));
+            });
+        },
+        formListen:function(){
+            $("#sell_price_calculate_frm button").click(function(){
+                var topid=$(this).data('topid');
+                console.log(topid);
+                if( topid ){
+                    var roundto=$("#sell_price_calculate_frm select").val();
+                    $.post("StockSellPriceCalculate/calc",{top_id:topid,round_to:roundto},function(ok){
+                        if(ok*1){
+                            alert("Цена Рассчитана у "+ok+" товаров");
+                        } else {
+                            App.flash("Изменений небыло");
+                        }
+                    });
+                }
+            });
+        }
+    };
+</script>
+<style>
+    #sell_price_calculate_frm input{
+        width:100px;
+    }
+</style>
+<form id="sell_price_calculate_frm">
+    {{discounts}}
+    <div>
+        <input type="number" title="{{label}}" name="discount_{{top_id}}" value="{{discount}}"> <button type="button" data-topid="{{top_id}}">Рассчитать{{top_id}}</button>
+    </div>
+    {{/discounts}}
+    <select title="Округлить до" name="round_to">
+        <option value="1">1</option>
+        <option value="0.50">0,50</option>
+        <option value="0.10">0,10</option>
+        <option value="0.01">0,01</option>
+    </select>
+</form>

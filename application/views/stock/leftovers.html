@@ -71,7 +71,10 @@
 			});
 		    }
 		});
-	    }
+	    },
+            calc_sell:function(){
+                App.loadWindow("StockSellPriceCalculate/dialog").done(Leftovers.tools.reload);
+            }
 	};
 	/////////////////////////////////////////////////////////
 	// Leftovers DATA BASE SECTION
@@ -465,7 +468,7 @@
 		render:function(){
 		    Leftovers.grid.updateOptions({params:{mode:Leftovers.table.columnMode}});
 		    var cols=Leftovers.table.columnsGet();
-                    console.log(cols);
+                    //console.log(cols);
                     Leftovers.table.columnSummaryWidth=0;
                     for( var i in cols ){
                         Leftovers.table.columnSummaryWidth+=cols[i].width;
@@ -477,9 +480,9 @@
 		    var wheight = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
 		    var height = (wheight - $(query).position().top - 20 + (dh || 0));// - $(query).position().top - 0
 		    var wwidth = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
-		    var width = (wwidth - $(query).position().left - 20 + (dw || 0));
+		    var width = (wwidth - $(query).position().left - 50 + (dw || 0));
 		    var col_width = Leftovers.table.columnSummaryWidth+ (dw || 0);
-		    $(query).css('height', height + 'px');
+		    $(query).css('height', wheight + 'px');
 		    $(query).css('width', Math.min(width,col_width) + 'px');
 		}
 	    }
@@ -522,6 +525,7 @@
 	    <div  class="x-stock-leftovers-utils">
 		<button data-action="calc_min"><img src="img/calc.png" style="width:24px;height: 24px;"> Рассчитать минимумы</button><br>
 		<button data-action="calc_abc"><img src="img/calc.png" style="width:24px;height: 24px;"> Рассчитать ABC</button><br>
+		<button data-action="calc_sell"><img src="img/calc.png" style="width:24px;height: 24px;"> Рассчитать цену продажи</button><br>
 		<button data-action="calc_buy_order"><img src="img/docnew.png" style="width:24px;height: 24px;"> Сформировать заказ</button><br>
 		<button data-action="send_to_buy_manager"><img src="img/docnew.png" style="width:24px;height: 24px;"> Загрузить в менеджер</button>		
 	    </div>
