@@ -1,0 +1,30 @@
+<script>
+    App.StockPriceLabel_dialog={
+        init:function(){
+            $("input[name=pcomp_name]").val(App.pcomp.label);
+            App.handler.progress(function(status){
+		if( status==='passiveCompanySelected' ){
+		    $("input[name=pcomp_name]").val(App.pcomp.label);
+		}
+	    });
+        },
+        print:function(){
+            var config=[
+                {field: "product_code", name: "Код товара", required: true}
+            ];
+            App.loadWindow("page/dialog/importer",{label: 'ценник', fields_to_import: config}).progress(function(status,fvalue,Importer){
+                if( status==='submit' ){
+                    console.log(fvalue);
+                    window.open("StockPriceLabel/out/?out_type=.print&label=ценник&field="+(fvalue.product_code));
+                }
+            });
+        }
+    };
+    
+</script>
+
+<button type="button" onclick="App.StockPriceLabel_dialog.print()"><img src="img/import.png"> Печать</button>
+<div>
+    <input title="Для клиента" name="pcomp_name" value="не выбран" readonly="readonly" />
+    <button type="button" class="tiny_button" onclick="App.user.pcompSelectionDialog();"><img src="img/settings.png"> Выбрать</button>
+</div>

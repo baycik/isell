@@ -37,7 +37,6 @@
         formListen:function(){
             $("#sell_price_calculate_frm button").click(function(){
                 var topid=$(this).data('topid');
-                console.log(topid);
                 if( topid ){
                     var roundto=$("#sell_price_calculate_frm select").val();
                     $.post("StockSellPriceCalculate/calc",{top_id:topid,round_to:roundto},function(ok){

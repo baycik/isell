@@ -1,0 +1,43 @@
+<style>
+    .price_label{
+        float: left;
+        width:30%;
+        border: 1px solid #ccc;
+        height: 2.5cm;
+        font-size: 18px;
+        text-align: left;
+        padding: 5px;
+    }
+    .price_label i{
+        font-size: 14px;
+    }
+    .price_label b{
+        background-color: black;
+        border-radius: 5px;
+        color: white;
+        padding: 3px;
+    }
+    .price_label img{
+        float: left;
+    }
+</style>
+<div class="page" style="width: 18.5cm;">
+{loop name="$v->products"}
+<div class="price_label">
+    <div style="height: 1.7cm;overflow: hidden">
+        <img src="../../Storage/image_flush/?size=50x50&path=dynImg/{$value->product_img}#"
+            onerror="this.onerror=null;this.src='../dynImg/{$value->product_img}_100x100.png';" />
+        {$value->product_name}
+    </div>
+    
+    
+    <div style="text-align: right">
+        <div style="float: left">
+            <i>Код: {$value->product_code}</i>
+        </div>
+        <b>{$value->product_price}</b>
+    </div>
+    
+    {$date}
+</div>
+{/loop}</div>  
