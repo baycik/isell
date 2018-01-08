@@ -58,8 +58,6 @@ class Reports_market_analyse extends Catalog{
                 $article article,
                 product_code,
                 ru product_name,
-                analyse_type,
-                analyse_brand,
                 $affiliate store_code,
                 $sold sold,
                 $left leftover
@@ -156,8 +154,6 @@ class Reports_market_analyse extends Catalog{
                 product_code,
                 article,
                 product_name,
-                analyse_type,
-                analyse_brand,
                 store_code,
                 sold,
                 leftover,
@@ -205,6 +201,8 @@ class Reports_market_analyse extends Catalog{
                 SUM(avg_price*leftover) leftover_sum
             FROM
                 plugin_market_rpt_entries
+		    JOIN
+		prod_list USING(product_code)
             WHERE
                 report_id='$report_id'
             GROUP BY $this->group_by 

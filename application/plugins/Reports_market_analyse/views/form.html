@@ -6,12 +6,12 @@
 	listInit:function(){
 	    var settings = {
 		columns: [
-                    {id:'idate',field:'idate',name:'Начало'},
-                    {id:'fdate',field:'fdate',name:'Конец'},
+                    {id:'idate',field:'idate',name:'Начало',width:100},
+                    {id:'fdate',field:'fdate',name:'Конец',width:100},
                     {id:'pcomp_label',field:'pcomp_label',name:'Клиент',width:150},
-                    {id:'sold_sum',field:'sold_sum',name:'Продано'},
-                    {id:'leftover_sum',field:'leftover_sum',name:'Остаток'},
-                    {id:'comment',field:'comment',name:'Коментарий',width:320}
+                    {id:'sold_sum',field:'sold_sum',name:'Продано',width:100},
+                    {id:'leftover_sum',field:'leftover_sum',name:'Остаток',width:100},
+                    {id:'comment',field:'comment',name:'Коментарий',width:200}
                 ],
 		options: {
 		    autoedit: false,
@@ -113,7 +113,7 @@
         <span class="icon-24 icon-delete" title="Удалить выбранные строчки" data-action="entryDelete"> </span>
         <span class="icon-24 icon-refresh" title="Обновить" data-action="reload"> </span>
     </div>
-    <div id="report_market_rpt_sg" style="height:100px;"></div>
+    <div id="report_market_rpt_sg" style="height:100px;width: 780px;"></div>
     <div style="text-align: center">
         <button type="button" onclick="App.plugin_report_market.import()"><img src="img/import.png" style="width:24px;height: auto">  Загрузить файл</button>
     </div>
