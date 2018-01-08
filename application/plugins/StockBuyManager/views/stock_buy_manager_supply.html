@@ -20,7 +20,7 @@
 	    },
 	    calcDimensions:function(query, dw, dh){
 		var wheight = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
-		var height = (wheight - $(query).position().top - 20 + (dh || 0)) + 'px';// - $(query).position().top - 0
+		var height = (wheight  + (dh || 0)) + 'px';// - $(query).position().top - 0
 		var width = $(query).parent().width() + (dw || 0);
 		$(query).css('height', height);
 		$(query).css('width', width);

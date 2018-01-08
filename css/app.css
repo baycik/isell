@@ -6,6 +6,7 @@ body{
     -background: url(../img/bg.jpg) repeat-x fixed;
     background: url(../img/bluebg.jpg)  no-repeat center center fixed;
     background-size: cover;
+    overflow-y: scroll;
 }
 .app_window{
     background: url(../img/window-bg.png) repeat-x;
