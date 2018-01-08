@@ -34,7 +34,7 @@ class StockSellPriceCalculate extends PluginManager {
             $where = "WHERE parent_id IN (" . implode(',', $branch_ids) . ")";
             $sql="UPDATE price_list 
                 SET
-                    sell=MAX(ROUND(buy*$discount/$round_to)*$round_to,$round_to)
+                    sell=GREATEST(ROUND(buy*$discount/$round_to)*$round_to,$round_to)
                 WHERE 
                     product_code IN (SELECT product_code FROM stock_entries $where)";
             $this->query($sql);
