@@ -86,10 +86,10 @@
 	    data:{},
 	    open:function(){
 		var json=localStorage.getItem('docmanager_doclist');
-		this.data=App.json(json) || {'-':'skip'};
+		doclist.data=App.json(json) || {'-':'skip'};
 	    },
 	    save:function(){
-		localStorage.setItem('docmanager_doclist',JSON.stringify(this.data));
+		localStorage.setItem('docmanager_doclist',JSON.stringify(doclist.data));
 	    }
 	};
         var table={
@@ -180,7 +180,7 @@
 	    },
 	    tools:{
 		reload: function () {
-		    table.grid.reload();
+		    table.reload();
 		},
 		entryDelete: function () {
 		    var selected_rows = table.grid.getSelectedRows();
@@ -230,6 +230,7 @@
                     }
                 };
 		
+                //doclist.open();
                 table.grid = new SlickInfinite("#document_manager_sg", settings);
 		table.setupActionEvent();
 		table.reload();
@@ -242,7 +243,7 @@
             },
 	    reload:function(){
 		var filter=table.grid.getFilter();
-		filter=$.extend({doc_id:Object.keys(doclist.data).join("|")},filter);
+                filter.doc_id=Object.keys(doclist.data).join("|");
 		table.grid.setFilter(filter);
 		result_table.reload();
 	    },
