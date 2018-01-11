@@ -20,10 +20,7 @@ class PluginManager extends Catalog{
 	    }
 	}
 	function sort_bygroup($a,$b){
-	    if( !isset($a['group_name']) || !isset($b['group_name']) || $a['group_name']==$b['group_name'] ){
-		return 0;
-	    }
-	    return ($a['group_name']>$b['group_name'])?1:-1;
+	    return strcmp($a['group_name'],$b['group_name']);
 	}
 	usort($plugins,'sort_bygroup');
 	return $plugins;
