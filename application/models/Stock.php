@@ -303,7 +303,8 @@ class Stock extends Catalog {
 
     public function productDelete($product_codes) {
 	$this->Hub->set_level(2);
-	$this->query("DELETE FROM stock_entries WHERE product_quantity=0 AND product_code IN ($product_codes)");
+	$product_codes= str_replace(",", "','", $product_codes);
+	$this->query("DELETE FROM stock_entries WHERE product_quantity=0 AND product_code IN ('$product_codes')");
 	return $this->db->affected_rows();
     }
     public $productMove=['parent_id'=>'int','product_code'=>'string'];
