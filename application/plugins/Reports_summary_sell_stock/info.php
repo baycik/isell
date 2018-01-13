@@ -5,7 +5,7 @@
 	'version'=>'1.1',
 	'group_name'=>'Результаты деятельности',
 	'uri'=>'',
-	'user_level'=>4,
+	'user_level'=>3,
 	'author'=>'baycik',
 	'author_uri'=>'',
 	'licence'=>''

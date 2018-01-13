@@ -3,13 +3,13 @@ class PluginManager extends Catalog{
     public $min_level=1;
     private $plugin_folder='application/plugins/';
     
-    public $listFetch=[];
-    public function listFetch(){
+    public $listFetch=['mode'=>'string'];
+    public function listFetch($mode=null){
 	$plugins_folders=$this->scanFolder($this->plugin_folder);
 	$plugins=[];
 	foreach($plugins_folders as $plugin_folder){
-	    if( strpos($plugin_folder, 'Reports')!==false ){
-		//continue;
+	    if( $mode=='ReportsOnly' && strpos($plugin_folder, 'Reports')===false ){
+		continue;
 	    }
 	    $headers=$this->get_plugin_headers($plugin_folder);
 	    if( isset($headers['user_level']) && $headers['user_level']<=$this->Hub->svar('user_level') ){
@@ -31,7 +31,7 @@ class PluginManager extends Catalog{
 	arsort($files);
 	return array_values($files);	
     }
-    private function get_plugin_headers( $plugin_system_name ){
+    protected function get_plugin_headers( $plugin_system_name ){
 	$path=$this->plugin_folder.$plugin_system_name."/models/".$plugin_system_name.".php";
 	if( !file_exists($path) ){
 	    $path=$this->plugin_folder.$plugin_system_name."/".$plugin_system_name.".php";// Support for older plugins
@@ -51,6 +51,7 @@ class PluginManager extends Catalog{
 	preg_match ('|Description:(.*)$|mi', $plugin_data, $description);
 	preg_match ('|Author:(.*)$|mi', $plugin_data, $author_name);
 	preg_match ('|Author URI:(.*)$|mi', $plugin_data, $author_uri);
+	preg_match ('|Plugin Template:(.*)$|mi', $plugin_data, $plugin_template);
 	return [
 	    'system_name'=>$plugin_system_name,
 	    'trigger_before'=>isset($trigger_before[1])?trim($trigger_before[1]):$plugin_system_name,
@@ -62,7 +63,8 @@ class PluginManager extends Catalog{
 	    'plugin_version'=>isset($version[1])?trim($version[1]):null,
 	    'plugin_description'=>isset($description[1])?trim($description[1]):null,
 	    'plugin_author'=>isset($author_name[1])?trim($author_name[1]):null,
-	    'plugin_author_uri'=>isset($author_uri[1])?trim($author_uri[1]):null
+	    'plugin_author_uri'=>isset($author_uri[1])?trim($author_uri[1]):null,
+	    'plugin_template'=>isset($plugin_template[1])?trim($plugin_template[1]):null
 	];
     }
     public $settingsDataFetch=[];
@@ -99,6 +101,7 @@ class PluginManager extends Catalog{
     
     public $activate=['plugin_system_name'=>'string'];
     public function activate($plugin_system_name){
+	$this->Hub->set_level(4);
 	$data=[
 	    'plugin_system_name'=>$plugin_system_name,
 	    'is_activated'=>1
@@ -111,6 +114,7 @@ class PluginManager extends Catalog{
     
     public $deactivate=['plugin_system_name'=>'string'];
     public function deactivate($plugin_system_name){
+	$this->Hub->set_level(4);
 	$data=[
 	    'plugin_system_name'=>$plugin_system_name,
 	    'is_activated'=>0
@@ -123,6 +127,7 @@ class PluginManager extends Catalog{
     
     public $install=['plugin_system_name'=>'string'];
     public function install($plugin_system_name){
+	$this->Hub->set_level(4);
 	$headers=$this->get_plugin_headers( $plugin_system_name );
 	$sql="REPLACE INTO 
 		plugin_list 
@@ -139,6 +144,7 @@ class PluginManager extends Catalog{
     
     public $uninstall=['plugin_system_name'=>'string'];
     public function uninstall($plugin_system_name){
+	$this->Hub->set_level(4);
 	$ok=$this->delete('plugin_list',['plugin_system_name'=>$plugin_system_name]);
 	$this->plugin_do($plugin_system_name, 'uninstall');
 	$this->pluginInitTriggers();
@@ -182,20 +188,20 @@ class PluginManager extends Catalog{
 	return $this->update('plugin_list',$data,['plugin_system_name'=>$plugin_system_name]);
     }
     
-    public function plugin_do($plugin_system_name, $plugin_method, $plugin_method_args=[]){
-	$path=$this->plugin_folder.$plugin_system_name."/models/".$plugin_system_name.".php";
-	if( !file_exists($path) ){
-	    $path=$this->plugin_folder.$plugin_system_name."/".$plugin_system_name.".php";// Support for older plugins
-	    if( !file_exists($path) ){
-		return [];
-	    }
-	}
-	
-	require_once $path;
-	$Plugin=$this->Hub->load_model($plugin_system_name);
-	if( method_exists($Plugin, $plugin_method) ){
-	    return call_user_func_array([$Plugin,$plugin_method], $plugin_method_args);
-	}
-	return null;
-    }
+//    public function plugin_do($plugin_system_name, $plugin_method, $plugin_method_args=[]){
+//	$path=$this->plugin_folder.$plugin_system_name."/models/".$plugin_system_name.".php";
+//	if( !file_exists($path) ){
+//	    $path=$this->plugin_folder.$plugin_system_name."/".$plugin_system_name.".php";// Support for older plugins
+//	    if( !file_exists($path) ){
+//		return [];
+//	    }
+//	}
+//	
+//	require_once $path;
+//	$Plugin=$this->Hub->load_model($plugin_system_name);
+//	if( method_exists($Plugin, $plugin_method) ){
+//	    return call_user_func_array([$Plugin,$plugin_method], $plugin_method_args);
+//	}
+//	return null;
+//    }
 }

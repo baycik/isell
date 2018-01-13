@@ -1,5 +1,14 @@
 <?php
-
+/* Group Name: Результаты деятельности
+ * User Level: 2
+ * Plugin Name: Рассчет продажной цены
+ * Plugin URI: 
+ * Version: 0.1
+ * Description: Рассчитывает продажную цену на основе закупочной
+ * Author: baycik 2018
+ * Author URI: 
+ * Trigger before: StockSellPriceCalculate
+ */
 class StockSellPriceCalculate extends PluginManager {
     function __construct(){
         $this->settings=$this->settingsDataFetch('StockSellPriceCalculate');

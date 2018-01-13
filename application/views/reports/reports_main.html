@@ -37,18 +37,18 @@
 		}
 	    },
 	    formLoad:function(){
-		var report_id=this.current_report_info.report_id;
+		var report_id=this.current_report_info.system_name;
 		App.get("ReportManager/formGet/"+report_id,function(resp){
 		    $("#report_form_wrapper").html(resp);
 		    ReportsJs.report.formRender();
 		});
 	    },
 	    formRender:function(){
-		var report_id=this.current_report_info.report_id;
+		var system_name=this.current_report_info.system_name;
 		var standart_data=this.formGetInitials();
 		App.renderTpl("report_form_wrapper",standart_data,'nocache');
 		App.setupForm("#report_form_wrapper form",{},'use_inp_values');
-		$("#report_form_wrapper form").attr('action',"ReportManager/formSubmit/"+report_id);
+		$("#report_form_wrapper form").attr('action',"ReportManager/formSubmit/"+system_name);
 		$("#report_form_wrapper form").attr('target','report_viewport');
 		$("#report_form_wrapper form").attr('method','post');
 		$("#report_form_wrapper form").submit(function(){
@@ -122,7 +122,7 @@
 	<div><b>{{header}}</b></div>
 	{{else}}
 	    <div class="left_label" data-report-index="{{#}}" onclick="ReportsJs.tile.click(this);">
-		<img src="img/report24.png"> {{title}}
+		<img src="img/report24.png"> {{plugin_name}}
 	    </div>	
 	{{/if}}
     {{/reports}}
@@ -134,13 +134,13 @@
 	</div>
 	<img src="img/reportbig.png" style="float:left">
 	<div style="float: right">
-	    <b>Автор:</b> {{author}}<br>
-	    <b>Версия:</b> {{version}}<br>
-	    {{if uri}}<b>Сайт:</b> <a href="{{uri}}" target="_blank">{{uri}}</a><br>{{/if}}
+	    <b>Автор:</b> {{plugin_author}}<br>
+	    <b>Версия:</b> {{plugin_version}}<br>
+	    {{if plugin_author_uri}}<b>Сайт:</b> <a href="{{plugin_author_uri}}" target="_blank">{{plugin_author_uri}}</a><br>{{/if}}
 	</div>
 	<div>
-	    <h2>{{title}}</h2>
-	    {{description}}
+	    <h2>{{plugin_name}}</h2>
+	    {{plugin_description}}
 	</div>
 	<div id="report_form_wrapper"></div>
     </div>

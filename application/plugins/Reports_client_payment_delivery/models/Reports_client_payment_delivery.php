@@ -1,4 +1,14 @@
 <?php
+/* Group Name: Работа с клиентами
+ * User Level: 2
+ * Plugin Name: Оплаты и отгрузки клиентам
+ * Plugin URI: 
+ * Version: 1
+ * Description: Выводит информацию о продажах и оплатах клиентов
+ * Author: baycik 2017
+ * Author URI: 
+ * Trigger before: Reports_client_payment_delivery
+ */
 class Reports_client_payment_delivery extends Catalog{
     private $idate;
     private $fdate;
@@ -6,8 +16,8 @@ class Reports_client_payment_delivery extends Catalog{
     private $deliveries;
     private $payments;
     public function __construct() {
-	$this->idate=$this->dmy2iso( $this->request('idate','\d\d.\d\d.\d\d\d\d') ).' 00:00:00';
-	$this->fdate=$this->dmy2iso( $this->request('fdate','\d\d.\d\d.\d\d\d\d') ).' 23:59:59';
+	$this->idate=$this->dmy2iso( $this->request('idate','\d\d.\d\d.\d\d\d\d') );
+	$this->fdate=$this->dmy2iso( $this->request('fdate','\d\d.\d\d.\d\d\d\d') );
 	$this->all_active=$this->request('all_active','bool');
 	$this->deliveries=$this->request('deliveries','bool');
 	$this->payments=$this->request('payments','bool');
@@ -18,6 +28,20 @@ class Reports_client_payment_delivery extends Catalog{
     private function dmy2iso( $dmy ){
 	$chunks=  explode('.', $dmy);
 	return "$chunks[2]-$chunks[1]-$chunks[0]";
+    }
+    private function iso2dmy( $iso ){
+	$chunks=  explode('-', $iso);
+	return "$chunks[2].$chunks[1].$chunks[0]";
+    }
+    private function or_like($field,$value){
+	$cases=explode(",",$value);
+	$filter="";
+	foreach($cases as $case){
+	    if($case){
+		$filter.=" OR $field LIKE '%$case%'";
+	    }
+	}
+	return $filter;
     }
     private function getAssignedPathWhere(){
         $assigned_path=$this->Hub->svar('user_assigned_path');
@@ -38,7 +62,7 @@ class Reports_client_payment_delivery extends Catalog{
 	$active_filter=$this->all_active?'':' AND active_company_id='.$this->Hub->acomp('company_id');
         $user_level=$this->Hub->svar('user_level');
         $path_filter=$this->getAssignedPathWhere();
-        $having=$this->filter_value?"HAVING $this->filter_by LIKE '%$this->filter_value%'":"";
+        $having=$this->filter_value?"HAVING 0 ".$this->or_like($this->filter_by,$this->filter_value):"";
 	$sql="
 	    SELECT
 		DATE_FORMAT(cstamp,'%d.%m.%Y') cdate,
@@ -56,8 +80,8 @@ class Reports_client_payment_delivery extends Catalog{
 		acc_trans ON company_id=passive_company_id
 	    WHERE
 		$direction_filter
-		AND cstamp>'$this->idate' 
-		AND cstamp<'$this->fdate' 
+		AND cstamp>'$this->idate 00:00:00' 
+		AND cstamp<'$this->fdate 23:59:59' 
 		AND level<='$user_level'
                 $path_filter
 		$active_filter
@@ -67,15 +91,24 @@ class Reports_client_payment_delivery extends Catalog{
 	$total_debit=0;
         $total_credit=0;
         foreach( $rows as $row ){
-            $total_debit+=$row->debit*1;
-            $total_credit+=$row->credit*1;
+            $total_debit+=(float) $row->debit*1;
+            $total_credit+=(float) $row->credit;
         }
 	$total_debit=round($total_debit,2);
 	$total_credit=round($total_credit,2);
 	return [
 	    'total_debit'=>$total_debit,
 	    'total_credit'=>$total_credit,
-	    'rows'=>count($rows)?$rows:[[]]
+	    'rows'=>count($rows)?$rows:[[]],
+	    'input'=>[
+		'idate'=>$this->iso2dmy($this->idate),
+		'fdate'=>$this->iso2dmy($this->fdate),
+		'all_active'=>$this->all_active,
+		'deliveries'=>$this->deliveries,
+		'payments'=>$this->payments,
+		'filter_by'=>$this->filter_by,
+		'filter_value'=>$this->filter_value
+	    ]
 	];
     }
 }

@@ -1,4 +1,14 @@
 <?php
+/* Group Name: Результаты деятельности
+ * User Level: 3
+ * Plugin Name: Эффективность запасов
+ * Plugin URI: 
+ * Version: 0.1
+ * Description: Выводит информацию о соотношении продаж к складским остаткам
+ * Author: baycik 2016
+ * Author URI: 
+ * Trigger before: Reports_summary_sell_profit
+ */
 class Reports_summary_sell_stock extends Catalog{
     private $idate;
     private $fdate;

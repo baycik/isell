@@ -1,11 +1,21 @@
 <?php
+/* Group Name: Результаты деятельности
+ * User Level: 3
+ * Plugin Name: Анализ продаж и прибыли
+ * Plugin URI: 
+ * Version: 0.1
+ * Description: Выводит развернутую информацию о продажах и прибыле, с возможностью группировать по аналитикам и клиентам
+ * Author: baycik 2017
+ * Author URI: 
+ * Trigger before: Reports_summary_sell_profit
+ */
 class Reports_summary_sell_profit extends Catalog{
     private $idate;
     private $fdate;
     private $all_active;
     public function __construct() {
-	$this->idate=$this->dmy2iso( $this->request('idate','\d\d.\d\d.\d\d\d\d') ).' 00:00:00';
-	$this->fdate=$this->dmy2iso( $this->request('fdate','\d\d.\d\d.\d\d\d\d') ).' 23:59:59';
+	$this->idate=$this->dmy2iso( $this->request('idate','\d\d.\d\d.\d\d\d\d') );
+	$this->fdate=$this->dmy2iso( $this->request('fdate','\d\d.\d\d.\d\d\d\d') );
 	$this->all_active=$this->request('all_active','bool');
 	$this->count_sells=$this->request('count_sells','bool',0);
 	$this->count_reclamations=$this->request('count_reclamations','bool',0);
@@ -25,6 +35,20 @@ class Reports_summary_sell_profit extends Catalog{
 	$chunks=  explode('.', $dmy);
 	return "$chunks[2]-$chunks[1]-$chunks[0]";
     }
+    private function iso2dmy( $iso ){
+	$chunks=  explode('-', $iso);
+	return "$chunks[2].$chunks[1].$chunks[0]";
+    }
+    private function and_like($field,$value){
+	$cases=explode(",",$value);
+	$filter="";
+	foreach($cases as $case){
+	    if($case){
+		$filter.=" AND $field LIKE '%$case%'";
+	    }
+	}
+	return $filter;
+    }
     public function viewGet(){
 	$active_filter=$this->all_active?'':' AND active_company_id='.$this->Hub->acomp('company_id');
         
@@ -40,9 +64,9 @@ class Reports_summary_sell_profit extends Catalog{
         }
         $path_filter='';
         if( $this->path_exclude || $this->path_include ){
-            $path_filter="JOIN companies_list cl ON dl.passive_company_id=company_id JOIN companies_tree ct ON cl.branch_id=ct.branch_id ";
-            $path_filter.=$this->path_include?"AND path LIKE '%$this->path_include%'":"";
-            $path_filter.=$this->path_exclude?"AND path NOT LIKE '%$this->path_exclude%'":"";
+	    $path_filter="JOIN companies_list cl ON dl.passive_company_id=company_id JOIN companies_tree ct ON cl.branch_id=ct.branch_id ";
+	    $path_filter.=$this->and_like('ct.path ', $this->path_include);
+	    $path_filter.=$this->and_like('ct.path NOT ', $this->path_exclude);
         }
 	$passive_groupper=$this->group_by_client?',passive_company_id':'';
 	$group_by_label=$this->group_by_client?"CONCAT($this->group_by,' / ',(SELECT company_name FROM companies_list WHERE company_id=passive_company_id))":"$this->group_by";
@@ -82,7 +106,7 @@ class Reports_summary_sell_profit extends Catalog{
 		    prod_list pl USING(product_code)
                     $path_filter
 		WHERE
-		    doc_type=1 AND cstamp>'$this->idate' AND cstamp<'$this->fdate' AND is_commited=1 AND notcount=0 $active_filter $reclamation_filter
+		    doc_type=1 AND cstamp>'$this->idate 00:00:00' AND cstamp<'$this->fdate 23:59:59' AND is_commited=1 AND notcount=0 $active_filter $reclamation_filter
 		GROUP BY product_code $passive_groupper) entries
 		$having)";
 	$this->query($main_table_sql);
@@ -122,7 +146,22 @@ class Reports_summary_sell_profit extends Catalog{
                 'total_net'=>$total_net,
                 'total_qty'=>$total_qty,
 		'rows'=>count($rows)?$rows:[[]],
-		'totals'=>count($totals)?$totals:[[]]
+		'totals'=>count($totals)?$totals:[[]],
+		'input'=>[
+		    'idate'=>$this->iso2dmy($this->idate),
+		    'fdate'=>$this->iso2dmy($this->fdate),
+		    'all_active'=>$this->all_active,
+		    'count_sells'=>$this->count_sells,
+		    'count_reclamations'=>$this->count_reclamations,
+		    'count_sells'=>$this->count_sells,
+		    'in_alt_currency'=>$this->in_alt_currency,
+		    'group_by_client'=>$this->group_by_client,
+		    'language'=>$this->language,
+		    'group_by_filter'=>$this->group_by_filter,
+		    'group_by'=>$this->group_by,
+		    'path_include'=>$this->path_include,
+		    'path_exclude'=>$this->path_exclude
+		]
 		];
 	return $view;	
     }

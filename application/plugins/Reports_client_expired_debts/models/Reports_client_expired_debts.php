@@ -1,4 +1,14 @@
 <?php
+/* Group Name: Работа с клиентами
+ * User Level: 1
+ * Plugin Name: Задолженность клиентов
+ * Plugin URI: 
+ * Version: 0.1
+ * Description: Выводит информацию о просроченной и общей задолженности клиентов
+ * Author: baycik 2017
+ * Author URI: 
+ * Trigger before: Reports_client_expired_debts
+ */
 class Reports_client_expired_debts extends Catalog{
     private $all_active;
     private $our_debts;
@@ -11,9 +21,15 @@ class Reports_client_expired_debts extends Catalog{
 	$this->filter_value=$this->request('filter_value');
 	parent::__construct();
     }
-    private function dmy2iso( $dmy ){
-	$chunks=  explode('.', $dmy);
-	return "$chunks[2]-$chunks[1]-$chunks[0]";
+    private function or_like($field,$value){
+	$cases=explode(",",$value);
+	$filter=[];
+	foreach($cases as $case){
+	    if($case){
+		$filter[]="$field LIKE '%$case%'";
+	    }
+	}
+	return implode(" OR ",$filter);
     }
     private function getAssignedPathWhere(){
         $assigned_path=$this->Hub->svar('user_assigned_path');
@@ -34,7 +50,7 @@ class Reports_client_expired_debts extends Catalog{
         $user_level=$this->Hub->svar('user_level');
         $path_filter=$this->getAssignedPathWhere();
 	$having =$this->getDirectionFilter();
-        $having.=$this->filter_value?" AND $this->filter_by LIKE '%$this->filter_value%'":"";
+        $having.=$this->filter_value?"AND (".$this->or_like($this->filter_by,$this->filter_value).")":"";
 	$sql="
 	    SELECT
 		label,
@@ -97,7 +113,14 @@ class Reports_client_expired_debts extends Catalog{
 	    'total_our_debt'=>$total_our_debt,
 	    'total_their_debt'=>$total_their_debt,
 	    'total_their_exp'=>$total_their_exp,
-	    'rows'=>count($rows)?$rows:[[]]
+	    'rows'=>count($rows)?$rows:[[]],
+	    'input'=>[
+		'all_active'=>$this->all_active,
+		'our_debts'=>$this->our_debts,
+		'their_debts'=>$this->their_debts,
+		'filter_by'=>$this->filter_by,
+		'filter_value'=>$this->filter_value
+	    ]
 	];
     }
 }

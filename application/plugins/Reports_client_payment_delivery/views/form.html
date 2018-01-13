@@ -1,16 +1,16 @@
 <form>
     <div class="inp_group" style="width: 230px;">
-	<input style="width:95px" class="easyui-datebox" name="idate" title="Начальная дата" value="{{first_day}}" data-options="required:true">
-	<input style="width:95px" class="easyui-datebox" name="fdate" title="Конечная дата" value="{{today}}" data-options="required:true">
+	<input style="width:110px" class="easyui-datebox" name="idate" title="Начальная дата" value="{{first_day}}" data-options="required:true">
+	<input style="width:110px" class="easyui-datebox" name="fdate" title="Конечная дата" value="{{today}}" data-options="required:true">
     </div>
     <div class="inp_group" style="width: 350px;">
 	<select name="filter_by" title="Фильтровать по">
-	    <option value="cdate" selected="selected">Дате</option>
+	    <option value="cdate">Дате</option>
+	    <option value="path" selected="selected">Путь</option>
 	    <option value="label">Клиенту</option>
 	    <option value="description">Пояснению</option>
 	    <option value="debit">Отгрузке</option>
 	    <option value="credit">Оплате</option>
-	    <option value="path">Группа клиента</option>
 	</select>
 	<input name="filter_value" title="Фильтр">	
     </div>

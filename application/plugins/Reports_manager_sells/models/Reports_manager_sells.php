@@ -1,11 +1,21 @@
 <?php
+/* Group Name: Работа с клиентами
+ * User Level: 2
+ * Plugin Name: Продажи менеджера
+ * Plugin URI: http://isellsoft.com
+ * Version: 0.1
+ * Description: Анализ продаж менеджера с учетом скидок клиента
+ * Author: baycik 2017
+ * Author URI: http://isellsoft.com
+ * Trigger before: Reports_manager_sells
+ */
 class Reports_manager_sells extends Catalog{
     private $idate;
     private $fdate;
     private $all_active;
     public function __construct() {
-	$this->idate=$this->dmy2iso( $this->request('idate','\d\d.\d\d.\d\d\d\d') ).' 00:00:00';
-	$this->fdate=$this->dmy2iso( $this->request('fdate','\d\d.\d\d.\d\d\d\d') ).' 23:59:59';
+	$this->idate=$this->dmy2iso( $this->request('idate','\d\d.\d\d.\d\d\d\d') );
+	$this->fdate=$this->dmy2iso( $this->request('fdate','\d\d.\d\d.\d\d\d\d') );
 	$this->all_active=$this->request('all_active','bool');
 	$this->count_sells=$this->request('count_sells','bool',0);
 	$this->count_reclamations=$this->request('count_reclamations','bool',0);
@@ -17,6 +27,20 @@ class Reports_manager_sells extends Catalog{
     private function dmy2iso( $dmy ){
 	$chunks=  explode('.', $dmy);
 	return "$chunks[2]-$chunks[1]-$chunks[0]";
+    }
+    private function iso2dmy( $iso ){
+	$chunks=  explode('-', $iso);
+	return "$chunks[2].$chunks[1].$chunks[0]";
+    }
+    private function and_like($field,$value){
+	$cases=explode(",",$value);
+	$filter="";
+	foreach($cases as $case){
+	    if($case){
+		$filter.=" AND $field LIKE '%$case%'";
+	    }
+	}
+	return $filter;
     }
     public function viewGet(){
 	$active_filter=$this->all_active?'':' AND active_company_id='.$this->Hub->acomp('company_id');
@@ -33,11 +57,9 @@ class Reports_manager_sells extends Catalog{
         }
         $path_filter='';
         if( $this->path_exclude || $this->path_include ){
-            //$path_filter="JOIN companies_list cl ON dl.passive_company_id=company_id JOIN companies_tree ct ON cl.branch_id=ct.branch_id ";
-            $path_filter.=$this->path_include?"AND ct.path LIKE '%$this->path_include%'":"";
-            $path_filter.=$this->path_exclude?"AND ct.path NOT LIKE '%$this->path_exclude%'":"";
+	    $path_filter.=$this->and_like('ct.path ', $this->path_include);
+	    $path_filter.=$this->and_like('ct.path NOT ', $this->path_exclude);
         }
-        //$having=$this->group_by_filter?"HAVING group_by LIKE '%$this->group_by_filter%'":"";
 	
 	$this->query("DROP TEMPORARY TABLE IF EXISTS tmp_manager_sells;");#TEMPORARY TEMPORARY 
 	$main_table_sql="CREATE TEMPORARY TABLE tmp_manager_sells ENGINE=MyISAM AS (
@@ -68,9 +90,9 @@ class Reports_manager_sells extends Catalog{
 		companies_discounts cd ON cd.company_id = passive_company_id
 		    AND st.top_id = cd.branch_id
 	    WHERE
-		doc_type=1 AND cstamp>'$this->idate' AND cstamp<'$this->fdate' AND is_commited=1 AND notcount=0 $active_filter $reclamation_filter $path_filter
+		doc_type=1 AND cstamp>'$this->idate 00:00:00' AND cstamp<'$this->fdate 23:59:59' AND is_commited=1 AND notcount=0 $active_filter $reclamation_filter $path_filter
 	    GROUP BY discount_overall ,st.top_id,  doc_id
-		ORDER BY cstamp)";
+	    ORDER BY ct.label)";
 	
 	$this->query($main_table_sql);
 	
@@ -85,9 +107,22 @@ class Reports_manager_sells extends Catalog{
             }
             $rows=$this->get_list("SELECT *$sum_fields FROM tmp_manager_sells");  
         }
+	$client_chart=$this->get_list("SELECT client_name,SUM(sum) total FROM tmp_manager_sells GROUP BY client_name ORDER BY SUM(sum) DESC");
+	$cat_chart=$this->get_list("SELECT cat,SUM(sum) total FROM tmp_manager_sells GROUP BY cat ORDER BY SUM(sum) DESC");
         return [
-                'd'=>$discounts,
-                'rows'=>count($rows)?$rows:[[]]
+		    'd'=>$discounts,
+		    'rows'=>count($rows)?$rows:[[]],
+		    'input'=>[
+			'idate'=>$this->iso2dmy($this->idate),
+			'fdate'=>$this->iso2dmy($this->fdate),
+			'all_active'=>$this->all_active,
+			'count_sells'=>$this->count_sells,
+			'count_reclamations'=>$this->count_reclamations,
+			'path_include'=>$this->path_include,
+			'path_exclude'=>$this->path_exclude
+		    ],
+		    'client_chart'=>$client_chart,
+		    'cat_chart'=>$cat_chart
                 ];
     }
 }

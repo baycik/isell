@@ -1,4 +1,14 @@
 <?php
+/* Group Name: Результаты деятельности
+ * User Level: 1
+ * Plugin Name: Анализ Затрат
+ * Plugin URI: 
+ * Version: 0.1
+ * Description: Выводит развернутую информацию о затратах
+ * Author: baycik 2017
+ * Author URI: 
+ * Trigger before: Reports_summary_expense
+ */
 class Reports_summary_expense extends Catalog{
     private $idate;
     private $fdate;

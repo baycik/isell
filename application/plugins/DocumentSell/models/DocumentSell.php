@@ -1,7 +1,7 @@
 <?php
 /* User Level: 1
  * Group Name: Документ
- * Plugin Name: DocumentSell
+ * Plugin Name: Расходный документ
  * Version: 2017-01-01
  * Description: Документ продажи товара
  * Author: baycik 2017

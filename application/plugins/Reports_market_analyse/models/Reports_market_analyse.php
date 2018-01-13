@@ -1,5 +1,5 @@
 <?php
-/* Group Name: Продажи
+/* Group Name: Результаты деятельности
  * User Level: 2
  * Plugin Name: Анализ отчетов маркетов
  * Plugin URI: http://isellsoft.com
@@ -71,8 +71,8 @@ class Reports_market_analyse extends Catalog{
         
         
         $sql_price_setup="SET @_product_code:='',@_acomp_id:=$acomp_id,@_pcomp_id:=$pcomp_id,@_to_cstamp:='{$fdate}';";
-        $sql_price_clear="DROP  TABLE IF EXISTS tmp_market_report_price";#TEMPORARY
-        $sql_price_prepare="CREATE  TABLE tmp_market_report_price ( INDEX(product_code) ) ENGINE=MyISAM AS (
+        $sql_price_clear="DROP TEMPORARY TABLE IF EXISTS tmp_market_report_price";#TEMPORARY
+        $sql_price_prepare="CREATE TEMPORARY TABLE tmp_market_report_price ( INDEX(product_code) ) ENGINE=MyISAM AS (
             SELECT 
 		product_code,ROUND(SUM(qty*invoice_price)/SUM(qty),2) avg_price 
 	    FROM
@@ -190,8 +190,11 @@ class Reports_market_analyse extends Catalog{
 		*
             FROM
                 plugin_market_rpt_entries
+		    JOIN
+		prod_list USING(product_code)
             WHERE
                 report_id='$report_id'";
+	$having=$this->group_by_filter?"HAVING group_by LIKE '%$this->group_by_filter%'":"";
         $sql_summary_type_fetch="
             SELECT
 		$this->group_by group_by,
@@ -206,14 +209,22 @@ class Reports_market_analyse extends Catalog{
             WHERE
                 report_id='$report_id'
             GROUP BY $this->group_by 
+	    $having
             ORDER BY sold_sum DESC";
 
 	$rows=$this->get_list($sql_fetch);
 	$sum_rows=$this->get_list($sql_summary_type_fetch);
+	
+	
+	$report_header=$this->get_row("SELECT * FROM plugin_market_rpt_list WHERE report_id='$report_id'");
+	$report_header->group_by=$this->group_by;
+	$report_header->group_by_filter=$this->group_by_filter;
+	
 	return [
 	    'rows'=>count($rows)?$rows:[[]],
 	    'sum_rows'=>count($sum_rows)?$sum_rows:[[]],
-	    'sum'=>$this->calc_sum($sum_rows)
+	    'sum'=>$this->calc_sum($sum_rows),
+	    'input'=>$report_header
 	];
     }
     private function calc_sum($sum_rows){

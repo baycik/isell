@@ -1,30 +1,12 @@
 <?php
 require_once 'Catalog.php';
-class ReportManager extends Catalog {
+class ReportManager extends PluginManager {
     private $plugin_folder='application/plugins/';
     private $current_info;
     
     public $listFetch=[];
-    public function listFetch(){
-	$plugins=$this->scanFolder($this->plugin_folder);
-	$reports=[];
-	foreach($plugins as $plugin_folder){
-	    if( strpos($plugin_folder, 'Reports')===false ){
-		continue;
-	    }
-	    $info=$this->infoGet($plugin_folder);
-	    if( $info['user_level']<=$this->Hub->svar('user_level') ){
-		$reports[]=$info;
-	    }
-	}
-	function sort_bygroup($a,$b){
-	    if( $a['group_name']==$b['group_name'] ){
-		return 0;
-	    }
-	    return ($a['group_name']>$b['group_name'])?-1:1;
-	}
-	usort($reports,'sort_bygroup');
-	return $reports;
+    public function listFetch($mode=null){
+	return parent::listFetch('ReportsOnly');
     }
     
     private function scanFolder( $path ){
@@ -32,12 +14,6 @@ class ReportManager extends Catalog {
 	$files = array_diff(scandir($path), array('.', '..'));
 	arsort($files);
 	return array_values($files);	
-    }
-    
-    private function infoGet( $report_id=null ){
-	$info=include $this->plugin_folder.$report_id."/info.php";
-	$info['report_id']=$report_id;
-	return $info;
     }
     
     public $formGet=['\w+'];
@@ -64,22 +40,22 @@ class ReportManager extends Catalog {
     }
     
     public $formSubmit=['\w+'];
-    public function formSubmit( $report_id=null ){
-	$this->current_info=$this->infoGet($report_id);
-	$tpl_files=isset($this->current_info['template'])?$this->current_info['template']:$this->current_info['report_id'].'.xlsx';
-	$Plugin=$this->load_report($report_id);
-        if( file_exists("application/plugins/{$this->current_info['report_id']}/views/") ){
-            $template_folder="application/plugins/{$this->current_info['report_id']}/views/";
+    public function formSubmit( $system_name=null ){
+	$this->current_info=$this->get_plugin_headers($system_name);
+	$tpl_files=isset($this->current_info['plugin_template'])?$this->current_info['plugin_template']:$this->current_info['system_name'].'.xlsx';
+	$Plugin=$this->load_report($system_name);
+        if( file_exists("application/plugins/{$this->current_info['system_name']}/views/") ){
+            $template_folder="application/plugins/{$this->current_info['system_name']}/views/";
         } else {
-            $template_folder="application/plugins/{$this->current_info['report_id']}/";
+            $template_folder="application/plugins/{$this->current_info['system_name']}/";
         }
 	$dump=[
 	    'tpl_files_folder'=>$template_folder,
 	    'tpl_files'=>$tpl_files,
-	    'title'=>$this->current_info['title'],
+	    'title'=>$this->current_info['plugin_name'],
 	    'user_data'=>[
 		'email'=>$this->Hub->svar('pcomp')?$this->Hub->svar('pcomp')->company_email:'',
-		'text'=>$this->current_info['title']
+		'text'=>$this->current_info['plugin_name']
 	    ],
 	    'view'=>$Plugin->viewGet()
 	];
