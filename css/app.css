@@ -39,7 +39,7 @@ body{
 }
 .inp_group b{
     display: inline-block;
-    width:95px;
+    width:100px;
     text-align: right;
     padding-right: 2px;
     padding-top: 3px;
