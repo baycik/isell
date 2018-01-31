@@ -92,8 +92,7 @@ class DocumentItems extends DocumentCore{
                     analyse_origin,
                     self_price,
                     buy*IF('$curr_code'<>ppl.curr_code,doc_ratio*@curr_correction,1) buy,
-                    doc_type,
-                    invoice_price
+                    doc_type
                 FROM
                     document_list
                         JOIN
@@ -228,6 +227,12 @@ class DocumentItems extends DocumentCore{
     public $entryDocumentCommit=['int'];
     public function entryDocumentCommit( $doc_id ){
 	$this->selectDoc($doc_id);
+        
+        $passive_company_id=$this->doc('passive_company_id');
+        $Company=$this->Hub->load_model("Company");
+        $Company->selectPassiveCompany($passive_company_id);
+        
+        
 	$this->documentDiscountsSave();
 	$Document2=$this->Hub->bridgeLoad('Document');
 	return $Document2->commit();

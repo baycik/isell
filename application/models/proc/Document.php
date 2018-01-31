@@ -942,8 +942,7 @@ class Document extends Data {
                     analyse_origin,
                     self_price,
                     buy*IF('$curr_code'<>ppl.curr_code,doc_ratio*@curr_correction,1) buy,
-                    doc_type,
-                    invoice_price
+                    doc_type
                 FROM
                     document_list
                         JOIN
