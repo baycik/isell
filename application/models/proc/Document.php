@@ -918,7 +918,7 @@ class Document extends Data {
         $curr_code=$this->Base->acomp('curr_code');
 	$company_lang = $this->Base->pcomp('language');
         $pcomp_price_label=$this->Base->pcomp('price_label');
-        $this->query("DROP TEMPORARY TABLE IF EXISTS tmp_doc_entries");
+        $this->Base->query("DROP TEMPORARY TABLE IF EXISTS tmp_doc_entries");
         $sql="CREATE TEMPORARY TABLE tmp_doc_entries ( INDEX(product_code) ) ENGINE=MyISAM AS (
                 SELECT 
                     *,
@@ -956,7 +956,7 @@ class Document extends Data {
                     doc_id='$doc_id'
                 ORDER BY pl.product_code) t
                 )";
-        $this->query($sql);
+        $this->Base->query($sql);
     }
     protected function footerGet($mode){
         $this->entriesTmpCreate(false,true);
