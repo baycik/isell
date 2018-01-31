@@ -924,7 +924,7 @@ class Document extends Data {
                     *,
                     ROUND(product_price_vatless*product_quantity,2) product_sum_vatless,
                     ROUND(product_price_total*product_quantity,2) product_sum_total,
-                    IF(doc_type=1,invoice_price * @vat_correction <buy-0.01,invoice_price * @vat_correction -0.01>buy) is_loss
+                    IF(doc_type=1,product_price_total-buy<0.01,product_price_total-buy>0.01) is_loss
                 FROM
                 (SELECT
                     doc_entry_id,
