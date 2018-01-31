@@ -902,7 +902,7 @@ class Document extends Data {
 	$sql="SELECT 
 		@vat_ratio:=1+vat_rate/100,
 		@vat_correction:=IF(use_vatless_price OR '$skip_vat_correction',1,@vat_ratio),
-		@curr_correction:=IF($native_curr OR $skip_curr_correction,1,1/doc_ratio),
+		@curr_correction:=IF($native_curr OR '$skip_curr_correction',1,1/doc_ratio),
 		@curr_symbol:=(SELECT curr_symbol FROM curr_list WHERE curr_code='$curr_code'),
                 @signs_after_dot:=signs_after_dot
 	    FROM
@@ -917,18 +917,14 @@ class Document extends Data {
 	$this->calcCorrections( $skip_vat_correction, $skip_curr_correction );
         $curr_code=$this->Base->acomp('curr_code');
 	$company_lang = $this->Base->pcomp('language');
-        
-         $this->Base->LoadClass("PrefOld");
-        $pref=$this->Base->PrefOld->prefGet();
-        
-        $use_total_as_base=$pref['use_total_as_base'];
-
-        $this->Base->query("DROP TEMPORARY TABLE IF EXISTS tmp_doc_entries");
+        $pcomp_price_label=$this->Base->pcomp('price_label');
+        $this->query("DROP TEMPORARY TABLE IF EXISTS tmp_doc_entries");
         $sql="CREATE TEMPORARY TABLE tmp_doc_entries ( INDEX(product_code) ) ENGINE=MyISAM AS (
                 SELECT 
                     *,
                     ROUND(product_price_vatless*product_quantity,2) product_sum_vatless,
-                    ROUND(product_price_total*product_quantity,2) product_sum_total
+                    ROUND(product_price_total*product_quantity,2) product_sum_total,
+                    IF(doc_type=1,invoice_price * @vat_correction <buy-0.01,invoice_price * @vat_correction -0.01>buy) is_loss
                 FROM
                 (SELECT
                     doc_entry_id,
@@ -945,18 +941,22 @@ class Document extends Data {
                     product_article,
                     analyse_origin,
                     self_price,
-                    IF(doc_type=1,invoice_price<self_price-0.01,invoice_price-0.01>self_price) is_loss
+                    buy*IF('$curr_code'<>ppl.curr_code,doc_ratio*@curr_correction,1) buy,
+                    doc_type,
+                    invoice_price
                 FROM
                     document_list
                         JOIN
                     document_entries de USING(doc_id)
                         JOIN 
                     prod_list pl USING(product_code)
+                        LEFT JOIN
+                    price_list ppl ON de.product_code=ppl.product_code AND label='$pcomp_price_label'
                 WHERE
                     doc_id='$doc_id'
                 ORDER BY pl.product_code) t
                 )";
-        $this->Base->query($sql);
+        $this->query($sql);
     }
     protected function footerGet($mode){
         $this->entriesTmpCreate(false,true);

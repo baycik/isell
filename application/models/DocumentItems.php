@@ -62,19 +62,19 @@ class DocumentItems extends DocumentCore{
 	return $this->get_row($sql);
     }
     
-    private function entriesTmpCreate( $skip_vat_correction=false ){
+    private function entriesTmpCreate( $skip_vat_correction=false, $skip_curr_correction=false ){
 	$doc_id=$this->doc('doc_id');
-	$this->calcCorrections( $skip_vat_correction );
+	$this->calcCorrections( $skip_vat_correction, $skip_curr_correction );
         $curr_code=$this->Hub->acomp('curr_code');
 	$company_lang = $this->Hub->pcomp('language');
-        $use_total_as_base=$this->Hub->pref('use_total_as_base');
-
+        $pcomp_price_label=$this->Hub->pcomp('price_label');
         $this->query("DROP TEMPORARY TABLE IF EXISTS tmp_doc_entries");
         $sql="CREATE TEMPORARY TABLE tmp_doc_entries ( INDEX(product_code) ) ENGINE=MyISAM AS (
                 SELECT 
                     *,
                     ROUND(product_price_vatless*product_quantity,2) product_sum_vatless,
-                    ROUND(product_price_total*product_quantity,2) product_sum_total
+                    ROUND(product_price_total*product_quantity,2) product_sum_total,
+                    IF(doc_type=1,invoice_price * @vat_correction <buy-0.01,invoice_price * @vat_correction -0.01>buy) is_loss
                 FROM
                 (SELECT
                     doc_entry_id,
@@ -91,13 +91,17 @@ class DocumentItems extends DocumentCore{
                     product_article,
                     analyse_origin,
                     self_price,
-                    IF(doc_type=1,invoice_price<self_price-0.01,invoice_price-0.01>self_price) is_loss
+                    buy*IF('$curr_code'<>ppl.curr_code,doc_ratio*@curr_correction,1) buy,
+                    doc_type,
+                    invoice_price
                 FROM
                     document_list
                         JOIN
                     document_entries de USING(doc_id)
                         JOIN 
                     prod_list pl USING(product_code)
+                        LEFT JOIN
+                    price_list ppl ON de.product_code=ppl.product_code AND label='$pcomp_price_label'
                 WHERE
                     doc_id='$doc_id'
                 ORDER BY pl.product_code) t

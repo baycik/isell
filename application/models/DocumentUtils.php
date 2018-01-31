@@ -63,14 +63,14 @@ class DocumentUtils extends Catalog{
 	    ");
 	return $next_num ? $next_num : 1;
     }
-    protected function calcCorrections($skip_vat_correction=false) {
+    protected function calcCorrections( $skip_vat_correction=false, $skip_curr_correction=false ) {
 	$doc_id=$this->doc('doc_id');
 	$curr_code=$this->Hub->pcomp('curr_code');
 	$native_curr=($this->Hub->pcomp('curr_code') == $this->Hub->acomp('curr_code'))?1:0;
 	$sql="SELECT 
 		@vat_ratio:=1+vat_rate/100,
 		@vat_correction:=IF(use_vatless_price OR '$skip_vat_correction',1,@vat_ratio),
-		@curr_correction:=IF($native_curr,1,1/doc_ratio),
+		@curr_correction:=IF($native_curr OR '$skip_curr_correction',1,1/doc_ratio),
 		@curr_symbol:=(SELECT curr_symbol FROM curr_list WHERE curr_code='$curr_code'),
                 @signs_after_dot:=signs_after_dot
 	    FROM
