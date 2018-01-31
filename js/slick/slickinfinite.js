@@ -257,6 +257,7 @@ $.fn.slickgrid = function (settings) {
 		data.length = total_row_count;
 		if( rows.length<limit ){
 		    table_finished=true;
+		    data.length+=1;
 		} else {
 		    data.length+=1;
 		}

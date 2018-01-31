@@ -188,20 +188,20 @@ class PluginManager extends Catalog{
 	return $this->update('plugin_list',$data,['plugin_system_name'=>$plugin_system_name]);
     }
     
-//    public function plugin_do($plugin_system_name, $plugin_method, $plugin_method_args=[]){
-//	$path=$this->plugin_folder.$plugin_system_name."/models/".$plugin_system_name.".php";
-//	if( !file_exists($path) ){
-//	    $path=$this->plugin_folder.$plugin_system_name."/".$plugin_system_name.".php";// Support for older plugins
-//	    if( !file_exists($path) ){
-//		return [];
-//	    }
-//	}
-//	
-//	require_once $path;
-//	$Plugin=$this->Hub->load_model($plugin_system_name);
-//	if( method_exists($Plugin, $plugin_method) ){
-//	    return call_user_func_array([$Plugin,$plugin_method], $plugin_method_args);
-//	}
-//	return null;
-//    }
+    public function plugin_do($plugin_system_name, $plugin_method, $plugin_method_args=[]){
+	$path=$this->plugin_folder.$plugin_system_name."/models/".$plugin_system_name.".php";
+	if( !file_exists($path) ){
+	    $path=$this->plugin_folder.$plugin_system_name."/".$plugin_system_name.".php";// Support for older plugins
+	    if( !file_exists($path) ){
+		return [];
+	    }
+	}
+	
+	require_once $path;
+	$Plugin=$this->Hub->load_model($plugin_system_name);
+	if( method_exists($Plugin, $plugin_method) ){
+	    return call_user_func_array([$Plugin,$plugin_method], $plugin_method_args);
+	}
+	return null;
+    }
 }

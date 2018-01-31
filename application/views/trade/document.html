@@ -30,7 +30,6 @@
 	    }
 	    App.setupForm("#Doc_head_frm", {},'use_inp_values');
 	    this.head.load(this.data.doc_id);
-	    this.toolbarToggleDisabled();
 	},
 	initAfter:function(){
 	    this.suggest.init();
@@ -71,8 +70,8 @@
 	    if( Doc.isCreated ){
 		selector.fadeIn();
 		selector2.fadeIn();
-		if( Doc.head.is_commited ){
-		    $("#Doc_tool_bar").find(".icon-commit").fadeOut();
+		if( Doc.head.props.is_commited*1 ){
+		    $("#Doc_tool_bar").find(".icon-commit").hide();
 		}
 	    } else {
 		selector.fadeOut();
@@ -99,6 +98,7 @@
 		    Doc.entries.reload();
 		}
                 createDef && createDef.notify('head_loaded',doc_id);
+		Doc.toolbarToggleDisabled();
 	    });
 	},
         set:function(){
