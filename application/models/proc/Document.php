@@ -895,14 +895,14 @@ class Document extends Data {
     ////////////////////////////////////////////
     //NEW FUNCTIONS
     ////////////////////////////////////////////
-    private function calcCorrections($skip_vat_correction=false) {
+    private function calcCorrections( $skip_vat_correction=false, $skip_curr_correction=false ) {
 	$doc_id=$this->doc('doc_id');
 	$curr_code=$this->Base->pcomp('curr_code');
 	$native_curr=($this->Base->pcomp('curr_code') == $this->Base->acomp('curr_code'))?1:0;
 	$sql="SELECT 
 		@vat_ratio:=1+vat_rate/100,
 		@vat_correction:=IF(use_vatless_price OR '$skip_vat_correction',1,@vat_ratio),
-		@curr_correction:=IF($native_curr,1,1/doc_ratio),
+		@curr_correction:=IF($native_curr OR $skip_curr_correction,1,1/doc_ratio),
 		@curr_symbol:=(SELECT curr_symbol FROM curr_list WHERE curr_code='$curr_code'),
                 @signs_after_dot:=signs_after_dot
 	    FROM
@@ -911,9 +911,10 @@ class Document extends Data {
 		doc_id='$doc_id'";
 	$this->Base->query($sql);
     }
-    private function entriesTmpCreate( $skip_vat_correction=false ){
+    
+    private function entriesTmpCreate( $skip_vat_correction=false, $skip_curr_correction=false ){
 	$doc_id=$this->doc('doc_id');
-	$this->calcCorrections( $skip_vat_correction );
+	$this->calcCorrections( $skip_vat_correction, $skip_curr_correction );
         $curr_code=$this->Base->acomp('curr_code');
 	$company_lang = $this->Base->pcomp('language');
         
@@ -957,8 +958,8 @@ class Document extends Data {
                 )";
         $this->Base->query($sql);
     }
-    protected function footerGet(){
-        $this->entriesTmpCreate();
+    protected function footerGet($mode){
+        $this->entriesTmpCreate(false,true);
         $sql="SELECT
                 ROUND(SUM(weight),2) total_weight,
                 ROUND(SUM(volume),2) total_volume,
@@ -1207,7 +1208,7 @@ class Document extends Data {
     public function updateTrans( $mode=null ) {
 	$doc_num = $this->doc('doc_num');
 	if ($this->isCommited()) {
-	    $sum = $this->footerGet();
+	    $sum = $this->footerGet('in_main_currency');
 	    $sum['profit'] = $sum['vatless'] - $sum['self'];
 	} else {
 	    return false;
