@@ -454,7 +454,7 @@
 		    $('#Doc_entry_dg').datagrid('getPanel').panel('panel').focus();
 		}
 		if( state==='delete' ){
-		    Doc.entries.delete();
+		    //Doc.entries.delete();
 		}
 	    });
 	},
@@ -790,11 +790,6 @@
 		<option value="3">Оказание услуги</option>
 		<option value="4">Получение услуги</option>
 	    </select>
-	    <input type="text" name="doc_ratio" class="easyui-numberbox" title="Курс" data-options="
-		   min:1,
-		   precision:2,
-		   onChange:function(val,old){Doc.head.update('doc_ratio',val,old)}
-		   ">
 	    <input class="easyui-combobox" name="passive_company_id" id="Doc_pci" title="Контрагент" data-options="
 		    valueField: 'company_id',
 		    textField: 'label',
@@ -815,13 +810,6 @@
                 <button type="button" onclick="Doc.head.openCompanyDetails();" style="margin-top:2px;margin-right: 3px;padding: 3px;" class="tiny_button" title="Реквизиты выбранной компании">
                     <img src="img/edit-16.png">
                 </button>
-	    <input type="text" name="signs_after_dot" class="easyui-numberspinner" title="Точность" data-options="
-		   min:0,
-		   max:5,
-		   editable:false,
-		   required:'required',
-		   onChange:function(val,old){Doc.head.update('signs_after_dot',val,old)}
-		   ">
 	    <input type="text" name="doc_date" class="easyui-datebox" title="Дата" data-options="
 		   required:'required',
 		   onChange:function(val,old){Doc.head.update('doc_date',val,old)}
@@ -854,6 +842,11 @@
 		   min:0,
 		   precision:0,
 		   onChange:function(val,old){Doc.head.update('vat_rate',val,old)}
+		   ">
+	    <input type="text" name="doc_ratio" class="easyui-numberbox" title="Курс" data-options="
+		   min:1,
+		   precision:2,
+		   onChange:function(val,old){Doc.head.update('doc_ratio',val,old)}
 		   ">
 	    <input name="extra_expenses" title="Доп. расходы" onchange="Doc.head.update('extra_expenses',this.value)">
 	    <div style="padding:1px;text-align: right;" class="transp60">

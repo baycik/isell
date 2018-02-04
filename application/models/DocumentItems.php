@@ -50,15 +50,21 @@ class DocumentItems extends DocumentCore{
 
     protected function footerGet(){
         $this->entriesTmpCreate();
-        $sql="SELECT
-                ROUND(SUM(weight),2) total_weight,
-                ROUND(SUM(volume),2) total_volume,
-                SUM(product_sum_vatless) vatless,
-                SUM(product_sum_total) total,
-                SUM(product_sum_total-product_sum_vatless) vat,
-                SUM(ROUND(product_quantity*self_price,2)) self,
-                @curr_symbol curr_symbol
-            FROM tmp_doc_entries";
+	$use_total_as_base=(bool) $this->Hub->pref('use_total_as_base');
+	if($use_total_as_base){
+	    $sql="SELECT
+		    ROUND(SUM(weight),2) total_weight,
+		    ROUND(SUM(volume),2) total_volume,
+		    SUM(product_sum_vatless) vatless,
+		    SUM(product_sum_total) total,
+		    SUM(product_sum_total-product_sum_vatless) vat,
+		    SUM(ROUND(product_quantity*self_price,2)) self,
+		    @curr_symbol curr_symbol
+		FROM tmp_doc_entries";
+	} else {
+	    
+	}
+
 	return $this->get_row($sql);
     }
     
@@ -69,29 +75,30 @@ class DocumentItems extends DocumentCore{
 	$company_lang = $this->Hub->pcomp('language');
         $pcomp_price_label=$this->Hub->pcomp('price_label');
         $this->query("DROP TEMPORARY TABLE IF EXISTS tmp_doc_entries");
-        $sql="CREATE TEMPORARY TABLE tmp_doc_entries ( INDEX(product_code) ) ENGINE=MyISAM AS (
+        $sql="CREATE TEMPORARY TABLE tmp_doc_entries ( INDEX(product_code) ) AS (
                 SELECT 
                     *,
-                    ROUND(product_price_vatless*product_quantity,2) product_sum_vatless,
-                    ROUND(product_price_total*product_quantity,2) product_sum_total,
                     IF(doc_type=1,product_price_total-buy<0.01,product_price_total-buy>0.01) is_loss
                 FROM
                 (SELECT
                     doc_entry_id,
+                    ROUND(invoice_price * @curr_correction, 2) AS product_price_vatless,
+                    ROUND(invoice_price * @curr_correction * product_quantity,2) product_sum_vatless,
+		    
+                    ROUND(invoice_price * @curr_correction * @vat_ratio, 2) AS product_price_total,
+		    ROUND(invoice_price * @curr_correction * @vat_ratio * product_quantity,2) product_sum_total,
+                    product_quantity*product_weight weight,
+                    product_quantity*product_volume volume,
                     pl.product_code,
                     $company_lang product_name,
                     product_quantity,
-                    ROUND(invoice_price * @curr_correction, @signs_after_dot) AS product_price_vatless,
-                    ROUND(invoice_price * @curr_correction * @vat_ratio, @signs_after_dot) AS product_price_total,
-                    product_quantity*product_weight weight,
-                    product_quantity*product_volume volume,
                     CHK_ENTRY(doc_entry_id) AS row_status,
                     product_unit,
                     party_label,
                     product_article,
                     analyse_origin,
                     self_price,
-                    buy*IF('$curr_code'<>ppl.curr_code,doc_ratio*@curr_correction,1) buy,
+                    buy*IF(curr_code && '$curr_code'<>ppl.curr_code,doc_ratio*@curr_correction,1) buy,
                     doc_type
                 FROM
                     document_list
@@ -190,7 +197,7 @@ class DocumentItems extends DocumentCore{
 	$Document2=$this->Hub->bridgeLoad('Document');
 	$invoice=$Document2->getProductInvoicePrice($product_code);
         $this->calcCorrections();
-        return $this->get_value("SELECT REPLACE(FORMAT('$invoice' * @vat_correction * @curr_correction,".$this->doc('signs_after_dot')."),',','') AS product_price");
+        return $this->get_value("SELECT REPLACE(FORMAT('$invoice' * @vat_correction * @curr_correction,2 ),',','') AS product_price");
 //	$invoice=round($invoice,$this->doc('signs_after_dot'));
 //	if( !$this->doc('use_vatless_price') ){
 //	    $invoice*=1+$this->doc('vat_rate')/100;

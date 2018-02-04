@@ -16,11 +16,37 @@
 	    this.node.window('window').css('position','fixed');
 	    this.node.window('window').css('top','40px');
 	    
+	    this.calcPrice();
+	    
+	    
 	    App.renderTpl('DocEntEd_markup',this.data);
 	    App.setupForm("#document_ented_frm",this.data).change(function(){
-		DocEntEd.change(this.name,this.value);
+		var field=this.name;
+		var value=this.value;
+		if( $(this).data('calc') ){
+		    value=DocEntEd.parseExpr(value,$(this).data('round'));
+		    if(value===NaN){
+			return;
+		    }
+		    $("input[name="+field+"]").val(value);
+		}
+		switch( this.name ){
+		    case 'product_price':
+			DocEntEd.calcSum();
+			break;
+		    case 'product_quantity':
+			DocEntEd.calcSum();
+			break;
+		    case 'product_sum':
+			DocEntEd.calcPrice();
+			field='product_price';
+			value=DocEntEd.data.product_price;
+			break;
+		}
+		DocEntEd.change(field,value);
 	    });
 	    DocEntEd.getStats();
+	    console.log(this.data);
 	},
 	initAfter:function(){
 	    $('#page_trade_document_entry_edit input').on('focus', function() {
@@ -42,7 +68,7 @@
 		    DocEntEd.getStats();
 		}
 		else{
-		    App.setupForm("#document_ented_frm",this.data);//form reset
+		    App.setupForm("#document_ented_frm",DocEntEd.data);//form reset
 		    App.flash('Ошибка. Значение не изменено!');
 		}
 	    });
@@ -82,9 +108,18 @@
 		}
 	    });	    
 	},
-        parsePrice:function( node ){
-            node.value=eval(node.value.toString().replace(',','.').match( /[\(\d\.\)\*\/\+-]*/ ).toString()) || 0;
-        }
+        parseExpr:function( expr,round ){
+	    var result=eval(expr.toString().replace(/,/g,'.').match( /[\(\d\.\)\*\/\+-]*/ ).toString());
+            return Math.round(result*round)/round;
+        },
+	calcPrice:function(){
+	    this.data.product_price=Math.round(this.data.product_sum/this.data.product_quantity*10000000)/10000000;
+	    $("#document_ented_frm input[name=product_price]").val(this.data.product_price);
+	},
+	calcSum:function(){
+	    this.data.product_sum=Math.round(this.data.product_price*this.data.product_quantity*100)/100;
+	    $("#document_ented_frm input[name=product_sum]").val(this.data.product_sum);
+	}
     };
 </script>
 <div id="DocEntEd_markup" class="covert">
@@ -103,17 +138,18 @@
 </div>
 <form id="document_ented_frm" onsubmit="DocEntEd.node.window('close');return false;">
     <div>
-	<input name="product_quantity" title="Кол-во" />
+	<input name="product_quantity" class="icon-calc16" style="background-position: right" title="Кол-во" data-calc="1" data-round="1" />
 	<span id="DocEntEd_qty_markup" class="covert" title="Кол-во на складе">Склад: {{product_quantity}} {{unit}}</span>
     </div>
     <div>
-        <input name="product_price" onchange="DocEntEd.parsePrice(this);" title="Цена" class="icon-calc16" style="background-position: right"/>
+        <input name="product_price" title="Цена" class="icon-calc16" style="background-position: right" data-calc="1" data-round="100000"/>
     <span id="DocEntEd_price_markup" class="covert" title="Стандартная цена">Цена: <b style="color:'{{color}}'">{{price}} {{curr_symbol}}</b></span>
     </div>
+ 	<input name="product_sum" title="Сумма" class="icon-calc16" style="background-position: right" data-calc="1" data-round="100">
  	<input name="party_label" title="Партия">
    <div style="text-align: center">
 	<button type="submit" onclick="DocEntEd.node.window('close')"><img src="img/apply24.png" style="vertical-align: middle"> Ок</button>
-	<button type="button" onclick="DocEntEd.delete();DocEntEd.node.window('close');"><img src="img/delete.png" style="vertical-align: middle"> Удалить</button>
+	<button type="button" onclick="DocEntEd.node.window('close');"><img src="img/close24.png" style="vertical-align: middle"> Закрыть</button>
     </div>
 </form>
 <style>

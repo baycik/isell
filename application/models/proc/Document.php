@@ -324,11 +324,11 @@ class Document extends Data {
 	if ($amount && !$this->moveProduct($entry['product_code'], $stock_action, $amount, $self)) {
 	    return false;
 	}
-	$signs_after_dot = $this->doc('signs_after_dot');
+	//$signs_after_dot = $this->doc('signs_after_dot');
 	$sql = "UPDATE document_entries 
                 SET 
                     product_quantity = $quantity,
-                    invoice_price = ROUND($invoice, $signs_after_dot),
+                    invoice_price = $invoice,
                     self_price = '$self',
                     party_label = '$party_label'
                 WHERE
@@ -919,29 +919,30 @@ class Document extends Data {
 	$company_lang = $this->Base->pcomp('language');
         $pcomp_price_label=$this->Base->pcomp('price_label');
         $this->Base->query("DROP TEMPORARY TABLE IF EXISTS tmp_doc_entries");
-        $sql="CREATE TEMPORARY TABLE tmp_doc_entries ( INDEX(product_code) ) ENGINE=MyISAM AS (
+        $sql="CREATE TEMPORARY TABLE tmp_doc_entries ( INDEX(product_code) ) AS (
                 SELECT 
                     *,
-                    ROUND(product_price_vatless*product_quantity,2) product_sum_vatless,
-                    ROUND(product_price_total*product_quantity,2) product_sum_total,
                     IF(doc_type=1,product_price_total-buy<0.01,product_price_total-buy>0.01) is_loss
                 FROM
                 (SELECT
                     doc_entry_id,
+                    ROUND(invoice_price * @curr_correction, 2) AS product_price_vatless,
+                    ROUND(invoice_price * @curr_correction * product_quantity,2) product_sum_vatless,
+		    
+                    ROUND(invoice_price * @curr_correction * @vat_ratio, 2) AS product_price_total,
+		    ROUND(invoice_price * @curr_correction * @vat_ratio * product_quantity,2) product_sum_total,
+                    product_quantity*product_weight weight,
+                    product_quantity*product_volume volume,
                     pl.product_code,
                     $company_lang product_name,
                     product_quantity,
-                    ROUND(invoice_price * @curr_correction, @signs_after_dot) AS product_price_vatless,
-                    ROUND(invoice_price * @curr_correction * @vat_ratio, @signs_after_dot) AS product_price_total,
-                    product_quantity*product_weight weight,
-                    product_quantity*product_volume volume,
                     CHK_ENTRY(doc_entry_id) AS row_status,
                     product_unit,
                     party_label,
                     product_article,
                     analyse_origin,
                     self_price,
-                    buy*IF('$curr_code'<>ppl.curr_code,doc_ratio*@curr_correction,1) buy,
+                    buy*IF(curr_code && '$curr_code'<>ppl.curr_code,doc_ratio*@curr_correction,1) buy,
                     doc_type
                 FROM
                     document_list
