@@ -50,27 +50,30 @@ class Reports_summary_expense extends Catalog{
     }
     public function viewGet(){
 	$active_filter=$this->all_active?'':' AND active_company_id='.$this->Hub->acomp('company_id');
-        $acc_debit_filter="acc_debit_code LIKE '9%' OR acc_debit_code LIKE '8%'";
-        $acc_credit_filter="acc_credit_code LIKE '9%' OR acc_credit_code LIKE '8%'";
+        $acc_debit_filter="acc_debit_code NOT LIKE '3%'";
+        $acc_credit_filter="acc_credit_code LIKE '3%'";
         
         $this->query("DROP TEMPORARY TABLE IF EXISTS tmp_expenses;");
-        $main_table_sql="CREATE TEMPORARY TABLE tmp_expenses ENGINE=MyISAM AS (
+        $main_table_sql="CREATE TEMPORARY TABLE tmp_expenses AS (
             SELECT 
-                active_company_id,
+                is_active,
+                expense_label,
+                trans_name,
+                DATE_FORMAT(cstamp,'%Y.%m.%d') trans_date,
                 acc_debit_code,
-                ct.label pname,
+                company_name,
                 description,
-                DATE_FORMAT(cstamp,'%d.%m.%Y') trans_date,
-                IF($acc_debit_filter,1,- 1)*ROUND(amount, 2) amount
+                amount
             FROM
-                acc_trans atr
+                acc_trans
                     JOIN
-                companies_list cl ON atr.passive_company_id = company_id
-                    JOIN
-                companies_tree ct ON ct.branch_id=cl.branch_id
+                companies_list ON company_id = passive_company_id
+                    LEFT JOIN
+                acc_trans_names USING(acc_debit_code,acc_credit_code)
             WHERE
                 cstamp>'$this->idate' AND cstamp<'$this->fdate'
-                AND ($acc_debit_filter OR $acc_credit_filter)
+                AND $acc_debit_filter 
+                AND $acc_credit_filter
                 $active_filter
             ORDER BY tstamp)";
         $this->query($main_table_sql);
@@ -78,13 +81,13 @@ class Reports_summary_expense extends Catalog{
         
         $totals_table_sql="
 	    SELECT 
+                expense_label,
+                trans_name,
                 acc_debit_code,
-                (SELECT label FROM companies_tree JOIN companies_list USING(branch_id) WHERE company_id=active_company_id) aname,
-		(SELECT label FROM acc_tree WHERE acc_code=acc_debit_code) acc_name,
 		SUM(amount) amount_sum
 	    FROM 
 		tmp_expenses
-	    GROUP BY active_company_id,acc_debit_code";
+	    GROUP BY is_active,expense_label,trans_name";
 	$totals=$this->get_list($totals_table_sql);
         $total_amount=0;
         foreach( $totals as $row ){
