@@ -16,7 +16,7 @@
 	    this.node.window('window').css('position','fixed');
 	    this.node.window('window').css('top','40px');
 	    
-	    this.calcPrice();
+	    this.calcPrice(DocEntEd.data.product_sum);
 	    
 	    
 	    App.renderTpl('DocEntEd_markup',this.data);
@@ -26,19 +26,21 @@
 		if( $(this).data('calc') ){
 		    value=DocEntEd.parseExpr(value,$(this).data('round'));
 		    if(value===NaN){
+                        
 			return;
 		    }
 		    $("input[name="+field+"]").val(value);
 		}
+                console.log(field,value);
 		switch( this.name ){
 		    case 'product_price':
-			DocEntEd.calcSum();
+			DocEntEd.calcSum(DocEntEd.data.product_quantity,value);
 			break;
 		    case 'product_quantity':
-			DocEntEd.calcSum();
+			DocEntEd.calcSum(value,DocEntEd.data.product_price);
 			break;
 		    case 'product_sum':
-			DocEntEd.calcPrice();
+			DocEntEd.calcPrice(value);
 			field='product_price';
 			value=DocEntEd.data.product_price;
 			break;
@@ -46,7 +48,7 @@
 		DocEntEd.change(field,value);
 	    });
 	    DocEntEd.getStats();
-	    console.log(this.data);
+	    //console.log(this.data);
 	},
 	initAfter:function(){
 	    $('#page_trade_document_entry_edit input').on('focus', function() {
@@ -112,13 +114,13 @@
 	    var result=eval(expr.toString().replace(/,/g,'.').match( /[\(\d\.\)\*\/\+-]*/ ).toString());
             return Math.round(result*round)/round;
         },
-	calcPrice:function(){
-	    this.data.product_price=Math.round(this.data.product_sum/this.data.product_quantity*10000000)/10000000;
-	    $("#document_ented_frm input[name=product_price]").val(this.data.product_price);
+	calcPrice:function(product_sum){
+	    DocEntEd.data.product_price=Math.round(product_sum/this.data.product_quantity*10000000)/10000000;
+	    $("#document_ented_frm input[name=product_price]").val(DocEntEd.data.product_price);
 	},
-	calcSum:function(){
-	    this.data.product_sum=Math.round(this.data.product_price*this.data.product_quantity*100)/100;
-	    $("#document_ented_frm input[name=product_sum]").val(this.data.product_sum);
+	calcSum:function(product_quantity,product_price){
+	    DocEntEd.data.product_sum=Math.round(product_price*product_quantity*100)/100;
+	    $("#document_ented_frm input[name=product_sum]").val(DocEntEd.data.product_sum);
 	}
     };
 </script>
