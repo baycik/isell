@@ -31,7 +31,6 @@
 		    }
 		    $("input[name="+field+"]").val(value);
 		}
-                console.log(field,value);
 		switch( this.name ){
 		    case 'product_price':
 			DocEntEd.calcSum(DocEntEd.data.product_quantity,value);
@@ -48,7 +47,6 @@
 		DocEntEd.change(field,value);
 	    });
 	    DocEntEd.getStats();
-	    //console.log(this.data);
 	},
 	initAfter:function(){
 	    $('#page_trade_document_entry_edit input').on('focus', function() {
