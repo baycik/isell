@@ -57,7 +57,7 @@ class Reports_summary_expense extends Catalog{
         $main_table_sql="CREATE TEMPORARY TABLE tmp_expenses AS (
             SELECT 
                 is_active,
-                IF(expense_label,expense_label,trans_label) label,
+                IF(expense_label<>'',expense_label,trans_label) label,
                 trans_name,
                 DATE_FORMAT(cstamp,'%Y.%m.%d') trans_date,
                 acc_debit_code,
@@ -75,19 +75,20 @@ class Reports_summary_expense extends Catalog{
                 AND $acc_debit_filter 
                 AND $acc_credit_filter
                 $active_filter
-            ORDER BY tstamp)";
+            ORDER BY label)";
         $this->query($main_table_sql);
 	$rows=$this->get_list("SELECT * FROM tmp_expenses");
         
         $totals_table_sql="
 	    SELECT 
                 label expense_label,
-                trans_name,
+                GROUP_CONCAT(DISTINCT(trans_name) SEPARATOR ', ') trans_name,
                 acc_debit_code,
 		SUM(amount) amount_sum
 	    FROM 
 		tmp_expenses
-	    GROUP BY is_active,label";
+	    GROUP BY is_active,label
+	    ORDER BY label";
 	$totals=$this->get_list($totals_table_sql);
         $total_amount=0;
         foreach( $totals as $row ){
