@@ -57,7 +57,7 @@ class Reports_summary_expense extends Catalog{
         $main_table_sql="CREATE TEMPORARY TABLE tmp_expenses AS (
             SELECT 
                 is_active,
-                COALESCE(expense_label,trans_label) label,
+                IF(expense_label,expense_label,trans_label) label,
                 trans_name,
                 DATE_FORMAT(cstamp,'%Y.%m.%d') trans_date,
                 acc_debit_code,
