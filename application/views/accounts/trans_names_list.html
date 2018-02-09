@@ -4,7 +4,7 @@
 	init: function () {
 	    this.node.window({
 		title: 'Операции по счету',
-		width: 470,
+		width: 570,
 		height: 420,
 		modal:true,
 		onClose: function(){
@@ -86,7 +86,7 @@
 <table id="Tnames_list_dg" class="easyui-datagrid" data-options="
      url:'AccountsData/transNameListFetch',
      height:300,
-     width:450,
+     width:550,
      singleSelect:true,
      onDblClickRow:Tnames_list.ok,
      onSelect:Tnames_list.enableOkButton,
@@ -97,6 +97,7 @@
 	    <th data-options="field:'trans_name',width:200">Название</th>
 	    <th data-options="field:'user_level',width:95,formatter:Tnames_list.levelFormatter">Доступ</th>
 	    <th data-options="field:'use_alt_currency',width:45,formatter:Tnames_list.altFormatter">Валютная</th>
+	    <th data-options="field:'trans_label',width:95">Статья</th>
 	</tr>
     </thead>
 </table>

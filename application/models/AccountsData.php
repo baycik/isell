@@ -13,6 +13,7 @@ class AccountsData extends AccountsCore{
 		acc_debit_code,
 		acc_credit_code,
 		trans_name,
+                trans_label,
 		CONCAT(acc_debit_code,'_',acc_credit_code) trans_type,
 		CONCAT(trans_name,' ',acc_debit_code,'_',acc_credit_code) trans_type_name,
 		IF(atd.curr_id<>'$curr_id' OR atc.curr_id<>'$curr_id',1,0) use_alt_currency,

@@ -57,7 +57,7 @@ class Reports_summary_expense extends Catalog{
         $main_table_sql="CREATE TEMPORARY TABLE tmp_expenses AS (
             SELECT 
                 is_active,
-                expense_label,
+                COALESCE(expense_label,trans_label) label,
                 trans_name,
                 DATE_FORMAT(cstamp,'%Y.%m.%d') trans_date,
                 acc_debit_code,
@@ -81,13 +81,13 @@ class Reports_summary_expense extends Catalog{
         
         $totals_table_sql="
 	    SELECT 
-                expense_label,
+                label expense_label,
                 trans_name,
                 acc_debit_code,
 		SUM(amount) amount_sum
 	    FROM 
 		tmp_expenses
-	    GROUP BY is_active,expense_label,trans_name";
+	    GROUP BY is_active,label";
 	$totals=$this->get_list($totals_table_sql);
         $total_amount=0;
         foreach( $totals as $row ){
