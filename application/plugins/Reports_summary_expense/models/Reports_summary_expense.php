@@ -81,7 +81,7 @@ class Reports_summary_expense extends Catalog{
         
         $totals_table_sql="
 	    SELECT 
-                label expense_label,
+                label,
                 GROUP_CONCAT(DISTINCT(trans_name) SEPARATOR ', ') trans_name,
                 acc_debit_code,
 		SUM(amount) amount_sum
@@ -91,12 +91,21 @@ class Reports_summary_expense extends Catalog{
 	    ORDER BY label";
 	$totals=$this->get_list($totals_table_sql);
         $total_amount=0;
+        $labeled_amount=0;
+        $unlabeled_amount=0;
         foreach( $totals as $row ){
             $total_amount+=$row->amount_sum;
+	    if( $row->label!='' ){
+		$labeled_amount+=$row->amount_sum;
+	    } else {
+		$unlabeled_amount+=$row->amount_sum;
+	    }
         }
         
 	$view=[
                 'total_amount'=>$total_amount,
+                'labeled_amount'=>$labeled_amount,
+                'unlabeled_amount'=>$unlabeled_amount,
 		'rows'=>count($rows)?$rows:[[]],
 		'totals'=>count($totals)?$totals:[[]]
 		];
