@@ -71,7 +71,7 @@ class AccountsCore extends Catalog{
 		acc_trans
 		    JOIN
 		companies_list ON company_id = passive_company_id
-		    JOIN
+		    LEFT JOIN
 		acc_trans_status USING (trans_status)
 		    LEFT JOIN
 		user_list ON user_id = modified_by
@@ -290,40 +290,79 @@ class AccountsCore extends Catalog{
       3 payed
       4 closed
       5 closing payment
+      6 unpayedsq
+      7 partlysq
+      8 payedsq
+      9 closedsq
+      10 closingsq
     *******************/
 
-    private function transPaymentCalculate($pcomp_id = NULL,$acc_code) {
+    private function transPaymentCalculate($pcomp_id = NULL,$acc_code,$side) {
         if ( !isset($pcomp_id) ){
             $pcomp_id = $this->Hub->pcomp('company_id');
         }
         $active_company_id=$this->Hub->acomp('company_id');
         $sensitivity=5.00;
         $this->query("SET @sum:=0.0;");
-        $this->query("
-                UPDATE
-                    acc_trans
-                SET trans_status=IF(acc_debit_code = $acc_code,
-                        (@sum:=@sum - amount)*0 + 
-                        IF(amount<0,0,
-                            IF(@sum <= 0 ,1,
-                                IF(@sum+$sensitivity< amount, 2, 3)
-                            )
-                        ),
-                        (@sum:=@sum + amount)*0
-                    )
-                WHERE
-                    active_company_id=$active_company_id
-                    AND passive_company_id = $pcomp_id
-                    AND trans_status <> 4
-                    AND trans_status <> 5
-                    AND (acc_debit_code = $acc_code
-                    OR acc_credit_code = $acc_code)
-                ORDER BY acc_debit_code = $acc_code, amount>0, cstamp;");
+        if( $side=='debit' ){
+            $this->query("
+                    UPDATE
+                        acc_trans
+                    SET trans_status=IF(acc_debit_code = $acc_code,
+                            (@sum:=@sum - amount)*0 + 
+                            IF(amount<0,0,
+                                IF(@sum <= 0 ,1,
+                                    IF(@sum+$sensitivity< amount, 2, 3)
+                                )
+                            ),
+                            (@sum:=@sum + amount)*0
+                        )
+                    WHERE
+                        active_company_id=$active_company_id
+                        AND passive_company_id = $pcomp_id
+                        AND trans_status <> 4
+                        AND trans_status <> 5
+                        AND (acc_debit_code = $acc_code
+                        OR acc_credit_code = $acc_code)
+                    ORDER BY acc_debit_code = $acc_code, amount>0, cstamp;");
+        } else {
+            $this->query("
+                    UPDATE
+                        acc_trans
+                    SET trans_status=IF(acc_credit_code = $acc_code,
+                            (@sum:=@sum - amount)*0 + 
+                            IF(amount<0,0,
+                                IF(@sum <= 0 ,6,
+                                    IF(@sum+$sensitivity< amount, 7, 8)
+                                )
+                            ),
+                            (@sum:=@sum + amount)*0
+                        )
+                    WHERE
+                        active_company_id=$active_company_id
+                        AND passive_company_id = $pcomp_id
+                        AND trans_status <> 9
+                        AND trans_status <> 10
+                        AND (acc_debit_code = $acc_code
+                        OR acc_credit_code = $acc_code)
+                    ORDER BY acc_credit_code = $acc_code, amount>0, cstamp;");
+        }
     }
-    private $payment_account=361;
+    private function transPaymentCalculateIfNeeded( $pcomp_id, $account ){
+        $debit_payment_accounts=[361];
+        $credit_payment_accounts=[631];
+        if( in_array($account, $debit_payment_accounts) ){
+            $this->transPaymentCalculate( $pcomp_id, $account, 'debit' );
+        }
+        if( in_array($account, $credit_payment_accounts) ){
+            $this->transPaymentCalculate( $pcomp_id, $account, 'credit' );
+        }
+    }
+    //private $payment_account=361;
     private function transCheckCalculate($trans){
-        if( isset($trans['acc_debit_code']) && ($trans['acc_debit_code']==$this->payment_account || $trans['acc_credit_code']==$this->payment_account)  ){
-            $this->transPaymentCalculate($trans['passive_company_id'], $this->payment_account);
+        if( isset($trans['acc_debit_code']) ){
+            $this->transPaymentCalculateIfNeeded( $trans['passive_company_id'], $trans['acc_debit_code'] );
+            $this->transPaymentCalculateIfNeeded( $trans['passive_company_id'], $trans['acc_credit_code'] );
         }
     }
     private function checkTransLink($trans_id,$trans) {
@@ -412,9 +451,8 @@ class AccountsCore extends Catalog{
             $ok=$this->db->affected_rows()>0?true:false;
 	    $this->checkTransBreakLink($trans->check_id);
 	    $this->transBreakLink($trans->trans_ref);
-            if( $trans->acc_debit_code==$this->payment_account || $trans->acc_credit_code==$this->payment_account ){
-                $this->transPaymentCalculate($trans->passive_company_id, $this->payment_account);
-            }
+            $this->transPaymentCalculateIfNeeded( $trans->passive_company_id, $trans->acc_debit_code );
+            $this->transPaymentCalculateIfNeeded( $trans->passive_company_id, $trans->acc_credit_code );
 	    return $ok;
 	}
 	$this->Hub->msg('access denied');

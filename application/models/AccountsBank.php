@@ -84,7 +84,7 @@ class AccountsBank extends AccountsData{
 		    at.active_company_id=$active_company_id
 		    AND at.passive_company_id=$passive_company_id
                     AND IF(debit_amount>0,acc_credit_code='{$acc->acc_code}',acc_debit_code='{$acc->acc_code}')
-		    AND trans_status IN(0,1,2,3)
+		    AND trans_status IN(0,1,2,3,6,7,8)
 		    AND acl.check_id={$check->check_id}";
 	$acc->suggs=$this->get_list($sql);
 	return $acc;
