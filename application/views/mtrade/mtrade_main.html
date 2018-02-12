@@ -1,86 +1,95 @@
-<script type="text/javascript">
-    /* global App */
-    MTradeJs = {
-        init: function () {
-	    this.ctreeInlineInit();
-            setTimeout(function(){MTradeJs.initTabsOnce();},0);
-	},
-        initTabsOnce:function(){
-            if( this.tabsInited ){
-                return;
-            }
-            this.tabsInited=true;
-            App.initTabs('trade_main_tabs');
-	    App.handler.progress(function(status){
-		if( status==='passiveCompanyInited' || status==='passiveCompanySelected' ){
-		    MTradeJs.showTabs(true);
-		}
-	    });
-            if( App.pcomp ){
-                MTradeJs.showTabs(true);
-            }
-        },
-	showTabs:function( show ){
-	    if( show ){
-		$("#trade_main_tabs_info").hide();
-		$("#trade_main_tabs_content").css('visibility','visible');		
-	    } else {
-		$("#trade_main_tabs_info").show();
-                $("#trade_main_tabs_content").css('visibility','hidden');
+<script>
+(function($){
+    function init(){
+	pcompInfoInit();
+	labelsInit("#mtrade_main_labels","#mtrade_main_content");
+	showTree();
+    }
+    function showTree(){
+	App.loadModule('page/company/tree',{inline:true,clickselect:true},'mCtreeInline',/(Ctree|page_company_tree)([^\w]|_)/g,"mCtreeInline$2").progress(function(status,company){
+	    if( status==='select' ){
+		App.user.pcompSelect(company);
 	    }
-	    MTradeJs.toggleView(true);
-	},
-	ctreeInlineInit:function(){
-	    App.loadModule('page/company/tree',{inline:true,clickselect:true},'CtreeInline',/(Ctree|page_company_tree)([^\w]|_)/g,"CtreeInline$2").progress(function(status,company){
-                if( status==='select' ){
-		    App.user.pcompSelect(company);
-		    MTradeJs.initTabsOnce();
-                }
-                if( status==='deleted' && company==='company' ){
-                    MTradeJs.showTabs(false);
-                    App.pcomp={};
-                }
-	    });
-	},
-	toggleView:function( hide_doc_list_full ){
-	    if( App.page_trade_document_list_full || hide_doc_list_full ){
-		$("#trade_main_show_full_btn").html('Показать все накладные');
-		$("#trade_main_tabs_holder").show();
-		MTradeJs.destroyDocListFull();
-	    } else {
-		$("#trade_main_show_full_btn").html('Скрыть все накладные');
-		$("#trade_main_tabs_holder").hide();
-		App.loadModule('page/trade/document_list_full');
+	    if( status==='deleted' && company==='company' ){
+		App.user.pcompSelect({company_id:0});
+		App.pcomp={};
 	    }
-	},
-	destroyDocListFull:function(){
-	    $("#page_trade_document_list_full").html('');
-	    delete App.page_trade_document_list_full;
+	});
+    }
+
+    function pcompInfoInit(){
+	App.Topic('passiveCompanySelected').subscribe(function(company){
+	    $("#mtradePcompLabel").html(company.label);
+	    $("#mtrade_main_labels").find("div[data-forpcomp=1]").show('slow');
+	    $("#mtrade_main_info .x-closebutton").show();
+	});
+	App.Topic('passiveCompanyReset').subscribe(function(company){
+	    $("#mtradePcompLabel").html("Все контрагенты");
+	    $("#mtrade_main_labels").find("div[data-forpcomp=1]").hide('slow');
+	    $("#mtrade_main_info .x-closebutton").hide();
+	});
+	$("#mtrade_main_info .x-closebutton").click(function(){
+	    App.user.pcompSelect({});
+	    mCtreeInline && mCtreeInline.unselectTree();
+	    mCtreeInline && mCtreeInline.unselectCombo();
+	});
+    }
+
+
+    function labelsInit(labels_id,content_id){
+	$(labels_id).click(function(e){
+	    $(labels_id).children().removeClass('left_label_selected');
+	    $(e.target).addClass('left_label_selected');
+	    $(content_id).children().hide();
+	    var path=$(e.target).data('href');
+	    labelsContentLoad(content_id,path);
+	    App.store('mtrade_last_label',path);
+	});
+	var last_path=App.store('mtrade_last_label');
+	if( last_path ){
+	    labelsContentLoad(content_id,last_path);
 	}
-    };
+    }
+    function labelsContentLoad(content_id,path){
+	var id = path.replace(/\//g, '_');
+	if( $(content_id).find("#"+id).length<1 ){
+	    $(content_id).append("<div id='"+id+"'></div>");
+	}
+	$(content_id).find("#"+id).show();
+	if( !App[id] ){
+	    App.loadModule(path);
+	}
+    }
+    init();
+})(jQuery);
 </script>
-<table style="border-spacing: 0px;border-collapse: separate;">
-    <tr>
-        <td style="vertical-align: top;padding: 0px;">
-	    <div class="transp60" style="margin-right: 1px;min-width:180px;" id="CtreeInline"></div>
-	    <button id="trade_main_show_full_btn" style="width:100%" onclick="MTradeJs.toggleView()">Показать все накладные</button>
-        </td>
-        <td style="vertical-align: top;padding: 0px;">
-	    <div id="page_trade_document_list_full"></div>
-	    <div id="trade_main_tabs_holder">
-		<div id="trade_main_tabs_info">
-		    <h1 style="text-shadow: 0px 0px 2px #fff;color:#333"><<< <i>Выберите клиента для начала работы</i></h1>
-		</div>
-		<div id="trade_main_tabs_content" style="visibility: hidden;">
-		    <div id="trade_main_tabs" class="slim-tab" style="min-width:1000px;">
-			<div title="Документы" href="page/trade/document_list.html" style="min-height: 500px;"></div>
-			<div title="Взаиморасчет" href="page/trade/payments.html" style="min-height: 500px;"></div>
-			<div title="Настройки" href="page/company/prefs.html" style="min-height: 500px;"></div>
-			<div title="Реквизиты" href="page/trade/details.html" style="min-height: 500px;"></div>
-			<div title="Бланки" href="page/trade/blank.html" style="min-height: 500px;"></div>
-		    </div>
-		</div>		
+<div style="float: left">
+    <div class="transp60" style="padding-bottom: 1px;margin-bottom: 2px;">
+	<div id="mtrade_main_info" class="transp60" style="margin: 5px;padding: 5px;position: relative">
+	    <b>Выбранный контрагент</b>
+	    <div style="max-width: 180px;overflow-x: hidden;white-space: nowrap">
+	    <img src="img/gray.png"> <span class="link_button" title="Сменить клиента" id="mtradePcompLabel" style="color:#009;font-size: 18px;line-height: 35px">Все контрагенты</span>
 	    </div>
-        </td>
-    </tr>
-</table>
+	    <div style="position: absolute;right: -12px;top:-12px;display: none" class="x-closebutton"><img src="img/close24.png"></div>
+	</div>
+	<div id="mtrade_main_labels">
+	    <div class="left_label" data-href="page/mtrade/document_list">Документы</div>
+	    <div class="left_label" data-href="page/trade/payments" data-forpcomp="1" style="display: none">Взаиморасчет</div>
+	    <div class="left_label" data-href="page/company/prefs" data-forpcomp="1" style="display: none">Настройки</div>
+	    <div class="left_label" data-href="page/trade/details" data-forpcomp="1" style="display: none">Реквизиты</div>	    
+	</div>
+    </div>
+    <div id="mCtreeInline" class="transp60"></div>
+</div>
+
+<div id="trade_main_tabs_content" style="visibility: hidden;">
+    <div id="trade_main_tabs" class="slim-tab" style="min-width:1000px;">
+	<div title="Документы" href="page/trade/document_list.html" style="min-height: 500px;"></div>
+	<div title="Взаиморасчет" href="page/trade/payments.html" style="min-height: 500px;"></div>
+	<div title="Настройки" href="page/company/prefs.html" style="min-height: 500px;"></div>
+	<div title="Реквизиты" href="page/trade/details.html" style="min-height: 500px;"></div>
+    </div>
+</div>	
+
+
+<div id="mtrade_main_content"></div>
