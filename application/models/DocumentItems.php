@@ -46,10 +46,6 @@ class DocumentItems extends DocumentCore{
 	    ORDER BY fetch_count-DATEDIFF(NOW(),fetch_stamp) DESC, product_code
 	    LIMIT 10 OFFSET $offset";
         $output=$this->get_list($sql);
-        
-        $this->Hub->msg($this->transliterate($q,'fromcyrilic'));
-        
-        
         if( !count($output) ){
             return $this->suggestTransliterate($q,$transliterated,$offset,$doc_id);
         }
