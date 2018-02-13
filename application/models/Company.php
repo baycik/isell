@@ -19,7 +19,7 @@ class Company extends Catalog{
     }
     
     public $listFetch=['string','q'=>['string',0]];
-    public function listFetch( $mode='',$q ){
+    public function listFetch( $mode='',$q,$transliterated=false ){
 	$assigned_path=$this->Hub->svar('user_assigned_path');
 	$level=$this->Hub->svar('user_level');
 	$companies=[];
@@ -39,7 +39,8 @@ class Company extends Catalog{
 			AND
 		    path LIKE '$assigned_path%'
 			AND
-		    level<=$level";
+		    level<=$level
+                LIMIT 20";
 	    $companies=$this->get_list( $sql );
 	}
 	else if( $mode=='selected_passive_if_empty' ){
@@ -50,7 +51,25 @@ class Company extends Catalog{
 	if( $mode=='with_active' ){
 	    array_push($companies,['company_id'=>$this->Hub->acomp('company_id'),'label'=>$this->Hub->acomp('company_name'),'path'=>'']);
 	}
+        if( !count($companies) && !$transliterated ){
+            return $this->listFetch($mode, $this->transliterate($q), true);
+        }
+        if( !count($companies) ){
+            return $this->suggestTransliterate($mode,$q,$transliterated);
+        }
 	return $companies;
+    }
+    
+    private function suggestTransliterate($mode,$q,$transliterated){
+        if( $transliterated==false || $transliterated=='fromlatin' ){
+            if( $transliterated==false ){
+                $direction='fromlatin';
+            } else {
+                $direction='fromcyrilic';
+            }
+            return $this->listFetch($mode,$this->transliterate($q,$direction),$direction);
+        }
+        return [];
     }
     
     public function listFetchAll($mode){

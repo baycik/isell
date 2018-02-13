@@ -2,7 +2,7 @@
 require_once 'DocumentCore.php';
 class DocumentItems extends DocumentCore{
     public $suggestFetch=['q'=>'string','offset'=>['int',0],'doc_id'=>['int',0]];
-    public function suggestFetch($q,$offset,$doc_id){
+    public function suggestFetch($q,$offset,$doc_id,$transliterated=false){
 	$price_query="0";
 	if( $doc_id || $this->doc('doc_id') ){
 	    $pcomp_id=$this->doc('passive_company_id');
@@ -45,7 +45,28 @@ class DocumentItems extends DocumentCore{
 	    WHERE $where
 	    ORDER BY fetch_count-DATEDIFF(NOW(),fetch_stamp) DESC, product_code
 	    LIMIT 10 OFFSET $offset";
-	return $this->get_list($sql);	
+        $output=$this->get_list($sql);
+        
+        $this->Hub->msg($this->transliterate($q,'fromcyrilic'));
+        
+        
+        if( !count($output) ){
+            return $this->suggestTransliterate($q,$transliterated,$offset,$doc_id);
+        }
+        return $output;
+    }
+    
+    private function suggestTransliterate($q,$transliterated,$offset,$doc_id){
+        if( $transliterated==false || $transliterated=='fromlatin' ){
+            if( $transliterated==false ){
+                $direction='fromlatin';
+            } else {
+                $direction='fromcyrilic';
+            }
+            
+            return $this->suggestFetch($this->transliterate($q,$direction),$offset,$doc_id, $direction);
+        }
+        return [];
     }
 
     protected function footerGet(){
