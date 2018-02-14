@@ -9,30 +9,6 @@
  * Author URI: 
  * Trigger before: Reports_summary_expense
  */
-
-
-
-/*
-SELECT 
-    expense_label,
-    trans_name,
-    DATE_FORMAT(cstamp,'%Y.%m.%d') dt,
-    company_name,
-    description,
-    amount
-FROM
-    acc_trans
-        JOIN
-    companies_list ON company_id = passive_company_id
-		LEFT JOIN
-	acc_trans_names USING(acc_debit_code,acc_credit_code)
-WHERE
-    acc_credit_code LIKE '3%'
-    AND cstamp>'2017-12-01'
-    AND expense_label<>''
- */
-
-
 class Reports_summary_expense extends Catalog{
     private $idate;
     private $fdate;
@@ -53,7 +29,7 @@ class Reports_summary_expense extends Catalog{
         $acc_debit_filter="acc_debit_code NOT LIKE '3%'";
         $acc_credit_filter="acc_credit_code LIKE '3%'";
         
-        $this->query("DROP TEMPORARY TABLE IF EXISTS tmp_expenses;");
+        $this->query("DROP TEMPORARY TABLE IF EXISTS tmp_expenses;");#TEMPORARY
         $main_table_sql="CREATE TEMPORARY TABLE tmp_expenses AS (
             SELECT 
                 is_active,
@@ -63,7 +39,8 @@ class Reports_summary_expense extends Catalog{
                 acc_debit_code,
                 company_name,
                 description,
-                amount
+                amount,
+                REPLACE(REPLACE(SUBSTRING(description,LOCATE('НДС 18% - ',description)),'НДС 18% - ',''),' ','') vat
             FROM
                 acc_trans
                     JOIN
@@ -77,32 +54,43 @@ class Reports_summary_expense extends Catalog{
                 $active_filter
             ORDER BY label)";
         $this->query($main_table_sql);
-	$rows=$this->get_list("SELECT * FROM tmp_expenses");
+	$rows=$this->get_list("SELECT *,amount-vat vatless FROM tmp_expenses");
         
         $totals_table_sql="
 	    SELECT 
                 label,
                 GROUP_CONCAT(DISTINCT(trans_name) SEPARATOR ', ') trans_name,
                 acc_debit_code,
-		SUM(amount) amount_sum
+		SUM(amount) amount_sum,
+                SUM(amount-vat) vatless_sum
 	    FROM 
 		tmp_expenses
 	    GROUP BY is_active,label
 	    ORDER BY label";
 	$totals=$this->get_list($totals_table_sql);
+        
         $total_amount=0;
         $labeled_amount=0;
         $unlabeled_amount=0;
+        $total_amount_vatless=0;
+        $labeled_amount_vatless=0;
+        $unlabeled_amount_vatless=0;
         foreach( $totals as $row ){
+            $total_amount_vatless+=$row->vatless_sum;
             $total_amount+=$row->amount_sum;
 	    if( $row->label!='' ){
+		$labeled_amount_vatless+=$row->vatless_sum;
 		$labeled_amount+=$row->amount_sum;
 	    } else {
+		$unlabeled_amount_vatless+=$row->vatless_sum;
 		$unlabeled_amount+=$row->amount_sum;
 	    }
         }
         
 	$view=[
+                'total_amount_vatless'=>$total_amount_vatless,
+                'labeled_amount_vatless'=>$labeled_amount_vatless,
+                'unlabeled_amount_vatless'=>$unlabeled_amount_vatless,
                 'total_amount'=>$total_amount,
                 'labeled_amount'=>$labeled_amount,
                 'unlabeled_amount'=>$unlabeled_amount,
