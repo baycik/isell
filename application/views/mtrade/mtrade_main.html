@@ -1,8 +1,8 @@
 <script>
 (function($){
     function init(){
-	pcompInfoInit();
-	labelsInit("#mtrade_main_labels","#mtrade_main_content");
+	//pcompInfoInit();
+	//labelsInit("#mtrade_main_labels","#mtrade_main_content");
 	showTree();
     }
     function showTree(){
@@ -16,8 +16,24 @@
 	    }
 	});
     }
+    
+    function initTabsOnce (){
+	if( this.tabsInited ){
+	    return;
+	}
+	this.tabsInited=true;
+	App.initTabs('trade_main_tabs');
+	App.handler.progress(function(status){
+	    if( status==='passiveCompanyInited' || status==='passiveCompanySelected' ){
+		MTradeJs.showTabs(true);
+	    }
+	});
+	if( App.pcomp ){
+	    MTradeJs.showTabs(true);
+	}
+    }
 
-    function pcompInfoInit(){
+/*    function pcompInfoInit(){
 	App.Topic('passiveCompanySelected').subscribe(function(company){
 	    $("#mtradePcompLabel").html(company.label);
 	    $("#mtrade_main_labels").find("div[data-forpcomp=1]").show('slow');
@@ -59,37 +75,17 @@
 	if( !App[id] ){
 	    App.loadModule(path);
 	}
-    }
+    }*/
     init();
 })(jQuery);
 </script>
 <div style="float: left">
-    <div class="transp60" style="padding-bottom: 1px;margin-bottom: 2px;">
-	<div id="mtrade_main_info" class="transp60" style="margin: 5px;padding: 5px;position: relative">
-	    <b>Выбранный контрагент</b>
-	    <div style="max-width: 180px;overflow-x: hidden;white-space: nowrap">
-	    <img src="img/gray.png"> <span class="link_button" title="Сменить клиента" id="mtradePcompLabel" style="color:#009;font-size: 18px;line-height: 35px">Все контрагенты</span>
-	    </div>
-	    <div style="position: absolute;right: -12px;top:-12px;display: none" class="x-closebutton"><img src="img/close24.png"></div>
-	</div>
-	<div id="mtrade_main_labels">
-	    <div class="left_label" data-href="page/mtrade/document_list">Документы</div>
-	    <div class="left_label" data-href="page/trade/payments" data-forpcomp="1" style="display: none">Взаиморасчет</div>
-	    <div class="left_label" data-href="page/company/prefs" data-forpcomp="1" style="display: none">Настройки</div>
-	    <div class="left_label" data-href="page/trade/details" data-forpcomp="1" style="display: none">Реквизиты</div>	    
-	</div>
-    </div>
     <div id="mCtreeInline" class="transp60"></div>
 </div>
 
-<div id="trade_main_tabs_content" style="visibility: hidden;">
-    <div id="trade_main_tabs" class="slim-tab" style="min-width:1000px;">
-	<div title="Документы" href="page/trade/document_list.html" style="min-height: 500px;"></div>
-	<div title="Взаиморасчет" href="page/trade/payments.html" style="min-height: 500px;"></div>
-	<div title="Настройки" href="page/company/prefs.html" style="min-height: 500px;"></div>
-	<div title="Реквизиты" href="page/trade/details.html" style="min-height: 500px;"></div>
-    </div>
-</div>	
-
-
-<div id="mtrade_main_content"></div>
+<div id="trade_main_tabs" class="slim-tab" style="min-width:1000px;">
+    <div title="Документы" href="page/mtrade/document_list.html" style="min-height: 500px;"></div>
+    <div title="Взаиморасчет" href="page/mtrade/payments.html" style="min-height: 500px;"></div>
+    <div title="Настройки" href="page/company/prefs.html" style="min-height: 500px;"></div>
+    <div title="Реквизиты" href="page/mtrade/details.html" style="min-height: 500px;"></div>
+</div>

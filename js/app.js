@@ -532,6 +532,9 @@ Mark.pipes.format = function (str) {
 			if( status==='select' ){
 			    App.user.pcompSelect(comp);
 			}
+			if( status==='reset' ){
+			    App.user.pcompSelect({});
+			}
 		    });
 		},
 		pcompSelect: function ( company ) {
@@ -555,7 +558,6 @@ Mark.pipes.format = function (str) {
 			App.Topic('passiveCompanySelected').publish(company);
 			if( mode==='notify_init' ){
 			    App.handler.notify('passiveCompanyInited',company);
-			    
                             return;
 			}
 			App.handler.notify('passiveCompanySelected',company);
@@ -589,9 +591,6 @@ Mark.pipes.format = function (str) {
 		    }
 		}
 	    };
-	    App.handler.progress(function(status){
-		//console.log(status);
-	    });
 	    App.topics={};
 	    App.Topic = function (id) {
 		var callbacks, topic = id && App.topics[ id ];
@@ -671,7 +670,7 @@ Mark.pipes.format = function (str) {
 	    App.onReady = function () {
 		App.user.getData();
                 App.handler.progress(function(status){
-                    if( status==='passiveCompanySelected' || status==='activeCompanySelected' ){
+                    if( status==='passiveCompanySelected' || status==='passiveCompanyReset' || status==='activeCompanySelected' ){
                         App.setTitle();
                     }
                 });

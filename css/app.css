@@ -285,6 +285,10 @@ div .combobox-item-hover{
 .icon-create{
     background:url('../img/edit_add.png') no-repeat center center;
 }
+.icon-close16{
+    background:url('../img/close24.png') no-repeat center center;
+    background-size: 16px 16px;
+}
 .icon-calc{
     background:url('../img/recalc.png') no-repeat center center;
 }

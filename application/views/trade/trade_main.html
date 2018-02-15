@@ -40,6 +40,10 @@
                     TradeJs.showTabs(false);
                     App.pcomp={};
                 }
+		if( status==='reset' ){
+		    App.user.pcompSelect({company_id:0});
+		    TradeJs.toggleView(false);
+		}
 	    });
 	},
 	toggleView:function( hide_doc_list_full ){

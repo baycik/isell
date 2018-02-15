@@ -29,6 +29,13 @@
 	    this.node.find('.validatebox-text').on('focus', function() {
                 this.select();
             });
+	    App.Topic('passiveCompanySelected').subscribe(function(pcomp){
+		$('#Ctree_combo').combobox('setText',pcomp.label);
+	    });
+	    App.Topic('passiveCompanyReset').subscribe(function(){
+		$('#Ctree_combo').combobox('setText','');
+		Ctree.unselectTree();
+	    });
 	},
 	close:function(){
 	    if (!Ctree.data.inline) {
@@ -55,11 +62,15 @@
 		Ctree.selectTree();
 	    }
 	},
+	reset:function(){
+	    Ctree.handler.notify('reset');
+	    Ctree.unselectTree();
+	},
 	selectTree: function () {
 	    var branch=$('#Ctree_tree').tree('getSelected');
 	    if( branch.company_id!==undefined ){
 		Ctree.handler.notify('select', branch);
-		Ctree.unselectCombo();
+		//Ctree.unselectCombo(branch.label);
 	    } else {
 		Ctree.handler.notify('selectFolder', branch);
 	    }
@@ -76,9 +87,9 @@
                 }
 	    }
 	},
-	unselectCombo:function(){
-	    $('#Ctree_combo').combobox('setText','');
-	},
+	//unselectCombo:function(label){
+	//    $('#Ctree_combo').combobox('setText',label);
+	//},
         loaderCombo:function(param, success, error){
 	    if( param.q===undefined ){
 		success([]);
@@ -228,7 +239,13 @@
        panelHeight:'auto',
        selectOnNavigation:false,
        mode: 'remote',
-       onSelect: Ctree.selectCombo
+       onSelect: Ctree.selectCombo,
+       icons: [{
+	    iconCls:'icon-close16',
+	    handler: function(e){
+		Ctree.reset();
+	    }
+	}]
        ">
     <ul class="easyui-tree" id="Ctree_tree" data-options="
         loader:Ctree.loaderTree,
