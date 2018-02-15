@@ -49,8 +49,7 @@ class Reports_summary_expense extends Catalog{
                 acc_trans_names USING(acc_debit_code,acc_credit_code)
             WHERE
                 cstamp>'$this->idate' AND cstamp<'$this->fdate'
-                AND $acc_debit_filter 
-                AND $acc_credit_filter
+                AND ($acc_debit_filter AND $acc_credit_filter OR trans_label<>'')
                 $active_filter
             ORDER BY label)";
         $this->query($main_table_sql);
