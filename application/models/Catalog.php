@@ -54,10 +54,10 @@ abstract class Catalog extends CI_Model {
             $letter=mb_substr($input,$i,1);
             if( $direction=='fromlatin' ){
                 $pos=mb_strpos($latin, $letter);
-                $output.=($pos==false)?$letter:mb_substr($cyrilic,$pos,1);
+                $output.=($pos===false)?$letter:mb_substr($cyrilic,$pos,1);
             } else {
                 $pos=mb_strpos($cyrilic, $letter);
-                $output.=($pos==false)?$letter:mb_substr($latin,$pos,1);
+                $output.=($pos===false)?$letter:mb_substr($latin,$pos,1);
             }
         }
         return $output;

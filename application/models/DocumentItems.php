@@ -137,9 +137,9 @@ class DocumentItems extends DocumentCore{
     protected function entriesFetch( $skip_vat_correction=false ){
         $this->entriesTmpCreate();
         if( $this->doc('use_vatless_price') ){
-            $sql="SELECT *, ROUND(product_sum_vatless/product_quantity,6) product_price, product_sum_vatless product_sum FROM tmp_doc_entries";
+            $sql="SELECT *, product_price_vatless product_price, product_sum_vatless product_sum FROM tmp_doc_entries";
         } else {
-            $sql="SELECT *, ROUND(product_sum_total/product_quantity,6) product_price, product_sum_total product_sum FROM tmp_doc_entries";
+            $sql="SELECT *, product_price_total product_price, product_sum_total product_sum FROM tmp_doc_entries";
         }
         return $this->get_list($sql);
     }

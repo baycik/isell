@@ -743,7 +743,7 @@ class Document extends Data {
 	    $pnotcount = $prev_doc['notcount'];
 	    $psignsafterdot = $prev_doc['signs_after_dot'];
 	    $pusevatlessprice = $prev_doc['use_vatless_price'];
-	    $vat_rate=$prev_doc['vat_rate'];
+	    //$vat_rate=$prev_doc['vat_rate'];
 	} else {
 	    $pnotcount = 0;
 	    $psignsafterdot = 2;
