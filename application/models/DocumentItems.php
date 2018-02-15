@@ -350,7 +350,7 @@ class DocumentItems extends DocumentCore{
     public function documentOut($doc_id,$out_type){
         $dump=[
             'tpl_files'=>'DocumentOut.xlsx',
-	    'title'=>"Document",
+	    'title'=>"Document#".$this->doc('doc_num'),
             'view'=>[
                 'head'=>$this->headGet($doc_id),
                 'rows'=>$this->entriesFetch(),
