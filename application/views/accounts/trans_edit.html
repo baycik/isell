@@ -41,7 +41,7 @@
 	},
         initArticleHolder:function(){
             console.log(this.data.trans_article);
-            if( this.data.trans_article ){
+            if( this.data.trans_article || this.data.transIsNew ){
                 $("#tedit_article_holder").show();
             } else {
                 $("#tedit_article_holder").hide();
