@@ -242,6 +242,7 @@ class AccountsCore extends Catalog{
 		(SELECT IF(label,label,company_name) FROM companies_list LEFT JOIN companies_tree USING(branch_id) WHERE company_id=passive_company_id) label,
 		CONCAT(acc_debit_code, '_', acc_credit_code) trans_type,
 		trans_name,
+                IF(trans_article<>'',trans_article,trans_label) trans_article,
 		IF(atd.curr_id<>'$curr_id' OR atc.curr_id<>'$curr_id',1,0) use_alt_currency,
 		atn.user_level,
 		nick
@@ -400,9 +401,9 @@ class AccountsCore extends Catalog{
 	'amount'=>'double',
 	'amount_alt'=>'double',
 	'description'=>'string',
-	
+	'trans_article'=>'string'
     ];
-    public function transCreateUpdate($trans_id,$check_id,$passive_company_id,$trans_type,$trans_date,$trans_ref,$amount,$amount_alt,$description){
+    public function transCreateUpdate($trans_id,$check_id,$passive_company_id,$trans_type,$trans_date,$trans_ref,$amount,$amount_alt,$description,$trans_article=''){
 	$user_id=$this->Hub->svar('user_id');
 	$acc_codes=  explode('_',$trans_type);
 	if( !$this->transCheckLevel($trans_type) ){
@@ -415,6 +416,7 @@ class AccountsCore extends Catalog{
 	    'passive_company_id'=>$passive_company_id,
 	    'acc_debit_code'=>$acc_codes[0],
 	    'acc_credit_code'=>$acc_codes[1],
+            'trans_article'=>$trans_article,
 	    'cstamp'=>$trans_date.date(" H:i:s"),
 	    'amount'=>$amount,
 	    'amount_alt'=>$amount_alt,

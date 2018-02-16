@@ -6,7 +6,7 @@
 	    this.node.window({
 		title: 'Редактирование проводки',
 		width: 450,
-		height: 310,
+		height: 330,
 		onClose: function(){
 		    App.page_accounts_trans_edit.handler.notify('close',App.page_accounts_trans_edit.data);
 		    App.page_accounts_trans_edit.node.window('destroy');
@@ -32,12 +32,21 @@
 	    $("#trans_edit_frm").form('load',Tedit.data);
 	    $("#trans_edit_frm").show();
 	    this.suppressUpdate=false;
+            this.initArticleHolder();
 	    this.calc();
 	    this.initRefHighlight();
 	    this.initSubmit();
 	    this.initSelectOnClick();
 	    this.altCurrencyToggle();
 	},
+        initArticleHolder:function(){
+            console.log(this.data.trans_article);
+            if( this.data.trans_article ){
+                $("#tedit_article_holder").show();
+            } else {
+                $("#tedit_article_holder").hide();
+            }
+        },
 	initSubmit:function(){
 	    $("#trans_edit_frm").submit(function(e){
 		e.preventDefault();
@@ -329,6 +338,15 @@
 	   height:66,
 	   required:true
 	   ">
+    <div id="tedit_article_holder" style="display: block">
+    <input style="width:300px" class="easyui-combobox" name="trans_article" title="Статья" data-options="
+	   valueField: 'article_name',
+	   textField: 'article_name',
+	   url:'AccountsData/articleListFetch',
+	   mode: 'remote',
+	   method:'get'
+	   ">
+    </div>
     <div style="text-align: center;margin-top: 15px;">
 	<button type="submit"><img src="img/Save-24.png" /> Сохранить</button>
 	<button type="button" onclick="Tedit.transDelete();"><img src="img/delete.png" /> Удалить</button>

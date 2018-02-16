@@ -124,4 +124,9 @@ class AccountsData extends AccountsCore{
 	$sql="SELECT acc_code,label FROM acc_tree WHERE acc_code LIKE '301%'";
 	return $this->get_list($sql);
     }
+    
+    public $articleListFetch=[];
+    public function articleListFetch(){
+        return $this->get_list("SELECT article_name FROM acc_article_list");
+    }
 }
