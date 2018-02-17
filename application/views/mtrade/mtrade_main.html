@@ -1,91 +1,66 @@
 <script>
 (function($){
     function init(){
-	//pcompInfoInit();
-	//labelsInit("#mtrade_main_labels","#mtrade_main_content");
 	showTree();
+	initTabsOnce();
     }
     function showTree(){
 	App.loadModule('page/company/tree',{inline:true,clickselect:true},'mCtreeInline',/(Ctree|page_company_tree)([^\w]|_)/g,"mCtreeInline$2").progress(function(status,company){
 	    if( status==='select' ){
 		App.user.pcompSelect(company);
 	    }
-	    if( status==='deleted' && company==='company' ){
+	    if( status==='deleted' && company==='company' || status==='reset' ){
 		App.user.pcompSelect({company_id:0});
 		App.pcomp={};
 	    }
 	});
     }
     
+    var tabs=[
+	{title:"Документы",href:"page/mtrade/document_list.html",pcompSpecific:false},
+	{title:"Взаиморасчет",href:"page/mtrade/payments.html",pcompSpecific:true},
+	{title:"Настройки",href:"page/company/prefs.html",pcompSpecific:true},
+	{title:"Реквизиты",href:"page/mtrade/details.html",pcompSpecific:true}
+    ];
+    var isTabsInited=false;
     function initTabsOnce (){
-	if( this.tabsInited ){
+	if( isTabsInited ){
 	    return;
 	}
-	this.tabsInited=true;
-	App.initTabs('trade_main_tabs');
+	isTabsInited=true;
+	$('#mtrade_main_tabs').tabs({border:true,pill:true});
+	for(var i in tabs){
+	    tabs[i].selected=false;
+	    $("#mtrade_main_tabs").tabs('add',tabs[i]);
+	}
+	App.initTabs('mtrade_main_tabs');
 	App.handler.progress(function(status){
-	    if( status==='passiveCompanyInited' || status==='passiveCompanySelected' ){
-		MTradeJs.showTabs(true);
+	    if( status==='passiveCompanyInited' || status==='passiveCompanySelected' || status==='passiveCompanyReset' ){
+		tabsTogglePcompSpecific();
 	    }
 	});
-	if( App.pcomp ){
-	    MTradeJs.showTabs(true);
+	tabsTogglePcompSpecific();
+    }
+    function tabsTogglePcompSpecific(){
+	var first_nonspecific;
+	for(var i in tabs){
+	    if(tabs[i].pcompSpecific){
+		App.pcomp && $("#mtrade_main_tabs").tabs('enableTab',tabs[i].title);
+		!App.pcomp && $("#mtrade_main_tabs").tabs('disableTab',tabs[i].title);
+	    } else {
+		first_nonspecific=tabs[i].title;
+	    }
+	}
+	var selected_disabled=$("#mtrade_main_tabs").tabs('getSelected').panel('options').disabled;
+	if( selected_disabled ){
+	    $("#mtrade_main_tabs").tabs('select',first_nonspecific);
 	}
     }
-
-/*    function pcompInfoInit(){
-	App.Topic('passiveCompanySelected').subscribe(function(company){
-	    $("#mtradePcompLabel").html(company.label);
-	    $("#mtrade_main_labels").find("div[data-forpcomp=1]").show('slow');
-	    $("#mtrade_main_info .x-closebutton").show();
-	});
-	App.Topic('passiveCompanyReset').subscribe(function(company){
-	    $("#mtradePcompLabel").html("Все контрагенты");
-	    $("#mtrade_main_labels").find("div[data-forpcomp=1]").hide('slow');
-	    $("#mtrade_main_info .x-closebutton").hide();
-	});
-	$("#mtrade_main_info .x-closebutton").click(function(){
-	    App.user.pcompSelect({});
-	    mCtreeInline && mCtreeInline.unselectTree();
-	    mCtreeInline && mCtreeInline.unselectCombo();
-	});
-    }
-
-
-    function labelsInit(labels_id,content_id){
-	$(labels_id).click(function(e){
-	    $(labels_id).children().removeClass('left_label_selected');
-	    $(e.target).addClass('left_label_selected');
-	    $(content_id).children().hide();
-	    var path=$(e.target).data('href');
-	    labelsContentLoad(content_id,path);
-	    App.store('mtrade_last_label',path);
-	});
-	var last_path=App.store('mtrade_last_label');
-	if( last_path ){
-	    labelsContentLoad(content_id,last_path);
-	}
-    }
-    function labelsContentLoad(content_id,path){
-	var id = path.replace(/\//g, '_');
-	if( $(content_id).find("#"+id).length<1 ){
-	    $(content_id).append("<div id='"+id+"'></div>");
-	}
-	$(content_id).find("#"+id).show();
-	if( !App[id] ){
-	    App.loadModule(path);
-	}
-    }*/
     init();
 })(jQuery);
 </script>
-<div style="float: left">
+<div style="float: left;margin-right: 3px;">
     <div id="mCtreeInline" class="transp60"></div>
 </div>
 
-<div id="trade_main_tabs" class="slim-tab" style="min-width:1000px;">
-    <div title="Документы" href="page/mtrade/document_list.html" style="min-height: 500px;"></div>
-    <div title="Взаиморасчет" href="page/mtrade/payments.html" style="min-height: 500px;"></div>
-    <div title="Настройки" href="page/company/prefs.html" style="min-height: 500px;"></div>
-    <div title="Реквизиты" href="page/mtrade/details.html" style="min-height: 500px;"></div>
-</div>
+<div id="mtrade_main_tabs" class="slim-tab" style="min-width:1000px;"></div>
