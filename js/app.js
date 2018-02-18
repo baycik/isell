@@ -142,11 +142,11 @@ var App = {
 	for(var i in urls){
 	    var url=urls[i];
 	    if( Array.isArray(url) ){
+		var original_callback=callback;
 		callback=function(){
-		    App.require(url,callback);
+		    App.require(url,original_callback);
 		};
 		ok();
-		console.log(url);
 	    } else
 	    if( url.indexOf('.css')>-1 ){
 		$('head').append( $('<link rel="stylesheet" type="text/css" />').attr('href', url) );
@@ -681,19 +681,6 @@ Mark.pipes.format = function (str) {
                         App.setTitle();
                     }
                 });
-	    };
-
-
-	    App.loadSlick=function( callback ){
-		App.require(["js/slick/lib/jquery.event.drag-2.3.0.js"],function(){
-		    App.require([
-			"js/slick/slick.core.js",
-			"js/slick/plugins/slick.rowselectionmodel.js",
-			"js/slick/slick.editors.js",
-			"js/slick/slickinfinite.js",
-			"js/slick/slick.grid.js"
-		    ], callback);
-		});
 	    };
 
 

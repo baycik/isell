@@ -1,78 +1,83 @@
 <script>
 App.page_mtrade_document_list=(function(){
     var require=[
-	    "js/slick/lib/jquery.event.drag-2.3.0.js",
-		[
-		"js/slick/slick.core.js",
-		"js/slick/slick.grid.js",
-		"js/slick/plugins/slick.rowselectionmodel.js",
-		"js/slick/slick.editors.js",
-		"js/slick/slickinfinite.js"
-		]
-	    ];
-    var docList;
-    function gridInit(){
-	function dateFormatter(row, cell, value, columnDef, dataContext){
-	    var date_parts=value.split(' ')[0].split('-');
-	    var date=date_parts[2]+'.'+date_parts[1]+'.'+date_parts[0];
-	    return '<span title="'+value.split(' ')[1]+'">'+date+'</span>';
-	}
-	function tooltip(row, cell, value, columnDef, dataContext){
-	    if( !value ){
-		return '';
-	    }
-	    var parts = value.split(' ');
-	    var cmd = parts.shift();
-	    if (cmd){
-		var style='max-width:16px;height:auto';
-		return '<img src="img/' + cmd + '.png" style="'+style+'" title="' + parts.join(' ') + '">';
-	    }
-	    else{
-		return '';
-	    }	    
-	}
+	"js/slick/lib/jquery.event.drag-2.3.0.js",
+	["js/slick/slick.core.js",
+	"js/slick/slick.grid.js",
+	"js/slick/plugins/slick.rowselectionmodel.js",
+	"js/slick/slick.editors.js",
+	"js/slick/slickinfinite.js"]
+    ];
+    var DocList={
+	init:function(){
+	    var frm={
+		round:function(num){
+		    return isNaN(num)?'':Number.parseFloat(num).toFixed(2);
+		},
+		tooltip:function(row, cell, value, columnDef, dataContext){
+		    if( !value ){
+			return '';
+		    }
+		    var parts = value.split(' ');
+		    var cmd = parts.shift();
+		    if (cmd){
+			var style='max-width:16px;height:auto';
+			return '<img src="img/' + cmd + '.png" style="'+style+'" title="' + parts.join(' ') + '">';
+		    }
+		    else{
+			return '';
+		    }	    
+		},
+		dateFormatter:function(row, cell, value, columnDef, dataContext){
+		    var date_parts=value.split(' ')[0].split('-');
+		    var date=date_parts[2]+'.'+date_parts[1]+'.'+date_parts[0];
+		    return '<span title="'+value.split(' ')[1]+'">'+date+'</span>';
+		}
+	    };
+	    var settings={
+		columns:[
+		    {id:"pcomp_label", field: "pcomp_label",name: "Контрагент", width: 120 },
+		    {id:"doc_type_icon", field: "doc_type_icon",name: "", width: 25,formatter:frm.tooltip},
+		    {id:"cstamp", field: "cstamp",name: "Дата",  width: 70, sortable: true,formatter:frm.dateFormatter },
+		    {id:"doc_num", field: "doc_num",name: "Номер", width: 50, sortable: true,cssClass:'slick-align-right' },
+		    {id:"doc_total", field: "doc_total",name: "Сумма", width: 70, sortable: true,cssClass:'slick-align-right' },
+		    {id:"trans_status", field: "trans_status",name: "Оплачен", width: 25, sortable: true,formatter:frm.tooltip},
+		    {id:"is_commited", field: "is_commited",name: "Проведен", width: 25,formatter:frm.tooltip},
+		    {id:"doc_type_name", field: "doc_type_name",name: "Тип документа", sortable: true, width: 150 },
+		    {id:"views", field: "views",name: "Напечатано", width: 70}
 
-	var settings={
-	    columns:[
-		{id:"pcomp_label", field: "pcomp_label",name: "Контрагент", width: 120 },
-		{id:"doc_type_icon", field: "doc_type_icon",name: "", width: 25,formatter:tooltip},
-		{id:"cstamp", field: "cstamp",name: "Дата",  width: 70, sortable: true,formatter:dateFormatter },
-		{id:"doc_num", field: "doc_num",name: "Номер", width: 50, sortable: true,cssClass:'slick-align-right' },
-		{id:"doc_total", field: "doc_total",name: "Сумма", width: 70, sortable: true },
-		{id:"trans_status", field: "trans_status",name: "Оплачен", width: 25, sortable: true,formatter:tooltip},
-		{id:"is_commited", field: "is_commited",name: "Проведен", width: 25,formatter:tooltip},
-		{id:"doc_type_name", field: "doc_type_name",name: "Тип документа", sortable: true, width: 150 },
-		{id:"views", field: "views",name: "Напечатано", width: 70}
-
-	    ],
-	    options:{
-		enableCellNavigation: true,
-		enableColumnReorder: false,
-		enableFilter:true,
-		multiSelect :false,
-		url:'DocumentList/listFetch'
-	    }
-	};
-	var h = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
-	$("#doclist_sg").css('height',(h-$("#doclist_sg").position().top-30)+'px');
-	$("#doclist_sg_tools .icon-refresh").click(function(){
-	    docList.reload();
-	});
-	docList=$("#doclist_sg").slickgrid(settings);
-	docList.onSelectedRowsChanged.subscribe(function(e,selection){
-	    var doclistRow=selection.grid.getDataItem(selection.rows[0]);
-	    App.Document.init(doclistRow.doc_type);
-	    App.Document.load(doclistRow.doc_id);
-	});
-    }
+		],
+		options:{
+		    enableCellNavigation: true,
+		    enableColumnReorder: false,
+		    enableFilter:true,
+		    multiSelect :false,
+		    url:'DocumentList/listFetch'
+		}
+	    };
+	    var h = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
+	    $("#doclist_sg").css('height',(h-$("#doclist_sg").position().top-30)+'px');
+	    $("#doclist_sg_tools .icon-refresh").click(function(){
+		DocList.grid.reload();
+	    });
+	    DocList.grid=$("#doclist_sg").slickgrid(settings);
+	    DocList.grid.onSelectedRowsChanged.subscribe(function(e,selection){
+		var doclistRow=selection.grid.getDataItem(selection.rows[0]);
+		App.Document.init(doclistRow.doc_type);
+		App.Document.load(doclistRow.doc_id);
+	    });
+	    App.Topic('passiveCompanySelected').subscribe(function(company){
+		DocList.grid.updateOptions({params:{mode:'show_only_pcomp_docs'}});
+		DocList.grid.reload();
+	    });
+	    App.Topic('passiveCompanyReset').subscribe(function(company){
+		DocList.grid.updateOptions({params:{mode:''}});
+		DocList.grid.reload();
+	    });
+	}
+    };
     function init(){
-	//gridInit();
-	App.Topic('passiveCompanySelected').subscribe(function(company){
-	    //docList.reload();
-	});
-	return;
-	//Document.init({doc_type:'sell'});
-	//Document.load(7180);
+	DocList.init();
 	$("#Document").load("page/mtrade/document.html",function(){
 	    App.Document.init('sell');
 	    App.Document.load(7180);

@@ -45,9 +45,9 @@ class DocumentList extends Catalog{
 		    FROM 
 			acc_trans 
 			    JOIN 
-			document_trans dt USING(trans_id)
-		    WHERE dt.doc_id=dl.doc_id 
-		    ORDER BY trans_id LIMIT 1) amount
+			document_trans dtr USING(trans_id)
+		    WHERE dtr.doc_id=dl.doc_id AND trans_role='total'
+		    LIMIT 1) doc_total
 	    FROM 
 		document_list dl
 		    JOIN
