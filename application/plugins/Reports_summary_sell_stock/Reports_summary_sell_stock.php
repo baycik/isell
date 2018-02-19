@@ -3,9 +3,9 @@
  * User Level: 3
  * Plugin Name: Эффективность запасов
  * Plugin URI: 
- * Version: 0.1
+ * Version: 1.0
  * Description: Выводит информацию о соотношении продаж к складским остаткам
- * Author: baycik 2016
+ * Author: baycik 2018
  * Author URI: 
  * Trigger before: Reports_summary_sell_profit
  */
