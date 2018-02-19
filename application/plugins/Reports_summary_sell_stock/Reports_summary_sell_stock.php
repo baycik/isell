@@ -18,6 +18,7 @@ class Reports_summary_sell_stock extends Catalog{
 	$this->fdate=$this->dmy2iso( $this->request('fdate','\d\d.\d\d.\d\d\d\d') ).' 23:59:59';
 	$this->all_active=$this->request('all_active','bool');
 	$this->count_reclamations=$this->request('count_reclamations','bool',0);
+	$this->count_buy_price=$this->request('count_buy_price','bool',0);
 	$this->in_alt_currency=$this->request('in_alt_currency','bool',0);
 	$this->group_by_filter=$this->request('group_by_filter');
 	$this->group_by=$this->request('group_by','\w+');
@@ -33,12 +34,13 @@ class Reports_summary_sell_stock extends Catalog{
     public function viewGet(){
 	$active_filter=$this->all_active?'':' AND active_company_id='.$this->Hub->acomp('company_id');
 	$reclamation_filter=$this->count_reclamations?'':' AND is_reclamation=0';
+	$leftover_price=$this->count_buy_price?'invoice_price':'self_price';
         $having=$this->group_by_filter?"HAVING group_by LIKE '%$this->group_by_filter%'":"";
         $sell_buy_table="
             SELECT
                 product_code,
                 SUM( IF(doc_type=2,product_quantity,-product_quantity) ) stock_qty,
-                SUM( IF(doc_type=2,invoice_price/IF($this->in_alt_currency,doc_ratio,1)*product_quantity,0) )/SUM( IF(doc_type=2,product_quantity,0) ) buy_avg,
+                SUM( IF(doc_type=2,$leftover_price/IF($this->in_alt_currency,doc_ratio,1)*product_quantity,0) )/SUM( IF(doc_type=2,product_quantity,0) ) buy_avg,
                 SUM( IF(doc_type=1 AND cstamp>'$this->idate',invoice_price/IF($this->in_alt_currency,doc_ratio,1)*product_quantity,0) ) sell_prod_sum,
                 SUM( IF(doc_type=1 AND cstamp>'$this->idate',product_quantity,0) ) sell_qty
             FROM
