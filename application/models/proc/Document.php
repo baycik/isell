@@ -1142,9 +1142,21 @@ class Document extends Data {
 	$doc_id = $this->doc('doc_id');
 	$this->setDocumentModifyingUser();
 	if ($field == 'ratio') {
+            $curr_code=$this->Base->acomp('curr_code');
+            $price_label=$this->Base->pcomp('price_label');
+            $current_ratio=$this->doc('doc_ratio');
+            $correction=$new_val/$current_ratio;
+            $this->Base->query("START TRANSACTION");
 	    $this->Base->query("UPDATE document_list SET doc_ratio='$new_val' WHERE doc_id='$doc_id'");
+            $this->Base->query("UPDATE 
+                        document_entries de 
+                            JOIN 
+                        price_list pl ON de.product_code=pl.product_code 
+                            AND label='$price_label' 
+                    SET invoice_price=invoice_price*$correction 
+                    WHERE doc_id='$doc_id' AND curr_code<>'' AND curr_code<>'$curr_code'");
+            $this->Base->query("COMMIT");
 	    $this->selectDoc($doc_id);
-	    $this->recalc();
 	} else
 	if ($field == 'num') {
 	    if ($new_val > 0) {// not null nan or zero
