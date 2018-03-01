@@ -213,7 +213,7 @@ class Document extends Data {
 		return false;
 	    }
 	}
-	if ($this->Base->pcomp('is_supplier') && $this->doc('doc_type') == 2) {
+	if ($this->Base->pcomp('is_supplier') && !$this->doc('is_reclamation') && $this->doc('doc_type') == 2) {
 	    $this->updateBuyPriceFromDoc();
 	    //$this->updateBuyPartyLabel();
 	}
