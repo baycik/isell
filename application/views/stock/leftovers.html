@@ -478,7 +478,7 @@
 		},
 		setDimensions:function(query, dw, dh){
 		    var wheight = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
-		    var height = (wheight - $(query).position().top - 20 + (dh || 0));// - $(query).position().top - 0
+		    //var height = (wheight - $(query).position().top - 20 + (dh || 0));// - $(query).position().top - 0
 		    var wwidth = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
 		    var width = (wwidth - $(query).position().left - 50 + (dw || 0));
 		    var col_width = Leftovers.table.columnSummaryWidth+ (dw || 0);

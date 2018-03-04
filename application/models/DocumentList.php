@@ -5,8 +5,8 @@
  * @author Baycik
  */
 class DocumentList extends Catalog{
-    public $listFetch=['offset'=>'int','limit'=>'int','sortby'=>'string','sortdir'=>'(ASC|DESC)','filter'=>'json','mode'=>'string'];
-    public function listFetch($offset=0,$limit=50,$sortby='cstamp',$sortdir='DESC',$filter=null,$mode=''){
+    public $listFetch=['offset'=>'int','limit'=>'int','sortby'=>'string','sortdir'=>'(ASC|DESC)','filter'=>'json','mode'=>'string','colmode'=>'string'];
+    public function listFetch($offset=0,$limit=50,$sortby='cstamp',$sortdir='DESC',$filter=null,$mode='',$colmode=''){
 	$fields=['cstamp','doc_num','label'];
 	if( empty($sortby) ){
 	    $sortby='cstamp';
@@ -27,6 +27,15 @@ class DocumentList extends Catalog{
 	    $andwhere.=" AND path LIKE '$assigned_path%'";
 	}
 	$active_company_id=$this->Hub->acomp('company_id');
+	
+	$advanced_cols="";
+	$advanced_tables="";
+	
+	if($colmode=='advanced'){
+	    
+	} else {
+	    
+	}
 	
 	
 	$having=$this->makeFilter($filter);

@@ -1,93 +1,143 @@
 <script>
-App.page_mtrade_document_list=(function(){
-    var require=[
-	"js/slick/lib/jquery.event.drag-2.3.0.js",
-	["js/slick/slick.core.js",
-	"js/slick/slick.grid.js",
-	"js/slick/plugins/slick.rowselectionmodel.js",
-	"js/slick/slick.editors.js",
-	"js/slick/slickinfinite.js"]
-    ];
-    var DocList={
-	init:function(){
-	    var frm={
-		round:function(num){
-		    return isNaN(num)?'':Number.parseFloat(num).toFixed(2);
-		},
-		tooltip:function(row, cell, value, columnDef, dataContext){
-		    if( !value ){
-			return '';
+    App.page_mtrade_document_list = (function () {
+	var require = [
+	    "js/slick/lib/jquery.event.drag-2.3.0.js",
+	    ["js/slick/slick.core.js",
+		"js/slick/slick.grid.js",
+		"js/slick/plugins/slick.rowselectionmodel.js",
+		"js/slick/slick.editors.js",
+		"js/slick/slickinfinite.js"]
+	];
+	var DocList = {
+	    init:function(){
+		DocList.table.init();
+	    },
+	    table: {
+		frm:{
+		    round: function (num) {
+			return isNaN(num) ? '' : Number.parseFloat(num).toFixed(2);
+		    },
+		    tooltip: function (row, cell, value, columnDef, dataContext) {
+			if (!value) {
+			    return '';
+			}
+			var parts = value.split(' ');
+			var cmd = parts.shift();
+			if (cmd) {
+			    var style = 'max-width:16px;height:auto';
+			    return '<img src="img/' + cmd + '.png" style="' + style + '" title="' + parts.join(' ') + '">';
+			} else {
+			    return '';
+			}
+		    },
+		    dateFormatter: function (row, cell, value, columnDef, dataContext) {
+			var date_parts = value.split(' ')[0].split('-');
+			var date = date_parts[2] + '.' + date_parts[1] + '.' + date_parts[0];
+			return '<span title="' + value.split(' ')[1] + '">' + date + '</span>';
 		    }
-		    var parts = value.split(' ');
-		    var cmd = parts.shift();
-		    if (cmd){
-			var style='max-width:16px;height:auto';
-			return '<img src="img/' + cmd + '.png" style="'+style+'" title="' + parts.join(' ') + '">';
-		    }
-		    else{
-			return '';
-		    }	    
 		},
-		dateFormatter:function(row, cell, value, columnDef, dataContext){
-		    var date_parts=value.split(' ')[0].split('-');
-		    var date=date_parts[2]+'.'+date_parts[1]+'.'+date_parts[0];
-		    return '<span title="'+value.split(' ')[1]+'">'+date+'</span>';
+		columnMode: App.store('document_list_table_mode') || 'simple',
+		init: function () {
+		    var settings = {
+			columns: [],
+			options: {
+			    enableCellNavigation: true,
+			    enableColumnReorder: false,
+			    enableFilter: true,
+			    multiSelect: false,
+			    url: 'DocumentList/listFetch',
+			    explicitInitialization: true
+			}
+		    };
+		    $("#doclist_sg_tools .icon-refresh").click(function () {
+			DocList.grid.reload();
+		    });
+		    DocList.grid = $("#doclist_sg").slickgrid(settings);
+		    DocList.grid.onSelectedRowsChanged.subscribe(function (e, selection) {
+			var doclistRow = selection.grid.getDataItem(selection.rows[0]);
+			App.Document.init(doclistRow.doc_type);
+			App.Document.load(doclistRow.doc_id);
+		    });
+		    App.Topic('passiveCompanySelected').subscribe(function (company) {
+			DocList.grid.updateOptions({params: {mode: 'show_only_pcomp_docs'}});
+			DocList.grid.reload();
+		    });
+		    App.Topic('passiveCompanyReset').subscribe(function (company) {
+			DocList.grid.updateOptions({params: {mode: ''}});
+			DocList.grid.reload();
+		    });
+		    DocList.table.render();
+		    DocList.grid.init();
+		    DocList.grid.reload();
+		    $("#document_list_adv_check").switchbutton({
+			checked: (DocList.table.columnMode === 'simple') ? 0 : 1,
+			onChange: function (is_on) {
+			    if (is_on) {
+				DocList.table.columnMode = 'advanced';
+				App.store('document_list_table_mode', 'advanced');
+			    } else {
+				DocList.table.columnMode = 'simple';
+				App.store('document_list_table_mode', 'simple');
+			    }
+			    DocList.table.render();
+			    DocList.grid.reload();
+			}
+		    });
+		},
+		columnsGet:function(){
+                    var columns_lev1=[
+                        {id: "doc_type_icon", field: "doc_type_icon", name: "", width: 25, formatter: DocList.table.frm.tooltip},
+			{id: "cstamp", field: "cstamp", name: "Дата", width: 70, sortable: true, formatter: DocList.table.frm.dateFormatter},
+			{id: "doc_num", field: "doc_num", name: "Номер", width: 50, sortable: true, cssClass: 'slick-align-right'},
+			{id: "doc_total", field: "doc_total", name: "Сумма", width: 70, sortable: true, cssClass: 'slick-align-right'},
+			{id: "trans_status", field: "trans_status", name: "Оплачен", width: 25, sortable: true, formatter: DocList.table.frm.tooltip},
+                    ];
+                    var columns_adv=[
+			{id: "pcomp_label", field: "pcomp_label", name: "Контрагент", width: 120},
+			{id: "is_commited", field: "is_commited", name: "Проведен", width: 25, formatter: DocList.table.frm.tooltip},
+			{id: "doc_type_name", field: "doc_type_name", name: "Тип документа", sortable: true, width: 150},
+			{id: "views", field: "views", name: "Напечатано", width: 70}
+                    ];
+                    var columns=columns_lev1;
+		    if( DocList.table.columnMode==='advanced' ){
+			columns=columns.concat(columns_adv);
+		    }
+                    return columns;
+		},
+		render:function(){
+		    DocList.grid.updateOptions({params:{colmode:DocList.table.columnMode}});
+		    var cols=DocList.table.columnsGet();
+                    //console.log(cols);
+                    DocList.table.columnSummaryWidth=10;
+                    for( var i in cols ){
+                        DocList.table.columnSummaryWidth+=cols[i].width;
+                    }
+		    DocList.grid.setColumnsAndFilters(cols);
+		    DocList.table.setDimensions("#doclist_sg",20,0);
+		},
+		setDimensions:function(query, dw, dh){
+		    var wheight = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
+		    //var height = (wheight - $(query).position().top - 20 + (dh || 0));// - $(query).position().top - 0
+		    var wwidth = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
+		    var width = (wwidth - $(query).position().left - 50 + (dw || 0));
+		    var col_width = DocList.table.columnSummaryWidth+ (dw || 0);
+		    $(query).css('height', wheight + 'px');
+		    $(query).css('width', Math.min(width,col_width) + 'px');
 		}
-	    };
-	    var settings={
-		columns:[
-		    {id:"pcomp_label", field: "pcomp_label",name: "Контрагент", width: 120 },
-		    {id:"doc_type_icon", field: "doc_type_icon",name: "", width: 25,formatter:frm.tooltip},
-		    {id:"cstamp", field: "cstamp",name: "Дата",  width: 70, sortable: true,formatter:frm.dateFormatter },
-		    {id:"doc_num", field: "doc_num",name: "Номер", width: 50, sortable: true,cssClass:'slick-align-right' },
-		    {id:"doc_total", field: "doc_total",name: "Сумма", width: 70, sortable: true,cssClass:'slick-align-right' },
-		    {id:"trans_status", field: "trans_status",name: "Оплачен", width: 25, sortable: true,formatter:frm.tooltip},
-		    {id:"is_commited", field: "is_commited",name: "Проведен", width: 25,formatter:frm.tooltip},
-		    {id:"doc_type_name", field: "doc_type_name",name: "Тип документа", sortable: true, width: 150 },
-		    {id:"views", field: "views",name: "Напечатано", width: 70}
-
-		],
-		options:{
-		    enableCellNavigation: true,
-		    enableColumnReorder: false,
-		    enableFilter:true,
-		    multiSelect :false,
-		    url:'DocumentList/listFetch'
-		}
-	    };
-	    var h = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
-	    $("#doclist_sg").css('height',(h-$("#doclist_sg").position().top-30)+'px');
-	    $("#doclist_sg_tools .icon-refresh").click(function(){
-		DocList.grid.reload();
-	    });
-	    DocList.grid=$("#doclist_sg").slickgrid(settings);
-	    DocList.grid.onSelectedRowsChanged.subscribe(function(e,selection){
-		var doclistRow=selection.grid.getDataItem(selection.rows[0]);
-		App.Document.init(doclistRow.doc_type);
-		App.Document.load(doclistRow.doc_id);
-	    });
-	    App.Topic('passiveCompanySelected').subscribe(function(company){
-		DocList.grid.updateOptions({params:{mode:'show_only_pcomp_docs'}});
-		DocList.grid.reload();
-	    });
-	    App.Topic('passiveCompanyReset').subscribe(function(company){
-		DocList.grid.updateOptions({params:{mode:''}});
-		DocList.grid.reload();
+	    }
+	};
+	function init() {
+	    DocList.init();
+	    $("#Document").load("page/mtrade/document.html", function () {
+		App.Document.init('sell');
+		App.Document.load(7180);
 	    });
 	}
-    };
-    function init(){
-	DocList.init();
-	$("#Document").load("page/mtrade/document.html",function(){
-	    App.Document.init('sell');
-	    App.Document.load(7180);
-	});
-    }
-    return {
-	require:require,
-	init:init
-    };
-})();
+	return {
+	    require: require,
+	    init: init
+	};
+    })();
 
 
 
@@ -118,6 +168,7 @@ App.page_mtrade_document_list=(function(){
 		<img src="img/table16.png" style="width:16px;height: 16px;"> Документы
 	    </div>
 	    <div style="float: right">
+		Полный режим <input id="document_list_adv_check" class="easyui-switchbutton" onText="Да" offText="Нет">
 		<span class="icon-24 icon-refresh" title="Обновить"> </span> 
 	    </div>
 	</div>
