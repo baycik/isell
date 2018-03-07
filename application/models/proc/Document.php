@@ -962,7 +962,7 @@ class Document extends Data {
         $this->Base->query($sql);
     }
     protected function footerGet($mode){
-        $this->entriesTmpCreate(false,true);
+        $this->entriesTmpCreate(false,false);
         $sql="SELECT
                 ROUND(SUM(weight),2) total_weight,
                 ROUND(SUM(volume),2) total_volume,
@@ -1271,7 +1271,8 @@ class Document extends Data {
 	if ($this->Base->pcomp('curr_code') == $this->Base->acomp('curr_code')) {
 	    $amount_alt = 0;
 	} else {
-	    $amount_alt = $amount / $this->doc('doc_ratio');
+	    $amount_alt = $amount;
+            $amount=$amount_alt * $this->doc('doc_ratio');
 	}
 	$doc_id = $this->doc('doc_id');
 	$trans_type = $acc_debit_code . "_" . $acc_credit_code;
