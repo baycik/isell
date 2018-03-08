@@ -116,6 +116,8 @@ class Stock_price_list extends Catalog{
 	if( $block->type!='category' ){
 	    return $block;
 	}
+        
+        
 	$pcomp_id=$this->Hub->pcomp('company_id');
 	$dollar_ratio=$this->Hub->pref('usd_ratio');
 	$main_curr_code=$this->Hub->acomp('curr_code');
@@ -125,14 +127,8 @@ class Stock_price_list extends Catalog{
                 CEIL(CHAR_LENGTH(ru)/50) rows_occupied, 
 		product_quantity<>0 in_stock,
 		product_img,
-                (SELECT ROUND(
-                        sell
-                            *IF(curr_code<>'' AND curr_code<>'$main_curr_code',$dollar_ratio,1)
-                            *IF(discount,discount,1)
-                    ,2) 
-                    FROM price_list pl
-                    WHERE pl.product_code=se.product_code AND (pl.label='{$this->price_label}' OR pl.label='')
-                    ORDER BY label DESC LIMIT 1) product_price
+                REPLACE(FORMAT(GET_PRICE(se.product_code,'$pcomp_id',$dollar_ratio), 2), ',', '') product_price,
+                REPLACE(FORMAT(GET_SELL_PRICE(se.product_code,'$pcomp_id',$dollar_ratio), 2), ',', '') promo_product_price
 	    FROM
 		stock_entries se
 		    JOIN

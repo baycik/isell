@@ -1314,8 +1314,19 @@ class Document extends Data {
     ///////////////////////////////////
 
     public function getProductInvoicePrice($product_code) {
-	$price = $this->getProductPrice($product_code);
-	return $this->doc('doc_type') == 1 ? $price['sell'] : $price['buy'];
+        $doc_ratio=$this->doc('doc_ratio');
+        if( $this->doc('doc_type') == 1 || $this->doc('doc_type') == 3 ){
+            $pcomp_id=$this->Base->pcomp("company_id");
+            return $this->Base->get_row("SELECT ROUND(GET_SELL_PRICE('$product_code','$pcomp_id',$doc_ratio)/{$this->vat_rate},2) sell",0);
+        } else {
+            $def_curr_code = $this->Base->acomp('curr_code');
+            $pcomp_price_label=$this->Base->pcomp('price_label');
+            return $this->Base->get_row("SELECT 
+                buy/{$this->vat_rate}*IF(curr_code<>'' AND curr_code<>'$def_curr_code',$doc_ratio,1) buy FROM price_list 
+                WHERE product_code='$product_code' AND (label='$pcomp_price_label' OR label='')
+                ORDER BY label='$pcomp_price_label' DESC
+                LIMIT 1",0);
+        }
     }
 
     protected function getProductSellSelfPrice($product_code, $invoice_qty) {

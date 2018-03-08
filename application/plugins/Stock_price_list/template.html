@@ -38,6 +38,9 @@
 	font-size: 16px;
 	font-family: Calibri,Arial;
     }
+    .promo .product_code,.promo .product_name,.promo .product_price{
+        background-color: #6f6;
+    }
 </style>
 <div class="page">
     <div>
@@ -48,10 +51,17 @@
         {loop name="v->price_blocks"}
             {if="$value->type=='category' && $num=count($value->rows)"}
                 {loop name="$value->rows"}
-                    <tr style="height: {$value1->rows_height}px;">
+                    <tr style="height: {$value1->rows_height}px;" {if="$value->product_price!=$value->promo_product_price"}class="promo"{/if}>
                         <td class="product_code" {if="$value->in_stock"}style="color:black"{/if}>{$value->product_code}</td>
                         <td class="product_name">{$value->product_name}</td>
-                        <td class="product_price"> {$value->product_price}</td>
+                        <td class="product_price"> 
+                            {if="$value->product_price!=$value->promo_product_price"}
+                                <s>{$value->product_price}</s>
+                                <b>{$value->promo_product_price}</b>
+                            {else}
+                                {$value->product_price}
+                            {/if}
+                        </td>
                         {if="$counter==0"}
                         <td class="product_imgs" rowspan="{$num}">
                             <div style="overflow: hidden;height1:{$value1->rows_count*23}px;">
