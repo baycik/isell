@@ -157,6 +157,10 @@ class DocumentView extends DocumentItems{
 	    /*if sell document use straight seller=acomp else buyer=pcomp*/
 	    $acomp=$Company->companyGet( $this->doc('active_company_id') );
 	    $pcomp=$Company->companyGet( $this->doc('passive_company_id') );
+            
+            $AccountsData=$this->Hub->load_model('AccountsData');
+            $doc_view->debt=$AccountsData->accountBalanceGet('361',$this->doc('passive_company_id'));
+            
 	    $reciever_email=$pcomp->company_email;
 	} else {
 	    $pcomp=$Company->companyGet( $this->doc('active_company_id') );

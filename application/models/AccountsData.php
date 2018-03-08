@@ -1,5 +1,4 @@
 <?php
-require_once 'AccountsCore.php';
 class AccountsData extends AccountsCore{
     public $min_level=1;
     
@@ -128,5 +127,20 @@ class AccountsData extends AccountsCore{
     public $articleListFetch=[];
     public function articleListFetch(){
         return $this->get_list("SELECT article_name FROM acc_article_list");
+    }
+    
+        
+    public function accountBalanceGet($acc_code,$pcomp_id,$fdate='NOW()'){
+        $active_company_id=$this->Hub->acomp('company_id');
+        $sql="SELECT 
+		    FORMAT(SUM(IF($acc_code=acc_debit_code,-amount,amount)),2,'ru_RU') total,
+                    FORMAT(SUM( IF(trans_status=1,IF($acc_code=acc_debit_code,-amount,amount),0) ),2,'ru_RU') expired
+		FROM 
+                    acc_trans
+		WHERE 
+                    (acc_debit_code=$acc_code OR acc_credit_code=$acc_code) 
+                    AND active_company_id=$active_company_id 
+                    AND passive_company_id='$pcomp_id'";
+        return $this->get_row($sql);
     }
 }

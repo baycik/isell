@@ -5,7 +5,6 @@
  *
  * @author Baycik
  */
-include 'Catalog.php';
 class AccountsCore extends Catalog{
     public $min_level=1;
     protected function getAccountProperties( $acc_code, $calc_balance=false, $use_passive_filter=false ) {
