@@ -130,17 +130,23 @@ class AccountsData extends AccountsCore{
     }
     
         
-    public function accountBalanceGet($acc_code,$pcomp_id,$fdate='NOW()'){
+    public function clientDebtGet(){
+        $acc_code='361';
         $active_company_id=$this->Hub->acomp('company_id');
-        $sql="SELECT 
-		    FORMAT(SUM(IF($acc_code=acc_debit_code,-amount,amount)),2,'ru_RU') total,
-                    FORMAT(SUM( IF(trans_status=1,IF($acc_code=acc_debit_code,-amount,amount),0) ),2,'ru_RU') expired
+        $passive_company_id=$this->Hub->pcomp('company_id');
+        $deferment=$this->Hub->pcomp('deferment');
+        $sql="SELECT FORMAT(total,2,'ru_RU') total,FORMAT(total-allowed,2,'ru_RU') expired FROM
+                (SELECT 
+		    SUM( IF($acc_code=acc_debit_code,amount,-amount) ) total,
+                    SUM(
+                        IF(DATEDIFF(NOW(),cstamp)<=$deferment AND (trans_status=1 OR trans_status=2),IF(acc_debit_code=361,amount,0),0)
+		    ) allowed
 		FROM 
                     acc_trans
 		WHERE 
                     (acc_debit_code=$acc_code OR acc_credit_code=$acc_code) 
                     AND active_company_id=$active_company_id 
-                    AND passive_company_id='$pcomp_id'";
+                    AND passive_company_id='$passive_company_id') t";
         return $this->get_row($sql);
     }
 }

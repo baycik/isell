@@ -159,7 +159,7 @@ class DocumentView extends DocumentItems{
 	    $pcomp=$Company->companyGet( $this->doc('passive_company_id') );
             
             $AccountsData=$this->Hub->load_model('AccountsData');
-            $doc_view->debt=$AccountsData->accountBalanceGet('361',$this->doc('passive_company_id'));
+            $doc_view->debt=$AccountsData->clientDebtGet();
             
 	    $reciever_email=$pcomp->company_email;
 	} else {
