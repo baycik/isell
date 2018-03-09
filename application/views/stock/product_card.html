@@ -52,7 +52,7 @@
 	    unpack:function(labeled_prices){
 		App.renderTpl('page_stock_product_card_pricetable',{labeled_prices:labeled_prices});
                 for(var i in labeled_prices){
-                    $("#page_stock_product_card_pricetable select[name=curr_code-"+labeled_prices[i].label+"]").val(labeled_prices[i].curr_code);
+                    $("#page_stock_product_card_pricetable select[name='curr_code-"+labeled_prices[i].label+"']").val(labeled_prices[i].curr_code);
                 }
 	    },
 	    pack:function(){
