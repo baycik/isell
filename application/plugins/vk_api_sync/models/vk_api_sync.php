@@ -75,7 +75,7 @@ class vk_api_sync extends PluginManager{
     private function uploadProduct($item){
 	$company_id=$this->settings->pcomp_id;//company_id for wich we will retrieve prices
 	$usd_ratio=$this->Hub->pref('usd_ratio');
-	$price=$this->get_value("SELECT GET_PRICE('{$item->product_code}',$company_id,$usd_ratio)");
+	$price=$this->get_value("SELECT GET_SELL_PRICE('{$item->product_code}',$company_id,$usd_ratio)");
 	$description=$this->stockRating($item->product_code, $item->description);
 	$this->market_id=-abs($this->settings->market_id);
 	

@@ -45,7 +45,6 @@
 	access_token_get:function(){
 	    var client_id=$('#plugin_settings input[name=client_id]').val();
 	    var url='https://oauth.vk.com/authorize?redirect_uri=http://oauth.vk.com/blank.html&display=page&response_type=token&scope=widgets,wall,photos,friends,groups,market,offline&v=5.45&client_id='+client_id;
-	    console.log(url);
 	    window.open(url);
 	},
 	sync:function(){
