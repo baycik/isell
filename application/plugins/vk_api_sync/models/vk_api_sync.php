@@ -53,16 +53,16 @@ class vk_api_sync extends PluginManager{
     }
     private function stockRating($product_code,$description){
 	$stock_count=$this->get_value("SELECT product_quantity FROM stock_entries WHERE product_code='{$product_code}'");
-	if( $stock_count>300 ){
+	if( $stock_count>50 ){
 	    $level="★★★★★";
 	} else
-	if( $stock_count>100 ){
+	if( $stock_count>30 ){
 	    $level="★★★★☆";
 	} else
-	if( $stock_count>50 ){
+	if( $stock_count>15 ){
 	    $level="★★★☆☆";
 	} else 
-	if( $stock_count>10 ){
+	if( $stock_count>5 ){
 	    $level="★★☆☆☆";
 	}  else 
 	if( $stock_count>0 ){
