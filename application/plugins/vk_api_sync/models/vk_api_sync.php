@@ -7,19 +7,19 @@
  * Description: Синхронизация с маркетом на сайте Вконтакте
  * Author: baycik 2016
  * Author URI: http://isellsoft.com
+ * Trigger before: vk_api_sync
  */
-
-require_once 'models/PluginManager.php';
 require_once 'vk.php';
 class vk_api_sync extends PluginManager{
     public $settings;
     function __construct(){
-	$this->settings=$this->settingsDataFetch('vk_api_sync');
-	$this->market_id=-abs($this->settings->market_id);
+	$settings=$this->settingsDataFetch('vk_api_sync');
+	$this->settings=$settings->plugin_settings;
 	$this->vk=new Vk($this->settings);
 	header("Content-type: text/plain");
     }
     private function marketGetAll(){
+	$this->market_id=-abs($this->settings->market_id);
 	$offset=0;
 	$marketItems=[];
 	do{
@@ -77,6 +77,7 @@ class vk_api_sync extends PluginManager{
 	$usd_ratio=$this->Hub->pref('usd_ratio');
 	$price=$this->get_value("SELECT GET_PRICE('{$item->product_code}',$company_id,$usd_ratio)");
 	$description=$this->stockRating($item->product_code, $item->description);
+	$this->market_id=-abs($this->settings->market_id);
 	
 	if( !is_numeric($price) ){
 	    echo "<br> Не найден код: ".$item->product_code;
@@ -133,6 +134,8 @@ class vk_api_sync extends PluginManager{
 	$this->Hub->svar('vk_api_offset',$offset+$limit);
 	return count($items)-$offset;
     }
+    
+    public $syncProducts=[];
     public function syncProducts(){
 	$this_step=$this->Hub->svar('vk_api_next_step');
 	switch($this_step){
