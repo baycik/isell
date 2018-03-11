@@ -51,12 +51,9 @@
 	sync:function(){
 	    $('#vk_api_down_img').attr('src','img/loading_16.gif');
 	    $.post('vk_api_sync/syncProducts',function(result){
-		alert(result);
 		$('#vk_api_down_img').attr('src','img/down.png');
 		App.vk_api.currStatus=result+App.vk_api.currStatus;
-		
 		$('#vk_api_status').html(App.vk_api.currStatus);
-		
 		if( result.indexOf('--')>-1 && App.vk_api.continue ){
 		    App.vk_api.sync();
 		} else {
