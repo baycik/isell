@@ -61,6 +61,11 @@
 	    });
 	},
 	start:function(){
+            if( !App.pcomp || !App.pcomp.company_id ){
+                alert("Выберите клиента цены которого нужно загрузить!");
+                App.user.pcompSelectionDialog();
+                return;
+            }
 	    if(!confirm("Обновить информацию о ценах и наличии?\n\nБудут использованы цены клиента: "+$("input[name=pcomp_name]").val())){
 		return;
 	    }
