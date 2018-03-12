@@ -38,18 +38,18 @@ class AccountsCore extends Catalog{
         return $this->get_row($sql);
     }
     private function ledgerCreate( $acc_code, $using_alt_currency=false, $use_passive_filter=false ){
-	$this->check($acc_code);
-	$this->check($using_alt_currency,'bool');
 	$active_company_id=$this->Hub->acomp('company_id');
 	$passive_filter="";
 	if( $use_passive_filter ){
 	    $passive_filter=" AND passive_company_id='".$this->Hub->pcomp('company_id')."'";
 	}
 	
-	$this->db->query("SET @acc_code:=?, @use_alt_amount=?;",[$acc_code,$using_alt_currency]);
-	$this->db->query("DROP TEMPORARY TABLE IF EXISTS tmp_ledger;");
-	$sql="CREATE TEMPORARY TABLE tmp_ledger ( INDEX(cstamp) ) ENGINE=MyISAM AS (
-	    SELECT 
+	$this->db->query("SET @acc_code:=?, @use_alt_amount=?,@row_total:=0.0",[$acc_code,$using_alt_currency]);
+	$this->db->query("DROP TEMPORARY TABLE IF EXISTS tmp_ledger;");#
+	$sql="CREATE TEMPORARY TABLE tmp_ledger ( INDEX(cstamp) ) AS (
+            SELECT *,
+                ROUND(@row_total:=@row_total+debit-credit,2) row_total
+            FROM(SELECT 
 		trans_id,
 		editable,
 		nick,
@@ -77,7 +77,9 @@ class AccountsCore extends Catalog{
 	    WHERE
 		(@acc_code = acc_debit_code OR @acc_code = acc_credit_code)
 		AND active_company_id='$active_company_id'
-		    $passive_filter)";
+		    $passive_filter
+            ORDER BY cstamp) t)";
+        
 	$this->query($sql);
     }
     private function ledgerGetSubtotals( $idate, $fdate, $having ){
