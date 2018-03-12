@@ -1,5 +1,5 @@
 <?php
-date_default_timezone_set('Europe/Kiev');
+//date_default_timezone_set('Europe/Kiev');
 spl_autoload_register(function ($class_name) {
     $filename=APPPATH.'models/'.$class_name . '.php';
     if( file_exists($filename) ){
