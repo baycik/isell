@@ -21,6 +21,10 @@ class DocumentCore extends DocumentUtils{
 	    $andwhere.=" AND path LIKE '$assigned_path%'";
 	}
 	$active_company_id=$this->Hub->acomp('company_id');
+        $amount_field='amount';
+        if( $this->Hub->pcomp('curr_code')!=$this->Hub->acomp('curr_code') ){
+            $amount_field='amount_alt';
+        }
 	$sql="
 	    SELECT 
 		doc_id,
@@ -28,7 +32,7 @@ class DocumentCore extends DocumentUtils{
 		DATE_FORMAT(dl.cstamp,'%d.%m.%Y') doc_date,
 		doc_num,
 		doc_type_name,
-		(SELECT amount 
+		(SELECT $amount_field 
 		    FROM 
 			acc_trans 
 			    JOIN 
