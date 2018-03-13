@@ -78,17 +78,18 @@ class vk_api_sync extends PluginManager{
 	$price=$this->get_value("SELECT GET_SELL_PRICE('{$item->product_code}',$company_id,$usd_ratio)");
 	$description=$this->stockRating($item->product_code, $item->description);
 	$this->market_id=-abs($this->settings->market_id);
+    	$product_name=$this->get_value("SELECT ru FROM prod_list WHERE product_code='{$item->product_code}'");
 	
 	if( !is_numeric($price) ){
 	    echo "<br> Не найден код: ".$item->product_code;
 	    $this->Hub->msg("Не найден код: ".$item->product_code);
 	    return true;
 	}
-	if( $price && $price!=$item->price->amount/100 || $description!=$item->description ){
+	if( $price && $price!=$item->price->amount/100 || $description!=$item->description  || $product_name!=$item->title){
 	    $product=[
 		'owner_id'=>$this->market_id,
 		'item_id'=>$item->id,
-		'name'=>$item->title,
+		'name'=>$product_name,
 		'description'=>$description,
 		'category_id'=>$item->category->id,
 		'price'=>$price,
