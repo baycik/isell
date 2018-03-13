@@ -68,7 +68,8 @@
 	},
 	selectTree: function () {
 	    var branch=$('#Ctree_tree').tree('getSelected');
-	    if( branch.company_id!==undefined ){
+            console.log(branch);
+	    if( branch.company_id>0 ){
 		Ctree.handler.notify('select', branch);
 		//Ctree.unselectCombo(branch.label);
 	    } else {
