@@ -40,6 +40,7 @@ class DocumentList extends Catalog{
 	
 	$having=$this->makeFilter($filter);
 	$sql="
+	    SELECT *,FORMAT(doc_total,2,'ru_RU') doc_total_frm FROM (
 	    SELECT 
 		doc_id,
 		doc_type,
@@ -73,7 +74,7 @@ class DocumentList extends Catalog{
 	    GROUP BY doc_id
 	    HAVING $having
 	    ORDER BY dl.is_commited,$sortby $sortdir
-	    LIMIT $limit OFFSET $offset";
+	    LIMIT $limit OFFSET $offset) t";
 	return $this->get_list($sql);
     }
 }
