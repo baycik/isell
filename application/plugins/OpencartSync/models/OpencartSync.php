@@ -13,8 +13,15 @@ class OpencartSync extends PluginManager{
     function __construct(){
 	$this->settings=$this->settingsDataFetch('OpencartSync');
     }
-    private function getProducts($page = 0){
-        $limit = 10000;
+    function init(){
+        $this->api_token=$this->Hub->svar('opencart_api_token');
+        if( !$this->api_token ){
+            $this->login();
+        }
+        echo 'Тoken:'.$this->api_token;
+    }
+/*    private function getProducts($page = 0){
+        $limit = 10;
         $offset = $limit * $page;
         $sql = "
             SELECT
@@ -52,10 +59,11 @@ class OpencartSync extends PluginManager{
             'login' => $this->settings->plugin_settings->login,
             'key' => $this->settings->plugin_settings->key
         );
-        $this->sendToGateway($postdata,$this->settings->plugin_settings->gateway_url.'/accept');
-    }
+        echo $this->sendToGateway($postdata,$this->settings->plugin_settings->gateway_url.'/accept');
+    }*/
 
-    private function sendToGateway($postdata,$url) {
+    private function sendToGateway($postdata=[],$getdata=[]) {
+        $url=$this->settings->plugin_settings->gateway_url."?".http_build_query($getdata);
         set_time_limit(120);
         $context = stream_context_create(
                 [
@@ -66,7 +74,78 @@ class OpencartSync extends PluginManager{
                     ]
                 ]
         );
-        echo file_get_contents($url, false, $context);
+        return file_get_contents($url, false, $context);
     }
-
+    
+    public $login=[];
+    public function login(){
+        $postdata = array(
+            'username' => $this->settings->plugin_settings->login,
+            'key' => $this->settings->plugin_settings->key
+        );
+        $getdata=[
+            'api_token'=>'',
+            'route'=>'api/login'
+        ];
+        $text=$this->sendToGateway($postdata,$getdata);
+        try{
+            $response= json_decode($text);
+        } catch (Exception $ex) {
+            die($ex.">>> ".$text);
+        }
+        if( $response && $response->api_token ){
+            $this->api_token=$response->api_token;
+            $this->Hub->svar('opencart_api_token',$response->api_token);
+            return true;
+        } else {
+            print('failed to login');
+            return false;
+        }
+    }
+    
+    public $cartAdd=[];
+    public function cartAdd(){
+        $postdata=[
+            'product_id'=>28,
+            'product_quantity'=>33
+        ];
+        $getdata=[
+            'route'=>'api/cart/add',
+            'api_token'=>$this->api_token
+        ];
+        header("Content-type:text/plain");
+        echo $this->sendToGateway($postdata, $getdata);
+    }
+    
+    public $productListGet=[];
+    public function productListGet(){
+        $postdata=[
+            'filter'=>json_encode([
+                'start'=>1,
+                'limit'=>2
+            ])
+        ];
+        $getdata=[
+            'route'=>'api/bayproduct/getProducts',
+            'api_token'=>$this->api_token
+        ];
+        header("Content-type:text/plain");
+        $text=$this->sendToGateway($postdata, $getdata);
+        print_r(json_decode($text));
+    }
+    
+    public $categoryListGet=[];
+    public function categoryListGet(){
+        $postdata=[
+        ];
+        $getdata=[
+            'route'=>'api/bayproduct/getCategories',
+            'api_token'=>$this->api_token
+        ];
+        header("Content-type:text/plain");
+        $text=$this->sendToGateway($postdata, $getdata);
+        
+        
+        print_r(json_decode($text));
+    }
 }
