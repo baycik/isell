@@ -11,6 +11,37 @@
 	var DocList = {
 	    init:function(){
 		DocList.table.init();
+		$(".x-doclist-tools").click(function (e) {
+		    var action = $(e.target).data('action');
+		    if (action) {
+			DocList.tools[action] && DocList.tools[action]();
+		    }
+		});
+		DocList.tools.swap_expand_collapse();
+	    },
+	    tools:{
+		reload:function(){
+		    DocList.grid.reload();
+		},
+		expand_collapse:function(){
+		    if (DocList.table.columnMode === 'advanced') {
+			DocList.table.columnMode = 'simple';
+			App.store('document_list_table_mode', 'simple');
+		    } else {
+			DocList.table.columnMode = 'advanced';
+			App.store('document_list_table_mode', 'advanced');
+		    }
+		    DocList.table.render();
+		    DocList.grid.reload();
+		    DocList.tools.swap_expand_collapse();
+		},
+		swap_expand_collapse:function(){
+		    if(DocList.table.columnMode === 'advanced'){
+			$(".x-doclist-tools .icon-expand").removeClass("icon-expand").addClass("icon-collapse");
+		    } else {
+			$(".x-doclist-tools .icon-collapse").removeClass("icon-collapse").addClass("icon-expand");
+		    }
+		}
 	    },
 	    table: {
 		frm:{
@@ -49,9 +80,6 @@
 			    explicitInitialization: true
 			}
 		    };
-		    $("#doclist_sg_tools .icon-refresh").click(function () {
-			DocList.grid.reload();
-		    });
 		    DocList.grid = $("#doclist_sg").slickgrid(settings);
 		    DocList.grid.onSelectedRowsChanged.subscribe(function (e, selection) {
 			var doclistRow = selection.grid.getDataItem(selection.rows[0]);
@@ -69,20 +97,6 @@
 		    DocList.table.render();
 		    DocList.grid.init();
 		    DocList.grid.reload();
-		    $("#document_list_adv_check").switchbutton({
-			checked: (DocList.table.columnMode === 'simple') ? 0 : 1,
-			onChange: function (is_on) {
-			    if (is_on) {
-				DocList.table.columnMode = 'advanced';
-				App.store('document_list_table_mode', 'advanced');
-			    } else {
-				DocList.table.columnMode = 'simple';
-				App.store('document_list_table_mode', 'simple');
-			    }
-			    DocList.table.render();
-			    DocList.grid.reload();
-			}
-		    });
 		},
 		columnsGet:function(){
                     var columns_lev1=[
@@ -107,7 +121,6 @@
 		render:function(){
 		    DocList.grid.updateOptions({params:{colmode:DocList.table.columnMode}});
 		    var cols=DocList.table.columnsGet();
-                    //console.log(cols);
                     DocList.table.columnSummaryWidth=0;
                     for( var i in cols ){
                         DocList.table.columnSummaryWidth+=cols[i].width+1;
@@ -116,12 +129,7 @@
 		    DocList.table.setDimensions("#doclist_sg",25,0);
 		},
 		setDimensions:function(query, dw, dh){
-		    var wheight = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
-		    //var height = (wheight - $(query).position().top - 20 + (dh || 0));// - $(query).position().top - 0
-		    var wwidth = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
-		    var width = (wwidth - $(query).position().left - 50 + (dw || 0));
 		    var col_width = DocList.table.columnSummaryWidth+ (dw || 0);
-		    $(query).css('height', 700 + 'px');
 		    $(query).css('width', col_width + 'px');
 		}
 	    }
@@ -140,24 +148,6 @@
     })();
 </script>
 <style>
-    /*
-    .slim-input input{
-	width:110px;
-    }
-    .slim-input select{
-	width:121px;
-	height:25px;
-    }
-    .slim-input .inp_group{
-	min-width:230px;
-	vertical-align: middle;
-    }
-    #doclist_document_entries_sg input{
-	width:100%;
-	border: none;
-    }*/
-    
-    
     #doclistgrid {
 	display: grid;
 	grid-template-columns: min-content min-content;
@@ -166,16 +156,16 @@
 </style>
 <div id="doclistgrid">
     <div>
-	<div id="doclist_sg_tools" class="transp60">
+	<div class="x-doclist-tools" class="transp60">
 	    <div style="float: left;font-weight: bold;padding-top: 8px;">
 		<img src="img/table16.png" style="width:16px;height: 16px;"> Документы
 	    </div>
 	    <div style="float: right">
-		Полный режим <input id="document_list_adv_check" class="easyui-switchbutton" onText="Да" offText="Нет">
-		<span class="icon-24 icon-refresh" title="Обновить"> </span> 
+		<span class="icon-24 icon-expand" data-action="expand_collapse" title="Полный/Сокращенный режим"> </span> 
+		<span class="icon-24 icon-refresh" data-action="reload" title="Обновить"> </span> 
 	    </div>
 	</div>
-	<div id="doclist_sg"></div>
+	<div id="doclist_sg" style="height:700px"></div>
     </div>
     <div style="vertical-align: top;width:800px;" id="Document" class="transp60"></div>
 </div>

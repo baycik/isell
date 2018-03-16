@@ -264,7 +264,7 @@ div .combobox-item-hover{
     font-size: 1px;
     height: 26px;
     width: 26px;
-    background-size: 24px 24px;
+    background-size: 24px 24px !important;
     line-height: 26px;
     margin-top: 0px;
     vertical-align: bottom;
@@ -352,7 +352,6 @@ div .combobox-item-hover{
 }
 .icon-export{
     background:url('../img/export.png') no-repeat center center;
-    background-size: 24px 24px;
 }
 .icon-duplicate{
     background:url('../img/copy.png') no-repeat center center;
@@ -385,10 +384,16 @@ div .combobox-item-hover{
     background: url('../img/file_download.png') no-repeat center center;
 }
 .icon-move{
-    background: url('../img/big_rightarrow.png') no-repeat center center;background-size: 24px 24px;
+    background: url('../img/big_rightarrow.png') no-repeat center center;
 }
 .icon-wallet{
-    background: url('../img/wallet.png') no-repeat center center;background-size: 24px 24px;
+    background: url('../img/wallet.png') no-repeat center center;
+}
+.icon-expand{
+    background: url('../img/expand.png') no-repeat center center;
+}
+.icon-collapse{
+    background: url('../img/collapse.png') no-repeat center center;
 }
 .link_button:hover{
     padding: 5px;
