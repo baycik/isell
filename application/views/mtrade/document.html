@@ -171,23 +171,46 @@
     App[holder_node_id].setHolderId( holder_node_id );
 </script>
 <style>
-    .slim-input input{
-	width:110px;
-    }
-    .slim-input select{
-	width:121px;
-	height:25px;
-    }
-    .slim-input .inp_group{
-	min-width:230px;
-	vertical-align: middle;
-    }
     #doclist_document_entries_sg input{
 	width:100%;
 	border: none;
     }
+    .sugg_img{
+	display:inline-block;
+	width:35px;
+    }
+    .sugg_code{
+	display: inline;
+	width:50px;
+	font-weight: bold;
+    }
+    .sugg_name{
+	width:450px;
+	display: inline-block;
+    }
+    .sugg_instock{
+	cursor: pointer;
+	min-height: 32px;
+    }
+    .sugg_outofstock{
+	cursor: pointer;
+	color: red;
+	min-height: 32px;
+    }
+    .sugg_price{
+	display: inline-block;
+	width:50px;
+	text-align: right;
+    }
+    .sugg_leftover{
+	display: inline-block;
+	width:50px;
+	text-align: right;
+	color:green;
+    }
+    
 </style>
-<div class="x-head slim-input"></div>
+<div class="x-head"></div>
 <div class="x-body"></div>
 <div class="x-foot"></div>
 <div class="x-views"></div>

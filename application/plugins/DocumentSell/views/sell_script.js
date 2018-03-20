@@ -126,9 +126,9 @@ body={
 		{id:"product_price_total", field: "product_price_total",name: "Цена", sortable: true, width: 70, cssClass:'slick-align-right',asyncPostRender:body.priceisloss, editor: Slick.Editors.Float},
 		{id:"product_sum_total", field: "product_sum_total",name: "Сумма", sortable: true, width: 80,cssClass:'slick-align-right', editor: Slick.Editors.Float},
 		{id:"row_status", field: "row_status",name: "!",sortable: true, width: 25,formatter:body.tooltip },
-		{id:"party_label",field:"party_label",name:"Партия",width:120, editor: Slick.Editors.Text},
-		{id:"analyse_origin",field:'analyse_origin',name:"Происхождение",width:70},
-		{id:"self_price",field:'self_price',name:"maliyet",width:60,cssClass:'slick-align-right'}
+		//{id:"party_label",field:"party_label",name:"Партия",width:120, editor: Slick.Editors.Text},
+		//{id:"analyse_origin",field:'analyse_origin',name:"Происхождение",width:70},
+		//{id:"self_price",field:'self_price',name:"maliyet",width:60,cssClass:'slick-align-right'}
 	    ],
 	    options:{
 		editable: true,
@@ -177,7 +177,13 @@ body={
     },
     suggestInit:function(){
 	function suggFormatter(row){
-	    return ' <b>'+row['product_code']+'</b> '+row['label']+' <b>[x'+row['product_spack']+']'+' <font color=green>'+row['product_quantity']+'</font></b>';
+	    var html ='<div class="sugg_'+(row['leftover']>0?'instock':'outofstock')+'">';
+	    html+='<div class="sugg_img"><img src="Storage/image_flush/?size=30x30&path=/dynImg/'+row['product_img']+'"></div>';
+	    html+='<div class="sugg_name"><div class="sugg_code">'+row['product_code']+'</div> '+row['product_name']+' [x'+row['product_spack']+row['product_unit']+']</div>';
+	    html+='<div class="sugg_price">'+Number(row.product_price_total).toFixed(2)+'</div>';
+	    html+='<div class="sugg_leftover">'+row['leftover']+row['product_unit']+'</div>';
+	    html+='</div>';
+	    return html;
 	};
 	var suggPrevCode='';
 	function suggOnselect( row ){
@@ -186,18 +192,21 @@ body={
 	};
 	$("#"+holderId+" .x-body .x-suggest").combobox({
 	    valueField: 'product_code',
-	    textField: 'product_code',
+	    textboxextField: 'product_code',
 	    formatter:suggFormatter,
 	    selectOnNavigation:false,
-	    url: 'DocumentSell/suggestFetch/',
+	    url: 'DocumentItems/suggestFetch/',
 	    panelHeight:'auto',
 	    mode: 'remote',
 	    method:'get',
 	    hasDownArrow:false,
-	    panelWidth:400,
+	    panelWidth:600,
 	    panelMinWidth:400,
 	    prompt:'код, название или штрихкод',
-	    onSelect: suggOnselect
+	    onSelect: suggOnselect,
+	    onBeforeLoad: function(param){
+		param.doc_id = doc_id;
+	    }
 	}).combobox('textbox').bind( 'keydown', function(e){
 	    if( e.keyCode===38 && $("#"+holderId+" .x-body .x-suggest").combobox('getValue')==='' ){
 		$("#"+holderId+" .x-body .x-suggest").combobox('setValue',suggPrevCode);
@@ -252,7 +261,7 @@ body={
 	var settings={
 	    columns:[
 		{id:"product_code", field: "product_code",width:110,name: "Код", sortable: true },
-		{id:"ru", field: "ru",name: "Название",width:400, sortable: true},
+		{id:"ru", field: "ru",name: "Название",width:330, sortable: true},
 		{id:"product_quantity", field: "product_quantity",width:70,name: "Остаток",cssClass:'slick-align-right', sortable: true,formatter:qty_color },
 		{id:"price", field: "price",name: "Цена",width:70, sortable: true,cssClass:'slick-align-right' }
 	    ],

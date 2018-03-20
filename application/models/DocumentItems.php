@@ -4,14 +4,13 @@ class DocumentItems extends DocumentCore{
     public $suggestFetch=['q'=>'string','offset'=>['int',0],'doc_id'=>['int',0]];
     public function suggestFetch($q,$offset,$doc_id,$transliterated=false){
 	$price_query="0";
-	if( $doc_id || $this->doc('doc_id') ){
+	if( $doc_id ){
+	    $this->selectDoc($doc_id);
 	    $pcomp_id=$this->doc('passive_company_id');
 	    $doc_ratio=$this->doc('doc_ratio');
-	    $price_query="GET_PRICE(product_code,{$pcomp_id},{$doc_ratio})";
 	} else if( $this->Hub->pcomp('company_id') ){
 	    $pcomp_id=$this->Hub->pcomp('company_id');
 	    $doc_ratio=$this->Hub->pref('usd_ratio');
-	    $price_query="GET_PRICE(product_code,{$pcomp_id},{$doc_ratio})";
 	}
 	$where="1";
 	if( strlen($q)==13 && is_numeric($q) ){
@@ -37,7 +36,7 @@ class DocumentItems extends DocumentCore{
 		product_quantity leftover,
                 product_img,
 		product_unit,
-		$price_query product_price_total
+		GET_SELL_PRICE(product_code,{$pcomp_id},{$doc_ratio}) product_price_total
 	    FROM
 		stock_entries
 		    JOIN
