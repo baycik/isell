@@ -99,8 +99,8 @@ class PluginManager extends Catalog{
 	return $this->db->affected_rows();
     }
     
-    public $activate=['plugin_system_name'=>'string'];
-    public function activate($plugin_system_name){
+    public $activate_plugin=['plugin_system_name'=>'string'];
+    public function activate_plugin($plugin_system_name){
 	$this->Hub->set_level(4);
 	$data=[
 	    'plugin_system_name'=>$plugin_system_name,
@@ -112,8 +112,8 @@ class PluginManager extends Catalog{
 	return $ok;
     }
     
-    public $deactivate=['plugin_system_name'=>'string'];
-    public function deactivate($plugin_system_name){
+    public $deactivate_plugin=['plugin_system_name'=>'string'];
+    public function deactivate_plugin($plugin_system_name){
 	$this->Hub->set_level(4);
 	$data=[
 	    'plugin_system_name'=>$plugin_system_name,
@@ -125,8 +125,8 @@ class PluginManager extends Catalog{
 	return $ok;
     }
     
-    public $install=['plugin_system_name'=>'string'];
-    public function install($plugin_system_name){
+    public $install_plugin=['plugin_system_name'=>'string'];
+    public function install_plugin($plugin_system_name){
 	$this->Hub->set_level(4);
 	$headers=$this->get_plugin_headers( $plugin_system_name );
 	$sql="REPLACE INTO 
@@ -142,8 +142,8 @@ class PluginManager extends Catalog{
 	return $ok;
     }
     
-    public $uninstall=['plugin_system_name'=>'string'];
-    public function uninstall($plugin_system_name){
+    public $uninstall_plugin=['plugin_system_name'=>'string'];
+    public function uninstall_plugin($plugin_system_name){
 	$this->Hub->set_level(4);
 	$ok=$this->delete('plugin_list',['plugin_system_name'=>$plugin_system_name]);
 	$this->plugin_do($plugin_system_name, 'uninstall');
