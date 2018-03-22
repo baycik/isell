@@ -5,3 +5,4 @@
 
 DROP TABLE `supply_list`;
 DROP TABLE `supplier_list`;
+DROP TABLE `supply_order`;
