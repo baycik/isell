@@ -91,9 +91,23 @@ class OpencartSync extends OpencartSyncUtils{
             'route'=>'api/sync/getProductDigests',
             'api_token'=>$this->api_token
         ];
-        $json_digest=$this->sendToGateway($postdata,$getdata);
-        $this->query("UPDATE plugin_list SET plugin_json_data='$json_digest' WHERE plugin_system_name='OpencartSync'");
-        
+        $json=$this->sendToGateway($postdata,$getdata);
+        if( $json ){
+            $product_digest= json_decode($json);
+            foreach( $product_digest as $product ){
+                $sql="INSERT 
+                        plugin_opencart_sync_list
+                    SET 
+                        remote_product_id='{$product->product_id}',
+                        remote_model='{$product->model}',
+                        remote_field_hash='{$product->field_hash}',
+                        remote_img_hash='{$product->img_hash}',
+                        remote_img_time='{$product->img_time}'";
+                $this->query($sql);
+            }
+            return true;
+        }
+        return false;
     }
 
     private function sendToGateway($postdata=[],$getdata=[]) {
@@ -111,26 +125,28 @@ class OpencartSync extends OpencartSyncUtils{
         return file_get_contents($url, false, $context);
     }
     
-    public $sync=[];
-    public function sync(){
-        $limit=10;
-        $current_step='';//$this->Hub->svar('ocsync_current_step');
-        $current_offset=$this->Hub->svar('ocsync_current_offset');
+    public $sync=['step'=>'string'];
+    public function sync($current_step){
+        //$limit=10;
+        //$current_step='';//$this->Hub->svar('ocsync_current_step');
+        //$current_offset=$this->Hub->svar('ocsync_current_offset');
         if( !$current_step ){
             $current_step='fetch_digest';
         }
         switch($current_step){
             case 'fetch_digest':
-                $this->productDigestGet();
+                if( $this->productDigestGet() ){
+                    $current_step='send_products';
+                }
                 break;
             case 'send_products':
                 $this->productSend($current_offset,$limit);
                 break;
         }
-        
+        header("Location: ./?step=$current_step");
         //$current_offset+=$limit;
-        $this->Hub->svar('ocsync_current_step',$current_step);        
-        $this->Hub->svar('ocsync_current_offset',$current_offset);
+        //$this->Hub->svar('ocsync_current_step',$current_step);        
+        //$this->Hub->svar('ocsync_current_offset',$current_offset);
     }
 
 
