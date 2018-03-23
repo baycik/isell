@@ -37,53 +37,82 @@ class OpencartSync extends OpencartSyncUtils{
         }
         //echo 'Тoken:'.$this->api_token;
     }
-    private function productSend($current_offset,$limit){
+    private function productSend($current_offset,$limit=3){
         $pcomp_id=$this->settings->plugin_settings->pcomp_id;
         $dratio=$this->settings->plugin_settings->dollar_ratio;
         $sql = "SELECT
-                    product_code model,
-                    ru name,
-                    GET_SELL_PRICE(product_code,'$pcomp_id','$dratio') price,
-                    product_quantity quantity,
-                    product_volume volume,
-                    product_weight weight,
-                    product_barcode ean,
-                    analyse_brand manufacturer_name,
-                    product_img
+                    posl.*,
+                    model,ean,quantity,price,weight,name,manufacturer_name,
+                    MD5(CONCAT(ean,quantity,price,weight,name,manufacturer_name)) local_field_hash,
+                    product_img local_img_filename
                 FROM
-                    stock_entries se
-                        JOIN
-                    prod_list USING(product_code)
-                LIMIT $limit OFFSET $current_offset";
+                    (SELECT
+                        product_code model,
+                        product_barcode ean,
+                        product_quantity quantity,
+                        GET_SELL_PRICE(product_code,'$pcomp_id','$dratio') price,
+                        product_weight weight,
+                        ru name,
+                        product_volume volume,
+                        analyse_brand manufacturer_name,
+                        product_img
+                    FROM
+                        stock_entries se
+                            JOIN
+                        prod_list USING(product_code)
+                    WHERE product_code like '241310%'
+                    LIMIT $limit OFFSET $current_offset) t
+                LEFT JOIN
+                    plugin_opencart_sync_list posl ON remote_model=model";
         $products=$this->get_list($sql);
         
-        
+        $request=[];
+        $requestsize_total=0;
+        $requestsize_limit=1*1024*1024;
         $Storage=$this->Hub->load_model('Storage');
         foreach($products as $product){
-            if( $product->product_img ){
-                $product->img_time=$Storage->file_time("dynImg/".$product->product_img);
-                $product->img_checksum=$Storage->file_checksum("dynImg/".$product->product_img);
-                $product->img_filename=$this->filename_prepare("$product->model $product->name");
+            $requestsize_total+=500;//500 bytes for text fields
+            if( $product->local_img_filename ){
+                $product->local_img_time=$Storage->file_time("dynImg/".$product->local_img_filename);
+                $product->local_img_hash=$Storage->file_checksum("dynImg/".$product->local_img_filename);
+                $this->productImageSync($product);
+                if( $requestsize_total+$product->local_img_b64size>$requestsize_limit ){
+                    continue;
+                }
+                $requestsize_total+=$product->local_img_b64size;
             }
+            $request[]=$product;
         }
-        
-        print_r($products);
-        die();
+       // print_r($request);
         
         
         $postdata=[
-            'products'=>json_encode($products)
+            'products'=>json_encode($request)
         ];
         $getdata=[
             'route'=>'api/sync/updateProducts',
             'api_token'=>$this->api_token
         ];
-        //header("Content-type:text/plain");
-        //echo $this->Hub->svar('ocsync_current_step');
-        //echo $this->Hub->svar('ocsync_current_offset');
         echo $this->sendToGateway($postdata,$getdata);
     }
-    
+    private function productImageSync( &$product ){
+        if( $product->remote_img_hash!=$product->local_img_hash ){
+            if( $product->local_img_time>$product->remote_img_time ){
+                $ext = pathinfo($product->local_img_filename, PATHINFO_EXTENSION);
+                $product->remote_img_filename=$this->filename_prepare("$product->model $product->name").".$ext";
+                $file_data=$this->Storage->file_restore('dynImg/'.$product->local_img_filename);
+                $product->local_img_data= base64_encode($file_data);
+                $product->local_img_b64size=strlen($product->local_img_data);
+            }
+        }
+                        
+    }
+
+
+
+
+
+
     private function productDigestGet(){
         $postdata=[
         ];
@@ -125,11 +154,8 @@ class OpencartSync extends OpencartSyncUtils{
         return file_get_contents($url, false, $context);
     }
     
-    public $sync=['step'=>'string'];
-    public function sync($current_step){
-        //$limit=10;
-        //$current_step='';//$this->Hub->svar('ocsync_current_step');
-        //$current_offset=$this->Hub->svar('ocsync_current_offset');
+    public $sync=['step'=>'string','offset'=>['int',0]];
+    public function sync($current_step,$current_offset){
         if( !$current_step ){
             $current_step='fetch_digest';
         }
@@ -137,17 +163,36 @@ class OpencartSync extends OpencartSyncUtils{
             case 'fetch_digest':
                 if( $this->productDigestGet() ){
                     $current_step='send_products';
+                    $current_offset=0;
                 }
                 break;
             case 'send_products':
-                $this->productSend($current_offset,$limit);
+                $this->productSend($current_offset);
                 break;
         }
-        header("Location: ./?step=$current_step");
-        //$current_offset+=$limit;
-        //$this->Hub->svar('ocsync_current_step',$current_step);        
-        //$this->Hub->svar('ocsync_current_offset',$current_offset);
+        //header("Location: ./?step=$current_step&offset=$current_offset");
     }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
 
 
     public $login=[];
