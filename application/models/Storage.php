@@ -63,7 +63,7 @@ class Storage extends CI_Model {
     
     public function file_checksum($filename){
         $path=$this->storageFolder . "/" .$filename;
-        return file_exists($path)?md5_file($path):'';
+        return file_exists($path)&&!is_dir($path)?md5_file($path):0;
     }
 
     public function file_time($filename){
