@@ -70,6 +70,10 @@ class Storage extends CI_Model {
         $path=$this->storageFolder . "/" .$filename;
         return file_exists($path)?filemtime($path):0;
     }
+    public function file_size($filename){
+        $path=$this->storageFolder . "/" .$filename;
+        return file_exists($path)?filesize($path):0;
+    }
 
     public function image_get() {
 	$args = func_get_args();
@@ -79,7 +83,7 @@ class Storage extends CI_Model {
     }
     
     private function cache_control(){
-	if( rand(0,10000)<2 ){//chance 0.01%
+	if( rand(0,100000)<2 ){//chance 0.001%
 	    $allfiles=scandir ( $this->storageFolder.'/dynImg' );
 	    $treshold=time()-30*24*60*60;
 	    foreach($allfiles as $file){
