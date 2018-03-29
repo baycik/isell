@@ -75,7 +75,7 @@ head={
 	    hasDownArrow:false,
 	    selectOnNavigation:false,
 	    formatter:head.pcompListfrm,
-	    width:220,
+	    
 	    icons: [
 		{iconCls:'icon-settings16',handler: App.user.pcompSelectionDialog},
 		{iconCls:'icon-change16',handler:head.pcompDetails}
