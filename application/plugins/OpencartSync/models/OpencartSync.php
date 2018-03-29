@@ -155,6 +155,7 @@ class OpencartSync extends OpencartSyncUtils{
     }
     
     private function productDigestGet(){
+        $start= microtime(true);
         $postdata=[
         ];
         $getdata=[
@@ -162,7 +163,9 @@ class OpencartSync extends OpencartSyncUtils{
             'api_token'=>$this->api_token
         ];
         $json=$this->sendToGateway($postdata,$getdata);
+        $down=microtime(true);
         $product_digest= $json?json_decode($json):null;
+        $this->query("START TRANSACTION");
         $this->query("DELETE FROM plugin_opencart_sync_list");
         if( $product_digest ){
             foreach( $product_digest as $product ){
@@ -176,6 +179,7 @@ class OpencartSync extends OpencartSyncUtils{
                         remote_img_time='{$product->img_time}'";
                 $this->query($sql);
             }
+            $ins1=microtime(true);
             $sql="INSERT INTO 
                     plugin_opencart_sync_list
                  SELECT 
@@ -187,6 +191,10 @@ class OpencartSync extends OpencartSyncUtils{
                 WHERE
                     product_code NOT IN (SELECT remote_model FROM plugin_opencart_sync_list)";
             $this->query($sql);
+            $this->query("COMMIT");
+            $ins2=microtime(true);
+            die( "down-".($start-$down)." ins1-".($down-$ins1)." ins2-".($ins1-$ins2));
+            
             return count($product_digest);
         }
         return 0;
