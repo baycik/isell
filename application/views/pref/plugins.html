@@ -61,13 +61,13 @@
 	    $(".x-plugins-buttons button").attr('disabled',true);
 	    if( all.is_installed*1 ){
 		if( all.is_activated*1 ){
-		    $('.x-plugins-buttons button[data-action="deactivate"]').attr('disabled',false);
+		    $('.x-plugins-buttons button[data-action="deactivate_plugin"]').attr('disabled',false);
 		} else {
-		    $('.x-plugins-buttons button[data-action="activate"]').attr('disabled',false);
-		    $('.x-plugins-buttons button[data-action="uninstall"]').attr('disabled',false);
+		    $('.x-plugins-buttons button[data-action="activate_plugin"]').attr('disabled',false);
+		    $('.x-plugins-buttons button[data-action="uninstall_plugin"]').attr('disabled',false);
 		}
 	    } else {
-		$('.x-plugins-buttons button[data-action="install"]').attr('disabled',false);
+		$('.x-plugins-buttons button[data-action="install_plugin"]').attr('disabled',false);
 	    }
 	},
 	do:function(action){
