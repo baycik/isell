@@ -2,12 +2,15 @@
     <h2>Настройки подключения</h2>
     <div class="plugin_settings">
 	<input name="login" title="API Логин" required="required">
-	<input name="dollar_ratio" title="Курс доллара" required="required">
+	<input title="Цены клиента" name="pcomp_name" value="" readonly="readonly" required="required"/>
+	<button type="button" class="tiny_button" onclick="App.user.pcompSelectionDialog();"><img src="img/settings.png"></button>
         <textarea name="key" title="API Ключ" required="required" rows="3"></textarea>
         <textarea name="gateway_url" title="Адрес модуля OC" required="required" rows="3"></textarea>
 	<input type="hidden" name="pcomp_id">
-	<input title="Цены клиента" name="pcomp_name" value="" readonly="readonly" required="required"/>
-	<button type="button" class="tiny_button" onclick="App.user.pcompSelectionDialog();"><img src="img/settings.png"> Изменить</button>
+	<input type="checkbox" name="img_down" checked="checked" title="Download pics">
+	<input type="checkbox" name="img_up" checked="checked" title="Upload pics">
+	<input type="checkbox" name="fields_up" checked="checked" title="Upload fields">
+	
 	<div style="text-align: center">
 	    <button type="submit"><img src="img/Save-24.png" style="width:24px;height: auto"> Сохранить</button>
 	</div>

@@ -37,16 +37,26 @@ class OpencartSync extends OpencartSyncUtils{
             $this->login();
         }
     }
+    public function install(){
+	$install_file=__DIR__."/install.sql";
+	$this->load->model('Maintain');
+	return $this->Maintain->backupImportExecute($install_file);
+    }
+    public function uninstall(){
+	$uninstall_file=__DIR__."/uninstall.sql";
+	$this->load->model('Maintain');
+	return $this->Maintain->backupImportExecute($uninstall_file);
+    }
     
     private function productSend(){
-        $rowcount_limit=500; 
+        $rowcount_limit=50; 
         $requestsize_limit=3*1024*1024;//2MB
         $request=[];
         $products_skipped=[];
         $requestsize_total=0;
         
         $pcomp_id=$this->settings->plugin_settings->pcomp_id;
-        $dratio=$this->settings->plugin_settings->dollar_ratio;
+        $dratio=$this->Hub->pref('usd_ratio');
         $this->Hub->load_model('Storage');
         $sql = "SELECT
                     model,ean,quantity,price,weight,name,manufacturer_name,
@@ -104,6 +114,9 @@ class OpencartSync extends OpencartSyncUtils{
                 break;
             }
         }
+	
+	//print_r($request);
+	
         $postdata=[
             'products'=>json_encode($request)
         ];
@@ -113,6 +126,9 @@ class OpencartSync extends OpencartSyncUtils{
         ];
         $response=$this->sendToGateway($postdata,$getdata);
         $products_synced=json_decode($response);
+	if( json_last_error()>0 ){
+	    die($response);
+	}
         if($products_synced){
             $products_to_remove= array_merge($products_skipped,$products_synced);
         } else {
