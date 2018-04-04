@@ -49,7 +49,7 @@ class OpencartSync extends OpencartSyncUtils{
     }
     
     private function productSend(){
-        $rowcount_limit=50; 
+        $rowcount_limit=300; 
         $requestsize_limit=3*1024*1024;//2MB
         $request=[];
         $products_skipped=[];
