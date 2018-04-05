@@ -58,6 +58,7 @@ class OpencartSync extends OpencartSyncUtils{
         $pcomp_id=$this->settings->plugin_settings->pcomp_id;
         $dratio=$this->Hub->pref('usd_ratio');
         $this->Hub->load_model('Storage');
+        $this->Hub->load_model('Stock');
         $sql = "SELECT
                     model,ean,quantity,price,weight,name,manufacturer_name,
                     volume,
@@ -85,7 +86,7 @@ class OpencartSync extends OpencartSyncUtils{
         $products=$this->get_list($sql);
         
         foreach($products as $product){
-            $item=$this->productImageInfoGet( $product->local_img_filename,$product->remote_img_hash,$product->remote_img_time,$product->model,$product->name );
+            $item=$this->productImageInfoGet( $product );
             if( $product->local_field_hash == $product->remote_field_hash && $item['local_img_hash'] == $product->remote_img_hash){
                 $products_skipped[]=$product->model;
                 continue;
@@ -137,25 +138,31 @@ class OpencartSync extends OpencartSyncUtils{
         return $this->productRemoveFromSyncList($products_to_remove);
     }
     
-    private function productImageInfoGet( $local_img_filename, $remote_img_hash, $remote_img_time, $model, $name ){
+    private function productImageInfoGet( $product ){
         $image_info=['local_img_b64size'=>0,'local_img_hash'=>0];
-        $filesize=$this->Storage->file_size('dynImg/'.$local_img_filename);
-        if( !$local_img_filename || $filesize>2*1024*1024 ){
+        $filesize=$this->Storage->file_size('dynImg/'.$product->local_img_filename);
+        if( !$product->local_img_filename || $filesize>2*1024*1024 ){
             return $image_info;
         }
-        $local_img_time=$this->Storage->file_time("dynImg/".$local_img_filename);
-        $image_info['local_img_hash']=$this->Storage->file_checksum("dynImg/".$local_img_filename); 
-        if( $image_info['local_img_hash']!==$remote_img_hash ){
-            if( $image_info['local_img_hash'] && $local_img_time>$remote_img_time ){
+        $local_img_time=$this->Storage->file_time("dynImg/".$product->local_img_filename);
+        $image_info['local_img_hash']=$this->Storage->file_checksum("dynImg/".$product->local_img_filename); 
+        if( $image_info['local_img_hash']!==$product->remote_img_hash ){
+            if( $image_info['local_img_hash'] && $local_img_time>$product->remote_img_time ){
                 //Upload local->remote
-                $ext = pathinfo($local_img_filename, PATHINFO_EXTENSION);
-                $file_data=$this->Storage->file_restore('dynImg/'.$local_img_filename);
+                $ext = pathinfo($product->local_img_filename, PATHINFO_EXTENSION);
+                $file_data=$this->Storage->file_restore('dynImg/'.$product->local_img_filename);
                 $image_info['local_img_data']=base64_encode($file_data);
                 $image_info['local_img_b64size']= strlen($image_info['local_img_data']);
-                $image_info['remote_img_filename']=$this->filename_prepare("$model $name").".$ext";
+                $image_info['remote_img_filename']=$this->filename_prepare("$product->model $product->name").".$ext";
             } else 
-            if( $remote_img_hash>0 && $remote_img_time>$local_img_time ){
-
+            if( $product->remote_img_hash>0 && $product->remote_img_time>$local_img_time ){
+                $dynImgName=time();
+                $ext = pathinfo($product->remote_img_url, PATHINFO_EXTENSION);
+                $dynImgPath=$this->Storage->storageFolder.'/dynImg/'.$dynImgName.$ext;
+                $sourceUrl=$this->settings->plugin_settings->gateway_url.'/image/'.$product->remote_img_url;
+                if( copy($sourceUrl,$dynImgPath) ){
+                    $this->Stock->productUpdate($product->model, 'product_img', $dynImgName);
+                }
             }
         }
         return $image_info;
@@ -190,13 +197,15 @@ class OpencartSync extends OpencartSyncUtils{
                         remote_model='{$product->model}',
                         remote_field_hash='{$product->field_hash}',
                         remote_img_hash='{$product->img_hash}',
-                        remote_img_time='{$product->img_time}'";
+                        remote_img_time='{$product->img_time}',
+                        remote_img_url='{$product->image}'
+                        ";
                 $this->query($sql);
             }
             $sql="INSERT INTO 
                     plugin_opencart_sync_list
                  SELECT 
-                    NULL,product_code,'','',0
+                    NULL,product_code,'','',0,''
                 FROM
                     stock_entries se
                         JOIN
@@ -276,51 +285,4 @@ class OpencartSync extends OpencartSyncUtils{
         );
         return file_get_contents($url, false, $context);
     }
-    
-    /*
-    public $cartAdd=[];
-    public function cartAdd(){
-        $postdata=[
-            'product_id'=>28,
-            'product_quantity'=>33
-        ];
-        $getdata=[
-            'route'=>'api/cart/add',
-            'api_token'=>$this->api_token
-        ];
-        header("Content-type:text/plain");
-        echo $this->sendToGateway($postdata, $getdata);
-    }
-    
-    public $productListGet=[];
-    public function productListGet(){
-        $postdata=[
-            'filter'=>json_encode([
-                'start'=>1,
-                'limit'=>2
-            ])
-        ];
-        $getdata=[
-            'route'=>'api/sync/getProducts',
-            'api_token'=>$this->api_token
-        ];
-        header("Content-type:text/plain");
-        $text=$this->sendToGateway($postdata, $getdata);
-        print_r(json_decode($text));
-    }
-    
-    public $categoryListGet=[];
-    public function categoryListGet(){
-        $postdata=[
-        ];
-        $getdata=[
-            'route'=>'api/bayproduct/getCategories',
-            'api_token'=>$this->api_token
-        ];
-        header("Content-type:text/plain");
-        $text=$this->sendToGateway($postdata, $getdata);
-        
-        
-        print_r(json_decode($text));
-    }*/
 }

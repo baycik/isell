@@ -10,7 +10,7 @@
  * @author Baycik
  */
 class Storage extends CI_Model {
-    private $storageFolder = '../storage';
+    public $storageFolder = '../storage';
     
     public function file_store($path, $data) {
 	$parts = explode('/', $path);
