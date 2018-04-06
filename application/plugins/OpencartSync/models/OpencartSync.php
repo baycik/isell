@@ -59,6 +59,7 @@ class OpencartSync extends OpencartSyncUtils{
         $dratio=$this->Hub->pref('usd_ratio');
         $this->Hub->load_model('Storage');
         $this->Hub->load_model('Stock');
+        
         $sql = "SELECT
                     model,ean,quantity,price,weight,name,manufacturer_name,
                     volume,
@@ -86,20 +87,26 @@ class OpencartSync extends OpencartSyncUtils{
         $products=$this->get_list($sql);
         
         foreach($products as $product){
-            $item=$this->productImageInfoGet( $product );
-            if( $product->local_field_hash == $product->remote_field_hash && $item['local_img_hash'] == $product->remote_img_hash){
+            $item=['local_img_b64size'=>0,'local_img_hash'=>0];
+            
+            if( $this->settings->plugin_settings->img_up || $this->settings->plugin_settings->img_down ){
+                $item=$this->productImageInfoGet( $product );
+            }
+            if( $this->settings->plugin_settings->fields_up ){
+                $item['ean']=$product->ean;
+                $item['quantity']=$product->quantity;
+                $item['price']=$product->price;
+                $item['weight']=$product->weight;
+                $item['volume']=$product->volume;
+                $item['name']=$product->name;
+                $item['manufacturer_name']=$product->manufacturer_name;
+            }
+            $item['model']=$product->model;
+            $item['product_id']=$product->remote_product_id;
+            if( $item['local_img_hash'] == $product->remote_img_hash && $product->local_field_hash == $product->remote_field_hash ){
                 $products_skipped[]=$product->model;
                 continue;
             }
-            $item['product_id']=$product->remote_product_id;
-            $item['model']=$product->model;
-            $item['ean']=$product->ean;
-            $item['quantity']=$product->quantity;
-            $item['price']=$product->price;
-            $item['weight']=$product->weight;
-            $item['volume']=$product->volume;
-            $item['name']=$product->name;
-            $item['manufacturer_name']=$product->manufacturer_name;
             if( !$product->local_field_hash ){
                 $item['action']='delete';
             } else
@@ -146,8 +153,13 @@ class OpencartSync extends OpencartSyncUtils{
         }
         $local_img_time=$this->Storage->file_time("dynImg/".$product->local_img_filename);
         $image_info['local_img_hash']=$this->Storage->file_checksum("dynImg/".$product->local_img_filename); 
+//        if( $product->model==24111001 ){
+//            echo $filesize." dynImg/".$product->local_img_filename;
+//            print_r($image_info);
+//            die();
+//        }
         if( $image_info['local_img_hash']!==$product->remote_img_hash ){
-            if( $image_info['local_img_hash'] && $local_img_time>$product->remote_img_time ){
+            if( $this->settings->plugin_settings->img_up && $image_info['local_img_hash'] && $local_img_time>$product->remote_img_time ){
                 //Upload local->remote
                 $ext = pathinfo($product->local_img_filename, PATHINFO_EXTENSION);
                 $file_data=$this->Storage->file_restore('dynImg/'.$product->local_img_filename);
@@ -155,10 +167,10 @@ class OpencartSync extends OpencartSyncUtils{
                 $image_info['local_img_b64size']= strlen($image_info['local_img_data']);
                 $image_info['remote_img_filename']=$this->filename_prepare("$product->model $product->name").".$ext";
             } else 
-            if( $product->remote_img_hash>0 && $product->remote_img_time>$local_img_time ){
-                $dynImgName=time();
+            if( $this->settings->plugin_settings->img_down && $product->remote_img_hash && $product->remote_img_time > $local_img_time ){
                 $ext = pathinfo($product->remote_img_url, PATHINFO_EXTENSION);
-                $dynImgPath=$this->Storage->storageFolder.'/dynImg/'.$dynImgName.$ext;
+                $dynImgName= microtime().$ext;
+                $dynImgPath=$this->Storage->storageFolder.'/dynImg/'.$dynImgName;
                 $sourceUrl=$this->settings->plugin_settings->gateway_url.'/image/'.$product->remote_img_url;
                 if( copy($sourceUrl,$dynImgPath) ){
                     $this->Stock->productUpdate($product->model, 'product_img', $dynImgName);
