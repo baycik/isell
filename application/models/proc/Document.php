@@ -1155,6 +1155,8 @@ class Document extends Data {
                             AND label='$price_label' 
                     SET invoice_price=invoice_price*$correction 
                     WHERE doc_id='$doc_id' AND curr_code<>'' AND curr_code<>'$curr_code'");
+            $this->clearTrans(); // To change
+            $this->updateTrans(); //Time of trans
             $this->Base->query("COMMIT");
 	    $this->selectDoc($doc_id);
 	} else
