@@ -3,7 +3,7 @@
  * User Level: 3
  * Plugin Name: Анализ продаж и прибыли
  * Plugin URI: 
- * Version: 0.1
+ * Version: 1.0
  * Description: Выводит развернутую информацию о продажах и прибыле, с возможностью группировать по аналитикам и клиентам
  * Author: baycik 2017
  * Author URI: 
@@ -49,6 +49,16 @@ class Reports_summary_sell_profit extends Catalog{
 	}
 	return $filter;
     }
+    private function or_like($field,$value){
+	$cases=explode(",",$value);
+	$filter=" AND (0";
+	foreach($cases as $case){
+	    if($case){
+		$filter.=" OR $field LIKE '%$case%'";
+	    }
+	}
+	return $filter.")";
+    }
     public function viewGet(){
 	$active_filter=$this->all_active?'':' AND active_company_id='.$this->Hub->acomp('company_id');
         
@@ -65,7 +75,7 @@ class Reports_summary_sell_profit extends Catalog{
         $path_filter='';
         if( $this->path_exclude || $this->path_include ){
 	    $path_filter="JOIN companies_list cl ON dl.passive_company_id=company_id JOIN companies_tree ct ON cl.branch_id=ct.branch_id ";
-	    $path_filter.=$this->and_like('ct.path ', $this->path_include);
+	    $path_filter.=$this->or_like('ct.path ', $this->path_include);
 	    $path_filter.=$this->and_like('ct.path NOT ', $this->path_exclude);
         }
 	$passive_groupper=$this->group_by_client?',passive_company_id':'';
@@ -109,6 +119,8 @@ class Reports_summary_sell_profit extends Catalog{
 		    doc_type=1 AND cstamp>'$this->idate 00:00:00' AND cstamp<'$this->fdate 23:59:59' AND is_commited=1 AND notcount=0 $active_filter $reclamation_filter
 		GROUP BY product_code $passive_groupper) entries
 		$having)";
+        
+        //die($main_table_sql);
 	$this->query($main_table_sql);
 	$rows=$this->get_list("SELECT * FROM tmp_sell_profit");
 	
