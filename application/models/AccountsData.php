@@ -124,9 +124,9 @@ class AccountsData extends AccountsCore{
 	return $this->get_list($sql);
     }
     
-    public $articleListFetch=[];
-    public function articleListFetch(){
-        return $this->get_list("SELECT article_name FROM acc_article_list");
+    public $articleListFetch=['q'=>'string'];
+    public function articleListFetch($q){
+        return $this->get_list("SELECT article_name FROM acc_article_list WHERE article_name LIKE '%$q%' ORDER BY article_name");
     }
     
         
