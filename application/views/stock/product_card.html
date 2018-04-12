@@ -116,7 +116,7 @@
 	submit:function(e){
 	    e.preventDefault();
 	    this.data=App.collectForm("#page_stock_product_card_frm");
-	    if( this.data.product_code_new.match(/^[\(\)\[\]\<\>\wабвгдеёжзийклмнопрстуфхцчшщъыьюяіїє\. ,-]+$/i) ){
+	    if( this.data.product_code_new.match(/^[\(\)\[\]\<\>\wабвгдеёжзийклмнопрстуфхцчшщъыьэюяіїє\. ,-]+$/i) ){
 		this.price.pack();
 		$.post('Stock/productSave/',this.data,function(ok){
 		    if( ok*1 ){
@@ -134,7 +134,7 @@
 		    }
 		});
 	    } else {
-		alert("Код товара не должен содержать сивол: "+(this.data.product_code_new.match(/[^\wабвгдеёжзийклмнопрстуфхцчшщъыьюяіїє\. ,-]/ig)||[]).join(""));
+		alert("Код товара не должен содержать сивол: "+(this.data.product_code_new.match(/[^\wабвгдеёжзийклмнопрстуфхцчшщъыьэюяіїє\. ,-]/ig)||[]).join(""));
 	    }
 	},
         next:function( direction ){
