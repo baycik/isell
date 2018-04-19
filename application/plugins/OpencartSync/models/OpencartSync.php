@@ -50,16 +50,17 @@ class OpencartSync extends OpencartSyncUtils{
     
     private function productSend(){
         $rowcount_limit=300; 
+        $requestsize_total=0;
         $requestsize_limit=3*1024*1024;//2MB
+        $requesttime_limit=time()+3;
         $request=[];
         $products_skipped=[];
-        $requestsize_total=0;
         
         $pcomp_id=$this->settings->plugin_settings->pcomp_id;
         $dratio=$this->Hub->pref('usd_ratio');
         $this->Hub->load_model('Storage');
         $this->Hub->load_model('Stock');
-        
+
         $sql = "SELECT
                     model,ean,quantity,price,weight,name,manufacturer_name,
                     volume,
@@ -87,11 +88,9 @@ class OpencartSync extends OpencartSyncUtils{
         $products=$this->get_list($sql);
         
         foreach($products as $product){
-            $item=['local_img_b64size'=>0,'local_img_hash'=>0];
-            
-            if( $this->settings->plugin_settings->img_up || $this->settings->plugin_settings->img_down ){
-                $item=$this->productImageInfoGet( $product );
-            }
+            $item=[];
+            $item_size=500;
+            $item['action']='skip';
             if( $this->settings->plugin_settings->fields_up ){
                 $item['ean']=$product->ean;
                 $item['quantity']=$product->quantity;
@@ -100,30 +99,42 @@ class OpencartSync extends OpencartSyncUtils{
                 $item['volume']=$product->volume;
                 $item['name']=$product->name;
                 $item['manufacturer_name']=$product->manufacturer_name;
+                if( !$product->local_field_hash ){
+                    $item['action']='delete';
+                } else
+                if( $product->remote_product_id ){
+                    $item['action']='edit';
+                } else {
+                    $item['action']='add';
+                }
             }
-            $item['model']=$product->model;
-            $item['product_id']=$product->remote_product_id;
-            if( $item['local_img_hash'] == $product->remote_img_hash && $product->local_field_hash == $product->remote_field_hash ){
+            if( $this->settings->plugin_settings->img_up ){
+                $img_data=$this->productImageUpload($product);
+                if( $img_data ){
+                    $item['local_img_data']=$img_data['local_img_data'];
+                    $item['remote_img_filename']=$img_data['remote_img_filename'];
+                    $item_size+=strlen($item['local_img_data']);
+                    if( $item['action']=='skip' && $product->remote_product_id ){
+                        $item['action']='edit';
+                    }
+                }
+            }
+            if( $this->settings->plugin_settings->img_down ){
+                $this->productImageDownload($product);
+            }            
+            $requestsize_total+=$item_size;
+            if( $requestsize_total>$requestsize_limit || time()>$requesttime_limit ){
+                break;
+            }
+            if( $item['action']=='skip' ){
                 $products_skipped[]=$product->model;
                 continue;
             }
-            if( !$product->local_field_hash ){
-                $item['action']='delete';
-            } else
-            if( $product->remote_product_id ){
-                $item['action']='edit';
-            } else {
-                $item['action']='add';
-            }
+            $item['model']=$product->model;
+            $item['product_id']=$product->remote_product_id;
             $request[]=$item;
-            $item_size=$item['local_img_b64size']+500;
-            $requestsize_total+=$item_size;
-            if( $requestsize_total>$requestsize_limit ){
-                break;
-            }
         }
-	
-	//print_r($request);
+	print_r($request);
 	
         $postdata=[
             'products'=>json_encode($request)
@@ -145,41 +156,35 @@ class OpencartSync extends OpencartSyncUtils{
         return $this->productRemoveFromSyncList($products_to_remove);
     }
     
-    private function productImageInfoGet( $product ){
-        $image_info=['local_img_b64size'=>0,'local_img_hash'=>0];
-        $filesize=$this->Storage->file_size('dynImg/'.$product->local_img_filename);
-        if( !$product->local_img_filename || $filesize>2*1024*1024 ){
-            return $image_info;
-        }
+    private function productImageUpload( $product ){
         $local_img_time=$this->Storage->file_time("dynImg/".$product->local_img_filename);
-        $image_info['local_img_hash']=$this->Storage->file_checksum("dynImg/".$product->local_img_filename); 
-//        if( $product->model==24111001 ){
-//            echo $filesize." dynImg/".$product->local_img_filename;
-//            print_r($image_info);
-//            die();
-//        }
-        if( $image_info['local_img_hash']!==$product->remote_img_hash ){
-            if( $this->settings->plugin_settings->img_up && $image_info['local_img_hash'] && $local_img_time>$product->remote_img_time ){
-                //Upload local->remote
-                $ext = pathinfo($product->local_img_filename, PATHINFO_EXTENSION);
-                $file_data=$this->Storage->file_restore('dynImg/'.$product->local_img_filename);
-                $image_info['local_img_data']=base64_encode($file_data);
-                $image_info['local_img_b64size']= strlen($image_info['local_img_data']);
-                $image_info['remote_img_filename']=$this->filename_prepare("$product->model $product->name").".$ext";
-            } else 
-            if( $this->settings->plugin_settings->img_down && $product->remote_img_hash && $product->remote_img_time > $local_img_time ){
-                $ext = pathinfo($product->remote_img_url, PATHINFO_EXTENSION);
-                $dynImgName= microtime().$ext;
-                $dynImgPath=$this->Storage->storageFolder.'/dynImg/'.$dynImgName;
-                $sourceUrl=$this->settings->plugin_settings->gateway_url.'/image/'.$product->remote_img_url;
-                if( copy($sourceUrl,$dynImgPath) ){
-                    $this->Stock->productUpdate($product->model, 'product_img', $dynImgName);
-                }
-            }
+        $local_img_hash=$this->Storage->file_checksum("dynImg/".$product->local_img_filename); 
+        if( $product->local_img_filename && $local_img_hash!==$product->remote_img_hash && $local_img_time>$product->remote_img_time ){
+            $ext = pathinfo($product->local_img_filename, PATHINFO_EXTENSION);
+            $file_data=$this->Storage->file_restore('dynImg/'.$product->local_img_filename);
+            return [
+                'local_img_data'=>base64_encode($file_data),
+                'remote_img_filename'=>$this->filename_prepare("$product->model $product->name").".$ext"
+            ];
         }
-        return $image_info;
+        return false;
     }
     
+    private function productImageDownload( $product ){
+        $local_img_time=$this->Storage->file_time("dynImg/".$product->local_img_filename);
+        if( $product->remote_img_hash && $product->remote_img_time > $local_img_time ){
+            $ext = pathinfo($product->remote_img_url, PATHINFO_EXTENSION);
+            $dynImgName= microtime(true).".$ext";
+            $dynImgPath=$this->Storage->storageFolder.'/dynImg/'.$dynImgName;
+            $sourceUrl=$this->settings->plugin_settings->gateway_url.'/image/'.$product->remote_img_url;
+            if( copy($sourceUrl,$dynImgPath) ){
+                $this->Stock->productUpdate($product->model, 'product_img', $dynImgName);
+                return true;
+            }
+        }
+        return false;
+    }
+        
     private function productRemoveFromSyncList( $products_to_remove ){
         if( count($products_to_remove) ){
             $list= "'".implode("','", $products_to_remove)."'";
