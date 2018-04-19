@@ -134,7 +134,7 @@ class OpencartSync extends OpencartSyncUtils{
             $item['product_id']=$product->remote_product_id;
             $request[]=$item;
         }
-	print_r($request);
+	//print_r($request);
 	
         $postdata=[
             'products'=>json_encode($request)
