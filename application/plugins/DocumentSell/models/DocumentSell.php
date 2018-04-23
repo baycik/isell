@@ -33,6 +33,12 @@ class DocumentSell extends DocumentBase{
 	$doc_type='sell';
 	return parent::documentAdd($doc_type);
     }
+    
+    public $documentDelete=['doc_id'=>'int'];
+    public function documentDelete( $doc_id ){
+        return parent::documentDelete($doc_id);
+    }
+    
     public $documentGet=['doc_id'=>'int','parts_to_load'=>'json'];
     public function documentGet($doc_id,$parts_to_load){
 	$this->documentSelect($doc_id);

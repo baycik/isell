@@ -5,14 +5,7 @@
 	function setHolderId(id){
 	    holderId=id;
 	}
-	var doc_id;
 	var document_model;
-	var document_data={
-	    head:{},
-	    body:{},
-	    foot:{},
-	    views:{}
-	};
 	var extension;
 	/*
 	 * INIT SECTION
@@ -46,7 +39,7 @@
 	    }
 	}
 	function initExtension(){
-	    doc.destroy();
+	    Document.destroy();
 	    if( !document_model ){
 		console.log('document_model is null');
 		App.flash("Не удалось загрузить плагин документа");
@@ -69,23 +62,30 @@
 		if( extension && extension.script ){
 		    eval(extension.script);
 		}
-		doc.init();		
+		Document.init();		
 	    }).fail(function(){
 		App.flash("Не удалось загрузить плагин документа");
 	    });
 	}
-	var doc={
+	var Document={
+            doc_id:0,
 	    init:function(){
-		head.init();
-		body.init();
-		foot.init();
-		views.init();
+		Document.head.init();
+		Document.body.init();
+		Document.foot.init();
+		Document.views.init();
+	    },
+	    render:function( render_data ){
+		render_data.head && Document.head.render(render_data.head);
+		render_data.body && Document.body.render(render_data.body);
+		render_data.foot && Document.foot.render(render_data.foot);
+		render_data.views && Document.views.render(render_data.views);
 	    },
 	    destroy:function(){
-		head.destroy();
-		body.destroy();
-		foot.destroy();
-		views.destroy();
+		Document.head.destroy();
+		Document.body.destroy();
+		Document.foot.destroy();
+		Document.views.destroy();
 		$("#"+holderId).find(".x-head, .x-body, .x-foot, .x-views").html("");
 	    },
 	    load:function(id,parts_to_load){
@@ -94,12 +94,12 @@
 		    return false;
 		}
 		parts_to_load= parts_to_load || ["head","body","foot","views"];
-		doc_id=id;
+		Document.doc_id=id;
 		var url=document_model+'/documentGet';
-		$.post(url,{doc_id:doc_id,parts_to_load:JSON.stringify(parts_to_load)},function(resp){
+		$.post(url,{doc_id:Document.doc_id,parts_to_load:JSON.stringify(parts_to_load)},function(resp){
 		    var render_data=App.json(resp);
 		    if(render_data){
-			doc.render( render_data );
+			Document.render( render_data );
 		    } else {
 			App.flash("Can't load document");
 		    }
@@ -107,64 +107,72 @@
 	    },
 	    reload:function(){
 		var parts=["head","body","foot","views"];
-		doc.load(doc_id,parts);
+		Document.load(Document.doc_id,parts);
 	    },
-	    render:function( render_data ){
-		render_data.head && head.render(render_data.head);
-		render_data.body && body.render(render_data.body);
-		render_data.foot && foot.render(render_data.foot);
-		render_data.views && views.render(render_data.views);
-	    }
-	};
-	var head={
-	    init:function(){
-		
-	    },
-	    render:function(){
-		
-	    },
-	    destroy:function(){
-		
-	    }
-	};
-	var body={
-	    init:function(){
-		
-	    },
-	    render:function(){
-		
-	    },
-	    destroy:function(){
-		
-	    }
-	};
-	var foot={
-	    init:function(){
-		
-	    },
-	    render:function(){
-		
-	    },
-	    destroy:function(){
-		
-	    }
-	};
-	var views={
-	    init:function(){
-		
-	    },
-	    render:function(){
-		
-	    },
-	    destroy:function(){
-		
-	    }
-	};
-	
+            delete:function(){
+		$.post(document_model+'/documentDelete',{doc_id:Document.doc_id},function(ok){
+		    if(ok*1){
+			Document.destroy();
+                        App.flash("Документ удален");
+		    } else {
+			App.flash("Can't DELETE document");
+		    }
+		});                
+            },
+            data:{
+                head:{},
+                body:{},
+                foot:{},
+                views:{}
+            },
+            head:{
+                init:function(){
 
+                },
+                render:function(){
+
+                },
+                destroy:function(){
+
+                }
+            },
+            body:{
+                init:function(){
+
+                },
+                render:function(){
+
+                },
+                destroy:function(){
+
+                }
+            },
+            foot:{
+                init:function(){
+
+                },
+                render:function(){
+
+                },
+                destroy:function(){
+
+                }
+            },
+            views:{
+                init:function(){
+
+                },
+                render:function(){
+
+                },
+                destroy:function(){
+
+                }
+            }
+        };
 	return {
 	    init:init,
-	    load:doc.load,
+	    load:Document.load,
 	    setHolderId:setHolderId
 	};
     })(jQuery);
