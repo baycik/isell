@@ -1,15 +1,16 @@
-/*global Slick,body,holderId,doc,document_model,App,doc_id*/
+/*global Slick,holderId,Document,document_model,App*/
 
-head={
+Document.head={
     pcompNode:null,
     init:function(){
-	head.initControls();
-	head.initToolbar();
+	Document.head.initControls();
+	Document.head.initToolbar();
     },
     render:function(head){
-	document_data.head=head;
+	Document.data.head=head;
 	$("#"+holderId+" .x-head form").form('load',head);
 	$("#"+holderId+" .x-head form input[name=is_commited]").prop("checked",head.is_commited*1);
+        $("#"+holderId+" .x-toolbar .icon-commit").css("filter","grayscale("+(head.is_commited*1?100:0)+"%)");
 	this.pcompNode && this.pcompNode.combobox("setText",head.label);
     },
     destroy:function(){
@@ -17,34 +18,40 @@ head={
     },
     update:function(field,value,succes_msg){
 	var url=document_model+'/documentUpdate';
-	return $.post(url,{doc_id:doc_id,field:field,value:value},function(ok){
+	return $.post(url,{doc_id:Document.doc_id,field:field,value:value},function(ok){
 	    if(ok*1){
 		App.flash(succes_msg);
 	    } else {
 		App.flash("Изменения не сохранены");
 	    }
-	    doc.reload();
+	    Document.reload();
 	});
     },
     initToolbar:function(){
 	$("#"+holderId+" .x-head .x-toolbar").click(function(e){
 	    var action=$(e.target).data('action');
 	    if( action ){
-		head.do( action );
+		Document.head.do( action );
 	    }
 	});
     },
     do:function( action ){
-	head[action] && head[action]();
+	Document.head[action] && Document.head[action]();
     },
     reload:function(){
-	doc.reload();
+	Document.reload();
     },
     commit:function(){
-	head.update('is_commited',1,'Документ проведен');
+	Document.head.update('is_commited',1,'Документ проведен');
     },
     uncommit:function(){
-	head.update('is_commited',0,'Документ не проведен');
+        if( Document.data.head.is_commited*1 ){
+            Document.head.update('is_commited',0,'Документ не проведен');
+        } else {
+            if( confirm("Удалить документ полностью?") ){
+                Document.delete();
+            }
+        }	
     },
     initControls:function(){
 	App.setupForm("#"+holderId+" .x-head form");
@@ -57,10 +64,10 @@ head={
 		var value=$(e.target).val();
 	    }
 	    console.log($(e.target).attr('name'));
-	    head.update( $(e.target).attr('name'), value, $(e.target).attr('title') );
+	    Document.head.update( $(e.target).attr('name'), value, $(e.target).attr('title') );
 	});
 	$.parser.parse("#"+holderId+" .x-head form");//for easy ui
-	head.pcompComboInit();
+	Document.head.pcompComboInit();
     },
     pcompComboInit:function(){
 	if( this.pcompNode ){
@@ -70,22 +77,22 @@ head={
 	var options={
 	    valueField: 'company_id',
 	    textField: 'label',
-	    loader:head.pcompLoader,
+	    loader:Document.head.pcompLoader,
 	    mode: 'remote',
 	    hasDownArrow:false,
 	    selectOnNavigation:false,
-	    formatter:head.pcompListfrm,
+	    formatter:Document.head.pcompListfrm,
 	    
 	    icons: [
 		{iconCls:'icon-settings16',handler: App.user.pcompSelectionDialog},
-		{iconCls:'icon-change16',handler:head.pcompDetails}
+		{iconCls:'icon-change16',handler:Document.head.pcompDetails}
 	     ]
 	};
 	this.pcompNode.combobox(options);
     },
     pcompLoader:function(param, success, error){
 	if( param.q===undefined ){
-	    success([{company_id:document_data.head.passive_company_id,label:document_data.head.label}]);
+	    success([{company_id:Document.data.head.passive_company_id,label:Document.data.head.label}]);
 	    return;
 	}
 	$.get('Company/listFetch/', param, function (xhr) {
@@ -102,10 +109,10 @@ head={
 	return label;
     },
     pcompDetails:function(){
-	App.loadWindow('page/company/details',{company_id:document_data.head.passive_company_id});
+	App.loadWindow('page/company/details',{company_id:Document.data.head.passive_company_id});
     }
 };
-body={
+Document.body={
     vocab:{
 	not_enough:"На складе не хватает:",
 	already_exists:"Строка с таким кодом уже добавлена",
@@ -115,14 +122,14 @@ body={
     },
     table_sg:{},
     init:function(){
-	body.table.init();
-	body.suggest.init();
-	body.tools.init();
+	Document.body.table.init();
+	Document.body.suggest.init();
+	Document.body.tools.init();
 	App.vocab=$.extend(App.vocab,this.vocab);
     },
     render:function(table){
-	body.table_sg.setData(table);
-	body.table_sg.render();
+	Document.body.table_sg.setData(table);
+	Document.body.table_sg.render();
     },
     destroy:function(){
 	$("#"+holderId+" .x-body .x-suggest").combobox('destroy');
@@ -158,7 +165,7 @@ body={
 		prompt:'код, название или штрихкод',
 		onSelect: suggOnselect,
 		onBeforeLoad: function(param){
-		    param.doc_id = doc_id;
+		    param.doc_id = Document.doc_id;
 		}
 	    }).combobox('textbox').bind( 'keydown', function(e){
 		if( e.keyCode===38 && $("#"+holderId+" .x-body .x-suggest").combobox('getValue')==='' ){
@@ -171,7 +178,7 @@ body={
 	    function suggestSubmit(){
 		var product_code=$("#"+holderId+" .x-body .x-suggest").combobox('getValue');
 		var product_quantity=$("#"+holderId+" .x-body .x-qty").val();
-		body.table.entryAdd(product_code,product_quantity);
+		Document.body.table.entryAdd(product_code,product_quantity);
 		$("#"+holderId+" .x-body .x-qty").val('');
 		$("#"+holderId+" .x-body .x-suggest").combobox('textbox').select();
 	    }
@@ -233,7 +240,7 @@ body={
 		$("#"+holderId+" .x-body .x-suggest").combobox('setValue',row.product_code);
 		$("#"+holderId+" .x-body .x-qty").val(row.product_spack).select();
 	    });
-	    body.picker.inited=true;
+	    Document.body.picker.inited=true;
 	}
     },
     tools:{
@@ -241,30 +248,30 @@ body={
 	    $("#"+holderId+" .x-body .x-body-tools").click(function(e){
 		var action=$(e.target).data('action');
 		if( action ){
-		    body.tools[ action ] && body.tools[action]();
+		    Document.body.tools[ action ] && Document.body.tools[action]();
 		}
 	    });	    
 	},
 	pickerToggle:function(){
-	    if(!body.picker.inited){
-		body.picker.init();
+	    if(!Document.body.picker.inited){
+		Document.body.picker.init();
 	    }
-	    if( body.pickerVisible ){
+	    if( Document.body.pickerVisible ){
 		$("#"+holderId+" .x-picker").hide();
 		$("#"+holderId+" .x-picker-button").text("Открыть подбор");
 	    } else {
 		$("#"+holderId+" .x-picker").show();
 		$("#"+holderId+" .x-picker-button").text("Скрыть подбор");
 	    }
-	    body.pickerVisible=!body.pickerVisible;
+	    Document.body.pickerVisible=!Document.body.pickerVisible;
 	},
 	productCard:function(){
-	    var selected_rows=body.table_sg.getSelectedRows();
+	    var selected_rows=Document.body.table_sg.getSelectedRows();
 	    if(!selected_rows.length){
 		App.flash("Ни одна строка не выбрана!");
 		return;
 	    }
-	    var row=body.table_sg.getDataItem(selected_rows[0]);
+	    var row=Document.body.table_sg.getDataItem(selected_rows[0]);
 	    App.loadWindow('page/stock/product_card',{product_code:row.product_code,loadProductByCode:true});
 	},
 	entryImport:function(){
@@ -276,17 +283,17 @@ body={
 	    ];
 	    App.loadWindow('page/dialog/importer',{label:'документ',fields_to_import:config}).progress(function(status,fvalue,Importer){
 		if( status==='submit' ){
-		    fvalue.doc_id=doc_id;
+		    fvalue.doc_id=Document.doc_id;
 		    App.post("DocumentSell/entryImport/",fvalue,function(ok){
 			App.flash("Импортировано "+ok);
 			Importer.reload();
-			doc.reload(["body","foot"]);
+			Document.reload(["body","foot"]);
 		    });
 		}
 	    });
 	},
 	entryDelete:function(){
-	    var selected_rows=body.table_sg.getSelectedRows();
+	    var selected_rows=Document.body.table_sg.getSelectedRows();
 	    if(!selected_rows.length){
 		App.flash("Ни одна строка не выбрана!");
 		return;
@@ -296,14 +303,14 @@ body={
 	    }
 	    var table_to_delete=[];
 	    for(var i in selected_rows){
-		table_to_delete.push(body.table_sg.getDataItem(selected_rows[i]).doc_entry_id);
+		table_to_delete.push(Document.body.table_sg.getDataItem(selected_rows[i]).doc_entry_id);
 	    }
 	    var url=document_model+'/entryDelete';
-	    $.post(url,{doc_id:doc_id,doc_entry_ids:JSON.stringify(table_to_delete)},function(ok){
+	    $.post(url,{doc_id:Document.doc_id,doc_entry_ids:JSON.stringify(table_to_delete)},function(ok){
 		if( !(ok*1) ){
 		    App.flash("Строка не удалена");
 		}
-		doc.reload(["body","foot"]);
+		Document.reload(["body","foot"]);
 	    });
 	}
     },
@@ -311,14 +318,14 @@ body={
 	init:function(){
 	    var settings={
 		columns:[
-		    {id:"queue",name: "№", width: 30,formatter:body.table.formatters.queue },
+		    {id:"queue",name: "№", width: 30,formatter:Document.body.table.formatters.queue },
 		    {id:"product_code", field: "product_code",name: "Код", sortable: true, width: 80},
 		    {id:"product_name", field: "product_name",name: "Название", sortable: true, width: 400},
 		    {id:"product_quantity", field: "product_quantity",name: "Кол-во", sortable: true, width: 70, cssClass:'slick-align-right', editor: Slick.Editors.Integer},
 		    {id:"product_unit", field: "product_unit",name: "Ед.", width: 30, sortable: true },
-		    {id:"product_price_total", field: "product_price_total",name: "Цена", sortable: true, width: 70, cssClass:'slick-align-right',asyncPostRender:body.table.formatters.priceisloss, editor: Slick.Editors.Float},
+		    {id:"product_price_total", field: "product_price_total",name: "Цена", sortable: true, width: 70, cssClass:'slick-align-right',asyncPostRender:Document.body.table.formatters.priceisloss, editor: Slick.Editors.Float},
 		    {id:"product_sum_total", field: "product_sum_total",name: "Сумма", sortable: true, width: 80,cssClass:'slick-align-right', editor: Slick.Editors.Float},
-		    {id:"row_status", field: "row_status",name: "!",sortable: true, width: 25,formatter:body.table.formatters.tooltip },
+		    {id:"row_status", field: "row_status",name: "!",sortable: true, width: 25,formatter:Document.body.table.formatters.tooltip },
 		    //{id:"party_label",field:"party_label",name:"Партия",width:120, editor: Slick.Editors.Text},
 		    //{id:"analyse_origin",field:'analyse_origin',name:"Происхождение",width:70},
 		    //{id:"self_price",field:'self_price',name:"maliyet",width:60,cssClass:'slick-align-right'}
@@ -334,13 +341,13 @@ body={
 		    enableAsyncPostRender: true
 		}
 	    };
-	    body.table_sg = new Slick.Grid("#"+holderId+" .x-body .x-entries", [], settings.columns, settings.options);
-	    body.table_sg.setSelectionModel(new Slick.RowSelectionModel());
-	    body.table_sg.onCellChange.subscribe(function(e,data){
+	    Document.body.table_sg = new Slick.Grid("#"+holderId+" .x-body .x-entries", [], settings.columns, settings.options);
+	    Document.body.table_sg.setSelectionModel(new Slick.RowSelectionModel());
+	    Document.body.table_sg.onCellChange.subscribe(function(e,data){
 		var updatedEntry=data.item;
 		var field=settings.columns[data.cell].field;
 		var value=updatedEntry[field];
-		body.table.entryUpdate(updatedEntry.doc_entry_id,field,value);
+		Document.body.table.entryUpdate(updatedEntry.doc_entry_id,field,value);
 	    });	    
 	},
 	formatters:{
@@ -365,7 +372,7 @@ body={
 	},
 	entryAdd:function(product_code,product_quantity){
 	    var url=document_model+'/entryAdd';
-	    $.post(url,{doc_id:doc_id,product_code:product_code,product_quantity:product_quantity},function(ok,status,xhr){
+	    $.post(url,{doc_id:Document.doc_id,product_code:product_code,product_quantity:product_quantity},function(ok,status,xhr){
 		if( !(ok*1) ){
 		    App.flash("Строка не добавлена");
 		}
@@ -373,16 +380,16 @@ body={
 		if( msg && msg.indexOf('product_code_unknown')>-1 && confirm("Добавить новый код "+product_code+" на склад?") ){
 		    App.loadWindow('page/stock/product_card',{product_code:product_code});
 		}
-		doc.reload(["body","foot"]);
+		Document.reload(["body","foot"]);
 	    });	
 	},
 	entryUpdate:function(doc_entry_id,field,value){
 	    var url=document_model+'/entryUpdate';
-	    $.post(url,{doc_id:doc_id,doc_entry_id:doc_entry_id,field:field,value:value},function(ok){
+	    $.post(url,{doc_id:Document.doc_id,doc_entry_id:doc_entry_id,field:field,value:value},function(ok){
 		if( !(ok*1) ){
 		    App.flash("Строка не изменена");
 		}
-		doc.reload(["body","foot"]);
+		Document.reload(["body","foot"]);
 	    });
 	}
     }

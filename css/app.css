@@ -522,8 +522,8 @@ h2{
 .switch .slider:before {
   position: absolute;
   content: "";
-  height: 22px;
-  width: 22px;
+  height: 20px;
+  width: 20px;
   left: 0px;
   bottom: -4px;
   background-color: #F1F1F1;
