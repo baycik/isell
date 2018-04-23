@@ -168,8 +168,7 @@ abstract class DocumentBase extends Catalog{
     protected function documentUpdateRatio( $new_ratio ){
 	
     }
-    protected function documentDelete(){
-	$doc_id=$this->doc('doc_id');
+    protected function documentDelete( $doc_id ){
 	$this->query("START TRANSACTION");
 	$this->delete('document_entries',['doc_id'=>$doc_id]);
 	$this->delete('document_view_list',['doc_id'=>$doc_id]);
@@ -220,7 +219,7 @@ abstract class DocumentBase extends Catalog{
 	    if( $this->doc('is_commited') ){
 		$uncommit_ok=$this->entryUncommit($doc_entry_id);
 	    } else {
-		$uncommit_ok=false;
+		$uncommit_ok=true;
 	    }
 	    $delete_ok=$this->delete('document_entries',['doc_id'=>$doc_id,'doc_entry_id'=>$doc_entry_id]);
 	    if( !$uncommit_ok || !$delete_ok ){
