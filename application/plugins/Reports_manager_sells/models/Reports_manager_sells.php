@@ -42,6 +42,16 @@ class Reports_manager_sells extends Catalog{
 	}
 	return $filter;
     }
+    private function or_like($field,$value){
+	$cases=explode(",",$value);
+	$filter=" AND (0";
+	foreach($cases as $case){
+	    if($case){
+		$filter.=" OR $field LIKE '%$case%'";
+	    }
+	}
+	return $filter.")";
+    }
     public function viewGet(){
 	$active_filter=$this->all_active?'':' AND active_company_id='.$this->Hub->acomp('company_id');
         
@@ -57,7 +67,7 @@ class Reports_manager_sells extends Catalog{
         }
         $path_filter='';
         if( $this->path_exclude || $this->path_include ){
-	    $path_filter.=$this->and_like('ct.path ', $this->path_include);
+	    $path_filter.=$this->or_like('ct.path ', $this->path_include);
 	    $path_filter.=$this->and_like('ct.path NOT ', $this->path_exclude);
         }
 	
