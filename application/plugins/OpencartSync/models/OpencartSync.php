@@ -279,9 +279,9 @@ class OpencartSync extends OpencartSyncUtils{
         } catch (Exception $ex) {
             die($ex.">>> ".$text);
         }
-        if( $response && isset($response->api_token) ){
-            $this->api_token=$response->api_token;
-            $this->Hub->svar('opencart_api_token',$response->api_token);
+        if( $response && ( isset($response->api_token) || isset($response->token) ) ){
+            $this->api_token=isset($response->api_token)?$response->api_token:$response->token;
+            $this->Hub->svar('opencart_api_token',$this->api_token);
             return true;
         } else {
             die('failed to login '.$text);
