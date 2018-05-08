@@ -1,5 +1,5 @@
 <?php
-error_reporting(E_ERROR | E_WARNING | E_PARSE);
+//error_reporting(E_ERROR | E_WARNING | E_PARSE);
 class FileEngine{
     private $conversion_table = [
 	'.html' => ['.doc' => 'Word Документ','.html' => 'Веб Страница','.pdf' => 'PDF'],
@@ -119,8 +119,8 @@ class FileEngine{
 	    unlink($tmphtml);
 	    unlink($tmppdf);
 	} else {
-            $this->header('Content-Disposition: attachment;filename="' .$file_name . '"');
-            $this->header('Cache-Control: max-age=0');
+            //$this->header('Content-Disposition: attachment;filename="' .$file_name . '"');
+            //$this->header('Cache-Control: max-age=0');
             $this->show_controls = false;
         }
         
