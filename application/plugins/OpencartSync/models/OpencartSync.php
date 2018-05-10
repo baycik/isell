@@ -51,8 +51,8 @@ class OpencartSync extends OpencartSyncUtils{
     private function productSend(){
         $rowcount_limit=300; 
         $requestsize_total=0;
-        $requestsize_limit=3*1024*1024;//2MB
-        $requesttime_limit=time()+3;
+        $requestsize_limit=3*1024*1024;
+        $requesttime_limit=time()+4;
         $request=[];
         $products_skipped=[];
         
@@ -121,20 +121,23 @@ class OpencartSync extends OpencartSyncUtils{
             }
             if( $this->settings->plugin_settings->img_down ){
                 $this->productImageDownload($product);
-            }            
-            $requestsize_total+=$item_size;
-            if( $requestsize_total>$requestsize_limit || time()>$requesttime_limit ){
-                break;
             }
             if( $item['action']=='skip' ){
                 $products_skipped[]=$product->model;
                 continue;
             }
+            $requestsize_total+=$item_size;
+            if( $requestsize_total>$requestsize_limit ){
+                $products_skipped[]=$product->model;
+                break;
+            }
+            if( time()>$requesttime_limit ){
+                break;
+            }
             $item['model']=$product->model;
             $item['product_id']=$product->remote_product_id;
             $request[]=$item;
         }
-	//print_r($request);
 	
         $postdata=[
             'products'=>json_encode($request)
