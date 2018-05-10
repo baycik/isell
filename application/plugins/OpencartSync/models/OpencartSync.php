@@ -129,6 +129,7 @@ class OpencartSync extends OpencartSyncUtils{
             $requestsize_total+=$item_size;
             if( $requestsize_total>$requestsize_limit ){
                 $products_skipped[]=$product->model;
+                $this->message.="Size of image of product {$product->model} is too big! ";
                 break;
             }
             if( time()>$requesttime_limit ){
@@ -241,29 +242,29 @@ class OpencartSync extends OpencartSyncUtils{
     
     public $sync=['step'=>['string','fetch_digest']];
     public function sync($current_step){
-        $message="";
+        $this->message="";
         switch($current_step){
             case 'fetch_digest':
                 $current_step='send_products';
                 $product_count=$this->productDigestGet();
                 if( $product_count ){
-                    $message="Recieved $product_count digests from remote server";
+                    $this->message="Recieved $product_count digests from remote server";
                 } else {
-                    $message="Server has no any products";
+                    $this->message="Server has no any products";
                 }
                 break;
             case 'send_products':
                 $product_count=$this->productSend();
                 if( $product_count ){
-                    $message="Synced $product_count products with remote server";
+                    $this->message="Synced $product_count products with remote server";
                 } else {
-                    $message="Syncronisation ends!";
-                    die($message);
+                    $this->message="Syncronisation ends!";
+                    die($this->message);
                 }
                 break;
         }
         header("Refresh: 1; url=./?step=$current_step");
-        echo $message;
+        echo $this->message;
     }
 
     public $login=[];
