@@ -65,7 +65,10 @@ class Reports_summary_sell_stock extends Catalog{
                 ($sell_buy_table) sellbuy USING(product_code)
             GROUP BY
 		$this->group_by
-            $having";
+            $having
+            ORDER BY
+                sell_sum DESC,stock_sum DESC
+            ";
         //die($sql);
         
         $rows=$this->get_list($sql);
@@ -84,13 +87,13 @@ class Reports_summary_sell_stock extends Catalog{
             $row->stock_proc=   $total_stock?round( $row->stock_sum/$total_stock, 4):'';
 	    $this->clear_zero($row);
         }
-	function sort_bysell($a,$b){
-	    if( $a->sell_sum==$b->sell_sum ){
-		return 0;
-	    }
-	    return ($a->sell_sum>$b->sell_sum)?-1:1;
-	}
-	usort($rows,'sort_bysell');
+//	function sort_bysell($a,$b){
+//	    if( $a->sell_sum==$b->sell_sum ){
+//		return 0;
+//	    }
+//	    return ($a->sell_sum>$b->sell_sum)?-1:1;
+//	}
+//      usort($rows,'sort_bysell');
 	$view=[
                 'total_sell'=>round($total_sell,2),
                 'total_stock'=>round($total_stock,2),
