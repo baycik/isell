@@ -1,8 +1,8 @@
 <?php
 require_once 'DocumentCore.php';
 class DocumentItems extends DocumentCore{
-    public $suggestFetch=['q'=>'string','offset'=>['int',0],'doc_id'=>['int',0]];
-    public function suggestFetch($q,$offset,$doc_id,$transliterated=false){
+    public $suggestFetch=['q'=>'string','offset'=>['int',0],'limit'=>['int',10],'doc_id'=>['int',0],'category_id'=>['int',0]];
+    public function suggestFetch($q,$offset,$limit,$doc_id,$category_id,$transliterated=false){
 	$price_query="0";
 	if( $doc_id ){
 	    $this->selectDoc($doc_id);
@@ -28,6 +28,9 @@ class DocumentItems extends DocumentCore{
 		$where=implode(' AND ',$cases);
 	    }
 	}
+        if( $category_id ){
+            $where.=" AND parent_id='$category_id'";
+        }
 	$sql="
 	    SELECT
 		product_code,
@@ -43,15 +46,15 @@ class DocumentItems extends DocumentCore{
 		prod_list USING(product_code)
 	    WHERE $where
 	    ORDER BY fetch_count-DATEDIFF(NOW(),fetch_stamp) DESC, product_code
-	    LIMIT 10 OFFSET $offset";
+	    LIMIT $limit OFFSET $offset";
         $output=$this->get_list($sql);
         if( !count($output) ){
-            return $this->suggestTransliterate($q,$transliterated,$offset,$doc_id);
+            return $this->suggestTransliterate($q,$transliterated,$offset,$limit,$doc_id,$category_id);
         }
         return $output;
     }
     
-    private function suggestTransliterate($q,$transliterated,$offset,$doc_id){
+    private function suggestTransliterate($q,$transliterated,$offset,$limit,$doc_id,$category_id){
         if( $transliterated==false || $transliterated=='fromlatin' ){
             if( $transliterated==false ){
                 $direction='fromlatin';
@@ -59,7 +62,7 @@ class DocumentItems extends DocumentCore{
                 $direction='fromcyrilic';
             }
             
-            return $this->suggestFetch($this->transliterate($q,$direction),$offset,$doc_id, $direction);
+            return $this->suggestFetch($this->transliterate($q,$direction),$offset,$limit,$doc_id,$category_id,$direction);
         }
         return [];
     }

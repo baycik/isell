@@ -54,7 +54,9 @@
 		    var holder_id=App.url_file.split('.')[0];
 		    if( !$("#"+holder_id).length ){
 			$("#main_container").append("<div id='"+holder_id+"'></div>");
-			$("#"+holder_id).load(App.url_file);
+			$("#"+holder_id).load(App.url_file,function(){
+                            App[holder_id] && App[holder_id].init && App[holder_id].init();
+                        });
 		    } 
 		    $("#main_container>div").hide();
 		    $("#"+holder_id).show();
@@ -165,7 +167,7 @@
 	$(App.init);
 	
 	
-	
+	/*
 	if ( !localStorage.getItem("disableSW") && ('serviceWorker' in navigator) ) {
 	    navigator.serviceWorker.register('../MobiSell/sw.js', {scope: '../MobiSell/'})
 	    .then(function(reg) {
@@ -192,7 +194,7 @@
 		    App.clearCache();
 		}
 	    });
-	}
+	}*/
     </script>
     <style>
 	.covert{
@@ -219,6 +221,10 @@
 	<a href="#document_list.html" class="item">
 	    <i class="list layout icon"></i>
 	    Список Документов
+	</a>
+	<a href="#stock.html" class="item">
+	    <i class="cube icon"></i>
+	    Склад
 	</a>
 	<a href="#document.html" class="item">
 	    <i class="file outline icon"></i>
