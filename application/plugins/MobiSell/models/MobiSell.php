@@ -77,15 +77,24 @@ class MobiSell extends Catalog{
 	    ];
     }
     
-    public $documentCreate=["doc_type"=>"int","pcomp_id"=>"int"];
-    public function documentCreate($doc_type,$pcomp_id){
+    public $documentCreate=["doc_type"=>"int","pcomp_id"=>"int",'entries'=>['json',null]];
+    public function documentCreate($doc_type,$pcomp_id,$entries){
 	$Company=$this->Hub->load_model("Company");
 	$Company->selectPassiveCompany($pcomp_id);
 	
 	$DocumentItems=$this->Hub->load_model("DocumentItems");
-	return $DocumentItems->createDocument($doc_type);
+	$doc_id= $DocumentItems->createDocument($doc_type);
+        if( $entries ){
+            $this->documentEntryFill($doc_id,$entries);
+        }
+        return $doc_id;
     }
-    
+    private function documentEntryFill($doc_id, $entries){
+        foreach($entries as $entry){
+            $this->documentEntryUpdate($doc_id,null,$entry['product_code'],$entry['product_quantity']);
+        }
+    }
+        
     public $documentGet=["doc_id"=>"int"];
     public function documentGet($doc_id){
 	$DocumentItems=$this->Hub->load_model("DocumentItems");

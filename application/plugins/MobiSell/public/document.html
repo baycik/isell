@@ -72,6 +72,10 @@
 		},
 		onSuccess: function () {
 		    var fvalue = $('#document_create_dialog_frm').form('get values');
+                    if( App.stock && App.stock.cart.list.length ){
+                        fvalue.entries=JSON.stringify(App.stock.cart.list);
+                        App.stock.cart.list=[];
+                    }
 		    $.post("documentCreate/", fvalue, function (resp) {
 			var new_doc_id = resp * 1;
 			if (new_doc_id) {
@@ -702,6 +706,7 @@
 		    </div>
 		</div>
 	    </div>
+            <p></p>
 	    <div class="actions">
 		<div class="ui button positive submit"><i class="file outline icon"></i>Создать</div>
 		<div class="ui button cancel" onclick="location.hash = ''"><i class="home icon"></i>Главная</div>

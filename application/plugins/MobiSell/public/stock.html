@@ -1,0 +1,464 @@
+<script>
+    App.stock = {
+        list: [],
+        offset: 0,
+        loading_finished: 0,
+         init: function () {
+            this.focus();
+            this.tree.load();
+
+        },
+        focus: function () {
+            App.title("Склад");
+            this.load();
+        },
+        cart: {
+            list: [],
+            // Добавление товара в корзину
+            add: function (product_object) {
+                if (this.is_there(product_object.product_code)) {
+                    return;
+                }
+                this.list.push(product_object);
+                App.stock.popup_cart.fill_content(product_object);
+                App.stock.render();
+                 console.log(App.stock.cart.list);
+                
+            },
+            remove: function (node) {
+                if( !confirm("Вы уверенны, что хотите удалить товар из корзины") ){
+                    return;
+                };
+                var index = $(node).data('index');
+                var product = App.stock.list[index];
+                for(var i=0; i<App.stock.cart.list.length; i++){
+                    if(product.product_code == App.stock.cart.list[i].product_code){
+                        App.stock.cart.list.splice(i,1);
+                        break;
+                    }
+                }
+                console.log(App.stock.cart.list);
+                
+                App.stock.render();
+                
+            },
+            edit: function (product_code, new_product_quantity) {
+
+            },
+            // Проверка наличия товара в корзине
+            is_there: function (product_code) {
+                for(var i=0; i < App.stock.cart.list.length; i++){
+                    if (product_code === App.stock.cart.list[i].product_code){
+                        return App.stock.cart.list[i].product_quantity;
+                    };
+                };
+                return false;
+            },
+            create_document: function(){
+                location.hash="#document.html";
+            }
+        },
+        tree: {
+          load: function(){
+            var params = {
+                id: 0,
+                depth: "all"
+            };
+            $.post("../Stock/branchFetch", params, function (response){
+                var tree_object = App.json(response);
+                App.stock.tree.render(tree_object);
+            });
+          },
+          make_backbone: function(tree_object,prefix){
+            prefix+="&nbsp;&nbsp;&nbsp;&nbsp;";
+            var html="";
+            for(var i in tree_object){
+                html+="<div class='item' data-value='" + tree_object[i].branch_id + "'>" + prefix + tree_object[i].label + "</div>";
+                if( tree_object[i].children.length>0 ){
+                    html+=App.stock.tree.make_backbone(tree_object[i].children,prefix);
+                }
+            }
+            return html;
+          },
+          render: function(tree_object){
+              var tree_html = "<div class='item' data-value='0'>Все категории</div>";
+              tree_html+=App.stock.tree.make_backbone(tree_object,"");
+              $('#stock_category_tree .menu').html(tree_html);
+              $('#stock_category_tree').dropdown({});
+              
+          }
+        },
+/*        categories_selection:{
+            get_list: function(parent_label){
+                var params = {
+                filter: {},
+                limit: 20,
+                mode: "advanced",
+                offset: 0,
+                sortby: "",
+                sortdir: "ASC",
+                parent_id: parent_label
+                };
+                $.post("../Stock/listFetch", params, function (response) {
+                    App.stock.list = App.json(response);
+                    App.stock.render();
+
+                });
+            },
+            sort: function(){
+                App.stock.tree.load();
+                var selected = $('#stock_category_tree').dropdown('get value');
+                var header = $('#stock_category_tree').dropdown('get text');
+                header = header.trim();
+                App.stock.categories_selection.get_list(selected);
+                $('#stock_categories_header').html(header);
+                
+            }
+        },*/
+        clear_searchbar:function(){
+            $("#stock_search_input").val('');
+            App.stock.load();
+        },
+        // Popup указания количества 
+        popup_add: {
+            // Получение данных о выбранном товаре
+            take_product_info: function (node) {
+                var index = $(node).data('index');
+                var product = App.stock.list[index];
+                App.renderTpl("stock_popup_body", product);
+                $('.small.modal').modal('show');
+            },
+            // Добавление товара в корзину
+            put_to_cart: function (node) {
+                var fvalue = $('#stock_popup_add_form').form('get values');
+                $('.small.modal').modal('hide');
+                App.stock.cart.add(fvalue);
+            },
+            // Калькулятор для пользователя
+            calculate_price: function(){
+                var fvalue = $('#stock_popup_add_form').form('get values');
+                var result_price = fvalue.product_quantity * fvalue.product_price;
+                $( "#popup_add_price" ).html(result_price.toFixed(2)+ "р.");
+            }
+        },
+        popup_cart: {
+            show_box: function(){
+                $('.ui.longer.modal').modal('show');
+                App.stock.popup_cart.fill_content();
+            },
+            fill_content: function(){
+                App.renderTpl("stock_cart_content", {cart_list: App.stock.cart.list});
+                if( App.stock.cart.list.length>0 ){
+                    $("#stock_cart_empty_msg").hide();
+                } else {
+                    $("#stock_cart_empty_msg").show();
+                }
+            }
+            
+        },
+       
+        // Рендеринг списка товаров
+        render: function () {
+            App.stock.edit_response();
+            App.renderTpl("stock_list_table", {products: App.stock.list,loading_finished: App.stock.loading_finished});
+            
+        },
+        // Получение списка товаров
+        load: function ( load_more ) {
+            App.stock.resolution.check();
+            if( load_more ){
+                App.stock.offset += 10;
+            } else {
+                App.stock.offset = 0;
+            };
+            var params = {
+                q: $('#stock_search_input').val(),
+                category_id: $('#stock_category_tree').dropdown('get value'),
+                offset:App.stock.offset
+            };
+            $('#stock_categories_header').html("");
+            $.post("../DocumentItems/suggestFetch", params, function (response) {
+                var new_loaded_items = App.json(response);
+                if( load_more ){
+                    App.stock.list = App.stock.list.concat(new_loaded_items);
+                } else {
+                    App.stock.list = new_loaded_items;
+                };
+                if ( new_loaded_items.length<10){
+                    App.stock.loading_finished = 1;
+                }else{
+                     App.stock.loading_finished = 0;
+                };
+                App.stock.render();
+
+            });
+        },
+        resolution: {
+            check: function(){
+            if (window.matchMedia("(max-width: 650px)").matches){
+                App.stock.resolution.phone();
+            } else if (window.matchMedia("(min-width: 650px)").matches){
+                App.stock.resolution.laptop();
+            };
+        },
+            phone: function(){
+                
+            },
+            laptop: function(){
+                var reso = document.getElementById("image_resolution");
+                reso.src.image_resolution = "100x100";
+                console.log(reso);
+            }
+        },
+        // Редактирование данных 
+        edit_response:function(){
+            for(var i=0;i<App.stock.list.length; i++){
+                //Добавляем товару свойство is_in_cart
+                App.stock.list[i].quantity_added = App.stock.cart.is_there(App.stock.list[i].product_code);
+            }
+         }
+    };
+</script>
+<style>
+
+    @media only screen and (min-width: 650px) {
+        #stock_product_row{
+            float: left;
+            width: 50%;
+            height: 10em;
+        }
+        #stock_list_table tr #stock_product_name{
+            max-height: 4.3em;
+            overflow: hidden;
+        }
+        .stock_image_td{
+            width: 120px;
+        }
+    }
+    @media only screen and (max-width: 650px){
+        #stock_list_table tr #stock_product_name{
+            max-height: 3em;
+            overflow: hidden;
+        }
+        #stock_list_table tr:hover #stock_product_name{
+            max-height: none;
+
+        }
+        .stock_image_td{
+            width: 50px;
+        }
+    }
+    #stock_cart_button{
+        position: fixed;
+        bottom: 10px;
+        right: 10px;
+        z-index: 2;
+        box-shadow: 0px 0px 10px 5px rgba(0,0,0,0.25);
+    }
+  
+    #stock_category_tree.ui.selection.dropdown .menu{
+        max-height: 29.4rem;
+    }
+    
+</style>
+
+<button class="ui icon circular blue button" id="stock_cart_button" onclick="App.stock.popup_cart.show_box()">
+    <i class="shop icon"></i>
+</button>
+
+<form id="categories">
+    <!--Строка категорий-->
+    <div class="ui field">
+        <label><b>Категории</b></label>
+        <div class="ui fluid selection dropdown" id="stock_category_tree" onchange="App.stock.load()"> 
+            <input name="gender" type="hidden">
+            <i class="dropdown icon"></i>
+            <div class="default text">Выберите категорию</div>
+            <div class="menu" ></div>
+        </div>
+    </div>
+</form>
+    <!--Строка поиска-->
+<form onsubmit="return false">   
+    <div id="stock_search" class="ui field">
+        <div class="ui field">
+            <label><b>Поиск</b></label>
+            <div class="ui left icon right labeled input fluid" style="margin-bottom: 5px;">
+		    <i class="search icon"></i>
+                    <input id="stock_search_input" placeholder="Введите название или код..." type="text"
+                       oninput="App.stock.load()">
+		    <div class="ui basic label" onclick="App.stock.clear_searchbar()"><i class="close icon"></i></div>
+            </div>
+        </div>
+    </div>
+</form>
+<div id="stock_categories_header" class="ui centered header" style="margin-top: auto">Все категории</div>
+<!--Список товаров-->
+<div id="stock_list_table" class="covert">
+    <table class="ui selectable very compact table unstackable"  style="margin-left: 5px; margin-right: 5px">
+        <tr>
+            <th>
+                <div></div>    
+            </th>
+            <th>
+                <div class="ui stackable two column grid">
+                    <div class = "column">
+                            <div class="fourteen wide column" style="padding: .5rem !important">Название</div>
+                        </div>
+                    <div class = "column">
+                        <div class = "ui grid" style="padding: .5rem !important">
+                            <div class="six wide column">Код</div>
+                            <div class="five wide column">Остаток</div>
+                            <div class="five wide column">Цена</div>
+                        </div>
+                    </div>
+                    </div>
+            </th>
+        </tr>
+
+        <!-- {{products}} -->
+
+        <tr id="stock_product_row">
+            <td class="stock_image_td">
+                <div id="product_image">
+                    <img id="image_resolution" style="width:100%;height: auto;" src="../Storage/image_flush/?size=70x70&path=/dynImg/{{product_img}}">
+                </div>  
+            </td>
+            <td>
+                <div class="ui stackable two column grid">
+                    <div class = "column" style="padding: .5rem !important">
+                        <div id="stock_product_name" class = "fourteen wide column">{{##}}) {{product_name}}</div>
+                        {{if quantity_added|more>0}}
+                             
+                            <span></span>
+                            <div class="ui buttons">
+                                <div class="ui left labeled button" tabindex="0">
+                                    <a class="ui basic label">
+                                        Добавлено: {{quantity_added}}
+                                    </a>
+                                    <button class="ui blue icon button" style="background-color: #0089ec; color:white">
+                                        <i class="edit icon"></i>
+                                    </button>
+                                    <button class="ui red icon button" data-index="{{#}}"
+                                            onclick="App.stock.cart.remove(this)">
+                                        <i class="trash alternate icon"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        {{else}}
+                            <button class="ui green button" data-index="{{#}}" 
+                                    onclick="App.stock.popup_add.take_product_info(this)">Добавить <i class="shop icon"></i></button>
+                        {{/if}}
+                       
+                    </div>
+                    <div class = "column" style="padding: .5rem !important">
+                        <div class = "ui grid">
+                            <div id="product_code" class = "six wide column" style = "color:#7a7a7a">{{product_code}}</div>
+                            <div id="product_quantity" class = "five wide column" style = "color:#7a7a7a">{{leftover}}</div>
+                            <div id="product_price" class = "five wide column" style = "color:#7a7a7a">{{product_price_total}}р.</div>
+                        </div>
+                    </div>
+                </div>
+
+            </td>
+        </tr>
+        <!-- {{/products}} -->
+
+    </table>
+    {{if loading_finished}} 
+        <button class='ui fluid basic grey disabled button' type='hidden'>
+        Загрузка завершена
+        </button>    
+    {{else}} 
+        <button id='stock_load_more' class='ui fluid basic green button'
+                onclick="App.stock.load(1)"> 
+        Показать ещё...
+        </button>    
+    {{/if}} 
+
+</div>
+
+<!--Popup для указания количества-->
+
+<div id="stock_popup_body" class="ui small modal">
+    <div class="header">Добавить в корзину</div>
+    <table style="margin-left: 15px">
+        <tr>
+            <td>
+            <img style="width:50px" src="../Storage/image_flush/?size=50x50&path=/dynImg/{{product_img}}">
+            </td>
+            <td>
+            <div class="ui stackable two column grid" style="margin-left: 15px" class="description">
+                <div class="column">{{product_name}}</div>
+                <p></p> 
+                <div class="column">
+                    <div class="ui grid">
+                    <div class="eight wide column" style = "color:#7a7a7a">{{product_code}}</div>
+                    <div id="popup_add_price" class="eight wide column" style = "color:#7a7a7a">{{product_price_total}}р.</div>
+                </div>
+            </div>
+            </td>
+        </tr>
+    </table>
+    <form id="stock_popup_add_form" class="ui form segment" onsubmit='App.stock.popup_add.put_to_cart();return false;'>
+        <div class="field">
+            <label>Количество</label>
+            <input type='hidden' name='product_image' value='{{product_img}}'>
+            <input type='hidden' name='product_name' value='{{product_name}}'>
+            <input type='hidden' name='product_code' value='{{product_code}}'>
+            <input type='hidden' name='product_price' value='{{product_price_total}}'>
+            <input name="product_quantity" placeholder="Количество" min="1"
+                   onchange="App.stock.popup_add.calculate_price()" 
+                   type="number" value="1">
+        </div>
+        <div class="actions">
+        <button type='submit' class="ui button">Добавить</button>
+        <div class="ui cancel button" >Отмена</div>
+        </div>
+    </form>
+ 
+      
+</div>
+                
+<!--Popup корзины-->
+
+<div  class="ui longer modal">
+   <div class="header">Корзина</div>
+  <div class="scrolling content">
+      <div id="stock_cart_content">
+        {{cart_list}}  
+        <table style="margin-left: 15px">
+            <tr>
+                <td>
+                    <img style="width:50px" src="../Storage/image_flush/?size=50x50&path=/dynImg/{{product_image}}">
+                </td>
+                <td>
+                    <div style="margin-left: 15px" class="two column stackable grid">
+                        <div class="column">
+                            <div class = "fourteen wide column">{{product_name}}</div>
+                        </div>
+                        <p></p> 
+                        <div class="column">
+                            <div class="ui grid">
+                                <div class="six wide column" style = "color:#7a7a7a">{{product_code}}</div>
+                                <div class="five wide column" style = "color:#7a7a7a">{{product_quantity}}</div>
+                                <div id="total_price" class="five wide column" style = "color:#7a7a7a">{{product_price}}р.</div>
+                            </div>
+                        </div>    
+                    </div> 
+                </td>
+            </tr>
+            <div class="ui section divider"></div> 
+        </table>
+        {{/cart_list}}  
+      </div>
+      <div id="stock_cart_empty_msg">В корзине пусто!</div>
+  </div>
+  <div class="actions">
+        <div class="ui approve button"
+             onclick="App.stock.cart.create_document()" >Заказ</div>
+        <div class="ui cancel button" >Назад</div>
+    </div>
+</div>
+  
+
