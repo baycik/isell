@@ -34,6 +34,22 @@
 	    body{
 		font-family: Arial;
 	    }
+	    #divider{
+		border-bottom: 1px solid #33bbFF;
+		text-align: center;
+		margin: 10px;
+		padding: 10px;
+		position: relative;
+	    }
+	    #or{
+		position: absolute;
+		width: 100%;
+		text-align: center;
+	    }
+	    #or b{
+		background-color: white;
+		padding: 5px;
+	    }
 	</style>
     </head>
     <body>
@@ -41,6 +57,9 @@
 	<form action="./?"  method="post" enctype="multipart/form-data">
 	    <input name="user_login" placeholder="Логин">
 	    <input name="user_pass" type="password" placeholder="Пароль">
+	    
+	    <div id="divider"><div id="or"><b>или</b></div></div>
+	    <input name="client_phone" placeholder="Номер телефона" type="tel" pattern="(\+7|8)?[0-9\s\-\)]+">
 	    <button style="">Вход в приложение</button>
 	</form>
     </body>
