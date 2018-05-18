@@ -28,6 +28,9 @@
 		App.holder.init();
 		//App.user.getData();
 		//App.user.signInPopup();
+                if( localStorage.getItem('pcomp_id') ){
+                    App.pcomp={company_id:localStorage.getItem('pcomp_id')};
+                }
 	    },
 	    holder: {
 		init: function () {
@@ -149,6 +152,19 @@
 		},
 		signInPopup:function(){
 		    $('#signInModal').modal('show');
+		},
+                pcompSelect: function ( company ) {
+		    var company_id=company.company_id||0;
+		    if( App.pcomp && App.pcomp.company_id===company_id ){
+			return;
+		    }
+		    $.post('../Company/selectPassiveCompany/' + company_id, function (xhr) {
+			App.user.setPassiveCompany(App.json(xhr));
+		    });
+		},
+                setPassiveCompany:function( company ){
+                    var old_pcomp_id=App.pcomp?App.pcomp.company_id:0;
+		    App.pcomp=company;
 		}
 	    },
 	    clearCache:function(){
