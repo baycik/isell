@@ -182,4 +182,14 @@ class MobiSell extends Catalog{
 	$Company->selectPassiveCompany($passive_company_id);
 	return $Company->companyPrefsGet();
     }
+    
+    public $suggestFetch=['q'=>'string','offset'=>['int',0],'limit'=>['int',10],'doc_id'=>['int',0],'category_id'=>['int',0],'pcomp_id'=>['int',0]];
+    public function suggestFetch($q,$offset,$limit,$doc_id,$category_id,$pcomp_id){
+        $Company=$this->Hub->load_model("Company");
+        $DocumentItems=$this->Hub->load_model("DocumentItems");
+        if( $this->Hub->pcomp('company_id')!=$pcomp_id ){
+            $Company->selectPassiveCompany($pcomp_id);
+        }
+        return $DocumentItems->suggestFetch($q,$offset,$limit,$doc_id,$category_id);
+    }
 }
