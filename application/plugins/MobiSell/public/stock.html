@@ -162,6 +162,7 @@
                 App.renderTpl("stock_popup_body", product);
                 $('#small_modal_header').html('Изменить количество');
                 $('.small.modal').modal('show');
+                $('#stock_popup_add_form input[name=product_quantity]').select();
             },
             // Добавление товара в корзину
             put_to_cart: function (node) {
@@ -428,7 +429,7 @@
 <form>
     <div class="five wide field">
         <label>Клиент</label>
-        <div class="ui fluid selection remote dropdown pcomp_id">
+        <div class="ui fluid search selection remote dropdown pcomp_id">
             <input name="pcomp_id" type="hidden">
             <i class="dropdown icon"></i>
             <div class="default text">Выбрать клиента</div>
@@ -444,7 +445,7 @@
     <!--Строка категорий-->
     <div class="ui field">
         <label><b>Категории</b></label>
-        <div class="ui fluid selection dropdown" id="stock_category_tree" onchange="App.stock.load()"> 
+        <div class="ui fluid search selection dropdown" id="stock_category_tree" onchange="App.stock.load()"> 
             <input name="gender" type="hidden">
             <i class="dropdown icon"></i>
             <div class="default text">Выберите категорию</div>
