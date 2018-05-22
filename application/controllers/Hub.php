@@ -34,8 +34,10 @@ class Hub  extends CI_Controller{
     private function loginform(){
 	$user_login=$this->request('user_login');
 	$user_pass=$this->request('user_pass');
+        $user_phone=$this->request('user_phone');
+        $user_phone_pass=$this->request('user_phone_pass');
 	$User=$this->load_model('User');
-	if( $user_login && $user_pass && $User->SignIn($user_login,$user_pass) ){
+	if( $user_login && $user_pass && $User->SignIn($user_login,$user_pass) || $User->SignByPhone($user_phone,$user_phone_pass) ){
 	    header("Location: ./");
 	    return;
 	}

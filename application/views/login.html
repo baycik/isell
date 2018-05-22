@@ -1,83 +1,112 @@
 <html>
     <head>
-	<title>Login to Mobile iSell</title>
-	<meta charset="UTF-8">
+        <title>Login to Mobile iSell</title>
+        <meta charset="UTF-8">
         <meta name="mobile-web-app-capable" content="yes">
         <link rel="icon" type="image/png" href="/favicon.png" />
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<script>
-	    window.onload=function(){
-		var location_with_slash= location.href.replace(/\/?(\?|#|$)/, '/$1');
-		if( location_with_slash!==location.href ){
-		    location.href=location_with_slash;
-		}
-	    };
-	    function phoneChanged(input){
-		if( !input.value ){
-		    return ;
-		}
-		var phone=input.value.replace(/[^\d]*/g,'').replace(/^(8|7)*(\d{0,3})(\d{0,3})(\d{0,2})(\d{0,2})/,'+7($2) $3 $4 $5');
-		document.getElementById('phone').innerHTML=" на "+phone;
-		if (phone.length===17){
-		    document.getElementById('phone_btn').disabled='';
-		} else {
-		    document.getElementById('phone_btn').disabled='disabled';
-		}
-	    }
-	</script>
-	<style>
-	    button{
-		padding:10px;
-		background-color: #33bbFF;
-		width: 100%;
-		border-radius: 5px;
-		border: none;
-		margin: 3px;
-		font-size: 1em;
-	    }
-	    input{
-		width: 100%;
-		margin: 3px;
-		padding: 10px;
-		font-size: 1em;
-		border: 1px #666 solid;
-		border-radius: 5px;
-	    }
-	    body{
-		font-family: Arial;
-	    }
-	    #divider{
-		border-bottom: 1px solid #33bbFF;
-		text-align: center;
-		margin: 10px;
-		padding: 10px;
-		position: relative;
-	    }
-	    #or{
-		position: absolute;
-		width: 100%;
-		text-align: center;
-	    }
-	    #or b{
-		background-color: white;
-		padding: 5px;
-	    }
-	    #phone_btn:disabled{
-		background-color: #ddd;
-	    }
-	</style>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script>
+            function phoneChanged(input) {
+                if (!input.value) {
+                    document.getElementById('login_user_pass').style.display = 'block';
+                    document.getElementById('phone_btn').disabled = 'disabled';
+                    return;
+                }
+                document.getElementById('login_user_pass').style.display = 'none';
+
+                phone = input.value.replace(/[^\d]*/g, '').replace(/^(8|7)*(\d{0,3})(\d{0,3})(\d{0,2})(\d{0,2})/, '+7($2) $3 $4 $5');
+                document.getElementById('phone').innerHTML = phone;
+                if (phone.length === 17) {
+                    document.getElementById('phone_btn').disabled = '';
+                } else {
+                    document.getElementById('phone_btn').disabled = 'disabled';
+                }
+            };
+/*          var phone;
+            function phoneSendSms() {
+                
+            };
+            function makeRequest( phone, callback ) {
+                var httpRequest = new XMLHttpRequest();
+                if (!httpRequest) {
+                    console.log('Giving up :( Cannot create an XMLHTTP instance');
+                    return false;
+                }
+                httpRequest.onreadystatechange = function() {
+                    if (httpRequest.readyState === XMLHttpRequest.DONE) {
+                        if (httpRequest.status === 200) {
+                            callback(httpRequest.responseText);
+                        } else {
+                            console.log('There was a problem with the request.');
+                        }
+                    }
+                };
+                httpRequest.open('POST', './');
+                httpRequest.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+                httpRequest.send('client_phone=' + encodeURIComponent(phone));
+            }*/
+            window.onload = function () {
+                var location_with_slash = location.href.replace(/\/?(\?|#|$)/, '/$1');
+                if (location_with_slash !== location.href) {
+                    location.href = location_with_slash;
+                }
+            };
+        </script>
+        <style>
+            button{
+                padding:10px;
+                background-color: #33bbFF;
+                width: 100%;
+                border-radius: 5px;
+                border: none;
+                margin: 3px;
+                font-size: 1em;
+            }
+            input{
+                width: 100%;
+                margin: 3px;
+                padding: 10px;
+                font-size: 1em;
+                border: 1px #666 solid;
+                border-radius: 5px;
+            }
+            body{
+                font-family: Arial;
+            }
+            #divider{
+                border-bottom: 1px solid #33bbFF;
+                text-align: center;
+                margin: 10px;
+                padding: 10px;
+                position: relative;
+            }
+            #or{
+                position: absolute;
+                width: 100%;
+                text-align: center;
+            }
+            #or b{
+                background-color: white;
+                padding: 5px;
+            }
+            #phone_btn:disabled{
+                background-color: #ddd;
+            }
+        </style>
     </head>
     <body>
-	<h3>Вход в систему iSell</h3>
-	<form action="./?"  method="post" enctype="multipart/form-data">
-	    <input name="user_login" placeholder="Логин">
-	    <input name="user_pass" type="password" placeholder="Пароль">
-	    <button style="">Вход в приложение</button>
-	    
-	    <div id="divider"><div id="or"><b>или</b></div></div>
-	    Войти по номеру телефона
-	    <input name="client_phone" placeholder="Номер телефона" type="tel" pattern="(\+7|8)+[0-9\s\-\)]+" onkeyup="phoneChanged(this)">
-	    <button type="button" disabled="disabled" id="phone_btn">Получить пароль<br><span id="phone"></span></button>
-	</form>
+        <h3>Вход в систему iSell</h3>
+        <form action="./?"  method="post" enctype="multipart/form-data">
+            <div id="login_user_pass">
+                <input name="user_login" placeholder="Логин">
+                <input name="user_pass" type="password" placeholder="Пароль">
+                <button style="">Вход в приложение</button>
+
+                <div id="divider"><div id="or"><b>или</b></div></div>
+            </div>
+            Войти по номеру телефона
+            <input name="user_phone" placeholder="Номер телефона" value="+79787288233" type="tel" onkeyup="phoneChanged(this)" onchange="phoneChanged(this)">
+            <button disabled="disabled" id="phone_btn" onclick="phoneSendSms()">Войти с помошью <br><span id="phone">телефона</span></button>
+        </form>
     </body>
 </html>

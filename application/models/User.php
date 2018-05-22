@@ -22,6 +22,30 @@ class User extends Catalog {
 	return false;
     }
     
+    public $SignByPhone=['user_phone'=>'[\d]*','user_phone_pass'=>'int'];
+    public function SignByPhone($user_phone,$user_phone_pass){
+        if( $user_phone && !$user_phone_pass ){
+            $user_data = $this->get_row("SELECT user_id,user_level FROM user_list WHERE user_phone LIKE '%{$user_phone}'");
+            if( $user_data ){
+                if( $user_data->user_level<1){
+                    return false;
+                }
+                return $this->sendPhonePass($user_phone);
+            }
+            //$user_data = $this->get_row("SELECT user_id,user_level FROM companies_list WHERE company_mobile LIKE '%{$user_phone}%'");
+        }
+    }
+    
+    private function sendPhonePass($user_phone){
+        $tmp_pass=rand(99,9999);
+        $this->Hub->svar('login_user_phone', $user_phone);
+        $this->Hub->svar('login_user_pass', $tmp_pass);
+        $this->Hub->load_model('Utils');
+        $this->Hub->Utils->sendSms($user_phone,$tmp_pass);
+        
+        die($user_phone.$tmp_pass);
+    }
+    
     private function initLoggedUser($user_data){
 	$this->Hub->svar('user_id', $user_data->user_id);
 	$this->Hub->svar('user_level', $user_data->user_level);
