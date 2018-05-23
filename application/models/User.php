@@ -1,5 +1,4 @@
 <?php
-
 require_once 'Catalog.php';
 class User extends Catalog {
     public $min_level=0;
@@ -22,7 +21,7 @@ class User extends Catalog {
 	return false;
     }
     
-    public $SignByPhone=['user_phone'=>'[\d]*','user_phone_pass'=>'int'];
+    public $SignByPhone=['user_phone'=>'^[\d]*','user_phone_pass'=>'int'];
     public function SignByPhone($user_phone,$user_phone_pass){
         if( $user_phone && !$user_phone_pass ){
             $user_data = $this->get_row("SELECT user_id,user_level FROM user_list WHERE user_phone LIKE '%{$user_phone}'");
@@ -40,10 +39,16 @@ class User extends Catalog {
         $tmp_pass=rand(99,9999);
         $this->Hub->svar('login_user_phone', $user_phone);
         $this->Hub->svar('login_user_pass', $tmp_pass);
-        $this->Hub->load_model('Utils');
-        $this->Hub->Utils->sendSms($user_phone,$tmp_pass);
-        
-        die($user_phone.$tmp_pass);
+        $initial_user_level=$this->Hub->svar('user_level');
+        $this->Hub->svar('user_level',1);
+        $this->Hub->load_model("Company");
+        $this->Hub->load_model("Utils");
+        if(!$this->Hub->acomp('company_id')){
+            $this->Hub->Company->selectActiveCompany(1);
+        }
+        $ok=1;//$this->Utils->sendSms($user_phone,$tmp_pass);
+        $this->Hub->svar('user_level',$initial_user_level);
+        return $ok;
     }
     
     private function initLoggedUser($user_data){

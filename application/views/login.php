@@ -95,6 +95,7 @@
         </style>
     </head>
     <body>
+        <?php echo $waiting_for_sms_pass?>
         <h3>Вход в систему iSell</h3>
         <form action="./?"  method="post" enctype="multipart/form-data">
             <div id="login_user_pass">

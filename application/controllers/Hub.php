@@ -37,10 +37,13 @@ class Hub  extends CI_Controller{
         $user_phone=$this->request('user_phone');
         $user_phone_pass=$this->request('user_phone_pass');
 	$User=$this->load_model('User');
-	if( $user_login && $user_pass && $User->SignIn($user_login,$user_pass) || $User->SignByPhone($user_phone,$user_phone_pass) ){
+	if( $user_login && $user_pass && $User->SignIn($user_login,$user_pass) ){
 	    header("Location: ./");
 	    return;
-	}
+	} else 
+        if( $sms_sent=$User->SignByPhone($user_phone,$user_phone_pass) ){
+            
+        }
 	include APPPATH.'views/login.html';
 	exit;
     }
