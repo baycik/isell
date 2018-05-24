@@ -2,6 +2,7 @@
     App.home = {
 	init: function () {
 	    this.focus();
+            App.user.getData();
 	},
 	focus: function () {
 	    App.title("Главная");
@@ -14,8 +15,8 @@
     <h2 class="ui sub header" style="color: lightgray; font-family: courier" >Version 1.5 beta</h2>
 </div>
 
-<div id="user_info" class="ui blue segment raised " style="margin: 10px;">
-    <div class="ui header">Добро пожаловать</div>
+<div id="user_info" class="ui blue segment raised covert" style="margin: 10px;">
+    <div class="ui header">Добро пожаловать, {{first_name}} {{middle_name}}</div>
     <div>
 	<div class="ui vertical menu fluid">
 	    <a href="#document_list.html" class="item">
