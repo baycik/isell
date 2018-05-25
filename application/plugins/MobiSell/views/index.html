@@ -178,8 +178,8 @@
                     localStorage.setItem('pcomp',JSON.stringify(App.user.pcomp));
                 },
                 restoreCompanies:function(){
-                    App.user.pcomp=JSON.parse(localStorage.getItem('pcomp') || '{}');
-                    App.user.acomp=JSON.parse(localStorage.getItem('acomp') || '{}');
+                    App.user.pcomp=JSON.parse(localStorage.getItem('pcomp')) || {};
+                    App.user.acomp=JSON.parse(localStorage.getItem('acomp')) || {};
                 },
                 pcompSelect: function ( company ) {
 		    var company_id=company.company_id||0;

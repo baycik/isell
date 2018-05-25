@@ -28,9 +28,9 @@
                     return;
                 }
                 this.list.push(product_object);
-                App.stock.popup_cart.fill_content(product_object);
+                console.log(this.list);
+                //App.stock.popup_cart.fill_content(product_object);
                 App.stock.render();
-
             },
             remove: function (node) {
                 if (!confirm("Вы уверенны, что хотите удалить товар из корзины?")) {
@@ -68,6 +68,13 @@
             create_document: function () {
                 location.hash = "#document.html";
             }
+        },
+        get_item_by_code:function(product_code,array){
+            for (var i = 0; i < array.length; i++) {
+                if (product_code == array[i].product_code) {
+                    return array[i];
+                };
+            };
         },
         pcomp_init: function () {
             $('.pcomp_id').dropdown({
@@ -130,31 +137,28 @@
             take_product_info: function (node) {
                 var index = $(node).data('index');
                 var product = App.stock.list[index];
-                if (product.leftover == 0) {
-                    if (!confirm("Товара нет в налиичии. Продолжить?")) {
-                        return;
-                    }
-                    App.renderTpl("stock_popup_body", product);
-                    $('#small_modal_header').html('Добавить в корзину');
-                    $('.small.modal').modal('show');
-                } else {
-                    App.renderTpl("stock_popup_body", product);
-                    $('#small_modal_header').html('Добавить в корзину');
-                    $('.small.modal').modal('show');
+                if ( product.leftover == 0 && !confirm("Товара нет в налиичии. Продолжить?")) {
+                    return;
                 }
+                App.renderTpl("stock_popup_body", product);
+                $('#small_modal_header').html('Добавить в корзину');
+                $('.small.modal').modal('show');
             },
-            edit_data: function (node) {
-                var index = $(node).data('index');
-                var product = App.stock.list[index];
+            edit_cart_item: function (node) {
+                var product_code = $(node).data('product_code');
+                var product = App.stock.get_item_by_code(product_code,App.stock.cart.list);
                 App.renderTpl("stock_popup_body", product);
                 $('#small_modal_header').html('Изменить количество');
                 $('.small.modal').modal('show');
-                $('#stock_popup_add_form input[name=product_quantity]').select();
+                App.stock.popup_add.calculate_price();
             },
             // Добавление товара в корзину
             put_to_cart: function (node) {
                 var fvalue = $('#stock_popup_add_form').form('get values');
                 $('.small.modal').modal('hide');
+                if( fvalue.product_quantity<1 ){
+                    return;
+                }
                 App.stock.cart.add(fvalue);
             },
             // Калькулятор для пользователя
@@ -168,7 +172,7 @@
                     $("#stock_popup_notice_quantity").html("");
                 }
                 ;
-                var result_price = fvalue.product_quantity * fvalue.product_price;
+                var result_price = fvalue.product_quantity * fvalue.product_price_total;
                 $("#popup_add_price").html(result_price.toFixed(2) + "р.");
             }
         },
@@ -179,26 +183,34 @@
             },
             fill_content: function () {
                 App.renderTpl("stock_cart_content", {cart_list: App.stock.cart.list});
-                if (App.stock.cart.list.length > 0) {
+                if(  App.stock.cart.list.length > 0 ) {
                     $("#stock_cart_empty_msg").hide();
                 } else {
                     $("#stock_cart_empty_msg").show();
                 }
             }
-
         },
-        popup_image: function (index) {
-            if( index>=0 && App.stock.list[index] ){
-                var suggest_entry = App.stock.list[index];
-                suggest_entry.size_x = Math.min($(document).width(), 500);
-                suggest_entry.size_y = Math.min($(document).height(), 500);
-                App.renderTpl('stock_image_modal', suggest_entry);
-                $("#stock_image_modal .content").css('height',suggest_entry.size_y);
+        popup_image: function (product_img) {
+            if( product_img ){
+                var img = {
+                    product_img:product_img,
+                    size_x:Math.min($(document).width()-20, 500),
+                    size_y:Math.min($(document).height()-20, 500)
+                };
+                App.renderTpl('stock_image_modal', img);
+                $("#stock_image_modal .content").css('height',img.size_y+20);
                 $("#stock_image_modal").modal('show');
             } else {
                 $("#stock_image_modal").modal('hide');
             }
 
+        },
+        edit_response: function () {
+            for (var i = 0; i < App.stock.list.length; i++) {
+                //Добавляем товару свойство is_in_cart
+                App.stock.list[i].quantity_added = App.stock.cart.is_there(App.stock.list[i].product_code);
+                App.stock.list[i].is_promo = (App.stock.list[i].product_price_total !== App.stock.list[i].product_price_total_raw) ? 1 : 0;
+            }
         },
         // Рендеринг списка товаров
         render: function () {
@@ -243,13 +255,6 @@
                 ;
                 App.stock.render();
             });
-        },
-        edit_response: function () {
-            for (var i = 0; i < App.stock.list.length; i++) {
-                //Добавляем товару свойство is_in_cart
-                App.stock.list[i].quantity_added = App.stock.cart.is_there(App.stock.list[i].product_code);
-                App.stock.list[i].is_promo = (App.stock.list[i].product_price_total !== App.stock.list[i].product_price_total_raw) ? 1 : 0;
-            }
         }
     };
 </script>
@@ -441,7 +446,7 @@
     <table class="stock_product_table {{if is_promo}}stock_product_promo{{/if}}">
         <tr>
             <td class="stock_product_image" rowspan="2" data-row-index="{{#}}">
-                <a href="#stock.html#popup_image={{#}}">
+                <a href="#stock.html#popup_image={{product_img}}">
                     <img src="../Storage/image_flush/?size=110x110&path=/dynImg/{{product_img}}" >
                 </a>
             </td>
@@ -457,7 +462,7 @@
                         Добавлено: {{quantity_added}}
                     </a>
                     <button class="ui blue icon button" style="background-color: #0089ec; color:white" data-product_code="{{product_code}}"
-                            onclick="App.stock.popup_add.edit_data(this)">
+                            onclick="App.stock.popup_add.edit_cart_item(this)">
                         <i class="edit icon"></i>
                     </button>
                     <button class="ui red icon button" data-product_code="{{product_code}}"
@@ -466,7 +471,7 @@
                     </button>
                 </div>
                 {{else}}
-                <button class="ui green button" data-index="{{#}}" 
+                <button class="ui green button" data-index="{{#}}"
                         onclick="App.stock.popup_add.take_product_info(this)">Добавить <i class="cart plus icon"></i></button>
                 {{/if}}
             </td> 
@@ -504,7 +509,9 @@
     <table style="margin-left: 15px; width: 100%">
         <tr style="height: 7em">
             <td class="popup_image_td" rowspan="2">
-                <img class="popup_image_resolution" style="width:60px" src="../Storage/image_flush/?size=120x120&path=/dynImg/{{product_img}}">
+                <a href="#stock.html#popup_image={{product_img}}">
+                <img src="../Storage/image_flush/?size=110x110&path=/dynImg/{{product_img}}">
+                </a>
             </td>
             <td>
                 <div class="popup_product_name description"  style="padding: .5rem !important">{{product_name}}</div>
@@ -539,15 +546,15 @@
     <form id="stock_popup_add_form" class="ui form segment" onsubmit='App.stock.popup_add.put_to_cart();return false;'>
         <div class="field">
             <label>Количество</label>
-            <input type='hidden' name='product_image' value='{{product_img}}'>
+            <input type='hidden' name='product_img' value='{{product_img}}'>
             <input type='hidden' name='product_name' value='{{product_name}}'>
             <input type='hidden' name='product_code' value='{{product_code}}'>
             <input type='hidden' name='leftover' value='{{leftover}}'>
-            <input type='hidden' name='product_price' value='{{product_price_total}}'>
-            <input name="product_quantity" placeholder="Количество" min="1"
+            <input type='hidden' name='product_price_total' value='{{product_price_total}}'>
+            <input type="number" name="product_quantity" placeholder="Количество" min="1"
                    onchange="App.stock.popup_add.calculate_price()" 
                    onfocus="this.select()"
-                   type="number" value="1">
+                   value="{{product_quantity|blank>1}}">
         </div>
         <div class="actions" style="margin-left: auto; margin-right: auto">
             <button type='submit' class="ui labeled icon  green button">
@@ -574,7 +581,9 @@
             <table style="margin-left: 15px">
                 <tr >
                     <td class="popup_cart_image_td" rowspan="2">
-                        <img  class="popup_cart_image_resolution" style="width:50px" src="../Storage/image_flush/?size=110x110&path=/dynImg/{{product_image}}">
+                        <a href="#stock.html#popup_image={{product_img}}">
+                        <img src="../Storage/image_flush/?size=110x110&path=/dynImg/{{product_img}}">
+                        </a>
                     </td>
                     <td>
                         <div class="popup_product_name"  style="padding: .5rem !important"> 
@@ -587,16 +596,16 @@
                         <div class="ui grid" style="margin-left:1px;">
                             <div class="six wide column" style = "color:#7a7a7a">{{product_code}}</div>
                             <div class="five wide column" style = "color:#7a7a7a">{{product_quantity}}</div>
-                            <div id="total_price" class="five wide column" style = "color:#7a7a7a">{{product_price}}р.</div>
+                            <div id="total_price" class="five wide column" style = "color:#7a7a7a">{{product_price_total}}р.</div>
                         </div>
                     </td>
                     <td>
-                        <div class="ui left labeled button" tabindex="0">
+                        <div class="ui right labeled button" tabindex="0">
                             <button class="ui blue icon button" style="background-color: #0089ec; color:white" data-product_code="{{product_code}}"
-                                    onclick="App.stock.popup_add.edit_data(this)">
+                                    onclick="App.stock.popup_add.edit_cart_item(this)">
                                 <i class="edit icon"></i>
                             </button>
-                            <button class="ui red icon button" data-product_code="{{product_code}}"
+                            <button class="ui left red icon button" data-product_code="{{product_code}}"
                                     onclick="App.stock.cart.remove(this)">
                                 <i class="trash alternate icon"></i>
                             </button>
@@ -623,14 +632,10 @@
 
 
 <div class="ui modal fullscreen" id="stock_image_modal">
-    <div class="header">{{product_code}}</div>
+    <div class="header">Изображение товара 
+        <a href="#stock.html" class="ui secondary close icon button" style="float:right" onclick="$('#stock_image_modal').modal('hide');"><i class="icon close"></i></a>
+    </div>
     <div class=" content" style="text-align: center">
 	<img src="../Storage/image_flush/?size={{size_x}}x{{size_y}}&path=/dynImg/{{product_img}}" />
-    </div>
-    <div class="description">
-	{{product_name}}
-    </div>
-    <div class="actions">
-	<div class="ui secondary close button"  onclick="$('#stock_image_modal').modal('hide');"><i class="icon close"></i> Закрыть</div>
     </div>
 </div>
