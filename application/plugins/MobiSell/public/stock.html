@@ -31,6 +31,9 @@
                 App.stock.render();
             },
             remove: function (node) {
+                if( !confirm("Удалить?") ){
+                    return;
+                }
                 var product_code = $(node).data('product_code');
                 for (var i = 0; i < App.stock.cart.list.length; i++) {
                     if (product_code == App.stock.cart.list[i].product_code) {
@@ -553,7 +556,7 @@
                    value="{{product_quantity|blank>1}}">
         </div>
         <div class="actions" style="margin-left: auto; margin-right: auto">
-            <button type='submit' class="ui labeled icon  green button">
+            <button type='submit' class="ui labeled green icon submit button">
                 <i class="plus icon"></i>
                 Добавить
             </button>
