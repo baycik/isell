@@ -25,6 +25,7 @@
         
 	App = {
 	    state: {},
+            url_file:'',
 	    init: function () {
 		App.sidebar.init();
 		App.holder.init();
@@ -37,9 +38,9 @@
 	    holder: {
 		init: function () {
 		    $(window).bind('hashchange', function (e) {
-			App.holder.load(location.hash.substring(1));
+			App.holder.hashchanged(location.hash.substring(1));
 		    });
-		    App.holder.load(location.hash.substring(1));
+		    App.holder.hashchanged(location.hash.substring(1));
 		},
                 hashchanged:function(url){
 		    url=url||'home.html';
@@ -51,9 +52,10 @@
 		    }
 		    
 		    var url_chunks = url.split("#");
+                    
  		    App.url_query = url_chunks[1];
 		    App.parseState(App.url_query);
-                    if( App.url_file != url_chunks[0] ){
+                    if( url_chunks[0] && App.url_file != url_chunks[0] ){
                         App.url_file = url_chunks[0];
                         this.load(url);
                     }
