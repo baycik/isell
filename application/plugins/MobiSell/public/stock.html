@@ -13,7 +13,6 @@
             });
             App.Topic('hashChange').subscribe(function () {
                 App.stock.popup_image(App.state['popup_image']);
-                console.log(App.state['popup_image']);
             });            
         },
         focus: function () {
@@ -36,12 +35,10 @@
             remove: function (node) {
                 if (!confirm("Вы уверенны, что хотите удалить товар из корзины?")) {
                     return;
-                }
-                ;
-                var index = $(node).data('index');
-                var product = App.stock.list[index];
+                };
+                var product_code = $(node).data('product_code');
                 for (var i = 0; i < App.stock.cart.list.length; i++) {
-                    if (product.product_code == App.stock.cart.list[i].product_code) {
+                    if (product_code == App.stock.cart.list[i].product_code) {
                         App.stock.cart.list.splice(i, 1);
                         break;
                     }
@@ -58,17 +55,14 @@
                         continue;
                     }
                 }
-
             },
             // Проверка наличия товара в корзине
             is_there: function (product_code) {
                 for (var i = 0; i < App.stock.cart.list.length; i++) {
                     if (product_code === App.stock.cart.list[i].product_code) {
                         return App.stock.cart.list[i].product_quantity;
-                    }
-                    ;
-                }
-                ;
+                    };
+                };
                 return false;
             },
             create_document: function () {
@@ -194,7 +188,7 @@
 
         },
         popup_image: function (index) {
-            if( index>=0 ){
+            if( index>=0 && App.stock.list[index] ){
                 var suggest_entry = App.stock.list[index];
                 suggest_entry.size_x = Math.min($(document).width(), 500);
                 suggest_entry.size_y = Math.min($(document).height(), 500);
@@ -206,12 +200,10 @@
             }
 
         },
-
         // Рендеринг списка товаров
         render: function () {
             App.stock.edit_response();
             App.renderTpl("stock_list", {products: App.stock.list, loading_finished: App.stock.loading_finished});
-
         },
         // Получение списка товаров
         load: function (load_more) {
@@ -229,6 +221,7 @@
                 q: $('#stock_search_input').val(),
                 category_id: $('#stock_category_tree').dropdown('get value'),
                 offset: App.stock.offset,
+                limit:12,
                 pcomp_id: App.user.pcomp.company_id
             };
             $('#stock_categories_header').html("");
@@ -256,7 +249,6 @@
                 //Добавляем товару свойство is_in_cart
                 App.stock.list[i].quantity_added = App.stock.cart.is_there(App.stock.list[i].product_code);
                 App.stock.list[i].is_promo = (App.stock.list[i].product_price_total !== App.stock.list[i].product_price_total_raw) ? 1 : 0;
-
             }
         }
     };
@@ -327,6 +319,12 @@
     .stock_product_name{
         color: #106596;
         height: 80px;
+    }
+    #stock_list .stock_product_promo{
+        box-shadow: 0px 0px 6px #0c0;
+    }
+    .stock_product_promo .stock_product_name{
+        color: #0c0;
     }
     
     
@@ -440,7 +438,7 @@
 
 
     <!-- {{products}} -->
-    <table class="stock_product_table">
+    <table class="stock_product_table {{if is_promo}}stock_product_promo{{/if}}">
         <tr>
             <td class="stock_product_image" rowspan="2" data-row-index="{{#}}">
                 <a href="#stock.html#popup_image={{#}}">
@@ -458,11 +456,11 @@
                     <a class="ui basic label">
                         Добавлено: {{quantity_added}}
                     </a>
-                    <button class="ui blue icon button" style="background-color: #0089ec; color:white" data-index="{{#}}"
+                    <button class="ui blue icon button" style="background-color: #0089ec; color:white" data-product_code="{{product_code}}"
                             onclick="App.stock.popup_add.edit_data(this)">
                         <i class="edit icon"></i>
                     </button>
-                    <button class="ui red icon button" data-index="{{#}}"
+                    <button class="ui red icon button" data-product_code="{{product_code}}"
                             onclick="App.stock.cart.remove(this)">
                         <i class="trash alternate icon"></i>
                     </button>
@@ -548,6 +546,7 @@
             <input type='hidden' name='product_price' value='{{product_price_total}}'>
             <input name="product_quantity" placeholder="Количество" min="1"
                    onchange="App.stock.popup_add.calculate_price()" 
+                   onfocus="this.select()"
                    type="number" value="1">
         </div>
         <div class="actions" style="margin-left: auto; margin-right: auto">
@@ -589,6 +588,18 @@
                             <div class="six wide column" style = "color:#7a7a7a">{{product_code}}</div>
                             <div class="five wide column" style = "color:#7a7a7a">{{product_quantity}}</div>
                             <div id="total_price" class="five wide column" style = "color:#7a7a7a">{{product_price}}р.</div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="ui left labeled button" tabindex="0">
+                            <button class="ui blue icon button" style="background-color: #0089ec; color:white" data-product_code="{{product_code}}"
+                                    onclick="App.stock.popup_add.edit_data(this)">
+                                <i class="edit icon"></i>
+                            </button>
+                            <button class="ui red icon button" data-product_code="{{product_code}}"
+                                    onclick="App.stock.cart.remove(this)">
+                                <i class="trash alternate icon"></i>
+                            </button>
                         </div>
                     </td>
                 </tr>
