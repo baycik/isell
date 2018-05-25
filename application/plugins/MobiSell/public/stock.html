@@ -28,14 +28,9 @@
                     return;
                 }
                 this.list.push(product_object);
-                console.log(this.list);
-                //App.stock.popup_cart.fill_content(product_object);
                 App.stock.render();
             },
             remove: function (node) {
-                if (!confirm("Вы уверенны, что хотите удалить товар из корзины?")) {
-                    return;
-                };
                 var product_code = $(node).data('product_code');
                 for (var i = 0; i < App.stock.cart.list.length; i++) {
                     if (product_code == App.stock.cart.list[i].product_code) {
@@ -43,13 +38,14 @@
                         break;
                     }
                 }
+                App.stock.cart.render();
                 App.stock.render();
             },
             edit: function (product_object) {
                 for (var i = 0; i < this.list.length; i++) {
                     if (product_object.product_code == App.stock.cart.list[i].product_code) {
                         App.stock.cart.list[i].product_quantity = product_object.product_quantity;
-                        App.stock.popup_cart.fill_content(product_object);
+                        App.stock.cart.render();
                         App.stock.render();
                     } else {
                         continue;
@@ -67,6 +63,14 @@
             },
             create_document: function () {
                 location.hash = "#document.html";
+            },
+            render: function () {
+                App.renderTpl("stock_cart_content", {cart_list: App.stock.cart.list});
+                if(  App.stock.cart.list.length > 0 ) {
+                    $("#stock_cart_empty_msg").hide();
+                } else {
+                    $("#stock_cart_empty_msg").show();
+                }
             }
         },
         get_item_by_code:function(product_code,array){
@@ -179,15 +183,7 @@
         popup_cart: {
             show_box: function () {
                 $('.ui.longer.modal').modal('show');
-                App.stock.popup_cart.fill_content();
-            },
-            fill_content: function () {
-                App.renderTpl("stock_cart_content", {cart_list: App.stock.cart.list});
-                if(  App.stock.cart.list.length > 0 ) {
-                    $("#stock_cart_empty_msg").hide();
-                } else {
-                    $("#stock_cart_empty_msg").show();
-                }
+                App.stock.cart.render();
             }
         },
         popup_image: function (product_img) {
@@ -578,16 +574,22 @@
     <div class="scrolling content">
         <div id="stock_cart_content">
             {{cart_list}}  
-            <table style="margin-left: 15px">
+            <table>
                 <tr >
-                    <td class="popup_cart_image_td" rowspan="2">
-                        <a href="#stock.html#popup_image={{product_img}}">
-                        <img src="../Storage/image_flush/?size=110x110&path=/dynImg/{{product_img}}">
-                        </a>
-                    </td>
                     <td>
-                        <div class="popup_product_name"  style="padding: .5rem !important"> 
-                            <div class = "fourteen wide column">{{product_name}}</div>
+                        <a href="#stock.html#popup_image={{product_img}}">
+                            <img style="float:left" src="../Storage/image_flush/?size=50x50&path=/dynImg/{{product_img}}">
+                        </a>
+                        {{product_name}}
+                        <div class="ui buttons">
+                            <button class="ui blue icon button" data-product_code="{{product_code}}"
+                                    onclick="App.stock.popup_add.edit_cart_item(this)">
+                                <i class="edit icon"></i>
+                            </button>
+                            <button class="ui red icon button" data-product_code="{{product_code}}"
+                                    onclick="App.stock.cart.remove(this)">
+                                <i class="trash alternate icon"></i>
+                            </button>
                         </div>
                     </td>
                 </tr>
@@ -596,19 +598,7 @@
                         <div class="ui grid" style="margin-left:1px;">
                             <div class="six wide column" style = "color:#7a7a7a">{{product_code}}</div>
                             <div class="five wide column" style = "color:#7a7a7a">{{product_quantity}}</div>
-                            <div id="total_price" class="five wide column" style = "color:#7a7a7a">{{product_price_total}}р.</div>
-                        </div>
-                    </td>
-                    <td>
-                        <div class="ui right labeled button" tabindex="0">
-                            <button class="ui blue icon button" style="background-color: #0089ec; color:white" data-product_code="{{product_code}}"
-                                    onclick="App.stock.popup_add.edit_cart_item(this)">
-                                <i class="edit icon"></i>
-                            </button>
-                            <button class="ui left red icon button" data-product_code="{{product_code}}"
-                                    onclick="App.stock.cart.remove(this)">
-                                <i class="trash alternate icon"></i>
-                            </button>
+                            <div class="five wide column" style = "color:#7a7a7a">{{product_price_total}}р.</div>
                         </div>
                     </td>
                 </tr>
@@ -636,6 +626,6 @@
         <a href="#stock.html" class="ui secondary close icon button" style="float:right" onclick="$('#stock_image_modal').modal('hide');"><i class="icon close"></i></a>
     </div>
     <div class=" content" style="text-align: center">
-	<img src="../Storage/image_flush/?size={{size_x}}x{{size_y}}&path=/dynImg/{{product_img}}" />
+        <img style="max-width: 100%" src="../Storage/image_flush/?size={{size_x}}x{{size_y}}&path=/dynImg/{{product_img}}" />
     </div>
 </div>
