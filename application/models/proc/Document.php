@@ -1287,9 +1287,10 @@ class Document extends Data {
 	} else {
 	    $this->Base->Accounts->updateTransaction($trans_id, array('amount' => $amount, 'amount_alt' => $amount_alt, 'description' => $description));
 	}
-	if ($trans_type == '361_702') {//Doc sum is changed || $trans_type=='631->361'
-	    if ($this->Base->Accounts->isTransConnected($trans_id))//Break connection
+	if ($trans_type == '361_702' || $trans_type=='631_28') {//Doc sum is changed || $trans_type=='631->361'
+	    if ($this->Base->Accounts->isTransConnected($trans_id)){//Break connection
 		$this->Base->Accounts->breakTransConnection($trans_id);
+            }
 	    $this->Base->Accounts->calculatePayments();
 	}
     }

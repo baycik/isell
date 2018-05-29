@@ -20,23 +20,29 @@
     <script type="text/javascript" src="../js/picker/picker.js"></script>
     <script type="text/javascript" src="../js/picker/picker.date.js"></script>
     <script type="text/javascript" src="../js/picker/translations/ru_RU.js"></script>
+    <script type="text/javascript" src="app.js"></script>
     <script type="text/javascript">
+        
 	App = {
 	    state: {},
+            url_file:'',
 	    init: function () {
 		App.sidebar.init();
 		App.holder.init();
-		//App.user.getData();
+		App.user.init();
 		//App.user.signInPopup();
+                if( localStorage.getItem('pcomp_id') ){
+                    App.pcomp={company_id:localStorage.getItem('pcomp_id')};
+                }
 	    },
 	    holder: {
 		init: function () {
 		    $(window).bind('hashchange', function (e) {
-			App.holder.load(location.hash.substring(1));
+			App.holder.hashchanged(location.hash.substring(1));
 		    });
-		    App.holder.load(location.hash.substring(1));
+		    App.holder.hashchanged(location.hash.substring(1));
 		},
-		load: function (url) {
+                hashchanged:function(url){
 		    url=url||'home.html';
 		    
 		    if(url=='home.html'){
@@ -46,11 +52,17 @@
 		    }
 		    
 		    var url_chunks = url.split("#");
-		    App.url_file = url_chunks[0];
-		    App.url_query = url_chunks[1];
+                    
+ 		    App.url_query = url_chunks[1];
 		    App.parseState(App.url_query);
+                    if( url_chunks[0] && App.url_file != url_chunks[0] ){
+                        App.url_file = url_chunks[0];
+                        this.load(url);
+                    }
+                    App.Topic('hashChange').publish(App.state);
 		    $(".ui.sidebar").sidebar('hide');
-		    
+                },
+		load: function (url) {
 		    var holder_id=App.url_file.split('.')[0];
 		    if( !$("#"+holder_id).length ){
 			$("#main_container").append("<div id='"+holder_id+"'></div>");
@@ -122,6 +134,11 @@
 	    },
 	    user: {
 		props: {},
+                acomp:{},
+                pcomp:{},
+                init:function(){
+                    this.restoreCompanies();
+                },
 		getData: function () {
 		    $.get("../User/userFetch", function (resp) {
 			App.user.props = App.json(resp);
@@ -149,8 +166,47 @@
 		},
 		signInPopup:function(){
 		    $('#signInModal').modal('show');
+		},
+                setPassiveCompany:function(company){
+                    App.user.pcomp=company;
+                    App.Topic('passiveCompanySelected').publish(company);
+                    localStorage.setItem('pcomp',JSON.stringify(App.user.pcomp));
+                },
+                setActiveCompany:function(company){
+                    App.user.pcomp=company;
+                    App.Topic('passiveCompanySelected').publish(company);
+                    localStorage.setItem('pcomp',JSON.stringify(App.user.pcomp));
+                },
+                restoreCompanies:function(){
+                    App.user.pcomp=JSON.parse(localStorage.getItem('pcomp')) || {};
+                    App.user.acomp=JSON.parse(localStorage.getItem('acomp')) || {};
+                },
+                pcompSelect: function ( company ) {
+		    var company_id=company.company_id||0;
+		    if( App.pcomp && App.pcomp.company_id===company_id ){
+			return;
+		    }
+		    $.post('../Company/selectPassiveCompany/' + company_id, function (xhr) {
+			App.user.setPassiveCompany(App.json(xhr));
+		    });
 		}
 	    },
+            topics:[],
+            Topic:function (id) {
+                var callbacks, topic = id && App.topics[ id ];
+                if (!topic) {
+                    callbacks = jQuery.Callbacks("memory");
+                    topic = {
+                        publish: callbacks.fire,
+                        subscribe: callbacks.add,
+                        unsubscribe: callbacks.remove
+                    };
+                    if (id) {
+                        App.topics[ id ] = topic;
+                    }
+                }
+                return topic;
+            },
 	    clearCache:function(){
 		navigator.serviceWorker.controller && navigator.serviceWorker.controller.postMessage('clear_cache');
 		location.reload();
@@ -165,9 +221,7 @@
 	    }
 	};
 	$(App.init);
-	
-	
-	/*
+
 	if ( !localStorage.getItem("disableSW") && ('serviceWorker' in navigator) ) {
 	    navigator.serviceWorker.register('../MobiSell/sw.js', {scope: '../MobiSell/'})
 	    .then(function(reg) {
@@ -194,7 +248,7 @@
 		    App.clearCache();
 		}
 	    });
-	}*/
+	}
     </script>
     <style>
 	.covert{

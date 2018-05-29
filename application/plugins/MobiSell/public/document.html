@@ -6,6 +6,9 @@
 	    App.document.head.init();
 	    App.document.focus();
 	    App.document.suggestion.init();
+            App.Topic('hashChange').subscribe(function () {
+                App.document.load(App.state.doc_id);
+            }); 
 	},
 	focus: function () {
 	    App.document.load(App.state.doc_id);
@@ -29,10 +32,8 @@
 	set: function (doc) {
 	    App.document.doc = doc;
 	    App.document.render();
-	    localStorage.setItem('acomp_id', doc.head.active_company_id);
-	    localStorage.setItem('acomp_label', doc.head.active_company_label);
-	    localStorage.setItem('pcomp_id', doc.head.passive_company_id);
-	    localStorage.setItem('pcomp_label', doc.head.label);
+            App.user.setActiveCompany({company_id:doc.head.active_company_id,label:doc.head.active_company_label});
+            App.user.setPassiveCompany({company_id:doc.head.passive_company_id,label:doc.head.label});
 	},
 	render: function () {
 	    App.document.row.parseStatus();
@@ -88,11 +89,12 @@
 	create: function () {
 	    App.document.createModalInit();
 	    $('.pcomp_id')
-		    .dropdown("set text", localStorage.getItem('pcomp_label'))
-		    .dropdown('set value', localStorage.getItem('pcomp_id'));
+		    .dropdown("set text", App.user.pcomp.label)
+		    .dropdown('set value', App.user.pcomp.company_id);
+            
 	    $('.acomp_id')
-		    .dropdown("set text", localStorage.getItem('acomp_label'))
-		    .dropdown('set value', localStorage.getItem('acomp_id'));
+		    .dropdown("set text", App.user.acomp.label)
+		    .dropdown('set value', App.user.acomp.company_id);
 	    $(".doc_type")
 		    .dropdown("set selected", 1);
 	    //$("#document_create_dialog").show();
@@ -732,7 +734,7 @@
     <div class="actions">
 	<div class="ui stackable grid">
 	    <div class="six wide column"><div class="ui positive approve fluid button"><i class="icon save"></i> Ок</div></div>
-	    <div class="four wide column"><div class="ui negative deny button"><i class="icon remove circle"></i> Удалить</div></div>
+	    <div class="four wide column"><div class="ui negative deny button"><i class="trash alternate icon"></i> Удалить</div></div>
 	    <div class="six wide column"><div class="ui secondary close fluid button" onclick="$('#document_entry_dialog').modal('hide');"><i class="icon close"></i> Закрыть</div></div>
 	</div>
     </div>
@@ -749,5 +751,4 @@
     <div class="actions">
 	<div class="ui secondary close button"  onclick="$('#document_product_image').modal('hide');"><i class="icon close"></i> Закрыть</div>
     </div>
-
 </div>

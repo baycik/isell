@@ -29,7 +29,8 @@ class DocumentItems extends DocumentCore{
 	    }
 	}
         if( $category_id ){
-            $where.=" AND parent_id='$category_id'";
+            $branch_ids = $this->treeGetSub('stock_tree', $category_id);
+            $where .= " AND parent_id IN (" . implode(',', $branch_ids) . ")";
         }
 	$sql="
 	    SELECT
@@ -39,7 +40,8 @@ class DocumentItems extends DocumentCore{
 		product_quantity leftover,
                 product_img,
 		product_unit,
-		GET_SELL_PRICE(product_code,{$pcomp_id},{$doc_ratio}) product_price_total
+		GET_SELL_PRICE(product_code,{$pcomp_id},{$doc_ratio}) product_price_total,
+                GET_PRICE(product_code,{$pcomp_id},{$doc_ratio}) product_price_total_raw
 	    FROM
 		stock_entries
 		    JOIN
