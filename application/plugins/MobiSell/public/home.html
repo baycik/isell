@@ -16,7 +16,7 @@
 </div>
 
 <div id="user_info" class="ui blue segment raised covert" style="margin: 10px;">
-    <div class="ui header">Добро пожаловать, {{first_name}} {{middle_name}}</div>
+    <div class="ui header">Добро пожаловать, {{first_name|blank>}} {{middle_name|blank>}}</div>
     <div>
 	<div class="ui vertical menu fluid">
 	    <a href="#document_list.html" class="item">
@@ -25,7 +25,7 @@
 	    </a>
 	    <a href="#stock.html" class="item">
 		<i class="cube icon"></i>
-		Склад
+		Товары
 	    </a>
 	    <a href="#document.html" class="item">
 		<i class="file outline icon"></i>
