@@ -21,34 +21,69 @@ class User extends Catalog {
 	return false;
     }
     
-    public $SignByPhone=['user_phone'=>'^[\d]*','user_phone_pass'=>'int'];
-    public function SignByPhone($user_phone,$user_phone_pass){
-        if( $user_phone && !$user_phone_pass ){
-            $user_data = $this->get_row("SELECT user_id,user_level FROM user_list WHERE user_phone LIKE '%{$user_phone}'");
-            if( $user_data ){
-                if( $user_data->user_level<1){
-                    return false;
-                }
-                return $this->sendPhonePass($user_phone);
-            }
-            //$user_data = $this->get_row("SELECT user_id,user_level FROM companies_list WHERE company_mobile LIKE '%{$user_phone}%'");
+    //public $SignByPhone=['user_phone'=>'^[\d]*','user_phone_pass'=>'int'];
+    public function sendPassword($user_phone){
+        $new_user_pass=$this->generatePassword();
+        $user_data = $this->get_row("SELECT user_id,user_level,user_login FROM user_list WHERE user_phone LIKE '%{$user_phone}'");
+        if( !$user_data ){
+            $user_data=$this->userRegister($user_phone);
         }
+        if( $user_data->user_level<1 || !$user_data->user_id ){
+            return false;
+        }
+        if( $this->userInformBySms($user_phone,$user_data->user_login,$new_user_pass) ){
+            $this->query("UPDATE user_list SET user_pass=MD5('$new_user_pass') WHERE user_id='$user_data->user_id'");
+            return true;
+        }
+        return false;
     }
-    
-    private function sendPhonePass($user_phone){
-        $tmp_pass=rand(99,9999);
-        $this->Hub->svar('login_user_phone', $user_phone);
-        $this->Hub->svar('login_user_pass', $tmp_pass);
+    private function userInformBySms($user_phone,$user_login,$new_user_pass){
+        $data['user_new_pass']=$new_user_pass;
+        $data['user_login']=$user_login;
+        $message=$this->load->view('dialog/sms_user_register',$data,true);
+        
         $initial_user_level=$this->Hub->svar('user_level');
-        $this->Hub->svar('user_level',1);
-        $this->Hub->load_model("Company");
+        $this->Hub->svar('user_level',1);//elevate user level for accessing sms credentials
         $this->Hub->load_model("Utils");
-        if(!$this->Hub->acomp('company_id')){
-            $this->Hub->Company->selectActiveCompany(1);
-        }
-        $ok=1;//$this->Utils->sendSms($user_phone,$tmp_pass);
+        $this->Hub->load_model("Company");
+        $this->Hub->Company->selectActiveCompany(1);// not always right!!!
+        $ok=$this->Utils->sendSms($user_phone,$message);
         $this->Hub->svar('user_level',$initial_user_level);
         return $ok;
+    }
+    private function userRegister($user_phone){
+        $client_data = $this->get_row("SELECT company_id,company_name,company_person,path FROM companies_list JOIN companies_tree USING(branch_id) WHERE company_mobile LIKE '%{$user_phone}%'");
+        $user_data=new stdClass;
+        $user_data->user_id=0;
+        $user_data->user_level=0;
+        if( $client_data ){
+            $sql="INSERT INTO
+                user_list
+            SET
+                user_login='{$user_phone}',
+                user_phone='{$user_phone}',
+                user_level=1,
+                user_assigned_path='{$client_data->path}',
+                first_name='{$client_data->company_name}',
+                user_sign='{$client_data->company_person}',
+                user_permissions='nocommit'
+                ";
+            $this->query($sql);
+            $user_data->user_id=$this->db->insert_id();
+            $user_data->user_level=1;
+        }
+        return $user_data;
+    }
+    private function generatePassword(){
+        $alphabet = 'abcdefghijklmnopqrstuvwxyz1234567890';//ABCDEFGHIJKLMNOPQRSTUVWXYZ
+        $password = array(); 
+        $alpha_length = strlen($alphabet) - 1; 
+        for ($i = 0; $i < 6; $i++) 
+        {
+            $n = rand(0, $alpha_length);
+            $password[] = $alphabet[$n];
+        }
+        return implode($password);
     }
     
     private function initLoggedUser($user_data){

@@ -34,15 +34,21 @@ class Hub  extends CI_Controller{
     private function loginform(){
 	$user_login=$this->request('user_login');
 	$user_pass=$this->request('user_pass');
-        $user_phone=$this->request('user_phone');
-        $user_phone_pass=$this->request('user_phone_pass');
 	$User=$this->load_model('User');
-	if( $user_login && $user_pass && $User->SignIn($user_login,$user_pass) ){
-	    header("Location: ./");
-	    return;
-	} else 
-        if( $sms_sent=$User->SignByPhone($user_phone,$user_phone_pass) ){
-            
+	if( $user_login && $user_pass ){
+            if( $User->SignIn($user_login,$user_pass) ){
+                header("Location: ./");
+                return;
+            }
+	    $status="login_or_pasword_wrong";
+	} else if( $user_phone=$this->request('user_phone','^[\d]+',false) ){
+            if( $User->sendPassword($user_phone) ){
+                $status="pasword_sent";
+            } else {
+                $status="phone_is_unknown";
+            }
+        } else {
+            $status="please_login";
         }
 	include APPPATH.'views/login.html';
 	exit;
