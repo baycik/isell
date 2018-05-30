@@ -69,7 +69,7 @@
                 data.passive_company_id=App.pcomp.company_id || 0;
                 data.label=App.pcomp.label || '?';
             }
-            App.loadWindow('page/accounts/trans_edit',data).progress(function(status,data){
+            App.loadWindow('page/accounts_shared/trans_edit',data).progress(function(status,data){
                 if( status==='save' || status==='delete' ){
                     //$('#account_clientbank_dg').datagrid('reload');
 		    Cbank.fav.load();
@@ -78,7 +78,7 @@
             });
         },
 	transEdit:function( trans_id ){
-	    App.loadWindow('page/accounts/trans_edit',{trans_id:trans_id}).progress(function(status,data){
+	    App.loadWindow('page/accounts_shared/trans_edit',{trans_id:trans_id}).progress(function(status,data){
                 if( status==='save' || status==='delete' ){
                     //$('#account_clientbank_dg').datagrid('reload');
 		    Cbank.fav.load();

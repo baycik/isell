@@ -3,7 +3,7 @@
     App.page_trade_payments={
 	init:function(){
 	    var data={passive_filter:true};
-	    App.loadModule('page/trade/ledger',data,'page_accounts_ledgerPayment',/(ledger)/ig,"$1Payment").progress(function(status,param){
+	    App.loadModule('page/accounts_shared/ledger',data,'page_accounts_ledgerPayment',/(ledger)/ig,"$1Payment").progress(function(status,param){
 		if( status==='inited' ){
 		    App.handler.progress(function(status){
 			if( status==="passiveCompanySelected" ){

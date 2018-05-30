@@ -78,6 +78,7 @@ class Company extends Catalog{
 	$where='';
 	if( $mode=='active_only' ){
 	    $where.='AND is_active=1';
+            $assigned_path='';
 	}
 	$sql="SELECT 
 		company_id,
