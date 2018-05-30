@@ -1,6 +1,6 @@
 <?php
 /* Group Name: Результаты деятельности
- * User Level: 1
+ * User Level: 3
  * Plugin Name: Анализ Затрат
  * Plugin URI: 
  * Version: 0.1

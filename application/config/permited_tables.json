@@ -1,5 +1,5 @@
 [
-    {"table_name":"prod_list","table_title":"Справочник товаров","level":1,"editable":1},
+    {"table_name":"prod_list","table_title":"Справочник товаров","level":2,"editable":1},
     {"table_name":"price_list","table_title":"Справочник цен","level":2,"editable":1},
     {"table_name":"stat_sell_analyse","table_title":"Стат. анализ продаж","level":4},
     {"table_name":"client_list","table_title":"Клиентская база","level":3},

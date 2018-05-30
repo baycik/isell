@@ -1,7 +1,7 @@
 <?php
 require_once 'AccountsCore.php';
 class AccountsRegistry extends AccountsCore{
-    
+    public $min_level=3;
     
     public $registryFetch=[
 	'period'=>'string',
