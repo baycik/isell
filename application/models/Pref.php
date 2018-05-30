@@ -1,7 +1,7 @@
 <?php
 require_once 'Catalog.php';
 class Pref extends Catalog {
-    public $min_level=2;
+    public $min_level=1;
     public $getStaffList=[];
     public function getStaffList() {
         $sql = "SELECT 

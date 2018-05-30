@@ -106,7 +106,15 @@ class Hub  extends CI_Controller{
 	if( $parent_folder=='plugins' ){
 	    $file_name = "application/".implode('/',func_get_args());
 	} else {
-	    $file_name = "application/views/".implode('/',func_get_args());
+            $file_name = "application/views/".implode('/',func_get_args());
+            $modules= json_decode(file_get_contents("application/config/modules.json"));
+            foreach ($modules as $module){
+                if( strcasecmp($module->name,$parent_folder)==0 ){
+                    if( $module->level > $this->svar('user_level') ){
+                        $this->set_level($module->level);
+                    }
+                }
+            }
 	}
 	if( file_exists($file_name) ){
 	    header("X-isell-type:OK");

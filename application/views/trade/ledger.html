@@ -1,0 +1,467 @@
+<script type="text/javascript">
+    /* global App,Mark*/
+    Ledger = App.page_accounts_ledger = {
+	idate: null,
+	fdate: null,
+	acc_props: {},
+	initAfter: function () {
+	    this.date.initRange();
+            this.fav.init();
+	    App.handler.progress(function(status){
+		if( status==="activeCompanySelected" ){
+		    Ledger.fav.init();
+		}
+	    });
+	},
+	reload:function(){
+	    this.load(Ledger.current_acc_code);
+	},
+	load:function( acc_code ){
+	    Ledger.current_acc_code=acc_code;
+	    $('#account_ledger_dg').datagrid('reload');
+	    Ledger.tnames.init();
+	},
+	showTree:function(){
+	    App.loadWindow('page/accounts/acc_tree',{}).progress(function(status,data){
+		if( status==='select' ){
+		    //Ledger.load(data.acc_code);
+                    Ledger.fav.select(data.acc_code);
+		}
+	    });
+	},
+	showAccForm:function(){
+	    App.loadWindow('page/accounts/acc_form',Ledger.acc_props).progress(function(status,data){
+		if( status==='change' ){
+		    App.renderTpl('Ledger_acc_props',data);
+		    Ledger.fav.init();
+		}
+	    });
+	},
+	addTransaction:function( node ){
+            var trans_type=$(node).attr('data-trans-type');
+            var trans_name=$(node).attr('data-trans-name');
+	    this.list.rowCreate(trans_type, trans_name);
+	},
+	fav:{
+            favs:[],
+	    init:function(){
+		if( Ledger.data.passive_filter && !App.pcomp ){
+		    return;//Pcomp not yet selected
+		}
+		var param={use_passive_filter:Ledger.data.passive_filter*1};
+		App.get("AccountsData/accountFavoritesFetch/",param,function(resp){
+		    var favs=App.json(resp);
+		    if( favs[0] ){
+                        Ledger.fav.favs=favs;
+			App.renderTpl('ledger_favorites',{favs:favs});	
+                        setTimeout(function(){
+                            Ledger.current_acc_code=Ledger.current_acc_code||favs[0].acc_code;
+                            Ledger.fav.select(Ledger.current_acc_code);
+                        },0);
+		    } else if(!Ledger.current_acc_code){
+			alert("Нет избранных счетов. Выберите счет из диалога.");
+			Ledger.showTree();
+		    }
+		});
+	    },
+	    select:function( fav ){
+                if( typeof fav==='object' ){
+                    fav=$(fav).attr('data-code');
+                }
+                $('#ledger_favorites .left_label_selected').removeClass('left_label_selected');
+                $('#ledger_favorites div[data-code="'+fav+'"]').addClass('left_label_selected');
+                Ledger.load( fav );
+	    },
+	    toggle:function(){
+		Ledger.acc_props.is_favorite=Ledger.acc_props.is_favorite*1?0:1;
+		
+		var props={acc_code:Ledger.acc_props.acc_code,is_favorite:Ledger.acc_props.is_favorite, use_passive_filter:Ledger.data.passive_filter*1};
+		App.post("AccountsData/accountFavoritesToggle/",props,function(ok){
+		    Ledger.fav.init();
+		    App.renderTpl('Ledger_acc_props',Ledger.acc_props);
+		});
+	    },
+            updateSelected:function( new_balance ){
+                for( var i in Ledger.fav.favs ){
+                    if( Ledger.fav.favs[i]['acc_code']===Ledger.current_acc_code ){
+                        Ledger.fav.favs[i]['balance']=new_balance;
+                    }
+                }
+                App.renderTpl('ledger_favorites',{favs:Ledger.fav.favs});
+                $('#ledger_favorites div[data-code="'+Ledger.current_acc_code+'"]').addClass('left_label_selected');
+            }
+	},
+	tnames:{
+	    init:function(){
+                Mark.pipes.undollar=function(str){
+                    return str.replace('$','&#36;');
+                };
+		if( Ledger.current_acc_code ){
+		    var param={selected_acc:Ledger.current_acc_code};
+		    App.get("AccountsData/transNameListFetch/",param,function(resp){
+			App.renderTpl('ledger_tnames',{tnames:App.json(resp)});
+		    });
+		}
+	    },
+	    show:function(){
+		App.loadWindow('page/accounts/trans_names_list',{trans_type:Ledger.current_acc_code}).progress(function(status){
+		    Ledger.tnames.init();
+		});
+	    }
+	},
+	documentOpen:function( doc_id ){
+	    App.loadWindow('page/trade/document',{doc_id:doc_id}).progress(function(status){
+		if( status!=='inited' ){
+		    $('#account_ledger_dg').datagrid('reload');
+		}
+	    });
+	},
+	date:{
+	    calendarChanged:function(newVal,which){
+		if( Ledger[which]!==newVal && /\d\d.\d\d.\d\d\d\d/.test(newVal) && !Ledger.date.suppress ){
+		    Ledger[which]=newVal;
+		    Ledger.date.suppress=true;
+		    this.dateToRange();
+		    Ledger.date.suppress=false;
+		    clearTimeout(Ledger.date.clock);
+		    Ledger.date.clock=setTimeout(function(){
+			$('#account_ledger_dg').datagrid('reload');
+		    },500);
+		}
+	    },
+	    dateToRange:function(){
+		var curr_month=(new Date()).getMonth()+1;
+		var imonth=Ledger.idate.split('.')[1];
+		var fmonth=Ledger.fdate.split('.')[1];
+		$("#account_ledger_range").slider('setValues',[imonth-curr_month+12,fmonth-curr_month+12]);
+	    },
+	    initRange:function(){
+		var months=["янв","фев","мар","апр","май","июн","июл","авг","сен","окт","ноя","дек"];
+		var curr_month=(new Date()).getMonth()+1;
+		var prev=months.slice( 0,curr_month );
+		var next=months.slice(curr_month);
+		months=next.concat(prev);
+		$("#account_ledger_range").slider({
+		    width:300,
+		    range: true,
+		    value: [10,12],
+		    step:1,
+		    min:1,
+		    max:12,
+		    rule: months,
+		    onChange:function(newVal){
+			Ledger.date.rangeToDate(newVal,'reload_ledger');
+		    }
+		});
+		Ledger.date.rangeToDate([10,12]);
+	    },
+	    rangeToDate:function( range, mode ){
+		var now=new Date();
+		Ledger.idate=App.toDmy(new Date(now.getFullYear(), now.getMonth()-12+range[0], 1));
+		Ledger.fdate=App.toDmy(new Date(now.getFullYear(), now.getMonth()-12+range[1]+1, 0));
+		$("#account_ledger_idate").datebox('setValue',Ledger.idate);
+		$("#account_ledger_fdate").datebox('setValue',Ledger.fdate);
+		if( mode==='reload_ledger' ){
+		    clearTimeout(Ledger.date.clock);
+		    Ledger.date.clock=setTimeout(function(){
+			$('#account_ledger_dg').datagrid('reload');
+		    },500);
+		}
+	    }
+	},
+	onListLoaded: function () {
+	    $("#account_ledger_ibal").html(App.formatNum(Ledger.sub_totals.ibal||'-') + ' ' + Ledger.acc_props.curr_symbol);
+	    $("#account_ledger_fbal").html(App.formatNum(Ledger.sub_totals.fbal||'-') + ' ' + Ledger.acc_props.curr_symbol);
+	    App.renderTpl('Ledger_acc_props',Ledger.acc_props);
+            Ledger.fav.updateSelected(Ledger.sub_totals.fbal);
+	},
+	list: {
+	    loader: function (param, success, error) {
+		if( Ledger.current_acc_code && Ledger.idate && Ledger.fdate ){
+		    Ledger.current_page=param.page;
+		    Ledger.current_rows=param.rows;
+		    
+		    
+		    var params={
+			acc_code:Ledger.current_acc_code,
+			idate:App.toIso(Ledger.idate),
+			fdate:App.toIso(Ledger.fdate),
+			page:Ledger.current_page,
+			rows:Ledger.current_rows,
+			filterRules:param.filterRules
+		    };
+		    App.post('AccountsCore/ledgerFetch', params, function (xhr) {
+			var resp = App.json(xhr);
+			if( resp.sub_totals ){
+			    Ledger.sub_totals = resp.sub_totals;
+			    Ledger.acc_props = resp.props;
+			    Ledger.using_alt_currency=resp.using_alt_currency;
+			    Ledger.onListLoaded();
+			    var rows=Ledger.list.addBalanceRows(resp);
+                            success(rows);
+			} else {
+			    success([]);
+			}
+		    });
+		} else {
+		    success([]);
+		}
+	    },
+	    addBalanceRows: function (resp) {
+		var opening_row = {
+		    trans_date: App.toDmy(Ledger.idate),
+		    description: "Входящий остаток"
+		};
+		var sub_row = {
+		    trans_date: App.toDmy(Ledger.fdate),
+		    description: "Оборот за период",
+		    debit: resp.sub_totals.pdebit,
+		    credit: resp.sub_totals.pcredit
+		};
+		var closing_row = {
+		    trans_date: App.toDmy(Ledger.fdate),
+		    description: "Исходящий остаток"
+		};
+		if (resp.sub_totals.ibal > 0) {
+		    opening_row.debit = resp.sub_totals.ibal;
+		} else {
+		    opening_row.credit = -resp.sub_totals.ibal;
+		}
+		if (resp.sub_totals.fbal > 0) {
+		    closing_row.debit = resp.sub_totals.fbal;
+		} else {
+		    closing_row.credit = -resp.sub_totals.fbal;
+		}
+		resp.rows.unshift(closing_row, sub_row);
+		resp.rows.push(opening_row);
+		return resp;
+	    },
+	    onSelect: function (index, row) {
+		$('#account_ledger_dg').datagrid('resize');
+	    },
+	    toggleFilter: function () {
+		if (this.filterEnabled) {
+		    $('#account_ledger_dg').datagrid('disableFilter');
+		    this.filterEnabled = false;
+		}
+		else {
+		    $('#account_ledger_dg').datagrid('enableFilter');
+		    this.filterEnabled = true;
+		}
+	    },
+	    out:function( out_type ){
+		var params={
+		    acc_code:Ledger.current_acc_code,
+		    idate:App.toIso(Ledger.idate),
+		    fdate:App.toIso(Ledger.fdate),
+		    page:Ledger.current_page,
+		    rows:Ledger.current_rows,
+		    use_passive_filter:Ledger.data.passive_filter,
+		    out_type:out_type
+		};
+		var url='AccountsView/ledgerViewGet/?'+$.param( params );
+		if( out_type==='.print' ){
+		    window.open(url,'print_tab');
+		} else {
+		    location.href=url;
+		}
+	    },
+	    rowCreate:function( trans_type, trans_name, amount, trans_ref ){
+		var data={
+		    trans_id:0,
+		    trans_date:App.today(),
+		    amount:amount||0,
+		    trans_ref:trans_ref||null,
+		    trans_type:trans_type||'',
+		    description:trans_name||'',
+		    current_acc_code:Ledger.current_acc_code,
+		    using_alt_currency:Ledger.using_alt_currency
+		};
+		if(Ledger.data.passive_filter && App.pcomp){
+		    data.passive_company_id=App.pcomp.company_id || 0;
+		    data.label=App.pcomp.label || '?';
+		} else {
+		    data.passive_company_id=App.acomp.company_id || 0;
+		    data.label=App.acomp.label || '?';
+		}
+		App.loadWindow('page/accounts/trans_edit',data).progress(function(status,data){
+		    if( status==='save' || status==='delete' ){
+			$('#account_ledger_dg').datagrid('reload');
+		    }
+		});
+	    },
+	    rowUpdate:function(){
+		var row=$('#account_ledger_dg').datagrid('getSelected');
+		if( row.editable*1 ){
+		    var data=row;
+		    data.current_acc_code=Ledger.current_acc_code;
+		    data.using_alt_currency=Ledger.using_alt_currency;
+		    App.loadWindow('page/accounts/trans_edit',data).progress(function(status,data){
+			if( status==='save' || status==='delete' ){
+			    $('#account_ledger_dg').datagrid('reload');
+			}
+		    });
+		} else {
+		    if( row.trans_id ){
+			Ledger.list.payTrans();
+		    }
+		}
+	    },
+	    rowDelete:function(){
+		var row=$('#account_ledger_dg').datagrid('getSelected');
+		if( row.editable*1 && row.trans_id && confirm("Удалить проводку?") ){
+		    App.post("AccountsCore/transDelete/"+row.trans_id,function(ok){
+			if( ok*1 ){
+			    App.flash("Проводка удалена");
+			    $('#account_ledger_dg').datagrid('reload');
+			} else {
+			    App.flash("Проводка не удалена");
+			}
+		    });
+		}
+	    },
+	    rowStyler: function (value, row, index) {
+		if (!row.trans_id) {
+		    return "background-color:rgba(255,255,255,.4);color:darkblue";
+		}
+	    },
+	    rowTooltip:function(value, row){
+		value=value==='0'?'document Открыть документ':'';
+		return App.datagrid.tooltip(value, row, 'Ledger.list.openDoc()');
+	    },
+	    rowPayTooltip:function(value,row){
+		return App.datagrid.tooltip(value,row,'Ledger.list.payTrans()');
+	    },
+	    calculate: function (value, row) {
+		var positive = row.debit > 0 ? true : false;
+		positive = Ledger.acc_props.acc_type === 'P' ? !positive : positive;
+		value = App.formatNum(value, 'clear');
+		var color = 'darkblue';
+		if (row.trans_id > 0) {
+		    color = (positive > 0 ? 'green' : 'red');
+		}
+		return '<span style="color:' + color + ';font-weight:bold">' + value + '</span>';
+	    },
+	    openDoc:function(){
+		var row=$('#account_ledger_dg').datagrid('getSelected');
+		if( row.trans_id ){
+		    App.get("AccountsCore/transGetDocId/"+row.trans_id,function(doc_id){
+			Ledger.documentOpen(doc_id);
+		    });
+		}
+	    },
+	    payTrans:function(){
+		var row=$('#account_ledger_dg').datagrid('getSelected');
+		if( row.trans_status ){
+		    var status=row.trans_status.split(' ')[0];
+		    if( "unpayed partly payed".indexOf(status)>-1 ){
+			this.rowCreate(null,null,row.debit||row.credit,row.trans_id);
+		    } else if( "closing closed".indexOf(status)>-1 ){
+			App.flash("Проводка уже связана.");
+		    }
+		}
+	    }
+	}
+    };
+</script>
+<style>
+    #Ledger_acc_props{
+	width:200px;
+	min-height:60px;
+	float:left;
+	border-right: 1px #999 solid;
+    }
+    #ledger_tnames a{
+	-display: none;
+    }
+    #ledger_tnames:hover a{
+	-display: inline;
+    }
+</style>
+<div style="width:180px;display: inline-block;vertical-align: top;border-right:1px solid #999;" class="transp60">
+    <div id="ledger_favorites" class="covert">
+	<img src="img/heart2.png" style="width:16px;height:16px;margin-bottom: 2px;"> Избранные счета
+	{{favs}}
+        <div class="left_label" onclick="Ledger.fav.select(this)" data-code="{{acc_code}}" style="min-height: 40px"><div class="tag">{{acc_code}}</div> {{label}} <br><span style="color:#058">{{balance|blank|format}}</span></div>
+	{{/favs}}
+    </div>
+    <div id="ledger_tnames" class="covert">
+	<img src="img/edit_add.png" style="width:16px;height:16px;margin-bottom: 2px;"> Операции по счету
+	{{tnames}}
+        <button style="text-align: left;margin-bottom: 3px;width: 177px" onclick="Ledger.addTransaction(this)" data-trans-type="{{trans_type}}" data-trans-name="{{trans_name|undollar}}"><span class="tag" style="font-weight: normal">{{trans_type}}</span><br>{{trans_name}}</button>
+	{{/tnames}}
+	<div><a href="javascript:Ledger.tnames.show()"><img src="img/edit-16.png"> Изменить список</a></div>
+    </div>
+</div>
+
+<div style="display: inline-block;margin-left:-4px;padding-left:3px">
+    <div id="Ledger_acc_props" class="covert">
+	<div class="tag" style="font-size: 2.2em;float: left;margin-right: 2px;cursor: pointer" onclick="Ledger.showTree()" title="Выбрать другой счет">{{acc_code}}</div><span style="font-size: 1.2em;">{{label}}</span>
+	<div style="clear: both;padding-top: 2px;">
+	    <button onclick="Ledger.fav.toggle()" title="{{if is_favorite|equals>1}}Счет избранный{{else}}Добавить в избранное{{/if}}" class="{{if is_favorite|notequals>1}}transparent{{/if}}"><img src="img/heart2.png" style="width:16px;height:16px"></button>
+	    <button onclick="Ledger.showAccForm()" title="Свойства счета"><img src="img/edit-16.png"></button>
+	    <button onclick="Ledger.showTree()" title="Выбрать другой счет"><img src="img/settings.png"></button>
+	</div>
+    </div>
+    <div style="text-align: right;padding-bottom: 3px;color: white;font-weight: bold;">
+	<div style="display: inline-block;margin: 10px;font-family: monospace">
+	    <input id="account_ledger_range" />
+	</div>
+	<div style="display: inline-block;padding: 5px;border-radius: 5px;" class="grn_grad" title="Начало периода">
+	    <input id="account_ledger_idate" class="easyui-datebox" style="width:100px" data-options="
+		   onChange:function(newVal){
+			Ledger.date.calendarChanged(newVal,'idate');
+		   }" />
+	    <div id="account_ledger_ibal"></div>
+	</div>
+	<div style="display: inline-block;padding: 5px;border-radius: 5px;" class="blue_grad" title="Конец периода">
+	    <input id="account_ledger_fdate" class="easyui-datebox" style="width:100px" data-options="
+		   onChange:function(newVal){
+			Ledger.date.calendarChanged(newVal,'fdate');
+		   }" />
+	    <div id="account_ledger_fbal"></div>
+	</div>
+    </div>
+    <div style="clear:both">
+	<div style="float: left;font-weight: bold;padding-top: 8px;">
+	    <img src="img/table16.png" style="width:16px;height: 16px;"> Движения по счету
+	</div>
+	<div style="float: right">
+	    <span class="icon-24 icon-create" title="Добавить" onclick="Ledger.list.rowCreate();"> </span>
+	    <span class="icon-24 icon-change" title="Изменить" onclick="Ledger.list.rowUpdate();"> </span>
+	    <span class="icon-24 icon-delete" title="Удалить" onclick="Ledger.list.rowDelete();"> </span>
+	    <span class="icon-24 icon-tablefilter" title="Фильтр таблицы" onclick="Ledger.list.toggleFilter()"> </span>
+	    <span class="icon-24 icon-refresh" title="Обновить" onclick="$('#account_ledger_dg').datagrid('reload')"> </span>
+	    <span class="icon-24" style="background-image: url(img/file_download.png);background-repeat: no-repeat" title="Скачать таблицу" onclick="Ledger.list.out('.xlsx');"> </span>
+	    <span class="icon-24 icon-print" title="Напечатать" onclick="Ledger.list.out('.print');"> </span>
+	</div>
+    </div>
+    <table id="account_ledger_dg" class="easyui-datagrid" style="width:810px;"
+	   data-options="
+	   idField:'trans_id',
+	   loader:Ledger.list.loader,
+	   rowStyler:Ledger.list.rowStyler,
+	   pagination:true,
+	   pageSize:25,
+	   pageList:[25,50,100,500,1000],
+	   singleSelect:true,
+	   remoteFilter:true,
+	   onSelect:Ledger.list.onSelect,
+	   onDblClickRow:Ledger.list.rowUpdate,
+	   onLoadSuccess:function(){$('#account_ledger_dg').datagrid('resize');}">
+	<thead>
+	    <tr>
+		<th data-options="width:25,field:'editable',align:'center',formatter:Ledger.list.rowTooltip"></th>
+		<th data-options="width:25,field:'trans_status',align:'center',formatter:Ledger.list.rowPayTooltip"></th>
+		<th data-options="width:65,field:'trans_date'">Дата</th>
+		<th data-options="width:160,field:'company_name'">Компания</th>
+		<th data-options="width:220,field:'description'">Пояснение</th>
+		<th data-options="width:85,field:'debit',align:'right',formatter:Ledger.list.calculate">Дебит</th>
+		<th data-options="width:85,field:'credit',align:'right',formatter:Ledger.list.calculate">Кредит</th>
+		<th data-options="width:85,field:'row_total',align:'right'">Остаток</th>
+		<th data-options="width:27,field:'trans_type'"></th>
+		<th data-options="width:30,field:'nick'"></th>
+	    </tr>
+	</thead>
+    </table>
+</div>

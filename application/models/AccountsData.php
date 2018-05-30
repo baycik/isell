@@ -77,10 +77,11 @@ class AccountsData extends AccountsCore{
     
     public $accountFavoritesFetch=['use_passive_filter'=>['int',0],'get_client_bank_accs'=>['int',0]];
     public function accountFavoritesFetch( $use_passive_filter=false, $get_client_bank_accs=false ){
-        $this->Hub->set_level(2);
 	if( $use_passive_filter ){
+            $this->Hub->set_level(1);
 	    $acc_list=$this->Hub->pcomp('company_acc_list');
 	} else {
+            $this->Hub->set_level(2);
 	    $where=$get_client_bank_accs?'use_clientbank=1':'is_favorite=1';
 	    $acc_list= $this->get_value("SELECT GROUP_CONCAT(acc_code SEPARATOR ',') FROM acc_tree WHERE $where");
 	}
