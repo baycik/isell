@@ -63,14 +63,16 @@ class User extends Catalog {
                 user_login='{$user_phone}',
                 user_phone='{$user_phone}',
                 user_level=1,
+                company_id={$client_data->company_id},
                 user_assigned_path='{$client_data->path}',
-                first_name='{$client_data->company_name}',
+                last_name='{$client_data->company_name}',
                 user_sign='{$client_data->company_person}',
                 user_permissions='nocommit'
                 ";
             $this->query($sql);
             $user_data->user_id=$this->db->insert_id();
             $user_data->user_level=1;
+            $user_data->user_login=$user_phone;
         }
         return $user_data;
     }
@@ -140,7 +142,7 @@ class User extends Catalog {
 		user_id,user_login,user_level,user_sign,user_position,user_phone,
 		first_name,middle_name,last_name,nick,
 		id_type,id_serial,id_number,id_given_by,id_date,
-		user_assigned_path,
+		user_assigned_path,company_id,
 		CONCAT(last_name,' ',first_name,' ',middle_name) AS full_name 
 	    FROM user_list
 		WHERE user_id='$user_id'";

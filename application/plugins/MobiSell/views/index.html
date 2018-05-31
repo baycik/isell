@@ -138,12 +138,14 @@
                 pcomp:{},
                 init:function(){
                     this.restoreCompanies();
+                    App.user.props=JSON.parse(localStorage.getItem('user_props'));
                 },
 		getData: function () {
-		    $.get("../User/userFetch", function (resp) {
+		    $.get("./userPropsGet", function (resp) {
 			App.user.props = App.json(resp);
 			if (App.user.props) {
 			    App.renderTpl("user_info", App.user.props);
+                            localStorage.setItem('user_props',JSON.stringify(App.user.props));
 			}
 		    });
 		},

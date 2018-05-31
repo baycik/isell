@@ -16,7 +16,17 @@
 </div>
 
 <div id="user_info" class="ui blue segment raised covert" style="margin: 10px;">
-    <div class="ui header">Добро пожаловать, {{first_name|blank>}} {{middle_name|blank>}}</div>
+    <div class="ui header">Добро пожаловать, {{first_name|blank>}} {{middle_name|blank>}} </div>
+    {{if debt.total }}
+    <div class="ui yellow message">
+        <b>Просроченный долг: {{debt.expired}}</b><br>
+        Общий долг: {{debt.total}}
+    </div>
+    {{else}}
+    <div class="ui green message">
+        Долга нет, спасибо
+    </div>
+    {{/if}}
     <div>
 	<div class="ui vertical menu fluid">
 	    <a href="#stock.html" class="item">

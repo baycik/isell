@@ -367,17 +367,17 @@
 			var status_chunks = App.document.doc.entries[i].row_status.split(" ");
 			var status = status_chunks.shift();
 			var message = status_chunks.join(" ");
-			if (status == 'ok' || status == 'info') {
+			if (status == 'ok' || status == 'info' || App.user.props.user_level<2) {
 			    App.document.doc.entries[i].status_icon = "check";
 			    App.document.doc.entries[i].status_color = "green";
 			    App.document.doc.entries[i].status_message = "";
-			}
+			} else
 			if (status == 'wrn') {
 			    App.document.doc.entries[i].status_icon = "warning sign";
 			    App.document.doc.entries[i].status_color = "orange";
 			    App.document.doc.entries[i].status_message = message;
-			}
-			if (status == 'err') {
+			} else
+			if (status == 'err' ) {
 			    App.document.doc.entries[i].status_icon = "warning circle";
 			    App.document.doc.entries[i].status_color = "red";
 			    App.document.doc.entries[i].status_message = message;
@@ -428,6 +428,16 @@
 		App.document.suggestion.search('');
 	    },
 	    render: function () {
+                if( App.user.props.user_level<2 ){
+                    for(var i in App.document.suggestion.entries){
+                        var lo=App.document.suggestion.entries[i].leftover;
+                        App.document.suggestion.entries[i].stared_leftover=
+                                lo<10?'★☆☆☆☆':
+                                lo<50?'★★☆☆☆':
+                                lo<100?'★★★☆☆':
+                                lo<500?'★★★★☆':'★★★★★';
+                    }
+                }
 		App.renderTpl('doc_suggestion_entries', {entries: App.document.suggestion.entries});
 	    },
 	    handleClick: function (row_node) {
@@ -638,7 +648,7 @@
 					    <div class="ui grid" style="opacity:0.7">
 						<div class="six wide column">{{product_code}}</div>
 						<div class="five wide column right aligned">{{product_price_total}}р</div>
-						<div class="five wide column right aligned">{{leftover}}{{product_unit}}</div>
+						<div class="five wide column right aligned">{{if stared_leftover}} {{stared_leftover}} {{else}} {{leftover}}{{product_unit}} {{/if}}</div>
 					    </div>
 					</div>
 				    </div>

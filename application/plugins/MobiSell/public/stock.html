@@ -209,6 +209,14 @@
                 //Добавляем товару свойство is_in_cart
                 App.stock.list[i].quantity_added = App.stock.cart.is_there(App.stock.list[i].product_code);
                 App.stock.list[i].is_promo = (App.stock.list[i].product_price_total !== App.stock.list[i].product_price_total_raw) ? 1 : 0;
+                if( App.user.props.user_level<2 ){
+                    var lo=App.stock.list[i].leftover;
+                    App.stock.list[i].stared_leftover=
+                            lo<10?'★☆☆☆☆':
+                            lo<50?'★★☆☆☆':
+                            lo<100?'★★★☆☆':
+                            lo<500?'★★★★☆':'★★★★★';
+                }
             }
         },
         // Рендеринг списка товаров
@@ -323,6 +331,7 @@
     .stock_product_name{
         color: #106596;
         height: 80px;
+        overflow: hidden;
     }
     #stock_list .stock_product_promo{
         box-shadow: 0px 0px 6px #0c0;
@@ -480,7 +489,7 @@
                 <div class = "ui grid">
                     <div class = "five wide column" style = "color:#7a7a7a">{{product_code}}</div>
                     <div class = "five wide column" 
-                         style = "{{if leftover|less>1}} color:#d62424 !important {{else}} color:#7a7a7a !important {{/if}};text-align: center"><b>{{leftover}}{{product_unit}}</b></div>
+                         style = "text-align: center;color:#7a7a7a"><b>{{if stared_leftover}} {{stared_leftover}} {{else}} {{leftover}}{{product_unit}} {{/if}}</b></div>
                     <div class = "six wide column stock_product_price">
                         {{if is_promo}}<s>{{product_price_total_raw}}р.</s> {{/if}}{{product_price_total}}р.
                     </div>
@@ -490,9 +499,9 @@
         <!-- {{/products}} -->
     </table>
     {{if loading_finished}} 
-    <button class='ui fluid section'>
-        Загрузка завершена
-    </button>    
+    <div class="ui olive message">
+        Больше нет товаров для показа
+    </div>   
     {{else}} 
     <button id='stock_load_more' class='ui fluid basic green button'
             onclick="App.stock.load(1)"> 
