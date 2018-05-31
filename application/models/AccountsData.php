@@ -132,10 +132,20 @@ class AccountsData extends AccountsCore{
     }
     
         
-    public function clientDebtGet(){
+    public function clientDebtGet($mode=NULL,$assigned_path=NULL){
         $acc_code='361';
-        $active_company_id=$this->Hub->acomp('company_id');
-        $passive_company_id=$this->Hub->pcomp('company_id');
+        $passive_filter='';
+        $active_filter='';
+        if( $mode!='all_active' ){
+            $active_company_id=$this->Hub->acomp('company_id');
+            $active_filter="AND active_company_id=$active_company_id ";
+        }
+        if( $assigned_path ){
+            $passive_filter="AND passive_company_id IN (SELECT company_id FROM companies_list JOIN companies_tree USING(branch_id) WHERE path LIKE '$assigned_path%')";
+        } else {
+            $passive_company_id=$this->Hub->pcomp('company_id');
+            $passive_filter="AND passive_company_id='$passive_company_id'";
+        }
         $deferment=$this->Hub->pcomp('deferment');
         $sql="SELECT FORMAT(total,2,'ru_RU') total,FORMAT(total-allowed,2,'ru_RU') expired FROM
                 (SELECT 
@@ -147,8 +157,8 @@ class AccountsData extends AccountsCore{
                     acc_trans
 		WHERE 
                     (acc_debit_code=$acc_code OR acc_credit_code=$acc_code) 
-                    AND active_company_id=$active_company_id 
-                    AND passive_company_id='$passive_company_id') t";
+                    $active_filter
+                    $passive_filter) t";
         return $this->get_row($sql);
     }
 }

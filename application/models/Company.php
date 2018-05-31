@@ -72,7 +72,7 @@ class Company extends Catalog{
         return [];
     }
     
-    public function listFetchAll($mode){
+    public function listFetchAll($mode=NULL){
 	$assigned_path=$this->Hub->svar('user_assigned_path');
 	$level=$this->Hub->svar('user_level');
 	$where='';

@@ -236,11 +236,11 @@ class MobiSell extends Catalog {
     public $userPropsGet=[];
     public function userPropsGet(){
         $props=$this->Hub->load_model('User')->userFetch();
-        if ($this->Hub->pcomp('company_id') != $props->company_id) {
-            $this->Hub->load_model("Company")->selectPassiveCompany($props->company_id);
-        }
-        if ($this->Hub->pcomp('company_id') ){
-            $props->debt=$this->Hub->load_model('AccountsData')->clientDebtGet();
+        $Company = $this->Hub->load_model("Company");
+        $Companies = $Company->listFetchAll();
+        if( $Companies && $Companies[0] ){
+            $Company->selectPassiveCompany($Companies[0]->company_id);
+            $props->debt=$this->Hub->load_model('AccountsData')->clientDebtGet('all_active',$props->user_assigned_path);
         }
         return $props;
     }
