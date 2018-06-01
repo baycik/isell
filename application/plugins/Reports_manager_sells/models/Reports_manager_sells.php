@@ -78,7 +78,7 @@ class Reports_manager_sells extends Catalog{
 		doc_num,
 		ct.label client_name,
 		(SELECT st2.label FROM stock_tree st2 WHERE branch_id=st.top_id) cat,
-		ROUND(SUM(de.product_quantity * invoice_price)) sum,
+		ROUND(SUM(de.product_quantity * invoice_price * (1+dl.vat_rate/100) )) sum,
 		ROUND(COALESCE(JSON_EXTRACT(doc_settings,
 					CONCAT('$.discounts.b', st.top_id)),
 				discount,
