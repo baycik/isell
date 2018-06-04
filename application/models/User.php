@@ -52,7 +52,7 @@ class User extends Catalog {
         return $ok;
     }
     private function userRegister($user_phone){
-        $client_data = $this->get_row("SELECT company_id,company_name,company_person,path FROM companies_list JOIN companies_tree USING(branch_id) WHERE company_mobile LIKE '%{$user_phone}%'");
+        $client_data = $this->get_row("SELECT company_id,label,company_person,path FROM companies_list JOIN companies_tree USING(branch_id) WHERE company_mobile LIKE '%{$user_phone}%'");
         $user_data=new stdClass;
         $user_data->user_id=0;
         $user_data->user_level=0;
@@ -65,7 +65,7 @@ class User extends Catalog {
                 user_level=1,
                 company_id={$client_data->company_id},
                 user_assigned_path='{$client_data->path}',
-                last_name='{$client_data->company_name}',
+                last_name='{$client_data->label}',
                 user_sign='{$client_data->company_person}',
                 user_permissions='nocommit'
                 ";

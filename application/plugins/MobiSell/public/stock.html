@@ -248,6 +248,9 @@
             $.post("./suggestFetch", params, function (response) {
                 App.flash("Загрузка товаров:ОК");
                 var new_loaded_items = App.json(response);
+                if( !new_loaded_items ){
+                    return;
+                }
                 if (load_more) {
                     App.stock.list = App.stock.list.concat(new_loaded_items);
                 } else {
@@ -328,7 +331,7 @@
         width:120px;
         height:120px;
     }
-    .stock_product_name{
+    .stock_product_name div{
         color: #106596;
         height: 80px;
         overflow: hidden;
@@ -499,7 +502,7 @@
         <!-- {{/products}} -->
     </table>
     {{if loading_finished}} 
-    <div class="ui olive message">
+    <div class="ui olive message" style="clear: both;text-align: center;">
         Больше нет товаров для показа
     </div>   
     {{else}} 

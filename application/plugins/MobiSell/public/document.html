@@ -231,6 +231,11 @@
 	prefs: {
 	    init: function () {
 		App.document.prefs.load();
+                if( App.user.props.user_level<2 ){
+                    $("#document_discounts input").prop("disabled",true);
+                } else {
+                    $("#document_discounts input").prop("disabled",false);
+                }
 	    },
 	    load: function () {
 		App.flash('Скидки: загрузка...');
@@ -270,7 +275,9 @@
 	    },
 	    update: function (type, id, value) {
 		$.post('../Company/companyPrefsUpdate', {type: type, field: id, value: value}, function (ok) {
-
+                    if( !ok*1 ){
+                        App.document.prefs.load();
+                    }
 		});
 	    }
 	},

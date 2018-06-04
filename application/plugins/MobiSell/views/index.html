@@ -216,6 +216,7 @@
 	    retryConnection:function(){
 		$('#offline_popup').modal('hide');
 		if( navigator.onLine ){
+                    console.log();
 		    location.reload();
 		} else {
 		    $('#offline_popup').modal('show');
@@ -328,6 +329,8 @@
 	<div class="actions">
 	    <div class="ui primary button"  onclick="App.user.signIn()"><i class="icon sign in"></i> Вход</div>
 	    <div class="ui secondary close button"  onclick="$('#signInModal').modal('hide');"><i class="icon close"></i> Закрыть</div>
+            <hr>
+            	<div class="ui negative button"  onclick="App.clearCache()"><i class="icon refresh"></i> Сбросить настройки</div>
 	</div>
     </div>
     
