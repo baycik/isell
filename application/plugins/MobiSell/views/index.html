@@ -141,7 +141,7 @@
                     App.user.props=JSON.parse(localStorage.getItem('user_props'));
                 },
 		getData: function () {
-		    $.get("./userPropsGet", function (resp) {
+		    $.post("./userPropsGet", function (resp) {
 			App.user.props = App.json(resp);
 			if (App.user.props) {
 			    App.renderTpl("user_info", App.user.props);
@@ -211,6 +211,7 @@
             },
 	    clearCache:function(){
 		navigator.serviceWorker.controller && navigator.serviceWorker.controller.postMessage('clear_cache');
+                console.log("Cache cleared");
 		location.reload();
 	    },
 	    retryConnection:function(){
@@ -225,7 +226,7 @@
 	};
 	$(App.init);
 
-	if ( !localStorage.getItem("disableSW") && ('serviceWorker' in navigator) ) {
+	if ( localStorage.getItem("disableSW")==1 && ('serviceWorker' in navigator) ) {
 	    navigator.serviceWorker.register('../MobiSell/sw.js', {scope: '../MobiSell/'})
 	    .then(function(reg) {
 		//console.log('serviceWorker Registration succeeded. Scope is ' + reg.scope);
@@ -246,7 +247,7 @@
 	    
 	    $.post('./version',function(current_version){
 		var stored_version=localStorage.getItem("stored_version");
-		if( current_version !== stored_version ){
+		if( current_version != stored_version ){
 		    localStorage.setItem("stored_version",current_version);
 		    App.clearCache();
 		}

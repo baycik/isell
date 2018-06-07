@@ -73,9 +73,28 @@ class User extends Catalog {
             $user_data->user_id=$this->db->insert_id();
             $user_data->user_level=1;
             $user_data->user_login=$user_phone;
+            
+            $this->userRegisterNotify($client_data);
         }
         return $user_data;
     }
+    private function userRegisterNotify($data){
+        $aphone=$this->Hub->acomp('company_mobile');
+        $aemail=$this->Hub->acomp('company_email');
+        
+	$Utils=$this->Hub->load_model('Utils');
+        $text=$this->load->view('user_registered.html',[],true);
+        if( $aemail ){
+            $Utils->sendEmail( $aemail, 'User registration', $text, NULL, 'nocopy' );
+        }
+        if( $aphone ){
+            $phones=  explode(',',preg_replace('|[^\d,]|', '', $aphone));
+            foreach($phones as $phone){
+                $Utils->sendSms($phone,"$text");
+            }
+        }
+    }
+
     private function generatePassword(){
         $alphabet = 'abcdefghijklmnopqrstuvwxyz1234567890';//ABCDEFGHIJKLMNOPQRSTUVWXYZ
         $password = array(); 

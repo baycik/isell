@@ -14,7 +14,7 @@
  * @author Baycik
  */
 
-class MobiSell extends Catalog {
+class MobiSell extends PluginManager {
 
     public $min_level = 1;
 
@@ -122,6 +122,10 @@ class MobiSell extends Catalog {
         if ($entries) {
             $this->documentEntryFill($doc_id, $entries);
         }
+        $this->notify("MobiSell уведомление от ".$this->Hub->svar('user_sign'),'document_created.html',[
+            'user_sign'=>$this->Hub->svar('user_sign'),
+            'pcomp_label'=>$this->Hub->pcomp('label')
+        ]);
         return $doc_id;
     }
 
@@ -247,4 +251,18 @@ class MobiSell extends Catalog {
     }
     
 
+    private function notify($subject,$view_file,$data){
+	$this->settings=$this->settingsDataFetch('MobiSell');
+	$Utils=$this->Hub->load_model('Utils');
+        $text=$this->load->view($view_file,$data,true);
+        if( isset($this->settings->plugin_settings->email) && $this->settings->plugin_settings->email ){
+            $Utils->sendEmail( $this->settings->plugin_settings->email, $subject, $text, NULL, 'nocopy' );
+        }
+        if( isset($this->settings->plugin_settings->phone) && $this->settings->plugin_settings->phone ){
+            $phones=  explode(',',preg_replace('|[^\d,]|', '', $this->settings->plugin_settings->phone));
+            foreach($phones as $phone){
+                $Utils->sendSms($phone,"$text");
+            }
+        }
+    }
 }
