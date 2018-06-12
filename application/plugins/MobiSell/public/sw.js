@@ -1,5 +1,8 @@
-this.addEventListener('install', function (event) {
 
+
+
+this.addEventListener('install', function (event) {
+    console.log('Hello new version');
 });
 
 this.addEventListener('message', function(event){
