@@ -241,10 +241,7 @@ class MobiSell extends PluginManager {
     public $userPropsGet=[];
     public function userPropsGet(){
         $props=$this->Hub->load_model('User')->userFetch();
-        $Company = $this->Hub->load_model("Company");
-        $Companies = $Company->listFetchAll();
-        if( $Companies && $Companies[0] ){
-            $Company->selectPassiveCompany($Companies[0]->company_id);
+        if( $props->user_assigned_path ){
             $props->debt=$this->Hub->load_model('AccountsData')->clientDebtGet('all_active',$props->user_assigned_path);
         }
         return $props;
