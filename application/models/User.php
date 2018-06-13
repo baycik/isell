@@ -24,35 +24,37 @@ class User extends Catalog {
     //public $SignByPhone=['user_phone'=>'^[\d]*','user_phone_pass'=>'int'];
     public function sendPassword($user_phone){
         $new_user_pass=$this->generatePassword();
-        $user_data = $this->get_row("SELECT user_id,user_level,user_login FROM user_list WHERE user_phone LIKE '%{$user_phone}'");
+        $user_data = $this->get_row("SELECT user_id,user_level,user_login,user_phone,user_email FROM user_list WHERE user_phone LIKE '%{$user_phone}'");
         if( !$user_data ){
             $user_data=$this->userRegister($user_phone);
         }
         if( $user_data->user_level<1 || !$user_data->user_id ){
-            return false;
+            return 'access_denied';
         }
-        if( $this->userInformBySms($user_phone,$user_data->user_login,$new_user_pass) ){
+        if( $this->userInformBySms($user_data,$new_user_pass) ){
             $this->query("UPDATE user_list SET user_pass=MD5('$new_user_pass') WHERE user_id='$user_data->user_id'");
-            return true;
+            return 'password_sent';
+        } else {
+            return 'password_sending_error';
         }
-        return false;
+        return 'phone_is_unknown';
     }
-    private function userInformBySms($user_phone,$user_login,$new_user_pass){
-        $data['user_new_pass']=$new_user_pass;
-        $data['user_login']=$user_login;
-        $message=$this->load->view('dialog/sms_user_register',$data,true);
+    private function userInformBySms($user_data,$new_user_pass){
+        $user_data->user_new_pass=$new_user_pass;
+        $message=$this->load->view('dialog/sms_user_register',$user_data,true);
         
         $initial_user_level=$this->Hub->svar('user_level');
         $this->Hub->svar('user_level',1);//elevate user level for accessing sms credentials
         $this->Hub->load_model("Utils");
         $this->Hub->load_model("Company");
         $this->Hub->Company->selectActiveCompany(1);// not always right!!!
-        $ok=$this->Utils->sendSms($user_phone,$message);
+        $ok_sms=$this->Utils->sendSms($user_data->user_phone,$message);
+        $ok_email=$this->Utils->sendEmail($user_data->user_email,'★ MobiSell',$message);
         $this->Hub->svar('user_level',$initial_user_level);
-        return $ok;
+        return $ok_sms || $ok_email;
     }
     private function userRegister($user_phone){
-        $client_data = $this->get_row("SELECT company_id,label,company_person,path FROM companies_list JOIN companies_tree USING(branch_id) WHERE company_mobile LIKE '%{$user_phone}%'");
+        $client_data = $this->get_row("SELECT company_id,label,company_person,path,company_email FROM companies_list JOIN companies_tree USING(branch_id) WHERE company_mobile LIKE '%{$user_phone}%'");
         $user_data=new stdClass;
         $user_data->user_id=0;
         $user_data->user_level=0;
@@ -62,6 +64,7 @@ class User extends Catalog {
             SET
                 user_login='{$user_phone}',
                 user_phone='{$user_phone}',
+                user_email='{$client_data->company_email}',
                 user_level=1,
                 company_id={$client_data->company_id},
                 user_assigned_path='{$client_data->path}',
@@ -74,7 +77,7 @@ class User extends Catalog {
             $user_data->user_level=1;
             $user_data->user_login=$user_phone;
             
-            $this->userRegisterNotify($client_data);
+            //$this->userRegisterNotify($client_data);
         }
         return $user_data;
     }
@@ -158,7 +161,7 @@ class User extends Catalog {
     public function userFetch(){
 	$user_id = $this->Hub->svar('user_id');
         $sql="SELECT
-		user_id,user_login,user_level,user_sign,user_position,user_phone,
+		user_id,user_login,user_level,user_sign,user_position,user_phone,user_email,
 		first_name,middle_name,last_name,nick,
 		id_type,id_serial,id_number,id_given_by,id_date,
 		user_assigned_path,company_id,
@@ -172,7 +175,7 @@ class User extends Catalog {
 	$user_id = $this->Hub->svar('user_id');
         $where = ($this->Hub->svar('user_level') < 4) ? "WHERE user_id='$user_id'" : "";
         $sql="SELECT
-		user_id,user_login,user_level,user_sign,user_position,user_phone,
+		user_id,user_login,user_level,user_sign,user_position,user_phone,user_email,
 		first_name,middle_name,last_name,nick,
 		id_type,id_serial,id_number,id_given_by,id_date,
 		user_assigned_path,user_permissions,
@@ -202,6 +205,7 @@ class User extends Catalog {
 	    $fields['last_name']=$this->request('last_name');
             $fields['nick']=mb_substr($fields['last_name'],0,1).mb_substr($fields['first_name'],0,1).mb_substr($fields['middle_name'],0,1);
 	    $fields['user_phone']=$this->request('user_phone');
+	    $fields['user_email']=$this->request('user_email');
 	    $fields['id_type']=$this->request('id_type');
 	    $fields['id_serial']=$this->request('id_serial');	    
 	    $fields['id_number']=$this->request('id_number');

@@ -68,7 +68,7 @@
                 background-color: #ddd;
             }
             .message{
-                border: 2px solid;
+                border: 1px solid;
                 border-radius: 5px;
                 padding: 10px;
                 font-weight: bold;
@@ -91,8 +91,11 @@
         <?php if(isset($status) && $status=='login_or_pasword_wrong'):?>
         <div class="message negative">Логин или пароль неверный</div>
         <?php endif; ?>
-        <?php if(isset($status) && $status=='pasword_sent'):?>
-        <div class="message positive">Сообщение с логином и паролем отправлено на указанный телефон</div>
+        <?php if(isset($status) && $status=='password_sent'):?>
+        <div class="message positive">Сообщение с логином и паролем отправлено на указанный телефон или почту</div>
+        <?php endif; ?>
+        <?php if(isset($status) && $status=='password_sending_error'):?>
+        <div class="message negative">Возникла ошибка отправки пароля :( <br>попробуйте еще раз позже</div>
         <?php endif; ?>
         <?php if(isset($status) && $status=='phone_is_unknown'):?>
         <div class="message negative">Указанный номер телефона не известен системе</div>
