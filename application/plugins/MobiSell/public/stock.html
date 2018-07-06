@@ -202,7 +202,6 @@
             } else {
                 $("#stock_image_modal").modal('hide');
             }
-
         },
         edit_response: function () {
             for (var i = 0; i < App.stock.list.length; i++) {
@@ -323,6 +322,21 @@
     .stock_product_table s{
         color: red;
     }
+    .stock_product_price{
+        color: green;
+        text-align: right
+    }
+    .stock_product_image{
+        width:120px;
+        height:120px;
+    }
+    .stock_product_name div{
+        color: #106596;
+        height: 80px;
+        overflow: hidden;
+    }
+    #stock_list .stock_product_promo{
+        box-shadow: 0px 0px 6px #0c0;
     }
     .stock_product_promo .stock_product_name{
         color: #0c0;
@@ -337,11 +351,9 @@
     .ui.stackable.two.column.grid > .column:not(.row){
         padding-top: 0.3em !important;
         padding-bottom: 0.3em !important;
-
     }
     #stock_list_header{
         color: #7a7a7a;
-
     }
     #stock_header_prod_quan{
         font-weight: bold;
@@ -467,6 +479,17 @@
                     </button>
                 </div>
                 {{else}}
+                <button class="ui button" data-index="{{#}}"
+                        onclick="App.stock.popup_add.take_product_info(this)">Добавить <i class="cart plus icon"></i></button>
+                {{/if}}
+            </td> 
+        </tr>
+        <tr>
+            <td colspan="2">
+                <div class = "ui grid">
+                    <div class = "five wide column" style = "color:#7a7a7a">{{product_code}}</div>
+                    <div class = "five wide column" 
+                         style = "text-align: center;color:#7a7a7a"><b>{{if stared_leftover}} {{stared_leftover}} {{else}} {{leftover}}{{product_unit}} {{/if}}</b></div>
                     <div class = "six wide column stock_product_price">
                         {{if is_promo}}<s>{{product_price_total_raw}}р.</s> {{/if}}{{product_price_total}}р.
                     </div>
@@ -476,9 +499,9 @@
         <!-- {{/products}} -->
     </table>
     {{if loading_finished}} 
-    .stock_product_price{
-        color: green;
-        text-align: right
+    <div class="ui olive message" style="clear: both;text-align: center;">
+        Больше нет товаров для показа
+    </div>   
     {{else}} 
     <button id='stock_load_more' class='ui fluid basic green button'
             onclick="App.stock.load(1)"> 
@@ -550,18 +573,11 @@
                 <i class="ban icon"></i>
                 Отмена
             </div>
-    .stock_product_image{
-        width:120px;
-        height:120px;
-    }
-    .stock_product_name div{
-        color: #106596;
-        height: 80px;
-        overflow: hidden;
-    }
-    #stock_list .stock_product_promo{
-        box-shadow: 0px 0px 6px #0c0;
-    }
+            <div class="ui approve blue labeled icon button"
+                onclick="App.stock.popup_cart.show_box()" >
+               <i class="shop icon"></i>
+               Перейти в корзину
+           </div>
         </div>
     </form>
 </div>
@@ -628,14 +644,3 @@
         <img style="max-width: 100%" src="../Storage/image_flush/?size={{size_x}}x{{size_y}}&path=/dynImg/{{product_img}}" />
     </div>
 </div>
-                <button class="ui button" data-index="{{#}}"
-                        onclick="App.stock.popup_add.take_product_info(this)">Добавить <i class="cart plus icon"></i></button>
-                {{/if}}
-            </td> 
-        </tr>
-        <tr>
-            <td colspan="2">
-                <div class = "ui grid">
-                    <div class = "five wide column" style = "color:#7a7a7a">{{product_code}}</div>
-                    <div class = "five wide column" 
-                         style = "text-align: center;color:#7a7a7a"><b>{{if stared_leftover}} {{stared_leftover}} {{else}} {{leftover}}{{product_unit}} {{/if}}</b></div>
