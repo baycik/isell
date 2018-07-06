@@ -1,5 +1,4 @@
 <?php
-
 /* User Level: 1
  * Group Name: Мобильное
  * Plugin Name: MobiSell
@@ -13,25 +12,18 @@
  * This class handles all of sell documents
  * @author Baycik
  */
-
 class MobiSell extends PluginManager {
-
     public $min_level = 1;
-
     function __construct() {
         ini_set('zlib.output_compression_level', 6);
         ob_start("ob_gzhandler");
         parent::__construct();
     }
-
     public $index = [];
-
     public function index() {
         $this->load->view('index.html');
     }
-
     public $version = [];
-
     public function version() {
         $parent_dir=dirname(__DIR__);
         if( file_exists($parent_dir."/version.txt") ){
@@ -41,7 +33,6 @@ class MobiSell extends PluginManager {
         file_put_contents($parent_dir."/version.txt",$checksum);
         return $checksum;
     }
-
     private function hashDirectory($directory) {
         if (!is_dir($directory)) {
             return false;
@@ -60,9 +51,7 @@ class MobiSell extends PluginManager {
         $dir->close();//
         return md5(implode('', $files));
     }
-
     public $doclistGet = ['type' => 'string', 'date' => '([0-9\-]+)', 'offset' => ['int', 0], 'limit' => ['int', 10], 'compFilter' => 'string'];
-
     public function doclistGet($type, $date, $offset, $limit, $compFilter) {
         $assigned_path = $this->Hub->svar('user_assigned_path');
         $level = $this->Hub->svar('user_level');
@@ -100,23 +89,18 @@ class MobiSell extends PluginManager {
 	    ";
         return $this->get_list($sql);
     }
-
     public $compListFetch = ['mode' => 'string', 'q' => 'string'];
-
     public function compListFetch($mode, $q) {
         return [
             'success' => true,
             'results' => $this->Hub->load_model('Company')->listFetchAll($mode, $q)
         ];
     }
-
     public $documentCreate = ["doc_type" => "int", "acomp_id" => "int",  "pcomp_id" => "int", 'entries' => ['json', null]];
-
     public function documentCreate($doc_type, $acomp_id, $pcomp_id, $entries) {
         $Company = $this->Hub->load_model("Company");
         $Company->selectPassiveCompany($pcomp_id);
         $Company->selectActiveCompany($acomp_id);
-
         $DocumentItems = $this->Hub->load_model("DocumentItems");
         $doc_id = $DocumentItems->createDocument($doc_type);
         if ($entries) {
@@ -128,22 +112,12 @@ class MobiSell extends PluginManager {
         ]);
         return $doc_id;
     }
-
     private function documentEntryFill($doc_id, $entries) {
         foreach ($entries as $entry) {
             $this->documentEntryUpdate($doc_id, null, $entry['product_code'], $entry['product_quantity']);
         }
     }
-
-        }
-    }
-    
-    
-
-}
-
     public $documentGet = ["doc_id" => "int"];
-
     public function documentGet($doc_id) {
         $DocumentItems = $this->Hub->load_model("DocumentItems");
         $document = $DocumentItems->entryDocumentGet($doc_id);
@@ -151,12 +125,10 @@ class MobiSell extends PluginManager {
         $document['head']->is_event_created = $this->documentShipmentEventId($doc_id);
         return $document;
     }
-
     private function documentShipmentEventId($doc_id) {
         $sql = "SELECT event_id FROM event_list WHERE doc_id='$doc_id' AND event_label LIKE '%Доставка%'";
         return $this->get_value($sql);
     }
-
     private function documentShipmentEventAdd($doc_id) {
         $DocumentItems = $this->Hub->load_model("DocumentItems");
         $head = $DocumentItems->headGet($doc_id);
@@ -175,13 +147,10 @@ class MobiSell extends PluginManager {
         ];
         return $this->create('event_list', $event);
     }
-
     private function documentShipmentEventDelete($doc_id) {
         $this->query("DELETE FROM event_list WHERE doc_id='$doc_id'  AND event_label LIKE '%Доставка%'");
     }
-
     public $documentHeadUpdate = ["doc_id" => "int", "field" => "string", "value" => "string"];
-
     public function documentHeadUpdate($doc_id, $field, $value) {
         $DocumentItems = $this->Hub->load_model("DocumentItems");
         switch ($field) {
@@ -205,9 +174,7 @@ class MobiSell extends PluginManager {
         }
         return $this->documentGet($doc_id);
     }
-
     public $documentEntryUpdate = ['doc_id' => 'int', 'doc_entry_id' => 'int', 'product_code' => 'string', 'product_quantity' => 'int'];
-
     public function documentEntryUpdate($doc_id, $doc_entry_id, $product_code, $product_quantity) {
         $DocumentItems = $this->Hub->load_model("DocumentItems");
         if ($doc_entry_id) {
@@ -217,25 +184,19 @@ class MobiSell extends PluginManager {
         }
         return $this->documentGet($doc_id);
     }
-
     public $documentEntryRemove = ['doc_id' => 'int', 'doc_entry_id' => 'int'];
-
     public function documentEntryRemove($doc_id, $doc_entry_id) {
         $DocumentItems = $this->Hub->load_model("DocumentItems");
         $DocumentItems->entryDeleteArray($doc_id, [[$doc_entry_id]]);
         return $this->documentGet($doc_id);
     }
-
     public $documentDiscountsGet = ['passive_company_id' => ['int', 0]];
-
     public function documentDiscountsGet($passive_company_id) {
         $Company = $this->Hub->load_model("Company");
         $Company->selectPassiveCompany($passive_company_id);
         return $Company->companyPrefsGet();
     }
-
     public $suggestFetch = ['q' => 'string', 'offset' => ['int', 0], 'limit' => ['int', 10], 'doc_id' => ['int', 0], 'category_id' => ['int', 0], 'pcomp_id' => ['int', 0]];
-
     public function suggestFetch($q, $offset, $limit, $doc_id, $category_id, $pcomp_id) {
         $Company = $this->Hub->load_model("Company");
         $DocumentItems = $this->Hub->load_model("DocumentItems");
@@ -254,3 +215,18 @@ class MobiSell extends PluginManager {
         return $props;
     }
     
+    private function notify($subject,$view_file,$data){
+	$this->settings=$this->settingsDataFetch('MobiSell');
+	$Utils=$this->Hub->load_model('Utils');
+        $text=$this->load->view($view_file,$data,true);
+        if( isset($this->settings->plugin_settings->email) && $this->settings->plugin_settings->email ){
+            $Utils->sendEmail( $this->settings->plugin_settings->email, $subject, $text, NULL, 'nocopy' );
+        }
+        if( isset($this->settings->plugin_settings->phone) && $this->settings->plugin_settings->phone ){
+            $phones=  explode(',',preg_replace('|[^\d,]|', '', $this->settings->plugin_settings->phone));
+            foreach($phones as $phone){
+                $Utils->sendSms($phone,"$text");
+            }
+        }
+    }
+}
