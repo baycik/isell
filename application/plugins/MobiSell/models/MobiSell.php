@@ -14,7 +14,7 @@
  * @author Baycik
  */
 
-class MobiSell extends Catalog {
+class MobiSell extends PluginManager {
 
     public $min_level = 1;
 
@@ -110,17 +110,22 @@ class MobiSell extends Catalog {
         ];
     }
 
-    public $documentCreate = ["doc_type" => "int", "pcomp_id" => "int", 'entries' => ['json', null]];
+    public $documentCreate = ["doc_type" => "int", "acomp_id" => "int",  "pcomp_id" => "int", 'entries' => ['json', null]];
 
-    public function documentCreate($doc_type, $pcomp_id, $entries) {
+    public function documentCreate($doc_type, $acomp_id, $pcomp_id, $entries) {
         $Company = $this->Hub->load_model("Company");
         $Company->selectPassiveCompany($pcomp_id);
+        $Company->selectActiveCompany($acomp_id);
 
         $DocumentItems = $this->Hub->load_model("DocumentItems");
         $doc_id = $DocumentItems->createDocument($doc_type);
         if ($entries) {
             $this->documentEntryFill($doc_id, $entries);
         }
+        $this->notify("MobiSell уведомление от ".$this->Hub->svar('user_sign'),'document_created.html',[
+            'user_sign'=>$this->Hub->svar('user_sign'),
+            'pcomp_label'=>$this->Hub->pcomp('label')
+        ]);
         return $doc_id;
     }
 
@@ -129,6 +134,13 @@ class MobiSell extends Catalog {
             $this->documentEntryUpdate($doc_id, null, $entry['product_code'], $entry['product_quantity']);
         }
     }
+
+        }
+    }
+    
+    
+
+}
 
     public $documentGet = ["doc_id" => "int"];
 
@@ -233,6 +245,12 @@ class MobiSell extends Catalog {
         return $DocumentItems->suggestFetch($q, $offset, $limit, $doc_id, $category_id);
     }
     
+    public $userPropsGet=[];
+    public function userPropsGet(){
+        $props=$this->Hub->load_model('User')->userFetch();
+        if( $props->user_assigned_path ){
+            $props->debt=$this->Hub->load_model('AccountsData')->clientDebtGet('all_active',$props->user_assigned_path);
+        }
+        return $props;
+    }
     
-
-}

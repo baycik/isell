@@ -35,10 +35,17 @@ class Hub  extends CI_Controller{
 	$user_login=$this->request('user_login');
 	$user_pass=$this->request('user_pass');
 	$User=$this->load_model('User');
-	if( $user_login && $user_pass && $User->SignIn($user_login,$user_pass) ){
-	    header("Location: ./");
-	    return;
-	}
+	if( $user_phone=$this->request('user_phone','^[\d]+',false) ){
+            $status=$User->sendPassword($user_phone);
+        } else if( $user_login && $user_pass ){
+            if( $User->SignIn($user_login,$user_pass) ){
+                header("Location: ./");
+                return;
+            }
+	    $status="login_or_pasword_wrong";
+	} else {
+            $status="please_login";
+        }
 	include APPPATH.'views/login.html';
 	exit;
     }
@@ -95,7 +102,15 @@ class Hub  extends CI_Controller{
 	if( $parent_folder=='plugins' ){
 	    $file_name = "application/".implode('/',func_get_args());
 	} else {
-	    $file_name = "application/views/".implode('/',func_get_args());
+            $file_name = "application/views/".implode('/',func_get_args());
+            $modules= json_decode(file_get_contents("application/config/modules.json"));
+            foreach ($modules as $module){
+                if( strcasecmp($module->name,$parent_folder)==0 ){
+                    if( $module->level > $this->svar('user_level') ){
+                        $this->set_level($module->level);
+                    }
+                }
+            }
 	}
 	if( file_exists($file_name) ){
 	    header("X-isell-type:OK");

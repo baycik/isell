@@ -1,47 +1,118 @@
 <html>
     <head>
-	<title>Login to Mobile iSell</title>
-	<meta charset="UTF-8">
+        <title>Login to Mobile iSell</title>
+        <meta charset="UTF-8">
         <meta name="mobile-web-app-capable" content="yes">
         <link rel="icon" type="image/png" href="/favicon.png" />
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<script>
-	    window.onload=function(){
-		var location_with_slash= location.href.replace(/\/?(\?|#|$)/, '/$1');
-		if( location_with_slash!==location.href ){
-		    location.href=location_with_slash;
-		}
-	    };
-	</script>
-	<style>
-	    button{
-		padding:10px;
-		background-color: #33bbFF;
-		width: 100%;
-		border-radius: 5px;
-		border: none;
-		margin: 3px;
-		font-size: 1em;
-	    }
-	    input{
-		width: 100%;
-		margin: 3px;
-		padding: 10px;
-		font-size: 1em;
-		border: 1px #666 solid;
-		border-radius: 5px;
-	    }
-	    body{
-		font-family: Arial;
-	    }
-	</style>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script>
+            function phoneChanged(input) {
+                var phone='';
+                if(input.value.length){
+                    phone = input.value.replace(/[^\d]*/g, '').replace(/^(8|7)*(\d{0,3})(\d{0,3})(\d{0,2})(\d{0,2})/, '+7($2) $3 $4 $5');
+                }
+                document.getElementById('phone').innerHTML = phone;
+                if (phone.length === 17) {
+                    document.getElementById('phone_btn').disabled = '';
+                } else {
+                    document.getElementById('phone_btn').disabled = 'disabled';
+                }
+                document.querySelector('input[name="user_phone"]').value=phone.replace(/[^\d]*/g, '') || 'телефон';
+            };
+            window.onload = function () {
+                var location_with_slash = location.href.replace(/\/?(\?|#|$)/, '/$1');
+                if (location_with_slash !== location.href) {
+                    location.href = location_with_slash;
+                }
+                phoneChanged(document.querySelector('input[name="user_phone"]'));
+            };
+        </script>
+        <style>
+            button{
+                padding:10px;
+                background-color: #33bbFF;
+                width: 100%;
+                border-radius: 5px;
+                border: none;
+                margin: 3px;
+                font-size: 1em;
+            }
+            input{
+                width: 100%;
+                margin: 3px;
+                padding: 10px;
+                font-size: 1em;
+                border: 1px #666 solid;
+                border-radius: 5px;
+            }
+            body{
+                font-family: Arial;
+            }
+            #divider{
+                border-bottom: 1px solid #33bbFF;
+                text-align: center;
+                margin: 10px;
+                padding: 10px;
+                position: relative;
+            }
+            #or{
+                position: absolute;
+                width: 100%;
+                text-align: center;
+            }
+            #or b{
+                background-color: white;
+                padding: 5px;
+            }
+            #phone_btn:disabled{
+                background-color: #ddd;
+            }
+            .message{
+                border: 1px solid;
+                border-radius: 5px;
+                padding: 10px;
+                font-weight: bold;
+            }
+            .positive{
+                color: #0c0;
+                background-color: #efe;
+                border-color: #0c0;
+            }
+            .negative{
+                color:red;
+                background-color: lightyellow;
+                border-color: red;
+            }
+        </style>
     </head>
     <body>
-	<h3>Вход в систему iSell</h3>
-	<form action="./?"  method="post" enctype="multipart/form-data">
-	    <input name="user_login" placeholder="Логин">
-	    <input name="user_pass" type="password" placeholder="Пароль">
-	    <button style="">Вход в приложение</button>
-	</form>
+        <h3>Вход в систему iSell</h3>
+        
+        <?php if(isset($status) && $status=='login_or_pasword_wrong'):?>
+        <div class="message negative">Логин или пароль неверный</div>
+        <?php endif; ?>
+        <?php if(isset($status) && $status=='password_sent'):?>
+        <div class="message positive">Сообщение с логином и паролем отправлено на указанный телефон или почту</div>
+        <?php endif; ?>
+        <?php if(isset($status) && $status=='password_sending_error'):?>
+        <div class="message negative">Возникла ошибка отправки пароля :( <br>попробуйте еще раз позже</div>
+        <?php endif; ?>
+        <?php if(isset($status) && $status=='phone_is_unknown'):?>
+        <div class="message negative">Указанный номер телефона не известен системе</div>
+        <?php endif; ?>
+        
+        <form action="./?"  method="post" enctype="multipart/form-data">
+            <div id="login_user_pass">
+                <input name="user_login" placeholder="Логин" pattern="^[a-zA-Z_0-9]*$">
+                <input name="user_pass" type="password" placeholder="Пароль">
+                <button style="">Вход в приложение</button>
+
+                <div id="divider"><div id="or"><b>или</b></div></div>
+            </div>
+            Войти по номеру телефона
+            <input name="user_phone" type="hidden" value="">
+            <input placeholder="Номер телефона" type="tel" onkeyup="phoneChanged(this)" onchange="phoneChanged(this)">
+            <button disabled="disabled" id="phone_btn">Получить пароль на <br><span id="phone"></span></button>
+        </form>
     </body>
 </html>

@@ -1,6 +1,6 @@
 <script type="text/javascript">
     /* global App */
-    Tedit = App.page_accounts_trans_edit = {
+    Tedit = App.page_accounts_shared_trans_edit = {
 	parsed:true,
 	init: function () {
 	    this.node.window({
@@ -8,10 +8,10 @@
 		width: 450,
 		height: 330,
 		onClose: function(){
-		    App.page_accounts_trans_edit.handler.notify('close',App.page_accounts_trans_edit.data);
-		    App.page_accounts_trans_edit.node.window('destroy');
-		    App.page_accounts_trans_edit.node.remove();
-		    delete App.page_accounts_trans_edit,Tedit;
+		    App.page_accounts_shared_trans_edit.handler.notify('close',App.page_accounts_shared_trans_edit.data);
+		    App.page_accounts_shared_trans_edit.node.window('destroy');
+		    App.page_accounts_shared_trans_edit.node.remove();
+		    delete App.page_accounts_shared_trans_edit,Tedit;
 		}
 	    });
 	    this.data.transIsNew=!this.data.trans_id;
@@ -27,7 +27,7 @@
 	},
 	initWidgets:function(){
 	    App.setupForm("#trans_edit_frm");
-	    $.parser.parse("#page_accounts_trans_edit");//for easy ui
+	    $.parser.parse("#page_accounts_shared_trans_edit");//for easy ui
 	    this.suppressUpdate=true;
 	    $("#trans_edit_frm").form('load',Tedit.data);
 	    $("#trans_edit_frm").show();
@@ -69,7 +69,7 @@
 	    });
 	},
 	initSelectOnClick:function(){
-	    $('#page_accounts_trans_edit .validatebox-text').on('focus', function() {
+	    $('#page_accounts_shared_trans_edit .validatebox-text').on('focus', function() {
 		this.select();
 	    });
 	    $("#Tedit_amount").next().find(".validatebox-text").focus();	    

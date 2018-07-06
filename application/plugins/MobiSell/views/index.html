@@ -138,12 +138,14 @@
                 pcomp:{},
                 init:function(){
                     this.restoreCompanies();
+                    App.user.props=JSON.parse(localStorage.getItem('user_props'));
                 },
 		getData: function () {
-		    $.get("../User/userFetch", function (resp) {
+		    $.post("./userPropsGet", function (resp) {
 			App.user.props = App.json(resp);
 			if (App.user.props) {
 			    App.renderTpl("user_info", App.user.props);
+                            localStorage.setItem('user_props',JSON.stringify(App.user.props));
 			}
 		    });
 		},
@@ -209,11 +211,13 @@
             },
 	    clearCache:function(){
 		navigator.serviceWorker.controller && navigator.serviceWorker.controller.postMessage('clear_cache');
+                console.log("Cache cleared");
 		location.reload();
 	    },
 	    retryConnection:function(){
 		$('#offline_popup').modal('hide');
 		if( navigator.onLine ){
+                    console.log();
 		    location.reload();
 		} else {
 		    $('#offline_popup').modal('show');
@@ -222,7 +226,7 @@
 	};
 	$(App.init);
 
-	if ( !localStorage.getItem("disableSW") && ('serviceWorker' in navigator) ) {
+	if ( localStorage.getItem("disableSW")!=1 && ('serviceWorker' in navigator) ) {
 	    navigator.serviceWorker.register('../MobiSell/sw.js', {scope: '../MobiSell/'})
 	    .then(function(reg) {
 		//console.log('serviceWorker Registration succeeded. Scope is ' + reg.scope);
@@ -243,7 +247,7 @@
 	    
 	    $.post('./version',function(current_version){
 		var stored_version=localStorage.getItem("stored_version");
-		if( current_version !== stored_version ){
+		if( current_version != stored_version ){
 		    localStorage.setItem("stored_version",current_version);
 		    App.clearCache();
 		}
@@ -272,17 +276,21 @@
 	    <i class="home icon"></i>
 	    Главная
 	</a>
+	<a href="#stock.html" class="item">
+	    <i class="cube icon"></i>
+	    Каталог товаров
+	</a>
 	<a href="#document_list.html" class="item">
 	    <i class="list layout icon"></i>
 	    Список Документов
 	</a>
-	<a href="#stock.html" class="item">
-	    <i class="cube icon"></i>
-	    Склад
-	</a>
 	<a href="#document.html" class="item">
 	    <i class="file outline icon"></i>
 	    Создать документ
+	</a>
+    	<a href="javascript:App.clearCache()" class="item">
+		<i class="refresh icon"></i>
+		Сбросить настройки
 	</a>
 	<a href="javascript:App.user.signOut()" class="item">
 	    <i class="sign out icon"></i>
@@ -326,6 +334,8 @@
 	<div class="actions">
 	    <div class="ui primary button"  onclick="App.user.signIn()"><i class="icon sign in"></i> Вход</div>
 	    <div class="ui secondary close button"  onclick="$('#signInModal').modal('hide');"><i class="icon close"></i> Закрыть</div>
+            <hr>
+            	<div class="ui negative button"  onclick="App.clearCache()"><i class="icon refresh"></i> Сбросить настройки</div>
 	</div>
     </div>
     

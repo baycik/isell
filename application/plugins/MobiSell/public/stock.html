@@ -16,7 +16,7 @@
             });            
         },
         focus: function () {
-            App.title("Склад");
+            App.title("Каталог товаров");
             this.load();
         },
         cart: {
@@ -209,6 +209,14 @@
                 //Добавляем товару свойство is_in_cart
                 App.stock.list[i].quantity_added = App.stock.cart.is_there(App.stock.list[i].product_code);
                 App.stock.list[i].is_promo = (App.stock.list[i].product_price_total !== App.stock.list[i].product_price_total_raw) ? 1 : 0;
+                if( App.user.props.user_level<2 ){
+                    var lo=App.stock.list[i].leftover;
+                    App.stock.list[i].stared_leftover=
+                            lo<10?'★☆☆☆☆':
+                            lo<50?'★★☆☆☆':
+                            lo<100?'★★★☆☆':
+                            lo<500?'★★★★☆':'★★★★★';
+                }
             }
         },
         // Рендеринг списка товаров
@@ -240,6 +248,9 @@
             $.post("./suggestFetch", params, function (response) {
                 App.flash("Загрузка товаров:ОК");
                 var new_loaded_items = App.json(response);
+                if( !new_loaded_items ){
+                    return;
+                }
                 if (load_more) {
                     App.stock.list = App.stock.list.concat(new_loaded_items);
                 } else {
@@ -312,20 +323,6 @@
     .stock_product_table s{
         color: red;
     }
-    .stock_product_price{
-        color: green;
-        text-align: right
-    }
-    .stock_product_image{
-        width:120px;
-        height:120px;
-    }
-    .stock_product_name{
-        color: #106596;
-        height: 80px;
-    }
-    #stock_list .stock_product_promo{
-        box-shadow: 0px 0px 6px #0c0;
     }
     .stock_product_promo .stock_product_name{
         color: #0c0;
@@ -470,17 +467,6 @@
                     </button>
                 </div>
                 {{else}}
-                <button class="ui green button" data-index="{{#}}"
-                        onclick="App.stock.popup_add.take_product_info(this)">Добавить <i class="cart plus icon"></i></button>
-                {{/if}}
-            </td> 
-        </tr>
-        <tr>
-            <td colspan="2">
-                <div class = "ui grid">
-                    <div class = "five wide column" style = "color:#7a7a7a">{{product_code}}</div>
-                    <div class = "five wide column" 
-                         style = "{{if leftover|less>1}} color:#d62424 !important {{else}} color:#7a7a7a !important {{/if}};text-align: center"><b>{{leftover}}{{product_unit}}</b></div>
                     <div class = "six wide column stock_product_price">
                         {{if is_promo}}<s>{{product_price_total_raw}}р.</s> {{/if}}{{product_price_total}}р.
                     </div>
@@ -490,9 +476,9 @@
         <!-- {{/products}} -->
     </table>
     {{if loading_finished}} 
-    <button class='ui fluid section'>
-        Загрузка завершена
-    </button>    
+    .stock_product_price{
+        color: green;
+        text-align: right
     {{else}} 
     <button id='stock_load_more' class='ui fluid basic green button'
             onclick="App.stock.load(1)"> 
@@ -564,10 +550,20 @@
                 <i class="ban icon"></i>
                 Отмена
             </div>
+    .stock_product_image{
+        width:120px;
+        height:120px;
+    }
+    .stock_product_name div{
+        color: #106596;
+        height: 80px;
+        overflow: hidden;
+    }
+    #stock_list .stock_product_promo{
+        box-shadow: 0px 0px 6px #0c0;
+    }
         </div>
     </form>
-
-
 </div>
 
 <!--Popup корзины-->
@@ -632,3 +628,14 @@
         <img style="max-width: 100%" src="../Storage/image_flush/?size={{size_x}}x{{size_y}}&path=/dynImg/{{product_img}}" />
     </div>
 </div>
+                <button class="ui button" data-index="{{#}}"
+                        onclick="App.stock.popup_add.take_product_info(this)">Добавить <i class="cart plus icon"></i></button>
+                {{/if}}
+            </td> 
+        </tr>
+        <tr>
+            <td colspan="2">
+                <div class = "ui grid">
+                    <div class = "five wide column" style = "color:#7a7a7a">{{product_code}}</div>
+                    <div class = "five wide column" 
+                         style = "text-align: center;color:#7a7a7a"><b>{{if stared_leftover}} {{stared_leftover}} {{else}} {{leftover}}{{product_unit}} {{/if}}</b></div>

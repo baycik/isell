@@ -1,6 +1,6 @@
 <script type="text/javascript">
     /* global App,Mark*/
-    Ledger = App.page_accounts_ledger = {
+    Ledger = App.page_accounts_shared_ledger = {
 	idate: null,
 	fdate: null,
 	acc_props: {},
@@ -284,7 +284,7 @@
 		    data.passive_company_id=App.acomp.company_id || 0;
 		    data.label=App.acomp.label || '?';
 		}
-		App.loadWindow('page/accounts/trans_edit',data).progress(function(status,data){
+		App.loadWindow('page/accounts_shared/trans_edit',data).progress(function(status,data){
 		    if( status==='save' || status==='delete' ){
 			$('#account_ledger_dg').datagrid('reload');
 		    }
@@ -296,7 +296,7 @@
 		    var data=row;
 		    data.current_acc_code=Ledger.current_acc_code;
 		    data.using_alt_currency=Ledger.using_alt_currency;
-		    App.loadWindow('page/accounts/trans_edit',data).progress(function(status,data){
+		    App.loadWindow('page/accounts_shared/trans_edit',data).progress(function(status,data){
 			if( status==='save' || status==='delete' ){
 			    $('#account_ledger_dg').datagrid('reload');
 			}

@@ -16,16 +16,26 @@
 </div>
 
 <div id="user_info" class="ui blue segment raised covert" style="margin: 10px;">
-    <div class="ui header">Добро пожаловать, {{first_name}} {{middle_name}}</div>
+    <div class="ui header">Добро пожаловать, {{first_name|blank>}} {{middle_name|blank>}} </div>
+    {{if debt.total }}
+    <div class="ui yellow message">
+        <b>Просроченный долг: {{debt.expired}}</b><br>
+        Общий долг: {{debt.total}}
+    </div>
+    {{else}}
+    <div class="ui green message">
+        Долга нет, спасибо
+    </div>
+    {{/if}}
     <div>
 	<div class="ui vertical menu fluid">
+	    <a href="#stock.html" class="item">
+		<i class="cube icon"></i>
+		Каталог товаров
+	    </a>
 	    <a href="#document_list.html" class="item">
 		<i class="list layout icon"></i>
 		Список Документов
-	    </a>
-	    <a href="#stock.html" class="item">
-		<i class="cube icon"></i>
-		Склад
 	    </a>
 	    <a href="#document.html" class="item">
 		<i class="file outline icon"></i>
@@ -38,7 +48,11 @@
 		<div class="ui secondary vertical menu">
 		    <a href="javascript:App.clearCache()" class="item">
 			<i class="refresh icon"></i>
-			Очистить кеш
+			Сбросить настройки
+		    </a>
+		    <a href="mailto:bay@nilson.ua?subject=MobiSell Поддержка&body=Добрый день, есть замечания к программе" class="inverted item">
+			<i class="question circle icon"></i>
+			Задать вопрос разработчику
 		    </a>
 		    <a href="javascript:App.user.signInPopup()" class="inverted item">
 			<i class="sign in icon"></i>
