@@ -1,32 +1,31 @@
 <script>
     /* global App*/
-    Cdet=App.page_company_details={
+    App.page_company_details={
 	properties:{
 	    title: 'Реквизиты компании',
 	    width: 920,
 	    height: 'auto',
 	    shadow:false,
 	    onClose: function(){
-		Cdet.handler.notify('close',Cdet.data);
-		Cdet.node.window('destroy');
-		Cdet.node.remove();
-		delete Cdet;
+		App.page_company_details.handler.notify('close',App.page_company_details.data);
+		App.page_company_details.node.window('destroy');
+		App.page_company_details.node.remove();
 		delete App.page_company_details;
 	    }
 	},
 	init:function () {
-	    var props=Cdet.properties;
-            if(Cdet.data.inline){
-                Cdet.node.panel(props);
+	    var props=App.page_company_details.properties;
+            if(App.page_company_details.data.inline){
+                App.page_company_details.node.panel(props);
             } else {
-                Cdet.node.window(props);
+                App.page_company_details.node.window(props);
         	this.node.window('hcenter');
                 this.node.window('window').css('position','fixed');
                 this.node.window('window').css('top','40px');
             }
-	    Cdet.autoselect_label=Cdet.data.autoselect_label;
+	    App.page_company_details.autoselect_label=App.page_company_details.data.autoselect_label;
 	    this.checkActive();
-	    Cdet.load(Cdet.data.company_id);
+	    App.page_company_details.load(App.page_company_details.data.company_id);
             this.initFormOnce();
 	},
         initFormOnce:function(){
@@ -36,7 +35,7 @@
             this.formInited=true;
             App.formElements("#page_company_details_frm").change(function () {
 		var node=this;
-		Cdet.updateField(node.name,node.value,node.title);
+		App.page_company_details.updateField(node.name,node.value,node.title);
 	    });
         },
 	checkActive:function(){
@@ -45,33 +44,33 @@
 		this.node.find(".page_company_details_active_details").show();
 		App.handler.progress(function(status,data){
 		    if( status==="activeCompanySelected" ){
-			Cdet.load(data.company_id);
+			App.page_company_details.load(data.company_id);
 		    }
 		});
 	    }
 	},
 	focus:function(){
-	    this.load(Cdet.data.company_id);
+	    this.load(App.page_company_details.data.company_id);
 	},
 	load:function( company_id ){
 	    if( company_id*1 ){
 		App.get('Company/companyGet/'+company_id,function(xhr){
-		    Cdet.data=App.json(xhr);
-		    Cdet.setup();
-		    Cdet.setTitle();
+		    App.page_company_details.data=App.json(xhr);
+		    App.page_company_details.setup();
+		    App.page_company_details.setTitle();
 		});
 	    }
 	},
 	setTitle:function(){
-	    this.node.panel('setTitle','Реквизиты компании '+(Cdet.data.label==='null'?Cdet.data.label:'') );
+	    this.node.panel('setTitle','Реквизиты компании '+(App.page_company_details.data.label==='null'?App.page_company_details.data.label:'') );
 	},
 	updateField:function(field,value,title){
-	    App.post('Company/companyUpdate/',{company_id:Cdet.data.company_id,field:field,value:value},function(ok){
+	    App.post('Company/companyUpdate/',{company_id:App.page_company_details.data.company_id,field:field,value:value},function(ok){
 		if( ok*1 ){
-		    Cdet.data[field]=value;
+		    App.page_company_details.data[field]=value;
 		    App.flash("Сохранено: " + title);
 		    if( field==='label' ){
-			Cdet.handler.notify('label_changed');
+			App.page_company_details.handler.notify('label_changed');
 		    }
 		} else {
 		    App.flash("Сохраненние не удалось: " + title);
@@ -79,19 +78,19 @@
 	    });
 	},
 	setup:function(){
-	    App.setupForm("#page_company_details_frm", Cdet.data);
+	    App.setupForm("#page_company_details_frm", App.page_company_details.data);
 	    if( this.autoselect_label ){
 		this.node.find('input[name=label]').select();
 	    }
-	    Cdet.makeActiveButtonCheck();
+	    App.page_company_details.makeActiveButtonCheck();
 	},
 	makeActive:function(){
-	    if( confirm("Сделать компанию "+Cdet.data.label+" активной?") ){
-		App.post('Company/companyMakeActive/'+Cdet.data.company_id,function(ok){
+	    if( confirm("Сделать компанию "+App.page_company_details.data.label+" активной?") ){
+		App.post('Company/companyMakeActive/'+App.page_company_details.data.company_id,function(ok){
 		    if( ok*1 ){
-			Cdet.data['is_active']=1;
-			Cdet.makeActiveButtonCheck();
-			App.flash("Компания "+Cdet.data.label+" теперь активная");
+			App.page_company_details.data['is_active']=1;
+			App.page_company_details.makeActiveButtonCheck();
+			App.flash("Компания "+App.page_company_details.data.label+" теперь активная");
 		    } else {
 			App.flash("Сохраненние не удалось");
 		    }
@@ -100,7 +99,7 @@
 	    }
 	},
 	makeActiveButtonCheck:function(){
-	    if( Cdet.data.is_active*1 ){
+	    if( App.page_company_details.data.is_active*1 ){
 		$(".comp_det_makeActBut").attr('disabled',true);
 	    }
 	}
@@ -148,7 +147,7 @@
     <div class="inp_rule"></div>
     <textarea name="company_description" title="Дополнительно" style="width:550px;"></textarea>
     <div class="page_company_details_passive_details inp_group" style="display: inline-block">
-	<button type="button" onclick="Cdet.makeActive()" class="comp_det_makeActBut"><img src="img/home.png"> Сделать активной компанией</button>
+	<button type="button" onclick="App.page_company_details.makeActive()" class="comp_det_makeActBut"><img src="img/home.png"> Сделать активной компанией</button>
     </div>
     <div class="inp_rule"></div>
     <div class="page_company_details_active_details" style="display: none">
