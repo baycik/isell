@@ -1,0 +1,264 @@
+<script>
+    App.payments = {
+        pageSize: 25,
+        currentType: "361",
+        local_db_rows: {},
+        local_db_finished:{},
+        init: function () {
+            App.payments.initDateRange();
+            App.payments.pcomp_init();
+            App.payments.initTab();
+            
+            //App.payments.load( App.payments.currentType );
+            App.Topic('passiveCompanySelected').subscribe(function(){
+                App.payments.load( App.payments.currentType );
+            });
+        },
+        initTab: function () {
+	    $('.payments_tabs .item').tab({
+		onVisible: function (type) {
+		    App.payments.currentType = type;
+                    if( App.payments.local_db_rows[type] === undefined ){//have not loaded such type yet
+                        App.payments.load(type);
+                    }
+		}
+	    });
+	    $('.payments_tabs .item').tab('change tab', App.payments.currentType);
+	},
+        initDateRange:function(){
+            var now=new Date();
+            var idate=new Date(now.getFullYear(), now.getMonth()-2, 2).toISOString().substr(0,10);
+            var fdate=new Date(now.getFullYear(), now.getMonth()+1, 1).toISOString().substr(0,10);
+            $('#idate').val(idate);
+            $('#fdate').val(fdate);
+        },
+        focus: function () {
+            //this.load();
+        },
+        load: function (type) {
+            if( App.payments.local_db_finished[type] ){
+                return;
+            }
+            if( App.payments.local_db_rows[type] === undefined ){//have not loaded such type yet
+                App.payments.local_db_rows[type]=[];
+            }
+            var page= App.payments.local_db_rows[type].length/App.payments.pageSize+1;
+            
+            var idate = $('#idate').val();
+            var fdate = $('#fdate').val();
+            var params = {
+                acc_code: type,
+                fdate: fdate,
+                idate: idate,
+                page: page,
+                rows: App.payments.pageSize
+            };
+            $.post("../AccountsCore/ledgerPaymentFetch", params, function (response) {
+                var new_loaded_items = App.json(response);
+                if (!new_loaded_items) {
+                    App.payments.local_db_rows[type]=[];
+                    App.payments.local_db_finished[type]=true;
+                    return;
+                };
+                if( new_loaded_items.rows.length<App.payments.pageSize ){
+                    App.payments.local_db_finished[type]=1;
+                };
+                App.payments.local_db_rows[type] = App.payments.local_db_rows[type].concat(new_loaded_items.rows);
+                App.payments.render(type,new_loaded_items.sub_totals);
+            });
+        },
+        render: function (type,sub_totals) {
+            for (var i in App.payments.local_db_rows[type]) {
+                if (App.payments.local_db_rows[type][i].credit * 1 === 0) {
+                    App.payments.local_db_rows[type][i].credit = "";
+                } else if (App.payments.local_db_rows[type][i].debit * 1 === 0) {
+                    App.payments.local_db_rows[type][i].debit = "";
+                };
+            };
+            App.renderTpl("payments_" + type, {
+                payments: App.payments.local_db_rows[type],
+                loading_finished:App.payments.local_db_finished[type],
+                sub_totals:sub_totals
+            });
+            
+        },
+        loadMore: function () {
+	    var type = App.payments.currentType;
+	    App.payments.load(type);
+	},
+        reset: function(){
+            //Очищаем память при смене pcomp'а
+            App.payments.local_db_finished={};
+            App.payments.local_db_rows={}; 
+        },
+        pcomp_init: function () {
+            $('.pcomp_id').dropdown({
+                apiSettings: {
+                    url: 'compListFetch/'
+                },
+                fields: {
+                    value: 'company_id',
+                    name: 'label',
+                    text: 'label'
+                },
+                filterRemoteData: true,
+                fullTextSearch: true,
+                onChange: function (value, text, $choice) {
+                    App.payments.reset();
+                    if (value * 1 > 0) {
+                        App.user.pcompSelect({company_id: value, label: text});
+                    } else {
+                        $(".pcomp_id").dropdown('set text', "Выберите клиента");
+                        $(".pcomp_id").dropdown('show');
+                    }
+                    
+                    App.payments.load( App.payments.currentType );
+                }
+            }).dropdown("set text", App.user.pcomp.label || '');
+        },
+        documentOpen: function(node){
+            console.log("first");
+            var trans_id=$(node).data('trans_id');
+            $.get("../AccountsCore/transGetDocId/"+trans_id,function(doc_id){
+                location.hash='#document.html#doc_id='+doc_id;
+            });
+            console.log("again");
+        }
+    };
+
+</script>
+<div  class="ui blue segment">
+    <form class="ui form">
+        <div class="field">
+            <label>Клиент</label>
+            <div class="ui fluid search selection remote dropdown pcomp_id">
+                <input name="pcomp_id" type="hidden">
+                <i class="dropdown icon"></i>
+                <div class="default text">Выбрать клиента</div>
+                <div class="menu"></div>
+            </div>
+        </div>
+      <div class="two fields">
+        <div class="field">
+            <label>Начало</label>
+            <div class="ui input left icon">
+                <i class="calendar icon"></i>
+                <input  id="idate" value="" type="date" onchange="App.payments.reset();App.payments.load(App.payments.currentType)">
+            </div>
+        </div>
+        <div class="field">
+            <label>Конец</label>
+            <div class="ui input left icon">
+                <i class="calendar icon"></i>
+                <input  id="fdate" value="" type="date" onchange="App.payments.reset();App.payments.load(App.payments.currentType)">
+            </div>
+        </div>
+      </div>
+    </form>
+</div>
+
+<div class="ui top attached tabular menu payments_tabs">
+    <a class="active item" data-tab="361">Покупатель</a>
+    <a class="item" data-tab="631">Поставщик</a>
+</div>
+<div id="payments_361" class="ui bottom attached  tab segment covert" data-tab="361">
+    <div class="ui grid" style="margin-bottom: -9px;">
+        <div class="four wide column" style="background-color: #dfd">Начальный остаток {{sub_totals.ibal|blank>-}}</div>
+        <div class="four wide column" style="background-color: #eee">Оборот расход {{sub_totals.pdebit|blank>-}}</div>
+        <div class="four wide column" style="background-color: #eee">Оборот приход {{sub_totals.pcredit|blank>-}} </div>
+        <div class="four wide column" style="background-color: #def">Конечный остаток {{sub_totals.fbal|blank>-}} </div>
+    </div>
+    <table class="ui green selectable table">
+        <thead>
+            <tr>
+                <th class="one wide column"></th>
+                <th class="two wide column">Дата</th>
+                <th class="seven wide column">Описание</th>
+                <th class="two wide column">Расход</th>
+                <th class="two wide column">Приход</th>
+                <th class="two wide column">Остаток</th>
+            </tr>
+        </thead>
+        <!-- {{if payments}} {{payments}} -->
+        <tr>
+            <td class="one wide column">
+                {{if editable|equals>0}}
+                <button type="button" class="circular ui icon  button" style="background-color:#dfd" data-trans_id="{{trans_id}}"
+                        onclick="App.payments.documentOpen(this)">
+                    <i class="file outline icon"></i>
+                </button>
+                {{/if}}
+            </td>
+            <td class="two wide column">{{trans_date}}</td>
+            <td class="seven wide column">{{description}}</td>
+            <td class="two wide column">{{debit}}</td>
+            <td class="two wide column">{{credit}}</td>
+            <td class="two wide column">{{row_total}}</td>
+        </tr>
+        <!-- {{/payments}} {{else}} -->
+        <tr>
+            <td colspan="5"><i class="red icon question"></i>Ничего не найдено</td>
+        </tr>
+        <!-- {{/if}}-->
+    </table>
+    {{if loading_finished|more>0}} 
+    <div class="ui info message" style="clear: both;text-align: center;">
+        Загрузка завершена
+    </div>   
+    {{else}} 
+    <button id='stock_load_more' class='ui fluid button'
+            onclick="App.payments.loadMore()"> 
+        Показать ещё...
+    </button>    
+    {{/if}}
+</div> 
+
+<div id="payments_631" class="ui bottom attached  tab segment covert" data-tab="631">
+    <div class="ui grid" style="margin-bottom: -9px;">
+        <div class="four wide column" style="background-color: #dfd">Начальный остаток {{sub_totals.ibal|blank>-}}</div>
+        <div class="four wide column" style="background-color: #eee">Оборот расход {{sub_totals.pdebit|blank>-}}</div>
+        <div class="four wide column" style="background-color: #eee">Оборот приход {{sub_totals.pcredit|blank>-}} </div>
+        <div class="four wide column" style="background-color: #def">Конечный остаток {{sub_totals.fbal|blank>-}} </div>
+    </div>
+    <table class="ui purple selectable  table">
+        <thead>
+            <tr>
+                <th class="two wide column">Дата</th>
+                <th class="three wide column">Описание</th>
+                <th class="one wide column">Расход</th>
+                <th class="one wide column">Приход</th>
+                <th class="two wide column">Остаток</th>
+            </tr>
+        </thead>
+        <!-- {{if payments}} {{payments}} -->
+        <tr>
+            <td class="one wide column">
+                {{if editable|equals>0}}
+                <i class="ui file outline icon"></i>
+                {{/if}}
+            </td>
+            <td class="two wide column">{{trans_date}}</td>
+            <td class="seven wide column">{{description}}</td>
+            <td class="two wide column">{{debit}}</td>
+            <td class="two wide column">{{credit}}</td>
+            <td class="two wide column">{{row_total}}</td>
+        </tr>
+        <!-- {{/payments}} {{else}} -->
+        <tr>
+            <td colspan="5"><i class="red icon question"></i>Ничего не найдено</td>
+        </tr>
+        <!-- {{/if}}-->
+    </table>
+    {{if loading_finished|more>0}} 
+    <div class="ui info message" style="clear: both;text-align: center;">
+        Загрузка завершена
+    </div>   
+    {{else}} 
+    <button id='stock_load_more' class='ui fluid button'
+            onclick="App.payments.loadMore()"> 
+        Показать ещё...
+    </button>    
+    {{/if}}
+</div> 
+
+ 
