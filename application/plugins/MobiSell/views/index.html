@@ -171,13 +171,13 @@
 		},
                 setPassiveCompany:function(company){
                     App.user.pcomp=company;
-                    App.Topic('passiveCompanySelected').publish(company);
                     localStorage.setItem('pcomp',JSON.stringify(App.user.pcomp));
+                    App.Topic('passiveCompanySelected').publish(company);
                 },
                 setActiveCompany:function(company){
                     App.user.pcomp=company;
-                    App.Topic('passiveCompanySelected').publish(company);
                     localStorage.setItem('pcomp',JSON.stringify(App.user.pcomp));
+                    App.Topic('activeCompanySelected').publish(company);
                 },
                 restoreCompanies:function(){
                     App.user.pcomp=JSON.parse(localStorage.getItem('pcomp')) || {};
@@ -287,6 +287,10 @@
 	<a href="#document.html" class="item">
 	    <i class="file outline icon"></i>
 	    Создать документ
+	</a>
+        <a href="#payments.html" class="item">
+	    <i class="exchange icon"></i>
+	    Взаиморасчет
 	</a>
     	<a href="javascript:App.clearCache()" class="item">
 		<i class="refresh icon"></i>
