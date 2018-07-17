@@ -1,6 +1,6 @@
 <?php
 
-if( empty($this->view['p']['company_vat_id']) ){
+if( empty($this->view['p']['company_tax_id']) ){
     $this->view['p']['company_name']="Неплатник податку";
     $this->view['p']['company_jaddress']="-";
     if( empty($this->view['extra']->type_of_reason) ){

@@ -469,7 +469,7 @@ class Accounts extends Data {
     }
 
     public function getCompanyBalance($pcomp_id, $pcomp_code) {
-        $where = $pcomp_id ? " company_id='$pcomp_id'" : " company_code='$pcomp_code' OR company_vat_id='$pcomp_code'";
+        $where = $pcomp_id ? " company_id='$pcomp_id'" : " company_code='$pcomp_code' OR company_tax_id='$pcomp_code'";
         $company = $this->Base->get_row("SELECT company_id,company_acc_list FROM companies_list WHERE $where LIMIT 1");
         if (!$company['company_acc_list']) {
             return false;
@@ -636,11 +636,11 @@ class Accounts extends Data {
             IF(dvl.tstamp,dvl.tstamp,cstamp),
             IF(doc_type=1,view_num,doc_num),
             IF(LOCATE('type_of_reason\":\"0',view_efield_values),SUBSTRING(view_efield_values,LOCATE('type_of_reason',view_efield_values)+17,2),'') tor,
-            CONCAT(label,IF(company_vat_id,'',' (Неплатник податку)')) AS short_name,
+            CONCAT(label,IF(company_tax_id,'',' (Неплатник податку)')) AS short_name,
             company_id,
             CONCAT(icon_name,' ',doc_type_name) AS icon,
-            IF(company_vat_id,company_name,'Неплатник податку'),
-            IF(company_vat_id,company_vat_id,'100000000000'),
+            IF(company_tax_id,company_name,'Неплатник податку'),
+            IF(company_tax_id,company_tax_id,'100000000000'),
             doc_data,
             (SELECT 
                     CAST(ROUND(amount,2) AS CHAR(10))
@@ -686,7 +686,7 @@ class Accounts extends Data {
             pcomp_id INT,
             icon VARCHAR(45),
             company_name VARCHAR(255),
-            company_vat_id VARCHAR(12),
+            company_tax_id VARCHAR(12),
             description VARCHAR(45),
             total VARCHAR(10),
             vatless VARCHAR(10),
@@ -711,7 +711,7 @@ class Accounts extends Data {
 	if( $group_by ){
 	    $select="
 		company_name,
-		company_vat_id,
+		company_tax_id,
 		SUM(total) total,
 		SUM(vatless) vatless,
 		SUM(vat) vat";

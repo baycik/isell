@@ -1,3 +1,5 @@
+<link href="Dadata_Suggest/suggestions.min.css" type="text/css" rel="stylesheet" />
+<script type="text/javascript" src="Dadata_Suggest/jquery.suggestions.min.js"></script>
 <script>
     /* global App*/
     App.page_company_details={
@@ -37,17 +39,95 @@
 		var node=this;
 		App.page_company_details.updateField(node.name,node.value,node.title);
 	    });
-            
-            $("#party").suggestions({
-                token: "0f4a11196419de6f9f5f69395229bdf85ded1c9c",
+	    setTimeout(function(){
+		App.page_company_details.DaDataInit();
+	    },500);
+        },
+	DaDataInit:function(){
+	    var token="0f4a11196419de6f9f5f69395229bdf85ded1c9c";
+	    $("input[name=company_tax_id]").suggestions({
+                token: token,
                 type: "PARTY",
                 count: 5,
                 /* Вызывается, когда пользователь выбирает одну из подсказок */
-                onSelect: function(suggestion) {
-                    console.log(suggestion);
+                onSelect: function(s) {
+		    console.log(s.data);
+		    if( !s.data ){
+			return;
+		    }
+		    App.page_company_details.DaDataSet('company_name',s.data.name.short_with_opf,'skip');
+		    App.page_company_details.DaDataSet('company_jaddress',s.data.address.value);
+		    App.page_company_details.DaDataSet('company_tax_id',s.data.inn);
+		    App.page_company_details.DaDataSet('company_tax_id2',s.data.kpp);
+		    App.page_company_details.DaDataSet('company_director',s.data.management.name);
+ 		    App.page_company_details.DaDataSet('company_director_title',s.data.management.post);
+ 		    App.page_company_details.DaDataSet('company_code_registration',s.data.ogrn);
+ 		    App.page_company_details.DaDataSet('company_code',s.data.okpo);
                 }
-            });
-        },
+            }).css('width','420px');
+	    $("input[name=company_name]").suggestions({
+                token: token,
+                type: "PARTY",
+                count: 5,
+                /* Вызывается, когда пользователь выбирает одну из подсказок */
+                onSelect: function(s) {
+		    console.log(s.data);
+		    if( !s.data ){
+			return;
+		    }
+		    App.page_company_details.DaDataSet('company_name',s.data.name.short_with_opf);
+		    App.page_company_details.DaDataSet('company_jaddress',s.data.address.value);
+		    App.page_company_details.DaDataSet('company_tax_id',s.data.inn,'skip');
+		    App.page_company_details.DaDataSet('company_tax_id2',s.data.kpp);
+		    App.page_company_details.DaDataSet('company_director',s.data.management.name);
+ 		    App.page_company_details.DaDataSet('company_director_title',s.data.management.post);
+ 		    App.page_company_details.DaDataSet('company_code_registration',s.data.ogrn);
+ 		    App.page_company_details.DaDataSet('company_code',s.data.okpo);
+                }
+            }).css('width','420px');
+	    $("input[name=company_bank_name]").suggestions({
+                token: token,
+                type: "BANK",
+                count: 5,
+                /* Вызывается, когда пользователь выбирает одну из подсказок */
+                onSelect: function(s) {
+		    console.log(s.data);
+		    if( !s.data ){
+			return;
+		    }
+		    App.page_company_details.DaDataSet('company_bank_id',s.data.bic,'skip');
+		    App.page_company_details.DaDataSet('company_bank_corr_account',s.data.correspondent_account);
+		    App.page_company_details.DaDataSet('company_bank_name',s.data.name.payment);
+                }
+            }).css('width','210px');
+	    $("input[name=company_bank_id]").suggestions({
+                token: token,
+                type: "BANK",
+                count: 5,
+                /* Вызывается, когда пользователь выбирает одну из подсказок */
+                onSelect: function(s) {
+		    console.log(s.data);
+		    if( !s.data ){
+			return;
+		    }
+		    App.page_company_details.DaDataSet('company_bank_id',s.data.bic);
+		    App.page_company_details.DaDataSet('company_bank_corr_account',s.data.correspondent_account);
+		    App.page_company_details.DaDataSet('company_bank_name',s.data.name.payment,'skip');
+                }
+            }).css('width','210px');
+	    $("input[name=company_email]").suggestions({
+                token: token,
+                type: "EMAIL",
+                count: 5
+            }).css('width','210px');
+	},
+	DaDataSet:function(name,value,skip){
+	    var current_value=$("input[name="+name+"]").val();
+	    if(current_value!=value){
+		$("input[name="+name+"]").val(value);
+		skip && $("input[name="+name+"]").trigger("change");
+	    }
+	},
 	checkActive:function(){
 	    if( this.data.is_active ){
 		this.node.find(".page_company_details_passive_details").hide();
@@ -115,8 +195,7 @@
 	}
     };
 </script>
-<link href="https://cdn.jsdelivr.net/npm/suggestions-jquery@18.3.3/dist/css/suggestions.min.css" type="text/css" rel="stylesheet" />
-<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/suggestions-jquery@18.3.3/dist/js/jquery.suggestions.min.js"></script>
+
 <style>
     #page_company_details_frm b{
 	width:120px;
@@ -124,12 +203,11 @@
 </style>
 <div id="page_company_details_frm" style="">
     <div class="inp_group" style="width: 550px;">
-	<input id="party" type="text" name="company_name" title="Полное название*" style="width:410px;"/>	
+	<input type="text" name="company_name" title="Полное название*"/>	
 	<input type="text" name="company_jaddress" title="Юр. Адрес*" style="width:410px;"/>
-	<input type="text" name="company_vat_id" title="ИНН*"/>
+	<input type="text" name="company_tax_id" title="ИНН*"/>
+	<input type="text" name="company_tax_id2" title="КПП"/>	
 	<input type="text" name="company_code" title="ОКПО"/>	
-	<input type="text" name="company_phone" title="Телефон*"/>	
-	<input type="text" name="company_vat_licence_id" title="КПП"/>	
 	<input type="text" name="company_code_registration" title="ОГРН"/>	
     </div>
     <div class="inp_group" style="width:340px;">
@@ -146,13 +224,14 @@
     <div class="inp_rule"></div>
     <div class="inp_group" style="width:340px;">
 	<input type="text" name="label" title="Короткое название" style="font-weight: bold"/>
+	<input type="text" name="company_director" title="Руководитель"/>
+	<input type="text" name="company_director_title" title="Должность Рукв."/>
 	<input type="text" name="company_address" title="Фактический Адрес"/>
 	<input type="text" name="company_person" title="Контактное лицо"/>
-	<input type="text" name="company_director" title="Директор"/>
     </div>
     <div class="inp_group" style="width:340px;">
+	<input type="text" name="company_phone" title="Телефон"/>	
 	<input type="text" name="company_mobile" title="Мобильный"/>
-	<input type="text" name="company_fax" title="Факс"/>
 	<input type="text" name="company_email" title="E-mail"/>
 	<input type="text" name="company_web" title="Сайт"/>
     </div>
