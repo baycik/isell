@@ -14,7 +14,7 @@
     }
     .price_label b{
         background-color: black;
-        border-radius: 5px;
+        -border-radius: 5px;
         color: white;
         padding: 3px;
         font-size: 30px;
@@ -31,16 +31,22 @@
         <img src="../../Storage/image_flush/?size=70x70&path=dynImg/{$value->product_img}#"
             onerror="this.onerror=null;this.src='../dynImg/{$value->product_img}_100x100.png';" />
         {/if}
+        <i>{$value->product_code}</i>
         {$value->product_name}
 
     </div>
 
     
-    <div style="text-align: right">
-		<div style="float: left">
-            <i>{$value->product_code}</i>
+    <div style="text-align: right; border-top:solid 1px black;padding-top:3px">
+        {if="$value->product_price2"}
+        <div  style="float: left">
+            <strong>{$value->product_price2}р</strong>
         </div>
+        {/if}
+        
+        <div>
         <b>{$value->product_price}р</b>
+        </div>
     </div>
     
     {$date}

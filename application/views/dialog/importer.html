@@ -33,6 +33,9 @@
 	    if( this.data.button_label ){
 		$(".x-button-label").html(this.data.button_label);
 	    }
+	    if( this.data.button_img ){
+		$(".x-button-img").attr('src','img/print_128.png');
+	    }
 	},
         close:function(){
             this.node.window('close');
@@ -236,7 +239,7 @@
 <div id="page_dialog_importer_selector" style="padding: 3px;text-align: right">
     <form id="page_dialog_importer_frm">
         <button style="float:left;" type="submit">
-            <img src="img/database.png" style="height: 90px;width: auto;"><div class="x-button-label">Импортировать</div>
+            <img src="img/database.png" style="height: 90px;width: auto;" class="x-button-img"><div class="x-button-label">Импортировать</div>
         </button>
         {{if extra_html}}
             {{extra_html}}<hr>

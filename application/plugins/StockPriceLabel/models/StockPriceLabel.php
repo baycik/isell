@@ -9,14 +9,16 @@
  * Author URI: http://isellsoft.ru
  */
 class StockPriceLabel extends Catalog{
-    public $out=['label'=>'string','field'=>'string','out_type'=>'string'];
-    public function out($label,$field,$out_type){
+    public $out=['label'=>'string','field'=>'string','quantity'=>['string','1'], 'pcomp2_id'=>'int', 'out_type'=>'string'];
+    public function out($label,$field,$quantity, $pcomp2_id, $out_type){
         $pcomp_id=$this->Hub->pcomp('company_id');
         $ratio=$this->Hub->pref("usd_ratio");
-        $sql="SELECT
+        echo $sql="SELECT
                 product_code,
                 ru product_name,
-                GET_PRICE(product_code,'$pcomp_id','$ratio') product_price,
+                GET_SELL_PRICE(product_code,'$pcomp_id','$ratio') product_price,
+                GET_SELL_PRICE(product_code,'$pcomp2_id','$ratio') product_price2,
+                $quantity quantity,
                 product_img
             FROM
                 prod_list
@@ -26,12 +28,20 @@ class StockPriceLabel extends Catalog{
                 stock_entries USING(product_code)
             WHERE label='$label'";
         $products=$this->get_list($sql);
+        
+        
+        $price_tags=[];
+        foreach($products as $row){
+            for( $i=0;$i<$row->quantity;$i++){
+               $price_tags[]= $row;
+            }
+        }
         $dump=[
 	    'tpl_files_folder'=>"application/plugins/StockPriceLabel/",
 	    'tpl_files'=>"template.html",
-	    'title'=>"Печать ценников",
+	    'title'=>"ценников",
 	    'view'=>[
-		'products'=>$products,
+		'products'=>$price_tags,
 		'date'=>date('d.m.Y')
 	    ]
 	];
