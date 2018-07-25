@@ -38,7 +38,7 @@
 
     
     <div style="text-align: right; border-top:solid 1px black;padding-top:3px">
-        {if="$value->product_price2"}
+        {if="$value->product_price2!=$value->product_price"}
         <div  style="float: left">
             <strong>{$value->product_price2}р</strong>
         </div>
