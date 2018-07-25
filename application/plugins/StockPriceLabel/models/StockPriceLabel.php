@@ -10,15 +10,15 @@
  */
 class StockPriceLabel extends Catalog{
     public $out=['label'=>'string','field'=>'string','quantity'=>['string','1'], 'pcomp2_id'=>'int', 'out_type'=>'string'];
-    public function out($label,$field,$quantity, $pcomp2_id, $out_type){
+    public function out($label,$field,$quantity_field, $pcomp2_id, $out_type){
         $pcomp_id=$this->Hub->pcomp('company_id');
         $ratio=$this->Hub->pref("usd_ratio");
         echo $sql="SELECT
                 product_code,
                 ru product_name,
                 GET_SELL_PRICE(product_code,'$pcomp_id','$ratio') product_price,
-                GET_SELL_PRICE(product_code,'$pcomp2_id','$ratio') product_price2,
-                $quantity quantity,
+                ROUND(GET_SELL_PRICE(product_code,'$pcomp2_id','$ratio'),2) product_price2,
+                $quantity_field quantity,
                 product_img
             FROM
                 prod_list
@@ -32,7 +32,11 @@ class StockPriceLabel extends Catalog{
         
         $price_tags=[];
         foreach($products as $row){
-            for( $i=0;$i<$row->quantity;$i++){
+            $tag_quantity=1;
+            if($row->quantity>0){
+                $tag_quantity=$row->quantity;
+            }
+            for( $i=0;$i<$tag_quantity;$i++){
                $price_tags[]= $row;
             }
         }
