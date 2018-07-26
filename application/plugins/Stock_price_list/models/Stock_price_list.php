@@ -67,8 +67,8 @@ class Stock_price_list extends Catalog{
 		$updated_value=$this->removeFromAvailables($availables, $value->id);
 		if( $updated_value ){
 		    $updated_value->type='category';
-                    $updated_value->hidden=$value->hidden;
-                    $updated_value->allimg=$value->allimg;
+                    $updated_value->hidden= isset($value->hidden)?$value->hidden:false;
+                    $updated_value->allimg=isset($value->allimg)?$value->allimg:false;
 		    $updated_items[]=$updated_value;
 		    continue;
 		}
@@ -118,7 +118,7 @@ class Stock_price_list extends Catalog{
 	if( $block->type!='category' ){
 	    return $block;
 	}
-	if( $block->hidden ){
+	if( isset($block->hidden)&&$block->hidden ){
 	    return null;
 	}
 	$pcomp_id=$this->Hub->pcomp('company_id');
