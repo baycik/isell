@@ -118,9 +118,6 @@ class Stock_price_list extends Catalog{
 	if( $block->type!='category' ){
 	    return $block;
 	}
-	if( isset($block->hidden)&&$block->hidden ){
-	    return null;
-	}
 	$pcomp_id=$this->Hub->pcomp('company_id');
 	$dollar_ratio=$this->Hub->pref('usd_ratio');
 	$main_curr_code=$this->Hub->acomp('curr_code');
@@ -203,6 +200,9 @@ class Stock_price_list extends Catalog{
 	$this->Hub->load_model('Storage');
 	$price_blocks=[];
 	foreach( $deployment['deployment']->items as $block ){
+            if( isset($block->hidden)&&$block->hidden ){
+                continue;
+            }
 	    $price_blocks[]=$this->fillPriceBlocks($block);
 	}
 	$dump=[
