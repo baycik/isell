@@ -67,6 +67,8 @@ class Stock_price_list extends Catalog{
 		$updated_value=$this->removeFromAvailables($availables, $value->id);
 		if( $updated_value ){
 		    $updated_value->type='category';
+                    $updated_value->hidden=$value->hidden;
+                    $updated_value->allimg=$value->allimg;
 		    $updated_items[]=$updated_value;
 		    continue;
 		}
@@ -116,8 +118,9 @@ class Stock_price_list extends Catalog{
 	if( $block->type!='category' ){
 	    return $block;
 	}
-        
-        
+	if( $block->hidden ){
+	    return null;
+	}
 	$pcomp_id=$this->Hub->pcomp('company_id');
 	$dollar_ratio=$this->Hub->pref('usd_ratio');
 	$main_curr_code=$this->Hub->acomp('curr_code');
@@ -140,10 +143,11 @@ class Stock_price_list extends Catalog{
 	    WHERE
 		se.parent_id='{$block->id}'
 	    ORDER BY $this->sort_by";
-	
-	
 	$block->rows=$this->get_list($sql);
         $block->rows_count=$this->countRowsOnBlock($block->rows);
+        if( $block->allimg ){
+            return $block;
+        }
 	$block->imgs=$this->getBlockImg($block->id,$block->rows_count);
 	$block->img_count=count($block->imgs);
         $block->img_height=$block->img_count>0?($block->rows_count*23/$block->img_count):0;
