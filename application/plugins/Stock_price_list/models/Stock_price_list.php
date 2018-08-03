@@ -63,7 +63,7 @@ class Stock_price_list extends Catalog{
     private function updateDeployment($items,&$availables){
 	$updated_items=[];
 	foreach($items as $key=>$value){
-	    if( $value->type=='category'){
+	    if( isset($value->type) && $value->type=='category'){
 		$updated_value=$this->removeFromAvailables($availables, $value->id);
 		if( $updated_value ){
 		    $updated_value->type='category';
