@@ -51,7 +51,6 @@ class Importer extends Catalog{
                     $skip_this_row=true;
 		    $set=['label'=>$label];
 		    foreach ($row->getCellIterator() as $cell) {
-                        $i++;
 			if( $i>16 ){
 			    break;
 			}
@@ -61,6 +60,7 @@ class Importer extends Catalog{
                         }
                         $set[$f[$i]]=$value;
                         $skip_this_row=false;
+                        $i++;
 		    }
                     if( !$skip_this_row ){
                         $this->create('imported_data',$set);
