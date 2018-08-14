@@ -66,7 +66,7 @@ class OpencartSync extends OpencartSyncUtils{
                     volume,
                     posl.*,
                     product_img local_img_filename,
-                    MD5(CONCAT(ean,quantity,ROUND(price,2),ROUND(weight,4),name,manufacturer_name)) local_field_hash
+                    MD5(CONCAT(ean,quantity,ROUND(price,2),ROUND(weight,4),name,COALESCE(manufacturer_name,''))) local_field_hash
                 FROM
                     plugin_opencart_sync_list posl
                 LEFT JOIN
@@ -125,7 +125,7 @@ class OpencartSync extends OpencartSyncUtils{
                 $this->productImageDownload($product);
             }
             
-            $this->log("$product->model: ".$item['action']);
+            $this->log("$product->remote_product_id ($product->model): ".$item['action']);
             
             if( $item['action']=='skip' ){
                 $products_skipped[]=$product->model;
@@ -277,6 +277,7 @@ class OpencartSync extends OpencartSyncUtils{
     }
     
     private function logstart(){
+        $this->Hub->load_model("Storage")->file_remove('OpencartSync/synclog.log');
         $log  = "-------------------------".PHP_EOL."SYNC STARTED User: ".$this->Hub->svar('user_name').' - '.date("d.m.Y H:i:s").PHP_EOL;
         $this->log($log);   
     }
