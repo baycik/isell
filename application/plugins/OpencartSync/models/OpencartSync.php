@@ -91,7 +91,7 @@ class OpencartSync extends OpencartSyncUtils{
             $item=[];
             $item_size=500;
             $item['action']='skip';
-            if( $this->settings->plugin_settings->fields_up ){
+            if( $this->settings->plugin_settings->fields_up && $product->local_field_hash!=$product->remote_field_hash){
                 $item['ean']=$product->ean;
                 $item['quantity']=$product->quantity;
                 $item['price']=$product->price;
@@ -113,15 +113,20 @@ class OpencartSync extends OpencartSyncUtils{
                 if( $img_data ){
                     $item['local_img_data']=$img_data['local_img_data'];
                     $item['remote_img_filename']=$img_data['remote_img_filename'];
-                    $item_size+=strlen($item['local_img_data']);
+                    $image_length=strlen($item['local_img_data']);
+                    $item_size+=$image_length;
                     if( $item['action']=='skip' && $product->remote_product_id ){
                         $item['action']='edit';
                     }
+                    $this->log("$product->model: Image uploaded Size:".floor($image_length/1024)."kB ".$item['remote_img_filename']);
                 }
             }
             if( $this->settings->plugin_settings->img_down ){
                 $this->productImageDownload($product);
             }
+            
+            $this->log("$product->model: ".$item['action']);
+            
             if( $item['action']=='skip' ){
                 $products_skipped[]=$product->model;
                 continue;
@@ -130,6 +135,7 @@ class OpencartSync extends OpencartSyncUtils{
             if( $requestsize_total>$requestsize_limit ){
                 $products_skipped[]=$product->model;
                 $this->message.="Size of image of product {$product->model} is too big! ";
+                $this->log("Size of image of product {$product->model} is too big! ");
                 break;
             }
             if( time()>$requesttime_limit ){
@@ -183,6 +189,7 @@ class OpencartSync extends OpencartSyncUtils{
             $sourceUrl=$this->settings->plugin_settings->gateway_url.'/image/'.$product->remote_img_url;
             if( copy($sourceUrl,$dynImgPath) ){
                 $this->Stock->productUpdate($product->model, 'product_img', $dynImgName);
+                $this->log("$product->model: Image Downloaded (url: $sourceUrl)");
                 return true;
             }
         }
@@ -247,24 +254,40 @@ class OpencartSync extends OpencartSyncUtils{
             case 'fetch_digest':
                 $current_step='send_products';
                 $product_count=$this->productDigestGet();
+                $this->logstart();
                 if( $product_count ){
-                    $this->message="Recieved $product_count digests from remote server";
+                    $this->message.="Recieved $product_count digests from remote server";
                 } else {
-                    $this->message="Server has no any products";
+                    $this->message.="Server has no any products";
                 }
                 break;
             case 'send_products':
                 $product_count=$this->productSend();
                 if( $product_count ){
-                    $this->message="Synced $product_count products with remote server";
+                    $this->message.="Synced $product_count products with remote server";
                 } else {
-                    $this->message="Syncronisation ends!";
+                    $this->message.="Syncronisation finished! <a href='../log_show'>Logfile</a>";
                     die($this->message);
                 }
                 break;
         }
         header("Refresh: 1; url=./?step=$current_step");
+        $this->log($this->message);
         echo $this->message;
+    }
+    
+    private function logstart(){
+        $log  = "-------------------------".PHP_EOL."SYNC STARTED User: ".$this->Hub->svar('user_name').' - '.date("d.m.Y H:i:s").PHP_EOL;
+        $this->log($log);   
+    }
+    private function log($msg){
+        $this->Hub->load_model("Storage")->file_store('OpencartSync/synclog.log', $msg.PHP_EOL, FILE_APPEND);
+    }
+    
+    public $log_show=[];
+    public function log_show(){
+        header("Content-type:text/plain");
+        echo $this->Hub->load_model("Storage")->file_restore('OpencartSync/synclog.log');
     }
 
     public $login=[];
