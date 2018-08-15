@@ -164,7 +164,7 @@ class Company extends Catalog{
 	return $ok;
     }
     
-    public $companyTreeCreate=['parent_id'=>'int','label'=>'string','branch_type'=>'string'];
+    public $companyTreeCreate=['parent_id'=>['int',0],'label'=>'string','branch_type'=>'string'];
     public function companyTreeCreate($parent_id,$label,$branch_type){
 	$this->Hub->set_level(2);
         $def_lang = $this->Hub->acomp('language');
