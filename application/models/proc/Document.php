@@ -502,8 +502,8 @@ class Document extends Data {
 	$footer['vatless'] = number_format($footer['vatless'], 2, ',', '');
 	$footer['vat'] = number_format($footer['vat'], 2, ',', '');
 	$footer['total'] = number_format($footer['total'], 2, ',', '');
-	$active['cvi'] = str_pad($active['company_vat_id'], 12, ' ', STR_PAD_LEFT);
-	$passive['cvi'] = str_pad($passive['company_vat_id'], 12, ' ', STR_PAD_LEFT);
+	$active['cvi'] = str_pad($active['company_tax_id'], 12, ' ', STR_PAD_LEFT);
+	$passive['cvi'] = str_pad($passive['company_tax_id'], 12, ' ', STR_PAD_LEFT);
 	if (!$passive['company_agreement_date'] && !$passive['company_agreement_num']) {
 	    $passive['company_agreement_date'] = $view['tstamp'];
 	    $passive['company_agreement_num'] = '-';
@@ -682,7 +682,7 @@ class Document extends Data {
 		return;
 	    }
 	    $view_num = $this->getViewNextNum($view_type_id);
-            if ($this->Base->pcomp('company_vat_id')){
+            if ($this->Base->pcomp('company_tax_id')){
                 $efields = '{"sign":"' . $this->Base->acomp('company_director') . '"}';
             }
 	    else{

@@ -3,11 +3,11 @@
   <СвУчДокОбор ИдОтпр="2BM-6699000000-2012052807205326661080000000000" ИдПол="2BM-9640079887-964001000-201509010651550853794">
     <СвОЭДОтпр НаимОрг="ЗАО &quot;ПФ &quot;СКБ Контур&quot;" ИННЮЛ="6663003127" ИдЭДО="2BM" />
   </СвУчДокОбор>
-  <Документ КНД="1115125" Функция="СЧФ" ДатаИнфПр="{$v->doc_view->creation_date}" ВремИнфПр="{$v->doc_view->creation_time}" НаимЭконСубСост="{$v->a->company_name|htmlentities}, ИНН/КПП {$v->a->company_vat_id}/{$v->a->company_vat_licence_id}">
+  <Документ КНД="1115125" Функция="СЧФ" ДатаИнфПр="{$v->doc_view->creation_date}" ВремИнфПр="{$v->doc_view->creation_time}" НаимЭконСубСост="{$v->a->company_name|htmlentities}, ИНН/КПП {$v->a->company_tax_id}/{$v->a->company_tax_id2}">
     <СвСчФакт НомерСчФ="{$v->doc_view->view_num}" ДатаСчФ="{$v->doc_view->date_dot}" КодОКВ="643">
       <СвПрод>
         <ИдСв>
-          <СвЮЛУч НаимОрг="{$v->a->company_name|htmlentities}" ИННЮЛ="{$v->a->company_vat_id}" КПП="{$v->a->company_vat_licence_id}" />
+          <СвЮЛУч НаимОрг="{$v->a->company_name|htmlentities}" ИННЮЛ="{$v->a->company_tax_id}" КПП="{$v->a->company_tax_id2}" />
         </ИдСв>
         <Адрес>
           <АдрРФ Индекс="620014" КодРегион="66" Город="Екатеринбург г" Улица="Тестовая ул" Дом="11" Корпус="1" />

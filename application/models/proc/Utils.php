@@ -118,10 +118,10 @@ class Utils extends Data {
 	    $all.=" в $comp[company_bank_name]";
 	if ($comp['company_bank_id'])
 	    $all.=" МФО:$comp[company_bank_id]";
-	if ($comp['company_vat_id'])
-	    $all.=", IПН:$comp[company_vat_id]";
-	if ($comp['company_vat_licence_id'])
-	    $all.=" Номер свiдоцтва:$comp[company_vat_licence_id]";
+	if ($comp['company_tax_id'])
+	    $all.=", IПН:$comp[company_tax_id]";
+	if ($comp['company_tax_id2'])
+	    $all.=" Номер свiдоцтва:$comp[company_tax_id2]";
 	if ($comp['company_code'])
 	    $all.=" ЄДРПОУ:$comp[company_code]";
 	$all.=" $comp[web]";

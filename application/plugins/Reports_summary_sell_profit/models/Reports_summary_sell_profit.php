@@ -105,8 +105,8 @@ class Reports_summary_sell_profit extends Catalog{
 		    analyse_class,
 		    product_article,
 		    SUM( de.product_quantity ) sell_qty,
-		    SUM( de.self_price/IF($this->in_alt_currency,doc_ratio,1)*de.product_quantity*IF($this->use_total_price,(1+dl.vat_rate/100),1) ) self_prod_sum,
-		    SUM( de.invoice_price/IF($this->in_alt_currency,doc_ratio,1)*de.product_quantity*IF($this->use_total_price,(1+dl.vat_rate/100),1) ) sell_prod_sum
+		    SUM( de.self_price/IF($this->in_alt_currency,doc_ratio,1)*de.product_quantity*IF($this->use_total_price,1+dl.vat_rate/100,1) ) self_prod_sum,
+		    SUM( de.invoice_price/IF($this->in_alt_currency,doc_ratio,1)*de.product_quantity*IF($this->use_total_price,1+dl.vat_rate/100,1) ) sell_prod_sum
 		FROM
 		    document_entries de
 			JOIN

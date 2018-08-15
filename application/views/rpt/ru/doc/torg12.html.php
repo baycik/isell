@@ -89,7 +89,7 @@ function format($num){
 }
 function getAll($comp) {
     $all = "$comp->company_name";
-    $all.=$comp->company_vat_id ? ", ИНН/КПП:{$comp->company_vat_id}/{$comp->company_vat_licence_id}" : '';
+    $all.=$comp->company_tax_id ? ", ИНН/КПП:{$comp->company_tax_id}/{$comp->company_tax_id2}" : '';
     $all.=$comp->company_jaddress ? ", $comp->company_jaddress" : '';
     $all.=$comp->company_phone ? ", тел.:{$comp->company_phone}" : '';
     return $all;

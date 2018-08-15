@@ -108,7 +108,7 @@
             App.get("Pref/getPrefs/tax_id_in_checks",function(resp){
                 var pref=App.json(resp);
                 if( pref.tax_id_in_checks*1 ){
-                    Cbank.updateField(company_id,'company_vat_id',Cbank.current_check.correspondent_code,'ИНН');
+                    Cbank.updateField(company_id,'company_tax_id',Cbank.current_check.correspondent_code,'ИНН');
                 } else {
                     Cbank.updateField(company_id,'company_code',Cbank.current_check.correspondent_code,'Код');
                 }

@@ -24,7 +24,7 @@
     <HZY>{$v.period_year}</HZY>
     <HZM>{$v.period_month}</HZM>
     <HNAME>{$v.a.company_name}</HNAME>
-    <HNPDV>{$v.a.company_vat_id}</HNPDV>
+    <HNPDV>{$v.a.company_tax_id}</HNPDV>
 {loop name="v.sell.entries.items"}
     <T1RXXXXG1 ROWNUM="{$counter+1}">{$counter+1}</T1RXXXXG1>
 {/loop}
@@ -51,7 +51,7 @@
     <T1RXXXXG5S ROWNUM="{$counter+1}">{$value.company_name}</T1RXXXXG5S>
 {/loop}
 {loop name="v.sell.entries.items"}
-    <T1RXXXXG6 ROWNUM="{$counter+1}">{$value.company_vat_id}</T1RXXXXG6>
+    <T1RXXXXG6 ROWNUM="{$counter+1}">{$value.company_tax_id}</T1RXXXXG6>
 {/loop}
 {loop name="v.sell.entries.items"}
     <T1RXXXXG7 ROWNUM="{$counter+1}">{$value.total}</T1RXXXXG7>
@@ -131,7 +131,7 @@
     <T2RXXXXG6S ROWNUM="{$counter+1}">{$value.company_name}</T2RXXXXG6S>
 {/loop}
 {loop name="v.buy.entries.items"}
-    <T2RXXXXG7 ROWNUM="{$counter+1}">{$value.company_vat_id}</T2RXXXXG7>
+    <T2RXXXXG7 ROWNUM="{$counter+1}">{$value.company_tax_id}</T2RXXXXG7>
 {/loop}
 {loop name="v.buy.entries.items"}
     <T2RXXXXG8 ROWNUM="{$counter+1}">{$value.total}</T2RXXXXG8>

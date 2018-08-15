@@ -27,8 +27,8 @@
     <HNUM2 xsi:nil="true" />
     <HNAMESEL>{$v->a->company_name}</HNAMESEL>
     <HNAMEBUY>{$v->p->company_name}</HNAMEBUY>
-    <HKSEL>{$v->a->company_vat_id}</HKSEL>
-    <HKBUY>{$v->p->company_vat_id}</HKBUY>
+    <HKSEL>{$v->a->company_tax_id}</HKSEL>
+    <HKBUY>{$v->p->company_tax_id}</HKBUY>
     <HLOCSEL>{$v->a->company_jaddress}</HLOCSEL>
     <HLOCBUY>{$v->p->company_jaddress}</HLOCBUY>
     <HTELSEL>{$v->a->company_phone}</HTELSEL>

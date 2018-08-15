@@ -120,14 +120,14 @@ class Company extends Catalog{
     }
     
     public $companyFindByCode=['int','int'];
-    public function companyFindByCode( $company_code=null, $company_vat_id=null, $company_bank_account=null ){
+    public function companyFindByCode( $company_code=null, $company_tax_id=null, $company_bank_account=null ){
         $sql="SELECT 
                 company_id 
             FROM 
                 companies_list 
             WHERE 
                 IF('$company_code',company_code='$company_code',0) 
-                OR IF('$company_vat_id',company_vat_id='$company_vat_id',0)
+                OR IF('$company_tax_id',company_tax_id='$company_tax_id',0)
                 OR IF('$company_bank_account',company_bank_account='$company_bank_account',0)";
         return $this->get_value($sql);
     }
