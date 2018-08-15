@@ -6,13 +6,17 @@
         local_db_finished:{},
         init: function () {
             App.payments.initDateRange();
-            App.payments.pcomp_init();
+            App.payments.form_init();
             App.payments.initTab();
             
             //App.payments.load( App.payments.currentType );
             App.Topic('passiveCompanySelected').subscribe(function(){
                 App.payments.load( App.payments.currentType );
             });
+            App.Topic('activeCompanySelected').subscribe(function(){
+                App.payments.load( App.payments.currentType );
+            });
+
         },
         initTab: function () {
 	    $('.payments_tabs .item').tab({
@@ -91,7 +95,7 @@
             App.payments.local_db_finished={};
             App.payments.local_db_rows={}; 
         },
-        pcomp_init: function () {
+        form_init: function () {
             $('.pcomp_id').dropdown({
                 apiSettings: {
                     url: 'compListFetch/'
@@ -111,10 +115,30 @@
                         $(".pcomp_id").dropdown('set text', "Выберите клиента");
                         $(".pcomp_id").dropdown('show');
                     }
-                    
-                    App.payments.load( App.payments.currentType );
                 }
             }).dropdown("set text", App.user.pcomp.label || '');
+
+            $('.acomp_id').dropdown({
+                apiSettings: {
+                    url: 'compListFetch/?mode=active_only'
+                },
+                fields: {
+                    value: 'company_id',
+                    name: 'label',
+                    text: 'label'
+                },
+                filterRemoteData: true,
+                fullTextSearch: true,
+                onChange: function (value, text, $choice) {
+                    App.payments.reset();
+                    if (value * 1 > 0) {
+                        App.user.acompSelect({company_id: value, label: text});
+                    } else {
+                        $(".acomp_id").dropdown('set text', "Выберите клиента");
+                        $(".acomp_id").dropdown('show');
+                    }
+                }
+            }).dropdown("set text", App.user.acomp.label || '');
         },
         documentOpen: function(node){
             console.log("first");
@@ -129,6 +153,15 @@
 </script>
 <div  class="ui blue segment">
     <form class="ui form">
+        <div class="field">
+            <label>Наша фирма</label>
+            <div class="ui fluid search selection remote dropdown acomp_id">
+                <input name="acomp_id" type="hidden">
+                <i class="dropdown icon"></i>
+                <div class="default text">Выбрать клиента</div>
+                <div class="menu"></div>
+            </div>
+        </div>
         <div class="field">
             <label>Клиент</label>
             <div class="ui fluid search selection remote dropdown pcomp_id">
@@ -168,32 +201,60 @@
         <div class="four wide column" style="background-color: #eee">Оборот приход {{sub_totals.pcredit|blank>-}} </div>
         <div class="four wide column" style="background-color: #def">Конечный остаток {{sub_totals.fbal|blank>-}} </div>
     </div>
-    <table class="ui green selectable table">
+    <table class="ui green selectable stackable table">
         <thead>
             <tr>
-                <th class="one wide column"></th>
-                <th class="two wide column">Дата</th>
-                <th class="seven wide column">Описание</th>
-                <th class="two wide column">Расход</th>
-                <th class="two wide column">Приход</th>
-                <th class="two wide column">Остаток</th>
+                <th>
+                    <div class="ui grid">
+                        <div class="sixteen wide column"></div>
+                    </div>
+                </th>
+                <th>
+                    <div class="ui grid">
+                        <div class="four wide column">Дата</div>
+                        <div class="twelve wide column"><i>Описание</i></div>
+                    </div>
+                </th>
+                <th>
+                    <div class="ui grid">
+                        <div class="six wide column" style="color:darkred">Расход</div>
+                        <div class="five wide column" style="color:green">Приход</div>
+                        <div class="five wide column" style="color:darkgray">Остаток</div>
+                    </div>
+                </th>
             </tr>
         </thead>
         <!-- {{if payments}} {{payments}} -->
         <tr>
-            <td class="one wide column">
-                {{if editable|equals>0}}
-                <button type="button" class="circular ui icon  button" style="background-color:#dfd" data-trans_id="{{trans_id}}"
-                        onclick="App.payments.documentOpen(this)">
-                    <i class="file outline icon"></i>
-                </button>
-                {{/if}}
+            <td>
+                <div class="ui grid">
+                    <div class="sixteen wide column">
+                        {{if editable|equals>0}}
+                        <button type="button" class="circular ui icon  button" style="background-color:#dfd" data-trans_id="{{trans_id}}"
+                            onclick="App.payments.documentOpen(this)">
+                        <i class="file outline icon"></i>
+                    </button>
+                    {{/if}}
+                    </div>
+                </div>
             </td>
-            <td class="two wide column">{{trans_date}}</td>
-            <td class="seven wide column">{{description}}</td>
-            <td class="two wide column">{{debit}}</td>
-            <td class="two wide column">{{credit}}</td>
-            <td class="two wide column">{{row_total}}</td>
+            <td>
+                <div class="ui grid">
+                    <div class="four wide column">
+                        <b>{{trans_date}}</b>
+                    </div>
+                    <div class="twelve wide column">
+                        <i>{{description}}</i>
+                    </div>
+                </div>
+            </td>
+            <td>
+                <div class="ui grid">
+                    <div class="six wide column" style="color:darkred">{{debit}}</div>
+                    <div class="five wide column" style="color:green">{{credit}}</div>
+                    <div class="five wide column" style="color:darkgray">{{row_total}}</div>
+                </div>
+            </td>
         </tr>
         <!-- {{/payments}} {{else}} -->
         <tr>
@@ -223,25 +284,54 @@
     <table class="ui purple selectable  table">
         <thead>
             <tr>
-                <th class="two wide column">Дата</th>
-                <th class="three wide column">Описание</th>
-                <th class="one wide column">Расход</th>
-                <th class="one wide column">Приход</th>
-                <th class="two wide column">Остаток</th>
+                <th>
+                    <div class="ui grid">
+                        <div class="sixteen wide column"></div>
+                    </div>
+                </th>
+                <th>
+                    <div class="ui grid">
+                        <div class="four wide column">Дата</div>
+                        <div class="twelve wide column"><i>Описание</i></div>
+                    </div>
+                </th>
+                <th>
+                    <div class="ui grid">
+                        <div class="six wide column" style="color:darkred">Расход</div>
+                        <div class="five wide column" style="color:green">Приход</div>
+                        <div class="five wide column" style="color:darkgray">Остаток</div>
+                    </div>
+                </th>
             </tr>
         </thead>
         <!-- {{if payments}} {{payments}} -->
         <tr>
             <td class="one wide column">
+                <div class="ui grid">
+                    <div class="sixteen wide column">
                 {{if editable|equals>0}}
                 <i class="ui file outline icon"></i>
                 {{/if}}
+                    </div>
+                </div>
             </td>
-            <td class="two wide column">{{trans_date}}</td>
-            <td class="seven wide column">{{description}}</td>
-            <td class="two wide column">{{debit}}</td>
-            <td class="two wide column">{{credit}}</td>
-            <td class="two wide column">{{row_total}}</td>
+            <td>
+                <div class="ui grid">
+                    <div class="four wide column">
+                        <b>{{trans_date}}</b>
+                    </div>
+                    <div class="twelve wide column">
+                        <i>{{description}}</i>
+                    </div>
+                </div>
+            </td>
+            <td>
+                <div class="ui grid">
+                    <div class="six wide column" style="color:darkred">{{debit}}</div>
+                    <div class="five wide column" style="color:green">{{credit}}</div>
+                    <div class="five wide column" style="color:darkgray">{{row_total}}</div>
+                </div>
+            </td>
         </tr>
         <!-- {{/payments}} {{else}} -->
         <tr>

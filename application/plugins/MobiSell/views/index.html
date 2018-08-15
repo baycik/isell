@@ -176,7 +176,7 @@
                 },
                 setActiveCompany:function(company){
                     App.user.pcomp=company;
-                    localStorage.setItem('pcomp',JSON.stringify(App.user.pcomp));
+                    localStorage.setItem('acomp',JSON.stringify(App.user.pcomp));
                     App.Topic('activeCompanySelected').publish(company);
                 },
                 restoreCompanies:function(){
@@ -190,6 +190,15 @@
 		    }
 		    $.post('../Company/selectPassiveCompany/' + company_id, function (xhr) {
 			App.user.setPassiveCompany(App.json(xhr));
+		    });
+		},
+                acompSelect: function ( company ) {
+		    var company_id=company.company_id||0;
+		    if( App.acomp && App.acomp.company_id===company_id ){
+			return;
+		    }
+		    $.post('../Company/selectActiveCompany/' + company_id, function (xhr) {
+			App.user.setActiveCompany(App.json(xhr));
 		    });
 		}
 	    },
