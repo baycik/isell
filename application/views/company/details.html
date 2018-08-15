@@ -18,6 +18,7 @@
 	init:function () {
 	    var props=App.page_company_details.properties;
             if(App.page_company_details.data.inline){
+                props.title='';
                 App.page_company_details.node.panel(props);
             } else {
                 App.page_company_details.node.window(props);
@@ -26,7 +27,7 @@
                 this.node.window('window').css('top','40px');
             }
 	    App.page_company_details.autoselect_label=App.page_company_details.data.autoselect_label;
-	    this.checkActive();
+	    
 	    App.page_company_details.load(App.page_company_details.data.company_id);
             this.initFormOnce();
 	},
@@ -137,7 +138,10 @@
 			App.page_company_details.load(data.company_id);
 		    }
 		});
-	    }
+	    } else{
+                this.node.find(".page_company_details_passive_details").show();
+		this.node.find(".page_company_details_active_details").hide();
+            }
 	},
 	focus:function(){
 	    this.load(App.page_company_details.data.company_id);
@@ -148,6 +152,7 @@
 		    App.page_company_details.data=App.json(xhr);
 		    App.page_company_details.setup();
 		    App.page_company_details.setTitle();
+                    App.page_company_details.checkActive();
 		});
 	    }
 	},
@@ -192,7 +197,16 @@
 	    if( App.page_company_details.data.is_active*1 ){
 		$(".comp_det_makeActBut").attr('disabled',true);
 	    }
-	}
+	},
+        sectionToggle:function(node){
+            var link=$(node);
+            var div=link.next().toggle();
+            if( div.is(':visible') ){
+                link.html(link.html().replace(/▼/g,"")+"▲");
+            } else {
+                link.html(link.html().replace(/▲/g,"")+"▼");
+            }
+        }
     };
 </script>
 
@@ -202,54 +216,63 @@
     }
 </style>
 <div id="page_company_details_frm" style="">
-    <div class="inp_group" style="width: 550px;">
-        Название
-	<input type="text" name="company_name" title="Полное название*"/>
-        <input type="text" name="label" title="Короткое название" style="width:410px;font-weight: bold"/>
-    </div>
-    <div class="inp_group" style="width:340px">
-        Кода
-	<input type="text" name="company_tax_id" title="ИНН*"/>
-	<input type="text" name="company_tax_id2" title="КПП"/>	
-	<input type="text" name="company_code" title="ОКПО"/>	
-	<input type="text" name="company_code_registration" title="ОГРН"/>	
-    </div>
-    <div class="inp_group" style="width: 550px;">
-        Адреса
-	<input type="text" name="company_jaddress" title="Юр. Адрес*" style="width:410px;"/>
-        <input type="text" name="company_address" title="Фактический Адрес" style="width:410px;"/>
-    </div>
-    <div class="inp_group" style="width:340px">
-        Банковский счет
-	<input type="text" name="company_bank_id" title="Код Банка"/>
-	<input type="text" name="company_bank_name" title="Название банка"/>	
-	<input type="text" name="company_bank_account" title="Поточный счет"/>
-	<input type="text" name="company_bank_corr_account" title="Корр. счет"/>	
-    </div>
-    <div class="inp_group page_company_details_passive_details" style="width:340px;">
-        Договор
-        <input type="text" name="company_agreement_num" title="Номер договора"/>
-        <input type="text" name="company_agreement_date" title="Дата договора"/>
-    </div>
+    <table>
+        <tr>
+            <td style="vertical-align: top">
+                <input type="text" name="label" title="Короткое название" style="width:410px;font-weight: bold"/>
+                <input type="text" name="company_name" title="Полное название"/>
+                <input type="text" name="company_jaddress" title="Юр. Адрес" style="width:410px;"/>
+                <input type="text" name="company_address" title="Фактический Адрес" style="width:410px;"/>
+                <div style="cursor: pointer;color:blue;height: 20px;padding-left: 120px">+ Добавить адрес</div>
+            </td>
+            <td style="vertical-align: top;width: 350px">
+                <div onclick="App.page_company_details.sectionToggle(this)" style="cursor: pointer;color:blue;height: 20px;">Регистрационные номера ▼</div>
+                <div title="Кода" style="display: none;width:350px;">
+                    <input type="text" name="company_tax_id" title="ИНН*"/>
+                    <input type="text" name="company_tax_id2" title="КПП"/>	
+                    <input type="text" name="company_code" title="ОКПО"/>	
+                    <input type="text" name="company_code_registration" title="ОГРН"/>	
+                </div>
+                <div onclick="App.page_company_details.sectionToggle(this)" style="cursor: pointer;color:blue;height: 20px;">Банковский счет ▼</div>
+                <div title="Банковский счет" style="display: none;width:350px;">
+                    <input type="text" name="company_bank_id" title="Код Банка"/>
+                    <input type="text" name="company_bank_account" title="Рассчетный счет"/>
+                    <input type="text" name="company_bank_name" title="Название банка"/>	
+                    <input type="text" name="company_bank_corr_account" title="Корр. счет"/>	
+                </div>
+                
+                <div title="Договор" class="page_company_details_passive_details">
+                    <div onclick="App.page_company_details.sectionToggle(this)" style="cursor: pointer;color:blue;height: 20px;">Договор ▼</div>
+                    <div title="Договор" style="display: none;width:350px;">
+                        <input type="text" name="company_agreement_num" title="Номер договора"/>
+                        <input type="text" name="company_agreement_date" title="Дата договора"/>
+                    </div>
+                    <div onclick="App.page_company_details.sectionToggle(this)" style="cursor: pointer;color:blue;height: 20px;">Настройки ▼</div>
+                    <div title="Настройки" style="padding: 10px;display: none;width:350px;">
+                        <button type="button" onclick="App.page_company_details.makeActive()" class="comp_det_makeActBut"><img src="img/home.png"> Сделать активной компанией</button>
+                    </div>
+                </div>
+            </td>
+        </tr>
+    </table>
+
     <div class="inp_rule"></div>
     <div class="inp_group" style="width:340px;">
-	Контактные лица
 	<input type="text" name="company_person" title="Контактное лицо"/>
-	<input type="text" name="company_director_title" title="Должность Рукв."/>
-	<input type="text" name="company_director" title="Руководитель"/>
 	<input type="text" name="company_accountant" title="Гл. Бухгалтер"/>
+	<input type="text" name="company_director" title="Руководитель"/>
+	<input type="text" name="company_director_title" title="Должность Рукв."/>
     </div>
     <div class="inp_group" style="width:340px;">
-        Контактная информация
-	<input type="text" name="company_phone" title="Телефон"/>	
 	<input type="text" name="company_mobile" title="Мобильный"/>
+	<input type="text" name="company_phone" title="Телефон"/>	
 	<input type="text" name="company_email" title="E-mail"/>
 	<input type="text" name="company_web" title="Сайт"/>
     </div>
     <div class="inp_rule"></div>
     <textarea name="company_description" title="Дополнительно" style="width:550px;"></textarea>
     <div class="page_company_details_passive_details inp_group" style="display: inline-block">
-	<button type="button" onclick="App.page_company_details.makeActive()" class="comp_det_makeActBut"><img src="img/home.png"> Сделать активной компанией</button>
+	
     </div>
     <div class="inp_rule"></div>
     <div class="page_company_details_active_details" style="display: none">
@@ -265,51 +288,5 @@
             <option value="RUB">Рубль RUB</option>
         </select>
     </div>
-    <div>
-        <img src="img/add_edit.png">
-    </div>
 
-    <div id="page_company_details_additional" class="easyui-panel" title="Дополнительные реквизиты" data-options="closable:true">
-        <div style="border: red 1px solid">
-            <input type="text" name="company_detail_name" title="Название реквизита"/>
-            <button><img src="img/delete24.png"> Удалить</button>
-            
-            <div class="inp_rule"></div>
-            <div class="inp_group" style="width: 340px;">
-                <input type="text" name="company_name" title="Полное название"/>
-                <input type="text" name="company_tax_id" title="ИНН"/>
-                <input type="text" name="company_tax_id2" title="КПП"/>	
-                <input type="text" name="company_code" title="ОКПО"/>	
-                <input type="text" name="company_code_registration" title="ОГРН"/>	
-                <input type="text" name="company_person" title="Контактное лицо"/>
-                <input type="text" name="company_director" title="Директор"/>
-            </div>
-            <div class="inp_group" style="width:340px;">
-                <input type="text" name="company_address_zip" title="Индекс"/>
-                <input type="text" name="company_address_region" title="Регион"/>
-                <input type="text" name="company_address_district" title="Район"/>
-                <input type="text" name="company_address_settlement" title="Населенный пункт"/>
-                <input type="text" name="company_address_street" title="Улица"/>
-                <input type="text" name="company_address_building" title="Дом/строение"/>
-                <input type="text" name="company_address_flat" title="Квартира/офис"/>
-            </div>
-            <div class="inp_rule"></div>
-            <div class="inp_group" style="width:340px;">
-                <input type="text" name="company_mobile" title="Мобильный"/>
-                <input type="text" name="company_email" title="E-mail"/>
-                <input type="text" name="company_web" title="Сайт"/>
-                <input type="text" name="company_phone" title="Телефон"/>
-            </div>
-            <div class="inp_group" style="width:340px;">
-                <input type="text" name="company_bank_id" title="Код Банка"/>
-                <input type="text" name="company_bank_name" title="Название банка"/>	
-                <input type="text" name="company_bank_account" title="Рассчетный счет"/>
-                <input type="text" name="company_bank_corr_account" title="Корр. счет"/>
-            </div>
-
-            <div class="inp_rule"></div>
-            <textarea name="company_description" title="Дополнительно" style="width:550px;"></textarea>
-
-        </div>
-    </div>
     </div>
