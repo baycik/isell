@@ -56,7 +56,8 @@ class Importer extends Catalog{
 			}
                         $value = $cell->getValue();
                         if( $value==null || $value=='' || $value==' ' ){
-                            continue;
+                            //continue;
+                            $value='';
                         }
                         $set[$f[$i]]=$value;
                         $skip_this_row=false;
