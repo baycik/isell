@@ -204,4 +204,27 @@ class PluginManager extends Catalog{
 	}
 	return null;
     }
+    private function getActivePlugins(){
+        $sql="SELECT 
+            plugin_system_name
+        FROM 
+            plugin_list 
+        WHERE 
+            is_activated";
+	return $this->get_list($sql);
+    }
+    
+    
+    public $modify=[];
+    
+    public function modify(){
+        return $active_plugins = $this->getActivePlugins();
+        
+    }
+    
+    
+    
+    
+    
+    
 }
