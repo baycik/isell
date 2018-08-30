@@ -165,7 +165,10 @@ class Maintain extends CI_Model {
 	if (file_exists($this->dirDbBackup . $file)) {
 	    header('Content-type: application/force-download');
 	    header('Content-Disposition: attachment; filename="' . $file . '"');
-	    echo file_get_contents($this->dirDbBackup . $file);
+            header('Content-Length: '.filesize($this->dirDbBackup.$file));
+            $fp = fopen($this->dirDbBackup.$file, 'rb');
+            fpassthru($fp);
+            exit;
 	} else {
 	    show_error('X-isell-error: File not found!' . $this->dirDbBackup . $file, 404);
 	}
