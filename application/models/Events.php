@@ -48,7 +48,6 @@ class Events extends Catalog{
     
     public $eventGet=['int'];
     public function eventGet( $event_id ){
-	$this->check($event_id,'int');
 	$sql="SELECT
 		*,
 		DATE_FORMAT(event_date,'%d.%m.%Y') event_date,
@@ -65,6 +64,10 @@ class Events extends Catalog{
     public $eventDelete=['int'];
     public function eventDelete( $event_id ){
 	return $this->delete("event_list",['event_id'=>$event_id]);
+    }
+    
+    protected function eventChange($event_id, $event){
+	return $this->update('event_list', $event, ['event_id'=>$event_id]);
     }
     
     public $eventUpdate=['int','\w+','raw'];
@@ -96,7 +99,7 @@ class Events extends Catalog{
 	    $event['created_by']=$this->Hub->svar('user_id');
 	    return $this->create('event_list', $event);
 	}
-	return $this->update('event_list', $event, ['event_id'=>$event_id]);
+	return $this->eventChange($event_id, $event);
     }
     
     public $eventMove=['int','\d\d\d\d-\d\d-\d\d','string','\d\d\d\d-\d\d-\d\d','string'];
