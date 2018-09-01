@@ -17,17 +17,46 @@ class Task extends Events{
 	    LIMIT 1";
 	$this->currentTask=$this->get_row($sql);
 	if( $this->currentTask ){
-	    $this->execute();
+	    $this->eventUpdate($this->currentTask->event_id,'event_status','inprogress');
+	    $ok=$this->execute();
+	    if( $ok ){
+		$new_status='done';
+		if( $this->currentTask->event_repeat>0 ){
+		    $this->postpone($this->currentTask->event_repeat." DAY");
+		    $new_status='undone';
+		}
+	    } else {
+		$this->postpone("1 HOUR");
+		$new_status='undone';
+	    }
+	    $this->eventUpdate($this->currentTask->event_id,'event_status',$new_status);
 	}
     }
     
+    private function postpone( $interval ){
+	return $this->query("UPDATE event_list SET event_date= DATE_ADD(event_date,INTERVAL $interval) WHERE event_id='{$this->currentTask->event_id}'");
+    }
+    
+    
+    public $addProgram=['event_id'=>'int'];
     public function addProgram( $event_id, $next_task=0, $commands=[] ){
+	$commands=[
+	    [
+		'model'=>'DocumentItems',
+		'method'=>'createDocument',
+		'arguments'=>[1]
+	    ]
+	];
+	$event_id=81;
+	
+	
+	
 	$program=[
 	    'next_task'=>$next_task,
 	    'commands'=>$commands
 	];
 	$program_json=  json_encode($program);
-	$this->eventUpdate($event_id,'event_program',$program_json);
+	return $this->eventUpdate($event_id,'event_program',$program_json);
     }
 
     private function execute(){
@@ -38,7 +67,8 @@ class Task extends Events{
 		$Model=$this->Hub->load_model($command->model);
 		$return=call_user_func_array([$Model, $command->method],$command->arguments);
 		if( $return===false ){
-		    break;
+		    echo ("[$Model, $command->method],$command->arguments  EXECUTION FAILED");
+		    return false;
 		}
 		$returned[]=$return;
 	    }
