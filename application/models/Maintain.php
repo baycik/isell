@@ -120,10 +120,10 @@ class Maintain extends CI_Model {
 	//
 	//$this->backupDumpZip($filename);
 	//$this->backupDumpFtpUpload("$filename");
-	return true;
+	return $filename;
     }
 
-    private function backupDumpZip($filename) {
+    public function backupDumpZip($filename) {
 	$zip = new ZipArchive;
 	if ($zip->open("$filename.zip", ZipArchive::CREATE) === TRUE) {
 	    $zip->addFile($filename,'backup.sql');
