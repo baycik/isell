@@ -18,7 +18,6 @@ class Task extends Events {
 	    ORDER BY event_date ASC
 	    LIMIT 1";
 	$this->currentTask = $this->get_row($sql);
-	die(333);
 	if ($this->currentTask) {
 	    return $this->execute_task();
 	}
@@ -26,7 +25,6 @@ class Task extends Events {
 
     
     private function execute_task(){
-	die(333);
 	$this->eventUpdate($this->currentTask->event_id, 'event_status', 'executing');
 	if ( $this->execute_program() ) {
 	    $this->currentTask->event_status = 'done';
@@ -42,31 +40,25 @@ class Task extends Events {
     }
     
     private function execute_program() {
-	
-	
-	
 	if ( !isset($this->currentTask->event_program )) {
 	    return true;
 	}
 	$program = json_decode($this->currentTask->event_program);
-	$program_length = count($program);
-	for ($i = 0; $i < $program_length; $i++) {
-	    $command = $program->$i;
-	    
-	    print_r($command);
-	    
-	    
-	    if ( $command->disabled || $this->currentTask->event_target > $i ) {
+	$program_length = count($program->commands);
+	for ($i=0; $i < $program_length; $i++) {
+	    $command = $program->commands[$i];
+	    if ( $this->currentTask->event_target > $i) {
 		continue;
 	    }
+	    print_r($command);
 	    $this->currentTask->event_note = $this->execute_command($command, $this->currentTask->event_note);
-	    if ($command->async == true) {
-		$this->currentTask->event_target = $i;
-		return false;
-	    }
-	    if ($i == $program_length) {
+	    $this->currentTask->event_target = $i+1;
+	    if ($this->currentTask->event_target == $program_length) {
 		$this->currentTask->event_target = 0;
 		return true;
+	    }
+	    if ($command->async == true) {
+		break;
 	    }
 	}
 	return false;
@@ -83,7 +75,11 @@ class Task extends Events {
 		$args[] = $arg;
 	    }
 	}
-	$return = call_user_func_array([$Model, $command->method], $args);
+	try{
+	    $return = call_user_func_array([$Model, $command->method], $args);
+	} catch (Exception $ex) {
+	    $return = $ex->getMessage();
+	}
 	if ($return === false) {
 	    echo ("[$Model, $command->method],$command->arguments  EXECUTION FAILED");
 	    return false;
@@ -96,7 +92,7 @@ class Task extends Events {
     }
 
     private function postpone($interval) {
-	return $this->query("UPDATE event_list SET event_date= DATE_ADD(event_date,INTERVAL $interval) WHERE event_id='{$this->currentTask->event_id}'");
+	$this->currentTask->event_date=$this->get_value("SELECT DATE_ADD('{$this->currentTask->event_date}',INTERVAL $interval)");
     }
 
     public $addProgram = ['event_id' => 'int'];
@@ -116,6 +112,13 @@ class Task extends Events {
 		'arguments' => ['-PREVIOUS-RETURN-'],
 		'async' => true,
 		'disabled' => false
+	    ],
+	    [
+		'model' => 'Maintain',
+		'method' => 'backupDumpFtpUpload',
+		'arguments' => ['-PREVIOUS-RETURN-'],
+		'async' => true,
+		'disabled' => false
 	    ]
 	];
 	$event_id = 81;
@@ -128,9 +131,7 @@ class Task extends Events {
 	$program_json = json_encode($program);
 	return $this->eventUpdate($event_id, 'event_program', $program_json);
     }
-
 }
-
 /*
  * event_note=returned value from previous command
  * event_target=pointer to current command
