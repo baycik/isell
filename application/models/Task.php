@@ -50,7 +50,7 @@ class Task extends Events {
 	    if ( $this->currentTask->event_target > $i) {
 		continue;
 	    }
-	    print_r($command);
+	    //print_r($command);
 	    $this->currentTask->event_note = $this->execute_command($command, $this->currentTask->event_note);
 	    $this->currentTask->event_target = $i+1;
 	    if ($this->currentTask->event_target == $program_length) {

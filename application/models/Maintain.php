@@ -133,12 +133,21 @@ class Maintain extends CI_Model {
 	}
 	return false;
     }
+    
+    //public $backupDumpFtpUpload=['f' =>'string'];
     public function backupDumpFtpUpload($filename){
 	$ftp_server=$this->Hub->pref('FTP_SERVER');
 	$ftp_user=$this->Hub->pref('FTP_USER');
 	$ftp_pass=$this->Hub->pref('FTP_PASS');
-	$remote_name=  array_pop( explode('/', $filename) );
-	copy($filename,"ftp://$ftp_user:$ftp_pass@$ftp_server/$remote_name");
+	$remote_name=  'backup.zip';//array_pop( explode('/', $filename) );
+	//return copy($filename,"ftp://$ftp_user:$ftp_pass@$ftp_server/$remote_name");
+	
+	$file_handler=fopen($filename, 'r');
+	$conn_id = ftp_connect($ftp_server);
+	if( !ftp_login($conn_id, $ftp_user, $ftp_pass) ){
+	    return "FTP ERROR:could not login";
+	}
+	return ftp_fput($conn_id, $remote_name, $file_handler, FTP_ASCII);
     }
 
     public $backupList = [];
