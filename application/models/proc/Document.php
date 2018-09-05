@@ -132,31 +132,36 @@ class Document extends Data {
 	$this->Base->query("UPDATE document_list SET modified_by='$user_id' WHERE doc_id='" . $this->doc('doc_id') . "'");
     }
 
-//    protected function isDebtLimitExceeded() {
-//	if ($this->doc('doc_type') != 1) {
-//	    /* only for sell docs */
-//	    return false;
-//	}
-//	$debt_limit = $this->Base->pcomp('debt_limit');
-//	if ($debt_limit == 0) {
-//	    $this->Base->LoadClass('PrefOld');
-//	    $prefs = $this->Base->PrefOld->prefGet();
-//	    $debt_limit = $prefs['default_debt_limit'];
-//	    if ($debt_limit == 0) {
-//		return false;
-//	    }
-//	}
-//	$pcomp_id = $this->Base->pcomp('company_id');
-//	$this->Base->LoadClass('Accounts');
-//	$debt_account = $this->Base->Accounts->getAccountBalance(361, $pcomp_id);
-//	$footer = $this->fetchFooter();
-//	$off_limit = $footer['total'] + $debt_account['balance'] - $debt_limit;
-//	if ($off_limit > 0) {
-//	    $this->Base->msg("Лимит долга в $debt_limit превышен на " . round($off_limit, 2) . "{$footer['curr_symbol']}!\nОбратитесь к администратору системы для изменения лимита.");
-//	    return true;
-//	}
-//	return false;
-//    }
+    protected function isDebtLimitExceeded() {
+	if ($this->doc('doc_type') != 1) {
+	    /* only for sell docs */
+	    return false;
+	}
+	$debt_limit = $this->Base->pcomp('debt_limit');
+	$deferment = $this->Base->pcomp('deferment');
+	if ($debt_limit == 0) {
+	    $this->Base->LoadClass('PrefOld');
+	    $prefs = $this->Base->PrefOld->prefGet();
+	    $debt_limit = $prefs['default_debt_limit'];
+	    if ($debt_limit == 0) {
+		return false;
+	    }
+	}
+	$pcomp_id = $this->Base->pcomp('company_id');
+	$this->Base->LoadClass('Accounts');
+	$debt_account = $this->Base->Accounts->getAccountBalance(361, $pcomp_id,$deferment);
+	$footer = $this->fetchFooter();
+	$off_limit = $footer['total'] + $debt_account['balance'] - $debt_limit;
+	if( $off_limit > 0 ){
+	    $this->Base->msg("Лимит долга в $debt_limit превышен на " . round($off_limit, 2) . "{$footer['curr_symbol']}!\n");
+	    return true;
+	}
+        if( $deferment>0 && $debt_account['expired_balance']>0 ){
+	    $this->Base->msg("Имеется просроченная задолженность " . round($debt_account['expired_balance'], 2) . "{$footer['curr_symbol']}!\n");
+	    return true;
+        }
+	return false;
+    }
 
     protected function normalizeQuantitySign() {
 	$doc_id = $this->doc('doc_id');
@@ -190,9 +195,9 @@ class Document extends Data {
 	    $this->Base->msg("Документ уже проведен!\n");
 	    return false;
 	}
-	//if ($this->isDebtLimitExceeded()) {
-	//    return false;
-	//}
+	if ( $this->isDebtLimitExceeded() ) {
+	    return false;
+	}
 	$doc_id = $this->doc('doc_id');
 
 	$company_lang = $this->Base->pcomp('language');

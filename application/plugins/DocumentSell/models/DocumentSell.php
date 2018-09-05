@@ -249,6 +249,8 @@ class DocumentSell extends DocumentBase{
      * Orders by date entries from newest to oldest
      */
     private function entryOriginsFind($product_code,$stock_leftover){
+        //FROGOT ABOUT FINAL DATE OF DOCUMENT UP TO THAT ENTRIES MUST BE SEARCHED???
+        
 	$this->query("SET @total_buyed:=0,@pcode='$product_code',@stock_leftover:='$stock_leftover';");
 	$this->query("DROP TEMPORARY TABLE IF EXISTS tmp_original_entries;");#TEMPORARY
 	$this->query("CREATE TEMPORARY TABLE tmp_original_entries AS 
@@ -271,9 +273,10 @@ class DocumentSell extends DocumentBase{
 				    AND (doc_type = '2' OR doc_type = 'buy')
 				    AND is_reclamation = 0
 				    AND is_commited = 1
+                                    AND notcount=0
 			    ORDER BY cstamp DESC) t
 			WHERE
-			    @total_buyed < @stock_leftover");
+			    @total_buyed <= @stock_leftover");
     }
     /*
      * Finds party_label from buy document origin entries and calculated avg self price.
