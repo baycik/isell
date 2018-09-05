@@ -102,7 +102,7 @@ class User extends Catalog {
         $alphabet = 'abcdefghijklmnopqrstuvwxyz1234567890';//ABCDEFGHIJKLMNOPQRSTUVWXYZ
         $password = array(); 
         $alpha_length = strlen($alphabet) - 1; 
-        for ($i = 0; $i < 6; $i++) 
+        for ($i = 0; $i < 4; $i++) 
         {
             $n = rand(0, $alpha_length);
             $password[] = $alphabet[$n];
