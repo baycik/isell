@@ -149,14 +149,14 @@ class Document extends Data {
 	}
 	$pcomp_id = $this->Base->pcomp('company_id');
 	$this->Base->LoadClass('Accounts');
-	$debt_account = $this->Base->Accounts->getAccountBalance(361, $pcomp_id);
+	$debt_account = $this->Base->Accounts->getAccountBalance(361, $pcomp_id,$deferment);
 	$footer = $this->fetchFooter();
 	$off_limit = $footer['total'] + $debt_account['balance'] - $debt_limit;
-	if ($off_limit > 0) {
+	if( $off_limit > 0 ){
 	    $this->Base->msg("Лимит долга в $debt_limit превышен на " . round($off_limit, 2) . "{$footer['curr_symbol']}!\n");
 	    return true;
 	}
-        if( $debt_account['expired_balance'] ){
+        if( $deferment>0 && $debt_account['expired_balance']>0 ){
 	    $this->Base->msg("Имеется просроченная задолженность " . round($debt_account['expired_balance'], 2) . "{$footer['curr_symbol']}!\n");
 	    return true;
         }
