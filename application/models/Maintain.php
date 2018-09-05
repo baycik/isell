@@ -120,21 +120,25 @@ class Maintain extends CI_Model {
 	//
 	//$this->backupDumpZip($filename);
 	//$this->backupDumpFtpUpload("$filename");
-	return true;
+	return $filename;
     }
 
-    private function backupDumpZip($filename) {
+    public function backupDumpZip($filename) {
 	$zip = new ZipArchive;
 	if ($zip->open("$filename.zip", ZipArchive::CREATE) === TRUE) {
 	    $zip->addFile($filename,'backup.sql');
 	    $zip->close();
 	    unlink($filename);
-	    return true;
+	    return "$filename.zip";
 	}
 	return false;
     }
-    private function backupDumpFtpUpload($filename){
-	copy($filename,"ftp:///dbbackup.sql.zip");
+    public function backupDumpFtpUpload($filename){
+	$ftp_server=$this->Hub->pref('FTP_SERVER');
+	$ftp_user=$this->Hub->pref('FTP_USER');
+	$ftp_pass=$this->Hub->pref('FTP_PASS');
+	$remote_name=  array_pop( explode('/', $filename) );
+	copy($filename,"ftp://$ftp_user:$ftp_pass@$ftp_server/$remote_name");
     }
 
     public $backupList = [];

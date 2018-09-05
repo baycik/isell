@@ -99,6 +99,10 @@ class Chat extends Catalog{
 		event_list 
 	    WHERE 
 		event_status='undone' AND event_date<NOW() AND event_liable_user_id='$my_id'";
-	return $this->get_value($sql);
+	$new_message_count=$this->get_value($sql);
+	if( $new_message_count ){
+	    return $new_message_count;
+	}
+	$this->Hub->load_model("Task")->doNext();
     }
 }
