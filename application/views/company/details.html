@@ -56,12 +56,14 @@
 		    if( !s.data ){
 			return;
 		    }
-		    App.page_company_details.DaDataSet('company_name',s.data.name.short_with_opf,'skip');
-		    App.page_company_details.DaDataSet('company_jaddress',s.data.address.value);
+                    var adress_full=s.data.address?s.data.address.value:'';
+                    adress_full=s.data.address&&s.data.address.data?s.data.address.data.source:adress_full;
+		    App.page_company_details.DaDataSet('company_name',s.data.name?s.data.name.short_with_opf:'','skip');
+		    App.page_company_details.DaDataSet('company_jaddress',adress_full);
 		    App.page_company_details.DaDataSet('company_tax_id',s.data.inn);
 		    App.page_company_details.DaDataSet('company_tax_id2',s.data.kpp);
-		    App.page_company_details.DaDataSet('company_director',s.data.management.name);
- 		    App.page_company_details.DaDataSet('company_director_title',s.data.management.post);
+		    App.page_company_details.DaDataSet('company_director',s.data.management?s.data.management.name:'');
+ 		    App.page_company_details.DaDataSet('company_director_title',s.data.management?s.data.management.post:'');
  		    App.page_company_details.DaDataSet('company_code_registration',s.data.ogrn);
  		    App.page_company_details.DaDataSet('company_code',s.data.okpo);
                 }
