@@ -19,6 +19,7 @@ class Reports_client_expired_debts extends Catalog{
 	$this->their_debts=$this->request('their_debts','bool');
 	$this->filter_by=$this->request('filter_by','\w+');
 	$this->filter_value=$this->request('filter_value');
+        $this->fdate=$this->dmy2iso( $this->request('fdate','\d\d.\d\d.\d\d\d\d') );
 	parent::__construct();
     }
     private function or_like($field,$value){
@@ -30,6 +31,10 @@ class Reports_client_expired_debts extends Catalog{
 	    }
 	}
 	return implode(" OR ",$filter);
+    }
+    private function dmy2iso( $dmy ){
+	$chunks=  explode('.', $dmy);
+	return "$chunks[2]-$chunks[1]-$chunks[0]";
     }
     private function getAssignedPathWhere(){
         $assigned_path=$this->Hub->svar('user_assigned_path');
@@ -47,6 +52,10 @@ class Reports_client_expired_debts extends Catalog{
     }
     public function viewGet(){
 	$active_filter=$this->all_active?'':' AND active_company_id='.$this->Hub->acomp('company_id');
+        $date_filter='';
+        if( $this->fdate ){
+            $date_filter="AND cstamp<'$this->fdate 23:59:59' ";
+        }
         $user_level=$this->Hub->svar('user_level');
         $path_filter=$this->getAssignedPathWhere();
 	$having =$this->getDirectionFilter();
@@ -83,6 +92,7 @@ class Reports_client_expired_debts extends Catalog{
 		    companies_tree USING(branch_id)
 		WHERE 
 		    level<='$user_level'
+                    $date_filter
 		    $active_filter
 		    $path_filter
                 GROUP BY companies_list.company_id
