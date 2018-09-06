@@ -40,7 +40,7 @@ class Reports_summary_sell_stock extends Catalog{
             SELECT
                 product_code,
                 SUM( IF(doc_type=2,product_quantity,-product_quantity) ) stock_qty,
-                SUM( IF(doc_type=2,$leftover_price/IF($this->in_alt_currency,doc_ratio,1)*product_quantity,0) )/SUM( IF(doc_type=2,product_quantity,0) ) buy_avg,
+                LEFTOVER_CALC(product_code,'$this->fdate',0,'selfprice') buy_avg,
                 SUM( IF(doc_type=1 AND cstamp>'$this->idate',invoice_price/IF($this->in_alt_currency,doc_ratio,1)*product_quantity,0) ) sell_prod_sum,
                 SUM( IF(doc_type=1 AND cstamp>'$this->idate',product_quantity,0) ) sell_qty
             FROM
