@@ -36,6 +36,10 @@ class Reports_client_expired_debts extends Catalog{
 	$chunks=  explode('.', $dmy);
 	return "$chunks[2]-$chunks[1]-$chunks[0]";
     }
+    private function iso2dmy( $iso ){
+	$chunks=  explode('-', $iso);
+	return "$chunks[2].$chunks[1].$chunks[0]";
+    }
     private function getAssignedPathWhere(){
         $assigned_path=$this->Hub->svar('user_assigned_path');
         return $assigned_path?"AND (path LIKE '".str_replace(',',"%' OR path LIKE '",$assigned_path.'')."%')":"";    
@@ -126,6 +130,7 @@ class Reports_client_expired_debts extends Catalog{
 	    'rows'=>count($rows)?$rows:[[]],
 	    'input'=>[
 		'all_active'=>$this->all_active,
+                'fdate'=>$this->iso2dmy($this->fdate),
 		'our_debts'=>$this->our_debts,
 		'their_debts'=>$this->their_debts,
 		'filter_by'=>$this->filter_by,
