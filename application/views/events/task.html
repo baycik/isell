@@ -1,0 +1,54 @@
+<script>
+(function($){
+    Task={
+	init:function(){
+	    Task.table.init();
+	},
+	table:{
+	    init:function(){
+		    var settings = {
+			columns:  [
+			    {id:'date_dmy',field:'date_dmy',name:'Дата'},
+			    {id:'event_name',field:'event_name',name:'Название'},
+			    {id:'event_descr',field:'event_descr',name:'Комментарий'},
+			    {id:'event_repeat',field:'event_repeat',name:'Повтор'},
+			    {id:'event_status',field:'event_status',name:'Статус'},
+			    {id:'event_taget',field:'event_target',name:'Этап'},
+			    {id:'event_note',field:'event_note',name:'Результат'},
+			    {id:'modified_by',field:'modified_by',name:'Изменено'},
+			    {id:'created_by',field:'created_by',name:'Создано'}
+			],
+			options: {
+			    editable: true,
+			    autoedit: true,
+			    enableCellNavigation: true,
+			    enableFilter: true,
+			    multiSelect: true,
+			    url: 'Task/taskListFetch/'
+			}
+		    };
+		    Task.grid = new SlickInfinite("#page_events_task_sg", settings);
+	    }
+	}
+    };
+
+    App.require(["js/slick/lib/jquery.event.drag-2.3.0.js","js/jquery-ui.min.js"], function () {
+	App.require([
+	    "js/slick/slick.core.js",
+	    "js/slick/plugins/slick.rowselectionmodel.js",
+	    "js/slick/slick.editors.js",
+	    "js/slick/slickinfinite.js",
+	    "js/slick/slick.grid.js"
+	], Task.init);
+    });
+})(jQuery);
+</script>
+<div class="x-event-task-tools" style="text-align: right;">
+    <span data-action="entryCreate" class="icon-24 icon-create" title="Добавить"> </span>
+    <span data-action="entryEdit" class="icon-24 icon-change" title="Изменить"> </span>
+    <span data-action="entryDelete" class="icon-24 icon-delete" title="Удалить"> </span>
+    <span data-action="reload" class="icon-24 icon-refresh" title="Обновить"> </span>
+    <span data-action="out" class="icon-24 icon-download" title="Скачать таблицу"> </span>
+    <span data-action="print" class="icon-24 icon-print" title="Печать"> </span>
+</div>
+<div id="page_events_task_sg" style="height: 300px;"></div>

@@ -15,6 +15,7 @@ class Task extends Events {
 		event_label='-TASK-'
 		AND event_status='undone'
 		AND (event_liable_user_id='$user_id' OR event_liable_user_id IS NULL)
+		AND event_date<NOW()
 	    ORDER BY event_date ASC
 	    LIMIT 1";
 	$this->currentTask = $this->get_row($sql);
@@ -88,6 +89,8 @@ class Task extends Events {
     }
 
     private function saveTask() {
+	$user_id = $this->Hub->svar('user_id');
+	$this->currentTask->modified_by=$user_id;
 	return $this->update('event_list', $this->currentTask, ['event_id' => $this->currentTask->event_id]);
     }
 
@@ -130,6 +133,21 @@ class Task extends Events {
 	];
 	$program_json = json_encode($program);
 	return $this->eventUpdate($event_id, 'event_program', $program_json);
+    }
+    public $taskListFetch=[];
+    public function taskListFetch(){
+	$sql="
+	    SELECT
+		*,
+		DATE_FORMAT(event_date,'%d.%m.%Y') date_dmy,
+		(SELECT nick FROM user_list WHERE user_id=created_by) created_by,
+		(SELECT nick FROM user_list WHERE user_id=modified_by) modified_by
+	    FROM
+		event_list
+	    WHERE
+		event_label='-Task-'
+	    ORDER BY event_status='undone',event_priority";
+	return $this->get_list($sql);
     }
 }
 /*

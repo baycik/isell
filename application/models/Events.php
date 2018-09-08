@@ -18,6 +18,7 @@ class Events extends Catalog{
 		event_list 
 	    WHERE 
 		event_label<>'chat' 
+		AND event_label<>'-Task-'
 		AND ( NOT event_is_private OR event_is_private AND (event_creator_user_id='$user_id' OR $user_level>=3) )
 	    ORDER BY event_date DESC";
 	return $this->get_list($sql);
@@ -41,7 +42,8 @@ class Events extends Catalog{
 		    OR DATEDIFF(event_date,'$date')%event_repeat=0
 		    OR event_status='undone' AND DATE(event_date)<DATE('$date')
 		) 
-                AND event_label<>'chat' $label_filter 
+                AND event_label<>'chat'
+		AND event_label<>'-Task-' $label_filter 
 	    ORDER BY event_status='undone' AND DATE(event_date)<DATE(NOW()),event_label,event_priority IS NULL,event_priority,event_target";
 	return $this->get_list($sql);
     }
