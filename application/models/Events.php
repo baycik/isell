@@ -91,6 +91,7 @@ class Events extends Catalog{
 	    'event_place'=>$this->request('event_place','raw'),
 	    'event_note'=>$this->request('event_note','raw'),
 	    'event_descr'=>$this->request('event_descr','raw'),
+	    'event_program'=>$this->request('event_program','raw'),
 	    'event_repeat'=>$this->request('event_repeat'),
 	    'event_status'=>$this->request('event_status'),
 	    'event_liable_user_id'=>$this->request('event_liable_user_id'),
