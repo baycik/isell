@@ -15,11 +15,11 @@ App.page_events_scheduler={
     },
     show_dialog:function(fvalue){
 	fvalue.event_creator_user_id = App.user.props.user_id;
-	fvalue.event_date=App.toDmy(App.page_events_scheduler.selectedDay);
+	fvalue.event_date_dmy=App.toDmy(App.page_events_scheduler.selectedDay);
 	App.loadWindow('page/events/event', fvalue).progress(function (status, fvalue) {
 	    if (status === 'update' || status === 'create' || status === 'delete') {
-		if( fvalue && fvalue.event_date ){
-		    App.page_events_scheduler.selectedDay = fvalue.event_date;
+		if( fvalue && fvalue.event_date_dmy ){
+		    App.page_events_scheduler.selectedDay = fvalue.event_date_dmy;
 		}
 		App.page_events_scheduler.activeDatesGet();
 	    }
@@ -82,7 +82,7 @@ App.page_events_scheduler={
 	    var header=$(node).parent().data('header');
 	    var fvalue = {
 		event_label: header,
-		event_date: App.page_events_scheduler.selectedDay
+		event_date_dmy: App.page_events_scheduler.selectedDay
 	    };
 	    App.page_events_scheduler.show_dialog(fvalue);
 	},
@@ -129,7 +129,7 @@ App.page_events_scheduler={
 	out:function( label, out_type ){
 	    var params={
 		label:label,
-		event_date:App.page_events_scheduler.selectedDay,
+		event_date_dmy:App.page_events_scheduler.selectedDay,
 		out_type:out_type
 	    };
 	    var url='Events/eventViewGet/?'+$.param( params );

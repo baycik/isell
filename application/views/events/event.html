@@ -32,7 +32,11 @@
 	    this.loadStaffList();
 	},
 	prepareData:function(){
-	    this.data.event_date = this.data.event_date || App.toDmy(new Date());
+	    console.log( this.data.event_date_dmy );
+	    
+	    
+	    
+	    this.data.event_date = this.data.event_date_dmy || App.toDmy(new Date());
 	    this.data.created_by = this.data.created_by || '-';
 	    this.data.modified_by = this.data.modified_by || '-';
 	    this.data.event_priority = this.data.event_priority || '3medium';
@@ -46,12 +50,10 @@
 	    });
 	},
 	saveEvent: function (fvalue) {
+	    fvalue=this.task.programCompile(fvalue);
 	    var card_event_id = fvalue.event_id;
 	    fvalue.event_date = App.toIso(fvalue.event_date);
-	    if(App.page_events_event.data.parsed_program){
-		fvalue.event_program=JSON.stringify(App.page_events_event.data.parsed_program);
-	    }
-	    
+    
 	    App.post('Events/eventSave/' + card_event_id, fvalue, function (resp) {
 		if (!card_event_id) {//new record card_event_id==0
 		    fvalue.event_id = resp;
@@ -80,35 +82,65 @@
 	    App.page_events_event.data.event_label = label;
 	    $('[name="event_label"]').val(label);
 	},
-	checkIfTask:function(){
-	    if( this.data.event_label==='-TASK-' ){
-		$('.task_specific').parent().show();
-		$('.task_unspecific').hide();
-		var program=this.data.parsed_program=App.json(this.data.event_program);
+	task:{
+	    programCompile:function(fvalue){
+		var program={commands:[]};
+		var commands=[];
+		for(var name in fvalue){
+		    if( name.indexOf('task_')>-1 ){
+			var task_details=name.split('_');
+			var cindex=task_details[1];
+			var ckey=task_details[2];
+			var cvalue=fvalue[name];
+			delete fvalue[name];
+			if( !commands[cindex] ){
+			    commands[cindex]={};
+			}
+			commands[cindex][ckey]=cvalue;
+		    }
+		}
+		for(var i in commands ){
+		    if( commands[i] && commands[i].model ){
+			program.commands.push(commands[i]);
+		    }
+		}
+		fvalue.event_program=JSON.stringify(program);
+		return fvalue;
+	    },
+	    programDecompile:function(){
+		var program=App.json(this.data.event_program);
 		if( program && Array.isArray(program.commands) ){
 		    for(var i in program.commands){
-			this.data[i+"_model"]=program.commands[i].model;
-			this.data[i+"_method"]=program.commands[i].method;
-			this.data[i+"_arguments"]=program.commands[i].arguments;
-			this.data[i+"_async"]=program.commands[i].async;
-			this.data[i+"_disabled"]=program.commands[i].disabled;
+			if( !program.commands[i] ){
+			    continue;
+			}
+			this.data["task_"+i+"_model"]=program.commands[i].model;
+			this.data["task_"+i+"_method"]=program.commands[i].method;
+			this.data["task_"+i+"_arguments"]=program.commands[i].arguments;
+			this.data["task_"+i+"_async"]=program.commands[i].async;
+			this.data["task_"+i+"_disabled"]=program.commands[i].disabled;
 		    }
 		    program.commands.push({model:'',metod:'',arguments:''});
 		} else {
-		    program=this.data.parsed_program={commands:[{}]};
+		    program={commands:[{}]};
 		}
-		App.renderTpl('event_program',program);
-		$('.task_specific input').change(function(){
-		    var index_name=$(this).attr('name').split('_');
-		    var value=$(this).val();
-		    if( !Array.isArray(App.page_events_event.data.parsed_program.commands) ){
-			App.page_events_event.data.parsed_program.commands=[{}];
-		    }
-		    App.page_events_event.data.parsed_program.commands[index_name[0]][index_name[1]]=value;
-		});
+		App.renderTpl('event_program',program);	    
+	    },
+	    commandDelete:function(index){
+
+	    },
+	    commandAdd:function(index){
 		
+	    }
+	},
+
+	checkIfTask:function(){
+	    if( this.data.event_label==='-TASK-' ){
+		$('.task_specific').show();
+		$('.task_unspecific').hide();
+		this.task.programDecompile();
 	    } else {
-		$('.task_specific').parent().hide();
+		$('.task_specific').hide();
 		$('.task_unspecific').show();
 	    }
 	}
@@ -120,7 +152,7 @@
     <input type="hidden" name="event_id"/>
     <img src="img/event.png" style="float:left;margin: 5px;" />
     <div style="display: inline-block;width: 320px;">
-        <input type="text" name="event_date" title="Дата" style="width:100px" class="easyui-datebox" />
+        <input type="text" name="event_date" title="Дата" class="easyui-datebox" />
         <input type="text" name="event_name" title="Задание" />
         <input type="text" name="event_place" title="Место" />
         <input type="text" name="event_target" title="Цель" />
@@ -158,20 +190,23 @@
 		<option value="4low" style="background-color: #ccc">Низкий</option>
 		<option value="5future" style="background-color: green">В планах</option>
 	    </select>
-	    <input type="text" name="event_repeat" placeholder="Интервал повтора Д Ч:м" title="Интервал повтора Дней Часов:минут"/>
+	    <input type="text" name="event_repeat" title="Интервал Д Ч:м" placeholder="Дней Часов:Минут"/>
 	    <input type="checkbox" name="event_is_private" value="1" title="Скрыть" />
 	</div>
-	<div class="easyui-panel task_specific"  title="Программа" data-options="collapsible:true,collapsed:false" style="width:340px;float:left;display: none">
-	    <div id="event_program" style="max-height: 300px;overflow-y: auto;">
-		{{commands}}
-		Комманда {{##}}.
-		<input name="{{#}}_model" title="Модель" value="{{model}}">
-		<input name="{{#}}_method" title="Метод" value="{{method}}">
-		<input name="{{#}}_arguments" title="Аргументы" value="{{arguments}}">
-		<input name="{{#}}_async" title="Асинхронная" type="checkbox">
-		<input name="{{#}}_disabled" title="Отключена" type="checkbox">
-		<hr style="clear: both;color:#ddd">
-		{{/commands}}
+	<div class="task_specific">
+	    <div class="easyui-panel "  title="Программа" data-options="collapsible:true,collapsed:false" style="width:340px;float:left;">
+		<div id="event_program" style="max-height: 300px;overflow-y: auto;">
+		    {{commands}}
+		    Комманда {{##}}. <a href="javascript:App.page_events_event.taskCommandDelete('{{#}}')">Удалить</a> | <a href="javascript:App.page_events_event.taskCommandAdd('{{#}}')">Добавить</a>
+		    <input name="task_{{#}}_model" title="Модель" value="{{model}}">
+		    <input name="task_{{#}}_method" title="Метод" value="{{method}}">
+		    <input name="task_{{#}}_arguments" title="Аргументы" value="{{arguments}}">
+		    <input name="task_{{#}}_async" title="Асинхронная" type="checkbox">
+		    <input name="task_{{#}}_disabled" title="Отключена" type="checkbox">
+		    <hr style="clear: both;color:#ddd">
+		    {{/commands}}
+		    
+		</div>
 	    </div>
 	</div>
     </div>
