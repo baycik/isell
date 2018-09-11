@@ -155,6 +155,11 @@ abstract class Catalog extends CI_Model {
         $data = array($field => $value);
         return $this->update($table, $data, $key);
     }
+    
+    protected function log($message){
+	$url = "http://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
+	$this->create('log_list',['message'=>$message,'url'=>$url]);
+    }
 
     ////////////////////////////////////////////////////
     // CORE TREE FUNCTIONS

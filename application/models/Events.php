@@ -100,6 +100,7 @@ class Events extends Catalog{
 	];
 	if( !$event_id ){
 	    $event['created_by']=$this->Hub->svar('user_id');
+	    $event['event_creator_user_id']=$this->Hub->svar('user_id');
 	    return $this->create('event_list', $event);
 	}
 	return $this->eventChange($event_id, $event);
