@@ -199,27 +199,48 @@ class Stock_price_list extends Catalog{
 	
 	$this->Hub->load_model('Storage');
 	$price_blocks=[];
+        $price_table=[];
 	foreach( $deployment['deployment']->items as $block ){
             if( isset($block->hidden)&&$block->hidden ){
                 continue;
             }
-	    $price_blocks[]=$this->fillPriceBlocks($block);
+            $block=$this->fillPriceBlocks($block);
+	    $price_blocks[]=$block;
+            if( isset($block->rows) ){
+                $price_table=array_merge($price_table,$block->rows);
+            }
 	}
 	$dump=[
 	    'tpl_files_folder'=>"application/plugins/stock_price_list/",
-	    'tpl_files'=>"template.html",
+	    'tpl_files'=>"template.html,views/StockPriceList.xlsx",
 	    'title'=>"Прайс Лист",
 	    'view'=>[
 		'price_blocks'=>$price_blocks,
+                'price_table'=>$price_table,
 		'pcomp_label'=>$this->Hub->pcomp('label'),
 		'dollar_ratio'=>$this->Hub->pref('usd_ratio'),
-		'date'=>date('d.m.Y')
+		'date'=>date('d.m.Y'),
+                'acomp_all_details'=>$this->acompGetAll()
 	    ]
 	];
 	
 	$ViewManager=$this->Hub->load_model('ViewManager');
 	$ViewManager->store($dump);
 	$ViewManager->outRedirect($out_type);
+    }
+    function acompGetAll() {
+        $comp=$this->Hub->svar('acomp');
+        $all =$comp->company_name." ".$comp->company_jaddress;
+        $all.=$comp->company_phone?", тел.:{$comp->company_phone}":'';
+        $all.=$comp->company_bank_account?", р/с:{$comp->company_bank_account}":'';
+        $all.=$comp->company_bank_corr_account?", к/с:{$comp->company_bank_corr_account}":'';
+        $all.=$comp->company_bank_name?" в {$comp->company_bank_name}":'';
+        $all.=$comp->company_bank_id?", БИК:{$comp->company_bank_id}":'';
+        $all.=$comp->company_tax_id?", ИНН:{$comp->company_tax_id}":'';
+        $all.=$comp->company_code?", ОКПО:{$comp->company_code}":'';
+        $all.=$comp->company_email?", E-mail:{$comp->company_email}":'';
+        $all.=$comp->company_web?",{$comp->company_web}":'';
+        return $all;
     }
 }
 
