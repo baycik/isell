@@ -290,7 +290,7 @@ class Document extends Data {
 
 	if ($this->doc('doc_type') == 1) {//Sell document
 	    if ($action == 'commit' || ($this->isCommited() && isset($new_invoice))) {
-		$self = $this->getProductSellSelfPrice($entry['product_code'], $quantity);
+		$self = $this->getProductSellSelfPrice($entry['product_code'], $quantity, $this->doc('cstamp'));
 	    } else {
 		$self = $entry['self_price'];
 	    }
@@ -1337,20 +1337,22 @@ class Document extends Data {
         }
     }
 
-    protected function getProductSellSelfPrice($product_code, $invoice_qty) {
-	$this->Base->LoadClass('Stock');
-	$stock_self = $this->Base->Stock->getEntrySelfPrice($product_code);
-	if ($stock_self > 0)
-	    return $stock_self;
-	/*
-	 * IF self price is not set
-	 * qty=0 or something else set
-	 * selfPrice as current buy price
-	 */
-	$price = $this->getRawProductPrice($product_code, $this->doc('doc_ratio'));
-	$price_self = $price['buy'] ? $price['buy'] : $price['sell'];
-	//$this->Base->Stock->setEntrySelfPrice($product_code, $price_self);
-	return $price_self;
+    protected function getProductSellSelfPrice($product_code, $invoice_qty,$fdate) {
+        return $this->Base->get_row("SELECT LEFTOVER_CALC('$product_code','$fdate','$invoice_qty','selfprice')",0);
+
+//	$this->Base->LoadClass('Stock');
+//	$stock_self = $this->Base->Stock->getEntrySelfPrice($product_code);
+//	if ($stock_self > 0)
+//	    return $stock_self;
+//	/*
+//	 * IF self price is not set
+//	 * qty=0 or something else set
+//	 * selfPrice as current buy price
+//	 */
+//	$price = $this->getRawProductPrice($product_code, $this->doc('doc_ratio'));
+//	$price_self = $price['buy'] ? $price['buy'] : $price['sell'];
+//	//$this->Base->Stock->setEntrySelfPrice($product_code, $price_self);
+//	return $price_self;
     }
 
     protected function getProductPrice($product_code) {
