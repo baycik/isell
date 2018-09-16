@@ -181,10 +181,11 @@
         
 	
 	<div class="easyui-panel" title="Другие настройки" data-options="collapsible:true,collapsed:true" style="width:340px;float:left">
-	    <select name="event_status" title="Выполнено">
-		<option value="executing">В процессе</option>
+	    <select name="event_status" title="Статус">
 		<option value="undone" style="color: red">Не выполнено</option>
 		<option value="done" style="color: green">Выполнено</option>
+		<option value="pending" style="color: blue">Ожидает</option>
+		<option value="executing">Исполняется</option>
 	    </select>
 	    <select name="event_liable_user_id" id="page_events_event_frm_liable" title="Закреплено за">
 		{{staff_list}}

@@ -24,28 +24,28 @@
 				break;
 			    case 'pending':
 				img='time.png';
-				title='Приостановлено';
+				title='Ожидает';
 				break;
 			}
 			return '<img src="img/'+img+'" title="'+title+'" style="margin:2px;">';
 		    },
-		    toDmy:function(row, cell, value, columnDef, dataContext){
-			return App.toDmy(value);
+		    toDmyt:function(row, cell, value, columnDef, dataContext){
+			return App.toDmyt(value);
 		    }
 		};
 		var settings = {
 		    columns:  [
-			{id:'event_date_dmy',field:'event_date_dmy',name:'Дата', sortable: true, width: 70},
-			{id:'event_name',field:'event_name',name:'Название', sortable: true, width: 250},
+			{id:'event_status',field:'event_status',name:'Статус',formatter:frm.status, sortable: true, width: 20},
+			{id:'event_name',field:'event_name',name:'Название', sortable: true, width: 150},
 			{id:'event_descr',field:'event_descr',name:'Комментарий', sortable: true, width: 350},
 			{id:'event_repeat',field:'event_repeat',name:'Повтор', sortable: true, width: 100},
+			{id:'event_date',field:'event_date',name:'След. Запуск',formatter:frm.toDmyt, sortable: true, width: 100},
+			{id:'event_date_done',field:'event_date_done',name:'Послед. Запуск',formatter:frm.toDmyt, sortable: true, width: 100},
 			{id:'event_note',field:'event_note',name:'Результат', sortable: true, width: 100},
-			{id:'event_date_done',field:'event_date_done',name:'Исполнено', sortable: true, width: 70},
-			{id:'event_date_created',field:'event_date_created',name:'Создано',formatter:frm.toDmy, sortable: true, width: 70},
 			{id:'event_taget',field:'event_target',name:'Этап', sortable: true, width: 25},
-			{id:'event_status',field:'event_status',name:'Статус',formatter:frm.status, sortable: true, width: 20},
 			{id:'modified_by',field:'modified_by',name:'Изменено', sortable: true, width: 40},
-			{id:'created_by',field:'created_by',name:'Создано', sortable: true, width: 40}
+			{id:'created_by',field:'created_by',name:'Создано', sortable: true, width: 40},
+			{id:'event_date_created',field:'event_date_created',name:'Создано',formatter:frm.toDmyt, sortable: true, width: 100}
 		    ],
 		    options: {
 			editable: true,

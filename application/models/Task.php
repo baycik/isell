@@ -13,7 +13,7 @@ class Task extends Events {
 		event_list
 	    WHERE
 		event_label='-TASK-'
-		AND event_status='undone'
+		AND (event_status='undone' OR event_status='pending')
 		AND (event_liable_user_id='$user_id' OR event_liable_user_id IS NULL OR event_liable_user_id='')
 		AND event_date<NOW()
 	    ORDER BY event_date ASC
@@ -27,7 +27,7 @@ class Task extends Events {
     
     private function execute_task(){
 	$this->log("TASK {$this->currentTask->event_name} is executing");
-	//$this->eventUpdate($this->currentTask->event_id, 'event_status', 'executing');
+	$this->eventUpdate($this->currentTask->event_id, 'event_status', 'executing');
 	if ( $this->execute_program() ) {
 	    $this->currentTask->event_status = 'done';
 	    if ($this->currentTask->event_repeat !='') {
@@ -120,6 +120,7 @@ class Task extends Events {
 
     private function postpone($interval) {
 	$this->currentTask->event_date=$this->get_value("SELECT DATE_ADD('{$this->currentTask->event_date}',INTERVAL $interval)");
+	$this->currentTask->event_status='pending';
 	$this->log("TASK {$this->currentTask->event_name} postponed $interval");
     }
 
