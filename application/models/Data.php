@@ -2,6 +2,7 @@
 
 require_once 'Catalog.php';
 class Data extends Catalog {
+    private $current_table_orderby=null;
     function __construct(){
 	$this->permited_tables = json_decode(file_get_contents('application/config/permited_tables.json', true));
     }
@@ -47,6 +48,9 @@ class Data extends Catalog {
 		continue;
             }
 	    if ($table_name == $table->table_name){
+		if( isset($table->orderby) ){
+		    $this->current_table_orderby=$table->orderby;
+		}
 		return true;
             }
 	}
@@ -83,12 +87,16 @@ class Data extends Catalog {
 	if( !$having ){
 	    $having=$this->decodeFilterRules();
 	}
+	$order='';
+	if( $this->current_table_orderby ){
+	    $order="ORDER BY ".$this->current_table_orderby;
+	}
 	$offset=($page-1)*$rows;
 	if( $offset<0 ){
 	    $offset=0;
 	}
 	return [
-		    'rows'=>$this->get_list("SELECT * FROM $table_name WHERE $having LIMIT $rows OFFSET $offset"),
+		    'rows'=>$this->get_list("SELECT * FROM $table_name WHERE $having $order LIMIT $rows OFFSET $offset"),
 		    'total'=>$this->get_value("SELECT COUNT(*) FROM $table_name WHERE $having")
 		];
     }

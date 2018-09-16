@@ -128,7 +128,7 @@ class Maintain extends CI_Model {
 	if ($zip->open("$filename.zip", ZipArchive::CREATE) === TRUE) {
 	    $zip->addFile($filename,'backup.sql');
 	    $zip->close();
-	    unlink($filename);
+	    file_exists($filename) && unlink($filename);
 	    return "$filename.zip";
 	}
 	return false;
@@ -141,7 +141,9 @@ class Maintain extends CI_Model {
 	$ftp_pass=$this->Hub->pref('FTP_PASS');
 	$remote_name=  'backup.zip';//array_pop( explode('/', $filename) );
 	//return copy($filename,"ftp://$ftp_user:$ftp_pass@$ftp_server/$remote_name");
-	
+	if( !file_exists($filename) ){
+	    return false;
+	}
 	$file_handler=fopen($filename, 'r');
 	$conn_id = ftp_connect($ftp_server);
 	if( !ftp_login($conn_id, $ftp_user, $ftp_pass) ){

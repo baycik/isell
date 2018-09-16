@@ -28,6 +28,9 @@
 				break;
 			}
 			return '<img src="img/'+img+'" title="'+title+'" style="margin:2px;">';
+		    },
+		    toDmy:function(row, cell, value, columnDef, dataContext){
+			return App.toDmy(value);
 		    }
 		};
 		var settings = {
@@ -38,7 +41,7 @@
 			{id:'event_repeat',field:'event_repeat',name:'Повтор', sortable: true, width: 100},
 			{id:'event_note',field:'event_note',name:'Результат', sortable: true, width: 100},
 			{id:'event_date_done',field:'event_date_done',name:'Исполнено', sortable: true, width: 70},
-			{id:'event_date_created',field:'event_date_created',name:'Создано', sortable: true, width: 70},
+			{id:'event_date_created',field:'event_date_created',name:'Создано',formatter:frm.toDmy, sortable: true, width: 70},
 			{id:'event_taget',field:'event_target',name:'Этап', sortable: true, width: 25},
 			{id:'event_status',field:'event_status',name:'Статус',formatter:frm.status, sortable: true, width: 20},
 			{id:'modified_by',field:'modified_by',name:'Изменено', sortable: true, width: 40},

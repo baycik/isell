@@ -156,7 +156,7 @@ abstract class Catalog extends CI_Model {
         return $this->update($table, $data, $key);
     }
     
-    protected function log($message){
+    public function log($message){
 	$url = "http://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
 	$this->create('log_list',['message'=>$message,'url'=>$url]);
     }

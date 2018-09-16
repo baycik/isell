@@ -7,7 +7,7 @@ class Task extends Events {
 
     public function doNext() {
 	$user_id = $this->Hub->svar('user_id');
-	echo $sql = "SELECT
+	$sql = "SELECT
 		*
 	    FROM
 		event_list
@@ -31,7 +31,7 @@ class Task extends Events {
 	if ( $this->execute_program() ) {
 	    $this->currentTask->event_status = 'done';
 	    if ($this->currentTask->event_repeat !='') {
-		$this->postpone($this->currentTask->event_repeat . " DAY_MINUTE");
+		$this->postpone("'{$this->currentTask->event_repeat}' DAY_MINUTE");
 		$this->currentTask->event_status = 'undone';
 	    }
 	} else {
@@ -54,8 +54,8 @@ class Task extends Events {
 	    if ( $this->currentTask->event_target > $i) {
 		continue;
 	    }
-	    print_r($command);
-	    print_r($this->currentTask);
+	    //print_r($command);
+	    //print_r($this->currentTask);
 	    $this->currentTask->event_note = $this->execute_command($command, $this->currentTask->event_note);
 	    $this->currentTask->event_target = $i+1;
 	    if ($this->currentTask->event_target == $program_length) {
@@ -71,26 +71,45 @@ class Task extends Events {
 
     private function execute_command($command, $previous_return) {
 	$args = [];
-	if (is_array($command->arguments)) {
-	    foreach ($command->arguments as $arg) {
+	$arguments=  explode(',', $command->arguments);
+	if (is_array($arguments)) {
+	    foreach ($arguments as $arg) {
 		if ($arg == '-PREVIOUS-RETURN-') {
 		    $arg = $previous_return;
 		}
 		$args[] = $arg;
 	    }
 	}
-	restore_error_handler ();
-	restore_exception_handler ();
-	try{
-	    $Model = $this->Hub->load_model($command->model);
-	    $return = call_user_func_array([$Model, $command->method], $args);
-	} catch (Exception $ex) {
-	    $return = $ex->getMessage();
-	    $this->log("TASK {$this->currentTask->event_name}[$Model, $command->method],$command->arguments  EXECUTION FAILED ERROR: $return");
-	    return false;
-	}
-	$this->log("TASK {$this->currentTask->event_name} [$Model, $command->method],$command->arguments RETURNED VALUE:$return");
+	$this->logErrors();
+	$Model = $this->Hub->load_model($command->model);
+	$return = call_user_func_array([$Model, $command->method], $args);
+	$this->log("TASK {$this->currentTask->event_name} {$command->model}->{$command->method}($command->arguments): RETURNED VALUE:$return");
 	return $return;
+    }
+    
+    private function logErrors(){
+	global $_this;
+	$_this=$this;
+	function log_exception( $e ){
+	    global $_this;
+	    $message = "Type: " . get_class( $e ) . "; Message: {$e->getMessage()}; File: {$e->getFile()}; Line: {$e->getLine()};";
+	    $_this->log($message);
+	    exit;
+	}
+	function log_error( $num, $str, $file, $line ){
+	    log_exception( new ErrorException( $str, 0, $num, $file, $line ) );
+	}
+	function check_for_fatal(){
+	    $error = error_get_last();
+	    if ( $error["type"] == E_ERROR ){
+		log_error( $error["type"], $error["message"], $error["file"], $error["line"] );
+	    }
+	}
+	register_shutdown_function( "check_for_fatal" );
+	set_error_handler( "log_error" );
+	set_exception_handler( "log_exception" );
+	//ini_set( "display_errors", "off" );
+	error_reporting( E_ALL );
     }
 
     private function saveTask() {
