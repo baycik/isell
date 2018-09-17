@@ -36,7 +36,16 @@
 	    this.data.created_by = this.data.created_by || '-';
 	    this.data.modified_by = this.data.modified_by || '-';
 	    this.data.event_priority = this.data.event_priority || '3medium';
-	    this.data.event_status = this.data.event_status || 'undone';	    
+	    this.data.event_status = this.data.event_status || 'undone';
+	    
+	    var interval=[0,0,0,0];
+	    if( this.data.event_repeat ){
+		interval = this.data.event_repeat.match(/(\d+)\s?(\d+):?(\d+)/);
+	    }
+	    this.data.event_repeat_day=interval[1];
+	    this.data.event_repeat_hour=interval[2];
+	    this.data.event_repeat_minute=interval[3];
+	    
 	},
 	loadStaffList: function () {
 	    App.get("Pref/getStaffList", function (resp) {
@@ -49,7 +58,9 @@
 	    fvalue=this.task.programCompile(fvalue);
 	    var card_event_id = fvalue.event_id;
 	    fvalue.event_date = App.toIso(fvalue.event_date);
-    
+	    if( fvalue.event_repeat_day || fvalue.event_repeat_hour || fvalue.event_repeat_minute ){
+		fvalue.event_repeat=fvalue.event_repeat_day+' '+fvalue.event_repeat_hour+':'+fvalue.event_repeat_minute;
+	    }
 	    App.post('Events/eventSave/' + card_event_id, fvalue, function (resp) {
 		if (!card_event_id) {//new record card_event_id==0
 		    fvalue.event_id = resp;
@@ -199,11 +210,15 @@
 		<option value="4low" style="background-color: #ccc">Низкий</option>
 		<option value="5future" style="background-color: green">В планах</option>
 	    </select>
-	    <input type="text" name="event_repeat" title="Интервал Д Ч:м" placeholder="Дней Часов:Минут"/>
+	    <div style="line-height: 22px;">
+		<input type="number" name="event_repeat_day" title="Интервал" placeholder="Дней" style="width:38px" min="0" max="365"/>дн.
+		<input type="number" name="event_repeat_hour" placeholder="Часов" style="width:38px" min="0" max="24"/>час.
+		<input type="number" name="event_repeat_minute" placeholder="Минут" style="width:38px" min="0" max="60"/>мин.
+	    </div>
 	    <input type="checkbox" name="event_is_private" value="1" title="Скрыть" />
 	</div>
 	<div class="task_specific">
-	    <div class="easyui-panel "  title="Программа" data-options="collapsible:true,collapsed:false" style="width:340px;float:left;">
+	    <div class="easyui-panel "  title="Программа" data-options="collapsible:true,collapsed:true" style="width:340px;float:left;">
 		<div id="event_program" style="max-height: 200px;overflow-y: auto;">
 		    {{commands}}
 		    Комманда {{##}}. <a href="javascript:App.page_events_event.task.commandDelete('{{#}}')">Удалить</a> | <a href="javascript:App.page_events_event.task.commandAdd('{{#}}')">Добавить</a>

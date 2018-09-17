@@ -26,36 +26,31 @@ class Task extends Events {
 
     
     private function execute_task(){
-	$this->log("TASK {$this->currentTask->event_name} is executing");
 	$this->eventUpdate($this->currentTask->event_id, 'event_status', 'executing');
+	$this->log("TASK '{$this->currentTask->event_name}' is started");
+	$this->currentTask->event_status = 'undone';
+	$this->currentTask->event_date_done=date("Y-m-d H:i");
 	if ( $this->execute_program() ) {
 	    $this->currentTask->event_status = 'done';
 	    if ($this->currentTask->event_repeat !='') {
 		$this->postpone("'{$this->currentTask->event_repeat}' DAY_MINUTE");
-		$this->currentTask->event_status = 'undone';
+		$this->currentTask->event_status = 'pending';
 	    }
-	} else {
-	    //$this->postpone("1 HOUR");
-	    $this->currentTask->event_status = 'undone';
 	}
-	$this->currentTask->event_date_done=date("Y-m-d H:i");
 	return $this->saveTask();	
     }
     
     private function execute_program() {
-	if ( !isset($this->currentTask->event_program )) {
+	if ( !isset($this->currentTask->event_program ) ){
 	    return true;
 	}
 	$program = json_decode($this->currentTask->event_program);
 	$program_length = count($program->commands);
 	for ($i=0; $i < $program_length; $i++) {
-	//$this->log("TASK program");
 	    $command = $program->commands[$i];
-	    if ( $this->currentTask->event_target > $i) {
+	    if ( $this->currentTask->event_target > $i ) {
 		continue;
 	    }
-	    //print_r($command);
-	    //print_r($this->currentTask);
 	    $this->currentTask->event_note = $this->execute_command($command, $this->currentTask->event_note);
 	    $this->currentTask->event_target = $i+1;
 	    if ($this->currentTask->event_target == $program_length) {
@@ -72,7 +67,7 @@ class Task extends Events {
     private function execute_command($command, $previous_return) {
 	$args = [];
 	$arguments=  explode(',', $command->arguments);
-	if (is_array($arguments)) {
+	if( is_array($arguments) ){
 	    foreach ($arguments as $arg) {
 		if ($arg == '-PREVIOUS-RETURN-') {
 		    $arg = $previous_return;
@@ -83,7 +78,7 @@ class Task extends Events {
 	$this->logErrors();
 	$Model = $this->Hub->load_model($command->model);
 	$return = call_user_func_array([$Model, $command->method], $args);
-	$this->log("TASK {$this->currentTask->event_name} {$command->model}->{$command->method}($command->arguments): RETURNED VALUE:$return");
+	$this->log("TASK {$this->currentTask->event_name} {$command->model}->{$command->method}(".implode(',',$args)."): RETURNED VALUE:'$return'");
 	return $return;
     }
     
@@ -94,7 +89,6 @@ class Task extends Events {
 	    global $_this;
 	    $message = "Type: " . get_class( $e ) . "; Message: {$e->getMessage()}; File: {$e->getFile()}; Line: {$e->getLine()};";
 	    $_this->log($message);
-	    exit;
 	}
 	function log_error( $num, $str, $file, $line ){
 	    log_exception( new ErrorException( $str, 0, $num, $file, $line ) );
@@ -108,7 +102,7 @@ class Task extends Events {
 	register_shutdown_function( "check_for_fatal" );
 	set_error_handler( "log_error" );
 	set_exception_handler( "log_exception" );
-	//ini_set( "display_errors", "off" );
+	ini_set( "display_errors", "off" );
 	error_reporting( E_ALL );
     }
 
@@ -129,14 +123,14 @@ class Task extends Events {
 	$sql="
 	    SELECT
 		*,
-		DATE_FORMAT(event_date,'%d.%m.%Y') event_date_dmy,
+		DATE_FORMAT(event_date,'%d.%m.%Y %H:%i:%s') event_date_dmyt,
 		(SELECT nick FROM user_list WHERE user_id=created_by) created_by,
 		(SELECT nick FROM user_list WHERE user_id=modified_by) modified_by
 	    FROM
 		event_list
 	    WHERE
 		event_label='-Task-'
-	    ORDER BY event_status='undone',event_priority";
+	    ORDER BY event_status<>'undone',event_status<>'pending',event_priority";
 	return $this->get_list($sql);
     }
 }

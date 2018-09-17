@@ -405,7 +405,7 @@ App.chatCheck=function(){
 	});
     }
     clearTimeout(App.chatclock);
-    App.chatclock=setTimeout(App.chatCheck,1000*60);
+    App.chatclock=setTimeout(App.chatCheck,1000*30);
 };
 App.chatInit=function(){
     setTimeout(App.chatCheck,1000*4);

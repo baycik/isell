@@ -136,20 +136,33 @@ class Maintain extends CI_Model {
     
     //public $backupDumpFtpUpload=['f' =>'string'];
     public function backupDumpFtpUpload($filename){
-	$ftp_server=$this->Hub->pref('FTP_SERVER');
-	$ftp_user=$this->Hub->pref('FTP_USER');
-	$ftp_pass=$this->Hub->pref('FTP_PASS');
-	$remote_name=  'backup.zip';//array_pop( explode('/', $filename) );
 	//return copy($filename,"ftp://$ftp_user:$ftp_pass@$ftp_server/$remote_name");
 	if( !file_exists($filename) ){
 	    return false;
 	}
-	$file_handler=fopen($filename, 'r');
-	$conn_id = ftp_connect($ftp_server);
-	if( !ftp_login($conn_id, $ftp_user, $ftp_pass) ){
-	    return "FTP ERROR:could not login";
+	$this->load->library('ftp');
+	$config['hostname'] = $this->Hub->pref('FTP_SERVER');
+	$config['username'] = $this->Hub->pref('FTP_USER');
+	$config['password'] = $this->Hub->pref('FTP_PASS');
+	$config['debug']        = TRUE;
+	$this->ftp->connect($config);
+	$remote_name=  array_pop( explode('/', $filename) );
+	$ok=$this->ftp->upload($filename, $remote_name, 'auto', 0600);
+	$this->backupDumpFtpCleanup();
+	$this->ftp->close();
+	return $ok;
+    }
+    
+    private function backupDumpFtpCleanup(){
+	$list = $this->ftp->list_files();
+	if( !$list ){
+	    return false;
 	}
-	return ftp_fput($conn_id, $remote_name, $file_handler, FTP_ASCII);
+	rsort($list);
+	$old_files=array_slice ($list,10);
+	foreach($old_files as $filename){
+	    $this->ftp->delete_file($filename);
+	}
     }
 
     public $backupList = [];
