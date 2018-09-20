@@ -1,4 +1,6 @@
 <?php
+    define("BAY_APP_FOLDER", 'application/');
+    define("BAY_VIEW_FOLDER", 'application/views/' );
 class PluginManager extends Catalog{
     public $min_level=1;
     private $plugin_folder='application/plugins/';
@@ -109,6 +111,7 @@ class PluginManager extends Catalog{
 	$ok=$this->pluginUpdate($plugin_system_name,$data);
 	$this->pluginInitTriggers();
 	$this->plugin_do($plugin_system_name, 'activate');
+        $this->modify_reset();
 	return $ok;
     }
     
@@ -122,6 +125,7 @@ class PluginManager extends Catalog{
 	$ok=$this->pluginUpdate($plugin_system_name,$data);
 	$this->pluginInitTriggers();
 	$this->plugin_do($plugin_system_name, 'deactivate');
+        $this->modify_reset();
 	return $ok;
     }
     
@@ -204,23 +208,80 @@ class PluginManager extends Catalog{
 	}
 	return null;
     }
-    private function getActivePlugins(){
+    
+    public function getActivePlugins(){
         $sql="SELECT 
             plugin_system_name
         FROM 
             plugin_list 
         WHERE 
             is_activated";
-	return $this->get_list($sql);
+	return ($this->get_list($sql));
     }
     
-    
+     
     public $modify=[];
     
     public function modify(){
         return $active_plugins = $this->getActivePlugins();
         
     }
+    
+    private $backup_prefix = "---";
+    public function modify_modificate ($plugmod){
+        if(!file_exists($plugmod)){
+            return true;
+        }
+        include $plugmod; 
+        $this->modify_backup_file($filename);
+        $altered_html = '';
+        $source_html = file_get_contents(BAY_VIEW_FOLDER.$filename);
+        if ($replace){
+            $trans = array($search => $replace, $replace => $search);
+            $altered_html = strtr($source_html, $trans);
+            
+        }else if ($before){
+            $position = strpos($source_html, $search);
+            $altered_html = substr_replace($source_html, $before, $position, 0);
+        }else if ($after){
+            $position = strpos($source_html, $search)+ strlen($search);
+            $altered_html = substr_replace($source_html, $after, $position, 0);
+        }
+        $this->modify_write_down(BAY_VIEW_FOLDER.$filename, $altered_html);
+    }
+    public $modify_reset = [];
+    public function modify_reset (){
+        foreach (glob(BAY_VIEW_FOLDER.'*/'.$this->backup_prefix.'*.html') as $filename) {
+            $info = pathinfo($filename);
+            $backup_file = $info['basename'];
+            $last_file_name = substr($backup_file, 3);
+            $main_directory = $info['dirname'];
+            copy($main_directory.'/'.$backup_file, $main_directory.'/'.$last_file_name);
+        }
+        $this->modify_scan();
+        return true;
+    }
+    
+    private function modify_write_down($filename, $filedata){
+        file_put_contents($filename, $filedata);
+    }
+    public $modify_scan=[];
+    public function modify_scan (){
+        $array = $this->getActivePlugins();
+        foreach ($array as $row) {
+            $plugin_folder = BAY_APP_FOLDER.'plugins/'.$row->plugin_system_name;
+            
+            $this->modify_modificate($plugin_folder.'/plugmod.php');
+        }
+    }
+    public function modify_backup_file ($file){
+        $devide_path = pathinfo($file);
+        $backup_file_name = BAY_VIEW_FOLDER.$devide_path['dirname'].'/'.$this->backup_prefix.$devide_path['basename'];
+        if (!file_exists ($backup_file_name)){
+            copy(BAY_VIEW_FOLDER.$file, $backup_file_name);
+        }
+    }
+
     
     
     

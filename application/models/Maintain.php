@@ -30,6 +30,12 @@ class Maintain extends CI_Model {
 	return true;
     }
     
+    public $updatePluginRefresh=[];
+    public function updatePluginRefresh(){
+	return $this->Hub->load_model('PluginManager')->modify_reset();
+	
+    }
+    
     private function updateDb(){
 	$result=$this->db->query("SELECT pref_value FROM pref_list WHERE pref_name='db_applied_patches'");
 	$db_applied_patches=$result->row()?$result->row()->pref_value:'';
