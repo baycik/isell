@@ -146,7 +146,8 @@ class Maintain extends CI_Model {
 	$config['password'] = $this->Hub->pref('FTP_PASS');
 	$config['debug']        = TRUE;
 	$this->ftp->connect($config);
-	$remote_name=  array_pop( explode('/', $filename) );
+	$path_info=pathinfo($filename);
+	$remote_name=  $path_info['basename'];
 	$ok=$this->ftp->upload($filename, $remote_name, 'auto', 0600);
 	$this->backupDumpFtpCleanup();
 	$this->ftp->close();
