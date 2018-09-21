@@ -122,14 +122,14 @@ App.page_events_scheduler={
 	    });
 	},
 	print:function(node){
-	    var label=$(node).parent().data('header');
-	    App.page_events_scheduler.selectedDay
+	    //var label=$(node).parent().data('header');
+	    //App.page_events_scheduler.selectedDay
 	    
 	},
 	out:function( label, out_type ){
 	    var params={
 		label:label,
-		event_date_dmy:App.page_events_scheduler.selectedDay,
+		event_date:App.page_events_scheduler.selectedDay,
 		out_type:out_type
 	    };
 	    var url='Events/eventViewGet/?'+$.param( params );
