@@ -94,6 +94,8 @@ class Task extends Events {
 	    log_exception( new ErrorException( $str, 0, $num, $file, $line ) );
 	}
 	function check_for_fatal(){
+	    global $_this;
+	    $_this->saveTask();
 	    $error = error_get_last();
 	    if ( $error["type"] == E_ERROR ){
 		log_error( $error["type"], $error["message"], $error["file"], $error["line"] );
