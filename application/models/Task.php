@@ -119,9 +119,14 @@ class Task extends Events {
 	$this->currentTask->event_status='pending';
 	$this->log("TASK {$this->currentTask->event_name} postponed $interval");
     }
-
-    public $taskListFetch=[];
-    public function taskListFetch(){
+    
+    public $taskListFetch=['offset'=>'int','limit'=>'int','sortby'=>'string','sortdir'=>'(ASC|DESC)','filter'=>'json'];
+    public function taskListFetch($offset,$limit,$sortby,$sortdir,$filter=null){
+	if( empty($sortby) ){
+	    $sortby="event_status<>'undone',event_status<>'pending',event_priority";
+	    //$sortdir="DESC";
+	}
+	$having=$this->makeFilter($filter);
 	$sql="
 	    SELECT
 		*,
@@ -132,7 +137,9 @@ class Task extends Events {
 		event_list
 	    WHERE
 		event_label='-Task-'
-	    ORDER BY event_status<>'undone',event_status<>'pending',event_priority";
+	    HAVING $having
+	    ORDER BY $sortby $sortdir
+	    LIMIT $limit OFFSET $offset";
 	return $this->get_list($sql);
     }
 }
