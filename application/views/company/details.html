@@ -126,12 +126,11 @@
                 count: 5
             }).css('width','210px');
 	},
-	DaDataSet:function(name,value,skip){
-            console.log('set',name,value,skip);
+	DaDataSet:function(name,value){
 	    var current_value=$("input[name="+name+"]").val();
 	    if(current_value!=value){
 		$("input[name="+name+"]").val(value);
-		skip!=='skip' && $("input[name="+name+"]").trigger("change");
+		App.page_company_details.updateField(name,value,$("input[name="+name+"]").attr('title'));
 	    }
 	},
 	checkActive:function(){
