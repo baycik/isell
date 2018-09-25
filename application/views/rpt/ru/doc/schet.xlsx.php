@@ -14,7 +14,7 @@
         $all.=$comp->company_bank_corr_account?", к/с:{$comp->company_bank_corr_account}":'';
         $all.=$comp->company_bank_name?" в {$comp->company_bank_name}":'';
         $all.=$comp->company_bank_id?", БИК:{$comp->company_bank_id}":'';
-        $all.=$comp->company_vat_id?", ИНН:{$comp->company_vat_id}":'';
+        $all.=$comp->company_tax_id?", ИНН:{$comp->company_tax_id}":'';
         $all.=$comp->company_code?", ОКПО:{$comp->company_code}":'';
         $all.=$comp->company_email?", E-mail:{$comp->company_email}":'';
         $all.=$comp->company_web?",{$comp->company_web}":'';

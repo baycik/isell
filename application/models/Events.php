@@ -18,6 +18,7 @@ class Events extends Catalog{
 		event_list 
 	    WHERE 
 		event_label<>'chat' 
+		AND event_label<>'-Task-'
 		AND ( NOT event_is_private OR event_is_private AND (event_creator_user_id='$user_id' OR $user_level>=3) )
 	    ORDER BY event_date DESC";
 	return $this->get_list($sql);
@@ -41,17 +42,17 @@ class Events extends Catalog{
 		    OR DATEDIFF(event_date,'$date')%event_repeat=0
 		    OR event_status='undone' AND DATE(event_date)<DATE('$date')
 		) 
-                AND event_label<>'chat' $label_filter 
+                AND event_label<>'chat'
+		AND event_label<>'-Task-' $label_filter 
 	    ORDER BY event_status='undone' AND DATE(event_date)<DATE(NOW()),event_label,event_priority IS NULL,event_priority,event_target";
 	return $this->get_list($sql);
     }
     
     public $eventGet=['int'];
     public function eventGet( $event_id ){
-	$this->check($event_id,'int');
 	$sql="SELECT
 		*,
-		DATE_FORMAT(event_date,'%d.%m.%Y') event_date,
+		DATE_FORMAT(event_date,'%d.%m.%Y') event_date_dmy,
 		(SELECT nick FROM user_list WHERE user_id=created_by) created_by,
 		(SELECT nick FROM user_list WHERE user_id=modified_by) modified_by,
 		event_status
@@ -65,6 +66,10 @@ class Events extends Catalog{
     public $eventDelete=['int'];
     public function eventDelete( $event_id ){
 	return $this->delete("event_list",['event_id'=>$event_id]);
+    }
+    
+    protected function eventChange($event_id, $event){
+	return $this->update('event_list', $event, ['event_id'=>$event_id]);
     }
     
     public $eventUpdate=['int','\w+','raw'];
@@ -86,6 +91,7 @@ class Events extends Catalog{
 	    'event_place'=>$this->request('event_place','raw'),
 	    'event_note'=>$this->request('event_note','raw'),
 	    'event_descr'=>$this->request('event_descr','raw'),
+	    'event_program'=>$this->request('event_program','raw'),
 	    'event_repeat'=>$this->request('event_repeat'),
 	    'event_status'=>$this->request('event_status'),
 	    'event_liable_user_id'=>$this->request('event_liable_user_id'),
@@ -94,9 +100,10 @@ class Events extends Catalog{
 	];
 	if( !$event_id ){
 	    $event['created_by']=$this->Hub->svar('user_id');
+	    $event['event_creator_user_id']=$this->Hub->svar('user_id');
 	    return $this->create('event_list', $event);
 	}
-	return $this->update('event_list', $event, ['event_id'=>$event_id]);
+	return $this->eventChange($event_id, $event);
     }
     
     public $eventMove=['int','\d\d\d\d-\d\d-\d\d','string','\d\d\d\d-\d\d-\d\d','string'];

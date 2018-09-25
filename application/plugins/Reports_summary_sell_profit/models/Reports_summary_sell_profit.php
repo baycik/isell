@@ -26,6 +26,7 @@ class Reports_summary_sell_profit extends Catalog{
 	$this->group_by=$this->request('group_by','\w+');
         $this->path_include=$this->request('path_include');
         $this->path_exclude=$this->request('path_exclude');
+        $this->use_total_price=$this->request('use_total_price','bool',0);
 	if( !in_array($this->group_by, ['label','product_code','analyse_type','analyse_brand','analyse_class','product_article']) ){
 	    $this->group_by='label';
 	}
@@ -104,8 +105,8 @@ class Reports_summary_sell_profit extends Catalog{
 		    analyse_class,
 		    product_article,
 		    SUM( de.product_quantity ) sell_qty,
-		    SUM( de.self_price/IF($this->in_alt_currency,doc_ratio,1)*de.product_quantity ) self_prod_sum,
-		    SUM( de.invoice_price/IF($this->in_alt_currency,doc_ratio,1)*de.product_quantity ) sell_prod_sum
+		    SUM( de.self_price/IF($this->in_alt_currency,doc_ratio,1)*de.product_quantity*IF($this->use_total_price,1+dl.vat_rate/100,1) ) self_prod_sum,
+		    SUM( de.invoice_price/IF($this->in_alt_currency,doc_ratio,1)*de.product_quantity*IF($this->use_total_price,1+dl.vat_rate/100,1) ) sell_prod_sum
 		FROM
 		    document_entries de
 			JOIN

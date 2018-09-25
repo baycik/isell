@@ -132,31 +132,36 @@ class Document extends Data {
 	$this->Base->query("UPDATE document_list SET modified_by='$user_id' WHERE doc_id='" . $this->doc('doc_id') . "'");
     }
 
-//    protected function isDebtLimitExceeded() {
-//	if ($this->doc('doc_type') != 1) {
-//	    /* only for sell docs */
-//	    return false;
-//	}
-//	$debt_limit = $this->Base->pcomp('debt_limit');
-//	if ($debt_limit == 0) {
-//	    $this->Base->LoadClass('PrefOld');
-//	    $prefs = $this->Base->PrefOld->prefGet();
-//	    $debt_limit = $prefs['default_debt_limit'];
-//	    if ($debt_limit == 0) {
-//		return false;
-//	    }
-//	}
-//	$pcomp_id = $this->Base->pcomp('company_id');
-//	$this->Base->LoadClass('Accounts');
-//	$debt_account = $this->Base->Accounts->getAccountBalance(361, $pcomp_id);
-//	$footer = $this->fetchFooter();
-//	$off_limit = $footer['total'] + $debt_account['balance'] - $debt_limit;
-//	if ($off_limit > 0) {
-//	    $this->Base->msg("Лимит долга в $debt_limit превышен на " . round($off_limit, 2) . "{$footer['curr_symbol']}!\nОбратитесь к администратору системы для изменения лимита.");
-//	    return true;
-//	}
-//	return false;
-//    }
+    protected function isDebtLimitExceeded() {
+	if ($this->doc('doc_type') != 1) {
+	    /* only for sell docs */
+	    return false;
+	}
+	$debt_limit = $this->Base->pcomp('debt_limit');
+	$deferment = $this->Base->pcomp('deferment');
+	if ($debt_limit == 0) {
+	    $this->Base->LoadClass('PrefOld');
+	    $prefs = $this->Base->PrefOld->prefGet();
+	    $debt_limit = $prefs['default_debt_limit'];
+	    if ($debt_limit == 0) {
+		return false;
+	    }
+	}
+	$pcomp_id = $this->Base->pcomp('company_id');
+	$this->Base->LoadClass('Accounts');
+	$debt_account = $this->Base->Accounts->getAccountBalance(361, $pcomp_id,$deferment);
+	$footer = $this->fetchFooter();
+	$off_limit = $footer['total'] + $debt_account['balance'] - $debt_limit;
+	if( $off_limit > 0 ){
+	    $this->Base->msg("Лимит долга в $debt_limit превышен на " . round($off_limit, 2) . "{$footer['curr_symbol']}!\n");
+	    return true;
+	}
+        if( $deferment>0 && $debt_account['expired_balance']>0 ){
+	    $this->Base->msg("Имеется просроченная задолженность " . round($debt_account['expired_balance'], 2) . "{$footer['curr_symbol']}!\n");
+	    return true;
+        }
+	return false;
+    }
 
     protected function normalizeQuantitySign() {
 	$doc_id = $this->doc('doc_id');
@@ -190,9 +195,9 @@ class Document extends Data {
 	    $this->Base->msg("Документ уже проведен!\n");
 	    return false;
 	}
-	//if ($this->isDebtLimitExceeded()) {
-	//    return false;
-	//}
+	if ( $this->isDebtLimitExceeded() ) {
+	    return false;
+	}
 	$doc_id = $this->doc('doc_id');
 
 	$company_lang = $this->Base->pcomp('language');
@@ -285,7 +290,7 @@ class Document extends Data {
 
 	if ($this->doc('doc_type') == 1) {//Sell document
 	    if ($action == 'commit' || ($this->isCommited() && isset($new_invoice))) {
-		$self = $this->getProductSellSelfPrice($entry['product_code'], $quantity);
+		$self = $this->getProductSellSelfPrice($entry['product_code'], $quantity, $this->doc('cstamp'));
 	    } else {
 		$self = $entry['self_price'];
 	    }
@@ -502,8 +507,8 @@ class Document extends Data {
 	$footer['vatless'] = number_format($footer['vatless'], 2, ',', '');
 	$footer['vat'] = number_format($footer['vat'], 2, ',', '');
 	$footer['total'] = number_format($footer['total'], 2, ',', '');
-	$active['cvi'] = str_pad($active['company_vat_id'], 12, ' ', STR_PAD_LEFT);
-	$passive['cvi'] = str_pad($passive['company_vat_id'], 12, ' ', STR_PAD_LEFT);
+	$active['cvi'] = str_pad($active['company_tax_id'], 12, ' ', STR_PAD_LEFT);
+	$passive['cvi'] = str_pad($passive['company_tax_id'], 12, ' ', STR_PAD_LEFT);
 	if (!$passive['company_agreement_date'] && !$passive['company_agreement_num']) {
 	    $passive['company_agreement_date'] = $view['tstamp'];
 	    $passive['company_agreement_num'] = '-';
@@ -682,7 +687,7 @@ class Document extends Data {
 		return;
 	    }
 	    $view_num = $this->getViewNextNum($view_type_id);
-            if ($this->Base->pcomp('company_vat_id')){
+            if ($this->Base->pcomp('company_tax_id')){
                 $efields = '{"sign":"' . $this->Base->acomp('company_director') . '"}';
             }
 	    else{
@@ -1332,20 +1337,22 @@ class Document extends Data {
         }
     }
 
-    protected function getProductSellSelfPrice($product_code, $invoice_qty) {
-	$this->Base->LoadClass('Stock');
-	$stock_self = $this->Base->Stock->getEntrySelfPrice($product_code);
-	if ($stock_self > 0)
-	    return $stock_self;
-	/*
-	 * IF self price is not set
-	 * qty=0 or something else set
-	 * selfPrice as current buy price
-	 */
-	$price = $this->getRawProductPrice($product_code, $this->doc('doc_ratio'));
-	$price_self = $price['buy'] ? $price['buy'] : $price['sell'];
-	//$this->Base->Stock->setEntrySelfPrice($product_code, $price_self);
-	return $price_self;
+    protected function getProductSellSelfPrice($product_code, $invoice_qty,$fdate) {
+        return $this->Base->get_row("SELECT LEFTOVER_CALC('$product_code','$fdate','$invoice_qty','selfprice')",0);
+
+//	$this->Base->LoadClass('Stock');
+//	$stock_self = $this->Base->Stock->getEntrySelfPrice($product_code);
+//	if ($stock_self > 0)
+//	    return $stock_self;
+//	/*
+//	 * IF self price is not set
+//	 * qty=0 or something else set
+//	 * selfPrice as current buy price
+//	 */
+//	$price = $this->getRawProductPrice($product_code, $this->doc('doc_ratio'));
+//	$price_self = $price['buy'] ? $price['buy'] : $price['sell'];
+//	//$this->Base->Stock->setEntrySelfPrice($product_code, $price_self);
+//	return $price_self;
     }
 
     protected function getProductPrice($product_code) {

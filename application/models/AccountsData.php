@@ -147,6 +147,9 @@ class AccountsData extends AccountsCore{
             $passive_filter="AND passive_company_id='$passive_company_id'";
         }
         $deferment=$this->Hub->pcomp('deferment');
+        if( !$deferment ){
+            $deferment=0;
+        }
         $sql="SELECT FORMAT(total,2,'ru_RU') total,FORMAT(total-allowed,2,'ru_RU') expired FROM
                 (SELECT 
 		    SUM( IF($acc_code=acc_debit_code,amount,-amount) ) total,

@@ -217,6 +217,18 @@ App.toDmy = function (iso) {
     }
     return iso?iso.replace(/^(\d\d\d\d)-(\d\d)-(\d\d)T?(\d\d:\d\d:\d\d)?Z?$/, "$3.$2.$1"):null;
 };
+App.toDmyt = function (iso) {
+    var date;
+    if ( iso instanceof Date ) {
+	date=iso;
+    } else {
+	date=new Date(iso);
+    }
+    if( date instanceof Date ){
+	 return String("0" + date.getDate()).slice(-2) + '.' + String("0" + (date.getMonth() + 1)).slice(-2) + '.' + date.getFullYear()+' '+date.getHours()+':'+date.getMinutes();
+    }
+    return null;
+};
 App.today = function () {
     return App.toDmy(new Date());
 };
@@ -393,7 +405,7 @@ App.chatCheck=function(){
 	});
     }
     clearTimeout(App.chatclock);
-    App.chatclock=setTimeout(App.chatCheck,1000*60);
+    App.chatclock=setTimeout(App.chatCheck,1000*30);
 };
 App.chatInit=function(){
     setTimeout(App.chatCheck,1000*4);

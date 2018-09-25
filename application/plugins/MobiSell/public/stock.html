@@ -208,14 +208,14 @@
                 //Добавляем товару свойство is_in_cart
                 App.stock.list[i].quantity_added = App.stock.cart.is_there(App.stock.list[i].product_code);
                 App.stock.list[i].is_promo = (App.stock.list[i].product_price_total !== App.stock.list[i].product_price_total_raw) ? 1 : 0;
-                if( App.user.props.user_level<2 ){
+                /*if( App.user.props.user_level<2 ){
                     var lo=App.stock.list[i].leftover;
                     App.stock.list[i].stared_leftover=
                             lo<10?'★☆☆☆☆':
                             lo<50?'★★☆☆☆':
                             lo<100?'★★★☆☆':
                             lo<500?'★★★★☆':'★★★★★';
-                }
+                }*/
             }
         },
         // Рендеринг списка товаров

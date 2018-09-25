@@ -12,14 +12,14 @@
 class Storage extends CI_Model {
     public $storageFolder = '../storage';
     
-    public function file_store($path, $data) {
+    public function file_store($path, $data, $flag=NULL) {
 	$parts = explode('/', $path);
 	$filename = array_pop($parts);
 	$dir_path = $this->storageFolder . "/" . implode('/', $parts);
 	if (!file_exists($dir_path)) {
 	    mkdir($dir_path, 0777, true);
 	}
-	return file_put_contents("$dir_path/$filename", $data);
+	return file_put_contents("$dir_path/$filename", $data, $flag);
     }
 
     public function file_restore($path) {

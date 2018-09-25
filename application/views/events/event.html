@@ -1,77 +1,166 @@
 <script type="text/javascript">
     /*global App */
     App.page_events_event = {
-        init: function () {
-            this.node.window({
-                title: 'Редактирование задания',
-                width: 800,
-		top:50,
+	init: function () {
+	    this.node.window({
+		title: 'Редактирование задания',
+		width: 800,
+		top: 50,
 		height: 'auto',
-		shadow:false,
-		onClose:function(){
+		shadow: false,
+		onClose: function () {
 		    App.page_events_event.node.remove();
 		    delete App.page_events_event;
 		}
-            });
+	    });
 	    this.node.window('hcenter');
-	    this.node.window('window').css('position','fixed');
-	    
-	    this.data.event_date=this.data.event_date || App.toDmy(new Date());
-	    this.data.created_by=this.data.created_by||'-';
-	    this.data.modified_by=this.data.modified_by||'-';
-	    this.data.event_priority=this.data.event_priority||'3medium';
-	    this.data.event_status=this.data.event_status||'undone';
+	    this.node.window('window').css('position', 'fixed');
+
+	    this.prepareData();
+	    this.checkIfTask();
 	    App.setupForm("#page_events_event_frm", this.data);
-	    App.renderTpl('page_events_event_frm_modified',this.data);
-            if (this.data.event_id) {
-                $('#event_delete_button').attr('disabled', false);
-            }
-            $('#page_events_event_frm').submit(function (event) {
-                event.preventDefault();
-                var fvalue = App.collectForm("#page_events_event_frm");
-                App.page_events_event.data = fvalue;
-                App.page_events_event.saveEvent(fvalue);
-            });
+	    App.renderTpl('page_events_event_frm_modified', this.data);
+	    if (this.data.event_id) {
+		$('#event_delete_button').attr('disabled', false);
+	    }
+	    $('#page_events_event_frm').submit(function (event) {
+		event.preventDefault();
+		var fvalue = App.collectForm("#page_events_event_frm");
+		App.page_events_event.data = fvalue;
+		App.page_events_event.saveEvent(fvalue);
+	    });
 	    this.loadStaffList();
-        },
-	loadStaffList:function(){
-	    App.get("Pref/getStaffList",function(resp){
-		var staff=App.json(resp);
-		App.renderTpl('page_events_event_frm_liable',{staff_list:staff});
+	},
+	prepareData:function(){
+	    this.data.event_date = this.data.event_date_dmy || App.toDmy(new Date());
+	    this.data.created_by = this.data.created_by || '-';
+	    this.data.modified_by = this.data.modified_by || '-';
+	    this.data.event_priority = this.data.event_priority || '3medium';
+	    this.data.event_status = this.data.event_status || 'undone';
+	    
+	    var interval=[0,0,0,0];
+	    if( this.data.event_repeat ){
+		interval = this.data.event_repeat.match(/(\d+)\s?(\d+):?(\d+)/);
+	    }
+	    this.data.event_repeat_day=interval[1];
+	    this.data.event_repeat_hour=interval[2];
+	    this.data.event_repeat_minute=interval[3];
+	    
+	},
+	loadStaffList: function () {
+	    App.get("Pref/getStaffList", function (resp) {
+		var staff = App.json(resp);
+		App.renderTpl('page_events_event_frm_liable', {staff_list: staff});
 		$("select[name=event_liable_user_id]").val(App.page_events_event.data.event_liable_user_id);
 	    });
 	},
-        saveEvent: function (fvalue) {
-	    var card_event_id=fvalue.event_id;
-            fvalue.event_date = App.toIso(fvalue.event_date);
-            App.post('Events/eventSave/'+card_event_id,fvalue,function( resp ){
-		if( !card_event_id ){//new record card_event_id==0
+	saveEvent: function (fvalue) {
+	    fvalue=this.task.programCompile(fvalue);
+	    var card_event_id = fvalue.event_id;
+	    fvalue.event_date = App.toIso(fvalue.event_date);
+	    if( fvalue.event_repeat_day || fvalue.event_repeat_hour || fvalue.event_repeat_minute ){
+		fvalue.event_repeat=fvalue.event_repeat_day+' '+fvalue.event_repeat_hour+':'+fvalue.event_repeat_minute;
+	    }
+	    App.post('Events/eventSave/' + card_event_id, fvalue, function (resp) {
+		if (!card_event_id) {//new record card_event_id==0
 		    fvalue.event_id = resp;
 		    $("input[name='event_id']").val(fvalue.event_id);
 		    App.page_events_event.data = fvalue;
 		}
-                App.flash("Запись сохранена: " + fvalue.event_name);
+		App.flash("Запись сохранена: " + fvalue.event_name);
 		App.page_events_event.handler.notify('create', fvalue);
-                App.page_events_event.node.window('close');                
-            });
-        },
-        deleteEvent: function () {
-            if (confirm('Удалить запись?') && App.page_events_event.data.event_id) {
-                App.post('Events/eventDelete/'+App.page_events_event.data.event_id,function(ok){
-		    if( ok*1 ){
+		App.page_events_event.node.window('close');
+	    });
+	},
+	deleteEvent: function () {
+	    if (confirm('Удалить запись?') && App.page_events_event.data.event_id) {
+		App.post('Events/eventDelete/' + App.page_events_event.data.event_id, function (ok) {
+		    if (ok * 1) {
 			App.flash("Запись удалена");
 			App.page_events_event.handler.notify('delete');
 			App.page_events_event.node.window('close');
-		    }else {
+		    } else {
 			App.flash("Запись неудалена");
 		    }
-                });
-            }
+		});
+	    }
 	},
-        setLabel: function (label) {
-            App.page_events_event.data.event_label = label;
-            $('[name="event_label"]').val(label);
-        }
+	setLabel: function (label) {
+	    App.page_events_event.data.event_label = label;
+	    $('[name="event_label"]').val(label);
+	},
+	task:{
+	    programCompile:function(fvalue){
+		var program={commands:[]};
+		var commands=[];
+		for(var name in fvalue){
+		    if( name.indexOf('task_')>-1 ){
+			var task_details=name.split('_');
+			var cindex=task_details[1];
+			var ckey=task_details[2];
+			var cvalue=fvalue[name];
+			delete fvalue[name];
+			if( !commands[cindex] ){
+			    commands[cindex]={};
+			}
+			commands[cindex][ckey]=cvalue;
+		    }
+		}
+		for(var i in commands ){
+		    if( commands[i] && commands[i].model ){
+			program.commands.push(commands[i]);
+		    }
+		}
+		fvalue.event_program=JSON.stringify(program);
+		return fvalue;
+	    },
+	    programDecompile:function(program){
+		if( program && Array.isArray(program.commands) ){
+		    for(var i in program.commands){
+			if( !program.commands[i] ){
+			    continue;
+			}
+			App.page_events_event.data["task_"+i+"_model"]=program.commands[i].model;
+			App.page_events_event.data["task_"+i+"_method"]=program.commands[i].method;
+			App.page_events_event.data["task_"+i+"_arguments"]=program.commands[i].arguments;
+			App.page_events_event.data["task_"+i+"_async"]=program.commands[i].async;
+			App.page_events_event.data["task_"+i+"_disabled"]=program.commands[i].disabled;
+		    }
+		} else {
+		    program={commands:[{}]};
+		}
+		App.renderTpl('event_program',program);
+	    },
+	    commandDelete:function(index){
+		if( this.program && this.program.commands ){
+		    this.program.commands.splice(index,1);
+		    this.programDecompile(this.program);
+		    App.setupForm("#page_events_event_frm", App.page_events_event.data);
+		}
+	    },
+	    commandAdd:function(index){
+		if( this.program && this.program.commands ){
+		    if( index<0 ){
+			index=this.program.commands.length;
+		    }
+		    this.program.commands.splice(index,0,{model:'',metod:'',arguments:''});
+		    this.programDecompile(this.program);
+		    App.setupForm("#page_events_event_frm", App.page_events_event.data);
+		}
+	    }
+	},
+
+	checkIfTask:function(){
+	    if( this.data.event_label==='-TASK-' ){
+		$('.task_specific').show();
+		$('.task_unspecific').hide();
+		this.task.program=App.json(App.page_events_event.data.event_program);
+		this.task.programDecompile(this.task.program);
+	    } else {
+		$('.task_specific').hide();
+		$('.task_unspecific').show();
+	    }
+	}
     };
 </script>
 <form id="page_events_event_frm" onsubmit="return false;" style="-moz-user-select:none;">
@@ -80,43 +169,70 @@
     <input type="hidden" name="event_id"/>
     <img src="img/event.png" style="float:left;margin: 5px;" />
     <div style="display: inline-block;width: 320px;">
-        <input type="text" name="event_date" title="Дата" style="width:100px" class="easyui-datebox" />
+        <input type="text" name="event_date" title="Дата" class="easyui-datebox" />
         <input type="text" name="event_name" title="Задание" />
+	<div class="inp_group task_unspecific">
         <input type="text" name="event_place" title="Место" />
         <input type="text" name="event_target" title="Цель" />
         <input type="text" name="event_note" title="Контакт" />
-        <textarea rows="4" name="event_descr" placeholder="Комментарий" style="width: 300px"></textarea>
+	</div>
+        <textarea rows="4" name="event_descr" placeholder="Комментарий" style="width: 305px"></textarea>
 	<div id="page_events_event_frm_modified">
 	    <img src="img/add-16.png" title="Создано пользователем" style="vertical-align: middle"> {{created_by}} 
 	    <img src="img/edit-16.png" title="Изменено пользователем" style="vertical-align: middle"> {{modified_by}}
 	</div>
     </div>
     <div style="display: inline-block;width: 320px;vertical-align: top">
-        <div class="inp_group" style="text-align: right;">
+        <div class="inp_group task_unspecific" style="text-align: right;">
             <a href="javascript:App.page_events_event.setLabel('Доставка')">Доставка</a> | 
             <a href="javascript:App.page_events_event.setLabel('Напоминание клиенту')">Напоминание клиенту</a> | 
             <a href="javascript:App.page_events_event.setLabel('Задания на складе')">Задания на складе</a> 
+	    <input type="text" name="event_label" placeholder="Группа" title="Группа задания" style="background-color:#FFFFCC" />
         </div>
-        <input type="text" name="event_label" placeholder="Группа" title="Группа задания" style="background-color:#FFFFCC" />
-	<select name="event_status" title="Выполнено">
-	    <option value="pending">В процессе</option>
-	    <option value="undone" style="color: red">Не выполнено</option>
-	    <option value="done" style="color: green">Выполнено</option>
-	</select>
-	<select name="event_liable_user_id" id="page_events_event_frm_liable" title="Закреплено за">
-	    {{staff_list}}
-	    <option value="{{user_id}}">{{full_name}}</option>
-	    {{/staff_list}}
-	</select>
-	<select name="event_priority" title="Приоритет">
-	    <option value="1critical" style="background-color: red">Критический</option>
-	    <option value="2high" style="background-color: yellow">Высокий</option>
-	    <option value="3medium" selected="selected">Средний</option>
-	    <option value="4low" style="background-color: #ccc">Низкий</option>
-	    <option value="5future" style="background-color: green">В планах</option>
-	</select>
-        <input type="text" name="event_repeat" placeholder="Повторять задание (дн.)" title="Повторять через"/>
-        <input type="checkbox" name="event_is_private" value="1" title="Скрыть" />
+        
+	
+	<div class="easyui-panel" title="Другие настройки" data-options="collapsible:true,collapsed:true" style="width:340px;float:left">
+	    <select name="event_status" title="Статус">
+		<option value="undone" style="color: red">Не выполнено</option>
+		<option value="done" style="color: green">Выполнено</option>
+		<option value="pending" style="color: blue">Ожидает</option>
+		<option value="executing">Исполняется</option>
+	    </select>
+	    <select name="event_liable_user_id" id="page_events_event_frm_liable" title="Закреплено за">
+		{{staff_list}}
+		<option value="{{user_id}}">{{full_name}}</option>
+		{{/staff_list}}
+	    </select>
+	    <select name="event_priority" title="Приоритет">
+		<option value="1critical" style="background-color: red">Критический</option>
+		<option value="2high" style="background-color: yellow">Высокий</option>
+		<option value="3medium" selected="selected">Средний</option>
+		<option value="4low" style="background-color: #ccc">Низкий</option>
+		<option value="5future" style="background-color: green">В планах</option>
+	    </select>
+	    <div style="line-height: 22px;">
+		<input type="number" name="event_repeat_day" title="Интервал" placeholder="Дней" style="width:38px" min="0" max="365"/>дн.
+		<input type="number" name="event_repeat_hour" placeholder="Часов" style="width:38px" min="0" max="24"/>час.
+		<input type="number" name="event_repeat_minute" placeholder="Минут" style="width:38px" min="0" max="60"/>мин.
+	    </div>
+	    <input type="checkbox" name="event_is_private" value="1" title="Скрыть" />
+	</div>
+	<div class="task_specific">
+	    <div class="easyui-panel "  title="Программа" data-options="collapsible:true,collapsed:true" style="width:340px;float:left;">
+		<div id="event_program" style="max-height: 200px;overflow-y: auto;">
+		    {{commands}}
+		    Комманда {{##}}. <a href="javascript:App.page_events_event.task.commandDelete('{{#}}')">Удалить</a> | <a href="javascript:App.page_events_event.task.commandAdd('{{#}}')">Добавить</a>
+		    <input name="task_{{#}}_model" title="Модель" value="{{model}}">
+		    <input name="task_{{#}}_method" title="Метод" value="{{method}}">
+		    <input name="task_{{#}}_arguments" title="Аргументы" value="{{arguments}}">
+		    <input name="task_{{#}}_async" title="Асинхронная" type="checkbox">
+		    <input name="task_{{#}}_disabled" title="Отключена" type="checkbox">
+		    <hr style="clear: both;color:#ddd">
+		    {{/commands}}
+		    <a href="javascript:App.page_events_event.task.commandAdd(-1)">Добавить</a>
+		</div>
+	    </div>
+	</div>
     </div>
     <div style="text-align: center;margin-top: 30px;">
         <button type="submit"><img src="img/Save-24.png" style="vertical-align: middle" /> Сохранить</button>

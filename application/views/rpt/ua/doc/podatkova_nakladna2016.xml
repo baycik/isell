@@ -36,8 +36,8 @@
     <HNUM1 xsi:nil="true" />
     <HNAMESEL>{$v->a->company_name}</HNAMESEL>
     <HNAMEBUY>{$v->p->company_name}</HNAMEBUY>
-    <HKSEL>{$v->a->company_vat_id}</HKSEL>
-    <HKBUY>{$v->p->company_vat_id}</HKBUY>
+    <HKSEL>{$v->a->company_tax_id}</HKSEL>
+    <HKBUY>{$v->p->company_tax_id}</HKBUY>
     <R04G11>{function="str_replace(',','.',$v->footer->total)"}</R04G11>
     <R03G11>{function="str_replace(',','.',$v->footer->vat)"}</R03G11>
     <R03G7>{function="str_replace(',','.',$v->footer->vat)"}</R03G7>
