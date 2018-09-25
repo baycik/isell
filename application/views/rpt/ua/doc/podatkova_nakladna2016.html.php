@@ -1,11 +1,11 @@
 <?php 
-if( empty($this->view->p->company_vat_id) ){
+if( empty($this->view->p->company_tax_id) ){
     $this->view->p->company_name="Неплатник податку";
     $this->view->p->company_jaddress="-";
     if( empty($this->view->doc_view->extra->type_of_reason) ){
 	$this->view->doc_view->extra->type_of_reason="02";
     }
-    $this->view->p->company_vat_id="100000000000";
+    $this->view->p->company_tax_id="100000000000";
 }
 if( $this->view->doc_view->extra->type_of_reason ){
     $this->view->doc_view->stay_at_seller='X';

@@ -1,0 +1,147 @@
+<script>
+(function($){
+    Task={
+	init:function(){
+	    Task.table.init();
+	},
+	table:{
+	    init:function(){
+		var frm={
+		    status:function(row, cell, value, columnDef, dataContext){
+			var img='',title='';
+			switch(value){
+			    case 'undone':
+				img='red.png';
+				title='Не выполнено';
+				break;
+			    case 'done':
+				img='ok.png';
+				title='Выполнено';
+				break;
+			    case 'executing':
+				img='bolt.png';
+				title='Исполняется';
+				break;
+			    case 'pending':
+				img='time.png';
+				title='Ожидает';
+				break;
+			}
+			return '<img src="img/'+img+'" title="'+title+'" style="margin:2px;">';
+		    },
+		    toDmyt:function(row, cell, value, columnDef, dataContext){
+			return App.toDmyt(value);
+		    }
+		};
+		var settings = {
+		    columns:  [
+			{id:'event_status',field:'event_status',name:'Статус',formatter:frm.status, sortable: true, width: 20},
+			{id:'event_name',field:'event_name',name:'Название', sortable: true, width: 150},
+			{id:'event_descr',field:'event_descr',name:'Комментарий', sortable: true, width: 350},
+			{id:'event_repeat',field:'event_repeat',name:'Повтор', sortable: true, width: 100},
+			{id:'event_date',field:'event_date',name:'След. Запуск',formatter:frm.toDmyt, sortable: true, width: 100},
+			{id:'event_date_done',field:'event_date_done',name:'Послед. Запуск',formatter:frm.toDmyt, sortable: true, width: 100},
+			{id:'event_note',field:'event_note',name:'Результат', sortable: true, width: 100},
+			{id:'event_taget',field:'event_target',name:'Этап', sortable: true, width: 25},
+			{id:'modified_by',field:'modified_by',name:'Изменено', sortable: true, width: 40},
+			{id:'created_by',field:'created_by',name:'Создано', sortable: true, width: 40},
+			{id:'event_date_created',field:'event_date_created',name:'Создано',formatter:frm.toDmyt, sortable: true, width: 100}
+		    ],
+		    options: {
+			editable: true,
+			autoedit: true,
+			enableCellNavigation: true,
+			enableFilter: true,
+			multiSelect: false,
+			url: 'Task/taskListFetch/'
+		    }
+		};
+		Task.grid = new SlickInfinite("#page_events_task_sg", settings);
+		Task.grid.onDblClick.subscribe(function (e, data) {
+		    var focus='';
+		    try{
+			focus=Task.grid.getColumns()[data.cell].field;
+		    } catch(e){
+
+		    }
+		    Task.table.tools.entryEdit(focus);
+		});
+		$(".x-event-task-tools").click(function (e) {
+		    var action = $(e.target).data('action');
+		    if (action) {
+			Task.table.tools[action] && Task.table.tools[action]();
+		    }
+		});
+	    },
+	    tools:{
+		entryDelete: function () {
+		    var selected_rows = Task.grid.getSelectedRows();
+		    if (!selected_rows.length) {
+			App.flash("Ни одна строка не выбрана!");
+			return;
+		    }
+		    if (!confirm("Удалить выделенные задания?")) {
+			return;
+		    }
+		    var row_data=Task.grid.getDataItem(selected_rows[0]);
+		    var event_id = row_data.event_id;
+
+		    $.post('Event/eventDelete/'+event_id, function (ok) {
+			if (ok * 1) {
+			    App.flash("Задание удалено");
+			    Task.grid.reload();
+			} else {
+			    App.flash("Задание не удалено");
+			}
+		    });
+		},
+		entryCreate: function () {
+		    var fvalue = {event_label:'-TASK-'};
+		    Task.showEventDialog(fvalue);
+		},
+		entryEdit: function (focus) {
+		    var selected_rows = Task.grid.getSelectedRows();
+		    if (!selected_rows.length) {
+			App.flash("Ни одна строка не выбрана!");
+			return;
+		    }
+		    var row_data=Task.grid.getDataItem(selected_rows[0]);
+		    if( row_data ){
+			row_data.focus=focus;
+			Task.showEventDialog(row_data);
+		    }
+		},
+		reload:function(){
+		    Task.grid.reload();
+		}
+	    }
+	},
+	showEventDialog:function(fvalue){
+	    App.loadWindow('page/events/event', fvalue).progress(function (status, fvalue) {
+		if (status === 'update' || status === 'create' || status === 'delete') {
+		    Task.grid.reload();
+		}
+	    });
+	}
+    };
+
+    App.require(["js/slick/lib/jquery.event.drag-2.3.0.js","js/jquery-ui.min.js"], function () {
+	App.require([
+	    "js/slick/slick.core.js",
+	    "js/slick/plugins/slick.rowselectionmodel.js",
+	    "js/slick/slick.editors.js",
+	    "js/slick/slickinfinite.js",
+	    "js/slick/slick.grid.js"
+	], Task.init);
+    });
+})(jQuery);
+</script>
+<div class="x-event-task-tools" style="text-align: right;">
+    <span data-action="entryCreate" class="icon-24 icon-create" title="Добавить"> </span>
+    <span data-action="entryEdit" class="icon-24 icon-change" title="Изменить"> </span>
+    <span data-action="entryDelete" class="icon-24 icon-delete" title="Удалить"> </span>
+    <span data-action="reload" class="icon-24 icon-refresh" title="Обновить"> </span>
+    <span data-action="out" class="icon-24 icon-download" title="Скачать таблицу"> </span>
+    <span data-action="print" class="icon-24 icon-print" title="Печать"> </span>
+</div>
+<div id="page_events_task_sg" style="height: 300px;"></div>

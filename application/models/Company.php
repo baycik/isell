@@ -120,14 +120,14 @@ class Company extends Catalog{
     }
     
     public $companyFindByCode=['int','int'];
-    public function companyFindByCode( $company_code=null, $company_vat_id=null, $company_bank_account=null ){
+    public function companyFindByCode( $company_code=null, $company_tax_id=null, $company_bank_account=null ){
         $sql="SELECT 
                 company_id 
             FROM 
                 companies_list 
             WHERE 
                 IF('$company_code',company_code='$company_code',0) 
-                OR IF('$company_vat_id',company_vat_id='$company_vat_id',0)
+                OR IF('$company_tax_id',company_tax_id='$company_tax_id',0)
                 OR IF('$company_bank_account',company_bank_account='$company_bank_account',0)";
         return $this->get_value($sql);
     }
@@ -267,6 +267,7 @@ class Company extends Catalog{
 	    ORDER BY label";
 	$sql_other="SELECT
 		deferment,
+                debt_limit,
 		curr_code,
 		price_label,
                 expense_label,
@@ -295,7 +296,7 @@ class Company extends Catalog{
 	    case 'discount':
 		return $this->discountUpdate($field,$value);
 	    case 'other':
-		if( in_array($field, array('deferment','curr_code','price_label','expense_label','manager_id','is_supplier','company_acc_list','language')) ){
+		if( in_array($field, array('deferment','debt_limit','curr_code','price_label','expense_label','manager_id','is_supplier','company_acc_list','language')) ){
 		    $passive_company_id = $this->Hub->pcomp('company_id');
 		    $this->query("UPDATE companies_list SET $field='$value' WHERE company_id=$passive_company_id");
 		    $ok=$this->db->affected_rows();

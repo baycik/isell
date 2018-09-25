@@ -167,7 +167,7 @@
 
         </ROW>
         <ROW TAB="0" LINE="0" NAME="N4">
-          <VALUE>{$v.p.company_vat_id}</VALUE>
+          <VALUE>{$v.p.company_tax_id}</VALUE>
         </ROW>
         <ROW TAB="0" LINE="0" NAME="N5">
           <VALUE>{$v.p.company_jaddress}</VALUE>
@@ -177,7 +177,7 @@
           <VALUE>{$v.p.company_phone}</VALUE>
         </ROW>
         <ROW TAB="0" LINE="0" NAME="N7">
-          <VALUE>{$v.p.company_vat_licence_id}</VALUE>
+          <VALUE>{$v.p.company_tax_id2}</VALUE>
         </ROW>
         <ROW TAB="0" LINE="0" NAME="N8">
           <VALUE>Договір поставки</VALUE>

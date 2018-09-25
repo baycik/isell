@@ -4,11 +4,11 @@
 | Enable/Disable Migrations
 |--------------------------------------------------------------------------
 |
-| Migrations are disabled by default but should be enabled 
+| Migrations are disabled by default but should be enabled
 | whenever you intend to do a schema migration.
 |
 */
-$config['migration_enabled'] = FALSE;
+$config['migration_enabled'] = false ;
 
 
 /*

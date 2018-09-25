@@ -11,7 +11,13 @@ body{
 .app_window{
     background: url(../img/window-bg.png) repeat-x;
 }
-
+a{
+    text-decoration: none;
+    color:#0099FF;
+}
+a:hover{
+    border-bottom: dashed 1px #09f;
+}
 
 .inp_rule{
     border-bottom: 1px solid #ccc;

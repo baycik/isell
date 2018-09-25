@@ -33,6 +33,9 @@ DataJs={
 	    if( struct[i].Type.indexOf('double')>-1 || struct[i].Type.indexOf('decimal')>-1 || struct[i].Type.indexOf('int')>-1 ){
 		struct[i].width=70;
 	    }
+	    if( struct[i].Type.indexOf('text')>-1){
+		struct[i].width=350;
+	    }
 	    this.tableWidth+=struct[i].width;
 	    if( struct[i].Key==="PRI" ){
 		DataJs.tableKey.push(struct[i].Field);
