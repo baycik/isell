@@ -254,7 +254,6 @@ class OpencartSync extends OpencartSyncUtils{
             case 'fetch_digest':
                 $current_step='send_products';
                 $product_count=$this->productDigestGet();
-                $this->logstart();
                 if( $product_count ){
                     $this->message.="Recieved $product_count digests from remote server";
                 } else {
@@ -274,12 +273,6 @@ class OpencartSync extends OpencartSyncUtils{
         header("Refresh: 1; url=./?step=$current_step");
         $this->log($this->message);
         echo $this->message;
-    }
-    
-    private function logstart(){
-        $this->Hub->load_model("Storage")->file_remove('OpencartSync/synclog.log');
-        $log  = "-------------------------".PHP_EOL."SYNC STARTED User: ".$this->Hub->svar('user_name').' - '.date("d.m.Y H:i:s").PHP_EOL;
-        $this->log($log);   
     }
     
     public $log_show=[];
