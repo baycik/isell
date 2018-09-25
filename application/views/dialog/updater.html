@@ -24,7 +24,7 @@
 	    $('#updater_status').show('slow');
 	    this.chain(0);
 	},
-	actionQueue:['download','unpack','swap','install'],
+	actionQueue:['download','unpack','swap','install','plugin_refresh'],
 	chain:function( step ){
 	    $('#updater_status_'+this.actionQueue[step-1]+' img').attr('src','img/ok.png');
 	    var action=this.actionQueue[step];
@@ -33,7 +33,9 @@
 		var url="../UpdateInstaller.php?echo=1&step="+action;
 		if( action==='install' ){
 		    url='Maintain/updateInstall/';
-		}
+		}else if ( action === 'plugin_refresh'){
+                    url='Maintain/updatePluginRefresh';
+                }
 		$.get(url,function(ok){
 		    if(ok*1){
 			App.page_dialog_updater.chain(step+1);
@@ -75,6 +77,7 @@
     <div id="updater_status_unpack"><img src="img/time.png"> Распаковка архива</div>
     <div id="updater_status_swap"><img src="img/time.png"> Установка файлов</div>
     <div id="updater_status_install"><img src="img/time.png"> Настройка базы данных</div>
+    <div id="updater_status_plugin_refresh"><img src="img/time.png"> Настройка плагинов</div>
     <div id="updater_status_finish"><img src="img/time.png"> Финиш!</div>
 </div>
 <div style="text-align: center">

@@ -36,7 +36,22 @@ class Storage extends CI_Model {
 	}
 	return unlink($this->storageFolder . "/" . $path);
     }
-
+    
+    public function dir_remove ($path){
+        return $this->delTree($this->storageFolder . "/".$path);
+    }
+    
+    private function delTree($path) {
+	if (!file_exists($path)) {
+	    return true;
+	}
+	$files = array_diff(scandir($path), array('.', '..'));
+	foreach ($files as $file) {
+	    (is_dir("$path/$file")) ? $this->delTree("$path/$file") : unlink("$path/$file");
+	}
+	return rmdir($path);
+    }
+    
     public function file_list($dir) {
 	$this->load->helper('directory');
 	return directory_map($this->storageFolder . "/" . $dir);

@@ -73,7 +73,10 @@
 	do:function(action){
 	    App.post('PluginManager/'+action,{plugin_system_name:Plugin.current_system_name},function(ok){
 		App.page_pref_plugins.tile.load();
-	    });	    
+	    });
+            if(action === "deactivate_plugin" | action === "activate_plugin" && confirm("Были внесены изменения. Обновите страницу, чтобы изменения вступили в силу.")){
+                location.reload();
+            };
 	},
 	initButtons:function(){
 	    $(".x-plugins-buttons").click(function(e){

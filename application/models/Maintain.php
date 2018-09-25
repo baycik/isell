@@ -31,11 +31,19 @@ class Maintain extends CI_Model {
 	$this->updateDb();
 	return true;
     }
-
-    private function updateDb() {
-	$result = $this->db->query("SELECT pref_value FROM pref_list WHERE pref_name='db_applied_patches'");
-	$db_applied_patches = $result->row() ? $result->row()->pref_value : '';
-	$directory = str_replace("\\", "/", $this->dirWork . '/install/db_update/');
+    
+    public $updatePluginRefresh=[];
+    public function updatePluginRefresh(){
+        $PluginManager=$this->Hub->load_model('PluginManager');
+        $PluginManager->mod_clear_backup();
+	return $PluginManager->mod_scan();
+	
+    }
+    
+    private function updateDb(){
+	$result=$this->db->query("SELECT pref_value FROM pref_list WHERE pref_name='db_applied_patches'");
+	$db_applied_patches=$result->row()?$result->row()->pref_value:'';
+	$directory = str_replace("\\", "/", $this->dirWork.'/install/db_update/');
 	$patches = array_diff(scandir($directory), array('..', '.'));
 	foreach ($patches as $patch) {
 	    $patch_version = str_replace('.sql', '', $patch);
