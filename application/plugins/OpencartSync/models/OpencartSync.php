@@ -281,9 +281,6 @@ class OpencartSync extends OpencartSyncUtils{
         $log  = "-------------------------".PHP_EOL."SYNC STARTED User: ".$this->Hub->svar('user_name').' - '.date("d.m.Y H:i:s").PHP_EOL;
         $this->log($log);   
     }
-    private function log($msg){
-        $this->Hub->load_model("Storage")->file_store('OpencartSync/synclog.log', $msg.PHP_EOL, FILE_APPEND);
-    }
     
     public $log_show=[];
     public function log_show(){
