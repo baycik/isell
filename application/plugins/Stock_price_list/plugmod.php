@@ -1,7 +1,7 @@
 <?php
     
 $filename=<<<EOT
-stock/stock_main.html
+views/stock/stock_main.html
 EOT;
 $search=<<<EOT
 <div title="Движения товара" href="page/stock/movements.html" style="min-height: 500px;"></div>

@@ -32,7 +32,9 @@ class Maintain extends CI_Model {
     
     public $updatePluginRefresh=[];
     public function updatePluginRefresh(){
-	return $this->Hub->load_model('PluginManager')->modify_reset();
+        $PluginManager=$this->Hub->load_model('PluginManager');
+        $PluginManager->mod_clear_backup();
+	return $PluginManager->mod_scan();
 	
     }
     
