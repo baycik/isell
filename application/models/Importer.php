@@ -8,7 +8,7 @@ class Importer extends Catalog{
 	}
 	$having=$this->makeFilter($filter);
 	$sql="
-	    insert 2 (after)SELECTinsert 1 (before) 
+	    SELECT 
 		*
 	    FROM 
 		imported_data
@@ -51,17 +51,16 @@ class Importer extends Catalog{
                     $skip_this_row=true;
 		    $set=['label'=>$label];
 		    foreach ($row->getCellIterator() as $cell) {
+                        $i++;
 			if( $i>16 ){
 			    break;
 			}
                         $value = $cell->getValue();
                         if( $value==null || $value=='' || $value==' ' ){
-                            //continue;
-                            $value='';
+                            continue;
                         }
                         $set[$f[$i]]=$value;
                         $skip_this_row=false;
-                        $i++;
 		    }
                     if( !$skip_this_row ){
                         $this->create('imported_data',$set);

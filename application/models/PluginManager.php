@@ -1,5 +1,4 @@
 <?php
-    define("BAY_STORAGE_FOLDER",'../storage/modificator_backup');
 class PluginManager extends Catalog{
     public $min_level=1;
     private $plugin_folder='application/plugins/';
