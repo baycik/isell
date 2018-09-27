@@ -1,57 +1,88 @@
 <script>
 App.counting = {
     current_product_index: '',
+    currentType: 'Document',
+    log:[],
     test_array: [
         {
             product_code: '24130407',
             product_name: 'Nilson Серебро Выключатель проход. без рамки',
-            product_quantity: '3',
-            product_verified: '0',
-            product_unit: 'шт'
+            product_quantity: 3,
+            product_verified: 0,
+            product_unit: 'шт',
+            verified: 0,
+            box_quantity: 12
         },
         {
             product_code: 'A0367',
             product_name: 'Лампа светодиодная шар 3.5Вт Е14 теплый 320Лм АСД',
-            product_quantity: '5',
-            product_verified: '0',
-            product_unit: 'шт'
+            product_quantity: 5,
+            product_verified: 0,
+            product_unit: 'шт',
+            verified: 0,
+            box_quantity: 12
         },
         {
             product_code: 'A0596',
             product_name: 'Светильник светодиодный аварийный СБА 8032С 24LED с наклейкой "ВЫХОД" lead-acid АС/DC',
-            product_quantity: '2',
-            product_verified: '0',
-            product_unit: 'уп'
+            product_quantity: 2,
+            product_verified: 0,
+            product_unit: 'уп',
+            verified: 0,
+            box_quantity: 10
         }
     ],
     init: function (){
-        this.focus(); 
+        this.initTab();
+        this.focus();
+    },
+    initTab: function () {
+        $('.counting_tabs .item').tab({
+            onVisible: function (type) {
+                App.counting.currentType = type;
+                App.counting.load(type);
+            }
+        });
+        $('.counting_tabs .item').tab('change tab', App.counting.currentType);
+       
     },
     focus: function () {
-            App.title("Учет");
-            this.load();
+        App.title("Учет");
+        this.load();
     },
-    load: function (){
-        this.render();
+    load: function (type){
+        if ( type === 'Document'){
+            this.render();
+        } else if ( type === 'Log'){
+            App.renderTpl("log_list", {log_list: App.counting.log});
+        }    
     },
     render: function (){
         App.renderTpl("product_list", {products: App.counting.test_array});
     },
     edit_quantity: function (node) {
         App.counting.current_product_index = $(node).data('index');
-        $('.ui.small.modal').modal('show');
+        $('#counting_quantity_popup').modal('show');
         App.renderTpl("quan_popup_content", {products: App.counting.test_array[App.counting.current_product_index]});
     },
     multiply_quantity: function () {
         var fvalue = $('#counting_popup_quan_form').form('get values');
-        var product_verified = App.counting.test_array[App.counting.current_product_index].product_verified = fvalue.product_verified;
+        var product_verified = App.counting.test_array[App.counting.current_product_index].product_verified += fvalue.product_input * 1;
         var product_quantity = App.counting.test_array[App.counting.current_product_index].product_quantity;
-        if ( product_verified === product_quantity ){
-            $('#verification_indicator_'+App.counting.current_product_index).hide();
-            console.log('VERIFIED!!!',App.counting.test_array);
+        if ( product_verified === product_quantity || product_verified > product_quantity){
+            App.counting.test_array[App.counting.current_product_index].verified = 1;
+            //$('#verification_indicator_'+App.counting.current_product_index).hide();
         };
-        $('.ui.small.modal').modal('hide');
+        App.counting.write_to_log(fvalue);
+        $('#counting_quantity_popup').modal('hide');
         App.counting.render();
+    },
+    write_to_log: function (entry){
+        var date = new Date();
+        entry.time = date.getFullYear() + '-' + date.getMonth() + '-' + date.getDate() + ' ' + date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds(); 
+        //entry.time = new Date ().toISOString();
+        App.counting.log.push(entry);
+        console.log(entry);
     }
 };   
     
@@ -62,19 +93,36 @@ App.counting = {
 
 
 <style>
-
     #counting_list .product_row .three wide column{
         height: 1em;
         overflow: hidden;
-    } 
-
+    }
+    div table .product_row .product_name {
+        max-height: 7.3em !important;
+        overflow: hidden !important;
+    }
+    div table .product_row .product_name div .three.wide.column{
+        padding-top: 10px !important;
+        padding-bottom: 0px !important;
+    }
+    .ui.celled.unstackable.selectable.table{
+        border-top: none;
+    }
+    .counting_product_name{
+        height: 4em;
+        overflow-y: hidden;
+    }
 </style>
- <div id="product_list" >
-     
-     <table id="counting_list" class="ui celled green unstackable selectable table" >
+
+ <div class="ui top attached tabular menu counting_tabs">
+      <a class="active item" data-tab="Document">Документ</a>
+      <a class="item" data-tab="Log">Операции</a>
+</div>
+<div id="product_list" class="ui bottom attached tab covert" data-tab="Document">
+     <table id="counting_list" class="ui celled unstackable selectable table" >
         <tr>
             <th>
-                <div class="ui two column stackable grid">
+                <div class="ui two column grid">
                     <div class="six wide column">Код</div>         
                     <div class="four wide column">Название</div>
                 </div>
@@ -89,8 +137,8 @@ App.counting = {
         <tr class="product_row" data-index="{{#}}" onclick="App.counting.edit_quantity(this)">
             <td class="product_name">
                 <div class="ui two column stackable grid">
-                    <div class="three wide column">{{product_code}}</div>
-                    <div class="seven wide column">{{product_name}}</div>
+                    <div class="three wide column"><b>{{product_code}}</b></div>
+                    <div class="seven wide column counting_product_name">{{product_name}}</div>
                 </div>
             </td>
             <td class="right-aligned">
@@ -101,20 +149,62 @@ App.counting = {
             </td>
             <td>
                 <div id="verification_indicator_{{#}}">
-                    <i class="check circle icon"></i>
+                {{if verified|equals>0}}
+                    <div>
+                        <i class="exclamation circle red icon"></i>
+                    </div>
+                {{else}}
+                    <div>
+                        <i class="check circle green icon"></i>
+                    </div>
                 </div>
-                <div style="display:none">
-                    <i class="exclamation circle red icon"></i>
-                </div>
+                {{/if}}
             </td>
         <!--{{/products}}-->
         </tr>
      </table>
- </div>
+</div>
 
-<div class="ui small modal">
-    <div id="quan_popup_content">
-        <div class="ui header">Изменение количества</div>
+<div id="log_list" class="ui bottom attached  tab covert" data-tab="Log">
+    <table id="log_list_content" class="ui celled unstackable selectable table" >
+        <tr>
+            <th class="left-aligned"> 
+                <div class="five wide column">Время проверки</div>
+            </th>  
+            <th>
+                <div class="ui three column grid">
+                    <div class="three wide column">Код</div>         
+                    <div class="six wide column">Название</div>
+                    <div class="three wide column">Количество</div>
+                </div>
+            </th>  
+            
+        </tr>
+     
+     
+        <!--{{log_list}}-->
+        <tr class="log_list_row" >
+            <td class="left-aligned">
+                <div class="ui grid">
+                    <div class="five wide column"><i>{{time}}</i></div>
+                </div>
+            </td>
+            <td class="log_name">
+                <div class="ui three column stackable grid">
+                    <div class="three wide column"><b>{{product_code}}</b></div>
+                    <div class="seven wide column counting_product_name">{{product_name}}</div>
+                    <div class="three wide column">{{product_input}}</div>
+                </div>
+            </td>
+            
+        <!--{{/log_list}}-->
+        </tr>
+     </table>
+</div>
+
+<div id="counting_quantity_popup" class="ui small modal">
+    <div id="quan_popup_content" class="ui segment">
+        <div class="ui header centered">Изменение количества</div>
         <!--{{products}}-->
         <table class="ui very basic table">
             <tr class="positive"><td class="center aligned">{{product_name}}</td></tr>
@@ -130,9 +220,9 @@ App.counting = {
                 <input type='hidden' name='product_name' value='{{product_name}}'>
                 <input type='hidden' name='product_code' value='{{product_code}}'>
                 <input type='hidden' name='product_quantity' value='{{product_quantity}}'>
-                <input type="number" name="product_verified" placeholder="Количество" min="1"
+                <input type="number" name="product_input" placeholder="Количество"
                        onfocus="this.select()"
-                       value="{{product_verified|blank>1}}">
+                       value="{{box_quantity|blank>1}}">
             </div>
         <!--{{/products}}-->
             <div class="actions" style="margin-left: auto; margin-right: auto">
@@ -140,6 +230,10 @@ App.counting = {
                 Готово
             </button>
             <button class="ui labeled icon cancel button">
+                 <i class="ban icon"></i>
+                 Отмена
+            </button>
+            <button class="ui fluid labeled icon cancel button">
                  <i class="ban icon"></i>
                  Отмена
             </button>
