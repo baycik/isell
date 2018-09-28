@@ -2,7 +2,7 @@
 
 class Maintain extends CI_Model {
 
-    private $dirDbBackup = "/ISELL_DBBACKUP/";
+    private $dirDbBackup = BAY_STORAGE."db_backup/";
     private $dirWork;
 
     function __construct() {
@@ -118,7 +118,7 @@ class Maintain extends CI_Model {
 	$this->Hub->set_level(4);
 	$path_to_mysql = $this->db->query("SHOW VARIABLES LIKE 'basedir'")->row()->Value;
 	if (!file_exists($this->dirDbBackup)) {
-	    mkdir($this->dirDbBackup);
+	    mkdir($this->dirDbBackup,0777 ,true);
 	}
 	$output = [];
 	$filename = $this->dirDbBackup . date('Ymd_His') . "_" . BAY_DB_NAME . '_BACKUP.sql';

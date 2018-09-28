@@ -4,14 +4,14 @@ $filename=<<<EOT
 views/stock/stock_main.html
 EOT;
 $search=<<<EOT
-<!--PLUGIN-TABS-->
+<!--PLUGINS-->
 EOT;
 $replace=<<<EOT
 EOT;
 $before=<<<EOT
 EOT;
 $after=<<<EOT
-\n  <div title="Печать ценников" href="StockPriceLabel/dialog.html" ></div>
+\n  <div title="Менеджер документов" href="DocumentManager/document_manager.html" ></div>
 EOT;
 
 

@@ -120,6 +120,7 @@ class User extends Catalog {
 	$this->Hub->svar('user_assigned_stat',$user_data->user_assigned_stat);
 	$this->Hub->svar('user_assigned_path',$user_data->user_assigned_path);
         $this->Hub->svar('user',$user_data);
+	$this->Hub->svar('modules_allowed',$this->getModuleList());
 
 	$Company=$this->Hub->load_model("Company");
 	if( $user_data->company_id ){
@@ -144,7 +145,7 @@ class User extends Catalog {
 	    'user_level_name'=>$this->Hub->svar('user_level_name'),
 	    'acomp'=>$this->Hub->svar('acomp'),
 	    'pcomp'=>$this->Hub->svar('pcomp'),
-	    'module_list'=>$this->getModuleList()
+	    'module_list'=>$this->Hub->svar('modules_allowed')
 	];
     }
     private function getModuleList(){
@@ -152,7 +153,7 @@ class User extends Catalog {
 	$alowed=array();
 	foreach( $mods as $mod ){
 	    if( $this->Hub->svar('user_level')>=$mod->level ){// && strpos(BAY_ACTIVE_MODULES, "/{$mod->name}/")!==false 
-		$alowed[]=$mod;
+		$alowed[$mod->name]=$mod;
 	    }
 	}
 	return $alowed;
