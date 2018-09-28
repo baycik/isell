@@ -2,7 +2,18 @@
 App.counting = {
     current_product_index: '',
     currentType: 'Document',
-    log:[],
+    log:[
+        {
+        product_code: "A0367",
+        product_input: "12",
+        product_name: "Лампа светодиодная шар 3.5Вт Е14 теплый 320Лм АСД",
+        product_quantity: "5",
+        time: "27.09.2018 15:19:59"
+        }
+    ],
+    counting_document_list: [
+        
+    ],
     test_array: [
         {
             product_code: '24130407',
@@ -33,12 +44,27 @@ App.counting = {
         }
     ],
     init: function (){
-        this.initTab();
-        this.focus();
+            this.initTab();
+            this.focus(); 
+            
+        }
+            
+    },
+    data_in_storage: function(){
+        var storage_product_list = App.json(App.restore ('product_list'));
+        var storage_log_list = App.json(App.restore ('log_list'));
+        console.log('works');
+        if (storage_product_list != null && storage_log_list != null){
+            return true;
+        } else {
+            
+            console.log('works');
+            return false;
+        }
     },
     initTab: function () {
         $('.counting_tabs .item').tab({
-            onVisible: function (type) {
+            onLoad: function (type) {
                 App.counting.currentType = type;
                 App.counting.load(type);
             }
@@ -52,13 +78,44 @@ App.counting = {
     },
     load: function (type){
         if ( type === 'Document'){
-            this.render();
+            this.render_document();
         } else if ( type === 'Log'){
-            App.renderTpl("log_list", {log_list: App.counting.log});
-        }    
+            this.render_log();
+        }
     },
-    render: function (){
+    render_log: function (){
+        var now = new Date();
+        var today=now.toLocaleDateString();
+        var yesterday = new Date(now.setDate(now.getDate() - 1)).toLocaleDateString();
+        //$('.counting_tabs .item').tab('change tab', 'Log');
+        var search_data = $("#counting_log_search_input").val();
+        var product_log = [];
+        for (var i=0; i<App.counting.log.length; i++){
+            search_data = search_data.replace(' ', '|');
+            var pattern = new RegExp(search_data, 'i');
+            var product_data = App.counting.log[i].product_name + ' ' + App.counting.log[i].product_code;
+            var test = pattern.test (product_data);
+            App.counting.log[i].time = App.counting.log[i].time.replace(today, "Сегодня в ").replace( yesterday, "Вчера в ");
+            if( test === true ){
+                product_log.push(App.counting.log[i]);
+                $('#no_match_message').hide();
+            }
+        }
+        App.renderTpl("log_list", {log_list: product_log});
+        if ( product_log.length === 0 ){
+            $('#no_match_message').hide();
+        }
+    },
+    render_document: function (){
+        $("#counting_log_search_input").val('');
+        //$('.counting_tabs .item').tab('change tab', 'Document');
         App.renderTpl("product_list", {products: App.counting.test_array});
+    },
+    generate_product_log: function (){
+        var fvalue = $('#counting_popup_quan_form').form('get values');
+        $('.counting_tabs .item').tab('change tab', 'Log');
+        $("#counting_log_search_input").val(fvalue.product_code);
+        App.counting.render_log();
     },
     edit_quantity: function (node) {
         App.counting.current_product_index = $(node).data('index');
@@ -75,14 +132,14 @@ App.counting = {
         };
         App.counting.write_to_log(fvalue);
         $('#counting_quantity_popup').modal('hide');
-        App.counting.render();
+        App.counting.render_document();
+        App.store('product_list', App.counting.test_array);
     },
     write_to_log: function (entry){
-        var date = new Date();
-        entry.time = date.getFullYear() + '-' + date.getMonth() + '-' + date.getDate() + ' ' + date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds(); 
-        //entry.time = new Date ().toISOString();
+        var date = new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString();
+        entry.time = date;
         App.counting.log.push(entry);
-        console.log(entry);
+        App.store('log_list', App.counting.log);
     }
 };   
     
@@ -165,44 +222,61 @@ App.counting = {
      </table>
 </div>
 
-<div id="log_list" class="ui bottom attached  tab covert" data-tab="Log">
-    <table id="log_list_content" class="ui celled unstackable selectable table" >
-        <tr>
-            <th class="left-aligned"> 
-                <div class="five wide column">Время проверки</div>
-            </th>  
-            <th>
-                <div class="ui three column grid">
-                    <div class="three wide column">Код</div>         
-                    <div class="six wide column">Название</div>
-                    <div class="three wide column">Количество</div>
-                </div>
-            </th>  
+<div  class="ui bottom attached  tab" data-tab="Log">
+    <div id="counting_log_search" class="ui field">
+        <div class="ui field">
+            <label><b>Поиск</b></label>
+            <div class="ui left icon right labeled input fluid" style="margin-bottom: 5px;">
+                <i class="search icon"></i>
+                <input id="counting_log_search_input" placeholder="Введите название или код..." type="text" 
+                       oninput="App.counting.render_log()">
+                <div class="ui basic label" onclick="App.counting.clear_searchbar()"><i class="close icon"></i></div>
+            </div>
+        </div>
+    </div>
+    <div id='no_match_message' class='ui red floating message' style='display:none'>
+        <p>По вашему запросу не найдено ни одной проверки</p>
+    </div>
+    <div id="log_list" class='covert'>
+        <table class="ui celled unstackable selectable table" >
+            <tr>
+                <th class="left-aligned"> 
+                    <div class="five wide column">Время проверки</div>
+                </th>  
+                <th>
+                    <div class="ui three column grid">
+                        <div class="three wide column">Код</div>         
+                        <div class="six wide column">Название</div>
+                        <div class="three wide column">Количество</div>
+                    </div>
+                </th>  
+
+            </tr>
+
+
+            <!--{{log_list}}-->
+            <tr class="log_list_row" >
+                <td class="left-aligned">
+                    <div class="ui grid">
+                        <div class="five wide column"><i>{{time}}</i></div>
+                    </div>
+                </td>
+                <td class="log_name">
+                    <div class="ui three column stackable grid">
+                        <div class="three wide column"><b>{{product_code}}</b></div>
+                        <div class="seven wide column counting_product_name">{{product_name}}</div>
+                        <div class="three wide column">{{product_input}}</div>
+                    </div>
+                </td>
+            </tr>
+            <!--{{/log_list}}-->
             
-        </tr>
-     
-     
-        <!--{{log_list}}-->
-        <tr class="log_list_row" >
-            <td class="left-aligned">
-                <div class="ui grid">
-                    <div class="five wide column"><i>{{time}}</i></div>
-                </div>
-            </td>
-            <td class="log_name">
-                <div class="ui three column stackable grid">
-                    <div class="three wide column"><b>{{product_code}}</b></div>
-                    <div class="seven wide column counting_product_name">{{product_name}}</div>
-                    <div class="three wide column">{{product_input}}</div>
-                </div>
-            </td>
-            
-        <!--{{/log_list}}-->
-        </tr>
-     </table>
+         </table>
+    </div>
 </div>
 
 <div id="counting_quantity_popup" class="ui small modal">
+    
     <div id="quan_popup_content" class="ui segment">
         <div class="ui header centered">Изменение количества</div>
         <!--{{products}}-->
@@ -214,7 +288,7 @@ App.counting = {
                 <td class='left_aligned'>{{product_verified}}/{{product_quantity}}</td>
             </tr>
         </table>
-        <form id='counting_popup_quan_form' class="ui form segment" onsubmit="App.counting.multiply_quantity(); return false">
+        <form id='counting_popup_quan_form' class="ui form segment" onsubmit =>
             <div class="field">
                 <label>Количество</label>
                 <input type='hidden' name='product_name' value='{{product_name}}'>
@@ -224,20 +298,23 @@ App.counting = {
                        onfocus="this.select()"
                        value="{{box_quantity|blank>1}}">
             </div>
-        <!--{{/products}}-->
+        
             <div class="actions" style="margin-left: auto; margin-right: auto">
-            <button type="submit" class="ui labeled green icon submit button">
+            <button type="submit" class="ui labeled green icon submit button" onclick="App.counting.multiply_quantity(); return false">
                 Готово
             </button>
-            <button class="ui labeled icon cancel button">
+            <button class="ui labeled icon cancel button" onclick="App.counting.generate_product_log('Type'); return false">
                  <i class="ban icon"></i>
                  Отмена
             </button>
-            <button class="ui fluid labeled icon cancel button">
+            {{if product_verified|more>0}}    
+            <button class="ui fluid labeled icon approve button" onclick="App.counting.generate_product_log(); return false">
                  <i class="ban icon"></i>
-                 Отмена
+                 История операций
             </button>
+            {{/if}}
             </div>
+            <!--{{/products}}-->
         </form>
     </div>
 </div>
