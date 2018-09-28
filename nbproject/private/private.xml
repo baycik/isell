@@ -3,11 +3,13 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file:/D:/iSell/www/ayderIsell/application/plugins/MobiSell/views/index.html</file>
-            <file>file:/D:/iSell/www/ayderIsell/application/plugins/MobiSell/public/stock.html</file>
-            <file>file:/D:/iSell/www/ayderIsell/application/plugins/MobiSell/public/counting.html</file>
-            <file>file:/D:/iSell/www/ayderIsell/application/models/PluginManager.php</file>
-            <file>file:/D:/iSell/www/ayderIsell/application/models/Importer.php</file>
+            <file>file:/W:/iSell/www/ayderIsell/application/plugins/MobiSell/public/payments.html</file>
+            <file>file:/W:/iSell/www/ayderIsell/application/views/stock/stock_main.html</file>
+            <file>file:/W:/iSell/www/ayderIsell/application/plugins/MobiSell/public/counting.html</file>
+            <file>file:/W:/iSell/www/ayderIsell/application/plugins/MobiSell/views/index.html</file>
+            <file>file:/W:/iSell/www/ayderIsell/application/plugins/Stock_price_list/template.html</file>
+            <file>file:/W:/iSell/www/ayderIsell/application/plugins/MobiSell/public/stock.html</file>
+            <file>file:/W:/iSell/www/ayderIsell/application/plugins/MobiSell/public/indexedDB.html</file>
         </group>
     </open-files>
 </project-private>

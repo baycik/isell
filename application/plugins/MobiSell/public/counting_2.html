@@ -1,0 +1,209 @@
+<script>
+    
+App.counting = {
+    
+    current_product_index: '',
+    test_array: [
+        {
+            product_code: '24130407',
+            product_name: 'Nilson Серебро Выключатель проход. без рамки',
+            product_quantity: '3',
+            product_verified: '0',
+            product_unit: 'шт'
+        },
+        {
+            product_code: 'A0367',
+            product_name: 'Лампа светодиодная шар 3.5Вт Е14 теплый 320Лм АСД',
+            product_quantity: '5',
+            product_verified: '0',
+            product_unit: 'шт'
+        },
+        {
+            product_code: 'A0596',
+            product_name: 'Светильник светодиодный аварийный СБА 8032С 24LED с наклейкой "ВЫХОД" lead-acid АС/DC',
+            product_quantity: '2',
+            product_verified: '0',
+            product_unit: 'уп'
+        }
+    ],
+    /*
+     init: function (){
+        
+    },
+    focus: function () {
+            App.title("Учет");
+            this.load();
+    },
+    load: function (){
+        //this.render();
+    },*/
+ 
+    product_list: new Vue ({
+        el: '#product_list',
+        data: {
+            product_list: [
+            {
+                product_code: '24130407',
+                product_name: 'Nilson Серебро Выключатель проход. без рамки',
+                product_quantity: '3',
+                product_verified: '0',
+                product_unit: 'шт'
+            },
+            {
+                product_code: 'A0367',
+                product_name: 'Лампа светодиодная шар 3.5Вт Е14 теплый 320Лм АСД',
+                product_quantity: '5',
+                product_verified: '0',
+                product_unit: 'шт'
+            },
+            {
+                product_code: 'A0596',
+                product_name: 'Светильник светодиодный аварийный СБА 8032С 24LED с наклейкой "ВЫХОД" lead-acid АС/DC',
+                product_quantity: '2',
+                product_verified: '0',
+                product_unit: 'уп'
+            }
+            ]
+        },
+        methods: {
+            show_popup: function(node){
+                console.log(node);
+                App.counting.current_product_index = $(node).data('index');
+                $('.ui.small.count.modal').modal('show'); 
+            }
+        }
+        
+    }),
+    popup_count: new Vue({
+       el: '#quan_popup_content',
+       //data: App.counting.test_array[App.counting.current_product_index],
+       methods: {
+           close_popup: function(){
+               
+               $('.ui.small.count.modal').modal('hide');
+           }
+       }
+    })
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    /*render: function (){
+        App.renderTpl("product_list", {products: App.counting.test_array});
+    },
+    edit_quantity: function (node) {
+        App.counting.current_product_index = $(node).data('index');
+        $('.ui.small.count.modal').modal('show');
+        App.renderTpl("quan_popup_content", {products: App.counting.test_array[App.counting.current_product_index]});
+    },
+    multiply_quantity: function () {
+        var fvalue = $('#counting_popup_quan_form').form('get values');
+        var product_verified = App.counting.test_array[App.counting.current_product_index].product_verified = fvalue.product_verified;
+        var product_quantity = App.counting.test_array[App.counting.current_product_index].product_quantity;
+        if ( product_verified === product_quantity ){
+            $('#verification_indicator_'+App.counting.current_product_index).hide();
+            console.log('VERIFIED!!!',App.counting.test_array);
+        };
+        $('.ui.small.count.modal').modal('hide');
+        App.counting.render();
+    }*/
+};   
+    
+    
+</script>    
+    
+
+
+
+<style>
+
+    #counting_list .product_row .three wide column{
+        height: 1em;
+        overflow: hidden;
+    } 
+
+</style>
+ <div id="product_list" >
+     
+     <table id="counting_list" class="ui celled green unstackable selectable table" >
+        <tr>
+            <th>
+                <div class="ui two column stackable grid">
+                    <div class="six wide column">Код</div>         
+                    <div class="four wide column">Название</div>
+                </div>
+            </th>  
+            <th class="right-aligned"> 
+                <div class="five wide column">Проверено</div>
+            </th>  
+        </tr>
+     
+     
+        
+        <tr class="product_row" v-for="product in product_list" data-index="2" v-on:click="show_popup(this)">
+            <td class="product_name">
+                <div class="ui two column stackable grid">
+                    <div class="three wide column">{{product.product_code}}</div>
+                    <div class="seven wide column">{{product.product_name}}</div>
+                </div>
+            </td>
+            <td class="right-aligned">
+                <div class="ui grid">
+                    <div class="three wide column">{{product.product_verified}}/{{product.product_quantity}}</div>
+                    <div class="three wide column">{{product.product_unit}}</div>
+                </div>
+            </td>
+            <td>
+                <div>
+                    <i class="check circle icon"></i>
+                </div>
+                <div style="display:none">
+                    <i class="exclamation circle red icon"></i>
+                </div>
+            </td>
+        </tr>
+     </table>
+ </div>
+
+<div class="ui small count modal">
+    <div id="quan_popup_content">
+        <div class="ui header">Изменение количества</div>
+        <!--{{products}}-->
+        <table class="ui very basic table">
+            <tr class="positive"><td class="center aligned">{{product_name}}</td></tr>
+            <tr class="positive"><td class="center aligned">{{product_code}}</td></tr>
+            <tr class="positive">
+                <td>Проверено:</td>
+                <td class='left_aligned'>{{product_verified}}/{{product_quantity}}</td>
+            </tr>
+        </table>
+        <form id='counting_popup_quan_form' class="ui form segment" >
+            <div class="field">
+                <label>Количество</label>
+                <input type='hidden' name='product_name' value='{{product_name}}'>
+                <input type='hidden' name='product_code' value='{{product_code}}'>
+                <input type='hidden' name='product_quantity' value='{{product_quantity}}'>
+                <input type="number" name="product_verified" placeholder="Количество" min="1"
+                       onfocus="this.select()"
+                       value="{{product_verified|blank>1}}">
+            </div>
+        <!--{{/products}}-->
+            <div class="actions" style="margin-left: auto; margin-right: auto">
+            <button v-on:click="close_popup" class="ui labeled green icon submit button">
+                Готово
+            </button>
+            <button class="ui labeled icon cancel button">
+                 <i class="ban icon"></i>
+                 Отмена
+            </button>
+            </div>
+        </form>
+    </div>
+</div>

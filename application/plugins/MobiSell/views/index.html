@@ -94,6 +94,12 @@
 		    return null;
 		}
 	    },
+            store: function (key, object){
+                localStorage.setItem(key, JSON.stringify(object));
+            },
+            restore: function (key, object){
+                return localStorage.getItem(key, object);
+            },
 	    toIso: function (dmy) {
 		if (!dmy) {
 		    return null;
