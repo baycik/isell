@@ -14,6 +14,7 @@
 		}		
 	    });
 	    this.node.window('window').css('position','fixed');
+	    this.taskFormInit();
 	},
 	destroy:function () {
 	    this.node.window('destroy');
@@ -106,8 +107,41 @@
         throbber:function(show){
             show?$("#backup_throbber").show():$("#backup_throbber").hide();
         },
-	addAutoBackupTask:function(){
-	    
+	taskFormInit:function(){
+	    App.setupForm('#dbbackup_task_frm');
+	    $("#dbbackup_task_frm").submit(function(e){
+		e.preventDefault();
+		var fvalue=App.collectForm('#dbbackup_task_frm');
+		App.page_dialog_backup.addAutoBackupTask(fvalue);
+	    });
+	},
+	addAutoBackupTask:function(fvalue){
+	    var comment="Создание резервной копии базы данных";
+	    var program={
+		commands:[
+		    {model:'Maintain',method:'backupDump',arguments:''}
+		]
+	    };
+	    if(fvalue.do_zip){
+		program.commands.push({
+		    model:'Maintain',method:'backupDumpZip',arguments:'-PREVIOUS-RETURN-'
+		});
+		comment+=", сжатие в архив zip";
+	    }
+	    if(fvalue.do_upload){
+		program.commands.push({
+		    model:'Maintain',method:'backupDumpFtpUpload',arguments:'-PREVIOUS-RETURN-'
+		});
+		comment+=", копирование на ftp сервер.";
+	    }
+	    var task={
+		event_program:JSON.stringify(program),
+		event_name:"Резервное копирование",
+		event_descr:comment,
+		event_label:"-TASK-",
+		event_repeat:"1 0:0"
+	    };
+	    App.loadWindow('page/events/event', task);
 	}
     };
 </script>
@@ -130,10 +164,12 @@
 	    <button onclick="App.page_dialog_backup.create();" style="width:200px;text-align: left;margin-bottom: 4px;"><img src="img/edit_add.png"> Создать резервную копию</button>
 	    <button onclick="App.page_dialog_backup.backupImport();" style="width:200px;text-align: left;margin-bottom: 4px;"><img src="img/database.png" style="width:24px;height: 24px;"> Импортировать файл</button>
 	    <div class="easyui-panel" title="Автоматизировать" data-options="collapsible:true,collapsed:true,width:200">
-		<input type="checkbox" name="do_backup" title="Создать" />
-		<input type="checkbox" name="do_zip" title="Упаковать" />
-		<input type="checkbox" name="do_upload" title="Закачать на ftp" />
-		<button><img src="img/event.png" style="width: 24px;height: auto;"> Добавить задание</button>
+		<form id="dbbackup_task_frm">
+		    <input type="checkbox" name="do_backup" title="Создать" checked="checked" readonly="readonly" />
+		    <input type="checkbox" name="do_zip" title="Упаковать" />
+		    <input type="checkbox" name="do_upload" title="Закачать на ftp" />
+		    <button><img src="img/event.png" style="width: 24px;height: auto;"> Добавить задание</button>
+		</form>
 	    </div>
 	</td>
 	<td>
