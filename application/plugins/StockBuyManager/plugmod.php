@@ -18,7 +18,7 @@ $filename[]=<<<EOT
 views/stock/leftovers.html
 EOT;
 $search[]=<<<EOT
-/*PLUGINS-UTILS*/
+/*PLUGIN-UTILS*/
 EOT;
 $replace[]=<<<EOT
 EOT;
@@ -36,4 +36,18 @@ $after[]=<<<EOT
 		    }
 		});
 	    }
+EOT;
+
+$filename[]=<<<EOT
+views/stock/leftovers.html
+EOT;
+$search[]=<<<EOT
+<!--PLUGIN-BUTTONS-->
+EOT;
+$replace[]=<<<EOT
+EOT;
+$before[]=<<<EOT
+EOT;
+$after[]=<<<EOT
+<button data-action="send_to_buy_manager"><img src="img/docnew.png" style="width:24px;height: 24px;"> Отправить в менеджер закупок</button><br>
 EOT;

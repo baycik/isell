@@ -258,22 +258,19 @@ class PluginManager extends Catalog{
     }
     
     private function mod_execute($filename='', $search='', $replace='', $before='', $after=''){
-	echo $file_data=$this->Hub->Storage->file_restore('plugin_modifications/'.$filename);//looking for already modified file
+	$file_data=$this->Hub->Storage->file_restore('plugin_modifications/'.$filename);//looking for already modified file
 	if( !$file_data ){//if there is none load original one
 	    $original_file=APPPATH.$filename;
 	    $file_data=file_get_contents($original_file);
 	}
         $altered_data = '';
         if ($replace){
-            $trans = array($search => $replace, $replace => $search);
-            $altered_data = strtr($file_data, $trans);
+	    $altered_data =  str_ireplace($search, $replace, $file_data);
         }else if ($before){
-            $position = mb_strpos($file_data, $search);
-            $altered_data = substr_replace($file_data, $before, $position, 0);
+	    $altered_data =  str_ireplace($search, $before.$search, $file_data);
         }else if ($after){
-            $position = mb_strpos($file_data, $search)+ mb_strlen($search, 'UTF-8');
-            $altered_data = substr_replace($file_data, $after, $position, 0);
+            $altered_data =  str_ireplace($search, $search.$after, $file_data);
         }
-        $this->Hub->Storage->file_store('plugin_modifications/'.$filename,$altered_data);
+        return $this->Hub->Storage->file_store('plugin_modifications/'.$filename,$altered_data);
     }
 }
