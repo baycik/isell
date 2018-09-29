@@ -232,6 +232,7 @@ class PluginManager extends Catalog{
             $plugin_dir = $this->plugin_dir.$row->plugin_system_name;
             $this->mod_modificate($plugin_dir.'/plugmod.php');
         }
+	return true;
     }
     
     private function mod_modificate ($plugmod){
