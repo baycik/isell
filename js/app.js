@@ -632,6 +632,7 @@ Mark.pipes.format = function (str) {
 		    $(window).bind( 'hashchange', function(e) {
 			App.module.load(location.hash.substring(1));
 		    });
+		    App.module.list=[];
 		    for(var i in App.user.props.module_list){
 			App.module.list.push(App.user.props.module_list[i]);
 		    }
