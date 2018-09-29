@@ -17,6 +17,7 @@ class User extends Catalog {
 		return true;
 	    }
 	}
+	$this->log("$login wrong password");
 	header("HTTP/1.1 401 Unauthorized");
 	return false;
     }
@@ -76,7 +77,7 @@ class User extends Catalog {
             $user_data->user_id=$this->db->insert_id();
             $user_data->user_level=1;
             $user_data->user_login=$user_phone;
-            
+            $this->log("{$user_phone} registered");
             //$this->userRegisterNotify($client_data);
         }
         return $user_data;
@@ -130,9 +131,11 @@ class User extends Catalog {
 	}
 	$PluginManager=$this->Hub->load_model("PluginManager");
 	$PluginManager->pluginInitTriggers();
+	$this->log("$user_data->user_login signed in",'User');
     }
     public $SignOut=[];
     public function SignOut(){
+	$this->log($this->Hub->svar('user_login')." signed out");
         $_SESSION = array();
 	return true;
     }
