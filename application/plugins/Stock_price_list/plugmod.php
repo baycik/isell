@@ -11,7 +11,7 @@ EOT;
 $before=<<<EOT
 EOT;
 $after=<<<EOT
-\n  <div title="Прайс лист" href="page/plugins/stock_price_list/stock_price_list.html" style="min-height: 500px;"></div>
+\n  <div title="Прайс лист" href="Stock_price_list/stock_price_list.html" style="min-height: 500px;"></div>
 EOT;
 
 
