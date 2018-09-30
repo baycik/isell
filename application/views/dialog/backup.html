@@ -119,18 +119,18 @@
 	    var comment="Создание резервной копии базы данных";
 	    var program={
 		commands:[
-		    {model:'Maintain',method:'backupDump',arguments:''}
+		    {model:'Maintain',method:'backupDump',arguments:'',async:true}
 		]
 	    };
 	    if(fvalue.do_zip){
 		program.commands.push({
-		    model:'Maintain',method:'backupDumpZip',arguments:'-PREVIOUS-RETURN-'
+		    model:'Maintain',method:'backupDumpZip',arguments:'-PREVIOUS-RETURN-',async:true
 		});
 		comment+=", сжатие в архив zip";
 	    }
 	    if(fvalue.do_upload){
 		program.commands.push({
-		    model:'Maintain',method:'backupDumpFtpUpload',arguments:'-PREVIOUS-RETURN-'
+		    model:'Maintain',method:'backupDumpFtpUpload',arguments:'-PREVIOUS-RETURN-',async:true
 		});
 		comment+=", копирование на ftp сервер.";
 	    }

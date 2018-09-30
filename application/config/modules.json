@@ -5,6 +5,5 @@
     {"level":"2","name":"Events","icon":"events.png","label":"Задания"},
     {"level":"1","name":"Reports","icon":"home.png","label":"Отчеты"},
     {"level":"2","name":"Pref","icon":"pref.png","label":"Настройки"},
-    {"level":"2","name":"Data","icon":"data.png","label":"Данные"},
-    {"level":"4","name":"MTrade","icon":"trade.png","label":"MTrade"}
+    {"level":"2","name":"Data","icon":"data.png","label":"Данные"}
 ]
