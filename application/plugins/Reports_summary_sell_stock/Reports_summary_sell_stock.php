@@ -59,7 +59,7 @@ class Reports_summary_sell_stock extends Catalog{
             GROUP BY product_code";
         $sql_tmp_create="CREATE TABLE tmp_summary_sell_stock AS(
             SELECT 
-                product_code,
+                product_code _product_code,
                 ru,
                 sell_prod_sum,
                 buy_avg*stock_qty stock_entry_sum,
