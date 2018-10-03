@@ -378,12 +378,12 @@ class Stock extends Catalog {
 	return $this->get_list($sql);
     }
 
-    public $calcABC=['parent_id'=>['int',0],'period'=>'int', 'all_active'=>'bool'];
-    public function calcABC($parent_id,$period,$all_active){
+    public $calcABC=['parent_id'=>['int',0],'period'=>'int', 'all_active'=>'bool','fdate'=>'string'];
+    public function calcABC($parent_id,$period,$all_active,$fdate){
 	$where="";
 	if ($parent_id) {
 	    $branch_ids = $this->treeGetSub('stock_tree', $parent_id);
-	    $where .= " se.parent_id IN (" . implode(',', $branch_ids) . ")";
+	    $where = "WHERE  se.parent_id IN (" . implode(',', $branch_ids) . ")";
 	}
 	$where_active="";
 	if( !$all_active ){
@@ -408,12 +408,12 @@ class Stock extends Catalog {
 			de.product_code=se.product_code
 			AND is_commited=1 
 			AND notcount=0
-			AND DATEDIFF(NOW(),dl.cstamp)<$period
+			AND DATEDIFF('$fdate',dl.cstamp)<$period
 			$where_active
 		    ),0) sold_sum
 		FROM
 		    stock_entries se
-		WHERE
+		
 		    $where
 		ORDER BY sold_sum) t
 	    );";
