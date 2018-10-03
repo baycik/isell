@@ -69,7 +69,7 @@ class Reports_manager_sells extends Catalog{
         
         $manager_filter='';
         if( $this->manager_id ){
-            $manager_filter=" OR manager_id='{$this->manager_id}'";
+            $manager_filter=" AND manager_id='{$this->manager_id}'";
         }
         $path_filter='';
         if( $this->path_exclude || $this->path_include ){
@@ -95,7 +95,7 @@ class Reports_manager_sells extends Catalog{
 		    JOIN
 		document_list dl USING (doc_id)
 		    JOIN
-		companies_list ON company_id = passive_company_id
+		companies_list cl ON company_id = passive_company_id
 		    JOIN
 		companies_tree ct USING (branch_id)
 		    JOIN
@@ -113,11 +113,11 @@ class Reports_manager_sells extends Catalog{
                 AND notcount=0 
                 $active_filter 
                 $reclamation_filter 
-                $path_filter
                 $manager_filter
+                $path_filter
 	    GROUP BY discount_overall ,st.top_id,  doc_id
 	    ORDER BY ct.label)";
-	
+        //die($main_table_sql);
 	$this->query($main_table_sql);
 	
 	$sum_fields='';
