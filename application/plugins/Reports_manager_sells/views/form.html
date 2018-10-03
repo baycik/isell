@@ -1,3 +1,8 @@
+<script>
+    ReportsJs.report.staff_list_needed=true;
+</script>
+
+
 <form>
     <div class="inp_group" style="width: 230px;">
 	<input style="width:110px" class="easyui-datebox" name="idate" title="Начальная дата" value="{{first_day}}" data-options="required:true">
@@ -7,6 +12,11 @@
     <div class="inp_group" style="width: 350px;">
         <input name="path_exclude" title="Исключить компании">
         <input name="path_include" title="Включить компании">
+        <select name="manager_id" title="Закреплен за">
+	    {{staff_list}}
+	    <option value="{{user_id}}">{{full_name}}</option>
+	    {{/staff_list}}
+	</select>
     </div>
     <div class="inp_group" style="width: 200px;">
     	<input type="checkbox" name="all_active" title="Все наши фирмы" checked="checked">

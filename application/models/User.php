@@ -179,14 +179,14 @@ class User extends Catalog {
 	$user_id = $this->Hub->svar('user_id');
         $where = ($this->Hub->svar('user_level') < 4) ? "WHERE user_id='$user_id'" : "";
         $sql="SELECT
-		user_id,user_login,user_level,user_sign,user_position,user_phone,user_email,
+		user_id,user_login,user_level,user_sign,user_position,user_phone,user_email,user_is_staff,
 		first_name,middle_name,last_name,nick,
 		id_type,id_serial,id_number,id_given_by,id_date,
 		user_assigned_path,user_permissions,
 		CONCAT(last_name,' ',first_name,' ',middle_name) AS full_name 
 	    FROM user_list
 		$where 
-	    ORDER BY user_id<>'$user_id', user_level DESC";
+	    ORDER BY user_id<>'$user_id', user_is_staff DESC,user_level DESC";
         return $this->get_list($sql);
     }
     public $save=[];
@@ -202,6 +202,7 @@ class User extends Catalog {
 	    }
 	}
 	if( $current_level>=3 ){
+	    $fields['user_is_staff']=$this->request('user_is_staff');	    
 	    $fields['user_sign']=$this->request('user_sign');
 	    $fields['user_position']=$this->request('user_position');	    
 	    $fields['first_name']=$this->request('first_name');
