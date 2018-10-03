@@ -12,13 +12,23 @@
 	    <option value="analyse_class">Класс</option>
 	    <option value="product_article">Артикул</option>
 	</select>
-	<input name="group_by_filter" title="Фильтр группы">	
+        <select name="group_by2" title="Группировать также по">
+            <option value="" selected="selected">-</option>
+	    <option value="parent_id">Категория</option>
+	    <option value="product_code">Код товара</option>
+	    <option value="analyse_type">Тип</option>
+	    <option value="analyse_brand">Бренд</option>
+	    <option value="analyse_class">Класс</option>
+	    <option value="product_article">Артикул</option>
+	</select>
+	<input name="group_by_filter" title="Фильтр группы">
     </div>
     <div class="inp_group" style="width: 200px;">
 	<input type="checkbox" name="all_active" title="Все наши фирмы" checked="checked">
 	<input type="checkbox" name="count_reclamations" title="Учитывать возвраты" checked="checked">
 	<input type="checkbox" name="count_buy_price" title="Остаток в закуп. ценах">
 	<input type="checkbox" name="in_alt_currency" title="Выводить в валюте">
+	<input type="checkbox" name="show_entries" title="Подробный отчет">
     </div>
     <div style="text-align: center">
 	<button type="submit"><img src="img/report24.png" style="width:24px;height: auto"> Сформировать</button>
