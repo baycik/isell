@@ -68,6 +68,7 @@
                 if( ReportsJs.report.staff_list_needed ){
                     $.get("Pref/getStaffList/",function(resp){
                         standart_data.staff_list=App.json(resp);
+                        standart_data.staff_list.unshift({user_id:'',full_name:'-'});
                         deffered.resolve(standart_data);
                     });
                 } else {
