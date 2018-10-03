@@ -39,7 +39,6 @@ class Reports_summary_sell_stock extends Catalog{
     public function viewGet(){
 	$active_filter=$this->all_active?'':' AND active_company_id='.$this->Hub->acomp('company_id');
 	$reclamation_filter=$this->count_reclamations?'':' AND is_reclamation=0';
-	$leftover_price=$this->use_total_price?'invoice_price':'self_price';
         $having=$this->group_by_filter?"HAVING group_by LIKE '%$this->group_by_filter%'":"";
         
         $sql_tmp_drop="DROP TABLE IF EXISTS tmp_summary_sell_stock;";
@@ -113,7 +112,7 @@ class Reports_summary_sell_stock extends Catalog{
         }
         
         if( $this->show_entries ){
-            $rows=$this->get_list("SELECT * FROM tmp_summary_sell_stock WHERE stock_entry_sum>0 OR sell_prod_sum>0 ORDER BY group_by,product_code");
+            $rows=$this->get_list("SELECT * FROM tmp_summary_sell_stock WHERE stock_entry_sum>0 OR sell_prod_sum>0 ORDER BY group_by,_product_code");
         }
 	$view=[
                 'total_sell'=>round($total_sell,2),
