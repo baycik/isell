@@ -18,7 +18,7 @@ class Reports_summary_sell_stock extends Catalog{
 	$this->fdate=$this->dmy2iso( $this->request('fdate','\d\d.\d\d.\d\d\d\d') ).' 23:59:59';
 	$this->all_active=$this->request('all_active','bool');
 	$this->count_reclamations=$this->request('count_reclamations','bool',0);
-	//$this->use_total_price=$this->request('use_total_price','bool',0);
+	$this->include_vat=$this->request('include_vat','bool',0);
 	$this->in_alt_currency=$this->request('in_alt_currency','bool',0);
 	$this->show_entries=$this->request('show_entries','bool',0);
 	$this->group_by_filter=$this->request('group_by_filter');
@@ -41,12 +41,20 @@ class Reports_summary_sell_stock extends Catalog{
 	$reclamation_filter=$this->count_reclamations?'':' AND is_reclamation=0';
         $having=$this->group_by_filter?"HAVING group_by LIKE '%$this->group_by_filter%'":"";
         
+        
+        if( $this->include_vat ){
+            $leftover_calc_mode='selfprice include_vat';
+        } else {
+            $leftover_calc_mode='selfprice';
+        }
+        
+        
         $sql_tmp_drop="DROP TABLE IF EXISTS tmp_summary_sell_stock;";
         $sell_buy_table="
             SELECT
                 product_code,
                 SUM( IF(doc_type=2,product_quantity,-product_quantity) ) stock_qty,
-                LEFTOVER_CALC(product_code,'$this->fdate',0,'selfprice') buy_avg,
+                LEFTOVER_CALC(product_code,'$this->fdate',0,'$leftover_calc_mode')/IF($this->in_alt_currency,doc_ratio,1) buy_avg,
                 SUM( IF(doc_type=1 AND cstamp>'$this->idate',invoice_price/IF($this->in_alt_currency,doc_ratio,1)*product_quantity,0) ) sell_prod_sum,
                 SUM( IF(doc_type=1 AND cstamp>'$this->idate',product_quantity,0) ) sell_qty
             FROM
