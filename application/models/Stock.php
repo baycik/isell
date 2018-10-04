@@ -390,9 +390,9 @@ class Stock extends Catalog {
 	    $acomp_id=$this->Hub->acomp('company_id');
 	    $where_active= " AND active_company_id='$acomp_id'";
 	}
-	$sql_prepare1="DROP TEMPORARY TABLE IF EXISTS tmp_abc_chart;";
+	$sql_prepare1="DROP  TABLE IF EXISTS tmp_abc_chart;";#TEMPORARY
 	$sql_prepare2="SET @sold_total:=0;";
-	$sql_create="CREATE TEMPORARY TABLE tmp_abc_chart AS (
+	$sql_create="CREATE  TABLE tmp_abc_chart AS (
 	    SELECT 
 		product_code, sold_sum, @sold_total:=@sold_total+sold_sum sold_total
 	    FROM
@@ -406,19 +406,20 @@ class Stock extends Catalog {
 			document_list dl USING(doc_id)
 		    WHERE
 			de.product_code=se.product_code
+                        AND doc_type=1
 			AND is_commited=1 
 			AND notcount=0
-			AND DATEDIFF('$fdate',dl.cstamp)<$period
+                        AND dl.cstamp<'$fdate 23:59:59'
+			AND DATEDIFF('$fdate 23:59:59',dl.cstamp)<$period
 			$where_active
 		    ),0) sold_sum
 		FROM
 		    stock_entries se
-		
 		    $where
-		ORDER BY sold_sum) t
-	    );";
+		) t
+	    ORDER BY sold_sum);";
 	$sql_calc="SET @A:=@sold_total*0.8,@B:=@sold_total*0.15,@C:=@sold_total*0.05;";
-	$sql_update="UPDATE prod_list JOIN tmp_abc_chart USING(product_code) SET analyse_class=IF(sold_total<@C,'C',IF(sold_total<@B,'B','A'));";
+	$sql_update="UPDATE prod_list JOIN tmp_abc_chart USING(product_code) SET analyse_class=IF(sold_total<@C,'C',IF(sold_total<@B+@C,'B','A'));";
 	$this->query($sql_prepare1);
 	$this->query($sql_prepare2);
 	$this->query($sql_create);
