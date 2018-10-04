@@ -103,7 +103,7 @@ class FileEngine{
 	    $this->header_mode='noheaders';
 	    $full_html=$this->fetch(".html");
 	    $this->header_mode='send_headers';
-	    $parent=realpath('../storage/wkhtml/');
+	    $parent=realpath(BAY_STORAGE.'wkhtml/');
 	    $rnd=rand(10,1000000);
 	    $tmphtml = $parent."/html-tmp$rnd.html";
 	    $tmppdf = $parent."/pdf-tmp$rnd.pdf";
