@@ -394,7 +394,7 @@ class Stock extends Catalog {
 	$sql_prepare2="SET @sold_total:=0;";
 	$sql_create="CREATE TEMPORARY TABLE tmp_abc_chart AS (
 	    SELECT 
-		product_code, sold_sum, @sold_total:=@sold_total+IF(sold_sum<0,0,sold_sum) sold_total
+		product_code, sold_sum, @sold_total:=@sold_total+sold_sum sold_total
 	    FROM
 		(SELECT
 		    product_code,
@@ -419,7 +419,7 @@ class Stock extends Catalog {
 		) t
 	    ORDER BY sold_sum);";
 	$sql_calc="SET @A:=@sold_total*0.8,@B:=@sold_total*0.15,@C:=@sold_total*0.05;";
-	$sql_update="UPDATE prod_list JOIN tmp_abc_chart USING(product_code) SET analyse_class=IF(sold_sum<0,'',IF(sold_total<@C,'C',IF(sold_total<@B+@C,'B','A')));";
+	$sql_update="UPDATE prod_list JOIN tmp_abc_chart USING(product_code) SET analyse_class=IF(sold_total<@C,'C',IF(sold_total<@B+@C,'B','A'));";
 	$this->query($sql_prepare1);
 	$this->query($sql_prepare2);
 	$this->query($sql_create);
