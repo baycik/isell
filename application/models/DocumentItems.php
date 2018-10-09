@@ -112,7 +112,7 @@ class DocumentItems extends DocumentCore{
                     product_quantity*product_volume volume,
                     pl.product_code,
                     $company_lang product_name,
-                    product_quantity,
+                    (product_quantity+0) product_quantity,
                     CHK_ENTRY(doc_entry_id) AS row_status,
                     product_unit,
                     party_label,
