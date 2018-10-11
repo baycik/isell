@@ -143,7 +143,7 @@ class Document extends Data {
 	    $this->Base->LoadClass('PrefOld');
 	    $prefs = $this->Base->PrefOld->prefGet();
 	    $debt_limit = $prefs['default_debt_limit'];
-	    if ($debt_limit == 0) {
+	    if ( $debt_limit==0 && $deferment==0 ) {
 		return false;
 	    }
 	}
@@ -152,7 +152,7 @@ class Document extends Data {
 	$debt_account = $this->Base->Accounts->getAccountBalance(361, $pcomp_id,$deferment);
 	$footer = $this->fetchFooter();
 	$off_limit = $footer['total'] + $debt_account['balance'] - $debt_limit;
-	if( $off_limit > 0 ){
+	if( $debt_limit>0 && $off_limit > 0 ){
 	    $this->Base->msg("Лимит долга в $debt_limit превышен на " . round($off_limit, 2) . "{$footer['curr_symbol']}!\n");
 	    return true;
 	}
