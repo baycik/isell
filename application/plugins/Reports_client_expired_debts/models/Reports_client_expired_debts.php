@@ -50,7 +50,7 @@ class Reports_client_expired_debts extends Catalog{
 	    $direction_filter[]="buy<>0";
 	}
 	if($this->their_debts){
-	    $direction_filter[]="exp<>0";
+	    $direction_filter[]="sell<>0";
 	}
 	return $direction_filter?'HAVING ('.implode(' OR ', $direction_filter).')':'HAVING 0';
     }
