@@ -49,7 +49,7 @@ class Reports_summary_sell_stock extends Catalog{
         }
         
         
-        $sql_tmp_drop="DROP TABLE IF EXISTS tmp_summary_sell_stock;";
+        $sql_tmp_drop="DROP TEMPORARY TABLE IF EXISTS tmp_summary_sell_stock;";
         $sell_buy_table="
             SELECT
                 product_code,
@@ -64,7 +64,7 @@ class Reports_summary_sell_stock extends Catalog{
             WHERE
                 (doc_type=1 OR doc_type=2) AND cstamp<'$this->fdate' AND is_commited=1 AND notcount=0 $active_filter $reclamation_filter
             GROUP BY product_code";
-        $sql_tmp_create="CREATE TABLE tmp_summary_sell_stock AS(
+        $sql_tmp_create="CREATE TEMPORARY TABLE tmp_summary_sell_stock AS(
             SELECT 
                 product_code _product_code,
                 ru,
