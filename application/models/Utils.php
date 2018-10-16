@@ -449,7 +449,6 @@ class Utils extends Catalog {
 
     public function selfPriceInvoiceRecalculate($idatedmy, $fdatedmy, $active_mode = '') {
         set_time_limit(300);
-        $this->db->query("START TRANSACTION");
         $idate = $this->dmy2iso($idatedmy) . ' 00:00:00';
         $fdate = $this->dmy2iso($fdatedmy) . ' 23:59:59';
         if ($active_mode == 'all_active') {
@@ -461,7 +460,6 @@ class Utils extends Catalog {
         $this->selfPriceCorrectEntries();
         $this->selfPriceStockAssign();
         $this->selfPriceOldApiRecalculate($idate, $fdate, $active_filter);
-        $this->db->query("COMMIT");
     }
 
     private function selfPriceStockAssign() {
