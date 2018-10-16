@@ -65,6 +65,8 @@
 		    today:App.today(),
 		    first_day:App.toDmy(new Date(now.getFullYear(), now.getMonth(), 1))
 		};
+                standart_data.iso_today=App.toIso(standart_data.today);
+                standart_data.iso_first_day=App.toIso(standart_data.first_day);
                 if( ReportsJs.report.staff_list_needed ){
                     $.get("Pref/getStaffList/",function(resp){
                         standart_data.staff_list=App.json(resp);
