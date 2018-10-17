@@ -1,7 +1,7 @@
 <?php
 /* Group Name: Результаты деятельности
  * User Level: 3
- * Plugin Name: Движение товара
+ * Plugin Name: Движения товара
  * Plugin URI: 
  * Version: 1.0
  * Description: Выводит информацию о движениям по складу
