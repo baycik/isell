@@ -32,6 +32,9 @@ class DocumentItems extends DocumentCore{
             $branch_ids = $this->treeGetSub('stock_tree', $category_id);
             $where .= " AND parent_id IN (" . implode(',', $branch_ids) . ")";
         }
+        if( $this->doc('doc_type')==3 || $this->doc('doc_type')==4 ){
+            $where .= " AND is_service=1";
+        }
 	$sql="
 	    SELECT
 		product_code,
