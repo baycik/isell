@@ -66,7 +66,12 @@ class Accounts extends Data {
         $this->unlinkCheckTrans($trans_id);
         $trans_data = $this->getTransaction($trans_id);
         $this->Base->query("DELETE FROM acc_trans WHERE trans_id=$trans_id");
-        $this->calculatePayments($trans_data['passive_company_id']);
+        if( $trans_data['acc_debit_code']==361 ){
+            $this->calculatePayments($trans_data['passive_company_id']);
+        }
+        if( $trans_data['acc_credit_code']==631 ){
+            $this->calculatePayments($trans_data['passive_company_id']);
+        }
         return true;
     }
 
@@ -75,7 +80,7 @@ class Accounts extends Data {
      */
 
     public function getTransaction($trans_id) {
-        return $this->Base->get_row("SELECT *,amount AS amount FROM acc_trans WHERE trans_id=$trans_id");
+        return $this->Base->get_row("SELECT * FROM acc_trans WHERE trans_id=$trans_id");
     }
 
     public function fetchTransData($trans_id) {
@@ -176,7 +181,7 @@ class Accounts extends Data {
                 SET trans_status=IF(acc_debit_code = $acc_code,
                                 (@sum:=@sum - amount)*0 + 
                                 IF(amount<0,0,
-                                        IF(@sum <= 0 ,1,
+                                        IF(ROUND(@sum,2) <= 0 ,1,
                                                 IF(@sum+$sensitivity< amount, 2, 3)
                                         )
                                 ),
@@ -190,6 +195,44 @@ class Accounts extends Data {
 			AND (acc_debit_code = $acc_code
 			OR acc_credit_code = $acc_code)
                 ORDER BY acc_debit_code = $acc_code, amount>0, cstamp;");
+    }
+    
+    /*     * ****************
+      STATUS
+      6 unpayedsq
+      7 partlysq
+      8 payedsq
+      9 closedsq
+      10 closingsq
+     * ***************** */
+
+    public function calculatePaymentsCredit($pcomp_id = NULL) {
+	$active_company_id=$this->Base->acomp('company_id');
+        if (!isset($pcomp_id))
+            $pcomp_id = $this->Base->pcomp('company_id');
+        $sensitivity=5.00;
+        $acc_code = 631;
+        $this->Base->query("SET @sum:=0.0;");
+        $this->Base->query("
+                UPDATE
+                        acc_trans
+                    SET trans_status=IF(acc_credit_code = $acc_code,
+                            (@sum:=@sum - amount)*0 + 
+                            IF(amount<0,0,
+                                IF(ROUND(@sum,2) <= 0 ,6,
+                                    IF(@sum+$sensitivity< amount, 7, 8)
+                                )
+                            ),
+                            (@sum:=@sum + amount)*0
+                        )
+                    WHERE
+                        active_company_id=$active_company_id
+                        AND passive_company_id = $pcomp_id
+                        AND trans_status <> 9
+                        AND trans_status <> 10
+                        AND (acc_debit_code = $acc_code
+                        OR acc_credit_code = $acc_code)
+                    ORDER BY acc_credit_code = $acc_code, amount>0, cstamp;");
     }
 
     private function getAccTransferView($acc_code, $company_only, $curr_id) {

@@ -313,7 +313,7 @@ class AccountsCore extends Catalog{
                     SET trans_status=IF(acc_debit_code = $acc_code,
                             (@sum:=@sum - amount)*0 + 
                             IF(amount<0,0,
-                                IF(@sum <= 0 ,1,
+                                IF(ROUND(@sum,2) <= 0 ,1,
                                     IF(@sum+$sensitivity< amount, 2, 3)
                                 )
                             ),
@@ -334,7 +334,7 @@ class AccountsCore extends Catalog{
                     SET trans_status=IF(acc_credit_code = $acc_code,
                             (@sum:=@sum - amount)*0 + 
                             IF(amount<0,0,
-                                IF(@sum <= 0 ,6,
+                                IF(ROUND(@sum,2) <= 0 ,6,
                                     IF(@sum+$sensitivity< amount, 7, 8)
                                 )
                             ),
