@@ -715,28 +715,27 @@ class Stock extends Catalog {
             WHERE
                 checkout_id = '$checkout_id'
             ";
-        print_r($checkout_id);
         $this->query($sql);
         return 'uploaded';
     }
     
-    public $checkoutPhotosDown=['checkout_id'=>'int'];
-    public function checkoutPhotosDown( $checkout_id ){
-	$sql="
-            SELECT
-                checkout_photos
-            FROM
-                checkout_list
-            WHERE
-                checkout_id = '$checkout_id'";
-        $simple_array = explode(',', $this->get_value($sql));
-        $final_array = [];
-        foreach ($simple_array as $entry){
-            $miliseconds = substr($entry, 0, -4);
-            array_push($final_array, array('photo'=>$entry, 'cstamp'=>$miliseconds));
-        }
-        return $final_array;
-    }
+//    public $checkoutPhotosDown=['checkout_id'=>'int'];
+//    public function checkoutPhotosDown( $checkout_id ){
+//	$sql="
+//            SELECT
+//                checkout_photos
+//            FROM
+//                checkout_list
+//            WHERE
+//                checkout_id = '$checkout_id'";
+//        $simple_array = explode(',', $this->get_value($sql));
+//        $final_array = [];
+//        foreach ($simple_array as $entry){
+//            $miliseconds = substr($entry, 0, -4);
+//            array_push($final_array, array('photo'=>$entry, 'cstamp'=>$miliseconds));
+//        }
+//        return $final_array;
+//    }
 }
 
 

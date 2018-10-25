@@ -61,7 +61,7 @@
                         App.checkout_document.log.render();
                     }
                     if(type === "Photos"){
-                        App.checkout_document.photos.load();
+                        App.checkout_document.photos.render();
                     }
                 }
             });
@@ -291,19 +291,21 @@
             list: [],
             render: function (){
                 $('.checkout_document_tabs .item').tab('change tab', 'Photos');
-                App.renderTpl("checkout_photos_tab", {checkout_photos: App.checkout_document.photos.list});
-            },
-            load: function (){
-                $.post('../Stock/checkoutPhotosDown', {checkout_id: App.state.checkout_id}, function (resp) {
-                    var response = App.json(resp);
-                    for (var i = 0; i < response.length; i++){
-                        var time_of_item = new Date (parseInt(response[i].cstamp));
-                        response[i].cstamp = time_of_item.toLocaleDateString() + ' ' + time_of_item.toLocaleTimeString();
+                App.checkout_document.photos.list = App.checkout_document.checkout_doc_head.checkout_photos?App.checkout_document.checkout_doc_head.checkout_photos.split(",").reverse():[];
+                var photos=[];
+                for(var filename of App.checkout_document.photos.list){
+                    if( !filename ){
+                        continue;
                     }
-                    App.checkout_document.photos.list = response;
-                    App.checkout_document.photos.render();
-                })
-            }, 
+                    var photo_date=new Date (parseInt(filename));
+                    var photo={
+                        filename:filename,
+                        date:photo_date.toLocaleDateString()+" "+photo_date.toLocaleTimeString()
+                    };
+                    photos.push(photo);
+                }
+                App.renderTpl("checkout_photos_tab", {checkout_photos: photos});
+            },
             up:function(fileList){
                 if( fileList.length ){
                     if( fileList[0].type.indexOf('image')===-1 ){
@@ -318,7 +320,8 @@
                     xhr.onreadystatechange = function() {
                         if (xhr.readyState === 4 && xhr.status === 200) {
                             if( xhr.responseText.indexOf('uploaded')>-1 ){
-                                App.flash("Файл загружен");
+                                App.flash("Фото загружено");
+                                App.checkout_document.load(App.state.checkout_id);
                             } else {
                                 App.flash("Не удалось загрузить");
                             }
@@ -329,7 +332,6 @@
                     fd.append("upload_file", fileList[0]);
                     xhr.send(fd);
                 }
-                App.checkout_document.photos.load();
             },
             checkout_upload:function(){
                 $('#checkout_attach').click();
@@ -590,13 +592,22 @@
 </div>
 
 <div id="checkout_photos_tab" class="ui bottom attached tab covert" data-tab="Photos">
-    
-    <!--{{checkout_photos}}--> 
-    <div class="ui segment"> 
-        <img src="../Storage/image_flush/?size=110x110&path=/checkout/{{photo}}" >   
-        <div><i>{{cstamp}}</i></div>
+    <div class="ui segment">
+        <div class="ui stackable cards">
+        <!--{{checkout_photos}}--> 
+            <div class="ui card">
+                <div class="image">
+                    <a href="../Storage/image_flush/?size=700x700&path=/checkout/{{filename}}">
+                    <img src="../Storage/image_flush/?size=110x110&path=/checkout/{{filename}}" style="max-height: 110px;max-width: 110px" >
+                    </a>
+                </div>
+              <div class="content">
+                <a class="header">{{date}}</a>
+              </div>
+            </div>
+        <!--{{/checkout_photos}}-->  
+        </div>
     </div>
-    <!--{{/checkout_photos}}-->  
 </div>
 
 <div id="checkout_document_quantity_popup" class="ui tiny modal">
