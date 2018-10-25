@@ -157,7 +157,7 @@ class Reports_stock_movements extends Catalog{
         }
         
         if( $this->show_entries ){
-            //$rows=$this->get_list("SELECT * FROM tmp_stock_movements WHERE stock_entry_sum>0 OR sell_prod_sum>0 ORDER BY group_by,_product_code");
+            $rows=$this->get_list("SELECT * FROM tmp_stock_movements WHERE GREATEST(stock_isum,buy_sum,sell_sum,stock_fsum)>0 ORDER BY group_by,_product_code");
         }
 	$view=[
                 'grand_total_stock_isum'=>round($grand_total_stock_isum,2),
