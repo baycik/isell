@@ -1,0 +1,137 @@
+<script>
+    App.checkout_document_list = {
+        doc_list: [],
+        checkout_doc_head: [],
+        init: function () {
+            App.checkout_document_list.initPicker();
+            App.title("Список проверок");
+            //App.checkout_document_list.check_storage();
+            //App.checkout_document_list.focus();
+        },
+        check_storage: function () {
+            var storage_checkout_entries = App.json(App.restore('checkout_entries'));
+            var storage_log_list = App.json(App.restore('log_list'));
+            if (storage_log_list != null && storage_checkout_entries != null) {
+                App.checkout_document_list.checkout_entries.list = storage_checkout_entries;
+                App.checkout_document_list.log = storage_log_list;
+            } else {
+                return true;
+            }
+        },
+        initPicker: function () {
+	    var $input = $('.datepicker').pickadate();
+	    App.checkout_document_list.picker = $input.pickadate('picker');
+	    //App.document_list.picker.set('select', new Date());
+	    App.checkout_document_list.current_date = App.checkout_document_list.picker.get('select', 'yyyy-mm-dd');
+	    App.checkout_document_list.picker.on({
+		set: function (thingSet) {
+		    if( App.checkout_document_list.current_date === App.checkout_document_list.picker.get('select', 'yyyy-mm-dd') ){
+			return;
+		    }
+                    App.checkout_document_list.doc_list = [];
+		    App.checkout_document_list.current_date = App.checkout_document_list.picker.get('select', 'yyyy-mm-dd');
+		    App.checkout_document_list.load(App.checkout_document_list.current_date, 0);
+		}
+	    });
+	},
+        focus: function () {
+            App.title("Список проверок");
+            App.checkout_document_list.load();
+        },
+        load: function (date, offset) {
+            if (offset === undefined) {
+		offset = App.checkout_document_list.doc_list.length || 0;
+	    }
+            App.flash('Список проверок: загрузка...');
+            $.post('../Stock/checkoutListFetch', {date: date, offset:offset}, function (resp) {
+                var response = App.json(resp);
+                if (offset>response.length){
+                    $("#checkout_button_load_more").hide();
+                }
+                App.checkout_document_list.doc_list = App.checkout_document_list.doc_list.concat(response);
+                App.checkout_document_list.render();
+                App.flash('Список проверок: ОК');
+            });
+        },
+        render: function () {
+            App.renderTpl("doc_list", {doc_list: App.checkout_document_list.doc_list});
+        },
+        open_document: function (node){
+            var checkout_id = $(node).data('checkout_id');
+	    location.hash = "#checkout_document.html#checkout_id=" + checkout_id;
+        }
+    };
+</script>    
+<style>
+    
+</style>
+
+<form class="ui form">
+    <div class="field">
+	<label>Дата</label>
+	<div class="field">
+	    <div class="ui left icon right labeled input">
+		<i class="calendar icon"></i>
+		<input name="date_filter" placeholder="Дата" type="date" class="datepicker">
+		<div class="ui basic label" onclick="App.checkout_document_list.clearDate()"><i class="close icon"></i></div>
+	    </div>
+	</div>
+    </div>
+</form>
+
+<div id="doc_list" class="covert">
+    <a href="#checkout_document.html#checkout_id=0">
+        <i class="plus icon"></i> 
+        Добавить проверку
+    </a>
+    <table class="ui celled unstackable selectable green table">
+        <thead> 
+            <tr>
+                <th>
+                    <div class="ui two column grid">       
+                        <div class="nine column">Название</div>
+                        <div class="seven wide right-aligned column">Дата</div>
+                    </div>
+                </th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            <!--{{doc_list}}-->
+            <tr class="doc_row" data-checkout_id="{{checkout_id}}" onclick="App.checkout_document_list.open_document(this)">
+                
+                <td class="doc_name">
+                    <div class="ui two column fluid unstackable grid">
+                        <div class="nine wide column"><b>{{checkout_name}}</b></div>
+                        <div class="seven wide column"><i>{{cstamp_dmy}}</i></div>
+                    </div> 
+                </td>
+                <td class="doc_status">
+                    {{if checkout_status|equals>not_checked}}
+                    <i class="close red large icon"></i>
+                    {{else}}
+                        {{if checkout_status|equals>checked}}
+                        <i class="check green large icon"></i>
+                        {{else}}
+                            {{if checkout_status|equals>checked_with_divergence}}
+                            <div>
+                                <i class="large icons">
+                                    <i class="check green icon"></i>
+                                    <i class="bottom left corner plus green icon"></i>
+                                    <i class="bottom right corner minus red icon"></i>
+                                </i>
+                            </div>
+                            {{else}}
+                                {{if checkout_status|equals>is_checking}}
+                                    <i class="spinner blue loading large icon"></i>
+                                {{/if}}
+                            {{/if}}
+                        {{/if}}
+                    {{/if}}
+                </td>
+            </tr>
+            <!--{{/doc_list}}-->
+        </tbody>
+    </table>
+</div>
+<button id="checkout_button_load_more"  class="ui fluid button" onclick="App.checkout_document_list.load(App.checkout_document_list.current_date)">Показать еще...</button>

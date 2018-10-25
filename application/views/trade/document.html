@@ -375,6 +375,12 @@
         download:function(){
             window.open("./DocumentItems/documentOut/?out_type=.xlsx&doc_id="+Doc.head.props.doc_id);
             //location.href="./DocumentItems/documentOut/?out_type=.xlsx&doc_id="+Doc.head.props.doc_id;
+        },
+        create_checkout: function () {
+                if(confirm("Создать список проверки?")){
+                    console.log(Doc.head.props);
+                    $.post("Stock/checkoutDocumentCreate",{ parent_doc_id: Doc.head.props.doc_id, checkout_name: "Документ №" + Doc.head.props.doc_num});
+                }             
         }
     };
     /////////////////////////////////////////////
@@ -854,6 +860,7 @@
 		<span class="icon-24 icon-import" title="Импортировать" onclick="Doc.head.import();"> </span>
 		<span class="icon-24 icon-download" title="Скачать Excel" onclick="Doc.head.download();"> </span>
 		<span class="icon-24 icon-duplicate" title="Копировать" onclick="Doc.head.duplicate();"> </span>
+                <span class="icon-24 icon-edit" title="Создать список проверки" onclick="Doc.head.create_checkout();"> </span>
 	    </div>
 	</div>
 	<div>
