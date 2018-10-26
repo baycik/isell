@@ -461,6 +461,16 @@ class AccountsCore extends Catalog{
 	$this->Hub->msg('access denied');
 	return false;
     }
+    
+    
+    public function transDisable($doc_id){
+        return $this->update('acc_trans JOIN acc_doc_trans USING(trans_id)',['is_disabled'=>1], ['doc_id'=>$doc_id]);
+    }
+    public function transClear($doc_id){
+        return $this->delete('acc_trans JOIN acc_doc_trans USING(trans_id)', ['doc_id'=>$doc_id]);
+    }
+    
+    
 
     public $documentPay=['doc_id'=>'int','acc_debit_code'=>'string','amount'=>'double','description'=>'string'];
     public function documentPay( $doc_id, $acc_debit_code, $amount, $description ){

@@ -161,6 +161,26 @@ abstract class Catalog extends CI_Model {
 	$url = "http://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
 	$this->create('log_list',['message'=>$message,'url'=>$url,'log_class'=>$class]);
     }
+    
+    private $db_transaction_nested_count=0;
+    protected function db_transaction_start(){
+        if( $this->db_transaction_nested_count=0 ){
+            $this->query("START TRANSACTION");
+        }
+        $this->db_transaction_nested_count+=1;
+    }
+    
+    protected function db_transaction_commit(){
+        $this->db_transaction_nested_count-=1;
+        if( $this->db_transaction_nested_count=0 ){
+            $this->query("COMMIT");
+        }
+    }
+    
+    protected function db_transaction_rollback(){
+        $this->db_transaction_nested_count=0;
+        $this->query("ROLLBACK");
+    }
 
     ////////////////////////////////////////////////////
     // CORE TREE FUNCTIONS

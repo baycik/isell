@@ -30,13 +30,6 @@ abstract class DocumentBase extends Catalog{
     protected function isCommited(){
 	return $this->doc('is_commited')=='1';
     }
-    protected function documentCurrencyCorrectionGet(){
-	$native_curr=$this->Hub->pcomp('curr_code') && ($this->Hub->pcomp('curr_code') != $this->Hub->acomp('curr_code'))?0:1;
-	return $native_curr?1:1/$this->doc('doc_ratio');
-    }
-    protected function documentSetLevel($level){
-	return false;
-    }
     protected function headDefaultDataGet(){
 	return [];
     }
@@ -70,6 +63,13 @@ abstract class DocumentBase extends Catalog{
 	$head=$this->get_row($sql);
 	//$head->extra_expenses=$this->getExtraExpenses();
 	return $head;
+    }
+    protected function documentCurrencyCorrectionGet(){
+	$native_curr=$this->Hub->pcomp('curr_code') && ($this->Hub->pcomp('curr_code') != $this->Hub->acomp('curr_code'))?0:1;
+	return $native_curr?1:1/$this->doc('doc_ratio');
+    }
+    protected function documentSetLevel($level){
+	return false;
     }
 
     protected function documentAdd( $doc_type ){
@@ -136,7 +136,7 @@ abstract class DocumentBase extends Catalog{
 	$this->Hub->set_level(2);
 	$this->documentSelect($doc_id);
 	$ok=true;
-	$this->query("START TRANSACTION");
+	$this->db_transaction_start();
 	switch($field){
 	    case 'is_commited':
 		$ok=$this->documentChangeCommit( $value );
@@ -162,30 +162,71 @@ abstract class DocumentBase extends Catalog{
 	}
 	$this->doc($field,$value);
 	$this->documentFlush();
-	$this->query("COMMIT");
+	$this->db_transaction_commit();
 	return true;
     }
     protected function documentUpdateRatio( $new_ratio ){
 	
     }
     protected function documentDelete( $doc_id ){
-	$this->query("START TRANSACTION");
+	$this->db_transaction_start();
 	$this->delete('document_entries',['doc_id'=>$doc_id]);
 	$this->delete('document_view_list',['doc_id'=>$doc_id]);
-	$this->delete('acc_trans',['doc_id'=>$doc_id]);
+	$this->transClear();
 	$ok=$this->delete('document_list',['doc_id'=>$doc_id,'is_commited'=>0]);
-	$this->query("COMMIT");
+	$this->db_transaction_commit();
 	return $ok;
     }
     /*
      * Commits and uncommit document
      */
     protected function documentChangeCommit( $make_commited=false ){
-	if( $make_commited && $this->doc('is_commited') || !$make_commited && !$this->doc('is_commited') ){
+	if( $make_commited && $this->isCommited() || !$make_commited && !$this->isCommited() ){
 	    return true;
 	}
+        $this->documentChangeCommitTransactions($make_commited);
 	return $this->documentChangeCommitEntries($make_commited);
     }
+    
+    
+    protected function documentChangeCommitTransactions($make_commited){
+        if( $make_commited ){
+            
+        } else {
+            $this->transDisable();
+        }
+        return false;
+    }
+    protected function transDisable(){
+        $Trans=$this->Hub->load_model("AccountsTrans");
+        $this->db_transaction_start();
+        $Trans->transDisable( $this->doc('doc_id') );
+        $this->db_transaction_commit();
+    }
+    protected function transClear(){
+        $Trans=$this->Hub->load_model("AccountsTrans");
+        $this->db_transaction_start();
+        $Trans->transClear( $this->doc('doc_id') );
+        $this->db_transaction_commit();
+    }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     /*
      * Commit or uncommit all entries in document
      */
@@ -214,9 +255,9 @@ abstract class DocumentBase extends Catalog{
     
     public function entryDelete($doc_id,$doc_entry_ids){
 	$this->documentSelect($doc_id);
-	$this->query("START TRANSACTION");
+	$this->db_transaction_start();
 	foreach($doc_entry_ids as $doc_entry_id){
-	    if( $this->doc('is_commited') ){
+	    if( $this->isCommited() ){
 		$uncommit_ok=$this->entryUncommit($doc_entry_id);
 	    } else {
 		$uncommit_ok=true;
@@ -226,7 +267,7 @@ abstract class DocumentBase extends Catalog{
 		return false;
 	    }
 	}
-	$this->query("COMMIT");
+	$this->db_transaction_commit();
 	return true;
     }    
     
@@ -251,6 +292,7 @@ abstract class DocumentBase extends Catalog{
 	}
         return  $imported_count;
     }
+    
     private function entryImportTruncate(){
 	if( $this->doc('is_commited') ){
 	    return false;
@@ -258,6 +300,7 @@ abstract class DocumentBase extends Catalog{
 	$doc_id=$this->doc('doc_id');
 	return $this->delete('document_entries',['doc_id'=>$doc_id]);
     }
+    
     private function entryImportFromTable( $table, $src, $trg, $filter, $label ){
 	$target=[];
 	$source=[];
@@ -284,5 +327,75 @@ abstract class DocumentBase extends Catalog{
 	$source_list=  implode(',', $source);
 	$this->query("INSERT INTO $table ($target_list) SELECT $source_list FROM imported_data WHERE label='$label' AND $product_code_source IN (SELECT product_code FROM stock_entries) ON DUPLICATE KEY UPDATE product_quantity=product_quantity+$quantity_source_field");
 	return $this->db->affected_rows();
+    }
+
+    /*
+     * Suggestion
+     */
+    public $suggestFetch=['q'=>'string'];
+    public function suggestFetch($q){
+	if( $q=='' ){
+	    return [];
+	}
+	$company_lang = $this->Hub->pcomp('language');
+	if( !$company_lang ){
+	    $company_lang='ru';
+	}
+	$where=['is_service=0'];
+	$clues=  explode(' ', $q);
+	foreach ($clues as $clue) {
+            if ($clue == ''){
+                continue;
+	    }
+            $where[]="(product_code LIKE '%$clue%' OR $company_lang LIKE '%$clue%')";
+        }
+	$sql="
+	    SELECT
+		product_code,
+		$company_lang label,
+		product_spack,
+		product_quantity
+	    FROM
+		prod_list
+		    JOIN
+		stock_entries USING(product_code)
+	    WHERE
+		".( implode(' AND ',$where) )."
+		    ORDER BY fetch_count-DATEDIFF(NOW(),fetch_stamp) DESC, product_code
+	    LIMIT 15
+	    ";
+	return $this->get_list($sql);
+    }
+    
+    public $pickerListFetch=['parent_id'=>'int','offset'=>['int',0],'limit'=>['int',10],'sortby'=>'string','sortdir'=>'(ASC|DESC)','filter'=>'json'];
+    public function pickerListFetch($parent_id,$offset,$limit,$sortby,$sortdir,$filter){
+	$pcomp_id=$this->Hub->pcomp('company_id');
+	$doc_ratio=$this->Hub->pref('usd_ratio');
+	
+	$having=$this->makeFilter($filter);
+	$order='';
+	$where='';
+	if( $parent_id ){
+	    $branch_ids=$this->treeGetSub('stock_tree',$parent_id);
+	    $where="WHERE se.parent_id IN (".implode(',',$branch_ids).")";
+	}
+	if( $sortby ){
+	    $order="ORDER BY $sortby $sortdir";
+	}
+	$sql="SELECT 
+		pl.product_code,
+		ru,
+		product_quantity,
+		ROUND(GET_PRICE(product_code,'$pcomp_id','$doc_ratio'),2) price,
+		product_spack
+	    FROM 
+		stock_entries se
+		    JOIN
+		prod_list pl USING(product_code)
+	    $where 
+	    HAVING $having 
+	    $order
+	    LIMIT $limit OFFSET $offset";
+	return $this->get_list($sql);
     }
 }
