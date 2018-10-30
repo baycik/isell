@@ -2,7 +2,7 @@
 
 require_once 'Data.php';
 
-class Stock extends Data {
+class StockOld extends Data {
 
     private $stockEntry, $productCode;
 

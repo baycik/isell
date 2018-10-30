@@ -149,20 +149,20 @@
                 }
                 App.renderTpl("stock_popup_body", product);
                 $('#small_modal_header').html('Добавить в корзину');
-                $('.small.modal').modal('show');
+                $('#stock_popup_body').modal('show');
             },
             edit_cart_item: function (node) {
                 var product_code = $(node).data('product_code');
                 var product = App.stock.get_item_by_code(product_code,App.stock.cart.list);
                 App.renderTpl("stock_popup_body", product);
                 $('#small_modal_header').html('Изменить количество');
-                $('.small.modal').modal('show');
+                $('#stock_popup_body').modal('show');
                 App.stock.popup_add.calculate_price();
             },
             // Добавление товара в корзину
             put_to_cart: function (node) {
                 var fvalue = $('#stock_popup_add_form').form('get values');
-                $('.small.modal').modal('hide');
+                $('#stock_popup_body').modal('hide');
                 if( fvalue.product_quantity<1 ){
                     return;
                 }
@@ -341,13 +341,6 @@
     .stock_product_promo .stock_product_name{
         color: #0c0;
     }
-    
-    
-    
-    
-    
-    
-    
     .ui.stackable.two.column.grid > .column:not(.row){
         padding-top: 0.3em !important;
         padding-bottom: 0.3em !important;
@@ -590,7 +583,7 @@
         <div id="stock_cart_content">
             {{cart_list}}  
             <table>
-                <tr >
+                <tr>
                     <td>
                         <a href="#stock.html#popup_image={{product_img}}">
                             <img style="float:left" src="../Storage/image_flush/?size=50x50&path=/dynImg/{{product_img}}">

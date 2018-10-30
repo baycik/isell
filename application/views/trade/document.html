@@ -104,7 +104,44 @@
         set:function(){
             Doc.head.setPropsForm(Doc.head.props);
             Doc.setTitle();
+            Doc.head.parse_checkout_statuses();
             App.renderTpl('Doc_owners',Doc.head.props);            
+        },
+        parse_checkout_statuses:function(){
+            switch(Doc.head.props.checkout_status){
+                case 'not_checked':
+                    Doc.head.props.checkout_status_img = 'red.png';
+                    Doc.head.props.checkout_status_msg = 'Не проверено';
+                    break;
+                case 'is_checking':
+                    Doc.head.props.checkout_status_img = 'bolt.png';
+                    Doc.head.props.checkout_status_msg = 'Проверяется';
+                    break;
+                case 'checked':
+                   Doc.head.props.checkout_status_img = 'ok.png';
+                   Doc.head.props.checkout_status_msg = 'Проверено';  
+                   break;
+                case 'checked_with_divergence':
+                   Doc.head.props.checkout_status_img = 'ok.png';
+                   Doc.head.props.checkout_status_msg = 'Проверено с корректировками';  
+                   break;
+               default:
+                   Doc.head.props.checkout_status_img= 'ProductCard.png';
+                   Doc.head.props.checkout_status_msg = 'Проверить';
+                   break;
+            }
+        },
+        go_to_checkout: function(){
+            if(Doc.head.props.checkout_status){
+                location.hash="#Stock#checkout_id="+Doc.head.props.checkout_id;
+            } else {
+                this.create_checkout();  
+            }
+        },
+        create_checkout: function () {
+                if(confirm("Создать список проверки?")){
+                    $.post("Checkout/checkoutDocumentCreate",{ parent_doc_id: Doc.head.props.doc_id, checkout_name: "Документ №" + Doc.head.props.doc_num}).done(Doc.head.load(Doc.head.props.doc_id));
+                }
         },
 	reload:function(){
 	    Doc.head.load(Doc.head.props.doc_id,false);
@@ -971,9 +1008,13 @@
 	</div>
 	<div id="Doc_owners" class="transparent covert" style="clear: left">
 	    {{if created_by}}
-	    <img src="img/add-16.png" title="Создано пользователем" style="vertical-align: middle"> {{created_by}} 
-	    <img src="img/edit-16.png" title="Изменено пользователем" style="vertical-align: middle"> {{modified_by}}
-	    {{/if}}
+                <img src="img/add-16.png" title="Создано пользователем" style="vertical-align: middle"> {{created_by}} 
+                <img src="img/edit-16.png" title="Изменено пользователем" style="vertical-align: middle"> {{modified_by}}
+            {{/if}}
+                <span onclick="Doc.head.go_to_checkout()">
+                <img src="img/{{checkout_status_img}}" title="{{checkout_status_msg}}" style="height:16px; width:auto;vertical-align: middle"/>  
+                {{checkout_status_msg}}
+                </span>  
 	</div>
 	<!-- DOCUMENT VIEWS -->
         <div id="Doc_view_tile" style="clear:both;vertical-align: top;text-align: justify" class="covert">

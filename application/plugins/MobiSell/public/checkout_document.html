@@ -1,0 +1,761 @@
+<script>
+    App.checkout_document = {
+        current_entry_index: '',
+        currentType: 'Document',
+        checkout_id: "",
+        input_barcode: '',
+        checkout_doc_head: [],
+        init: function () {
+            //App.checkout_document.check_storage();
+            //App.checkout_document.focus();
+            App.checkout_document.initTab();
+            document.addEventListener('keypress', function (event) {
+                var char=event.key;
+                if(char*1==char){
+                    App.checkout_document.input_barcode += event.key;
+                    if (App.checkout_document.input_barcode.length == 13){
+                       App.checkout_document.input_barcode = App.checkout_document.input_barcode.substr(0, 13);
+                       App.checkout_document.entries.search_barcode(App.checkout_document.input_barcode);
+                       App.checkout_document.input_barcode='';
+                    }   
+                } else {
+                    App.checkout_document.input_barcode='';
+                }  
+            });
+        },
+        load: function (checkout_id){
+            App.checkout_document.log.put_on_server().done(function(){
+                $.post('../Checkout/checkoutDocumentGet', {checkout_id: checkout_id}, function (resp) {
+                    var response = App.json(resp);
+                    App.checkout_document.entries.list = response.entries;
+                    App.checkout_document.log.list = response.log;
+                    App.checkout_document.checkout_doc_head = response.head;
+                    App.checkout_document.entries.render();
+                });
+            });
+        },
+        focus: function () {
+            App.title("Документ для проверки");
+            App.checkout_document.currentType = 'Document';
+            App.checkout_document.initTab();
+            console.log('works');
+             
+            App.checkout_document.load(App.state.checkout_id);
+            //App.checkout_document.log.put_on_server();
+            
+        },
+        blur: function (){
+            App.checkout_document.log.put_on_server();
+            clearTimeout(App.checkout_document.sync_clock);
+        },
+        check_storage: function () {
+            var storage_log_list = App.json(App.restore('log_list'));
+            if (storage_log_list != null) {
+                App.checkout_document.log.list = storage_log_list;
+            } else {
+                return true;
+            }
+        },
+        initTab: function () {
+            $('.checkout_document_tabs .item').tab({
+                onVisible: function (type) {
+                    App.checkout_document.currentType = type;
+                    if(type === "Document"){
+                        App.checkout_document.entries.render();
+                    }
+                    if(type === "Log"){
+                        App.checkout_document.log.render();
+                    }
+                    if(type === "Photos"){
+                        App.checkout_document.photos.render();
+                    }
+                }
+            });
+            $('.checkout_document_tabs .item').tab('change tab', App.checkout_document.currentType);
+        },
+        render_head: function(){
+            if (App.state.checkout_id == 0){
+              var now = new Date().toLocaleString().replace(',','').substr(0,15);  
+              App.checkout_document.checkout_doc_head = {
+                  checkout_id: 000,
+                  checkout_name: 'Новая проверка',
+                  checkout_status: 'not_checked',
+                  creator_nick: App.user.props.user_sign,
+                  modifier_nick: App.user.props.user_sign,
+                  cstamp_dmy: now
+              }
+            }
+            App.renderTpl("doc_head", App.checkout_document.checkout_doc_head);
+        },
+        generate_product_log: function () {
+            var fvalue = $('#checkout_document_popup_quan_form').form('get values');
+            $("#checkout_document_log_search_input").val(fvalue.product_code);
+            App.checkout_document.log.render();
+        },
+        progress_update: function(){
+            var verified = 0;
+            var total = 0;
+            App.checkout_document.entries.list.forEach(function(item){
+                  verified += Math.min(item.product_quantity_verified, item.product_quantity);
+                  total += item.product_quantity*1;
+            });
+            if (verified > 0){
+                
+            };
+            $('#checkout_progress_bar').progress("set percent", verified/total*100 );
+        },
+        entries: { 
+            list: [],
+            render: function () {
+                App.checkout_document.input_barcode = '';
+                $("#checkout_document_log_search_input").val('');
+                App.checkout_document.progress_update();
+                App.checkout_document.render_head();
+                App.renderTpl("checkout_entries", {products: App.checkout_document.entries.list});
+            },
+            update:function(operation_quantity){
+                var currentEntry=App.checkout_document.entries.list[App.checkout_document.current_entry_index];
+                var product_verified = currentEntry.product_quantity_verified*1 + operation_quantity*1;
+                var product_quantity = currentEntry.product_quantity * 1;
+                if (product_verified < 0){
+                    App.flash("Орицательное количество!");
+                    return true;
+                }
+                if (product_verified === product_quantity || product_verified > product_quantity) {
+                    currentEntry.verification_status = 1;
+                };
+                currentEntry.product_quantity_verified = product_verified;
+                App.checkout_document.log.write_to_log(operation_quantity, currentEntry);
+            },
+            search_barcode:function (barcode){
+                var barcode_founded = false;
+                for(var i = 0; i < App.checkout_document.entries.list.length; i++){
+                    if (barcode == App.checkout_document.entries.list[i].product_barcode){
+                        barcode_founded = true;
+                        App.checkout_document.current_entry_index = i;
+                        break;
+                    } 
+                }
+                if (!barcode_founded){
+                    alert('There is no such barcode=( We will search for it on server!');
+                    App.checkout_document.entries.load_by_barcode(barcode);
+                    return;
+                } else {
+                    App.checkout_document.entries.show_popup(App.checkout_document.entries.list[i]);
+                }
+            },
+            load_by_barcode: function (barcode) {
+                $.post('../Checkout/checkoutProductGet', {barcode: barcode}, function (resp) {
+		    var new_entry = App.json(resp);
+                    if (new_entry){
+                        new_entry.checkout_id = App.state.checkout_id;
+                        new_entry.product_quantity = '0';
+                        new_entry.product_quantity_verified = '0';
+                        new_entry.verification_status = '0';
+                        var new_length = App.checkout_document.entries.list.push(new_entry);
+                        App.checkout_document.current_entry_index = new_length-1;
+                        App.checkout_document.entries.show_popup();
+                    } else if (!new_entry){
+                        return;
+                    }
+		});
+            },
+            submit_form: function () {
+                var fvalue = $('#checkout_document_popup_quan_form').form('get values');
+                if(fvalue.operation_quantity == 0){
+                    $("#popup_quantity_message").show('fast');
+                    return false;
+                } else {
+                    $("#popup_quantity_message").hide();
+                }
+                App.checkout_document.entries.update(fvalue.operation_quantity);
+                $('#checkout_document_quantity_popup').modal('hide');
+                App.checkout_document.entries.render();
+            },
+            show_popup_by_click: function (node) {
+                App.checkout_document.current_entry_index = $(node).data('index');
+                this.show_popup();
+            },
+            show_popup: function () {
+                $("#popup_quantity_message").hide();
+                $('#checkout_document_quantity_popup').modal('show');
+                App.renderTpl("quan_popup_content", {products: App.checkout_document.entries.list[App.checkout_document.current_entry_index]});
+            },
+            check_package_type: function (type) {
+                var currentEntry=App.checkout_document.entries.list[App.checkout_document.current_entry_index];
+                var quantity=1;
+                if (type === 'Extra_Small') {
+                    quantity=1;
+                } else if (type === 'Small') {
+                    quantity=currentEntry.product_spack;
+                } else if (type === 'Big') {
+                    quantity=currentEntry.product_bpack;
+                }
+                $("#checkout_document_popup_quan_form input[name=operation_quantity]").val(quantity);
+                App.checkout_document.entries.submit_form();
+            }
+        },
+        log: {
+            list: [],
+            put_on_server: function (){
+                var deffered = $.Deferred();
+                clearTimeout(App.checkout_document.sync_clock);
+                var uncommited_logs = [];
+                if(App.checkout_document.log.list){
+                    for (var item in App.checkout_document.log.list){
+                        if(App.checkout_document.log.list[item].is_commited === false){
+                            App.checkout_document.log.list[item].index = item;
+                            uncommited_logs.push(App.checkout_document.log.list[item]);
+                        }
+                    }
+                    if( uncommited_logs.length < 1 ){
+                        deffered.resolve();
+                    } else {
+                        var uncommited_logs_json = JSON.stringify( uncommited_logs );    
+                        $.post('../Checkout/checkoutLogCommit', { checkout_id: App.state.checkout_id, entries: uncommited_logs_json }, function (okey) {
+                            if(okey*1){
+                                App.checkout_document.log.make_commited(uncommited_logs);
+                                deffered.resolve();
+                            } 
+                        });    
+                    }    
+                } else {
+                    deffered.resolve();
+                }
+                App.checkout_document.sync_clock=setTimeout(App.checkout_document.log.put_on_server, 10000); 
+                return deffered.promise();
+            },
+            make_commited: function(uncommited_logs){
+                for(var i in uncommited_logs){
+                    for (var k in App.checkout_document.log.list){
+                        if(uncommited_logs[i].index == k){
+                            App.checkout_document.log.list[k].is_commited = true;
+                        }
+                    }
+                }
+                App.store('log_list', App.checkout_document.log.list);
+            },
+            write_to_log: function (operation_quantity, product_info) {
+                App.checkout_document.checkout_doc_head.checkout_status = 'is_checking';
+                var now = new Date();
+                var time = now.toISOString().substr(0,10) + ' ' + now.toLocaleTimeString();
+                var product_to_write =
+                        {
+                            product_id: product_info.product_id,
+                            ru: product_info.ru,
+                            product_code: product_info.product_code,
+                            operation_quantity: operation_quantity,
+                            product_unit: product_info.product_unit,
+                            verification_status: product_info.verification_status,
+                            cstamp: time,
+                            is_commited: false
+                        };
+                App.checkout_document.log.list.push(product_to_write);
+                App.store('log_list', App.checkout_document.log.list);
+            },
+            rewrite_to_log: function (node) {
+                var product_quantity = $(node).data('operation_quantity') * -1;
+                var product_info = $(node).data();
+                for (var i = 0; i < App.checkout_document.entries.list.length; i++) {
+                    var item=App.checkout_document.entries.list[i];
+                    if (item.product_code == product_info.product_code) {
+                        App.checkout_document.current_entry_index = i;
+                        App.checkout_document.entries.update(product_quantity);
+                        break;
+                    }
+                }
+                App.checkout_document.entries.render();
+                App.checkout_document.log.render();
+            },
+            filter: function () {
+                var now = new Date();
+                var today = now.toISOString().substr(0,10);
+                var yesterday = new Date(now.setDate(now.getDate() - 1)).toISOString().substr(0,10);
+                var search_data = $("#checkout_document_log_search_input").val();
+                search_data = search_data.replace(' ', '|');
+                var product_log = [];
+                for (var i = 0; i < App.checkout_document.log.list.length; i++) {
+                    var item = App.checkout_document.log.list[i];
+                    var pattern = new RegExp(search_data, 'i');
+                    var product_data = item.ru + ' ' + item.product_code;
+                    if ( pattern.test(product_data) ) {
+                        item.time_to_display = item.cstamp.replace(today, "Сегодня в ").replace(yesterday, "Вчера в ");
+                        product_log.push(item);
+                        $('#no_match_message').hide();
+                    }
+                }
+                return product_log.reverse();
+            },
+            render: function () {
+                var product_log = App.checkout_document.log.filter();
+                $('.checkout_document_tabs .item').tab('change tab', 'Log');
+                App.checkout_document.render_head();
+                App.renderTpl("log_list", {log_list: product_log});
+            }
+        },
+        photos:{
+            list: [],
+            render: function (){
+                $('.checkout_document_tabs .item').tab('change tab', 'Photos');
+                App.checkout_document.photos.list = App.checkout_document.checkout_doc_head.checkout_photos?App.checkout_document.checkout_doc_head.checkout_photos.split(",").reverse():[];
+                var photos=[];
+                for(var filename of App.checkout_document.photos.list){
+                    if( !filename ){
+                        continue;
+                    }
+                    var photo_date=new Date (parseInt(filename));
+                    var photo={
+                        filename:filename,
+                        date:photo_date.toLocaleDateString()+" "+photo_date.toLocaleTimeString()
+                    };
+                    photos.push(photo);
+                }
+                App.renderTpl("checkout_photos_tab", {checkout_photos: photos});
+            },
+            up:function(fileList){
+                if( fileList.length ){
+                    if( fileList[0].type.indexOf('image')===-1 ){
+			alert("Файл должен быть изображением");
+			return false;
+		    }
+                    var file_name=(new Date()).getTime()+'.'+fileList[0].name.split('.').pop();
+                    var url = '../Checkout/checkoutUp/';
+                    var xhr = new XMLHttpRequest();
+                    var fd = new FormData();
+                    xhr.open("POST", url, true);
+                    xhr.onreadystatechange = function() {
+                        if (xhr.readyState === 4 && xhr.status === 200) {
+                            if( xhr.responseText.indexOf('uploaded')>-1 ){
+                                App.flash("Фото загружено");
+                                App.checkout_document.load(App.state.checkout_id);
+                            } else {
+                                App.flash("Не удалось загрузить");
+                            }
+                        }
+                    };
+                    fd.append("checkout_id",App.state.checkout_id);
+                    fd.append("file_name",file_name);
+                    fd.append("upload_file", fileList[0]);
+                    xhr.send(fd);
+                }
+            },
+            checkout_upload:function(){
+                $('#checkout_attach').click();
+            }
+        },
+        clear_searchbar: function () {
+            $("#checkout_document_log_search_input").val('');
+            App.checkout_document.log.render();
+        },
+        commit_checkout: function () {
+            App.checkout_document.blur();
+            if(confirm('Вы уверены, что хотите завершить проверку?')){
+                $.post('../Checkout/checkoutDocumentOutput', {checkout_id: App.state.checkout_id}, function (resp) {
+                    location.hash = "#document_list.html";
+                })
+            } 
+        }
+    };
+</script>    
+
+
+
+
+<style>
+    #checkout_document_save_button {
+        position: fixed;
+        bottom: 15px;
+        right: 10px;
+        z-index: 2;
+        padding: 1.5em;
+        box-shadow: 0px 0px 10px 5px rgba(0,0,0,0.25);
+    }
+    #doc_list .checkout_document_modified_by_tr td{
+        border-top: none;
+        line-height: 0.5em;
+        font-size: 12px;
+    }
+    #checkout_document_table .product_row .three wide column{
+        height: 1em;
+        overflow: hidden;
+    }
+    div table .product_row .product_name {
+        max-height: 7.3em !important;
+        overflow: hidden !important;
+    }
+    div table .product_row .product_name div .three.wide.column{
+        padding-top: 10px !important;
+        padding-bottom: 0px !important;
+    }
+    .ui.celled.unstackable.selectable.table{
+        border-top: none;
+    }
+    .checkout_document_product_name{
+        height: 4em;
+        overflow-y: hidden;
+    }
+    #log_list .checkout_document_log_time_td{
+        border-top: none;      
+    }
+    #log_list .checkout_document_log_time_button_td{
+        border-top: none;      
+    }
+    #checkout_progress_bar_container{ 
+       position: fixed;
+       top: 41px;
+       width: 100%;
+       z-index: 500;
+    }
+    #checkout_progress_bar{
+        height: 0.2em;
+        border-radius: 0px !important;
+    }  
+    #checkout_progress_bar .bar{
+        height: 0.2em;
+        border-radius: 0px !important;
+    }
+</style>
+
+<div id="checkout_progress_bar_container" >
+    <div id="checkout_progress_bar" class="ui indicating blue progress" data-value="0">
+      <div class="bar"></div>
+    </div>
+</div>
+
+<div id="doc_head" class="ui segment blue covert">
+    <div>
+        <span>{{cstamp_dmy}}</span>
+        <span>{{checkout_name}}</span>
+    </div>
+    <div>
+        <div class="ui equal width grid">
+            <div class="column">
+                <i class="plus circle icon"></i>
+                <i>{{creator_nick}}</i>
+            </div>
+            <div class="column">
+                <i class="pencil alternate icon"></i>
+                <i>{{modifier_nick}}</i>
+            </div>
+        </div>
+        <div>
+            {{if checkout_status|equals>not_checked}}
+                <i class="close red large icon"></i>
+                    Не выполнено
+                {{else}}
+                    {{if checkout_status|equals>checked}}
+                    <i class="check green large icon"></i>
+                        Выполнено
+                    {{else}}
+                        {{if checkout_status|equals>checked_with_divergence}}
+                        <div>
+                            <i class="large icons">
+                                <i class="check green icon"></i>
+                                <i class="top right corner minus red icon"></i>
+                                <i class="bottom right corner plus green icon"></i>
+                            </i>
+                                Выполнено (с расхождениями)
+                        </div>
+                        {{else}}
+                            {{if checkout_status|equals>is_checking}}
+                                <i class="spinner blue loading large icon"></i>
+                                    Выполняется
+                            {{/if}}
+                        {{/if}}
+                    {{/if}}
+                {{/if}}
+        </div>
+        {{if checkout_status|equals>is_checking}}
+        <button class="ui fluid  primary button compact" onclick="App.checkout_document.commit_checkout(); return false">Завершить проверку</button>
+        {{/if}}
+    </div>
+</div>
+
+<button class="ui blue icon button fluid" onclick="App.checkout_document.photos.checkout_upload()">
+    <i class="ui photo icon"></i> 
+    Прикрепить фото
+</button>
+
+<input id="checkout_attach" style="display:none"  type="file" onchange="App.checkout_document.photos.up(this.files)"/>
+<div id="checkout_document_head"  class="ui top attached tabular menu checkout_document_tabs ">
+    <a id="document_tab_header" class="active item" data-tab="Document">Документ</a>
+    <a id="log_tab_header" class="item" data-tab="Log">Операции</a>
+    <a id="photos_tab_header" class="item" data-tab="Photos">Фото</a>
+</div>
+
+<div id="checkout_entries" class="ui bottom attached tab covert" data-tab="Document">
+ 
+    <table id="checkout_document_table" class="ui celled unstackable selectable table">
+        <thead> 
+            <tr>
+                <th>
+                    <div class="ui two column grid">
+                        <div class="six wide column">Код</div>         
+                        <div class="four wide column">Название</div>
+                    </div>
+                </th>  
+                <th colspan="2" class="right-aligned"> 
+                    <div class="five wide column">Проверено</div>
+                </th>  
+            </tr>
+        </thead>
+        <tbody>
+            <!--{{products}}-->
+            <tr class="product_row" data-index="{{#}}" onclick="App.checkout_document.entries.show_popup_by_click(this)">
+                <td class="product_name">
+                    <b>{{product_code}}</b> {{ru}}
+                </td>
+                <td>
+                    <div class="ui grid">
+                        <div class="seven wide column">{{product_quantity_verified}}/{{product_quantity}}</div>
+                    </div>
+                </td>
+                <td>
+                    <div id="verification_indicator_{{#}}">
+                        {{if verification_status|equals>0}}
+                        <div>
+                            <i class="exclamation circle red icon"></i>
+                        </div>
+                        {{else}}
+                        <div>
+                            <i class="check circle green icon"></i>
+                        </div>
+                    </div>
+                    {{/if}}
+                </td>
+
+            </tr>
+            <!--{{/products}}-->
+            
+        </tbody>
+    </table>
+    <div class="ui inverted segment blue">
+	<div class="ui inverted fluid accordion " id="checkout_suggestion"> 
+	    <div class="title"><i class="add icon"></i>Добавить товар</div>
+	    <div class="content ">
+		<div class="ui left icon right labeled input fluid" style="margin-bottom: 5px;">
+		    <i class="search icon"></i>
+		    <input placeholder="Поиск по коду или названию" type="text">
+		    <div class="ui basic label" onclick="App.document.suggestion.clear()"><i class="close icon"></i></div>
+		</div>
+		<div class="covert" id="doc_suggestion_entries">
+		    <table class="ui very compact table unstackable">
+			<tbody>
+			    <!-- {{if entries}} {{entries}} -->
+			    <tr>
+				<td  style="height:50px" data-row-index="{{#}}" onclick="App.document.suggestion.popImage(this)">
+				    <img style="width:50px" src="../Storage/image_flush/?size=50x50&path=/dynImg/{{product_img}}">
+				</td>
+				<td data-row-index="{{#}}" onclick="App.document.suggestion.handleClick(this)">
+				    <div class="ui grid stackable" style="{{if leftover|less>1}} color:red !important {{/if}}">
+					<div class="eight wide column" style="padding: .5rem !important">{{product_name}}</div>
+					<div class="eight wide column" style="padding: .5rem !important">
+					    <div class="ui grid" style="opacity:0.7">
+						<div class="six wide column">{{product_code}}</div>
+						<div class="five wide column right aligned">{{product_price_total}}р</div>
+						<div class="five wide column right aligned">{{if stared_leftover}} {{stared_leftover}} {{else}} {{leftover}}{{product_unit}} {{/if}}</div>
+					    </div>
+					</div>
+				    </div>
+				</td>
+			    </tr>
+			    <!-- {{/entries}} {{else}}-->
+			    <tr>
+				<td colspan="2">Ничего не найдено</td>
+			    </tr>
+			    <!--{{/if}}-->
+			</tbody>
+		    </table>
+		    <button class="ui button fluid" id="load_suggestions_button" onclick="App.document.suggestion.load();">Показать еще ...</button>
+		</div>
+	    </div>
+	</div>
+    </div>
+</div>
+
+
+<div  class="ui bottom attached  tab" data-tab="Log">
+    <div id="checkout_document_log_search" class="ui field">
+        <div class="ui field">
+            <label><b>Поиск</b></label>
+            <div class="ui left icon right labeled input fluid" style="margin-bottom: 5px;">
+                <i class="search icon"></i>
+                <input id="checkout_document_log_search_input" placeholder="Введите название или код..." type="text" 
+                       oninput="App.checkout_document.log.render()">
+                <div class="ui basic label" onclick="App.checkout_document.clear_searchbar()"><i class="close icon"></i></div>
+            </div>
+        </div>
+    </div>
+    <div id='no_match_message' class='ui red floating message' style='display:none'>
+        <p>По вашему запросу не найдено ни одной проверки</p>
+    </div>
+    <div id="log_list"  class='covert'>
+        <table class="ui unstackable compact table" >
+            <thead>
+                <tr>
+                    <th>
+                        <div class="ui two column grid">
+                            <div class="six wide column">Код</div>         
+                            <div class="ten wide column">Название</div>
+                        </div>
+                    </th>  
+                    <th> 
+                        <div></div>
+                    </th>  
+                </tr>
+            </thead>
+            <tbody>
+                <!--{{log_list}}-->
+                <tr class="log_list_row" style="border: 1px">
+                    <td class="log_name">
+                        <div class="ui two column unstackable grid">
+                            <div class="sixteen wide column"><b>{{product_code}}</b> {{ru}}</div>
+                        </div>
+                    </td>
+                    <td class="center-aligned">                      
+                        <div><b>{{operation_quantity}}</b> {{product_unit}}</div>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="checkout_document_log_time_td">
+                        <div class="sixteen wide fluid column" style ="font-size:14px"><i>{{time_to_display}}</i></div>
+                    </td>
+                    <td class="checkout_document_log_time_button_td">
+                        <button class="ui red icon button" 
+                                data-product_id = "{{product_id}}"
+                                data-product_code = "{{product_code}}" 
+                                data-ru = "{{ru}}"
+                                data-operation_quantity = "{{operation_quantity}}"
+                                data-product_unit = "{{product_unit}}" 
+                                data-time = "{{cstamp}}"
+                                onclick="App.checkout_document.log.rewrite_to_log(this); return false">
+                            <i class="ban icon"></i>
+                        </button>
+                    </td>
+                </tr>
+                <!--{{/log_list}}-->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div id="checkout_photos_tab" class="ui bottom attached tab covert" data-tab="Photos">
+    <div class="ui segment">
+        <div class="ui stackable cards">
+        <!--{{checkout_photos}}--> 
+            <div class="ui card">
+                <div class="image">
+                    <a href="../Storage/image_flush/?size=700x700&path=/checkout/{{filename}}">
+                    <img src="../Storage/image_flush/?size=110x110&path=/checkout/{{filename}}" style="max-height: 110px;max-width: 110px" >
+                    </a>
+                </div>
+              <div class="content">
+                <a class="header">{{date}}</a>
+              </div>
+            </div>
+        <!--{{/checkout_photos}}-->  
+        </div>
+    </div>
+</div>
+
+<div id="checkout_document_quantity_popup" class="ui tiny modal">
+
+    <div id="quan_popup_content" >
+        <!--{{products}}-->
+        <table class="ui celled unstackable table">
+            <tbody>
+                <tr>
+                    <td class="left-aligned"> 
+                        <div class="ui unstackable two column grid">
+                            <div class="five wide column">
+                                <img src="../Storage/image_flush/?size=80x80&path=/dynImg/{{product_img}}" >
+                            </div>
+                            <div class="eleven wide column"><b>{{product_code}}</b> {{ru}}</div> 
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td class='left_aligned'>
+                        Проверено: {{product_quantity_verified}} из {{product_quantity}}
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <div class="ui small header">
+                            Упаковка({{product_unit}}):
+                        </div>
+                        <div class="actions" id="checkout_document_quantity_buttons">
+                            <div class="ui equal width  grid ">
+                                {{if product_spack|notequals>1}}
+                                <div class="column" >
+                                    <button class="ui blue fluid button"  onclick="App.checkout_document.entries.check_package_type('Extra_Small'); return false">
+                                        1
+                                    </button>   
+                                </div>
+                                {{/if}}
+                                {{if product_spack|notequals>0}}
+                                <div class="column">
+                                    <button class="ui blue fluid button"  onclick="App.checkout_document.entries.check_package_type('Small'); return false">
+                                        {{product_spack}} 
+                                    </button>   
+                                </div>
+                                {{/if}}
+                                {{if product_bpack|notequals>0}}
+                                <div class="column">
+                                    <button class="ui blue fluid button"  onclick="App.checkout_document.entries.check_package_type('Big'); return false">
+                                        {{product_bpack}}
+                                    </button>   
+                                </div>
+                                {{/if}}
+                            </div>
+                        </div>
+                    </td>    
+                </tr>
+            </tbody>    
+        </table>
+         <div id="popup_quantity_message" class=" ui warning message">
+             <i class="exclamation icon"></i>
+                Пожалуйста, укажите количество 
+         </div>
+        <form id='checkout_document_popup_quan_form' class="ui form segment">
+            <div class="field">
+                <label>Количество</label>
+                <input type='hidden' name='ru' value='{{ru}}'>
+                <input type='hidden' name='product_code' value='{{product_code}}'>
+                <input type='hidden' name='product_quantity' value='{{product_quantity}}'>
+                <input type="number" name="operation_quantity" placeholder="Количество"
+                       onfocus="this.select()"
+                       value="{{product_spack|blank>1}}">
+            </div>
+           
+            <div class="actions">
+                <div class="ui center aligned grid">
+                    <div class="ui equal width row">
+                        <div class="column">
+                            <button type="submit" class="ui green submit icon button" onclick="App.checkout_document.entries.submit_form(); return false">
+                                Добавить
+                            </button>
+                        </div>
+                        <div class="column">
+                            <button class="ui cancel icon button" onclick="App.checkout_document.entries.render();
+                                    return false">
+                                Отмена
+                            </button>
+                        </div>
+                    </div>    
+                </div>
+                {{if product_quantity_verified|more>0}}    
+                <div class="ui center aligned grid">
+                    <div class="ui equal width row">
+                        <button class="ui labeled icon approve button" onclick="App.checkout_document.generate_product_log(); return false">
+                            <i class="list ul icon"></i>
+                            История операций
+                        </button>
+                    </div>
+                </div>    
+                {{/if}}
+            </div>
+            <!--{{/products}}-->
+        </form>
+    </div>
+</div>
