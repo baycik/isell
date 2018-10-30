@@ -313,7 +313,7 @@ class AccountsCore extends Catalog{
                     SET trans_status=IF(acc_debit_code = $acc_code,
                             (@sum:=@sum - amount)*0 + 
                             IF(amount<0,0,
-                                IF(@sum <= 0 ,1,
+                                IF(ROUND(@sum,2) <= 0 ,1,
                                     IF(@sum+$sensitivity< amount, 2, 3)
                                 )
                             ),
@@ -334,7 +334,7 @@ class AccountsCore extends Catalog{
                     SET trans_status=IF(acc_credit_code = $acc_code,
                             (@sum:=@sum - amount)*0 + 
                             IF(amount<0,0,
-                                IF(@sum <= 0 ,6,
+                                IF(ROUND(@sum,2) <= 0 ,6,
                                     IF(@sum+$sensitivity< amount, 7, 8)
                                 )
                             ),
@@ -461,6 +461,16 @@ class AccountsCore extends Catalog{
 	$this->Hub->msg('access denied');
 	return false;
     }
+    
+    
+    public function transDisable($doc_id){
+        return $this->update('acc_trans JOIN acc_doc_trans USING(trans_id)',['is_disabled'=>1], ['doc_id'=>$doc_id]);
+    }
+    public function transClear($doc_id){
+        return $this->delete('acc_trans JOIN acc_doc_trans USING(trans_id)', ['doc_id'=>$doc_id]);
+    }
+    
+    
 
     public $documentPay=['doc_id'=>'int','acc_debit_code'=>'string','amount'=>'double','description'=>'string'];
     public function documentPay( $doc_id, $acc_debit_code, $amount, $description ){

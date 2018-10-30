@@ -4,8 +4,8 @@
 	init:function(data){
 	    this.node.window({
 		title:'Резервное копирование',
-		width: 500,
-		height: 330,
+		width: 530,
+		height: 'auto',
 		top:50,
 		shadow:false,
 		onClose: function(){
@@ -14,6 +14,7 @@
 		}		
 	    });
 	    this.node.window('window').css('position','fixed');
+	    this.taskFormInit();
 	},
 	destroy:function () {
 	    this.node.window('destroy');
@@ -24,9 +25,9 @@
             App.page_dialog_backup.throbber(1);
 	    App.post("Maintain/backupDump/",function(ok){
                 App.page_dialog_backup.throbber(0);
-		if( ok*1 ){
+		if( ok!=0 ){
 		    App.flash("Резервная копия базы данных создана");
-		    $('#page_dialog_backup_dg').datagrid('reload')
+		    $('#page_dialog_backup_dg').datagrid('reload');
 		} else {
 		    alert("Ошибка при создании базы данных. Сведения в .log файле");
 		}
@@ -34,13 +35,17 @@
 	},
 	backupImport:function(){
 	    var row=$('#page_dialog_backup_dg').datagrid('getSelected');
+	    if( !row ){
+		alert("Выберите файл для импорта из списка");
+		return;
+	    }
 	    var wrn="\
 		    Внимание!\n\
 		    - Импорт выбранного файла может привести к потере данных до момента его создания.\n\
 		    - В случае неудачного импорта может программа iSell может стать не работоспособной\n\n\
 		    Настойчиво рекомендуется создать и скачать резервную копию базы данных перед импортом!\n\n\n\
 		    Продолжить?";
-	    if( row && confirm(wrn) ){
+	    if( confirm(wrn) ){
                 App.page_dialog_backup.throbber(1);
 		App.post("Maintain/backupImport/",{filename:row.file},function(ok){
                     App.page_dialog_backup.throbber(0);
@@ -67,7 +72,7 @@
 	    }
 	},
 	create:function(){
-	    if( confirm("Создать резервную копию?") ){
+	    if( confirm("Создать резервную копию базы данных?") ){
 		this.backupDump();
 	    }
 	},
@@ -101,7 +106,43 @@
 	},
         throbber:function(show){
             show?$("#backup_throbber").show():$("#backup_throbber").hide();
-        }
+        },
+	taskFormInit:function(){
+	    App.setupForm('#dbbackup_task_frm');
+	    $("#dbbackup_task_frm").submit(function(e){
+		e.preventDefault();
+		var fvalue=App.collectForm('#dbbackup_task_frm');
+		App.page_dialog_backup.addAutoBackupTask(fvalue);
+	    });
+	},
+	addAutoBackupTask:function(fvalue){
+	    var comment="Создание резервной копии базы данных";
+	    var program={
+		commands:[
+		    {model:'Maintain',method:'backupDump',arguments:'',async:true}
+		]
+	    };
+	    if(fvalue.do_zip){
+		program.commands.push({
+		    model:'Maintain',method:'backupDumpZip',arguments:'-PREVIOUS-RETURN-',async:true
+		});
+		comment+=", сжатие в архив zip";
+	    }
+	    if(fvalue.do_upload){
+		program.commands.push({
+		    model:'Maintain',method:'backupDumpFtpUpload',arguments:'-PREVIOUS-RETURN-',async:true
+		});
+		comment+=", копирование на ftp сервер.";
+	    }
+	    var task={
+		event_program:JSON.stringify(program),
+		event_name:"Резервное копирование",
+		event_descr:comment,
+		event_label:"-TASK-",
+		event_repeat:"1 0:0"
+	    };
+	    App.loadWindow('page/events/event', task);
+	}
     };
 </script>
 <style>
@@ -120,8 +161,16 @@
     <tr>
 	<td style="vertical-align: top;">
 	    <img src="img/database.png">
-	    <button onclick="App.page_dialog_backup.create();" style="width:170px;text-align: left"><img src="img/edit_add.png"> Создать резервную копию</button>
-	    <button onclick="App.page_dialog_backup.backupImport();" style="width:170px;text-align: left"><img src="img/database.png" style="width:24px;height: 24px;"> Импортировать выбранный файл</button>
+	    <button onclick="App.page_dialog_backup.create();" style="width:200px;text-align: left;margin-bottom: 4px;"><img src="img/edit_add.png"> Создать резервную копию</button>
+	    <button onclick="App.page_dialog_backup.backupImport();" style="width:200px;text-align: left;margin-bottom: 4px;"><img src="img/database.png" style="width:24px;height: 24px;"> Импортировать файл</button>
+	    <div class="easyui-panel" title="Автоматизировать" data-options="collapsible:true,collapsed:true,width:200">
+		<form id="dbbackup_task_frm">
+		    <input type="checkbox" name="do_backup" title="Создать" checked="checked" readonly="readonly" />
+		    <input type="checkbox" name="do_zip" title="Упаковать" />
+		    <input type="checkbox" name="do_upload" title="Закачать на ftp" />
+		    <button><img src="img/event.png" style="width: 24px;height: auto;"> Добавить задание</button>
+		</form>
+	    </div>
 	</td>
 	<td>
 	    <div style="text-align: right;padding-right: 5px;">

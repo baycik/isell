@@ -17,6 +17,7 @@ class User extends Catalog {
 		return true;
 	    }
 	}
+	$this->log("$login wrong password");
 	header("HTTP/1.1 401 Unauthorized");
 	return false;
     }
@@ -76,7 +77,7 @@ class User extends Catalog {
             $user_data->user_id=$this->db->insert_id();
             $user_data->user_level=1;
             $user_data->user_login=$user_phone;
-            
+            $this->log("{$user_phone} registered");
             //$this->userRegisterNotify($client_data);
         }
         return $user_data;
@@ -120,6 +121,7 @@ class User extends Catalog {
 	$this->Hub->svar('user_assigned_stat',$user_data->user_assigned_stat);
 	$this->Hub->svar('user_assigned_path',$user_data->user_assigned_path);
         $this->Hub->svar('user',$user_data);
+	$this->Hub->svar('modules_allowed',$this->getModuleList());
 
 	$Company=$this->Hub->load_model("Company");
 	if( $user_data->company_id ){
@@ -129,9 +131,11 @@ class User extends Catalog {
 	}
 	$PluginManager=$this->Hub->load_model("PluginManager");
 	$PluginManager->pluginInitTriggers();
+	$this->log("$user_data->user_login signed in",'User');
     }
     public $SignOut=[];
     public function SignOut(){
+	$this->log($this->Hub->svar('user_login')." signed out");
         $_SESSION = array();
 	return true;
     }
@@ -144,7 +148,7 @@ class User extends Catalog {
 	    'user_level_name'=>$this->Hub->svar('user_level_name'),
 	    'acomp'=>$this->Hub->svar('acomp'),
 	    'pcomp'=>$this->Hub->svar('pcomp'),
-	    'module_list'=>$this->getModuleList()
+	    'module_list'=>$this->Hub->svar('modules_allowed')
 	];
     }
     private function getModuleList(){
@@ -152,7 +156,7 @@ class User extends Catalog {
 	$alowed=array();
 	foreach( $mods as $mod ){
 	    if( $this->Hub->svar('user_level')>=$mod->level ){// && strpos(BAY_ACTIVE_MODULES, "/{$mod->name}/")!==false 
-		$alowed[]=$mod;
+		$alowed[$mod->name]=$mod;
 	    }
 	}
 	return $alowed;
@@ -175,14 +179,14 @@ class User extends Catalog {
 	$user_id = $this->Hub->svar('user_id');
         $where = ($this->Hub->svar('user_level') < 4) ? "WHERE user_id='$user_id'" : "";
         $sql="SELECT
-		user_id,user_login,user_level,user_sign,user_position,user_phone,user_email,
+		user_id,user_login,user_level,user_sign,user_position,user_phone,user_email,user_is_staff,
 		first_name,middle_name,last_name,nick,
 		id_type,id_serial,id_number,id_given_by,id_date,
 		user_assigned_path,user_permissions,
 		CONCAT(last_name,' ',first_name,' ',middle_name) AS full_name 
 	    FROM user_list
 		$where 
-	    ORDER BY user_id<>'$user_id', user_level DESC";
+	    ORDER BY user_id<>'$user_id', user_is_staff DESC,user_level DESC";
         return $this->get_list($sql);
     }
     public $save=[];
@@ -198,6 +202,7 @@ class User extends Catalog {
 	    }
 	}
 	if( $current_level>=3 ){
+	    $fields['user_is_staff']=$this->request('user_is_staff');	    
 	    $fields['user_sign']=$this->request('user_sign');
 	    $fields['user_position']=$this->request('user_position');	    
 	    $fields['first_name']=$this->request('first_name');

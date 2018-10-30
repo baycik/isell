@@ -480,8 +480,7 @@ Mark.pipes.format = function (str) {
 		    App.user.setActiveCompany(userProps.acomp,'notify_init');
 		    App.user.setPassiveCompany(userProps.pcomp,'notify_init');
 		    if( userProps && userProps.user_level>0 ){
-			App.renderTpl('div_user_panel', App.user.props || '');	
-			App.renderTpl('div_module_list', App.user.props || '');
+			App.renderTpl('div_user_panel', App.user.props || '');
 			this.signedIn=true;
 			this.loginFormHide();
 			App.module.init();
@@ -628,14 +627,23 @@ Mark.pipes.format = function (str) {
 	    };
 	    
 	    App.module={
+		list:[],
 		init:function(){
 		    $(window).bind( 'hashchange', function(e) {
 			App.module.load(location.hash.substring(1));
 		    });
+		    App.module.list=[];
+		    for(var i in App.user.props.module_list){
+			App.module.list.push(App.user.props.module_list[i]);
+		    }
 		    if( !location.hash ){
-			location.hash="#"+App.user.props.module_list[0].name;
+			location.hash="#"+App.module.list[0].name;
 		    }
 		    App.module.load(location.hash.substring(1));
+		    this.render_icons();
+		},
+		render_icons:function(){
+		    App.renderTpl('div_module_list', {module_list:App.module.list});
 		},
 		load:function(name){
 		    if( this.current === name ){
@@ -673,13 +681,8 @@ Mark.pipes.format = function (str) {
 		parseHTML:function(){
 		    $.parser.parse("#holder"+App.module.current);//for easy ui   
 		},
-		findTitle:function(){
-		    App.user.props.module_list.forEach(function(item){
-			if( item.name===App.module.current ){
-			    App.setTitle(item.label);
-			    return false;
-			}
-		    });
+		findTitle:function(){		    
+		    App.setTitle(App.user.props.module_list[App.module.current].label);
 		},
 		selectButton:function(){
 		    $(".ModuleButtonSelected").removeClass("ModuleButtonSelected");

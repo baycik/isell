@@ -10,12 +10,11 @@
  * @author Baycik
  */
 class Storage extends CI_Model {
-    public $storageFolder = '../storage';
+    public $storageFolder = BAY_STORAGE;
     
     public function file_store($path, $data, $flag=NULL) {
-	$parts = explode('/', $path);
-	$filename = array_pop($parts);
-	$dir_path = $this->storageFolder . "/" . implode('/', $parts);
+	$filename = basename($path);
+	$dir_path = $this->storageFolder . "/" . dirname ( $path );
 	if (!file_exists($dir_path)) {
 	    mkdir($dir_path, 0777, true);
 	}
@@ -37,19 +36,20 @@ class Storage extends CI_Model {
 	return unlink($this->storageFolder . "/" . $path);
     }
     
-    public function dir_remove ($path){
-        return $this->delTree($this->storageFolder . "/".$path);
+    public function dir_remove ($path,$remove_root){
+        return $this->delTree($this->storageFolder . "/".$path,$remove_root);
     }
     
-    private function delTree($path) {
+    private function delTree($path,$remove_root=true) {
+	$path;
 	if (!file_exists($path)) {
 	    return true;
 	}
 	$files = array_diff(scandir($path), array('.', '..'));
 	foreach ($files as $file) {
-	    (is_dir("$path/$file")) ? $this->delTree("$path/$file") : unlink("$path/$file");
+	    is_dir("$path/$file") ? $this->delTree("$path/$file",true) : unlink("$path/$file");
 	}
-	return rmdir($path);
+	return $remove_root?rmdir($path):true;
     }
     
     public function file_list($dir) {
@@ -68,7 +68,7 @@ class Storage extends CI_Model {
     public $upload=['dir'=>'raw','filename'=>'raw'];
     public function upload($dir = '', $filename = null) {
 	if (!file_exists($this->storageFolder . "/" . $dir)) {
-	    mkdir($this->storageFolder . "/" . $dir);
+	    mkdir($this->storageFolder . "/" . $dir,0777,true);
 	}
 	if ($_FILES['upload_file'] && !$_FILES['upload_file']['error']) {
 	    return 'uploaded' . move_uploaded_file($_FILES['upload_file']["tmp_name"], $this->storageFolder . "/" . $dir . "/" . ($filename ? $filename : $_FILES['upload_file']['name']));

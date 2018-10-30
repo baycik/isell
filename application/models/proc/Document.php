@@ -143,7 +143,7 @@ class Document extends Data {
 	    $this->Base->LoadClass('PrefOld');
 	    $prefs = $this->Base->PrefOld->prefGet();
 	    $debt_limit = $prefs['default_debt_limit'];
-	    if ($debt_limit == 0) {
+	    if ( $debt_limit==0 && $deferment==0 ) {
 		return false;
 	    }
 	}
@@ -152,7 +152,7 @@ class Document extends Data {
 	$debt_account = $this->Base->Accounts->getAccountBalance(361, $pcomp_id,$deferment);
 	$footer = $this->fetchFooter();
 	$off_limit = $footer['total'] + $debt_account['balance'] - $debt_limit;
-	if( $off_limit > 0 ){
+	if( $debt_limit>0 && $off_limit > 0 ){
 	    $this->Base->msg("Лимит долга в $debt_limit превышен на " . round($off_limit, 2) . "{$footer['curr_symbol']}!\n");
 	    return true;
 	}
@@ -1292,12 +1292,19 @@ class Document extends Data {
 	} else {
 	    $this->Base->Accounts->updateTransaction($trans_id, array('amount' => $amount, 'amount_alt' => $amount_alt, 'description' => $description));
 	}
-	if ($trans_type == '361_702' || $trans_type=='631_28') {//Doc sum is changed || $trans_type=='631->361'
+	if ($trans_type == '361_702' || $trans_type=='84_631') {//Doc sum is changed || $trans_type=='631->361'
 	    if ($this->Base->Accounts->isTransConnected($trans_id)){//Break connection
 		$this->Base->Accounts->breakTransConnection($trans_id);
             }
-	    $this->Base->Accounts->calculatePayments();
+	    
 	}
+        if( $acc_debit_code == 361 ){
+            $this->Base->Accounts->calculatePayments();
+        } 
+        if( $acc_credit_code == 631 ){
+            $this->Base->Accounts->calculatePaymentsCredit();
+        } 
+        
     }
 
     protected function clearTrans() {

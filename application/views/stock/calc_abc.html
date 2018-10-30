@@ -18,7 +18,7 @@
 	    this.node.window('window').css('position', 'fixed');
 
 	    $("#stock_calc_abc_label").html(this.data.parent_label || "Все");
-	    App.setupForm("#page_stock_calc_abc_frm", {}, "use_inp_values");
+	    App.setupForm("#page_stock_calc_abc_frm", {fdate:App.toIso(new Date())}, "use_inp_values");
 	    
 	    /*App.require(['js/pickmeup/pickmeup.min.js','js/pickmeup/pickmeup.css'],function(){
 		App.page_stock_calc_abc.rangePicker();
@@ -80,6 +80,7 @@
 	<option value="91" selected="selected">3 месяца</option>
 	<option value="365">год</option>
     </select>
+    <input type="date" name="fdate" title="Конечная дата" data-options="required:true">
     <div style="text-align: center;margin-top: 15px;">
 	<button type="submit"><img src="img/calc.png" style="width:24px;height: 24px;" /> Рассчитать</button>
 	<button type="button" onclick="App.page_stock_calc_abc.node.window('close')"><img src="img/close24.png" /> Закрыть</button>

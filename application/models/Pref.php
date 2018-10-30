@@ -20,7 +20,7 @@ class Pref extends Catalog {
                 FROM 
 		    " . BAY_DB_MAIN . ".user_list
                 WHERE 
-		    first_name IS NOT NULL AND last_name IS NOT NULL";
+		    user_is_staff AND first_name IS NOT NULL AND last_name IS NOT NULL";
         return $this->get_list($sql);
     }
     public $getPrefs=['[a-z_,]+'];

@@ -1,20 +1,21 @@
 <?php
 class PluginManager extends Catalog{
     public $min_level=1;
-    private $plugin_folder='application/plugins/';
+    private $plugin_dir='application/plugins/';
+    private $plugin_mod_dir=BAY_STORAGE.'plugin_modifications/';
     
     public $listFetch=['mode'=>'string'];
     public function listFetch($mode=null){
-	$plugins_folders=$this->scanFolder($this->plugin_folder);
+	$plugins_folders=$this->scanFolder($this->plugin_dir);
 	$plugins=[];
-	foreach($plugins_folders as $plugin_folder){
-	    if( $mode=='ReportsOnly' && strpos($plugin_folder, 'Reports')===false ){
+	foreach($plugins_folders as $plugin_dir){
+	    if( $mode=='ReportsOnly' && strpos($plugin_dir, 'Reports')===false ){
 		continue;
 	    }
-	    $headers=$this->get_plugin_headers($plugin_folder);
+	    $headers=$this->get_plugin_headers($plugin_dir);
 	    if( isset($headers['user_level']) && $headers['user_level']<=$this->Hub->svar('user_level') ){
                 if( !isset($headers['plugin_name']) ){
-                    $headers['plugin_name']=$plugin_folder;
+                    $headers['plugin_name']=$plugin_dir;
                 }
 		$plugins[]=$headers;
 	    }
@@ -32,9 +33,9 @@ class PluginManager extends Catalog{
 	return array_values($files);	
     }
     protected function get_plugin_headers( $plugin_system_name ){
-	$path=$this->plugin_folder.$plugin_system_name."/models/".$plugin_system_name.".php";
+	$path=$this->plugin_dir.$plugin_system_name."/models/".$plugin_system_name.".php";
 	if( !file_exists($path) ){
-	    $path=$this->plugin_folder.$plugin_system_name."/".$plugin_system_name.".php";// Support for older plugins
+	    $path=$this->plugin_dir.$plugin_system_name."/".$plugin_system_name.".php";// Support for older plugins
 	    if( !file_exists($path) ){
 		return [];
 	    }
@@ -81,7 +82,7 @@ class PluginManager extends Catalog{
     public function settingsAllFetch($plugin_system_name){
 	$settings_data=$this->settingsDataFetch($plugin_system_name);
 	
-	$settings_file=$this->plugin_folder.$plugin_system_name."/settings.html";
+	$settings_file=$this->plugin_dir.$plugin_system_name."/settings.html";
 	$settings_data->html=file_exists($settings_file)?file_get_contents($settings_file):'';
 	return $settings_data;
     }
@@ -191,9 +192,9 @@ class PluginManager extends Catalog{
     }
     
     public function plugin_do($plugin_system_name, $plugin_method, $plugin_method_args=[]){
-	$path=$this->plugin_folder.$plugin_system_name."/models/".$plugin_system_name.".php";
+	$path=$this->plugin_dir.$plugin_system_name."/models/".$plugin_system_name.".php";
 	if( !file_exists($path) ){
-	    $path=$this->plugin_folder.$plugin_system_name."/".$plugin_system_name.".php";// Support for older plugins
+	    $path=$this->plugin_dir.$plugin_system_name."/".$plugin_system_name.".php";// Support for older plugins
 	    if( !file_exists($path) ){
 		return [];
 	    }
@@ -217,54 +218,24 @@ class PluginManager extends Catalog{
 	return ($this->get_list($sql));
     }
      
-//    public $mod_reset = [];
-//    public function mod_reset2 (){
-//        if (!is_dir(BAY_STORAGE_FOLDER)){
-//            mkdir(BAY_STORAGE_FOLDER);
-//        }
-//        foreach (glob(BAY_STORAGE_FOLDER.'/'.$this->backup_prefix.'*') as $filename) {
-//            if (!is_file($filename)){
-//                continue;
-//            }
-//            $backup_file_info = pathinfo($filename);
-//            $backup_file_name = $backup_file_info['basename'].'<br/>';
-//            $backup_file_path = $backup_file_info['dirname'].'<br/>';
-//            $view_file_name = substr($backup_file_name, 3);
-//            $view_file_path = substr($backup_file_path, strlen(BAY_STORAGE_FOLDER));
-//            copy($backup_file_path.'/'.$backup_file_name , APPPATH.$view_file_path.'/'.$view_file_name);
-//        }
-//        $this->mod_scan();
-//        return true;
-//    }
-    
     public $mod_reset=[];
-    public function mod_reset($path='') {
-        $backup_folder='../storage/modificator_backup/';
-        $app_folder=APPPATH;
-        if (!file_exists($backup_folder.$path)){
-            return true;
-        }
-	$files = array_diff(scandir($backup_folder.$path), array('.', '..'));
-	foreach ($files as $file) {
-	    if(is_dir($backup_folder."$path/$file")){
-                $this->mod_reset("$path/$file");
-            } else if (is_file ($backup_folder."$path/$file")) {
-                copy($backup_folder."$path/$file", $app_folder."$path/$file");
-            }
-	}
+    public function mod_reset() {
+	return $this->Hub->Storage->dir_remove('plugin_modifications',false);
     }
 
     public $mod_scan=[];
     public function mod_scan (){
+	$this->Hub->load_model('Storage');
         $this->mod_reset();
         $array = $this->getActivePlugins();
         foreach ($array as $row) {
-            $plugin_folder = APPPATH.'plugins/'.$row->plugin_system_name;
-            $this->mod_modificate($plugin_folder.'/plugmod.php');
+            $plugin_dir = $this->plugin_dir.$row->plugin_system_name;
+            $this->mod_modificate($plugin_dir.'/plugmod.php');
         }
+	return true;
     }
     
-    public function mod_modificate ($plugmod){
+    private function mod_modificate ($plugmod){
         if( !file_exists($plugmod) ){
             return true;
         }
@@ -275,51 +246,32 @@ class PluginManager extends Catalog{
         $after = [];
         include $plugmod;
         if ( is_array($filename) ){
-            foreach ($filename as $row=>$val){
-                $replace_ex=isset($replace[$row])?$replace[$row]:'';
-                $before_ex=isset($before[$row])?$before[$row]:'';
-                $after_ex=isset($after[$row])?$after[$row]:'';
-                $this->mod_submodificate($filename[$row], $search[$row], $replace_ex, $before_ex, $after_ex);
+            foreach ($filename as $index=>$val){
+                $replace_exe=isset($replace[$index])?$replace[$index]:'';
+                $before_exe=isset($before[$index])?$before[$index]:'';
+                $after_exe=isset($after[$index])?$after[$index]:'';
+                $this->mod_execute($filename[$index], $search[$index], $replace_exe, $before_exe, $after_exe);
             }
         } else {
-            $this->mod_submodificate($filename, $search, $replace, $before, $after);
+            $this->mod_execute($filename, $search, $replace, $before, $after);
         }
-        
+	return true;
     }
     
-    public function mod_submodificate($filename='', $search='', $replace='', $before='', $after=''){
-        $this->mod_backup_file($filename);
-        $altered_html = '';
-        $source_html = file_get_contents(APPPATH.$filename);  
+    private function mod_execute($filename='', $search='', $replace='', $before='', $after=''){
+	$file_data=$this->Hub->Storage->file_restore('plugin_modifications/'.$filename);//looking for already modified file
+	if( !$file_data ){//if there is none load original one
+	    $original_file=APPPATH.$filename;
+	    $file_data=file_get_contents($original_file);
+	}
+        $altered_data = '';
         if ($replace){
-            $trans = array($search => $replace, $replace => $search);
-            $altered_html = strtr($source_html, $trans);
+	    $altered_data =  str_ireplace($search, $replace, $file_data);
         }else if ($before){
-            $position = strpos($source_html, $search);
-            $altered_html = substr_replace($source_html, $before, $position, 0);
+	    $altered_data =  str_ireplace($search, $before.$search, $file_data);
         }else if ($after){
-            $position = strpos($source_html, $search)+ strlen($search);
-            $altered_html = substr_replace($source_html, $after, $position, 0);
+            $altered_data =  str_ireplace($search, $search.$after, $file_data);
         }
-        file_put_contents(APPPATH.$filename, $altered_html);
-    }
-    
-    public function mod_backup_file ($file){
-        $backup_folder='../storage/modificator_backup/';
-        $app_folder=APPPATH;
-        if ( !file_exists (dirname($backup_folder.$file)) ){
-            mkdir( dirname($backup_folder.$file), 0777, true);
-        }
-        if ( !file_exists ($backup_folder.$file) ){
-            copy( $app_folder.$file, $backup_folder.$file );
-        }
-    }
-    
-    public $mod_clear_backup = [];
-    public function mod_clear_backup (){
-        $Storage=$this->Hub->load_model('Storage');
-        $Storage->dir_remove('modificator_backup');
+        return $this->Hub->Storage->file_store('plugin_modifications/'.$filename,$altered_data);
     }
 }
-
-

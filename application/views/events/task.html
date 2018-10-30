@@ -86,7 +86,7 @@
 		    var row_data=Task.grid.getDataItem(selected_rows[0]);
 		    var event_id = row_data.event_id;
 
-		    $.post('Event/eventDelete/'+event_id, function (ok) {
+		    $.post('Events/eventDelete/'+event_id, function (ok) {
 			if (ok * 1) {
 			    App.flash("Задание удалено");
 			    Task.grid.reload();

@@ -6,21 +6,23 @@
         first_loaded:false,
 	init: function () {
 	    var date = new Date();
-	    this.firstDay = App.toDmy(new Date(date.getFullYear(), date.getMonth(), 1));
-	    this.lastDay = App.toDmy(new Date(date.getFullYear(), date.getMonth() + 1, 0));
+	    this.firstDay = App.toIso(new Date(date.getFullYear(), date.getMonth(), 1));
+	    this.lastDay = App.toIso(new Date(date.getFullYear(), date.getMonth() + 1, 0));
 
-	    $('#page_accounts_balance_idate').datebox({value: this.firstDay, onChange: function (newVal) {
-		if (App.page_accounts_balance.firstDay !== newVal) {
+	    $('#page_accounts_balance_idate').val(this.firstDay).change( function (newVal) {
+                var newVal=$('#page_accounts_balance_idate').val();
+		if (newVal && App.page_accounts_balance.firstDay !== newVal) {
 		    App.page_accounts_balance.firstDay = newVal;
 		    $('#page_accounts_balance_dg').treegrid('reload');
 		}
-	    }});
-	    $('#page_accounts_balance_fdate').datebox({value: this.lastDay, onChange: function (newVal) {
-		if (App.page_accounts_balance.lastDay !== newVal) {
+	    });
+	    $('#page_accounts_balance_fdate').val(this.lastDay).change( function (newVal) {
+                var newVal=$('#page_accounts_balance_fdate').val();
+		if (newVal && App.page_accounts_balance.lastDay !== newVal) {
 		    App.page_accounts_balance.lastDay = newVal;
 		    $('#page_accounts_balance_dg').treegrid('reload');
 		}
-	    }});
+	    });
 	},
 	initAfter:function(){
             App.handler.progress(function(status){
@@ -41,7 +43,7 @@
 	loadBranch: function (param, success, error) {
 	    if( App.page_accounts_balance.firstDay && App.page_accounts_balance.lastDay ){
                 App.page_accounts_balance.first_loaded=true;
-		var url='AccountsCore/accountBalanceTreeFetch/' + App.uri((param['id'] || 0), App.toIso(App.page_accounts_balance.firstDay), App.toIso(App.page_accounts_balance.lastDay),App.page_accounts_balance.unused_shown*1);
+		var url='AccountsCore/accountBalanceTreeFetch/' + App.uri((param['id'] || 0), App.page_accounts_balance.firstDay, App.page_accounts_balance.lastDay,App.page_accounts_balance.unused_shown*1);
 		App.get(url,function(resp){
 		    var rows=App.json(resp);
 		    success(rows?rows:[]);
@@ -164,6 +166,12 @@
 	}
     };
 </script>
+<div id="page_accounts_balance_toolbar">
+    Начало периода: <input type="date" id="page_accounts_balance_idate" title="Начало периода" style="width:120px;" />
+    Конец периода:  <input type="date" id="page_accounts_balance_fdate" title="Конец периода" style="width:120px;" />
+    <a href="javascript:void(0)" class="easyui-linkbutton" data-options="iconCls:'icon-reload',plain:true" onclick="$('#page_accounts_balance_dg').treegrid('reload')">Обновить</a>
+    <a href="javascript:App.page_accounts_balance.show_unused()" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-ok',toggle:true">Скрыть неиспользуемые счета</a>
+</div>
 <table id="page_accounts_balance_dg" class="easyui-treegrid" 
        data-options="
        width:870,
@@ -196,12 +204,6 @@
 	</tr>
     </thead>
 </table>
-<div id="toolbar">
-    Начало периода: <input type="date" id="page_accounts_balance_idate" title="Начало периода" class="easyui-datebox" style="width:100px" />
-    Конец периода:  <input type="date" id="page_accounts_balance_fdate" title="Конец периода" class="easyui-datebox" style="width:100px" />
-    <a href="javascript:void(0)" class="easyui-linkbutton" data-options="iconCls:'icon-reload',plain:true" onclick="$('#page_accounts_balance_dg').treegrid('reload')">Обновить</a>
-    <a href="javascript:App.page_accounts_balance.show_unused()" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-ok',toggle:true">Скрыть неиспользуемые счета</a>
-</div>
 <div id="page_accounts_balance_menu" class="easyui-menu" style="width:170px;">
     <div onclick="App.page_accounts_balance.showLedger()">Проводки по счету</div>
     <div class="menu-sep"></div>

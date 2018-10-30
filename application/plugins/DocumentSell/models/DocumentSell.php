@@ -133,7 +133,7 @@ class DocumentSell extends DocumentBase{
 	$pcomp_id=$this->doc('passive_company_id');
 	$doc_ratio=$this->doc('doc_ratio');
 	
-	$this->query("START TRANSACTION");
+	$this->db_transaction_start();
 	$this->query("INSERT INTO document_entries SET doc_id=$doc_id,product_code='$product_code',invoice_price=COALESCE(GET_PRICE('$product_code',$pcomp_id,'$doc_ratio'),0)",false);
 	$error = $this->db->error();
 	if($error['code']==1452){
@@ -154,13 +154,13 @@ class DocumentSell extends DocumentBase{
 	if( !$update_ok ){
 	    return false;
 	}
-	$this->query("COMMIT");
+	$this->db_transaction_commit();
     }
     public $entryUpdate=['doc_id'=>'int','doc_entry_id'=>'int','field'=>'(product_price_total|product_quantity|product_sum_total|party_label)','value'=>'string'];
     public function entryUpdate($doc_id,$doc_entry_id,$field,$value){
 	$this->documentSelect($doc_id);
 	$entry_updated=[];
-	$this->query("START TRANSACTION");	
+	$this->db_transaction_start();	
 	if( $field=='product_sum_total' ){
 	    $entry_data=$this->entryGet($doc_entry_id);
 	    $product_price_vatless=$this->entryPriceNormalize($value);
@@ -194,7 +194,7 @@ class DocumentSell extends DocumentBase{
 	if( !$update_ok ){
 	    return false;
 	}
-	$this->query("COMMIT");
+	$this->db_transaction_commit();
 	return true;
     }
     public $entryDelete=['doc_id'=>'int','doc_entry_ids'=>'json'];
@@ -300,74 +300,5 @@ class DocumentSell extends DocumentBase{
 		WHERE
 		    @sold_quantity > @total_sold) t2;";
 	return $this->get_row($sql);
-    }
-    /*
-     * Suggestion
-     */
-    public $suggestFetch=['q'=>'string'];
-    public function suggestFetch($q){
-	if( $q=='' ){
-	    return [];
-	}
-	$company_lang = $this->Hub->pcomp('language');
-	if( !$company_lang ){
-	    $company_lang='ru';
-	}
-	$where=['is_service=0'];
-	$clues=  explode(' ', $q);
-	foreach ($clues as $clue) {
-            if ($clue == ''){
-                continue;
-	    }
-            $where[]="(product_code LIKE '%$clue%' OR $company_lang LIKE '%$clue%')";
-        }
-	$sql="
-	    SELECT
-		product_code,
-		$company_lang label,
-		product_spack,
-		product_quantity
-	    FROM
-		prod_list
-		    JOIN
-		stock_entries USING(product_code)
-	    WHERE
-		".( implode(' AND ',$where) )."
-		    ORDER BY fetch_count-DATEDIFF(NOW(),fetch_stamp) DESC, product_code
-	    LIMIT 15
-	    ";
-	return $this->get_list($sql);
-    }
-    
-    public $pickerListFetch=['parent_id'=>'int','offset'=>['int',0],'limit'=>['int',10],'sortby'=>'string','sortdir'=>'(ASC|DESC)','filter'=>'json'];
-    public function pickerListFetch($parent_id,$offset,$limit,$sortby,$sortdir,$filter){
-	$pcomp_id=$this->Hub->pcomp('company_id');
-	$doc_ratio=$this->Hub->pref('usd_ratio');
-	
-	$having=$this->makeFilter($filter);
-	$order='';
-	$where='';
-	if( $parent_id ){
-	    $branch_ids=$this->treeGetSub('stock_tree',$parent_id);
-	    $where="WHERE se.parent_id IN (".implode(',',$branch_ids).")";
-	}
-	if( $sortby ){
-	    $order="ORDER BY $sortby $sortdir";
-	}
-	$sql="SELECT 
-		pl.product_code,
-		ru,
-		product_quantity,
-		ROUND(GET_PRICE(product_code,'$pcomp_id','$doc_ratio'),2) price,
-		product_spack
-	    FROM 
-		stock_entries se
-		    JOIN
-		prod_list pl USING(product_code)
-	    $where 
-	    HAVING $having 
-	    $order
-	    LIMIT $limit OFFSET $offset";
-	return $this->get_list($sql);
     }
 }

@@ -32,6 +32,9 @@ class DocumentItems extends DocumentCore{
             $branch_ids = $this->treeGetSub('stock_tree', $category_id);
             $where .= " AND parent_id IN (" . implode(',', $branch_ids) . ")";
         }
+        if( $this->doc('doc_type')==3 || $this->doc('doc_type')==4 ){
+            $where .= " AND is_service=1";
+        }
 	$sql="
 	    SELECT
 		product_code,
@@ -95,6 +98,12 @@ class DocumentItems extends DocumentCore{
         $curr_code=$this->Hub->acomp('curr_code');
 	$company_lang = $this->Hub->pcomp('language');
         $pcomp_price_label=$this->Hub->pcomp('price_label');
+        
+        $extra_columns='';
+        if( $this->doc('doc_type')==2 && $this->Hub->pref('use_class_analytics_in_buy_doc') ){
+            $use_class_analytics_in_buy_doc=$this->Hub->pref('use_class_analytics_in_buy_doc');
+            $extra_columns.=',analyse_class';
+        }
         $this->query("DROP TEMPORARY TABLE IF EXISTS tmp_doc_entries");
         $sql="CREATE TEMPORARY TABLE tmp_doc_entries ( INDEX(product_code) ) AS (
                 SELECT 
@@ -112,7 +121,7 @@ class DocumentItems extends DocumentCore{
                     product_quantity*product_volume volume,
                     pl.product_code,
                     $company_lang product_name,
-                    product_quantity,
+                    (product_quantity+0) product_quantity,
                     CHK_ENTRY(doc_entry_id) AS row_status,
                     product_unit,
                     party_label,
@@ -121,6 +130,7 @@ class DocumentItems extends DocumentCore{
                     self_price,
                     buy*IF(curr_code && '$curr_code'<>ppl.curr_code,doc_ratio*@curr_correction,1) buy,
                     doc_type
+                    $extra_columns
                 FROM
                     document_list
                         JOIN

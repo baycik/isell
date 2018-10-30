@@ -43,16 +43,6 @@
 		    }
 		});
 	    },
-	    send_to_buy_manager: function () {
-		var params = Leftovers.table.currentParamsGet();
-		$.post("StockBuyManager/orderFromStock/", params, function (ok) {
-		    if (ok * 1) {
-			App.flash("Заказ загружен в менеджер закупок");
-		    } else {
-			App.flash("Заказ не сформирован");
-		    }
-		});
-	    },
 	    calc_buy_order: function () {
 		App.loadWindow("page/stock/calc_buy_order", {parent_label: Leftovers.parent_label}).progress(function (status, fvalue) {
 		    if (status === 'submit') {
@@ -71,10 +61,8 @@
 			});
 		    }
 		});
-	    },
-            calc_sell:function(){
-                App.loadWindow("StockSellPriceCalculate/dialog").done(Leftovers.tools.reload);
-            }
+	    }
+	    /*PLUGIN-UTILS*/
 	};
 	/////////////////////////////////////////////////////////
 	// Leftovers DATA BASE SECTION
@@ -524,9 +512,9 @@
 	    <hr>
 	    <div  class="x-stock-leftovers-utils">
                 <button data-action="calc_min"><img src="img/calc.png" style="width:24px;height: 24px;"> Рассчитать минимумы</button><br>
-		<button data-action="calc_abc"><img src="img/calc.png" style="width:24px;height: 24px;"> Рассчитать ABC</button><br><button data-action="calc_sell"><img src="img/calc.png" style="width:24px;height: 24px;"> Рассчитать цену продажи</button><br><button data-action="calc_sell"><img src="img/calc.png" style="width:24px;height: 24px;"> Рассчитать цену продажи</button><br><button data-action="calc_sell"><img src="img/calc.png" style="width:24px;height: 24px;"> Рассчитать цену продажи</button><br>
+		<button data-action="calc_abc"><img src="img/calc.png" style="width:24px;height: 24px;"> Рассчитать ABC</button><br>
 		<button data-action="calc_buy_order"><img src="img/docnew.png" style="width:24px;height: 24px;"> Сформировать заказ</button><br>
-		<button data-action="send_to_buy_manager"><img src="img/docnew.png" style="width:24px;height: 24px;"> Загрузить в менеджер</button>		
+		<!--PLUGIN-BUTTONS-->
 	    </div>
 	</td>
 	<td style="vertical-align: top">

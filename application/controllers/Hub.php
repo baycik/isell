@@ -99,27 +99,12 @@ class Hub  extends CI_Controller{
     }
     
     public function page( $parent_folder=null ){
-	if( $parent_folder=='plugins' ){
-	    $file_name = "application/".implode('/',func_get_args());
-	} else {
-            $file_name = "application/views/".implode('/',func_get_args());
-            $modules= json_decode(file_get_contents("application/config/modules.json"));
-            foreach ($modules as $module){
-                if( strcasecmp($module->name,$parent_folder)==0 ){
-                    if( $module->level > $this->svar('user_level') ){
-                        $this->set_level($module->level);
-                    }
-                }
-            }
+	$modules_allowed=$this->svar('modules_allowed');
+	if( isset($modules_allowed[$parent_folder]) && $modules_allowed[$parent_folder]->level > $this->svar('user_level') ){
+	    $this->set_level($modules_allowed[$parent_folder]->level);
 	}
-	if( file_exists($file_name) ){
-	    header("X-isell-type:OK");
-	    include $file_name;
-	}
-	else{
-	    show_error('X-isell-error: File not found!', 404);
-	}
-	exit;
+	$file_name = implode('/',func_get_args());
+	$this->load->view($file_name);
     }
 
     private function pluginTrigger($model_name,$method,$route_args){

@@ -125,7 +125,7 @@ class OpencartSync extends OpencartSyncUtils{
                 $this->productImageDownload($product);
             }
             
-            $this->log("$product->remote_product_id ($product->model): ".$item['action']);
+            //$this->log("$product->remote_product_id ($product->model): ".$item['action']);
             
             if( $item['action']=='skip' ){
                 $products_skipped[]=$product->model;
@@ -135,7 +135,6 @@ class OpencartSync extends OpencartSyncUtils{
             if( $requestsize_total>$requestsize_limit ){
                 $products_skipped[]=$product->model;
                 $this->message.="Size of image of product {$product->model} is too big! ";
-                $this->log("Size of image of product {$product->model} is too big! ");
                 break;
             }
             if( time()>$requesttime_limit ){
@@ -266,7 +265,8 @@ class OpencartSync extends OpencartSyncUtils{
                     $this->message.="Synced $product_count products with remote server";
                 } else {
                     $this->message.="Syncronisation finished! <a href='../log_show'>Logfile</a>";
-                    die($this->message);
+                    $this->log($this->message);
+                    die();
                 }
                 break;
         }
@@ -274,13 +274,6 @@ class OpencartSync extends OpencartSyncUtils{
         $this->log($this->message);
         echo $this->message;
     }
-    
-    public $log_show=[];
-    public function log_show(){
-        header("Content-type:text/plain");
-        echo $this->Hub->load_model("Storage")->file_restore('OpencartSync/synclog.log');
-    }
-
     public $login=[];
     public function login(){
         $postdata = array(

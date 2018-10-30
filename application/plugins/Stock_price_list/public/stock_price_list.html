@@ -1,15 +1,15 @@
 <script src="js/jquery.sortable.js"></script>
 <script>
-    App.price_list = App.page_plugins_stock_price_list_stock_price_list = {
+    App.price_list = App.Stock_price_list_stock_price_list = {
 	current_dpl_id: 0,
 	init: function () {
-            this.initForm();
 	    App.handler.progress(function(status){
 		if( status==='passiveCompanySelected' ){
 		    $("input[name=pcomp_name]").val(App.pcomp.label);
 		}
 	    });
             this.initUsedCheckboxes();
+            this.initForm();
 	},
 	initDrag: function () {
 	    $('.connected').sortable('destroy');

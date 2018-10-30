@@ -37,7 +37,7 @@
 |
 */
 
-$autoload['packages'] = array();
+$autoload['packages'] = array(BAY_STORAGE.'plugin_modifications/');
 
 
 /*

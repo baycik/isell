@@ -38,31 +38,45 @@
 	    },
 	    formLoad:function(){
 		var report_id=this.current_report_info.system_name;
-		App.get("ReportManager/formGet/"+report_id,function(resp){
+		$.get("ReportManager/formGet/"+report_id,function(resp){
 		    $("#report_form_wrapper").html(resp);
-		    ReportsJs.report.formRender();
+                    ReportsJs.report.formRender();
 		});
 	    },
 	    formRender:function(){
 		var system_name=this.current_report_info.system_name;
-		var standart_data=this.formGetInitials();
-		App.renderTpl("report_form_wrapper",standart_data,'nocache');
-		App.setupForm("#report_form_wrapper form",{},'use_inp_values');
-		$("#report_form_wrapper form").attr('action',"ReportManager/formSubmit/"+system_name);
-		$("#report_form_wrapper form").attr('target','report_viewport');
-		$("#report_form_wrapper form").attr('method','post');
-		$("#report_form_wrapper form").submit(function(){
-		    $('#report_throbber').show();
-		});
-		$.parser.parse("#report_form_wrapper");//for easy ui
-		$("#report_viewport").height(0);
+                this.formGetInitials().done(function(standart_data){
+                    App.renderTpl("report_form_wrapper",standart_data,'nocache');
+                    App.setupForm("#report_form_wrapper form",{},'use_inp_values');
+                    $("#report_form_wrapper form").attr('action',"ReportManager/formSubmit/"+system_name);
+                    $("#report_form_wrapper form").attr('target','report_viewport');
+                    $("#report_form_wrapper form").attr('method','post');
+                    $("#report_form_wrapper form").submit(function(){
+                        $('#report_throbber').show();
+                    });
+                    $.parser.parse("#report_form_wrapper");//for easy ui
+                    $("#report_viewport").height(0);
+                });
 	    },
 	    formGetInitials:function(){
-		var now=new Date();
-		return {
+                var deffered=$.Deferred();
+                var now=new Date();
+                var standart_data={
 		    today:App.today(),
 		    first_day:App.toDmy(new Date(now.getFullYear(), now.getMonth(), 1))
 		};
+                standart_data.iso_today=App.toIso(standart_data.today);
+                standart_data.iso_first_day=App.toIso(standart_data.first_day);
+                if( ReportsJs.report.staff_list_needed ){
+                    $.get("Pref/getStaffList/",function(resp){
+                        standart_data.staff_list=App.json(resp);
+                        standart_data.staff_list.unshift({user_id:'',full_name:'-'});
+                        deffered.resolve(standart_data);
+                    });
+                } else {
+                    deffered.resolve(standart_data);
+                }
+                return deffered;
 	    }
 	}
     };

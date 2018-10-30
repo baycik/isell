@@ -22,6 +22,7 @@ class Reports_manager_sells extends Catalog{
 	$this->group_by=$this->request('group_by','\w+');
         $this->path_include=$this->request('path_include');
         $this->path_exclude=$this->request('path_exclude');
+        $this->manager_id=$this->request('manager_id');
 	parent::__construct();
     }
     private function dmy2iso( $dmy ){
@@ -65,6 +66,11 @@ class Reports_manager_sells extends Catalog{
         if( !$this->count_sells && !$this->count_reclamations ){
             $reclamation_filter=' AND 0';
         }
+        
+        $manager_filter='';
+        if( $this->manager_id ){
+            $manager_filter=" AND manager_id='{$this->manager_id}'";
+        }
         $path_filter='';
         if( $this->path_exclude || $this->path_include ){
 	    $path_filter.=$this->or_like('ct.path ', $this->path_include);
@@ -89,7 +95,7 @@ class Reports_manager_sells extends Catalog{
 		    JOIN
 		document_list dl USING (doc_id)
 		    JOIN
-		companies_list ON company_id = passive_company_id
+		companies_list cl ON company_id = passive_company_id
 		    JOIN
 		companies_tree ct USING (branch_id)
 		    JOIN
@@ -100,10 +106,18 @@ class Reports_manager_sells extends Catalog{
 		companies_discounts cd ON cd.company_id = passive_company_id
 		    AND st.top_id = cd.branch_id
 	    WHERE
-		doc_type=1 AND cstamp>'$this->idate 00:00:00' AND cstamp<'$this->fdate 23:59:59' AND is_commited=1 AND notcount=0 $active_filter $reclamation_filter $path_filter
+		doc_type=1 
+                AND cstamp>'$this->idate 00:00:00' 
+                AND cstamp<'$this->fdate 23:59:59' 
+                AND is_commited=1 
+                AND notcount=0 
+                $active_filter 
+                $reclamation_filter 
+                $manager_filter
+                $path_filter
 	    GROUP BY discount_overall ,st.top_id,  doc_id
 	    ORDER BY ct.label)";
-	
+        //die($main_table_sql);
 	$this->query($main_table_sql);
 	
 	$sum_fields='';

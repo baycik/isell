@@ -13,7 +13,7 @@ class Task extends Events {
 		event_list
 	    WHERE
 		event_label='-TASK-'
-		AND (event_status='undone' OR event_status='pending')
+		AND ( event_status='undone' OR event_status='pending' OR  (event_status='executing' AND DATE_ADD(event_date_done,INTERVAL 1 HOUR)<NOW()) )
 		AND (event_liable_user_id='$user_id' OR event_liable_user_id IS NULL OR event_liable_user_id='')
 		AND event_date<NOW()
 	    ORDER BY event_date ASC
@@ -26,10 +26,12 @@ class Task extends Events {
 
     
     private function execute_task(){
-	$this->eventUpdate($this->currentTask->event_id, 'event_status', 'executing');
+	$this->logErrors();
+        $this->currentTask->event_status = 'executing';
+	$this->currentTask->event_date_done=date("Y-m-d H:i");
+        $this->saveTask();
 	$this->log("TASK '{$this->currentTask->event_name}' is started");
 	$this->currentTask->event_status = 'undone';
-	$this->currentTask->event_date_done=date("Y-m-d H:i");
 	if ( $this->execute_program() ) {
 	    $this->currentTask->event_status = 'done';
 	    if ($this->currentTask->event_repeat !='') {
@@ -75,7 +77,6 @@ class Task extends Events {
 		$args[] = $arg;
 	    }
 	}
-	$this->logErrors();
 	$Model = $this->Hub->load_model($command->model);
 	$return = call_user_func_array([$Model, $command->method], $args);
 	$this->log("TASK {$this->currentTask->event_name} {$command->model}->{$command->method}(".implode(',',$args)."): RETURNED VALUE:'$return'");
@@ -104,7 +105,7 @@ class Task extends Events {
 	register_shutdown_function( "check_for_fatal" );
 	set_error_handler( "log_error" );
 	set_exception_handler( "log_exception" );
-	ini_set( "display_errors", "off" );
+	//ini_set( "display_errors", "off" );
 	error_reporting( E_ALL );
     }
 

@@ -2,7 +2,7 @@
 
 class Maintain extends CI_Model {
 
-    private $dirDbBackup = "/ISELL_DBBACKUP/";
+    private $dirDbBackup = BAY_STORAGE."db_backup/";
     private $dirWork;
 
     function __construct() {
@@ -35,7 +35,6 @@ class Maintain extends CI_Model {
     public $updatePluginRefresh=[];
     public function updatePluginRefresh(){
         $PluginManager=$this->Hub->load_model('PluginManager');
-        $PluginManager->mod_clear_backup();
 	return $PluginManager->mod_scan();
 	
     }
@@ -87,6 +86,9 @@ class Maintain extends CI_Model {
     }
 
     public function backupImportExecute($file) {
+	if( pathinfo($file, PATHINFO_EXTENSION )=='zip' ){
+	    $file=pathinfo($file, PATHINFO_DIRNAME ).'/'.$this->backupDumpUnzip($file);
+	}
 	$output = [];
 	$conf_file = $this->setupConf();
 	$path_to_mysql = $this->db->query("SHOW VARIABLES LIKE 'basedir'")->row()->Value;
@@ -115,7 +117,7 @@ class Maintain extends CI_Model {
 	$this->Hub->set_level(4);
 	$path_to_mysql = $this->db->query("SHOW VARIABLES LIKE 'basedir'")->row()->Value;
 	if (!file_exists($this->dirDbBackup)) {
-	    mkdir($this->dirDbBackup);
+	    mkdir($this->dirDbBackup,0777 ,true);
 	}
 	$output = [];
 	$filename = $this->dirDbBackup . date('Ymd_His') . "_" . BAY_DB_NAME . '_BACKUP.sql';
@@ -124,17 +126,27 @@ class Maintain extends CI_Model {
 	    file_put_contents($filename . '.log', implode("\n", $output));
 	    return false;
 	}
-
-	//
-	//$this->backupDumpZip($filename);
-	//$this->backupDumpFtpUpload("$filename");
+	return $filename;
+    }
+    
+    private function backupDumpUnzip($zipfile){
+	$filename=null;
+	$zip = new ZipArchive() ;
+	if ( $zip->open($zipfile) === true ) {
+	    $first_filename = $zip->getNameIndex(0);
+	    $extracted=$zip->extractTo($this->dirDbBackup,$first_filename);
+	    if( $extracted ){
+		$filename=$first_filename;
+	    }
+	}
+	$zip->close();
 	return $filename;
     }
 
     public function backupDumpZip($filename) {
 	$zip = new ZipArchive;
 	if ($zip->open("$filename.zip", ZipArchive::CREATE) === TRUE) {
-	    $zip->addFile($filename,'backup.sql');
+	    $zip->addFile($filename);
 	    $zip->close();
 	    file_exists($filename) && unlink($filename);
 	    return "$filename.zip";
@@ -142,9 +154,7 @@ class Maintain extends CI_Model {
 	return false;
     }
     
-    //public $backupDumpFtpUpload=['f' =>'string'];
     public function backupDumpFtpUpload($filename){
-	//return copy($filename,"ftp://$ftp_user:$ftp_pass@$ftp_server/$remote_name");
 	if( !file_exists($filename) ){
 	    return false;
 	}
