@@ -460,15 +460,7 @@
 		App.renderTpl('document_product_image', suggest_entry);
 		$("#document_product_image").modal('show');
 	    }
-	},
-        create_checkout: function () {
-                if(confirm("Создать список проверки?")){
-                    $.post("../Checkout/checkoutDocumentCreate",{ parent_doc_id: App.document.doc.head.doc_id, checkout_name: ("Документ №" + App.document.doc.head.doc_num)}, function(resp){
-                        App.flash('Создано!');
-                        location.hash = '#checkout_document.html#checkout_id='+resp;
-                    });
-                }
-        }
+	}
     };
     $(App.document.init);
 </script>
@@ -609,7 +601,6 @@
 		</div>
 	    </div>
 	</div>
-        <button id="document_create_checkout_button" class="ui button" onclick="App.document.create_checkout()">Проверить</button>
 	<button id="document_delete_button" class="ui negative button" onclick="App.document.head.remove()">Удалить документ</button>
     </div>
     <div class="ui tab segment" data-tab="discounts" id="document_discounts">

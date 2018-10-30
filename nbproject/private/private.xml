@@ -3,18 +3,13 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file:/W:/iSell/www/ayderIsell/application/models/DocumentItems.php</file>
-            <file>file:/W:/iSell/www/ayderIsell/application/plugins/MobiSell/public/checkout_document.html</file>
-            <file>file:/W:/iSell/www/ayderIsell/application/views/stock/product_card.html</file>
-            <file>file:/W:/iSell/www/ayderIsell/application/views/dialog/importer.html</file>
-            <file>file:/W:/iSell/www/ayderIsell/application/models/Stock.php</file>
-            <file>file:/W:/iSell/www/ayderIsell/application/plugins/MobiSell/public/document_list.html</file>
-            <file>file:/W:/iSell/www/ayderIsell/application/views/trade/document.html</file>
-            <file>file:/W:/iSell/www/ayderIsell/application/models/Importer.php</file>
-            <file>file:/W:/iSell/www/ayderIsell/application/models/Storage.php</file>
-            <file>file:/W:/iSell/www/ayderIsell/application/plugins/MobiSell/public/stock.html</file>
-            <file>file:/W:/iSell/www/ayderIsell/js/app.js</file>
-            <file>file:/W:/iSell/www/ayderIsell/application/plugins/MobiSell/public/checkout_document_list.html</file>
+            <file>file:/D:/iSell/www/ayderIsell/application/models/Maintain.php</file>
+            <file>file:/D:/iSell/www/ayderIsell/application/plugins/StockPriceLabel/plugmod.php</file>
+            <file>file:/D:/iSell/www/ayderIsell/application/views/stock/leftovers.html</file>
+            <file>file:/D:/iSell/www/ayderIsell/application/models/PluginManager.php</file>
+            <file>file:/D:/iSell/www/ayderIsell/application/plugins/StockSellPriceCalculate/plugmod.php</file>
+            <file>file:/D:/iSell/www/ayderIsell/application/models/Storage.php</file>
+            <file>file:/D:/iSell/www/ayderIsell/application/views/stock/stock_main.html</file>
         </group>
     </open-files>
 </project-private>

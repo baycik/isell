@@ -44,27 +44,23 @@
 		},
                 hashchanged:function(url){
 		    url=url||'home.html';
+		    
 		    if(url=='home.html'){
 			$('.mobisell_backbutton').hide();
 		    } else {
 			$('.mobisell_backbutton').show();
 		    }
+		    
 		    var url_chunks = url.split("#");
                     
  		    App.url_query = url_chunks[1];
 		    App.parseState(App.url_query);
                     if( url_chunks[0] && App.url_file != url_chunks[0] ){
-                        this.unload();
                         App.url_file = url_chunks[0];
                         this.load(url);
                     }
                     App.Topic('hashChange').publish(App.state);
 		    $(".ui.sidebar").sidebar('hide');
-                },
-                unload: function (){
-                    var holder_id=App.url_file.split('.')[0];
-                    App[holder_id] && App[holder_id].blur && App[holder_id].blur();
-                    
                 },
 		load: function (url) {
 		    var holder_id=App.url_file.split('.')[0];
@@ -72,7 +68,6 @@
 			$("#main_container").append("<div id='"+holder_id+"'></div>");
 			$("#"+holder_id).load(App.url_file,function(){
                             App[holder_id] && App[holder_id].init && App[holder_id].init();
-                            App[holder_id] && App[holder_id].focus && App[holder_id].focus();
                         });
 		    } 
 		    $("#main_container>div").hide();
@@ -99,12 +94,6 @@
 		    return null;
 		}
 	    },
-            store: function (key, object){
-                localStorage.setItem(key, JSON.stringify(object));
-            },
-            restore: function (key, object){
-                return localStorage.getItem(key, object);
-            },
 	    toIso: function (dmy) {
 		if (!dmy) {
 		    return null;
@@ -299,10 +288,6 @@
 	<a href="#stock.html" class="item">
 	    <i class="cube icon"></i>
 	    Каталог товаров
-	</a>
-        <a href="#checkout_document_list.html" class="item">
-	    <i class="clipboard list icon"></i>
-	    Учет
 	</a>
 	<a href="#document_list.html" class="item">
 	    <i class="list layout icon"></i>

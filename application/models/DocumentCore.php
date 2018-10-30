@@ -132,16 +132,12 @@ class DocumentCore extends DocumentUtils{
 		signs_after_dot,
 		doc_ratio,
 		doc_num,
-		DATE_FORMAT(document_list.cstamp,'%d.%m.%Y') doc_date,
+		DATE_FORMAT(cstamp,'%d.%m.%Y') doc_date,
 		doc_data,
-		(SELECT last_name FROM user_list WHERE user_id=document_list.created_by) created_by,
-		(SELECT last_name FROM user_list WHERE user_id=document_list.modified_by) modified_by,
-                (SELECT last_name FROM user_list WHERE user_id=checkout_list.modified_by) checkout_modifier,
-                checkout_status, checkout_id
+		(SELECT last_name FROM user_list WHERE user_id=created_by) created_by,
+		(SELECT last_name FROM user_list WHERE user_id=modified_by) modified_by
 	    FROM
 		document_list
-                    LEFT JOIN
-                checkout_list ON checkout_list.parent_doc_id=document_list.doc_id
 	    WHERE doc_id=$doc_id"
 	;
 	$head=$this->get_row($sql);

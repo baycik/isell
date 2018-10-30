@@ -34,8 +34,8 @@ class Stock extends Catalog {
 	$deleted = $this->db->affected_rows();
 	return $deleted;
     }
-    public $makeStockFilter = ['filter' => 'json'];
-    public function makeStockFilter($filter) {
+
+    private function makeStockFilter($filter) {
 	if (!$filter) {
 	    return ['inner' => 1, 'outer' => 1];
 	}
@@ -52,9 +52,9 @@ class Stock extends Catalog {
     }
 
     private function columnsGet($mode) {
-	$lvl1 = "product_id, parent_id,parent_label,t.product_code,ru,t.product_quantity,product_unit";
-	$lvl2 = ",product_id, product_wrn_quantity,SUM(IF(TO_DAYS(NOW()) - TO_DAYS(dl.cstamp) <= 30,de.product_quantity,0)) m1,ROUND( SUM(IF(TO_DAYS(NOW()) - TO_DAYS(dl.cstamp) <= 92,de.product_quantity,0))/3 ) m3";
-	$adv = ",product_id, t.self_price,sell,buy,curr_code,product_img,product_spack,product_bpack,product_weight,product_volume,analyse_origin,analyse_origin,product_barcode,analyse_type,analyse_brand,analyse_class,product_article";
+	$lvl1 = "parent_id,parent_label,t.product_code,ru,t.product_quantity,product_unit";
+	$lvl2 = ",product_wrn_quantity,SUM(IF(TO_DAYS(NOW()) - TO_DAYS(dl.cstamp) <= 30,de.product_quantity,0)) m1,ROUND( SUM(IF(TO_DAYS(NOW()) - TO_DAYS(dl.cstamp) <= 92,de.product_quantity,0))/3 ) m3";
+	$adv = ",t.self_price,sell,buy,curr_code,product_img,product_spack,product_bpack,product_weight,product_volume,analyse_origin,analyse_origin,product_barcode,analyse_type,analyse_brand,analyse_class,product_article";
 	if ($this->Hub->svar('user_level') < 2) {
 	    return $lvl1;
 	}
@@ -427,5 +427,5 @@ class Stock extends Catalog {
 	$this->query($sql_update);
 	//echo $sql_prepare1.$sql_prepare2.$sql_create.$sql_calc.$sql_update;
 	return $this->db->affected_rows();
-    } 
+    }
 }

@@ -195,6 +195,7 @@ class DocumentItems extends DocumentCore{
     public $entryDelete=['int','string'];
     public function entryDelete( $doc_id, $ids ){
 	$ids_arr=  json_decode('[['.str_replace(',', '],[', rawurldecode($ids)).']]');
+	
 	return $this->entryDeleteArray($doc_id, $ids_arr);
     }
     
