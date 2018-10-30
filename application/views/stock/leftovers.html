@@ -61,8 +61,21 @@
 			});
 		    }
 		});
-	    }
+	    },
 	    /*PLUGIN-UTILS*/
+            create_checkout: function () {
+                if(confirm("Создать список проверки?")){
+                    if(Leftovers.parent_id == 0 && !confirm('Будут выбраны ВСЕ ТОВАРЫ, продолжить?')){
+                            return;
+                        }
+                        
+                    $.post("Stock/checkoutStockCreate",{ parent_id: Leftovers.parent_id, checkout_name: Leftovers.parent_label||'Все категории'}, function(resp){
+                        location.hash="#Stock#checkout_id="+resp;
+                        $('#stock_main_tabs').tabs('select','Список проверок');
+                    });
+                    
+                }             
+            }
 	};
 	/////////////////////////////////////////////////////////
 	// Leftovers DATA BASE SECTION
@@ -513,8 +526,11 @@
 	    <div  class="x-stock-leftovers-utils">
                 <button data-action="calc_min"><img src="img/calc.png" style="width:24px;height: 24px;"> Рассчитать минимумы</button><br>
 		<button data-action="calc_abc"><img src="img/calc.png" style="width:24px;height: 24px;"> Рассчитать ABC</button><br>
+                <button data-action="calc_sell"><img src="img/calc.png" style="width:24px;height: 24px;"> Рассчитать цену продажи</button><br>
 		<button data-action="calc_buy_order"><img src="img/docnew.png" style="width:24px;height: 24px;"> Сформировать заказ</button><br>
 		<!--PLUGIN-BUTTONS-->
+		<button data-action="send_to_buy_manager"><img src="img/docnew.png" style="width:24px;height: 24px;"> Загрузить в менеджер</button><br>
+                <button data-action="create_checkout"><img src="img/docnew.png" style="width:24px;height: 24px;"> Начать проверку</button><br>
 	    </div>
 	</td>
 	<td style="vertical-align: top">

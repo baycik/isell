@@ -279,6 +279,7 @@ class Document extends Data {
     }
 
     protected function alterEntry($action = 'update', $doc_entry_id, $new_quantity = NULL, $new_invoice = NULL, $new_party_label = NULL) {//Must be called within db transaction
+        
 	$entry = $this->Base->get_row("SELECT * FROM document_entries WHERE doc_entry_id=$doc_entry_id");
 	if ($this->doc('doc_id') != $entry['doc_id']) {
 	    $this->Base->msg("Trying to update entry of unselected Doc!!!");
@@ -287,7 +288,6 @@ class Document extends Data {
 	$invoice = $new_invoice != NULL ? abs($new_invoice) : $entry['invoice_price'];
 	$quantity = $new_quantity !== NULL ? $new_quantity : $entry['product_quantity'];
 	$party_label = $new_party_label !== NULL ? $new_party_label : $entry['party_label'];
-
 	if ($this->doc('doc_type') == 1) {//Sell document
 	    if ($action == 'commit' || ($this->isCommited() && isset($new_invoice))) {
 		$self = $this->getProductSellSelfPrice($entry['product_code'], $quantity, $this->doc('cstamp'));
@@ -306,6 +306,7 @@ class Document extends Data {
 	    $amount = $quantity;
 	}
 	if ($action == 'update') {
+            print_r($quantity);
 	    $quantity = abs($quantity) * ($this->doc('is_reclamation') ? -1 : 1);
 	    if ($this->isCommited() && ($this->doc('doc_type') == 1 || $this->doc('doc_type') == 2)) {
 //                if ($entry['self_price'] != $self) {//remove product by old self price and then return by new 
@@ -351,18 +352,18 @@ class Document extends Data {
             return false;
         }
 	$doc_num = $this->doc('doc_num');
-	$this->Base->LoadClass('Stock');
+	$this->Base->LoadClass('StockOld');
 	if ($this->doc('doc_type') == 1) {//Sell Document
 	    if ($stock_action == 'increase') {
-		return $this->Base->Stock->decreaseStock($product_code, $amount, $self_price, "Расходный документ $doc_num");
+		return $this->Base->StockOld->decreaseStock($product_code, $amount, $self_price, "Расходный документ $doc_num");
 	    } else {
-		return $this->Base->Stock->increaseStock($product_code, $amount, $self_price, "Расходный документ $doc_num");
+		return $this->Base->StockOld->increaseStock($product_code, $amount, $self_price, "Расходный документ $doc_num");
 	    }
 	} else if ($this->doc('doc_type') == 2) {//Buy Document
 	    if ($stock_action == 'increase') {
-		return $this->Base->Stock->increaseStock($product_code, $amount, $self_price, "Приходный документ $doc_num");
+		return $this->Base->StockOld->increaseStock($product_code, $amount, $self_price, "Приходный документ $doc_num");
 	    } else {
-		return $this->Base->Stock->decreaseStock($product_code, $amount, $self_price, "Приходный документ $doc_num");
+		return $this->Base->StockOld->decreaseStock($product_code, $amount, $self_price, "Приходный документ $doc_num");
 	    }
 	} else if ($this->doc('doc_type') == 3 || $this->doc('doc_type') == 4) {
 	    return true; //OK For doc_type 3 4
@@ -391,7 +392,7 @@ class Document extends Data {
     }
 
     public function addEntry($product_code, $product_quantity, $invoice_price=NULL, $add_duplicated_rows =false) {
-	$this->Base->LoadClass('Stock');
+	$this->Base->LoadClass('StockOld');
 	if ($this->isCommited()) {
 	    $this->Base->set_level(2);
 	}
@@ -400,7 +401,7 @@ class Document extends Data {
 	}
 	$doc_id = $this->doc('doc_id');
 	$this->Base->query("START TRANSACTION");
-	$party_label = $this->Base->Stock->getEntryPartyLabel($product_code);
+	$party_label = $this->Base->StockOld->getEntryPartyLabel($product_code);
 	//$this->Base->msg($party_label);
 	$this->Base->query("INSERT INTO document_entries SET doc_id='$doc_id', product_code='$product_code',party_label='$party_label'", false);
 	if (mysqli_errno($this->Base->db_link) == 1062) {//Duplicate entry
@@ -429,7 +430,7 @@ class Document extends Data {
 	}
 	$this->Base->query("COMMIT");
 	$this->updateTrans();
-	$this->Base->Stock->increaseFetchCount($product_code);
+	$this->Base->StockOld->increaseFetchCount($product_code);
 	$this->setDocumentModifyingUser();
 	return $doc_entry_id;
     }
@@ -1347,8 +1348,8 @@ class Document extends Data {
     protected function getProductSellSelfPrice($product_code, $invoice_qty,$fdate) {
         return $this->Base->get_row("SELECT LEFTOVER_CALC('$product_code','$fdate','$invoice_qty','selfprice')",0);
 
-//	$this->Base->LoadClass('Stock');
-//	$stock_self = $this->Base->Stock->getEntrySelfPrice($product_code);
+//	$this->Base->LoadClass('StockOld');
+//	$stock_self = $this->Base->StockOld->getEntrySelfPrice($product_code);
 //	if ($stock_self > 0)
 //	    return $stock_self;
 //	/*
@@ -1358,7 +1359,7 @@ class Document extends Data {
 //	 */
 //	$price = $this->getRawProductPrice($product_code, $this->doc('doc_ratio'));
 //	$price_self = $price['buy'] ? $price['buy'] : $price['sell'];
-//	//$this->Base->Stock->setEntrySelfPrice($product_code, $price_self);
+//	//$this->Base->StockOld->setEntrySelfPrice($product_code, $price_self);
 //	return $price_self;
     }
 
