@@ -627,10 +627,9 @@ Mark.pipes.format = function (str) {
 	    };
 	    
 	    App.module={
-		list:[],
-		init:function(){
-		    $(window).bind( 'hashchange', function(e) {
-			App.module.load(location.hash.substring(1));
+                init: function () {
+		    $(window).bind('hashchange', function (e) {
+			App.module.hashchanged(location.hash.substring(1));
 		    });
 		    App.module.list=[];
 		    for(var i in App.user.props.module_list){
@@ -644,7 +643,26 @@ Mark.pipes.format = function (str) {
 		},
 		render_icons:function(){
 		    App.renderTpl('div_module_list', {module_list:App.module.list});
+		    App.module.hashchanged(location.hash.substring(1));
 		},
+                hashchanged:function(hash){
+		    var url_chunks = hash.split("#");
+ 		    App.url_query = url_chunks[1];
+		    App.module.parseState(App.url_query);
+                    this.load(url_chunks[0]);
+                    App.Topic('hashChange').publish(App.state);
+                },
+                parseState: function (text) {
+                    var newstate = {};
+                    if (text) {
+                        var pairs = text.split('&');
+                        for (var i in pairs) {
+                            var keyval = pairs[i].split('=');
+                            newstate[keyval[0]] = keyval[1];
+                        }
+                    }
+                    App.state = newstate;
+                },
 		load:function(name){
 		    if( this.current === name ){
 			return false;
