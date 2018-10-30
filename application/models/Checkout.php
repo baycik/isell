@@ -31,6 +31,9 @@ class Checkout extends Stock {
     
     public $checkoutDocumentGet = ['checkout_id' => 'int'];
     public function checkoutDocumentGet ($checkout_id){
+        if( !$checkout_id ){
+            return null;
+        }
         $sql = "        
             SELECT
                 checkout_list.*,

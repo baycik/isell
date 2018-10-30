@@ -105,7 +105,10 @@
 			    enableColumnReorder: false,
 			    enableFilter: true,
                             limit:999999,
-			    url: 'Stock/checkoutDocumentGet/'
+			    url: 'Stock/checkoutDocumentGet/',
+                            params:{
+                                checkout_id:0
+                            }
 			}
 		    };
                    
@@ -123,13 +126,15 @@
                 //App.page_stock_checkout_list.entries.grid.reload();
                 $.post("Checkout/checkoutDocumentGet/", {checkout_id: checkout_id}, function(resp){
                     var response = App.json(resp);
-                    App.page_stock_checkout_list.entries.grid.setData(response['entries']);
-                    App.page_stock_checkout_list.log.grid.setData(response['log']);
-                    App.page_stock_checkout_list.photos.list = response['head'];
-                    App.page_stock_checkout_list.entries.calc_progress(response);
-                    App.page_stock_checkout_list.photos.load();
-                    App.page_stock_checkout_list.log.load(checkout_id);
-                    App.page_stock_checkout_list.entries.grid.render();
+                    if(response){
+                        App.page_stock_checkout_list.entries.grid.setData(response['entries']);
+                        App.page_stock_checkout_list.log.grid.setData(response['log']);
+                        App.page_stock_checkout_list.photos.list = response['head'];
+                        App.page_stock_checkout_list.entries.calc_progress(response);
+                        App.page_stock_checkout_list.photos.load();
+                        App.page_stock_checkout_list.log.load(checkout_id);
+                        App.page_stock_checkout_list.entries.grid.render();
+                    }
                     
                 });
             },

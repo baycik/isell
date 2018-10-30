@@ -139,9 +139,14 @@
             }
         },
         create_checkout: function () {
-                if(confirm("Создать список проверки?")){
-                    $.post("Checkout/checkoutDocumentCreate",{ parent_doc_id: Doc.head.props.doc_id, checkout_name: "Документ №" + Doc.head.props.doc_num}).done(Doc.head.load(Doc.head.props.doc_id));
-                }
+            if(confirm("Создать список проверки?")){
+                $.post("Checkout/checkoutDocumentCreate",{ parent_doc_id: Doc.head.props.doc_id, checkout_name: "Документ №" + Doc.head.props.doc_num},function(checkout_id){
+                    if(checkout_id){
+                        Doc.head.load(Doc.head.props.doc_id);
+                        App.flash("Список проверки создан");
+                    }
+                });
+            }
         },
 	reload:function(){
 	    Doc.head.load(Doc.head.props.doc_id,false);
