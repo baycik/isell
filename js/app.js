@@ -638,7 +638,6 @@ Mark.pipes.format = function (str) {
 		    if( !location.hash ){
 			location.hash="#"+App.module.list[0].name;
 		    }
-		    App.module.load(location.hash.substring(1));
 		    this.render_icons();
 		},
 		render_icons:function(){
@@ -648,6 +647,7 @@ Mark.pipes.format = function (str) {
                 hashchanged:function(hash){
 		    var url_chunks = hash.split("#");
  		    App.url_query = url_chunks[1];
+                    App.module.load(url_chunks[0]);
 		    App.module.parseState(App.url_query);
                     this.load(url_chunks[0]);
                     App.Topic('hashChange').publish(App.state);
