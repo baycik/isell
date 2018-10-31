@@ -5,16 +5,9 @@
 abstract class DocumentBase extends Catalog{
     protected $doc_id=null;
     protected $document_properties=null;
-    protected function documentSelect( $doc_id ){
-	$this->doc_id=$doc_id;
-	unset($this->document_properties);
-    }
-    protected function documentFlush(){
-	if( !$this->document_properties ){
-	    throw new Exception("Can't flush properties because they are not loaded");
-	}
-	return $this->update('document_list',$this->document_properties,['doc_id'=>$this->document_properties->doc_id]);
-    }
+    //////////////////////////////////////////
+    // UTILS SECTION
+    //////////////////////////////////////////
     protected function doc($field=null,$value=null){
 	if( !isset($this->document_properties) ){
 	    if( !$this->doc_id ){
@@ -30,39 +23,18 @@ abstract class DocumentBase extends Catalog{
     protected function isCommited(){
 	return $this->doc('is_commited')=='1';
     }
-    protected function headDefaultDataGet(){
-	return [];
+    //////////////////////////////////////////
+    // DOCUMENT SECTION
+    //////////////////////////////////////////
+    protected function documentSelect( $doc_id ){
+	$this->doc_id=$doc_id;
+	unset($this->document_properties);
     }
-    public function headGet( $doc_id ){
-	if( $doc_id==0 ){
-	    return $this->headDefaultDataGet();
+    protected function documentFlush(){
+	if( !$this->document_properties ){
+	    throw new Exception("Can't flush properties because they are not loaded");
 	}
-	//$this->documentSelect($doc_id);
-	$sql="
-	    SELECT
-		doc_id,
-		passive_company_id,
-                (SELECT label FROM companies_tree JOIN companies_list USING(branch_id) WHERE company_id=passive_company_id) label,
-		IF(is_reclamation,-doc_type,doc_type) doc_type,
-		is_reclamation,
-		is_commited,
-		notcount,
-		vat_rate,
-		use_vatless_price,
-		signs_after_dot,
-		doc_ratio,
-		doc_num,
-		DATE_FORMAT(cstamp,'%d.%m.%Y') doc_date,
-		doc_data,
-		(SELECT last_name FROM user_list WHERE user_id=created_by) created_by,
-		(SELECT last_name FROM user_list WHERE user_id=modified_by) modified_by
-	    FROM
-		document_list
-	    WHERE doc_id=$doc_id"
-	;
-	$head=$this->get_row($sql);
-	//$head->extra_expenses=$this->getExtraExpenses();
-	return $head;
+	return $this->update('document_list',$this->document_properties,['doc_id'=>$this->document_properties->doc_id]);
     }
     protected function documentCurrencyCorrectionGet(){
 	$native_curr=$this->Hub->pcomp('curr_code') && ($this->Hub->pcomp('curr_code') != $this->Hub->acomp('curr_code'))?0:1;
@@ -93,7 +65,7 @@ abstract class DocumentBase extends Catalog{
 	    'notcount'=>0,
 	    'doc_num'=>0
 	];
-	$prev_document=$this->documentGetPrevious($acomp_id, $pcomp_id);
+	$prev_document=$this->headerPreviousGet($acomp_id, $pcomp_id);
 	if( $prev_document && !is_numeric($prev_document->doc_type) ){
 	    $new_document['doc_type']=$prev_document->doc_type;
 	    $new_document['notcount']=$prev_document->notcount;
@@ -104,19 +76,6 @@ abstract class DocumentBase extends Catalog{
 	$new_document['doc_num']=$this->documentNumNext($acomp_id,$doc_type);
 	$new_doc_id=$this->create('document_list', $new_document);
 	return $new_doc_id;
-    }
-    protected function documentGetPrevious($acomp_id,$pcomp_id){
-	$sql="SELECT 
-		* 
-	    FROM 
-		document_list 
-	    WHERE 
-		active_company_id='$acomp_id' 
-		AND passive_company_id='$pcomp_id' 
-		AND doc_type<10 
-		AND is_commited=1 
-	    ORDER BY cstamp DESC LIMIT 1";
-	return 	$this->get_row($sql);
     }
     protected function documentNumNext($acomp_id,$doc_type){
 	$sql="SELECT 
@@ -178,7 +137,7 @@ abstract class DocumentBase extends Catalog{
 	return $ok;
     }
     /*
-     * Commits and uncommit document
+     * DOCUMENT COMMIT
      */
     protected function documentChangeCommit( $make_commited=false ){
 	if( $make_commited && $this->isCommited() || !$make_commited && !$this->isCommited() ){
@@ -187,49 +146,6 @@ abstract class DocumentBase extends Catalog{
         $this->documentChangeCommitTransactions($make_commited);
 	return $this->documentChangeCommitEntries($make_commited);
     }
-    
-    
-    protected function documentChangeCommitTransactions($make_commited){
-        if( $make_commited ){
-            
-        } else {
-            $this->transDisable();
-        }
-        return false;
-    }
-    protected function transDisable(){
-        $Trans=$this->Hub->load_model("AccountsTrans");
-        $this->db_transaction_start();
-        $Trans->transDisable( $this->doc('doc_id') );
-        $this->db_transaction_commit();
-    }
-    protected function transClear(){
-        $Trans=$this->Hub->load_model("AccountsTrans");
-        $this->db_transaction_start();
-        $Trans->transClear( $this->doc('doc_id') );
-        $this->db_transaction_commit();
-    }
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    /*
-     * Commit or uncommit all entries in document
-     */
     protected function documentChangeCommitEntries($make_commited){
 	$doc_id=$this->doc('doc_id');
 	$document_entries=$this->get_list("SELECT doc_entry_id FROM document_entries WHERE doc_id='$doc_id'");
@@ -245,14 +161,75 @@ abstract class DocumentBase extends Catalog{
 	}
 	return true;
     }
-    protected function entryCommit($doc_entry_id,$new_product_quantity=NULL){
-	return false;
-    }
-    protected function entryUncommit($doc_entry_id){
-	return false;
+    protected function documentChangeCommitTransactions($make_commited){
+        if( $make_commited ){
+            
+        } else {
+            $this->transDisable();
+        }
+        return false;
     }
     
+    //////////////////////////////////////////
+    // HEADER SECTION
+    //////////////////////////////////////////
+    public function headerGet( $doc_id ){
+	if( $doc_id==0 ){
+	    return $this->headerDefaultGet();
+	}
+	//$this->documentSelect($doc_id);
+	$sql="
+	    SELECT
+		doc_id,
+		passive_company_id,
+                (SELECT label FROM companies_tree JOIN companies_list USING(branch_id) WHERE company_id=passive_company_id) label,
+		IF(is_reclamation,-doc_type,doc_type) doc_type,
+		is_reclamation,
+		is_commited,
+		notcount,
+		vat_rate,
+		use_vatless_price,
+		signs_after_dot,
+		doc_ratio,
+		doc_num,
+		DATE_FORMAT(cstamp,'%d.%m.%Y') doc_date,
+		doc_data,
+		(SELECT last_name FROM user_list WHERE user_id=created_by) created_by,
+		(SELECT last_name FROM user_list WHERE user_id=modified_by) modified_by
+	    FROM
+		document_list
+	    WHERE doc_id=$doc_id"
+	;
+	$head=$this->get_row($sql);
+	//$head->extra_expenses=$this->getExtraExpenses();
+	return $head;
+    }
+    protected function headerPreviousGet($acomp_id,$pcomp_id){
+	$sql="SELECT 
+		* 
+	    FROM 
+		document_list 
+	    WHERE 
+		active_company_id='$acomp_id' 
+		AND passive_company_id='$pcomp_id' 
+		AND doc_type<10 
+		AND is_commited=1 
+	    ORDER BY cstamp DESC LIMIT 1";
+	return 	$this->get_row($sql);
+    }
+    protected function headerDefaultGet(){
+	return [];
+    }
     
+    //////////////////////////////////////////
+    // ENTRIES SECTION
+    //////////////////////////////////////////
+    protected function entryAdd(){
+	
+    }
+    protected function entryUpdate(){
+	
+    }
     public function entryDelete($doc_id,$doc_entry_ids){
 	$this->documentSelect($doc_id);
 	$this->db_transaction_start();
@@ -270,8 +247,14 @@ abstract class DocumentBase extends Catalog{
 	$this->db_transaction_commit();
 	return true;
     }    
+   
     
-    
+    protected function entryCommit($doc_entry_id,$new_product_quantity=NULL){
+	return false;
+    }
+    protected function entryUncommit($doc_entry_id){
+	return false;
+    }
 
     public $entryImport=['doc_id'=>'int','label'=>'string'];
     public function entryImport( $doc_id,$label ){
@@ -328,6 +311,44 @@ abstract class DocumentBase extends Catalog{
 	$this->query("INSERT INTO $table ($target_list) SELECT $source_list FROM imported_data WHERE label='$label' AND $product_code_source IN (SELECT product_code FROM stock_entries) ON DUPLICATE KEY UPDATE product_quantity=product_quantity+$quantity_source_field");
 	return $this->db->affected_rows();
     }
+   
+    
+    
+    
+    
+    
+    protected function transDisable(){
+        $Trans=$this->Hub->load_model("AccountsTrans");
+        $this->db_transaction_start();
+        $Trans->transDisable( $this->doc('doc_id') );
+        $this->db_transaction_commit();
+    }
+    protected function transClear(){
+        $Trans=$this->Hub->load_model("AccountsTrans");
+        $this->db_transaction_start();
+        $Trans->transClear( $this->doc('doc_id') );
+        $this->db_transaction_commit();
+    }
+    protected function transUpdate(){
+	
+    }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
 
     /*
      * Suggestion

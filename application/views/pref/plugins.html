@@ -1,0 +1,150 @@
+<script>
+    Plugins=App.page_pref_plugins = {
+	init: function () {
+	    this.tile.load();
+	    Plugins.initButtons();
+	},
+	tile:{
+	    plugin_list:[],
+	    load:function(){
+		App.get("PluginManager/listFetch/",function(resp){
+		    var plugin_list=App.json(resp);
+		    var group_name='';
+                    Plugins.tile.plugin_list=[];
+		    for(var i=0;i<plugin_list.length;i++){
+			if( plugin_list[i].group_name!==group_name ){
+			    group_name=plugin_list[i].group_name;
+                            Plugins.tile.plugin_list.push({header:(group_name||'Другие')});
+			}
+                        Plugins.tile.plugin_list.push(plugin_list[i]);
+		    }
+		    App.renderTpl('plugins_tile',{plugins:Plugins.tile.plugin_list});
+		    var last_index=App.store('last_plugin_i')||1;
+		    Plugins.load(Plugins.tile.plugin_list[last_index]);
+		});
+	    },
+	    click:function(node){
+		var index=$(node).data('plugin-index');
+		App.store('last_plugin_i',index);
+		Plugins.load(Plugins.tile.plugin_list[index]);
+	    }
+	},
+	load:function(info){
+	    info.user_level_name=["Нет доступа", "Ограниченный", "Менеджер", "Бухгалтер", "Администратор"][info.user_level];
+	    App.renderTpl('plugin_info',info);
+	    this.loadSettings(info.system_name);
+	},
+	loadSettings:function( system_name ){
+	    Plugin.current_system_name=system_name;
+	    $.get('PluginManager/settingsAllFetch',{system_name:system_name},function(resp){
+		var all=App.json(resp);
+		Plugins.renderSettings(all);
+		Plugins.renderButtons(all);
+	    });
+	},
+	renderSettings:function(all){
+	    $('#plugin_settings').html(all.html);
+	    App.setupForm('#plugin_settings form',all.plugin_settings,'use_inp_values');
+	    $('#plugin_settings form').submit(function(e){
+		e.preventDefault();
+		var settings=App.collectForm('#plugin_settings form');
+		App.post('PluginManager/settingsSave',{plugin_system_name:Plugin.current_system_name,settings_json:JSON.stringify(settings)},function(ok){
+		    if(ok*1){
+			App.flash("Настройки сохранены");
+		    } else {
+			App.flash("Ничего не изменилось");
+		    }
+		});
+	    });
+	},
+	renderButtons:function(all){
+	    $(".x-plugins-buttons button").attr('disabled',true);
+	    if( all.is_installed*1 ){
+		if( all.is_activated*1 ){
+		    $('.x-plugins-buttons button[data-action="deactivate_plugin"]').attr('disabled',false);
+		} else {
+		    $('.x-plugins-buttons button[data-action="activate_plugin"]').attr('disabled',false);
+		    $('.x-plugins-buttons button[data-action="uninstall_plugin"]').attr('disabled',false);
+		}
+	    } else {
+		$('.x-plugins-buttons button[data-action="install_plugin"]').attr('disabled',false);
+	    }
+	},
+	do:function(action){
+	    App.post('PluginManager/'+action,{plugin_system_name:Plugin.current_system_name},function(ok){
+		App.page_pref_plugins.tile.load();
+	    });
+            if(action === "deactivate_plugin" | action === "activate_plugin" && confirm("Были внесены изменения. Обновите страницу, чтобы изменения вступили в силу.")){
+                location.reload();
+            };
+	},
+	initButtons:function(){
+	    $(".x-plugins-buttons").click(function(e){
+		var action=$(e.target).data('action');
+		if( action ){
+		    Plugins.do(action);
+		}
+	    });
+	}
+    };
+</script>
+<style>
+    .left_label_selected,.left_label_selected:hover{
+	background: #FF9;
+    }
+    #plugin_info{
+	padding: 2px;
+	margin: 2px;
+	background-color: rgba(255,255,255,0.4);
+    }
+    #plugin_settings{
+	border-top:1px solid #fff;
+	margin-top: 4px;
+	
+    }
+    #plugin_settings .inp_group b{
+	width:140px;
+    }
+    .x-plugins-buttons{
+	background-color: rgba(0,0,0,.2);
+	padding: 2px;
+	margin: 2px;
+    }
+
+</style>
+<div id="plugins_tile" class="covert" style="float:left;">
+    {{plugins}}
+	{{if header}}
+	<div><b>{{header}}</b></div>
+	{{else}}
+	    <div class="left_label" data-plugin-index="{{#}}" onclick="Plugins.tile.click(this);">
+		<img src="img/plugin.png" style="width:24px;height: 24px;"> {{plugin_name}}
+	    </div>	
+	{{/if}}
+    {{/plugins}}
+</div>
+<div style="overflow: auto">
+    <div class="x-plugins-buttons">
+	<button data-action="uninstall_plugin">Удалить</button>
+	<button data-action="install_plugin">Установить</button> | 
+	<button data-action="deactivate_plugin">Отключить</button>
+	<button data-action="activate_plugin">Активировать</button>
+    </div>
+    <div id="plugin_info" class="covert">
+	<img src="img/plugin.png" style="float:left;width:auto;height: 70px;">
+        {{if plugin_author|notempty}}
+	<div style="float: right">
+	    <b>Автор:</b> {{plugin_author}}<br>
+	    <b>Версия:</b> {{plugin_version}}<br>
+	    {{if plugin_author_uri}}<b>Сайт:</b> <a href="{{plugin_author_uri}}" target="_blank">{{plugin_author_uri}}</a><br>{{/if}}
+	    <b>Группа:</b> {{group_name}}<br>
+	    <b>Доступ:</b> {{user_level_name}}<br>
+	</div>
+        {{/if}}
+	<div>
+	    <h2>{{plugin_name}}</h2>
+	    {{plugin_description|blank>}}
+	</div>
+	<div id="plugin_settings" style="clear:both"></div>
+    </div>
+</div>

@@ -1,0 +1,14 @@
+<script>
+    /* global App,DetInline */
+    App.page_pref_details={
+	init:function(){
+	    var data = {
+		company_id: App.acomp.company_id,
+		inline: true,
+		is_active: true
+	    };
+	    App.loadModule('page/company/details', data, 'DetAcomp', /(Cdet|page_company_details)([^\w]|_)/g, "DetAcomp$2");
+	}
+    };
+</script>
+<div id="DetAcomp"></div>

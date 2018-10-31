@@ -45,8 +45,8 @@
                         var selected_rows = App.page_stock_checkout_list.table.grid.getSelectedRows();
                         var row_data=App.page_stock_checkout_list.table.grid.getDataItem(selected_rows[0]);
                         if(row_data && row_data.checkout_id != state.checkout_id){
-                            let object = App.page_stock_checkout_list.table.grid.getData();  
-                            for(let i in object){
+                            var object = App.page_stock_checkout_list.table.grid.getData();  
+                            for(var i in object){
                                 if (object[i].checkout_id == state.checkout_id){
                                   App.page_stock_checkout_list.table.grid.setSelectedRows([object[i].num]); 
                                   App.page_stock_checkout_list.table.grid.resetActiveCell();
@@ -105,7 +105,10 @@
 			    enableColumnReorder: false,
 			    enableFilter: true,
                             limit:999999,
-			    url: 'Stock/checkoutDocumentGet/'
+			    url: 'Stock/checkoutDocumentGet/',
+                            params:{
+                                checkout_id:0
+                            }
 			}
 		    };
                    
@@ -123,21 +126,22 @@
                 //App.page_stock_checkout_list.entries.grid.reload();
                 $.post("Checkout/checkoutDocumentGet/", {checkout_id: checkout_id}, function(resp){
                     var response = App.json(resp);
-                    App.page_stock_checkout_list.entries.grid.setData(response['entries']);
-                    App.page_stock_checkout_list.log.grid.setData(response['log']);
-                    App.page_stock_checkout_list.photos.list = response['head'];
-                    App.page_stock_checkout_list.entries.calc_progress(response);
-                    App.page_stock_checkout_list.photos.load();
-                    App.page_stock_checkout_list.log.load(checkout_id);
-                    App.page_stock_checkout_list.entries.grid.render();
+                    if(response){
+                        App.page_stock_checkout_list.entries.grid.setData(response['entries']);
+                        App.page_stock_checkout_list.log.grid.setData(response['log']);
+                        App.page_stock_checkout_list.photos.list = response['head'];
+                        App.page_stock_checkout_list.entries.calc_progress(response);
+                        App.page_stock_checkout_list.photos.load();
+                        App.page_stock_checkout_list.log.load(checkout_id);
+                        App.page_stock_checkout_list.entries.grid.render();
+                    }
                     
                 });
             },
-            calc_progress(response){
+            calc_progress:function(response){
                 if (response['head'].checkout_status === 'not_checked' ){
                     $('#checkout_progress_bar').progressbar({
                         value: 0
-                        
                     });
                     return;
                 }; 
@@ -151,10 +155,9 @@
                 if (verified > 0){
                 };
                 $('#checkout_progress_bar').progressbar({
-                        value: Math.round(verified/total*100)
+		    value: Math.round(verified/total*100)
                 });
             }
-            
         },
         log:{
             list:[],
@@ -273,7 +276,6 @@
                                 </div>
                             </div>
                             {{/checkout_photos}}
-
                         </div>
                     </div>
                 </div>

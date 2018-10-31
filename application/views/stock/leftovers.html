@@ -62,20 +62,19 @@
 		    }
 		});
 	    },
-	    /*PLUGIN-UTILS*/
-            create_checkout: function () {
+	    create_checkout: function () {
                 if(confirm("Создать список проверки?")){
                     if(Leftovers.parent_id == 0 && !confirm('Будут выбраны ВСЕ ТОВАРЫ, продолжить?')){
-                            return;
-                        }
-                        
-                    $.post("Stock/checkoutStockCreate",{ parent_id: Leftovers.parent_id, checkout_name: Leftovers.parent_label||'Все категории'}, function(resp){
+			return;
+		    }
+                    $.post("Checkout/checkoutStockCreate",{ parent_id: Leftovers.parent_id, checkout_name: (Leftovers.parent_label||'Все категории')}, function(resp){
                         location.hash="#Stock#checkout_id="+resp;
                         $('#stock_main_tabs').tabs('select','Список проверок');
                     });
-                    
                 }             
             }
+
+	    /*PLUGIN-UTILS*/
 	};
 	/////////////////////////////////////////////////////////
 	// Leftovers DATA BASE SECTION
