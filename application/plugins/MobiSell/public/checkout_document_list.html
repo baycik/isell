@@ -3,10 +3,8 @@
         doc_list: [],
         checkout_doc_head: [],
         init: function () {
-            App.checkout_document_list.initPicker();
             App.title("Список проверок");
-            //App.checkout_document_list.check_storage();
-            //App.checkout_document_list.focus();
+            App.checkout_document_list.focus();
         },
         check_storage: function () {
             var storage_checkout_entries = App.json(App.restore('checkout_entries'));
@@ -18,32 +16,18 @@
                 return true;
             }
         },
-        initPicker: function () {
-	    var $input = $('.datepicker').pickadate();
-	    App.checkout_document_list.picker = $input.pickadate('picker');
-	    //App.document_list.picker.set('select', new Date());
-	    App.checkout_document_list.current_date = App.checkout_document_list.picker.get('select', 'yyyy-mm-dd');
-	    App.checkout_document_list.picker.on({
-		set: function (thingSet) {
-		    if( App.checkout_document_list.current_date === App.checkout_document_list.picker.get('select', 'yyyy-mm-dd') ){
-			return;
-		    }
-                    App.checkout_document_list.doc_list = [];
-		    App.checkout_document_list.current_date = App.checkout_document_list.picker.get('select', 'yyyy-mm-dd');
-		    App.checkout_document_list.load(App.checkout_document_list.current_date, 0);
-		}
-	    });
-	},
         focus: function () {
             App.title("Список проверок");
             App.checkout_document_list.load();
         },
-        load: function (date, offset) {
+        load: function (offset) {
             if (offset === undefined) {
 		offset = App.checkout_document_list.doc_list.length || 0;
 	    }
+            var date=$("#checkout_list_datefilter").val();
+            var filter=JSON.stringify({cstamp:date});
             App.flash('Список проверок: загрузка...');
-            $.post('../Checkout/checkoutListFetch', {date: date, offset:offset, limit: 5}, function (resp) {
+            $.post('../Checkout/checkoutListFetch', {offset:offset, limit: 5,filter:filter}, function (resp) {
                 var response = App.json(resp);
                 if (response.length<5){
                     $("#checkout_button_load_more").hide();
@@ -72,8 +56,7 @@
 	<div class="field">
 	    <div class="ui left icon right labeled input">
 		<i class="calendar icon"></i>
-		<input name="date_filter" placeholder="Дата" type="date" class="datepicker">
-		<div class="ui basic label" onclick="App.checkout_document_list.clearDate()"><i class="close icon"></i></div>
+		<input name="date_filter" placeholder="Дата" type="date" id="checkout_list_datefilter" onchange="App.checkout_document_list.doc_list=[];App.checkout_document_list.load(0);">
 	    </div>
 	</div>
     </div>
@@ -134,4 +117,4 @@
         </tbody>
     </table>
 </div>
-<button id="checkout_button_load_more"  class="ui fluid button" onclick="App.checkout_document_list.load(App.checkout_document_list.current_date)">Показать еще...</button>
+<button id="checkout_button_load_more"  class="ui fluid button" onclick="App.checkout_document_list.load()">Показать еще...</button>
