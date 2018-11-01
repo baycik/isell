@@ -650,7 +650,7 @@ Mark.pipes.format = function (str) {
                     App.module.load(url_chunks[0]);
 		    App.module.parseState(App.url_query);
                     this.load(url_chunks[0]);
-                    App.Topic('hashChange').publish(App.state);
+                    App.Topic('hashChange').publish(App.state,url_chunks[0]);
                 },
                 parseState: function (text) {
                     var newstate = {};

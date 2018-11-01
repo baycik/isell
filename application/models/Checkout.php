@@ -111,7 +111,10 @@ class Checkout extends Stock {
 		FROM
 		    prod_list 
 		WHERE 
-		    product_barcode= '$barcode'";
+		    product_barcode= '$barcode'
+                        OR
+                    product_code = '$barcode'    
+                ";
 	$product_data = $this->get_row($sql);
 	return $product_data;
     }
@@ -179,8 +182,8 @@ class Checkout extends Stock {
     public function checkoutStockCreate ($parent_id, $checkout_name){
         $stock_entries_list = $this->listFetch($parent_id, 0, 10000, 'product_code', 'ASC', null, 'advanced');
         $user_id = $this->Hub->svar('user_id');
-        $cstamp = date('Y-m-d H:i:s');
-        $checkout_id=$this->create('checkout_list', ['checkout_name'=>$checkout_name, 'parent_doc_id'=>null, 'created_by'=>$user_id, 'modified_by'=>$user_id, 'cstamp'=> $cstamp]);
+       // $cstamp = date('Y-m-d H:i:s');
+        $checkout_id=$this->create('checkout_list', ['checkout_name'=>$checkout_name, 'parent_doc_id'=>null, 'created_by'=>$user_id, 'modified_by'=>$user_id]);
         foreach ($stock_entries_list as $entry){
             $this->create('checkout_entries', ['checkout_id'=>$checkout_id, 
                                                 'product_id'=>$entry->product_id, 
@@ -195,8 +198,7 @@ class Checkout extends Stock {
         $DocumentItems = $this->Hub->load_model("DocumentItems");
         $document_entries_list = $DocumentItems->entryDocumentGet($parent_doc_id);
         $user_id = $this->Hub->svar('user_id');
-        $cstamp = date('Y-m-d H:i:s');
-        $checkout_id=$this->create('checkout_list', ['checkout_name'=>$checkout_name, 'parent_doc_id'=>$parent_doc_id, 'created_by'=>$user_id, 'modified_by'=>$user_id, 'cstamp'=> $cstamp]);
+        $checkout_id=$this->create('checkout_list', ['checkout_name'=>$checkout_name, 'parent_doc_id'=>$parent_doc_id, 'created_by'=>$user_id, 'modified_by'=>$user_id]);
         foreach ($document_entries_list['entries'] as $entry){
             $product_id = $this->get_value("SELECT product_id FROM prod_list WHERE product_code = '$entry->product_code'");
             $this->create('checkout_entries', ['checkout_id'=>$checkout_id, 

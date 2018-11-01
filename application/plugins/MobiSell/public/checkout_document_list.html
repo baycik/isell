@@ -43,9 +43,9 @@
 		offset = App.checkout_document_list.doc_list.length || 0;
 	    }
             App.flash('Список проверок: загрузка...');
-            $.post('../Checkout/checkoutListFetch', {date: date, offset:offset}, function (resp) {
+            $.post('../Checkout/checkoutListFetch', {date: date, offset:offset, limit: 5}, function (resp) {
                 var response = App.json(resp);
-                if (offset>response.length){
+                if (response.length<5){
                     $("#checkout_button_load_more").hide();
                 }
                 App.checkout_document_list.doc_list = App.checkout_document_list.doc_list.concat(response);

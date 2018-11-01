@@ -463,7 +463,11 @@
 	},
         create_checkout: function () {
                 if(confirm("Создать список проверки?")){
-                    $.post("../Checkout/checkoutDocumentCreate",{ parent_doc_id: App.document.doc.head.doc_id, checkout_name: ("Документ №" + App.document.doc.head.doc_num)}, function(resp){
+                    var params = {
+                        parent_doc_id: App.document.doc.head.doc_id,
+                        checkout_name: (App.document.doc.head.label + " Док. №" + App.document.doc.head.doc_num)
+                    };
+                    $.post("../Checkout/checkoutDocumentCreate", params, function(resp){
                         App.flash('Создано!');
                         location.hash = '#checkout_document.html#checkout_id='+resp;
                     });
