@@ -106,10 +106,10 @@ class MobiSell extends PluginManager {
         if ($entries) {
             $this->documentEntryFill($doc_id, $entries);
         }
-        $this->notify("MobiSell уведомление от ".$this->Hub->svar('user_sign'),'document_created.html',[
+        /*$this->notify("MobiSell уведомление от ".$this->Hub->svar('user_sign'),'document_created.html',[
             'user_sign'=>$this->Hub->svar('user_sign'),
             'pcomp_label'=>$this->Hub->pcomp('label')
-        ]);
+        ]);*/
         return $doc_id;
     }
     private function documentEntryFill($doc_id, $entries) {

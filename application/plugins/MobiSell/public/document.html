@@ -1,18 +1,23 @@
 <script>
     App.document = {
-	doc: {},
+	doc: {
+            doc_id:0
+        },
 	init: function () {
+            App.title("Документ");
 	    App.document.initTab();
 	    App.document.head.init();
-	    App.document.focus();
+	    //App.document.focus();
 	    App.document.suggestion.init();
-            App.Topic('hashChange').subscribe(function () {
-                App.document.load(App.state.doc_id);
+            App.Topic('hashChange').subscribe(function (state,module) {
+                if( state.doc_id!=App.document.doc.doc_id ){
+                    console.log("load on hashchange",state);
+                    App.document.load(App.state.doc_id);
+                }
             }); 
 	},
 	focus: function () {
-	    App.document.load(App.state.doc_id);
-	    App.title("Документ");
+            App.title("Документ");
 	},
 	load: function (doc_id) {
 	    if (!doc_id) {
@@ -21,6 +26,7 @@
 		App.document.create();
 		return false;
 	    }
+            App.document.doc.doc_id=doc_id;
 	    $("#document_container").show();
 	    $("#document_create_dialog").hide();
 	    App.flash('Документ: загрузка...');
