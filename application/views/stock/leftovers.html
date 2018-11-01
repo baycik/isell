@@ -67,7 +67,11 @@
                     if(Leftovers.parent_id == 0 && !confirm('Будут выбраны ВСЕ ТОВАРЫ, продолжить?')){
 			return;
 		    }
-                    $.post("Checkout/checkoutStockCreate",{ parent_id: Leftovers.parent_id, checkout_name: (Leftovers.parent_label||'Все категории')}, function(resp){
+                    var params = {
+                        parent_id: Leftovers.parent_id,
+                        checkout_name: "Склад: " + (Leftovers.parent_label||'Все категории')
+                    }
+                    $.post("Checkout/checkoutStockCreate", params, function(resp){
                         location.hash="#Stock#checkout_id="+resp;
                         $('#stock_main_tabs').tabs('select','Список проверок');
                     });

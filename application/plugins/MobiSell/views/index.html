@@ -72,7 +72,7 @@
 			$("#main_container").append("<div id='"+holder_id+"'></div>");
 			$("#"+holder_id).load(App.url_file,function(){
                             App[holder_id] && App[holder_id].init && App[holder_id].init();
-                            App[holder_id] && App[holder_id].focus && App[holder_id].focus();
+                            App[holder_id] && App[holder_id].focus && App[holder_id].focus();           
                         });
 		    } 
 		    $("#main_container>div").hide();

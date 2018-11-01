@@ -23,10 +23,10 @@
                 var settings = {
 			columns:  [
                             {id: "row_num", field: "",formatter:App.page_stock_checkout_list.table.frm.queue, name: "#", width: 25,cssClass: 'slick-align-right'},
-                            {id: "cstamp", field: "cstamp_dmy", name: "Дата", width: 100,cssClass: 'slick-align-right'},
-                            {id: "checkout_name", field: "checkout_name", name: "Название", width: 100,cssClass: 'slick-align-left'},
-                            {id: "created_by", field: "creator_nick", name: "Начал", width: 100,cssClass: 'slick-align-right'},
-                            {id: "modified_by", field: "modifier_nick", name: "Проверил", width: 100,cssClass: 'slick-align-right'},
+                            {id: "cstamp", field: "cstamp_dmy", name: "Дата", width: 120,cssClass: 'slick-align-right'},
+                            {id: "checkout_name", field: "checkout_name", name: "Название", width: 140,cssClass: 'slick-align-left'},
+                            {id: "created_by", field: "creator_nick", name: "Начал", width: 100},
+                            {id: "modified_by", field: "modifier_nick", name: "Проверил", width: 100},
                             {id: "chackout_status", field: "checkout_status", formatter:App.page_stock_checkout_list.table.frm.status, name: "", width: 30,cssClass: 'slick-align-middle'}
                         ],
 			options: {
@@ -41,17 +41,21 @@
                     if(App.page_stock_checkout_list.table.current_id){
                         App.page_stock_checkout_list.entries.load();
                     } 
-                    App.Topic('hashChange').subscribe(function(state){
-                        var selected_rows = App.page_stock_checkout_list.table.grid.getSelectedRows();
-                        var row_data=App.page_stock_checkout_list.table.grid.getDataItem(selected_rows[0]);
-                        if(row_data && row_data.checkout_id != state.checkout_id){
+                    App.Topic('hashChange').subscribe(function(state,module){
+                        console.log(state);
+                        if(module == 'Stock'){
+                            var selected_rows = App.page_stock_checkout_list.table.grid.getSelectedRows();
+                            var row_data=App.page_stock_checkout_list.table.grid.getDataItem(selected_rows[0]);
+                            if(row_data && row_data.checkout_id != state.checkout_id){
                             var object = App.page_stock_checkout_list.table.grid.getData();  
-                            for(var i in object){
-                                if (object[i].checkout_id == state.checkout_id){
-                                  App.page_stock_checkout_list.table.grid.setSelectedRows([object[i].num]); 
-                                  App.page_stock_checkout_list.table.grid.resetActiveCell();
+                                for(var i in object){
+                                    if (object[i].checkout_id == state.checkout_id){
+                                      App.page_stock_checkout_list.table.grid.setSelectedRows([object[i].num]); 
+                                      App.page_stock_checkout_list.table.grid.resetActiveCell();
+                                    }
                                 }
                             }
+                            App.page_stock_checkout_list.table.grid.reload();
                         }
                     });
                     App.page_stock_checkout_list.table.grid.onClick.subscribe(function (e, data) {
@@ -93,7 +97,7 @@
                 var settings = {
 			columns:  [
                             {id: "row_num", field: "",formatter:App.page_stock_checkout_list.table.frm.queue, name: "#", width: 25,cssClass: 'slick-align-right'},
-                            {id: "product_code", field: "product_code", name: "Код", width: 40,cssClass: 'slick-align-right'},
+                            {id: "product_code", field: "product_code", name: "Код", width: 80,cssClass: 'slick-align-right'},
                             {id: "checkout_name", field: "ru", name: "Название", width: 250,cssClass: 'slick-align-left'},
                             {id: "product_quantity_verified", field: "product_quantity_verified", name: "Проверено", width: 70,cssClass: 'slick-align-right'},
                             {id: "product_quantity", field: "product_quantity", name: "Количество", width: 70,cssClass: 'slick-align-right'},
@@ -115,8 +119,10 @@
 		    //App.page_stock_checkout_list.entries.grid = new SlickInfinite("#checkout_entries_sg", settings);
                     App.page_stock_checkout_list.entries.grid = new Slick.Grid("#checkout_entries_sg", [], settings.columns, settings.options);
                    
-                    App.Topic('hashChange').subscribe(function(state){
-                        App.page_stock_checkout_list.entries.load(state.checkout_id);
+                    App.Topic('hashChange').subscribe(function(state, module){
+                        if( module == 'Stock'){
+                            App.page_stock_checkout_list.entries.load(state.checkout_id);
+                        }
                     });
             },
             load:function(checkout_id){
@@ -234,7 +240,6 @@
 <div >
     <table>
         <tr>
-            
             <td class="transp60">
                 <div style="text-align: center; font-size: 13px;  color: darkblue">
                     <img src="img/ProductCard.png" style="float:left; height:20px; width:auto">
@@ -243,17 +248,17 @@
                 <div class="x-stock-leftovers-tools" style="text-align: right;padding-top:11px">
                     <span class="icon-24 icon-refresh" title="Обновить" onclick="App.page_stock_checkout_list.table.grid.reload()"></span>
                 </div>
-                <div style="width: 465px; height: 500px; float:left" id="checkout_list_sg"></div>
+                <div style="width: 535px; height: 500px; float:left" id="checkout_list_sg"></div>
             </td>
             
             <td class="transp60">
                 <div id="checkout_progress_bar" class="easyui-progressbar" data-options="value:0" style="width:575px"></div>
-                <div class="easyui-tabs " style="width:575px ">
+                <div class="easyui-tabs " style="width:590px ">
                     <span class="icon-24 icon-refresh" title="Обновить" style="float:right" onclick="App.page_stock_checkout_list.entries.load(App.state.checkout_id)"></span>
                     <div title="Подробности"  style="min-height: 500px;">
                         <div class="x-stock-leftovers-tools" style="text-align: right;">
                         </div>
-                        <div style="width: 525px; height: 500px; margin-left:20px" id="checkout_entries_sg">
+                        <div style="width: 565px; height: 500px;" id="checkout_entries_sg">
                             <h1><<Выберите документ</h1>
                         </div> 
                     </div>

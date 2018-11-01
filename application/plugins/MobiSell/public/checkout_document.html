@@ -8,7 +8,6 @@
         init: function () {
             //App.checkout_document.check_storage();
             //App.checkout_document.focus();
-            App.checkout_document.initTab();
             document.addEventListener('keypress', function (event) {
                 var char=event.key;
                 if(char*1==char){
@@ -22,6 +21,10 @@
                     App.checkout_document.input_barcode='';
                 }  
             });
+            App.checkout_document.initTab();
+            setTimeout(function(){
+                App.checkout_document.suggestion.init();
+            },500);
         },
         load: function (checkout_id){
             App.checkout_document.log.put_on_server().done(function(){
@@ -30,6 +33,7 @@
                     App.checkout_document.entries.list = response.entries;
                     App.checkout_document.log.list = response.log;
                     App.checkout_document.checkout_doc_head = response.head;
+                    App.checkout_document.photos.render();
                     App.checkout_document.entries.render();
                 });
             });
@@ -38,8 +42,6 @@
             App.title("Документ для проверки");
             App.checkout_document.currentType = 'Document';
             App.checkout_document.initTab();
-            console.log('works');
-             
             App.checkout_document.load(App.state.checkout_id);
             //App.checkout_document.log.put_on_server();
             
@@ -156,9 +158,28 @@
                         App.checkout_document.current_entry_index = new_length-1;
                         App.checkout_document.entries.show_popup();
                     } else if (!new_entry){
+                        var prod_code = prompt('Штрихкод не найден.\n Введите код товара.', '');
+                        if (prod_code){
+                            App.checkout_document.entries.link_barcode(prod_code, barcode);
+                        }
                         return;
                     }
 		});
+            },
+            link_barcode: function(product_code, barcode){
+              var fvalue={
+		    product_code: product_code,
+		    field:'product_barcode',
+		    value: barcode
+		};
+		$.post("../Stock/productUpdate/",fvalue,function(ok){
+		    if(ok){
+			App.flash("Штрихкод привязан");
+                        App.checkout_document.entries.load_by_barcode(barcode);
+		    } else {
+                        App.flash("Не удалось");
+                    }
+		});  
             },
             submit_form: function () {
                 var fvalue = $('#checkout_document_popup_quan_form').form('get values');
@@ -190,6 +211,8 @@
                     quantity=currentEntry.product_spack;
                 } else if (type === 'Big') {
                     quantity=currentEntry.product_bpack;
+                }   else if (type === 'qty') {
+                    quantity=currentEntry.product_quantity;
                 }
                 $("#checkout_document_popup_quan_form input[name=operation_quantity]").val(quantity);
                 App.checkout_document.entries.submit_form();
@@ -296,7 +319,7 @@
         photos:{
             list: [],
             render: function (){
-                $('.checkout_document_tabs .item').tab('change tab', 'Photos');
+                
                 App.checkout_document.photos.list = App.checkout_document.checkout_doc_head.checkout_photos?App.checkout_document.checkout_doc_head.checkout_photos.split(",").reverse():[];
                 var photos=[];
                 for(var filename of App.checkout_document.photos.list){
@@ -343,11 +366,84 @@
                 $('#checkout_attach').click();
             }
         },
+        suggestion: {
+	    q: '',
+	    entries: [],
+	    init: function () {
+                
+		//App.renderTpl('checkout_doc_suggestion_entries', {entries: []});
+                console.log("accordion");
+		$("#checkout_suggestion").accordion({
+		    onOpen: function () {
+			App.checkout_document.suggestion.search("");
+		    }
+		});
+		$("#checkout_suggestion input").on('keyup', function () {
+		    App.checkout_document.suggestion.search($("#checkout_suggestion input").val());
+		});
+	    },
+	    search: function (q) {
+		clearTimeout(this.clock);
+		this.clock = setTimeout(function () {
+		    App.checkout_document.suggestion.q = q;
+		    App.checkout_document.suggestion.entries = [];
+		    App.checkout_document.suggestion.load();
+		}, 200);
+	    },
+	    load: function () {
+		App.flash('Подсказки: загрузка...');
+		var offset = App.checkout_document.suggestion.entries.length || 0;
+		$.post('../DocumentItems/suggestFetch', {offset: offset, q: App.checkout_document.suggestion.q}, function (resp) {
+		    var suggestion = App.json(resp);
+                    console.log(suggestion);
+		    App.checkout_document.suggestion.entries = App.checkout_document.suggestion.entries.concat(suggestion);
+		    App.checkout_document.suggestion.render();
+		    if (suggestion && suggestion.length > 0) {
+			$("#checkout_load_suggestions_button").show();
+		    } else {
+			$("#checkout_load_suggestions_button").hide();
+		    }
+		    App.flash('Подсказки: ОК');
+		});
+	    },
+	    clear:function(){
+		$("#checkout_suggestion input").val('');
+		App.checkout_document.suggestion.search('');
+	    },
+	    render: function () {
+                if( App.user.props.user_level<2 ){
+                    for(var i in App.checkout_document.suggestion.entries){
+                        var lo=App.checkout_document.suggestion.entries[i].leftover;
+                        App.checkout_document.suggestion.entries[i].stared_leftover=
+                                lo<10?'★☆☆☆☆':
+                                lo<50?'★★☆☆☆':
+                                lo<100?'★★★☆☆':
+                                lo<500?'★★★★☆':'★★★★★';
+                    }
+                }
+		App.renderTpl('checkout_doc_suggestion_entries', {entries: App.checkout_document.suggestion.entries});
+	    },
+	    handleClick: function (row_node) {
+		var index = $(row_node).data('row-index');
+		var suggest_entry = App.checkout_document.suggestion.entries[index];
+		App.checkout_document.entries.load_by_barcode(suggest_entry.product_code);
+                $('#checkout_suggestion').accordion('close', 0);
+	    },
+	    popImage: function (row_node) {
+		var index = $(row_node).data('row-index');
+		var suggest_entry = App.checkout_document.suggestion.entries[index];
+		suggest_entry.size_x = Math.min($(checkout_document).width(), 500);
+		suggest_entry.size_y = Math.min($(checkout_document).height(), 500);
+		App.renderTpl('document_product_image', suggest_entry);
+		$("#document_product_image").modal('show');
+	    }
+	},
         clear_searchbar: function () {
             $("#checkout_document_log_search_input").val('');
             App.checkout_document.log.render();
         },
         commit_checkout: function () {
+            console.log('end!');
             App.checkout_document.blur();
             if(confirm('Вы уверены, что хотите завершить проверку?')){
                 $.post('../Checkout/checkoutDocumentOutput', {checkout_id: App.state.checkout_id}, function (resp) {
@@ -483,8 +579,10 @@
     <a id="photos_tab_header" class="item" data-tab="Photos">Фото</a>
 </div>
 
-<div id="checkout_entries" class="ui bottom attached tab covert" data-tab="Document">
- 
+<div class="ui bottom attached tab" data-tab="Document">
+    
+    
+    <div id="checkout_entries"  class="covert">
     <table id="checkout_document_table" class="ui celled unstackable selectable table">
         <thead> 
             <tr>
@@ -507,18 +605,16 @@
                 </td>
                 <td>
                     <div class="ui grid">
-                        <div class="seven wide column">{{product_quantity_verified}}/{{product_quantity}}</div>
-                    </div>
-                </td>
-                <td>
-                    <div id="verification_indicator_{{#}}">
-                        {{if verification_status|equals>0}}
-                        <div>
-                            <i class="exclamation circle red icon"></i>
-                        </div>
-                        {{else}}
-                        <div>
-                            <i class="check circle green icon"></i>
+                        <div class="nine wide column" style="font-size:16px; font-weight: bold; text-align: right">{{product_quantity_verified}}/{{product_quantity}}</div>
+                        <div id="verification_indicator_{{#}}" class="seven wide column">
+                            {{if verification_status|equals>0}}
+                            <div>
+                                <i class="exclamation circle red icon"></i>
+                            </div>
+                            {{else}}
+                            <div>
+                                <i class="check circle green icon"></i>
+                            </div>
                         </div>
                     </div>
                     {{/if}}
@@ -526,27 +622,28 @@
 
             </tr>
             <!--{{/products}}-->
-            
         </tbody>
     </table>
-    <div class="ui inverted segment blue">
+    </div>
+    
+ <div class="ui inverted segment blue">
 	<div class="ui inverted fluid accordion " id="checkout_suggestion"> 
 	    <div class="title"><i class="add icon"></i>Добавить товар</div>
 	    <div class="content ">
 		<div class="ui left icon right labeled input fluid" style="margin-bottom: 5px;">
 		    <i class="search icon"></i>
 		    <input placeholder="Поиск по коду или названию" type="text">
-		    <div class="ui basic label" onclick="App.document.suggestion.clear()"><i class="close icon"></i></div>
+		    <div class="ui basic label" onclick="App.checkout_document.suggestion.clear()"><i class="close icon"></i></div>
 		</div>
-		<div class="covert" id="doc_suggestion_entries">
+		<div class="covert" id="checkout_doc_suggestion_entries">
 		    <table class="ui very compact table unstackable">
 			<tbody>
 			    <!-- {{if entries}} {{entries}} -->
 			    <tr>
-				<td  style="height:50px" data-row-index="{{#}}" onclick="App.document.suggestion.popImage(this)">
+				<td  style="height:50px" data-row-index="{{#}}" onclick="App.checkout_document.suggestion.popImage(this)">
 				    <img style="width:50px" src="../Storage/image_flush/?size=50x50&path=/dynImg/{{product_img}}">
 				</td>
-				<td data-row-index="{{#}}" onclick="App.document.suggestion.handleClick(this)">
+				<td data-row-index="{{#}}" onclick="App.checkout_document.suggestion.handleClick(this)">
 				    <div class="ui grid stackable" style="{{if leftover|less>1}} color:red !important {{/if}}">
 					<div class="eight wide column" style="padding: .5rem !important">{{product_name}}</div>
 					<div class="eight wide column" style="padding: .5rem !important">
@@ -566,7 +663,7 @@
 			    <!--{{/if}}-->
 			</tbody>
 		    </table>
-		    <button class="ui button fluid" id="load_suggestions_button" onclick="App.document.suggestion.load();">Показать еще ...</button>
+		    <button class="ui button fluid" id="checkout_load_suggestions_button" onclick="App.checkout_document.suggestion.load();">Показать еще ...</button>
 		</div>
 	    </div>
 	</div>
@@ -686,26 +783,35 @@
                         </div>
                         <div class="actions" id="checkout_document_quantity_buttons">
                             <div class="ui equal width  grid ">
-                                {{if product_spack|notequals>1}}
-                                <div class="column" >
-                                    <button class="ui blue fluid button"  onclick="App.checkout_document.entries.check_package_type('Extra_Small'); return false">
-                                        1
-                                    </button>   
-                                </div>
-                                {{/if}}
-                                {{if product_spack|notequals>0}}
-                                <div class="column">
-                                    <button class="ui blue fluid button"  onclick="App.checkout_document.entries.check_package_type('Small'); return false">
-                                        {{product_spack}} 
-                                    </button>   
-                                </div>
-                                {{/if}}
-                                {{if product_bpack|notequals>0}}
-                                <div class="column">
-                                    <button class="ui blue fluid button"  onclick="App.checkout_document.entries.check_package_type('Big'); return false">
-                                        {{product_bpack}}
-                                    </button>   
-                                </div>
+                                
+                                {{if product_quantity|between>1>product_bpack}}
+                                    {{if product_spack|notequals>1}}
+                                    <div class="column" >
+                                        <button class="ui blue fluid button"  onclick="App.checkout_document.entries.check_package_type('Extra_Small'); return false">
+                                            1
+                                        </button>   
+                                    </div>
+                                    {{/if}}
+                                     <div class="column">
+                                        <button class="ui green fluid button"  onclick="App.checkout_document.entries.check_package_type('qty'); return false">
+                                            {{product_quantity}} 
+                                        </button>   
+                                    </div>
+                                {{else}}
+                                    {{if product_spack|notequals>0}}
+                                    <div class="column">
+                                        <button class="ui blue fluid button"  onclick="App.checkout_document.entries.check_package_type('Small'); return false">
+                                            {{product_spack}} 
+                                        </button>   
+                                    </div>
+                                    {{/if}}
+                                    {{if product_bpack|more>1}}
+                                    <div class="column">
+                                        <button class="ui blue fluid button"  onclick="App.checkout_document.entries.check_package_type('Big'); return false">
+                                            {{product_bpack}}
+                                        </button>   
+                                    </div>
+                                    {{/if}}
                                 {{/if}}
                             </div>
                         </div>
