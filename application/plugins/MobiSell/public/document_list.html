@@ -1,7 +1,7 @@
 <script>
     App.document_list = {
 	init: function () {
-	    App.document_list.initPicker();
+	    //App.document_list.initPicker();
 	    App.document_list.initTab();
 	    App.title("Список документов");
 	},
@@ -10,19 +10,10 @@
 	    App.title("Список документов");
 	},
 	initPicker: function () {
-	    var $input = $('.datepicker').pickadate();
-	    App.document_list.picker = $input.pickadate('picker');
-	    //App.document_list.picker.set('select', new Date());
-	    App.document_list.current_date = App.document_list.picker.get('select', 'yyyy-mm-dd');
-	    App.document_list.picker.on({
-		set: function (thingSet) {
-		    if( App.document_list.current_date === App.document_list.picker.get('select', 'yyyy-mm-dd') ){
-			return;
-		    }
-		    App.document_list.current_date = App.document_list.picker.get('select', 'yyyy-mm-dd');
-		    App.document_list.reload();
-		}
-	    });
+            $("#doc_list_datefilter").change(function(){
+                console.log(this);
+                App.document_list.reload();
+            })
 	},
 	initTab: function () {
 	    $('.doclist_tabs .item').tab({
@@ -51,12 +42,12 @@
 	compFilter: '',
 	currentType: '',
 	load: function (type, offset) {
-	    var date = App.document_list.picker.get('select', 'yyyy-mm-dd');
+	    var date = $("#doc_list_datefilter").val();
 	    if (offset === undefined) {
 		offset = App.document_list.docTypeConfig[type].entries.length || 0;
 	    }
 	    App.flash('Список документов: загрузка...');
-	    $.post('doclistGet', {type: type, date: date, offset: offset, compFilter: App.document_list.compFilter}, function (resp) {
+	    $.post('doclistGet', {type: type, offset: offset, date: date, compFilter: App.document_list.compFilter}, function (resp) {
 		var doc_list = App.json(resp);
 		App.document_list.docTypeConfig[type].entries = App.document_list.docTypeConfig[type].entries.concat(doc_list);
 		App.document_list.render(type, App.document_list.docTypeConfig[type].entries);
@@ -88,9 +79,6 @@
 	    $('input[name=\'company_filter\']').val('');
 	    App.document_list.compFilter ='';
 	    App.document_list.reload();
-	},
-	clearDate:function(){
-	    App.document_list.picker.clear();
 	}
     };
     App.document_list.init();
@@ -116,8 +104,7 @@
 	<div class="field">
 	    <div class="ui left icon right labeled input">
 		<i class="calendar icon"></i>
-		<input name="date_filter" placeholder="Дата" type="date" class="datepicker">
-		<div class="ui basic label" onclick="App.document_list.clearDate()"><i class="close icon"></i></div>
+                <input name="date_filter" placeholder="Дата" type="date" id="doc_list_datefilter" onchange="App.document_list.reload();">
 	    </div>
 	</div>
     </div>

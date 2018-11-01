@@ -1,18 +1,23 @@
 <script>
     App.document = {
-	doc: {},
+	doc: {
+            doc_id:0
+        },
 	init: function () {
+            App.title("Документ");
 	    App.document.initTab();
 	    App.document.head.init();
-	    App.document.focus();
+	    //App.document.focus();
 	    App.document.suggestion.init();
-            App.Topic('hashChange').subscribe(function () {
-                App.document.load(App.state.doc_id);
+            App.Topic('hashChange').subscribe(function (state,module) {
+                if( state.doc_id!=App.document.doc.doc_id ){
+                    console.log("load on hashchange",state);
+                    App.document.load(App.state.doc_id);
+                }
             }); 
 	},
 	focus: function () {
-	    App.document.load(App.state.doc_id);
-	    App.title("Документ");
+            App.title("Документ");
 	},
 	load: function (doc_id) {
 	    if (!doc_id) {
@@ -21,6 +26,7 @@
 		App.document.create();
 		return false;
 	    }
+            App.document.doc.doc_id=doc_id;
 	    $("#document_container").show();
 	    $("#document_create_dialog").hide();
 	    App.flash('Документ: загрузка...');
@@ -81,6 +87,7 @@
 			var new_doc_id = resp * 1;
 			if (new_doc_id) {
 			    location.hash = "#" + App.url_file + "#doc_id=" + new_doc_id;
+                            App.document.notify_created();
 			}
 		    });
 		}
@@ -91,7 +98,6 @@
 	    $('.pcomp_id')
 		    .dropdown("set text", App.user.pcomp.label)
 		    .dropdown('set value', App.user.pcomp.company_id);
-            
 	    $('.acomp_id')
 		    .dropdown("set text", App.user.acomp.label)
 		    .dropdown('set value', App.user.acomp.company_id);
@@ -99,6 +105,9 @@
 		    .dropdown("set selected", 1);
 	    //$("#document_create_dialog").show();
 	},
+        notify_created:function(){
+            $.post("notify_pending/");
+        },
 	initTab: function () {
 	    $('.menu .item').tab({
 		onVisible: function (type) {
