@@ -106,10 +106,16 @@ class MobiSell extends PluginManager {
         if ($entries) {
             $this->documentEntryFill($doc_id, $entries);
         }
-        /*$this->notify("MobiSell уведомление от ".$this->Hub->svar('user_sign'),'document_created.html',[
-            'user_sign'=>$this->Hub->svar('user_sign'),
-            'pcomp_label'=>$this->Hub->pcomp('label')
-        ]);*/
+        
+        $message=[
+            "subject"=>"MobiSell уведомление от ".$this->Hub->svar('user_sign'),
+            "view"=>'document_created.html',
+            "data"=>[
+                'user_sign'=>$this->Hub->svar('user_sign'),
+                'pcomp_label'=>$this->Hub->pcomp('label')
+            ]
+        ];
+        $this->Hub->svar('Mobisell_create_notification',$message);
         return $doc_id;
     }
     private function documentEntryFill($doc_id, $entries) {
@@ -228,5 +234,10 @@ class MobiSell extends PluginManager {
                 $Utils->sendSms($phone,"$text");
             }
         }
+    }
+    public $notify_pending=[];
+    public function notify_pending(){
+        $message=$this->Hub->svar('Mobisell_create_notification');
+        $this->notify($message['subject'],$message['view'],$message['data']);
     }
 }

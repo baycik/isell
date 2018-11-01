@@ -87,6 +87,7 @@
 			var new_doc_id = resp * 1;
 			if (new_doc_id) {
 			    location.hash = "#" + App.url_file + "#doc_id=" + new_doc_id;
+                            App.document.notify_created();
 			}
 		    });
 		}
@@ -97,7 +98,6 @@
 	    $('.pcomp_id')
 		    .dropdown("set text", App.user.pcomp.label)
 		    .dropdown('set value', App.user.pcomp.company_id);
-            
 	    $('.acomp_id')
 		    .dropdown("set text", App.user.acomp.label)
 		    .dropdown('set value', App.user.acomp.company_id);
@@ -105,6 +105,9 @@
 		    .dropdown("set selected", 1);
 	    //$("#document_create_dialog").show();
 	},
+        notify_created:function(){
+            $.post("notify_pending/");
+        },
 	initTab: function () {
 	    $('.menu .item').tab({
 		onVisible: function (type) {
