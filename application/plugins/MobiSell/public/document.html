@@ -26,6 +26,9 @@
 		App.document.create();
 		return false;
 	    }
+            if( App.document.doc.doc_id==doc_id ){
+                return ;
+            }
             App.document.doc.doc_id=doc_id;
 	    $("#document_container").show();
 	    $("#document_create_dialog").hide();
