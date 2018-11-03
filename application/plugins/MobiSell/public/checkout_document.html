@@ -518,24 +518,16 @@
     </div>
 </div>
 
-<div id="doc_head" class="ui segment blue covert">
-    <div>
-        <span>{{cstamp_dmy}}</span>
-        <span>{{checkout_name}}</span>
+<div id="doc_head" class="ui message covert">
+    <div id="chdocument_header" class="ui attached segment ">
+	<div class="header">
+	    <i class="clipboard list icon"></i> Список проверки
+	</div>
+	"{{checkout_name}}"<b>от</b> {{cstamp_dmy}}
     </div>
-    <div>
-        <div class="ui equal width grid">
+        <div class="ui equal width grid segment">
             <div class="column">
-                <i class="plus circle icon"></i>
-                <i>{{creator_nick}}</i>
-            </div>
-            <div class="column">
-                <i class="pencil alternate icon"></i>
-                <i>{{modifier_nick}}</i>
-            </div>
-        </div>
-        <div>
-            {{if checkout_status|equals>not_checked}}
+		<b>Статус:</b> {{if checkout_status|equals>not_checked}}
                 <i class="close red large icon"></i>
                     Не выполнено
                 {{else}}
@@ -560,14 +552,22 @@
                         {{/if}}
                     {{/if}}
                 {{/if}}
+            </div>
+            <div class="column">
+                <i class="plus circle icon"></i>
+                <i>{{creator_nick}}</i>
+            </div>
+            <div class="column">
+                <i class="pencil alternate icon"></i>
+                <i>{{modifier_nick}}</i>
+            </div>
         </div>
         {{if checkout_status|equals>is_checking}}
-        <button class="ui fluid  primary button compact" onclick="App.checkout_document.commit_checkout(); return false">Завершить проверку</button>
+        <button class="ui fluid  primary button compact" onclick="App.checkout_document.commit_checkout(); return false"><i class="check icon"></i> Завершить проверку</button>
         {{/if}}
-    </div>
 </div>
 
-<button class="ui blue icon button fluid" onclick="App.checkout_document.photos.checkout_upload()">
+<button class="ui icon button fluid" onclick="App.checkout_document.photos.checkout_upload()">
     <i class="ui photo icon"></i> 
     Прикрепить фото
 </button>
