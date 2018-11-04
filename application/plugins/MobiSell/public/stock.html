@@ -131,7 +131,9 @@
                 var tree_html = "<div class='item' data-value='0'>Все категории</div>";
                 tree_html += App.stock.tree.make_backbone(tree_object, "");
                 $('#stock_category_tree .menu').html(tree_html);
-                $('#stock_category_tree').dropdown({});
+                $('#stock_category_tree').dropdown({
+		    fullTextSearch:true
+		});
             }
         },
         clear_searchbar: function () {
@@ -371,9 +373,7 @@
     }
 </style>
 
-<button class="ui icon circular blue button" id="stock_cart_button" onclick="App.stock.popup_cart.show_box()">
-    <i class="shop icon"></i>
-</button>
+
 <div  class="ui blue segment">
     <form>
         <div class="five wide field">
@@ -416,7 +416,14 @@
             </div>
         </div>
     </form>
+    <button class="ui fluid blue button" onclick="App.stock.popup_cart.show_box()">
+	<i class="shop icon"></i>
+	Сформировать заказ
+    </button>
 </div>
+
+
+
 <div id="stock_categories_header" class="ui centered header" style="margin-top: auto">Все категории</div>
 <!--Список товаров-->
 <div id="stock_list" class="covert">
@@ -496,7 +503,7 @@
         Больше нет товаров для показа
     </div>   
     {{else}} 
-    <button id='stock_load_more' class='ui fluid basic green button'
+    <button id='stock_load_more' class='ui fluid  button'
             onclick="App.stock.load(1)"> 
         Показать ещё...
     </button>    
