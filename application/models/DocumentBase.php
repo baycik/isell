@@ -136,15 +136,19 @@ abstract class DocumentBase extends Catalog{
 	$this->db_transaction_commit();
 	return $ok;
     }
-    /*
-     * DOCUMENT COMMIT
-     */
+    //////////////////////////////////////////
+    // COMMIT SECTION
+    //////////////////////////////////////////
     protected function documentChangeCommit( $make_commited=false ){
 	if( $make_commited && $this->isCommited() || !$make_commited && !$this->isCommited() ){
 	    return true;
 	}
-        $this->documentChangeCommitTransactions($make_commited);
-	return $this->documentChangeCommitEntries($make_commited);
+        $trans_ok=$this->documentChangeCommitTransactions($make_commited);
+	$entries_ok=$this->documentChangeCommitEntries($make_commited);
+	if( !$trans_ok || !$entries_ok ){
+	    $this->db_transaction_rollback();
+	    return false;
+	}
     }
     protected function documentChangeCommitEntries($make_commited){
 	$doc_id=$this->doc('doc_id');
@@ -163,17 +167,18 @@ abstract class DocumentBase extends Catalog{
     }
     protected function documentChangeCommitTransactions($make_commited){
         if( $make_commited ){
+	    $footer=$this->
+	    $this->transUpdate($footer);
             
         } else {
             $this->transDisable();
         }
         return false;
     }
-    
     //////////////////////////////////////////
     // HEADER SECTION
     //////////////////////////////////////////
-    public function headerGet( $doc_id ){
+    public function headGet( $doc_id ){
 	if( $doc_id==0 ){
 	    return $this->headerDefaultGet();
 	}
@@ -204,7 +209,7 @@ abstract class DocumentBase extends Catalog{
 	//$head->extra_expenses=$this->getExtraExpenses();
 	return $head;
     }
-    protected function headerPreviousGet($acomp_id,$pcomp_id){
+    protected function headPreviousGet($acomp_id,$pcomp_id){
 	$sql="SELECT 
 		* 
 	    FROM 
@@ -217,13 +222,52 @@ abstract class DocumentBase extends Catalog{
 	    ORDER BY cstamp DESC LIMIT 1";
 	return 	$this->get_row($sql);
     }
-    protected function headerDefaultGet(){
+    protected function headDefaultGet(){
 	return [];
     }
-    
     //////////////////////////////////////////
-    // ENTRIES SECTION
+    // BODY SECTION
     //////////////////////////////////////////
+    protected function bodyGet($doc_id){
+	$this->entriesTmpCreate( $doc_id );
+	return $this->get_list("SELECT * FROM tmp_doc_entries");
+    }
+    protected function entriesTmpCreate( $doc_id ){
+	//$this->documentSelect($doc_id);
+	$doc_vat_ratio=1+$this->doc('vat_rate')/100;
+	//$signs_after_dot=$this->doc('signs_after_dot');
+	$curr_correction=$this->documentCurrencyCorrectionGet();
+
+        $this->query("DROP TEMPORARY TABLE IF EXISTS tmp_doc_entries");
+        $sql="CREATE TEMPORARY TABLE tmp_doc_entries ( INDEX(product_code) ) ENGINE=MyISAM AS (
+                SELECT 
+                    *,
+                    ROUND(corrected_price, 2) AS product_price_vatless,
+                    ROUND(corrected_price * $doc_vat_ratio, 2) AS product_price_total,
+                    ROUND(corrected_price * product_quantity,2) product_sum_vatless,
+                    ROUND(corrected_price * $doc_vat_ratio * product_quantity,2) product_sum_total
+                FROM
+                (SELECT
+                    de.*,
+                    ru product_name,
+		    invoice_price * $curr_correction corrected_price,
+		    invoice_price<(self_price-0.01) is_loss,
+		    product_quantity*product_weight weight,
+                    product_quantity*product_volume volume,
+                    CHK_ENTRY(doc_entry_id) AS row_status,
+                    product_unit,
+                    analyse_origin
+                FROM
+                    document_list
+                        JOIN
+                    document_entries de USING(doc_id)
+                        JOIN 
+                    prod_list pl USING(product_code)
+                WHERE
+                    doc_id='$doc_id'
+                ORDER BY pl.product_code) t)";
+        $this->query($sql);
+    }
     protected function entryAdd(){
 	
     }
@@ -246,16 +290,13 @@ abstract class DocumentBase extends Catalog{
 	}
 	$this->db_transaction_commit();
 	return true;
-    }    
-   
-    
+    }
     protected function entryCommit($doc_entry_id,$new_product_quantity=NULL){
 	return false;
     }
     protected function entryUncommit($doc_entry_id){
 	return false;
     }
-
     public $entryImport=['doc_id'=>'int','label'=>'string'];
     public function entryImport( $doc_id,$label ){
 	$this->documentSelect($doc_id);
@@ -275,7 +316,6 @@ abstract class DocumentBase extends Catalog{
 	}
         return  $imported_count;
     }
-    
     private function entryImportTruncate(){
 	if( $this->doc('is_commited') ){
 	    return false;
@@ -283,7 +323,6 @@ abstract class DocumentBase extends Catalog{
 	$doc_id=$this->doc('doc_id');
 	return $this->delete('document_entries',['doc_id'=>$doc_id]);
     }
-    
     private function entryImportFromTable( $table, $src, $trg, $filter, $label ){
 	$target=[];
 	$source=[];
@@ -311,26 +350,44 @@ abstract class DocumentBase extends Catalog{
 	$this->query("INSERT INTO $table ($target_list) SELECT $source_list FROM imported_data WHERE label='$label' AND $product_code_source IN (SELECT product_code FROM stock_entries) ON DUPLICATE KEY UPDATE product_quantity=product_quantity+$quantity_source_field");
 	return $this->db->affected_rows();
     }
-   
-    
-    
-    
-    
-    
+    //////////////////////////////////////////
+    // FOOT SECTION
+    //////////////////////////////////////////
+    protected function footGet(){
+	$curr_code=$this->Hub->pcomp('curr_code');
+	$curr_symbol=$this->get_value("SELECT curr_symbol FROM curr_list WHERE curr_code='$curr_code'");
+	$sql="SELECT
+	    ROUND(SUM(weight),2) total_weight,
+	    ROUND(SUM(volume),2) total_volume,
+	    SUM(product_sum_vatless) vatless,
+	    SUM(product_sum_total) total,
+	    SUM(product_sum_total-product_sum_vatless) vat,
+	    SUM(ROUND(product_quantity*self_price,2)) self,
+	    '$curr_symbol' curr_symbol
+	FROM tmp_doc_entries";
+	return $this->get_row($sql);
+    }
+    //////////////////////////////////////////
+    // TRANS SECTION
+    //////////////////////////////////////////
     protected function transDisable(){
-        $Trans=$this->Hub->load_model("AccountsTrans");
+        $Trans=$this->Hub->load_model("AccountsCore");
         $this->db_transaction_start();
-        $Trans->transDisable( $this->doc('doc_id') );
+        $Trans->documentTransDisable( $this->doc('doc_id') );
         $this->db_transaction_commit();
     }
     protected function transClear(){
-        $Trans=$this->Hub->load_model("AccountsTrans");
+        $Trans=$this->Hub->load_model("AccountsCore");
         $this->db_transaction_start();
-        $Trans->transClear( $this->doc('doc_id') );
+        $Trans->documentTransClear( $this->doc('doc_id') );
         $this->db_transaction_commit();
     }
     protected function transUpdate(){
-	
+	$foot=$this->footGet();
+        $Trans=$this->Hub->load_model("AccountsCore");
+        $this->db_transaction_start();
+        $Trans->documentTransUpdate( $this->doc('doc_id'), $foot );
+        $this->db_transaction_commit();
     }
     
     

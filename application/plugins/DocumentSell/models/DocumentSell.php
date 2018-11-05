@@ -66,62 +66,13 @@ class DocumentSell extends DocumentBase{
 	$this->entriesTmpCreate( $doc_id );
 	return $this->get_list("SELECT * FROM tmp_doc_entries");
     }
-    private function footGet(){
-	$curr_code=$this->Hub->pcomp('curr_code');
-	$curr_symbol=$this->get_value("SELECT curr_symbol FROM curr_list WHERE curr_code='$curr_code'");
-	$sql="SELECT
-	    ROUND(SUM(weight),2) total_weight,
-	    ROUND(SUM(volume),2) total_volume,
-	    SUM(product_sum_vatless) vatless,
-	    SUM(product_sum_total) total,
-	    SUM(product_sum_total-product_sum_vatless) vat,
-	    SUM(ROUND(product_quantity*self_price,2)) self,
-	    '$curr_symbol' curr_symbol
-	FROM tmp_doc_entries";
-	return $this->get_row($sql);
-    }
     private function viewsGet(){
 	
     }
     /*
      * Entries section 
      */
-    private function entriesTmpCreate( $doc_id ){
-	//$this->documentSelect($doc_id);
-	$doc_vat_ratio=1+$this->doc('vat_rate')/100;
-	//$signs_after_dot=$this->doc('signs_after_dot');
-	$curr_correction=$this->documentCurrencyCorrectionGet();
 
-        $this->query("DROP TEMPORARY TABLE IF EXISTS tmp_doc_entries");
-        $sql="CREATE TEMPORARY TABLE tmp_doc_entries ( INDEX(product_code) ) ENGINE=MyISAM AS (
-                SELECT 
-                    *,
-                    ROUND(corrected_price, 2) AS product_price_vatless,
-                    ROUND(corrected_price * $doc_vat_ratio, 2) AS product_price_total,
-                    ROUND(corrected_price * product_quantity,2) product_sum_vatless,
-                    ROUND(corrected_price * $doc_vat_ratio * product_quantity,2) product_sum_total
-                FROM
-                (SELECT
-                    de.*,
-                    ru product_name,
-		    invoice_price * $curr_correction corrected_price,
-		    invoice_price<(self_price-0.01) is_loss,
-		    product_quantity*product_weight weight,
-                    product_quantity*product_volume volume,
-                    CHK_ENTRY(doc_entry_id) AS row_status,
-                    product_unit,
-                    analyse_origin
-                FROM
-                    document_list
-                        JOIN
-                    document_entries de USING(doc_id)
-                        JOIN 
-                    prod_list pl USING(product_code)
-                WHERE
-                    doc_id='$doc_id'
-                ORDER BY pl.product_code) t)";
-        $this->query($sql);
-    }
     private function entryPriceNormalize( $price ){
 	$doc_vat_ratio=1+$this->doc('vat_rate')/100;
 	$curr_correction=$this->documentCurrencyCorrectionGet();
