@@ -88,7 +88,7 @@
                   creator_nick: App.user.props.user_sign,
                   modifier_nick: App.user.props.user_sign,
                   cstamp_dmy: now
-              }
+              };
             }
             App.renderTpl("doc_head", App.checkout_document.checkout_doc_head);
         },
@@ -500,9 +500,11 @@
             for(var i = 0; i< App.checkout_document.entries.list.length; i++){
                 if (App.checkout_document.entries.list[i].verification_status !== '1'){
                     var difference = App.checkout_document.entries.list[i].product_quantity_verified*1 + App.checkout_document.entries.list[i].product_quantity*1;
-                    if(difference>0){difference = '+' + difference};
+                    if(difference>0){
+                        difference = '+' + difference;
+                    };
                     App.checkout_document.entries.list[i].difference = difference;
-                    console.log(App.checkout_document.entries.list[i])
+                    console.log(App.checkout_document.entries.list[i]);
                     App.checkout_document.confirm_modal.warning_entries.push(App.checkout_document.entries.list[i]);
                     
                 }
@@ -514,13 +516,13 @@
         confirm_modal:{
             warning_entries:[],
             render: function(){
+                App.renderTpl('checkout_confirm_warning', {products: App.checkout_document.confirm_modal.warning_entries});
                 $('#checkout_confirm_warning').modal('show').modal('can fit');
-                App.renderTpl('checkout_confirm_warning', {products: App.checkout_document.confirm_modal.warning_entries})
             },
             confirm:function(){
                 $.post('../Checkout/checkoutDocumentOutput', {checkout_id: App.state.checkout_id}, function (resp) {
                     location.hash = "#checkout_document_list.html";
-                })
+                });
             }
         }
     };
