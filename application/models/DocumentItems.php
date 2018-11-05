@@ -121,6 +121,7 @@ class DocumentItems extends DocumentCore{
                     party_label,
                     product_article,
                     analyse_origin,
+                    analyse_class,
                     self_price,
                     buy*IF(curr_code && '$curr_code'<>ppl.curr_code,doc_ratio*@curr_correction,1) buy,
                     doc_type

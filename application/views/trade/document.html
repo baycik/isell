@@ -526,6 +526,10 @@
 	    }
 	    return value;
 	},
+	abcCalculate: function (value, row) {
+            var color=row.analyse_class.replace("A","rgba(0,255,0,0.5)").replace("B","rgba(255,255,0,0.5)").replace("C","rgba(255,0,0,0.5)");
+	    return "background-color:"+color;
+	},
 	onRowContextMenu: function (e, row) {
 	    e.preventDefault();
 	    var selected_rows=$('#Doc_entry_dg').datagrid('getSelected');
@@ -958,7 +962,7 @@
                     <th data-options="field:'row_num',width:30">№</th>  
                     <th data-options="field:'product_code',width:75">Код</th>  
 		    <th data-options="field:'product_name',width:300">Название</th>
-		    <th data-options="field:'product_quantity',width:50,align:'right'">Кол-во</th>
+		    <th data-options="field:'product_quantity',width:50,align:'right',styler:Doc.entries.abcCalculate">Кол-во</th>
 		    <th data-options="field:'product_unit',width:40,align:'center'">Ед.</th>
 		    <th data-options="field:'product_price',width:60,align:'right',formatter:Doc.entries.calculate">Цена</th>
 		    <th data-options="field:'product_sum',width:70,align:'right'">Сумма</th>
