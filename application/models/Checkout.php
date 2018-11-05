@@ -5,24 +5,34 @@ class Checkout extends Stock {
 
 // I AM A PRINCESS
     
-    public $checkoutListFetch = ['offset' => ['int', 0], 'limit' => ['int', 5], 'sortby' => 'string', 'sortdir' => '(ASC|DESC)', 'filter' => 'json'];
-    public function checkoutListFetch( $offset, $limit, $sortby, $sortdir, $filter = null ){
+    public $checkoutListFetch = ['date' => 'string' ,'offset' => ['int', 0], 'limit' => ['int', 5], 'sortby' => 'string', 'sortdir' => '(ASC|DESC)', 'filter' => 'json'];
+    public function checkoutListFetch( $date, $offset, $limit, $sortby, $sortdir, $filter = null ){
+        $assigned_path = $this->Hub->svar('user_assigned_path');
+        $level = $this->Hub->svar('user_level');
         if (empty($sortby)) {
 	    $sortby = "cstamp";
 	    $sortdir = "DESC";
 	}
+        $null = null;
 	$having = $this->makeStockFilter($filter);
         $where = '';
-
         $sql = "        
             SELECT
                 checkout_list.*,
-                DATE_FORMAT(cstamp, '%d.%m.%Y %H:%i') cstamp_dmy, 
-                (SELECT user_sign FROM user_list WHERE user_id = created_by) AS creator_nick,
-                (SELECT user_sign FROM user_list WHERE user_id = modified_by) AS modifier_nick
+                DATE_FORMAT(checkout_list.cstamp, '%d.%m.%Y %H:%i') cstamp_dmy, 
+                (SELECT user_sign FROM user_list WHERE user_id = checkout_list.created_by) AS creator_nick,
+                (SELECT user_sign FROM user_list WHERE user_id = checkout_list.modified_by) AS modifier_nick
             FROM 
-                checkout_list
-            $where
+                checkout_list 
+                    LEFT JOIN
+                document_list ON doc_id=checkout_list.parent_doc_id 
+		    LEFT JOIN 
+		companies_list ON company_id=passive_company_id
+		    LEFT JOIN 
+		companies_tree USING(branch_id)
+            WHERE
+		checkout_list.cstamp LIKE '$date%'
+                AND IF(checkout_list.parent_doc_id,level<='$level' AND path LIKE '$assigned_path%','$level'>1)
             HAVING {$having['inner']}
             ORDER BY $sortby $sortdir
             LIMIT $limit OFFSET $offset";
@@ -31,18 +41,30 @@ class Checkout extends Stock {
     
     public $checkoutDocumentGet = ['checkout_id' => 'int'];
     public function checkoutDocumentGet ($checkout_id){
+        $assigned_path = $this->Hub->svar('user_assigned_path');
+        $level = $this->Hub->svar('user_level');
         if( !$checkout_id ){
             return null;
         }
         $sql = "        
             SELECT
                 checkout_list.*,
-                DATE_FORMAT(cstamp, '%d.%m.%Y %H:%i') cstamp_dmy, 
-                (SELECT user_sign FROM user_list WHERE user_id = created_by) AS creator_nick,
-                (SELECT user_sign FROM user_list WHERE user_id = modified_by) AS modifier_nick
+                DATE_FORMAT(checkout_list.cstamp, '%d.%m.%Y %H:%i') cstamp_dmy, 
+                (SELECT user_sign FROM user_list WHERE user_id = checkout_list.created_by) AS creator_nick,
+                (SELECT user_sign FROM user_list WHERE user_id = checkout_list.modified_by) AS modifier_nick
             FROM 
                 checkout_list
-            WHERE checkout_id='$checkout_id'";
+                    LEFT JOIN
+                document_list ON doc_id=checkout_list.parent_doc_id 
+		    LEFT JOIN 
+		companies_list ON company_id=passive_company_id
+		    LEFT JOIN 
+		companies_tree USING(branch_id)
+            WHERE 
+                checkout_id='$checkout_id'
+                AND IF(checkout_list.parent_doc_id,level<='$level' AND path LIKE '$assigned_path%','$level'>1)
+                ";
+        
         $head= $this->get_row($sql);
         if( $head -> parent_doc_id ){
             $this->checkoutDocumentRefresh($checkout_id, $head->parent_doc_id);
@@ -233,6 +255,7 @@ class Checkout extends Stock {
                         $DocumentItems->entryDeleteArray($source_doc_id, [[$entry_doc->doc_entry_id]]);
                     } else {
                         $DocumentItems->entryUpdate($source_doc_id, $entry_doc->doc_entry_id, 'product_quantity', $entry_check->product_quantity_verified );
+                        print_r($DocumentItems->entryUpdate($source_doc_id, $entry_doc->doc_entry_id, 'product_quantity', $entry_check->product_quantity_verified));
                     }
                     continue;
                 } else if ($entry_check->product_id == $doc_product_id ) {

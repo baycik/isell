@@ -13,10 +13,10 @@
                 if(char*1==char){
                     App.checkout_document.input_barcode += event.key;
                     if (App.checkout_document.input_barcode.length == 13){
-                       App.checkout_document.input_barcode = App.checkout_document.input_barcode.substr(0, 13);
-                       App.checkout_document.entries.search_barcode(App.checkout_document.input_barcode);
-                       App.checkout_document.input_barcode='';
-                    }   
+                        App.checkout_document.input_barcode = App.checkout_document.input_barcode.substr(0, 13);
+                        App.checkout_document.entries.search_barcode(App.checkout_document.input_barcode);
+                        App.checkout_document.input_barcode='';
+                    }    
                 } else {
                     App.checkout_document.input_barcode='';
                 }  
@@ -40,9 +40,12 @@
         },
         focus: function () {
             App.title("Документ для проверки");
+            App.checkout_document.entries.select_mode = 'off';
+            App.checkout_document.entries.select_mode_view_edit();
             App.checkout_document.currentType = 'Document';
             App.checkout_document.initTab();
             App.checkout_document.load(App.state.checkout_id);
+            
             //App.checkout_document.log.put_on_server();
             
         },
@@ -85,7 +88,7 @@
                   creator_nick: App.user.props.user_sign,
                   modifier_nick: App.user.props.user_sign,
                   cstamp_dmy: now
-              }
+              };
             }
             App.renderTpl("doc_head", App.checkout_document.checkout_doc_head);
         },
@@ -108,11 +111,16 @@
         },
         entries: { 
             list: [],
+            temp_barcode: '',
+            select_mode: 'off',
+            popup_mode: 'off',
             render: function () {
+                App.checkout_document.current_entry_index = '';
                 App.checkout_document.input_barcode = '';
                 $("#checkout_document_log_search_input").val('');
                 App.checkout_document.progress_update();
                 App.checkout_document.render_head();
+                App.checkout_document.entries.popup_mode='off';
                 App.renderTpl("checkout_entries", {products: App.checkout_document.entries.list});
             },
             update:function(operation_quantity){
@@ -123,8 +131,10 @@
                     App.flash("Орицательное количество!");
                     return true;
                 }
-                if (product_verified === product_quantity || product_verified > product_quantity) {
+                if (product_verified === product_quantity) {
                     currentEntry.verification_status = 1;
+                }else if (product_verified > product_quantity || product_verified < product_quantity  ) {
+                    currentEntry.verification_status = 2;
                 };
                 currentEntry.product_quantity_verified = product_verified;
                 App.checkout_document.log.write_to_log(operation_quantity, currentEntry);
@@ -139,10 +149,19 @@
                     } 
                 }
                 if (!barcode_founded){
-                    alert('There is no such barcode=( We will search for it on server!');
-                    App.checkout_document.entries.load_by_barcode(barcode);
+                    App.checkout_document.entries.render();
+                    $('#checkout_document_quantity_popup').modal('hide');
+                    if(confirm('Товара с таким штрихкодом нет в списке\n Выполнить поиск на сервере?')){ 
+                        App.checkout_document.entries.load_by_barcode(barcode);
+                        return; 
+                    }
                     return;
                 } else {
+                    if( App.checkout_document.entries.popup_mode == 'on'){
+                            App.checkout_document.entries.update(1);
+                            App.renderTpl("quan_popup_content", {products: App.checkout_document.entries.list[App.checkout_document.current_entry_index]});
+                            return;
+                    } 
                     App.checkout_document.entries.show_popup(App.checkout_document.entries.list[i]);
                 }
             },
@@ -157,14 +176,45 @@
                         var new_length = App.checkout_document.entries.list.push(new_entry);
                         App.checkout_document.current_entry_index = new_length-1;
                         App.checkout_document.entries.show_popup();
+                        App.checkout_document.entries.select_mode = 'off';
+                        App.checkout_document.entries.select_mode_view_edit();
+                        App.checkout_document.input_barcode='';
                     } else if (!new_entry){
-                        var prod_code = prompt('Штрихкод не найден.\n Введите код товара.', '');
-                        if (prod_code){
-                            App.checkout_document.entries.link_barcode(prod_code, barcode);
+                        if(confirm('Штрихкод не найден! Выберите из списка')){
+                            App.checkout_document.entries.temp_barcode = barcode;
+                            App.checkout_document.entries.select_mode = 'on';
+                            App.checkout_document.entries.select_mode_view_edit();
+                            App.checkout_document.entries.render();
+                            
                         }
                         return;
                     }
 		});
+            },
+            search_by_prod_code: function(){
+                var prod_code = prompt(' Введите код товара.', '');
+                if (prod_code){
+                    App.checkout_document.entries.link_barcode(prod_code,App.checkout_document.entries.temp_barcode);
+                }
+            },
+            select_mode_view_edit(){
+              if(App.checkout_document.entries.select_mode == 'on'){
+                  $('#doc_head').hide();
+                  $('#checkout_photo_upload').hide();
+                  $('#checkout_suggestion_mother').hide();
+                  $('#log_tab_header').hide();
+                  $('#photos_tab_header').hide();
+                  $('#checkout_select_mode_button').show();
+              } else if(App.checkout_document.entries.select_mode == 'off'){
+                  $('#doc_head').show();
+                  $('#checkout_photo_upload').show();
+                  $('#checkout_suggestion_mother').show();
+                  $('#log_tab_header').show();
+                  $('#photos_tab_header').show();    
+                  $('#checkout_select_mode_button').hide();
+              }
+              
+              return;  
             },
             link_barcode: function(product_code, barcode){
               var fvalue={
@@ -195,9 +245,15 @@
             },
             show_popup_by_click: function (node) {
                 App.checkout_document.current_entry_index = $(node).data('index');
+                if(App.checkout_document.entries.select_mode == 'on'){
+                    var product_code = App.checkout_document.entries.list[App.checkout_document.current_entry_index].product_code;
+                    App.checkout_document.entries.link_barcode(product_code, App.checkout_document.entries.temp_barcode);
+                    return;
+                }
                 this.show_popup();
             },
             show_popup: function () {
+                App.checkout_document.entries.popup_mode='on';
                 $("#popup_quantity_message").hide();
                 $('#checkout_document_quantity_popup').modal('show');
                 App.renderTpl("quan_popup_content", {products: App.checkout_document.entries.list[App.checkout_document.current_entry_index]});
@@ -370,9 +426,6 @@
 	    q: '',
 	    entries: [],
 	    init: function () {
-                
-		//App.renderTpl('checkout_doc_suggestion_entries', {entries: []});
-                console.log("accordion");
 		$("#checkout_suggestion").accordion({
 		    onOpen: function () {
 			App.checkout_document.suggestion.search("");
@@ -395,7 +448,6 @@
 		var offset = App.checkout_document.suggestion.entries.length || 0;
 		$.post('../DocumentItems/suggestFetch', {offset: offset, q: App.checkout_document.suggestion.q}, function (resp) {
 		    var suggestion = App.json(resp);
-                    console.log(suggestion);
 		    App.checkout_document.suggestion.entries = App.checkout_document.suggestion.entries.concat(suggestion);
 		    App.checkout_document.suggestion.render();
 		    if (suggestion && suggestion.length > 0) {
@@ -443,13 +495,35 @@
             App.checkout_document.log.render();
         },
         commit_checkout: function () {
-            console.log('end!');
+            App.checkout_document.confirm_modal.warning_entries = [];
             App.checkout_document.blur();
-            if(confirm('Вы уверены, что хотите завершить проверку?')){
+            for(var i = 0; i< App.checkout_document.entries.list.length; i++){
+                if (App.checkout_document.entries.list[i].verification_status !== '1'){
+                    var difference = App.checkout_document.entries.list[i].product_quantity_verified*1 + App.checkout_document.entries.list[i].product_quantity*1;
+                    if(difference>0){
+                        difference = '+' + difference;
+                    };
+                    App.checkout_document.entries.list[i].difference = difference;
+                    console.log(App.checkout_document.entries.list[i]);
+                    App.checkout_document.confirm_modal.warning_entries.push(App.checkout_document.entries.list[i]);
+                    
+                }
+            }
+            if( App.checkout_document.confirm_modal.warning_entries.length>0){
+                 App.checkout_document.confirm_modal.render();
+            }
+        },
+        confirm_modal:{
+            warning_entries:[],
+            render: function(){
+                App.renderTpl('checkout_confirm_warning', {products: App.checkout_document.confirm_modal.warning_entries});
+                $('#checkout_confirm_warning').modal('show').modal('can fit');
+            },
+            confirm:function(){
                 $.post('../Checkout/checkoutDocumentOutput', {checkout_id: App.state.checkout_id}, function (resp) {
-                    location.hash = "#document_list.html";
-                })
-            } 
+                    location.hash = "#checkout_document_list.html";
+                });
+            }
         }
     };
 </script>    
@@ -579,6 +653,8 @@
     <a id="photos_tab_header" class="item" data-tab="Photos">Фото</a>
 </div>
 
+<button class="ui blue button" id="checkout_select_mode_button" onclick="App.checkout_document.entries.search_by_prod_code()">В списке нет нужного товара</button> 
+
 <div class="ui bottom attached tab" data-tab="Document">
     
     
@@ -612,12 +688,20 @@
                                 <i class="exclamation circle red icon"></i>
                             </div>
                             {{else}}
-                            <div>
-                                <i class="check circle green icon"></i>
-                            </div>
+                                {{if verification_status|equals>2}}
+                                <div>
+                                    <i class="exclamation circle yellow icon"></i>
+                                </div>
+                                {{else}}
+                                {{if verification_status|equals>1}}
+                                <div>
+                                    <i class="check circle green icon"></i>
+                                </div>
+                                {{/if}}
+                            {{/if}}
+                        {{/if}}   
                         </div>
                     </div>
-                    {{/if}}
                 </td>
 
             </tr>
@@ -626,8 +710,8 @@
     </table>
     </div>
     
- <div class="ui inverted segment blue">
-	<div class="ui inverted fluid accordion " id="checkout_suggestion"> 
+ <div class="ui inverted segment blue" id="checkout_suggestion_mother">
+	<div class="ui inverted fluid accordion" id="checkout_suggestion"> 
 	    <div class="title"><i class="add icon"></i>Добавить товар</div>
 	    <div class="content ">
 		<div class="ui left icon right labeled input fluid" style="margin-bottom: 5px;">
@@ -671,7 +755,7 @@
 </div>
 
 
-<div  class="ui bottom attached  tab" data-tab="Log">
+<div id="checkout_log_tab" class="ui bottom attached  tab" data-tab="Log">
     <div id="checkout_document_log_search" class="ui field">
         <div class="ui field">
             <label><b>Поиск</b></label>
@@ -864,4 +948,53 @@
             <!--{{/products}}-->
         </form>
     </div>
+</div>
+
+<div class="ui special modal" id="checkout_confirm_warning">
+    <div class="container">
+    <table class="ui unstackable table">
+        <tbody>
+        <tr>
+            <td>
+                <div class="ui header">Некоторые позиции не сходятся по количеству:</div>
+
+            </td>
+
+        </tr>
+
+        <tr>
+         <!--{{products}}-->
+            <td class="left-aligned"> 
+                <div class="ui unstackable two column grid">
+                    <div class="eleven wide column"><b>{{product_code}}</b> {{ru}}</div> 
+                    <div class="five wide column">{{difference}}</div>
+                </div>
+            </td>
+        </tr>
+        <!--{{/products}}-->
+        <tr>
+            <td>
+                <div class="ui header">Вы уверены, что хотите продолжить?</div>
+               <div class="actions">
+                    <div class="ui center aligned grid">
+                        <div class="ui equal width row">
+                            <div class="column">
+                                <button type="submit" class="ui green submit icon button" onclick="App.checkout_document.confirm_modal.confirm(); return false">
+                                    Я согласен
+                                </button>
+                            </div>
+                            <div class="column">
+                                <button class="ui cancel icon button" onclick="App.checkout_document.entries.render();
+                                        return false">
+                                    Отмена
+                                </button>
+                            </div>
+                        </div>    
+                    </div>
+                </div>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+    </div>    
 </div>
