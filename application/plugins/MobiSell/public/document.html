@@ -11,7 +11,6 @@
 	    App.document.suggestion.init();
             App.Topic('hashChange').subscribe(function (state,module) {
                 if( state.doc_id!=App.document.doc.doc_id ){
-                    console.log("load on hashchange",state);
                     App.document.load(App.state.doc_id);
                 }
             }); 

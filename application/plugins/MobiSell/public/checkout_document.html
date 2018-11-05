@@ -518,56 +518,56 @@
     </div>
 </div>
 
-<div id="doc_head" class="ui segment blue covert">
-    <div>
-        <span>{{cstamp_dmy}}</span>
-        <span>{{checkout_name}}</span>
+<div id="doc_head" class="ui message covert">
+    <div id="chdocument_header" class="ui attached segment ">
+	<div class="header">
+	    <i class="clipboard list icon"></i> Список проверки
+	</div>
+	"{{checkout_name}}" <b>от</b> {{cstamp_dmy}}
+	<div class="ui equal width grid" style="margin-top: 5px;">
+	    <div class="column">
+		<i class="plus circle icon"></i>
+		<i>{{creator_nick}}</i>
+	    </div>
+	    <div class="column">
+		<i class="pencil alternate icon"></i>
+		<i>{{modifier_nick}}</i>
+	    </div>
+	</div>
     </div>
-    <div>
-        <div class="ui equal width grid">
-            <div class="column">
-                <i class="plus circle icon"></i>
-                <i>{{creator_nick}}</i>
-            </div>
-            <div class="column">
-                <i class="pencil alternate icon"></i>
-                <i>{{modifier_nick}}</i>
-            </div>
-        </div>
-        <div>
-            {{if checkout_status|equals>not_checked}}
-                <i class="close red large icon"></i>
-                    Не выполнено
-                {{else}}
-                    {{if checkout_status|equals>checked}}
-                    <i class="check green large icon"></i>
-                        Выполнено
-                    {{else}}
-                        {{if checkout_status|equals>checked_with_divergence}}
-                        <div>
-                            <i class="large icons">
-                                <i class="check green icon"></i>
-                                <i class="top right corner minus red icon"></i>
-                                <i class="bottom right corner plus green icon"></i>
-                            </i>
-                                Выполнено (с расхождениями)
-                        </div>
-                        {{else}}
-                            {{if checkout_status|equals>is_checking}}
-                                <i class="spinner blue loading large icon"></i>
-                                    Выполняется
-                            {{/if}}
-                        {{/if}}
-                    {{/if}}
-                {{/if}}
-        </div>
-        {{if checkout_status|equals>is_checking}}
-        <button class="ui fluid  primary button compact" onclick="App.checkout_document.commit_checkout(); return false">Завершить проверку</button>
-        {{/if}}
+    <div class="ui  segment">
+	<b>Статус:</b> {{if checkout_status|equals>not_checked}}
+	<i class="close red large icon"></i>
+	    Не выполнено
+	{{else}}
+	    {{if checkout_status|equals>checked}}
+	    <i class="check green large icon"></i>
+		Выполнено
+	    {{else}}
+		{{if checkout_status|equals>checked_with_divergence}}
+		<div>
+		    <i class="large icons">
+			<i class="check green icon"></i>
+			<i class="top right corner minus red icon"></i>
+			<i class="bottom right corner plus green icon"></i>
+		    </i>
+			Выполнено (с расхождениями)
+		</div>
+		{{else}}
+		    {{if checkout_status|equals>is_checking}}
+			<i class="spinner blue loading large icon"></i>
+			    Выполняется
+		    {{/if}}
+		{{/if}}
+	    {{/if}}
+	{{/if}}
     </div>
+    {{if checkout_status|equals>is_checking}}
+    <button class="ui fluid  primary button compact" onclick="App.checkout_document.commit_checkout(); return false"><i class="check icon"></i> Завершить проверку</button>
+    {{/if}}
 </div>
 
-<button class="ui blue icon button fluid" onclick="App.checkout_document.photos.checkout_upload()">
+<button class="ui icon button fluid" onclick="App.checkout_document.photos.checkout_upload()">
     <i class="ui photo icon"></i> 
     Прикрепить фото
 </button>
@@ -741,9 +741,9 @@
         <div class="ui stackable cards">
         <!--{{checkout_photos}}--> 
             <div class="ui card">
-                <div class="image">
-                    <a href="../Storage/image_flush/?size=700x700&path=/checkout/{{filename}}">
-                    <img src="../Storage/image_flush/?size=110x110&path=/checkout/{{filename}}" style="max-height: 110px;max-width: 110px" >
+                <div class="image" style="min-height:200px;text-align: center">
+                    <a href="../Storage/image_flush/?size=1000x1000&path=/checkout/{{filename}}" target="_blank">
+                    <img src="../Storage/image_flush/?size=200x200&path=/checkout/{{filename}}" >
                     </a>
                 </div>
               <div class="content">

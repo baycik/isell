@@ -306,7 +306,6 @@ class Document extends Data {
 	    $amount = $quantity;
 	}
 	if ($action == 'update') {
-            print_r($quantity);
 	    $quantity = abs($quantity) * ($this->doc('is_reclamation') ? -1 : 1);
 	    if ($this->isCommited() && ($this->doc('doc_type') == 1 || $this->doc('doc_type') == 2)) {
 //                if ($entry['self_price'] != $self) {//remove product by old self price and then return by new 
