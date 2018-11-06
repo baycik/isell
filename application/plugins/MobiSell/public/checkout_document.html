@@ -598,6 +598,14 @@
 	    <i class="clipboard list icon"></i> Список проверки
 	</div>
 	"{{checkout_name}}" <b>от</b> {{cstamp_dmy}}
+        {{if parent_document_id|truly}}
+            <a href="#document.html#doc_id={{parent_doc_id}}">
+                <i class="file alternate outline large icon"></i>
+            </a>
+        {{/if}}
+        
+        
+        
 	<div class="ui equal width grid" style="margin-top: 5px;">
 	    <div class="column">
 		<i class="plus circle icon"></i>

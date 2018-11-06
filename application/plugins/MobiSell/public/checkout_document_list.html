@@ -71,7 +71,6 @@
     <table class="ui celled unstackable selectable green table">
         <thead> 
             <tr>
-                <th style="width:10px"></th>
                 <th>
                     <div class="ui two column grid">       
                         <div class="nine column">Название</div>
@@ -84,11 +83,6 @@
         <tbody>
             <!--{{doc_list}}-->
             <tr class="doc_row" data-checkout_id="{{checkout_id}}" onclick="App.checkout_document_list.open_document(this)">
-                <td style="width:10px">
-                    <a href="#document.html#doc_id={{parent_doc_id}}">
-                        <i class="file alternate outline large icon"></i>
-                    </a>
-                </td>
                 <td class="doc_name">
                     <div class="ui two column fluid unstackable grid">
                         <div class="nine wide column"><b>{{checkout_name}}</b></div>
