@@ -140,26 +140,31 @@
             },
             search_barcode:function (barcode){
                 var barcode_founded = false;
+                var barcode_founded_index=null;
                 for(var i = 0; i < App.checkout_document.entries.list.length; i++){
                     if (barcode == App.checkout_document.entries.list[i].product_barcode){
                         barcode_founded = true;
-                        App.checkout_document.current_entry_index = i;
+                        barcode_founded_index=i;
                         break;
                     } 
                 }
-                if (!barcode_founded){
+                if ( barcode_founded ){
+                    if( $('#checkout_document_quantity_popup').css('display')=='none' ){
+                        App.checkout_document.current_entry_index = barcode_founded_index;
+                    }
+                    if( App.checkout_document.entries.popup_mode == 'on'){
+                        App.checkout_document.entries.update(1);
+                        App.checkout_document.current_entry_index = barcode_founded_index;
+                        App.renderTpl("quan_popup_content", {products: App.checkout_document.entries.list[App.checkout_document.current_entry_index]});
+                        return;
+                    }
+                    App.checkout_document.entries.show_popup(App.checkout_document.entries.list[barcode_founded_index]);
+                } else {
                     App.checkout_document.entries.render();
                     $('#checkout_document_quantity_popup').modal('hide');
                     App.confirm('Товара с таким штрихкодом нет в списке\n Выполнить поиск на сервере?').done(function(){
                         App.checkout_document.entries.load_by_barcode(barcode);
                     });
-                } else {
-                    if( App.checkout_document.entries.popup_mode == 'on'){
-                            App.checkout_document.entries.update(1);
-                            App.renderTpl("quan_popup_content", {products: App.checkout_document.entries.list[App.checkout_document.current_entry_index]});
-                            return;
-                    } 
-                    App.checkout_document.entries.show_popup(App.checkout_document.entries.list[i]);
                 }
             },
             load_by_barcode: function (barcode) {
@@ -328,6 +333,7 @@
                         };
                 App.checkout_document.log.list.push(product_to_write);
                 App.store('log_list', App.checkout_document.log.list);
+                App.checkout_document.log.put_on_server();
             },
             rewrite_to_log: function (node) {
                 var product_quantity = $(node).data('operation_quantity') * -1;
@@ -928,9 +934,9 @@
                 <input type='hidden' name='ru' value='{{ru}}'>
                 <input type='hidden' name='product_code' value='{{product_code}}'>
                 <input type='hidden' name='product_quantity' value='{{product_quantity}}'>
-                <input type="number" name="operation_quantity" placeholder="Количество"
+                <input type="number" name="operation_quantity" placeholder="Количество" autofocus="autofocus"
                        onfocus="this.select()"
-                       value="{{product_spack|blank>1}}">
+                       value="1">
             </div>
            
             <div class="actions">
