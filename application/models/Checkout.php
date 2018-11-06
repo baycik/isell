@@ -2,9 +2,6 @@
 require_once 'Catalog.php';
 
 class Checkout extends Stock {
-
-// I AM A PRINCESS
-    
     public $checkoutListFetch = ['date' => 'string' ,'offset' => ['int', 0], 'limit' => ['int', 5], 'sortby' => 'string', 'sortdir' => '(ASC|DESC)', 'filter' => 'json'];
     public function checkoutListFetch( $date, $offset, $limit, $sortby, $sortdir, $filter = null ){
         $assigned_path = $this->Hub->svar('user_assigned_path');
@@ -75,6 +72,7 @@ class Checkout extends Stock {
             'log'=>$this->checkoutLogFetch($checkout_id)    
             ];
     }
+    
     private function checkoutDocumentRefresh ($checkout_id,$parent_doc_id){
         $sql_reset="
             UPDATE 
@@ -90,12 +88,13 @@ class Checkout extends Stock {
             SELECT
                 product_id, product_quantity, $checkout_id, 0, 0
             FROM
-                document_entries
+                document_entries de
                     JOIN
-                prod_list USING(product_code)
+                prod_list pl USING(product_code)
             WHERE 
                 doc_id = '$parent_doc_id'
-            ON DUPLICATE KEY UPDATE checkout_entries.product_quantity=document_entries.product_quantity    
+            ON DUPLICATE KEY UPDATE checkout_entries.product_quantity=de.product_quantity,
+            verification_status=IF(de.product_quantity=product_quantity_verified,1,2)
             ";
         $this->query($sql_reset);
         $this->query($sql_update);
@@ -185,6 +184,7 @@ class Checkout extends Stock {
         $this->query($sql);
         return true;
     }
+    
     public $checkoutLogFetch = ['checkout_id' => 'int'];
     public function checkoutLogFetch ($checkout_id) {
         $sql = " 
@@ -204,7 +204,6 @@ class Checkout extends Stock {
     public function checkoutStockCreate ($parent_id, $checkout_name){
         $stock_entries_list = $this->listFetch($parent_id, 0, 10000, 'product_code', 'ASC', null, 'advanced');
         $user_id = $this->Hub->svar('user_id');
-       // $cstamp = date('Y-m-d H:i:s');
         $checkout_id=$this->create('checkout_list', ['checkout_name'=>$checkout_name, 'parent_doc_id'=>null, 'created_by'=>$user_id, 'modified_by'=>$user_id]);
         foreach ($stock_entries_list as $entry){
             $this->create('checkout_entries', ['checkout_id'=>$checkout_id, 
@@ -215,6 +214,7 @@ class Checkout extends Stock {
         }
         return $checkout_id;
     }
+    
     public $checkoutDocumentCreate = ['parent_doc_id' => 'int', 'checkout_name'=>'string'];
     public function checkoutDocumentCreate ($parent_doc_id, $checkout_name){
         $DocumentItems = $this->Hub->load_model("DocumentItems");
@@ -231,6 +231,7 @@ class Checkout extends Stock {
         }
         return $checkout_id;
     }
+    
     public $checkoutDocumentOutput = ['checkout_id'=>'int'];
     public function checkoutDocumentOutput ($checkout_id){
         $parent_doc_id = $this->get_value("SELECT parent_doc_id FROM checkout_list WHERE checkout_id=$checkout_id");
@@ -248,6 +249,7 @@ class Checkout extends Stock {
         $source_doc_id = $checkout_document['head']->parent_doc_id;
         $document = $DocumentItems->entryDocumentGet($source_doc_id);
         foreach ($checkout_document['entries'] as $entry_check){
+            $entry_exists_in_document=false;
             foreach ($document['entries'] as $entry_doc ){
                 $doc_product_id = $this->get_value("SELECT product_id FROM prod_list WHERE product_code = '$entry_doc->product_code'");
                 if( $entry_check->product_id == $doc_product_id ){
@@ -255,23 +257,21 @@ class Checkout extends Stock {
                         $DocumentItems->entryDeleteArray($source_doc_id, [[$entry_doc->doc_entry_id]]);
                     } else {
                         $DocumentItems->entryUpdate($source_doc_id, $entry_doc->doc_entry_id, 'product_quantity', $entry_check->product_quantity_verified );
-                        print_r($DocumentItems->entryUpdate($source_doc_id, $entry_doc->doc_entry_id, 'product_quantity', $entry_check->product_quantity_verified));
                     }
-                    continue;
-                } else if ($entry_check->product_id == $doc_product_id ) {
-                    $check_product_code = $this->get_value("SELECT product_code FROM prod_list WHERE product_id = '$entry_check->product_id'");
-                    print_r($check_product_code);
-                    $DocumentItems->entryAdd($check_product_code, $entry_check->product_quantity_verified );
-                    continue;
+                    $entry_exists_in_document=true;
                 }
-                
+            }
+            if( !$entry_exists_in_document ){
+                $check_product_code = $this->get_value("SELECT product_code FROM prod_list WHERE product_id = '$entry_check->product_id'");
+                $DocumentItems->entryAdd($check_product_code, $entry_check->product_quantity_verified );
             }
         }
-        return; 
-        
+        return;
     }
     
     private function checkoutCalcDifference($checkout_id){
+        $current_checkout=$this->checkoutDocumentGet ($checkout_id);
+        $document_comment='Корректировка '.$current_checkout['head']->checkout_name.' от '.$current_checkout['head']->cstamp_dmy;
         $sql_more = "
             SELECT
                 product_code,
@@ -286,13 +286,15 @@ class Checkout extends Stock {
             ";
         $entries_list_more = $this->get_list($sql_more);
         $DocumentItems=$this->Hub->load_model('DocumentItems');
+        $more_doc_id=0;
         if (count($entries_list_more)>0){
             $this->checkoutUpdateDocStatus($checkout_id, 'checked_with_divergence');
             $more_doc_id = $DocumentItems->createDocument(2);
             foreach($entries_list_more as $item){
                 $DocumentItems->entryAdd($item->product_code, $item->difference);
             }
-            $DocumentItems->entryDocumentCommit($more_doc_id);
+            $DocumentItems->headUpdate('doc_data',$document_comment);
+            //$DocumentItems->entryDocumentCommit($more_doc_id);
         }
         $sql_less = "
             SELECT
@@ -308,16 +310,19 @@ class Checkout extends Stock {
             ";
         $entries_list_less = $this->get_list($sql_less);
         $DocumentItems=$this->Hub->load_model('DocumentItems');
+        $less_doc_id=0;
         if (count($entries_list_less)>0){
             $this->checkoutUpdateDocStatus($checkout_id, 'checked_with_divergence');
             $less_doc_id = $DocumentItems->createDocument(1);
             foreach($entries_list_less as $item){
                 $DocumentItems->entryAdd($item->product_code, $item->difference);
             }
-            $DocumentItems->entryDocumentCommit($less_doc_id);
+            $DocumentItems->headUpdate('doc_data',$document_comment);
+            //$DocumentItems->entryDocumentCommit($less_doc_id);
         }
         return [$more_doc_id, $less_doc_id];
     }
+    
     public $checkoutUp=['checkout_id'=>'int', 'file_name'=>'string'];
     public function checkoutUp( $checkout_id, $file_name){
         $Storage = $this->Hub->load_model('Storage');
