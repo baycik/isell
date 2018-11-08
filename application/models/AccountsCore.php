@@ -361,7 +361,7 @@ class AccountsCore extends Catalog{
         }
     }
     //private $payment_account=361;
-    private function transCheckCalculate($trans){
+    private function transCalculate($trans){
         if( isset($trans['acc_debit_code']) ){
             $this->transPaymentCalculateIfNeeded( $trans['passive_company_id'], $trans['acc_debit_code'] );
             $this->transPaymentCalculateIfNeeded( $trans['passive_company_id'], $trans['acc_credit_code'] );
@@ -405,12 +405,12 @@ class AccountsCore extends Catalog{
 	'trans_article'=>'string'
     ];
     public function transCreateUpdate($trans_id,$check_id,$passive_company_id,$trans_type,$trans_date,$trans_ref,$amount,$amount_alt,$description,$trans_article=''){
-	$user_id=$this->Hub->svar('user_id');
-	$acc_codes=  explode('_',$trans_type);
 	if( !$this->transCheckLevel($trans_type) ){
 	    $this->Hub->msg('access denied');
 	    return false;
 	}
+	$user_id=$this->Hub->svar('user_id');
+	$acc_codes=  explode('_',$trans_type);
 	$trans=[
 	    'trans_ref'=>$trans_ref,
 	    'check_id'=>$check_id,
@@ -441,8 +441,14 @@ class AccountsCore extends Catalog{
 	}
 	$this->checkTransLink($trans_id,$trans);
 	$this->transCrossLink($trans_id,$trans);
-	$this->transCheckCalculate($trans);
+	$this->transCalculate($trans);
 	return $trans_id;
+    }
+    
+    private function transUpdate( $trans_id, $trans_data ){
+	$this->Hub->set_level(2);
+	$this->update('acc_trans', $trans_data, ['trans_id'=>$trans_id]);
+	$ok= $this->db->affected_rows()>0?true:false;
     }
     
     public $transDelete=['int'];
@@ -473,7 +479,10 @@ class AccountsCore extends Catalog{
     public function documentTransUpdate($doc_id,$foot){
 	$document_transactions=$this->get_list("SELECT * FROM document_trans WHERE doc_id='$doc_id'");
 	foreach($document_transactions as $trans){
-	    
+	    $transaction_amount=0;
+	    if( isset($foot[$trans->role]) ){
+		$transaction_amount=$foot[$trans->role];
+	    }
 	}
     }
     
