@@ -465,10 +465,10 @@ class AccountsCore extends Catalog{
     // DOCUMENT TRANS SECTION
     //////////////////////////////////////////
     public function documentTransDisable($doc_id){
-        return $this->update('acc_trans JOIN acc_doc_trans USING(trans_id)',['is_disabled'=>1], ['doc_id'=>$doc_id]);
+        return $this->update('acc_trans JOIN document_trans USING(trans_id)',['is_disabled'=>1], ['doc_id'=>$doc_id]);
     }
     public function documentTransClear($doc_id){
-        return $this->delete('acc_trans JOIN acc_doc_trans USING(trans_id)', ['doc_id'=>$doc_id]);
+        return $this->delete('acc_trans JOIN document_trans USING(trans_id)', ['doc_id'=>$doc_id]);
     }
     public function documentTransUpdate($doc_id,$foot){
 	$document_transactions=$this->get_list("SELECT * FROM document_trans WHERE doc_id='$doc_id'");
