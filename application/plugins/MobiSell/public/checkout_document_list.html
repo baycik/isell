@@ -18,18 +18,19 @@
         },
         focus: function () {
             App.title("Список проверок");
+            App.checkout_document_list.doc_list=[];
             App.checkout_document_list.load();
         },
         load: function (offset) {
             if (offset === undefined) {
 		offset = App.checkout_document_list.doc_list.length || 0;
 	    }
+            var name=$("#checkout_list_namefilter").val();
             var date=$("#checkout_list_datefilter").val();
-            var filter=JSON.stringify({cstamp:date});
+            var filter=JSON.stringify({cstamp:date,checkout_name:name});
             App.flash('Список проверок: загрузка...');
             $.post('../Checkout/checkoutListFetch', {offset:offset, limit: 5,filter:filter}, function (resp) {
                 var response = App.json(resp);
-                console.log(response);
                 if (response.length<5){
                     $("#checkout_button_load_more").hide();
                 }
@@ -53,6 +54,15 @@
 
 <form class="ui form">
     <div class="field">
+	<label>Название</label>
+	<div class="field">
+	    <div class="ui left icon right labeled input">
+		<i class="file icon"></i>
+		<input name="name_filter" placeholder="Название" type="text" id="checkout_list_namefilter" onchange="App.checkout_document_list.doc_list=[];App.checkout_document_list.load(0);">
+	    </div>
+	</div>
+    </div>
+    <div class="field">
 	<label>Дата</label>
 	<div class="field">
 	    <div class="ui left icon right labeled input">
@@ -64,14 +74,9 @@
 </form>
 
 <div id="doc_list" class="covert">
-    <a href="#checkout_document.html#checkout_id=0">
-        <i class="plus icon"></i> 
-        Добавить проверку
-    </a>
     <table class="ui celled unstackable selectable green table">
         <thead> 
             <tr>
-                <th style="width:10px"></th>
                 <th>
                     <div class="ui two column grid">       
                         <div class="nine column">Название</div>
@@ -84,11 +89,6 @@
         <tbody>
             <!--{{doc_list}}-->
             <tr class="doc_row" data-checkout_id="{{checkout_id}}" onclick="App.checkout_document_list.open_document(this)">
-                <td style="width:10px">
-                    <a href="#document.html#doc_id={{parent_doc_id}}">
-                        <i class="file alternate outline large icon"></i>
-                    </a>
-                </td>
                 <td class="doc_name">
                     <div class="ui two column fluid unstackable grid">
                         <div class="nine wide column"><b>{{checkout_name}}</b></div>

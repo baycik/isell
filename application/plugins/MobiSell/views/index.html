@@ -140,6 +140,41 @@
 		    $("#status").hide();
 		}, 1500);
 	    },
+            alert: function(msg){
+                $("#index_alert_popup .content").html(msg);
+                $("#index_alert_popup").modal("show");
+                $("#index_confirm_popup .approve").focus();
+                //$("#index_alert_popup button").c
+            },
+            confirm:function(msg){
+                var def=$.Deferred();
+                $("#index_confirm_popup .content").html(msg);
+                $("#index_confirm_popup").modal({
+                    onApprove:function(){
+                        def.resolve();
+                    },
+                    onDeny:function(){
+                        def.reject();
+                    }
+                }).modal("show");
+                $("#index_confirm_popup .approve").focus();
+                return def.promise();
+            },
+            prompt:function(msg,value){
+                var def=$.Deferred();
+                $("#index_prompt_popup .header").html(msg);
+                $("#index_prompt_popup input").val(value||'');
+                $("#index_prompt_popup").modal({
+                    onApprove:function(){
+                        def.resolve( $("#index_prompt_popup input").val() );
+                    },
+                    onDeny:function(){
+                        def.reject(null);
+                    }
+                }).modal("show");
+                $("#index_prompt_popup .approve").focus();
+                return def.promise();
+            },
 	    title:function(msg){
 		$("#title").html(msg);
 	    },
@@ -199,7 +234,7 @@
 		    if( App.pcomp && App.pcomp.company_id===company_id ){
 			return;
 		    }
-		    $.post('../Company/selectPassiveCompany/' + company_id, function (xhr) {
+		    return $.post('../Company/selectPassiveCompany/' + company_id, function (xhr) {
 			App.user.setPassiveCompany(App.json(xhr));
 		    });
 		},
@@ -208,7 +243,7 @@
 		    if( App.acomp && App.acomp.company_id===company_id ){
 			return;
 		    }
-		    $.post('../Company/selectActiveCompany/' + company_id, function (xhr) {
+		    return $.post('../Company/selectActiveCompany/' + company_id, function (xhr) {
 			App.user.setActiveCompany(App.json(xhr));
 		    });
 		}
@@ -378,7 +413,30 @@
 	</div>
     </div>
     
-    
-    
+    <div class="ui modal" id="index_alert_popup">
+	<div class="header">Внимание</div>
+	<div class="content"> --- </div>
+	<div class="actions">
+	    <button class="ui secondary approve button"><i class="icon check"></i> Ок</button>
+	</div>
+    </div>
+    <div class="ui modal" id="index_confirm_popup">
+	<div class="header">Вопрос</div>
+	<div class="content"> --- </div>
+	<div class="actions">
+	    <button class="ui positive approve button"><i class="icon check"></i> Ок</button>
+            <button class="ui negative deny button"><i class="icon close"></i> Отменить</button>
+	</div>
+    </div>
+    <div class="ui modal" id="index_prompt_popup">
+	<div class="header">Вопрос</div>
+        <div class="content ui input">
+            <input type="text">
+        </div>
+	<div class="actions">
+	    <button class="ui positive approve button"><i class="icon check"></i> Ок</button>
+            <button class="ui negative deny button"><i class="icon close"></i> Отменить</button>
+	</div>
+    </div>
 </body>
 </html>
