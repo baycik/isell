@@ -1,0 +1,45 @@
+
+<script>
+   App.company_cart = {
+       list:[],
+       init:function(){
+           App.company_cart.load();
+       },
+       focus:function(){
+           App.company_cart.load();
+       },
+       load:function(){
+           $.post('../Company/companyGet/'+App.state.company_id, function(resp){
+               var response = App.json(resp);
+               console.log(response);
+               App.company_cart.list = response;
+               App.company_cart.render();
+           })
+       },
+       render:function(){
+           App.renderTpl('cart_content', {info: App.company_cart.list});
+       }
+       
+   }
+</script>
+<div id="cart_content" class="ui segment covert">
+        <!--{{info}}-->
+        <div style="margin-bottom: 15px; text-align: center; text-transform: uppercase; border-bottom: 2px solid gray"><h3>{{label}}</h3></div>
+        <div><b>Полное название:</b></div>
+        <div>{{company_name}}</div>
+        <div><b>Юридический Адрес:</b></div>
+        <div>{{company_jaddress}}</div>
+        <div><b>Фактический Адрес:</b></div>
+        <div>{{company_address}}</div>
+        <div><b>Контактное лицо:</b></div>
+        <div>{{company_person}}</div>
+        <div><b>Мобильный:</b></div>
+        <div><a href="tel:{{company_mobile}}">{{company_mobile}}</a></div>
+        <div><b>E-mail:</b></div>
+        <div><a href="mailto:{{company_email}}">{{company_email}}</a></div>
+        <div><b>Сайт:</b></div>
+        <div><a href="{{company_web}}">{{company_web}}</a></div>
+        <div><b>Дополнительно:</b></div>
+        <div>{{company_description}}</div> 
+         <!--{{/info}}-->
+</div>
