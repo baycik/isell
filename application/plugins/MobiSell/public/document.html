@@ -113,9 +113,11 @@
 	initTab: function () {
 	    $('.menu .item').tab({
 		onVisible: function (type) {
-		    if (type === 'discounts') {
+		    if (type === 'prefs') {
 			App.document.prefs.init();
-		    }
+		    } else if (type === 'blanks'){
+                        App.document.blanks.init();
+                    }
 		}
 	    });
 	    $('.menu .item').tab('change tab', 'entries');
@@ -240,6 +242,37 @@
 		}
 	    }
 	},
+        blanks:{
+            init: function (){
+                App.document.blanks.load();
+            },
+            load: function (){
+                if( App.document.doc.head ){
+                    $.post('../DocumentView/viewListFetch/'+App.document.doc.head.doc_id, function (xhr) {
+                        App.document.doc.views = App.json(xhr);
+                        App.renderTpl('document_blanks',{blanks:App.document.doc.views});
+                        console.log(App.document.doc.views);
+                        /*Doc.view.views = Doc.view.compile(App.json(xhr));
+                        App.renderTpl('Doc_view_tile',{views:Doc.view.views});*/
+                    });
+                }
+            },
+            create:function(view_type_id){
+                $.post("../DocumentView/viewCreate/"+view_type_id,function(doc_view_id){
+                        if( doc_view_id*1 ){
+                         App.document.blanks.open(doc_view_id);
+                        } else {
+                            App.flash ('Невозможно создать');
+                        }
+                });
+            },
+            open: function (doc_view_id){
+                window.open("../DocumentView/documentViewGet/?out_type=.print&doc_view_id="+doc_view_id*1, '_new');
+            },
+            render: function (){
+                
+            }
+        },
 	prefs: {
 	    init: function () {
 		App.document.prefs.load();
@@ -545,9 +578,10 @@
 	</form>
     </div>
     <div class="ui top attached tabular menu">
-	<a class=" item" data-tab="entries">Накладная</a>
-	<a class="active item" data-tab="discounts">Скидки</a>
+	<a class="active item" data-tab="entries">Накладная</a>
+        <a class="item" data-tab="blanks">Печать</a>
 	<a class="item" data-tab="prefs">Настройки</a>
+       
     </div>
     <div class="ui bottom attached  tab segment covert" data-tab="entries" id="document_entries">
 	<table class="ui selectable  table  stackable blue">
@@ -602,6 +636,26 @@
 	    </tfoot>
 	</table>
     </div>
+        
+    <div class="ui bottom attached tab segment" data-tab="blanks" id="">
+        <div id="document_blanks" class="ui unstackable two column grid">
+            <!--{{blanks}}-->
+            <div class="eight wide column" >
+                {{if doc_view_id|more>0}}
+                <div class="ui green button fluid" onclick="App.document.blanks.open({{doc_view_id}})" >
+                    <div>{{view_name}} №{{view_num}}</div>
+                    <div>{{view_date}}</div>
+                </div>
+                {{else}}
+                <button class="ui button fluid" onclick="App.document.blanks.create({{view_type_id}})" >
+                    {{view_name}}
+                </button>
+                {{/if}}
+            </div>
+            <!--{{/blanks}}-->
+        </div>
+    </div>
+    
     <div class="ui bottom attached tab segment" data-tab="prefs" id="">
 	<div class="ui form fluid segment" id="document_header_controls">
 	    <div class="fields">
@@ -641,9 +695,8 @@
         {{/if}}  
 	<button id="document_delete_button" class="ui negative button" onclick="App.document.head.remove()">Удалить документ</button>
         </div>
-    </div>
-    <div class="ui tab segment" data-tab="discounts" id="document_discounts">
-	<table class="ui table unstackable">
+        <div><h4>Скидки</h4></div>
+        <table class="ui table unstackable" id="document_discounts">
 	    <thead>
 		<tr>
 		    <th>Категория</th>
@@ -670,6 +723,8 @@
 	    </tbody>
 	</table>    
     </div>
+
+
     <div class="ui inverted segment blue">
 	<div class="ui inverted fluid accordion " id="doc_suggestion"> 
 	    <div class="title"><i class="add icon"></i>Добавить товар</div>
@@ -796,12 +851,12 @@
     </div>
 </div>
 
-<div class="ui modal" id="document_product_image" style="height: calc( 50 + {{size_x}}px);width: calc( 50 + {{size_y}}px);">
+<div class="ui modal" id="document_product_image">
     <div class="header">{{product_code}}</div>
-    <div class="image content">
+    <div class="image content" style="height: 400px">
 	<img class="image" src="../Storage/image_flush/?size={{size_x}}x{{size_y}}&path=/dynImg/{{product_img}}" onload='$("#document_product_image").modal("show");' style="margin-left: auto;margin-right: auto" />
     </div>
-    <div class="description">
+    <div class="description" style="margin-bottom: 15px">
 	{{product_name}}
     </div>
     <div class="actions">
