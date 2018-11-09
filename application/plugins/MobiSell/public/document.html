@@ -198,6 +198,7 @@
 		$('.is_event_created').checkbox("set " + (head.is_event_created > 0 ? "checked" : "unchecked"));
 		App.document.picker.set('select', new Date(App.toIso(head.doc_date)));
 		App.document.head.suppressUpdate = false;
+                App.renderTpl('document_checkout_button', {checkout_status: App.document.doc.head.checkout_status});
 		App.document.head.switchView(head);
 	    },
 	    switchView: function (head) {
@@ -253,6 +254,7 @@
 		$.get('./documentDiscountsGet', {passive_company_id: App.document.doc.head.passive_company_id}, function (resp) {
 		    var prefs = App.json(resp);
 		    if (prefs && prefs.discounts) {
+                        
 			App.document.prefs.discountSet(prefs);
 			App.flash('Скидки: ОК');
 		    }
@@ -472,6 +474,13 @@
 		$("#document_product_image").modal('show');
 	    }
 	},
+        go_to_checkout: function(){
+            if(App.document.doc.head){
+                location.hash = '#checkout_document.html#checkout_id=' + App.document.doc.head.checkout_id;
+            } else {
+                this.create_checkout();  
+            }
+        },
         create_checkout: function () {
                 if(confirm("Создать список проверки?")){
                     var params = {
@@ -624,8 +633,14 @@
 		</div>
 	    </div>
 	</div>
-        <button id="document_create_checkout_button" class="ui button" onclick="App.document.create_checkout()">Проверить</button>
+        <div id="document_checkout_button" class="ui equal width centered grid" style="margin-top:10px; margin-bottom:10px">
+        {{if checkout_status|equals>not_checked}}      
+                <button id="document_create_checkout_button" class="ui button" onclick="App.document.create_checkout()">Проверить</button>
+        {{else}} 
+            <button class="ui button" onclick="App.document.go_to_checkout()">Открыть проверку</button>
+        {{/if}}  
 	<button id="document_delete_button" class="ui negative button" onclick="App.document.head.remove()">Удалить документ</button>
+        </div>
     </div>
     <div class="ui tab segment" data-tab="discounts" id="document_discounts">
 	<table class="ui table unstackable">
