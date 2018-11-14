@@ -5,6 +5,7 @@
         checkout_id: "",
         input_barcode: '',
         checkout_doc_head: [],
+	
         init: function () {
             //App.checkout_document.check_storage();
             App.checkout_document.focus();
@@ -24,6 +25,7 @@
             setTimeout(function(){
                 App.checkout_document.suggestion.init();
             },500);
+	    this.device_has_numeric_keypad=0;
         },
         load: function (checkout_id){
             App.checkout_document.log.put_on_server().done(function(){
@@ -257,9 +259,24 @@
             },
             show_popup: function () {
                 App.checkout_document.entries.popup_mode='on';
-                $("#popup_quantity_message").hide();
-                $('#checkout_document_quantity_popup').modal('show');
                 App.renderTpl("quan_popup_content", {products: App.checkout_document.entries.list[App.checkout_document.current_entry_index]});
+		if(App.checkout_document.device_has_numeric_keypad){
+		    $("#checkout_document_popup_quan_form input[type=number]").on('keypress',function(e){
+			var str=$(this).val();
+			if( $.isNumeric(e.key) ){
+			    $(this).val(str+''+e.key);
+			} else if(e.key=='Backspace'){
+			    $(this).val(  str.substring(0, str.length - 1) );
+			} else if(e.key=='-'){
+			    $(this).val(-1*str);
+			}
+			console.log(e.key);
+		    }).attr('readonly',1);
+		}
+                $("#popup_quantity_message").hide();
+                $('#checkout_document_quantity_popup').modal({
+		    duration:100
+		}).modal('show');
             },
             check_package_type: function (type) {
                 var currentEntry=App.checkout_document.entries.list[App.checkout_document.current_entry_index];
@@ -528,8 +545,11 @@
                 $('#checkout_confirm_warning').modal('hide');
                 if(App.checkout_document.checkout_doc_head.parent_doc_id>0){
                     $.post('../Checkout/checkoutDocumentOutput', {checkout_id: App.state.checkout_id}, function (resp) {
-                        App.alert("Накладная исправлена!");
-                        App.holder.load("checkout_document_list.html");
+			var result=App.json(resp);
+			if( result ){
+			    App.checkout_document.show_result(result);
+			    App.holder.load("checkout_document_list.html");
+			}
                     });
                 } else {
                     App.user.pcompSelect({company_id:App.user.acomp.company_id}).done(function(){
@@ -539,7 +559,26 @@
                         });
                     });
                 }
-            }
+            },
+	    show_result:function(result){
+		var msg='';
+		if( result.less ){
+		    msg+=`Недостача: ${result.less} позиций<br>`;
+		}
+		if( result.more ){
+		    msg+=`Избыток: ${result.more} позиций<br>`;
+		}
+		if( result.added ){
+		    msg+=`Добавлено строк: ${result.added}<br>`;
+		}
+		if( result.deleted ){
+		    msg+=`Удалено строк: ${result.added}<br>`;
+		}
+		if( result.updated ){
+		    msg+=`Изменено строк: ${result.added}<br>`;
+		}
+		App.alert("Результат проверки:<br>"+msg);
+	    }
         }
     };
 </script>    
@@ -934,8 +973,9 @@
                 <input type='hidden' name='ru' value='{{ru}}'>
                 <input type='hidden' name='product_code' value='{{product_code}}'>
                 <input type='hidden' name='product_quantity' value='{{product_quantity}}'>
-                <input type="number" name="operation_quantity" placeholder="Количество" autofocus="autofocus"
+                <input type="number" name="operation_quantity" placeholder="Количество"
                        onfocus="this.select()"
+		       tabindex="-1"
                        value="1">
             </div>
            
