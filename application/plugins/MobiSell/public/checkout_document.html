@@ -25,6 +25,19 @@
             setTimeout(function(){
                 App.checkout_document.suggestion.init();
             },500);
+            if(App.checkout_document.device_has_numeric_keypad){
+                $("#quan_popup_content").on('keypress',function(e){
+                    var $inp=$("#checkout_document_popup_quan_form input[name=operation_quantity]");
+                    if( $.isNumeric(e.key) ){
+                        $inp.val($inp.val()+''+e.key);
+                    } else if(e.key=='Backspace'){
+                        $inp.val(  $inp.val().substring(0, $inp.val().length - 1) );
+                    } else if(e.key=='-'){
+                        $inp.val(-1*str);
+                    }
+                });
+                $("#checkout_document_popup_quan_form input[name=operation_quantity]").attr('readonly',1);
+            }
         },
         load: function (checkout_id){
             App.checkout_document.log.put_on_server().done(function(){
@@ -236,7 +249,7 @@
                     }
 		});  
             },
-            submit_form: function () {
+            submit_form: function ( mode ) {
                 var fvalue = $('#checkout_document_popup_quan_form').form('get values');
                 if(fvalue.operation_quantity == 0){
                     $("#popup_quantity_message").show('fast');
@@ -244,6 +257,10 @@
                 } else {
                     $("#popup_quantity_message").hide();
                 }
+                if( mode=='minus_quantity' ){
+                    fvalue.operation_quantity*=-1;
+                }
+                
                 App.checkout_document.entries.update(fvalue.operation_quantity);
                 $('#checkout_document_quantity_popup').modal('hide');
                 App.checkout_document.entries.render();
@@ -260,18 +277,6 @@
             show_popup: function () {
                 App.checkout_document.entries.popup_mode='on';
                 App.renderTpl("quan_popup_content", {products: App.checkout_document.entries.list[App.checkout_document.current_entry_index]});
-		if(App.checkout_document.device_has_numeric_keypad){
-		    $("#checkout_document_popup_quan_form input[type=number]").on('keypress',function(e){
-			var str=$(this).val();
-			if( $.isNumeric(e.key) ){
-			    $(this).val(str+''+e.key);
-			} else if(e.key=='Backspace'){
-			    $(this).val(  str.substring(0, str.length - 1) );
-			} else if(e.key=='-'){
-			    $(this).val(-1*str);
-			}
-		    }).attr('readonly',1);
-		}
                 $("#popup_quantity_message").hide();
                 $('#checkout_document_quantity_popup').modal({
 		    duration:100
@@ -550,7 +555,7 @@
                     $.post('../Checkout/checkoutDocumentOutput', {checkout_id: App.state.checkout_id}, function (resp) {
 			var result=App.json(resp);
 			if( result ){
-			    App.checkout_document.show_result(result);
+			    App.checkout_document.confirm_modal.show_result(result);
 			    App.holder.load("checkout_document_list.html");
 			}
                     });
@@ -565,20 +570,20 @@
             },
 	    show_result:function(result){
 		var msg='';
-		if( result.less ){
+		if( result.less>0 ){
 		    msg+=`Недостача: ${result.less} позиций<br>`;
 		}
-		if( result.more ){
+		if( result.more>0 ){
 		    msg+=`Избыток: ${result.more} позиций<br>`;
 		}
-		if( result.added ){
+		if( result.added>0 ){
 		    msg+=`Добавлено строк: ${result.added}<br>`;
 		}
-		if( result.deleted ){
-		    msg+=`Удалено строк: ${result.added}<br>`;
+		if( result.deleted>0 ){
+		    msg+=`Удалено строк: ${result.deleted}<br>`;
 		}
-		if( result.updated ){
-		    msg+=`Изменено строк: ${result.added}<br>`;
+		if( result.updated>0 ){
+		    msg+=`Изменено строк: ${result.updated}<br>`;
 		}
 		App.alert("Результат проверки:<br>"+msg);
 	    }
@@ -904,7 +909,7 @@
 
 <div id="checkout_document_quantity_popup" class="ui tiny modal">
 
-    <div id="quan_popup_content" >
+    <div id="quan_popup_content"  tabindex="0">
         <!--{{products}}-->
         <table class="ui celled unstackable table">
             <tbody>
@@ -979,7 +984,6 @@
                 <div class="ui left icon right labeled input">
                     <i class="search icon"></i>
                     <input type="number" name="operation_quantity" placeholder="Количество"
-                           tabindex="-1"
                            value="">
                     <div class="ui basic label" onclick="App.checkout_document.entries.popup_quantity_backspace_emulate()"><img src="../img/backspace-arrow.png"></div>
                 </div>
@@ -989,13 +993,20 @@
                 <div class="ui center aligned grid">
                     <div class="ui equal width row">
                         <div class="column">
-                            <button type="submit" class="ui green submit icon button" onclick="App.checkout_document.entries.submit_form(); return false">
+                            <button type="submit" class="ui green submit icon fluid button" onclick="App.checkout_document.entries.submit_form(); return false">
+                                <i class="plus ul icon"></i>
                                 Добавить
                             </button>
                         </div>
                         <div class="column">
-                            <button class="ui cancel icon button" onclick="App.checkout_document.entries.render();
-                                    return false">
+                            <button class="ui yellow submit icon button" onclick="App.checkout_document.entries.submit_form('minus_quantity'); return false">
+                                <i class="minus ul icon"></i>
+                                Отнять
+                            </button>
+                        </div>
+                        <div class="column">
+                            <button class="ui cancel icon button" onclick="App.checkout_document.entries.render();return false">
+                                <i class="close ul icon"></i>
                                 Отмена
                             </button>
                         </div>

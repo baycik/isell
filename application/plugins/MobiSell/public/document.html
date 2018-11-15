@@ -691,10 +691,9 @@
 	</div>
         <div id="document_checkout_button" class="ui equal width centered grid" style="margin-top:10px; margin-bottom:10px">
         {{if checkout_id|more>0}}      
-            <button class="ui button" onclick="App.document.go_to_checkout()">Открыть проверку</button>
-        {{else}}
-	    <button id="document_create_checkout_button" class="ui button" onclick="App.document.create_checkout()">Проверить</button>
-        {{/if}}  
+        <a href="#checkout_document.html#checkout_id={{checkout_id}}"><i class="clipboard list icon"></i> Открыть проверку</a>
+        {{/if}}
+        <button id="document_create_checkout_button" class="ui button" onclick="App.document.create_checkout()"><i class="plus icon"></i> Проверить</button> 
 	<button id="document_delete_button" class="ui negative button" onclick="App.document.head.remove()">Удалить документ</button>
         </div>
         <div><h4>Скидки</h4></div>

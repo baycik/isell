@@ -247,6 +247,7 @@ class Checkout extends Stock {
         $DocumentItems=$this->Hub->load_model('DocumentItems');
         $checkout_document = $this->checkoutDocumentGet($checkout_id);
         $source_doc_id = $checkout_document['head']->parent_doc_id;
+        $document = $DocumentItems->entryDocumentGet($source_doc_id);
 	$result=[
 	    'added'=>0,
 	    'deleted'=>0,
