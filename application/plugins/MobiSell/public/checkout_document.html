@@ -25,7 +25,6 @@
             setTimeout(function(){
                 App.checkout_document.suggestion.init();
             },500);
-	    this.device_has_numeric_keypad=0;
         },
         load: function (checkout_id){
             App.checkout_document.log.put_on_server().done(function(){
@@ -46,6 +45,7 @@
             App.checkout_document.currentType = 'Document';
             App.checkout_document.initTab();
             App.checkout_document.load(App.state.checkout_id);
+	    this.device_has_numeric_keypad=localStorage.getItem('device_has_numeric_keypad')=='true'?1:0;
             
             //App.checkout_document.log.put_on_server();
             
@@ -270,13 +270,16 @@
 			} else if(e.key=='-'){
 			    $(this).val(-1*str);
 			}
-			console.log(e.key);
 		    }).attr('readonly',1);
 		}
                 $("#popup_quantity_message").hide();
                 $('#checkout_document_quantity_popup').modal({
 		    duration:100
 		}).modal('show');
+            },
+            popup_quantity_backspace_emulate:function(){
+                var str=$("#checkout_document_popup_quan_form input[name=operation_quantity]").val();
+                $("#checkout_document_popup_quan_form input[name=operation_quantity]").val(  str.substring(0, str.length - 1) );
             },
             check_package_type: function (type) {
                 var currentEntry=App.checkout_document.entries.list[App.checkout_document.current_entry_index];
@@ -973,10 +976,13 @@
                 <input type='hidden' name='ru' value='{{ru}}'>
                 <input type='hidden' name='product_code' value='{{product_code}}'>
                 <input type='hidden' name='product_quantity' value='{{product_quantity}}'>
-                <input type="number" name="operation_quantity" placeholder="Количество"
-                       onfocus="this.select()"
-		       tabindex="-1"
-                       value="1">
+                <div class="ui left icon right labeled input">
+                    <i class="search icon"></i>
+                    <input type="number" name="operation_quantity" placeholder="Количество"
+                           tabindex="-1"
+                           value="1">
+                    <div class="ui basic label" onclick="App.checkout_document.entries.popup_quantity_backspace_emulate()"><img src="../img/backspace-arrow.png"></div>
+                </div>
             </div>
            
             <div class="actions">
