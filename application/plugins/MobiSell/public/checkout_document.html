@@ -971,11 +971,13 @@
                                     </button>
                                 </div>
                                 {{/if}}
+                                {{if product_quantity_left|more>1}}
                                 <div class="column">
                                     <button class="ui green fluid button"  onclick="App.checkout_document.entries.check_package_type('qty'); return false">
                                         {{product_quantity_left}} 
                                     </button>   
                                 </div>
+                                {{/if}}
                             </div>
                         </div>
                     </td>    
