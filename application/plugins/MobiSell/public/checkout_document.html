@@ -40,6 +40,7 @@
             }
         },
         load: function (checkout_id){
+            var def=$.Deferred();
             App.checkout_document.log.put_on_server().done(function(){
                 $.post('../Checkout/checkoutDocumentGet', {checkout_id: checkout_id}, function (resp) {
                     var response = App.json(resp);
@@ -48,8 +49,10 @@
                     App.checkout_document.checkout_doc_head = response.head;
                     App.checkout_document.photos.render();
                     App.checkout_document.entries.render();
+                    def.resolve();
                 });
             });
+            return def.promise();
         },
         focus: function () {
             App.title("Документ для проверки");
@@ -170,7 +173,9 @@
                     if( App.checkout_document.entries.popup_mode == 'on'){
                         App.checkout_document.entries.update(1);
                         App.checkout_document.current_entry_index = barcode_founded_index;
-                        App.renderTpl("quan_popup_content", {products: App.checkout_document.entries.list[App.checkout_document.current_entry_index]});
+                        App.checkout_document.entries.show_popup();
+                        
+                        //App.renderTpl("quan_popup_content", {products: App.checkout_document.entries.list[App.checkout_document.current_entry_index]});
                         return;
                     }
                     App.checkout_document.entries.show_popup(App.checkout_document.entries.list[barcode_founded_index]);
@@ -243,7 +248,11 @@
 		$.post("../Stock/productUpdate/",fvalue,function(ok){
 		    if(ok){
 			App.flash("Штрихкод привязан");
-                        App.checkout_document.entries.load_by_barcode(barcode);
+                        App.checkout_document.entries.select_mode = 'off';
+                        App.checkout_document.entries.select_mode_view_edit();
+                        App.checkout_document.load(App.state.checkout_id).done(function(){
+                            App.checkout_document.entries.search_barcode(barcode);
+                        });
 		    } else {
                         App.flash("Не удалось");
                     }
@@ -276,10 +285,18 @@
             },
             show_popup: function () {
                 App.checkout_document.entries.popup_mode='on';
-                App.renderTpl("quan_popup_content", {products: App.checkout_document.entries.list[App.checkout_document.current_entry_index]});
+                var popup_product_data=App.checkout_document.entries.list[App.checkout_document.current_entry_index];
+                popup_product_data.product_quantity_left=popup_product_data.product_quantity-popup_product_data.product_quantity_verified;
+                if(popup_product_data.product_spack!=popup_product_data.product_bpack && popup_product_data.product_bpack>1){
+                    popup_product_data.product_bpack_isunique=1;
+                }
+                
+                
+                
+                App.renderTpl("quan_popup_content", {products:popup_product_data});
                 $("#popup_quantity_message").hide();
                 $('#checkout_document_quantity_popup').modal({
-		    duration:100
+		    duration:0
 		}).modal('show');
             },
             popup_quantity_backspace_emulate:function(){
@@ -296,7 +313,7 @@
                 } else if (type === 'Big') {
                     quantity=currentEntry.product_bpack;
                 }   else if (type === 'qty') {
-                    quantity=currentEntry.product_quantity;
+                    quantity=currentEntry.product_quantity_left;
                 }
                 $("#checkout_document_popup_quan_form input[name=operation_quantity]").val(quantity);
                 App.checkout_document.entries.submit_form();
@@ -935,36 +952,30 @@
                         </div>
                         <div class="actions" id="checkout_document_quantity_buttons">
                             <div class="ui equal width  grid ">
-                                
-                                {{if product_quantity|between>1>product_bpack}}
-                                    {{if product_spack|notequals>1}}
-                                    <div class="column" >
-                                        <button class="ui blue fluid button"  onclick="App.checkout_document.entries.check_package_type('Extra_Small'); return false">
-                                            1
-                                        </button>   
-                                    </div>
-                                    {{/if}}
-                                     <div class="column">
-                                        <button class="ui green fluid button"  onclick="App.checkout_document.entries.check_package_type('qty'); return false">
-                                            {{product_quantity}} 
-                                        </button>   
-                                    </div>
-                                {{else}}
-                                    {{if product_spack|notequals>0}}
-                                    <div class="column">
-                                        <button class="ui blue fluid button"  onclick="App.checkout_document.entries.check_package_type('Small'); return false">
-                                            {{product_spack}} 
-                                        </button>   
-                                    </div>
-                                    {{/if}}
-                                    {{if product_bpack|more>1}}
-                                    <div class="column">
-                                        <button class="ui blue fluid button"  onclick="App.checkout_document.entries.check_package_type('Big'); return false">
-                                            {{product_bpack}}
-                                        </button>   
-                                    </div>
-                                    {{/if}}
+                                <div class="column">
+                                    <button class="ui blue fluid button"  onclick="App.checkout_document.entries.check_package_type('Extra_Small'); return false">
+                                        1 
+                                    </button>   
+                                </div>
+                                {{if product_spack|more>1}}
+                                <div class="column">
+                                    <button class="ui blue fluid button"  onclick="App.checkout_document.entries.check_package_type('Small'); return false">
+                                        {{product_spack}} 
+                                    </button>   
+                                </div>
                                 {{/if}}
+                                {{if product_bpack_isunique|more>1}}
+                                <div class="column">
+                                    <button class="ui blue fluid button"  onclick="App.checkout_document.entries.check_package_type('Big'); return false">
+                                        {{product_bpack}}
+                                    </button>
+                                </div>
+                                {{/if}}
+                                <div class="column">
+                                    <button class="ui green fluid button"  onclick="App.checkout_document.entries.check_package_type('qty'); return false">
+                                        {{product_quantity_left}} 
+                                    </button>   
+                                </div>
                             </div>
                         </div>
                     </td>    
