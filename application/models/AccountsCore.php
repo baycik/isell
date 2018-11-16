@@ -411,7 +411,7 @@ class AccountsCore extends Catalog{
 	}
 	$user_id=$this->Hub->svar('user_id');
 	$acc_codes=  explode('_',$trans_type);
-	$trans=[
+	$trans_data=[
 	    'trans_ref'=>$trans_ref,
 	    'check_id'=>$check_id,
 	    'passive_company_id'=>$passive_company_id,
@@ -424,31 +424,34 @@ class AccountsCore extends Catalog{
 	    'description'=>$description,
 	    'modified_by'=>$user_id
 	];
-	
-	$this->Hub->set_level(2);
-	if( $trans_id ){
-	    $this->update('acc_trans', $trans, ['trans_id'=>$trans_id,'editable'=>1]);
-	    $trans_id= $this->db->affected_rows()>0?$trans_id:false;
-	} else {
-	    $trans['editable']=1;
-	    $trans['active_company_id']=$this->Hub->acomp('company_id');
-	    $trans['created_by']=$trans['modified_by'];
-	    if( $trans['trans_ref'] && $this->transAlreadyLinked($trans['trans_ref']) ){//Check whether referenced trans is already linked
+        $update_trans_data=true;
+        if( !$trans_id ){
+            $this->Hub->set_level(2);
+	    $trans_data['editable']=1;
+	    $trans_data['active_company_id']=$this->Hub->acomp('company_id');
+	    $trans_data['created_by']=$trans_data['modified_by'];
+	    if( $trans_data['trans_ref'] && $this->transAlreadyLinked($trans_data['trans_ref']) ){//Check whether referenced trans is already linked
 		return false;
 	    }
-	    $this->create('acc_trans', $trans);
+	    $this->create('acc_trans', $trans_data);
 	    $trans_id= $this->db->insert_id();
-	}
-	$this->checkTransLink($trans_id,$trans);
-	$this->transCrossLink($trans_id,$trans);
-	$this->transCalculate($trans);
+            $update_trans_data=false;
+        }
+        $this->transUpdate($trans_id, $trans_data, $update_trans_data);
 	return $trans_id;
     }
     
-    private function transUpdate( $trans_id, $trans_data ){
+    private function transUpdate( $trans_id, $trans_data, $update_trans_data=true ){
 	$this->Hub->set_level(2);
-	$this->update('acc_trans', $trans_data, ['trans_id'=>$trans_id]);
-	$ok= $this->db->affected_rows()>0?true:false;
+        $ok=true;
+        if( $update_trans_data ){
+            $this->update('acc_trans', $trans_data, ['trans_id'=>$trans_id]);
+            $ok= $this->db->affected_rows()>0?true:false;
+        }
+        $this->checkTransLink($trans_id,$trans_data);
+	$this->transCrossLink($trans_id,$trans_data);
+	$this->transCalculate($trans_data);
+        return $ok;
     }
     
     public $transDelete=['int'];
@@ -476,14 +479,23 @@ class AccountsCore extends Catalog{
     public function documentTransClear($doc_id){
         return $this->delete('acc_trans JOIN document_trans USING(trans_id)', ['doc_id'=>$doc_id]);
     }
-    public function documentTransUpdate($doc_id,$foot){
+    public function documentTransUpdate($doc_id,$foot,$doc_ratio=0){
+        $ok=true;
 	$document_transactions=$this->get_list("SELECT * FROM document_trans WHERE doc_id='$doc_id'");
 	foreach($document_transactions as $trans){
 	    $transaction_amount=0;
 	    if( isset($foot[$trans->role]) ){
-		$transaction_amount=$foot[$trans->role];
+                if( $doc_ratio>0 ){
+                    $transaction_amount=$foot[$trans->role]*$doc_ratio;
+                    $transaction_amount_alt=$foot[$trans->role];
+                } else {
+                    $transaction_amount=$foot[$trans->role];
+                    $transaction_amount_alt=0;
+                }
+                $ok = $ok && $this->transUpdate($trans->trans_id, ['amount'=>$transaction_amount,'amount_alt'=>$transaction_amount_alt]);
 	    }
 	}
+        return $ok;
     }
     
     
