@@ -27,6 +27,7 @@ class Task extends Events {
     
     private function execute_task(){
 	$this->logErrors();
+        session_write_close();
         $this->currentTask->event_status = 'executing';
 	$this->currentTask->event_date_done=date("Y-m-d H:i");
         $this->saveTask();
