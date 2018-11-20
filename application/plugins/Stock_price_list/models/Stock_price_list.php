@@ -16,6 +16,7 @@ class Stock_price_list extends Catalog{
     
     public $save=['deployment_id'=>'string','deployment_data'=>'raw'];
     public function save($deployment_id,$deployment_data){
+        $this->Hub->set_level(2);
 	$this->load->model('Storage');
 	return $this->Storage->file_store('stock_price_list/deployments/'.$deployment_id.'.json',$deployment_data);
     }
@@ -28,6 +29,7 @@ class Stock_price_list extends Catalog{
     
     public $remove=['deployment_id'=>'string'];
     public function remove($deployment_id){
+        $this->Hub->set_level(2);
 	$this->load->model('Storage');
 	return $this->Storage->file_remove('stock_price_list/deployments/'.$deployment_id.'.json');	
     }
@@ -228,7 +230,7 @@ class Stock_price_list extends Catalog{
 	$ViewManager->store($dump);
 	$ViewManager->outRedirect($out_type);
     }
-    function acompGetAll() {
+    private function acompGetAll() {
         $comp=$this->Hub->svar('acomp');
         $all =$comp->company_name." ".$comp->company_jaddress;
         $all.=$comp->company_phone?", тел.:{$comp->company_phone}":'';
