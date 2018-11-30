@@ -23,7 +23,6 @@ class Chat extends Catalog{
     public $sendRecieve=['int'];
     public function sendRecieve( $his_id='all' ){
 	$msg=$this->request('message');
-	$this->check($his_id,'int');
 	if( $this->request('is_phone_sms','bool') ){
 	    if( $this->sendPhoneSms($his_id, $msg) ){
 		$msg="[sms] ".$msg;
