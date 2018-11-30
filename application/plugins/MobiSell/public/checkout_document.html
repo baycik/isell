@@ -182,12 +182,11 @@
                 } else {
                     App.checkout_document.entries.render();
                     $('#checkout_document_quantity_popup').modal('hide');
-                    App.confirm('Товара с таким штрихкодом нет в списке\n Выполнить поиск на сервере?').done(function(){
-                        App.checkout_document.entries.load_by_barcode(barcode);
-                    });
+                    App.checkout_document.entries.load_by_barcode(barcode);
                 }
             },
             load_by_barcode: function (barcode) {
+                App.flash('Поиск товара по штрихкоду');
                 $.post('../Checkout/checkoutProductGet', {barcode: barcode}, function (resp) {
 		    var new_entry = App.json(resp);
                     if (new_entry){
@@ -201,6 +200,7 @@
                         App.checkout_document.entries.select_mode = 'off';
                         App.checkout_document.entries.select_mode_view_edit();
                         App.checkout_document.input_barcode='';
+                        App.flash('Товар найден и добавлен');
                     } else if (!new_entry){
                         App.confirm('Штрихкод не найден! Выберите из списка').done(function(){
                             App.checkout_document.entries.temp_barcode = barcode;
