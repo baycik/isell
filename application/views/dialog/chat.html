@@ -112,7 +112,7 @@
 	}
     };
 </script>
-<div id="chat_users" class="covert">
+<div id="chat_users">
     {{user_list}}
     <div onclick="App.page_dialog_chat.setCounterpart(this)" data-user="{{user_id}}" class="{{if has_new|more>0}}blink{{/if}}">
         {{if is_online|more>0}}
