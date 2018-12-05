@@ -396,7 +396,10 @@ class Document extends Data {
 	    $this->Base->set_level(2);
 	}
 	if (strlen($product_code) == 13 && preg_match('/\d{13}/', $product_code)) {//
-	    $product_code = $this->Base->get_row("SELECT product_code FROM prod_list WHERE product_barcode='$product_code'", 0);
+	    $_product_code = $this->Base->get_row("SELECT product_code FROM prod_list WHERE product_barcode='$product_code'", 0);
+            if( $_product_code ){
+                $product_code = $_product_code;
+            }
 	}
         if( !$product_code ){
             return false;
