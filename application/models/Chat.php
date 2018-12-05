@@ -10,12 +10,12 @@ class Chat extends Catalog{
                 user_id,
                 user_login,
 		CONCAT(first_name,' ',last_name) name,
+                user_is_staff,
+                TIMESTAMPDIFF(MINUTE,last_activity,NOW())<3 is_online, 
 		(SELECT 1 FROM event_list WHERE created_by=user_id AND event_status='undone' AND event_date<NOW() AND event_liable_user_id='$my_id' LIMIT 1) has_new
             FROM
                 user_list
-            WHERE 
-                user_is_staff
-            ORDER BY first_name
+            ORDER BY user_is_staff DESC,first_name
                 ";
         return $this->get_list($sql);
     }
@@ -90,6 +90,7 @@ class Chat extends Catalog{
 	    ";
 	$dialog=$this->get_list($sql);
 	$this->setAsRead();
+        $this->query("UPDATE user_list SET last_activity=NOW() WHERE user_id='$my_id'");
         return ['dialog'=>$dialog,'has_new'=>$this->checkNew()];
     }
     
@@ -103,9 +104,10 @@ class Chat extends Catalog{
 	    WHERE 
 		event_status='undone' AND event_date<NOW() AND event_liable_user_id='$my_id'";
 	$new_message_count=$this->get_value($sql);
-	if( $new_message_count ){
+	if( $new_message_count>0 ){
 	    return $new_message_count;
 	}
+        $this->query("UPDATE user_list SET last_activity=NOW() WHERE user_id='$my_id'");
 	$this->Hub->load_model("Task")->doNext();
     }
 }

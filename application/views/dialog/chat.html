@@ -4,7 +4,7 @@
 	has_new_status:0,
 	init: function () {
 	    this.node.window({
-		width: 600,
+		width: 800,
 		title: 'Чат',
 		height: 420,
 		onClose: function () {
@@ -94,6 +94,11 @@
 <div id="chat_users">
     {{user_list}}
     <div onclick="App.page_dialog_chat.setCounterpart(this)" data-user="{{user_id}}" class="{{if has_new|more>0}}blink{{/if}}">
+        {{if is_online|more>0}}
+        <img src="img/grn.png">
+        {{else}}
+        <img src="img/red.png">
+        {{/if}}
 	{{if name}}
 	    {{name}}
 	{{else}}
@@ -142,12 +147,16 @@
 	max-height: 300px;
         float: right;
         background-color: #7af;
-	overflow: auto;
+	overflow-y: auto;
+        width:200px;
     }
     #chat_users div{
         padding: 5px;
         margin: 1px;
         cursor: pointer;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
     }
     #chat_users div:hover{
         background-color: rgb(180,220,250);
