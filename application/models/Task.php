@@ -110,7 +110,7 @@ class Task extends Events {
 	error_reporting( E_ALL );
     }
 
-    private function saveTask() {
+    public function saveTask() {
 	$user_id = $this->Hub->svar('user_id');
 	$this->currentTask->modified_by=$user_id;
 	return $this->update('event_list', $this->currentTask, ['event_id' => $this->currentTask->event_id]);
