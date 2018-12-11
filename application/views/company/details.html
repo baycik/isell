@@ -128,7 +128,7 @@
 	},
 	DaDataSet:function(name,value){
 	    var current_value=$("input[name="+name+"]").val();
-	    if(current_value!=value){
+	    if(current_value!==value && value!=='' ){
 		$("input[name="+name+"]").val(value);
 		App.page_company_details.updateField(name,value,$("input[name="+name+"]").attr('title'));
 	    }
