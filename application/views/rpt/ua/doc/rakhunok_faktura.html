@@ -49,6 +49,7 @@
     <table class="table_border" width="680" border="0" cellpadding="1" cellspacing="0">
       <tr class="big">
         <td width="15" align="center" nowrap="nowrap" bgcolor="#aaaaaa"><b>№</b></td>
+        <td width="50" bgcolor="#aaaaaa"><b>Код</b></td>
         <td align="center" nowrap="nowrap" bgcolor="#aaaaaa"><b>Повна назва товару</b></td>
         <td width="50" align="center" nowrap="nowrap" bgcolor="#aaaaaa"><b>Од.вим.</b></td>
         <td width="50" align="center" nowrap="nowrap" bgcolor="#aaaaaa"><b>К-ть</b></td>
@@ -58,6 +59,7 @@
       {loop name="v->rows"}
       <tr>
         <td align="right" valign="top">{$counter+1}</td>
+        <td align="left" valign="top">{$value->product_code}</td>
         <td align="left" valign="top">{$value->product_name}</td>
         <td align="center" valign="top">{$value->product_unit}</td>
         <td align="right" valign="top">{$value->product_quantity}</td>
