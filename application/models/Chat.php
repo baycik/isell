@@ -90,12 +90,11 @@ class Chat extends Catalog{
 	    ";
 	$dialog=$this->get_list($sql);
 	$this->setAsRead();
-        $this->query("UPDATE user_list SET last_activity=NOW() WHERE user_id='$my_id'");
-        return ['dialog'=>$dialog,'has_new'=>$this->checkNew()];
+        return ['dialog'=>$dialog,'has_new'=>$this->checkNew('skip_tasks')];
     }
     
     public $checkNew=[];
-    public function checkNew(){
+    public function checkNew($mode){
 	$my_id = $this->Hub->svar('user_id');
 	$sql="SELECT 
 		COUNT(*) 
@@ -104,10 +103,12 @@ class Chat extends Catalog{
 	    WHERE 
 		event_status='undone' AND event_date<NOW() AND event_liable_user_id='$my_id'";
 	$new_message_count=$this->get_value($sql);
+        $this->query("UPDATE user_list SET last_activity=NOW() WHERE user_id='$my_id'");
 	if( $new_message_count>0 ){
 	    return $new_message_count;
 	}
-        $this->query("UPDATE user_list SET last_activity=NOW() WHERE user_id='$my_id'");
-	$this->Hub->load_model("Task")->doNext();
+        if( $mode!=='skip_tasks' ){
+            $this->Hub->load_model("Task")->doNext();
+        }
     }
 }

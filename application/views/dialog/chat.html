@@ -67,10 +67,14 @@
 	},
         renderedMessages:{},
 	renderDialog:function( dialog ){
+            if( !dialog ){
+                //return;
+            }
             for(let item of dialog){
                 if( App.page_dialog_chat.renderedMessages[item.event_id] || !item.is_chat ){
                     continue;
                 }
+                $("#chat_field .blinkborder").removeClass('white blinkborder').addClass('yellow done');
                 App.page_dialog_chat.renderedMessages[item.event_id]=1;
                 let message_html=App.page_dialog_chat.renderMessage(item);
                 let chat_entry=$('<div></div>').html(message_html);
