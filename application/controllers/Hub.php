@@ -12,6 +12,7 @@ class Hub  extends CI_Controller{
     public $level_names=["Нет доступа","Ограниченный","Менеджер","Бухгалтер","Администратор"];
     private $rtype='OK';
     private $msg='';
+    public $log_output_messages=false;
     function __construct(){
 	session_name('baycikSid');
 	session_start();
@@ -270,7 +271,12 @@ class Hub  extends CI_Controller{
 	if( isset($this->bridge) && $this->bridge->msg ){
 	    $this->msg.=$this->bridge->msg;
 	}
-	$this->output->set_header("X-isell-msg:".urlencode($this->msg));
+        if( $this->log_output_messages ){
+            $this->load_model('Catalog')->log($this->svar('user_login').': '.$this->msg);
+        } else {
+            $this->output->set_header("X-isell-msg:".urlencode($this->msg));
+        }
+        
 	$this->output->set_header("X-isell-type:".$this->rtype);
 	
 	if( is_array($response) || is_object($response) ){

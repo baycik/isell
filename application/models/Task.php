@@ -49,6 +49,7 @@ class Task extends Events {
 	}
 	$program = json_decode($this->currentTask->event_program);
 	$program_length = count($program->commands);
+        $this->Hub->log_output_messages=true;
 	for ($i=0; $i < $program_length; $i++) {
 	    $command = $program->commands[$i];
 	    if ( $this->currentTask->event_target > $i ) {

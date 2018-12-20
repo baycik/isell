@@ -155,6 +155,7 @@ class Maintain extends CI_Model {
     }
     
     public function backupDumpFtpUpload($filename){
+	$this->Hub->set_level(4);
 	if( !file_exists($filename) ){
 	    return false;
 	}
