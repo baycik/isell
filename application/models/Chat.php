@@ -94,7 +94,7 @@ class Chat extends Catalog{
     }
     
     public $checkNew=[];
-    public function checkNew($mode){
+    public function checkNew($mode=''){
 	$my_id = $this->Hub->svar('user_id');
 	$sql="SELECT 
 		COUNT(*) 
