@@ -82,7 +82,7 @@ class Reports_balance extends Catalog{
         }
         
         foreach( $fdate_list as $i=>$fdate ){
-            $v['active_total_'.$i]=
+            //$v['active_total_'.$i]='';
         }
         
         
