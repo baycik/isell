@@ -137,6 +137,7 @@ class PluginManager extends Catalog{
 	    SET
 		plugin_system_name='$plugin_system_name',
 		trigger_before='{$headers['trigger_before']}',
+		trigger_after='{$headers['trigger_after']}',
 		is_installed=1,
 		is_activated=0";
 	$ok=$this->query($sql);
@@ -158,25 +159,25 @@ class PluginManager extends Catalog{
 	$before=[];
 	$after=[];
 	$sql="SELECT 
-		plugin_system_name,trigger_before
+		plugin_system_name,trigger_before,trigger_after
 	    FROM 
 		plugin_list 
 	    WHERE 
-		is_activated AND (trigger_before IS NOT NULL)";
+		is_activated AND (trigger_before IS NOT NULL OR trigger_after IS NOT NULL)";
 	$active_plugin_triggers=$this->db->query($sql);
 	if($active_plugin_triggers){
 	    foreach( $active_plugin_triggers->result() as $trigger ){
 		if( $trigger->trigger_before ){
 		    $this->pluginParseTriggers($before, $trigger->trigger_before, $trigger->plugin_system_name);
 		}
-//		if( $trigger->trigger_after ){
-//		    $this->pluginParseTriggers($after, $trigger->trigger_after, $trigger->plugin_system_name);
-//		}
+		if( $trigger->trigger_after ){
+		    $this->pluginParseTriggers($after, $trigger->trigger_after, $trigger->plugin_system_name);
+		}
 	    }
 	    $active_plugin_triggers->free_result();
 	}
 	$this->Hub->svar('trigger_before',$before);
-	//$this->Hub->svar('trigger_after',$after);
+	$this->Hub->svar('trigger_after',$after);
     }
     private function pluginParseTriggers( &$registry, $triggers, $plugin_system_name ){
 	$trigger_list=explode(',',$triggers);

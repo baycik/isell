@@ -151,19 +151,25 @@ class DocumentItems extends DocumentCore{
         }
         return $this->get_list($sql);
     }
-    public function entryAdd( $code, $quantity, $price=NULL ){
+    
+    
+    public $entryAdd=['doc_id'=>'int','code'=>'string','quantity'=>'int'];
+    public function entryAdd( $doc_id, $code, $quantity, $price=NULL ){
+        if($doc_id){
+            $this->selectDoc($doc_id);
+        }
 	$Document2=$this->Hub->bridgeLoad('Document');
 	$add_duplicate_rows=(bool) $this->Hub->pref('add_duplicate_rows');
 	return $Document2->addEntry( $code, $quantity, $price, $add_duplicate_rows );
     }
-    public $entryPostAdd=[];
+/*    public $entryPostAdd=[];
     public function entryPostAdd(){
 	$doc_id=$this->request('doc_id','int');
 	$code=$this->request('code');
 	$quantity=$this->request('quantity','int');
 	$this->selectDoc($doc_id);
 	return $this->entryAdd($code, $quantity);
-    }
+    }*/
     public $entryUpdate=['int','int','string','string'];
     public function entryUpdate( $doc_id, $doc_entry_id, $name=null, $value=null ){
         if( $name==null && $value==null ){

@@ -7,10 +7,6 @@
  * Author: baycik 2017
  * Author URI: isellsoft.com
  * Trigger before: MobiSell
- * 
- * Description of DocumentSell
- * This class handles all of sell documents
- * @author Baycik
  */
 class MobiSell extends PluginManager {
     public $min_level = 1;

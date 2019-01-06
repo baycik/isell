@@ -5,8 +5,8 @@
  * @author Baycik
  */
 class DocumentList extends Catalog{
-    public $listFetch=['offset'=>'int','limit'=>'int','sortby'=>'string','sortdir'=>'(ASC|DESC)','filter'=>'json','mode'=>'string','colmode'=>'string'];
-    public function listFetch($offset=0,$limit=50,$sortby='cstamp',$sortdir='DESC',$filter=null,$mode='',$colmode=''){
+    public $listFetch=['offset'=>['int',0],'limit'=>['int',50],'sortby'=>'string','sortdir'=>'(ASC|DESC)','filter'=>'json','mode'=>'string','colmode'=>'string'];
+    public function listFetch($offset,$limit,$sortby='cstamp',$sortdir='DESC',$filter=null,$mode='',$colmode=''){
 	$fields=['cstamp','doc_num','label'];
 	if( empty($sortby) ){
 	    $sortby='cstamp';

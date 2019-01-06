@@ -59,10 +59,16 @@ class Hub  extends CI_Controller{
     public function on( $model_name, $method='index' ){
 	$this->checkAnonymousAccess($model_name,$method);
 	$route_args =array_slice(func_get_args(), 2);
-	$this->pluginTrigger($model_name,$method,$route_args);
+	$this->pluginTriggerBefore($model_name,$method,$route_args);
 	$this->execute($model_name, $method, $route_args);
+	$this->pluginTriggerAfter($model_name,$method,$route_args);
+        if( !is_null($this->previous_return) ){
+            $this->response($this->previous_return);
+        }
     }
     
+    
+    public $previous_return;
     private function execute( $model_name, $method, $route_args ){
 	try{
 	    $Model=$this->load_model($model_name);
@@ -74,10 +80,7 @@ class Hub  extends CI_Controller{
 	    }
 	    $method_args_config=$Model->$method;
 	    $method_args=$this->parseMethodArguments($method_args_config, $route_args);
-	    $response=call_user_func_array([$Model, $method],$method_args);
-	    if( !is_null($response) ){
-		$this->response($response);
-	    }
+	    $this->previous_return=call_user_func_array([$Model, $method],$method_args);
 	} catch(Exception $e){
 	    show_error("X-isell-error: ".$e->getMessage(), 500);
 	}
@@ -99,20 +102,22 @@ class Hub  extends CI_Controller{
 	}
     }
     
-    public function page( $parent_folder=null ){
-	$modules_allowed=$this->svar('modules_allowed');
-	if( isset($modules_allowed[$parent_folder]) && $modules_allowed[$parent_folder]->level > $this->svar('user_level') ){
-	    $this->set_level($modules_allowed[$parent_folder]->level);
-	}
-	$file_name = implode('/',func_get_args());
-	$this->load->view($file_name);
-    }
-
-    private function pluginTrigger($model_name,$method,$route_args){
+    private function pluginTriggerBefore($model_name,$method,$route_args){
 	$trigger_before=$this->svar('trigger_before');
-	if( isset($trigger_before[$model_name]) ){
+	if( isset($trigger_before[$model_name]) || isset($trigger_before["$model_name/$method"]) ){
 	    $this->pluginCheckIfPublicFile($model_name,$method,$route_args);
 	    $model_override=$trigger_before[$model_name];
+	    $this->load->add_package_path(APPPATH.'plugins/'.$model_override, FALSE);
+	    if( $model_override===$model_name ){//if plugin ovverides it self then adding package is enough
+		return false;
+	    }
+	    $this->execute($model_override, $method, $route_args);
+	}
+    }
+    private function pluginTriggerAfter($model_name,$method,$route_args){
+	$trigger_after=$this->svar('trigger_after');
+	if( isset($trigger_after[$model_name]) || isset($trigger_after["$model_name/$method"]) ){
+	    $model_override=$trigger_after[$model_name];
 	    $this->load->add_package_path(APPPATH.'plugins/'.$model_override, FALSE);
 	    if( $model_override===$model_name ){//if plugin ovverides it self then adding package is enough
 		return false;
@@ -129,6 +134,16 @@ class Hub  extends CI_Controller{
 	    exit;
 	}
     }
+    
+    public function page( $parent_folder=null ){
+	$modules_allowed=$this->svar('modules_allowed');
+	if( isset($modules_allowed[$parent_folder]) && $modules_allowed[$parent_folder]->level > $this->svar('user_level') ){
+	    $this->set_level($modules_allowed[$parent_folder]->level);
+	}
+	$file_name = implode('/',func_get_args());
+	$this->load->view($file_name);
+    }
+
     /*
      * bridgeLoad function to load and use legacy iSell2 class files
      */

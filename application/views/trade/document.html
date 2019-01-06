@@ -453,7 +453,7 @@
 	add:function( code, qty ){
 	    if( code && qty ){
 		if( Doc.isCreated ){
-		    App.post("DocumentItems/entryPostAdd/",{doc_id:Doc.head.props.doc_id,code:code,quantity:qty},function(response_code){
+		    App.post("DocumentItems/entryAdd/",{doc_id:Doc.head.props.doc_id,code:code,quantity:qty},function(response_code){
 			switch( response_code ){
 			    case false:
 				App.flash("Строка не добавлена!");
