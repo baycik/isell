@@ -1,7 +1,7 @@
 <?php
 require_once 'DocumentUtils.php';
 class DocumentCore extends DocumentUtils{
-    /*public $listFetch=['int','int','string'];
+    public $listFetch=['int','int','string'];
     public function listFetch( $page=1, $rows=30, $mode='' ){
 	$offset=($page-1)*$rows;
 	if( $offset<0 ){
@@ -64,7 +64,7 @@ class DocumentCore extends DocumentUtils{
 	$result_rows=$this->get_list($sql);
 	$total_estimate=$offset+(count($result_rows)==$rows?$rows+1:count($result_rows));
 	return array('rows'=>$result_rows,'total'=>$total_estimate);
-    }*/
+    }
     public $createDocument=['string'];
     public function createDocument( $doc_type=null ){
 	$pcomp_id=$this->Hub->pcomp('company_id');
