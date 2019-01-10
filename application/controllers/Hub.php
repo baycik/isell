@@ -9,7 +9,7 @@ spl_autoload_register(function ($class_name) {
 
 
 class Hub  extends CI_Controller{
-    public $level_names=["РќРµС‚ РґРѕСЃС‚СѓРїР°","РћРіСЂР°РЅРёС‡РµРЅРЅС‹Р№","РњРµРЅРµРґР¶РµСЂ","Р‘СѓС…РіР°Р»С‚РµСЂ","РђРґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂ"];
+    public $level_names=["Нет доступа","Ограниченный","Менеджер","Бухгалтер","Администратор"];
     private $rtype='OK';
     private $msg='';
     public $log_output_messages=false;
@@ -75,10 +75,16 @@ class Hub  extends CI_Controller{
 	    if( !method_exists($model_name, $method) ){
 		show_error("X-isell-error: No such method '$method' in $model_name", 500);
 	    }
-	    if( !isset($Model->$method) ){
-		show_error("X-isell-error: '$method' config for arguments is not set. Access denied", 500);
-	    }
-	    $method_args_config=$Model->$method;
+            
+	    if( isset($Model->$method) ){
+		!$Model->$method && show_error("X-isell-error: '$method' not accessible from outside. Access denied", 500);
+                
+                $method_args_config=$Model->$method;
+	    } else {//read_method_arguments
+                $reflectionMethod = new ReflectionMethod($Model, $method);
+                $method_args_config = $reflectionMethod->getParameters();
+            }
+	    
 	    $method_args=$this->parseMethodArguments($method_args_config, $route_args);
 	    $this->previous_return=call_user_func_array([$Model, $method],$method_args);
 	} catch(Exception $e){
@@ -89,14 +95,25 @@ class Hub  extends CI_Controller{
     private function parseMethodArguments($method_args_config,$route_args){
 	if( is_array($method_args_config) ){
 	    $method_args=[];
-	    foreach( $method_args_config as $var_name=>$var_type ){
-		if( is_numeric($var_name) && isset($route_args[$var_name]) ){
-		    $arg_value=rawurldecode($route_args[$var_name]);
-		    $this->check($arg_value, $var_type);
+	    foreach( $method_args_config as $i=>$param ){
+                
+                if( is_numeric($i) && isset($route_args[$i]) ){
+                    $param_name=$i;
+		    $arg_value=rawurldecode($route_args[$param_name]);
+		    $this->check($arg_value, $param);
 		    $method_args[]=$arg_value;
-		} else {
-		    $method_args[]=is_array($var_type)?$this->request($var_name,$var_type[0],$var_type[1]):$this->request($var_name,$var_type);
+                    continue;
 		}
+                if( $param instanceof ReflectionParameter ){
+                    $param_name=$param->getName();
+                    $param_default=$param->isOptional()?null:$param->getDefaultValue();
+                    $param_type=$param->hasType()?$param->getType():'string';
+                } else {
+		    $param_name=$i;
+                    $param_default=is_array($param)?$param[1]:null;
+                    $param_type=is_array($param)?$param[0]:'string';
+		}
+                $method_args[]=$this->request($param_name,$param_type,$param_default);
 	    }
 	    return $method_args;
 	}
@@ -106,23 +123,23 @@ class Hub  extends CI_Controller{
 	$trigger_before=$this->svar('trigger_before');
 	if( isset($trigger_before[$model_name]) || isset($trigger_before["$model_name/$method"]) ){
 	    $this->pluginCheckIfPublicFile($model_name,$method,$route_args);
-	    $model_override=$trigger_before[$model_name];
-	    $this->load->add_package_path(APPPATH.'plugins/'.$model_override, FALSE);
-	    if( $model_override===$model_name ){//if plugin ovverides it self then adding package is enough
+	    $model_listener=$trigger_before[$model_name];
+	    $this->load->add_package_path(APPPATH.'plugins/'.$model_listener, FALSE);
+	    if( $model_listener===$model_name ){//if plugin ovverides it self then adding package is enough
 		return false;
 	    }
-	    $this->execute($model_override, $method, $route_args);
+	    $this->execute($model_listener, "before$model_name".ucfirst($method), $route_args);
 	}
     }
     private function pluginTriggerAfter($model_name,$method,$route_args){
 	$trigger_after=$this->svar('trigger_after');
 	if( isset($trigger_after[$model_name]) || isset($trigger_after["$model_name/$method"]) ){
-	    $model_override=$trigger_after[$model_name];
-	    $this->load->add_package_path(APPPATH.'plugins/'.$model_override, FALSE);
-	    if( $model_override===$model_name ){//if plugin ovverides it self then adding package is enough
+	    $model_listener=$trigger_after[$model_name];
+	    $this->load->add_package_path(APPPATH.'plugins/'.$model_listener, FALSE);
+	    if( $model_listener===$model_name ){//if plugin ovverides it self then adding package is enough
 		return false;
 	    }
-	    $this->execute($model_override, $method, $route_args);
+	    $this->execute($model_listener, "after$model_name".ucfirst($method), $route_args);
 	}
     }
     private function pluginCheckIfPublicFile($model_name,$method,$route_args){
@@ -203,11 +220,11 @@ class Hub  extends CI_Controller{
     public function set_level($allowed_level) {
 	if ($this->svar('user_level') < $allowed_level) {
 	    if ($this->svar('user_level') == 0) {
-		$this->msg("РўРµРєСѓС‰РёР№ СѓСЂРѕРІРµРЅСЊ " . $this->level_names[$this->svar('user_level') * 1]);
-		$this->msg("РќРµРѕР±С…РѕРґРёРј СѓСЂРѕРІРµРЅСЊ РґРѕСЃС‚СѓРїР° " . $this->level_names[$allowed_level]);
+		$this->msg("Текущий уровень " . $this->level_names[$this->svar('user_level') * 1]);
+		$this->msg("Необходим уровень доступа " . $this->level_names[$allowed_level]);
 		$this->kick_out();
 	    } else {
-		$this->msg("РќРµРѕР±С…РѕРґРёРј РјРёРЅ. СѓСЂРѕРІРµРЅСЊ РґРѕСЃС‚СѓРїР° '{$this->level_names[$allowed_level]}'");
+		$this->msg("Необходим мин. уровень доступа '{$this->level_names[$allowed_level]}'");
 		$this->response(0);
 	    }
 	}
@@ -267,13 +284,13 @@ class Hub  extends CI_Controller{
 	$error = $this->db->error();
 	switch( $error['code'] ){
 	    case 1451:
-		$this->msg('Р­Р»РµРјРµРЅС‚ РёРїРѕР»СЊР·СѓРµС‚СЃСЏ, РїРѕСЌС‚РѕРјСѓ РЅРµ РјРѕР¶РµС‚ Р±С‹С‚СЊ РёР·РјРµРЅРµРЅ РёР»Рё СѓРґР°Р»РµРЅ!');
+		$this->msg('Элемент ипользуется, поэтому не может быть изменен или удален!');
 		break;
 	    case 1452:
-		$this->msg('РќРѕРІРѕРµ Р·РЅР°С‡РµРЅРёРµ РѕС‚СЃСѓС‚СЃС‚РІСѓРµС‚ РІ РІС‹С€РµСЃС‚РѕСЏС‰РµР№ С‚Р°Р±Р»РёС†Рµ!');
+		$this->msg('Новое значение отсутствует в вышестоящей таблице!');
 		break;
 	    case 1062:
-		$this->msg('Р—Р°РїРёСЃСЊ СЃ С‚Р°РєРёРј РєР»СЋС‡РµРј СѓР¶Рµ РµСЃС‚СЊ!');
+		$this->msg('Запись с таким ключем уже есть!');
 		break;
 	    default:
 		header("X-isell-type:error");

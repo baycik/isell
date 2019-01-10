@@ -1,16 +1,16 @@
 <?php
 /* User Level: 2
- * Group Name: ĞŸÑ€Ğ¾Ğ´Ğ°Ğ¶Ğ¸
+ * Group Name: Ïğîäàæè
  * Plugin Name: SalePlanManager
  * Version: 2019-01-05
- * Description: Ğ Ğ°ÑÑ‡ĞµÑ‚ Ğ¿Ğ»Ğ°Ğ½Ğ¾Ğ² Ğ¸ Ğ±Ğ¾Ğ½ÑƒÑĞ¾Ğ² Ğ¼ĞµĞ½ĞµĞ´Ğ¶ĞµÑ€Ğ¾Ğ²
+ * Description: Ğàñ÷åò ïëàíîâ è áîíóñîâ ìåíåäæåğîâ
  * Author: baycik 2019
  * Author URI: 
  * Trigger After: DocumentItems
  */
 class SalePlanManager extends Catalog{
     public $listFetch=[];
-    public function listFetch(){
+    public function afterDocumentItemsListFetch( string $hello ){
         echo 'por favor';
         return $this->Hub->previous_return;
     }
