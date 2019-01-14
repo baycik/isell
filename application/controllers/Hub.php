@@ -1,5 +1,5 @@
 <?php
-//date_default_timezone_set('Europe/Kiev');
+date_default_timezone_set('Europe/Moscow');
 spl_autoload_register(function ($class_name) {
     $filename=APPPATH.'models/'.$class_name . '.php';
     if( file_exists($filename) ){
@@ -8,8 +8,8 @@ spl_autoload_register(function ($class_name) {
 });
 
 
-class Hub  extends CI_Controller{
-    public $level_names=["Íåò äîñòóïà","Îãðàíè÷åííûé","Ìåíåäæåð","Áóõãàëòåð","Àäìèíèñòðàòîð"];
+class Hub  extends CI_Controller{ 
+    public $level_names=["ÐÐµÑ‚ Ð´Ð¾ÑÑ‚ÑƒÐ¿Ð°","ÐžÐ³Ñ€Ð°Ð½Ð¸Ñ‡ÐµÐ½Ð½Ñ‹Ð¹","ÐœÐµÐ½ÐµÐ´Ð¶ÐµÑ€","Ð‘ÑƒÑ…Ð³Ð°Ð»Ñ‚ÐµÑ€","ÐÐ´Ð¼Ð¸Ð½Ð¸ÑÑ‚Ñ€Ð°Ñ‚Ð¾Ñ€"];
     private $rtype='OK';
     private $msg='';
     public $log_output_messages=false;
@@ -75,10 +75,8 @@ class Hub  extends CI_Controller{
 	    if( !method_exists($model_name, $method) ){
 		show_error("X-isell-error: No such method '$method' in $model_name", 500);
 	    }
-            
 	    if( isset($Model->$method) ){
-		!$Model->$method && show_error("X-isell-error: '$method' not accessible from outside. Access denied", 500);
-                
+		$Model->$method===false && show_error("X-isell-error: '$method' not accessible from outside. Access denied", 500);
                 $method_args_config=$Model->$method;
 	    } else {//read_method_arguments
                 $reflectionMethod = new ReflectionMethod($Model, $method);
@@ -96,7 +94,6 @@ class Hub  extends CI_Controller{
 	if( is_array($method_args_config) ){
 	    $method_args=[];
 	    foreach( $method_args_config as $i=>$param ){
-                
                 if( is_numeric($i) && isset($route_args[$i]) ){
                     $param_name=$i;
 		    $arg_value=rawurldecode($route_args[$param_name]);
@@ -104,14 +101,14 @@ class Hub  extends CI_Controller{
 		    $method_args[]=$arg_value;
                     continue;
 		}
-                if( $param instanceof ReflectionParameter ){
+                /*if( $param instanceof ReflectionParameter ){
                     $param_name=$param->getName();
-                    $param_default=$param->isOptional()?null:$param->getDefaultValue();
+                    $param_default=$param->isOptional()?$param->getDefaultValue():null;
                     $param_type=$param->hasType()?$param->getType():'string';
-                } else {
+                }*/ else {
 		    $param_name=$i;
                     $param_default=is_array($param)?$param[1]:null;
-                    $param_type=is_array($param)?$param[0]:'string';
+                    $param_type=is_array($param)?$param[0]:$param;
 		}
                 $method_args[]=$this->request($param_name,$param_type,$param_default);
 	    }
@@ -220,11 +217,11 @@ class Hub  extends CI_Controller{
     public function set_level($allowed_level) {
 	if ($this->svar('user_level') < $allowed_level) {
 	    if ($this->svar('user_level') == 0) {
-		$this->msg("Òåêóùèé óðîâåíü " . $this->level_names[$this->svar('user_level') * 1]);
-		$this->msg("Íåîáõîäèì óðîâåíü äîñòóïà " . $this->level_names[$allowed_level]);
+		$this->msg("Ð¢ÐµÐºÑƒÑ‰Ð¸Ð¹ ÑƒÑ€Ð¾Ð²ÐµÐ½ÑŒ " . $this->level_names[$this->svar('user_level') * 1]);
+		$this->msg("ÐÐµÐ¾Ð±Ñ…Ð¾Ð´Ð¸Ð¼ ÑƒÑ€Ð¾Ð²ÐµÐ½ÑŒ Ð´Ð¾ÑÑ‚ÑƒÐ¿Ð° " . $this->level_names[$allowed_level]);
 		$this->kick_out();
 	    } else {
-		$this->msg("Íåîáõîäèì ìèí. óðîâåíü äîñòóïà '{$this->level_names[$allowed_level]}'");
+		$this->msg("ÐÐµÐ¾Ð±Ñ…Ð¾Ð´Ð¸Ð¼ Ð¼Ð¸Ð½. ÑƒÑ€Ð¾Ð²ÐµÐ½ÑŒ Ð´Ð¾ÑÑ‚ÑƒÐ¿Ð° '{$this->level_names[$allowed_level]}'");
 		$this->response(0);
 	    }
 	}
@@ -284,13 +281,13 @@ class Hub  extends CI_Controller{
 	$error = $this->db->error();
 	switch( $error['code'] ){
 	    case 1451:
-		$this->msg('Ýëåìåíò èïîëüçóåòñÿ, ïîýòîìó íå ìîæåò áûòü èçìåíåí èëè óäàëåí!');
+		$this->msg('Ð­Ð»ÐµÐ¼ÐµÐ½Ñ‚ Ð¸Ð¿Ð¾Ð»ÑŒÐ·ÑƒÐµÑ‚ÑÑ, Ð¿Ð¾ÑÑ‚Ð¾Ð¼Ñƒ Ð½Ðµ Ð¼Ð¾Ð¶ÐµÑ‚ Ð±Ñ‹Ñ‚ÑŒ Ð¸Ð·Ð¼ÐµÐ½ÐµÐ½ Ð¸Ð»Ð¸ ÑƒÐ´Ð°Ð»ÐµÐ½!');
 		break;
 	    case 1452:
-		$this->msg('Íîâîå çíà÷åíèå îòñóòñòâóåò â âûøåñòîÿùåé òàáëèöå!');
+		$this->msg('ÐÐ¾Ð²Ð¾Ðµ Ð·Ð½Ð°Ñ‡ÐµÐ½Ð¸Ðµ Ð¾Ñ‚ÑÑƒÑ‚ÑÑ‚Ð²ÑƒÐµÑ‚ Ð² Ð²Ñ‹ÑˆÐµÑÑ‚Ð¾ÑÑ‰ÐµÐ¹ Ñ‚Ð°Ð±Ð»Ð¸Ñ†Ðµ!');
 		break;
 	    case 1062:
-		$this->msg('Çàïèñü ñ òàêèì êëþ÷åì óæå åñòü!');
+		$this->msg('Ð—Ð°Ð¿Ð¸ÑÑŒ Ñ Ñ‚Ð°ÐºÐ¸Ð¼ ÐºÐ»ÑŽÑ‡ÐµÐ¼ ÑƒÐ¶Ðµ ÐµÑÑ‚ÑŒ!');
 		break;
 	    default:
 		header("X-isell-type:error");
@@ -322,7 +319,7 @@ class Hub  extends CI_Controller{
 	    $this->output->set_header("Content-type:text/html;charset=utf8"); 
 	    $this->output->set_output($response);	    
 	}
-	$this->output->_display();
+        $this->output->_display();
 	exit;
     }
 }

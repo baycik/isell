@@ -1,9 +1,9 @@
 <?php
 /* User Level: 2
- * Group Name: Ïðîäàæè
+ * Group Name: ÐŸÑ€Ð¾Ð´Ð°Ð¶Ð¸
  * Plugin Name: SalePlanManager
  * Version: 2019-01-05
- * Description: Ðàñ÷åò ïëàíîâ è áîíóñîâ ìåíåäæåðîâ
+ * Description: Ð Ð°ÑÑ‡ÐµÑ‚ Ð¿Ð»Ð°Ð½Ð¾Ð² Ð¸ Ð±Ð¾Ð½ÑƒÑÐ¾Ð² Ð¼ÐµÐ½ÐµÐ´Ð¶ÐµÑ€Ð¾Ð²
  * Author: baycik 2019
  * Author URI: 
  * Trigger After: DocumentItems
