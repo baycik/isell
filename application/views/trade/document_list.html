@@ -1,171 +1,24 @@
-<script>
-    App.page_trade_document_list = (function () {
-	var require = [
-	    "js/slick/lib/jquery.event.drag-2.3.0.js",
-	    ["js/slick/slick.core.js",
-	    "js/slick/slick.grid.js",
-	    "js/slick/plugins/slick.rowselectionmodel.js",
-	    "js/slick/slick.editors.js",
-	    "js/slick/slickinfinite.js"]
-	];
-	var DocList = {
-	    init:function(){
-		DocList.table.init();
-		$(".x-doclist-tools").click(function (e) {
-		    var action = $(e.target).data('action');
-		    if (action) {
-			DocList.tools[action] && DocList.tools[action]();
-		    }
-		});
-		DocList.tools.swap_expand_collapse();
-	    },
-	    tools:{
-		reload:function(){
-		    DocList.grid.reload();
-		},
-                add:function(){
-                    Document.load(0);
-                },
-		expand_collapse:function(){
-		    if (DocList.table.columnMode === 'advanced') {
-			DocList.table.columnMode = 'simple';
-			App.store('document_list_table_mode', 'simple');
-		    } else {
-			DocList.table.columnMode = 'advanced';
-			App.store('document_list_table_mode', 'advanced');
-		    }
-		    DocList.table.render();
-		    DocList.grid.reload();
-		    DocList.tools.swap_expand_collapse();
-		},
-		swap_expand_collapse:function(){
-		    if(DocList.table.columnMode === 'advanced'){
-			$(".x-doclist-tools .icon-expand").removeClass("icon-expand").addClass("icon-collapse");
-		    } else {
-			$(".x-doclist-tools .icon-collapse").removeClass("icon-collapse").addClass("icon-expand");
+<script type="text/javascript">
+    /* global App,DocList,TradeJs,CtreeInline */
+    DocList = App.page_trade_document_list = {
+	init: function () {
+            DocList.doc.init();
+	    App.handler.progress(function(status,pcomp){
+                if( status==='passiveCompanyInited' ||  status==='passiveCompanySelected' || status==='activeCompanySelected' ){
+		    DocList.list.readyToLoad=true;
+                    DocList.list.selectedDocId=0;
+		    DocList.list.load();
+		    if( CtreeInline ){
+			CtreeInline.unselectTree();
+			//CtreeInline.unselectCombo();
 		    }
 		}
-	    },
-	    table: {
-		frm:{
-		    round: function (num) {
-			return isNaN(num) ? '' : Number.parseFloat(num).toFixed(2);
-		    },
-		    tooltip: function (row, cell, value, columnDef, dataContext) {
-			if (!value) {
-			    return '';
-			}
-			var parts = value.split(' ');
-			var cmd = parts.shift();
-			if (cmd) {
-			    var style = 'max-width:16px;height:auto';
-			    return '<img src="img/' + cmd + '.png" data-action="'+cmd+'" style="' + style + '" title="' + parts.join(' ') + '">';
-			} else {
-			    return '';
-			}
-		    },
-		    dateFormatter: function (row, cell, value, columnDef, dataContext) {
-                        if( !value ){
-                            return '';
-                        }
-			var date_parts = value.split(' ')[0].split('-');
-			var date = date_parts[2] + '.' + date_parts[1] + '.' + date_parts[0];
-			return '<span title="' + value.split(' ')[1] + '">' + date + '</span>';
-		    }
-		},
-		columnMode: App.store('document_list_table_mode') || 'simple',
-		init: function () {
-		    var settings = {
-			columns: [],
-			options: {
-			    enableCellNavigation: true,
-			    enableColumnReorder: false,
-			    enableFilter: true,
-                            disableLoadScroll:true,
-                            disableAutoload:true,
-			    multiSelect: false,
-			    url: 'DocumentList/listFetch',
-			    explicitInitialization: true,
-                            pagesize:20,
-                            params:{
-                                mode:'add_empty_row'
-                            }
-			}
-		    };
-		    DocList.grid = $("#doclist_sg").slickgrid(settings);
-		    DocList.grid.onSelectedRowsChanged.subscribe(function (e, selection) {
-			var doclistRow = selection.grid.getDataItem(selection.rows[0]);
-			Document.init(doclistRow.doc_type);
-			Document.load(doclistRow.doc_id);
-		    });
-                    DocList.grid.onClick.subscribe(function(e,cell){
-                        if( cell.cell==4 ){
-                            var row=DocList.grid.getDataItem(cell.row);
-                            if( row.trans_status ){
-                                var status=row.trans_status.split(' ')[0];
-                                if( "unpayed partly payed".indexOf(status)>-1 ){
-                                    App.loadWindow("page/accounts/document_pay",{doc_id:row.doc_id,total:row.doc_total}).done(function(fvalue){
-                                        DocList.grid.reload();
-                                    });
-                                } else if( "closing closed".indexOf(status)>-1 ){
-                                    App.flash("Документ уже оплачен");
-                                }
-                            }
-                        }
-                        console.log(arguments);
-                    });
-		    App.Topic('passiveCompanySelected').subscribe(function (company) {
-			DocList.grid.updateOptions({params: {mode: 'show_only_pcomp_docs,add_empty_row'}});
-			DocList.grid.reload();
-		    });
-		    App.Topic('passiveCompanyReset').subscribe(function (company) {
-			DocList.grid.updateOptions({params: {mode: 'add_empty_row'}});
-			DocList.grid.reload();
-		    });
-		    DocList.table.render();
-		    DocList.grid.init();
-		    //DocList.grid.reload();
-		},
-		columnsGet:function(){
-                    var columns_lev1=[
-                        {id: "doc_type_icon", field: "doc_type_icon", name: "", width: 25, formatter: DocList.table.frm.tooltip},
-			{id: "doc_num", field: "doc_num", name: "Номер", width: 50, sortable: true, cssClass: 'slick-align-right'},
-			{id: "cstamp", field: "cstamp", name: "Дата", width: 80, sortable: true, formatter: DocList.table.frm.dateFormatter},
-			{id: "doc_total_frm", field: "doc_total_frm", name: "Сумма", width: 80, sortable: true, cssClass: 'slick-align-right'},
-			{id: "trans_status", field: "trans_status", name: "Оплачен", width: 25, sortable: true, formatter: DocList.table.frm.tooltip},
-                    ];
-                    var columns_adv=[
-			{id: "pcomp_label", field: "pcomp_label", name: "Контрагент", width: 120},
-			{id: "is_commited", field: "is_commited", name: "Проведен", width: 25, formatter: DocList.table.frm.tooltip},
-			{id: "doc_type_name", field: "doc_type_name", name: "Тип документа", sortable: true, width: 150},
-			{id: "views", field: "views", name: "Напечатано", width: 70}
-                    ];
-                    var columns=columns_lev1;
-		    if( DocList.table.columnMode==='advanced' ){
-			columns=columns.concat(columns_adv);
-		    }
-                    return columns;
-		},
-		render:function(){
-		    DocList.grid.updateOptions({params:{colmode:DocList.table.columnMode}});
-		    var cols=DocList.table.columnsGet();
-                    DocList.table.columnSummaryWidth=0;
-                    for( var i in cols ){
-                        DocList.table.columnSummaryWidth+=cols[i].width+1;
-                    }
-		    DocList.grid.setColumnsAndFilters(cols);
-		    DocList.table.setDimensions("#doclist_sg",25,0);
-		},
-		setDimensions:function(query, dw, dh){
-		    var col_width = DocList.table.columnSummaryWidth+ (dw || 0);
-		    $(query).css('width', col_width + 'px');
-		}
-	    }
-	};
-        var Document={
+            });
+	},
+	doc:{
 	    doc_id:null,
 	    init:function(){
-		App.loadModule('page/trade/document',{doc_id:this.doc_id,open_in:'panel'},'DocInline',/(Doc|page_trade_document)([^\w]|_)/g,"DocInline$2").progress(function(status,param){
+		App.loadModule('page/trade/document',{doc_id:DocList.doc.doc_id,open_in:'panel'},'DocInline',/(Doc|page_trade_document)([^\w]|_)/g,"DocInline$2").progress(function(status,param){
                     switch( status ){
 			case 'close':
 			    $('#document_list_dg').datagrid('unselectAll');
@@ -174,14 +27,14 @@
 			case 'uncommit':
 			case 'commit':
 			case 'head_changed':
-			    //DocList.list.suppressOnSelect=true;
-			    DocList.grid.reload();
+			    DocList.list.suppressOnSelect=true;
+			    $('#document_list_dg').datagrid('reload');
 			    break;
 			case 'created':
-			    //DocList.doc.doc_id=param;
-			    //DocList.list.selectedDocId=param;
-			    //DocList.list.suppressOnSelect=true;
-			    DocList.grid.reload();
+			    DocList.doc.doc_id=param;
+			    DocList.list.selectedDocId=param;
+			    DocList.list.suppressOnSelect=true;
+			    $('#document_list_dg').datagrid('reload');
 			    break;
 			case 'pcomp_changed':
 			    App.user.pcompSelect({company_id:param});
@@ -195,45 +48,145 @@
 	    },
 	    load:function( doc_id ){
 		this.doc_id=doc_id;
-		if( Document && Document.data ){
-		    Document.data.doc_id=this.doc_id;
-		    Document.init();
+		if( App.DocInline && App.DocInline.data ){
+		    App.DocInline.data.doc_id=this.doc_id;
+		    App.DocInline.init();
 		} else {
 		    this.init();
 		}
 	    }
 	}
-	function init() {
-	    DocList.init();
-            Document.load(0);
+    };
+	
+    DocList.list = {
+	readyToLoad:false,
+	init: function () {
+	},
+	load:function(){
+            if( App.pcomp ){
+                $('#document_list_dg').datagrid('reload');
+                $("#doc_list_pcompname").text(App.pcomp.label);
+            }
+	},
+	loader: function (param, success, error) {
+            if( DocList.list.readyToLoad ){
+                App.get(App.uri('DocumentCore', 'listFetch', param.page, param.rows, 'show_only_pcomp_docs'), {filterRules: param.filterRules}, function (xhr) {
+                    var resp = App.json(xhr);
+                    if (resp.rows) {
+                        resp.rows.unshift(DocList.list.getNewDocRow());
+                        success(resp);
+                        if (DocList.list.selectedDocId) {
+                            $('#document_list_dg').datagrid('selectRecord', DocList.list.selectedDocId);
+                        } else {
+                            setTimeout(function(){
+                                //Sometimes doc is not loaded yet
+                                $('#document_list_dg').datagrid('selectRow', 0);
+                            },0);
+			}
+                    }
+                    else {
+                        success({
+                            rows: [DocList.list.getNewDocRow()],
+                            total: 1
+                        });
+                    }
+                    $('#document_list_dg').datagrid('mergeCells', {index: 0,field: 'doc_num',colspan: 5});
+                });
+            } else {
+                success({rows: [],total: 1});
+            }
+	},
+	getNewDocRow: function () {
+	    return {
+		doc_id: 0,
+		doc_num: 'Создать новый документ',
+		doc_type_icon: "new Новый документ"
+	    };
+	},
+	toggleFilter: function () {
+	    if (this.filterEnabled) {
+		$('#document_list_dg').datagrid('disableFilter');
+		this.filterEnabled = false;
+	    }
+	    else {
+		$('#document_list_dg').datagrid('enableFilter');
+		this.filterEnabled = true;
+	    }
+	},
+	onSelect: function (index, row) {
+	    if ( DocList.list.suppressOnSelect ) {
+		DocList.list.suppressOnSelect=false;
+		return;
+	    }
+	    DocList.list.selectedDocId=row.doc_id;
+	    DocList.doc.load(row.doc_id);
+	},
+	rowPayTooltip:function(value,row){
+	    return App.datagrid.tooltip(value,row,'DocList.list.payTrans()');
+	},
+	payTrans:function(){
+	    var row=$('#document_list_dg').datagrid('getSelected');
+	    if( row.trans_status ){
+		var status=row.trans_status.split(' ')[0];
+		if( "unpayed partly payed".indexOf(status)>-1 ){
+		    App.loadWindow("page/accounts/document_pay",{doc_id:row.doc_id,total:row.amount}).done(function(fvalue){
+			$('#document_list_dg').datagrid('reload');
+		    });
+		} else if( "closing closed".indexOf(status)>-1 ){
+		    App.flash("Документ уже оплачен");
+		}
+	    }
 	}
-	return {
-	    require: require,
-	    init: init
-	};
-    })();
+	/*,
+	createDoc: function () {
+	    App.post('DocumentCore/createDoc', function (resp) {
+		if (resp * 1 !== 0) {
+		    DocList.list.selectedDocId = resp;
+		    $('#document_list_dg').datagrid('reload');
+		}
+	    });
+	}*/
+    };
 </script>
-<style>
-    #doclistgrid {
-	margin: 1px;
-	display: grid;
-	grid-template-columns: min-content min-content;
-	grid-gap:5px;
-    }
-</style>
-<div id="doclistgrid">
-    <div style="vertical-align: top;" id="DocInline" class="transp60"></div>
-    <div>
-	<div class="x-doclist-tools transp60">
-	    <div style="float: left;font-weight: bold;padding-top: 8px;">
-		<img src="img/table16.png" style="width:16px;height: 16px;"> Документы
+<table style="border-collapse: collapse;">
+    <tr>
+	<td style="vertical-align: top;width:700px;"> 
+	    <div id="DocInline"></div>
+	</td>
+	<td style="vertical-align: top">
+	    <div>
+		<div style="float: left;font-weight: bold;padding-top: 8px;">
+		    <img src="img/table16.png" style="width:16px;height: 16px;"> Документы <span id="doc_list_pcompname"></span>
+		</div>
+		<div style="float: right">
+		    <span class="icon-24 icon-tablefilter" title="Фильтр таблицы" onclick="DocList.list.toggleFilter()"> </span>
+		    <span class="icon-24 icon-refresh" title="Обновить" onclick="$('#document_list_dg').datagrid('reload')"> </span> 
+		</div>
 	    </div>
-	    <div style="float: right">
-		<span class="icon-24 icon-create" data-action="add" title="Создать документ"> </span> 
-		<span class="icon-24 icon-expand" data-action="expand_collapse" title="Полный/Сокращенный режим"> </span> 
-		<span class="icon-24 icon-refresh" data-action="reload" title="Обновить"> </span> 
-	    </div>
-	</div>
-	<div id="doclist_sg" style="height:600px;"></div>
-    </div>
-</div>
+	    <table id="document_list_dg" class="easyui-datagrid" style="width:260px"
+		   data-options="
+		   idField:'doc_id',
+		   loader:DocList.list.loader,
+		   pagination:true,
+		   pageSize:30,
+		   pageList:[30,60,120,600],
+		   singleSelect:true,
+		   remoteFilter:true,
+		   onSelect:DocList.list.onSelect,
+		   onLoadSuccess:function(){$('#document_list_dg').datagrid('resize');},
+		   method:'get'">
+		<thead>
+		    <tr>
+			<th data-options="width:25,field:'doc_type_icon',align:'center',formatter:App.datagrid.tooltip">Тип</th>
+			<th data-options="width:45,field:'doc_num',align:'left'">Номер</th>
+			<th data-options="width:65,field:'doc_date'">Дата</th>
+			<th data-options="width:70,field:'amount',align:'right',formatter:function(num){ return isNaN(num*1)?'':App.formatNum( (num*1).toFixed(2)); }">Сумма</th>
+			<th data-options="width:25,field:'commited',align:'center',formatter:App.datagrid.tooltip"></th>
+			<th data-options="width:25,field:'trans_status',align:'center',formatter:DocList.list.rowPayTooltip"></th>
+		    </tr>
+		</thead>
+	    </table>
+	</td>
+    </tr>
+</table>
+
