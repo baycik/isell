@@ -107,8 +107,8 @@ class Hub  extends CI_Controller{
                     $param_type=$param->hasType()?$param->getType():'string';
                 }*/ else {
 		    $param_name=$i;
-                    $param_default=is_array($param)?$param[1]:null;
-                    $param_type=is_array($param)?$param[0]:$param;
+                    $param_default= is_array($param)?$param[1]:null;
+                    $param_type=    is_array($param)?$param[0]:$param;
 		}
                 $method_args[]=$this->request($param_name,$param_type,$param_default);
 	    }

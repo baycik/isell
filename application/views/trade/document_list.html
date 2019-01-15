@@ -23,6 +23,9 @@
 		reload:function(){
 		    DocList.grid.reload();
 		},
+                add:function(){
+                    Document.load(0);
+                },
 		expand_collapse:function(){
 		    if (DocList.table.columnMode === 'advanced') {
 			DocList.table.columnMode = 'simple';
@@ -56,12 +59,15 @@
 			var cmd = parts.shift();
 			if (cmd) {
 			    var style = 'max-width:16px;height:auto';
-			    return '<img src="img/' + cmd + '.png" style="' + style + '" title="' + parts.join(' ') + '">';
+			    return '<img src="img/' + cmd + '.png" data-action="'+cmd+'" style="' + style + '" title="' + parts.join(' ') + '">';
 			} else {
 			    return '';
 			}
 		    },
 		    dateFormatter: function (row, cell, value, columnDef, dataContext) {
+                        if( !value ){
+                            return '';
+                        }
 			var date_parts = value.split(' ')[0].split('-');
 			var date = date_parts[2] + '.' + date_parts[1] + '.' + date_parts[0];
 			return '<span title="' + value.split(' ')[1] + '">' + date + '</span>';
@@ -75,9 +81,15 @@
 			    enableCellNavigation: true,
 			    enableColumnReorder: false,
 			    enableFilter: true,
+                            disableLoadScroll:true,
+                            disableAutoload:true,
 			    multiSelect: false,
 			    url: 'DocumentList/listFetch',
-			    explicitInitialization: true
+			    explicitInitialization: true,
+                            pagesize:20,
+                            params:{
+                                mode:'add_empty_row'
+                            }
 			}
 		    };
 		    DocList.grid = $("#doclist_sg").slickgrid(settings);
@@ -86,23 +98,39 @@
 			Document.init(doclistRow.doc_type);
 			Document.load(doclistRow.doc_id);
 		    });
+                    DocList.grid.onClick.subscribe(function(e,cell){
+                        if( cell.cell==4 ){
+                            var row=DocList.grid.getDataItem(cell.row);
+                            if( row.trans_status ){
+                                var status=row.trans_status.split(' ')[0];
+                                if( "unpayed partly payed".indexOf(status)>-1 ){
+                                    App.loadWindow("page/accounts/document_pay",{doc_id:row.doc_id,total:row.doc_total}).done(function(fvalue){
+                                        DocList.grid.reload();
+                                    });
+                                } else if( "closing closed".indexOf(status)>-1 ){
+                                    App.flash("Документ уже оплачен");
+                                }
+                            }
+                        }
+                        console.log(arguments);
+                    });
 		    App.Topic('passiveCompanySelected').subscribe(function (company) {
-			DocList.grid.updateOptions({params: {mode: 'show_only_pcomp_docs'}});
+			DocList.grid.updateOptions({params: {mode: 'show_only_pcomp_docs,add_empty_row'}});
 			DocList.grid.reload();
 		    });
 		    App.Topic('passiveCompanyReset').subscribe(function (company) {
-			DocList.grid.updateOptions({params: {mode: ''}});
+			DocList.grid.updateOptions({params: {mode: 'add_empty_row'}});
 			DocList.grid.reload();
 		    });
 		    DocList.table.render();
 		    DocList.grid.init();
-		    DocList.grid.reload();
+		    //DocList.grid.reload();
 		},
 		columnsGet:function(){
                     var columns_lev1=[
                         {id: "doc_type_icon", field: "doc_type_icon", name: "", width: 25, formatter: DocList.table.frm.tooltip},
 			{id: "doc_num", field: "doc_num", name: "Номер", width: 50, sortable: true, cssClass: 'slick-align-right'},
-			{id: "cstamp", field: "cstamp", name: "Дата", width: 70, sortable: true, formatter: DocList.table.frm.dateFormatter},
+			{id: "cstamp", field: "cstamp", name: "Дата", width: 80, sortable: true, formatter: DocList.table.frm.dateFormatter},
 			{id: "doc_total_frm", field: "doc_total_frm", name: "Сумма", width: 80, sortable: true, cssClass: 'slick-align-right'},
 			{id: "trans_status", field: "trans_status", name: "Оплачен", width: 25, sortable: true, formatter: DocList.table.frm.tooltip},
                     ];
@@ -137,7 +165,7 @@
         var Document={
 	    doc_id:null,
 	    init:function(){
-		App.loadModule('page/trade/document',{doc_id:DocList.doc.doc_id,open_in:'panel'},'DocInline',/(Doc|page_trade_document)([^\w]|_)/g,"DocInline$2").progress(function(status,param){
+		App.loadModule('page/trade/document',{doc_id:this.doc_id,open_in:'panel'},'DocInline',/(Doc|page_trade_document)([^\w]|_)/g,"DocInline$2").progress(function(status,param){
                     switch( status ){
 			case 'close':
 			    $('#document_list_dg').datagrid('unselectAll');
@@ -146,14 +174,14 @@
 			case 'uncommit':
 			case 'commit':
 			case 'head_changed':
-			    DocList.list.suppressOnSelect=true;
-			    $('#document_list_dg').datagrid('reload');
+			    //DocList.list.suppressOnSelect=true;
+			    DocList.grid.reload();
 			    break;
 			case 'created':
-			    DocList.doc.doc_id=param;
-			    DocList.list.selectedDocId=param;
-			    DocList.list.suppressOnSelect=true;
-			    $('#document_list_dg').datagrid('reload');
+			    //DocList.doc.doc_id=param;
+			    //DocList.list.selectedDocId=param;
+			    //DocList.list.suppressOnSelect=true;
+			    DocList.grid.reload();
 			    break;
 			case 'pcomp_changed':
 			    App.user.pcompSelect({company_id:param});
@@ -167,9 +195,9 @@
 	    },
 	    load:function( doc_id ){
 		this.doc_id=doc_id;
-		if( App.DocInline && App.DocInline.data ){
-		    App.DocInline.data.doc_id=this.doc_id;
-		    App.DocInline.init();
+		if( Document && Document.data ){
+		    Document.data.doc_id=this.doc_id;
+		    Document.init();
 		} else {
 		    this.init();
 		}
@@ -177,6 +205,7 @@
 	}
 	function init() {
 	    DocList.init();
+            Document.load(0);
 	}
 	return {
 	    require: require,
@@ -193,17 +222,18 @@
     }
 </style>
 <div id="doclistgrid">
+    <div style="vertical-align: top;" id="DocInline" class="transp60"></div>
     <div>
 	<div class="x-doclist-tools transp60">
 	    <div style="float: left;font-weight: bold;padding-top: 8px;">
 		<img src="img/table16.png" style="width:16px;height: 16px;"> Документы
 	    </div>
 	    <div style="float: right">
+		<span class="icon-24 icon-create" data-action="add" title="Создать документ"> </span> 
 		<span class="icon-24 icon-expand" data-action="expand_collapse" title="Полный/Сокращенный режим"> </span> 
 		<span class="icon-24 icon-refresh" data-action="reload" title="Обновить"> </span> 
 	    </div>
 	</div>
-	<div id="doclist_sg" style="height:700px"></div>
+	<div id="doclist_sg" style="height:600px;"></div>
     </div>
-    <div style="vertical-align: top;width:800px;" id="DocInline" class="transp60"></div>
 </div>
