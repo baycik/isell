@@ -13,14 +13,16 @@ class DocumentManager extends Catalog{
     public function result($offset,$limit,$sortby,$sortdir,$filter=null,$config){
 	$add=[0];
 	$extract=[0];
-	foreach($config as $doc_id=>$action){
-	    if($action == 'add'){
-		$add[]=$doc_id;
-	    }
-	    if($action == 'extract'){
-		$extract[]=$doc_id;
-	    }
-	}
+        if( $config ){
+            foreach($config as $doc_id=>$action){
+                if($action == 'add'){
+                    $add[]=$doc_id;
+                }
+                if($action == 'extract'){
+                    $extract[]=$doc_id;
+                }
+            }
+        }
 	$add_in=  implode(',', $add);
 	$extract_in=  implode(',', $extract);
 	if( empty($sortby) ){
