@@ -22,6 +22,8 @@
         
 	grid = new Slick.Grid(node, remoteModel.data, columns, options);
 	grid.setSelectionModel(new Slick.RowSelectionModel());
+        grid.onRenderFinished = new Slick.Event();
+        
         grid.loadNext=remoteModel.loadNext;
 	grid.updateOptions=function(new_options){
 	    options=$.extend(true, options, new_options);
@@ -88,7 +90,7 @@
 	    };
             if( options.disableLoadScroll ){
                 grid.reload = function () {
-                    remoteModel.reloadData();
+                    remoteModel.reloadAll();
                 };
             } else {
                 grid.reload = function () {
@@ -112,6 +114,7 @@
 		}
 		grid.updateRowCount();
 		grid.render();
+                grid.onRenderFinished.notify(args);
 	    });
 	    !options.disableAutoload && grid.reload();
 	}
@@ -197,11 +200,12 @@ $.fn.slickgrid = function (settings) {
 
         function loadNext( count ){
             count=count?count:PAGESIZE;
-            ensureData(total_row_count, total_row_count+PAGESIZE);
+            ensureData(total_row_count, total_row_count+count);
         }
 
         function reloadAll(){
-            reloadData(0, total_row_count || PAGESIZE);
+            clear();
+            makeRequest(0, total_row_count || PAGESIZE);
         }
 
 	function reloadData(from, to) {
@@ -307,6 +311,7 @@ $.fn.slickgrid = function (settings) {
 	    "isDataLoaded": isDataLoaded,
 	    "ensureData": ensureData,
 	    "reloadData": reloadData,
+	    "reloadAll": reloadAll,
 	    "reloadRow":reloadRow,
 	    "setSort": setSort,
 	    "setFilter": setFilter,
