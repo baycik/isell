@@ -182,7 +182,7 @@ class MobiSell extends PluginManager {
         if ($doc_entry_id) {
             $DocumentItems->entryUpdate($doc_id, $doc_entry_id, 'product_quantity', $product_quantity);
         } else {
-            $DocumentItems->entryAdd($product_code, $product_quantity);
+            $DocumentItems->entryAdd($doc_id, $product_code, $product_quantity);
         }
         return $this->documentGet($doc_id);
     }
