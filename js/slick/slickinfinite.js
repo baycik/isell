@@ -200,13 +200,13 @@ $.fn.slickgrid = function (settings) {
             ensureData(total_row_count, total_row_count+PAGESIZE);
         }
 
+        function reloadAll(){
+            reloadData(0, total_row_count || PAGESIZE);
+        }
+
 	function reloadData(from, to) {
-            if( from && to ){
-                clear();
-                ensureData(from, to);
-            } else {
-                makeRequest(0, total_row_count || PAGESIZE);
-            }
+            clear();
+            ensureData(from, to);
 	}
 
 	function setSort(column, dir) {
