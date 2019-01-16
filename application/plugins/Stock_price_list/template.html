@@ -49,7 +49,8 @@
     <table border>
         <tbody>
         {loop name="v->price_blocks"}
-            {if="$value->type=='category' && $num=count($value->rows)"}
+            {if="$value->type=='category'"}
+                {if="$num=count($value->rows)"}
                 {loop name="$value->rows"}
                     <tr style="height: {$value1->rows_height}px;" {if="$value->product_price!=$value->promo_product_price"}class="promo"{/if}>
                         <td class="product_code" {if="$value->in_stock"}style="color:black"{/if}>{$value->product_code}</td>
@@ -86,6 +87,9 @@
                         {/if}
                     </tr>	
                 {/loop}
+                {else}
+                
+                {/if}
             {else}
             </tbody></table>
                 {if="$value->type=='page'"}
