@@ -40,8 +40,8 @@ class Reports_stock_movements extends Catalog{
     public function viewGet(){
 	$active_filter=$this->all_active?'':' AND active_company_id='.$this->Hub->acomp('company_id');
 	$reclamation_filter=$this->count_reclamations?'':' AND is_reclamation=0';
-        $having=$this->group_by_filter?"HAVING group_by LIKE '%$this->group_by_filter%'":"";
         
+        $having=$this->group_by_filter?"HAVING group_by LIKE '%".str_replace(",", "%' OR group_by LIKE '%", $this->group_by_filter)."%'":"";
         
         if( $this->include_vat ){
             $leftover_calc_mode='selfprice include_vat';
