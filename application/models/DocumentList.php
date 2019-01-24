@@ -74,9 +74,9 @@ class DocumentList extends Catalog{
 		document_view_types dvt USING(view_type_id)
 	    WHERE dl.active_company_id = '$active_company_id' $andwhere
 	    GROUP BY doc_id
-	    HAVING $having
 	    ORDER BY dl.is_commited,$sortby $sortdir
-	    LIMIT $limit OFFSET $offset) t";
+	    LIMIT $limit OFFSET $offset) t
+            HAVING $having";
         $rows=$this->get_list($sql);
 	if( $offset==0 && strpos($mode,'add_empty_row')!==FALSE ){
             $rows= array_merge([['doc_id'=>0,'doc_type_icon'=>"new "]],$rows);
