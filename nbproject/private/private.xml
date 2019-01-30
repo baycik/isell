@@ -2,18 +2,6 @@
 <project-private xmlns="http://www.netbeans.org/ns/project-private/1">
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
-        <group>
-            <file>file:/W:/iSell/www/ayderIsell/application/plugins/MobiSell/public/checkout_document.html</file>
-            <file>file:/W:/iSell/www/ayderIsell/application/libraries/FileEngineWrapper.php</file>
-            <file>file:/W:/iSell/www/ayderIsell/application/views/rpt/Wrapper.php</file>
-            <file>file:/W:/iSell/www/ayderIsell/application/libraries/FileEngine.php</file>
-            <file>file:/W:/iSell/www/ayderIsell/application/models/Checkout.php</file>
-            <file>file:/W:/iSell/www/ayderIsell/application/views/trade/document.html</file>
-            <file>file:/W:/iSell/www/ayderIsell/application/models/proc/Document.php</file>
-            <file>file:/W:/iSell/www/ayderIsell/application/plugins/MobiSell/public/document.html</file>
-            <file>file:/W:/iSell/www/ayderIsell/application/models/DocumentView.php</file>
-            <file>file:/W:/iSell/www/ayderIsell/application/models/ViewManager.php</file>
-            <file>file:/W:/iSell/www/ayderIsell/application/plugins/MobiSell/public/checkout_document_list.html</file>
-        </group>
+        <group/>
     </open-files>
 </project-private>

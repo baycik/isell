@@ -1,0 +1,247 @@
+<script type="text/javascript">
+    /* global App */
+    App.AttributeManager_attribute_manager={
+	init:function(){
+            App.require(["js/slick/lib/jquery.event.drag-2.3.0.js"], function () {
+                App.require([
+                    "js/slick/slick.core.js",
+                    "js/slick/plugins/slick.rowselectionmodel.js",
+                    "js/slick/slick.editors.js",
+                    "js/slick/slickinfinite.js",
+                    "js/slick/slick.grid.js"
+                ], function(){
+                    App.AttributeManager_attribute_manager.table.init();
+                    App.AttributeManager_attribute_manager.entries.init();
+                });
+            });
+            
+        },
+        table:{
+            current_id: '',
+            list:[],
+            init: function(){
+                var settings = {
+			columns:  [
+                            {id: "attribute_name1", field: "attribute_name", name: "Название",  width: 120,cssClass: 'slick-align-left'},
+                            {id: "attribute_unit1", field: "attribute_unit", name: "Единица",  width: 140,cssClass: 'slick-align-left'}
+                        ],
+			options: {
+			    editable: false,
+			    enableCellNavigation: true,
+			    enableColumnReorder: false,
+			    enableFilter: true,
+			    url: 'AttributeManager/listFetch/'
+			}
+		    };
+                    
+		    App.AttributeManager_attribute_manager.table.grid = new SlickInfinite("#attribute_list_sg", settings);
+                    App.AttributeManager_attribute_manager.table.grid.onClick.subscribe(function (e, data) {
+                        var row_data=App.AttributeManager_attribute_manager.table.grid.getDataItem(data.row);
+                        App.AttributeManager_attribute_manager.table.current_id = row_data.attribute_id;
+                        App.AttributeManager_attribute_manager.entries.grid.updateOptions({params:{attribute_id:row_data.attribute_id}});
+                        App.AttributeManager_attribute_manager.entries.grid.reload();
+		    });
+                    
+                    $(".x-attribute-tools").click(function (e) {
+                        var action = $(e.target).data('action');
+                        if (action) {
+                            App.AttributeManager_attribute_manager.table.tools[action] && App.AttributeManager_attribute_manager.table.tools[action]();
+                        }
+                    });
+            },
+            frm: {
+                queue:function(row, cell, value, columnDef, dataContext){
+                    return row+1;
+                }, 
+            },
+            
+            tools:{
+                entryEdit: function (focus) {
+                    var row_data = '';
+                    var selected_rows = App.AttributeManager_attribute_manager.table.grid.getSelectedRows();
+		    if (!selected_rows.length && !focus) {
+			App.flash("Ни одна строка не выбрана!");
+			return;
+		    }
+                    
+		    
+                    if(focus && focus.attribute_id == 0){
+                        row_data.attribute_id = 0;
+                        row_data.attribute_name = '';
+                        row_data.attribute_unit = '';
+                    }else{
+                        row_data=App.AttributeManager_attribute_manager.table.grid.getDataItem(selected_rows[0]);
+                        row_data.focus=focus;
+                    };
+                    App.loadWindow("AttributeManager/editor", {row: row_data}).progress(function (status, fvalue) {
+                        if (status === 'submit') {
+                           $.post('AttributeManager/attributeUpdate', {attribute_id: fvalue.attribute_id, attribute_name: fvalue.attribute_name, attribute_unit: fvalue.attribute_unit}, function (ok) {
+                                if (ok * 1) {
+                                    App.AttributeManager_attribute_manager.table.grid.reload();
+                                    App.flash("Атрибуты изменены");
+                                } else {
+                                    App.flash("Атрибуты не изменились");
+                                }
+                            });
+                        }
+                    });
+                },
+                entryCreate: function() {
+                    var row_data = {
+                        attribute_id: 0
+                    }
+                   App.AttributeManager_attribute_manager.table.tools.entryEdit(row_data);
+                },
+                entryDelete: function () {
+		    var selected_rows = App.AttributeManager_attribute_manager.table.grid.getSelectedRows();
+                    var rows = [];
+		    if (!selected_rows.length) {
+			App.flash("Ни одна строка не выбрана!");
+			return;
+		    }
+		    if (!confirm("Удалить выделенные атрибуты?")) {
+			return;
+		    }
+                    for (var i in selected_rows) {
+                        rows.push(App.AttributeManager_attribute_manager.table.grid.getDataItem(selected_rows[i]));
+		    }
+		    $.post('AttributeManager/attributeDelete', {rows: JSON.stringify(rows)}, function (ok) {
+			if (ok * 1) {
+			    App.flash("Атрибут удален");
+			    App.AttributeManager_attribute_manager.table.grid.reload();
+			} else {
+			    App.flash("Атрибут не удален");
+			}
+		    });
+		}
+            }
+        },
+        entries:{
+            recent_code: '',
+            list:[],
+            init: function(){
+                var settings = {
+			columns:  [
+                            {id: "product_code", field: "product_code", name: "Код", width: 80,cssClass: 'slick-align-right'},
+                            {id: "ru", field: "ru", name: "Название", width: 250,cssClass: 'slick-align-left'},
+                            {id: "attribute_name", field: "attribute_name", name: "Атрибут", width: 70,cssClass: 'slick-align-right'},
+                            {id: "attribute_value", field: "attribute_value", name: "Значение атрибута", editor: Slick.Editors.Text, width: 70,cssClass: 'slick-align-right'},
+                            {id: "attribute_unit", field: "attribute_unit", name: "Единица", width: 70,cssClass: 'slick-align-right'}
+                        ],
+			options: {
+			    editable: true,
+			    enableCellNavigation: true,
+			    enableColumnReorder: false,
+			    enableFilter: true,
+			    url: 'AttributeManager/getProducts/'
+			}
+		    };
+		    App.AttributeManager_attribute_manager.entries.grid = new SlickInfinite("#attribute_entries_sg", settings);
+                    App.AttributeManager_attribute_manager.entries.grid.onCellChange.subscribe(function (e, data) {
+			var updatedEntry = data.item;
+			var field = App.AttributeManager_attribute_manager.entries.grid.getColumns()[data.cell].field;
+			var value = updatedEntry[field];
+                        console.log(updatedEntry.attribute_id, updatedEntry.product_id, value);
+                        if(!value){
+                            App.flash("Пустое значение недопустимо");
+                             App.AttributeManager_attribute_manager.entries.grid.reload();
+                            return;
+                        }
+			App.AttributeManager_attribute_manager.entries.update(updatedEntry.attribute_id, updatedEntry.product_id, value).done(function () {
+			    //Leftovers.grid.rowReload(data.row);
+			});
+		    });
+                    $(".x-attribute-entries-tools").click(function (e) {
+                        var action = $(e.target).data('action');
+                        if (action) {
+                            App.AttributeManager_attribute_manager.entries.tools[action] && App.AttributeManager_attribute_manager.entries.tools[action]();
+                        }
+                    });
+            },
+            update:function(attribute_id, product_id, attribute_value) {
+                return $.post('AttributeManager/attributeValueUpdate', {attribute_id: attribute_id, product_id: product_id, attribute_value: attribute_value}, function (ok) {
+                    if (ok) {
+                        App.AttributeManager_attribute_manager.entries.grid.reload();
+                    }
+                });
+            },
+            tools:{
+                addProduct: function () {
+                    var selected_rows = App.AttributeManager_attribute_manager.table.grid.getSelectedRows();
+                    var row = App.AttributeManager_attribute_manager.table.grid.getDataItem(selected_rows[0]);
+                    if(!row){
+                        return;
+                    }
+                    var product_code = prompt('Введите код товара', App.AttributeManager_attribute_manager.entries.recent_code);
+                    App.AttributeManager_attribute_manager.entries.recent_code = product_code;
+                    return $.post('AttributeManager/addProduct', {attribute_id:row.attribute_id, product_code:product_code, attribute_value: '0'}, function (ok) {
+                    if (ok) {
+                        App.AttributeManager_attribute_manager.entries.grid.reload();
+                    }
+                });
+                    
+                },
+                import: function () {
+                    
+		    var config = [
+			{name: 'Код товара', field: 'product_code', required: true}
+		    ];
+                    var attributes = [];
+                    $.post('AttributeManager/getAttributes', function(resp){
+                        attributes = App.json(resp);
+                        for (var i=0; i<attributes.length; i++){
+                            var attribute = {
+                                name: attributes[i].attribute_name,
+                                field: 'attribute_' + attributes[i].attribute_id
+                            };
+                            config.push(attribute);
+                        }
+                    });
+                    App.loadWindow('page/dialog/importer', {label: 'атрибуты', fields_to_import: config}).progress(function (status, fvalue, Importer) {
+			if (status === 'submit') {
+			    App.post("AttributeManager/import/", fvalue, function (ok) {
+				App.flash("Добавлено/Изменено " + ok);
+				App.AttributeManager_attribute_manager.entries.grid.reload();
+				Importer.reload();
+			    });
+			}
+		    });
+                }
+            }           
+        }
+    };
+</script>
+<div >
+    <table>
+        <tr>
+            <td class="transp60">
+                <div style="text-align: center; font-size: 13px;  color: darkblue">
+                    <img src="img/ProductCard.png" style="float:left; height:20px; width:auto">
+                    Список атрибутов
+                </div>
+                <div class="x-attribute-tools" style="text-align: right;padding-top:11px">
+                    <span data-action="entryEdit" class="icon-24 icon-change" title="Изменить"> </span>
+                    <span data-action="entryCreate" class="icon-24 icon-create" title="Добавить"> </span>
+                    <span data-action="entryDelete" class="icon-24 icon-delete" title="Удалить"> </span>
+                    <span class="icon-24 icon-refresh" title="Обновить" onclick="App.AttributeManager_attribute_manager.table.grid.reload()"></span>
+                </div>
+                <div style="width: 280px; height: 500px; float:left" id="attribute_list_sg"></div>
+            </td>
+            
+            <td class="transp60">
+                <div  style="width:590px ">
+                    <div title="Подробности"  style="min-height: 500px;">
+                        <div class="x-attribute-entries-tools" style="text-align: right;">
+                             <span data-action="addProduct" class="icon-24 icon-create" title="Добавить"> </span>
+                            <span data-action="import" class="icon-24 icon-import" title="Импорт"> </span>
+                             <span class="icon-24 icon-refresh" title="Обновить" style="float:right" onclick="App.AttributeManager_attribute_manager.entries.grid.reload()"></span>
+                        </div>
+                        <div style="width: 565px; height: 500px;" id="attribute_entries_sg">
+                            <h1><<Выберите документ</h1>
+                        </div> 
+                    </div>
+                </div>
+            </td>
+        <tr>
+    </table>
+</div>

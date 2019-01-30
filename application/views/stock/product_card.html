@@ -37,6 +37,8 @@
 		};
 		App.page_stock_product_card.unpackPrices();
 	    }
+            /*PLUGINS GO HERE!!DO NOT ERASE THIS TEXT, ITS AN ANCHOR*/
+            
 	    App.page_stock_product_card.initWidgets();
             if( this.data.enablePrevnext ){
                 $("#stock_prod_card_prevnext").css('visibility','visible');   
@@ -200,7 +202,6 @@
 		});
 	    }
 	}
-	
     };
 </script>
 <form id="page_stock_product_card_frm" onsubmit="App.page_stock_product_card.submit(event)">
@@ -309,6 +310,7 @@
 	    <input name="analyse_brand" title="Бренд">
 	    <input name="analyse_class" title="Класс">
 	</div>
+        <!--ATTRIBUTE_PLUGIN-->
     </div>
     <div style="text-align: center;margin-top: 15px;clear: both">
         <button type="submit" onclick="App.page_stock_product_card.closeOnSave=true;"><img src="img/Save-24.png" /> Сохранить</button>
@@ -319,3 +321,4 @@
         </span>
     </div>
 </form>
+
