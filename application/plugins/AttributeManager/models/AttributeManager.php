@@ -25,8 +25,8 @@ class AttributeManager extends Catalog{
     public $listFetch = ['offset' => ['int', 0], 'limit' => ['int', 5], 'sortby' => 'string', 'sortdir' => '(ASC|DESC)', 'filter' => 'json'];
     public function listFetch( $offset, $limit, $sortby, $sortdir, $filter = null){
         if (empty($sortby)) {
-	    $sortby = "attribute_id";
-	    $sortdir = "DESC";
+	    $sortby = "attribute_name";
+	    $sortdir = "ASC";
 	}
         $null = null;
         $having = '';
@@ -104,6 +104,7 @@ class AttributeManager extends Catalog{
                 *
             FROM 
                 attribute_list
+            ORDER BY attribute_name
             ";
         return $this->get_list($sql);
     }
@@ -118,7 +119,7 @@ class AttributeManager extends Catalog{
 		attribute_list USING (attribute_id)
             WHERE 
                 av.product_id = (SELECT product_id FROM prod_list WHERE product_code = '$product_code')
-                AND av.attribute_id IN (SELECT distinct av.attribute_id FROM attribute_values)
+            ORDER BY attribute_name
         ";
         return $this->get_list($sql);
     }
@@ -151,8 +152,8 @@ class AttributeManager extends Catalog{
     public $getProducts = [ 'attribute_id' => 'int', 'attribute_name' => 'string', 'attribute_unit' => 'string','offset' => ['int', 0], 'limit' => ['int', 5], 'sortby' => 'string', 'sortdir' => '(ASC|DESC)', 'filter' => 'json'];
     public function getProducts( $attribute_id, $attribute_name, $attribute_unit,$offset, $limit, $sortby, $sortdir, $filter = null ){
          if (empty($sortby)) {
-	    $sortby = "attribute_id";
-	    $sortdir = "DESC";
+	    $sortby = "attribute_name";
+	    $sortdir = "ASC";
 	}
         $null = null;
         $having = '';
@@ -174,7 +175,7 @@ class AttributeManager extends Catalog{
                 attribute_list USING(attribute_id)    
             $where
             $having
-            ORDER BY $sortby $sortdir
+            ORDER BY product_code, $sortby $sortdir
             LIMIT $limit OFFSET $offset
             ";
         return $this->get_list($sql);
