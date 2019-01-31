@@ -76,10 +76,7 @@ class AttributeManager extends Catalog{
     
     public $attributeDelete = ['rows' => 'json'];
     public function attributeDelete( $rows ){
-       
         foreach($rows as $row){
-           
-            
             $sql = "
             DELETE FROM 
                 attribute_list

@@ -178,9 +178,27 @@
                     if (ok) {
                         App.AttributeManager_attribute_manager.entries.grid.reload();
                     }
-                });
-                    
+                });  
                 },
+                deleteProduct: function () {
+		    var selected_rows = App.AttributeManager_attribute_manager.entries.grid.getSelectedRows();
+                    var row = App.AttributeManager_attribute_manager.entries.grid.getDataItem(selected_rows[0]);
+		    if (!selected_rows.length) {
+			App.flash("Ни одна строка не выбрана!");
+			return;
+		    }
+		    if (!confirm("Открепить товар от атрибута?")) {
+			return;
+		    }
+		    $.post('AttributeManager/deleteProduct', {attribute_id:row.attribute_id, product_code:row.product_code}, function (ok) {
+			if (ok * 1) {
+			    App.flash("Товар откреплен от атрибута");
+			    App.AttributeManager_attribute_manager.entries.grid.reload();
+			} else {
+			    App.flash("Не удалось открепить товар от атрибута");
+			}
+		    });
+		},
                 import: function () {
                     
 		    var config = [
@@ -233,6 +251,7 @@
                     <div title="Подробности"  style="min-height: 500px;">
                         <div class="x-attribute-entries-tools" style="text-align: right;">
                              <span data-action="addProduct" class="icon-24 icon-create" title="Добавить"> </span>
+                             <span data-action="deleteProduct" class="icon-24 icon-delete" title="Удалить"> </span>
                             <span data-action="import" class="icon-24 icon-import" title="Импорт"> </span>
                              <span class="icon-24 icon-refresh" title="Обновить" style="float:right" onclick="App.AttributeManager_attribute_manager.entries.grid.reload()"></span>
                         </div>
