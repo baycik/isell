@@ -10,7 +10,17 @@
  */
 class AttributeManager extends Catalog{
     
-  
+    public $min_level=3;
+    public function install(){
+	$install_file=__DIR__."/install.sql";
+	$this->load->model('Maintain');
+	return $this->Maintain->backupImportExecute($install_file);
+    }
+    public function uninstall(){
+	$uninstall_file=__DIR__."/uninstall.sql";
+	$this->load->model('Maintain');
+	return $this->Maintain->backupImportExecute($uninstall_file);
+    }
     
     public $listFetch = ['offset' => ['int', 0], 'limit' => ['int', 5], 'sortby' => 'string', 'sortdir' => '(ASC|DESC)', 'filter' => 'json'];
     public function listFetch( $offset, $limit, $sortby, $sortdir, $filter = null){
