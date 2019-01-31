@@ -1,0 +1,46 @@
+<script type="text/javascript">
+    /*global App */
+    App.AttributeManager_editor = {
+	parsed:true,
+	init: function () {
+	    this.node.window({
+		title: 'Редактировать атрибут',
+		width: 550,
+                top:50,
+		height: 'auto',
+		shadow:false,
+		onClose:function(){
+                    delete App.attribute_manager_editor;
+		}
+	    });
+            
+	    this.node.window('hcenter');
+	    this.node.window('window').css('position','fixed');
+            
+            
+	    $("#attribute_manager_editor_label").html(this.data.row.attribute_name||"Новый");
+	    App.setupForm("#attribute_manager_editor_frm",{},"use_inp_values");
+            $("input[name='attribute_id']").val(this.data.row.attribute_id);
+            $("input[name='attribute_name']").val(this.data.row.attribute_name);
+            $("input[name='attribute_unit']").val(this.data.row.attribute_unit);
+	},
+	submit:function(e){
+	    e.preventDefault();
+	    var fvalue=App.collectForm("#attribute_manager_editor_frm");
+	    this.handler.notify('submit',fvalue);
+	    App.AttributeManager_editor.node.window('close')
+	}
+    };
+</script>
+<form id="attribute_manager_editor_frm" onsubmit="App.AttributeManager_editor.submit(event)">
+    <p style="padding: 5px">
+    <big>Редактирование атрибута "<b id="attribute_manager_editor_label"></b>"</big>
+    </p>
+    <input type="hidden" name="attribute_id" title="Код">
+    <input name="attribute_name" title="Название" required="required">
+    <input name="attribute_unit" title="Обозначение">
+    <div style="text-align: center;margin-top: 15px;">
+	<button type="submit"><img src="img/plus.png" style="width:24px;height: 24px;" /> Сохранить</button>
+	<button type="button" onclick="App.AttributeManager_editor.node.window('close')"><img src="img/close24.png" /> Закрыть</button>
+    </div>
+</form>

@@ -1,0 +1,115 @@
+<div id="attribute_panel"> 
+{{product_attributes}}
+<div style="clear: both;padding-top: 2px;display: flex;padding: 7px;">
+   <div style="width:110px;">
+       <img src="img/delete.png" 
+            style="width:16px;height: auto" 
+            title="Удалить атрибут" 
+            onclick="App.page_stock_product_card.attributes.remove(this)"
+            data-name="{{attribute_name}}"
+            data-id="{{attribute_id}}"> {{attribute_name}} 
+   </div>
+   <div>
+       <input name="sell-{{attribute_id}}" value="{{attribute_value}}" style="width:80px;">
+   </div>
+   {{if attribute_unit}}
+   <div style="width:30px;margin-left: 10px">
+       {{attribute_unit}}
+   </div>
+   {{/if}}
+</div>
+{{/product_attributes}}
+<div style="clear: both;padding-top: 2px;display: flex;padding: 7px;">        
+       <select id="attribute_select" name="attribute_select"  style="width:110px" onchange="App.page_stock_product_card.attributes.renderInput()">
+           <option value="unset">-Не выбрано-</option>
+           {{attribute_list}}
+           <option value="{{attribute_id}}">{{attribute_name}}</option>
+           {{/attribute_list}}
+       </select>
+       <div >
+           <input name="new_attribute_value" type="text" value="" style="width:40px;margin-left: 10px;">
+       </div>
+       <div id="attribute_unit" style="width:30px;margin-left: 10px"></div>
+       <button class="tiny_button" type="button" title="Добавить категорию цен" onclick="App.page_stock_product_card.attributes.add()"><img src="img/add.png"> Добавить</button>
+</div>
+</div>
+<script>
+    
+     App.page_stock_product_card.attributes = {
+            list: [],
+            product_attributes: [],
+            getAttributesByCode: function(product_code){
+                $.post('AttributeManager/getAttributesByCode', {product_code: product_code},function(resp){
+		    if(resp){
+                        App.page_stock_product_card.attributes.product_attributes = App.json(resp);
+                        App.renderTpl('attribute_panel',{product_attributes: App.page_stock_product_card.attributes.product_attributes});
+		    }
+		});
+            },
+            load: function(){
+                $.post('AttributeManager/getAttributes',function(resp){
+		    if(resp){
+                        App.page_stock_product_card.attributes.list = App.json(resp);
+                        App.renderTpl('attribute_select',{attribute_list: App.page_stock_product_card.attributes.list});
+		    }
+		});
+            },
+            remove:function(node){
+		var attribute_id=$(node).data('id');
+                var product_code = App.page_stock_product_card.data.product_code;
+		if( !confirm("Удалить атрибут "+ $(node).data('name') +"?") ){
+		    return ;
+		};
+                $.post('AttributeManager/deleteProduct',{attribute_id:attribute_id, product_code:product_code},function(resp){
+		    if(resp){
+                        App.page_stock_product_card.attributes.getAttributesByCode(App.page_stock_product_card.data.product_code);
+                        App.renderTpl('attribute_select',{attribute_list: App.page_stock_product_card.attributes.list});
+		    }
+		});
+	    },
+	    add:function(){
+                var attribute_id = $("#attribute_select").val();  
+                if (attribute_id == 'unset'){
+                    App.flash("Выберите атрибут");
+                    return;
+                }
+                
+                var product_code = App.page_stock_product_card.data.product_code;
+                var attribute_value = $("input[name='new_attribute_value']").val();
+                if (attribute_value == ''){
+                    App.flash("Введите значение атрибута");
+                    return;
+                }
+                var validate = ["'", '"', '`', '~', '/', ';', ':','|','$','#','[',']','{','}'];
+                for (var i=0; i<validate.length; i++){
+                    if(attribute_value.indexOf(validate[i]) == 0){
+                        App.flash("Недопустимые знаки: ' ` ~ / ; : | $ # [ ] { }");
+                        App.AttributeManager_attribute_manager.entries.grid.reload();
+                        return false;
+                    }
+                }
+                $.post('AttributeManager/addProduct',{attribute_id:attribute_id, product_code:product_code, attribute_value:attribute_value },function(resp){
+		    if(resp){
+                        App.page_stock_product_card.attributes.getAttributesByCode(App.page_stock_product_card.data.product_code);
+                        App.renderTpl('attribute_select',{attribute_list: App.page_stock_product_card.attributes.list});
+		    }
+		});
+                
+	    },
+            renderInput: function (){
+                var attribute_id = $("#attribute_select").val();  
+                for( var i = 0; i < App.page_stock_product_card.attributes.list.length; i++){
+                    if(attribute_id == App.page_stock_product_card.attributes.list[i].attribute_id ){
+                        $('#attribute_unit').html(App.page_stock_product_card.attributes.list[i].attribute_unit);
+                        return;
+                    }
+                }
+            }
+            
+        };
+        
+
+        App.page_stock_product_card.attributes.load();
+        App.page_stock_product_card.attributes.getAttributesByCode(App.page_stock_product_card.data.product_code);
+        
+</script>
