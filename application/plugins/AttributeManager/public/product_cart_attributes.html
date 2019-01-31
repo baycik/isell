@@ -80,6 +80,14 @@
                     App.flash("Введите значение атрибута");
                     return;
                 }
+                var validate = ["'", '"', '`', '~', '/', ';', ':','|','$','#','[',']','{','}'];
+                for (var i=0; i<validate.length; i++){
+                    if(attribute_value.indexOf(validate[i]) == 0){
+                        App.flash("Недопустимые знаки: ' ` ~ / ; : | $ # [ ] { }");
+                        App.AttributeManager_attribute_manager.entries.grid.reload();
+                        return false;
+                    }
+                }
                 $.post('AttributeManager/addProduct',{attribute_id:attribute_id, product_code:product_code, attribute_value:attribute_value },function(resp){
 		    if(resp){
                         App.page_stock_product_card.attributes.getAttributesByCode(App.page_stock_product_card.data.product_code);

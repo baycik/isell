@@ -141,15 +141,12 @@
 			var updatedEntry = data.item;
 			var field = App.AttributeManager_attribute_manager.entries.grid.getColumns()[data.cell].field;
 			var value = updatedEntry[field];
-                        console.log(updatedEntry.attribute_id, updatedEntry.product_id, value);
                         if(!value){
                             App.flash("Пустое значение недопустимо");
                              App.AttributeManager_attribute_manager.entries.grid.reload();
                             return;
                         }
-			App.AttributeManager_attribute_manager.entries.update(updatedEntry.attribute_id, updatedEntry.product_id, value).done(function () {
-			    //Leftovers.grid.rowReload(data.row);
-			});
+			App.AttributeManager_attribute_manager.entries.update(updatedEntry.attribute_id, updatedEntry.product_id, value);
 		    });
                     $(".x-attribute-entries-tools").click(function (e) {
                         var action = $(e.target).data('action');
@@ -159,6 +156,16 @@
                     });
             },
             update:function(attribute_id, product_id, attribute_value) {
+                var validate = ["'", '"', '`', '~', '/', ';', ':','|','$','#','[',']','{','}'];
+                for (var i=0; i<validate.length; i++){
+                    if(attribute_value.indexOf(validate[i]) == 0){
+                        App.flash("Недопустимые знаки: ' ` ~ / ; : | $ # [ ] { }");
+                        App.AttributeManager_attribute_manager.entries.grid.reload();
+                        return false;
+                    }
+                }
+                
+                //if(attribute_value.indexOf(validate))
                 return $.post('AttributeManager/attributeValueUpdate', {attribute_id: attribute_id, product_id: product_id, attribute_value: attribute_value}, function (ok) {
                     if (ok) {
                         App.AttributeManager_attribute_manager.entries.grid.reload();
