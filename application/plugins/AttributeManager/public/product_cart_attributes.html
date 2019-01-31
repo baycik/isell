@@ -27,7 +27,7 @@
             {{/attribute_list}}
         </select>
         <div >
-            <input name="new_attribute_value" type="text" value="" style="width:40px;margin-left: 10px;">
+            <input name="new_attribute_value" type="text" value="" style="width:40px;margin-left: 10px;" onkeypress="if(event.keyCode == 13)App.page_stock_product_card.attributes.add();event.preventDefault();">
         </div>
         <div id="attribute_unit" style="width:30px;margin-left: 10px"></div>
         <button class="tiny_button" type="button" title="Добавить категорию цен" onclick="App.page_stock_product_card.attributes.add()"><img src="img/add.png"> Добавить</button>
