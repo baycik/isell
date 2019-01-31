@@ -27,6 +27,7 @@ class Task extends Events {
     
     private function execute_task(){
 	$this->logErrors();
+        session_write_close();
         $this->currentTask->event_status = 'executing';
 	$this->currentTask->event_date_done=date("Y-m-d H:i");
         $this->saveTask();
@@ -48,6 +49,7 @@ class Task extends Events {
 	}
 	$program = json_decode($this->currentTask->event_program);
 	$program_length = count($program->commands);
+        $this->Hub->log_output_messages=true;
 	for ($i=0; $i < $program_length; $i++) {
 	    $command = $program->commands[$i];
 	    if ( $this->currentTask->event_target > $i ) {
@@ -109,7 +111,7 @@ class Task extends Events {
 	error_reporting( E_ALL );
     }
 
-    private function saveTask() {
+    public function saveTask() {
 	$user_id = $this->Hub->svar('user_id');
 	$this->currentTask->modified_by=$user_id;
 	return $this->update('event_list', $this->currentTask, ['event_id' => $this->currentTask->event_id]);

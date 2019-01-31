@@ -30,6 +30,11 @@
 	    
 	    App.page_company_details.load(App.page_company_details.data.company_id);
             this.initFormOnce();
+            App.handler.progress(function(status,data){
+                if( status==="activeCompanySelected" ){
+                    //App.page_company_details.load(data.company_id);
+                }
+            });
 	},
         initFormOnce:function(){
             if( this.formInited ){
@@ -128,7 +133,7 @@
 	},
 	DaDataSet:function(name,value){
 	    var current_value=$("input[name="+name+"]").val();
-	    if(current_value!=value){
+	    if(current_value!=value && value!=null && value!='' ){
 		$("input[name="+name+"]").val(value);
 		App.page_company_details.updateField(name,value,$("input[name="+name+"]").attr('title'));
 	    }
@@ -137,11 +142,6 @@
 	    if( this.data.is_active ){
 		this.node.find(".page_company_details_passive_details").hide();
 		this.node.find(".page_company_details_active_details").show();
-		App.handler.progress(function(status,data){
-		    if( status==="activeCompanySelected" ){
-			App.page_company_details.load(data.company_id);
-		    }
-		});
 	    } else{
                 this.node.find(".page_company_details_passive_details").show();
 		this.node.find(".page_company_details_active_details").hide();
@@ -152,7 +152,7 @@
 	},
 	load:function( company_id ){
 	    if( company_id*1 ){
-		App.get('Company/companyGet/'+company_id,function(xhr){
+		$.get('Company/companyGet/'+company_id,function(xhr){
 		    App.page_company_details.data=App.json(xhr);
 		    App.page_company_details.setup();
 		    App.page_company_details.setTitle();
@@ -164,7 +164,7 @@
 	    this.node.panel('setTitle','Реквизиты компании '+(App.page_company_details.data.label==='null'?App.page_company_details.data.label:'') );
 	},
 	updateField:function(field,value,title){
-	    App.post('Company/companyUpdate/',{company_id:App.page_company_details.data.company_id,field:field,value:value},function(ok){
+	    $.post('Company/companyUpdate/',{company_id:App.page_company_details.data.company_id,field:field,value:value},function(ok){
 		if( ok*1 ){
 		    App.page_company_details.data[field]=value;
 		    App.flash("Сохранено: " + title);

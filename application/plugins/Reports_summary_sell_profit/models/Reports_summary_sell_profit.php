@@ -81,7 +81,7 @@ class Reports_summary_sell_profit extends Catalog{
         }
 	$passive_groupper=$this->group_by_client?',passive_company_id':'';
 	$group_by_label=$this->group_by_client?"CONCAT($this->group_by,' / ',(SELECT company_name FROM companies_list WHERE company_id=passive_company_id))":"$this->group_by";
-        $having=$this->group_by_filter?"HAVING group_by LIKE '%$this->group_by_filter%'":"";
+        $having=$this->group_by_filter?"HAVING group_by LIKE '%".str_replace(",", "%' OR group_by LIKE '%", $this->group_by_filter)."%'":"";
 	
 	$this->query("DROP TEMPORARY TABLE IF EXISTS tmp_sell_profit;");
 	$main_table_sql="CREATE TEMPORARY TABLE tmp_sell_profit ( INDEX(product_code) ) ENGINE=MyISAM AS (

@@ -397,7 +397,10 @@ App.chatCheck=function(){
     if( App.user.signedIn ){
 	$.get('Chat/checkNew',function(resp){
 	    var count=resp*1;
-	    App.renderTpl('chat_panel',{count:count});
+            if( App.chatPrevCount !== count ){
+                App.renderTpl('chat_panel',{count:count});
+                App.chatPrevCount = count;
+            }
 	    if( count ){
 		App.flash("У вас новое сообщение!");
                 new Audio('img/icq_message_sound.mp3').play();

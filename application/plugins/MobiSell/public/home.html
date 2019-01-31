@@ -3,16 +3,22 @@
 	init: function () {
 	    this.focus();
             App.user.getData();
+            setTimeout(App.home.initSettings,111);
 	},
 	focus: function () {
 	    App.title("Главная");
-	}
+	},
+        initSettings:function(){
+            var device_has_numeric_keypad=localStorage.getItem('device_has_numeric_keypad')=='true'?1:0;
+            $('input[name=device_has_numeric_keypad]').prop('checked', device_has_numeric_keypad);
+            $("#home_version_date").html(new Date(document.lastModified).toLocaleDateString());
+        }
     };
 </script>
 <div style="text-align: center; margin-top: 15px">
     <img src="logo/144logo.png">
     <h1 class="ui header">MobiSell</h1>
-    <h2 class="ui sub header" style="color: lightgray; font-family: courier" >Version 1.5 beta</h2>
+    <h2 class="ui sub header" style="color: lightgray;" >Версия <span id="home_version_date"></span></h2>
 </div>
 
 <div id="user_info" class="ui blue segment raised covert" style="margin: 10px;">
@@ -52,7 +58,7 @@
 	    <div class="item">
 		<i class="settings icon"></i>
 		Настройки
-		<div class="ui secondary vertical menu">
+		<div class="ui secondary vertical menu fluid">
 		    <a href="javascript:App.clearCache()" class="item">
 			<i class="refresh icon"></i>
 			Сбросить настройки
@@ -69,9 +75,14 @@
 			<i class="sign out icon"></i>
 			Выход
 		    </a>
+                    <div class="inverted item">
+                        <div class="ui slider checkbox device_has_numeric_keypad">
+                            <input name="device_has_numeric_keypad" class="" type="checkbox" onchange="localStorage.setItem('device_has_numeric_keypad',$(this).is(':checked'));">
+                            <label>Использовать цифровую клавиатуру</label>
+                        </div>
+                    </div>
 		</div>
 	    </div>
-
 	</div>
     </div>
 </div>

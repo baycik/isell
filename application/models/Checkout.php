@@ -248,6 +248,11 @@ class Checkout extends Stock {
         $checkout_document = $this->checkoutDocumentGet($checkout_id);
         $source_doc_id = $checkout_document['head']->parent_doc_id;
         $document = $DocumentItems->entryDocumentGet($source_doc_id);
+	$result=[
+	    'added'=>0,
+	    'deleted'=>0,
+	    'updated'=>0
+	];
         foreach ($checkout_document['entries'] as $entry_check){
             $entry_exists_in_document=false;
             foreach ($document['entries'] as $entry_doc ){
@@ -255,18 +260,21 @@ class Checkout extends Stock {
                 if( $entry_check->product_id == $doc_product_id ){
                     if ( $entry_check->product_quantity_verified == 0 ){
                         $DocumentItems->entryDeleteArray($source_doc_id, [[$entry_doc->doc_entry_id]]);
+			$result['deleted']++;
                     } else {
                         $DocumentItems->entryUpdate($source_doc_id, $entry_doc->doc_entry_id, 'product_quantity', $entry_check->product_quantity_verified );
+			$result['updated']++;
                     }
                     $entry_exists_in_document=true;
                 }
             }
             if( !$entry_exists_in_document ){
                 $check_product_code = $this->get_value("SELECT product_code FROM prod_list WHERE product_id = '$entry_check->product_id'");
-                $DocumentItems->entryAdd($check_product_code, $entry_check->product_quantity_verified );
+                $DocumentItems->entryAdd(null,$check_product_code, $entry_check->product_quantity_verified );
+		$result['added']++;
             }
         }
-        return;
+        return $result;
     }
     
     private function checkoutCalcDifference($checkout_id){
@@ -291,7 +299,7 @@ class Checkout extends Stock {
             $this->checkoutUpdateDocStatus($checkout_id, 'checked_with_divergence');
             $more_doc_id = $DocumentItems->createDocument(2);
             foreach($entries_list_more as $item){
-                $DocumentItems->entryAdd($item->product_code, $item->difference);
+                $DocumentItems->entryAdd(null,$item->product_code, $item->difference);
             }
             $DocumentItems->headUpdate('doc_data',$document_comment);
             //$DocumentItems->entryDocumentCommit($more_doc_id);
@@ -315,12 +323,15 @@ class Checkout extends Stock {
             $this->checkoutUpdateDocStatus($checkout_id, 'checked_with_divergence');
             $less_doc_id = $DocumentItems->createDocument(1);
             foreach($entries_list_less as $item){
-                $DocumentItems->entryAdd($item->product_code, $item->difference);
+                $DocumentItems->entryAdd(null,$item->product_code, $item->difference);
             }
             $DocumentItems->headUpdate('doc_data',$document_comment);
             //$DocumentItems->entryDocumentCommit($less_doc_id);
         }
-        return [$more_doc_id, $less_doc_id];
+        return [
+	    'less'=>count($entries_list_less),
+	    'more'=>count($entries_list_more)
+	    ];
     }
     
     public $checkoutUp=['checkout_id'=>'int', 'file_name'=>'string'];

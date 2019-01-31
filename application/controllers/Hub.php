@@ -1,5 +1,5 @@
 <?php
-//date_default_timezone_set('Europe/Kiev');
+date_default_timezone_set('Europe/Moscow');
 spl_autoload_register(function ($class_name) {
     $filename=APPPATH.'models/'.$class_name . '.php';
     if( file_exists($filename) ){
@@ -8,10 +8,11 @@ spl_autoload_register(function ($class_name) {
 });
 
 
-class Hub  extends CI_Controller{
+class Hub  extends CI_Controller{ 
     public $level_names=["Нет доступа","Ограниченный","Менеджер","Бухгалтер","Администратор"];
     private $rtype='OK';
     private $msg='';
+    public $log_output_messages=false;
     function __construct(){
 	session_name('baycikSid');
 	session_start();
@@ -58,25 +59,32 @@ class Hub  extends CI_Controller{
     public function on( $model_name, $method='index' ){
 	$this->checkAnonymousAccess($model_name,$method);
 	$route_args =array_slice(func_get_args(), 2);
-	$this->pluginTrigger($model_name,$method,$route_args);
+	$this->pluginTriggerBefore($model_name,$method,$route_args);
 	$this->execute($model_name, $method, $route_args);
+	$this->pluginTriggerAfter($model_name,$method,$route_args);
+        if( !is_null($this->previous_return) ){
+            $this->response($this->previous_return);
+        }
     }
     
+    
+    public $previous_return;
     private function execute( $model_name, $method, $route_args ){
 	try{
 	    $Model=$this->load_model($model_name);
 	    if( !method_exists($model_name, $method) ){
 		show_error("X-isell-error: No such method '$method' in $model_name", 500);
 	    }
-	    if( !isset($Model->$method) ){
-		show_error("X-isell-error: '$method' config for arguments is not set. Access denied", 500);
-	    }
-	    $method_args_config=$Model->$method;
+	    if( isset($Model->$method) ){
+		$Model->$method===false && show_error("X-isell-error: '$method' not accessible from outside. Access denied", 500);
+                $method_args_config=$Model->$method;
+	    } else {//read_method_arguments
+                $reflectionMethod = new ReflectionMethod($Model, $method);
+                $method_args_config = $reflectionMethod->getParameters();
+            }
+	    
 	    $method_args=$this->parseMethodArguments($method_args_config, $route_args);
-	    $response=call_user_func_array([$Model, $method],$method_args);
-	    if( !is_null($response) ){
-		$this->response($response);
-	    }
+	    $this->previous_return=call_user_func_array([$Model, $method],$method_args);
 	} catch(Exception $e){
 	    show_error("X-isell-error: ".$e->getMessage(), 500);
 	}
@@ -85,16 +93,59 @@ class Hub  extends CI_Controller{
     private function parseMethodArguments($method_args_config,$route_args){
 	if( is_array($method_args_config) ){
 	    $method_args=[];
-	    foreach( $method_args_config as $var_name=>$var_type ){
-		if( is_numeric($var_name) && isset($route_args[$var_name]) ){
-		    $arg_value=rawurldecode($route_args[$var_name]);
-		    $this->check($arg_value, $var_type);
+	    foreach( $method_args_config as $i=>$param ){
+                if( is_numeric($i) && isset($route_args[$i]) ){
+                    $param_name=$i;
+		    $arg_value=rawurldecode($route_args[$param_name]);
+		    $this->check($arg_value, $param);
 		    $method_args[]=$arg_value;
-		} else {
-		    $method_args[]=is_array($var_type)?$this->request($var_name,$var_type[0],$var_type[1]):$this->request($var_name,$var_type);
+                    continue;
 		}
+                /*if( $param instanceof ReflectionParameter ){
+                    $param_name=$param->getName();
+                    $param_default=$param->isOptional()?$param->getDefaultValue():null;
+                    $param_type=$param->hasType()?$param->getType():'string';
+                }*/ else {
+		    $param_name=$i;
+                    $param_default= is_array($param)?$param[1]:null;
+                    $param_type=    is_array($param)?$param[0]:$param;
+		}
+                $method_args[]=$this->request($param_name,$param_type,$param_default);
 	    }
 	    return $method_args;
+	}
+    }
+    
+    private function pluginTriggerBefore($model_name,$method,$route_args){
+	$trigger_before=$this->svar('trigger_before');
+	if( isset($trigger_before[$model_name]) || isset($trigger_before["$model_name/$method"]) ){
+	    $this->pluginCheckIfPublicFile($model_name,$method,$route_args);
+	    $model_listener=$trigger_before[$model_name];
+	    $this->load->add_package_path(APPPATH.'plugins/'.$model_listener, FALSE);
+	    if( $model_listener===$model_name ){//if plugin ovverides it self then adding package is enough
+		return false;
+	    }
+	    $this->execute($model_listener, "before$model_name".ucfirst($method), $route_args);
+	}
+    }
+    private function pluginTriggerAfter($model_name,$method,$route_args){
+	$trigger_after=$this->svar('trigger_after');
+	if( isset($trigger_after[$model_name]) || isset($trigger_after["$model_name/$method"]) ){
+	    $model_listener=$trigger_after[$model_name];
+	    $this->load->add_package_path(APPPATH.'plugins/'.$model_listener, FALSE);
+	    if( $model_listener===$model_name ){//if plugin ovverides it self then adding package is enough
+		return false;
+	    }
+	    $this->execute($model_listener, "after$model_name".ucfirst($method), $route_args);
+	}
+    }
+    private function pluginCheckIfPublicFile($model_name,$method,$route_args){
+	$public_file_path=APPPATH."plugins/{$model_name}/public/$method".($route_args?"/".implode("/",$route_args):"");
+	if (file_exists($public_file_path)) {
+            header("X-isell-type: OK");
+	    $this->load->helper('download');
+	    force_download($public_file_path, null, true);
+	    exit;
 	}
     }
     
@@ -107,27 +158,6 @@ class Hub  extends CI_Controller{
 	$this->load->view($file_name);
     }
 
-    private function pluginTrigger($model_name,$method,$route_args){
-	$trigger_before=$this->svar('trigger_before');
-	if( isset($trigger_before[$model_name]) ){
-	    $this->pluginCheckIfPublicFile($model_name,$method,$route_args);
-	    $model_override=$trigger_before[$model_name];
-	    $this->load->add_package_path(APPPATH.'plugins/'.$model_override, FALSE);
-	    if( $model_override===$model_name ){//if plugin ovverides it self then adding package is enough
-		return false;
-	    }
-	    $this->execute($model_override, $method, $route_args);
-	}
-    }
-    private function pluginCheckIfPublicFile($model_name,$method,$route_args){
-	$public_file_path=APPPATH."plugins/{$model_name}/public/$method".($route_args?"/".implode("/",$route_args):"");
-	if (file_exists($public_file_path)) {
-            header("X-isell-type: OK");
-	    $this->load->helper('download');
-	    force_download($public_file_path, null, true);
-	    exit;
-	}
-    }
     /*
      * bridgeLoad function to load and use legacy iSell2 class files
      */
@@ -270,7 +300,12 @@ class Hub  extends CI_Controller{
 	if( isset($this->bridge) && $this->bridge->msg ){
 	    $this->msg.=$this->bridge->msg;
 	}
-	$this->output->set_header("X-isell-msg:".urlencode($this->msg));
+        if( $this->log_output_messages ){
+            $this->load_model('Catalog')->log($this->svar('user_login').': '.$this->msg);
+        } else {
+            $this->output->set_header("X-isell-msg:".urlencode($this->msg));
+        }
+        
 	$this->output->set_header("X-isell-type:".$this->rtype);
 	
 	if( is_array($response) || is_object($response) ){
@@ -284,7 +319,7 @@ class Hub  extends CI_Controller{
 	    $this->output->set_header("Content-type:text/html;charset=utf8"); 
 	    $this->output->set_output($response);	    
 	}
-	$this->output->_display();
+        $this->output->_display();
 	exit;
     }
 }
