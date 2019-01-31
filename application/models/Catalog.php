@@ -1,6 +1,6 @@
 <?php
 
-abstract class Catalog extends CI_Model {
+class Catalog extends CI_Model {
 
     public $min_level = 1;
 
@@ -45,19 +45,19 @@ abstract class Catalog extends CI_Model {
         }
         return $default;
     }
-    
-    protected function transliterate($input,$direction='fromlatin'){
-        $latin="qwertyuiop[]asdfghjkl;'zxcvbnm,./";
-        $cyrilic="йцукенгшщзхъфывапролджэячсмитьбю.";
-        $output="";
-        for($i=0;$i<mb_strlen($input);$i++){
-            $letter=mb_substr($input,$i,1);
-            if( $direction=='fromlatin' ){
-                $pos=mb_strpos($latin, $letter);
-                $output.=($pos===false)?$letter:mb_substr($cyrilic,$pos,1);
+
+    protected function transliterate($input, $direction = 'fromlatin') {
+        $latin = "qwertyuiop[]asdfghjkl;'zxcvbnm,./";
+        $cyrilic = "йцукенгшщзхъфывапролджэячсмитьбю.";
+        $output = "";
+        for ($i = 0; $i < mb_strlen($input); $i++) {
+            $letter = mb_substr($input, $i, 1);
+            if ($direction == 'fromlatin') {
+                $pos = mb_strpos($latin, $letter);
+                $output .= ($pos === false) ? $letter : mb_substr($cyrilic, $pos, 1);
             } else {
-                $pos=mb_strpos($cyrilic, $letter);
-                $output.=($pos===false)?$letter:mb_substr($latin,$pos,1);
+                $pos = mb_strpos($cyrilic, $letter);
+                $output .= ($pos === false) ? $letter : mb_substr($latin, $pos, 1);
             }
         }
         return $output;
@@ -155,30 +155,31 @@ abstract class Catalog extends CI_Model {
         $data = array($field => $value);
         return $this->update($table, $data, $key);
     }
-    
-    public function log($message){
-	$class=get_class($this);
-	$url = "http://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
-	$this->create('log_list',['message'=>$message,'url'=>$url,'log_class'=>$class]);
+
+    public function log($message) {
+        $class = get_class($this);
+        $url = "http://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
+        $this->create('log_list', ['message' => $message, 'url' => $url, 'log_class' => $class]);
     }
-    
-    private $db_transaction_nested_count=0;
-    protected function db_transaction_start(){
-        if( $this->db_transaction_nested_count=0 ){
+
+    private $db_transaction_nested_count = 0;
+
+    protected function db_transaction_start() {
+        if ($this->db_transaction_nested_count = 0) {
             $this->query("START TRANSACTION");
         }
-        $this->db_transaction_nested_count+=1;
+        $this->db_transaction_nested_count += 1;
     }
-    
-    protected function db_transaction_commit(){
-        $this->db_transaction_nested_count-=1;
-        if( $this->db_transaction_nested_count=0 ){
+
+    protected function db_transaction_commit() {
+        $this->db_transaction_nested_count -= 1;
+        if ($this->db_transaction_nested_count = 0) {
             $this->query("COMMIT");
         }
     }
-    
-    protected function db_transaction_rollback(){
-        $this->db_transaction_nested_count=0;
+
+    protected function db_transaction_rollback() {
+        $this->db_transaction_nested_count = 0;
         $this->query("ROLLBACK");
     }
 
@@ -338,13 +339,13 @@ abstract class Catalog extends CI_Model {
         }
         $having = [];
         foreach ($filter as $field => $value) {
-            if( strpos($value,'|')===false ){
+            if (strpos($value, '|') === false) {
                 $having[] = "$field LIKE '%$value%'";
             } else {
-                $having[] = "($field = '".str_replace('|', "' OR $field = '", $value)."')";
+                $having[] = "($field = '" . str_replace('|', "' OR $field = '", $value) . "')";
             }
         }
-        return  implode(' AND ', $having);
+        return implode(' AND ', $having);
     }
 
 }

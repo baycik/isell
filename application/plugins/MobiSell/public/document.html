@@ -200,8 +200,7 @@
 		$('.is_event_created').checkbox("set " + (head.is_event_created > 0 ? "checked" : "unchecked"));
 		App.document.picker.set('select', new Date(App.toIso(head.doc_date)));
 		App.document.head.suppressUpdate = false;
-                App.renderTpl('document_checkout_button', {checkout_status: App.document.doc.head.checkout_status});
-                console.log(App.document.doc.head);
+                App.renderTpl('document_checkout_button', {checkout_id: App.document.doc.head.checkout_id});
 		App.document.head.switchView(head);
 	    },
 	    switchView: function (head) {
@@ -691,11 +690,10 @@
 	    </div>
 	</div>
         <div id="document_checkout_button" class="ui equal width centered grid" style="margin-top:10px; margin-bottom:10px">
-        {{if checkout_status|equals>not_checked}}      
-                <button id="document_create_checkout_button" class="ui button" onclick="App.document.create_checkout()">Проверить</button>
-        {{else}} 
-            <button class="ui button" onclick="App.document.go_to_checkout()">Открыть проверку</button>
-        {{/if}}  
+        {{if checkout_id|more>0}}      
+        <a href="#checkout_document.html#checkout_id={{checkout_id}}"><i class="clipboard list icon"></i> Открыть проверку</a>
+        {{/if}}
+        <button id="document_create_checkout_button" class="ui button" onclick="App.document.create_checkout()"><i class="plus icon"></i> Проверить</button> 
 	<button id="document_delete_button" class="ui negative button" onclick="App.document.head.remove()">Удалить документ</button>
         </div>
         <div><h4>Скидки</h4></div>

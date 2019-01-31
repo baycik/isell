@@ -4,7 +4,7 @@
 	has_new_status:0,
 	init: function () {
 	    this.node.window({
-		width: 600,
+		width: 800,
 		title: 'Чат',
 		height: 420,
 		onClose: function () {
@@ -12,7 +12,6 @@
 		}
 	    });
 	    this.node.window('center');
-	    this.loadUserlist();
 	    $("#chat_form").submit(function (e) {
 		e.preventDefault();
 		var text = $("#chat_form input").val();
@@ -21,10 +20,12 @@
 	    });
 	    App.page_dialog_chat.counterpart = App.cookie('last_chat_counterpart') || 'all';
 	    //this.clock=setInterval(App.page_dialog_chat.sendRecieve,1000);
+            App.page_dialog_chat.loadUserlist();
 	    this.sendRecieve();
 	},
 	destroy:function(){
 	    clearInterval(App.page_dialog_chat.clock);
+            clearInterval(App.page_dialog_chat.ulistclock);
 	    App.page_dialog_chat.node.window('destroy');
 	    delete App.page_dialog_chat;
 	},
@@ -34,12 +35,19 @@
 		App.renderTpl('chat_users', users);
 		$("#chat_users div[data-user=" + App.page_dialog_chat.counterpart + "]").addClass('user_selected');
 	    });
+            clearTimeout(App.page_dialog_chat.ulistclock);
+            App.page_dialog_chat.ulistclock=setTimeout(function(){
+                App.page_dialog_chat.loadUserlist();
+            },3*60*1000);
 	},
 	setCounterpart: function (user_div) {
 	    $("#chat_users div").removeClass('user_selected');
 	    $(user_div).addClass('user_selected');
 	    this.counterpart = $(user_div).data('user');
 	    App.cookie('last_chat_counterpart', this.counterpart);
+            
+            App.page_dialog_chat.renderedMessages={};
+            $("#chat_field").html('');
 	},
 	msg_count:0,
 	sendRecieve: function (msg) {
@@ -58,13 +66,32 @@
 	    });
 	    App.page_dialog_chat.is_phone_sms=false;
 	},
+        renderedMessages:{},
 	renderDialog:function( dialog ){
-	    App.renderTpl('chat_field', {dialog:dialog});
-	    if( App.page_dialog_chat.msg_count!==dialog.length ){
-		App.page_dialog_chat.msg_count=dialog.length;
-		$("#chat_field").animate({scrollTop: $("#chat_field")[0].scrollHeight}, 1000);
-	    }	    
+            if( !dialog ){
+                //return;
+            }
+            for(let item of dialog){
+                if( App.page_dialog_chat.renderedMessages[item.event_id] || !item.is_chat ){
+                    continue;
+                }
+                $("#chat_field .blinkborder").removeClass('white blinkborder').addClass('yellow done');
+                $("#chat_field .white").removeClass('white').addClass('blue');
+                App.page_dialog_chat.renderedMessages[item.event_id]=1;
+                let message_html=App.page_dialog_chat.renderMessage(item);
+                let chat_entry=$('<div></div>').html(message_html);
+                $("#chat_field").append(chat_entry);
+                
+                clearTimeout(animation_clock);
+                var animation_clock=setTimeout(function(){
+                    $("#chat_field").animate({scrollTop: $("#chat_field")[0].scrollHeight}, 1000);
+                },100);
+            }
 	},
+        renderMessage:function(message){
+            App.renderTpl('chat_message_template',{message:message});
+            return $("#chat_message_template").html();
+        },
 	eventLoad:function(node){
 	    var event_id=$(node).parent().data('event-id');
 	    App.get("Events/eventGet/"+event_id,function(resp){
@@ -94,6 +121,11 @@
 <div id="chat_users">
     {{user_list}}
     <div onclick="App.page_dialog_chat.setCounterpart(this)" data-user="{{user_id}}" class="{{if has_new|more>0}}blink{{/if}}">
+        {{if is_online|more>0}}
+        <img src="img/grn.png">
+        {{else}}
+        <img src="img/red.png">
+        {{/if}}
 	{{if name}}
 	    {{name}}
 	{{else}}
@@ -102,8 +134,9 @@
     </div>
     {{/user_list}}
 </div>
-<div id="chat_field">
-    {{dialog}}
+<div id="chat_field"></div>
+<div id="chat_message_template" style="display: none">
+    {{message}}
     {{if for_me}}
     <div class="bubble bubble-alt {{if event_status|equals>undone}}white blinkborder{{else}}yellow done{{/if}} {{if is_chat|less>1}}bubble-event{{/if}}" title="Отправлено {{time}}">
 	{{if is_chat|less>1}}
@@ -124,7 +157,7 @@
         {{event_descr}}
     </div>
     {{/if}}
-    {{/dialog}}
+    {{/message}}
 </div> 
 <form id="chat_form">
     <table style="width: 100%">
@@ -142,12 +175,16 @@
 	max-height: 300px;
         float: right;
         background-color: #7af;
-	overflow: auto;
+	overflow-y: auto;
+        width:200px;
     }
     #chat_users div{
         padding: 5px;
         margin: 1px;
         cursor: pointer;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
     }
     #chat_users div:hover{
         background-color: rgb(180,220,250);

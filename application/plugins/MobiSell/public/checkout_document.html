@@ -5,6 +5,7 @@
         checkout_id: "",
         input_barcode: '',
         checkout_doc_head: [],
+	
         init: function () {
             //App.checkout_document.check_storage();
             App.checkout_document.focus();
@@ -24,8 +25,22 @@
             setTimeout(function(){
                 App.checkout_document.suggestion.init();
             },500);
+            if(App.checkout_document.device_has_numeric_keypad){
+                $("#quan_popup_content").on('keypress',function(e){
+                    var $inp=$("#checkout_document_popup_quan_form input[name=operation_quantity]");
+                    if( $.isNumeric(e.key) ){
+                        $inp.val($inp.val()+''+e.key);
+                    } else if(e.key=='Backspace'){
+                        $inp.val(  $inp.val().substring(0, $inp.val().length - 1) );
+                    } else if(e.key=='-'){
+                        $inp.val(-1*str);
+                    }
+                });
+                $("#checkout_document_popup_quan_form input[name=operation_quantity]").attr('readonly',1);
+            }
         },
         load: function (checkout_id){
+            var def=$.Deferred();
             App.checkout_document.log.put_on_server().done(function(){
                 $.post('../Checkout/checkoutDocumentGet', {checkout_id: checkout_id}, function (resp) {
                     var response = App.json(resp);
@@ -34,8 +49,10 @@
                     App.checkout_document.checkout_doc_head = response.head;
                     App.checkout_document.photos.render();
                     App.checkout_document.entries.render();
+                    def.resolve();
                 });
             });
+            return def.promise();
         },
         focus: function () {
             App.title("Документ для проверки");
@@ -44,6 +61,7 @@
             App.checkout_document.currentType = 'Document';
             App.checkout_document.initTab();
             App.checkout_document.load(App.state.checkout_id);
+	    this.device_has_numeric_keypad=localStorage.getItem('device_has_numeric_keypad')=='true'?1:0;
             
             //App.checkout_document.log.put_on_server();
             
@@ -155,19 +173,20 @@
                     if( App.checkout_document.entries.popup_mode == 'on'){
                         App.checkout_document.entries.update(1);
                         App.checkout_document.current_entry_index = barcode_founded_index;
-                        App.renderTpl("quan_popup_content", {products: App.checkout_document.entries.list[App.checkout_document.current_entry_index]});
+                        App.checkout_document.entries.show_popup();
+                        
+                        //App.renderTpl("quan_popup_content", {products: App.checkout_document.entries.list[App.checkout_document.current_entry_index]});
                         return;
                     }
                     App.checkout_document.entries.show_popup(App.checkout_document.entries.list[barcode_founded_index]);
                 } else {
                     App.checkout_document.entries.render();
                     $('#checkout_document_quantity_popup').modal('hide');
-                    App.confirm('Товара с таким штрихкодом нет в списке\n Выполнить поиск на сервере?').done(function(){
-                        App.checkout_document.entries.load_by_barcode(barcode);
-                    });
+                    App.checkout_document.entries.load_by_barcode(barcode);
                 }
             },
             load_by_barcode: function (barcode) {
+                App.flash('Поиск товара по штрихкоду');
                 $.post('../Checkout/checkoutProductGet', {barcode: barcode}, function (resp) {
 		    var new_entry = App.json(resp);
                     if (new_entry){
@@ -181,6 +200,7 @@
                         App.checkout_document.entries.select_mode = 'off';
                         App.checkout_document.entries.select_mode_view_edit();
                         App.checkout_document.input_barcode='';
+                        App.flash('Товар найден и добавлен');
                     } else if (!new_entry){
                         App.confirm('Штрихкод не найден! Выберите из списка').done(function(){
                             App.checkout_document.entries.temp_barcode = barcode;
@@ -228,13 +248,17 @@
 		$.post("../Stock/productUpdate/",fvalue,function(ok){
 		    if(ok){
 			App.flash("Штрихкод привязан");
-                        App.checkout_document.entries.load_by_barcode(barcode);
+                        App.checkout_document.entries.select_mode = 'off';
+                        App.checkout_document.entries.select_mode_view_edit();
+                        App.checkout_document.load(App.state.checkout_id).done(function(){
+                            App.checkout_document.entries.search_barcode(barcode);
+                        });
 		    } else {
                         App.flash("Не удалось");
                     }
 		});  
             },
-            submit_form: function () {
+            submit_form: function ( mode ) {
                 var fvalue = $('#checkout_document_popup_quan_form').form('get values');
                 if(fvalue.operation_quantity == 0){
                     $("#popup_quantity_message").show('fast');
@@ -242,6 +266,10 @@
                 } else {
                     $("#popup_quantity_message").hide();
                 }
+                if( mode=='minus_quantity' ){
+                    fvalue.operation_quantity*=-1;
+                }
+                
                 App.checkout_document.entries.update(fvalue.operation_quantity);
                 $('#checkout_document_quantity_popup').modal('hide');
                 App.checkout_document.entries.render();
@@ -257,9 +285,23 @@
             },
             show_popup: function () {
                 App.checkout_document.entries.popup_mode='on';
+                var popup_product_data=App.checkout_document.entries.list[App.checkout_document.current_entry_index];
+                popup_product_data.product_quantity_left=popup_product_data.product_quantity-popup_product_data.product_quantity_verified;
+                if(popup_product_data.product_spack!=popup_product_data.product_bpack && popup_product_data.product_bpack>1){
+                    popup_product_data.product_bpack_isunique=1;
+                }
+                
+                
+                
+                App.renderTpl("quan_popup_content", {products:popup_product_data});
                 $("#popup_quantity_message").hide();
-                $('#checkout_document_quantity_popup').modal('show');
-                App.renderTpl("quan_popup_content", {products: App.checkout_document.entries.list[App.checkout_document.current_entry_index]});
+                $('#checkout_document_quantity_popup').modal({
+		    duration:0
+		}).modal('show');
+            },
+            popup_quantity_backspace_emulate:function(){
+                var str=$("#checkout_document_popup_quan_form input[name=operation_quantity]").val();
+                $("#checkout_document_popup_quan_form input[name=operation_quantity]").val(  str.substring(0, str.length - 1) );
             },
             check_package_type: function (type) {
                 var currentEntry=App.checkout_document.entries.list[App.checkout_document.current_entry_index];
@@ -271,7 +313,7 @@
                 } else if (type === 'Big') {
                     quantity=currentEntry.product_bpack;
                 }   else if (type === 'qty') {
-                    quantity=currentEntry.product_quantity;
+                    quantity=currentEntry.product_quantity_left;
                 }
                 $("#checkout_document_popup_quan_form input[name=operation_quantity]").val(quantity);
                 App.checkout_document.entries.submit_form();
@@ -528,8 +570,11 @@
                 $('#checkout_confirm_warning').modal('hide');
                 if(App.checkout_document.checkout_doc_head.parent_doc_id>0){
                     $.post('../Checkout/checkoutDocumentOutput', {checkout_id: App.state.checkout_id}, function (resp) {
-                        App.alert("Накладная исправлена!");
-                        App.holder.load("checkout_document_list.html");
+			var result=App.json(resp);
+			if( result ){
+			    App.checkout_document.confirm_modal.show_result(result);
+			    App.holder.load("checkout_document_list.html");
+			}
                     });
                 } else {
                     App.user.pcompSelect({company_id:App.user.acomp.company_id}).done(function(){
@@ -539,7 +584,26 @@
                         });
                     });
                 }
-            }
+            },
+	    show_result:function(result){
+		var msg='';
+		if( result.less>0 ){
+		    msg+=`Недостача: ${result.less} позиций<br>`;
+		}
+		if( result.more>0 ){
+		    msg+=`Избыток: ${result.more} позиций<br>`;
+		}
+		if( result.added>0 ){
+		    msg+=`Добавлено строк: ${result.added}<br>`;
+		}
+		if( result.deleted>0 ){
+		    msg+=`Удалено строк: ${result.deleted}<br>`;
+		}
+		if( result.updated>0 ){
+		    msg+=`Изменено строк: ${result.updated}<br>`;
+		}
+		App.alert("Результат проверки:<br>"+msg);
+	    }
         }
     };
 </script>    
@@ -862,7 +926,7 @@
 
 <div id="checkout_document_quantity_popup" class="ui tiny modal">
 
-    <div id="quan_popup_content" >
+    <div id="quan_popup_content"  tabindex="0">
         <!--{{products}}-->
         <table class="ui celled unstackable table">
             <tbody>
@@ -888,35 +952,31 @@
                         </div>
                         <div class="actions" id="checkout_document_quantity_buttons">
                             <div class="ui equal width  grid ">
-                                
-                                {{if product_quantity|between>1>product_bpack}}
-                                    {{if product_spack|notequals>1}}
-                                    <div class="column" >
-                                        <button class="ui blue fluid button"  onclick="App.checkout_document.entries.check_package_type('Extra_Small'); return false">
-                                            1
-                                        </button>   
-                                    </div>
-                                    {{/if}}
-                                     <div class="column">
-                                        <button class="ui green fluid button"  onclick="App.checkout_document.entries.check_package_type('qty'); return false">
-                                            {{product_quantity}} 
-                                        </button>   
-                                    </div>
-                                {{else}}
-                                    {{if product_spack|notequals>0}}
-                                    <div class="column">
-                                        <button class="ui blue fluid button"  onclick="App.checkout_document.entries.check_package_type('Small'); return false">
-                                            {{product_spack}} 
-                                        </button>   
-                                    </div>
-                                    {{/if}}
-                                    {{if product_bpack|more>1}}
-                                    <div class="column">
-                                        <button class="ui blue fluid button"  onclick="App.checkout_document.entries.check_package_type('Big'); return false">
-                                            {{product_bpack}}
-                                        </button>   
-                                    </div>
-                                    {{/if}}
+                                <div class="column">
+                                    <button class="ui blue fluid button"  onclick="App.checkout_document.entries.check_package_type('Extra_Small'); return false">
+                                        1 
+                                    </button>   
+                                </div>
+                                {{if product_spack|more>1}}
+                                <div class="column">
+                                    <button class="ui blue fluid button"  onclick="App.checkout_document.entries.check_package_type('Small'); return false">
+                                        {{product_spack}} 
+                                    </button>   
+                                </div>
+                                {{/if}}
+                                {{if product_bpack_isunique|more>0}}
+                                <div class="column">
+                                    <button class="ui blue fluid button"  onclick="App.checkout_document.entries.check_package_type('Big'); return false">
+                                        {{product_bpack}}
+                                    </button>
+                                </div>
+                                {{/if}}
+                                {{if product_quantity_left|more>1}}
+                                <div class="column">
+                                    <button class="ui green fluid button"  onclick="App.checkout_document.entries.check_package_type('qty'); return false">
+                                        {{product_quantity_left}} 
+                                    </button>   
+                                </div>
                                 {{/if}}
                             </div>
                         </div>
@@ -934,22 +994,32 @@
                 <input type='hidden' name='ru' value='{{ru}}'>
                 <input type='hidden' name='product_code' value='{{product_code}}'>
                 <input type='hidden' name='product_quantity' value='{{product_quantity}}'>
-                <input type="number" name="operation_quantity" placeholder="Количество" autofocus="autofocus"
-                       onfocus="this.select()"
-                       value="1">
+                <div class="ui left icon right labeled input">
+                    <i class="search icon"></i>
+                    <input type="number" name="operation_quantity" placeholder="Количество"
+                           value="">
+                    <div class="ui basic label" onclick="App.checkout_document.entries.popup_quantity_backspace_emulate()"><img src="../img/backspace-arrow.png"></div>
+                </div>
             </div>
            
             <div class="actions">
                 <div class="ui center aligned grid">
                     <div class="ui equal width row">
                         <div class="column">
-                            <button type="submit" class="ui green submit icon button" onclick="App.checkout_document.entries.submit_form(); return false">
+                            <button type="submit" class="ui green submit icon fluid button" onclick="App.checkout_document.entries.submit_form(); return false">
+                                <i class="plus ul icon"></i>
                                 Добавить
                             </button>
                         </div>
                         <div class="column">
-                            <button class="ui cancel icon button" onclick="App.checkout_document.entries.render();
-                                    return false">
+                            <button class="ui yellow submit icon button" onclick="App.checkout_document.entries.submit_form('minus_quantity'); return false">
+                                <i class="minus ul icon"></i>
+                                Отнять
+                            </button>
+                        </div>
+                        <div class="column">
+                            <button class="ui cancel icon button" onclick="App.checkout_document.entries.render();return false">
+                                <i class="close ul icon"></i>
                                 Отмена
                             </button>
                         </div>

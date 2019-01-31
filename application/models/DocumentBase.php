@@ -167,7 +167,7 @@ abstract class DocumentBase extends Catalog{
     }
     protected function documentChangeCommitTransactions($make_commited){
         if( $make_commited ){
-	    $footer=$this->
+	    $footer=$this->footGet();
 	    $this->transUpdate($footer);
             
         } else {
@@ -373,22 +373,56 @@ abstract class DocumentBase extends Catalog{
     protected function transDisable(){
         $Trans=$this->Hub->load_model("AccountsCore");
         $this->db_transaction_start();
-        $Trans->documentTransDisable( $this->doc('doc_id') );
-        $this->db_transaction_commit();
+        $ok=$Trans->documentTransDisable( $this->doc('doc_id') );
+        if( $ok ){
+            $this->db_transaction_commit();
+            return true;
+        }
+        $this->db_transaction_rollback();
+        return false;
     }
     protected function transClear(){
         $Trans=$this->Hub->load_model("AccountsCore");
         $this->db_transaction_start();
-        $Trans->documentTransClear( $this->doc('doc_id') );
-        $this->db_transaction_commit();
+        $ok=$Trans->documentTransClear( $this->doc('doc_id') );
+        if( $ok ){
+            $this->db_transaction_commit();
+            return true;
+        }
+        $this->db_transaction_rollback();
+        return false;
     }
     protected function transUpdate(){
 	$foot=$this->footGet();
+        if ($this->Hub->pcomp('curr_code') == $this->Hub->acomp('curr_code')) {
+	    $doc_ratio=0;
+	} else {
+	    $doc_ratio=$this->doc('doc_ratio');
+	}
         $Trans=$this->Hub->load_model("AccountsCore");
         $this->db_transaction_start();
-        $Trans->documentTransUpdate( $this->doc('doc_id'), $foot );
+        $ok=$Trans->documentTransUpdate( $this->doc('doc_id'), $foot,  $doc_ratio);
+        if( $ok ){
+            $this->db_transaction_commit();
+            return true;
+        }
+        $this->db_transaction_rollback();
+        return false;
+    }
+    protected function transCreate(){
+        $this->db_transaction_start();
+        
         $this->db_transaction_commit();
     }
+    
+    protected $document_transaction_scheme=[
+        [
+            'role'=>'total',
+            'comment'=>'',
+            'debit'=>'',
+            'credit'=>''
+        ]
+    ];
     
     
     
