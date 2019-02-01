@@ -181,26 +181,18 @@ class AttributeManager extends Catalog{
         return $this->get_list($sql);
     }
     
-    
-    
-    
-    
-    
     public $import = ['label' => 'string', 'source' => 'raw', 'target' => 'raw'];
     public function import($label, $source, $target ) {
 	$source = array_map('addslashes', $source);
 	$target = array_map('addslashes', $target);
-	
 	return $this->importInTable( $source, $target, $label);
     }
 
     private function importInTable($src, $trg, $label) {
         $product_code_source_column='';
         $attributes=[];
-        
         for ($i = 0; $i < count($src); $i++) {
             $source_column=$src[$i];
-            
             if($trg[$i]=='product_code'){
                 $product_code_source_column=$source_column;
             } else {
@@ -210,29 +202,24 @@ class AttributeManager extends Catalog{
                  
             }
         }
-        
         $total_rows=0;
         foreach ($attributes as $attribute_id=>$attribute_source_column){
-         
             $sql="INSERT INTO
                 attribute_values 
                 (`attribute_id`,`product_id`,`attribute_value`)
                 SELECT 
-                    $attribute_id,(SELECT product_id FROM prod_list WHERE product_code=$product_code_source_column),$attribute_source_column
+                    $attribute_id,product_id,$attribute_source_column
                 FROM 
-                    imported_data 
+                    imported_data
+                        JOIN
+                    prod_list ON product_code = $product_code_source_column
                 WHERE 
                     label LIKE '%$label%'
-                ON DUPLICATE KEY UPDATE attribute_value={$attribute_source_column};
-                    ";
+                ON DUPLICATE KEY UPDATE attribute_value={$attribute_source_column};";
             $this->query($sql);
             $total_rows+=$this->db->affected_rows();
-            
         }
         $this->query("DELETE FROM imported_data WHERE label LIKE '%$label%' AND {$product_code_source_column} IN (SELECT product_code FROM prod_list pl JOIN attribute_values av USING (product_id))");
 	return $total_rows;
     }
-    
-    
-
 }

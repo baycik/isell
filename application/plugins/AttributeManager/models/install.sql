@@ -16,8 +16,6 @@ CREATE TABLE `attribute_values` (
   `attribute_value` varchar(225) DEFAULT NULL,
   PRIMARY KEY (`attribute_id`,`product_id`),
   KEY `fk_ayder_prod_list_idx` (`product_id`),
-  CONSTRAINT `fk_ayder_attribute_list` FOREIGN KEY (`attribute_id`) REFERENCES `attribute_list` (`attribute_id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
-  CONSTRAINT `fk_ayder_prod_list` FOREIGN KEY (`product_id`) REFERENCES `prod_list` (`product_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+  CONSTRAINT `fk_ayder_attribute_list` FOREIGN KEY (`attribute_id`) REFERENCES `attribute_list` (`attribute_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `fk_ayder_prod_list` FOREIGN KEY (`product_id`) REFERENCES `prod_list` (`product_id`) ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
-
