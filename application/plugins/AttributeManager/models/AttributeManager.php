@@ -210,7 +210,7 @@ class AttributeManager extends Catalog{
                     attribute_values 
                 (`attribute_id`,`product_id`,`attribute_value`)
                 SELECT 
-                    $attribute_id,product_id,$attribute_source_column
+                    $attribute_id,product_id,REPLACE($attribute_source_column,(SELECT attribute_unit FROM attribute_list WHERE attribute_id=$attribute_id),'')
                 FROM 
                     imported_data
                         JOIN
@@ -230,7 +230,7 @@ class AttributeManager extends Catalog{
                     attribute_values av USING(product_id)
                 SET
                     av.attribute_id='$attribute_id',
-                    av.attribute_value=$attribute_source_column
+                    av.attribute_value=REPLACE($attribute_source_column,(SELECT attribute_unit FROM attribute_list WHERE attribute_id=$attribute_id),'')
                 WHERE 
                     label LIKE '%$label%'";
             $this->query($sql);
