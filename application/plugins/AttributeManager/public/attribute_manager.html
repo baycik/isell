@@ -22,8 +22,8 @@
             init: function(){
                 var settings = {
 			columns:  [
-                            {id: "attribute_name1", field: "attribute_name", name: "Название",  width: 120,cssClass: 'slick-align-left'},
-                            {id: "attribute_unit1", field: "attribute_unit", name: "Единица",  width: 140,cssClass: 'slick-align-left'}
+                            {id: "attribute_name1", field: "attribute_name",sortable: true, name: "Название",  width: 120,cssClass: 'slick-align-left'},
+                            {id: "attribute_unit1", field: "attribute_unit",sortable: true, name: "Единица",  width: 140,cssClass: 'slick-align-left'}
                         ],
 			options: {
 			    editable: false,
@@ -126,11 +126,11 @@
             init: function(){
                 var settings = {
 			columns:  [
-                            {id: "product_code", field: "product_code", name: "Код", width: 80,cssClass: 'slick-align-right'},
-                            {id: "ru", field: "ru", name: "Название", width: 250,cssClass: 'slick-align-left'},
-                            {id: "attribute_name", field: "attribute_name", name: "Атрибут", width: 85,cssClass: 'slick-align-right'},
-                            {id: "attribute_value", field: "attribute_value", name: "Значение атрибута", editor: Slick.Editors.Text, width: 70,cssClass: 'slick-align-right'},
-                            {id: "attribute_unit", field: "attribute_unit", name: "Единица", width: 70,cssClass: 'slick-align-right'}
+                            {id: "product_code", field: "product_code",sortable: true, name: "Код", width: 80,cssClass: 'slick-align-right'},
+                            {id: "ru", field: "ru",sortable: true, name: "Название", width: 250,cssClass: 'slick-align-left'},
+                            {id: "attribute_name", field: "attribute_name",sortable: true, name: "Атрибут", width: 85,cssClass: 'slick-align-right'},
+                            {id: "attribute_value", field: "attribute_value",sortable: true, name: "Значение атрибута", editor: Slick.Editors.Text, width: 70,cssClass: 'slick-align-right'},
+                            {id: "attribute_unit", field: "attribute_unit",sortable: true, name: "Единица", width: 70,cssClass: 'slick-align-right'}
                         ],
 			options: {
 			    editable: true,
