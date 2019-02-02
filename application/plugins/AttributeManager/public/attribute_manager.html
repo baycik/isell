@@ -37,8 +37,12 @@
 		    App.AttributeManager_attribute_manager.table.grid = new SlickInfinite("#attribute_list_sg", settings);
                     App.AttributeManager_attribute_manager.table.grid.onClick.subscribe(function (e, data) {
                         var row_data=App.AttributeManager_attribute_manager.table.grid.getDataItem(data.row);
-                        App.AttributeManager_attribute_manager.table.current_id = row_data.attribute_id;
-                        App.AttributeManager_attribute_manager.entries.grid.updateOptions({params:{attribute_id:row_data.attribute_id}});
+                        var attribute_id=0;
+                        if(row_data){
+                            attribute_id=row_data.attribute_id;
+                        }
+                        App.AttributeManager_attribute_manager.table.current_id = attribute_id;
+                        App.AttributeManager_attribute_manager.entries.grid.updateOptions({params:{attribute_id:attribute_id}});
                         App.AttributeManager_attribute_manager.entries.grid.reload();
 		    });
                     
@@ -188,8 +192,8 @@
                 });  
                 },
                 deleteProduct: function () {
-		    var selected_rows = App.AttributeManager_attribute_manager.entries.grid.getSelectedRows();
-                    var row = App.AttributeManager_attribute_manager.entries.grid.getDataItem(selected_rows[0]);
+                    var selected_rows = App.AttributeManager_attribute_manager.entries.grid.getSelectedRows();
+                    var rows = [];
 		    if (!selected_rows.length) {
 			App.flash("Ни одна строка не выбрана!");
 			return;
@@ -197,7 +201,11 @@
 		    if (!confirm("Открепить товар от атрибута?")) {
 			return;
 		    }
-		    $.post('AttributeManager/deleteProduct', {attribute_id:row.attribute_id, product_code:row.product_code}, function (ok) {
+                    for (var i in selected_rows) {
+                        var row=App.AttributeManager_attribute_manager.entries.grid.getDataItem(selected_rows[i]);
+                        rows.push({product_id:row.product_id,attribute_id:row.attribute_id});
+		    }
+		    $.post('AttributeManager/deleteProduct', {rows: JSON.stringify(rows)}, function (ok) {
 			if (ok * 1) {
 			    App.flash("Товар откреплен от атрибута");
 			    App.AttributeManager_attribute_manager.entries.grid.reload();
@@ -207,7 +215,6 @@
 		    });
 		},
                 import: function () {
-                    
 		    var config = [
 			{name: 'Код товара', field: 'product_code', required: true}
 		    ];
@@ -221,16 +228,16 @@
                             };
                             config.push(attribute);
                         }
+                        App.loadWindow('page/dialog/importer', {label: 'атрибуты', fields_to_import: config}).progress(function (status, fvalue, Importer) {
+                            if (status === 'submit') {
+                                App.post("AttributeManager/import/", fvalue, function (ok) {
+                                    App.flash("Добавлено/Изменено " + ok);
+                                    App.AttributeManager_attribute_manager.entries.grid.reload();
+                                    Importer.reload();
+                                });
+                            }
+                        });
                     });
-                    App.loadWindow('page/dialog/importer', {label: 'атрибуты', fields_to_import: config}).progress(function (status, fvalue, Importer) {
-			if (status === 'submit') {
-			    App.post("AttributeManager/import/", fvalue, function (ok) {
-				App.flash("Добавлено/Изменено " + ok);
-				App.AttributeManager_attribute_manager.entries.grid.reload();
-				Importer.reload();
-			    });
-			}
-		    });
                 }
             }           
         }

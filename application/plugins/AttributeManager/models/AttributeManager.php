@@ -137,14 +137,17 @@ class AttributeManager extends Catalog{
     }
        
     
-    public $deleteProduct = [ 'attribute_id' => 'string', 'product_code' => 'string' ];
-    public function deleteProduct ($attribute_id, $product_code){
+    public $deleteProduct = [ 'rows' => 'json' ];
+    public function deleteProduct ($rows){
+        $cases=[];
+        foreach($rows as $row){
+            $cases[]="(product_id={$row['product_id']} AND attribute_id={$row['attribute_id']})";
+        }
+        $where= implode(' OR ', $cases);
         $sql = "
             DELETE FROM
                     attribute_values 
-            WHERE attribute_id = {$attribute_id}
-                AND product_id = (SELECT product_id FROM prod_list WHERE product_code = '$product_code')       
-            ";
+            WHERE $where";
         return $this->query($sql);        
     }
         
@@ -155,14 +158,14 @@ class AttributeManager extends Catalog{
 	    $sortby = "attribute_name";
 	    $sortdir = "ASC";
 	}
-        $null = null;
         $having = '';
         $where = '';
         if($filter){
            $having = "HAVING ".$this->makeFilter($filter);
-        }else{
+        }
+        if($attribute_id){
             $where="WHERE attribute_id = '$attribute_id'";
-        };
+        }
         $sql = "
             SELECT 
                 attribute_list.*, attribute_value,
@@ -195,17 +198,16 @@ class AttributeManager extends Catalog{
             $source_column=$src[$i];
             if($trg[$i]=='product_code'){
                 $product_code_source_column=$source_column;
-            } else {
+            } else if($source_column){
                 $target=explode('_',$trg[$i]);
                 $target_attribute_id=$target[1];
                 $attributes[$target_attribute_id]=$source_column;
-                 
             }
         }
         $total_rows=0;
         foreach ($attributes as $attribute_id=>$attribute_source_column){
-            $sql="INSERT INTO
-                attribute_values 
+            $sqli="INSERT IGNORE INTO
+                    attribute_values 
                 (`attribute_id`,`product_id`,`attribute_value`)
                 SELECT 
                     $attribute_id,product_id,$attribute_source_column
@@ -215,7 +217,22 @@ class AttributeManager extends Catalog{
                     prod_list ON product_code = $product_code_source_column
                 WHERE 
                     label LIKE '%$label%'
-                ON DUPLICATE KEY UPDATE attribute_value={$attribute_source_column};";
+                    AND $attribute_source_column <>''";
+            //die($sqli);
+            $this->query($sqli);
+            $total_rows+=$this->db->affected_rows();
+            
+            $sql="UPDATE
+                    imported_data
+                        JOIN
+                    prod_list pl ON product_code = $product_code_source_column
+                        JOIN
+                    attribute_values av USING(product_id)
+                SET
+                    av.attribute_id='$attribute_id',
+                    av.attribute_value=$attribute_source_column
+                WHERE 
+                    label LIKE '%$label%'";
             $this->query($sql);
             $total_rows+=$this->db->affected_rows();
         }
