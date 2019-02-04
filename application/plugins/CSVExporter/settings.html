@@ -1,0 +1,209 @@
+<form>
+    <h2>Настройки подключения</h2>
+    <div class="plugin_settings">
+	<div id="categories_panel" class="panel">
+            Категории для экспорта
+            {{if categories|empty}}
+                <div>
+                   Пусто!
+               </div>
+            {{/if}}
+            {{categories}}
+            <div style="clear: both;padding-top: 2px;display: flex;padding: 7px;">
+               <div style="width:110px;">
+                   <img src="img/delete.png" 
+                        style="width:16px;height: auto" 
+                        title="Удалить атрибут" 
+                        onclick="App.csv_exporter_settings.categories.remove(this)"
+                        data-name="{{category_path}}"
+                        data-id="{{branch_id}}">
+               </div>
+               <div>
+                    {{category_path}} 
+               </div>
+            </div>
+            {{/categories}}
+            <div style="clear: both;padding-top: 2px;display: flex;padding: 7px;">
+                <button class="tiny_button" type="button" title="Добавить категорию" onclick="App.csv_exporter_settings.categories.add()"><img src="img/add.png"> Добавить</button>
+            </div>
+            
+        </div>
+        <div id="csv_pcomp">
+            <input type="hidden" name="pcomp_id">
+            <input title="Цены клиента" name="pcomp_name" value="" readonly="readonly" required="required"/>
+            <button type="button" class="tiny_button" onclick="App.csv_exporter_settings.select_pcomp()"><img src="img/settings.png"> Изменить</button>
+            <hr>
+        </div>
+        <div style="clear: both;padding-top: 2px;display: flex;padding: 7px;">
+            <input id="publicUrlInput" title="Публичный адрес" value="" required="required" oninput="App.csv_exporter_settings.updatePublicUrl()"/>    
+        </div>
+        <div id="csv_attributes">
+            
+        </div>
+    </div>
+    <div style="display: inline-block;padding: 10px;margin: 10px">
+	<h2>Экспорт товаров</h2>
+	<div style="text-align: center;">
+	    <button type="button" onclick="App.csv_exporter_settings.export()"><img src="img/down.png" id="csv_exporter_settings_down_img">Экспорт</button>
+	</div>
+    </div>
+</form>
+<script>
+    App.csv_exporter_settings={
+        list:{
+            attributes:{},
+            categories:[],
+            pcomp:{
+                label: App.pcomp.label,
+                company_id: App.pcomp.company_id
+            },
+            publicUrl: ''
+        },
+	init:function(){
+	    $("input[name=pcomp_id]").val(App.pcomp.company_id);
+	    $("input[name=pcomp_name]").val(App.pcomp.label);
+            App.csv_exporter_settings.getSettings();
+            
+	},
+        getSettings: function(){
+            $.post('CSVExporter/getSettings',function(resp){
+                if(resp){
+                   var response = App.json(resp);
+                   App.csv_exporter_settings.list = response;
+                   $('#publicUrlInput').val(App.csv_exporter_settings.list.publicUrl);
+                   App.csv_exporter_settings.categories.render();
+                   App.csv_exporter_settings.attributes.init();
+                }
+            });
+        },
+        updateSettings: function(){
+            App.csv_exporter_settings.list.pcomp = {
+                label: App.pcomp.label,
+                company_id: App.pcomp.company_id
+            };
+            $.post('CSVExporter/updateSettings', {settings: JSON.stringify(App.csv_exporter_settings.list)},function(resp){
+                if(resp){
+                   var response = App.json(resp);
+                   App.csv_exporter_settings.list = response;
+                   $('#publicUrlInput').val(App.csv_exporter_settings.list.publicUrl);
+                }
+            });
+        },
+        export: function (){
+            $.post('CSVExporter/export', function(ok){
+                if(ok){
+                    alert('ok!');
+                }
+            });
+        },
+        updatePublicUrl: function (){
+            App.csv_exporter_settings.list.publicUrl = $('#publicUrlInput').val();
+            App.csv_exporter_settings.updateSettings();
+            $('#publicUrlInput').val(App.csv_exporter_settings.list.publicUrl);
+        },
+        attributes:{
+            list:[],
+            init: function(){
+                App.csv_exporter_settings.attributes.load();
+            },
+            load:function(){
+                 $.post('AttributeManager/getAttributes',function(resp){
+		    if(resp){
+                        App.csv_exporter_settings.attributes.list = App.json(resp);
+                        App.csv_exporter_settings.attributes.render();
+		    }
+		});
+            },
+            render: function(){
+                var html = '';
+                for( var i = 1; i <= 12; i++){
+                    if( App.csv_exporter_settings.list.attributes.length<1){
+                        var attribute_obj = {
+                            attribute_index: 'attribute_'+i,
+                            attribute_selected: 'unset'
+                        };
+                    //App.csv_exporter_settings.list.attributes.push(attribute_obj);
+                        App.csv_exporter_settings.list.attributes['attribute_' + i ] = attribute_obj.attribute_selected ;
+                    };
+                    html += '<div class="csv_attribute_select" style="margin:5px"><span style="margin-right:10px;width: 70px;display: inline-block;">Атрибут ' + i + '</span><select id="attribute_' + i + '"  data-id="attribute_' + i + '" style="width:110px" onchange=" App.csv_exporter_settings.attributes.update(this)" value="' + App.csv_exporter_settings.list.attributes['attribute_' + i ] + '"><option value="unset">-Не выбрано-</option>{{attribute_list}}<option  value="{{attribute_id}}" style="margin-left:10px">{{attribute_name}}</option>{{/attribute_list}}</select></div>'
+                    }
+                 $("#csv_attributes").html(html); 
+                 App.renderTpl('csv_attributes',{attribute_list: App.csv_exporter_settings.attributes.list});
+                 App.csv_exporter_settings.attributes.getAttributesChosen();
+                 
+            },
+            getAttributesChosen:function(){
+                for( var i = 1; i <= 12; i++){
+                    if(App.csv_exporter_settings.list.attributes['attribute_' + i ] != 'unset'){
+                       $('#attribute_' + i).val(App.csv_exporter_settings.list.attributes['attribute_' + i ]); 
+                    }
+                    
+                }
+            },
+            update: function(node){
+                var attribute_index = $(node).attr( "id");
+                var selector = '#' + attribute_index;
+                var selected_attribute = $(selector).val();
+                App.csv_exporter_settings.list.attributes[attribute_index] = selected_attribute;
+                App.csv_exporter_settings.updateSettings();
+            }
+        },
+        categories:{
+            list:[],
+            render: function(){
+                App.renderTpl('categories_panel',{categories: App.csv_exporter_settings.list.categories});
+            },
+            add: function(){
+                App.loadWindow("page/stock/tree").progress(function (status, fvalue) {
+                    if (status === 'select') {
+                       for(var i = 0; i < App.csv_exporter_settings.list.categories.length; i++){
+                            if (App.csv_exporter_settings.list.categories[i].branch_id == fvalue.branch_id){
+                                App.flash("Такая категория уже добавлена");
+                                return;
+                            }
+                        }
+                        var category_obj = {
+                            branch_id: fvalue.branch_id,
+                            category_path: fvalue.path
+                        };
+                       App.csv_exporter_settings.list.categories.push(category_obj);
+                       App.csv_exporter_settings.updateSettings();
+                       App.csv_exporter_settings.categories.render();
+                       /*
+                        App.post("AttributeManager/import/", fvalue, function (ok) {
+                            App.flash("Добавлено/Изменено " + ok);
+                            App.AttributeManager_attribute_manager.entries.grid.reload();
+                            Importer.reload();
+                        });*/
+                    }
+                });
+            },
+            remove:function(node){
+		var branch_id = $(node).data('id');
+		if( !confirm("Удалить атрибут "+ $(node).data('name') +"?") ){
+		    return ;
+		};
+                 
+                for (var i = 0; i < App.csv_exporter_settings.list.categories.length; i++){
+                    if (App.csv_exporter_settings.list.categories[i].branch_id == branch_id ){
+                        App.csv_exporter_settings.list.categories.splice(i, 1);
+                        App.csv_exporter_settings.categories.render();
+                        return;
+                    }
+                }
+	    }
+        },
+	select_pcomp:function(){
+	    App.user.pcompSelectionDialog();
+	}
+    };
+    App.handler.progress(function(status){
+	if( status==='passiveCompanySelected' || status==='passiveCompanyInited' ){
+            App.csv_exporter_settings.categories.render();
+            App.csv_exporter_settings.attributes.render();
+	    $("input[name=pcomp_name]").val(App.pcomp.label);
+	    $("input[name=pcomp_id]").val(App.pcomp.company_id);
+	}
+    });
+    $(App.csv_exporter_settings.init);
+</script>
