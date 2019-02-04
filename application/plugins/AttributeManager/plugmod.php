@@ -40,6 +40,6 @@ EOT;
 $before[]=<<<EOT
 EOT;
 $after[]=<<<EOT
-<div class="easyui-panel" title="Атрибуты" data-options="collapsible:true,collapsed:false" id="attributes"></div>
+<div class="easyui-panel" title="Атрибуты" data-options="collapsible:true,collapsed:true" id="attributes"></div>
 EOT;
  
