@@ -22,8 +22,8 @@
             init: function(){
                 var settings = {
 			columns:  [
-                            {id: "attribute_name1", field: "attribute_name", name: "Название",  width: 120,cssClass: 'slick-align-left'},
-                            {id: "attribute_unit1", field: "attribute_unit", name: "Единица",  width: 140,cssClass: 'slick-align-left'}
+                            {id: "attribute_name1", field: "attribute_name",sortable: true, name: "Название",  width: 120,cssClass: 'slick-align-left'},
+                            {id: "attribute_unit1", field: "attribute_unit",sortable: true, name: "Единица",  width: 140,cssClass: 'slick-align-left'}
                         ],
 			options: {
 			    editable: false,
@@ -37,8 +37,12 @@
 		    App.AttributeManager_attribute_manager.table.grid = new SlickInfinite("#attribute_list_sg", settings);
                     App.AttributeManager_attribute_manager.table.grid.onClick.subscribe(function (e, data) {
                         var row_data=App.AttributeManager_attribute_manager.table.grid.getDataItem(data.row);
-                        App.AttributeManager_attribute_manager.table.current_id = row_data.attribute_id;
-                        App.AttributeManager_attribute_manager.entries.grid.updateOptions({params:{attribute_id:row_data.attribute_id}});
+                        var attribute_id=0;
+                        if(row_data){
+                            attribute_id=row_data.attribute_id;
+                        }
+                        App.AttributeManager_attribute_manager.table.current_id = attribute_id;
+                        App.AttributeManager_attribute_manager.entries.grid.updateOptions({params:{attribute_id:attribute_id}});
                         App.AttributeManager_attribute_manager.entries.grid.reload();
 		    });
                     
@@ -122,11 +126,11 @@
             init: function(){
                 var settings = {
 			columns:  [
-                            {id: "product_code", field: "product_code", name: "Код", width: 80,cssClass: 'slick-align-right'},
-                            {id: "ru", field: "ru", name: "Название", width: 250,cssClass: 'slick-align-left'},
-                            {id: "attribute_name", field: "attribute_name", name: "Атрибут", width: 70,cssClass: 'slick-align-right'},
-                            {id: "attribute_value", field: "attribute_value", name: "Значение атрибута", editor: Slick.Editors.Text, width: 70,cssClass: 'slick-align-right'},
-                            {id: "attribute_unit", field: "attribute_unit", name: "Единица", width: 70,cssClass: 'slick-align-right'}
+                            {id: "product_code", field: "product_code",sortable: true, name: "Код", width: 80,cssClass: 'slick-align-right'},
+                            {id: "ru", field: "ru",sortable: true, name: "Название", width: 250,cssClass: 'slick-align-left'},
+                            {id: "attribute_name", field: "attribute_name",sortable: true, name: "Атрибут", width: 85,cssClass: 'slick-align-right'},
+                            {id: "attribute_value", field: "attribute_value",sortable: true, name: "Значение атрибута", editor: Slick.Editors.Text, width: 70,cssClass: 'slick-align-right'},
+                            {id: "attribute_unit", field: "attribute_unit",sortable: true, name: "Единица", width: 70,cssClass: 'slick-align-right'}
                         ],
 			options: {
 			    editable: true,
@@ -188,8 +192,8 @@
                 });  
                 },
                 deleteProduct: function () {
-		    var selected_rows = App.AttributeManager_attribute_manager.entries.grid.getSelectedRows();
-                    var row = App.AttributeManager_attribute_manager.entries.grid.getDataItem(selected_rows[0]);
+                    var selected_rows = App.AttributeManager_attribute_manager.entries.grid.getSelectedRows();
+                    var rows = [];
 		    if (!selected_rows.length) {
 			App.flash("Ни одна строка не выбрана!");
 			return;
@@ -197,7 +201,11 @@
 		    if (!confirm("Открепить товар от атрибута?")) {
 			return;
 		    }
-		    $.post('AttributeManager/deleteProduct', {attribute_id:row.attribute_id, product_code:row.product_code}, function (ok) {
+                    for (var i in selected_rows) {
+                        var row=App.AttributeManager_attribute_manager.entries.grid.getDataItem(selected_rows[i]);
+                        rows.push({product_id:row.product_id,attribute_id:row.attribute_id});
+		    }
+		    $.post('AttributeManager/deleteProduct', {rows: JSON.stringify(rows)}, function (ok) {
 			if (ok * 1) {
 			    App.flash("Товар откреплен от атрибута");
 			    App.AttributeManager_attribute_manager.entries.grid.reload();
@@ -207,7 +215,6 @@
 		    });
 		},
                 import: function () {
-                    
 		    var config = [
 			{name: 'Код товара', field: 'product_code', required: true}
 		    ];
@@ -221,16 +228,16 @@
                             };
                             config.push(attribute);
                         }
+                        App.loadWindow('page/dialog/importer', {label: 'атрибуты', fields_to_import: config}).progress(function (status, fvalue, Importer) {
+                            if (status === 'submit') {
+                                App.post("AttributeManager/import/", fvalue, function (ok) {
+                                    App.flash("Добавлено/Изменено " + ok);
+                                    App.AttributeManager_attribute_manager.entries.grid.reload();
+                                    Importer.reload();
+                                });
+                            }
+                        });
                     });
-                    App.loadWindow('page/dialog/importer', {label: 'атрибуты', fields_to_import: config}).progress(function (status, fvalue, Importer) {
-			if (status === 'submit') {
-			    App.post("AttributeManager/import/", fvalue, function (ok) {
-				App.flash("Добавлено/Изменено " + ok);
-				App.AttributeManager_attribute_manager.entries.grid.reload();
-				Importer.reload();
-			    });
-			}
-		    });
                 }
             }           
         }
@@ -239,21 +246,16 @@
 <div >
     <table>
         <tr>
-            <td class="transp60">
-                <div style="text-align: center; font-size: 13px;  color: darkblue">
-                    <img src="img/ProductCard.png" style="float:left; height:20px; width:auto">
-                    Список атрибутов
-                </div>
-                <div class="x-attribute-tools" style="text-align: right;padding-top:11px">
+            <td>
+                <div class="x-attribute-tools" style="text-align: right;">
                     <span data-action="entryEdit" class="icon-24 icon-change" title="Изменить"> </span>
                     <span data-action="entryCreate" class="icon-24 icon-create" title="Добавить"> </span>
                     <span data-action="entryDelete" class="icon-24 icon-delete" title="Удалить"> </span>
                     <span class="icon-24 icon-refresh" title="Обновить" onclick="App.AttributeManager_attribute_manager.table.grid.reload()"></span>
                 </div>
-                <div style="width: 280px; height: 500px; float:left" id="attribute_list_sg"></div>
+                <div style="width: 280px; height: 600px; float:left" id="attribute_list_sg"></div>
             </td>
-            
-            <td class="transp60">
+            <td>
                 <div  style="width:590px ">
                     <div title="Подробности"  style="min-height: 500px;">
                         <div class="x-attribute-entries-tools" style="text-align: right;">
@@ -262,9 +264,7 @@
                             <span data-action="import" class="icon-24 icon-import" title="Импорт"> </span>
                              <span class="icon-24 icon-refresh" title="Обновить" style="float:right" onclick="App.AttributeManager_attribute_manager.entries.grid.reload()"></span>
                         </div>
-                        <div style="width: 565px; height: 500px;" id="attribute_entries_sg">
-                            <h1><<Выберите документ</h1>
-                        </div> 
+                        <div style="width: 585px; height: 600px;" id="attribute_entries_sg"></div> 
                     </div>
                 </div>
             </td>

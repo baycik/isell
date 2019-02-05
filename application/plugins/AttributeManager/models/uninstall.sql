@@ -1,6 +1,5 @@
 /**
- * Author:  Baycik
- * Created: May 4, 2017
+ * Author:  AdamHider
  */
 
 DROP TABLE `attribute_values`;
