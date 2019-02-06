@@ -1,7 +1,7 @@
 <form>
     <h2>Настройки подключения</h2>
     <div class="plugin_settings">
-	<div id="categories_panel" class="panel">
+	<div id="categories_panel" class="panel covert">
             Категории для экспорта
             {{if categories|empty}}
                 <div>
@@ -53,15 +53,15 @@
         list:{
             attributes:{},
             categories:[],
-            pcomp:{
-                label: App.pcomp.label,
-                company_id: App.pcomp.company_id
-            },
             publicUrl: ''
         },
 	init:function(){
-	    $("input[name=pcomp_id]").val(App.pcomp.company_id);
-	    $("input[name=pcomp_name]").val(App.pcomp.label);
+            if (App.pcomp){
+                $("input[name=pcomp_id]").val(App.pcomp.company_id);
+                $("input[name=pcomp_name]").val(App.pcomp.label);
+                App.csv_exporter_setting.list.pcomp.label = App.pcomp.label;
+                App.csv_exporter_setting.list.pcomp.company_id = App.pcomp.company_id;
+            }
             App.csv_exporter_settings.getSettings();
             
 	},
@@ -90,6 +90,10 @@
             });
         },
         export: function (){
+            if (!App.pcomp){
+                App.flash("Выберите категорию цен!");
+                return;
+            }
             $.post('CSVExporter/export', function(ok){
                 if(ok){
                     alert('ok!');
@@ -201,9 +205,13 @@
 	if( status==='passiveCompanySelected' || status==='passiveCompanyInited' ){
             App.csv_exporter_settings.categories.render();
             App.csv_exporter_settings.attributes.render();
-	    $("input[name=pcomp_name]").val(App.pcomp.label);
-	    $("input[name=pcomp_id]").val(App.pcomp.company_id);
-	}
+            if(App.pcomp){
+                $("input[name=pcomp_name]").val(App.pcomp.label);
+                $("input[name=pcomp_id]").val(App.pcomp.company_id);
+                App.csv_exporter_setting.list.pcomp.label = App.pcomp.label;
+                App.csv_exporter_setting.list.pcomp.company_id = App.pcomp.company_id;
+            }
+        }
     });
     $(App.csv_exporter_settings.init);
 </script>

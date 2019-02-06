@@ -26,7 +26,8 @@ class CSVExporter extends Catalog{
         foreach ($branch_ids as $category){
             $all_categories= array_merge(array(),  $this->getCategories($category->branch_id));
         }
-        $date = (new \DateTime())->format('Y_m_d_H_i_s');  
+        $file_path = str_replace('\\', '/', realpath("../public")) ; 
+        
         $sql = "
             SELECT 
                 product_code,
@@ -58,8 +59,8 @@ class CSVExporter extends Catalog{
             WHERE
                 product_img AND
                 se.parent_id IN (". implode(',',$all_categories).")
-            INTO OUTFILE '/isell_export_".$date.".csv'
-            CHARACTER SET utf8 
+            INTO OUTFILE '$file_path/isell_export.csv'
+            CHARACTER SET cp1251 
             FIELDS TERMINATED BY ';'
             ENCLOSED BY ''
             LINES TERMINATED BY '\r\n'     
