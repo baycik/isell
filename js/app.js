@@ -549,7 +549,7 @@ Mark.pipes.format = function (str) {
                     });
                 },
 		pcompSelectionDialog:function(){
-		    App.loadWindow('page/company/tree',{}).progress(function(status,comp){
+		    return App.loadWindow('page/company/tree',{}).progress(function(status,comp){
 			if( status==='select' ){
 			    App.user.pcompSelect(comp);
 			}
