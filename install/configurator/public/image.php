@@ -1,5 +1,5 @@
 <?php
-    include 'config.php';
+    include '../config.php';
     
   function image_flush( $size_x, $path ){
 	$path = BAY_STORAGE . "/dynImg/" . $path;
