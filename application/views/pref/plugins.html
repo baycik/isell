@@ -38,13 +38,16 @@
 	    Plugin.current_system_name=system_name;
 	    $.get('PluginManager/settingsAllFetch',{system_name:system_name},function(resp){
 		var all=App.json(resp);
-		Plugins.renderSettings(all);
+                Plugins.currentData=all;
+		Plugins.renderSettings();
 		Plugins.renderButtons(all);
 	    });
 	},
-	renderSettings:function(all){
-	    $('#plugin_settings').html(all.html);
-	    App.setupForm('#plugin_settings form',all.plugin_settings,'use_inp_values');
+	renderSettings:function(){
+	    $('#plugin_settings').html(Plugins.currentData.html);
+            //App.renderTpl('plugin_settings',Plugins.currentData.plugin_settings);
+            $.parser.parse("#plugin_settings");
+            App.setupForm('#plugin_settings form',Plugins.currentData.plugin_settings,'use_inp_values');
 	    $('#plugin_settings form').submit(function(e){
 		e.preventDefault();
 		var settings=App.collectForm('#plugin_settings form');
