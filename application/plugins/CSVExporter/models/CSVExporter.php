@@ -22,9 +22,9 @@ class CSVExporter extends Catalog {
         $all_categories = [];
         $img_url = '';
         if (strrpos($settings->publicUrl, '/') == 0) {
-            $img_url = $settings->publicUrl . 'public/index.php?size=500x500&path=';
+            $img_url = $settings->publicUrl . 'public/image.php?size=500x500&path=';
         } else {
-            $img_url = $settings->publicUrl . '/public/index.php?size=500x500&path=';
+            $img_url = $settings->publicUrl . '/public/image.php?size=500x500&path=';
         }
         foreach ($branch_ids as $category) {
             $all_categories = array_merge(array(), $this->getCategories($category->branch_id));
