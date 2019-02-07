@@ -9,7 +9,7 @@
 	}
 	if( !file_exists($cache) ){
 	    $size = explode('x', $size_x);
-	    $thumb=$this->image_resize($path, $size[0], $size[1]);
+	    $thumb=image_resize($path, $size[0], $size[1]);
 	    imagepng($thumb,$cache);
 	}
 	header("Content-type: image/png");
