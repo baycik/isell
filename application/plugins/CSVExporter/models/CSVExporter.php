@@ -44,7 +44,7 @@ class CSVExporter extends Catalog {
                 product_quantity,
                 path AS category_lvl1,
                 $attribute_select
-                CONCAT ('http://localhost:888/public/index.php?size=500x500&path=',product_img) as img, 
+                CONCAT ('$img_url',product_img) as img, 
                 GET_PRICE(product_code, " . $settings->pcomp_id . ", '$usd_ratio') as price1, GET_SELL_PRICE(product_code, " . $settings->pcomp_id . ", '$usd_ratio') as price2
             FROM
                 prod_list pl 
