@@ -204,7 +204,6 @@ class AttributeManager extends Catalog{
                 $attributes[$target_attribute_id]=$source_column;
             }
         }
-        $total_rows=0;
         foreach ($attributes as $attribute_id=>$attribute_source_column){
             $sqli="INSERT IGNORE INTO
                     attribute_values 
@@ -217,25 +216,11 @@ class AttributeManager extends Catalog{
                     prod_list ON product_code = $product_code_source_column
                 WHERE 
                     label LIKE '%$label%'
-                    AND $attribute_source_column <>''";
-            //die($sqli);
+                ON DUPLICATE KEY UPDATE attribute_value={$attribute_source_column};";
             $this->query($sqli);
-            $total_rows+=$this->db->affected_rows();
-            
-            $sql="UPDATE
-                    imported_data
-                        JOIN
-                    prod_list pl ON product_code = $product_code_source_column
-                        JOIN
-                    attribute_values av USING(product_id)
-                SET
-                    av.attribute_id='$attribute_id',
-                    av.attribute_value=REPLACE($attribute_source_column,(SELECT attribute_unit FROM attribute_list WHERE attribute_id=$attribute_id),'')
-                WHERE 
-                    label LIKE '%$label%'";
-            $this->query($sql);
-            $total_rows+=$this->db->affected_rows();
+            $total_rows=$this->db->affected_rows();
         }
+        $this->query("DELETE FROM attribute_values WHERE attribute_value=''");
         $this->query("DELETE FROM imported_data WHERE label LIKE '%$label%' AND {$product_code_source_column} IN (SELECT product_code FROM prod_list pl JOIN attribute_values av USING (product_id))");
 	return $total_rows;
     }
