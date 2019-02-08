@@ -6,15 +6,19 @@ function image_flush($size_x, $path) {
     $path = BAY_STORAGE . "/dynImg/" . $path;
     $cache = $path . "_{$size_x}.png";
     if (is_dir($path) || !file_exists($path)) {
-        $path = 'img/notfound.jpg';
+        $path = '../img/notfound.jpg';
     }
-    if (!file_exists($cache)) {
+    if( !file_exists($path) ){
+        die();
+    }
+    if ( !file_exists($cache) ) {
         $size = explode('x', $size_x);
         $thumb = image_resize($path, $size[0], $size[1]);
         imagepng($thumb, $cache);
     }
     header("Content-type: image/png");
-    passthru($cache);
+    readfile($cache);
+    exit();
 }
 
 function image_resize($path, $width, $height) {

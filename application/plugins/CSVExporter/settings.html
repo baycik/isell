@@ -95,13 +95,13 @@
             });
         },
         export: function () {
-            if (!App.pcomp) {
-                App.flash("Выберите категорию цен!");
+            if (!App.csv_exporter_settings.data.pcomp_id) {
+                App.flash("Выберите клиента, цены которого будут использованы!");
                 return;
             }
             $.post('CSVExporter/export', function (ok) {
                 if (ok) {
-                    alert('ok!');
+                    App.flash("Файл экспортирован в публичную папку!\n"+App.csv_exporter_settings.data.publicUrl+'/public');
                 }
             });
         },
