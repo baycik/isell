@@ -101,7 +101,9 @@
             }
             $.post('CSVExporter/export', function (ok) {
                 if (ok) {
-                    App.flash("Файл экспортирован в публичную папку!\n"+App.csv_exporter_settings.data.publicUrl+'/public');
+                    App.flash(ok+" Товаров было экспортировано в файл в публичной папке!<br>"+App.csv_exporter_settings.data.publicUrl+'/public');
+                } else {
+                    App.flash("Возникла ошибка при экспорте!");
                 }
             });
         },

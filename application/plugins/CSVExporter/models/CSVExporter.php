@@ -32,20 +32,30 @@ class CSVExporter extends Catalog {
         !is_dir("../public") && mkdir("../public", 0777);
         $file_path = str_replace('\\', '/', realpath("../public")) . '/isell_export.csv';
         @unlink($file_path);
-
-
         $attribute_select = $this->getAttributesSelect($settings);
         $sql = "
-            SELECT 
-                REPLACE(product_code,';',',') product_code,
-                REPLACE(ru,';',',') ru,
-                analyse_brand,
-                product_id,
-                product_quantity,
-                path AS category_lvl1,
+            SELECT
+                SUBSTRING_INDEX(SUBSTRING_INDEX(path, '/', 2), '/', -1) col1,
+                SUBSTRING_INDEX(SUBSTRING_INDEX(path, SUBSTRING_INDEX(path, '/', 2), -1),label,1) col2,
+                label col3,
+                REPLACE(product_code,';',',') col4,
+                REPLACE(ru,';',',') col5,
+                analyse_brand col6,
+                analyse_origin col7,
+                product_quantity col8,
+                product_barcode col9,
+                product_article col10,
+                product_bpack col11,
+                product_spack col12,
+                product_weight col13,
+                product_volume col14,
+                product_unit col15,
+                CONCAT ('$img_url',product_img) col16,
+                GET_PRICE(product_code, " . $settings->pcomp_id . ", '$usd_ratio') col17,
+                GET_SELL_PRICE(product_code, " . $settings->pcomp_id . ", '$usd_ratio') col18,
+                '' col19,
+                '' col20
                 $attribute_select
-                CONCAT ('$img_url',product_img) as img, 
-                GET_PRICE(product_code, " . $settings->pcomp_id . ", '$usd_ratio') as price1, GET_SELL_PRICE(product_code, " . $settings->pcomp_id . ", '$usd_ratio') as price2
             FROM
                 prod_list pl 
                     JOIN
@@ -60,13 +70,14 @@ class CSVExporter extends Catalog {
             FIELDS TERMINATED BY ';'
             ENCLOSED BY ''
             LINES TERMINATED BY '\r\n'";
-        return $this->query($sql);
+        $this->query($sql);
+        return $this->db->affected_rows();
     }
 
     private function getAttributesSelect($settings) {
         $attribute_select = "";
         foreach ($settings->attributes as $key => $attribute_id) {
-            $attribute_select .= "IFNULL( (SELECT attribute_value FROM  attribute_values av WHERE pl.product_id = av.product_id AND av.attribute_id = '$attribute_id'), '') as $key,";
+            $attribute_select .= ",IFNULL( (SELECT attribute_value FROM  attribute_values av WHERE pl.product_id = av.product_id AND av.attribute_id = '$attribute_id'), '')";
         }
         return $attribute_select;
     }
