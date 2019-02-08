@@ -77,7 +77,7 @@ class CSVExporter extends Catalog {
     private function getAttributesSelect($settings) {
         $attribute_select = "";
         foreach ($settings->attributes as $key => $attribute_id) {
-            $attribute_select .= ",IFNULL( (SELECT attribute_value FROM  attribute_values av WHERE pl.product_id = av.product_id AND av.attribute_id = '$attribute_id'), '')";
+            $attribute_select .= ",IFNULL( (SELECT CONCAT(attribute_value,attribute_unit) FROM  attribute_values av JOIN attribute_list USING(attribute_id) WHERE attribute_value<>'' AND pl.product_id = av.product_id AND av.attribute_id = '$attribute_id'), '')";
         }
         return $attribute_select;
     }
