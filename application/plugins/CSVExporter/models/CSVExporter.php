@@ -66,6 +66,7 @@ class CSVExporter extends Catalog {
             WHERE
                 product_img AND
                 se.parent_id IN (" . implode(',', $all_categories) . ")
+            ORDER BY product_code
             INTO OUTFILE '$file_path'
             CHARACTER SET cp1251 
             FIELDS TERMINATED BY ';'
