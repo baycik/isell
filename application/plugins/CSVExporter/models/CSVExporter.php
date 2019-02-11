@@ -19,15 +19,16 @@ class CSVExporter extends Catalog {
         $usd_ratio = $this->Hub->pref('usd_ratio');
         $settings = $this->getSettings();
         $branch_ids = $settings->categories;
-        $all_categories = [];
+        
         $img_url = '';
         if (strrpos($settings->publicUrl, '/') == 0) {
             $img_url = $settings->publicUrl . 'public/image.php?size=500x500&path=';
         } else {
             $img_url = $settings->publicUrl . '/public/image.php?size=500x500&path=';
         }
+        $all_categories = [];
         foreach ($branch_ids as $category) {
-            $all_categories = array_merge(array(), $this->getCategories($category->branch_id));
+            $all_categories = array_merge($all_categories, $this->getCategories($category->branch_id));
         }
         !is_dir("../public") && mkdir("../public", 0777);
         $file_path = str_replace('\\', '/', realpath("../public")) . '/isell_export.csv';
