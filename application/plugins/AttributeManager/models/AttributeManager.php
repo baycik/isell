@@ -152,8 +152,8 @@ class AttributeManager extends Catalog{
     }
         
     
-    public $getProducts = [ 'attribute_id' => 'int', 'attribute_name' => 'string', 'attribute_unit' => 'string','offset' => ['int', 0], 'limit' => ['int', 5], 'sortby' => 'string', 'sortdir' => '(ASC|DESC)', 'filter' => 'json'];
-    public function getProducts( $attribute_id, $attribute_name, $attribute_unit,$offset, $limit, $sortby, $sortdir, $filter = null ){
+    public $getProducts = [ 'attribute_id' => 'int','offset' => ['int', 0], 'limit' => ['int', 5], 'sortby' => 'string', 'sortdir' => '(ASC|DESC)', 'filter' => 'json'];
+    public function getProducts( $attribute_id,$offset, $limit, $sortby, $sortdir, $filter = null ){
          if (empty($sortby)) {
 	    $sortby = "attribute_name";
 	    $sortdir = "ASC";
@@ -223,5 +223,48 @@ class AttributeManager extends Catalog{
         $this->query("DELETE FROM attribute_values WHERE attribute_value=''");
         $this->query("DELETE FROM imported_data WHERE label LIKE '%$label%' AND {$product_code_source_column} IN (SELECT product_code FROM prod_list pl JOIN attribute_values av USING (product_id))");
 	return $total_rows;
+    }
+    
+    public $tableViewGet=['out_type'=>['string','.print'],'attribute_id' => ['int',0], 'filter' => 'json'];
+    public function tableViewGet($out_type,$attribute_id,$filter){
+	$rows=$this->getProducts( $attribute_id,0, 10000, null, null, $filter = null );
+	$dump=[
+            'tpl_files_folder'=>"application/plugins/AttributeManager/views/",
+	    'tpl_files'=>'GridTpl.xlsx',
+	    'title'=>"Экспорт таблицы",
+	    'user_data'=>[
+		'email'=>$this->Hub->svar('pcomp')?$this->Hub->svar('pcomp')->company_email:'',
+		'text'=>'Доброго дня'
+	    ],
+	    'struct'=>$this->tableStructure(),
+	    'view'=>[
+		'rows'=>$rows
+	    ]
+	];
+
+	$ViewManager=$this->Hub->load_model('ViewManager');
+	$ViewManager->store($dump);
+	$ViewManager->outRedirect($out_type);
+    }
+    
+    public function tableStructure(){
+        return [
+            [
+                'Field'=>'product_code',
+                'Comment'=>'Код'
+            ],
+            [
+                'Field'=>'attribute_name',
+                'Comment'=>'Атрибут'
+            ],
+            [
+                'Field'=>'attribute_value',
+                'Comment'=>'Значение'
+            ],
+            [
+                'Field'=>'attribute_unit',
+                'Comment'=>'Единица'
+            ]
+        ];
     }
 }
