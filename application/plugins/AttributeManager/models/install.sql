@@ -3,9 +3,9 @@
  */
 CREATE TABLE `attribute_list` (
   `attribute_id` int(11) NOT NULL AUTO_INCREMENT,
-  `attribute_name` varchar(45) DEFAULT NULL,
-  `attribute_unit` varchar(225) DEFAULT NULL,
-  `attribute_prefix` varchar(45) DEFAULT NULL,
+  `attribute_name` varchar(45) NOT NULL,
+  `attribute_unit` varchar(225) NOT NULL,
+  `attribute_prefix` varchar(45) NOT NULL,
   PRIMARY KEY (`attribute_id`),
   UNIQUE KEY `attribute_id_UNIQUE` (`attribute_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
