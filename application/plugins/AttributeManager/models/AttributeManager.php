@@ -44,15 +44,16 @@ class AttributeManager extends Catalog{
 	return $this->get_list($sql);
     }
     
-    public $attributeUpdate = ['attribute_id' => 'int', 'attribute_name' => 'string', 'attribute_unit' => 'string'];
-    public function attributeUpdate( $attribute_id, $attribute_name, $attribute_unit ){
+    public $attributeUpdate = ['attribute_id' => 'int', 'attribute_name' => 'string', 'attribute_unit' => 'string', 'attribute_prefix' => 'string'];
+    public function attributeUpdate( $attribute_id, $attribute_name, $attribute_unit, $attribute_prefix ){
         if($attribute_id == 0){
             $sql = "
                 INSERT INTO
                     attribute_list
                 SET 
                     attribute_name = '$attribute_name',
-                    attribute_unit = '$attribute_unit'
+                    attribute_unit = '$attribute_unit',
+                    attribute_prefix = '$attribute_prefix'
                 ";
             return  $this->query($sql);          
         };
@@ -61,7 +62,8 @@ class AttributeManager extends Catalog{
                 attribute_list
             SET 
                 attribute_name = '$attribute_name',
-                attribute_unit = '$attribute_unit'
+                attribute_unit = '$attribute_unit',
+                attribute_prefix = '$attribute_prefix'
             WHERE attribute_id = $attribute_id       
             ";
         return  $this->query($sql);
@@ -104,8 +106,7 @@ class AttributeManager extends Catalog{
                 *
             FROM 
                 attribute_list
-            ORDER BY attribute_name
-            ";
+            ORDER BY attribute_name";
         return $this->get_list($sql);
     }
     
@@ -205,11 +206,26 @@ class AttributeManager extends Catalog{
             }
         }
         foreach ($attributes as $attribute_id=>$attribute_source_column){
+            $attribute_units=$this->get_row("SELECT attribute_unit,attribute_prefix FROM attribute_list WHERE attribute_id=$attribute_id");
+            $attribute_value="$attribute_source_column";
+            if($attribute_units){
+                if($attribute_units->attribute_unit){
+                    $attribute_value="REPLACE($attribute_value,'{$attribute_units->attribute_unit}','')";
+                    $unit_translit=iconv('UTF-8', 'ASCII//TRANSLIT', $attribute_units->attribute_unit);
+                    $attribute_value="REPLACE($attribute_value,'{$unit_translit}','')";
+                }
+                if($attribute_units->attribute_prefix){
+                    $attribute_value="REPLACE($attribute_value,'{$attribute_units->attribute_prefix}','')";
+                    $prefix_translit=iconv('UTF-8', 'ASCII//TRANSLIT', $attribute_units->attribute_prefix);
+                    $attribute_value="REPLACE($attribute_value,'{$prefix_translit}','')";
+                }
+            }
+            
             $sqli="INSERT IGNORE INTO
                     attribute_values 
                 (`attribute_id`,`product_id`,`attribute_value`)
                 SELECT 
-                    $attribute_id,product_id,REPLACE($attribute_source_column,(SELECT attribute_unit FROM attribute_list WHERE attribute_id=$attribute_id),'')
+                    $attribute_id,product_id,$attribute_value
                 FROM 
                     imported_data
                         JOIN

@@ -22,8 +22,9 @@
             init: function(){
                 var settings = {
 			columns:  [
-                            {id: "attribute_name1", field: "attribute_name",sortable: true, name: "Название",  width: 120,cssClass: 'slick-align-left'},
-                            {id: "attribute_unit1", field: "attribute_unit",sortable: true, name: "Единица",  width: 140,cssClass: 'slick-align-left'}
+                            {id: "attribute_name1", field: "attribute_name",sortable: true, name: "Название",  width: 120},
+                            {id: "attribute_prefix", field: "attribute_prefix",sortable: true, name: "Приставка",  width: 70},
+                            {id: "attribute_unit1", field: "attribute_unit",sortable: true, name: "Единица",  width: 70}
                         ],
 			options: {
 			    editable: false,
@@ -79,7 +80,7 @@
                     };
                     App.loadWindow("AttributeManager/editor", {row: row_data}).progress(function (status, fvalue) {
                         if (status === 'submit') {
-                           $.post('AttributeManager/attributeUpdate', {attribute_id: fvalue.attribute_id, attribute_name: fvalue.attribute_name, attribute_unit: fvalue.attribute_unit}, function (ok) {
+                           $.post('AttributeManager/attributeUpdate', fvalue, function (ok) {
                                 if (ok * 1) {
                                     App.AttributeManager_attribute_manager.table.grid.reload();
                                     App.flash("Атрибуты изменены");
@@ -128,9 +129,10 @@
 			columns:  [
                             {id: "product_code", field: "product_code",sortable: true, name: "Код", width: 80,cssClass: 'slick-align-right'},
                             {id: "ru", field: "ru",sortable: true, name: "Название", width: 250,cssClass: 'slick-align-left'},
-                            {id: "attribute_name", field: "attribute_name",sortable: true, name: "Атрибут", width: 85,cssClass: 'slick-align-right'},
-                            {id: "attribute_value", field: "attribute_value",sortable: true, name: "Значение атрибута", editor: Slick.Editors.Text, width: 70,cssClass: 'slick-align-right'},
-                            {id: "attribute_unit", field: "attribute_unit",sortable: true, name: "Единица", width: 70,cssClass: 'slick-align-right'}
+                            {id: "attribute_name", field: "attribute_name",sortable: true, name: "Атрибут", width: 115},
+                            {id: "attribute_prefix", field: "attribute_prefix",sortable: true, name: "Приставка", width: 70},
+                            {id: "attribute_value", field: "attribute_value",sortable: true, name: "Значение атрибута", editor: Slick.Editors.Text, width: 100,cssClass: 'slick-align-right'},
+                            {id: "attribute_unit", field: "attribute_unit",sortable: true, name: "Единица", width: 70}
                         ],
 			options: {
 			    editable: true,
@@ -238,7 +240,25 @@
                             }
                         });
                     });
-                }
+                },
+		out: function (out_type) {
+		    var sorted = App.AttributeManager_attribute_manager.entries.grid.getSortColumns();
+		    var params = {
+			sortby: sorted.length ? sorted[0].columnId : '',
+			sortdir: sorted.length ? (sorted[0].sortAsc ? 'ASC' : 'DESC') : '',
+			filter: JSON.stringify(App.AttributeManager_attribute_manager.entries.grid.getFilter()),
+			out_type: (out_type || '.xlsx')
+		    };
+		    var url = 'AttributeManager/tableViewGet/?' + $.param(params);
+		    if (out_type === '.print') {
+			window.open(url, 'print_tab');
+		    } else {
+			location.href = url;
+		    }
+		},
+		print: function () {
+		    this.out('.print');
+		}
             }           
         }
     };
@@ -262,9 +282,11 @@
                              <span data-action="addProduct" class="icon-24 icon-create" title="Добавить"> </span>
                              <span data-action="deleteProduct" class="icon-24 icon-delete" title="Удалить"> </span>
                             <span data-action="import" class="icon-24 icon-import" title="Импорт"> </span>
+                            <span class="icon-24 icon-download" title="Скачать таблицу" data-action="out"> </span> 
+                            <span class="icon-24 icon-print" title="Напечатать" data-action="print"> </span> 
                              <span class="icon-24 icon-refresh" title="Обновить" style="float:right" onclick="App.AttributeManager_attribute_manager.entries.grid.reload()"></span>
                         </div>
-                        <div style="width: 585px; height: 600px;" id="attribute_entries_sg"></div> 
+                        <div style="width: 710px; height: 600px;" id="attribute_entries_sg"></div> 
                     </div>
                 </div>
             </td>
