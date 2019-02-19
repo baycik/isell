@@ -244,6 +244,7 @@
 		out: function (out_type) {
 		    var sorted = App.AttributeManager_attribute_manager.entries.grid.getSortColumns();
 		    var params = {
+                        attribute_id:App.AttributeManager_attribute_manager.table.current_id,
 			sortby: sorted.length ? sorted[0].columnId : '',
 			sortdir: sorted.length ? (sorted[0].sortAsc ? 'ASC' : 'DESC') : '',
 			filter: JSON.stringify(App.AttributeManager_attribute_manager.entries.grid.getFilter()),
