@@ -178,7 +178,7 @@ class Reports_manager_annual_sells extends Catalog{
                 $path_filter
             GROUP BY $group_by_concat
             $having
-            ORDER BY sum DESC
+            ORDER BY $group_by_concat DESC
             ";
         $rows=$this->get_list($sql);
 	$view=[
