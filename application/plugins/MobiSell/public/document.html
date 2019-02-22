@@ -280,9 +280,11 @@
 		App.document.prefs.load();
                 if( App.user.props.user_level<2 ){
                     $("#document_discounts input").prop("disabled",true);
+                    $("#document_discounts").html("");
                 } else {
                     $("#document_discounts input").prop("disabled",false);
                 }
+                
 	    },
 	    load: function () {
 		App.flash('Скидки: загрузка...');
@@ -696,8 +698,10 @@
         <button id="document_create_checkout_button" class="ui button" onclick="App.document.create_checkout()"><i class="plus icon"></i> Проверить</button> 
 	<button id="document_delete_button" class="ui negative button" onclick="App.document.head.remove()">Удалить документ</button>
         </div>
+        
         <div><h4>Скидки</h4></div>
         <table class="ui table unstackable" id="document_discounts">
+            {{if user_level|like>3}} 
 	    <thead>
 		<tr>
 		    <th>Категория</th>
@@ -705,6 +709,7 @@
 		    <th>Наценка</th>
 		</tr>
 	    </thead>
+            
 	    <tbody>
 		<!-- {{discounts}} -->
 		<tr data-row-index="{{#}}">
@@ -722,7 +727,9 @@
 		</tr>
 		<!-- {{/discounts}} -->
 	    </tbody>
-	</table>    
+             {{/if}}
+	</table>
+     
     </div>
 
 
