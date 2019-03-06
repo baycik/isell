@@ -246,16 +246,25 @@
 			Doc.entries.reload();
 		    }
 		    break;
+		case 'doc_status_id':
+		    if( !ok*1 ){
+			App.flash("Невозможно присвоить этот статус документу",'alert');
+                        //$("Doc_status_id").combobox('setValue',oldval);
+		    } else {
+                        //Doc.entries.reload();
+		    }
+		    break;
 	    }
-	    if( !ok ){
-		Doc.head.setPropsForm( Doc.head.props );
-		App.flash('Свойства документа не были сохранены');
-	    }
-	    else{
+            
+	    if( ok*1 ){
 		Doc.head.props[field]=value;
 		Doc.head.hightlightCommited();
                 Doc.head.set();
 		Doc.handler.notify('head_changed',value);
+	    }
+	    else{
+		Doc.head.setPropsForm( Doc.head.props );
+		App.flash('Свойства документа не были сохранены');
 	    }
 	},
 	typeComboFormatter: function (data) {
@@ -872,17 +881,18 @@
 		   required:'required',
 		   onChange:function(val,old){Doc.head.update('doc_num',val,old)}
 		   ">
+            <input class="easyui-combobox" name="doc_status_id" id="Doc_status_id" title="Статус" data-options="
+                showItemIcon:true,
+                valueField: 'doc_status_id',
+                textField: 'status_description',
+                url:'DocumentList/statusFetchList',
+                mode: 'remote',
+                selectOnNavigation:false,
+                onSelect: function(status,old){Doc.head.update('doc_status_id',status.doc_status_id,old)}
+                ">
 	</div>
 	<div id="Doc_utils" style="display: none">
 	    <div class="inp_rule"></div>
-	    <select class="easyui-combobox" name="notcount" id="Doc_notcount_cmb" title="На складе" data-options="
-		    editable:false,
-		    panelHeight:'auto',
-		    onChange:function(val,old){Doc.head.update('notcount',val,old)}
-		    ">
-		<option value="0">Учитывать</option>
-		<option value="1">Неучитывать</option>
-	    </select>
 	    <select class="easyui-combobox" name="use_vatless_price" id="Doc_use_vatless_price_cmb" title="Цена" data-options="
 		    editable:false,
 		    panelHeight:'auto',
@@ -891,11 +901,23 @@
 		<option value="0">В том числе НДС</option>
 		<option value="1">Плюс НДС</option>
 	    </select>
+	    <select class="easyui-combobox" name="notcount" id="Doc_notcount_cmb" title="На складе" data-options="
+		    editable:false,
+		    panelHeight:'auto',
+		    onChange:function(val,old){Doc.head.update('notcount',val,old)}
+		    ">
+		<option value="0">Учитывать</option>
+		<option value="1">Неучитывать</option>
+	    </select>
 	    <input type="text" name="vat_rate" class="easyui-numberbox" title="НДС %" data-options="
 		   min:0,
 		   precision:0,
 		   onChange:function(val,old){Doc.head.update('vat_rate',val,old)}
 		   ">
+            
+            
+            
+            
 	    <input type="text" name="doc_ratio" class="easyui-numberbox" title="Курс" data-options="
 		   min:1,
 		   precision:2,

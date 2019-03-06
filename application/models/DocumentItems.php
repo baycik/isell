@@ -160,7 +160,11 @@ class DocumentItems extends DocumentCore{
         }
 	$Document2=$this->Hub->bridgeLoad('Document');
 	$add_duplicate_rows=(bool) $this->Hub->pref('add_duplicate_rows');
-	return $Document2->addEntry( $code, $quantity, $price, $add_duplicate_rows );
+	$add_ok=$Document2->addEntry( $code, $quantity, $price, $add_duplicate_rows );
+        if( $this->isReserved() ){
+            $this->updateReservedCount();
+        }
+        return $add_ok;
     }
 /*    public $entryPostAdd=[];
     public function entryPostAdd(){
@@ -181,6 +185,9 @@ class DocumentItems extends DocumentCore{
 	switch( $name ){
 	    case 'product_quantity':
                 $ok=$Document2->updateEntry($doc_entry_id, $value, NULL);
+                if( $this->isReserved() ){
+                    $this->updateReservedCount();
+                }
                 $Document2->updateTrans();
 		return $ok;
 	    case 'product_price':
@@ -201,7 +208,11 @@ class DocumentItems extends DocumentCore{
     public function entryDeleteArray($doc_id,$ids_arr){
 	$this->selectDoc($doc_id);
 	$Document2=$this->Hub->bridgeLoad('Document');
-	return $Document2->deleteEntry($ids_arr);
+	$delete_ok=$Document2->deleteEntry($ids_arr);
+        if( $this->isReserved() ){
+            $this->updateReservedCount();
+        }
+        return $delete_ok;
     }
     
     public $entryStatsGet=['int','string'];
@@ -264,22 +275,29 @@ class DocumentItems extends DocumentCore{
     public $entryDocumentCommit=['int'];
     public function entryDocumentCommit( $doc_id ){
 	$this->selectDoc($doc_id);
-        
         $passive_company_id=$this->doc('passive_company_id');
         $Company=$this->Hub->load_model("Company");
         $Company->selectPassiveCompany($passive_company_id);
-        
-        
 	$this->documentDiscountsSave();
 	$Document2=$this->Hub->bridgeLoad('Document');
-	return $Document2->commit();
+        $commit_ok=$Document2->commit();
+        if( $commit_ok ){
+            $this->loadDoc($doc_id);//very very bad engine handling of doc_head updates
+            $this->setStatusByCode($doc_id,'processed');
+        }
+	return $commit_ok;
     }
     public $entryDocumentUncommit=['int'];
     public function entryDocumentUncommit( $doc_id ){
-	$this->check($doc_id,'int');
 	$this->selectDoc($doc_id);
+        $is_commited=$this->isCommited();
 	$Document2=$this->Hub->bridgeLoad('Document');
-	return $Document2->uncommit();
+        $uncommit_ok=$Document2->uncommit();
+        if( $is_commited && $uncommit_ok ){
+            $this->loadDoc($doc_id);//very very bad engine handling of doc_head updates
+            $this->setStatusByCode($doc_id,'created');
+        }
+	return $uncommit_ok;
     }
     public $recalc=['int','double'];
     public function recalc( $doc_id, $proc=0 ){

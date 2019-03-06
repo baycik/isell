@@ -84,6 +84,7 @@ class DocumentCore extends DocumentUtils{
             'doc_num'=>0,
             'doc_data'=>'',
             'doc_ratio'=>$this->Hub->pref('usd_ratio'),
+            'doc_status_id'=>'',
             'label'=>$this->Hub->pcomp('label'),
             'passive_company_id'=>$passive_company_id,
             'curr_code'=>$this->Hub->pcomp('curr_code'),
@@ -132,6 +133,7 @@ class DocumentCore extends DocumentUtils{
 		signs_after_dot,
 		doc_ratio,
 		doc_num,
+                doc_status_id,
 		DATE_FORMAT(document_list.cstamp,'%d.%m.%Y') doc_date,
 		doc_data,
 		(SELECT last_name FROM user_list WHERE user_id=document_list.created_by) created_by,
@@ -198,12 +200,15 @@ class DocumentCore extends DocumentUtils{
 		break;
 	    case 'doc_type':
 		return $this->setType($new_val);
+	    case 'doc_status_id':
+		return $this->setStatus(null,$new_val);
 	    case 'extra_expenses':
 		return $this->setExtraExpenses($new_val);
 	}
 	//$new_val=  rawurldecode($new_val);
 	$Document2=$this->Hub->bridgeLoad('Document');
-	return $Document2->updateHead($new_val,$field);
+	$head_update_ok=$Document2->updateHead($new_val,$field);
+        return $head_update_ok;
     }
     private function setExtraExpenses($expense){//not beautifull function at all
 	$doc_type=$this->doc('doc_type');
@@ -226,5 +231,95 @@ class DocumentCore extends DocumentUtils{
 	    return $expense;
 	}
 	return 0;
+    }
+    
+    public function setStatusByCode($doc_id,$new_status_code){
+        if(!$new_status_code){
+            return false;
+        }
+        $doc_status_id=$this->get_value("SELECT doc_status_id FROM document_status_list WHERE status_code='$new_status_code'");
+        return $this->setStatus($doc_id,$doc_status_id);
+    }
+    
+    public function setStatus($doc_id,$new_status_id){
+        if(!$new_status_id){
+            return false;
+        }
+        $this->Hub->set_level(2);
+        $commited_only=$this->get_value("SELECT commited_only FROM document_status_list WHERE doc_status_id='$new_status_id'");
+        if( $commited_only != $this->isCommited() ){
+            return false;
+        }
+        if( !$doc_id ){
+            $doc_id=$this->doc('doc_id');
+        }
+        $status_change_ok=$this->update('document_list',['doc_status_id'=>$new_status_id],['doc_id'=>$doc_id]);
+        
+        if( $new_status_id==2 ){//reserved 
+            $this->reservedTaskAdd($doc_id);
+        } else {
+            $this->reservedTaskRemove($doc_id);
+        }
+        $this->reservedCountUpdate();
+        return $status_change_ok;
+    }
+    
+    public function reservedTaskAdd($doc_id){
+        $this->Hub->load_model('Events');
+        $event=$this->Hub->Events->eventGetByDocId($doc_id);
+        if( $event ){
+            return $this->Hub->Events->eventDelete( $event->event_id );
+        }
+        $day_limit=3;
+        $stamp=time()+60*60*24*$day_limit;
+        $event=[
+            'doc_id'=>$doc_id,
+            'event_name'=>'Снятие с резерва',
+            'event_status'=>'undone',
+            'event_label'=>'-TASK-',
+            'event_date'=>date("Y-m-d H:i:s",$stamp),
+            'event_descr'=>"Снятие с резерва счета №".$this->doc('doc_num'),
+            'event_program'=>json_encode([
+                'commands'=>[
+                    [
+                        'model'=>'DocumentCore',
+                        'method'=>'setStatusByCode',
+                        'arguments'=>[$doc_id,'created']
+                    ]
+                ]
+            ])
+        ];
+        return $this->Hub->Events->eventCreate($event);
+    }
+    
+    public function reservedTaskRemove($doc_id){
+        $this->Hub->load_model('Events');
+        $event=$this->Hub->Events->eventGetByDocId($doc_id);
+        if( $event ){
+            return $this->Hub->Events->eventDelete( $event->event_id );
+        }
+        return false;
+    }
+    
+    public function reservedCountUpdate(){
+        $sql="
+        UPDATE 
+            stock_entries
+                JOIN
+            (SELECT 
+                product_code,
+                    SUM(IF(doc_type = 1, de.product_quantity, 0)) reserved,
+                    SUM(IF(doc_type = 2, de.product_quantity, 0)) awaiting
+            FROM
+                document_entries de
+            JOIN document_list USING (doc_id)
+            JOIN document_status_list dsl USING (doc_status_id)
+            WHERE
+                dsl.status_code = 'reserved'
+            GROUP BY product_code) reserve USING (product_code) 
+        SET 
+            product_reserved = reserved,
+            product_awaiting = awaiting;";
+        return $this->query($sql);
     }
 }

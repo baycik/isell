@@ -37,7 +37,15 @@ class Document extends Data {
     }
 
     protected function loadDoc($doc_id) {
-	$this->_doc = $this->Base->get_row("SELECT *, DATE_FORMAT(cstamp,'%d.%m.%Y') AS doc_date FROM document_list WHERE doc_id='$doc_id'");
+	$this->_doc = $this->Base->get_row("SELECT 
+                dl.*,
+                dsl.status_code,
+                DATE_FORMAT(cstamp,'%d.%m.%Y') AS doc_date 
+                FROM 
+                    document_list dl
+                        LEFT JOIN
+                    document_status_list dsl USING(doc_status_id)
+                WHERE doc_id='$doc_id'");
 	if (!$this->_doc) {
 	    $this->Base->response_error("Невозможно выбрать документ");
 	}
@@ -142,7 +150,7 @@ class Document extends Data {
 	if ($debt_limit == 0) {
 	    $this->Base->LoadClass('PrefOld');
 	    $prefs = $this->Base->PrefOld->prefGet();
-	    $debt_limit = $prefs['default_debt_limit'];
+	    $debt_limit = isset($prefs['default_debt_limit'])?$prefs['default_debt_limit']:0;
 	    if ( $debt_limit==0 && $deferment==0 ) {
 		return false;
 	    }
@@ -773,6 +781,7 @@ class Document extends Data {
             notcount='$pnotcount',
             doc_ratio='$doc_ratio',
             doc_num='$next_doc_num',
+            doc_status_id=1,
             created_by=$user_id,
             modified_by=$user_id,
             vat_rate=$vat_rate"

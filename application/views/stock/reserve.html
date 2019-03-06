@@ -1,0 +1,124 @@
+<script type="text/javascript">
+    /* global App */
+    App.page_stock_reserve={
+        init:function(){
+            App.require(["js/slick/lib/jquery.event.drag-2.3.0.js"], function () {
+                App.require([
+                    "js/slick/slick.core.js",
+                    "js/slick/plugins/slick.rowselectionmodel.js",
+                    "js/slick/slick.editors.js",
+                    "js/slick/slickinfinite.js",
+                    "js/slick/slick.grid.js"
+                ], function(){
+                    App.page_stock_reserve.table.init();
+                });
+            });
+            App.Topic('hashChange').subscribe(function(hash_object){
+                App.page_stock_reserve.table.filter_from_state();
+            });
+        },
+        table:{
+            current_id: '',
+            list:[],
+            init: function(){
+                var settings = {
+                    columns:  [
+                        {id: "doc_id", field: "doc_id", formatter:App.page_stock_reserve.table.frm.doc, name: "", width: 30,cssClass: 'slick-align-middle'},
+                        {id: "acomp_name", field: "acomp_name", name: "Предприятие", width: 100},
+                        {id: "pcomp_name", field: "pcomp_name", name: "Контрагент", width: 100},
+                        {id: "doc", field: "doc", name: "Документ", width: 170,cssClass: 'slick-align-left'},
+                        {id: "product_code", field: "product_code", name: "Код", width: 100},
+                        {id: "product_name", field: "product_name", name: "Название", width: 350},
+                        {id: "awaiting", field: "awaiting", name: "Ожидается", width: 80},
+                        {id: "awaiting_at", field: "awaiting_at", name: "Ожидается к", width: 80},
+                        {id: "reserved", field: "reserved", name: "Резерв", width: 80},
+                        {id: "reserved_until", field: "reserved_until", name: "Резерв до", width: 80}
+                    ],
+                    options: {
+                        editable: false,
+                        enableColumnReorder: false,
+                        enableFilter: true,
+                        url: 'Stock/reserveListFetch/'
+                    }
+                };
+                App.page_stock_reserve.table.grid = new SlickInfinite("#reserve_list_sg", settings);
+                $(".x-stock-reserve-tools").click(function (e) {
+                    var action = $(e.target).data('action');
+                    if (action) {
+                        App.page_stock_reserve.table.tools[action] && App.page_stock_reserve.table.tools[action]();
+                    }
+                });
+                App.page_stock_reserve.table.grid.onClick.subscribe(function(e,cell){
+                    if( cell.cell==0 ){
+                        var row=App.page_stock_reserve.table.grid.getDataItem(cell.row);
+                        if( row.doc_id ){
+                            App.page_stock_reserve.openDoc(row.doc_id);
+                        }
+                    }
+                });
+                App.page_stock_reserve.table.filter_from_state();
+            },
+            filter_from_state:function(){
+                if( !App.page_stock_reserve.table.grid ){
+                    return;
+                }
+                var filter={
+                    product_code:App.state['product_code']||''
+                };
+                App.page_stock_reserve.table.grid.setFilter( filter );
+            },
+            frm: {
+                queue:function(row, cell, value, columnDef, dataContext){
+                    return row+1;
+                }, 
+                doc:function(row, cell, value, columnDef, dataContext){
+                    if( dataContext.doc_id ){
+                        return '<img src="img/document.png" title="Открыть документ" style="margin:2px;">';
+                    }
+                    return "";
+                }
+            },
+            currentParamsGet:function(){
+                var sorted = App.page_stock_reserve.table.grid.getSortColumns();
+                return {
+                    sortby: sorted.length ? sorted[0].columnId : '',
+                    sortdir: sorted.length ? (sorted[0].sortAsc ? 'ASC' : 'DESC') : '',
+                    filter: JSON.stringify(App.page_stock_reserve.table.grid.getFilter())
+                };
+            },
+            tools:{
+                reload:function(){
+                    App.page_stock_reserve.table.grid.reload();
+                },
+                out: function (out_type) {
+		    var params = App.page_stock_reserve.table.currentParamsGet();
+		    params.out_type=(out_type || '.xlsx');
+		    var url = 'StockView/reserveViewGet/?' + $.param(params);
+		    if (out_type === '.print') {
+			window.open(url, 'print_tab');
+		    } else {
+			location.href = url;
+		    }
+		},
+		print: function () {
+		    this.out('.print');
+		}
+            }
+        },
+	openDoc:function(doc_id){
+	    App.loadWindow('page/trade/document',{doc_id:doc_id}).progress(function(status){
+		if( status!=='inited' ){
+		    App.page_stock_reserve.table.tools.reload();
+		}
+	    });
+	}
+    };
+</script>
+<div style="width: 1190px;">
+    <div class="x-stock-reserve-tools" style="text-align: right;">
+        <span data-action="reload" class="icon-24 icon-refresh" title="Обновить"> </span>
+        <span data-action="out" class="icon-24 icon-download" title="Скачать таблицу"> </span>
+        <span data-action="print" class="icon-24 icon-print" title="Печать"> </span>
+    </div>
+    <div id="reserve_list_sg" style="height: 600px;"></div>
+</div>

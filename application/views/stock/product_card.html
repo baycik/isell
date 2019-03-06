@@ -310,7 +310,7 @@
 	    <input name="analyse_brand" title="Бренд">
 	    <input name="analyse_class" title="Класс">
 	</div>
-        <!--ATTRIBUTE_PLUGIN-->
+        <!--PLUGINS-->
     </div>
     <div style="text-align: center;margin-top: 15px;clear: both">
         <button type="submit" onclick="App.page_stock_product_card.closeOnSave=true;"><img src="img/Save-24.png" /> Сохранить</button>
@@ -319,6 +319,8 @@
             | <button type="button" onclick="App.page_stock_product_card.next(-1)" title="Сохранить и открыть предидущий"><img src="img/2leftarrow.png" style="width:24px;height: auto;"/> Пред.</button>
             <button type="button" onclick="App.page_stock_product_card.next(1)" title="Сохранить и открыть следующий"><img src="img/2rightarrow.png" style="width:24px;height: auto;"/> След.</button>
         </span>
+        | <a href="#" onclick="location='#Stock#stock_main_tabs=Резерв&product_code='+App.page_stock_product_card.data.product_code;App.page_stock_product_card.node.window('close');return false;"><img src="img/reserved.png" style="width:24px;height: auto;" /> Резервы по товару</a>
+        | <a href="#" onclick="location='#Stock#stock_main_tabs=Движения товара&product_code='+App.page_stock_product_card.data.product_code;App.page_stock_product_card.node.window('close');return false;">Движения товара</a>
     </div>
 </form>
 

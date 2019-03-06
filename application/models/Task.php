@@ -92,6 +92,7 @@ class Task extends Events {
 	    global $_this;
 	    $message = "Type: " . get_class( $e ) . "; Message: {$e->getMessage()}; File: {$e->getFile()}; Line: {$e->getLine()};";
 	    $_this->log($message);
+            $this->postpone("'0 3:0' DAY_MINUTE");
 	}
 	function log_error( $num, $str, $file, $line ){
 	    log_exception( new ErrorException( $str, 0, $num, $file, $line ) );

@@ -83,4 +83,11 @@ class DocumentList extends Catalog{
 	}
 	return $rows;
     }
+    
+    public $statusFetchList=[];
+    public function statusFetchList(){
+        $sql="SELECT * FROM document_status_list";
+        return $this->get_list($sql);
+    }
+    
 }
