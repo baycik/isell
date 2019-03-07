@@ -245,13 +245,15 @@ class DocumentCore extends DocumentUtils{
         if(!$new_status_id){
             return false;
         }
+        if( $doc_id ){
+            $this->loadDoc($doc_id);
+        }else {
+            $doc_id=$this->doc('doc_id');
+        }
         $this->Hub->set_level(2);
         $commited_only=$this->get_value("SELECT commited_only FROM document_status_list WHERE doc_status_id='$new_status_id'");
         if( $commited_only != $this->isCommited() ){
             return false;
-        }
-        if( !$doc_id ){
-            $doc_id=$this->doc('doc_id');
         }
         $status_change_ok=$this->update('document_list',['doc_status_id'=>$new_status_id],['doc_id'=>$doc_id]);
         

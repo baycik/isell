@@ -103,6 +103,7 @@ class Company extends Catalog{
 	if( $company_id==0 ){
 	    return false;
 	}
+        $user_level=$this->Hub->svar('user_level');
 	$assigned_path=$this->Hub->svar('user_assigned_path');
 	$sql="SELECT
 		*
@@ -115,6 +116,8 @@ class Company extends Catalog{
 	    WHERE
 		(path LIKE '$assigned_path%' OR is_active)
 		    AND
+                level <= $user_level 
+                    AND
 		company_id=$company_id";
 	return $this->get_row($sql);
     }

@@ -14,7 +14,7 @@ class DocumentUtils extends Catalog{
 	    $this->Hub->Company->selectPassiveCompany( $this->_doc->passive_company_id );	
 	}
     }
-    protected function loadDoc($doc_id) {
+    protected function loadDoc($doc_id){//MUST INCLUDE SECURITY CHECK!!! user_level & path
         if( $doc_id ){
             $sql="SELECT 
                     dl.*,
@@ -25,7 +25,16 @@ class DocumentUtils extends Catalog{
                         LEFT JOIN
                     document_status_list dsl USING(doc_status_id)
                 WHERE doc_id='$doc_id'";
-            $this->_doc = $this->get_row($sql);
+            $document_head=$this->get_row($sql);
+            $passive_company=$this->Hub->load_model('Company')->companyGet($document_head->passive_company_id);
+            /*
+             * IF cant get company than it is not permitted to user
+             */
+            if( !$passive_company ){
+                $this->Hub->kick_out();
+                return false;
+            }
+            $this->_doc = $document_head;
             if( !$this->_doc ){
                 $this->Hub->msg("Doc $doc_id not found");
                 $this->Hub->response(0);
