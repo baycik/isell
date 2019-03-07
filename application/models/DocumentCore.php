@@ -308,8 +308,8 @@ class DocumentCore extends DocumentUtils{
                 JOIN
             (SELECT 
                 product_code,
-                    SUM(IF(doc_type = 1, de.product_quantity, 0)) reserved,
-                    SUM(IF(doc_type = 2, de.product_quantity, 0)) awaiting
+                SUM(IF(doc_type = 1, de.product_quantity, 0)) reserved,
+                SUM(IF(doc_type = 2, de.product_quantity, 0)) awaiting
             FROM
                 document_entries de
             JOIN document_list USING (doc_id)
