@@ -270,21 +270,34 @@ class DocumentCore extends DocumentUtils{
         if( $event ){
             return $this->Hub->Events->eventDelete( $event->event_id );
         }
-        $day_limit=3;
-        $stamp=time()+60*60*24*$day_limit;
+        $user_id=$this->Hub->svar('user_id');
+        if( $this->doc('doc_type')==1 ){
+            $day_limit=$this->Hub->pref('reserved_limit');
+        } else {
+            $day_limit=$this->Hub->pref('awaiting_limit');
+        }
+        $stamp=time()+60*60*24*($day_limit?$day_limit:3);
+        $alert="Счет №".$this->doc('doc_num')." для ".$this->Hub->pcomp('company_name')." снят с резерва";
+        $name="Снятие с резерва";
+        $description="$name счета №".$this->doc('doc_num')." для ".$this->Hub->pcomp('company_name');
         $event=[
             'doc_id'=>$doc_id,
-            'event_name'=>'Снятие с резерва',
+            'event_name'=>$name,
             'event_status'=>'undone',
             'event_label'=>'-TASK-',
             'event_date'=>date("Y-m-d H:i:s",$stamp),
-            'event_descr'=>"Снятие с резерва счета №".$this->doc('doc_num'),
+            'event_descr'=>$description,
             'event_program'=>json_encode([
                 'commands'=>[
                     [
                         'model'=>'DocumentCore',
                         'method'=>'setStatusByCode',
                         'arguments'=>[$doc_id,'created']
+                    ],
+                    [
+                        'model'=>'Chat',
+                        'method'=>'addMessage',
+                        'arguments'=>[$user_id,$alert]
                     ]
                 ]
             ])

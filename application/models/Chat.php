@@ -42,7 +42,7 @@ class Chat extends Catalog{
         }
 	return false;
     }
-    private function addMessage( $his_id, $msg ){
+    public function addMessage( $his_id, $msg ){
         $my_id = $this->Hub->svar('user_id');
         $sql="INSERT INTO
                 event_list
