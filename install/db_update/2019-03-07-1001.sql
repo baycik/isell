@@ -5,7 +5,7 @@ CREATE TABLE `document_status_list` (
   `user_level` tinyint(4) DEFAULT NULL,
   `commited_only` tinyint(4) DEFAULT NULL,
   PRIMARY KEY (`doc_status_id`)
-) ENGINE=InnoDBDEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
 

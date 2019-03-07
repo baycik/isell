@@ -162,7 +162,7 @@ class DocumentItems extends DocumentCore{
 	$add_duplicate_rows=(bool) $this->Hub->pref('add_duplicate_rows');
 	$add_ok=$Document2->addEntry( $code, $quantity, $price, $add_duplicate_rows );
         if( $this->isReserved() ){
-            $this->updateReservedCount();
+            $this->reservedCountUpdate();
         }
         return $add_ok;
     }
@@ -186,7 +186,7 @@ class DocumentItems extends DocumentCore{
 	    case 'product_quantity':
                 $ok=$Document2->updateEntry($doc_entry_id, $value, NULL);
                 if( $this->isReserved() ){
-                    $this->updateReservedCount();
+                    $this->reservedCountUpdate();
                 }
                 $Document2->updateTrans();
 		return $ok;
@@ -210,7 +210,7 @@ class DocumentItems extends DocumentCore{
 	$Document2=$this->Hub->bridgeLoad('Document');
 	$delete_ok=$Document2->deleteEntry($ids_arr);
         if( $this->isReserved() ){
-            $this->updateReservedCount();
+            $this->reservedCountUpdate();
         }
         return $delete_ok;
     }

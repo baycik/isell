@@ -1,3 +1,5 @@
+DROP FUNCTION `CHK_ENTRY`;
+DELIMITER $$
 CREATE DEFINER=`root`@`localhost` FUNCTION `CHK_ENTRY`( _entry_id INT ) RETURNS varchar(100) CHARSET utf8
     READS SQL DATA
 BEGIN
@@ -45,4 +47,5 @@ END IF;
 IF _weight=0 OR _volume=0 THEN RETURN 'info Вес или объем не установлен'; END IF;
 
 RETURN 'ok Ошибок нет';
-END
+END$$
+DELIMITER ;
