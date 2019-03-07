@@ -73,7 +73,7 @@ App.page_events_scheduler={
 	    }
 	},
 	updateEvent:function(event){
-            App.post('Events/eventSave/'+event.event_id,event,function( resp ){
+            App.post('Events/eventSave/',event,function( resp ){
                 App.flash("Запись сохранена: " + event.event_name);
 		App.page_events_scheduler.tile.load();               
             });

@@ -107,7 +107,22 @@ class Events extends Catalog{
         'event_liable_user_id'=>'string',
         'event_is_private'=>'string',
         ];
-    public function eventSave( $event_id,$doc_id,$event_date,$event_priority,$event_name,$event_label,$event_target,$event_place,$event_note,$event_descr,$event_program,$event_repeat,$event_status,$event_liable_user_id,$event_is_private ){
+    public function eventSave( 
+            $event_id,
+            $doc_id,
+            $event_date,
+            $event_priority,
+            $event_name,
+            $event_label,
+            $event_target,
+            $event_place,
+            $event_note,
+            $event_descr,
+            $event_program,
+            $event_repeat,
+            $event_status,
+            $event_liable_user_id,
+            $event_is_private ){
 	$this->Hub->set_level(2);
 	$event=[
 	    'doc_id'=>$doc_id,
