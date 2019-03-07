@@ -201,7 +201,9 @@
 	    doc_id:null,
 	    init:function(){
 		App.loadModule('page/trade/document',{doc_id:this.doc_id,open_in:'panel'},'DocInline',/(Doc|page_trade_document)([^\w]|_)/g,"DocInline$2").progress(function(status,param){
-                    DocList.selected_doc_id=Document.doc_id;
+                    if( DocInline.head && DocInline.head.props ){
+                        DocList.selected_doc_id=DocInline.head.props.doc_id;
+                    }
                     switch( status ){
 			case 'close':
 			    $('#document_list_dg').datagrid('unselectAll');
