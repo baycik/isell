@@ -1,7 +1,7 @@
 body{
     margin:0px;
     padding:0px;
-    font-family: 'Trebuchet MS',Arial;
+    font-family: 'Trebuchet MS',Arial !important;
     font-size: 12px;
     -background: url(../img/bg.jpg) repeat-x fixed;
     background: url(../img/bluebg.jpg)  no-repeat center center fixed;
