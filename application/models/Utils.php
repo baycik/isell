@@ -496,17 +496,22 @@ class Utils extends Catalog {
     ////////////////////////////////////////////////////////////
     // STOCK UTILS FUNCTIONS
     ////////////////////////////////////////////////////////////
-    public $stockCalcMin = ['int', 'int', 'int'];
+    public $stockCalcMin = ['parent_id'=> 'int', 'sales_period'=>'int', 'reserve_period'=>'int', 'count_reserved'=>'bool', 'count_awaiting'=>'bool',];
 
-    public function stockCalcMin($parent_id, $sales_period, $reserve_period) {
+    public function stockCalcMin($parent_id, $sales_period, $reserve_period,$count_reserved,$count_awaiting) {
         $branch_ids = $this->treeGetSub('stock_tree', $parent_id);
+        $round_step=10;
         $stock_table = "
 	    UPDATE
 		stock_entries se
 	    SET
 		product_wrn_quantity=
 		GREATEST( COALESCE(
-                (SELECT ROUND( SUM(de.product_quantity)/$sales_period*$reserve_period/10 )*10
+                (SELECT ROUND( 
+                        (SUM(de.product_quantity)/$sales_period*$reserve_period
+                        +IF('$count_reserved',product_reserved,0)
+                        -IF('$count_awaiting',product_awaiting,0))/$round_step
+                    )*$round_step
 		FROM
 		    document_entries de
 			JOIN

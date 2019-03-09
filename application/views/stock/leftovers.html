@@ -17,7 +17,8 @@
 	    calc_min: function () {
 		App.loadWindow("page/stock/calc_min", {parent_label: Leftovers.parent_label}).progress(function (status, fvalue) {
 		    if (status === 'submit') {
-			$.post("Utils/stockCalcMin/" + App.uri(Leftovers.parent_id, fvalue.sales_period, fvalue.reserve_period), function (ok) {
+                        fvalue.parent_id=Leftovers.parent_id;
+			$.post("Utils/stockCalcMin/",fvalue, function (ok) {
 			    if (ok * 1) {
 				Leftovers.grid.reload();
 				App.flash("Минимумы расчитаны у " + ok + " товаров");

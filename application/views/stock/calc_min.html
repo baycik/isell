@@ -15,25 +15,11 @@
 	    });
 	    this.node.window('hcenter');
 	    this.node.window('window').css('position','fixed');
-            this.initSlider();
             
             
 	    $("#stock_calc_min_label").html(this.data.parent_label||"Все");
 	    App.setupForm("#page_stock_calc_min_frm",{},"use_inp_values");
 	},
-        initSlider:function(){
-                $("#page_stock_calc_min_slider").slider({
-		    width:300,
-		    value: [4],
-		    step:1,
-		    min:1,
-		    max:7,
-		    rule: ['1нд','2нд','3нд','1мес','2мес','3мес','6мес'],
-		    onChange:function(newVal){
-			Ledger.date.rangeToDate(newVal,'reload_ledger');
-		    }
-		});            
-        },
 	submit:function(e){
 	    e.preventDefault();
 	    var fvalue=App.collectForm("#page_stock_calc_min_frm");
@@ -76,6 +62,8 @@
 	<option value="21">3 недели</option>
 	<option value="28">4 недели</option>
     </select>
+    <input type="checkbox" title="Добавлять резерв" name="count_reserved">
+    <input type="checkbox" title="Вычитать ожидаемые" name="count_awaiting">
     <div style="text-align: center;margin-top: 15px;">
 	<button type="submit"><img src="img/calc.png" style="width:24px;height: 24px;" /> Рассчитать</button>
 	<button type="button" onclick="App.page_stock_calc_min.node.window('close')"><img src="img/close24.png" /> Закрыть</button>
