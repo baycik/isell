@@ -3503,7 +3503,7 @@
 .datagrid-row-selected,
 .datagrid-row-selected .datagrid-td-rownumber {
   color: #404040;
-  background: #e1e1e1;
+  background: #Fe9;
 }
 .datagrid-filter-row .textbox,
 .datagrid-editable .textbox {
@@ -3520,7 +3520,7 @@
 }
 .tree-node-selected {
   color: #404040;
-  background: #e1e1e1;
+  background: #Fe9;
 }
 .calendar-header,
 .calendar-body th {

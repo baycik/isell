@@ -39,8 +39,9 @@ var App = {
         document.title = this.title + ': ' +  (App.acomp?App.acomp.company_name:'');
     },
     initTabs: function (tab_id) {
+        var selected_default=App.state[tab_id] || App.store(tab_id) || 0;
 	$('#' + tab_id).tabs({
-	    selected: App.store(tab_id) || 0,
+	    selected: selected_default,
 	    onSelect: function (title, index) {
 		var href = $('#' + tab_id).tabs('getTab', title).panel('options').href;
 		var id = href.replace(/\//g, '_').replace('.html', '');

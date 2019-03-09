@@ -124,11 +124,17 @@ classes should alter those!
     padding: 0px !important;
     padding-right: 1px;
 }
+.slick-headerrow .slick-headerrow-columns{
+    height: 23px !important;
+}
 .slick-tool-reload{
     cursor: pointer;
 }
 .slick-align-right{
     text-align: right;
+}
+.slick-header-column.ui-state-default{
+    height: 23px;
 }
 
 
