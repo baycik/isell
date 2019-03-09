@@ -263,6 +263,8 @@ class DocumentCore extends DocumentUtils{
             $this->reservedTaskRemove($doc_id);
         }
         $this->reservedCountUpdate();
+        
+        echo 'reservedCountUpdate';
         return $status_change_ok;
     }
     
@@ -317,10 +319,10 @@ class DocumentCore extends DocumentUtils{
     }
     
     public function reservedCountUpdate(){
-        $sql="
+        echo $sql="
         UPDATE 
             stock_entries
-                JOIN
+                LEFT JOIN
             (SELECT 
                 product_code,
                 SUM(IF(doc_type = 1, de.product_quantity, 0)) reserved,
@@ -333,8 +335,13 @@ class DocumentCore extends DocumentUtils{
                 dsl.status_code = 'reserved'
             GROUP BY product_code) reserve USING (product_code) 
         SET 
-            product_reserved = reserved,
-            product_awaiting = awaiting;";
+            product_reserved = COALESCE(reserved,0),
+            product_awaiting = COALESCE(awaiting,0)
+        WHERE 
+	product_reserved IS NOT NULL 
+        OR product_awaiting IS NOT NULL
+	OR reserved IS NOT NULL 
+        OR awaiting IS NOT NULL";
         return $this->query($sql);
     }
 }

@@ -330,8 +330,8 @@ class DocumentItems extends DocumentCore{
 	return $new_doc_id;
     }
     
-    public $absentToNewdoc=['doc_id'=>'int'];
-    public function absentToNewdoc($old_doc_id){
+    public $absentToNewdoc=['doc_id'=>'int','new_doc_comment'=>'string'];
+    public function absentToNewdoc($old_doc_id,$new_doc_comment){
 	$this->Hub->set_level(2);
 	$this->selectDoc($old_doc_id);
         if( $this->isCommited() ||  $this->doc('doc_type')!=1 ){
@@ -340,6 +340,7 @@ class DocumentItems extends DocumentCore{
         $new_doc_id=$this->createDocument(1);
         $this->absentEntriesMove($new_doc_id, $old_doc_id);
         $this->duplicateHead($new_doc_id, $old_doc_id);
+        $this->headUpdate('doc_data',$new_doc_comment);
         return $new_doc_id;
     }
     
@@ -347,8 +348,8 @@ class DocumentItems extends DocumentCore{
         $sql="SELECT 
             doc_entry_id,
             de.product_code,
-            se.product_quantity - se.product_reserved old_product_quantity,
-            (de.product_quantity - se.product_quantity + se.product_reserved) new_product_quantity,
+            GREATEST(se.product_quantity - se.product_reserved,0) old_product_quantity,
+            GREATEST(de.product_quantity - se.product_quantity + se.product_reserved,0) new_product_quantity,
             de.self_price,
             de.party_label,
             de.invoice_price
@@ -361,19 +362,21 @@ class DocumentItems extends DocumentCore{
             AND de.product_quantity > (se.product_quantity-se.product_reserved)";
 	$old_entries=$this->get_list($sql);
 	foreach($old_entries as $entry){
-            $new_entry=[
-                'doc_id'=>$new_doc_id,
-                'product_code'=>$entry->product_code,
-                'product_quantity'=>$entry->new_product_quantity,
-                'self_price'=>$entry->self_price,
-                'party_label'=>$entry->party_label,
-                'invoice_price'=>$entry->invoice_price
-            ];
             $old_entry=[
                 'product_quantity'=>$entry->old_product_quantity
             ];
-	    $this->create("document_entries",$new_entry);
-	    $this->update("document_entries",$old_entry,['doc_entry_id'=>$entry->doc_entry_id]);
+            $this->update("document_entries",$old_entry,['doc_entry_id'=>$entry->doc_entry_id]);
+            if($entry->new_product_quantity>0){
+                $new_entry=[
+                    'doc_id'=>$new_doc_id,
+                    'product_code'=>$entry->product_code,
+                    'product_quantity'=>$entry->new_product_quantity,
+                    'self_price'=>$entry->self_price,
+                    'party_label'=>$entry->party_label,
+                    'invoice_price'=>$entry->invoice_price
+                ];
+                $this->create("document_entries",$new_entry);
+            }
 	}
     }
     

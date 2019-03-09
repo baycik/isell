@@ -392,7 +392,8 @@
                 return false;
             }
             if( confirm("Вынести недостающие позиции в отдельную накладную?") ){
-		App.post("DocumentItems/absentToNewdoc/",{doc_id:Doc.head.props.doc_id},function(doc_id){
+                var new_doc_comment=`Недостаюшие позиции по накладной #${Doc.head.props.doc_num}`;
+		App.post("DocumentItems/absentToNewdoc/",{doc_id:Doc.head.props.doc_id,new_doc_comment:new_doc_comment},function(doc_id){
 		    if( doc_id*1 ){
 			//Doc.head.load(doc_id);
 			Doc.handler.notify('entry_changed');
