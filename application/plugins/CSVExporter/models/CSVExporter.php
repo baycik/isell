@@ -19,33 +19,44 @@ class CSVExporter extends Catalog {
         $usd_ratio = $this->Hub->pref('usd_ratio');
         $settings = $this->getSettings();
         $branch_ids = $settings->categories;
-        $all_categories = [];
+        
         $img_url = '';
         if (strrpos($settings->publicUrl, '/') == 0) {
-            $img_url = $settings->publicUrl . 'public/index.php?size=500x500&path=';
+            $img_url = $settings->publicUrl . 'public/image.php?size=500x500&path=';
         } else {
-            $img_url = $settings->publicUrl . '/public/index.php?size=500x500&path=';
+            $img_url = $settings->publicUrl . '/public/image.php?size=500x500&path=';
         }
+        $all_categories = [];
         foreach ($branch_ids as $category) {
-            $all_categories = array_merge(array(), $this->getCategories($category->branch_id));
+            $all_categories = array_merge($all_categories, $this->getCategories($category->branch_id));
         }
         !is_dir("../public") && mkdir("../public", 0777);
         $file_path = str_replace('\\', '/', realpath("../public")) . '/isell_export.csv';
         @unlink($file_path);
-
-
         $attribute_select = $this->getAttributesSelect($settings);
         $sql = "
-            SELECT 
-                REPLACE(product_code,';',',') product_code,
-                REPLACE(ru,';',',') ru,
-                analyse_brand,
-                product_id,
-                product_quantity,
-                path AS category_lvl1,
+            SELECT
+                SUBSTRING_INDEX(SUBSTRING_INDEX(path, '/', 2), '/', -1) col1,
+                SUBSTRING_INDEX(SUBSTRING_INDEX(path, SUBSTRING_INDEX(path, '/', 2), -1),label,1) col2,
+                label col3,
+                REPLACE(product_code,';',',') col4,
+                REPLACE(ru,';',',') col5,
+                analyse_brand col6,
+                analyse_origin col7,
+                product_quantity col8,
+                product_barcode col9,
+                product_article col10,
+                product_bpack col11,
+                product_spack col12,
+                product_weight col13,
+                product_volume col14,
+                product_unit col15,
+                CONCAT ('$img_url',product_img) col16,
+                GET_PRICE(product_code, " . $settings->pcomp_id . ", '$usd_ratio') col17,
+                GET_SELL_PRICE(product_code, " . $settings->pcomp_id . ", '$usd_ratio') col18,
+                '' col19,
+                '' col20
                 $attribute_select
-                CONCAT ('http://localhost:888/public/index.php?size=500x500&path=',product_img) as img, 
-                GET_PRICE(product_code, " . $settings->pcomp_id . ", '$usd_ratio') as price1, GET_SELL_PRICE(product_code, " . $settings->pcomp_id . ", '$usd_ratio') as price2
             FROM
                 prod_list pl 
                     JOIN
@@ -55,18 +66,20 @@ class CSVExporter extends Catalog {
             WHERE
                 product_img AND
                 se.parent_id IN (" . implode(',', $all_categories) . ")
+            ORDER BY product_code
             INTO OUTFILE '$file_path'
             CHARACTER SET cp1251 
             FIELDS TERMINATED BY ';'
             ENCLOSED BY ''
             LINES TERMINATED BY '\r\n'";
-        return $this->query($sql);
+        $this->query($sql);
+        return $this->db->affected_rows();
     }
 
     private function getAttributesSelect($settings) {
         $attribute_select = "";
         foreach ($settings->attributes as $key => $attribute_id) {
-            $attribute_select .= "IFNULL( (SELECT attribute_value FROM  attribute_values av WHERE pl.product_id = av.product_id AND av.attribute_id = '$attribute_id'), '') as $key,";
+            $attribute_select .= ",IFNULL( (SELECT CONCAT(attribute_prefix,attribute_value,attribute_unit) FROM  attribute_values av JOIN attribute_list USING(attribute_id) WHERE attribute_value<>'' AND pl.product_id = av.product_id AND av.attribute_id = '$attribute_id'), '')";
         }
         return $attribute_select;
     }

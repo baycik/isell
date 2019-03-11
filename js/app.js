@@ -39,23 +39,22 @@ var App = {
         document.title = this.title + ': ' +  (App.acomp?App.acomp.company_name:'');
     },
     initTabs: function (tab_id) {
+        var selected_default=App.state[tab_id] || App.store(tab_id) || 0;
 	$('#' + tab_id).tabs({
-	    selected: App.store(tab_id) || 0,
+	    selected: selected_default,
 	    onSelect: function (title, index) {
 		var href = $('#' + tab_id).tabs('getTab', title).panel('options').href;
 		var id = href.replace(/\//g, '_').replace('.html', '');
 		App[id] && App[id].focus && App[id].focus();
-		App.store(tab_id, title);		    
+		App.store(tab_id, title);
+                App.state[tab_id]=title;
+                location="#"+App.module.current+"#"+$.param(App.state).replace(/\+/g, '%20');
 	    },
 	    onLoad:function(panel){
 		var href = panel.panel('options').href;
 		if( href ){
 		    var id = href.replace(/\//g, '_').replace('.html', '');
 		    if( App[id] ){
-//			if( !$("#" + id).length ){
-//			    panel.wrapInner('<div id="'+id+'" style="padding:0px"></div>');
-//			    panel.css('padding','5px');
-//			}
 			App.require(App[id].require,function(){
 			    App.initModule(id,{inline:true},null);
 			});
@@ -63,6 +62,11 @@ var App = {
 		}
 	    }
 	});
+        App.Topic('hashChange').subscribe(function(hash_object){
+            if( hash_object[tab_id] ){
+                $('#' + tab_id).tabs('select',decodeURI(hash_object[tab_id]));
+            }
+        });
     },
     initModule: function(id,data,handler){
 	App[id].data = data;
@@ -661,7 +665,7 @@ Mark.pipes.format = function (str) {
                         var pairs = text.split('&');
                         for (var i in pairs) {
                             var keyval = pairs[i].split('=');
-                            newstate[keyval[0]] = keyval[1];
+                            newstate[keyval[0]] = decodeURIComponent(keyval[1]);
                         }
                     }
                     App.state = newstate;

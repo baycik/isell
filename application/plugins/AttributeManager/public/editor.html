@@ -22,6 +22,7 @@
 	    App.setupForm("#attribute_manager_editor_frm",{},"use_inp_values");
             $("input[name='attribute_id']").val(this.data.row.attribute_id);
             $("input[name='attribute_name']").val(this.data.row.attribute_name);
+            $("input[name='attribute_prefix']").val(this.data.row.attribute_prefix);
             $("input[name='attribute_unit']").val(this.data.row.attribute_unit);
 	},
 	submit:function(e){
@@ -38,7 +39,8 @@
     </p>
     <input type="hidden" name="attribute_id" title="Код">
     <input name="attribute_name" title="Название" required="required">
-    <input name="attribute_unit" title="Обозначение">
+    <input name="attribute_prefix" title="Приставка">
+    <input name="attribute_unit" title="Единица">
     <div style="text-align: center;margin-top: 15px;">
 	<button type="submit"><img src="img/plus.png" style="width:24px;height: 24px;" /> Сохранить</button>
 	<button type="button" onclick="App.AttributeManager_editor.node.window('close')"><img src="img/close24.png" /> Закрыть</button>

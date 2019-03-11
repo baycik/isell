@@ -246,24 +246,33 @@
 			Doc.entries.reload();
 		    }
 		    break;
+		case 'doc_status_id':
+		    if( !ok*1 ){
+			App.flash("Невозможно присвоить этот статус документу",'alert');
+                        //$("Doc_status_id").combobox('setValue',oldval);
+		    } else {
+                        //Doc.entries.reload();
+		    }
+		    break;
 	    }
-	    if( !ok ){
-		Doc.head.setPropsForm( Doc.head.props );
-		App.flash('Свойства документа не были сохранены');
-	    }
-	    else{
+            
+	    if( ok*1 ){
 		Doc.head.props[field]=value;
 		Doc.head.hightlightCommited();
                 Doc.head.set();
 		Doc.handler.notify('head_changed',value);
+	    }
+	    else{
+		Doc.head.setPropsForm( Doc.head.props );
+		App.flash('Свойства документа не были сохранены');
 	    }
 	},
 	typeComboFormatter: function (data) {
 	    return "<img src='img/" + (["", "sell", "buy", "serviceout", "servicein"][Math.abs(data.value)]) + ".png'> " + data.text;
 	},
 	typeComboFormatterIcon:function(newVal){
-	    var icon=Doc.head.typeComboFormatter({value:newVal,text:''});
-	    $('#Doc_type_cmb').next().find(".l-btn-text").html( icon );
+	    var icon_class='icon-'+(["", "sell", "buy", "serviceout", "servicein"][Math.abs(newVal)]);
+	    $('#Doc_type_cmb').next().find(".l-btn-icon").attr('class',"l-btn-icon "+icon_class);
 	},
 	companyListFrm:function(row){
 	    var label=row.label;
@@ -377,6 +386,22 @@
 		});
 	    }
 	},
+        absent_to_newdoc:function(){
+            if( Doc.head.props.doc_type!=1 ){
+                App.flash("Только для расходных документов");
+                return false;
+            }
+            if( confirm("Вынести недостающие позиции в отдельную накладную?") ){
+                var new_doc_comment=`Недостаюшие позиции по накладной #${Doc.head.props.doc_num}`;
+		App.post("DocumentItems/absentToNewdoc/",{doc_id:Doc.head.props.doc_id,new_doc_comment:new_doc_comment},function(doc_id){
+		    if( doc_id*1 ){
+			//Doc.head.load(doc_id);
+			Doc.handler.notify('entry_changed');
+			App.flash("Документ с резервом на недостающие позиции создан");
+		    }
+		});                
+            }
+        },
 	import:function(){
 	    if( !Doc.isCreated ){
 		Doc.create().progress(function(status){
@@ -533,6 +558,12 @@
                 return "background-color:"+color; 
             }
 	},
+        goToReserved:function(product_code){
+            location.hash="#Stock#stock_main_tabs=Резерв&product_code="+product_code;
+        },
+        tooltip:function(value, row){
+            return App.datagrid.tooltip(value, row, "Doc.entries.goToReserved('"+row.product_code+"')");
+        },
 	onRowContextMenu: function (e, row) {
 	    e.preventDefault();
 	    var selected_rows=$('#Doc_entry_dg').datagrid('getSelected');
@@ -827,7 +858,7 @@
 	<div>
 	    <select class="easyui-combobox" id="Doc_type_cmb" name="doc_type" title="Вид" data-options="
 		    editable:false,
-		    buttonText:'<img src=img/sell.png>',
+                    buttonIcon:'icon-sell',
 		    buttonAlign:'left',
 		    formatter:Doc.head.typeComboFormatter,
 		    panelHeight:'auto',
@@ -872,17 +903,19 @@
 		   required:'required',
 		   onChange:function(val,old){Doc.head.update('doc_num',val,old)}
 		   ">
+            <input class="easyui-combobox" name="doc_status_id" id="Doc_status_id" title="Статус" data-options="
+                showItemIcon:true,
+                valueField: 'doc_status_id',
+                textField: 'status_description',
+                url:'DocumentList/statusFetchList',
+                mode: 'remote',
+                selectOnNavigation:false,
+                onSelect: function(status,old){Doc.head.update('doc_status_id',status.doc_status_id,old)},
+                panelHeight:''
+                ">
 	</div>
 	<div id="Doc_utils" style="display: none">
 	    <div class="inp_rule"></div>
-	    <select class="easyui-combobox" name="notcount" id="Doc_notcount_cmb" title="На складе" data-options="
-		    editable:false,
-		    panelHeight:'auto',
-		    onChange:function(val,old){Doc.head.update('notcount',val,old)}
-		    ">
-		<option value="0">Учитывать</option>
-		<option value="1">Неучитывать</option>
-	    </select>
 	    <select class="easyui-combobox" name="use_vatless_price" id="Doc_use_vatless_price_cmb" title="Цена" data-options="
 		    editable:false,
 		    panelHeight:'auto',
@@ -890,6 +923,14 @@
 		    ">
 		<option value="0">В том числе НДС</option>
 		<option value="1">Плюс НДС</option>
+	    </select>
+	    <select class="easyui-combobox" name="notcount" id="Doc_notcount_cmb" title="На складе" data-options="
+		    editable:false,
+		    panelHeight:'auto',
+		    onChange:function(val,old){Doc.head.update('notcount',val,old)}
+		    ">
+		<option value="0">Учитывать</option>
+		<option value="1">Неучитывать</option>
 	    </select>
 	    <input type="text" name="vat_rate" class="easyui-numberbox" title="НДС %" data-options="
 		   min:0,
@@ -901,17 +942,18 @@
 		   precision:2,
 		   onChange:function(val,old){Doc.head.update('doc_ratio',val,old)}
 		   ">
-	    <input name="extra_expenses" title="Доп. расходы" onchange="Doc.head.update('extra_expenses',this.value)">
+	    <input name="extra_expenses" class="easyui-numberbox" title="Доп. расходы" onchange="Doc.head.update('extra_expenses',this.value)">
 	    <div style="padding:1px;text-align: right;" class="transp60">
 		Дополнительные инструменты: 
 		<span class="icon-24 icon-import" title="Импортировать" onclick="Doc.head.import();"> </span>
 		<span class="icon-24 icon-download" title="Скачать Excel" onclick="Doc.head.download();"> </span>
 		<span class="icon-24 icon-duplicate" title="Копировать" onclick="Doc.head.duplicate();"> </span>
+		<span class="icon-24 icon-split" title="Вынести недостающие позиции в новую накладную" onclick="Doc.head.absent_to_newdoc();"> </span>
 	    </div>
 	</div>
 	<div>
-	    <div id="Doc_tool_bar" class="" style="padding:1px;text-align: right;border-top:1px #fff solid;position: relative">
-		<div style="display: inline-block;left:0px;top:-5px;position: absolute;" title="↑ для вывода предыдущего кода">
+	    <div id="Doc_tool_bar" class="" style="height: 35px;padding-top: 5px;text-align: right;border-top:1px #ccc solid;position: relative">
+		<div style="display: inline-block;left:1px;top:0px;position: absolute;" title="↑ для вывода предыдущего кода">
 		    <input class="easyui-combobox" id="Doc_suggest_cmb" style="width:190px;" data-options="
 			   valueField: 'product_code',
 			   textField: 'product_code',
@@ -969,7 +1011,7 @@
 		    <th data-options="field:'product_unit',width:40,align:'center'">Ед.</th>
 		    <th data-options="field:'product_price',width:60,align:'right',formatter:Doc.entries.calculate">Цена</th>
 		    <th data-options="field:'product_sum',width:70,align:'right'">Сумма</th>
-		    <th data-options="field:'row_status',width:24,align:'center',formatter:App.datagrid.tooltip">!</th>
+		    <th data-options="field:'row_status',width:24,align:'center',formatter:Doc.entries.tooltip">!</th>
 		</tr>
 	    </thead>
 	</table>

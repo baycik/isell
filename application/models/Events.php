@@ -63,12 +63,18 @@ class Events extends Catalog{
 	return $this->get_row($sql);
     }
     
+    public function eventGetByDocId($doc_id){
+        $event_id=$this->get_value("SELECT event_id FROM event_list WHERE doc_id='$doc_id' LIMIT 1");
+        return $this->eventGet($event_id);
+    }
+    
     public $eventDelete=['int'];
     public function eventDelete( $event_id ){
 	return $this->delete("event_list",['event_id'=>$event_id]);
     }
     
-    protected function eventChange($event_id, $event){
+    public function eventChange($event_id, $event){
+        $event['modified_by']=$this->Hub->svar('user_id');
 	return $this->update('event_list', $event, ['event_id'=>$event_id]);
     }
     
@@ -78,30 +84,64 @@ class Events extends Catalog{
 	return $this->update('event_list', [$field=>$value], ['event_id'=>$event_id]);
     }
     
-    public $eventSave=['int'];
-    public function eventSave( $event_id ){
+    public function eventCreate($event){
+        $event['created_by']=$this->Hub->svar('user_id');
+        $event['event_creator_user_id']=$this->Hub->svar('user_id');
+        return $this->create('event_list', $event);
+    }
+    
+    public $eventSave=[
+        'event_id'=> 'int',
+        'doc_id'=>'int',
+        'event_date'=>'string',
+        'event_priority'=>'string',
+        'event_name'=>'raw',
+        'event_label'=>'raw',
+        'event_target'=>'raw',
+        'event_place'=>'raw',
+        'event_note'=>'raw',
+        'event_descr'=>'raw',
+        'event_program'=>'raw',
+        'event_repeat'=>'string',
+        'event_status'=>'string',
+        'event_liable_user_id'=>'string',
+        'event_is_private'=>'string',
+        ];
+    public function eventSave( 
+            $event_id,
+            $doc_id,
+            $event_date,
+            $event_priority,
+            $event_name,
+            $event_label,
+            $event_target,
+            $event_place,
+            $event_note,
+            $event_descr,
+            $event_program,
+            $event_repeat,
+            $event_status,
+            $event_liable_user_id,
+            $event_is_private ){
 	$this->Hub->set_level(2);
 	$event=[
-	    'doc_id'=>$this->request('doc_id','int'),
-	    'event_date'=>$this->request('event_date'),
-	    'event_priority'=>$this->request('event_priority'),
-	    'event_name'=>$this->request('event_name','raw'),
-	    'event_label'=>$this->request('event_label','raw'),
-	    'event_target'=>$this->request('event_target','raw'),
-	    'event_place'=>$this->request('event_place','raw'),
-	    'event_note'=>$this->request('event_note','raw'),
-	    'event_descr'=>$this->request('event_descr','raw'),
-	    'event_program'=>$this->request('event_program','raw'),
-	    'event_repeat'=>$this->request('event_repeat'),
-	    'event_status'=>$this->request('event_status'),
-	    'event_liable_user_id'=>$this->request('event_liable_user_id'),
-	    'event_is_private'=>$this->request('event_is_private'),
-	    'modified_by'=>$this->Hub->svar('user_id')
+	    'doc_id'=>$doc_id,
+	    'event_date'=>$event_date,
+	    'event_priority'=>$event_priority,
+	    'event_name'=>$event_name,
+	    'event_label'=>$event_label,
+	    'event_target'=>$event_target,
+	    'event_place'=>$event_place,
+	    'event_note'=>$event_note,
+	    'event_descr'=>$event_descr,
+	    'event_program'=>$event_program,
+	    'event_repeat'=>$event_repeat,
+	    'event_status'=>$event_status,
+	    'event_liable_user_id'=>$event_liable_user_id,
+	    'event_is_private'=>$event_is_private
 	];
 	if( !$event_id ){
-	    $event['created_by']=$this->Hub->svar('user_id');
-	    $event['event_creator_user_id']=$this->Hub->svar('user_id');
-	    return $this->create('event_list', $event);
+            return $this->eventCreate($event);
 	}
 	return $this->eventChange($event_id, $event);
     }

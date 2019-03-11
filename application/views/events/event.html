@@ -61,7 +61,7 @@
 	    if( fvalue.event_repeat_day || fvalue.event_repeat_hour || fvalue.event_repeat_minute ){
 		fvalue.event_repeat=fvalue.event_repeat_day+' '+fvalue.event_repeat_hour+':'+fvalue.event_repeat_minute;
 	    }
-	    App.post('Events/eventSave/' + card_event_id, fvalue, function (resp) {
+	    App.post('Events/eventSave/', fvalue, function (resp) {
 		if (!card_event_id) {//new record card_event_id==0
 		    fvalue.event_id = resp;
 		    $("input[name='event_id']").val(fvalue.event_id);

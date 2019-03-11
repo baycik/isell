@@ -48,6 +48,8 @@
         <h1>Плагин не установлен</h1>
     </div>
     <div style="text-align: center">
+        
+        <button type="button" onclick="App.csv_exporter_settings.addAutoBackupTask()"><img src="img/event.png" style="width:24px;"> Добавить автовыполнение</button>
         <button type="button" onclick="App.csv_exporter_settings.export()"><img src="img/export.png" style="width:24px;"> Экспорт</button>
     </div>
 </form>
@@ -95,13 +97,15 @@
             });
         },
         export: function () {
-            if (!App.pcomp) {
-                App.flash("Выберите категорию цен!");
+            if (!App.csv_exporter_settings.data.pcomp_id) {
+                App.flash("Выберите клиента, цены которого будут использованы!");
                 return;
             }
             $.post('CSVExporter/export', function (ok) {
                 if (ok) {
-                    alert('ok!');
+                    App.flash(ok+" Товаров было экспортировано в файл в публичной папке!<br>"+App.csv_exporter_settings.data.publicUrl+'/public');
+                } else {
+                    App.flash("Возникла ошибка при экспорте!");
                 }
             });
         },
@@ -194,7 +198,23 @@
                     App.csv_exporter_settings.updateSettings();
                 }
             });
-        }
+        },
+	addAutoBackupTask:function(fvalue){
+	    var comment="Создание экспортного файла синхронизации";
+	    var program={
+		commands:[
+		    {model:'CSVExporter',method:'export',arguments:''}
+		]
+	    };
+	    var task={
+		event_program:JSON.stringify(program),
+		event_name:"Синхронизация с сайтом",
+		event_descr:comment,
+		event_label:"-TASK-",
+		event_repeat:"0 3:0"
+	    };
+	    App.loadWindow('page/events/event', task);
+	}
     };
     $(App.csv_exporter_settings.init);
 </script>

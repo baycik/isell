@@ -99,6 +99,19 @@
 			//Document.init(doclistRow.doc_type);
 			Document.load(doclistRow.doc_id);
 		    });
+                    DocList.grid.onRenderFinished.subscribe(function(){
+                        if( DocList.selected_doc_id ){
+                            var rows=DocList.grid.getData();
+                            for(var num in rows){
+                                if(rows[num].doc_id==DocList.selected_doc_id){
+                                    DocList.grid.setSelectedRows([num]);
+                                    break;
+                                }
+                            }
+                        } else {
+                            DocList.grid.setSelectedRows([0]);
+                        }
+                    });
                     DocList.grid.onClick.subscribe(function(e,cell){
                         if( cell.cell==4 ){
                             var row=DocList.grid.getDataItem(cell.row);
@@ -188,11 +201,17 @@
 	    doc_id:null,
 	    init:function(){
 		App.loadModule('page/trade/document',{doc_id:this.doc_id,open_in:'panel'},'DocInline',/(Doc|page_trade_document)([^\w]|_)/g,"DocInline$2").progress(function(status,param){
+                    if( DocInline.head && DocInline.head.props ){
+                        DocList.selected_doc_id=DocInline.head.props.doc_id;
+                    }
                     switch( status ){
 			case 'close':
 			    $('#document_list_dg').datagrid('unselectAll');
 			    break;
 			case 'deleted':
+                            DocList.selected_doc_id=0;
+                            DocList.tools.reload();
+                            break;
 			case 'uncommit':
 			case 'commit':
 			case 'head_changed':

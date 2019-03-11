@@ -160,7 +160,11 @@ class DocumentItems extends DocumentCore{
         }
 	$Document2=$this->Hub->bridgeLoad('Document');
 	$add_duplicate_rows=(bool) $this->Hub->pref('add_duplicate_rows');
-	return $Document2->addEntry( $code, $quantity, $price, $add_duplicate_rows );
+	$add_ok=$Document2->addEntry( $code, $quantity, $price, $add_duplicate_rows );
+        if( $this->isReserved() ){
+            $this->reservedCountUpdate();
+        }
+        return $add_ok;
     }
 /*    public $entryPostAdd=[];
     public function entryPostAdd(){
@@ -181,6 +185,9 @@ class DocumentItems extends DocumentCore{
 	switch( $name ){
 	    case 'product_quantity':
                 $ok=$Document2->updateEntry($doc_entry_id, $value, NULL);
+                if( $this->isReserved() ){
+                    $this->reservedCountUpdate();
+                }
                 $Document2->updateTrans();
 		return $ok;
 	    case 'product_price':
@@ -201,7 +208,11 @@ class DocumentItems extends DocumentCore{
     public function entryDeleteArray($doc_id,$ids_arr){
 	$this->selectDoc($doc_id);
 	$Document2=$this->Hub->bridgeLoad('Document');
-	return $Document2->deleteEntry($ids_arr);
+	$delete_ok=$Document2->deleteEntry($ids_arr);
+        if( $this->isReserved() ){
+            $this->reservedCountUpdate();
+        }
+        return $delete_ok;
     }
     
     public $entryStatsGet=['int','string'];
@@ -264,22 +275,29 @@ class DocumentItems extends DocumentCore{
     public $entryDocumentCommit=['int'];
     public function entryDocumentCommit( $doc_id ){
 	$this->selectDoc($doc_id);
-        
         $passive_company_id=$this->doc('passive_company_id');
         $Company=$this->Hub->load_model("Company");
         $Company->selectPassiveCompany($passive_company_id);
-        
-        
 	$this->documentDiscountsSave();
 	$Document2=$this->Hub->bridgeLoad('Document');
-	return $Document2->commit();
+        $commit_ok=$Document2->commit();
+        if( $commit_ok ){
+            $this->loadDoc($doc_id);//very very bad engine handling of doc_head updates
+            $this->setStatusByCode($doc_id,'processed');
+        }
+	return $commit_ok;
     }
     public $entryDocumentUncommit=['int'];
     public function entryDocumentUncommit( $doc_id ){
-	$this->check($doc_id,'int');
 	$this->selectDoc($doc_id);
+        $is_commited=$this->isCommited();
 	$Document2=$this->Hub->bridgeLoad('Document');
-	return $Document2->uncommit();
+        $uncommit_ok=$Document2->uncommit();
+        if( $is_commited && $uncommit_ok ){
+            $this->loadDoc($doc_id);//very very bad engine handling of doc_head updates
+            $this->setStatusByCode($doc_id,'created');
+        }
+	return $uncommit_ok;
     }
     public $recalc=['int','double'];
     public function recalc( $doc_id, $proc=0 ){
@@ -311,6 +329,57 @@ class DocumentItems extends DocumentCore{
 	$this->duplicateHead($new_doc_id, $old_doc_id);
 	return $new_doc_id;
     }
+    
+    public $absentToNewdoc=['doc_id'=>'int','new_doc_comment'=>'string'];
+    public function absentToNewdoc($old_doc_id,$new_doc_comment){
+	$this->Hub->set_level(2);
+	$this->selectDoc($old_doc_id);
+        if( $this->isCommited() ||  $this->doc('doc_type')!=1 ){
+            return false;
+        }
+        $new_doc_id=$this->createDocument(1);
+        $this->absentEntriesMove($new_doc_id, $old_doc_id);
+        $this->duplicateHead($new_doc_id, $old_doc_id);
+        $this->headUpdate('doc_data',$new_doc_comment);
+        return $new_doc_id;
+    }
+    
+    private function absentEntriesMove($new_doc_id,$old_doc_id){
+        $sql="SELECT 
+            doc_entry_id,
+            de.product_code,
+            GREATEST(se.product_quantity - se.product_reserved,0) old_product_quantity,
+            GREATEST(de.product_quantity - se.product_quantity + se.product_reserved,0) new_product_quantity,
+            de.self_price,
+            de.party_label,
+            de.invoice_price
+        FROM 
+            document_entries de
+                JOIN 
+            stock_entries se USING(product_code)
+        WHERE 
+            doc_id='$old_doc_id'
+            AND de.product_quantity > (se.product_quantity-se.product_reserved)";
+	$old_entries=$this->get_list($sql);
+	foreach($old_entries as $entry){
+            $old_entry=[
+                'product_quantity'=>$entry->old_product_quantity
+            ];
+            $this->update("document_entries",$old_entry,['doc_entry_id'=>$entry->doc_entry_id]);
+            if($entry->new_product_quantity>0){
+                $new_entry=[
+                    'doc_id'=>$new_doc_id,
+                    'product_code'=>$entry->product_code,
+                    'product_quantity'=>$entry->new_product_quantity,
+                    'self_price'=>$entry->self_price,
+                    'party_label'=>$entry->party_label,
+                    'invoice_price'=>$entry->invoice_price
+                ];
+                $this->create("document_entries",$new_entry);
+            }
+	}
+    }
+    
     public $import=['int'];
     public function import( $doc_id ){
 	$this->check($doc_id,'int');

@@ -33,7 +33,7 @@ $filename[]=<<<EOT
 views/stock/product_card.html
 EOT;
 $search[]=<<<EOT
-<!--ATTRIBUTE_PLUGIN-->
+<!--PLUGINS-->
 EOT;
 $replace[]=<<<EOT
 EOT;

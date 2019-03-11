@@ -30,7 +30,7 @@
 			return '<img src="img/'+img+'" title="'+title+'" style="margin:2px;">';
 		    },
 		    toDmyt:function(row, cell, value, columnDef, dataContext){
-			return App.toDmyt(value);
+			return value?App.toDmyt(value):'';
 		    }
 		};
 		var settings = {

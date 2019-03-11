@@ -44,15 +44,16 @@ class AttributeManager extends Catalog{
 	return $this->get_list($sql);
     }
     
-    public $attributeUpdate = ['attribute_id' => 'int', 'attribute_name' => 'string', 'attribute_unit' => 'string'];
-    public function attributeUpdate( $attribute_id, $attribute_name, $attribute_unit ){
+    public $attributeUpdate = ['attribute_id' => 'int', 'attribute_name' => 'string', 'attribute_unit' => 'string', 'attribute_prefix' => 'string'];
+    public function attributeUpdate( $attribute_id, $attribute_name, $attribute_unit, $attribute_prefix ){
         if($attribute_id == 0){
             $sql = "
                 INSERT INTO
                     attribute_list
                 SET 
                     attribute_name = '$attribute_name',
-                    attribute_unit = '$attribute_unit'
+                    attribute_unit = '$attribute_unit',
+                    attribute_prefix = '$attribute_prefix'
                 ";
             return  $this->query($sql);          
         };
@@ -61,7 +62,8 @@ class AttributeManager extends Catalog{
                 attribute_list
             SET 
                 attribute_name = '$attribute_name',
-                attribute_unit = '$attribute_unit'
+                attribute_unit = '$attribute_unit',
+                attribute_prefix = '$attribute_prefix'
             WHERE attribute_id = $attribute_id       
             ";
         return  $this->query($sql);
@@ -104,8 +106,7 @@ class AttributeManager extends Catalog{
                 *
             FROM 
                 attribute_list
-            ORDER BY attribute_name
-            ";
+            ORDER BY attribute_name";
         return $this->get_list($sql);
     }
     
@@ -152,8 +153,8 @@ class AttributeManager extends Catalog{
     }
         
     
-    public $getProducts = [ 'attribute_id' => 'int', 'attribute_name' => 'string', 'attribute_unit' => 'string','offset' => ['int', 0], 'limit' => ['int', 5], 'sortby' => 'string', 'sortdir' => '(ASC|DESC)', 'filter' => 'json'];
-    public function getProducts( $attribute_id, $attribute_name, $attribute_unit,$offset, $limit, $sortby, $sortdir, $filter = null ){
+    public $getProducts = [ 'attribute_id' => 'int','offset' => ['int', 0], 'limit' => ['int', 5], 'sortby' => 'string', 'sortdir' => '(ASC|DESC)', 'filter' => 'json'];
+    public function getProducts( $attribute_id,$offset, $limit, $sortby, $sortdir, $filter = null ){
          if (empty($sortby)) {
 	    $sortby = "attribute_name";
 	    $sortdir = "ASC";
@@ -204,39 +205,82 @@ class AttributeManager extends Catalog{
                 $attributes[$target_attribute_id]=$source_column;
             }
         }
-        $total_rows=0;
         foreach ($attributes as $attribute_id=>$attribute_source_column){
+            $attribute_units=$this->get_row("SELECT attribute_unit,attribute_prefix FROM attribute_list WHERE attribute_id=$attribute_id");
+            $attribute_value="$attribute_source_column";
+            if($attribute_units){
+                if($attribute_units->attribute_unit){
+                    $attribute_value="REPLACE($attribute_value,'{$attribute_units->attribute_unit}','')";
+                    $unit_translit=iconv('UTF-8', 'ASCII//TRANSLIT', $attribute_units->attribute_unit);
+                    $attribute_value="REPLACE($attribute_value,'{$unit_translit}','')";
+                }
+                if($attribute_units->attribute_prefix){
+                    $attribute_value="REPLACE($attribute_value,'{$attribute_units->attribute_prefix}','')";
+                    $prefix_translit=iconv('UTF-8', 'ASCII//TRANSLIT', $attribute_units->attribute_prefix);
+                    $attribute_value="REPLACE($attribute_value,'{$prefix_translit}','')";
+                }
+            }
+            
             $sqli="INSERT IGNORE INTO
                     attribute_values 
                 (`attribute_id`,`product_id`,`attribute_value`)
                 SELECT 
-                    $attribute_id,product_id,REPLACE($attribute_source_column,(SELECT attribute_unit FROM attribute_list WHERE attribute_id=$attribute_id),'')
+                    $attribute_id,product_id,$attribute_value
                 FROM 
                     imported_data
                         JOIN
                     prod_list ON product_code = $product_code_source_column
                 WHERE 
                     label LIKE '%$label%'
-                    AND $attribute_source_column <>''";
-            //die($sqli);
+                ON DUPLICATE KEY UPDATE attribute_value={$attribute_source_column};";
             $this->query($sqli);
-            $total_rows+=$this->db->affected_rows();
-            
-            $sql="UPDATE
-                    imported_data
-                        JOIN
-                    prod_list pl ON product_code = $product_code_source_column
-                        JOIN
-                    attribute_values av USING(product_id)
-                SET
-                    av.attribute_id='$attribute_id',
-                    av.attribute_value=REPLACE($attribute_source_column,(SELECT attribute_unit FROM attribute_list WHERE attribute_id=$attribute_id),'')
-                WHERE 
-                    label LIKE '%$label%'";
-            $this->query($sql);
-            $total_rows+=$this->db->affected_rows();
+            $total_rows=$this->db->affected_rows();
         }
+        $this->query("DELETE FROM attribute_values WHERE attribute_value=''");
         $this->query("DELETE FROM imported_data WHERE label LIKE '%$label%' AND {$product_code_source_column} IN (SELECT product_code FROM prod_list pl JOIN attribute_values av USING (product_id))");
 	return $total_rows;
+    }
+    
+    public $tableViewGet=['out_type'=>['string','.print'],'attribute_id' => ['int',0], 'filter' => 'json'];
+    public function tableViewGet($out_type,$attribute_id,$filter){
+	$rows=$this->getProducts( $attribute_id,0, 10000, null, null, $filter = null );
+	$dump=[
+            'tpl_files_folder'=>"application/plugins/AttributeManager/views/",
+	    'tpl_files'=>'GridTpl.xlsx',
+	    'title'=>"Экспорт таблицы",
+	    'user_data'=>[
+		'email'=>$this->Hub->svar('pcomp')?$this->Hub->svar('pcomp')->company_email:'',
+		'text'=>'Доброго дня'
+	    ],
+	    'struct'=>$this->tableStructure(),
+	    'view'=>[
+		'rows'=>$rows
+	    ]
+	];
+
+	$ViewManager=$this->Hub->load_model('ViewManager');
+	$ViewManager->store($dump);
+	$ViewManager->outRedirect($out_type);
+    }
+    
+    public function tableStructure(){
+        return [
+            [
+                'Field'=>'product_code',
+                'Comment'=>'Код'
+            ],
+            [
+                'Field'=>'attribute_name',
+                'Comment'=>'Атрибут'
+            ],
+            [
+                'Field'=>'attribute_value',
+                'Comment'=>'Значение'
+            ],
+            [
+                'Field'=>'attribute_unit',
+                'Comment'=>'Единица'
+            ]
+        ];
     }
 }

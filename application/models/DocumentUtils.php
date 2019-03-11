@@ -14,9 +14,27 @@ class DocumentUtils extends Catalog{
 	    $this->Hub->Company->selectPassiveCompany( $this->_doc->passive_company_id );	
 	}
     }
-    private function loadDoc($doc_id) {
+    protected function loadDoc($doc_id){//MUST INCLUDE SECURITY CHECK!!! user_level & path
         if( $doc_id ){
-            $this->_doc = $this->get_row("SELECT *, DATE_FORMAT(cstamp,'%d.%m.%Y') AS doc_date FROM document_list WHERE doc_id='$doc_id'");
+            $sql="SELECT 
+                    dl.*,
+                    dsl.status_code,
+                    DATE_FORMAT(cstamp,'%d.%m.%Y') AS doc_date 
+                FROM 
+                    document_list dl
+                        LEFT JOIN
+                    document_status_list dsl USING(doc_status_id)
+                WHERE doc_id='$doc_id'";
+            $document_head=$this->get_row($sql);
+            $passive_company=$this->Hub->load_model('Company')->companyGet($document_head->passive_company_id);
+            /*
+             * IF cant get company than it is not permitted to user
+             */
+            if( !$passive_company ){
+                $this->Hub->kick_out();
+                return false;
+            }
+            $this->_doc = $document_head;
             if( !$this->_doc ){
                 $this->Hub->msg("Doc $doc_id not found");
                 $this->Hub->response(0);
@@ -45,6 +63,10 @@ class DocumentUtils extends Catalog{
     protected function isCommited() {
 	return $this->doc('is_commited');
     }
+    protected function isReserved(){
+        return $this->doc('status_code')=='reserved';
+    }
+    
     protected function setDocumentModifyingUser() {
 	$user_id = $this->Hub->svar('user_id');
 	$this->rowUpdateField( 'document_list', 'doc_id', $this->doc('doc_id'), 'modified_by', $user_id );

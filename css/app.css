@@ -1,8 +1,8 @@
 body{
     margin:0px;
     padding:0px;
-    font-family: 'Trebuchet MS',Arial;
-    font-size: 12px;
+    font-family: 'Trebuchet MS',Arial !important;
+    font-size: 12px !important;
     -background: url(../img/bg.jpg) repeat-x fixed;
     background: url(../img/bluebg.jpg)  no-repeat center center fixed;
     background-size: cover;
@@ -55,8 +55,8 @@ input,select,textarea{
     color: #056;
     border: 1px solid #95b8e7;
     padding: 2px 4px 2px 4px;
-    margin-left: -2px;
-    width:200px;
+    -margin-left: -2px;
+    width:209px;
     vertical-align:top;
     font-size: 12px;
 }
@@ -64,8 +64,8 @@ input[type=checkbox]{
     width: 20px;
 }
 input:hover,textarea:hover{
-    background: #e0f3ff;
-    border-color:#acf;
+    -background: #e0f3ff;
+    -border-color:#acf;
 }
 fieldset{
     display: inline-block;
@@ -87,7 +87,7 @@ button, .gray_grad, .light_grad{
     border: 1px solid #759dc0;
     padding: 2px 4px 4px 4px;
     color: #000000;
-    border-radius: 4px;
+    border-radius: 2px;
     box-shadow: 0 1px 1px rgba(0, 0, 0, 0.15);
     background-color: #bcd8f4;
     background-repeat: repeat-x;
@@ -251,7 +251,7 @@ button img{
     border-color: #000;
 }
 div .combobox-item-hover{
-    background-color: #cdf;
+    -background-color: #cdf;
 }
 
 .transparent{
@@ -279,7 +279,7 @@ div .combobox-item-hover{
     cursor: pointer;
     border: 1px solid #95b8e7;
     border-radius: 3px;
-    margin: -1px;
+    margin: -0px;
     background-color: #bcd8f4;
 }
 .icon-eye{
@@ -361,6 +361,9 @@ div .combobox-item-hover{
 }
 .icon-duplicate{
     background:url('../img/copy.png') no-repeat center center;
+}
+.icon-split{
+    background:url('../img/split.png') no-repeat center center;
 }
 .icon-settings16{
     background:url('../img/settings.png') no-repeat center center;

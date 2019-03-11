@@ -117,11 +117,12 @@ class Hub  extends CI_Controller{
     }
     
     private function pluginTriggerBefore($model_name,$method,$route_args){
+        //need to be rewriten
 	$trigger_before=$this->svar('trigger_before');
 	if( isset($trigger_before[$model_name]) || isset($trigger_before["$model_name/$method"]) ){
 	    $this->pluginCheckIfPublicFile($model_name,$method,$route_args);
 	    $model_listener=$trigger_before[$model_name];
-	    $this->load->add_package_path(APPPATH.'plugins/'.$model_listener, FALSE);
+	    //$this->load->add_package_path(APPPATH.'plugins/'.$model_listener, FALSE);
 	    if( $model_listener===$model_name ){//if plugin ovverides it self then adding package is enough
 		return false;
 	    }
@@ -129,10 +130,11 @@ class Hub  extends CI_Controller{
 	}
     }
     private function pluginTriggerAfter($model_name,$method,$route_args){
+        //need to be rewriten
 	$trigger_after=$this->svar('trigger_after');
 	if( isset($trigger_after[$model_name]) || isset($trigger_after["$model_name/$method"]) ){
 	    $model_listener=$trigger_after[$model_name];
-	    $this->load->add_package_path(APPPATH.'plugins/'.$model_listener, FALSE);
+	    //$this->load->add_package_path(APPPATH.'plugins/'.$model_listener, FALSE);
 	    if( $model_listener===$model_name ){//if plugin ovverides it self then adding package is enough
 		return false;
 	    }
@@ -202,6 +204,12 @@ class Hub  extends CI_Controller{
     }
     
     public function load_model( $name ){
+	$trigger_before=$this->svar('trigger_before');
+	$trigger_after=$this->svar('trigger_after');
+	if( isset($trigger_before[$name]) || isset($trigger_after[$name]) ){
+	    $name=isset($trigger_before[$name])?$trigger_before[$name]:$trigger_after[$name];
+            $this->load->add_package_path(APPPATH.'plugins/'.$name, FALSE);
+        }
 	$this->load->model($name,null,true);
 	if( isset($this->{$name}->min_level) ){
 	    $this->set_level($this->{$name}->min_level);
@@ -210,7 +218,6 @@ class Hub  extends CI_Controller{
 	if( method_exists($this->{$name}, 'init') ){
 	    $this->{$name}->init();
 	}
-
 	return $this->{$name};
     }
     

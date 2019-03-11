@@ -88,4 +88,25 @@ class StockView extends Stock{
 	$ViewManager->store($dump);
 	$ViewManager->outRedirect($out_type);
     }
+    
+    public $reserveViewGet = ['offset' => ['int', 0], 'limit' => ['int', 1000], 'sortby' => ['string','cstamp'], 'sortdir' => ['(ASC|DESC)','DESC'], 'filter' => 'json', 'out_type'=>'string'];
+    public function reserveViewGet($offset, $limit, $sortby, $sortdir, $filter = null, $out_type) {
+	$rows=$this->reserveListFetch($offset, $limit, $sortby, $sortdir, $filter);
+	$dump=[
+	    'tpl_files'=>'/StockReserves.xlsx',
+	    'title'=>"Резервы",
+	    'user_data'=>[
+		'email'=>$this->Hub->svar('pcomp')?$this->Hub->svar('pcomp')->company_email:'',
+		'text'=>'Доброго дня'
+	    ],
+	    'view'=>[
+		'date'=>date('d.m.Y H:i'),
+		'user_sign'=>$this->Hub->svar('user_sign'),
+		'rows'=>$rows
+	    ]
+	];
+	$ViewManager=$this->Hub->load_model('ViewManager');
+	$ViewManager->store($dump);
+	$ViewManager->outRedirect($out_type);
+    }
 }

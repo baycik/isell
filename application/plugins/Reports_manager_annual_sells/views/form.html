@@ -1,0 +1,53 @@
+<script>
+    ReportsJs.report.staff_list_needed=true;
+</script>
+<form>
+    <div class="inp_group" style="width: 250px;">
+        <input style="width:110px" type="date" name="idate" title="Начальная дата" value="{{iso_first_day}}" required="required">
+        <input style="width:110px" type="date" name="fdate" title="Конечная дата" value="{{iso_today}}" required="required">
+    </div>
+    <div class="inp_group" style="width: 200px;">
+    	<input type="checkbox" name="all_active" title="Все наши фирмы" checked="checked">
+	<input type="checkbox" name="count_sells" title="Учитывать продажи" checked="checked">
+	<input type="checkbox" name="count_reclamations" title="Учитывать возвраты" checked="checked">
+	<input type="checkbox" name="include_vat" title="Цены с НДС">
+	<input type="checkbox" name="group_by_manager" title="Группировать по менеджеру">
+	<input type="checkbox" name="group_by_client" title="Группировать по клиенту">
+    </div>
+    <div class="inp_group" style="width: 350px;">
+        Фильтр клиентов
+        <hr>
+        <input name="path_exclude" title="Исключить компании">
+        <input name="path_include" title="Включить компании">
+        <select name="manager_id" title="Менеджер">
+	    {{staff_list}}
+	    <option value="{{user_id}}">{{full_name}}</option>
+	    {{/staff_list}}
+	</select>
+    </div>
+    <div class="inp_group" style="width: 350px;">
+        Группирование товара
+        <hr>
+        <select name="group_by" title="Группировать по">
+	    <option value="category_name" selected="selected">Категория</option>
+	    <option value="product_code">Код товара</option>
+	    <option value="analyse_type">Тип</option>
+	    <option value="analyse_brand">Бренд</option>
+	    <option value="analyse_class">Класс</option>
+	    <option value="product_article">Артикул</option>
+	</select>
+        <select name="group_by2" title="Группировать также по">
+            <option value="" selected="selected">-</option>
+	    <option value="category_name">Категория</option>
+	    <option value="product_code">Код товара</option>
+	    <option value="analyse_type">Тип</option>
+	    <option value="analyse_brand">Бренд</option>
+	    <option value="analyse_class">Класс</option>
+	    <option value="product_article">Артикул</option>
+	</select>
+	<input name="group_by_filter" title="Фильтр группы">
+    </div>
+    <div style="text-align: center">
+	<button type="submit"><img src="img/report24.png" style="width:24px;height: auto"> Сформировать</button>
+    </div>
+</form>

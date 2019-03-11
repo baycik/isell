@@ -17,7 +17,8 @@
 	    calc_min: function () {
 		App.loadWindow("page/stock/calc_min", {parent_label: Leftovers.parent_label}).progress(function (status, fvalue) {
 		    if (status === 'submit') {
-			$.post("Utils/stockCalcMin/" + App.uri(Leftovers.parent_id, fvalue.sales_period, fvalue.reserve_period), function (ok) {
+                        fvalue.parent_id=Leftovers.parent_id;
+			$.post("Utils/stockCalcMin/",fvalue, function (ok) {
 			    if (ok * 1) {
 				Leftovers.grid.reload();
 				App.flash("Минимумы расчитаны у " + ok + " товаров");
@@ -316,7 +317,9 @@
                         {id: "product_code", field: "product_code", name: "Код", width: 80, sortable: true},
                         {id: "ru", field: "ru", name: "Название", width: 330, sortable: true},
                         {id: "product_unit", field: "product_unit", name: "Ед", width: 30, sortable: true, cssClass: 'slick-align-right'},
-                        {id: "product_quantity", field: "product_quantity", name: "Остаток", width: 60, sortable: true,formatter:Leftovers.table.frm.min, cssClass: 'slick-align-right'}
+                        {id: "product_quantity", field: "product_quantity", name: "Остаток", width: 60, sortable: true,formatter:Leftovers.table.frm.min, cssClass: 'slick-align-right'},
+                        {id: "reserved", field: "product_reserved", name: "Резерв", width: 60, sortable: true,formatter:Leftovers.table.frm.int, cssClass: 'slick-align-right'},
+                        {id: "awaiting", field: "product_awaiting", name: "Ожидается", width: 60, sortable: true,formatter:Leftovers.table.frm.int, cssClass: 'slick-align-right'}
                     ];
                     var columns_lev2=[
                         {id: "product_wrn_quantity", field: "product_wrn_quantity",  name: "Мин", width: 60, editor: Slick.Editors.Integer, sortable: true,formatter:Leftovers.table.frm.int, cssClass: 'slick-align-right'},
