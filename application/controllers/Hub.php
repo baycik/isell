@@ -101,11 +101,11 @@ class Hub  extends CI_Controller{
 		    $method_args[]=$arg_value;
                     continue;
 		}
-                /*if( $param instanceof ReflectionParameter ){
+                if( $param instanceof ReflectionParameter ){
                     $param_name=$param->getName();
-                    $param_default=$param->isOptional()?$param->getDefaultValue():null;
+                    $param_default=$param->isDefaultValueAvailable()?$param->getDefaultValue():null;
                     $param_type=$param->hasType()?$param->getType():'string';
-                }*/ else {
+                } else {
 		    $param_name=$i;
                     $param_default= is_array($param)?$param[1]:null;
                     $param_type=    is_array($param)?$param[0]:$param;
@@ -114,6 +114,82 @@ class Hub  extends CI_Controller{
 	    }
 	    return $method_args;
 	}
+    }
+    public function check( &$var, $type=null ){
+	switch( $type ){
+	    case 'raw':
+		break;
+	    case 'int':
+		$var=(int) $var;
+		break;
+	    case 'double':
+		$var=(float) $var;
+		break;
+	    case 'bool':
+		$var=(bool) $var;
+		break;
+	    case 'escape':
+		$var=$this->db->escape_identifiers($var);
+		break;
+	    case 'string':
+                $var=  addslashes( $var );
+                break;
+	    case 'json':
+	    case 'array':
+                $var= json_decode( $var ,true);
+                break;
+	    default:
+		if( $type ){
+		    $matches=[];
+		    preg_match('/'.$type.'/u', $var, $matches);
+		    $var=  isset($matches[0])?$matches[0]:null;
+		} else {
+		    $var=  addslashes( $var );
+		}
+	}
+    }
+    public function request( $name, $type=null, $default=null ){
+	$value=$this->input->get_post($name);
+	if( strlen($value)==0 ){
+	    $value=$default;
+	}
+        $this->check($value,$type);
+	return $value;
+    }
+    
+    private function cast( $var, $type ){
+	switch( $type ){
+	    case 'raw':
+		break;
+	    case 'int':
+		$var=(int) $var;
+		break;
+	    case 'double':
+		$var=(float) $var;
+		break;
+	    case 'bool':
+		$var=(bool) $var;
+		break;
+	    case 'escape':
+		$var=$this->db->escape_identifiers($var);
+		break;
+	    case 'string':
+                $var=  addslashes( $var );
+                break;
+	    case 'json':
+	    case 'array':
+                $var= json_decode( $var ,true);
+                break;
+	    default:
+		if( $type ){
+		    $matches=[];
+		    preg_match('/'.$type.'/u', $var, $matches);
+		    $var=  isset($matches[0])?$matches[0]:null;
+		} else {
+		    $var=  addslashes( $var );
+		}
+	}
+        return $var;
     }
     
     private function pluginTriggerBefore($model_name,$method,$route_args){
@@ -233,46 +309,7 @@ class Hub  extends CI_Controller{
 	    }
 	}
     }
-    public function check( &$var, $type=null ){
-	switch( $type ){
-	    case 'raw':
-		break;
-	    case 'int':
-		$var=(int) $var;
-		break;
-	    case 'double':
-		$var=(float) $var;
-		break;
-	    case 'bool':
-		$var=(bool) $var;
-		break;
-	    case 'escape':
-		$var=$this->db->escape_identifiers($var);
-		break;
-	    case 'string':
-                $var=  addslashes( $var );
-                break;
-	    case 'json':
-                $var= json_decode( $var ,true);
-                break;
-	    default:
-		if( $type ){
-		    $matches=[];
-		    preg_match('/'.$type.'/u', $var, $matches);
-		    $var=  isset($matches[0])?$matches[0]:null;
-		} else {
-		    $var=  addslashes( $var );
-		}
-	}
-    }
-    public function request( $name, $type=null, $default=null ){
-	$value=$this->input->get_post($name);
-	if( $value!==null ){
-	    $this->check($value,$type);
-	    return $value;
-	}
-	return $default;
-    }
+
     
     public function kick_out() {
 	header("HTTP/1.1 401 Unauthorized");

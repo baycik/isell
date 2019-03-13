@@ -1,0 +1,164 @@
+<script>
+    App.CampaignManager_index = (function ($) {
+        var campaign_id = 1;
+        function init() {
+            Campaign.init();
+            
+        }
+
+        var Utils = {
+        };
+
+
+        var Campaign = {
+            init: function () {
+                this.get();
+            },
+            render: function (campaign) {
+                App.renderTpl('CampaignManager', campaign);
+                App.setupForm('#camp_manager_form', campaign.settings).change(function (node) {
+                    Campaign.update(this.name, App.val(this), this.title);
+                });
+                Clients.init();
+            },
+            get: function () {
+                $.post("CampaignManager/campaignGet", {campaign_id: campaign_id}, function (resp) {
+                    var campaign = App.json(resp);
+                    Campaign.render(campaign);
+                });
+            },
+            update: function (field, value, title) {
+                $.post("CampaignManager/campaignUpdate", {campaign_id: campaign_id, field: field, value: value}, function (ok) {
+                    if (ok * 1) {
+                        App.flash("updated " + title);
+                    } else {
+                        App.flash("not updated " + title);
+                    }
+
+                });
+            },
+            remove: function () {
+                if (confirm("Delete this campaign?")) {
+                    $.post("Campaign/campaignRemove", {campaign_id: campaign_id}, function (ok) {
+                        if (ok * 1) {
+                            App.flash("removed");
+                        } else {
+                            App.flash("not removed");
+                        }
+                    });
+                }
+            },
+            add: function () {
+                $.post("Campaign/campaignAdd", function (ok) {
+                    if (ok * 1) {
+                        App.flash("added");
+                    } else {
+                        App.flash("not added");
+                    }
+                });
+            }
+        };
+
+        var Clients = {
+            init: function () {
+                var settings = {
+                    columns: [
+                        {id: 'label1', field: 'label', name: 'Название', width: 180},
+                        {id: 'path1', field: 'path', name: 'Путь', width: 300}
+                    ],
+                    options: {
+                        enableCellNavigation: true,
+                        enableColumnReorder: false,
+                        enableFilter: true,
+                        url: 'CampaignManager/clientListFetch',
+                        params:{
+                            campaign_id:campaign_id
+                        }
+                    }
+                };
+                $(".x-campaign-clients-tools").click(function (e) {
+		    var action = $(e.target).data('action');
+		    if (action) {
+			Clients.tools[action] && Clients.tools[action]();
+		    }
+		});
+                Clients.grid = new SlickInfinite("#CampaignManager_clients_sg", settings);
+            },
+            load: function () {
+                Clients.grid;
+            },
+            tools: {
+                reload: function () {
+                    Clients.grid.reload();
+                    
+                }
+            }
+        };
+        var require = [
+            "js/slick/lib/jquery.event.drag-2.3.0.js",
+            ["js/slick/slick.core.js",
+                "js/slick/slick.grid.js",
+                "js/slick/plugins/slick.rowselectionmodel.js",
+                "js/slick/slick.editors.js",
+                "js/slick/slickinfinite.js"]
+        ];
+        return {
+            require: require,
+            init: init
+        };
+    })(jQuery);
+</script>
+
+<div id="CampaignManager" style="padding: 10px;">
+    <div id="camp_manager_form">
+        <div class="easyui-tabs">
+            <div title="Campaign 1">
+
+            </div>
+        </div>
+
+        <div class="easyui-panel" title="Campaign Settings">
+            <input type="text" title="Название" name="campaign_name">
+            <select name="liable_user_id" title="Закреплен за">
+                <!--{{staff_list}}-->
+                <option value="{{user_id}}">{{full_name}}</option>
+                <!--{{/staff_list}}-->
+            </select>
+        </div>
+        <div class="easyui-panel leftcol-grid" title="Campaign Clients">
+            <div>
+                <input type="text" title="Включить группу" name="subject_path_include">
+                <input type="text" title="Исключить группу" name="subject_path_exclude">
+                <select name="subject_manager_include" title="Включить закрепленных">
+                    <!--{{staff_list}}-->
+                    <option value="{{user_id}}">{{full_name}}</option>
+                    <!--{{/staff_list}}-->
+                </select>
+                <select name="subject_manager_exclude" title="Исключить закрепленных">
+                    <!--{{staff_list}}-->
+                    <option value="{{user_id}}">{{full_name}}</option>
+                    <!--{{/staff_list}}-->
+                </select>
+            </div>
+            <div  style="width:500px;">
+                <div class="x-campaign-clients-tools" style="display:grid;grid-template-columns: auto auto;">
+                    <div style="font-weight: bold;padding-top: 8px;">
+                        <img src="img/table16.png" style="width:16px;height: 16px;"> Список клиентов
+                    </div>
+                    <div style="text-align: right">
+                        <span class="icon-24 icon-refresh" data-action="reload" title="Обновить"> </span> 
+                    </div>                    
+                </div>
+                <div id="CampaignManager_clients_sg" style="height: 500px;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .leftcol-grid{
+        display: grid;
+        grid-template-columns: 350px auto;
+    }
+</style>
+
