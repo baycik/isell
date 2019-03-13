@@ -9,18 +9,24 @@
  * Trigger After: CampaignManager
  */
 class CampaignManager extends Catalog{
+    public $min_level=3;
+    
     public function index(){
         $this->load->view('campaign_manager.html');
     }
     
     public function campaignGet( int $campaign_id ){
         $settings=$this->get_row("SELECT * FROM plugin_campaign_list WHERE campaign_id='$campaign_id'");
-        $Pref=$this->Hub->load_model("Pref");
-        $staff=$Pref->getStaffList();
         return [
             'settings'=>$settings,
-            'staff_list'=>$staff
+            'staff_list'=>$this->Hub->load_model("Pref")->getStaffList(),
+            'bonus_ranges'=>$this->campaignBonusRangesGet( $campaign_id ),
+            'stock_category_list'=>$this->treeFetch('stock_tree',0,'top')
         ];
+    }
+    
+    private function campaignBonusRangesGet( int $campaign_id ){
+        return $this->get_list("SELECT * FROM plugin_campaign_bonus WHERE campaign_id='$campaign_id'");
     }
     
     public function campaignAdd(){
@@ -40,16 +46,16 @@ class CampaignManager extends Catalog{
         $or_case=[];
         $and_case=[];
         if( $settings->subject_path_include ){
-            $or_case[]=" path LIKE '".str_replace(",", "%' OR path LIKE '", $settings->subject_path_include)."%'";
+            $or_case[]=" path LIKE '%".str_replace(",", "%' OR path LIKE '%", $settings->subject_path_include)."%'";
         }
         if( $settings->subject_path_exclude ){
-            $and_case[]=" path NOT LIKE '".str_replace(",", "%' AND path NOT LIKE '", $settings->subject_path_include)."%'";
+            $and_case[]=" path NOT LIKE '%".str_replace(",", "%' AND path NOT LIKE '%", $settings->subject_path_exclude)."%'";
         }
         if( $settings->subject_manager_include ){
             $or_case[]=" manager_id = '".str_replace(",", "' OR manager_id = '", $settings->subject_manager_include)."'";
         }
-        if( $settings->subject_path_exclude ){
-            $and_case[]=" manager_id <> '".str_replace(",", "' OR manager_id <> '", $settings->subject_manager_include)."'";
+        if( $settings->subject_manager_exclude ){
+            $and_case[]=" manager_id <> '".str_replace(",", "' OR manager_id <> '", $settings->subject_manager_exclude)."'";
         }
         if( count($or_case) ){
             $where="(".implode(' OR ',$or_case).")";
@@ -81,5 +87,19 @@ class CampaignManager extends Catalog{
             ORDER BY $sortby $sortdir
 	    LIMIT $limit OFFSET $offset";
         return $this->get_list($sql);
+    }
+    
+    
+    
+    
+    
+    
+    public function bonusRangeAdd( int $campaign_id ){
+        $bonus_range=['campaign_id'=>$campaign_id,'bonus_type'=>'volume'];
+        return $this->create('plugin_campaign_bonus', $bonus_range);
+    }
+    
+    public function bonusRangeUpdate( int $campaign_bonus_id, string $field, string $value){
+        return $this->update('plugin_campaign_bonus',[$field=>$value],['campaign_bonus_id'=>$campaign_bonus_id]);
     }
 }

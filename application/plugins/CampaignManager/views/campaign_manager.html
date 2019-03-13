@@ -3,7 +3,7 @@
         var campaign_id = 1;
         function init() {
             Campaign.init();
-            
+
         }
 
         var Utils = {
@@ -14,12 +14,21 @@
             init: function () {
                 this.get();
             },
-            render: function (campaign) {
-                App.renderTpl('CampaignManager', campaign);
-                App.setupForm('#camp_manager_form', campaign.settings).change(function (node) {
-                    Campaign.update(this.name, App.val(this), this.title);
+            data:{},
+            render: function (data) {
+                Campaign.data=data;
+                Mark.globals.stock_categories = data.stock_category_list;
+                App.renderTpl('CampaignManager', data);
+                App.setupForm('#camp_manager_form', data.settings).change(function (node) {
+                    if( $(this).data('campaign_bonus_id') ){
+                        Bonuses.update(this.name, App.val(this), this.title, $(this).data('campaign_bonus_id'));
+                    } else {
+                        Campaign.update(this.name, App.val(this), this.title);
+                    }
+                    
                 });
                 Clients.init();
+                Bonuses.init();
             },
             get: function () {
                 $.post("CampaignManager/campaignGet", {campaign_id: campaign_id}, function (resp) {
@@ -71,17 +80,17 @@
                         enableColumnReorder: false,
                         enableFilter: true,
                         url: 'CampaignManager/clientListFetch',
-                        params:{
-                            campaign_id:campaign_id
+                        params: {
+                            campaign_id: campaign_id
                         }
                     }
                 };
                 $(".x-campaign-clients-tools").click(function (e) {
-		    var action = $(e.target).data('action');
-		    if (action) {
-			Clients.tools[action] && Clients.tools[action]();
-		    }
-		});
+                    var action = $(e.target).data('action');
+                    if (action) {
+                        Clients.tools[action] && Clients.tools[action]();
+                    }
+                });
                 Clients.grid = new SlickInfinite("#CampaignManager_clients_sg", settings);
             },
             load: function () {
@@ -90,10 +99,49 @@
             tools: {
                 reload: function () {
                     Clients.grid.reload();
-                    
+
                 }
             }
         };
+        var Bonuses = {
+            init: function () {
+                $("#CampaignManager_bonuses_add").click(function () {
+                    Bonuses.add();
+                });
+                Bonuses.setForm();
+            },
+            setForm:function(){
+                for( let i in Campaign.data.bonus_ranges ){
+                    console.log(`select [name=bonus_type][data-campaign_bonus_id=${Campaign.data.bonus_ranges[i].campaign_bonus_id}]`);
+                    $(`select [name=bonus_type][data-campaign_bonus_id=${Campaign.data.bonus_ranges[i].campaign_bonus_id}]`).val(Campaign.data.bonus_ranges[i].bonus_type);
+                }
+            },
+            add: function () {
+                $.post("CampaignManager/bonusRangeAdd", {campaign_id: campaign_id}, function () {
+                    Campaign.get();
+                });
+            },
+            remove: function () {
+                $.post("CampaignManager/bonusRangeRemove", {campaign_bonus_id: campaign_bonus_id}, function () {
+                    Campaign.get();
+                });
+            },
+            update: function (field, value, title, campaign_bonus_id) {
+                $.post("CampaignManager/bonusRangeUpdate", {campaign_bonus_id: campaign_bonus_id, field: field, value: value}, function (ok) {
+                    if (ok * 1) {
+                        App.flash("updated " + title);
+                    } else {
+                        App.flash("not updated " + title);
+                    }
+                    //Campaign.get();
+                });
+            }
+        };
+
+
+
+
+
         var require = [
             "js/slick/lib/jquery.event.drag-2.3.0.js",
             ["js/slick/slick.core.js",
@@ -124,6 +172,48 @@
                 <option value="{{user_id}}">{{full_name}}</option>
                 <!--{{/staff_list}}-->
             </select>
+        </div>
+        <div class="easyui-panel" title="Campaign Bonuses">
+            <div>
+                <div class="bonus-range-grid">
+
+                    <div>Вид бонуса</div>
+                    <div>Бренд товара</div>
+                    <div>Тип товара</div>
+                    <div>Категория товара</div>
+
+
+                    <!--{{bonus_ranges}}-->
+                    <div>
+                        <select name="bonus_type" data-campaign_bonus_id="{{campaign_bonus_id}}">
+                            <option value="profit">Наценка</option>
+                            <option value="volume">Объем</option>
+                            <option value="payment">Оплата</option>
+                        </select>
+                    </div>
+                    <div><input name="product_brand_filter" data-campaign_bonus_id="{{campaign_bonus_id}}"></div>
+                    <div><input name="product_type_filter" data-campaign_bonus_id="{{campaign_bonus_id}}"></div>
+                    <div>
+                    <select name="product_category_id" data-campaign_bonus_id="{{campaign_bonus_id}}">
+                        <option selected="selected">-</option>
+                        <!--{{stock_categories}}-->
+                        <option value="{{branch_id}}">{{label}}</option>
+                        <!--{{/stock_categories}}-->
+                    </select>
+                    </div>
+                    <!--{{/bonus_ranges}}-->
+
+
+
+
+
+
+                </div>
+                <button id="CampaignManager_bonuses_add">Add</button>
+            </div>
+            <div  style="width:500px;">
+
+            </div>
         </div>
         <div class="easyui-panel leftcol-grid" title="Campaign Clients">
             <div>
@@ -159,6 +249,18 @@
     .leftcol-grid{
         display: grid;
         grid-template-columns: 350px auto;
+    }
+    .bonus-range-grid{
+        display: grid;
+        grid-gap:5px;
+        grid-template-columns: auto auto auto auto;
+    }
+    .bonus-range-grid input, .bonus-range-grid select{
+        width: 100px;
+        padding: 3px;
+    }
+    .bonus-range-grid input{
+        padding: 4px;
     }
 </style>
 
