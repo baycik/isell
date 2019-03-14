@@ -14,18 +14,25 @@
             init: function () {
                 this.get();
             },
-            data:{},
+            data: {},
             render: function (data) {
-                Campaign.data=data;
+                Campaign.data = data;
+                for (let i in Campaign.data.bonus_ranges) {
+                    for (let k in Campaign.data.bonus_ranges[i]) {
+                        Campaign.data.settings[`${k}-${Campaign.data.bonus_ranges[i].campaign_bonus_id}`] = Campaign.data.bonus_ranges[i][k];
+                    }
+                }
                 Mark.globals.stock_categories = data.stock_category_list;
                 App.renderTpl('CampaignManager', data);
                 App.setupForm('#camp_manager_form', data.settings).change(function (node) {
-                    if( $(this).data('campaign_bonus_id') ){
-                        Bonuses.update(this.name, App.val(this), this.title, $(this).data('campaign_bonus_id'));
+                    if (this.name.indexOf('-') > -1) {
+                        var campaign_bonus_id = this.name.split('-')[1];
+                        var field = this.name.split('-')[0];
+                        Bonuses.update(field, App.val(this), this.title, campaign_bonus_id);
                     } else {
                         Campaign.update(this.name, App.val(this), this.title);
                     }
-                    
+
                 });
                 Clients.init();
                 Bonuses.init();
@@ -108,13 +115,6 @@
                 $("#CampaignManager_bonuses_add").click(function () {
                     Bonuses.add();
                 });
-                Bonuses.setForm();
-            },
-            setForm:function(){
-                for( let i in Campaign.data.bonus_ranges ){
-                    console.log(`select [name=bonus_type][data-campaign_bonus_id=${Campaign.data.bonus_ranges[i].campaign_bonus_id}]`);
-                    $(`select [name=bonus_type][data-campaign_bonus_id=${Campaign.data.bonus_ranges[i].campaign_bonus_id}]`).val(Campaign.data.bonus_ranges[i].bonus_type);
-                }
             },
             add: function () {
                 $.post("CampaignManager/bonusRangeAdd", {campaign_id: campaign_id}, function () {
@@ -173,48 +173,53 @@
                 <!--{{/staff_list}}-->
             </select>
         </div>
+        
+        
+        
+        
+        
         <div class="easyui-panel" title="Campaign Bonuses">
-            <div>
-                <div class="bonus-range-grid">
-
-                    <div>Вид бонуса</div>
-                    <div>Бренд товара</div>
-                    <div>Тип товара</div>
-                    <div>Категория товара</div>
-
-
-                    <!--{{bonus_ranges}}-->
-                    <div>
-                        <select name="bonus_type" data-campaign_bonus_id="{{campaign_bonus_id}}">
-                            <option value="profit">Наценка</option>
-                            <option value="volume">Объем</option>
-                            <option value="payment">Оплата</option>
-                        </select>
-                    </div>
-                    <div><input name="product_brand_filter" data-campaign_bonus_id="{{campaign_bonus_id}}"></div>
-                    <div><input name="product_type_filter" data-campaign_bonus_id="{{campaign_bonus_id}}"></div>
-                    <div>
-                    <select name="product_category_id" data-campaign_bonus_id="{{campaign_bonus_id}}">
+            <!--{{bonus_ranges}}-->
+            <div class=" leftcol-grid">
+                <div>
+                    <select name="bonus_type-{{campaign_bonus_id}}" title="Вид бонуса">
+                        <option value="volume">Объем</option>
+                        <option value="profit">Наценка</option>
+                        <option value="payment">Оплата</option>
+                    </select>
+                    <!--{{if bonus_type|equals>volume}}-->
+                    <input type="date" name="campaign_start_at-{{campaign_bonus_id}}" title="Начало">
+                    <input type="date" name="campaign_finish_at-{{campaign_bonus_id}}" title="Конец">
+                    <!--{{/if}}-->
+                    <!--{{if bonus_type|equals>payment|falsy}}-->
+                    <select name="product_category_id-{{campaign_bonus_id}}" title="Категор. товара">
                         <option selected="selected">-</option>
                         <!--{{stock_categories}}-->
                         <option value="{{branch_id}}">{{label}}</option>
                         <!--{{/stock_categories}}-->
                     </select>
-                    </div>
-                    <!--{{/bonus_ranges}}-->
-
-
-
-
-
-
+                    <input name="product_brand_filter-{{campaign_bonus_id}}" title="Бренд товара">
+                    <input name="product_type_filter-{{campaign_bonus_id}}" title="Тип товара">
+                    <!--{{/if}}-->
+                    <input type="number" name="campaign_volume-{{campaign_bonus_id}}" title="Оборот">
+                    <input type="number" name="campaign_bonus_ratio-{{campaign_bonus_id}}" title="% бонуса">
+                    <button id="ddd">Delete</button>
                 </div>
-                <button id="CampaignManager_bonuses_add">Add</button>
+                <div>
+                    ksfg
+                </div>
             </div>
-            <div  style="width:500px;">
-
-            </div>
+            <hr>
+            <!--{{/bonus_ranges}}-->
+            <button id="CampaignManager_bonuses_add">Add</button>
+            
+            
+            
+            
         </div>
+        
+        
+        
         <div class="easyui-panel leftcol-grid" title="Campaign Clients">
             <div>
                 <input type="text" title="Включить группу" name="subject_path_include">
@@ -253,14 +258,14 @@
     .bonus-range-grid{
         display: grid;
         grid-gap:5px;
-        grid-template-columns: auto auto auto auto;
+        grid-template-columns: auto auto auto auto auto auto auto auto;
     }
-    .bonus-range-grid input, .bonus-range-grid select{
-        width: 100px;
+    /*.leftcol-grid input, .leftcol-grid select{
+        width: 150px;
         padding: 3px;
     }
-    .bonus-range-grid input{
+    .leftcol-grid input{
         padding: 4px;
-    }
+    }*/
 </style>
 
