@@ -115,13 +115,17 @@
                 $("#CampaignManager_bonuses_add").click(function () {
                     Bonuses.add();
                 });
+                $(".CampaignManager_bonuses_delete").click(function () {
+                    var campaign_bonus_id=$(this).data('campaign_bonus_id');
+                    Bonuses.remove(campaign_bonus_id);
+                });
             },
             add: function () {
                 $.post("CampaignManager/bonusRangeAdd", {campaign_id: campaign_id}, function () {
                     Campaign.get();
                 });
             },
-            remove: function () {
+            remove: function (campaign_bonus_id) {
                 $.post("CampaignManager/bonusRangeRemove", {campaign_bonus_id: campaign_bonus_id}, function () {
                     Campaign.get();
                 });
@@ -130,6 +134,9 @@
                 $.post("CampaignManager/bonusRangeUpdate", {campaign_bonus_id: campaign_bonus_id, field: field, value: value}, function (ok) {
                     if (ok * 1) {
                         App.flash("updated " + title);
+                        if( field==='bonus_type' || field==='campaign_grouping_interval' ){
+                            Campaign.get();
+                        }
                     } else {
                         App.flash("not updated " + title);
                     }
@@ -181,16 +188,28 @@
         <div class="easyui-panel" title="Campaign Bonuses">
             <!--{{bonus_ranges}}-->
             <div class=" leftcol-grid">
-                <div>
+                <div style="padding: 5px">
                     <select name="bonus_type-{{campaign_bonus_id}}" title="Вид бонуса">
-                        <option value="volume">Объем</option>
-                        <option value="profit">Наценка</option>
-                        <option value="payment">Оплата</option>
+                        <option value="volume">Бонус с объема</option>
+                        <option value="profit">Бонус с наценки</option>
+                        <option value="payment">Бонус с оплаты</option>
                     </select>
+                    <select name="campaign_grouping_interval-{{campaign_bonus_id}}" title="Интервал" required="required">
+                        <!--{{if bonus_type|equals>volume}}-->
+                        <option value="custom">Дата от и до</option>
+                        <!--{{/if}}-->
+                        <option value="MONTH">Месяц</option>
+                        <option value="QUARTER">Квартал</option>
+                        <option value="YEAR">Год</option>
+                    </select>
+                        
+                    <!--{{if campaign_grouping_interval|equals>custom}}-->
                     <!--{{if bonus_type|equals>volume}}-->
                     <input type="date" name="campaign_start_at-{{campaign_bonus_id}}" title="Начало">
                     <input type="date" name="campaign_finish_at-{{campaign_bonus_id}}" title="Конец">
                     <!--{{/if}}-->
+                    <!--{{/if}}-->
+                    
                     <!--{{if bonus_type|equals>payment|falsy}}-->
                     <select name="product_category_id-{{campaign_bonus_id}}" title="Категор. товара">
                         <option selected="selected">-</option>
@@ -201,9 +220,11 @@
                     <input name="product_brand_filter-{{campaign_bonus_id}}" title="Бренд товара">
                     <input name="product_type_filter-{{campaign_bonus_id}}" title="Тип товара">
                     <!--{{/if}}-->
-                    <input type="number" name="campaign_volume-{{campaign_bonus_id}}" title="Оборот">
+                    <input type="number" name="campaign_volume-{{campaign_bonus_id}}" title="План по обороту">
                     <input type="number" name="campaign_bonus_ratio-{{campaign_bonus_id}}" title="% бонуса">
-                    <button id="ddd">Delete</button>
+                    <div>
+                        <button class="CampaignManager_bonuses_delete" data-campaign_bonus_id="{{campaign_bonus_id}}"><img src="img/delete.png" style="width:16px"> Delete</button>
+                    </div>
                 </div>
                 <div>
                     ksfg
@@ -211,7 +232,7 @@
             </div>
             <hr>
             <!--{{/bonus_ranges}}-->
-            <button id="CampaignManager_bonuses_add">Add</button>
+            <button id="CampaignManager_bonuses_add"><img src="img/add.png" > Add</button>
             
             
             
@@ -253,19 +274,19 @@
 <style>
     .leftcol-grid{
         display: grid;
-        grid-template-columns: 350px auto;
+        grid-template-columns: 320px auto;
     }
     .bonus-range-grid{
         display: grid;
         grid-gap:5px;
         grid-template-columns: auto auto auto auto auto auto auto auto;
     }
-    /*.leftcol-grid input, .leftcol-grid select{
-        width: 150px;
+    .leftcol-grid input, .leftcol-grid select{
+        width: 200px;
         padding: 3px;
     }
     .leftcol-grid input{
         padding: 4px;
-    }*/
+    }
 </style>
 

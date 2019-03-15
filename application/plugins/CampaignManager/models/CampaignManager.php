@@ -102,4 +102,8 @@ class CampaignManager extends Catalog{
     public function bonusRangeUpdate( int $campaign_bonus_id, string $field, string $value){
         return $this->update('plugin_campaign_bonus',[$field=>$value],['campaign_bonus_id'=>$campaign_bonus_id]);
     }
+    
+    public function bonusRangeRemove( int $campaign_bonus_id ){
+        return $this->delete('plugin_campaign_bonus',['campaign_bonus_id'=>$campaign_bonus_id]);
+    }
 }
