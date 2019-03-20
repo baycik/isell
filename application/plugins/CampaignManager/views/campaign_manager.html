@@ -1,3 +1,4 @@
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.5.0/Chart.min.js"></script>
 <script>
     App.CampaignManager_index = (function ($) {
         var campaign_id = 1;
@@ -19,9 +20,18 @@
                 Campaign.data = data;
                 for (let i in Campaign.data.bonus_ranges) {
                     for (let k in Campaign.data.bonus_ranges[i]) {
+                        if( k==='campaign_start_at' || k==='campaign_finish_at' ){
+                            Campaign.data.bonus_ranges[i][k]=Campaign.data.bonus_ranges[i][k].substr(0,10);
+                        }
                         Campaign.data.settings[`${k}-${Campaign.data.bonus_ranges[i].campaign_bonus_id}`] = Campaign.data.bonus_ranges[i][k];
                     }
                 }
+                Mark.pipes.month=function(index){
+                    return ['','Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Ноябрь','Декабрь'][index];
+                };
+                Mark.pipes.quarter=function(index){
+                    return ['','I','II','III','IV'][index];
+                };
                 Mark.globals.stock_categories = data.stock_category_list;
                 App.renderTpl('CampaignManager', data);
                 App.setupForm('#camp_manager_form', data.settings).change(function (node) {
@@ -119,19 +129,20 @@
                     var campaign_bonus_id=$(this).data('campaign_bonus_id');
                     Bonuses.remove(campaign_bonus_id);
                 });
+                Bonuses.renderViews();
             },
             add: function () {
-                $.post("CampaignManager/bonusRangeAdd", {campaign_id: campaign_id}, function () {
+                $.post("CampaignManager/bonusAdd", {campaign_id: campaign_id}, function () {
                     Campaign.get();
                 });
             },
             remove: function (campaign_bonus_id) {
-                $.post("CampaignManager/bonusRangeRemove", {campaign_bonus_id: campaign_bonus_id}, function () {
+                $.post("CampaignManager/bonusRemove", {campaign_bonus_id: campaign_bonus_id}, function () {
                     Campaign.get();
                 });
             },
             update: function (field, value, title, campaign_bonus_id) {
-                $.post("CampaignManager/bonusRangeUpdate", {campaign_bonus_id: campaign_bonus_id, field: field, value: value}, function (ok) {
+                $.post("CampaignManager/bonusUpdate", {campaign_bonus_id: campaign_bonus_id, field: field, value: value}, function (ok) {
                     if (ok * 1) {
                         App.flash("updated " + title);
                         if( field==='bonus_type' || field==='campaign_grouping_interval' ){
@@ -142,6 +153,52 @@
                     }
                     //Campaign.get();
                 });
+            },
+            renderViews:function(){
+                //var tpl=$("#CampaignManager_bonus_tpl").html();
+                //console.log(tpl);
+                for (let range of Campaign.data.bonus_ranges){
+                    for (let view of range.views){
+                        Bonuses.renderChart(view);
+                    }
+                }
+            },
+            renderChart:function(view){
+                var color = Chart.helpers.color;
+                var ctx = document.getElementById(`bonus_chart-${view.campaign_bonus_period_id}`).getContext('2d');
+                new Chart(ctx, {
+                    type: 'horizontalBar',
+                    data: {
+                        labels: ['Red', 'Blue', 'Yellow'],
+                        datasets: [{
+                            data: [view.sold_total, view.period_plan1, view.period_plan2, view.period_plan3],
+                            backgroundColor: [
+                                'rgba(255, 99, 132, 0.2)',
+                                'rgba(54, 162, 235, 0.2)',
+                                'rgba(255, 206, 86, 0.2)'
+                            ],
+                            borderColor: [
+                                'rgba(255, 99, 132, 1)',
+                                'rgba(54, 162, 235, 1)',
+                                'rgba(255, 206, 86, 1)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        elements: {
+                            rectangle: {
+                                borderWidth: 2,
+                            }
+                        },
+                        responsive: true,
+                        title: {
+                            display: true,
+                            text: 'Chart.js Horizontal Bar Chart'
+                        }
+                    }
+                });
+                
             }
         };
 
@@ -163,6 +220,13 @@
         };
     })(jQuery);
 </script>
+<script id="CampaignManager_bonus_tpl" type = "text/html">
+    {{volume_left}}
+    {{bonus_result}}
+    <canvas id="doughnut-chart" width="800" height="450"></canvas>
+</script>
+
+
 
 <div id="CampaignManager" style="padding: 10px;">
     <div id="camp_manager_form">
@@ -194,22 +258,15 @@
                         <option value="profit">Бонус с наценки</option>
                         <option value="payment">Бонус с оплаты</option>
                     </select>
-                    <select name="campaign_grouping_interval-{{campaign_bonus_id}}" title="Интервал" required="required">
-                        <!--{{if bonus_type|equals>volume}}-->
-                        <option value="custom">Дата от и до</option>
-                        <!--{{/if}}-->
+                        
+                    <input type="date" name="campaign_start_at-{{campaign_bonus_id}}" title="Начало">
+                    <input type="date" name="campaign_finish_at-{{campaign_bonus_id}}" title="Конец">
+                    <select name="campaign_grouping_interval-{{campaign_bonus_id}}" title="Интервал">
+                        <option value="" selected="selected">Не группировать</option>
                         <option value="MONTH">Месяц</option>
                         <option value="QUARTER">Квартал</option>
                         <option value="YEAR">Год</option>
                     </select>
-                        
-                    <!--{{if campaign_grouping_interval|equals>custom}}-->
-                    <!--{{if bonus_type|equals>volume}}-->
-                    <input type="date" name="campaign_start_at-{{campaign_bonus_id}}" title="Начало">
-                    <input type="date" name="campaign_finish_at-{{campaign_bonus_id}}" title="Конец">
-                    <!--{{/if}}-->
-                    <!--{{/if}}-->
-                    
                     <!--{{if bonus_type|equals>payment|falsy}}-->
                     <select name="product_category_id-{{campaign_bonus_id}}" title="Категор. товара">
                         <option selected="selected">-</option>
@@ -220,14 +277,29 @@
                     <input name="product_brand_filter-{{campaign_bonus_id}}" title="Бренд товара">
                     <input name="product_type_filter-{{campaign_bonus_id}}" title="Тип товара">
                     <!--{{/if}}-->
-                    <input type="number" name="campaign_volume-{{campaign_bonus_id}}" title="План по обороту">
-                    <input type="number" name="campaign_bonus_ratio-{{campaign_bonus_id}}" title="% бонуса">
+                    <input pattern="\d+" name="campaign_bonus_ratio1-{{campaign_bonus_id}}" title="План1 бонус %">
+                    <input pattern="\d+" name="campaign_bonus_ratio2-{{campaign_bonus_id}}" title="План2 бонус %">
+                    <input pattern="\d+" name="campaign_bonus_ratio3-{{campaign_bonus_id}}" title="План3 бонус %">
                     <div>
                         <button class="CampaignManager_bonuses_delete" data-campaign_bonus_id="{{campaign_bonus_id}}"><img src="img/delete.png" style="width:16px"> Delete</button>
                     </div>
                 </div>
-                <div>
-                    ksfg
+                <div class="CampaignManager_bonuses_views">
+                    {{views}}
+                        <div>
+                            <div style="width:200px;">
+                                <div class="bonus-period-grid">
+                                    <div>Период:</div><div>{{period_month|month}} {{period_year}}г <b>{{period_quarter|quarter}} кв</b></div>
+                                    <div>Объем продаж:</div><div>{{sold_total}}</div>
+                                    <div>Результат:</div><div>{{bonus_result}}</div>
+                                </div>
+                                <input pattern="\d+" name="period_plan1--{{campaign_bonus_period_id}}" title="План 1">
+                                <input pattern="\d+" name="period_plan2--{{campaign_bonus_period_id}}" title="План 2">
+                                <input pattern="\d+" name="period_plan3--{{campaign_bonus_period_id}}" title="План 3">
+                                <canvas id="bonus_chart-{{campaign_bonus_period_id}}" width="200" height="200"></canvas>
+                            </div>
+                        </div>
+                    {{/views}}
                 </div>
             </div>
             <hr>
@@ -281,12 +353,37 @@
         grid-gap:5px;
         grid-template-columns: auto auto auto auto auto auto auto auto;
     }
+    .bonus-period-grid{
+        display: grid;
+        grid-gap:5px;
+        grid-template-columns: auto auto;
+    }
     .leftcol-grid input, .leftcol-grid select{
         width: 200px;
         padding: 3px;
     }
     .leftcol-grid input{
         padding: 4px;
+    }
+    .CampaignManager_bonuses_views {
+        display: flex;
+        -flex-wrap: wrap;
+        height: 350px;
+        overflow-x: auto;
+    }
+    .CampaignManager_bonuses_views>div{
+        flex: 1;
+        max-width: 100%;
+        object-fit: cover;
+        margin: 5px;
+        padding: 5px;
+        background-color: rgba(255,255,255,.5);
+    }
+    .CampaignManager_bonuses_views>div>div{
+        width: 230px;
+    }
+    .CampaignManager_bonuses_views input{
+        width:100px;
     }
 </style>
 
