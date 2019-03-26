@@ -77,8 +77,6 @@ class CampaignManager extends Catalog{
         return $where?$where:1;
     }
     
-    
-    
     public function clientListFetch(int $campaign_id, int $offset,int $limit,string $sortby='label',string $sortdir='ASC',array $filter){
         $having=$this->makeFilter($filter);
         $where=$this->clientListFilterGet($campaign_id);
@@ -96,11 +94,6 @@ class CampaignManager extends Catalog{
 	    LIMIT $limit OFFSET $offset";
         return $this->get_list($sql);
     }
-    
-    
-    
-    
-    
     
     public function bonusAdd( int $campaign_id ){
         $sql="
@@ -140,6 +133,10 @@ class CampaignManager extends Catalog{
     ////////////////////////////////////////////////////
     private function bonusPeriodsClear( $campaign_bonus_id ){
         $this->delete('plugin_campaign_bonus_periods',['campaign_bonus_id'=>$campaign_bonus_id]);
+    }
+    
+    public function bonusPeriodUpdate( int $campaign_bonus_period_id, string $field, string $value){
+        return $this->update('plugin_campaign_bonus_periods',[$field=>$value],['campaign_bonus_period_id'=>$campaign_bonus_period_id]);
     }
     
     private function bonusPeriodsFill( $campaign_bonus_id ){
@@ -254,11 +251,14 @@ class CampaignManager extends Catalog{
         }
         $sql="SELECT
             *,
-            ROUND(sold_total*
-                IF(sold_total>period_plan3 AND campaign_bonus_ratio3,campaign_bonus_ratio3,
-                IF(sold_total>period_plan2 AND campaign_bonus_ratio2,campaign_bonus_ratio2,
-                IF(sold_total>period_plan1,campaign_bonus_ratio1,0
-            )))/100) bonus_result
+            ROUND(bonus_base*
+                IF(bonus_base>period_plan3 AND campaign_bonus_ratio3,campaign_bonus_ratio3,
+                IF(bonus_base>period_plan2 AND campaign_bonus_ratio2,campaign_bonus_ratio2,
+                IF(bonus_base>period_plan1,campaign_bonus_ratio1,0
+            )))/100) bonus_result,
+            ROUND(bonus_base/period_plan1*100) period_percent1,
+            ROUND(bonus_base/period_plan2*100) period_percent2,
+            ROUND(bonus_base/period_plan3*100) period_percent3
         FROM (
             SELECT
                 pcb.*,
@@ -269,7 +269,7 @@ class CampaignManager extends Catalog{
                 period_plan1,
                 period_plan2,
                 period_plan3,
-                COALESCE(ROUND(SUM(invoice_price * product_quantity)),0) sold_total
+                COALESCE(ROUND(SUM(invoice_price * product_quantity)),0) bonus_base
             FROM
                 plugin_campaign_bonus pcb 
                     JOIN
@@ -285,7 +285,7 @@ class CampaignManager extends Catalog{
             WHERE
                 campaign_bonus_id = $campaign_bonus_id
             GROUP BY period_year,period_quarter,period_month
-            ORDER BY period_year,period_quarter,period_month) tt";
+            ORDER BY period_year DESC,period_quarter DESC,period_month DESC) tt";
         return $this->get_list($sql);
     }
 }

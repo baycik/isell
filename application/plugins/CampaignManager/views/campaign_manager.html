@@ -4,13 +4,9 @@
         var campaign_id = 1;
         function init() {
             Campaign.init();
-
         }
-
         var Utils = {
         };
-
-
         var Campaign = {
             init: function () {
                 this.get();
@@ -34,7 +30,12 @@
                 };
                 Mark.globals.stock_categories = data.stock_category_list;
                 App.renderTpl('CampaignManager', data);
-                App.setupForm('#camp_manager_form', data.settings).change(function (node) {
+                App.setupForm('#camp_manager_form', data.settings, 'use_inp_values').change(function (node) {
+                    if (this.name.indexOf('--') > -1) {
+                        var campaign_bonus_period_id = this.name.split('--')[1];
+                        var field = this.name.split('--')[0];
+                        Bonuses.periodUpdate(field, App.val(this), this.title, campaign_bonus_period_id);
+                    } else 
                     if (this.name.indexOf('-') > -1) {
                         var campaign_bonus_id = this.name.split('-')[1];
                         var field = this.name.split('-')[0];
@@ -154,6 +155,15 @@
                     //Campaign.get();
                 });
             },
+            periodUpdate:function(field, value, title, campaign_bonus_period_id) {
+                $.post("CampaignManager/bonusPeriodUpdate", {campaign_bonus_period_id: campaign_bonus_period_id, field: field, value: value}, function (ok) {
+                    if (ok * 1) {
+                        App.flash("updated " + title);
+                    } else {
+                        App.flash("not updated " + title);
+                    }
+                });
+            },
             renderViews:function(){
                 //var tpl=$("#CampaignManager_bonus_tpl").html();
                 //console.log(tpl);
@@ -162,8 +172,16 @@
                         Bonuses.renderChart(view);
                     }
                 }
+                //element.scrollIntoView({behavior: "smooth", block: "end", inline: "nearest"});
             },
             renderChart:function(view){
+                $(`#bonus_chart-${view.campaign_bonus_period_id}`)
+                
+                
+                
+                
+                
+                /*
                 var color = Chart.helpers.color;
                 var ctx = document.getElementById(`bonus_chart-${view.campaign_bonus_period_id}`).getContext('2d');
                 new Chart(ctx, {
@@ -197,7 +215,7 @@
                             text: 'Chart.js Horizontal Bar Chart'
                         }
                     }
-                });
+                });*/
                 
             }
         };
@@ -286,17 +304,41 @@
                 </div>
                 <div class="CampaignManager_bonuses_views">
                     {{views}}
-                        <div>
-                            <div style="width:200px;">
+                    <div style="border:4px solid #fff">
+                        <div style="background-color: #fff;height: 30px;font-size: 16px">{{period_month|month}} {{period_year}}г <b>{{period_quarter|quarter}} кв</b></div>
+                            <div>
                                 <div class="bonus-period-grid">
-                                    <div>Период:</div><div>{{period_month|month}} {{period_year}}г <b>{{period_quarter|quarter}} кв</b></div>
-                                    <div>Объем продаж:</div><div>{{sold_total}}</div>
+                                    <div>База бонуса:</div><div>{{bonus_base}}</div>
                                     <div>Результат:</div><div>{{bonus_result}}</div>
+                                    <div>План I:</div><div><input pattern="\d+" name="period_plan1--{{campaign_bonus_period_id}}" value="{{period_plan1}}"></div>
+                                    <!--{{if period_plan1|more>0}}-->
+                                    <div>План II:</div><div><input pattern="\d+" name="period_plan2--{{campaign_bonus_period_id}}" value="{{period_plan2}}"></div>
+                                    <!--{{/if}}-->
+                                    <!--{{if period_plan2|more>0}}-->
+                                    <div>План III:</div><div><input pattern="\d+" name="period_plan3--{{campaign_bonus_period_id}}" value="{{period_plan3}}"></div>
+                                    <!--{{/if}}-->
                                 </div>
-                                <input pattern="\d+" name="period_plan1--{{campaign_bonus_period_id}}" title="План 1">
-                                <input pattern="\d+" name="period_plan2--{{campaign_bonus_period_id}}" title="План 2">
-                                <input pattern="\d+" name="period_plan3--{{campaign_bonus_period_id}}" title="План 3">
-                                <canvas id="bonus_chart-{{campaign_bonus_period_id}}" width="200" height="200"></canvas>
+                                <hr>
+                                <div id="bonus_chart-{{campaign_bonus_period_id}}">
+                                    {{if period_percent1}}
+                                    План I {{period_percent1}}%
+                                    <div class="cart-bar" style="border: 1px solid greenyellow">
+                                        <div style="max-width:{{period_percent1}}%;background-color: greenyellow"></div>
+                                    </div>
+                                    {{/if}}
+                                    {{if period_percent2}}
+                                    План II {{period_percent2}}%
+                                    <div class="cart-bar" style="border: 1px solid orange">
+                                        <div style="max-width:{{period_percent2}}%;background-color: orange"></div>
+                                    </div>
+                                    {{/if}}
+                                    {{if period_percent3}}
+                                    План III {{period_percent3}}%
+                                    <div class="cart-bar" style="border: 1px solid blueviolet">
+                                        <div style="max-width:{{period_percent3}}%;background-color: blueviolet"></div>
+                                    </div>
+                                    {{/if}}
+                                </div>
                             </div>
                         </div>
                     {{/views}}
@@ -358,6 +400,12 @@
         grid-gap:5px;
         grid-template-columns: auto auto;
     }
+    .bonus-period-grid div{
+        text-align: right;
+        display:table-cell;
+        vertical-align:middle;
+        height: 20px;
+    }
     .leftcol-grid input, .leftcol-grid select{
         width: 200px;
         padding: 3px;
@@ -376,7 +424,6 @@
         max-width: 100%;
         object-fit: cover;
         margin: 5px;
-        padding: 5px;
         background-color: rgba(255,255,255,.5);
     }
     .CampaignManager_bonuses_views>div>div{
@@ -384,6 +431,10 @@
     }
     .CampaignManager_bonuses_views input{
         width:100px;
+    }
+    .CampaignManager_bonuses_views .cart-bar>div{
+        height: 15px;
+        opacity: 0.6;
     }
 </style>
 
