@@ -20,17 +20,9 @@ class CampaignManager extends Catalog{
         return [
             'settings'=>$settings,
             'staff_list'=>$this->Hub->load_model("Pref")->getStaffList(),
-            'bonus_ranges'=>$this->campaignBonusRangesGet( $campaign_id ),
+            'bonuses'=>$this->bonusesGet( $campaign_id ),
             'stock_category_list'=>$this->treeFetch('stock_tree',0,'top')
         ];
-    }
-    
-    private function campaignBonusRangesGet( int $campaign_id ){
-        $bonus_ranges=$this->get_list("SELECT * FROM plugin_campaign_bonus WHERE campaign_id='$campaign_id'");
-        foreach($bonus_ranges as $bonus_range){
-            $bonus_range->views=$this->bonusCalculate($bonus_range->campaign_bonus_id);
-        }
-        return $bonus_ranges;
     }
     
     public function campaignAdd(){
@@ -126,7 +118,13 @@ class CampaignManager extends Catalog{
     private function bonusGet($campaign_bonus_id){
         return $this->get('plugin_campaign_bonus',['campaign_bonus_id'=>$campaign_bonus_id]);
     }
-    
+    private function bonusesGet( int $campaign_id ){
+        $bonuses=$this->get_list("SELECT * FROM plugin_campaign_bonus WHERE campaign_id='$campaign_id'");
+//        foreach($bonuses as $bonus){
+//            $bonus->periods=$this->bonusCalculate($bonus->campaign_bonus_id);
+//        }
+        return $bonuses;
+    }    
     
     ////////////////////////////////////////////////////
     //PERIODS HANDLING
@@ -230,35 +228,44 @@ class CampaignManager extends Catalog{
     
     public function bonusCalculate( int $campaign_bonus_id ){
         $campaign_bonus=$this->bonusGet($campaign_bonus_id);
-        
-        
         $client_filter=$this->clientListFilterGet($campaign_bonus->campaign_id);
         switch( $campaign_bonus->campaign_grouping_interval ){
             case 'MONTH':
-                $select_interval=",DATE_FORMAT(cstamp,'%m.%Y') time_interval";
-                $period_filter='AND period_month<>0';
+                //$select_interval=",DATE_FORMAT(cstamp,'%m.%Y') time_interval";
+                //$period_filter='AND period_month<>0';
                 $period_on=" YEAR(cstamp)=period_year AND MONTH(cstamp)=period_month ";
                 break;
             case 'QUARTER':
-                $select_interval=",CONCAT(QUARTER(cstamp),' ',YEAR(cstamp)) time_interval";
-                $period_filter='AND period_quarter<>0 AND period_month=0';
+                //$select_interval=",CONCAT(QUARTER(cstamp),' ',YEAR(cstamp)) time_interval";
+                //$period_filter='AND period_quarter<>0 AND period_month=0';
                 $period_on=" YEAR(cstamp)=period_year AND QUARTER(cstamp)=period_quarter";
                 break;
             default :
-                $select_interval='';
-                $period_filter='AND period_year<>0 AND period_quarter=0';
+                //$select_interval='';
+                //$period_filter='AND period_year<>0 AND period_quarter=0';
                 $period_on=" YEAR(cstamp)=period_year ";
+        }
+        switch( $campaign_bonus->bonus_type ){
+            case 'VOLUME':
+                $bonus_base= $this->bonusCalculateVolume($campaign_bonus,$period_on,$client_filter);
+                break;
+            case 'PROFIT':
+                break;
+            case 'PAYMENT':
+                $bonus_base= $this->bonusCalculatePayment($campaign_bonus,$period_on,$client_filter);
+                break;
         }
         $sql="SELECT
             *,
             ROUND(bonus_base*
-                IF(bonus_base>period_plan3 AND campaign_bonus_ratio3,campaign_bonus_ratio3,
-                IF(bonus_base>period_plan2 AND campaign_bonus_ratio2,campaign_bonus_ratio2,
+                IF(bonus_base>period_plan3 AND period_plan3 AND campaign_bonus_ratio3,campaign_bonus_ratio3,
+                IF(bonus_base>period_plan2 AND period_plan2 AND campaign_bonus_ratio2,campaign_bonus_ratio2,
                 IF(bonus_base>period_plan1,campaign_bonus_ratio1,0
             )))/100) bonus_result,
             ROUND(bonus_base/period_plan1*100) period_percent1,
             ROUND(bonus_base/period_plan2*100) period_percent2,
-            ROUND(bonus_base/period_plan3*100) period_percent3
+            ROUND(bonus_base/period_plan3*100) period_percent3,
+            CONCAT(period_month,'.',period_quarter,'.',period_year)=CONCAT(MONTH(NOW()),'.',QUARTER(NOW()),'.',YEAR(NOW())) is_current
         FROM (
             SELECT
                 pcb.*,
@@ -269,11 +276,42 @@ class CampaignManager extends Catalog{
                 period_plan1,
                 period_plan2,
                 period_plan3,
-                COALESCE(ROUND(SUM(invoice_price * product_quantity)),0) bonus_base
+                {$bonus_base['select']} bonus_base
             FROM
                 plugin_campaign_bonus pcb 
                     JOIN
                 plugin_campaign_bonus_periods pcbp USING (campaign_bonus_id)
+                {$bonus_base['table']}
+            WHERE
+                campaign_bonus_id = $campaign_bonus_id
+                {$bonus_base['where']}
+            GROUP BY period_year,period_quarter,period_month
+            ORDER BY period_year DESC,period_quarter DESC,period_month DESC) tt";
+        return $this->get_list($sql);
+    }
+    
+    private function bonusCalculateProductRange($campaign_bonus){
+        $table="document_entries de";
+        $where="";
+        if( $campaign_bonus->product_category_id ){
+            $stock_category_ids=$this->treeGetSub('stock_tree', $campaign_bonus->product_category_id);
+            $table.=" JOIN stock_entries se ON de.product_code=se.product_code AND se.parent_id IN (". implode(',', $stock_category_ids).")";
+        }
+        if( $campaign_bonus->product_brand_filter || $campaign_bonus->product_type_filter ){
+            $brand_filter =" analyse_brand LIKE '%". str_replace(',', "%' OR  analyse_brand LIKE '%", $campaign_bonus->product_brand_filter)."%'";
+            $type_filter =" analyse_type  LIKE '%". str_replace(',', "%' OR  analyse_type  LIKE '%", $campaign_bonus->product_type_filter)."%'";
+            $table.=" JOIN prod_list pl ON de.product_code=pl.product_code AND ($brand_filter) AND ($type_filter)";
+        }
+        return [
+            'table'=>"(SELECT doc_id,invoice_price,de.product_quantity FROM $table)",
+            'where'=>$where
+        ];
+    }
+    
+    private function bonusCalculateVolume($campaign_bonus,$period_on,$client_filter){
+        $product_range= $this->bonusCalculateProductRange($campaign_bonus);
+        $select="COALESCE(ROUND(SUM(invoice_price * product_quantity)),0)";
+        $table="
                     LEFT JOIN
                 document_list dl ON $period_on 
                                     AND doc_type = 1 
@@ -281,11 +319,30 @@ class CampaignManager extends Catalog{
                                     AND NOT notcount 
                                     AND passive_company_id IN (SELECT company_id FROM companies_list JOIN companies_tree USING(branch_id) WHERE $client_filter)
                     LEFT JOIN
-                document_entries de USING (doc_id)
-            WHERE
-                campaign_bonus_id = $campaign_bonus_id
-            GROUP BY period_year,period_quarter,period_month
-            ORDER BY period_year DESC,period_quarter DESC,period_month DESC) tt";
-        return $this->get_list($sql);
+                {$product_range['table']} product_range USING (doc_id)
+                ";
+        $where="";
+        return [
+            'select'=>$select,
+            'table'=>$table,
+            'where'=>$where
+        ];
+    }
+    private function bonusCalculatePayment($campaign_bonus,$period_on,$client_filter){
+        $payment_account="361";
+        
+        $select="COALESCE(ROUND(SUM(amount)),0)";
+        $table="
+                    LEFT JOIN
+                        acc_trans at ON
+                            passive_company_id IN (SELECT company_id FROM companies_list JOIN companies_tree USING(branch_id) WHERE $client_filter)
+                    
+                ";
+        $where="";
+        return [
+            'select'=>$select,
+            'table'=>$table,
+            'where'=>$where
+        ];
     }
 }
