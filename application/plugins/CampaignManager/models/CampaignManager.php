@@ -309,6 +309,10 @@ class CampaignManager extends Catalog{
     }
     
     private function bonusCalculateVolume($campaign_bonus,$period_on,$client_filter){
+        
+        
+        // VAT VAT VAT
+        
         $product_range= $this->bonusCalculateProductRange($campaign_bonus);
         $select="COALESCE(ROUND(SUM(invoice_price * product_quantity)),0)";
         $table="
@@ -330,13 +334,12 @@ class CampaignManager extends Catalog{
     }
     private function bonusCalculatePayment($campaign_bonus,$period_on,$client_filter){
         $payment_account="361";
-        
         $select="COALESCE(ROUND(SUM(amount)),0)";
         $table="
                     LEFT JOIN
-                        acc_trans at ON
-                            passive_company_id IN (SELECT company_id FROM companies_list JOIN companies_tree USING(branch_id) WHERE $client_filter)
-                    
+                        acc_trans at ON $period_on
+                            AND passive_company_id IN (SELECT company_id FROM companies_list JOIN companies_tree USING(branch_id) WHERE $client_filter)
+                            AND acc_credit_code='$payment_account'
                 ";
         $where="";
         return [
