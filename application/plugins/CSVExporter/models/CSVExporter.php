@@ -33,7 +33,7 @@ class CSVExporter extends Catalog {
         !is_dir("../public") && mkdir("../public", 0777);
         $file_path = str_replace('\\', '/', realpath("../public")) . '/isell_export.csv';
         @unlink($file_path);
-        $attribute_select = $this->getAttributesSelect($settings);
+        $this->putAttributesConfig($file_path);
         $sql = "
             SELECT
                 SUBSTRING_INDEX(SUBSTRING_INDEX(path, '/', 2), '/', -1) col1,
@@ -55,8 +55,11 @@ class CSVExporter extends Catalog {
                 GET_PRICE(product_code, " . $settings->pcomp_id . ", '$usd_ratio') col17,
                 GET_SELL_PRICE(product_code, " . $settings->pcomp_id . ", '$usd_ratio') col18,
                 '' col19,
-                '' col20
-                $attribute_select
+                (SELECT 
+                    GROUP_CONCAT(IFNULL(
+                        (SELECT attribute_value FROM attribute_values av WHERE al.attribute_id = av.attribute_id AND av.product_id = pl.product_id), '') SEPARATOR '|')
+                    FROM attribute_list al ORDER BY al.attribute_id
+                ) col20
             FROM
                 prod_list pl 
                     JOIN
@@ -75,13 +78,39 @@ class CSVExporter extends Catalog {
         $this->query($sql);
         return $this->db->affected_rows();
     }
-
-    private function getAttributesSelect($settings) {
-        $attribute_select = "";
-        foreach ($settings->attributes as $key => $attribute_id) {
-            $attribute_select .= ",IFNULL( (SELECT CONCAT(attribute_prefix,attribute_value,attribute_unit) FROM  attribute_values av JOIN attribute_list USING(attribute_id) WHERE attribute_value<>'' AND pl.product_id = av.product_id AND av.attribute_id = '$attribute_id'), '')";
+    
+    
+    
+    private function putAttributesConfig($file_path) {
+        $this->query("SET @index:=-1");
+        $sql = "
+            SELECT 'attribute_group' as `field`,
+            attribute_name as `name`,
+            'Свойства товара' as `group_description`,
+            @index:=@index+1 as `index`
+            FROM attribute_list
+            ";
+        $attributes = $this->get_list($sql);
+        $filtes_from_config = $this->getSettings()->filters;
+        $filters = [];
+        foreach($attributes as $attribute){
+            foreach($filtes_from_config as $filter){
+                $filter_object = [];
+                if($attribute->name == $filter->attribute_name){
+                    $filter_object['field'] = $attribute->field;
+                    $filter_object['name'] = $attribute->name;
+                    $filter_object['index'] = $attribute->index;
+                    $filter_object['delimeter'] = ',';
+                    $filters[] = $filter_object;
+                }
+            }
         }
-        return $attribute_select;
+        $result_array = [
+            'attributes' => $attributes,
+            'filters'=> $filters
+        ];
+        file_put_contents(str_replace('isell_export.csv', 'attribute_config.json', $file_path), json_encode($result_array ));
+        return;
     }
 
     public $updateSettings = ['settings' => 'json'];
