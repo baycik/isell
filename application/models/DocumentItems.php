@@ -365,7 +365,11 @@ class DocumentItems extends DocumentCore{
             $old_entry=[
                 'product_quantity'=>$entry->old_product_quantity
             ];
-            $this->update("document_entries",$old_entry,['doc_entry_id'=>$entry->doc_entry_id]);
+            if($entry->old_product_quantity>0){
+                $this->update("document_entries",$old_entry,['doc_entry_id'=>$entry->doc_entry_id]);
+            } else {
+                $this->delete("document_entries",['doc_entry_id'=>$entry->doc_entry_id]);
+            }
             if($entry->new_product_quantity>0){
                 $new_entry=[
                     'doc_id'=>$new_doc_id,

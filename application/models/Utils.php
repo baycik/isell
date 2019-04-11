@@ -509,8 +509,8 @@ class Utils extends Catalog {
 		GREATEST( COALESCE(
                 (SELECT ROUND( 
                         (SUM(de.product_quantity)/$sales_period*$reserve_period
-                        +IF('$count_reserved',product_reserved,0)
-                        -IF('$count_awaiting',product_awaiting,0))/$round_step
+                        +IF('$count_reserved',COALESCE(product_reserved,0),0)
+                        -IF('$count_awaiting',COALESCE(product_awaiting,0),0))/$round_step
                     )*$round_step
 		FROM
 		    document_entries de
