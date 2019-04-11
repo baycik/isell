@@ -112,6 +112,7 @@ class CSVExporter extends Catalog {
         file_put_contents(str_replace('isell_export.csv', 'attribute_config.json', $file_path), json_encode($result_array ));
         return;
     }
+    
 
     public $updateSettings = ['settings' => 'json'];
 
