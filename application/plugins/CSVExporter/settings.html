@@ -37,9 +37,30 @@
                     </div>
                 </td>
                 <td style="vertical-align: top">
-                    <div id="csv_Exporter_attributes" style="min-width:220px;" class=" easyui-panel" title="Атрибуты для экспорта">
-
+                    <div id="filter_panel" class=" easyui-panel" style="height:200px;min-width:200px" title="Фильтры"> 
+                        {{product_filters}}
+                        <div style="clear: both;padding-top: 2px;display: flex;padding: 7px;">
+                            <div style="width:110px;">
+                                <img src="img/delete.png" 
+                                     style="width:16px;height: auto" 
+                                     title="Удалить атрибут" 
+                                     onclick="App.csv_exporter_settings.filters.remove(this)"
+                                     data-name="{{attribute_name}}"
+                                     data-id="{{attribute_id}}"> {{attribute_name}} 
+                            </div>
+                        </div>
+                        {{/product_filters}}
                     </div>
+                    <div style="clear: both;padding-top: 2px;display: flex;padding: 7px;">        
+                        <select id="filter_select" name="filter_select"  style="width:110px">
+                            <option value="unset">-Не выбрано-</option>
+                            {{filter_list}}
+                            <option value="{{attribute_id}}">{{attribute_name}}</option>
+                            {{/filter_list}}
+                        </select>
+                        <div id="filter_unit" style="width:30px;margin-left: 10px"></div>
+                   </div>
+                   <button class="tiny_button" type="button" title="Добавить фильтр" onclick="App.csv_exporter_settings.filters.add()"><img src="img/add.png"> Добавить</button>
                 </td>
             </tr>
         </table>
@@ -54,7 +75,7 @@
     </div>
 </form>
 <style>
-    #csv_Exporter_attributes label b{
+    #csv_Exporter_filters label b{
         width: 100px !important;
     }
 </style>
@@ -62,11 +83,11 @@
     App.csv_exporter_settings = {
         init: function () {
             if( Plugins.currentData.is_activated==1 ){
-                if( Plugins.currentData.plugin_settings.attributes ){
+                if( Plugins.currentData.plugin_settings.filters ){
                     App.csv_exporter_settings.data = Plugins.currentData.plugin_settings;
                 } else {
                     App.csv_exporter_settings.data={
-                        attributes: {},
+                        filters: [],
                         categories: [],
                         publicUrl: '',
                         pcomp_id:0,
@@ -76,7 +97,7 @@
                 $(".plugin_settings").show();
                 $(".plugin_notinstalled").hide();
                 App.csv_exporter_settings.categories.init();
-                App.csv_exporter_settings.attributes.init();
+                App.csv_exporter_settings.filters.load();
             } else {
                 $(".plugin_settings").hide();
                 $(".plugin_notinstalled").show();
@@ -109,43 +130,53 @@
                 }
             });
         },
-        attributes: {
-            availableList: null,
-            init: function () {
-                //App.csv_exporter_settings.attributes.render();
-                App.csv_exporter_settings.attributes.load();
-            },
+        filters: {
+            list: [],
             load: function () {
                 $.post('AttributeManager/getAttributes', function (resp) {
                     if (resp) {
-                        App.csv_exporter_settings.attributes.availableList = App.json(resp);
-                        App.csv_exporter_settings.attributes.render();
+                        App.csv_exporter_settings.filters.list = App.json(resp);
+                        App.renderTpl('filter_select', {filter_list: App.csv_exporter_settings.filters.list});
+                        App.renderTpl('filter_panel', {product_filters: App.csv_exporter_settings.data.filters});
                     }
                 });
             },
-            render: function () {
-                var html = '';
-                for (var i = 1; i <= 12; i++) {
-                    html += '<select title="Атрибут ' + i + '" id="attribute_' + i + '"  data-id="attribute_' + i + '" style="width:110px" onchange=" App.csv_exporter_settings.attributes.update(this)" value="' + App.csv_exporter_settings.data.attributes['attribute_' + i ] + '"><option value="">-</option>{{attribute_list}}<option  value="{{attribute_id}}" style="margin-left:10px">{{attribute_name}}</option>{{/attribute_list}}</select>';
-                }
-                $("#csv_Exporter_attributes").html(html);
-                App.renderTpl('csv_Exporter_attributes', {attribute_list: App.csv_exporter_settings.attributes.availableList});
-                App.setupForm('#csv_Exporter_attributes');
-                App.csv_exporter_settings.attributes.getAttributesChosen();
-            },
-            getAttributesChosen: function () {
-                for (var i = 1; i <= 12; i++) {
-                    if (App.csv_exporter_settings.data.attributes['attribute_' + i ]) {
-                        $('#attribute_' + i).val(App.csv_exporter_settings.data.attributes['attribute_' + i ]);
+            remove: function (node) {
+                var attribute_id = $(node).data('id');
+                if (!confirm("Удалить атрибут " + $(node).data('name') + "?")) {
+                    return;
+                };
+                for(var i = 0; i < App.csv_exporter_settings.data.filters.length; i++){
+                    if(attribute_id == App.csv_exporter_settings.data.filters[i].attribute_id){
+                        App.csv_exporter_settings.data.filters.splice(i, 1);
+                        App.csv_exporter_settings.updateSettings();
+                        App.csv_exporter_settings.filters.load();
+                        return;
                     }
                 }
             },
-            update: function (node) {
-                var attribute_index = $(node).attr("id");
-                var selector = '#' + attribute_index;
-                var selected_attribute = $(selector).val();
-                App.csv_exporter_settings.data.attributes[attribute_index] = selected_attribute;
+            add: function () {
+                var attribute_id = $("#filter_select").val();
+                if (attribute_id == 'unset') {
+                    App.flash("Выберите фильтр");
+                    return;
+                }
+                for(var i = 0; i < App.csv_exporter_settings.data.filters.length; i++){
+                    if(attribute_id == App.csv_exporter_settings.data.filters[i].attribute_id){
+                        App.flash("Атрибут уже добавлен!");
+                        return;
+                    }
+                }
+                for(var i = 0; i < App.csv_exporter_settings.filters.list.length; i++){
+                    if(attribute_id == App.csv_exporter_settings.filters.list[i].attribute_id){
+                        var filter = App.csv_exporter_settings.filters.list[i];
+                        break;
+                    }
+                }
+                App.csv_exporter_settings.data.filters.push(filter);
                 App.csv_exporter_settings.updateSettings();
+                App.csv_exporter_settings.filters.load();
+
             }
         },
         categories: {

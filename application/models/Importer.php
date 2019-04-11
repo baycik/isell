@@ -74,6 +74,7 @@ class Importer extends Catalog{
 	}
         return 'error'.$_FILES['upload_file']['error'];
     }
+    
     public $deleteRows=['row_ids'=>'[\d,]+'];
     public function deleteRows($row_ids){
 	$this->query("DELETE FROM imported_data WHERE row_id IN ($row_ids)");
