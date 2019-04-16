@@ -41,7 +41,6 @@ class DocumentList extends Catalog{
 	
 	$having=$this->makeFilter($filter);
 	$sql="
-	    SELECT *,FORMAT(doc_total,2,'ru_RU') doc_total_frm FROM (
 	    SELECT 
 		doc_id,
 		doc_type,
@@ -75,7 +74,7 @@ class DocumentList extends Catalog{
 	    WHERE dl.active_company_id = '$active_company_id' $andwhere
 	    GROUP BY doc_id
 	    ORDER BY dl.is_commited,$sortby $sortdir
-	    LIMIT $limit OFFSET $offset) t
+	    LIMIT ($limit-1) OFFSET $offset
             HAVING $having";
         $rows=$this->get_list($sql);
 	if( $offset==0 && strpos($mode,'add_empty_row')!==FALSE ){
