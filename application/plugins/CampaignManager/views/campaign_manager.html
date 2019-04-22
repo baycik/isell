@@ -1,4 +1,3 @@
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.5.0/Chart.min.js"></script>
 <script>
     App.CampaignManager_index = (function ($) {
         var campaign_id = 1;
@@ -275,33 +274,41 @@
             <!--{{bonuses}}-->
             <div class=" leftcol-grid">
                 <div style="padding: 5px">
-                    <select name="bonus_type-{{campaign_bonus_id}}" title="Вид бонуса">
-                        <option value="VOLUME">Бонус с объема</option>
-                        <option value="PROFIT">Бонус с наценки</option>
-                        <option value="PAYMENT">Бонус с оплаты</option>
-                    </select>
-                        
-                    <input type="date" name="campaign_start_at-{{campaign_bonus_id}}" title="Начало">
-                    <input type="date" name="campaign_finish_at-{{campaign_bonus_id}}" title="Конец">
-                    <select name="campaign_grouping_interval-{{campaign_bonus_id}}" title="Интервал">
-                        <option value="" selected="selected">Не группировать</option>
-                        <option value="MONTH">Месяц</option>
-                        <option value="QUARTER">Квартал</option>
-                        <option value="YEAR">Год</option>
-                    </select>
-                    <!--{{if bonus_type|equals>payment|falsy}}-->
-                    <select name="product_category_id-{{campaign_bonus_id}}" title="Категор. товара">
-                        <option selected="selected">* Все</option>
-                        <!--{{stock_categories}}-->
-                        <option value="{{branch_id}}">{{label}}</option>
-                        <!--{{/stock_categories}}-->
-                    </select>
-                    <input name="product_brand_filter-{{campaign_bonus_id}}" title="Бренд товара">
-                    <input name="product_type_filter-{{campaign_bonus_id}}" title="Тип товара">
+                    <fieldset>
+                        <select name="bonus_type-{{campaign_bonus_id}}" title="Вид бонуса">
+                            <option value="VOLUME">Бонус с объема</option>
+                            <option value="PROFIT">Бонус с наценки</option>
+                            <option value="PAYMENT">Бонус с оплаты</option>
+                        </select>
+
+                        <input type="date" name="campaign_start_at-{{campaign_bonus_id}}" title="Начало">
+                        <input type="date" name="campaign_finish_at-{{campaign_bonus_id}}" title="Конец">
+                        <select name="campaign_grouping_interval-{{campaign_bonus_id}}" title="Интервал">
+                            <option value="" selected="selected">Не группировать</option>
+                            <option value="MONTH">Месяц</option>
+                            <option value="QUARTER">Квартал</option>
+                            <option value="YEAR">Год</option>
+                        </select>
+                    </fieldset>
+                    <!--{{if bonus_type|equals>PAYMENT|falsy}}-->
+                    <fieldset>
+                        <legend>Товары для расчета бонуса</legend>
+                        <select name="product_category_id-{{campaign_bonus_id}}" title="Категор. товара">
+                            <option selected="selected">* Все</option>
+                            <!--{{stock_categories}}-->
+                            <option value="{{branch_id}}">{{label}}</option>
+                            <!--{{/stock_categories}}-->
+                        </select>
+                        <input name="product_brand_filter-{{campaign_bonus_id}}" title="Бренд товара">
+                        <input name="product_type_filter-{{campaign_bonus_id}}" title="Тип товара">
+                    </fieldset>
                     <!--{{/if}}-->
-                    <input pattern="\d+" name="campaign_bonus_ratio1-{{campaign_bonus_id}}" title="План1 бонус %">
-                    <input pattern="\d+" name="campaign_bonus_ratio2-{{campaign_bonus_id}}" title="План2 бонус %">
-                    <input pattern="\d+" name="campaign_bonus_ratio3-{{campaign_bonus_id}}" title="План3 бонус %">
+                    <fieldset>
+                        <legend>Процент бонуса по планам</legend>
+                        <input pattern="\d+" name="campaign_bonus_ratio1-{{campaign_bonus_id}}" title="План1 бонус %">
+                        <input pattern="\d+" name="campaign_bonus_ratio2-{{campaign_bonus_id}}" title="План2 бонус %">
+                        <input pattern="\d+" name="campaign_bonus_ratio3-{{campaign_bonus_id}}" title="План3 бонус %">
+                    </fieldset>
                     <div>
                         <button class="CampaignManager_bonuses_delete" data-campaign_bonus_id="{{campaign_bonus_id}}"><img src="img/delete.png" style="width:16px"> Delete</button>
                     </div>
@@ -354,7 +361,7 @@
 <style>
     .leftcol-grid{
         display: grid;
-        grid-template-columns: 320px auto;
+        grid-template-columns: 340px auto;
     }
     .bonus-range-grid{
         display: grid;
@@ -401,6 +408,9 @@
     .CampaignManager_bonus_period_cards .cart-bar>div{
         height: 15px;
         opacity: 0.6;
+    }
+    #CampaignManager fieldset{
+        width: auto;
     }
 </style>
 
