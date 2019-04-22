@@ -30,7 +30,7 @@ class User extends Catalog {
             $user_data=$this->userRegister($user_phone);
         }
         if( $user_data->user_level<1 || !$user_data->user_id ){
-            return 'access_denied';
+            return 'phone_is_unknown';
         }
         if( $this->userInformBySms($user_data,$new_user_pass) ){
             $this->query("UPDATE user_list SET user_pass=MD5('$new_user_pass') WHERE user_id='$user_data->user_id'");
