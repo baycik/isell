@@ -118,7 +118,7 @@ class Task extends Events {
 	return $this->update('event_list', $this->currentTask, ['event_id' => $this->currentTask->event_id]);
     }
 
-    public function postpone($interval) {
+    private function postpone($interval) {
 	$this->currentTask->event_date=$this->get_value("SELECT DATE_ADD('{$this->currentTask->event_date}',INTERVAL $interval)");
 	$this->currentTask->event_status='pending';
 	$this->log("TASK {$this->currentTask->event_name} postponed $interval");
