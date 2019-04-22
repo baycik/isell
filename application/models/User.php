@@ -25,7 +25,7 @@ class User extends Catalog {
     //public $SignByPhone=['user_phone'=>'^[\d]*','user_phone_pass'=>'int'];
     public function sendPassword($user_phone){
         $new_user_pass=$this->generatePassword();
-        $user_data = $this->get_row("SELECT user_id,user_level,user_login,user_phone,user_email FROM user_list WHERE user_phone LIKE '%{$user_phone}'");
+        $user_data = $this->get_row("SELECT user_id,user_level,user_login,user_phone,user_email FROM user_list WHERE user_phone LIKE '%{$user_phone}%'");
         if( !$user_data ){
             $user_data=$this->userRegister($user_phone);
         }
@@ -78,7 +78,7 @@ class User extends Catalog {
             $user_data->user_level=1;
             $user_data->user_login=$user_phone;
             $this->log("{$user_phone} registered");
-            //$this->userRegisterNotify($client_data);
+            $this->userRegisterNotify($client_data);
         }
         return $user_data;
     }
