@@ -446,35 +446,35 @@
                 </td>
                 <td data-row-index="{{#}}" onclick="App.document.suggestion.handleClick(this)">
                     <div class="ui grid stackable" style="{{if leftover|less>1}} color:red !important; {{/if}}">
-                        <div class="eight wide column" style="padding: .5rem !important">{{product_name}}</div>
-                        <div class="eight wide column" style="padding: .5rem !important">
-                            <div class="ui grid" style="opacity:0.7">
+                        <div class="six wide column" style="padding: .5rem !important">{{product_name}}</div>
+                        <div class="six wide column" style="padding: .5rem !important">
+                            <div class="ui grid" style="color:#666">
                                 <div class="six wide column">{{product_code}}</div>
                                 <div class="five wide column right aligned">{{if is_promo}}<s>{{product_price_total_raw}}</s> {{/if}}<b>{{product_price_total}}</b></div>
                                 <div class="five wide column right aligned">{{if stared_leftover}} {{stared_leftover}} {{else}} {{leftover}}{{product_unit}} {{/if}}</div>
                             </div>
                         </div>
+                        <div class="four wide column" style="padding: .5rem !important">
+                            {{if quantity_added|more>0}}
+                            <div class="ui left labeled button" tabindex="0">
+                                <a class="ui basic label">
+                                    Добавлено: {{quantity_added}}
+                                </a>
+                                <button class="ui blue icon button" style="background-color: #0089ec; color:white" data-product_code="{{product_code}}"
+                                        onclick="App.stock.popup_add.edit_cart_item(this)">
+                                    <i class="edit icon"></i>
+                                </button>
+                                <button class="ui red icon button" data-product_code="{{product_code}}"
+                                        onclick="App.stock.cart.remove(this)">
+                                    <i class="trash alternate icon"></i>
+                                </button>
+                            </div>
+                            {{else}}
+                            <button class="ui button" data-index="{{#}}"
+                                    onclick="App.stock.popup_add.take_product_info(this)">Добавить <i class="cart plus icon"></i></button>
+                            {{/if}}
+                        </div>
                     </div>
-                </td>
-                <td>
-                    {{if quantity_added|more>0}}
-                    <div class="ui left labeled button" tabindex="0">
-                        <a class="ui basic label">
-                            Добавлено: {{quantity_added}}
-                        </a>
-                        <button class="ui blue icon button" style="background-color: #0089ec; color:white" data-product_code="{{product_code}}"
-                                onclick="App.stock.popup_add.edit_cart_item(this)">
-                            <i class="edit icon"></i>
-                        </button>
-                        <button class="ui red icon button" data-product_code="{{product_code}}"
-                                onclick="App.stock.cart.remove(this)">
-                            <i class="trash alternate icon"></i>
-                        </button>
-                    </div>
-                    {{else}}
-                    <button class="ui button" data-index="{{#}}"
-                            onclick="App.stock.popup_add.take_product_info(this)">Добавить <i class="cart plus icon"></i></button>
-                    {{/if}}
                 </td>
             </tr>
             <!-- {{/products}} {{else}}-->
