@@ -306,7 +306,7 @@
     #stock_list .stock_product_table{
         width: calc(100% - 8px);
         float: left;
-        height: 10em;
+        -height: 10em;
         margin: 4px;
         border-radius: 3px;
         box-shadow: 0px 0px 2px #ccc;
@@ -454,7 +454,7 @@
                                 <div class="five wide column right aligned">{{if stared_leftover}} {{stared_leftover}} {{else}} {{leftover}}{{product_unit}} {{/if}}</div>
                             </div>
                         </div>
-                        <div class="four wide column" style="padding: .5rem !important">
+                        <div class="four wide column">
                             {{if quantity_added|more>0}}
                             <div class="ui left labeled button" tabindex="0">
                                 <a class="ui basic label">
