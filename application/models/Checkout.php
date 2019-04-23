@@ -191,7 +191,7 @@ class Checkout extends Stock {
     
     public $checkoutLogFetch = ['checkout_id' => 'int'];
     public function checkoutLogFetch ($checkout_id) {
-        $this->Hub->set_level(2);
+        $this->Hub->set_level(1);
         $sql = " 
             SELECT
                 checkout_log.*,
