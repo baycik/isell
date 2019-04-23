@@ -102,6 +102,7 @@ class Checkout extends Stock {
 
     public $checkoutEntriesFetch = ['checkout_id' => 'int', 'sortby' => 'string', 'sortdir' => '(ASC|DESC)', 'filter' => 'json'];
     public function checkoutEntriesFetch ($checkout_id, $sortby=null, $sortdir=null, $filter = null  ){
+        $this->Hub->set_level(2);
         if (empty($sortby)) {
 	    $sortby = "cstamp";
 	    $sortdir = "DESC";
@@ -126,6 +127,7 @@ class Checkout extends Stock {
     
     public $checkoutProductGet = ['barcode' => 'string']; 
     public function checkoutProductGet($barcode) {
+        $this->Hub->set_level(2);
 	$sql = "SELECT
 		    product_id, product_code,ru, product_barcode,
                     product_bpack, product_spack, product_unit
@@ -142,6 +144,7 @@ class Checkout extends Stock {
     
     public $checkoutLogCommit = ['checkout_id'=>'int', 'entries'=>'json'];
     public function checkoutLogCommit ($checkout_id, $entries = null) {
+        $this->Hub->set_level(2);
         $this->query("START TRANSACTION");
         foreach($entries as $entry){
             $sql = "
@@ -174,6 +177,7 @@ class Checkout extends Stock {
     
     public $checkoutUpdateDocStatus = ['checkout_id' => 'int', 'doc_status' => 'int'];
     public function checkoutUpdateDocStatus ($checkout_id, $doc_status){
+        $this->Hub->set_level(2);
         $sql = " 
             UPDATE
                 checkout_list
@@ -187,6 +191,7 @@ class Checkout extends Stock {
     
     public $checkoutLogFetch = ['checkout_id' => 'int'];
     public function checkoutLogFetch ($checkout_id) {
+        $this->Hub->set_level(2);
         $sql = " 
             SELECT
                 checkout_log.*,
@@ -202,6 +207,7 @@ class Checkout extends Stock {
     
     public $checkoutStockCreate = ['parent_id' => 'int', 'checkout_name'=>'string'];
     public function checkoutStockCreate ($parent_id, $checkout_name){
+        $this->Hub->set_level(2);
         $stock_entries_list = $this->listFetch($parent_id, 0, 10000, 'product_code', 'ASC', null, 'advanced');
         $user_id = $this->Hub->svar('user_id');
         $checkout_id=$this->create('checkout_list', ['checkout_name'=>$checkout_name, 'parent_doc_id'=>null, 'created_by'=>$user_id, 'modified_by'=>$user_id]);
@@ -217,6 +223,7 @@ class Checkout extends Stock {
     
     public $checkoutDocumentCreate = ['parent_doc_id' => 'int', 'checkout_name'=>'string'];
     public function checkoutDocumentCreate ($parent_doc_id, $checkout_name){
+        $this->Hub->set_level(2);
         $DocumentItems = $this->Hub->load_model("DocumentItems");
         $document_entries_list = $DocumentItems->entryDocumentGet($parent_doc_id);
         $user_id = $this->Hub->svar('user_id');
@@ -234,6 +241,7 @@ class Checkout extends Stock {
     
     public $checkoutDocumentOutput = ['checkout_id'=>'int'];
     public function checkoutDocumentOutput ($checkout_id){
+        $this->Hub->set_level(2);
         $parent_doc_id = $this->get_value("SELECT parent_doc_id FROM checkout_list WHERE checkout_id=$checkout_id");
         if ($parent_doc_id){
             $this->checkoutUpdateDocStatus($checkout_id, 'checked');
@@ -244,6 +252,7 @@ class Checkout extends Stock {
     }
     
     private function checkoutSourceDocUpdate ($checkout_id){
+        $this->Hub->set_level(2);
         $DocumentItems=$this->Hub->load_model('DocumentItems');
         $checkout_document = $this->checkoutDocumentGet($checkout_id);
         $source_doc_id = $checkout_document['head']->parent_doc_id;
@@ -278,6 +287,7 @@ class Checkout extends Stock {
     }
     
     private function checkoutCalcDifference($checkout_id){
+        $this->Hub->set_level(2);
         $current_checkout=$this->checkoutDocumentGet ($checkout_id);
         $document_comment='Корректировка '.$current_checkout['head']->checkout_name.' от '.$current_checkout['head']->cstamp_dmy;
         $sql_more = "
@@ -336,6 +346,7 @@ class Checkout extends Stock {
     
     public $checkoutUp=['checkout_id'=>'int', 'file_name'=>'string'];
     public function checkoutUp( $checkout_id, $file_name){
+        $this->Hub->set_level(2);
         $Storage = $this->Hub->load_model('Storage');
         $Storage->upload('checkout', $file_name);
 	$sql="
