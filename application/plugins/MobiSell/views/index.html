@@ -196,7 +196,10 @@
 			    App.renderTpl("user_info", App.user.props);
                             localStorage.setItem('user_props',JSON.stringify(App.user.props));
 			}
-		    });
+		    }).fail(function(jqxhr, settings, ex){
+                        console.log(jqxhr, settings, ex);
+                        App.user.signInPopup();
+                    });
 		},
 		signOut: function () {
 		    $.post("../User/SignOut", function (resp) {
@@ -410,8 +413,7 @@
 	<div class="actions">
 	    <div class="ui primary button"  onclick="App.user.signIn()"><i class="icon sign in"></i> Вход</div>
 	    <div class="ui secondary close button"  onclick="$('#signInModal').modal('hide');"><i class="icon close"></i> Закрыть</div>
-            <hr>
-            	<div class="ui negative button"  onclick="App.clearCache()"><i class="icon refresh"></i> Сбросить настройки</div>
+            <div class="ui negative button"  onclick="App.clearCache()"><i class="icon refresh"></i> Выход</div>
 	</div>
     </div>
     

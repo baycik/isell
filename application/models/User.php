@@ -78,7 +78,7 @@ class User extends Catalog {
             $user_data->user_level=1;
             $user_data->user_login=$user_phone;
             $this->log("{$user_phone} registered");
-            $this->userRegisterNotify($client_data);
+            //$this->userRegisterNotify($client_data);
         }
         return $user_data;
     }
