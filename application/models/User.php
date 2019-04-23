@@ -67,7 +67,7 @@ class User extends Catalog {
                 user_phone='{$user_phone}',
                 user_email='{$client_data->company_email}',
                 user_level=1,
-                company_id={$client_data->company_id},
+                company_id=0,
                 user_assigned_path='{$client_data->path}',
                 last_name='{$client_data->label}',
                 user_sign='{$client_data->company_person}',
