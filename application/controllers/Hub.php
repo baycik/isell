@@ -130,7 +130,7 @@ class Hub  extends CI_Controller{
 	}
     }
     private function pluginTriggerAfter($model_name,$method,$route_args){
-        //need to be rewriten
+        //needs to be rewriten
 	$trigger_after=$this->svar('trigger_after');
 	if( isset($trigger_after[$model_name]) || isset($trigger_after["$model_name/$method"]) ){
 	    $model_listener=$trigger_after[$model_name];

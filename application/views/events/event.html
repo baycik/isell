@@ -40,7 +40,7 @@
 	    
 	    var interval=[0,0,0,0];
 	    if( this.data.event_repeat ){
-		interval = this.data.event_repeat.match(/(\d+)\s?(\d+):?(\d+)/);
+		interval = this.data.event_repeat.match(/(\d+)?\s?(\d+)?:?(\d+)?/);
 	    }
 	    this.data.event_repeat_day=interval[1];
 	    this.data.event_repeat_hour=interval[2];

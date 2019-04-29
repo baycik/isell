@@ -49,8 +49,8 @@
 	    },
 	    table: {
 		frm:{
-		    round: function (num) {
-			return isNaN(num) ? '' : Number.parseFloat(num).toFixed(2);
+		    round: function (row, cell, value, columnDef, dataContext) {
+			return isNaN(value) ? '' : Number(value).toLocaleString("ru-RU", { style: 'currency', currency: 'RUB' });
 		    },
 		    tooltip: function (row, cell, value, columnDef, dataContext) {
 			if (!value) {
@@ -154,7 +154,7 @@
                         {id: "doc_type_icon", field: "doc_type_icon", name: "", width: 25, formatter: DocList.table.frm.tooltip},
 			{id: "doc_num", field: "doc_num", name: "Номер", width: 50, sortable: true, cssClass: 'slick-align-right'},
 			{id: "cstamp", field: "cstamp", name: "Дата", width: 80, sortable: true, formatter: DocList.table.frm.dateFormatter},
-			{id: "doc_total_frm", field: "doc_total_frm", name: "Сумма", width: 80, sortable: true, cssClass: 'slick-align-right'},
+			{id: "doc_total", field: "doc_total", name: "Сумма", width: 80, sortable: true, cssClass: 'slick-align-right', formatter: DocList.table.frm.round},
 			{id: "trans_status", field: "trans_status", name: "Оплачен", width: 25, sortable: true, formatter: DocList.table.frm.tooltip},
                     ];
                     var columns_adv=[

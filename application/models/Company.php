@@ -221,7 +221,7 @@ class Company extends Catalog{
 	    $this->update('user_list',['company_id'=>$company_id],['user_id'=>$user_id]);
 	    return $company;
 	}
-	return null;
+	return $this->switchActiveCompany();//supplied company id is not active so provide valid acomp from list
     }
     
     public $switchActiveCompany=[];

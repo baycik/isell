@@ -310,7 +310,7 @@
 		    this.init = function () {
 			var html = "<select style='width:100%'>";
 			for (var i in Supplier.list) {
-			    html += Supplier.list[i].supplier_name ? "<option>" + Supplier.list[i].supplier_name + "</option>" : "";
+			    html += Supplier.list[i].supplier_name ? "<option value='" + Supplier.list[i].supplier_name + "'>" + Supplier.list[i].supplier_name + "</option>" : "";
 			}
 			html += "</select>";
 			$input = $(html);
