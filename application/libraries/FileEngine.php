@@ -135,7 +135,6 @@ class FileEngine{
 	
 	
 	
-	
         if ($this->compilator == 'PHPExcel') {
             if ($out_extension == '.html' || $is_printpage) {
                 $this->header('Content-Type: text/html; charset="utf-8"');
