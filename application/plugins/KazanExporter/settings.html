@@ -31,7 +31,11 @@
             
         },
         export: function () {
-            console.log($('#kazan_file')[0].files);
+            var uploaded_file = $('#kazan_file')[0].files;
+            if(uploaded_file.length<1){
+                App.flash('Файл не выбран!');
+                return;
+            }
             var formData = new FormData();
             formData.append('file', $('#kazan_file')[0].files[0]);
             $.ajax({
