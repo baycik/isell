@@ -1,0 +1,69 @@
+<form enctype="multipart/form-data" method="post">
+    <div class="plugin_notinstalled">
+        <h1>Плагин не установлен</h1>
+    </div>
+        <div style="text-align: center; margin:20px 0">
+            <div><label>Выберите файл</label></div>
+          <input type="file" id="kazan_file" name="file" multiple style="margin-bottom: 9px;">
+        </div>
+    <div style="text-align: center">
+        <button type="button" onclick="App.kazan_exporter_settings.export()"><img src="img/export.png" style="width:24px;"> Экспорт</button>
+        <button type="button" onclick="App.kazan_exporter_settings.addAutoBackupTask()"><img src="img/event.png" style="width:24px;"> Добавить автовыполнение</button>
+    </div>
+</form>
+<style>
+    #csv_Exporter_filters label b{
+        width: 100px !important;
+    }
+</style>
+<script>
+    App.kazan_exporter_settings = {
+        init: function () {
+            if( Plugins.currentData.is_activated==1 ){
+                $(".plugin_settings").show();
+                $(".plugin_notinstalled").hide();
+            } else {
+                $(".plugin_settings").hide();
+                $(".plugin_notinstalled").show();
+            }
+        },
+        render:function(){
+            
+        },
+        export: function () {
+            console.log($('#kazan_file')[0].files);
+            var formData = new FormData();
+            formData.append('file', $('#kazan_file')[0].files[0]);
+            $.ajax({
+                url : "KazanExporter/index",
+                type: "POST",
+                data : formData,
+                processData: false,
+                contentType: false,
+                success:function(){
+                    App.flash('Загрузка прошла успешно!');
+                },
+                error: function(){
+                    App.flash("Возникла ошибка при экспорте!");  
+                }
+            });
+        },
+	addAutoBackupTask:function(){
+	    var comment="Создание экспортного файла синхронизации SmartShop";
+	    var program={
+		commands:[
+		    {model:'KazanExporter',method:'index',arguments:''}
+		]
+	    };
+	    var task={
+		event_program:JSON.stringify(program),
+		event_name:"Синхронизация с сайтом SmartShop",
+		event_descr:comment,
+		event_label:"-TASK-",
+		event_repeat:"0 3:0"
+	    };
+	    App.loadWindow('page/events/event', task);
+	}
+    };
+    $(App.kazan_exporter_settings.init);
+</script>

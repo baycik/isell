@@ -81,6 +81,7 @@ class FileEngine {
 
     public function send($file_name, $is_printpage = false) {
         $ext = substr($file_name, strrpos($file_name, '.'));
+        
         if ($ext == '.print') {
             $ext = '.html';
             $is_printpage = true;
