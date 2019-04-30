@@ -2,9 +2,9 @@
     <div class="plugin_notinstalled">
         <h1>Плагин не установлен</h1>
     </div>
-        <div>
-          <label for="file">Choose file to upload</label>
-          <input type="file" id="file" name="file" multiple>
+        <div style="text-align: center; margin:20px 0">
+            <div><label>Выберите файл</label></div>
+          <input type="file" id="kazan_file" name="file" multiple style="margin-bottom: 9px;">
         </div>
     <div style="text-align: center">
         <button type="button" onclick="App.kazan_exporter_settings.export()"><img src="img/export.png" style="width:24px;"> Экспорт</button>
@@ -31,20 +31,19 @@
             
         },
         export: function () {
-            console.log($('#file')[0].files);
+            console.log($('#kazan_file')[0].files);
             var formData = new FormData();
-            formData.append('file', $('#file')[0].files[0]);
-          // var file = $('#file').prop('files');
+            formData.append('file', $('#kazan_file')[0].files[0]);
             $.ajax({
                 url : "KazanExporter/index",
                 type: "POST",
                 data : formData,
                 processData: false,
                 contentType: false,
-                success:function(data, textStatus, jqXHR){
+                success:function(){
                     App.flash('Загрузка прошла успешно!');
                 },
-                error: function(jqXHR, textStatus, errorThrown){
+                error: function(){
                     App.flash("Возникла ошибка при экспорте!");  
                 }
             });
