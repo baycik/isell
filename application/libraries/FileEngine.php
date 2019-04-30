@@ -220,7 +220,7 @@ class FileEngine{
 		if( strpos($cellRawValue,'$v')!==false ){
 		    $v=$this->view;
 		    $cellValue=eval('return "' . addslashes($cellRawValue) . '";');
-		    $this->Worksheet->getCellByColumnAndRow($col, $row+$i)->setValue($cellValue);
+		    $this->Worksheet->getCellByColumnAndRow($col, $row)->setValue($cellValue);
 		}
 	    }
 	}

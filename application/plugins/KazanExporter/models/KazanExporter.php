@@ -14,39 +14,33 @@ class KazanExporter extends Catalog {
 
     
     public function index(){
-        $product_codes = $this->getSettings();
         if(isset($_FILES['file'])){
             $product_codes = $this->getCsv($_FILES['file']["tmp_name"]);
         }
-        $this->viewGet($product_codes);
     }
     
-    
-    private function viewGet($product_codes){
+    public $start = ['filename'=>'string'];
+    public function start($filename){
+        $product_codes = $this->getSettings();
+        $this->viewGet($product_codes, $filename);
+    }
+
+    private function viewGet($product_codes, $filename){
 	$table=$this->getProductList($product_codes);
 	$dump=[
 	    'tpl_files_folder'=>__DIR__.'/../xlsx_template/',
 	    'tpl_files'=>'KazanExporter.xlsx',
-	    'title'=>"Остаток Nilson Крым",
-	    'user_data'=>[
-		'email'=>$this->Hub->svar('pcomp')?$this->Hub->svar('pcomp')->company_email:'',
-		'text'=>'Доброго дня'
-	    ],
+	    'title'=>"",
+	    'user_data'=>[],
 	    'view'=>[
 		'date'=>date('d.m.Y'),
 		'filter'=>'',
 		'rows'=>$table
 	    ]
 	];
-	$ViewManager=$this->Hub->load_model('ViewManager');
-	$ViewManager->store($dump);
-        $filename = '84650823nils_ost.xlsx';
-        
         !is_dir("../public") && mkdir("../public", 0777);
         $file_path = str_replace('\\', '/', realpath("../public")) . '/';
-        @unlink($file_path);
-        
-	file_put_contents($file_path.$filename, $this->exportXLSX($dump));
+	file_put_contents($file_path.$filename.'.xlsx', $this->exportXLSX($dump));
     }
     
     private function exportXLSX($dump){
@@ -60,11 +54,12 @@ class KazanExporter extends Catalog {
         $FileEngine->assign($dump_view, $dump['tpl_files']);
         
         $file_name = str_replace(' ','_',$dump['title']).'.xlsx';
-        $FileEngine->header_mode='send_headers';
+        $FileEngine->header_mode='';
         return $FileEngine->fetch($file_name);
     }
     
     private function getProductList($product_codes){
+        $product_codes = addslashes($product_codes);
         $sql = "
             SELECT 
                 se.product_code, se.product_quantity, pl.ru as product_name 
@@ -89,16 +84,14 @@ class KazanExporter extends Catalog {
         $this->updateSettings($result);
         return $result;
     }
-    
  
     private function updateSettings($settings) {
-        $this->settings = $settings;
-        $encoded = json_encode($settings, JSON_UNESCAPED_UNICODE);
+        ;
         $sql = "
             UPDATE
                 plugin_list
             SET 
-                plugin_settings = '$encoded'
+                plugin_settings = '$settings'
             WHERE plugin_system_name = 'KazanExporter'    
             ";
         $this->query($sql);
