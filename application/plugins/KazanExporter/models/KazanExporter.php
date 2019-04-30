@@ -14,12 +14,15 @@ class KazanExporter extends Catalog {
 
     
     public function index(){
-        $product_codes = $this->getCsv($_FILES['file']["tmp_name"]);
+        $product_codes = $this->getSettings();
+        if(isset($_FILES['file'])){
+            $product_codes = $this->getCsv($_FILES['file']["tmp_name"]);
+        }
         $this->viewGet($product_codes);
     }
     
     
-    public function viewGet($product_codes){
+    private function viewGet($product_codes){
 	$table=$this->getProductList($product_codes);
 	$dump=[
 	    'tpl_files_folder'=>__DIR__.'/../xlsx_template/',
@@ -82,6 +85,35 @@ class KazanExporter extends Catalog {
         foreach($csv as &$row){
             $list[] = explode(';', $row)[0];
         }
-        return implode(',',$list);
+        $result = implode(',',$list);
+        $this->updateSettings($result);
+        return $result;
+    }
+    
+ 
+    private function updateSettings($settings) {
+        $this->settings = $settings;
+        $encoded = json_encode($settings, JSON_UNESCAPED_UNICODE);
+        $sql = "
+            UPDATE
+                plugin_list
+            SET 
+                plugin_settings = '$encoded'
+            WHERE plugin_system_name = 'KazanExporter'    
+            ";
+        $this->query($sql);
+        return;
+    }
+
+    private function getSettings() {
+        $sql = "
+            SELECT
+                plugin_settings
+            FROM 
+                plugin_list
+            WHERE plugin_system_name = 'KazanExporter'    
+            ";
+        $row = $this->get_row($sql);
+        return $row->plugin_settings;
     }
 }
