@@ -37,8 +37,16 @@ class DocumentList extends Catalog{
 	} else {
 	    
 	}
-	
-        $limit--;//because of empty row that added at beginning
+        
+	$empty_row=null;
+        if( strpos($mode,'add_empty_row')!==FALSE ){
+            if( $offset==0 ){
+                $limit--;//because of empty row that added at beginning
+                $empty_row=['doc_id'=>0,'doc_type_icon'=>"new "];
+            } else {
+                $offset--;
+            }
+	}
 	
 	$having=$this->makeFilter($filter);
 	$sql="
@@ -79,10 +87,7 @@ class DocumentList extends Catalog{
 	    LIMIT $limit OFFSET $offset
             ";
         $rows=$this->get_list($sql);
-	if( $offset==0 && strpos($mode,'add_empty_row')!==FALSE ){
-            $rows= array_merge([['doc_id'=>0,'doc_type_icon'=>"new "]],$rows);
-	}
-	return $rows;
+	return $empty_row?array_merge([$empty_row],$rows):$rows;
     }
     
     public $statusFetchList=[];

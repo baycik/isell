@@ -42,7 +42,7 @@
                 e.preventDefault();
                 remoteModel.loadNext();
             });
-            a.css('backgroundColor','rgba(255,255,255,.6)').css("borderRadius","5px").css('padding','5px').css('margin','5px');
+            a.css('backgroundColor','rgba(255,255,255,.6)').css("borderRadius","5px").css('padding','5px').css('margin','5px').css('cursor','pointer');
         }
 
 	function initFilter() {
@@ -207,7 +207,7 @@ $.fn.slickgrid = function (settings) {
         function reloadAll(){
             var _total_row_count=total_row_count;
             clear();
-            makeRequest(0, _total_row_count || PAGESIZE);
+            makeRequest(0, Math.max(_total_row_count,PAGESIZE) );
         }
 
 	function reloadData(from, to) {
