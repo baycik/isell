@@ -27,6 +27,7 @@ Document.head={
 	    Document.reload();
 	});
     },
+    
     initToolbar:function(){
 	$("#"+holderId+" .x-head .x-toolbar").click(function(e){
 	    var action=$(e.target).data('action');
@@ -54,19 +55,42 @@ Document.head={
         }	
     },
     initControls:function(){
+//        
+//        $('.x-head .easyui-combobox.head_input').combobox({
+//            onChange:function(val,old){
+//                var name = $(this).attr('textboxname');
+//                console.log(name);
+//                Document.head.update(name,val,old);
+//            }
+//        });
+//        $('.x-head .easyui-numberspinner.head_input').numberspinner({
+//            onChange:function(val,old){
+//                var name = $(this).attr('textboxname');
+//                Document.head.update(name,val,old);
+//            }
+//        });
+//        $('.x-head .easyui-datebox.head_input').datebox({
+//            onChange:function(val,old){
+//                var name = $(this).attr('textboxname');
+//                Document.head.update(name,val,old);
+//            }
+//        });
+        
 	App.setupForm("#"+holderId+" .x-head form");
-	$("#"+holderId+" .x-head form").change(function(e){
-	    e.target;
-
-	    if( $(e.target).attr('type')==='checkbox' ){
-		var value=$(e.target).prop('checked')?1:0;
-	    } else {
-		var value=$(e.target).val();
-	    }
-	    console.log($(e.target).attr('name'));
-	    Document.head.update( $(e.target).attr('name'), value, $(e.target).attr('title') );
+	$("#"+holderId+" .x-head form").form({
+            onLoadSuccess: function(){
+                return;
+            },
+            onChange: function(e){
+                e.preventDefault;
+                var name = $(e).attr('textboxname');
+                var value = $(e).val();
+                Document.head.update( name, value, value+'changed!' );
+            }
 	});
+        
 	$.parser.parse("#"+holderId+" .x-head form");//for easy ui
+        
 	Document.head.pcompComboInit();
     },
     pcompComboInit:function(){
@@ -252,6 +276,7 @@ Document.body={
 		}
 	    });	    
 	},
+        
 	pickerToggle:function(){
 	    if(!Document.body.picker.inited){
 		Document.body.picker.init();
@@ -397,3 +422,22 @@ Document.body={
      * @TODO add export table
      */
 };
+Document.foot = {
+    init: function(){
+        
+    },
+    render:function(footer){
+        footer.total_weight=footer.total_weight||0;
+        footer.total_volume=footer.total_volume||0;
+        footer.vatless=footer.vatless||0;
+        footer.vat=footer.vat||0;
+        footer.total=footer.total||0;
+        footer.curr_symbol=footer.curr_symbol||'-';
+        Document.data.foot=footer;
+        App.renderTpl('Doc_footer',Document.data.foot);
+    },
+    destroy:function(){
+	$("#"+holderId+" .x-foot .x-suggest").combobox('destroy');
+    }
+};
+

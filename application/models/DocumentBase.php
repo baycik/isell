@@ -9,6 +9,8 @@ abstract class DocumentBase extends Catalog{
     // UTILS SECTION
     //////////////////////////////////////////
     protected function doc($field=null,$value=null){
+        //TODO//
+        //add security check//
 	if( !isset($this->document_properties) ){
 	    if( !$this->doc_id ){
 		throw new Exception("Can't use properties because Document is not selected");
@@ -93,6 +95,7 @@ abstract class DocumentBase extends Catalog{
     public $documentUpdate=['doc_id'=>'int','field'=>'string','value'=>'string'];
     public function documentUpdate($doc_id,$field,$value){
 	$this->Hub->set_level(2);
+        $this->doc_id = $doc_id;
 	$this->documentSelect($doc_id);
 	$ok=true;
 	$this->db_transaction_start();
@@ -149,6 +152,7 @@ abstract class DocumentBase extends Catalog{
 	    $this->db_transaction_rollback();
 	    return false;
 	}
+        return true;
     }
     protected function documentChangeCommitEntries($make_commited){
 	$doc_id=$this->doc('doc_id');
@@ -157,10 +161,10 @@ abstract class DocumentBase extends Catalog{
 	
 	foreach($document_entries as $entry){
 	    if( $make_commited && !$this->entryCommit($entry->doc_entry_id) ){
-		return false;//need to commit but it failed
+		return true;//need to commit but it failed
 	    }
 	    if( !$make_commited && !$this->entryUncommit($entry->doc_entry_id) ){
-		return false;//need to uncommit but it failed
+		return true;//need to uncommit but it failed
 	    }
 	}
 	return true;
@@ -169,9 +173,10 @@ abstract class DocumentBase extends Catalog{
         if( $make_commited ){
 	    $footer=$this->footGet();
 	    $this->transUpdate($footer);
-            
+            return true;
         } else {
             $this->transDisable();
+            return true;
         }
         return false;
     }
@@ -230,6 +235,7 @@ abstract class DocumentBase extends Catalog{
     //////////////////////////////////////////
     protected function bodyGet($doc_id){
 	$this->entriesTmpCreate( $doc_id );
+        $this->footGet();
 	return $this->get_list("SELECT * FROM tmp_doc_entries");
     }
     protected function entriesTmpCreate( $doc_id ){
@@ -268,12 +274,12 @@ abstract class DocumentBase extends Catalog{
                 ORDER BY pl.product_code) t)";
         $this->query($sql);
     }
-    protected function entryAdd(){
+    /*protected function entryAdd(){
 	
     }
     protected function entryUpdate(){
 	
-    }
+    }*/
     public function entryDelete($doc_id,$doc_entry_ids){
 	$this->documentSelect($doc_id);
 	$this->db_transaction_start();
@@ -354,6 +360,7 @@ abstract class DocumentBase extends Catalog{
     // FOOT SECTION
     //////////////////////////////////////////
     protected function footGet(){
+        $this->entriesTmpCreate( $this->doc_id );
 	$curr_code=$this->Hub->pcomp('curr_code');
 	$curr_symbol=$this->get_value("SELECT curr_symbol FROM curr_list WHERE curr_code='$curr_code'");
 	$sql="SELECT
@@ -364,7 +371,8 @@ abstract class DocumentBase extends Catalog{
 	    SUM(product_sum_total-product_sum_vatless) vat,
 	    SUM(ROUND(product_quantity*self_price,2)) self,
 	    '$curr_symbol' curr_symbol
-	FROM tmp_doc_entries";
+	FROM 
+            tmp_doc_entries";
 	return $this->get_row($sql);
     }
     //////////////////////////////////////////
@@ -393,7 +401,7 @@ abstract class DocumentBase extends Catalog{
         return false;
     }
     protected function transUpdate(){
-	$foot=$this->footGet();
+	$foot=$this->footGet($this->doc_id);
         if ($this->Hub->pcomp('curr_code') == $this->Hub->acomp('curr_code')) {
 	    $doc_ratio=0;
 	} else {

@@ -13,12 +13,19 @@
 
 	</div>
 	<div>
-	    <input class="easyui-numberspinner" name="doc_type" title="Вид">
-	    <input name="passive_company_id" title="Покупатель">
+            <select class="easyui-combobox head_input" id="Doc_type_cmb" name="doc_type" title="Вид" >
+		<option value="1">Продажа</option>
+		<option value="-1">Возврат от покупателя</option>
+		<option value="2">Покупка</option>
+		<option value="-2">Возврат поставщику</option>
+		<option value="3">Оказание услуги</option>
+		<option value="4">Получение услуги</option>
+	    </select>
+	    <input class="head_input" name="passive_company_id" title="Покупатель">
 	</div>
 	<div>
-	    <input class="easyui-numberspinner" name="doc_num" title="Номер">
-	    <input class="easyui-datebox" name="doc_date" title="Дата">
+	    <input class="easyui-numberspinner head_input" name="doc_num" title="Номер">
+	    <input class="easyui-datebox head_input" name="doc_date" title="Дата">
 	</div>
 	<div>
 	    <div class="x-toolbar" style="text-align: right">
