@@ -1,10 +1,38 @@
 
-<h1>kjfhk</h1>
+<div style="display: grid; grid-template-columns:200px auto">
+    <div id="pmanager_stree" class="transp60"></div>
+    <div>
+        
+    </div>
+</div>
 <script type="text/javascript">
     (function () {
+        let Breakeven={
+            init(){
+                this.treeInit();
+                
+            },
+            treeInit(){
+                App.loadModule('page/stock/tree', {inline: true, clickselect: true}, 'pmanager_stree', /(Stree|page_stock_tree)([^\w]|_)/g, "pmanager_stree$2").progress(function (status, branch) {
+		    console.log(branch);
+		});
+            },
+            load(){
+                $.post("PriceManager/breakevenFetchList",resp=>{
+                    let list=App.json(resp);
+                });
+            },
+            render(){
+                
+            },
+            destroy(){
+                
+            }
+        };
+        
+        
 	function init() {
-	    Leftovers.init();
-	    Utils.init();
+	    Breakeven.init();
 	}
         init();
         return {};
