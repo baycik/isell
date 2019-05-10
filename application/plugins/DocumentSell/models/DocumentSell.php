@@ -62,7 +62,7 @@ class DocumentSell extends DocumentBase{
 	}
 	return $document;
     }
-    private function bodyGet($doc_id){
+    protected function bodyGet($doc_id){
 	$this->entriesTmpCreate( $doc_id );
 	return $this->get_list("SELECT * FROM tmp_doc_entries");
     }

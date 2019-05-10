@@ -706,8 +706,8 @@ Mark.pipes.format = function (str) {
 		parseHTML:function(){
 		    $.parser.parse("#holder"+App.module.current);//for easy ui   
 		},
-		findTitle:function(){		    
-		    App.setTitle(App.user.props.module_list[App.module.current].label);
+		findTitle:function(){		
+		    //App.setTitle(App.user.props.module_list[App.module.current].label);
 		},
 		selectButton:function(){
 		    $(".ModuleButtonSelected").removeClass("ModuleButtonSelected");
