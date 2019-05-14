@@ -1,13 +1,5 @@
 <script>
     App.page_trade_document_list = (function () {
-	var require = [
-	    "js/slick/lib/jquery.event.drag-2.3.0.js",
-	    ["js/slick/slick.core.js",
-	    "js/slick/slick.grid.js",
-	    "js/slick/plugins/slick.rowselectionmodel.js",
-	    "js/slick/slick.editors.js",
-	    "js/slick/slickinfinite.js"]
-	];
 	DocList = {
 	    init:function(){
 		DocList.table.init();
@@ -250,7 +242,6 @@
             Document.load(0);
 	}
 	return {
-	    require: require,
 	    init: init
 	};
     })();
