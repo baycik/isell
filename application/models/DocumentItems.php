@@ -164,7 +164,7 @@ class DocumentItems extends DocumentCore{
         return $doc_entry_id;
     }
     private function entryBreakevenPriceUpdate( $doc_entry_id=null, $doc_id=null ){
-        if( !$doc_entry_id&&!$doc_id || $this->Hub->pcomp('skip_breakeven_check') ){
+        if( !$doc_entry_id&&!$doc_id ){
             return;
         }
         $pcomp_id=$this->doc('passive_company_id');
@@ -178,12 +178,21 @@ class DocumentItems extends DocumentCore{
         } else {
             $where="doc_id=$doc_id";
         }
-        $sql="UPDATE 
+        if( $this->Hub->pcomp('skip_breakeven_check') ){
+            $sql="UPDATE 
+                    document_entries 
+                SET 
+                    breakeven_price = 0
+                WHERE 
+                    $where";
+        } else {
+            $sql="UPDATE 
                     document_entries 
                 SET 
                     breakeven_price = ROUND(GET_BREAKEVEN_PRICE(product_code,'$pcomp_id','$usd_ratio',self_price),2)
                 WHERE 
                     $where";
+        }
         $this->query($sql);
     }
 /*    public $entryPostAdd=[];
