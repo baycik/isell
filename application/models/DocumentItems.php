@@ -99,11 +99,7 @@ class DocumentItems extends DocumentCore{
         $pcomp_price_label=$this->Hub->pcomp('price_label');
         $this->query("DROP TEMPORARY TABLE IF EXISTS tmp_doc_entries");
         $sql="CREATE TEMPORARY TABLE tmp_doc_entries ( INDEX(product_code) ) AS (
-                SELECT 
-                    *,
-                    IF(doc_type=1,product_price_total-buy<0.01,product_price_total-buy>0.01) is_loss
-                FROM
-                (SELECT
+                SELECT
                     doc_entry_id,
                     ROUND(invoice_price * @curr_correction, 2) AS product_price_vatless,
                     ROUND(invoice_price * @curr_correction * product_quantity,2) product_sum_vatless,
@@ -135,7 +131,7 @@ class DocumentItems extends DocumentCore{
                     price_list ppl ON de.product_code=ppl.product_code AND label='$pcomp_price_label'
                 WHERE
                     doc_id='$doc_id'
-                ORDER BY pl.product_code) t
+                ORDER BY pl.product_code
                 )";
         $this->query($sql);
     }

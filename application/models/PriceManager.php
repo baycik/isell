@@ -58,9 +58,9 @@ class PriceManager extends Catalog{
             SELECT
                 product_code,
                 ru product_name,
-                LEFTOVER_CALC(product_code,NOW(),product_quantity,'selfprice') self_price,
+                ROUND(LEFTOVER_CALC(product_code,NOW(),product_quantity,'selfprice'),2) self_price,
                 ROUND(buy,2) buy,
-                GET_BREAKEVEN_PRICE(product_code,$company_id,$usd_ratio,LEFTOVER_CALC(product_code,NOW(),product_quantity,'selfprice')) breakeven_price
+                ROUND(GET_BREAKEVEN_PRICE(product_code,$company_id,$usd_ratio,LEFTOVER_CALC(product_code,NOW(),product_quantity,'selfprice')),2) breakeven_price
             FROM
                 stock_entries se
                     JOIN

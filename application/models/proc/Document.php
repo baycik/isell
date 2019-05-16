@@ -297,11 +297,11 @@ class Document extends Data {
 	$quantity = $new_quantity !== NULL ? $new_quantity : $entry['product_quantity'];
 	$party_label = $new_party_label !== NULL ? $new_party_label : $entry['party_label'];
 	if ($this->doc('doc_type') == 1) {//Sell document
-	    if ($action == 'commit' || ($this->isCommited() && isset($new_invoice))) {
+	    //if ($action == 'commit' || ($this->isCommited() && isset($new_invoice))) {
 		$self = $this->getProductSellSelfPrice($entry['product_code'], $quantity, $this->doc('cstamp'));
-	    } else {
-		$self = $entry['self_price'];
-	    }
+	    //} else {
+		//$self = $entry['self_price'];
+	    //}
 	} else {//Buy and other document
 	    $self = $invoice;
 	}
