@@ -111,6 +111,7 @@ class DocumentItems extends DocumentCore{
 		    
                     ROUND(invoice_price * @curr_correction * @vat_ratio, 2) AS product_price_total,
 		    ROUND(invoice_price * @curr_correction * @vat_ratio * product_quantity,2) product_sum_total,
+                    ROUND(breakeven_price,2) breakeven_price,
                     product_quantity*product_weight weight,
                     product_quantity*product_volume volume,
                     pl.product_code,
@@ -154,17 +155,41 @@ class DocumentItems extends DocumentCore{
     
     
     public $entryAdd=['doc_id'=>'int','code'=>'string','quantity'=>'int'];
-    public function entryAdd( $doc_id, $code, $quantity, $price=NULL ){
+    public function entryAdd( $doc_id, $product_code, $quantity, $price=NULL ){
         if($doc_id){
             $this->selectDoc($doc_id);
         }
 	$Document2=$this->Hub->bridgeLoad('Document');
 	$add_duplicate_rows=(bool) $this->Hub->pref('add_duplicate_rows');
-	$add_ok=$Document2->addEntry( $code, $quantity, $price, $add_duplicate_rows );
+	$doc_entry_id=$Document2->addEntry( $product_code, $quantity, $price, $add_duplicate_rows );
         if( $this->isReserved() ){
             $this->reservedCountUpdate();
         }
-        return $add_ok;
+        $this->entryBreakevenPriceUpdate($doc_entry_id);
+        return $doc_entry_id;
+    }
+    private function entryBreakevenPriceUpdate( $doc_entry_id=null, $doc_id=null ){
+        if( !$doc_entry_id || $this->Hub->pcomp('skip_breakeven_check') ){
+            return;
+        }
+        $pcomp_id=$this->doc('passive_company_id');
+        $usd_ratio=$this->doc('doc_ratio');
+        $doc_type=$this->doc('doc_type');
+        if( $doc_type!=1 ){
+            return;
+        }
+        if( $doc_entry_id ){
+            $where="doc_entry_id=$doc_entry_id";
+        } else {
+            $where="doc_id=$doc_id";
+        }
+        $sql="UPDATE 
+                    document_entries 
+                SET 
+                    breakeven_price = GET_BREAKEVEN_PRICE(product_code,'$pcomp_id','$usd_ratio',self_price) 
+                WHERE 
+                    $where";
+        $this->query($sql);
     }
 /*    public $entryPostAdd=[];
     public function entryPostAdd(){
@@ -306,6 +331,7 @@ class DocumentItems extends DocumentCore{
 	$Document2=$this->Hub->bridgeLoad('Document');
 	$Document2->selectDoc($doc_id);
 	$Document2->recalc($proc);
+        $this->entryBreakevenPriceUpdate(null,$doc_id);
     }
     private function duplicateEntries($new_doc_id,$old_doc_id){
 	$old_entries=$this->get_list("SELECT product_code,product_quantity,self_price,party_label,invoice_price FROM document_entries WHERE doc_id='$old_doc_id'");

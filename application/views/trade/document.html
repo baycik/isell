@@ -530,6 +530,14 @@
 		}
 	    });
 	},
+        update:function(field,value){
+            var row=$("#Doc_entry_dg").datagrid('getSelected');
+            $.post( 'DocumentItems/entryUpdate/'+Doc.head.props.doc_id+'/'+row.doc_entry_id,{name:field,value:value}, function(ok){
+		if(ok*1){
+		    Doc.entries.reload();
+		}
+	    });
+        },
 	delete:function(){
 	    var rows=$("#Doc_entry_dg").datagrid('getSelections');
 	    if( !rows.length ){
@@ -561,8 +569,18 @@
         goToReserved:function(product_code){
             location.hash="#Stock#stock_main_tabs=Резерв&product_code="+product_code;
         },
+        resetToBreakeven:function(breakeven_price){
+            App.flash("Цена изменена на "+breakeven_price);
+            Doc.entries.update('product_price',breakeven_price);
+        },
         tooltip:function(value, row){
-            return App.datagrid.tooltip(value, row, "Doc.entries.goToReserved('"+row.product_code+"')");
+            if( value.indexOf('reserved')>-1 ){
+                return App.datagrid.tooltip(value, row, "Doc.entries.goToReserved('"+row.product_code+"')");
+            }
+            if( value.indexOf('err_breakeven')>-1 ){
+                return App.datagrid.tooltip(value, row, "Doc.entries.resetToBreakeven('"+row.breakeven_price+"')");
+            }
+            return App.datagrid.tooltip(value, row);
         },
 	onRowContextMenu: function (e, row) {
 	    e.preventDefault();

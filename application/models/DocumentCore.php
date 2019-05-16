@@ -319,7 +319,7 @@ class DocumentCore extends DocumentUtils{
     }
     
     public function reservedCountUpdate(){
-        echo $sql="
+        $sql="
         UPDATE 
             stock_entries
                 LEFT JOIN

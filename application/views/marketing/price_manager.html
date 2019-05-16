@@ -1,32 +1,224 @@
 
-<div style="display: grid; grid-template-columns:200px auto">
-    <div id="pmanager_stree" class="transp60"></div>
+<div style="display: grid; grid-template-columns:520px 700px; grid-gap:3px">
     <div>
-        
+        <div class="x-marketing-breakeven-tools" style="text-align: right;">
+            <span data-action="entryCreate" class="icon-24 icon-create" title="Добавить"> </span>
+            <span data-action="entryDelete" class="icon-24 icon-delete" title="Удалить"> </span>
+            <span data-action="reload" class="icon-24 icon-refresh" title="Обновить"> </span>
+        </div>
+        <div id="breakeven_list_sg" style="height: 500px;"></div>
+    </div>
+    <div>
+        <div class="x-marketing-breakeven-result-tools" style="text-align: right;">
+            <span data-action="reload" class="icon-24 icon-refresh" title="Обновить"> </span>
+        </div>
+        <div id="breakeven_result_list_sg" style="height: 500px;max-width: 700px"></div>        
     </div>
 </div>
 <script type="text/javascript">
     (function () {
         let Breakeven={
             init(){
-                this.treeInit();
-                
-            },
-            treeInit(){
-                App.loadModule('page/stock/tree', {inline: true, clickselect: true}, 'pmanager_stree', /(Stree|page_stock_tree)([^\w]|_)/g, "pmanager_stree$2").progress(function (status, branch) {
-		    console.log(branch);
-		});
+                this.table.init();
+                this.result_table.init();
             },
             load(){
-                $.post("PriceManager/breakevenFetchList",resp=>{
-                    let list=App.json(resp);
-                });
+                
             },
             render(){
                 
             },
             destroy(){
                 
+            },
+            table:{
+                init(){
+                    var settings = {
+                        columns:  [
+                            {id: "category_label", field: "category_label", name: "Категория", width: 150,formatter:Breakeven.table.frm.default_label},
+                            {id: "pcomp_label", field: "pcomp_label", name: "Контрагент", width: 150,formatter:Breakeven.table.frm.default_label},
+                            {id: "breakeven_base", field: "breakeven_base", name: "Расчет от цены", width: 120,formatter:Breakeven.table.frm.breakevenBase,editor:Breakeven.table.frm.breakevenBaseEditor},
+                            {id: "breakeven_ratio", field: "breakeven_ratio", name: "Процент", width: 80,editor:Slick.Editors.Integer}
+                        ],
+                        options: {
+                            editable: true,
+                            enableColumnReorder: false,
+                            enableFilter: true,
+                            url: 'PriceManager/breakevenListFetch/'
+                        }
+                    };
+                    Breakeven.table.grid=new SlickInfinite("#breakeven_list_sg", settings);
+                    Breakeven.table.grid.onCellChange.subscribe(function (e, data) {
+                        var updatedEntry = data.item;
+                        var field = settings.columns[data.cell].field;
+                        var value = updatedEntry[field];
+                        if( updatedEntry.breakeven_rule_id ){
+                            Breakeven.table.crud.update(updatedEntry.breakeven_rule_id, field, value).done(function(){
+                                Breakeven.table.grid.reload();
+                            });
+                        } else {
+                            Breakeven.table.crud.create(updatedEntry.branch_id, updatedEntry.company_id).done(resp=>{
+                                var breakeven_rule_id=resp;
+                                Breakeven.table.crud.update(breakeven_rule_id, field, value);
+                            });
+                        }
+                    });
+                    Breakeven.table.grid.onSelectedRowsChanged.subscribe(function(){
+                        var selected_rows = Breakeven.table.grid.getSelectedRows();
+                        if( selected_rows.length ){
+                            var row_data=Breakeven.table.grid.getDataItem(selected_rows[0]);
+                            var params={
+                                company_id:row_data.company_id,
+                                branch_id:row_data.branch_id
+                            };
+                            Breakeven.result_table.grid.updateOptions({params:params});
+                            Breakeven.result_table.grid.reload();
+                        }
+                    });
+                    
+                    $(".x-marketing-breakeven-tools").click(function (e) {
+                        var action = $(e.target).data('action');
+                        if (action) {
+                            Breakeven.table.tools[action] && Breakeven.table.tools[action]();
+                        }
+                    });
+                },
+                crud:{
+                    create(branch_id,company_id){
+                        return $.post('PriceManager/breakevenCreate',{branch_id:branch_id,company_id:company_id});
+                    },
+                    update(breakeven_rule_id,field,value){
+                        return $.post('PriceManager/breakevenUpdate',{breakeven_rule_id:breakeven_rule_id,field:field,value:value});
+                    },
+                    delete(breakeven_rule_id){
+                        return $.post('PriceManager/breakevenDelete',{breakeven_rule_id:breakeven_rule_id});
+                    }
+                },
+                frm:{
+                    breakevenBase:function(row,cell,value, columnDef, dataContext){
+                        return Breakeven.table.frm.breakevenDictionary[value||'last_buy'];
+                    },
+                    breakevenDictionary:{
+                        last_buy:'Закупочная',
+                        self_price:'Себестоимость'
+                    },
+                    breakevenBaseEditor:function (args) {
+                        var $input;
+                        this.keyCaptureList = [Slick.keyCode.UP, Slick.keyCode.DOWN, Slick.keyCode.ENTER];
+                        this.init = function () {
+                            var html = "<select style='width:100%'>";
+                            for(var base_type in Breakeven.table.frm.breakevenDictionary){
+                                var base_typeName=Breakeven.table.frm.breakevenDictionary[base_type];
+                                html += "<option value='"+base_type+"'>"+base_typeName+"</option>";
+                            }
+                            html += "</select>";
+                            $input = $(html);
+                            $input.appendTo(args.container);
+                        };
+                        this.destroy = function () {
+                            $input.remove();
+                        };
+                        this.focus = function () {
+                            $input.focus();
+                        };
+                        this.loadValue = function (item) {
+                            item['breakeven_base'] && $input.val(item['breakeven_base']);
+                        };
+                        this.serializeValue = function () {
+                            return $input.val();
+                        };
+                        this.applyValue = function (item, state) {
+                            item[args.column.field] = state;
+                        };
+                        this.isValueChanged = function () {
+                            return true;
+                        };
+                        this.validate = function () {
+                            return {
+                                valid: true,
+                                msg: null
+                            };
+                        };
+                        this.init();
+                    },
+                    default_label:function(row, cell, value, columnDef, dataContext){
+                        if(!value)
+                            return 'Все';
+                        return value;
+                    }
+                },
+                tools:{
+                    reload: function () {
+                        Breakeven.table.grid.reload();
+                    },
+                    entryDelete: function () {
+                        var selected_rows = Breakeven.table.grid.getSelectedRows();
+                        var ids = [];
+                        if (!selected_rows.length) {
+                            App.flash("Ни одна строка не выбрана!");
+                            return;
+                        }
+                        if (!confirm("Удалить выделенные товары?")) {
+                            return;
+                        }
+                        var after_delete;
+                        for (var i in selected_rows) {
+                            var row_data=Breakeven.table.grid.getDataItem(selected_rows[i]);
+                            after_delete=Breakeven.table.crud.delete(row_data['breakeven_rule_id']);
+                        }
+                        after_delete.done(function(){
+                            Breakeven.table.grid.reload();
+                        });
+                    },
+                    entryCreate: function () {
+                        var selected_rows = Breakeven.table.grid.getSelectedRows();
+                        if (!selected_rows.length) {
+                            App.flash("Выберите строку с категорией товара!");
+                            //return;
+                        }
+                        var row_data=Breakeven.table.grid.getDataItem(selected_rows[0]);
+                        alert("Выберите компанию, для которой порог безубыточности будет расчитан\n по категории: "+row_data.category_label);
+                        App.loadWindow("page/company/tree").progress(function(status,company){
+                            if(status==='select'){
+                                Breakeven.table.crud.create(row_data.branch_id,company.company_id).done( ()=>{
+                                    Breakeven.table.grid.reload();
+                                });
+                            }
+                        });
+                    }
+                }
+            },
+            result_table:{
+                init(){
+                    var settings = {
+                        columns:  [
+                            {id: "product_code", field: "product_code", name: "Код", width: 80},
+                            {id: "product_name", field: "product_name", name: "Название", width: 300},
+                            {id: "self_price", field: "self_price", name: "Себестоимость", width: 80},
+                            {id: "buy", field: "buy", name: "Покупка", width: 80},
+                            {id: "breakeven_price", field: "breakeven_price", name: "Точка безубыточности", width: 140},
+                        ],
+                        options: {
+                            editable: false,
+                            enableColumnReorder: false,
+                            enableFilter: true,
+                            url: 'PriceManager/breakevenResultListFetch/'
+                        }
+                    };
+                    Breakeven.result_table.grid=new SlickInfinite("#breakeven_result_list_sg", settings);
+                    $(".x-marketing-breakeven-result-tools").click(function (e) {
+                        var action = $(e.target).data('action');
+                        if (action) {
+                            Breakeven.result_table.tools[action] && Breakeven.result_table.tools[action]();
+                        }
+                    });
+                },
+                frm:{},
+                tools:{
+                    reload: function () {
+                        Breakeven.result_table.grid.reload();
+                    }
+                }
             }
         };
         
