@@ -135,7 +135,6 @@ class FileEngine{
 	
 	
 	
-	
         if ($this->compilator == 'PHPExcel') {
             if ($out_extension == '.html' || $is_printpage) {
                 $this->header('Content-Type: text/html; charset="utf-8"');
@@ -221,7 +220,7 @@ class FileEngine{
 		if( strpos($cellRawValue,'$v')!==false ){
 		    $v=$this->view;
 		    $cellValue=eval('return "' . addslashes($cellRawValue) . '";');
-		    $this->Worksheet->getCellByColumnAndRow($col, $row+$i)->setValue($cellValue);
+		    $this->Worksheet->getCellByColumnAndRow($col, $row)->setValue($cellValue);
 		}
 	    }
 	}

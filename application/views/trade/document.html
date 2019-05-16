@@ -271,8 +271,8 @@
 	    return "<img src='img/" + (["", "sell", "buy", "serviceout", "servicein"][Math.abs(data.value)]) + ".png'> " + data.text;
 	},
 	typeComboFormatterIcon:function(newVal){
-	    var icon=Doc.head.typeComboFormatter({value:newVal,text:''});
-	    $('#Doc_type_cmb').next().find(".l-btn-text").html( icon );
+	    var icon_class='icon-'+(["", "sell", "buy", "serviceout", "servicein"][Math.abs(newVal)]);
+	    $('#Doc_type_cmb').next().find(".l-btn-icon").attr('class',"l-btn-icon "+icon_class);
 	},
 	companyListFrm:function(row){
 	    var label=row.label;
@@ -876,7 +876,7 @@
 	<div>
 	    <select class="easyui-combobox" id="Doc_type_cmb" name="doc_type" title="Вид" data-options="
 		    editable:false,
-		    buttonText:'<img src=img/sell.png>',
+                    buttonIcon:'icon-sell',
 		    buttonAlign:'left',
 		    formatter:Doc.head.typeComboFormatter,
 		    panelHeight:'auto',
@@ -928,7 +928,8 @@
                 url:'DocumentList/statusFetchList',
                 mode: 'remote',
                 selectOnNavigation:false,
-                onSelect: function(status,old){Doc.head.update('doc_status_id',status.doc_status_id,old)}
+                onSelect: function(status,old){Doc.head.update('doc_status_id',status.doc_status_id,old)},
+                panelHeight:''
                 ">
 	</div>
 	<div id="Doc_utils" style="display: none">
@@ -954,10 +955,6 @@
 		   precision:0,
 		   onChange:function(val,old){Doc.head.update('vat_rate',val,old)}
 		   ">
-            
-            
-            
-            
 	    <input type="text" name="doc_ratio" class="easyui-numberbox" title="Курс" data-options="
 		   min:1,
 		   precision:2,

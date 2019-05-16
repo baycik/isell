@@ -42,7 +42,7 @@
                 e.preventDefault();
                 remoteModel.loadNext();
             });
-            a.css('backgroundColor','rgba(255,255,255,.6)').css("borderRadius","5px").css('padding','5px').css('margin','5px');
+            a.css('backgroundColor','rgba(255,255,255,.6)').css("borderRadius","5px").css('padding','5px').css('margin','5px').css('cursor','pointer');
         }
 
 	function initFilter() {
@@ -200,12 +200,14 @@ $.fn.slickgrid = function (settings) {
 
         function loadNext( count ){
             count=count?count:PAGESIZE;
+            table_finished=false;
             ensureData(total_row_count, total_row_count+count);
         }
 
         function reloadAll(){
+            var _total_row_count=total_row_count;
             clear();
-            makeRequest(0, total_row_count || PAGESIZE);
+            makeRequest(0, Math.max(_total_row_count,PAGESIZE) );
         }
 
 	function reloadData(from, to) {
@@ -230,7 +232,6 @@ $.fn.slickgrid = function (settings) {
 	}
         
 	function ensureData(from, to) {
-            
 	    cancelRequest();
 	    from=Math.max(from,0);
 	    var rows_to_load = [];

@@ -4,13 +4,12 @@ class DocumentItems extends DocumentCore{
     public $suggestFetch=['q'=>'string','offset'=>['int',0],'limit'=>['int',10],'doc_id'=>['int',0],'category_id'=>['int',0]];
     public function suggestFetch($q,$offset,$limit,$doc_id,$category_id,$transliterated=false){
 	$price_query="0";
+        $pcomp_id=$this->Hub->pcomp('company_id');
+        $usd_ratio=$this->Hub->pref('usd_ratio');
 	if( $doc_id ){
 	    $this->selectDoc($doc_id);
 	    $pcomp_id=$this->doc('passive_company_id');
-	    $doc_ratio=$this->doc('doc_ratio');
-	} else if( $this->Hub->pcomp('company_id') ){
-	    $pcomp_id=$this->Hub->pcomp('company_id');
-	    $doc_ratio=$this->Hub->pref('usd_ratio');
+	    $usd_ratio=$this->doc('doc_ratio');
 	}
 	$where="1";
 	if( strlen($q)==13 && is_numeric($q) ){
@@ -43,8 +42,8 @@ class DocumentItems extends DocumentCore{
 		product_quantity leftover,
                 product_img,
 		product_unit,
-		GET_SELL_PRICE(product_code,{$pcomp_id},{$doc_ratio}) product_price_total,
-                GET_PRICE(product_code,{$pcomp_id},{$doc_ratio}) product_price_total_raw
+		GET_SELL_PRICE(product_code,{$pcomp_id},{$usd_ratio}) product_price_total,
+                GET_PRICE(product_code,{$pcomp_id},{$usd_ratio}) product_price_total_raw
 	    FROM
 		stock_entries
 		    JOIN
@@ -169,7 +168,7 @@ class DocumentItems extends DocumentCore{
         return $doc_entry_id;
     }
     private function entryBreakevenPriceUpdate( $doc_entry_id=null, $doc_id=null ){
-        if( !$doc_entry_id || $this->Hub->pcomp('skip_breakeven_check') ){
+        if( !$doc_entry_id&&!$doc_id || $this->Hub->pcomp('skip_breakeven_check') ){
             return;
         }
         $pcomp_id=$this->doc('passive_company_id');
@@ -186,7 +185,7 @@ class DocumentItems extends DocumentCore{
         $sql="UPDATE 
                     document_entries 
                 SET 
-                    breakeven_price = GET_BREAKEVEN_PRICE(product_code,'$pcomp_id','$usd_ratio',self_price) 
+                    breakeven_price = ROUND(GET_BREAKEVEN_PRICE(product_code,'$pcomp_id','$usd_ratio',self_price),2)
                 WHERE 
                     $where";
         $this->query($sql);
@@ -209,6 +208,7 @@ class DocumentItems extends DocumentCore{
 	$Document2=$this->Hub->bridgeLoad('Document');
 	switch( $name ){
 	    case 'product_quantity':
+                $this->Hub->set_level(1);
                 $ok=$Document2->updateEntry($doc_entry_id, $value, NULL);
                 if( $this->isReserved() ){
                     $this->reservedCountUpdate();
@@ -216,10 +216,12 @@ class DocumentItems extends DocumentCore{
                 $Document2->updateTrans();
 		return $ok;
 	    case 'product_price':
+                $this->Hub->set_level(2);
 		$ok=$Document2->updateEntry($doc_entry_id, NULL, $value);
                 $Document2->updateTrans();
                 return $ok;
 	    case 'party_label':
+                $this->Hub->set_level(2);
                 $this->query("UPDATE document_entries SET party_label='$value' WHERE doc_entry_id='$doc_entry_id'");
 		return true;
 	}
@@ -326,12 +328,11 @@ class DocumentItems extends DocumentCore{
     }
     public $recalc=['int','double'];
     public function recalc( $doc_id, $proc=0 ){
-	$this->check($doc_id,'int');
 	$this->selectDoc($doc_id);
+        $this->entryBreakevenPriceUpdate(null,$doc_id);
 	$Document2=$this->Hub->bridgeLoad('Document');
 	$Document2->selectDoc($doc_id);
 	$Document2->recalc($proc);
-        $this->entryBreakevenPriceUpdate(null,$doc_id);
     }
     private function duplicateEntries($new_doc_id,$old_doc_id){
 	$old_entries=$this->get_list("SELECT product_code,product_quantity,self_price,party_label,invoice_price FROM document_entries WHERE doc_id='$old_doc_id'");
@@ -391,7 +392,11 @@ class DocumentItems extends DocumentCore{
             $old_entry=[
                 'product_quantity'=>$entry->old_product_quantity
             ];
-            $this->update("document_entries",$old_entry,['doc_entry_id'=>$entry->doc_entry_id]);
+            if($entry->old_product_quantity>0){
+                $this->update("document_entries",$old_entry,['doc_entry_id'=>$entry->doc_entry_id]);
+            } else {
+                $this->delete("document_entries",['doc_entry_id'=>$entry->doc_entry_id]);
+            }
             if($entry->new_product_quantity>0){
                 $new_entry=[
                     'doc_id'=>$new_doc_id,

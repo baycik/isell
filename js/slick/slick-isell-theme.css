@@ -55,10 +55,15 @@ classes should alter those!
 .slick-cell.active{
     white-space: normal;
     overflow: visible;
-    background-color: white;
     height: auto !important;
-    min-height: 20px;
+    min-height: 25px;
     z-index: 100;
+    border: 1px solid #39f;
+    border-color: #39f;
+    border-style: solid;
+}
+.slick-cell.selected {
+    background-color: #Fe9;
 }
 
 .slick-group {
@@ -82,17 +87,6 @@ classes should alter those!
 .slick-group-totals {
     color: gray;
     background: white;
-}
-
-.slick-cell.selected {
-    background-color: #Fe9;
-}
-
-.slick-cell.active {
-    border: 1px solid #39f;
-    -margin: -1px;
-    border-color: #39f;
-    border-style: solid;
 }
 
 .slick-sortable-placeholder {

@@ -37,11 +37,19 @@ class DocumentList extends Catalog{
 	} else {
 	    
 	}
-	
+        
+	$empty_row=null;
+        if( strpos($mode,'add_empty_row')!==FALSE ){
+            if( $offset==0 ){
+                $limit--;//because of empty row that added at beginning
+                $empty_row=['doc_id'=>0,'doc_type_icon'=>"new "];
+            } else {
+                $offset--;
+            }
+	}
 	
 	$having=$this->makeFilter($filter);
 	$sql="
-	    SELECT *,FORMAT(doc_total,2,'ru_RU') doc_total_frm FROM (
 	    SELECT 
 		doc_id,
 		doc_type,
@@ -74,14 +82,12 @@ class DocumentList extends Catalog{
 		document_view_types dvt USING(view_type_id)
 	    WHERE dl.active_company_id = '$active_company_id' $andwhere
 	    GROUP BY doc_id
+            HAVING $having
 	    ORDER BY dl.is_commited,$sortby $sortdir
-	    LIMIT $limit OFFSET $offset) t
-            HAVING $having";
+	    LIMIT $limit OFFSET $offset
+            ";
         $rows=$this->get_list($sql);
-	if( $offset==0 && strpos($mode,'add_empty_row')!==FALSE ){
-            $rows= array_merge([['doc_id'=>0,'doc_type_icon'=>"new "]],$rows);
-	}
-	return $rows;
+	return $empty_row?array_merge([$empty_row],$rows):$rows;
     }
     
     public $statusFetchList=[];

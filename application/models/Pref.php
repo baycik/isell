@@ -31,8 +31,9 @@ class Pref extends Catalog {
 	} else {
 	    $where = "WHERE active_company_id='$active_company_id'";
 	}
-        $prefs = $this->get_row("SELECT GROUP_CONCAT(pref_value SEPARATOR '|') pvals,GROUP_CONCAT(pref_name SEPARATOR '|') pnames FROM pref_list  $where");
-        return (object) array_combine(explode('|', $prefs->pnames), explode('|', $prefs->pvals));
+        $this->query("SET SESSION group_concat_max_len = 1000000;");
+        $prefs = $this->get_row("SELECT GROUP_CONCAT(pref_value SEPARATOR '~|~') pvals,GROUP_CONCAT(pref_name SEPARATOR '~|~') pnames FROM pref_list  $where");
+        return (object) array_combine(explode('~|~', $prefs->pnames), explode('~|~', $prefs->pvals));
     }
     public $setPrefs=['[a-zA-Z_]+','[^|]+'];
     public function setPrefs($field,$value='') {

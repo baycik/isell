@@ -223,7 +223,8 @@
         // Рендеринг списка товаров
         render: function () {
             App.stock.edit_response();
-            App.renderTpl("stock_list", {products: App.stock.list, loading_finished: App.stock.loading_finished});
+            var gridview=localStorage.getItem('stockGridView');
+            App.renderTpl("stock_list", {products: App.stock.list, loading_finished: App.stock.loading_finished, gridview:gridview});
         },
         // Получение списка товаров
         load: function (load_more) {
@@ -266,6 +267,10 @@
                 ;
                 App.stock.render();
             });
+        },
+        gridViewEnable:function(enable){
+            localStorage.setItem('stockGridView',enable);
+            this.render();
         }
     };
 </script>
@@ -301,7 +306,7 @@
     #stock_list .stock_product_table{
         width: calc(100% - 8px);
         float: left;
-        height: 10em;
+        -height: 10em;
         margin: 4px;
         border-radius: 3px;
         box-shadow: 0px 0px 2px #ccc;
@@ -426,30 +431,62 @@
 
 <div id="stock_categories_header" class="ui centered header" style="margin-top: auto">Все категории</div>
 <!--Список товаров-->
+<button class="ui icon button" onclick="App.stock.gridViewEnable(0)"> <i class="list icon"></i></button>
+<button class="ui icon button" onclick="App.stock.gridViewEnable(1)"> <i class="table icon"></i></button>
 <div id="stock_list" class="covert">
-    <table id="stock_list_header" class="ui very compact table unstackable" >
-        <tr>
-            <td>
-                <div></div>    
-            </td>
-            <td>
-                <div class="ui stackable two column grid">
-                    <div class = "column">
-                        <div id="stock_header_prod_name" class="fourteen wide column" style="padding: .3rem !important">Название</div>
-                    </div>
-                    <div class = "column">
-                        <div class = "ui grid" style="padding: .3rem !important">
-                            <div class="six wide column">Код</div>
-                            <div id="stock_header_prod_quan" class="five wide column">Остаток</div>
-                            <div class="five wide column">Цена</div>
+    <!--{{if gridview|less>1}}-->
+    <table class="ui very compact table unstackable">
+        <tbody>
+            <!-- {{if products}} {{products}} -->
+            <tr style=" {{if is_promo}}  background-color: #cfc; {{/if}}">
+                <td  style="height:50px" data-row-index="{{#}}">
+                    <a href="#stock.html#popup_image={{product_img}}">
+                        <img src="../Storage/image_flush/?size=50x50&path=/dynImg/{{product_img}}" >
+                    </a>
+                </td>
+                <td data-row-index="{{#}}" onclick="App.document.suggestion.handleClick(this)">
+                    <div class="ui grid stackable" style="{{if leftover|less>1}} color:red !important; {{/if}}">
+                        <div class="six wide column" style="padding: .5rem !important">{{product_name}}</div>
+                        <div class="six wide column" style="padding: .5rem !important">
+                            <div class="ui grid" style="color:#666">
+                                <div class="six wide column">{{product_code}}</div>
+                                <div class="five wide column right aligned">{{if is_promo}}<s>{{product_price_total_raw}}</s> {{/if}}<b>{{product_price_total}}</b></div>
+                                <div class="five wide column right aligned">{{if stared_leftover}} {{stared_leftover}} {{else}} {{leftover}}{{product_unit}} {{/if}}</div>
+                            </div>
+                        </div>
+                        <div class="four wide column">
+                            {{if quantity_added|more>0}}
+                            <div class="ui left labeled button" tabindex="0">
+                                <a class="ui basic label">
+                                    Добавлено: {{quantity_added}}
+                                </a>
+                                <button class="ui blue icon button" style="background-color: #0089ec; color:white" data-product_code="{{product_code}}"
+                                        onclick="App.stock.popup_add.edit_cart_item(this)">
+                                    <i class="edit icon"></i>
+                                </button>
+                                <button class="ui red icon button" data-product_code="{{product_code}}"
+                                        onclick="App.stock.cart.remove(this)">
+                                    <i class="trash alternate icon"></i>
+                                </button>
+                            </div>
+                            {{else}}
+                            <button class="ui button" data-index="{{#}}"
+                                    onclick="App.stock.popup_add.take_product_info(this)">Добавить <i class="cart plus icon"></i></button>
+                            {{/if}}
                         </div>
                     </div>
-                </div>
-            </td>
-        </tr>
+                </td>
+            </tr>
+            <!-- {{/products}} {{else}}-->
+            <tr>
+                <td colspan="2">Ничего не найдено</td>
+            </tr>
+            <!--{{/if}}-->
+        </tbody>
     </table>
-
-
+    <!--{{/if}}-->
+    
+    <!--{{if gridview|more>0}}-->
     <!-- {{products}} -->
     <table class="stock_product_table {{if is_promo}}stock_product_promo{{/if}}">
         <tr>
@@ -491,12 +528,13 @@
                     <div class = "five wide column" 
                          style = "text-align: center;color:#7a7a7a"><b>{{if stared_leftover}} {{stared_leftover}} {{else}} {{leftover}}{{product_unit}} {{/if}}</b></div>
                     <div class = "six wide column stock_product_price">
-                        {{if is_promo}}<s>{{product_price_total_raw}}р.</s> {{/if}}{{product_price_total}}р.
+                        {{if is_promo}}<s>{{product_price_total_raw}}</s> {{/if}}{{product_price_total}}
                     </div>
                 </div>
             </td>
         </tr>
         <!-- {{/products}} -->
+        <!--{{/if}}-->
     </table>
     {{if loading_finished}} 
     <div class="ui olive message" style="clear: both;text-align: center;">
@@ -567,7 +605,7 @@
         <div class="actions" style="margin-left: auto; margin-right: auto">
             <button type='submit' class="ui labeled green icon submit button">
                 <i class="plus icon"></i>
-                Добавить
+                Сохранить
             </button>
             <div class="ui labeled icon cancel button" >
                 <i class="ban icon"></i>

@@ -263,8 +263,6 @@ class DocumentCore extends DocumentUtils{
             $this->reservedTaskRemove($doc_id);
         }
         $this->reservedCountUpdate();
-        
-        echo 'reservedCountUpdate';
         return $status_change_ok;
     }
     

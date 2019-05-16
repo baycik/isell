@@ -41,8 +41,8 @@
 	    },
 	    table: {
 		frm:{
-		    round: function (num) {
-			return isNaN(num) ? '' : Number.parseFloat(num).toFixed(2);
+		    round: function (row, cell, value, columnDef, dataContext) {
+			return isNaN(value) ? '' : Number(value).toLocaleString("ru-RU", { style: 'currency', currency: 'RUB' });
 		    },
 		    tooltip: function (row, cell, value, columnDef, dataContext) {
 			if (!value) {

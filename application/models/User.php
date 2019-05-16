@@ -25,12 +25,12 @@ class User extends Catalog {
     //public $SignByPhone=['user_phone'=>'^[\d]*','user_phone_pass'=>'int'];
     public function sendPassword($user_phone){
         $new_user_pass=$this->generatePassword();
-        $user_data = $this->get_row("SELECT user_id,user_level,user_login,user_phone,user_email FROM user_list WHERE user_phone LIKE '%{$user_phone}'");
+        $user_data = $this->get_row("SELECT user_id,user_level,user_login,user_phone,user_email FROM user_list WHERE user_phone LIKE '%{$user_phone}%'");
         if( !$user_data ){
             $user_data=$this->userRegister($user_phone);
         }
         if( $user_data->user_level<1 || !$user_data->user_id ){
-            return 'access_denied';
+            return 'phone_is_unknown';
         }
         if( $this->userInformBySms($user_data,$new_user_pass) ){
             $this->query("UPDATE user_list SET user_pass=MD5('$new_user_pass') WHERE user_id='$user_data->user_id'");
@@ -67,7 +67,7 @@ class User extends Catalog {
                 user_phone='{$user_phone}',
                 user_email='{$client_data->company_email}',
                 user_level=1,
-                company_id={$client_data->company_id},
+                company_id=0,
                 user_assigned_path='{$client_data->path}',
                 last_name='{$client_data->label}',
                 user_sign='{$client_data->company_person}',

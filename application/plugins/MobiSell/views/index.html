@@ -59,7 +59,7 @@
                         this.load(url);
                     }
                     App.Topic('hashChange').publish(App.state);
-		    $(".ui.sidebar").sidebar('hide');
+		    App.sidebar.hide();
                 },
                 unload: function (){
                     var holder_id=App.url_file.split('.')[0];
@@ -88,7 +88,10 @@
 		    $("#backbutton").click(function(){
 			history.back();
 		    });
-		}
+		},
+                hide: function (){
+                        $(".ui.sidebar").sidebar('hide');
+                }
 	    },
 	    tplcache: {},
 	    json: function (text) {
@@ -193,7 +196,10 @@
 			    App.renderTpl("user_info", App.user.props);
                             localStorage.setItem('user_props',JSON.stringify(App.user.props));
 			}
-		    });
+		    }).fail(function(jqxhr, settings, ex){
+                        console.log(jqxhr, settings, ex);
+                        App.user.signInPopup();
+                    });
 		},
 		signOut: function () {
 		    $.post("../User/SignOut", function (resp) {
@@ -323,6 +329,16 @@
 	    background-color: rgba(0,0,0,.8);
 	    border-radius: .3em;
 	}
+        @media only screen and (min-width: 800px) {
+            #main_container{
+                padding: 0 5% 0 5%;
+            }
+        } 
+        @media only screen and (min-width: 1000px) {
+            #main_container{
+                padding: 0 10% 0 10%;
+            }
+        } 
     </style>
 </head>
 <body>
@@ -397,8 +413,7 @@
 	<div class="actions">
 	    <div class="ui primary button"  onclick="App.user.signIn()"><i class="icon sign in"></i> Вход</div>
 	    <div class="ui secondary close button"  onclick="$('#signInModal').modal('hide');"><i class="icon close"></i> Закрыть</div>
-            <hr>
-            	<div class="ui negative button"  onclick="App.clearCache()"><i class="icon refresh"></i> Сбросить настройки</div>
+            <div class="ui negative button"  onclick="App.clearCache()"><i class="icon refresh"></i> Выход</div>
 	</div>
     </div>
     
