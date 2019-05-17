@@ -8,7 +8,7 @@
 	    modal: true,
 	    shadow:false,
 	    onClose: function () {
-		Ctree.handler.notify('close', Ctree.data);
+                Ctree.handler.notify('close', Ctree.data);
 		Ctree.node.window('destroy');
 		Ctree.node.remove();
 		delete App.page_company_tree, Ctree;
@@ -16,17 +16,17 @@
 	},
 	init: function () {
 	    if (!Ctree.data.inline) {
-		this.node.window(Ctree.properties);
-                this.node.window('hcenter');
-                this.node.window('window').css('position','fixed');
-                this.node.window('window').css('top','40px');
+		Ctree.node.window(Ctree.properties);
+                Ctree.node.window('hcenter');
+                Ctree.node.window('window').css('position','fixed');
+                Ctree.node.window('window').css('top','40px');
             }
 	    if( Ctree.data.clickselect ){
-		this.node.find('button.ok').hide();
+		Ctree.node.find('button.ok').hide();
 	    }
 	},
 	initAfter:function(){
-	    this.node.find('.validatebox-text').on('focus', function() {
+	    Ctree.node.find('.validatebox-text').on('focus', function() {
                 this.select();
             });
 	    App.Topic('passiveCompanySelected').subscribe(function(pcomp){
@@ -39,7 +39,7 @@
 	},
 	close:function(){
 	    if (!Ctree.data.inline) {
-		this.node.window('close');
+		Ctree.node.window('close');
 	    }
 	},
 	enableButtons:function( leaf ){
@@ -68,7 +68,6 @@
 	},
 	selectTree: function () {
 	    var branch=$('#Ctree_tree').tree('getSelected');
-            console.log(branch);
 	    if( branch.company_id>0 ){
 		Ctree.handler.notify('select', branch);
 		//Ctree.unselectCombo(branch.label);
@@ -77,14 +76,16 @@
 	    }
 	},
 	unselectTree:function(){
-	    this.node.find('.tree-node-selected').removeClass('tree-node-selected');
+	    Ctree.node.find('.tree-node-selected').removeClass('tree-node-selected');
 	},
 	selectCombo:function(company,oldVal){
 	    if( company.company_id ){
 		Ctree.handler.notify('select', company);
 		Ctree.unselectTree();
                 if (!Ctree.data.inline) {
-                    this.node.window("close");
+                    setTimeout(function(){
+                        Ctree.node.window("close");
+                    },50);
                 }
 	    }
 	},

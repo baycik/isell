@@ -2,19 +2,9 @@
     /* global App */
     App.page_stock_checkout_list={
 	init:function(){
-            App.require(["js/slick/lib/jquery.event.drag-2.3.0.js"], function () {
-                App.require([
-                    "js/slick/slick.core.js",
-                    "js/slick/plugins/slick.rowselectionmodel.js",
-                    "js/slick/slick.editors.js",
-                    "js/slick/slickinfinite.js",
-                    "js/slick/slick.grid.js"
-                ], function(){
-                    App.page_stock_checkout_list.table.init();
-                    App.page_stock_checkout_list.entries.init();
-                    App.page_stock_checkout_list.log.init(); 
-                });
-            });
+            App.page_stock_checkout_list.table.init();
+            App.page_stock_checkout_list.entries.init();
+            App.page_stock_checkout_list.log.init(); 
         },
         table:{
             current_id: '',
