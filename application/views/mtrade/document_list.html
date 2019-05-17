@@ -86,6 +86,7 @@
 			App.Document.init(doclistRow.doc_type);
 			App.Document.load(doclistRow.doc_id);
 		    });
+                    
 		    App.Topic('passiveCompanySelected').subscribe(function (company) {
 			DocList.grid.updateOptions({params: {mode: 'show_only_pcomp_docs'}});
 			DocList.grid.reload();
@@ -103,7 +104,7 @@
                         {id: "doc_type_icon", field: "doc_type_icon", name: "", width: 25, formatter: DocList.table.frm.tooltip},
 			{id: "doc_num", field: "doc_num", name: "Номер", width: 50, sortable: true, cssClass: 'slick-align-right'},
 			{id: "cstamp", field: "cstamp", name: "Дата", width: 70, sortable: true, formatter: DocList.table.frm.dateFormatter},
-			{id: "doc_total_frm", field: "doc_total_frm", name: "Сумма", width: 80, sortable: true, cssClass: 'slick-align-right'},
+			{id: "doc_total", field: "doc_total", name: "Сумма", width: 80, sortable: true, cssClass: 'slick-align-right'},
 			{id: "trans_status", field: "trans_status", name: "Оплачен", width: 25, sortable: true, formatter: DocList.table.frm.tooltip},
                     ];
                     var columns_adv=[
@@ -138,7 +139,7 @@
 	    DocList.init();
 	    $("#Document").load("page/mtrade/document.html", function () {
 		App.Document.init('sell');
-		App.Document.load(7180);
+		App.Document.load(App.Document.doc_id);
 	    });
 	}
 	return {
@@ -149,13 +150,13 @@
 </script>
 <style>
     #doclistgrid {
-	margin: 1px;
 	display: grid;
 	grid-template-columns: min-content min-content;
 	grid-gap:5px;
     }
 </style>
 <div id="doclistgrid">
+    <div style="vertical-align: top;width:800px;" id="Document" class="transp60"></div>
     <div>
 	<div class="x-doclist-tools" class="transp60">
 	    <div style="float: left;font-weight: bold;padding-top: 8px;">
@@ -168,5 +169,4 @@
 	</div>
 	<div id="doclist_sg" style="height:700px"></div>
     </div>
-    <div style="vertical-align: top;width:800px;" id="Document" class="transp60"></div>
 </div>

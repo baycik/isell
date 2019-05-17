@@ -1,14 +1,23 @@
 <form>
-    <div style="background-color: white;padding: 5px;">
+    <div style="background-color: white;padding: 10px;">
 	<label class="switch">
 	    <input type="checkbox"  name="is_commited" title="Проведен" value="1" data-skip="1">
 	    <div class="slider round"></div>
 	</label>Проведен
+        <div class="x-toolbar" style="text-align: right; float: right; ">
+            <span class="icon-24 icon-commit" title="Провести документ" data-action="commit"> </span>
+            <span class="icon-24 icon-uncommit" title="Отменить документ" data-action="uncommit"> </span>
+            <span class="icon-24 icon-lorry" title="Добавить в распорядок" data-action="addevent"> </span>
+            <span class="icon-24 icon-sms" title="Отправить СМС" data-action="sendsms"> </span>
+            <span class="icon-24 icon-duplicate" title="Копировать" data-action="duplicate"> </span>
+            <span class="icon-24 icon-utils" title="Дополнительные свойства" onclick="$('.x-utils').toggle('slow')" ></span>
+            <span class="icon-24 icon-refresh" title="Обновить" data-action="reload"> </span> 
+        </div>
     </div>	
 
 
 
-    <div style="display: grid;grid-template-columns: min-content min-content min-content auto;">
+    <div style="display: grid;grid-template-columns: min-content min-content min-content auto; padding-top: 8px;">
 	<div>
 
 	</div>
@@ -24,33 +33,20 @@
 	    <input class="head_input" name="passive_company_id" title="Покупатель">
 	</div>
 	<div>
-	    <input class="easyui-numberspinner head_input" name="doc_num" title="Номер">
-	    <input class="easyui-datebox head_input" name="doc_date" title="Дата">
-	</div>
-	<div>
-	    <div class="x-toolbar" style="text-align: right">
-		<span class="icon-24 icon-commit" title="Провести документ" data-action="commit"> </span>
-		<span class="icon-24 icon-uncommit" title="Отменить документ" data-action="uncommit"> </span>
-		
-		<span class="icon-24 icon-lorry" title="Добавить в распорядок" data-action="addevent"> </span>
-		<span class="icon-24 icon-sms" title="Отправить СМС" data-action="sendsms"> </span>
-		<span class="icon-24 icon-utils" title="Дополнительные свойства" onclick="$('.x-utils').toggle('slow')"> </span>
-		<span class="icon-24 icon-refresh" title="Обновить" data-action="reload"> </span> 
-	    </div>
+	    <input type='number' min="1" class="head_input" name="doc_num" title="Номер" style="height: 28px;">
+            <input type='date' class="head_input" name="doc_date" title="Дата" style="height: 28px; font-family: 'Trebuchet MS',Arial; font-size: 14px">
 	</div>
     </div>
-
     <div class="x-utils" style="display: none">
 	<hr style="border-color: white">
-	<select name="use_vatless_price" title="Цена">
+	<select name="use_vatless_price" class="easyui-combobox" title="Цена" style="height: 28px;">
 	    <option value="0">В том числе НДС</option>
 	    <option value="1">Плюс НДС</option>
 	</select>
-	<select name="notcount" title="На складе">
+	<select name="notcount"  class="easyui-combobox" title="На складе" style="height: 28px;">
 	    <option value="0">Учитывать</option>
 	    <option value="1">Не учитывать</option>    
 	</select>
 	<input class="easyui-numberbox" name="doc_ratio" title="Курс">
-	<span class="icon-24 icon-duplicate" title="Копировать" data-action="duplicate"> </span>
     </div>
 </form>

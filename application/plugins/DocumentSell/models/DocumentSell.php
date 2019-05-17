@@ -66,8 +66,9 @@ class DocumentSell extends DocumentBase{
 	$this->entriesTmpCreate( $doc_id );
 	return $this->get_list("SELECT * FROM tmp_doc_entries");
     }
-    private function viewsGet(){
-	
+    private function viewsGet($doc_id){
+        $DocumentView = $this->Hub->load_model("DocumentView");
+        return $DocumentView->viewListFetch($doc_id);
     }
     /*
      * Entries section 
@@ -252,4 +253,22 @@ class DocumentSell extends DocumentBase{
 		    @sold_quantity > @total_sold) t2;";
 	return $this->get_row($sql);
     }
+    protected function getProductSellSelfPrice($product_code, $invoice_qty,$fdate) {
+        return $this->Base->get_row("SELECT LEFTOVER_CALC('$product_code','$fdate','$invoice_qty','all')",0);
+
+//	$this->Base->LoadClass('StockOld');
+//	$stock_self = $this->Base->StockOld->getEntrySelfPrice($product_code);
+//	if ($stock_self > 0)
+//	    return $stock_self;
+//	/*
+//	 * IF self price is not set
+//	 * qty=0 or something else set
+//	 * selfPrice as current buy price
+//	 */
+//	$price = $this->getRawProductPrice($product_code, $this->doc('doc_ratio'));
+//	$price_self = $price['buy'] ? $price['buy'] : $price['sell'];
+//	//$this->Base->StockOld->setEntrySelfPrice($product_code, $price_self);
+//	return $price_self;
+    }
+
 }

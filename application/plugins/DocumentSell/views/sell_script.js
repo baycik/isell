@@ -2,16 +2,21 @@
 
 Document.head={
     pcompNode:null,
+    suppress_update:true,
+    edit_passive_company: false,
     init:function(){
 	Document.head.initControls();
 	Document.head.initToolbar();
     },
     render:function(head){
+        Document.head.suppress_update = false;
 	Document.data.head=head;
 	$("#"+holderId+" .x-head form").form('load',head);
 	$("#"+holderId+" .x-head form input[name=is_commited]").prop("checked",head.is_commited*1);
         $("#"+holderId+" .x-toolbar .icon-commit").css("filter","grayscale("+(head.is_commited*1?100:0)+"%)");
+        App.renderTpl('Doc_owners',Document.data.head);  
 	this.pcompNode && this.pcompNode.combobox("setText",head.label);
+        Document.head.suppress_update = true;
     },
     destroy:function(){
 	//this.pcompNode && this.pcompNode.combobox && this.pcompNode.combobox('destroy');
@@ -27,7 +32,6 @@ Document.head={
 	    Document.reload();
 	});
     },
-    
     initToolbar:function(){
 	$("#"+holderId+" .x-head .x-toolbar").click(function(e){
 	    var action=$(e.target).data('action');
@@ -43,6 +47,9 @@ Document.head={
 	Document.reload();
     },
     commit:function(){
+        if( Document.data.head.is_commited*1 ){
+            return;
+        }
 	Document.head.update('is_commited',1,'Документ проведен');
     },
     uncommit:function(){
@@ -55,43 +62,40 @@ Document.head={
         }	
     },
     initControls:function(){
-//        
-//        $('.x-head .easyui-combobox.head_input').combobox({
-//            onChange:function(val,old){
-//                var name = $(this).attr('textboxname');
-//                console.log(name);
-//                Document.head.update(name,val,old);
-//            }
-//        });
-//        $('.x-head .easyui-numberspinner.head_input').numberspinner({
-//            onChange:function(val,old){
-//                var name = $(this).attr('textboxname');
-//                Document.head.update(name,val,old);
-//            }
-//        });
-//        $('.x-head .easyui-datebox.head_input').datebox({
-//            onChange:function(val,old){
-//                var name = $(this).attr('textboxname');
-//                Document.head.update(name,val,old);
-//            }
-//        });
-        
 	App.setupForm("#"+holderId+" .x-head form");
+	$.parser.parse("#"+holderId+" .x-head form");//for easy ui
+	Document.head.pcompComboInit();
 	$("#"+holderId+" .x-head form").form({
-            onLoadSuccess: function(){
-                return;
-            },
             onChange: function(e){
-                e.preventDefault;
-                var name = $(e).attr('textboxname');
-                var value = $(e).val();
-                Document.head.update( name, value, value+'changed!' );
+                if(Document.head.suppress_update === true){
+                    var name = $(e).attr('name') || $(e).attr('textboxname');
+                    if(name == 'is_commited'){
+                        if( Document.data.head.is_commited*1 ){
+                            var value = 0;
+                        } else {
+                            var value = 1;
+                        }	
+                    } else {
+                        var value = $(e).val();
+                    }
+                    if(name == 'doc_date' && value == ''){
+                        App.flash("Пустая дата!");
+                        return;
+                    }
+                    Document.head.update( name, value, 'Параметры документа изменены!' );
+                }
             }
 	});
-        
-	$.parser.parse("#"+holderId+" .x-head form");//for easy ui
-        
-	Document.head.pcompComboInit();
+    },
+    pcompTree:function(){   
+        App.loadWindow('page/company/tree',{}).progress(function(status,company){
+            if( status==='select' ){
+                App.user.pcompSelect(company);
+                $(Document.head.pcompNode).combobox('setValue', company.company_id);
+                $(Document.head.pcompNode).combobox('setText', company.label);
+                //Document.head.update( 'passive_company_id', company.company_id,'passive_company_id is changed');
+            }
+        });
     },
     pcompComboInit:function(){
 	if( this.pcompNode ){
@@ -106,11 +110,10 @@ Document.head={
 	    hasDownArrow:false,
 	    selectOnNavigation:false,
 	    formatter:Document.head.pcompListfrm,
-	    
 	    icons: [
-		{iconCls:'icon-settings16',handler: App.user.pcompSelectionDialog},
+		{iconCls:'icon-settings16',handler: Document.head.pcompTree},
 		{iconCls:'icon-change16',handler:Document.head.pcompDetails}
-	     ]
+	    ]
 	};
 	this.pcompNode.combobox(options);
     },
@@ -134,6 +137,41 @@ Document.head={
     },
     pcompDetails:function(){
 	App.loadWindow('page/company/details',{company_id:Document.data.head.passive_company_id});
+    },
+    duplicate:function(){
+        if( confirm("Создать копию этого документа?") ){
+            App.post("DocumentItems/duplicate/"+Document.data.head.doc_id,function(doc_id){
+                if( doc_id*1 ){
+                    Document.head.load(doc_id);
+                    Document.handler.notify('created',doc_id);
+                    App.flash("Документ скопирован и загружен");
+                }
+            });
+        }
+    },
+    sendsms:function(){
+        $.get("Company/companyGet/"+Document.data.head.passive_company_id, function ( xhr ) {
+            var passive_data=App.json(xhr);
+            var data={to:passive_data.company_mobile,body:Document.data.head.doc_data};
+            App.loadWindow('page/dialog/send_sms',data);	    
+        });
+    },
+    addevent:function(){
+        $.get("Company/companyGet/"+Document.data.head.passive_company_id, function ( xhr ) {
+            var passive_data=App.json(xhr);
+            var fvalue={
+                doc_id:Document.data.head.doc_id,
+                event_id:0,
+                event_label:'Доставка',
+                event_creator_user_id: App.user.props.user_id,
+                event_name: 'Документ №' + Document.data.head.doc_num,
+                event_descr: Document.data.head.doc_data,
+                event_target: passive_data.company_person + " (" + passive_data.label + ")",
+                event_place: passive_data.company_address,
+                event_note: passive_data.company_mobile
+            };
+            App.loadWindow('page/events/event',fvalue);	    
+        });
     }
 };
 Document.body={
@@ -345,7 +383,7 @@ Document.body={
 		columns:[
 		    {id:"queue",name: "№", width: 30,formatter:Document.body.table.formatters.queue },
 		    {id:"product_code", field: "product_code",name: "Код", sortable: true, width: 80},
-		    {id:"product_name", field: "product_name",name: "Название", sortable: true, width: 400},
+		    {id:"product_name", field: "product_name",name: "Название", sortable: true, width: 388},
 		    {id:"product_quantity", field: "product_quantity",name: "Кол-во", sortable: true, width: 70, cssClass:'slick-align-right', editor: Slick.Editors.Integer},
 		    {id:"product_unit", field: "product_unit",name: "Ед.", width: 30, sortable: true },
 		    {id:"product_price_total", field: "product_price_total",name: "Цена", sortable: true, width: 70, cssClass:'slick-align-right',asyncPostRender:Document.body.table.formatters.priceisloss, editor: Slick.Editors.Float},
@@ -424,7 +462,6 @@ Document.body={
 };
 Document.foot = {
     init: function(){
-        
     },
     render:function(footer){
         footer.total_weight=footer.total_weight||0;
@@ -434,10 +471,83 @@ Document.foot = {
         footer.total=footer.total||0;
         footer.curr_symbol=footer.curr_symbol||'-';
         Document.data.foot=footer;
-        App.renderTpl('Doc_footer',Document.data.foot);
+        App.renderTpl('Document_footer',Document.data.foot);
     },
     destroy:function(){
 	$("#"+holderId+" .x-foot .x-suggest").combobox('destroy');
+    }
+};
+
+Document.views={
+    init:function(){
+        Document.views.initControls();
+    },
+    render: function(views){
+        Document.views.view_list = Document.views.compile(views);
+        App.renderTpl('Document_view_tile',{views:Document.views.view_list});
+    },
+    initControls: function(){
+        $('#load_views_button').click(function(){
+            Document.views.render(Document.views.view_list);
+        });
+        $('#Document_view_tile img, #Document_view_tile ,view_button').click(function(e){
+            switch(e.target.id){
+                case 'Document_view_settings':
+                    Document.views.settings(e.target);
+                    event.stopPropagation();
+                    return;
+                default:
+                    Document.views.click(e.target);
+                    return;
+            }
+        });
+    },
+    compile:function( view_list ){
+        for( var i in view_list ){
+            var view=view_list[i];
+            var efield_vals=App.json(view.view_efield_values);
+            var efield_labs=App.json(view.view_efield_labels);
+            view_list[i].efields=[];
+            for( var k in efield_labs ){
+                view_list[i].efields.push({field:k,label:efield_labs[k],value:efield_vals?efield_vals[k]||'':''});
+            }
+        }
+        return view_list;
+    },
+    settings:function( node ){
+        var i=$(node).attr('data-view-i');
+        var view=Document.views.view_list[i];
+        if( view.doc_view_id ){
+            App.loadWindow('page/trade/view_settings',view).progress(function(status){
+                if( status==='deleted' || status==='changed' || status==='close' ){
+                    Document.reload();
+                }
+            });
+        }
+    },
+    create:function(view_type_id){
+        if(!view_type_id){
+            return;
+        }
+        App.post("DocumentView/viewCreate/"+view_type_id,function(doc_view_id){
+            if( doc_view_id*1 ){
+                Document.views.open(doc_view_id);
+                Document.reload();
+            }
+        });
+    },
+    open:function(doc_view_id){
+        window.open("./DocumentView/documentViewGet/?out_type=.print&doc_view_id="+doc_view_id, '_new');
+    },
+    click:function( node ){
+        var doc_view_id=$(node).attr('data-view-id');
+        var view_type_id=$(node).attr('data-view-type-id');
+        if( doc_view_id*1 ){
+            Document.views.open(doc_view_id);
+        }
+        else{
+            Document.views.create(view_type_id);
+        }
     }
 };
 

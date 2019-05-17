@@ -114,8 +114,12 @@ abstract class DocumentBase extends Catalog{
 	    case 'vat_rate':
 		$ok=$this->transChangeVatRate( $value );
 		break;
+	    case 'doc_date':
+		$field='cstamp';
+		break;
 	    case 'doc_num':
-		if( !is_int($value) ){
+		if( !is_int((int)$value)){
+                    echo 'hello';
 		    return false;
 		}
 	}
@@ -202,7 +206,7 @@ abstract class DocumentBase extends Catalog{
 		signs_after_dot,
 		doc_ratio,
 		doc_num,
-		DATE_FORMAT(cstamp,'%d.%m.%Y') doc_date,
+		DATE_FORMAT(cstamp,'%Y-%m-%d') doc_date,
 		doc_data,
 		(SELECT last_name FROM user_list WHERE user_id=created_by) created_by,
 		(SELECT last_name FROM user_list WHERE user_id=modified_by) modified_by

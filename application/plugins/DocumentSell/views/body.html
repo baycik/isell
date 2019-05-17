@@ -1,20 +1,23 @@
 <hr style="border-color: #fff;">
 <div class="x-picker transp60" style="display: none">
     <div style="height:200px;width:200px;float:right;overflow: auto">
-	<button class="x-allcath tiny_button" type="button" style="width: 100%" title="Сбросить выделение">Все категории</button>
+	<button class="x-allcath tiny-button" type="button" style="width: 100%" title="Сбросить выделение">Все категории</button>
 	<div class="x-tree"></div>
     </div>
     <div class="x-stock" style="height:200px;"></div>
 </div>
-<div>
-    <div style="float:left;margin: 1px;margin-right: 3px;" title="↑ для вывода предыдущего кода">
-	<input class="x-suggest" placeholder="код, название или штрихкод" style="width:200px;">
-	<input class="x-qty" placeholder="Кол-во" style="margin: 0px; padding-top: 0px; padding-bottom: 0px; height: 24px; line-height: 24px; width: 50px;vertical-align: middle;">
-	<button class="x-suggest-submit tiny_button" type="button" title="Добавить строку в документ" style="padding: 2px;vertical-align: middle;"><img src="img/plus.png"></button>
+<div style="padding: 0px 10px;">
+    <div style="display: inline-block;vertical-align: middle;margin: 1px;margin-right: 3px;" title="Нажмите ↑ для вывода предыдущего кода товара">
+        <input class="x-suggest" placeholder="код, название или штрихкод" style="width:200px;">
+	<input class="x-qty" placeholder="Кол-во" 
+               style="margin: 0px; padding-top: 0px; padding-bottom: 0px; 
+               height: 30px; line-height: 30px; 
+               width: 50px;vertical-align: middle;">
+	<button class="x-suggest-submit tiny-button" type="button" title="Добавить строку в документ" ><img src="img/plus.png"></button>
+        
     </div>
-    <div class="x-body-tools">
-	<button type="button" title="Подобрать товар со склада" class="x-picker-button tiny_button" data-action="pickerToggle" style="padding: 2px;margin-right: 5%">Открыть подбор</button>
-
+    <div class="x-body-tools" style="display: inline-block;vertical-align: middle;margin: 1px;margin-right: 3px; width: 49%;text-align: end;">
+        <button class="x-picker-button  tiny-button" data-action="pickerToggle" type="button"  title="Подобрать товар со склада" >Открыть подбор</button>
 	<span class="icon-24 icon-delete" title="Удалить стоку" data-action="entryDelete"> </span>
 	<span class="icon-24 icon-calc" title="Перерасчитать цены" data-action="entryRecalc"> </span>
 	<span class="icon-24 icon-import" title="Импортировать" data-action="entryImport"> </span>
@@ -22,4 +25,4 @@
     </div>
 </div>
 <div style="clear:both;"></div>
-<div class="x-entries"></div>
+<div class="x-entries" style="width: 780px;margin: 10px auto;border: 1px solid #cdcdcd;border-top-left-radius: 5px;border-top-right-radius: 5px;"></div>

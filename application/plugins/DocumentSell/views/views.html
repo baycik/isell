@@ -1,0 +1,27 @@
+<span id="load_views_button" class="icon-24 icon-utils" title="Дополнительные свойства" onclick="$('#Document_view_tile').toggle('slow')" ></span>
+<div id="Document_view_tile" style="clear:both;vertical-align: top;text-align: justify;margin: auto 10px;display: none" class="covert">
+    <hr style="border-color: white">
+    {{if views}}
+        {{views}}
+        <div id="Document_view_button" class="tiny-button view_button {{if view_hidden|equals>1}}view_is_hidden{{/if}} {{if #|more>3}}view_is_hidden{{/if}}" 
+             data-view-id="{{doc_view_id}}" 
+             data-view-type-id="{{view_type_id}}"  >
+            <img id="add_view" src="img/document.png" data-view-i="{{#}}" style="float:left;padding:5px;margin-right: 5px" title="Печатный документ">
+            {{view_name}}
+            {{if doc_view_id}}
+            №{{view_num}} {{view_date}}
+            <img id="Document_view_settings" src="img/settings.png" data-view-i="{{#}}" style="float:right;" title="Настройки">
+                <div class="view_efields">
+                {{if efields}}
+                    {{efields}}
+                     {{label}}: {{if value}}<u style="color:red">{{value}}</u>{{/if}}<br/>
+                    {{/efields}}
+                {{/if}}
+            {{/if}}
+            </div>
+        </div>
+        {{/views}}
+    {{/if}}
+</div>
+<textarea name="doc_data" title="Комментарий" placeholder="Комментарий" data-skip="1" class="document_comment" onchange="Document.head.update('doc_data',this.value)"></textarea>
+	

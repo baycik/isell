@@ -368,7 +368,7 @@ class AccountsCore extends Catalog{
         }
     }
     private function checkTransLink($trans_id,$trans) {
-	if( $trans['check_id'] ){
+	if( isset($trans['check_id']) ){
 	    $this->update('acc_check_list',['trans_id'=>$trans_id],['check_id'=>$trans['check_id']]);
 	}
     }
@@ -378,7 +378,7 @@ class AccountsCore extends Catalog{
 	}	
     }
     private function transCrossLink($trans_id,$trans){
-	if( $trans['trans_ref'] ){
+	if( isset($trans['trans_ref']) ){
 	    $this->update('acc_trans', ['trans_ref'=>$trans['trans_ref'],'trans_status'=>5], ['trans_id'=>$trans_id]);
 	    $this->update('acc_trans', ['trans_ref'=>$trans_id,'trans_status'=>4], ['trans_id'=>$trans['trans_ref']]);
 	}
@@ -485,12 +485,13 @@ class AccountsCore extends Catalog{
 	$document_transactions=$this->get_list("SELECT * FROM document_trans WHERE doc_id='$doc_id'");
 	foreach($document_transactions as $trans){
 	    $transaction_amount=0;
-	    if( isset($foot[$trans->role]) ){
+            $current_role = $trans->trans_role;
+	    if( isset($foot->$current_role) ){
                 if( $doc_ratio>0 ){
-                    $transaction_amount=$foot[$trans->role]*$doc_ratio;
-                    $transaction_amount_alt=$foot[$trans->role];
+                    $transaction_amount=$foot->$current_role*$doc_ratio;
+                    $transaction_amount_alt=$foot->$current_role;
                 } else {
-                    $transaction_amount=$foot[$trans->role];
+                    $transaction_amount=$foot->$current_role;
                     $transaction_amount_alt=0;
                 }
                 $ok = $ok && $this->transUpdate($trans->trans_id, ['amount'=>$transaction_amount,'amount_alt'=>$transaction_amount_alt]);

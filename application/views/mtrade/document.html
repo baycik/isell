@@ -101,7 +101,7 @@
 		    if(render_data){
 			Document.render( render_data );
 		    } else {
-			App.flash("Can't load document");
+			App.flash("Не могу загрузить документ");
 		    }
 		});
 	    },
@@ -115,7 +115,7 @@
 			Document.destroy();
                         App.flash("Документ удален");
 		    } else {
-			App.flash("Can't DELETE document");
+			App.flash("Не могу удалить документ");
 		    }
 		});                
             },
