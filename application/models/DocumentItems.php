@@ -123,7 +123,8 @@ class DocumentItems extends DocumentCore{
                     analyse_origin,
                     analyse_class,
                     self_price,
-                    buy*IF(curr_code IS NOT NULL && '$curr_code'<>ppl.curr_code,doc_ratio*@curr_correction,1) buy,
+                    buy*IF(curr_code IS NULL OR curr_code='' OR '$curr_code'=ppl.curr_code,1,doc_ratio*@curr_correction) buy,
+                        curr_code,
                     doc_type
                 FROM
                     document_list
