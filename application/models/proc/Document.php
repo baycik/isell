@@ -297,11 +297,11 @@ class Document extends Data {
 	$quantity = $new_quantity !== NULL ? $new_quantity : $entry['product_quantity'];
 	$party_label = $new_party_label !== NULL ? $new_party_label : $entry['party_label'];
 	if ($this->doc('doc_type') == 1) {//Sell document
-	    if ($action == 'commit' || ($this->isCommited() && isset($new_invoice))) {
+	    //if ($action == 'commit' || ($this->isCommited() && isset($new_invoice))) {
 		$self = $this->getProductSellSelfPrice($entry['product_code'], $quantity, $this->doc('cstamp'));
-	    } else {
-		$self = $entry['self_price'];
-	    }
+	    //} else {
+		//$self = $entry['self_price'];
+	    //}
 	} else {//Buy and other document
 	    $self = $invoice;
 	}
@@ -754,9 +754,12 @@ class Document extends Data {
 	$doc_ratio = $ratios["usd_ratio"];
 
 	$prev_doc = $this->Base->get_row("SELECT use_vatless_price,signs_after_dot,notcount,doc_type,vat_rate FROM document_list WHERE active_company_id='$active_company_id' AND passive_company_id='$passive_company_id' AND doc_type<10 AND is_commited=1 ORDER BY cstamp DESC LIMIT 1");
-	if( $doc_type===null ){
+        if( $doc_type==null ){
 	    $doc_type=$prev_doc['doc_type']?$prev_doc['doc_type']:1;
 	}
+        if( !$doc_type ){
+            return false;
+        }
 	$next_doc_num = $this->getNextDocNum($doc_type);
 	if ($prev_doc) {
 	    $pnotcount = $prev_doc['notcount'];

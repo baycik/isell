@@ -2,17 +2,7 @@
     /* global App */
     App.page_stock_reserve={
         init:function(){
-            App.require(["js/slick/lib/jquery.event.drag-2.3.0.js"], function () {
-                App.require([
-                    "js/slick/slick.core.js",
-                    "js/slick/plugins/slick.rowselectionmodel.js",
-                    "js/slick/slick.editors.js",
-                    "js/slick/slickinfinite.js",
-                    "js/slick/slick.grid.js"
-                ], function(){
-                    App.page_stock_reserve.table.init();
-                });
-            });
+            App.page_stock_reserve.table.init();
             App.Topic('hashChange').subscribe(function(hash_object){
                 App.page_stock_reserve.table.filter_from_state();
             });
