@@ -99,17 +99,14 @@ class DocumentItems extends DocumentCore{
         $pcomp_price_label=$this->Hub->pcomp('price_label');
         $this->query("DROP TEMPORARY TABLE IF EXISTS tmp_doc_entries");
         $sql="CREATE TEMPORARY TABLE tmp_doc_entries ( INDEX(product_code) ) AS (
-                SELECT 
-                    *,
-                    IF(doc_type=1,product_price_total-buy<0.01,product_price_total-buy>0.01) is_loss
-                FROM
-                (SELECT
+                SELECT
                     doc_entry_id,
                     ROUND(invoice_price * @curr_correction, 2) AS product_price_vatless,
                     ROUND(invoice_price * @curr_correction * product_quantity,2) product_sum_vatless,
 		    
                     ROUND(invoice_price * @curr_correction * @vat_ratio, 2) AS product_price_total,
 		    ROUND(invoice_price * @curr_correction * @vat_ratio * product_quantity,2) product_sum_total,
+                    ROUND(breakeven_price,2) breakeven_price,
                     product_quantity*product_weight weight,
                     product_quantity*product_volume volume,
                     pl.product_code,
@@ -134,7 +131,7 @@ class DocumentItems extends DocumentCore{
                     price_list ppl ON de.product_code=ppl.product_code AND label='$pcomp_price_label'
                 WHERE
                     doc_id='$doc_id'
-                ORDER BY pl.product_code) t
+                ORDER BY pl.product_code
                 )";
         $this->query($sql);
     }
@@ -153,17 +150,50 @@ class DocumentItems extends DocumentCore{
     
     
     public $entryAdd=['doc_id'=>'int','code'=>'string','quantity'=>'int'];
-    public function entryAdd( $doc_id, $code, $quantity, $price=NULL ){
+    public function entryAdd( $doc_id, $product_code, $quantity, $price=NULL ){
         if($doc_id){
             $this->selectDoc($doc_id);
         }
 	$Document2=$this->Hub->bridgeLoad('Document');
 	$add_duplicate_rows=(bool) $this->Hub->pref('add_duplicate_rows');
-	$add_ok=$Document2->addEntry( $code, $quantity, $price, $add_duplicate_rows );
+	$doc_entry_id=$Document2->addEntry( $product_code, $quantity, $price, $add_duplicate_rows );
         if( $this->isReserved() ){
             $this->reservedCountUpdate();
         }
-        return $add_ok;
+        $this->entryBreakevenPriceUpdate($doc_entry_id);
+        return $doc_entry_id;
+    }
+    private function entryBreakevenPriceUpdate( $doc_entry_id=null, $doc_id=null ){
+        if( !$doc_entry_id&&!$doc_id ){
+            return;
+        }
+        $pcomp_id=$this->doc('passive_company_id');
+        $usd_ratio=$this->doc('doc_ratio');
+        $doc_type=$this->doc('doc_type');
+        if( $doc_type!=1 ){
+            return;
+        }
+        if( $doc_entry_id ){
+            $where="doc_entry_id=$doc_entry_id";
+        } else {
+            $where="doc_id=$doc_id";
+        }
+        if( $this->Hub->pcomp('skip_breakeven_check') ){
+            $sql="UPDATE 
+                    document_entries 
+                SET 
+                    breakeven_price = 0
+                WHERE 
+                    $where";
+        } else {
+            $sql="UPDATE 
+                    document_entries 
+                SET 
+                    breakeven_price = ROUND(GET_BREAKEVEN_PRICE(product_code,'$pcomp_id','$usd_ratio',self_price),2)
+                WHERE 
+                    $where";
+        }
+        $this->query($sql);
     }
 /*    public $entryPostAdd=[];
     public function entryPostAdd(){
@@ -183,6 +213,7 @@ class DocumentItems extends DocumentCore{
 	$Document2=$this->Hub->bridgeLoad('Document');
 	switch( $name ){
 	    case 'product_quantity':
+                $this->Hub->set_level(1);
                 $ok=$Document2->updateEntry($doc_entry_id, $value, NULL);
                 if( $this->isReserved() ){
                     $this->reservedCountUpdate();
@@ -190,10 +221,12 @@ class DocumentItems extends DocumentCore{
                 $Document2->updateTrans();
 		return $ok;
 	    case 'product_price':
+                $this->Hub->set_level(2);
 		$ok=$Document2->updateEntry($doc_entry_id, NULL, $value);
                 $Document2->updateTrans();
                 return $ok;
 	    case 'party_label':
+                $this->Hub->set_level(2);
                 $this->query("UPDATE document_entries SET party_label='$value' WHERE doc_entry_id='$doc_entry_id'");
 		return true;
 	}
@@ -300,8 +333,8 @@ class DocumentItems extends DocumentCore{
     }
     public $recalc=['int','double'];
     public function recalc( $doc_id, $proc=0 ){
-	$this->check($doc_id,'int');
 	$this->selectDoc($doc_id);
+        $this->entryBreakevenPriceUpdate(null,$doc_id);
 	$Document2=$this->Hub->bridgeLoad('Document');
 	$Document2->selectDoc($doc_id);
 	$Document2->recalc($proc);

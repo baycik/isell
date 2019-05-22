@@ -530,6 +530,14 @@
 		}
 	    });
 	},
+        update:function(field,value){
+            var row=$("#Doc_entry_dg").datagrid('getSelected');
+            $.post( 'DocumentItems/entryUpdate/'+Doc.head.props.doc_id+'/'+row.doc_entry_id,{name:field,value:value}, function(ok){
+		if(ok*1){
+		    Doc.entries.reload();
+		}
+	    });
+        },
 	delete:function(){
 	    var rows=$("#Doc_entry_dg").datagrid('getSelections');
 	    if( !rows.length ){
@@ -546,12 +554,6 @@
 		});		
 	    }
 	},
-	calculate: function (value, row) {
-	    if( row.is_loss*1 ){
-		return '<span style="color:red;font-weight:bold">' + value + '</span>';
-	    }
-	    return value;
-	},
 	abcCalculate: function (value, row) {
             if( Doc.head.props.doc_type==2 ){
                var color=row.analyse_class.replace("A","rgba(0,255,0,0.3)").replace("B","rgba(255,255,0,0.5)").replace("C","rgba(255,0,0,0.3)");
@@ -561,8 +563,18 @@
         goToReserved:function(product_code){
             location.hash="#Stock#stock_main_tabs=Резерв&product_code="+product_code;
         },
+        resetToBreakeven:function(breakeven_price){
+            App.flash("Цена изменена на "+breakeven_price);
+            Doc.entries.update('product_price',breakeven_price);
+        },
         tooltip:function(value, row){
-            return App.datagrid.tooltip(value, row, "Doc.entries.goToReserved('"+row.product_code+"')");
+            if( value.indexOf('reserved')>-1 ){
+                return App.datagrid.tooltip(value, row, "Doc.entries.goToReserved('"+row.product_code+"')");
+            }
+            if( value.indexOf('err_breakeven')>-1 ){
+                return App.datagrid.tooltip(value, row, "Doc.entries.resetToBreakeven('"+row.breakeven_price+"')");
+            }
+            return App.datagrid.tooltip(value, row);
         },
 	onRowContextMenu: function (e, row) {
 	    e.preventDefault();
@@ -1009,7 +1021,7 @@
 		    <th data-options="field:'product_name',width:300">Название</th>
 		    <th data-options="field:'product_quantity',width:50,align:'right',styler:Doc.entries.abcCalculate">Кол-во</th>
 		    <th data-options="field:'product_unit',width:40,align:'center'">Ед.</th>
-		    <th data-options="field:'product_price',width:60,align:'right',formatter:Doc.entries.calculate">Цена</th>
+		    <th data-options="field:'product_price',width:60,align:'right'">Цена</th>
 		    <th data-options="field:'product_sum',width:70,align:'right'">Сумма</th>
 		    <th data-options="field:'row_status',width:24,align:'center',formatter:Doc.entries.tooltip">!</th>
 		</tr>
