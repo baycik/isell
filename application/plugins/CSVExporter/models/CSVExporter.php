@@ -73,7 +73,7 @@ class CSVExporter extends Catalog {
             INTO OUTFILE '$file_path'
             CHARACTER SET cp1251 
             FIELDS TERMINATED BY ';'
-            ENCLOSED BY ''
+            ENCLOSED BY '\"'
             LINES TERMINATED BY '\r\n'";
         $this->query($sql);
         return $this->db->affected_rows();
