@@ -23,6 +23,9 @@
 		reload:function(){
 		    DocList.grid.reload();
 		},
+                add:function(){
+                    
+                },
 		expand_collapse:function(){
 		    if (DocList.table.columnMode === 'advanced') {
 			DocList.table.columnMode = 'simple';
@@ -141,6 +144,7 @@
 		App.Document.init('sell');
 		App.Document.load(App.Document.doc_id);
 	    });
+            
 	}
 	return {
 	    require: require,
@@ -158,11 +162,12 @@
 <div id="doclistgrid">
     <div style="vertical-align: top;width:800px;" id="Document" class="transp60"></div>
     <div>
-	<div class="x-doclist-tools" class="transp60">
-	    <div style="float: left;font-weight: bold;padding-top: 8px;">
+        <div class="x-doclist-tools" class="transp60" style="background-color: white; padding:10px; height: 38px">
+	    <div style="display: inline-block; width: 48%;font-weight: bold;">
 		<img src="img/table16.png" style="width:16px;height: 16px;"> Документы
 	    </div>
 	    <div style="float: right">
+		<span class="icon-24 icon-create" data-action="add" title="Создать документ"> </span> 
 		<span class="icon-24 icon-expand" data-action="expand_collapse" title="Полный/Сокращенный режим"> </span> 
 		<span class="icon-24 icon-refresh" data-action="reload" title="Обновить"> </span> 
 	    </div>

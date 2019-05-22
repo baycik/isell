@@ -86,7 +86,8 @@
 		Document.body.destroy();
 		Document.foot.destroy();
 		Document.views.destroy();
-		$("#"+holderId).find(".x-head, .x-body, .x-foot, .x-views").html("");
+                Document.reload();
+		//$("#"+holderId).find(".x-head, .x-body, .x-foot, .x-views").html("");
 	    },
 	    load:function(id,parts_to_load){
 		if( !document_model ){

@@ -18,8 +18,20 @@ Document.head={
 	this.pcompNode && this.pcompNode.combobox("setText",head.label);
         Document.head.suppress_update = true;
     },
+    add:function(){
+        var url=document_model+'/documentAdd';
+        var doc_type = $('Doc_type_cmb').val();
+	return $.post(url,{doc_type:doc_type},function(ok){
+	    if(ok*1){
+		App.flash('Документ создан');
+	    } else {
+		App.flash("Документ не создан");
+	    }
+	    Document.head.reload();
+	});
+    },
     destroy:function(){
-	//this.pcompNode && this.pcompNode.combobox && this.pcompNode.combobox('destroy');
+        this.pcompNode && this.pcompNode.combobox && this.pcompNode.combobox('clear');
     },
     update:function(field,value,succes_msg){
 	var url=document_model+'/documentUpdate';
@@ -138,16 +150,10 @@ Document.head={
     pcompDetails:function(){
 	App.loadWindow('page/company/details',{company_id:Document.data.head.passive_company_id});
     },
-    duplicate:function(){
-        if( confirm("Создать копию этого документа?") ){
-            App.post("DocumentItems/duplicate/"+Document.data.head.doc_id,function(doc_id){
-                if( doc_id*1 ){
-                    Document.head.load(doc_id);
-                    Document.handler.notify('created',doc_id);
-                    App.flash("Документ скопирован и загружен");
-                }
-            });
-        }
+    pay:function(){
+        App.loadWindow("page/accounts/document_pay",{doc_id:Document.doc_id,total:Document.data.foot.total}).done(function(fvalue){
+            App.flash("head_changed!");
+        });
     },
     sendsms:function(){
         $.get("Company/companyGet/"+Document.data.head.passive_company_id, function ( xhr ) {
@@ -172,6 +178,18 @@ Document.head={
             };
             App.loadWindow('page/events/event',fvalue);	    
         });
+    },
+    duplicate:function(){
+        if( confirm("Создать копию этого документа?") ){
+            App.post("DocumentItems/duplicate/"+Document.doc_id,function(doc_id){
+                if( doc_id*1 ){
+                    Document.doc_id = doc_id;
+                    Document.reload();
+                    //Document.handler.notify('created',doc_id);
+                    App.flash("Документ скопирован и загружен");
+                }
+            });
+        }
     }
 };
 Document.body={
@@ -194,7 +212,7 @@ Document.body={
 	Document.body.table_sg.render();
     },
     destroy:function(){
-	$("#"+holderId+" .x-body .x-suggest").combobox('destroy');
+	$("#"+holderId+" .x-body .x-suggest").combobox('clear');
     },
     suggest:{
 	init:function(){
@@ -375,6 +393,16 @@ Document.body={
 		}
 		Document.reload(["body","foot"]);
 	    });
+	},
+        recalculate:function(){
+	    App.loadWindow('page/trade/document_recalculate').progress(function(state,data){
+		if( state==='submit' ){
+		    App.post("DocumentItems/recalc/"+Document.doc_id+'/'+(data.recalc_proc*1||0), function ( xhr ) {
+                        Document.reload(["body","foot"]);
+                        App.flash("Перерасчет выполнен");
+		    });
+                }
+	    });
 	}
     },
     table:{
@@ -480,27 +508,33 @@ Document.foot = {
 
 Document.views={
     init:function(){
-        Document.views.initControls();
     },
     render: function(views){
         Document.views.view_list = Document.views.compile(views);
         App.renderTpl('Document_view_tile',{views:Document.views.view_list});
+        Document.views.initControls();
     },
     initControls: function(){
         $('#load_views_button').click(function(){
             Document.views.render(Document.views.view_list);
         });
-        $('#Document_view_tile img, #Document_view_tile ,view_button').click(function(e){
-            switch(e.target.id){
+        $('#Document_view_tile img, #Document_view_tile .view_button').click(function(e){
+            switch(e.target.className){
                 case 'Document_view_settings':
                     Document.views.settings(e.target);
                     event.stopPropagation();
+                    return;
+                case 'Document_view_arrow':
+                    Document.views.togglehidden();
                     return;
                 default:
                     Document.views.click(e.target);
                     return;
             }
         });
+    },
+    destroy:function(){
+        
     },
     compile:function( view_list ){
         for( var i in view_list ){
@@ -548,6 +582,12 @@ Document.views={
         else{
             Document.views.create(view_type_id);
         }
+    },
+    showhidden:false,
+    togglehidden:function(){
+        this.showhidden=!this.showhidden;
+        $('.Document_view_arrow').attr('src','img/arrow'+(this.showhidden?'left':'right')+'.png');
+        $('.view_is_hidden').css('display',(this.showhidden?'inline-block':'none'));
     }
 };
 

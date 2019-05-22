@@ -588,10 +588,6 @@ h2{
   border-radius: 50%;
 }
 
-
-
-
-
 .left_label{
     padding: 3px;
     margin-bottom: 5px;
@@ -613,24 +609,19 @@ h2{
 .left_label_selected,.left_label_selected:hover{
     background: #FF9;
 }
-
-
-
-
 #main_grid{
   display: grid;
   width: 100%;
   grid-template-columns: 60px auto;
   grid-auto-rows: minmax(100px, auto);
 }
-
 .view_button{
     display: inline-block;
     border: 1px #bbb solid;
     color: #333;
     border-radius: 3px;
-    width: 19%;
-    min-height: 46px;
+    width: 23%;
+    min-height: 52px;
     margin: 0px 0px 6px 0px;
     text-align: center;
     background-color: #fff;
@@ -643,6 +634,29 @@ h2{
 .view_button:hover{
     border: 1px #528df3 solid;
     box-shadow: 1px 1px 3px lightgray;
+}
+
+.view_button img.Document_view_settings:hover{
+    border: 1px #528df3 solid !important;
+    border-radius: 2px;
+    box-shadow: 1px 1px 3px lightgray;
+}
+
+.view_button.view_is_hidden{
+    display: none;
+}
+
+.view_button .view_efields {
+    background-color: white;
+    position: absolute;
+    margin-top: 1px;
+    text-align: left;
+    width: 155px;
+    border: 1px #528df3 solid;
+    overflow: hidden;
+    margin-left: -1px;
+    z-index: 100;
+    padding: 10px;
 }
 
 .document_comment{

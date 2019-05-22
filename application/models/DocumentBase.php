@@ -119,7 +119,6 @@ abstract class DocumentBase extends Catalog{
 		break;
 	    case 'doc_num':
 		if( !is_int((int)$value)){
-                    echo 'hello';
 		    return false;
 		}
 	}
@@ -135,6 +134,7 @@ abstract class DocumentBase extends Catalog{
 	
     }
     protected function documentDelete( $doc_id ){
+        $this->doc_id = $doc_id;
 	$this->db_transaction_start();
 	$this->delete('document_entries',['doc_id'=>$doc_id]);
 	$this->delete('document_view_list',['doc_id'=>$doc_id]);

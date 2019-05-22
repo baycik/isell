@@ -477,7 +477,7 @@ class AccountsCore extends Catalog{
         return $this->update('acc_trans JOIN document_trans USING(trans_id)',['is_disabled'=>1], ['doc_id'=>$doc_id]);
     }
     public function documentTransClear($doc_id){
-        $this->query("DELETE ac,dt FROM acc_trans JOIN document_trans USING(trans_id) WHERE doc_id='$doc_id'");
+        $this->query("DELETE acc_trans.*, document_trans.* FROM acc_trans JOIN document_trans USING(trans_id) WHERE doc_id='$doc_id'");
         return $this->db->affected_rows();
     }
     public function documentTransUpdate($doc_id,$foot,$doc_ratio=0){

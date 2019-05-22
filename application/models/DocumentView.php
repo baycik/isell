@@ -5,6 +5,7 @@ class DocumentView extends DocumentItems{
     public $viewListFetch=['int'];
     public function viewListFetch( $doc_id ){
 	$blank_set=$this->Hub->pref('blank_set');
+        
 	$acomp_id=$this->Hub->acomp('company_id');
 	if( $doc_id ){
 	    $this->selectDoc($doc_id);
