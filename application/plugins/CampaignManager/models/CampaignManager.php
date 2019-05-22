@@ -93,10 +93,14 @@ class CampaignManager extends Catalog{
                 plugin_campaign_bonus
             SET
                 campaign_id='$campaign_id',
-                bonus_type='volume',
+                bonus_type='VOLUME',
                 campaign_start_at=NOW(),
-                campaign_finish_at=DATE_ADD(NOW(), INTERVAL 1 YEAR)";
-        return $this->query($sql);
+                campaign_finish_at=DATE_ADD(NOW(), INTERVAL 1 YEAR),
+                campaign_grouping_interval='NOGROUP',
+                campaign_bonus_ratio1=0";
+        $ok=$this->query($sql);
+        $this->bonusPeriodsFill( $this->db->insert_id() );
+        return $ok;
     }
     
     public function bonusUpdate( int $campaign_bonus_id, string $field, string $value){
@@ -105,6 +109,11 @@ class CampaignManager extends Catalog{
             $this->bonusPeriodsClear( $campaign_bonus_id );
             $this->bonusPeriodsFill( $campaign_bonus_id );
         } else if( $field === 'campaign_start_at' || $field === 'campaign_finish_at'  ){
+            $now_year=date("Y");
+            $needed_year=substr($value,0,4);
+            if( abs($now_year-$needed_year)>3 ){
+                return false;
+            }
             $this->bonusPeriodsFill( $campaign_bonus_id );
         }
         return $ok;
@@ -210,6 +219,27 @@ class CampaignManager extends Catalog{
                                 OR period_year=$start_year AND period_month<$start_month
                                 OR period_year=$finish_year AND period_month>$finish_month";
             }
+            if( $bonus->campaign_grouping_interval =='NOGROUP' ){
+                for( $m=$start_month;$m<=$start_month+$delta_month; $m++ ){
+                    $year=$start_year+ceil($m/12)-1;
+                    $month=($m-1)%12+1;
+                    $quarter=ceil($month/3);
+                    $data=[
+                        'campaign_bonus_id'=>$campaign_bonus_id,
+                        'period_year'=>$year,
+                        'period_quarter'=>$quarter,
+                        'period_month'=>$month,
+                        'period_plan1'=>0,
+                        'period_plan2'=>0,
+                        'period_plan3'=>0
+                    ];
+                    $this->bonusPeriodCreate($data);
+                }
+                $delete_sql.="  period_year<$start_year 
+                                OR period_year>$finish_year
+                                OR period_year=$start_year AND period_month<$start_month
+                                OR period_year=$finish_year AND period_month>$finish_month";
+            }
             $this->query($delete_sql);
             return true;
         }
@@ -255,6 +285,8 @@ class CampaignManager extends Catalog{
             case 'PAYMENT':
                 $bonus_base= $this->bonusCalculatePayment($campaign_bonus,$period_on,$client_filter);
                 break;
+            default:
+                return false;
         }
         $sql="SELECT
             *,
@@ -288,7 +320,7 @@ class CampaignManager extends Catalog{
                 {$bonus_base['where']}
             GROUP BY period_year,period_quarter,period_month
             ORDER BY period_year DESC,period_quarter DESC,period_month DESC) tt";
-                //die($sql);
+            //die($sql);
         return $this->get_list($sql);
     }
     
