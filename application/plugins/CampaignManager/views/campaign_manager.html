@@ -33,7 +33,6 @@
                 Mark.globals.stock_categories = data.stock_category_list;
                 App.renderTpl('CampaignManager', data);
                 App.setupForm('#camp_manager_form', data.settings, 'use_inp_values').change(function (node) {
-                    console.log(this.name);
                     if (this.name.indexOf('-') > -1) {
                         var campaign_bonus_id = this.name.split('-')[1];
                         var field = this.name.split('-')[0];
@@ -135,7 +134,7 @@
                 for (let bonus of Campaign.data.bonuses) {
                     lastCardsPromise=Bonuses.periodsLoad(bonus.campaign_bonus_id);
                 }
-                lastCardsPromise.done(function(){
+                lastCardsPromise && lastCardsPromise.done(function(){
                     Bonuses.periodsCardsIntoView();
                 });
             },
@@ -150,6 +149,17 @@
                 });
             },
             update: function (field, value, title, campaign_bonus_id) {
+                if( field==='campaign_start_at' || field==='campaign_finish_at' ){
+                    let now_year=new Date().getYear();
+                    let needed_year=value.substring(0,4);
+                    let diff=Math.abs(now_year-needed_year);
+                    if( diff>3 ){
+                        App.flash("Слишком большой период: " + title);
+                        return;
+                    }
+                }
+                
+                
                 $.post("CampaignManager/bonusUpdate", {campaign_bonus_id: campaign_bonus_id, field: field, value: value}, function (ok) {
                     if (ok * 1) {
                         App.flash("Сохранено: " + title);
@@ -183,14 +193,15 @@
                 $(".is_current-1").each(function(i,current_card){
                     current_card && current_card.scrollIntoView({behavior: "smooth", block: "center", inline: "start"});
                 });
+                $(".is_current-1").css('borderColor','#Fe9');
             },
             periodsUpdate:function(field, value, title, campaign_bonus_period_id,campaign_bonus_id) {
                 $.post("CampaignManager/bonusPeriodUpdate", {campaign_bonus_period_id: campaign_bonus_period_id, field: field, value: value}, function (ok) {
                     if (ok * 1) {
                         Bonuses.periodsLoad(campaign_bonus_id);
-                        App.flash("updated " + title);
+                        App.flash("Сохранено: " + title);
                     } else {
-                        App.flash("not updated " + title);
+                        App.flash("Ошибка сохранения: " + title);
                     }
                 });
             }
@@ -201,6 +212,7 @@
     })(jQuery);
 </script>
 <script id="CampaignManager_bonus_periods_tpl" type = "text/html">
+    {{if period_cards}}
     {{period_cards}}
     <div style=""  class="is_current-{{is_current}}">
         <div style="height: 30px;font-size: 16px;padding: 4px;">
@@ -242,6 +254,9 @@
         </div>
     </div>
     {{/period_cards}}
+    {{else}}
+        Форма расчета не заполнена полностью
+    {{/if}}
 </script>
 
 
@@ -268,16 +283,16 @@
             <div class=" leftcol-grid">
                 <div style="padding: 5px">
                     <fieldset>
-                        <select name="bonus_type-{{campaign_bonus_id}}" title="Вид бонуса">
+                        <select name="bonus_type-{{campaign_bonus_id}}" title="Вид бонуса" required>
                             <option value="VOLUME">Бонус с объема</option>
                             <option value="PROFIT">Бонус с наценки</option>
                             <option value="PAYMENT">Бонус с оплаты</option>
                         </select>
 
-                        <input type="date" name="campaign_start_at-{{campaign_bonus_id}}" title="Начало">
-                        <input type="date" name="campaign_finish_at-{{campaign_bonus_id}}" title="Конец">
-                        <select name="campaign_grouping_interval-{{campaign_bonus_id}}" title="Интервал">
-                            <option value="" selected="selected">Не группировать</option>
+                        <input type="date" name="campaign_start_at-{{campaign_bonus_id}}" title="Начало" required>
+                        <input type="date" name="campaign_finish_at-{{campaign_bonus_id}}" title="Конец" required>
+                        <select name="campaign_grouping_interval-{{campaign_bonus_id}}" title="Интервал" required>
+                            <option value="NOGROUP" selected="selected">Не группировать</option>
                             <option value="MONTH">Месяц</option>
                             <option value="QUARTER">Квартал</option>
                             <option value="YEAR">Год</option>
@@ -298,7 +313,7 @@
                     <!--{{/if}}-->
                     <fieldset>
                         <legend>Процент бонуса по планам</legend>
-                        <input pattern="\d+" name="campaign_bonus_ratio1-{{campaign_bonus_id}}" title="План I бонус %">
+                        <input pattern="\d+" name="campaign_bonus_ratio1-{{campaign_bonus_id}}" title="План I бонус %" required>
                         <input pattern="\d+" name="campaign_bonus_ratio2-{{campaign_bonus_id}}" title="План II бонус %">
                         <input pattern="\d+" name="campaign_bonus_ratio3-{{campaign_bonus_id}}" title="План III бонус %">
                     </fieldset>
