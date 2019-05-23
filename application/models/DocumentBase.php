@@ -12,7 +12,7 @@ abstract class DocumentBase extends Catalog{
         //TODO//
         //add security check//
 	if( !isset($this->document_properties) ){
-	    if( !$this->doc_id ){
+	    if( !isset($this->doc_id) ){
 		throw new Exception("Can't use properties because Document is not selected");
 	    }
 	    $this->document_properties=$this->get_row("SELECT * FROM document_list WHERE doc_id='$this->doc_id'");
@@ -67,7 +67,7 @@ abstract class DocumentBase extends Catalog{
 	    'notcount'=>0,
 	    'doc_num'=>0
 	];
-	$prev_document=$this->headerPreviousGet($acomp_id, $pcomp_id);
+	$prev_document=$this->headPreviousGet($acomp_id, $pcomp_id);
 	if( $prev_document && !is_numeric($prev_document->doc_type) ){
 	    $new_document['doc_type']=$prev_document->doc_type;
 	    $new_document['notcount']=$prev_document->notcount;
@@ -77,10 +77,11 @@ abstract class DocumentBase extends Catalog{
 	}
 	$new_document['doc_num']=$this->documentNumNext($acomp_id,$doc_type);
 	$new_doc_id=$this->create('document_list', $new_document);
+        $this->Hub->msg('Document created!');
 	return $new_doc_id;
     }
     protected function documentNumNext($acomp_id,$doc_type){
-	$sql="SELECT 
+	echo $sql="SELECT 
 		MAX(doc_num)+1 
 	    FROM 
 		document_list 
@@ -95,8 +96,13 @@ abstract class DocumentBase extends Catalog{
     public $documentUpdate=['doc_id'=>'int','field'=>'string','value'=>'string'];
     public function documentUpdate($doc_id,$field,$value){
 	$this->Hub->set_level(2);
+        if(!$doc_id){
+            $doc_id = $this->documentAdd();
+            $this->documentSelect($doc_id);
+        }
         $this->doc_id = $doc_id;
 	$this->documentSelect($doc_id);
+        
 	$ok=true;
 	$this->db_transaction_start();
 	switch($field){
@@ -129,6 +135,28 @@ abstract class DocumentBase extends Catalog{
 	$this->documentFlush();
 	$this->db_transaction_commit();
 	return true;
+    }
+    private function duplicateEntries($new_doc_id,$old_doc_id){
+	$old_entries=$this->get_list("SELECT product_code,product_quantity,self_price,party_label,invoice_price FROM document_entries WHERE doc_id='$old_doc_id'");
+	foreach($old_entries as $entry){
+	    $entry->doc_id=$new_doc_id;
+	    $this->create("document_entries",$entry);
+	}
+    }
+    private function duplicateHead($new_doc_id,$old_doc_id){
+	$old_head=$this->get_row("SELECT cstamp,doc_data,doc_ratio,notcount,use_vatless_price FROM document_list WHERE doc_id='$old_doc_id'");
+	$this->update("document_list", $old_head, ['doc_id'=>$new_doc_id]);
+    }
+    public $documentDuplicate=['int'];
+    public function documentDuplicate( $old_doc_id ){
+	$this->check($old_doc_id,'int');
+	$this->Hub->set_level(2);
+	$this->documentSelect($old_doc_id);
+	$old_doc_type = $this->doc('doc_type');
+	$new_doc_id=$this->documentAdd($old_doc_type);
+	$this->duplicateEntries($new_doc_id, $old_doc_id);
+	$this->duplicateHead($new_doc_id, $old_doc_id);
+	return $new_doc_id;
     }
     protected function documentUpdateRatio( $new_ratio ){
 	
@@ -184,12 +212,13 @@ abstract class DocumentBase extends Catalog{
         }
         return false;
     }
+    
     //////////////////////////////////////////
     // HEADER SECTION
     //////////////////////////////////////////
     public function headGet( $doc_id ){
 	if( $doc_id==0 ){
-	    return $this->headerDefaultGet();
+	    return $this->headDefaultGet();
 	}
 	//$this->documentSelect($doc_id);
 	$sql="
@@ -232,8 +261,55 @@ abstract class DocumentBase extends Catalog{
 	return 	$this->get_row($sql);
     }
     protected function headDefaultGet(){
-	return [];
+	$active_company_id=$this->Hub->acomp('company_id');
+	$passive_company_id = $this->Hub->pcomp('company_id');
+        $def_head=[
+	    'doc_id'=>0,
+            'doc_date'=>date('Y-m-d'),
+            'doc_num'=>0,
+            'doc_data'=>'',
+            'doc_ratio'=>$this->Hub->pref('usd_ratio'),
+            'doc_status_id'=>'',
+            'label'=>$this->Hub->pcomp('label'),
+            'passive_company_id'=>$passive_company_id,
+            'curr_code'=>$this->Hub->pcomp('curr_code'),
+            'vat_rate'=>$this->Hub->acomp('company_vat_rate'),
+            'doc_type'=>1,
+            'signs_after_dot'=>3
+        ];
+	$prev_doc = $this->get_row("SELECT 
+		doc_type,
+		signs_after_dot 
+	    FROM 
+		document_list 
+	    WHERE 
+		passive_company_id='$passive_company_id' 
+		AND active_company_id='$active_company_id' 
+		AND doc_type<10 
+		AND is_commited=1 
+	    ORDER BY cstamp DESC LIMIT 1");
+        if( $prev_doc ){
+            $def_head['doc_type']=$prev_doc->doc_type;
+            $def_head['signs_after_dot']=$prev_doc->signs_after_dot;
+        }
+        $def_head['doc_num']=$this->getNextDocNum($def_head['doc_type']);
+        return ['head'=>$def_head, 'body'=>[], 'foot'=>[], 'vews'=>[]];
     }
+    
+    protected function getNextDocNum($doc_type) {//Util
+	$active_company_id = $this->Hub->acomp('company_id');
+	$next_num = $this->get_value("
+	    SELECT 
+		MAX(doc_num)+1 
+	    FROM 
+		document_list 
+	    WHERE 
+	    IF('$doc_type'>0,doc_type='$doc_type' AND is_reclamation=0,doc_type=-'$doc_type' AND is_reclamation=1) 
+	    AND active_company_id='$active_company_id' 
+	    ");
+	return $next_num ? $next_num : 1;
+    }
+   
     //////////////////////////////////////////
     // BODY SECTION
     //////////////////////////////////////////
@@ -359,6 +435,117 @@ abstract class DocumentBase extends Catalog{
 	$source_list=  implode(',', $source);
 	$this->query("INSERT INTO $table ($target_list) SELECT $source_list FROM imported_data WHERE label='$label' AND $product_code_source IN (SELECT product_code FROM stock_entries) ON DUPLICATE KEY UPDATE product_quantity=product_quantity+$quantity_source_field");
 	return $this->db->affected_rows();
+    }
+   // public $entrySuggestFetch=['q'=>'string','offset'=>['int',0],'limit'=>['int',10],'doc_id'=>['int',0],'category_id'=>['int',0]];
+    public function entrySuggestFetch(string $q, int $offset, int$limit, int $doc_id, int $category_id, bool $transliterated=false){
+	$price_query="0";
+        $pcomp_id=$this->Hub->pcomp('company_id');
+        $usd_ratio=$this->Hub->pref('usd_ratio');
+	if( $doc_id ){
+	    $this->documentSelect($doc_id);
+	    $pcomp_id=$this->doc('passive_company_id');
+	    $usd_ratio=$this->doc('doc_ratio');
+	}
+	$where="1";
+	if( strlen($q)==13 && is_numeric($q) ){
+	    $where="product_barcode=$q";
+	} else if( $q ){
+	    $cases=[];
+	    $clues=  explode(' ', $q);
+	    foreach ($clues as $clue) {
+		if ($clue == ''){
+		    continue;
+		}
+		$cases[]="(product_code LIKE '%$clue%' OR ru LIKE '%$clue%')";
+	    }
+	    if( count($cases)>0 ){
+		$where=implode(' AND ',$cases);
+	    }
+	}
+        if( $category_id ){
+            $branch_ids = $this->treeGetSub('stock_tree', $category_id);
+            $where .= " AND parent_id IN (" . implode(',', $branch_ids) . ")";
+        }
+        if( $this->doc('doc_type')==3 || $this->doc('doc_type')==4 ){
+            $where .= " AND is_service=1";
+        }
+	$sql="
+	    SELECT
+		product_code,
+		ru product_name,
+		product_spack,
+		product_quantity leftover,
+                product_img,
+		product_unit,
+		GET_SELL_PRICE(product_code,{$pcomp_id},{$usd_ratio}) product_price_total,
+                GET_PRICE(product_code,{$pcomp_id},{$usd_ratio}) product_price_total_raw
+	    FROM
+		stock_entries
+		    JOIN
+		prod_list USING(product_code)
+	    WHERE $where
+	    ORDER BY fetch_count-DATEDIFF(NOW(),fetch_stamp) DESC, product_code
+	    LIMIT $limit OFFSET $offset";
+        $output=$this->get_list($sql);
+        if( !count($output) ){
+            return $this->entrySuggestTransliterate($q,$transliterated,$offset,$limit,$doc_id,$category_id);
+        }
+        return $output;
+    }
+    
+    private function entrySuggestTransliterate($q,$transliterated,$offset,$limit,$doc_id,$category_id){
+        if( $transliterated==false || $transliterated=='fromlatin' ){
+            if( $transliterated==false ){
+                $direction='fromlatin';
+            } else {
+                $direction='fromcyrilic';
+            }
+            
+            return $this->suggestFetch($this->transliterate($q,$direction),$offset,$limit,$doc_id,$category_id,$direction);
+        }
+        return [];
+    }
+    
+    public $entryRecalc=['int','double'];
+    public function entryRecalc( $doc_id, $proc=0 ){
+	$this->documentSelect($doc_id);
+        $this->entryBreakevenPriceUpdate(null,$doc_id);
+	$Document2=$this->Hub->bridgeLoad('Document');
+	$Document2->selectDoc($doc_id);
+	$Document2->recalc($proc);
+    }
+    private function entryBreakevenPriceUpdate( $doc_entry_id=null, $doc_id=null ){
+        if( !$doc_entry_id&&!$doc_id ){
+            return;
+        }
+        $pcomp_id=$this->doc('passive_company_id');
+        $usd_ratio=$this->doc('doc_ratio');
+        $doc_type=$this->doc('doc_type');
+        if( $doc_type!=1 ){
+            echo '$doc_type!=1';
+            return;
+        }
+        if( $doc_entry_id ){
+            $where="doc_entry_id=$doc_entry_id";
+        } else {
+            $where="doc_id=$doc_id";
+        }
+        if( $this->Hub->pcomp('skip_breakeven_check') ){
+            $sql="UPDATE 
+                    document_entries 
+                SET 
+                    breakeven_price = 0
+                WHERE 
+                    $where";
+        } else {
+            $sql="UPDATE 
+                    document_entries 
+                SET 
+                    breakeven_price = ROUND(GET_BREAKEVEN_PRICE(product_code,'$pcomp_id','$usd_ratio',self_price),2)
+                WHERE 
+                    $where";
+        }
+        $this->query($sql);
     }
     //////////////////////////////////////////
     // FOOT SECTION

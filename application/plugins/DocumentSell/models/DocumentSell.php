@@ -44,8 +44,7 @@ class DocumentSell extends DocumentBase{
 	$this->documentSelect($doc_id);
 	$doc_type=$this->doc('doc_type');
 	if( $doc_type!='sell' && $doc_type!=1 ){
-	    $this->Hub->msg("wrong_doc_type");
-	    return false;
+            return parent::headGet($doc_id);
 	}
 	$document=[];
 	if( in_array("head",$parts_to_load) ){
@@ -83,10 +82,15 @@ class DocumentSell extends DocumentBase{
     public function entryAdd($doc_id,$product_code,$product_quantity){
 	$this->documentSelect($doc_id);
 	$pcomp_id=$this->doc('passive_company_id');
+        if(!isset($pcomp_id)){
+            $doc_id = $this->documentAdd();
+            $this->documentSelect($doc_id);
+            $pcomp_id=$this->doc('passive_company_id');
+        }
+        
 	$doc_ratio=$this->doc('doc_ratio');
-	
 	$this->db_transaction_start();
-	$this->query("INSERT INTO document_entries SET doc_id=$doc_id,product_code='$product_code',invoice_price=COALESCE(GET_PRICE('$product_code',$pcomp_id,'$doc_ratio'),0)",false);
+        $this->query("INSERT INTO document_entries SET doc_id=$doc_id,product_code='$product_code',invoice_price=COALESCE(GET_PRICE('$product_code',$pcomp_id,'$doc_ratio'),0)",false);
 	$error = $this->db->error();
 	if($error['code']==1452){
 	    $this->Hub->msg("product_code_unknown");

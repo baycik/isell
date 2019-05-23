@@ -24,7 +24,7 @@
 		    DocList.grid.reload();
 		},
                 add:function(){
-                    
+                    //Document.load(0);
                 },
 		expand_collapse:function(){
 		    if (DocList.table.columnMode === 'advanced') {
@@ -35,8 +35,9 @@
 			App.store('document_list_table_mode', 'advanced');
 		    }
 		    DocList.table.render();
-		    DocList.grid.reload();
+		    DocList.tools.reload();
 		    DocList.tools.swap_expand_collapse();
+                    //DocList.table.setDimensions("#trade_main_tabs .panel-body");
 		},
 		swap_expand_collapse:function(){
 		    if(DocList.table.columnMode === 'advanced'){
@@ -48,8 +49,8 @@
 	    },
 	    table: {
 		frm:{
-		    round: function (num) {
-			return isNaN(num) ? '' : Number.parseFloat(num).toFixed(2);
+		    round: function (row, cell, value, columnDef, dataContext) {
+			return isNaN(value) ? '' : Number(value).toLocaleString("ru-RU", { style: 'currency', currency: 'RUB' });
 		    },
 		    tooltip: function (row, cell, value, columnDef, dataContext) {
 			if (!value) {
@@ -59,18 +60,24 @@
 			var cmd = parts.shift();
 			if (cmd) {
 			    var style = 'max-width:16px;height:auto';
-			    return '<img src="img/' + cmd + '.png" style="' + style + '" title="' + parts.join(' ') + '">';
+			    return '<img src="img/' + cmd + '.png" data-action="'+cmd+'" style="' + style + '" title="' + parts.join(' ') + '">';
 			} else {
 			    return '';
 			}
 		    },
+                    currency:function(row, cell, value, columnDef, dataContext){
+                        return value*1 ? Number.parseFloat(value).toLocaleString('ru-RU',{ style: 'currency', currency: 'RUB' }) : '';
+                    },
 		    dateFormatter: function (row, cell, value, columnDef, dataContext) {
+                        if( !value ){
+                            return '';
+                        }
 			var date_parts = value.split(' ')[0].split('-');
 			var date = date_parts[2] + '.' + date_parts[1] + '.' + date_parts[0];
 			return '<span title="' + value.split(' ')[1] + '">' + date + '</span>';
 		    }
 		},
-		columnMode: App.store('document_list_table_mode') || 'simple',
+		columnMode: /*App.store('document_list_table_mode') || */'simple',
 		init: function () {
 		    var settings = {
 			columns: [],
@@ -78,36 +85,79 @@
 			    enableCellNavigation: true,
 			    enableColumnReorder: false,
 			    enableFilter: true,
+                            disableLoadScroll:true,
+                            disableAutoload:true,
 			    multiSelect: false,
 			    url: 'DocumentList/listFetch',
-			    explicitInitialization: true
+			    explicitInitialization: true,
+                            pagesize:20,
+                            params:{
+                                mode:'add_empty_row'
+                            }
 			}
 		    };
 		    DocList.grid = $("#doclist_sg").slickgrid(settings);
 		    DocList.grid.onSelectedRowsChanged.subscribe(function (e, selection) {
 			var doclistRow = selection.grid.getDataItem(selection.rows[0]);
-			App.Document.init(doclistRow.doc_type);
+			//App.Document.init(doclistRow.doc_type);
 			App.Document.load(doclistRow.doc_id);
 		    });
-                    
+                    DocList.grid.onRenderFinished.subscribe(function(){
+                        if( DocList.selected_doc_id ){
+                            var rows=DocList.grid.getData();
+                            for(var num in rows){
+                                if(rows[num].doc_id==DocList.selected_doc_id){
+                                    DocList.grid.setSelectedRows([num]);
+                                    break;
+                                }
+                            }
+                        } else {
+                            DocList.grid.setSelectedRows([0]);
+                        }
+                    });
+                    DocList.grid.onClick.subscribe(function(e,cell){
+                        if( cell.cell==4 ){
+                            var row=DocList.grid.getDataItem(cell.row);
+                            if( row.trans_status ){
+                                var status=row.trans_status.split(' ')[0];
+                                if( "unpayed partly payed".indexOf(status)>-1 ){
+                                    App.loadWindow("page/accounts/document_pay",{doc_id:row.doc_id,total:row.doc_total}).done(function(fvalue){
+                                        DocList.tools.reload();
+                                    });
+                                } else if( "closing closed".indexOf(status)>-1 ){
+                                    App.flash("Документ уже оплачен");
+                                }
+                            }
+                        }
+                    });
+                    DocList.grid.onRenderFinished.subscribe(function(e,args){
+                        DocList.table.setDimensions("#doclist_sg .slick-viewport",DocList.table.columnSummaryWidth);
+                    });
+		    App.Topic('activeCompanySelected').subscribe(function (company) {
+			DocList.grid.updateOptions({params: {mode: 'show_only_pcomp_docs,add_empty_row'}});
+			DocList.tools.reload();
+                        //App.Document.load(0);
+		    });
 		    App.Topic('passiveCompanySelected').subscribe(function (company) {
-			DocList.grid.updateOptions({params: {mode: 'show_only_pcomp_docs'}});
-			DocList.grid.reload();
+			DocList.grid.updateOptions({params: {mode: 'show_only_pcomp_docs,add_empty_row'}});
+			DocList.tools.reload();
+                        //App.Document.load(0);
 		    });
 		    App.Topic('passiveCompanyReset').subscribe(function (company) {
-			DocList.grid.updateOptions({params: {mode: ''}});
-			DocList.grid.reload();
+			DocList.grid.updateOptions({params: {mode: 'add_empty_row'}});
+			DocList.tools.reload();
+                        //App.Document.load(0);
 		    });
 		    DocList.table.render();
 		    DocList.grid.init();
-		    DocList.grid.reload();
+		    //DocList.tools.reload();
 		},
 		columnsGet:function(){
                     var columns_lev1=[
                         {id: "doc_type_icon", field: "doc_type_icon", name: "", width: 25, formatter: DocList.table.frm.tooltip},
 			{id: "doc_num", field: "doc_num", name: "Номер", width: 50, sortable: true, cssClass: 'slick-align-right'},
 			{id: "cstamp", field: "cstamp", name: "Дата", width: 70, sortable: true, formatter: DocList.table.frm.dateFormatter},
-			{id: "doc_total", field: "doc_total", name: "Сумма", width: 80, sortable: true, cssClass: 'slick-align-right'},
+			{id: "doc_total", field: "doc_total", name: "Сумма", width: 80, sortable: true, cssClass: 'slick-align-right', formatter: DocList.table.frm.currency},
 			{id: "trans_status", field: "trans_status", name: "Оплачен", width: 25, sortable: true, formatter: DocList.table.frm.tooltip},
                     ];
                     var columns_adv=[
@@ -130,24 +180,79 @@
                         DocList.table.columnSummaryWidth+=cols[i].width+1;
                     }
 		    DocList.grid.setColumnsAndFilters(cols);
-		    DocList.table.setDimensions("#doclist_sg",25,0);
+                    
+                    DocList.table.setDimensions("#doclist_sg",DocList.table.columnSummaryWidth);
 		},
 		setDimensions:function(query, dw, dh){
-		    var col_width = DocList.table.columnSummaryWidth+ (dw || 0);
-		    $(query).css('width', col_width + 'px');
+                    if( dw===undefined ){
+                        dw=0;
+                    }
+                    if( dh===undefined ){
+                        dh=0;
+                    }
+                    var div = $(query)[0];
+                    var hasVerticalScrollbar = div.scrollHeight > div.clientHeight;
+                    if(hasVerticalScrollbar){
+                        dw+=20;
+                    }
+		    var width =(dw+5 || 0);
+		    $("#doclist_sg").css('width', width + 'px');
 		}
 	    }
-	};
+	}; 
+        var Document={
+	    doc_id:null,
+	    init:function(){
+		App.loadModule('page/trade/document',{doc_id:this.doc_id,open_in:'panel'},'DocInline',/(Doc|page_trade_document)([^\w]|_)/g,"DocInline$2").progress(function(status,param){
+                    if( DocInline.head && DocInline.head.props ){
+                        DocList.selected_doc_id=DocInline.head.props.doc_id;
+                    }
+                    switch( status ){
+			case 'close':
+			    $('#document_list_dg').datagrid('unselectAll');
+			    break;
+			case 'deleted':
+                            DocList.selected_doc_id=0;
+                            DocList.tools.reload();
+                            break;
+			case 'uncommit':
+			case 'commit':
+			case 'head_changed':
+			    DocList.tools.reload();
+			    break;
+			case 'entry_changed':
+			    DocList.tools.reload();
+			    break;
+			case 'created':
+			    DocList.tools.reload();
+			    break;
+			case 'pcomp_changed':
+			    App.user.pcompSelect({company_id:param});
+			    if( CtreeInline ){
+				CtreeInline.unselectTree();
+			    }
+			    break;
+		    }
+		});
+	    },
+	    load:function( doc_id ){
+		this.doc_id=doc_id;
+		if( Document && Document.data ){
+		    Document.data.doc_id=this.doc_id;
+		    Document.init();
+		} else {
+		    this.init();
+		}
+	    }
+	}
 	function init() {
 	    DocList.init();
-	    $("#Document").load("page/mtrade/document.html", function () {
-		App.Document.init('sell');
-		App.Document.load(App.Document.doc_id);
-	    });
-            
+            $("#Document").load("page/mtrade/document.html", function () {
+                App.Document.init('sell');
+                App.Document.load(App.Document.doc_id);
+            });
 	}
 	return {
-	    require: require,
 	    init: init
 	};
     })();

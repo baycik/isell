@@ -181,7 +181,7 @@ Document.head={
     },
     duplicate:function(){
         if( confirm("Создать копию этого документа?") ){
-            App.post("DocumentItems/duplicate/"+Document.doc_id,function(doc_id){
+            App.post(document_model+"/documentDuplicate/"+Document.doc_id,function(doc_id){
                 if( doc_id*1 ){
                     Document.doc_id = doc_id;
                     Document.reload();
@@ -235,7 +235,7 @@ Document.body={
 		textboxextField: 'product_code',
 		formatter:suggFormatter,
 		selectOnNavigation:false,
-		url: 'DocumentItems/suggestFetch/',
+		url: document_model+'/entrySuggestFetch/',
 		panelHeight:'auto',
 		mode: 'remote',
 		method:'get',
@@ -311,7 +311,7 @@ Document.body={
 		    enableColumnReorder: false,
 		    enableFilter:true,
 		    multiSelect :false,
-		    url:'DocumentSell/pickerListFetch'
+		    url:document_model+'/pickerListFetch'
 		}
 	    };
 	    var picklist=$("#"+holderId+" .x-body .x-stock").slickgrid(settings);
@@ -365,7 +365,7 @@ Document.body={
 	    App.loadWindow('page/dialog/importer',{label:'документ',fields_to_import:config}).progress(function(status,fvalue,Importer){
 		if( status==='submit' ){
 		    fvalue.doc_id=Document.doc_id;
-		    App.post("DocumentSell/entryImport/",fvalue,function(ok){
+		    App.post(document_model+"/entryImport/",fvalue,function(ok){
 			App.flash("Импортировано "+ok);
 			Importer.reload();
 			Document.reload(["body","foot"]);
@@ -397,7 +397,7 @@ Document.body={
         recalculate:function(){
 	    App.loadWindow('page/trade/document_recalculate').progress(function(state,data){
 		if( state==='submit' ){
-		    App.post("DocumentItems/recalc/"+Document.doc_id+'/'+(data.recalc_proc*1||0), function ( xhr ) {
+		    App.post(document_model+"/entryRecalc/"+Document.doc_id+'/'+(data.recalc_proc*1||0), function ( xhr ) {
                         Document.reload(["body","foot"]);
                         App.flash("Перерасчет выполнен");
 		    });
@@ -492,12 +492,12 @@ Document.foot = {
     init: function(){
     },
     render:function(footer){
-        footer.total_weight=footer.total_weight||0;
-        footer.total_volume=footer.total_volume||0;
-        footer.vatless=footer.vatless||0;
-        footer.vat=footer.vat||0;
-        footer.total=footer.total||0;
-        footer.curr_symbol=footer.curr_symbol||'-';
+        footer.total_weight=footer.total_weight||'0.00';
+        footer.total_volume=footer.total_volume||'0.00';
+        footer.vatless=footer.vatless||'0.00';
+        footer.vat=footer.vat||'0.00';
+        footer.total=footer.total||'0.00';
+        footer.curr_symbol=footer.curr_symbol||'';
         Document.data.foot=footer;
         App.renderTpl('Document_footer',Document.data.foot);
     },

@@ -1,4 +1,4 @@
-<?php
+ <?php
 /**
  * ACCOUNTS SPECIFIC FUNCTIONS
  * Accounting processing
