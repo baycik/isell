@@ -93,10 +93,14 @@ class CampaignManager extends Catalog{
                 plugin_campaign_bonus
             SET
                 campaign_id='$campaign_id',
-                bonus_type='volume',
+                bonus_type='VOLUME',
                 campaign_start_at=NOW(),
-                campaign_finish_at=DATE_ADD(NOW(), INTERVAL 1 YEAR)";
-        return $this->query($sql);
+                campaign_finish_at=DATE_ADD(NOW(), INTERVAL 1 YEAR),
+                campaign_grouping_interval='NOGROUP',
+                campaign_bonus_ratio1=0";
+        $ok=$this->query($sql);
+        $this->bonusPeriodsFill( $this->db->insert_id() );
+        return $ok;
     }
     
     public function bonusUpdate( int $campaign_bonus_id, string $field, string $value){
@@ -105,6 +109,11 @@ class CampaignManager extends Catalog{
             $this->bonusPeriodsClear( $campaign_bonus_id );
             $this->bonusPeriodsFill( $campaign_bonus_id );
         } else if( $field === 'campaign_start_at' || $field === 'campaign_finish_at'  ){
+            $now_year=date("Y");
+            $needed_year=substr($value,0,4);
+            if( abs($now_year-$needed_year)>3 ){
+                return false;
+            }
             $this->bonusPeriodsFill( $campaign_bonus_id );
         }
         return $ok;
@@ -152,9 +161,9 @@ class CampaignManager extends Catalog{
             $delta_month=$finish_month + $delta_year*12 - $start_month;
             $delta_quarter=$finish_quarter - $start_quarter + $delta_year*4;
             
-            $delete_sql="DELETE FROM plugin_campaign_bonus_periods WHERE ";
+            $delete_sql="DELETE FROM plugin_campaign_bonus_periods WHERE campaign_bonus_id='$campaign_bonus_id' AND";
             if( $bonus->campaign_grouping_interval =='YEAR' ){
-                for( $y=$start_year;$m<=$finish_year; $y++ ){
+                for( $y=$start_year;$y<=$finish_year; $y++ ){
                     $data=[
                         'campaign_bonus_id'=>$campaign_bonus_id,
                         'period_year'=>$y,
@@ -190,6 +199,27 @@ class CampaignManager extends Catalog{
                                 OR period_year=$finish_year AND period_quarter>$finish_quarter";
             }
             if( $bonus->campaign_grouping_interval =='MONTH' ){
+                for( $m=$start_month;$m<=$start_month+$delta_month; $m++ ){
+                    $year=$start_year+ceil($m/12)-1;
+                    $month=($m-1)%12+1;
+                    $quarter=ceil($month/3);
+                    $data=[
+                        'campaign_bonus_id'=>$campaign_bonus_id,
+                        'period_year'=>$year,
+                        'period_quarter'=>$quarter,
+                        'period_month'=>$month,
+                        'period_plan1'=>0,
+                        'period_plan2'=>0,
+                        'period_plan3'=>0
+                    ];
+                    $this->bonusPeriodCreate($data);
+                }
+                $delete_sql.="  period_year<$start_year 
+                                OR period_year>$finish_year
+                                OR period_year=$start_year AND period_month<$start_month
+                                OR period_year=$finish_year AND period_month>$finish_month";
+            }
+            if( $bonus->campaign_grouping_interval =='NOGROUP' ){
                 for( $m=$start_month;$m<=$start_month+$delta_month; $m++ ){
                     $year=$start_year+ceil($m/12)-1;
                     $month=($m-1)%12+1;
@@ -250,10 +280,13 @@ class CampaignManager extends Catalog{
                 $bonus_base= $this->bonusCalculateVolume($campaign_bonus,$period_on,$client_filter);
                 break;
             case 'PROFIT':
+                $bonus_base= $this->bonusCalculateProfit($campaign_bonus,$period_on,$client_filter);
                 break;
             case 'PAYMENT':
                 $bonus_base= $this->bonusCalculatePayment($campaign_bonus,$period_on,$client_filter);
                 break;
+            default:
+                return false;
         }
         $sql="SELECT
             *,
@@ -287,6 +320,7 @@ class CampaignManager extends Catalog{
                 {$bonus_base['where']}
             GROUP BY period_year,period_quarter,period_month
             ORDER BY period_year DESC,period_quarter DESC,period_month DESC) tt";
+            //die($sql);
         return $this->get_list($sql);
     }
     
@@ -303,18 +337,34 @@ class CampaignManager extends Catalog{
             $table.=" JOIN prod_list pl ON de.product_code=pl.product_code AND ($brand_filter) AND ($type_filter)";
         }
         return [
-            'table'=>"(SELECT doc_id,invoice_price,de.product_quantity FROM $table)",
+            'table'=>"(SELECT doc_id,invoice_price,de.product_quantity,de.breakeven_price,de.self_price FROM $table)",
             'where'=>$where
         ];
     }
     
     private function bonusCalculateVolume($campaign_bonus,$period_on,$client_filter){
-        
-        
-        // VAT VAT VAT
-        
         $product_range= $this->bonusCalculateProductRange($campaign_bonus);
-        $select="COALESCE(ROUND(SUM(invoice_price * product_quantity)),0)";
+        $select="COALESCE(ROUND(SUM(invoice_price * product_quantity * (dl.vat_rate/100+1))),0)";
+        $table="
+                    LEFT JOIN
+                document_list dl ON $period_on 
+                                    AND doc_type = 1 
+                                    AND is_commited 
+                                    AND NOT notcount 
+                                    AND passive_company_id IN (SELECT company_id FROM companies_list JOIN companies_tree USING(branch_id) WHERE $client_filter)
+                    LEFT JOIN
+                {$product_range['table']} product_range USING (doc_id)
+                ";
+        $where="";
+        return [
+            'select'=>$select,
+            'table'=>$table,
+            'where'=>$where
+        ];
+    }
+    private function bonusCalculateProfit($campaign_bonus,$period_on,$client_filter){
+        $product_range= $this->bonusCalculateProductRange($campaign_bonus);
+        $select="COALESCE(ROUND(SUM( (invoice_price-GREATEST(breakeven_price,self_price)) * product_quantity * (dl.vat_rate/100+1) )),0)";
         $table="
                     LEFT JOIN
                 document_list dl ON $period_on 

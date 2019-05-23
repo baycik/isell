@@ -1,7 +1,7 @@
 <?php
 
 $filename=<<<EOT
-views/accounts/accounts_main.html
+views/marketing/marketing_main.html
 EOT;
 $search=<<<EOT
 <!--PLUGIN-TABS-->
