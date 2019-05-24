@@ -1,6 +1,7 @@
 <script>
     App.CampaignManager_index = (function ($) {
         var campaign_id = 1;
+        var campaign_list=[];
         function init() {
             Campaign.init();
         }
@@ -14,12 +15,34 @@
 
         var Campaign = {
             init: function () {
-                this.get();
-                $("#Campaign_delete_btn").click(function(){
-                    
+                $('#CampaignManager-tabs-holder').append('<div id="CampaignManager-tabs"></div>');
+                $('#CampaignManager-tabs').tabs({
+                    onSelect: function(title,index){
+                        if( campaign_list[index] ){
+                            campaign_id=campaign_list[index].campaign_id;
+                            Campaign.get();
+                        } else {
+                            Campaign.add();
+                        }
+                    }
                 });
+                this.load();
             },
             data: {},
+            load:function(){
+                $.post("CampaignManager/campaignListFetch",function(resp){
+                    campaign_list = App.json(resp);
+                    for(let i in campaign_list){
+                        $('#CampaignManager-tabs').tabs('add',{title: campaign_list[i].campaign_name,index: i});
+                    }
+                    $('#CampaignManager-tabs').tabs('add',{title: "+ Добавить кампанию",selected:false});
+                    $('#CampaignManager-tabs').tabs('select',0);
+                });
+            },
+            reload:function(){
+                $('#CampaignManager-tabs').remove();
+                Campaign.init();
+            },
             render: function (data) {
                 Campaign.data = data;
                 for (let i in Campaign.data.bonuses) {
@@ -41,6 +64,9 @@
                         Campaign.update(this.name, App.val(this), this.title);
                     }
                 });
+                $("#Campaign_delete_btn").click(function(){
+                    Campaign.remove();
+                });
                 Clients.init();
                 Bonuses.init();
             },
@@ -53,17 +79,18 @@
             update: function (field, value, title) {
                 $.post("CampaignManager/campaignUpdate", {campaign_id: campaign_id, field: field, value: value}, function (ok) {
                     if (ok * 1) {
+                        Campaign.reload();
                         App.flash("updated " + title);
                     } else {
                         App.flash("not updated " + title);
                     }
-
                 });
             },
             remove: function () {
                 if (confirm("Delete this campaign?")) {
-                    $.post("Campaign/campaignRemove", {campaign_id: campaign_id}, function (ok) {
+                    $.post("CampaignManager/campaignRemove", {campaign_id: campaign_id}, function (ok) {
                         if (ok * 1) {
+                            Campaign.reload();
                             App.flash("removed");
                         } else {
                             App.flash("not removed");
@@ -72,8 +99,9 @@
                 }
             },
             add: function () {
-                $.post("Campaign/campaignAdd", function (ok) {
+                $.post("CampaignManager/campaignAdd",{campaign_name:"Новая кампания"}, function (ok) {
                     if (ok * 1) {
+                        Campaign.reload();
                         App.flash("added");
                     } else {
                         App.flash("not added");
@@ -129,6 +157,10 @@
                     var campaign_bonus_id=$(this).data('campaign_bonus_id');
                     Bonuses.remove(campaign_bonus_id);
                 });
+                $(".CampaignManager_bonuses_reload").click(function () {
+                    var campaign_bonus_id=$(this).data('campaign_bonus_id');
+                    Bonuses.periodsLoad(campaign_bonus_id);
+                });
                 
                 var lastCardsPromise;
                 for (let bonus of Campaign.data.bonuses) {
@@ -150,7 +182,7 @@
             },
             update: function (field, value, title, campaign_bonus_id) {
                 if( field==='campaign_start_at' || field==='campaign_finish_at' ){
-                    let now_year=new Date().getYear();
+                    let now_year=new Date().getFullYear();
                     let needed_year=value.substring(0,4);
                     let diff=Math.abs(now_year-needed_year);
                     if( diff>3 ){
@@ -188,6 +220,7 @@
                     var field = this.name.split('--')[0];
                     Bonuses.periodsUpdate(field, App.val(this), this.title, campaign_bonus_period_id,campaign_bonus_id);
                 });
+                Bonuses.periodsCardsIntoView();
             },
             periodsCardsIntoView:function(){
                 $(".is_current-1").each(function(i,current_card){
@@ -216,7 +249,11 @@
     {{period_cards}}
     <div style=""  class="is_current-{{is_current}}">
         <div style="height: 30px;font-size: 16px;padding: 4px;">
-            {{period_month|month|blank>}} {{period_year}}г <b>{{period_quarter|quarter}} кв</b>
+            {{if period_year|more>0}}
+                {{period_month|month|blank>}} {{period_year}}г <b>{{period_quarter|quarter}} кв</b>
+            {{else}}
+                {{campaign_start_at|chop>10}} &Gt; {{campaign_finish_at|chop>10}}
+            {{/if}}
         </div>
         <div>
             <div class="bonus-period-grid">
@@ -255,110 +292,111 @@
     </div>
     {{/period_cards}}
     {{else}}
-        Форма расчета не заполнена полностью
+        <div style="width:200px">
+            <div><h2>Пока еще кампания не настроена полностью</h2></div>
+            <div>Возможно форма расчета не заполнена полностью или не выбраны клиенты, по продажам которых расчитывается мотивация.</div>
+        </div>
     {{/if}}
 </script>
 
+<div style="padding: 10px;">
+    <div id="CampaignManager-tabs-holder"></div>
+    <div id="CampaignManager">
 
+        <div id="camp_manager_form">
 
-<div id="CampaignManager" style="padding: 10px;">
-    <div id="camp_manager_form">
-        <div class="easyui-tabs">
-            <div title="Campaign 1">
-
-            </div>
-        </div>
-        <div class="easyui-panel" title="Настройки Кампании" style="padding:10px">
-            <input type="text" title="Название" name="campaign_name">
-            <select name="liable_user_id" title="Менеджер">
-                <!--{{staff_list}}-->
-                <option value="{{user_id}}">{{full_name}}</option>
-                <!--{{/staff_list}}-->
-            </select>
-            <hr>
-            <button id="Campaign_delete_btn"><img src="img/delete.png"> Удалить Кампанию</button>
-        </div>
-        <div class="easyui-panel" title="Расчет бонусов Кампании">
-            <!--{{bonuses}}-->
-            <div class=" leftcol-grid">
-                <div style="padding: 5px">
-                    <fieldset>
-                        <select name="bonus_type-{{campaign_bonus_id}}" title="Вид бонуса" required>
-                            <option value="VOLUME">Бонус с объема</option>
-                            <option value="PROFIT">Бонус с наценки</option>
-                            <option value="PAYMENT">Бонус с оплаты</option>
-                        </select>
-
-                        <input type="date" name="campaign_start_at-{{campaign_bonus_id}}" title="Начало" required>
-                        <input type="date" name="campaign_finish_at-{{campaign_bonus_id}}" title="Конец" required>
-                        <select name="campaign_grouping_interval-{{campaign_bonus_id}}" title="Интервал" required>
-                            <option value="NOGROUP" selected="selected">Не группировать</option>
-                            <option value="MONTH">Месяц</option>
-                            <option value="QUARTER">Квартал</option>
-                            <option value="YEAR">Год</option>
-                        </select>
-                    </fieldset>
-                    <!--{{if bonus_type|equals>PAYMENT|falsy}}-->
-                    <fieldset>
-                        <legend>Товары для расчета бонуса</legend>
-                        <select name="product_category_id-{{campaign_bonus_id}}" title="Категор. товара">
-                            <option selected="selected">* Все</option>
-                            <!--{{stock_categories}}-->
-                            <option value="{{branch_id}}">{{label}}</option>
-                            <!--{{/stock_categories}}-->
-                        </select>
-                        <input name="product_brand_filter-{{campaign_bonus_id}}" title="Бренд товара">
-                        <input name="product_type_filter-{{campaign_bonus_id}}" title="Тип товара">
-                    </fieldset>
-                    <!--{{/if}}-->
-                    <fieldset>
-                        <legend>Процент бонуса по планам</legend>
-                        <input pattern="\d+" name="campaign_bonus_ratio1-{{campaign_bonus_id}}" title="План I бонус %" required>
-                        <input pattern="\d+" name="campaign_bonus_ratio2-{{campaign_bonus_id}}" title="План II бонус %">
-                        <input pattern="\d+" name="campaign_bonus_ratio3-{{campaign_bonus_id}}" title="План III бонус %">
-                    </fieldset>
-                    <div>
-                        <button class="CampaignManager_bonuses_delete" data-campaign_bonus_id="{{campaign_bonus_id}}"><img src="img/delete.png" style="width:16px"> Удалить расчет</button>
-                    </div>
-                </div>
-                <div class="CampaignManager_bonus_period_cards" id="CampaignManager_bonus_period_cards-{{campaign_bonus_id}}">
-                    ...
-                </div>
-            </div>
-            <hr>
-            <!--{{/bonuses}}-->
-            <button id="CampaignManager_bonuses_add"><img src="img/add.png" > Добавить расчет</button>
-        </div>
-        <div class="easyui-panel leftcol-grid" title="Клиенты Кампании">
-            <div>
-                <input type="text" title="Включить группу" name="subject_path_include">
-                <input type="text" title="Исключить группу" name="subject_path_exclude">
-                <select name="subject_manager_include" title="Включить закрепленных">
+            <div class="easyui-panel" title="Настройки Кампании" style="padding:10px">
+                <input type="text" title="Название" name="campaign_name">
+                <select name="liable_user_id" title="Менеджер">
                     <!--{{staff_list}}-->
                     <option value="{{user_id}}">{{full_name}}</option>
                     <!--{{/staff_list}}-->
                 </select>
-                <select name="subject_manager_exclude" title="Исключить закрепленных">
-                    <!--{{staff_list}}-->
-                    <option value="{{user_id}}">{{full_name}}</option>
-                    <!--{{/staff_list}}-->
-                </select>
+                <hr>
+                <button id="Campaign_delete_btn"><img src="img/delete.png"> Удалить Кампанию</button>
             </div>
-            <div  style="max-width:920px;">
-                <div class="x-campaign-clients-tools" style="display:grid;grid-template-columns: auto auto;">
-                    <div style="font-weight: bold;padding-top: 8px;">
-                        <img src="img/table16.png" style="width:16px;height: 16px;"> Список клиентов
+            <div class="easyui-panel" title="Расчет бонусов Кампании">
+                <!--{{bonuses}}-->
+                <div class=" leftcol-grid">
+                    <div style="padding: 5px">
+                        <fieldset>
+                            <select name="bonus_type-{{campaign_bonus_id}}" title="Вид бонуса" required>
+                                <option value="VOLUME">Бонус с объема</option>
+                                <option value="PROFIT">Бонус с наценки</option>
+                                <option value="PAYMENT">Бонус с оплаты</option>
+                            </select>
+
+                            <input type="date" name="campaign_start_at-{{campaign_bonus_id}}" title="Начало" required>
+                            <input type="date" name="campaign_finish_at-{{campaign_bonus_id}}" title="Конец" required>
+                            <select name="campaign_grouping_interval-{{campaign_bonus_id}}" title="Интервал" required>
+                                <option value="NOGROUP" selected="selected">Не группировать</option>
+                                <option value="MONTH">Месяц</option>
+                                <option value="QUARTER">Квартал</option>
+                                <option value="YEAR">Год</option>
+                            </select>
+                        </fieldset>
+                        <!--{{if bonus_type|equals>PAYMENT|falsy}}-->
+                        <fieldset>
+                            <legend>Товары для расчета бонуса</legend>
+                            <select name="product_category_id-{{campaign_bonus_id}}" title="Категор. товара">
+                                <option selected="selected">* Все</option>
+                                <!--{{stock_categories}}-->
+                                <option value="{{branch_id}}">{{label}}</option>
+                                <!--{{/stock_categories}}-->
+                            </select>
+                            <input name="product_brand_filter-{{campaign_bonus_id}}" title="Бренд товара">
+                            <input name="product_type_filter-{{campaign_bonus_id}}" title="Тип товара">
+                        </fieldset>
+                        <!--{{/if}}-->
+                        <fieldset>
+                            <legend>Процент бонуса по планам</legend>
+                            <input pattern="\d+" name="campaign_bonus_ratio1-{{campaign_bonus_id}}" title="План I бонус %" required>
+                            <input pattern="\d+" name="campaign_bonus_ratio2-{{campaign_bonus_id}}" title="План II бонус %">
+                            <input pattern="\d+" name="campaign_bonus_ratio3-{{campaign_bonus_id}}" title="План III бонус %">
+                        </fieldset>
+                        <div>
+                            <button class="CampaignManager_bonuses_delete" data-campaign_bonus_id="{{campaign_bonus_id}}"><img src="img/delete.png" style="width:16px"> Удалить расчет</button>
+                            <button class="CampaignManager_bonuses_reload" data-campaign_bonus_id="{{campaign_bonus_id}}"><img src="img/reload.png" style="width:16px"> Обновить расчет</button>
+                        </div>
                     </div>
-                    <div style="text-align: right">
-                        <span class="icon-24 icon-refresh" data-action="reload" title="Обновить"> </span> 
-                    </div>                    
+                    <div class="CampaignManager_bonus_period_cards" id="CampaignManager_bonus_period_cards-{{campaign_bonus_id}}">
+                        ...
+                    </div>
                 </div>
-                <div id="CampaignManager_clients_sg" style="height: 300px;"></div>
+                <hr>
+                <!--{{/bonuses}}-->
+                <button id="CampaignManager_bonuses_add"><img src="img/add.png" > Добавить расчет</button>
+            </div>
+            <div class="easyui-panel leftcol-grid" title="Клиенты Кампании">
+                <div>
+                    <input type="text" title="Включить группу" name="subject_path_include">
+                    <input type="text" title="Исключить группу" name="subject_path_exclude">
+                    <select name="subject_manager_include" title="Включить закрепленных">
+                        <!--{{staff_list}}-->
+                        <option value="{{user_id}}">{{full_name}}</option>
+                        <!--{{/staff_list}}-->
+                    </select>
+                    <select name="subject_manager_exclude" title="Исключить закрепленных">
+                        <!--{{staff_list}}-->
+                        <option value="{{user_id}}">{{full_name}}</option>
+                        <!--{{/staff_list}}-->
+                    </select>
+                </div>
+                <div  style="max-width:920px;">
+                    <div class="x-campaign-clients-tools" style="display:grid;grid-template-columns: auto auto;">
+                        <div style="font-weight: bold;padding-top: 8px;">
+                            <img src="img/table16.png" style="width:16px;height: 16px;"> Список клиентов
+                        </div>
+                        <div style="text-align: right">
+                            <span class="icon-24 icon-refresh" data-action="reload" title="Обновить"> </span> 
+                        </div>                    
+                    </div>
+                    <div id="CampaignManager_clients_sg" style="height: 300px;"></div>
+                </div>
             </div>
         </div>
     </div>
 </div>
-
 <style>
     .leftcol-grid{
         display: grid;
@@ -398,12 +436,13 @@
         max-width: 100%;
         object-fit: cover;
         margin: 5px;
-        background-color: rgba(255,255,255,.3);
-        border:4px solid rgba(255,255,255,0.8)
+        -background-color: rgba(255,255,255,.3);
+        background-image: url(img/window-bg.png);
+        border:4px solid rgba(255,255,255,1);
     }
     .CampaignManager_bonus_period_cards>div>div:first-child{
         min-width: 230px;
-        background-color: rgba(255,255,255,.5);
+        background-color: rgba(255,255,255,1);
     }
     .CampaignManager_bonus_period_cards>div>div{
         padding: 5px;

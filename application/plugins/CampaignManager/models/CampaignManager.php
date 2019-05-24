@@ -15,6 +15,11 @@ class CampaignManager extends Catalog{
         $this->load->view('campaign_manager.html');
     }
     
+    public function campaignListFetch(){
+        $sql="SELECT * FROM isell_db.plugin_campaign_list";
+        return $this->get_list($sql);
+    }
+    
     public function campaignGet( int $campaign_id ){
         $settings=$this->get_row("SELECT * FROM plugin_campaign_list WHERE campaign_id='$campaign_id'");
         return [
@@ -25,8 +30,8 @@ class CampaignManager extends Catalog{
         ];
     }
     
-    public function campaignAdd(){
-        return $this->create('plugin_campaign_list');
+    public function campaignAdd( string $campaign_name ){
+        return $this->create('plugin_campaign_list',['campaign_name'=>$campaign_name,'liable_user_id'=>0,'subject_manager_include'=>0,'subject_manager_exclude'=>0]);
     }
     
     public function campaignRemove(int $campaign_id){
@@ -57,6 +62,7 @@ class CampaignManager extends Catalog{
         if( $settings->subject_manager_exclude ){
             $and_case[]=" manager_id <> '".str_replace(",", "' OR manager_id <> '", $settings->subject_manager_exclude)."'";
         }
+        $where="";
         if( count($or_case) ){
             $where="(".implode(' OR ',$or_case).")";
         }
@@ -66,7 +72,7 @@ class CampaignManager extends Catalog{
             }
             $where.=implode(' AND ', $and_case);
         }
-        return $where?$where:1;
+        return $where?$where:0;
     }
     
     public function clientListFetch(int $campaign_id, int $offset,int $limit,string $sortby='label',string $sortdir='ASC',array $filter){
@@ -212,6 +218,7 @@ class CampaignManager extends Catalog{
                         'period_plan2'=>0,
                         'period_plan3'=>0
                     ];
+                    //print_r($data);
                     $this->bonusPeriodCreate($data);
                 }
                 $delete_sql.="  period_year<$start_year 
@@ -220,25 +227,17 @@ class CampaignManager extends Catalog{
                                 OR period_year=$finish_year AND period_month>$finish_month";
             }
             if( $bonus->campaign_grouping_interval =='NOGROUP' ){
-                for( $m=$start_month;$m<=$start_month+$delta_month; $m++ ){
-                    $year=$start_year+ceil($m/12)-1;
-                    $month=($m-1)%12+1;
-                    $quarter=ceil($month/3);
-                    $data=[
-                        'campaign_bonus_id'=>$campaign_bonus_id,
-                        'period_year'=>$year,
-                        'period_quarter'=>$quarter,
-                        'period_month'=>$month,
-                        'period_plan1'=>0,
-                        'period_plan2'=>0,
-                        'period_plan3'=>0
-                    ];
-                    $this->bonusPeriodCreate($data);
-                }
-                $delete_sql.="  period_year<$start_year 
-                                OR period_year>$finish_year
-                                OR period_year=$start_year AND period_month<$start_month
-                                OR period_year=$finish_year AND period_month>$finish_month";
+                $data=[
+                    'campaign_bonus_id'=>$campaign_bonus_id,
+                    'period_year'=>0,
+                    'period_quarter'=>0,
+                    'period_month'=>0,
+                    'period_plan1'=>0,
+                    'period_plan2'=>0,
+                    'period_plan3'=>0
+                ];
+                $this->bonusPeriodCreate($data);
+                $delete_sql.="  period_year<>0 ";//delete all periods
             }
             $this->query($delete_sql);
             return true;
@@ -258,22 +257,26 @@ class CampaignManager extends Catalog{
     
     public function bonusCalculate( int $campaign_bonus_id ){
         $campaign_bonus=$this->bonusGet($campaign_bonus_id);
+        if(!$campaign_bonus){
+            return false;//notfound
+        }
         $client_filter=$this->clientListFilterGet($campaign_bonus->campaign_id);
+        $is_current_detection="1";
         switch( $campaign_bonus->campaign_grouping_interval ){
             case 'MONTH':
-                //$select_interval=",DATE_FORMAT(cstamp,'%m.%Y') time_interval";
-                //$period_filter='AND period_month<>0';
                 $period_on=" YEAR(cstamp)=period_year AND MONTH(cstamp)=period_month ";
+                $is_current_detection="CONCAT(period_month,'.',period_year)=CONCAT(MONTH(NOW()),'.',YEAR(NOW()))";
                 break;
             case 'QUARTER':
-                //$select_interval=",CONCAT(QUARTER(cstamp),' ',YEAR(cstamp)) time_interval";
-                //$period_filter='AND period_quarter<>0 AND period_month=0';
                 $period_on=" YEAR(cstamp)=period_year AND QUARTER(cstamp)=period_quarter";
+                $is_current_detection="CONCAT(period_quarter,'.',period_year)=CONCAT(QUARTER(NOW()),'.',YEAR(NOW()))";
+                break;
+            case 'YEAR':
+                $period_on=" YEAR(cstamp)=period_year ";
+                $is_current_detection="period_year=YEAR(NOW())";
                 break;
             default :
-                //$select_interval='';
-                //$period_filter='AND period_year<>0 AND period_quarter=0';
-                $period_on=" YEAR(cstamp)=period_year ";
+                $period_on=" 1 ";//whole period
         }
         switch( $campaign_bonus->bonus_type ){
             case 'VOLUME':
@@ -298,7 +301,7 @@ class CampaignManager extends Catalog{
             ROUND(bonus_base/period_plan1*100) period_percent1,
             ROUND(bonus_base/period_plan2*100) period_percent2,
             ROUND(bonus_base/period_plan3*100) period_percent3,
-            CONCAT(period_month,'.',period_quarter,'.',period_year)=CONCAT(MONTH(NOW()),'.',QUARTER(NOW()),'.',YEAR(NOW())) is_current
+            $is_current_detection is_current
         FROM (
             SELECT
                 pcb.*,
@@ -355,7 +358,7 @@ class CampaignManager extends Catalog{
                     LEFT JOIN
                 {$product_range['table']} product_range USING (doc_id)
                 ";
-        $where="";
+        $where="AND dl.cstamp>'{$campaign_bonus->campaign_start_at}' AND dl.cstamp<'{$campaign_bonus->campaign_finish_at}'";
         return [
             'select'=>$select,
             'table'=>$table,
@@ -375,7 +378,7 @@ class CampaignManager extends Catalog{
                     LEFT JOIN
                 {$product_range['table']} product_range USING (doc_id)
                 ";
-        $where="";
+        $where="AND dl.cstamp>'{$campaign_bonus->campaign_start_at}' AND dl.cstamp<'{$campaign_bonus->campaign_finish_at}'";
         return [
             'select'=>$select,
             'table'=>$table,
@@ -391,7 +394,7 @@ class CampaignManager extends Catalog{
                             AND passive_company_id IN (SELECT company_id FROM companies_list JOIN companies_tree USING(branch_id) WHERE $client_filter)
                             AND acc_credit_code='$payment_account'
                 ";
-        $where="";
+        $where="AND at.cstamp>'{$campaign_bonus->campaign_start_at}' AND at.cstamp<'{$campaign_bonus->campaign_finish_at}'";
         return [
             'select'=>$select,
             'table'=>$table,
