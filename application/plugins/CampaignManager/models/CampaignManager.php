@@ -1,5 +1,5 @@
 <?php
-/* User Level: 2
+/* User Level: 3
  * Group Name: Продажи
  * Plugin Name: CampaignManager
  * Version: 2019-01-05
@@ -13,6 +13,18 @@ class CampaignManager extends Catalog{
     
     public function index(){
         $this->load->view('campaign_manager.html');
+    }
+    
+    public function install(){
+	$install_file=__DIR__."/../install/install.sql";
+	$this->load->model('Maintain');
+	return $this->Maintain->backupImportExecute($install_file);
+    }
+    
+    public function uninstall(){
+	$uninstall_file=__DIR__."/../install/uninstall.sql";
+	$this->load->model('Maintain');
+	return $this->Maintain->backupImportExecute($uninstall_file);
     }
     
     public function campaignListFetch(){
@@ -240,6 +252,7 @@ class CampaignManager extends Catalog{
                 $delete_sql.="  period_year<>0 ";//delete all periods
             }
             $this->query($delete_sql);
+            //echo $delete_sql;
             return true;
         }
         return false;
@@ -255,9 +268,9 @@ class CampaignManager extends Catalog{
     }
     
     
-    public function bonusCalculate( int $campaign_bonus_id ){
+    public function bonusCalculate( int $campaign_bonus_id, bool $only_current_period=false ){
         $campaign_bonus=$this->bonusGet($campaign_bonus_id);
-        if(!$campaign_bonus){
+        if( !$campaign_bonus ){
             return false;//notfound
         }
         $client_filter=$this->clientListFilterGet($campaign_bonus->campaign_id);
@@ -291,6 +304,12 @@ class CampaignManager extends Catalog{
             default:
                 return false;
         }
+        
+        $current_filter="";
+        if( $only_current_period ){
+            $current_filter="AND $is_current_detection";
+        }
+        
         $sql="SELECT
             *,
             ROUND(bonus_base*
@@ -321,6 +340,7 @@ class CampaignManager extends Catalog{
             WHERE
                 campaign_bonus_id = $campaign_bonus_id
                 {$bonus_base['where']}
+                $current_filter
             GROUP BY period_year,period_quarter,period_month
             ORDER BY period_year DESC,period_quarter DESC,period_month DESC) tt";
             //die($sql);
@@ -355,10 +375,11 @@ class CampaignManager extends Catalog{
                                     AND is_commited 
                                     AND NOT notcount 
                                     AND passive_company_id IN (SELECT company_id FROM companies_list JOIN companies_tree USING(branch_id) WHERE $client_filter)
+                                    AND dl.cstamp>'{$campaign_bonus->campaign_start_at}' AND dl.cstamp<'{$campaign_bonus->campaign_finish_at}'
                     LEFT JOIN
                 {$product_range['table']} product_range USING (doc_id)
                 ";
-        $where="AND dl.cstamp>'{$campaign_bonus->campaign_start_at}' AND dl.cstamp<'{$campaign_bonus->campaign_finish_at}'";
+        $where="";
         return [
             'select'=>$select,
             'table'=>$table,
@@ -375,10 +396,11 @@ class CampaignManager extends Catalog{
                                     AND is_commited 
                                     AND NOT notcount 
                                     AND passive_company_id IN (SELECT company_id FROM companies_list JOIN companies_tree USING(branch_id) WHERE $client_filter)
+                                    AND dl.cstamp>'{$campaign_bonus->campaign_start_at}' AND dl.cstamp<'{$campaign_bonus->campaign_finish_at}'
                     LEFT JOIN
                 {$product_range['table']} product_range USING (doc_id)
                 ";
-        $where="AND dl.cstamp>'{$campaign_bonus->campaign_start_at}' AND dl.cstamp<'{$campaign_bonus->campaign_finish_at}'";
+        $where="";
         return [
             'select'=>$select,
             'table'=>$table,
@@ -393,8 +415,9 @@ class CampaignManager extends Catalog{
                         acc_trans at ON $period_on
                             AND passive_company_id IN (SELECT company_id FROM companies_list JOIN companies_tree USING(branch_id) WHERE $client_filter)
                             AND acc_credit_code='$payment_account'
+                            AND at.cstamp>'{$campaign_bonus->campaign_start_at}' AND at.cstamp<'{$campaign_bonus->campaign_finish_at}'
                 ";
-        $where="AND at.cstamp>'{$campaign_bonus->campaign_start_at}' AND at.cstamp<'{$campaign_bonus->campaign_finish_at}'";
+        $where="";
         return [
             'select'=>$select,
             'table'=>$table,

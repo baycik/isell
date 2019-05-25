@@ -6,10 +6,10 @@
             Campaign.init();
         }
         Mark.pipes.month=function(index){
-            return ['','Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Ноябрь','Декабрь'][index];
+            return ['huh----','Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'][index];
         };
         Mark.pipes.quarter=function(index){
-            return ['','I','II','III','IV'][index];
+            return ['','Iкв','IIкв','IIIкв','IVкв'][index];
         };
 
 
@@ -162,13 +162,11 @@
                     Bonuses.periodsLoad(campaign_bonus_id);
                 });
                 
-                var lastCardsPromise;
                 for (let bonus of Campaign.data.bonuses) {
-                    lastCardsPromise=Bonuses.periodsLoad(bonus.campaign_bonus_id);
+                    Bonuses.periodsLoad(bonus.campaign_bonus_id).done(function(){
+                        Bonuses.periodsCardsIntoView(bonus.campaign_bonus_id);
+                    });
                 }
-                lastCardsPromise && lastCardsPromise.done(function(){
-                    Bonuses.periodsCardsIntoView();
-                });
             },
             add: function () {
                 $.post("CampaignManager/bonusAdd", {campaign_id: campaign_id}, function () {
@@ -215,18 +213,23 @@
                 var period_cards_holder=`#CampaignManager_bonus_period_cards-${campaign_bonus_id}`;
                 var tpl=$("#CampaignManager_bonus_periods_tpl").html();
                 $(period_cards_holder).html(Mark.up(tpl,{period_cards:periodsCardData}));
+                $(period_cards_holder+" .is_current-1").css('borderColor','#Fe6');
                 App.setupForm(period_cards_holder, {}, 'use_inp_values').change(function (node) {
                     var campaign_bonus_period_id = this.name.split('--')[1];
                     var field = this.name.split('--')[0];
                     Bonuses.periodsUpdate(field, App.val(this), this.title, campaign_bonus_period_id,campaign_bonus_id);
                 });
-                Bonuses.periodsCardsIntoView();
             },
-            periodsCardsIntoView:function(){
-                $(".is_current-1").each(function(i,current_card){
-                    current_card && current_card.scrollIntoView({behavior: "smooth", block: "center", inline: "start"});
-                });
-                $(".is_current-1").css('borderColor','#Fe9');
+            periodsCardsIntoView:function( campaign_bonus_id ){
+                var period_cards_holder=`#CampaignManager_bonus_period_cards-${campaign_bonus_id}`;
+                let current_card=$(period_cards_holder+" .is_current-1");
+                if( !current_card.length ){
+                    return;
+                }
+                current_card.parent().scrollLeft(0);
+                let card_left=current_card.offset().left-20;
+                let holder_left=current_card.parent().offset().left-20;
+                current_card.parent().scrollLeft( card_left-holder_left );
             },
             periodsUpdate:function(field, value, title, campaign_bonus_period_id,campaign_bonus_id) {
                 $.post("CampaignManager/bonusPeriodUpdate", {campaign_bonus_period_id: campaign_bonus_period_id, field: field, value: value}, function (ok) {
@@ -250,7 +253,15 @@
     <div style=""  class="is_current-{{is_current}}">
         <div style="height: 30px;font-size: 16px;padding: 4px;">
             {{if period_year|more>0}}
-                {{period_month|month|blank>}} {{period_year}}г <b>{{period_quarter|quarter}} кв</b>
+                
+                {{if period_month|more>0 }}
+                    {{period_month|month|blank>}}
+                    
+                {{else}}
+                    <b>{{period_quarter|quarter}}</b>
+                {{/if}}
+                {{period_year}}г 
+                
             {{else}}
                 {{campaign_start_at|chop>10}} &Gt; {{campaign_finish_at|chop>10}}
             {{/if}}
@@ -271,19 +282,19 @@
             <div id="bonus_chart-{{campaign_bonus_period_id}}">
                 {{if period_percent1}}
                 План I {{period_percent1}}%
-                <div class="cart-bar" style="border: 1px solid greenyellow">
+                <div class="card-bar" style="border: 1px solid greenyellow">
                     <div style="max-width:{{period_percent1}}%;background-color: greenyellow"></div>
                 </div>
                 {{/if}}
                 {{if period_percent2}}
                 План II {{period_percent2}}%
-                <div class="cart-bar" style="border: 1px solid orange">
+                <div class="card-bar" style="border: 1px solid orange">
                     <div style="max-width:{{period_percent2}}%;background-color: orange"></div>
                 </div>
                 {{/if}}
                 {{if period_percent3}}
                 План III {{period_percent3}}%
-                <div class="cart-bar" style="border: 1px solid blueviolet">
+                <div class="card-bar" style="border: 1px solid blueviolet">
                     <div style="max-width:{{period_percent3}}%;background-color: blueviolet"></div>
                 </div>
                 {{/if}}
@@ -438,7 +449,7 @@
         margin: 5px;
         -background-color: rgba(255,255,255,.3);
         background-image: url(img/window-bg.png);
-        border:4px solid rgba(255,255,255,1);
+        border:4px solid #bcf;
     }
     .CampaignManager_bonus_period_cards>div>div:first-child{
         min-width: 230px;
@@ -450,7 +461,7 @@
     .CampaignManager_bonus_period_cards input{
         width:100px;
     }
-    .CampaignManager_bonus_period_cards .cart-bar>div{
+    .CampaignManager_bonus_period_cards .card-bar>div{
         height: 15px;
         opacity: 0.6;
     }
