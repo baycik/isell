@@ -1,5 +1,5 @@
 <?php
-/* User Level: 3
+/* User Level: 2
  * Group Name: Продажи
  * Plugin Name: CampaignManager
  * Version: 2019-01-05
@@ -9,30 +9,35 @@
  * Trigger After: CampaignManager
  */
 class CampaignManager extends Catalog{
-    public $min_level=3;
+    public $min_level=2;
     
     public function index(){
+        $this->Hub->set_level(3);
         $this->load->view('campaign_manager.html');
     }
     
     public function install(){
+        $this->Hub->set_level(4);
 	$install_file=__DIR__."/../install/install.sql";
 	$this->load->model('Maintain');
 	return $this->Maintain->backupImportExecute($install_file);
     }
     
     public function uninstall(){
+        $this->Hub->set_level(4);
 	$uninstall_file=__DIR__."/../install/uninstall.sql";
 	$this->load->model('Maintain');
 	return $this->Maintain->backupImportExecute($uninstall_file);
     }
     
     public function campaignListFetch(){
-        $sql="SELECT * FROM isell_db.plugin_campaign_list";
+        $this->Hub->set_level(3);
+        $sql="SELECT * FROM plugin_campaign_list";
         return $this->get_list($sql);
     }
     
     public function campaignGet( int $campaign_id ){
+        $this->Hub->set_level(3);
         $settings=$this->get_row("SELECT * FROM plugin_campaign_list WHERE campaign_id='$campaign_id'");
         return [
             'settings'=>$settings,
@@ -43,18 +48,22 @@ class CampaignManager extends Catalog{
     }
     
     public function campaignAdd( string $campaign_name ){
+        $this->Hub->set_level(3);
         return $this->create('plugin_campaign_list',['campaign_name'=>$campaign_name,'liable_user_id'=>0,'subject_manager_include'=>0,'subject_manager_exclude'=>0]);
     }
     
     public function campaignRemove(int $campaign_id){
+        $this->Hub->set_level(3);
         return $this->delete('plugin_campaign_list',['campaign_id'=>$campaign_id]);
     }
     
     public function campaignUpdate(int $campaign_id,string $field,string $value){
+        $this->Hub->set_level(3);
         return $this->update('plugin_campaign_list',[$field=>$value],['campaign_id'=>$campaign_id]);
     }
     
     private function clientListFilterGet($campaign_id){
+        $this->Hub->set_level(3);
         $settings=$this->get_row("SELECT * FROM plugin_campaign_list WHERE campaign_id='$campaign_id'");
         $assigned_path=  $this->Hub->svar('user_assigned_path');
         $or_case=[];
@@ -88,6 +97,7 @@ class CampaignManager extends Catalog{
     }
     
     public function clientListFetch(int $campaign_id, int $offset,int $limit,string $sortby='label',string $sortdir='ASC',array $filter){
+        $this->Hub->set_level(3);
         $having=$this->makeFilter($filter);
         $where=$this->clientListFilterGet($campaign_id);
         $sql="
@@ -106,6 +116,7 @@ class CampaignManager extends Catalog{
     }
     
     public function bonusAdd( int $campaign_id ){
+        $this->Hub->set_level(3);
         $sql="
             INSERT INTO 
                 plugin_campaign_bonus
@@ -122,6 +133,7 @@ class CampaignManager extends Catalog{
     }
     
     public function bonusUpdate( int $campaign_bonus_id, string $field, string $value){
+        $this->Hub->set_level(3);
         $ok=$this->update('plugin_campaign_bonus',[$field=>$value],['campaign_bonus_id'=>$campaign_bonus_id]);
         if( $field === 'campaign_grouping_interval' ){
             $this->bonusPeriodsClear( $campaign_bonus_id );
@@ -138,6 +150,7 @@ class CampaignManager extends Catalog{
     }
     
     public function bonusRemove( int $campaign_bonus_id ){
+        $this->Hub->set_level(3);
         $this->bonusPeriodsClear( $campaign_bonus_id );
         return $this->delete('plugin_campaign_bonus',['campaign_bonus_id'=>$campaign_bonus_id]);
     }
@@ -161,6 +174,7 @@ class CampaignManager extends Catalog{
     }
     
     public function bonusPeriodUpdate( int $campaign_bonus_period_id, string $field, string $value){
+        $this->Hub->set_level(3);
         return $this->update('plugin_campaign_bonus_periods',[$field=>$value],['campaign_bonus_period_id'=>$campaign_bonus_period_id]);
     }
     
@@ -267,8 +281,12 @@ class CampaignManager extends Catalog{
         return $this->query($sql);
     }
     
+    public function bonusCalculate( int $campaign_bonus_id ){
+        $this->Hub->set_level(3);$campaign_bonus=$this->bonusGet($campaign_bonus_id);
+        return $this->bonusCalculateResult($campaign_bonus_id);
+    }
     
-    public function bonusCalculate( int $campaign_bonus_id, bool $only_current_period=false ){
+    private function bonusCalculateResult( int $campaign_bonus_id, bool $only_current_period=false ){
         $campaign_bonus=$this->bonusGet($campaign_bonus_id);
         if( !$campaign_bonus ){
             return false;//notfound
@@ -424,4 +442,24 @@ class CampaignManager extends Catalog{
             'where'=>$where
         ];
     }
+    
+    public function bonusChartView(){
+        $this->load->view('bonus_chart.html');
+    }
+    
+    public function bonusCalculatePersonal(){
+        $this->Hub->set_level(2);
+        $liable_user_id=$this->Hub->svar('user_id');
+        $sql="SELECT * FROM plugin_campaign_list JOIN plugin_campaign_bonus USING(campaign_id) WHERE liable_user_id=$liable_user_id";
+        $personal_bonuses=[];
+        $campaign_list=$this->get_list($sql);
+        foreach( $campaign_list as $campaign ){
+            $personal_bonuses[]=[
+                'campaign_name'=>$campaign->campaign_name,
+                'current_result'=>$this->bonusCalculateResult($campaign->campaign_bonus_id,true)
+            ];
+        }
+        return $personal_bonuses;
+    }
+    
 }
