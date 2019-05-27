@@ -99,6 +99,9 @@
 		    DocList.grid = $("#doclist_sg").slickgrid(settings);
 		    DocList.grid.onSelectedRowsChanged.subscribe(function (e, selection) {
 			var doclistRow = selection.grid.getDataItem(selection.rows[0]);
+                        if(!doclistRow){
+                            return false;
+                        }
 			//App.Document.init(doclistRow.doc_type);
 			App.Document.load(doclistRow.doc_id);
 		    });

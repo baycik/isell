@@ -407,6 +407,7 @@ Document.body={
     },
     table:{
 	init:function(){
+
 	    var settings={
 		columns:[
 		    {id:"queue",name: "№", width: 30,formatter:Document.body.table.formatters.queue },
@@ -414,8 +415,8 @@ Document.body={
 		    {id:"product_name", field: "product_name",name: "Название", sortable: true, width: 388},
 		    {id:"product_quantity", field: "product_quantity",name: "Кол-во", sortable: true, width: 70, cssClass:'slick-align-right', editor: Slick.Editors.Integer},
 		    {id:"product_unit", field: "product_unit",name: "Ед.", width: 30, sortable: true },
-		    {id:"product_price_total", field: "product_price_total",name: "Цена", sortable: true, width: 70, cssClass:'slick-align-right',asyncPostRender:Document.body.table.formatters.priceisloss, editor: Slick.Editors.Float},
-		    {id:"product_sum_total", field: "product_sum_total",name: "Сумма", sortable: true, width: 80,cssClass:'slick-align-right', editor: Slick.Editors.Float},
+		    {id:"product_price", field: "product_price",name: "Цена", sortable: true, width: 70, cssClass:'slick-align-right',asyncPostRender:Document.body.table.formatters.priceisloss, editor: Slick.Editors.Float},
+		    {id:"product_sum", field: "product_sum",name: "Сумма", sortable: true, width: 80,cssClass:'slick-align-right', editor: Slick.Editors.Float},
 		    {id:"row_status", field: "row_status",name: "!",sortable: true, width: 25,formatter:Document.body.table.formatters.tooltip },
 		    //{id:"party_label",field:"party_label",name:"Партия",width:120, editor: Slick.Editors.Text},
 		    //{id:"analyse_origin",field:'analyse_origin',name:"Происхождение",width:70},
@@ -439,8 +440,32 @@ Document.body={
 		var field=settings.columns[data.cell].field;
 		var value=updatedEntry[field];
 		Document.body.table.entryUpdate(updatedEntry.doc_entry_id,field,value);
-	    });	    
+	    });	  
+            $("#"+holderId+" .x-body .x-entries").click(function(e){
+                var row = Document.body.table_sg.getSelectedRows()[0];
+                var action = $(e.target).data('action');
+                var row_data = Document.body.table_sg.getData()[row];
+		if( action ){
+		    Document.body.table.actions[ action ] && Document.body.table.actions[action](row_data);
+		}
+            });
+             
 	},
+        actions:{
+            err_reserve:function(row_data){
+                location.hash="#Stock#stock_main_tabs=Резерв&product_code="+row_data.product_code;
+            },
+            err_breakeven:function(row_data){
+                var url=document_model+'/entryUpdate';
+                $.post(url,{doc_id:Document.doc_id,doc_entry_id:row_data.doc_entry_id,field:'product_price',value:row_data.breakeven_price},function(ok){
+                    if( !(ok*1) ){
+                        App.flash("Строка не изменена");
+                    }
+                    Document.reload(["body","foot"]);
+                });
+                App.flash("Цена изменена на "+row_data.breakeven_price);
+            }
+            },
 	formatters:{
 	    queue:function(row, cell, value, columnDef, dataContext){
 		return row+1;
@@ -450,7 +475,7 @@ Document.body={
 		    var parts = value.split(' ');
 		    var cmd = parts.shift();
 		    if (cmd){
-			return '<img src="img/' + cmd + '.png" style="max-width:16px;height:auto" title="' + parts.join(' ') + '">';
+			return '<img src="img/' + cmd + '.png" style="max-width:16px;height:auto; cursor: pointer" title="' + parts.join(' ') + '" data-action="' + cmd + '">';
 		    }
 		}
 		return '';
@@ -483,6 +508,7 @@ Document.body={
 		Document.reload(["body","foot"]);
 	    });
 	}
+        
     }
     /*
      * @TODO add export table

@@ -107,7 +107,6 @@ class DocumentItems extends DocumentCore{
                     doc_entry_id,
                     ROUND(invoice_price * @curr_correction, 2) AS product_price_vatless,
                     ROUND(invoice_price * @curr_correction * product_quantity,2) product_sum_vatless,
-		    
                     ROUND(invoice_price * @curr_correction * @vat_ratio, 2) AS product_price_total,
 		    ROUND(invoice_price * @curr_correction * @vat_ratio * product_quantity,2) product_sum_total,
                     ROUND(breakeven_price,2) breakeven_price,

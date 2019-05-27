@@ -81,7 +81,7 @@ abstract class DocumentBase extends Catalog{
 	return $new_doc_id;
     }
     protected function documentNumNext($acomp_id,$doc_type){
-	echo $sql="SELECT 
+	$sql="SELECT 
 		MAX(doc_num)+1 
 	    FROM 
 		document_list 
@@ -93,8 +93,8 @@ abstract class DocumentBase extends Catalog{
 	$next_num = $this->get_value($sql);
 	return $next_num ? $next_num : 1;
     }
-    public $documentUpdate=['doc_id'=>'int','field'=>'string','value'=>'string'];
-    public function documentUpdate($doc_id,$field,$value){
+    
+    public function documentUpdate( int $doc_id, string $field, string $value){
 	$this->Hub->set_level(2);
         if(!$doc_id){
             $doc_id = $this->documentAdd();
@@ -113,6 +113,7 @@ abstract class DocumentBase extends Catalog{
 		$ok=$this->transChangeNotcount((bool) $value );
 		break;
 	    case 'use_vatless_price':
+                $this->query("UPDATE document_list SET use_vatless_price = '$value' WHERE doc_id='$doc_id'");
 		break;
 	    case 'doc_ratio':
 		$ok=$this->transChangeCurrRatio( $value );
@@ -126,7 +127,9 @@ abstract class DocumentBase extends Catalog{
 	    case 'doc_num':
 		if( !is_int((int)$value)){
 		    return false;
-		}
+		};
+	    case 'extra_expenses':
+		return $this->documentSetExtraExpenses($value);   
 	}
 	if( !$ok ){
 	    return false;
@@ -224,6 +227,8 @@ abstract class DocumentBase extends Catalog{
 	$sql="
 	    SELECT
 		doc_id,
+		active_company_id,
+                (SELECT label FROM companies_tree JOIN companies_list USING(branch_id) WHERE company_id=active_company_id) active_company_label,
 		passive_company_id,
                 (SELECT label FROM companies_tree JOIN companies_list USING(branch_id) WHERE company_id=passive_company_id) label,
 		IF(is_reclamation,-doc_type,doc_type) doc_type,
@@ -235,16 +240,21 @@ abstract class DocumentBase extends Catalog{
 		signs_after_dot,
 		doc_ratio,
 		doc_num,
-		DATE_FORMAT(cstamp,'%Y-%m-%d') doc_date,
+                doc_status_id,
+		DATE_FORMAT(document_list.cstamp,'%Y-%m-%d') doc_date,
 		doc_data,
-		(SELECT last_name FROM user_list WHERE user_id=created_by) created_by,
-		(SELECT last_name FROM user_list WHERE user_id=modified_by) modified_by
+		(SELECT last_name FROM user_list WHERE user_id=document_list.created_by) created_by,
+		(SELECT last_name FROM user_list WHERE user_id=document_list.modified_by) modified_by,
+                (SELECT last_name FROM user_list WHERE user_id=checkout_list.modified_by) checkout_modifier,
+                checkout_status, checkout_id
 	    FROM
 		document_list
+                    LEFT JOIN
+                checkout_list ON checkout_list.parent_doc_id=document_list.doc_id
 	    WHERE doc_id=$doc_id"
 	;
 	$head=$this->get_row($sql);
-	//$head->extra_expenses=$this->getExtraExpenses();
+	$head->extra_expenses=$this->documentGetExtraExpenses();
 	return $head;
     }
     protected function headPreviousGet($acomp_id,$pcomp_id){
@@ -309,49 +319,82 @@ abstract class DocumentBase extends Catalog{
 	    ");
 	return $next_num ? $next_num : 1;
     }
-   
+    protected function calcCorrections( $skip_vat_correction=false, $skip_curr_correction=false ) {
+	$doc_id=$this->doc('doc_id');
+	$curr_code=$this->Hub->pcomp('curr_code');
+	$native_curr=($this->Hub->pcomp('curr_code') == $this->Hub->acomp('curr_code'))?1:0;
+	$sql="SELECT 
+		@vat_ratio:=1+vat_rate/100,
+		@vat_correction:=IF(use_vatless_price OR '$skip_vat_correction',1,@vat_ratio),
+		@curr_correction:=IF($native_curr OR '$skip_curr_correction',1,1/doc_ratio),
+		@curr_symbol:=(SELECT curr_symbol FROM curr_list WHERE curr_code='$curr_code'),
+                @signs_after_dot:=signs_after_dot
+	    FROM
+		document_list
+	    WHERE
+		doc_id='$doc_id'";
+	$this->query($sql);
+    }
     //////////////////////////////////////////
     // BODY SECTION
     //////////////////////////////////////////
     protected function bodyGet($doc_id){
 	$this->entriesTmpCreate( $doc_id );
-        $this->footGet();
-	return $this->get_list("SELECT * FROM tmp_doc_entries");
+        if( $this->doc('use_vatless_price') ){
+            $sql="SELECT *, product_price_vatless product_price, product_sum_vatless product_sum FROM tmp_doc_entries";
+        } else {
+            $sql="SELECT *, product_price_total product_price, product_sum_total product_sum FROM tmp_doc_entries";
+        }
+        return $this->get_list($sql);
     }
-    protected function entriesTmpCreate( $doc_id ){
-	//$this->documentSelect($doc_id);
-	$doc_vat_ratio=1+$this->doc('vat_rate')/100;
-	//$signs_after_dot=$this->doc('signs_after_dot');
-	$curr_correction=$this->documentCurrencyCorrectionGet();
-
+    
+    
+    protected function entriesTmpCreate( $doc_id, $skip_vat_correction = false, $skip_curr_correction = false ){
+	$doc_id=$this->doc('doc_id');
+	$this->calcCorrections( $skip_vat_correction, $skip_curr_correction );
+        $curr_code=$this->Hub->acomp('curr_code');
+	$company_lang = $this->Hub->pcomp('language');
+        $pcomp_price_label=$this->Hub->pcomp('price_label');
         $this->query("DROP TEMPORARY TABLE IF EXISTS tmp_doc_entries");
-        $sql="CREATE TEMPORARY TABLE tmp_doc_entries ( INDEX(product_code) ) ENGINE=MyISAM AS (
-                SELECT 
+        $sql="CREATE TEMPORARY TABLE tmp_doc_entries ( INDEX(product_code) ) AS (
+                SELECT
                     *,
-                    ROUND(corrected_price, 2) AS product_price_vatless,
-                    ROUND(corrected_price * $doc_vat_ratio, 2) AS product_price_total,
-                    ROUND(corrected_price * product_quantity,2) product_sum_vatless,
-                    ROUND(corrected_price * $doc_vat_ratio * product_quantity,2) product_sum_total
+                    IF(doc_type=1,product_price_total-buy<0.01,product_price_total-buy>0.01) is_loss
                 FROM
                 (SELECT
-                    de.*,
-                    ru product_name,
-		    invoice_price * $curr_correction corrected_price,
-		    invoice_price<(self_price-0.01) is_loss,
-		    product_quantity*product_weight weight,
+                    doc_entry_id,
+                    ROUND(invoice_price * @curr_correction, 2) AS product_price_vatless,
+                    ROUND(invoice_price * @curr_correction * product_quantity,2) product_sum_vatless,
+                    ROUND(invoice_price * @curr_correction * @vat_ratio, 2) AS product_price_total,
+		    ROUND(invoice_price * @curr_correction * @vat_ratio * product_quantity,2) product_sum_total,
+                    ROUND(breakeven_price,2) breakeven_price,
+                    product_quantity*product_weight weight,
                     product_quantity*product_volume volume,
+                    pl.product_code,
+                    $company_lang product_name,
+                    (product_quantity+0) product_quantity,
                     CHK_ENTRY(doc_entry_id) AS row_status,
                     product_unit,
-                    analyse_origin
+                    party_label,
+                    product_article,
+                    analyse_origin,
+                    analyse_class,
+                    self_price,
+                    buy*IF(curr_code IS NULL OR curr_code='' OR '$curr_code'=ppl.curr_code,1,doc_ratio*@curr_correction) buy,
+                        curr_code,
+                    doc_type
                 FROM
                     document_list
                         JOIN
                     document_entries de USING(doc_id)
                         JOIN 
                     prod_list pl USING(product_code)
+                        LEFT JOIN
+                    price_list ppl ON de.product_code=ppl.product_code AND label='$pcomp_price_label'
                 WHERE
                     doc_id='$doc_id'
-                ORDER BY pl.product_code) t)";
+                ORDER BY pl.product_code) t
+                )";
         $this->query($sql);
     }
     /*protected function entryAdd(){
@@ -436,8 +479,9 @@ abstract class DocumentBase extends Catalog{
 	$this->query("INSERT INTO $table ($target_list) SELECT $source_list FROM imported_data WHERE label='$label' AND $product_code_source IN (SELECT product_code FROM stock_entries) ON DUPLICATE KEY UPDATE product_quantity=product_quantity+$quantity_source_field");
 	return $this->db->affected_rows();
     }
-   // public $entrySuggestFetch=['q'=>'string','offset'=>['int',0],'limit'=>['int',10],'doc_id'=>['int',0],'category_id'=>['int',0]];
-    public function entrySuggestFetch(string $q, int $offset, int$limit, int $doc_id, int $category_id, bool $transliterated=false){
+            
+    public function entrySuggestFetch(string $q, int $offset = 0, int $limit = 10, int $doc_id = 0, int $category_id = 0, bool $transliterated=false){
+        $this->documentSelect($doc_id);
 	$price_query="0";
         $pcomp_id=$this->Hub->pcomp('company_id');
         $usd_ratio=$this->Hub->pref('usd_ratio');
@@ -514,39 +558,7 @@ abstract class DocumentBase extends Catalog{
 	$Document2->selectDoc($doc_id);
 	$Document2->recalc($proc);
     }
-    private function entryBreakevenPriceUpdate( $doc_entry_id=null, $doc_id=null ){
-        if( !$doc_entry_id&&!$doc_id ){
-            return;
-        }
-        $pcomp_id=$this->doc('passive_company_id');
-        $usd_ratio=$this->doc('doc_ratio');
-        $doc_type=$this->doc('doc_type');
-        if( $doc_type!=1 ){
-            echo '$doc_type!=1';
-            return;
-        }
-        if( $doc_entry_id ){
-            $where="doc_entry_id=$doc_entry_id";
-        } else {
-            $where="doc_id=$doc_id";
-        }
-        if( $this->Hub->pcomp('skip_breakeven_check') ){
-            $sql="UPDATE 
-                    document_entries 
-                SET 
-                    breakeven_price = 0
-                WHERE 
-                    $where";
-        } else {
-            $sql="UPDATE 
-                    document_entries 
-                SET 
-                    breakeven_price = ROUND(GET_BREAKEVEN_PRICE(product_code,'$pcomp_id','$usd_ratio',self_price),2)
-                WHERE 
-                    $where";
-        }
-        $this->query($sql);
-    }
+    
     //////////////////////////////////////////
     // FOOT SECTION
     //////////////////////////////////////////
@@ -709,4 +721,31 @@ abstract class DocumentBase extends Catalog{
 	    LIMIT $limit OFFSET $offset";
 	return $this->get_list($sql);
     }
-}
+    
+      /*===============================*/
+     /*==TO DO: MOVE TO DOCUMENT BUY==*/ 
+    /*===============================*/
+    
+    private function documentSetExtraExpenses($expense){//not beautifull function at all
+	$doc_type=$this->doc('doc_type');
+	$doc_id=$this->doc('doc_id');
+	if($doc_id && $doc_type==2){
+	    //only for buy documents
+	    $footer=$this->footerGet();
+	    $expense_ratio=$expense/$footer->vatless+1;
+	    return $this->query("UPDATE document_entries SET self_price=invoice_price*$expense_ratio WHERE doc_id=$doc_id");
+	}
+    }
+    private function documentGetExtraExpenses(){
+	$doc_type=$this->doc('doc_type');
+	$doc_id=$this->doc('doc_id');
+	if($doc_id && $doc_type==2){
+	    //only for buy documents
+	    $footer=$this->footerGet();
+	    $expense_ratio=$this->get_value("SELECT self_price/invoice_price FROM document_entries WHERE doc_id=$doc_id LIMIT 1");
+	    $expense=$footer->vatless*($expense_ratio-1);
+	    return $expense;
+	}
+	return 0;
+    }
+}    
