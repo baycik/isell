@@ -475,6 +475,7 @@ class CampaignManager extends Catalog{
     }
     
     public function dashboardManagerStatistics(){
+        $this->Hub->set_level(2);
         $liable_user_id=$this->Hub->svar('user_id');
         $campaigns=$this->get_list("SELECT * FROM plugin_campaign_bonus JOIN plugin_campaign_list USING(campaign_id) WHERE liable_user_id='$liable_user_id'");
         $sqls=[];
@@ -482,7 +483,7 @@ class CampaignManager extends Catalog{
             $client_filter=$this->clientListFilterGet($campaign->campaign_id);
             $sqls[]="
                 SELECT
-                    *
+                    doc_id,passive_company_id
                 FROM
                     document_list dl 
                 WHERE 

@@ -75,14 +75,6 @@
                 </tbody>
                 <!--{{/current_result}}-->
             </table>
-
-
-
-
-
-
-
-
         </div>
     </div>
     {{/campaigns}}
@@ -91,8 +83,10 @@
 <script>
 App.dashboardCampaigns = {
     init: function () {
-        App.dashboardCampaigns.campaigns.load();
-        App.dashboardCampaigns.statistics.load();
+        if( App.user.props.user_level>1 ){
+            App.dashboardCampaigns.campaigns.load();
+            App.dashboardCampaigns.statistics.load();
+        }
     },
     campaigns: {
         load: function () {

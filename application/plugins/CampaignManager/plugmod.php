@@ -25,7 +25,7 @@ EOT;
 $before[]=<<<EOT
 EOT;
 $after[]=<<<EOT
-<div id="CampaignManager_dashboard_holder" class="ui green segment raised" style="margin: 10px;"></div>
+<div id="CampaignManager_dashboard_holder" class="ui blue segment raised" style="margin: 10px;"></div>
 <script>
     $("#CampaignManager_dashboard_holder").load("../CampaignManager/dashboardMobiSell");
 </script>
