@@ -66,6 +66,9 @@ class CampaignManager extends Catalog{
         $this->Hub->set_level(3);
         $settings=$this->get_row("SELECT * FROM plugin_campaign_list WHERE campaign_id='$campaign_id'");
         $assigned_path=  $this->Hub->svar('user_assigned_path');
+        /*
+         * WARNING FILTER COMP TREE BY BRANCH LEVEL
+         */
         $or_case=[];
         $and_case=[];
         if( $assigned_path ){
@@ -96,7 +99,7 @@ class CampaignManager extends Catalog{
         return $where?$where:0;
     }
     
-    public function clientListFetch(int $campaign_id, int $offset,int $limit,string $sortby='label',string $sortdir='ASC',array $filter){
+    public function clientListFetch(int $campaign_id, int $offset=0,int $limit=30,string $sortby='label',string $sortdir='ASC',array $filter){
         $this->Hub->set_level(3);
         $having=$this->makeFilter($filter);
         $where=$this->clientListFilterGet($campaign_id);
@@ -338,6 +341,7 @@ class CampaignManager extends Catalog{
             ROUND(bonus_base/period_plan1*100) period_percent1,
             ROUND(bonus_base/period_plan2*100) period_percent2,
             ROUND(bonus_base/period_plan3*100) period_percent3,
+            (SELECT label FROM stock_tree WHERE branch_id=product_category_id) product_category_label,
             $is_current_detection is_current
         FROM (
             SELECT
@@ -444,6 +448,7 @@ class CampaignManager extends Catalog{
     }
     
     public function bonusChartView(){
+        $this->Hub->set_level(2);
         $this->load->view('bonus_chart.html');
     }
     
@@ -460,6 +465,40 @@ class CampaignManager extends Catalog{
             ];
         }
         return $personal_bonuses;
+    }
+    
+    
+    
+    public function dashboardMobiSell(){
+        $this->Hub->set_level(2);
+        $this->load->view("dashboard_mobisell.html");
+    }
+    
+    public function dashboardManagerStatistics(){
+        $liable_user_id=$this->Hub->svar('user_id');
+        $campaigns=$this->get_list("SELECT * FROM plugin_campaign_bonus JOIN plugin_campaign_list USING(campaign_id) WHERE liable_user_id='$liable_user_id'");
+        $sqls=[];
+        foreach($campaigns as $campaign){
+            $client_filter=$this->clientListFilterGet($campaign->campaign_id);
+            $sqls[]="
+                SELECT
+                    *
+                FROM
+                    document_list dl 
+                WHERE 
+                    doc_type = 1 
+                    AND is_commited 
+                    AND NOT notcount 
+                    AND passive_company_id IN (SELECT company_id FROM companies_list JOIN companies_tree USING(branch_id) WHERE $client_filter)
+                    AND MONTH(cstamp) = MONTH(CURRENT_DATE()) AND YEAR(cstamp) = YEAR(CURRENT_DATE())";
+        }
+        $super_table=implode(') UNION (',$sqls);
+        $sql="
+            SELECT 
+                COUNT(DISTINCT doc_id) invoice_count,
+                COUNT(DISTINCT passive_company_id) client_count
+            FROM (($super_table))t";
+        return $this->get_row($sql);
     }
     
 }

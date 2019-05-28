@@ -6,7 +6,7 @@
             Campaign.init();
         }
         Mark.pipes.month=function(index){
-            return ['huh----','Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'][index];
+            return ['','Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'][index];
         };
         Mark.pipes.quarter=function(index){
             return ['','Iкв','IIкв','IIIкв','IVкв'][index];
@@ -253,7 +253,6 @@
     <div style=""  class="is_current-{{is_current}}">
         <div style="height: 30px;font-size: 16px;padding: 4px;">
             {{if period_year|more>0}}
-                
                 {{if period_month|more>0 }}
                     {{period_month|month|blank>}}
                     

@@ -15,10 +15,15 @@ class MobiSell extends PluginManager {
         ob_start("ob_gzhandler");
         parent::__construct();
     }
-    public $index = [];
+
     public function index() {
         $this->load->view('index.html');
     }
+    
+    public function view( string $path ){
+	$this->load->view($path);
+    }
+    
     public $version = [];
     public function version() {
         $parent_dir=dirname(__DIR__);
