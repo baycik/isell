@@ -458,13 +458,19 @@ class CampaignManager extends Catalog{
         $sql="SELECT * FROM plugin_campaign_list JOIN plugin_campaign_bonus USING(campaign_id) WHERE liable_user_id=$liable_user_id";
         $personal_bonuses=[];
         $campaign_list=$this->get_list($sql);
+        $result_total=0;
         foreach( $campaign_list as $campaign ){
+            $current_result=$this->bonusCalculateResult($campaign->campaign_bonus_id,true);
             $personal_bonuses[]=[
                 'campaign_name'=>$campaign->campaign_name,
-                'current_result'=>$this->bonusCalculateResult($campaign->campaign_bonus_id,true)
+                'current_result'=>$current_result
             ];
+            $result_total+=$current_result[0]->bonus_result;
         }
-        return $personal_bonuses;
+        return [
+                'total'=>$result_total,
+                'bonuses'=>$personal_bonuses
+                ];
     }
     
     

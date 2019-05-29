@@ -1,14 +1,18 @@
 <div class="ui header">Статистика продаж за месяц</div>
 <div id="CampaignStat">
-    <div class="ui blue image label">
+    <div class="ui blue image label" style="margin: 3px">
         <i class="icon user alternate"></i> Клиентов за месяц <div class="detail">{{client_count}}</div>
     </div>
-    <div class="ui teal image label">
+    <div class="ui teal image label" style="margin: 3px">
         <i class="icon file alternate"></i> Накладных за месяц <div class="detail">{{invoice_count}}</div> 
     </div>
 </div>
+<div class="ui header">Мотивации</div>
 <div id="CampaignCharts">
-    {{campaigns}}
+    <div class="ui green image label">
+        <i class="icon money"></i> Общий результат <div class="detail">{{campaigns.total}}</div> 
+    </div>
+    {{campaigns.bonuses}}
     <div class="ui segment grid stackable">
         <div class="six wide column">
             <canvas id="campaign-chart{{current_result.0.campaign_bonus_id}}" style="width: 100%"></canvas>
@@ -33,22 +37,6 @@
                         </td>
                     </tr>
                     <tr>
-                        <td><i class="icon circle" style="color:rgba(100,240,100)"></i> План I ({{campaign_bonus_ratio1}}%):</td>
-                        <td>{{period_plan1}}</td>
-                    </tr>
-                    <!--{{if period_plan2|more>0}}-->
-                    <tr>
-                        <td><i class="icon circle" style="color:rgba(100,230,255)"></i>План II ({{campaign_bonus_ratio2}}%):</td>
-                        <td>{{period_plan2}}</td>
-                    </tr>
-                    <!--{{if period_plan3|more>0}}-->
-                    <tr>
-                        <td><i class="icon circle" style="color:rgba(100,100,255)"></i>План III ({{campaign_bonus_ratio3}}%):</td>
-                        <td>{{period_plan3}}</td>
-                    </tr>
-                    <!--{{/if}}-->
-                    <!--{{/if}}-->
-                    <tr>
                         <td>База начисления:</td>
                         <td>
                             {{if bonus_type|equals>VOLUME}}Оборот{{/if}}
@@ -66,33 +54,99 @@
                     </tr>
                     <tr>
                         <td>Сумма:</td>
-                        <td>{{bonus_base}}</td>
+                        <td>
+                            <!--{{if bonus_type|equals>PROFIT}}-->
+                            {{bonus_base|percent}} баллов
+                            <!--{{else}}-->
+                            {{bonus_base}}
+                            <!--{{/if}}-->
+                        </td>
                     </tr>
+
+                    <tr>
+                        <td><i class="icon circle" style="color:rgba(100,240,100)"></i>
+                            {{if bonus_type|equals>PROFIT}}
+                            Балл=<b>{{campaign_bonus_ratio1}}</b>:
+                            {{else}}
+                            План I ({{campaign_bonus_ratio1}}%):
+                            {{/if}}
+                        </td>
+                        <td>{{if period_plan1|more>0}} 
+                            
+                                {{if bonus_type|equals>PROFIT}}
+                                    {{period_plan1|percent}}
+                                {{else}}
+                                    {{period_plan1}}
+                                {{/if}}
+                            
+                            {{else}} без ограничений {{/if}}</td>
+                    </tr>
+                    <!--{{if period_plan2|more>0}}-->
+                    <tr>
+                        <td><i class="icon circle" style="color:rgba(100,230,255)"></i>
+                            {{if bonus_type|equals>PROFIT}}
+                            Балл=<b>{{campaign_bonus_ratio2}}</b>:
+                            {{else}}
+                            План II ({{campaign_bonus_ratio2}}%):
+                            {{/if}}
+                        </td>
+                        <td>
+                            {{if bonus_type|equals>PROFIT}}
+                                {{period_plan2|percent}}
+                            {{else}}
+                                {{period_plan2}}
+                            {{/if}}
+                        </td>
+                    </tr>
+                    <!--{{if period_plan3|more>0}}-->
+                    <tr>
+                        <td><i class="icon circle" style="color:rgba(100,100,255)"></i>
+                            {{if bonus_type|equals>PROFIT}}
+                            Балл=<b>{{campaign_bonus_ratio3}}</b>:
+                            {{else}}
+                            План III ({{campaign_bonus_ratio3}}%):
+                            {{/if}}
+                        </td>
+                        <td>
+                            {{if bonus_type|equals>PROFIT}}
+                                {{period_plan3|percent}}
+                            {{else}}
+                                {{period_plan3}}
+                            {{/if}}
+                        </td>
+                    </tr>
+                    <!--{{/if}}-->
+                    <!--{{/if}}-->
                     <tr>
                         <td>Результат:</td>
-                        <td>{{bonus_result}}</td>
+                        <td>
+                            {{bonus_result}}
+                        </td>
                     </tr>
                 </tbody>
                 <!--{{/current_result}}-->
             </table>
         </div>
     </div>
-    {{/campaigns}}
+    {{/campaigns.bonuses}}
 </div>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0/dist/Chart.min.js"></script>
 <script>
 App.dashboardCampaigns = {
     init: function () {
         if( App.user.props.user_level>1 ){
+
             App.dashboardCampaigns.campaigns.load();
             App.dashboardCampaigns.statistics.load();
         }
     },
     campaigns: {
+        scriptDeffered:{},
         load: function () {
+            let url="https://cdn.jsdelivr.net/npm/chart.js@2.8.0/dist/Chart.min.js";
+            this.scriptDeffered=$.ajax({url: url,dataType: "script",cache: true,async:true});
             $.post("../CampaignManager/bonusCalculatePersonal/", function (resp) {
                 var personal_bonuses = App.json(resp);
-                if (!personal_bonuses || !personal_bonuses.length) {
+                if (!personal_bonuses || !personal_bonuses.bonuses.length) {
                     $("#CampaignCharts").html("<h2>Нет кампаний</h2>");
                     return;
                 }
@@ -106,9 +160,12 @@ App.dashboardCampaigns = {
             Mark.pipes.quarter = function (index) {
                 return ['', 'Iкв', 'IIкв', 'IIIкв', 'IVкв'][index];
             };
+            Mark.pipes.percent=function(number){
+                return number/100;
+            }
             App.renderTpl('CampaignCharts', {campaigns: personal_bonuses});
-            for (let i in personal_bonuses) {
-                App.dashboardCampaigns.campaigns.chartAdd(personal_bonuses[i]);
+            for (let i in personal_bonuses.bonuses) {
+                App.dashboardCampaigns.campaigns.chartAdd(personal_bonuses.bonuses[i]);
             }
         },
         chartAdd: function (bonus_data) {
@@ -131,9 +188,9 @@ App.dashboardCampaigns = {
             };
             config.data.datasets = App.dashboardCampaigns.campaigns.chartDatasetCalc(bonus_data);
             let chart_id = "#campaign-chart" + bonus_data.current_result[0].campaign_bonus_id;
-            setTimeout(function () {
+            App.dashboardCampaigns.campaigns.scriptDeffered.done(function(){
                 new Chart($(chart_id)[0].getContext('2d'), config);
-            }, 100);
+            });
         },
         chartDatasetCalc: function (bonus_data) {
             var doughnut1 = this.chartDatasetCalcArc(bonus_data.current_result[0], 1);
