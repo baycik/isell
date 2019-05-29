@@ -89,7 +89,7 @@ class CSVExporter extends Catalog {
             $all_categories = array_merge($all_categories, $this->getCategories($category->branch_id));
         }
         !is_dir("../public") && mkdir("../public", 0777);
-        $file_path = str_replace('\\', '/', realpath("../public")) . '/yaml_export.yaml';
+        $file_path = str_replace('\\', '/', realpath("../public")) . '/yml_export.yml';
         @unlink($file_path);
         $sql = "
             SELECT
@@ -100,18 +100,10 @@ class CSVExporter extends Catalog {
                 '' picture,
                 'false' store,
                 'pickup' delivery,
-                '' delivery_options,
                 REPLACE(ru, ';', ',') name,
                 REPLACE(product_code, ';', ',') vendorCode,
                 'true' manufacturer_warranty,
-                '' country_origin,
-                product_quantity,
-                pl.product_barcode barcode,
-                (SELECT 
-                    GROUP_CONCAT(IFNULL(
-                        (SELECT attribute_value FROM attribute_values av WHERE al.attribute_id = av.attribute_id AND av.product_id = pl.product_id), '') SEPARATOR '|')
-                    FROM attribute_list al ORDER BY al.attribute_id
-                ) attributes
+                pl.product_barcode barcode
             FROM
                 prod_list pl 
                     JOIN
@@ -154,7 +146,6 @@ class CSVExporter extends Catalog {
                 $xml_category = $xmlDoc->createElement('category',$category->label);
                 $category_node = $categories->appendChild($xml_category);
                 $category_node->setAttribute("id", $category->branch_id);
-                $category_node->setAttribute("parent_id", $category->parent_id);
             }
         }
         
@@ -166,7 +157,9 @@ class CSVExporter extends Catalog {
                 $item_node->setAttribute("id", $item->product_id);
                 $item_node->setAttribute("available", 'true');
                 foreach($item as $key=>$val){
-                    $product->appendChild($xmlDoc->createElement($key, $val));
+                    if($key != 'product_id'){
+                        $product->appendChild($xmlDoc->createElement($key, $val));
+                    }
                 }
             }
         }
