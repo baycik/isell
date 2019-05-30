@@ -181,11 +181,14 @@ class MobiSell extends PluginManager {
         }
         return $this->documentGet($doc_id);
     }
-    public $documentEntryUpdate = ['doc_id' => 'int', 'doc_entry_id' => 'int', 'product_code' => 'string', 'product_quantity' => 'int'];
-    public function documentEntryUpdate($doc_id, $doc_entry_id, $product_code, $product_quantity) {
+
+    public function documentEntryUpdate(int $doc_id, int $doc_entry_id, string $product_code, float $product_quantity, float $product_price=null) {
         $DocumentItems = $this->Hub->load_model("DocumentItems");
         if ($doc_entry_id) {
             $DocumentItems->entryUpdate($doc_id, $doc_entry_id, 'product_quantity', $product_quantity);
+            if( $product_price ){
+                $DocumentItems->entryUpdate($doc_id, $doc_entry_id, 'product_price', $product_price);
+            }
         } else {
             $DocumentItems->entryAdd($doc_id, $product_code, $product_quantity);
         }

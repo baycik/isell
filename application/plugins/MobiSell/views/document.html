@@ -13,7 +13,7 @@
                 if( state.doc_id!=App.document.doc.doc_id ){
                     App.document.load(App.state.doc_id);
                 }
-            }); 
+            });
 	},
 	focus: function () {
             App.title("Документ");
@@ -337,20 +337,23 @@
 		App.document.row.edit(suggest_entry, null);
 	    },
 	    edit: function (entry, index) {
+                entry.user_level=App.user.props.user_level;
 		App.renderTpl('document_entry_dialog', entry);
 		$('#document_entry_dialog').modal({
 		    onDeny: function () {
 			App.document.row.remove(index);
 		    },
 		    onApprove: function () {
-			entry.product_quantity = $("#document_entry_dialog input").val();
+			entry.product_quantity = $("#document_entry_dialog input[name=product_quantity]").val();
+			entry.product_price = $("#document_entry_dialog input[name=product_price]").val();
 			App.document.row.save(entry, index);
 		    },
 		    onVisible: function () {
 			$("#document_entry_dialog input").select();
+                        $('.ui.accordion').accordion();
 		    }
 		}).modal('show');
-		$("#document_entry_dialog input").val(entry.product_quantity);
+		//$("#document_entry_dialog input[name=product_quantity]").val(entry.product_quantity);
 	    },
 	    save: function (entry, index) {
 		if (index === null) {//new entry
@@ -369,8 +372,12 @@
 		    doc_id: App.document.doc.head.doc_id,
 		    doc_entry_id: entry.doc_entry_id,
 		    product_code: entry.product_code,
-		    product_quantity: entry.product_quantity
+		    product_quantity: entry.product_quantity,
+                    product_price:0
 		};
+                if( entry.product_price ){
+                    params.product_price=entry.product_price;
+                }
 		$.post('documentEntryUpdate/', params, function (resp) {
 		    App.document.set(App.json(resp));
 		});
@@ -429,13 +436,23 @@
 			    App.document.doc.entries[i].status_color = "green";
 			    App.document.doc.entries[i].status_message = "";
 			} else
-			if (status == 'wrn') {
+			if ( status == 'wrn' ) {
 			    App.document.doc.entries[i].status_icon = "warning sign";
 			    App.document.doc.entries[i].status_color = "orange";
 			    App.document.doc.entries[i].status_message = message;
 			} else
-			if (status == 'err' ) {
+			if ( status == 'err' ) {
 			    App.document.doc.entries[i].status_icon = "warning circle";
+			    App.document.doc.entries[i].status_color = "red";
+			    App.document.doc.entries[i].status_message = message;
+			}
+			if ( status.indexOf('reserve')>-1 ) {
+			    App.document.doc.entries[i].status_icon = "box";
+			    App.document.doc.entries[i].status_color = "red";
+			    App.document.doc.entries[i].status_message = message;
+			}
+			if ( status.indexOf('breakeven')>-1 ) {
+			    App.document.doc.entries[i].status_icon = "arrow alternate circle down outline";
 			    App.document.doc.entries[i].status_color = "red";
 			    App.document.doc.entries[i].status_message = message;
 			}
@@ -488,11 +505,11 @@
                 if( App.user.props.user_level<2 ){
                     for(var i in App.document.suggestion.entries){
                         var lo=App.document.suggestion.entries[i].leftover;
-                        App.document.suggestion.entries[i].stared_leftover=
+                        App.document.suggestion.entries[i].stared_leftover=(
                                 lo<10?'★☆☆☆☆':
                                 lo<50?'★★☆☆☆':
                                 lo<100?'★★★☆☆':
-                                lo<500?'★★★★☆':'★★★★★';
+                                lo<500?'★★★★☆':'★★★★★');
                     }
                 }
 		App.renderTpl('doc_suggestion_entries', {entries: App.document.suggestion.entries});
@@ -641,7 +658,7 @@
 	</table>
     </div>
         
-    <div class="ui bottom attached tab segment" data-tab="blanks" id="">
+    <div class="ui bottom attached tab segment" data-tab="blanks">
         <div id="document_blanks" class="ui unstackable two column grid">
             <!--{{blanks}}-->
             <div class="eight wide column" >
@@ -660,7 +677,7 @@
         </div>
     </div>
     
-    <div class="ui bottom attached tab segment" data-tab="prefs" id="">
+    <div class="ui bottom attached tab segment" data-tab="prefs">
 	<div class="ui form fluid segment" id="document_header_controls">
 	    <div class="fields">
 		<div class="four wide field">
@@ -839,21 +856,51 @@
     <div class="header">Редактирование строки</div>
     <div class="content">
 	<div class="ui stackable grid">
-	    <div class="eight wide column"><span style="opacity:.7">{{product_code}}</span> {{product_name}}</div>
+	    <div class="eight wide column"><span style="color:#666">{{product_code}}</span> {{product_name}}</div>
 	    <div class="eight wide column">
 		<div class="ui right labeled fluid input">
-		    <input placeholder="Колличество" type="number">
+                    <input placeholder="Колличество" type="number" name="product_quantity" value="{{product_quantity}}">
 		    <div class="ui basic label">{{product_unit}}</div>
 		</div>
 	    </div>
 	</div>
-    </div>
-    <div class="actions">
-	<div class="ui stackable grid">
-	    <div class="six wide column"><div class="ui positive approve fluid button"><i class="icon save"></i> Ок</div></div>
-	    <div class="four wide column"><div class="ui negative deny button"><i class="trash alternate icon"></i> Удалить</div></div>
-	    <div class="six wide column"><div class="ui secondary close fluid button" onclick="$('#document_entry_dialog').modal('hide');"><i class="icon close"></i> Закрыть</div></div>
-	</div>
+        <div class="actions">
+            <div class="ui stackable grid">
+                <div class="eight wide column"><div class="ui positive approve fluid button"><i class="icon save"></i> Ок</div></div>
+                <div class="eight wide column"><div class="ui grey close fluid button" onclick="$('#document_entry_dialog').modal('hide');"><i class="icon close"></i> Отмена</div></div>
+            </div>
+            <!--{{if user_level|more>1}}-->
+            <div class="ui horizontal divider"></div>
+            <div class="ui styled fluid accordion" style="text-align: left">
+                <div class="title">
+                    <i class="dropdown icon"></i>
+                    Еще действия
+                </div>
+                <div class="content">
+                    <div class="ui stackable grid">
+                        <div class="ten wide column">
+                            <div class="ui labeled input fluid">
+                                <label class="ui label">Цена</label>
+                                <input placeholder="Цена" type="number" name="product_price" value="{{product_price}}">
+                            </div>
+                        </div>
+                        <div class="six wide column">
+                            <div class="title">
+                                <i class="arrow circle down icon"></i>
+                                Минимальная цена
+                            </div>
+                            <div class="content">
+                                {{breakeven_price}}
+                            </div>
+                        </div>
+                        <div class="sixteen wide column">
+                            <div class="ui negative deny button"><i class="trash alternate icon"></i> Удалить</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!--{{/if}}-->
+        </div>
     </div>
 </div>
 

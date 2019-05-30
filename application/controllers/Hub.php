@@ -122,6 +122,7 @@ class Hub  extends CI_Controller{
 	    case 'int':
 		$var=(int) $var;
 		break;
+	    case 'float':
 	    case 'double':
 		$var=(float) $var;
 		break;
@@ -164,6 +165,7 @@ class Hub  extends CI_Controller{
 	    case 'int':
 		$var=(int) $var;
 		break;
+	    case 'float':
 	    case 'double':
 		$var=(float) $var;
 		break;

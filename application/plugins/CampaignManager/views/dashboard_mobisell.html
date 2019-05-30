@@ -161,7 +161,7 @@ App.dashboardCampaigns = {
                 return ['', 'Iкв', 'IIкв', 'IIIкв', 'IVкв'][index];
             };
             Mark.pipes.percent=function(number){
-                return number/100;
+                return Math.round(number/100);
             }
             App.renderTpl('CampaignCharts', {campaigns: personal_bonuses});
             for (let i in personal_bonuses.bonuses) {
