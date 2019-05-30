@@ -97,8 +97,8 @@ class MobiSell extends PluginManager {
             'results' => $this->Hub->load_model('Company')->listFetchAll($mode, $q)
         ];
     }
-    public $documentCreate = ["doc_type" => "int", "acomp_id" => "int",  "pcomp_id" => "int", 'entries' => ['json', null]];
-    public function documentCreate($doc_type, $acomp_id, $pcomp_id, $entries) {
+
+    public function documentCreate( int $doc_type, int $acomp_id, int $pcomp_id, array $entries) {
         $Company = $this->Hub->load_model("Company");
         $Company->selectPassiveCompany($pcomp_id);
         $Company->selectActiveCompany($acomp_id);

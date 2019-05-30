@@ -203,10 +203,7 @@ App.dashboardCampaigns = {
             ];
         },
         chartDatasetCalcArc: function (arc_data, i) {
-            if (arc_data['period_plan' + i] > 0) {
-                return Math.round(Math.min(arc_data.bonus_base / arc_data['period_plan' + i], 1) * 100);
-            }
-            return 0;
+            return Math.round(Math.min(arc_data.bonus_base / arc_data['period_plan' + i] || 0.01, 1) * 100);
         }
     },
     statistics:{
