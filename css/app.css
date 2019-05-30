@@ -663,4 +663,21 @@ h2{
     width: 780px;
     margin: 10px;
     height: 70px;
+    padding: 7px;
+    resize: none;
+}
+
+.footer_table {
+    background-image: linear-gradient(#fff 0%, #efefef 100%);
+    border-collapse: collapse;
+    margin: 5px -2px 2px 0px;
+}
+
+.footer_table td {
+    text-align: right;
+    width: 80px;
+    border: 1px solid #ccc;
+    padding: 3px;
+    padding-top: 4px;
+    padding-bottom: 4px;
 }

@@ -1,6 +1,8 @@
 <script>
     var holder_node_id = document.scripts[document.scripts.length - 1].parentNode.id;
     App[holder_node_id]=(function($){
+        
+        
 	var holderId;
 	function setHolderId(id){
 	    holderId=id;
@@ -108,7 +110,8 @@
 	    },
 	    reload:function(){
 		var parts=["head","body","foot","views"];
-		Document.load(Document.doc_id,parts);
+                App.Topic('documentUpdated').publish();
+                Document.load(Document.doc_id,parts);
 	    },
             delete:function(){
 		$.post(document_model+'/documentDelete',{doc_id:Document.doc_id},function(ok){

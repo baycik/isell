@@ -9,6 +9,7 @@ Document.head={
 	Document.head.initToolbar();
     },
     render:function(head){
+        
         Document.head.suppress_update = false;
 	Document.data.head=head;
 	$("#"+holderId+" .x-head form").form('load',head);
@@ -17,6 +18,7 @@ Document.head={
         App.renderTpl('Doc_owners',Document.data.head);  
 	this.pcompNode && this.pcompNode.combobox("setText",head.label);
         Document.head.suppress_update = true;
+        $('.document_comment').val(Document.data.head.doc_data);
     },
     add:function(){
         var url=document_model+'/documentAdd';
@@ -41,7 +43,7 @@ Document.head={
 	    } else {
 		App.flash("Изменения не сохранены");
 	    }
-	    Document.reload();
+            Document.reload();
 	});
     },
     initToolbar:function(){
@@ -98,6 +100,10 @@ Document.head={
                 }
             }
 	});
+        $('textarea[name="doc_data"').change(function(e){
+            var value = $(e).val();
+            Document.head.update( 'doc_data', value, 'Параметры документа изменены!' );
+        });
     },
     pcompTree:function(){   
         App.loadWindow('page/company/tree',{}).progress(function(status,company){

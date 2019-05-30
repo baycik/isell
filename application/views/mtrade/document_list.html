@@ -22,6 +22,9 @@
 	    tools:{
 		reload:function(){
 		    DocList.grid.reload();
+                    //DocList.grid.setSelectedRows([DocList.table.current_row]);
+                    console.log(DocList.grid.getSelectedRows());
+                    
 		},
                 add:function(){
                     //Document.load(0);
@@ -78,6 +81,7 @@
 		    }
 		},
 		columnMode: /*App.store('document_list_table_mode') || */'simple',
+                current_row: '',
 		init: function () {
 		    var settings = {
 			columns: [],
@@ -102,14 +106,14 @@
                         if(!doclistRow){
                             return false;
                         }
-			//App.Document.init(doclistRow.doc_type);
+                        DocList.table.selected_doc_id = doclistRow.doc_id;
 			App.Document.load(doclistRow.doc_id);
 		    });
                     DocList.grid.onRenderFinished.subscribe(function(){
-                        if( DocList.selected_doc_id ){
+                        if( DocList.table.selected_doc_id ){
                             var rows=DocList.grid.getData();
                             for(var num in rows){
-                                if(rows[num].doc_id==DocList.selected_doc_id){
+                                if(rows[num].doc_id==DocList.table.selected_doc_id){
                                     DocList.grid.setSelectedRows([num]);
                                     break;
                                 }
@@ -148,6 +152,10 @@
 		    });
 		    App.Topic('passiveCompanyReset').subscribe(function (company) {
 			DocList.grid.updateOptions({params: {mode: 'add_empty_row'}});
+			DocList.tools.reload();
+                        //App.Document.load(0);
+		    });
+		    App.Topic('documentUpdated').subscribe(function () {
 			DocList.tools.reload();
                         //App.Document.load(0);
 		    });
@@ -251,7 +259,7 @@
 	function init() {
 	    DocList.init();
             $("#Document").load("page/mtrade/document.html", function () {
-                App.Document.init('sell');
+                App.Document.init('1');
                 App.Document.load(App.Document.doc_id);
             });
 	}

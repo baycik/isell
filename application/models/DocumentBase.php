@@ -54,7 +54,7 @@ abstract class DocumentBase extends Catalog{
 	$vat_rate = $this->Hub->acomp('company_vat_rate');
 	$usd_ratio=$this->Hub->pref('usd_ratio');
 	$new_document=[
-	    'doc_type'=>($doc_type?$doc_type:'sell'),
+	    'doc_type'=>($doc_type?$doc_type:'1'),
 	    'cstamp'=>date('Y-m-d H:i:s'),
 	    'active_company_id'=>$acomp_id,
 	    'passive_company_id'=>$pcomp_id,
@@ -65,7 +65,8 @@ abstract class DocumentBase extends Catalog{
 	    'modified_by'=>$user_id,
 	    'use_vatless_price'=>0,
 	    'notcount'=>0,
-	    'doc_num'=>0
+	    'doc_num'=>0,
+	    'doc_status_id'=>1
 	];
 	$prev_document=$this->headPreviousGet($acomp_id, $pcomp_id);
 	if( $prev_document && !is_numeric($prev_document->doc_type) ){
@@ -77,6 +78,7 @@ abstract class DocumentBase extends Catalog{
 	}
 	$new_document['doc_num']=$this->documentNumNext($acomp_id,$doc_type);
 	$new_doc_id=$this->create('document_list', $new_document);
+        $this->documentChangeCommitTransactions(1);
         $this->Hub->msg('Document created!');
 	return $new_doc_id;
     }
@@ -285,7 +287,8 @@ abstract class DocumentBase extends Catalog{
             'curr_code'=>$this->Hub->pcomp('curr_code'),
             'vat_rate'=>$this->Hub->acomp('company_vat_rate'),
             'doc_type'=>1,
-            'signs_after_dot'=>3
+            'signs_after_dot'=>3,
+            'doc_status_id'=>1
         ];
 	$prev_doc = $this->get_row("SELECT 
 		doc_type,
@@ -622,8 +625,23 @@ abstract class DocumentBase extends Catalog{
     }
     protected function transCreate(){
         $this->db_transaction_start();
+        $foot=$this->footGet($this->doc_id);
+        if ($this->Hub->pcomp('curr_code') == $this->Hub->acomp('curr_code')) {
+	    $doc_ratio=0;
+	} else {
+	    $doc_ratio=$this->doc('doc_ratio');
+	}
+        $Trans=$this->Hub->load_model("AccountsCore");
+        $this->db_transaction_start();
         
-        $this->db_transaction_commit();
+        if( $ok ){
+            $this->db_transaction_commit();
+            return true;
+        }
+        $this->db_transaction_rollback();
+        return false;
+        
+        
     }
     
     protected $document_transaction_scheme=[
@@ -634,22 +652,6 @@ abstract class DocumentBase extends Catalog{
             'credit'=>''
         ]
     ];
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
     
 
     /*

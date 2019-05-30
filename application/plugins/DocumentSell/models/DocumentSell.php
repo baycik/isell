@@ -30,7 +30,7 @@ class DocumentSell extends DocumentBase{
     }
     
     public function documentAdd( $doc_type=null ){
-	$doc_type='sell';
+	$doc_type='1';
 	return parent::documentAdd($doc_type);
     }
     
@@ -43,7 +43,7 @@ class DocumentSell extends DocumentBase{
     public function documentGet($doc_id,$parts_to_load){
 	$this->documentSelect($doc_id);
 	$doc_type=$this->doc('doc_type');
-	if( $doc_type!='sell' && $doc_type!=1 ){
+	if( $doc_type!='1' && $doc_type!=1 ){
             return parent::headGet($doc_id);
 	}
 	$document=[];
@@ -195,6 +195,7 @@ class DocumentSell extends DocumentBase{
             print_r($entry_updated);
 	    return false;
 	}
+        $this->transUpdate();
 	$this->db_transaction_commit();
 	return true;
     }
@@ -355,6 +356,8 @@ class DocumentSell extends DocumentBase{
 //	return $price_self;
     }
 
+    
+    
     /*----------------------------
      * OTHER
      ------------------------*/
