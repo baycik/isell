@@ -1,5 +1,5 @@
 <div class="ui header">Статистика продаж за месяц</div>
-<div id="CampaignStat">
+<div id="CampaignStat" class="covert">
     <div class="ui blue image label" style="margin: 3px">
         <i class="icon user alternate"></i> Клиентов за месяц <div class="detail">{{client_count}}</div>
     </div>
@@ -8,7 +8,7 @@
     </div>
 </div>
 <div class="ui header">Мотивации</div>
-<div id="CampaignCharts">
+<div id="CampaignCharts" class="covert">
     <div class="ui green image label">
         <i class="icon money"></i> Общий результат <div class="detail">{{campaigns.total}}</div> 
     </div>
@@ -147,7 +147,7 @@ App.dashboardCampaigns = {
             $.post("../CampaignManager/bonusCalculatePersonal/", function (resp) {
                 var personal_bonuses = App.json(resp);
                 if (!personal_bonuses || !personal_bonuses.bonuses.length) {
-                    $("#CampaignCharts").html("<h2>Нет кампаний</h2>");
+                    $("#CampaignCharts").html("<h2>Нет кампаний</h2>").removeClass('covert');
                     return;
                 }
                 App.dashboardCampaigns.campaigns.render(personal_bonuses);

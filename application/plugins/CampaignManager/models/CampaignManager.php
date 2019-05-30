@@ -63,7 +63,7 @@ class CampaignManager extends Catalog{
     }
     
     private function clientListFilterGet($campaign_id){
-        $this->Hub->set_level(3);
+        $this->Hub->set_level(2);
         $settings=$this->get_row("SELECT * FROM plugin_campaign_list WHERE campaign_id='$campaign_id'");
         $assigned_path=  $this->Hub->svar('user_assigned_path');
         /*
