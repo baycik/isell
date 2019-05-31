@@ -97,8 +97,8 @@ class MobiSell extends PluginManager {
             'results' => $this->Hub->load_model('Company')->listFetchAll($mode, $q)
         ];
     }
-
-    public function documentCreate( int $doc_type, int $acomp_id, int $pcomp_id, array $entries) {
+    public $documentCreate = ["doc_type" => "int", "acomp_id" => "int",  "pcomp_id" => "int", 'entries' => ['json', null]];
+    public function documentCreate($doc_type, $acomp_id, $pcomp_id, $entries) {
         $Company = $this->Hub->load_model("Company");
         $Company->selectPassiveCompany($pcomp_id);
         $Company->selectActiveCompany($acomp_id);
@@ -181,8 +181,8 @@ class MobiSell extends PluginManager {
         }
         return $this->documentGet($doc_id);
     }
-
-    public function documentEntryUpdate(int $doc_id, int $doc_entry_id, string $product_code, float $product_quantity, float $product_price=null) {
+    public $documentEntryUpdate = ['doc_id' => 'int', 'doc_entry_id' => 'int', 'product_code' => 'string', 'product_quantity' => 'int'];
+    public function documentEntryUpdate($doc_id, $doc_entry_id, $product_code, $product_quantity) {
         $DocumentItems = $this->Hub->load_model("DocumentItems");
         if ($doc_entry_id) {
             $DocumentItems->entryUpdate($doc_id, $doc_entry_id, 'product_quantity', $product_quantity);
