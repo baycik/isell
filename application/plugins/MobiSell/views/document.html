@@ -4,10 +4,9 @@
             doc_id:0
         },
 	init: function () {
-            App.title("Документ");
 	    App.document.initTab();
 	    App.document.head.init();
-	    //App.document.focus();
+	    App.document.focus();
 	    App.document.suggestion.init();
             App.Topic('hashChange').subscribe(function (state,module) {
                 App.document.load(App.state.doc_id);
