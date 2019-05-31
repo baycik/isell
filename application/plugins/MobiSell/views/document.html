@@ -10,9 +10,7 @@
 	    //App.document.focus();
 	    App.document.suggestion.init();
             App.Topic('hashChange').subscribe(function (state,module) {
-                if( state.doc_id!=App.document.doc.doc_id ){
-                    App.document.load(App.state.doc_id);
-                }
+                App.document.load(App.state.doc_id);
             });
 	},
 	focus: function () {
@@ -28,7 +26,7 @@
             if( App.document.doc.doc_id==doc_id ){
                 return ;
             }
-            App.document.doc.doc_id=doc_id;
+            App.document.doc.doc_id=doc_id*1;
 	    $("#document_container").show();
 	    $("#document_create_dialog").hide();
 	    App.flash('Документ: загрузка...');
