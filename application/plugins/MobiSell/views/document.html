@@ -110,9 +110,12 @@
 	    //$("#document_create_dialog").show();
 	},
         notify_created:function(){
+            App.flash("Отправляется...");
             setTimeout(function(){
-                $.post("notify_pending/",{message:App.document.doc.head.doc_data});
-            },2000);
+                $.post("notify_pending/",{message:App.document.doc.head.doc_data}).done(function(){
+                    App.flash("Сообщение отправлено!");
+                });
+            },1000);
         },
 	initTab: function () {
 	    $('.menu .item').tab({
