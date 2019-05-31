@@ -24,6 +24,7 @@
                         } else {
                             Campaign.add();
                         }
+                        App.store('campaign_active_tab',title);
                     }
                 });
                 this.load();
@@ -36,7 +37,7 @@
                         $('#CampaignManager-tabs').tabs('add',{title: campaign_list[i].campaign_name,index: i});
                     }
                     $('#CampaignManager-tabs').tabs('add',{title: "+ Добавить кампанию",selected:false});
-                    $('#CampaignManager-tabs').tabs('select',0);
+                    $('#CampaignManager-tabs').tabs('select',App.store('campaign_active_tab'));
                 });
             },
             reload:function(){
@@ -55,6 +56,7 @@
                 }
                 Mark.globals.stock_categories = data.stock_category_list;
                 App.renderTpl('CampaignManager', data);
+                $("#CampaignManager").css('visibility','visible');
                 App.setupForm('#camp_manager_form', data.settings, 'use_inp_values').change(function (node) {
                     if (this.name.indexOf('-') > -1) {
                         var campaign_bonus_id = this.name.split('-')[1];
@@ -80,20 +82,20 @@
                 $.post("CampaignManager/campaignUpdate", {campaign_id: campaign_id, field: field, value: value}, function (ok) {
                     if (ok * 1) {
                         Campaign.reload();
-                        App.flash("updated " + title);
+                        App.flash("Изменения сохранены " + title);
                     } else {
-                        App.flash("not updated " + title);
+                        App.flash("Ошибка сохранения " + title);
                     }
                 });
             },
             remove: function () {
-                if (confirm("Delete this campaign?")) {
+                if (confirm("Удалить кампанию?")) {
                     $.post("CampaignManager/campaignRemove", {campaign_id: campaign_id}, function (ok) {
                         if (ok * 1) {
                             Campaign.reload();
-                            App.flash("removed");
+                            App.flash("Кампания удалена");
                         } else {
-                            App.flash("not removed");
+                            App.flash("Ошибка удаления кампании");
                         }
                     });
                 }
@@ -102,9 +104,9 @@
                 $.post("CampaignManager/campaignAdd",{campaign_name:"Новая кампания"}, function (ok) {
                     if (ok * 1) {
                         Campaign.reload();
-                        App.flash("added");
+                        App.flash("Кампания добавлена");
                     } else {
-                        App.flash("not added");
+                        App.flash("Ошибка добавления кампании");
                     }
                 });
             }
@@ -311,7 +313,7 @@
 
 <div style="padding: 10px;">
     <div id="CampaignManager-tabs-holder"></div>
-    <div id="CampaignManager">
+    <div id="CampaignManager" style="visibility:hidden">
 
         <div id="camp_manager_form">
 

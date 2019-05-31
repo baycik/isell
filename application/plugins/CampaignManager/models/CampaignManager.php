@@ -66,11 +66,10 @@ class CampaignManager extends Catalog{
         $this->Hub->set_level(2);
         $settings=$this->get_row("SELECT * FROM plugin_campaign_list WHERE campaign_id='$campaign_id'");
         $assigned_path=  $this->Hub->svar('user_assigned_path');
-        /*
-         * WARNING FILTER COMP TREE BY BRANCH LEVEL
-         */
+        $user_level=     $this->Hub->svar('user_level');
         $or_case=[];
         $and_case=[];
+        $and_case[]=" level<= $user_level";
         if( $assigned_path ){
             $and_case[]=" path LIKE '%".str_replace(",", "%' OR path LIKE '%", $assigned_path)."%'";
         }
