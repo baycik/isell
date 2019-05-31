@@ -240,10 +240,10 @@ class MobiSell extends PluginManager {
         }
     }
     
-    public function notify_pending( string $custom_message=null ){
+    public function notify_pending( string $custom_message='' ){
         $message=$this->Hub->svar('Mobisell_create_notification');
         if( $message ){
-            $message.=" $custom_message";
+            $message['subject'].=" $custom_message";
         }
         $this->notify($message['subject'],$message['view'],$message['data']);
     }
