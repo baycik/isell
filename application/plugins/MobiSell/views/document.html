@@ -89,7 +89,9 @@
 			var new_doc_id = resp * 1;
 			if (new_doc_id) {
 			    location.hash = "#" + App.url_file + "#doc_id=" + new_doc_id;
-                            App.document.notify_created();
+                            if( !localStorage.getItem('disable_document_create_notification') ){
+                                App.document.notify_created();
+                            }
 			}
 		    });
 		}
@@ -108,7 +110,9 @@
 	    //$("#document_create_dialog").show();
 	},
         notify_created:function(){
-            $.post("notify_pending/");
+            setTimeout(function(){
+                $.post("notify_pending/",{message:App.document.doc.head.doc_data});
+            },2000);
         },
 	initTab: function () {
 	    $('.menu .item').tab({
@@ -713,6 +717,7 @@
         <a href="#checkout_document.html#checkout_id={{checkout_id}}"><i class="clipboard list icon"></i> Открыть проверку</a>
         {{/if}}
         <button id="document_create_checkout_button" class="ui button" onclick="App.document.create_checkout()"><i class="plus icon"></i> Проверить</button> 
+	<button class="ui positive button" onclick="App.document.notify_created();">Уведомить Офис</button>
 	<button id="document_delete_button" class="ui negative button" onclick="App.document.head.remove()">Удалить документ</button>
         </div>
         
