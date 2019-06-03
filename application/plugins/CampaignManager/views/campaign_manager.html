@@ -24,7 +24,7 @@
                         } else {
                             Campaign.add();
                         }
-                        App.store('campaign_active_tab',title);
+                        title!=="+ Добавить кампанию" && App.store('campaign_active_tab',title);
                     }
                 });
                 this.load();
@@ -37,7 +37,7 @@
                         $('#CampaignManager-tabs').tabs('add',{title: campaign_list[i].campaign_name,index: i});
                     }
                     $('#CampaignManager-tabs').tabs('add',{title: "+ Добавить кампанию",selected:false});
-                    $('#CampaignManager-tabs').tabs('select',App.store('campaign_active_tab'));
+                    $('#CampaignManager-tabs').tabs('select',App.store('campaign_active_tab')||0);
                 });
             },
             reload:function(){
