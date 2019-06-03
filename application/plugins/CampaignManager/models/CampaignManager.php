@@ -54,6 +54,8 @@ class CampaignManager extends Catalog{
     
     public function campaignRemove(int $campaign_id){
         $this->Hub->set_level(3);
+        $this->query("DELETE p,b FROM plugin_campaign_bonus_periods p JOIN plugin_campaign_bonus b USING(campaign_bonus_id) WHERE campaign_id = $campaign_id");
+        $this->delete('plugin_campaign_bonus',['campaign_id'=>$campaign_id]);
         return $this->delete('plugin_campaign_list',['campaign_id'=>$campaign_id]);
     }
     
@@ -125,8 +127,8 @@ class CampaignManager extends Catalog{
             SET
                 campaign_id='$campaign_id',
                 bonus_type='VOLUME',
-                campaign_start_at=NOW(),
-                campaign_finish_at=DATE_ADD(NOW(), INTERVAL 1 YEAR),
+                campaign_start_at=DATE_FORMAT(NOW(),'%Y-%m-%d 00:00:00'),
+                campaign_finish_at=DATE_FORMAT(DATE_ADD(NOW(), INTERVAL 1 YEAR),'%Y-%m-%d 23:59:59'),
                 campaign_grouping_interval='NOGROUP',
                 campaign_bonus_ratio1=0";
         $ok=$this->query($sql);
@@ -136,16 +138,27 @@ class CampaignManager extends Catalog{
     
     public function bonusUpdate( int $campaign_bonus_id, string $field, string $value){
         $this->Hub->set_level(3);
-        $ok=$this->update('plugin_campaign_bonus',[$field=>$value],['campaign_bonus_id'=>$campaign_bonus_id]);
-        if( $field === 'campaign_grouping_interval' ){
-            $this->bonusPeriodsClear( $campaign_bonus_id );
-            $this->bonusPeriodsFill( $campaign_bonus_id );
-        } else if( $field === 'campaign_start_at' || $field === 'campaign_finish_at'  ){
+        $period_fill_is_needed=false;
+        function validate_period($date){
             $now_year=date("Y");
-            $needed_year=substr($value,0,4);
+            $needed_year=substr($date,0,4);
             if( abs($now_year-$needed_year)>3 ){
                 return false;
             }
+            return true;
+        }
+        if( $field === 'campaign_grouping_interval' ){
+            $this->bonusPeriodsClear( $campaign_bonus_id );
+            $period_fill_is_needed=true;
+        } else if( $field === 'campaign_start_at' && validate_period($value) ){
+            $value=substr($value,0,10).' 00:00:00';
+            $period_fill_is_needed=true;
+        } else if( $field === 'campaign_finish_at' && validate_period($value) ){
+            $value=substr($value,0,10).' 23:59:59';
+            $period_fill_is_needed=true;
+        }
+        $ok=$this->update('plugin_campaign_bonus',[$field=>$value],['campaign_bonus_id'=>$campaign_bonus_id]);
+        if( $period_fill_is_needed ){
             $this->bonusPeriodsFill( $campaign_bonus_id );
         }
         return $ok;
@@ -388,6 +401,9 @@ class CampaignManager extends Catalog{
     
     private function bonusCalculateVolume($campaign_bonus,$period_on,$client_filter){
         $product_range= $this->bonusCalculateProductRange($campaign_bonus);
+        
+        //print_r($product_range);
+        
         $select="COALESCE(ROUND(SUM(invoice_price * product_quantity * (dl.vat_rate/100+1))),0)";
         $table="
                     LEFT JOIN

@@ -94,6 +94,7 @@
                         if (ok * 1) {
                             Campaign.reload();
                             App.flash("Кампания удалена");
+                            $("#CampaignManager").css('visibility','hidden');
                         } else {
                             App.flash("Ошибка удаления кампании");
                         }
