@@ -363,9 +363,9 @@
                         <!--{{/if}}-->
                         <fieldset>
                             <legend>Процент бонуса по планам</legend>
-                            <input pattern="\d+" name="campaign_bonus_ratio1-{{campaign_bonus_id}}" title="План I бонус %" required>
-                            <input pattern="\d+" name="campaign_bonus_ratio2-{{campaign_bonus_id}}" title="План II бонус %">
-                            <input pattern="\d+" name="campaign_bonus_ratio3-{{campaign_bonus_id}}" title="План III бонус %">
+                            <input pattern="[\d\.]+" name="campaign_bonus_ratio1-{{campaign_bonus_id}}" title="План I бонус %" required>
+                            <input pattern="[\d\.]+" name="campaign_bonus_ratio2-{{campaign_bonus_id}}" title="План II бонус %">
+                            <input pattern="[\d\.]+" name="campaign_bonus_ratio3-{{campaign_bonus_id}}" title="План III бонус %">
                         </fieldset>
                         <div>
                             <button class="CampaignManager_bonuses_delete" data-campaign_bonus_id="{{campaign_bonus_id}}"><img src="img/delete.png" style="width:16px"> Удалить расчет</button>
