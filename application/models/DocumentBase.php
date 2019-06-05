@@ -625,23 +625,8 @@ abstract class DocumentBase extends Catalog{
     }
     protected function transCreate(){
         $this->db_transaction_start();
-        $foot=$this->footGet($this->doc_id);
-        if ($this->Hub->pcomp('curr_code') == $this->Hub->acomp('curr_code')) {
-	    $doc_ratio=0;
-	} else {
-	    $doc_ratio=$this->doc('doc_ratio');
-	}
-        $Trans=$this->Hub->load_model("AccountsCore");
-        $this->db_transaction_start();
         
-        if( $ok ){
-            $this->db_transaction_commit();
-            return true;
-        }
-        $this->db_transaction_rollback();
-        return false;
-        
-        
+        $this->db_transaction_commit();
     }
     
     protected $document_transaction_scheme=[
