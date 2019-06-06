@@ -208,7 +208,7 @@ class CampaignManager extends Catalog{
             $delta_month=$finish_month + $delta_year*12 - $start_month;
             $delta_quarter=$finish_quarter - $start_quarter + $delta_year*4;
             
-            $delete_sql="DELETE FROM plugin_campaign_bonus_periods WHERE campaign_bonus_id='$campaign_bonus_id' AND";
+            $delete_sql="DELETE FROM plugin_campaign_bonus_periods WHERE campaign_bonus_id='$campaign_bonus_id' AND (";
             if( $bonus->campaign_grouping_interval =='YEAR' ){
                 for( $y=$start_year;$y<=$finish_year; $y++ ){
                     $data=[
@@ -280,6 +280,7 @@ class CampaignManager extends Catalog{
                 $this->bonusPeriodCreate($data);
                 $delete_sql.="  period_year<>0 ";//delete all periods
             }
+            $delete_sql.=")";
             $this->query($delete_sql);
             //echo $delete_sql;
             return true;
