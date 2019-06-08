@@ -30,7 +30,7 @@ class DocumentSell extends DocumentBase{
     }
     
     public function documentAdd( $doc_type=null ){
-	$doc_type='sell';
+	$doc_type='1';
 	return parent::documentAdd($doc_type);
     }
     
@@ -43,9 +43,8 @@ class DocumentSell extends DocumentBase{
     public function documentGet($doc_id,$parts_to_load){
 	$this->documentSelect($doc_id);
 	$doc_type=$this->doc('doc_type');
-	if( $doc_type!='sell' && $doc_type!=1 ){
-	    $this->Hub->msg("wrong_doc_type");
-	    return false;
+	if( $doc_type!='1' && $doc_type!=1 ){
+            return parent::headGet($doc_id);
 	}
 	$document=[];
 	if( in_array("head",$parts_to_load) ){
@@ -62,12 +61,54 @@ class DocumentSell extends DocumentBase{
 	}
 	return $document;
     }
+    
+    public function documentUpdate(int $doc_id, string $field, string $value){
+        $this->documentSelect($doc_id);
+	switch($field){
+            case 'doc_status_id':
+		return $this->documentSetStatus($doc_id,$value);
+            default:
+                return parent::documentUpdate($doc_id,$field,$value); 
+	}
+    }
+    
+    public function documentSetStatus($doc_id,$new_status_id){
+        if(!isset($new_status_id)){
+            return false;
+        }
+        if( $doc_id ){
+            $this->documentSelect($doc_id);
+        }else {
+            $doc_id=$this->doc('doc_id');
+        }
+        $this->Hub->set_level(2);
+        $commited_only=$this->get_value("SELECT commited_only FROM document_status_list WHERE doc_status_id='$new_status_id'");
+        if( $commited_only != $this->isCommited() ){
+            return false;
+        }
+        $status_change_ok=$this->update('document_list',['doc_status_id'=>$new_status_id],['doc_id'=>$doc_id]);
+        
+        if( $new_status_id==2 ){//reserved 
+            $this->reservedTaskAdd($doc_id);
+        } else {
+            $this->reservedTaskRemove($doc_id);
+        }
+        $this->reservedCountUpdate();
+        return $status_change_ok;
+    }
+    
     protected function bodyGet($doc_id){
 	$this->entriesTmpCreate( $doc_id );
-	return $this->get_list("SELECT * FROM tmp_doc_entries");
+	if( $this->doc('use_vatless_price') ){
+            $sql="SELECT *, product_price_vatless product_price, product_sum_vatless product_sum FROM tmp_doc_entries";
+        } else {
+            $sql="SELECT *, product_price_total product_price, product_sum_total product_sum FROM tmp_doc_entries";
+        }
+        return $this->get_list($sql);
     }
-    private function viewsGet(){
-	
+    private function viewsGet($doc_id){
+        $DocumentView = $this->Hub->load_model("DocumentView");
+        return $DocumentView->viewListFetch($doc_id);
     }
     /*
      * Entries section 
@@ -82,10 +123,15 @@ class DocumentSell extends DocumentBase{
     public function entryAdd($doc_id,$product_code,$product_quantity){
 	$this->documentSelect($doc_id);
 	$pcomp_id=$this->doc('passive_company_id');
+        if(!isset($pcomp_id)){
+            $doc_id = $this->documentAdd();
+            $this->documentSelect($doc_id);
+            $pcomp_id=$this->doc('passive_company_id');
+        }
+        
 	$doc_ratio=$this->doc('doc_ratio');
-	
 	$this->db_transaction_start();
-	$this->query("INSERT INTO document_entries SET doc_id=$doc_id,product_code='$product_code',invoice_price=COALESCE(GET_PRICE('$product_code',$pcomp_id,'$doc_ratio'),0)",false);
+        $this->query("INSERT INTO document_entries SET doc_id=$doc_id,product_code='$product_code',invoice_price=COALESCE(GET_PRICE('$product_code',$pcomp_id,'$doc_ratio'),0)",false);
 	$error = $this->db->error();
 	if($error['code']==1452){
 	    $this->Hub->msg("product_code_unknown");
@@ -107,8 +153,8 @@ class DocumentSell extends DocumentBase{
 	}
 	$this->db_transaction_commit();
     }
-    public $entryUpdate=['doc_id'=>'int','doc_entry_id'=>'int','field'=>'(product_price_total|product_quantity|product_sum_total|party_label)','value'=>'string'];
-    public function entryUpdate($doc_id,$doc_entry_id,$field,$value){
+    
+    public function entryUpdate(int $doc_id, int $doc_entry_id, string $field, string $value){
 	$this->documentSelect($doc_id);
 	$entry_updated=[];
 	$this->db_transaction_start();	
@@ -123,7 +169,10 @@ class DocumentSell extends DocumentBase{
 	} else
 	if( $field=='party_label' ){
 	    $entry_updated['party_label']=$value;
-	} else
+	} else 
+        if( $field == 'product_price'){
+                $entry_updated['invoice_price']=$value;
+         } else    
 	if( $field=='product_quantity' ){//IF document is already commited then commit entry. If commit is failed then abort update
 	    if( $value<=0 ){//quantity must be more than zero
 		$this->Hub->msg('quantity_wrong');
@@ -143,8 +192,10 @@ class DocumentSell extends DocumentBase{
 	}
 	$update_ok=$this->update("document_entries",$entry_updated,['doc_entry_id'=>$doc_entry_id]);
 	if( !$update_ok ){
+            print_r($entry_updated);
 	    return false;
 	}
+        $this->transUpdate();
 	$this->db_transaction_commit();
 	return true;
     }
@@ -195,6 +246,41 @@ class DocumentSell extends DocumentBase{
 	$this->stockLeftoverSet($entry_data->product_code,$new_leftover,$new_leftover_calculated->self_price,$new_leftover_calculated->party_label);
 	return true;
     }
+    public function entryBreakevenPriceUpdate( int $doc_entry_id=null, int $doc_id=null ){
+        if( !$doc_entry_id&&!$doc_id ){
+            return;
+        }
+        $this->documentSelect($doc_id);
+        $pcomp_id=$this->doc('passive_company_id');
+        $usd_ratio=$this->doc('doc_ratio');
+        $doc_type=$this->doc('doc_type');
+        if( $doc_type!=1 ){
+            echo '$doc_type!=1';
+            return;
+        }
+        if( $doc_entry_id ){
+            $where="doc_entry_id=$doc_entry_id";
+        } else {
+            $where="doc_id=$doc_id";
+        }
+        if( $this->Hub->pcomp('skip_breakeven_check') ){
+            $sql="UPDATE 
+                    document_entries 
+                SET 
+                    breakeven_price = 0
+                WHERE 
+                    $where";
+        } else {
+            $sql="UPDATE 
+                    document_entries 
+                SET 
+                    breakeven_price = ROUND(GET_BREAKEVEN_PRICE(product_code,'$pcomp_id','$usd_ratio',self_price),2)
+                WHERE 
+                    $where";
+        }
+;        $this->query($sql);
+    }
+    
     /*
      * Find entries from buy documents wich are original (correspond) to commited sell entry. 
      * Orders by date entries from newest to oldest
@@ -252,4 +338,107 @@ class DocumentSell extends DocumentBase{
 		    @sold_quantity > @total_sold) t2;";
 	return $this->get_row($sql);
     }
+    protected function getProductSellSelfPrice($product_code, $invoice_qty,$fdate) {
+        return $this->Base->get_row("SELECT LEFTOVER_CALC('$product_code','$fdate','$invoice_qty','all')",0);
+
+//	$this->Base->LoadClass('StockOld');
+//	$stock_self = $this->Base->StockOld->getEntrySelfPrice($product_code);
+//	if ($stock_self > 0)
+//	    return $stock_self;
+//	/*
+//	 * IF self price is not set
+//	 * qty=0 or something else set
+//	 * selfPrice as current buy price
+//	 */
+//	$price = $this->getRawProductPrice($product_code, $this->doc('doc_ratio'));
+//	$price_self = $price['buy'] ? $price['buy'] : $price['sell'];
+//	//$this->Base->StockOld->setEntrySelfPrice($product_code, $price_self);
+//	return $price_self;
+    }
+
+    
+    
+    /*----------------------------
+     * OTHER
+     ------------------------*/
+    
+
+    public function reservedTaskAdd($doc_id){
+        $this->Hub->load_model('Events');
+        $event=$this->Hub->Events->eventGetByDocId($doc_id);
+        if( $event ){
+            return $this->Hub->Events->eventDelete( $event->event_id );
+        }
+        $user_id=$this->Hub->svar('user_id');
+        if( $this->doc('doc_type')==1 ){
+            $day_limit=$this->Hub->pref('reserved_limit');
+        } else {
+            $day_limit=$this->Hub->pref('awaiting_limit');
+        }
+        $stamp=time()+60*60*24*($day_limit?$day_limit:3);
+        $alert="Счет №".$this->doc('doc_num')." для ".$this->Hub->pcomp('company_name')." снят с резерва";
+        $name="Снятие с резерва";
+        $description="$name счета №".$this->doc('doc_num')." для ".$this->Hub->pcomp('company_name');
+        $event=[
+            'doc_id'=>$doc_id,
+            'event_name'=>$name,
+            'event_status'=>'undone',
+            'event_label'=>'-TASK-',
+            'event_date'=>date("Y-m-d H:i:s",$stamp),
+            'event_descr'=>$description,
+            'event_program'=>json_encode([
+                'commands'=>[
+                    [
+                        'model'=>'DocumentCore',
+                        'method'=>'setStatusByCode',
+                        'arguments'=>[$doc_id,'created']
+                    ],
+                    [
+                        'model'=>'Chat',
+                        'method'=>'addMessage',
+                        'arguments'=>[$user_id,$alert]
+                    ]
+                ]
+            ])
+        ];
+        return $this->Hub->Events->eventCreate($event);
+    }
+    
+    public function reservedTaskRemove($doc_id){
+        $this->Hub->load_model('Events');
+        $event=$this->Hub->Events->eventGetByDocId($doc_id);
+        if( $event ){
+            return $this->Hub->Events->eventDelete( $event->event_id );
+        }
+        return false;
+    }
+    
+    public function reservedCountUpdate(){
+        $sql="
+        UPDATE 
+            stock_entries
+                LEFT JOIN
+            (SELECT 
+                product_code,
+                SUM(IF(doc_type = 1, de.product_quantity, 0)) reserved,
+                SUM(IF(doc_type = 2, de.product_quantity, 0)) awaiting
+            FROM
+                document_entries de
+            JOIN document_list USING (doc_id)
+            JOIN document_status_list dsl USING (doc_status_id)
+            WHERE
+                dsl.status_code = 'reserved'
+            GROUP BY product_code) reserve USING (product_code) 
+        SET 
+            product_reserved = COALESCE(reserved,0),
+            product_awaiting = COALESCE(awaiting,0)
+        WHERE 
+	product_reserved IS NOT NULL 
+        OR product_awaiting IS NOT NULL
+	OR reserved IS NOT NULL 
+        OR awaiting IS NOT NULL";
+        return $this->query($sql);
+    }
+   
+    
 }

@@ -1,5 +1,5 @@
-<div id="Doc_footer">
-    <table style="float:left" class="footer_table">
+<div id="Document_footer" class="covert" style="margin:auto 10px">
+    <table style=" float:left; text-align: left" class="footer_table">
         <tr>
             <td>Вес:</td><td style="font-weight: bold;">{{total_weight}} кг</td>
         </tr>
@@ -8,7 +8,7 @@
         </tr>
     </table>
 
-    <table style="float:right" class="footer_table">
+    <table style="text-align: right; float:right " class="footer_table"><tbody style="float: inline-end;">
         <tr>
             <td>Всего:</td><td style="font-weight: bold;width: 100px;">{{vatless}} {{curr_symbol}}</td>
         </tr>
@@ -18,14 +18,15 @@
         <tr>
             <td>Всего с НДС:</td><td style="font-weight: bold;">{{total}} {{curr_symbol}}</td>
         </tr>
+        </tbody>
     </table>
 </div>
-<div id="Doc_owners" class="transparent covert" style="clear: left">
+<div id="Doc_owners" class="transparent covert" style="clear: left; margin:auto 10px">
     {{if created_by}}
         <img src="img/add-16.png" title="Создано пользователем" style="vertical-align: middle"> {{created_by}} 
         <img src="img/edit-16.png" title="Изменено пользователем" style="vertical-align: middle"> {{modified_by}}
     {{/if}}
-        <span onclick="Doc.head.go_to_checkout()">
+        <span onclick="Document.head.go_to_checkout()">
         <img src="img/{{checkout_status_img}}" title="{{checkout_status_msg}}" style="height:16px; width:auto;vertical-align: middle"/>  
         {{checkout_status_msg}}
         </span>  

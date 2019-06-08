@@ -2,19 +2,38 @@
 
 Document.head={
     pcompNode:null,
+    suppress_update:true,
+    edit_passive_company: false,
     init:function(){
 	Document.head.initControls();
 	Document.head.initToolbar();
     },
     render:function(head){
+        
+        Document.head.suppress_update = false;
 	Document.data.head=head;
 	$("#"+holderId+" .x-head form").form('load',head);
 	$("#"+holderId+" .x-head form input[name=is_commited]").prop("checked",head.is_commited*1);
         $("#"+holderId+" .x-toolbar .icon-commit").css("filter","grayscale("+(head.is_commited*1?100:0)+"%)");
+        App.renderTpl('Doc_owners',Document.data.head);  
 	this.pcompNode && this.pcompNode.combobox("setText",head.label);
+        Document.head.suppress_update = true;
+        $('.document_comment').val(Document.data.head.doc_data);
+    },
+    add:function(){
+        var url=document_model+'/documentAdd';
+        var doc_type = $('Doc_type_cmb').val();
+	return $.post(url,{doc_type:doc_type},function(ok){
+	    if(ok*1){
+		App.flash('Документ создан');
+	    } else {
+		App.flash("Документ не создан");
+	    }
+	    Document.head.reload();
+	});
     },
     destroy:function(){
-	//this.pcompNode && this.pcompNode.combobox && this.pcompNode.combobox('destroy');
+        this.pcompNode && this.pcompNode.combobox && this.pcompNode.combobox('clear');
     },
     update:function(field,value,succes_msg){
 	var url=document_model+'/documentUpdate';
@@ -24,10 +43,9 @@ Document.head={
 	    } else {
 		App.flash("Изменения не сохранены");
 	    }
-	    Document.reload();
+            Document.reload();
 	});
     },
-    
     initToolbar:function(){
 	$("#"+holderId+" .x-head .x-toolbar").click(function(e){
 	    var action=$(e.target).data('action');
@@ -43,6 +61,9 @@ Document.head={
 	Document.reload();
     },
     commit:function(){
+        if( Document.data.head.is_commited*1 ){
+            return;
+        }
 	Document.head.update('is_commited',1,'Документ проведен');
     },
     uncommit:function(){
@@ -55,43 +76,44 @@ Document.head={
         }	
     },
     initControls:function(){
-//        
-//        $('.x-head .easyui-combobox.head_input').combobox({
-//            onChange:function(val,old){
-//                var name = $(this).attr('textboxname');
-//                console.log(name);
-//                Document.head.update(name,val,old);
-//            }
-//        });
-//        $('.x-head .easyui-numberspinner.head_input').numberspinner({
-//            onChange:function(val,old){
-//                var name = $(this).attr('textboxname');
-//                Document.head.update(name,val,old);
-//            }
-//        });
-//        $('.x-head .easyui-datebox.head_input').datebox({
-//            onChange:function(val,old){
-//                var name = $(this).attr('textboxname');
-//                Document.head.update(name,val,old);
-//            }
-//        });
-        
 	App.setupForm("#"+holderId+" .x-head form");
+	$.parser.parse("#"+holderId+" .x-head form");//for easy ui
+	Document.head.pcompComboInit();
 	$("#"+holderId+" .x-head form").form({
-            onLoadSuccess: function(){
-                return;
-            },
             onChange: function(e){
-                e.preventDefault;
-                var name = $(e).attr('textboxname');
-                var value = $(e).val();
-                Document.head.update( name, value, value+'changed!' );
+                if(Document.head.suppress_update === true){
+                    var name = $(e).attr('name') || $(e).attr('textboxname');
+                    if(name == 'is_commited'){
+                        if( Document.data.head.is_commited*1 ){
+                            var value = 0;
+                        } else {
+                            var value = 1;
+                        }	
+                    } else {
+                        var value = $(e).val();
+                    }
+                    if(name == 'doc_date' && value == ''){
+                        App.flash("Пустая дата!");
+                        return;
+                    }
+                    Document.head.update( name, value, 'Параметры документа изменены!' );
+                }
             }
 	});
-        
-	$.parser.parse("#"+holderId+" .x-head form");//for easy ui
-        
-	Document.head.pcompComboInit();
+        $('textarea[name="doc_data"').change(function(e){
+            var value = $(e).val();
+            Document.head.update( 'doc_data', value, 'Параметры документа изменены!' );
+        });
+    },
+    pcompTree:function(){   
+        App.loadWindow('page/company/tree',{}).progress(function(status,company){
+            if( status==='select' ){
+                App.user.pcompSelect(company);
+                $(Document.head.pcompNode).combobox('setValue', company.company_id);
+                $(Document.head.pcompNode).combobox('setText', company.label);
+                //Document.head.update( 'passive_company_id', company.company_id,'passive_company_id is changed');
+            }
+        });
     },
     pcompComboInit:function(){
 	if( this.pcompNode ){
@@ -106,11 +128,10 @@ Document.head={
 	    hasDownArrow:false,
 	    selectOnNavigation:false,
 	    formatter:Document.head.pcompListfrm,
-	    
 	    icons: [
-		{iconCls:'icon-settings16',handler: App.user.pcompSelectionDialog},
+		{iconCls:'icon-settings16',handler: Document.head.pcompTree},
 		{iconCls:'icon-change16',handler:Document.head.pcompDetails}
-	     ]
+	    ]
 	};
 	this.pcompNode.combobox(options);
     },
@@ -134,6 +155,47 @@ Document.head={
     },
     pcompDetails:function(){
 	App.loadWindow('page/company/details',{company_id:Document.data.head.passive_company_id});
+    },
+    pay:function(){
+        App.loadWindow("page/accounts/document_pay",{doc_id:Document.doc_id,total:Document.data.foot.total}).done(function(fvalue){
+            App.flash("head_changed!");
+        });
+    },
+    sendsms:function(){
+        $.get("Company/companyGet/"+Document.data.head.passive_company_id, function ( xhr ) {
+            var passive_data=App.json(xhr);
+            var data={to:passive_data.company_mobile,body:Document.data.head.doc_data};
+            App.loadWindow('page/dialog/send_sms',data);	    
+        });
+    },
+    addevent:function(){
+        $.get("Company/companyGet/"+Document.data.head.passive_company_id, function ( xhr ) {
+            var passive_data=App.json(xhr);
+            var fvalue={
+                doc_id:Document.data.head.doc_id,
+                event_id:0,
+                event_label:'Доставка',
+                event_creator_user_id: App.user.props.user_id,
+                event_name: 'Документ №' + Document.data.head.doc_num,
+                event_descr: Document.data.head.doc_data,
+                event_target: passive_data.company_person + " (" + passive_data.label + ")",
+                event_place: passive_data.company_address,
+                event_note: passive_data.company_mobile
+            };
+            App.loadWindow('page/events/event',fvalue);	    
+        });
+    },
+    duplicate:function(){
+        if( confirm("Создать копию этого документа?") ){
+            App.post(document_model+"/documentDuplicate/"+Document.doc_id,function(doc_id){
+                if( doc_id*1 ){
+                    Document.doc_id = doc_id;
+                    Document.reload();
+                    //Document.handler.notify('created',doc_id);
+                    App.flash("Документ скопирован и загружен");
+                }
+            });
+        }
     }
 };
 Document.body={
@@ -156,7 +218,7 @@ Document.body={
 	Document.body.table_sg.render();
     },
     destroy:function(){
-	$("#"+holderId+" .x-body .x-suggest").combobox('destroy');
+	$("#"+holderId+" .x-body .x-suggest").combobox('clear');
     },
     suggest:{
 	init:function(){
@@ -179,7 +241,7 @@ Document.body={
 		textboxextField: 'product_code',
 		formatter:suggFormatter,
 		selectOnNavigation:false,
-		url: 'DocumentItems/suggestFetch/',
+		url: document_model+'/entrySuggestFetch/',
 		panelHeight:'auto',
 		mode: 'remote',
 		method:'get',
@@ -255,7 +317,7 @@ Document.body={
 		    enableColumnReorder: false,
 		    enableFilter:true,
 		    multiSelect :false,
-		    url:'DocumentSell/pickerListFetch'
+		    url:document_model+'/pickerListFetch'
 		}
 	    };
 	    var picklist=$("#"+holderId+" .x-body .x-stock").slickgrid(settings);
@@ -309,7 +371,7 @@ Document.body={
 	    App.loadWindow('page/dialog/importer',{label:'документ',fields_to_import:config}).progress(function(status,fvalue,Importer){
 		if( status==='submit' ){
 		    fvalue.doc_id=Document.doc_id;
-		    App.post("DocumentSell/entryImport/",fvalue,function(ok){
+		    App.post(document_model+"/entryImport/",fvalue,function(ok){
 			App.flash("Импортировано "+ok);
 			Importer.reload();
 			Document.reload(["body","foot"]);
@@ -337,19 +399,30 @@ Document.body={
 		}
 		Document.reload(["body","foot"]);
 	    });
+	},
+        recalculate:function(){
+	    App.loadWindow('page/trade/document_recalculate').progress(function(state,data){
+		if( state==='submit' ){
+		    App.post(document_model+"/entryRecalc/"+Document.doc_id+'/'+(data.recalc_proc*1||0), function ( xhr ) {
+                        Document.reload(["body","foot"]);
+                        App.flash("Перерасчет выполнен");
+		    });
+                }
+	    });
 	}
     },
     table:{
 	init:function(){
+
 	    var settings={
 		columns:[
 		    {id:"queue",name: "№", width: 30,formatter:Document.body.table.formatters.queue },
 		    {id:"product_code", field: "product_code",name: "Код", sortable: true, width: 80},
-		    {id:"product_name", field: "product_name",name: "Название", sortable: true, width: 400},
+		    {id:"product_name", field: "product_name",name: "Название", sortable: true, width: 388},
 		    {id:"product_quantity", field: "product_quantity",name: "Кол-во", sortable: true, width: 70, cssClass:'slick-align-right', editor: Slick.Editors.Integer},
 		    {id:"product_unit", field: "product_unit",name: "Ед.", width: 30, sortable: true },
-		    {id:"product_price_total", field: "product_price_total",name: "Цена", sortable: true, width: 70, cssClass:'slick-align-right',asyncPostRender:Document.body.table.formatters.priceisloss, editor: Slick.Editors.Float},
-		    {id:"product_sum_total", field: "product_sum_total",name: "Сумма", sortable: true, width: 80,cssClass:'slick-align-right', editor: Slick.Editors.Float},
+		    {id:"product_price", field: "product_price",name: "Цена", sortable: true, width: 70, cssClass:'slick-align-right',asyncPostRender:Document.body.table.formatters.priceisloss, editor: Slick.Editors.Float},
+		    {id:"product_sum", field: "product_sum",name: "Сумма", sortable: true, width: 80,cssClass:'slick-align-right', editor: Slick.Editors.Float},
 		    {id:"row_status", field: "row_status",name: "!",sortable: true, width: 25,formatter:Document.body.table.formatters.tooltip },
 		    //{id:"party_label",field:"party_label",name:"Партия",width:120, editor: Slick.Editors.Text},
 		    //{id:"analyse_origin",field:'analyse_origin',name:"Происхождение",width:70},
@@ -373,8 +446,32 @@ Document.body={
 		var field=settings.columns[data.cell].field;
 		var value=updatedEntry[field];
 		Document.body.table.entryUpdate(updatedEntry.doc_entry_id,field,value);
-	    });	    
+	    });	  
+            $("#"+holderId+" .x-body .x-entries").click(function(e){
+                var row = Document.body.table_sg.getSelectedRows()[0];
+                var action = $(e.target).data('action');
+                var row_data = Document.body.table_sg.getData()[row];
+		if( action ){
+		    Document.body.table.actions[ action ] && Document.body.table.actions[action](row_data);
+		}
+            });
+             
 	},
+        actions:{
+            err_reserve:function(row_data){
+                location.hash="#Stock#stock_main_tabs=Резерв&product_code="+row_data.product_code;
+            },
+            err_breakeven:function(row_data){
+                var url=document_model+'/entryUpdate';
+                $.post(url,{doc_id:Document.doc_id,doc_entry_id:row_data.doc_entry_id,field:'product_price',value:row_data.breakeven_price},function(ok){
+                    if( !(ok*1) ){
+                        App.flash("Строка не изменена");
+                    }
+                    Document.reload(["body","foot"]);
+                });
+                App.flash("Цена изменена на "+row_data.breakeven_price);
+            }
+            },
 	formatters:{
 	    queue:function(row, cell, value, columnDef, dataContext){
 		return row+1;
@@ -384,7 +481,7 @@ Document.body={
 		    var parts = value.split(' ');
 		    var cmd = parts.shift();
 		    if (cmd){
-			return '<img src="img/' + cmd + '.png" style="max-width:16px;height:auto" title="' + parts.join(' ') + '">';
+			return '<img src="img/' + cmd + '.png" style="max-width:16px;height:auto; cursor: pointer" title="' + parts.join(' ') + '" data-action="' + cmd + '">';
 		    }
 		}
 		return '';
@@ -417,6 +514,7 @@ Document.body={
 		Document.reload(["body","foot"]);
 	    });
 	}
+        
     }
     /*
      * @TODO add export table
@@ -424,20 +522,104 @@ Document.body={
 };
 Document.foot = {
     init: function(){
-        
     },
     render:function(footer){
-        footer.total_weight=footer.total_weight||0;
-        footer.total_volume=footer.total_volume||0;
-        footer.vatless=footer.vatless||0;
-        footer.vat=footer.vat||0;
-        footer.total=footer.total||0;
-        footer.curr_symbol=footer.curr_symbol||'-';
+        footer.total_weight=footer.total_weight||'0.00';
+        footer.total_volume=footer.total_volume||'0.00';
+        footer.vatless=footer.vatless||'0.00';
+        footer.vat=footer.vat||'0.00';
+        footer.total=footer.total||'0.00';
+        footer.curr_symbol=footer.curr_symbol||'';
         Document.data.foot=footer;
-        App.renderTpl('Doc_footer',Document.data.foot);
+        App.renderTpl('Document_footer',Document.data.foot);
     },
     destroy:function(){
 	$("#"+holderId+" .x-foot .x-suggest").combobox('destroy');
+    }
+};
+
+Document.views={
+    init:function(){
+    },
+    render: function(views){
+        Document.views.view_list = Document.views.compile(views);
+        App.renderTpl('Document_view_tile',{views:Document.views.view_list});
+        Document.views.initControls();
+    },
+    initControls: function(){
+        $('#load_views_button').click(function(){
+            Document.views.render(Document.views.view_list);
+        });
+        $('#Document_view_tile img, #Document_view_tile .view_button').click(function(e){
+            switch(e.target.className){
+                case 'Document_view_settings':
+                    Document.views.settings(e.target);
+                    event.stopPropagation();
+                    return;
+                case 'Document_view_arrow':
+                    Document.views.togglehidden();
+                    return;
+                default:
+                    Document.views.click(e.target);
+                    return;
+            }
+        });
+    },
+    destroy:function(){
+        
+    },
+    compile:function( view_list ){
+        for( var i in view_list ){
+            var view=view_list[i];
+            var efield_vals=App.json(view.view_efield_values);
+            var efield_labs=App.json(view.view_efield_labels);
+            view_list[i].efields=[];
+            for( var k in efield_labs ){
+                view_list[i].efields.push({field:k,label:efield_labs[k],value:efield_vals?efield_vals[k]||'':''});
+            }
+        }
+        return view_list;
+    },
+    settings:function( node ){
+        var i=$(node).attr('data-view-i');
+        var view=Document.views.view_list[i];
+        if( view.doc_view_id ){
+            App.loadWindow('page/trade/view_settings',view).progress(function(status){
+                if( status==='deleted' || status==='changed' || status==='close' ){
+                    Document.reload();
+                }
+            });
+        }
+    },
+    create:function(view_type_id){
+        if(!view_type_id){
+            return;
+        }
+        App.post("DocumentView/viewCreate/"+view_type_id,function(doc_view_id){
+            if( doc_view_id*1 ){
+                Document.views.open(doc_view_id);
+                Document.reload();
+            }
+        });
+    },
+    open:function(doc_view_id){
+        window.open("./DocumentView/documentViewGet/?out_type=.print&doc_view_id="+doc_view_id, '_new');
+    },
+    click:function( node ){
+        var doc_view_id=$(node).attr('data-view-id');
+        var view_type_id=$(node).attr('data-view-type-id');
+        if( doc_view_id*1 ){
+            Document.views.open(doc_view_id);
+        }
+        else{
+            Document.views.create(view_type_id);
+        }
+    },
+    showhidden:false,
+    togglehidden:function(){
+        this.showhidden=!this.showhidden;
+        $('.Document_view_arrow').attr('src','img/arrow'+(this.showhidden?'left':'right')+'.png');
+        $('.view_is_hidden').css('display',(this.showhidden?'inline-block':'none'));
     }
 };
 

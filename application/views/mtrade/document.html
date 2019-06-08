@@ -1,6 +1,8 @@
 <script>
     var holder_node_id = document.scripts[document.scripts.length - 1].parentNode.id;
     App[holder_node_id]=(function($){
+        
+        
 	var holderId;
 	function setHolderId(id){
 	    holderId=id;
@@ -86,7 +88,8 @@
 		Document.body.destroy();
 		Document.foot.destroy();
 		Document.views.destroy();
-		$("#"+holderId).find(".x-head, .x-body, .x-foot, .x-views").html("");
+                Document.reload();
+		//$("#"+holderId).find(".x-head, .x-body, .x-foot, .x-views").html("");
 	    },
 	    load:function(id,parts_to_load){
 		if( !document_model ){
@@ -101,13 +104,14 @@
 		    if(render_data){
 			Document.render( render_data );
 		    } else {
-			App.flash("Can't load document");
+			App.flash("Не могу загрузить документ");
 		    }
 		});
 	    },
 	    reload:function(){
 		var parts=["head","body","foot","views"];
-		Document.load(Document.doc_id,parts);
+                App.Topic('documentUpdated').publish();
+                Document.load(Document.doc_id,parts);
 	    },
             delete:function(){
 		$.post(document_model+'/documentDelete',{doc_id:Document.doc_id},function(ok){
@@ -115,7 +119,7 @@
 			Document.destroy();
                         App.flash("Документ удален");
 		    } else {
-			App.flash("Can't DELETE document");
+			App.flash("Не могу удалить документ");
 		    }
 		});                
             },
@@ -173,7 +177,8 @@
 	return {
 	    init:init,
 	    load:Document.load,
-	    setHolderId:setHolderId
+	    setHolderId:setHolderId,
+            Document: Document
 	};
     })(jQuery);
     App[holder_node_id].setHolderId( holder_node_id );

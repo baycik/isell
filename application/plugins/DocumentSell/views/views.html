@@ -1,0 +1,31 @@
+
+<div id="Document_view_tile" style="clear:both;vertical-align: top;text-align: justify;margin: auto 10px;display: none" class="covert">
+     <hr style="border-color: white">
+    {{if views}}
+        {{views}}
+        <div class="view_button {{if view_hidden|equals>1}}view_is_hidden{{/if}} {{if #|more>3}}view_is_hidden{{/if}}" 
+             data-view-id = "{{doc_view_id}}" 
+             data-view-type-id = "{{view_type_id}}"  
+             onmouseenter = "$('.view_efields'+{{#}}).show('fast')"
+             onmouseleave = "$('.view_efields'+{{#}}).hide('fast')"
+             >
+            <img src="img/document.png" style="float:left;padding:5px;margin-right: 5px" title="Печатный документ">
+            {{view_name}}
+            {{if doc_view_id}}
+            <b>№{{view_num}}</b> </br>{{view_date}}
+            <img class="Document_view_settings" src="img/settings.png" data-view-i="{{#}}" style="float:right; padding: 2px;border: 1px solid white;" title="Настройки">
+                {{if efields}}
+                <div class="view_efields view_efields{{#}}" style="display: none">
+                    {{efields}}
+                     {{label}}: {{if value}}<u style="color:red">{{value}}</u>{{/if}}<br/>
+                    {{/efields}}
+                {{/if}}
+            {{/if}}
+                </div>
+        </div>
+        {{/views}}
+    {{/if}}
+	 <img class="Document_view_arrow"  src="img/arrowright.png" title="Дополнительные шаблоны печати" style="padding: 10px 5px 10px 5px;">    
+</div>
+<textarea name="doc_data" title="Комментарий" placeholder="Комментарий" data-skip="1" class="document_comment"></textarea>
+	
