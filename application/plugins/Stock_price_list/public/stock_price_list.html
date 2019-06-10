@@ -67,7 +67,7 @@
 	itemTextEdit:function( li_html, li_node ){
 	    App.loadWindow('page/dialog/text_editor',{html:li_html}).progress(function(status,data){
 		if( status==='save' ){
-		    console.log(data.html);
+		    //console.log(data.html);
 		    li_node.find('span').html(data.html);
 		    App.price_list.save();
 		}
@@ -103,7 +103,7 @@
 	    var deployment_id = this.current_dpl_id;
 	    this.deployment_data = {items: [], name: $("#price_list_name").html(), id: deployment_id};
 	    this.deployment_data.sort_by=$("select[name=sort_by]").val();
-	    console.log(this.deployment_data.sort_by);
+	    //console.log(this.deployment_data.sort_by);
 	    this.deployment_data.price_label=$("select[name=price_label]").val();
 	    $("#price_list_drag_msg").remove();
 	    $(".used_items li").each(function () {
@@ -228,9 +228,9 @@
 			<option value="product_name">Название</option>
 		    </select>
                     <select name="price_label" title="Категория цен" onchange="App.price_list.save()">
-                        {{price_label_list}}
+                        <!--{{price_label_list}}-->
                         <option value="{{label}}">{{label}}</option>
-                        {{/price_label_list}}
+                        <!--{{/price_label_list}}-->
                     </select>
 		</form>
 	    </div>
@@ -246,16 +246,16 @@
 		<h3>Не используемые блоки прайс листа</h3>
 	    </div>
 	    <ul id="price_list_availables" class="connected available_items" style="width:435px;">
-		{{availables}}
-                    {{if top_id}}
-                        <div style="clear:both">{{label}}<hr></div>
-                    {{else}}
+		<!--{{availables}}-->
+                    <!--{{if top_id}}-->
+                        <li style="clear:both"><!--{{label}}--><hr></li>
+                    <!--{{else}}-->
                         <li data-id="{{id}}" data-type="category" title="{{path}}">
                             <span>{{text}}</span> ({{product_count}}) 
                             <i>{{path}}</i>
                         </li>
-                    {{/if}}
-		{{/availables}}
+                    <!--{{/if}}-->
+		<!--{{/availables}}-->
 	    </ul>	    
 	</td>
 	<td style="vertical-align: top">
@@ -264,8 +264,8 @@
 		Перетащите сюда или дважды щелкните не используемые блоки прайс листа. Блоки можно сортировать перетаскиванием.
 	    </div>
 	    <ul id="price_list_deployment" class="connected used_items" style="width:18.5cm;float:right;">
-		{{items}}
-		    {{if type|equals>category}}
+		<!--{{items}}-->
+		    <!--{{if type|equals>category}}-->
 			<li data-id="{{id}}" data-type="category" title="{{path}}">
                             <div style="float:right">Скрыть:
                                 {{if hidden|bool}}
@@ -284,7 +284,7 @@
 			    <span>{{text}}</span> ({{product_count}}) 
 			    <i>{{path}}</i>
 			</li>
-		    {{else}}
+		    <!--{{else}}-->
 			<li data-type="{{type}}" class="{{type}}">
                             <img src="img/edit-16.png" class="edit_pencil" onclick="App.price_list.itemEdit(this)"> 
                             <div style="float:right">Скрыть:
@@ -296,8 +296,8 @@
                             </div>
                             <span>{{text}}</span>
                         </li>
-		    {{/if}}
-		{{/items}}
+		    <!--{{/if}}-->
+		<!--{{/items}}-->
 	    </ul>	    
 	</td>
     </tr>
