@@ -24,7 +24,7 @@
 
 	</div>
 	<div>
-            <select class="easyui-combobox head_input" id="Doc_type_cmb" name="doc_type" title="Вид" >
+            <select class="easyui-combobox head_input" id="Doc_type_cmb" name="doc_type" title="Тип" >
 		<option value="1">Продажа</option>
 		<option value="-1">Возврат от покупателя</option>
 		<option value="2">Покупка</option>
@@ -33,7 +33,16 @@
 		<option value="4">Получение услуги</option>
 	    </select>
 	    <input class="head_input" name="passive_company_id" title="Покупатель">
-            <input class="easyui-combobox" name="doc_status_id" id="Doc_status_id" title="Статус" data-options="
+	</div>
+	<div>
+	    <input type='number' min="1" class="head_input" name="doc_num" title="Номер" style="height: 28px;">
+            <input type='date' class="head_input" name="doc_date" title="Дата" style="height: 28px;">
+	</div>
+        
+    </div>
+    <div class="x-utils" style="display: none">
+	<hr style="border-color: white">
+        <input class="easyui-combobox" name="doc_status_id" id="Doc_status_id" title="Статус" data-options="
                 showItemIcon:true,
                 valueField: 'doc_status_id',
                 textField: 'status_description',
@@ -42,15 +51,6 @@
                 selectOnNavigation:false,
                 panelHeight:''
                 ">
-	</div>
-	<div>
-	    <input type='number' min="1" class="head_input" name="doc_num" title="Номер" style="height: 28px;">
-            <input type='date' class="head_input" name="doc_date" title="Дата" style="height: 28px; font-family: 'Trebuchet MS',Arial; font-size: 14px">
-	</div>
-        
-    </div>
-    <div class="x-utils" style="display: none">
-	<hr style="border-color: white">
 	<select name="use_vatless_price" class="easyui-combobox" title="Цена" style="height: 28px;">
 	    <option value="0">В том числе НДС</option>
 	    <option value="1">Плюс НДС</option>

@@ -432,6 +432,7 @@ Document.body={
 		    editable: true,
 		    autoEdit: true,
 		    autoHeight: true,
+                    leaveSpaceForNewRows:true,
 		    enableCellNavigation: true,
 		    enableColumnReorder : false,
 		    enableFilter:false,
