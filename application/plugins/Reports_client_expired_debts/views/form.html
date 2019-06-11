@@ -1,5 +1,5 @@
 <form>
-    <div class="inp_group" style="width: 350px;">
+    <div class="inp_group">
 	<select name="filter_by" title="Фильтровать по">
 	    <option value="label" selected="selected">Компания</option>
 	    <option value="sell">Общий долг</option>
@@ -9,10 +9,11 @@
 	</select>
 	<input name="filter_value" title="Фильтр">	
     </div>
-    <div class="inp_group" style="width: 230px;">
-	<input style="width:110px" class="easyui-datebox" name="fdate" title="Конечная дата" value="{{today}}" data-options="required:true">
+    <div class="inp_group">
+        <input type="date" name="fdate" title="Конечная дата" value="{{iso_today}}" required="required">
+	<input name="threshold" title="Порог долга" value="100">
     </div>
-    <div class="inp_group" style="width: 200px;">
+    <div class="inp_group">
 	<input type="checkbox" name="all_active" title="Все наши фирмы" checked="checked">
 	<input type="checkbox" name="their_debts" title="Их долг" checked="checked">
 	<input type="checkbox" name="our_debts" title="Наш долг" checked="checked">
