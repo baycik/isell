@@ -1,4 +1,4 @@
-<script src="js/jquery.sortable.js"></script>
+
 <script>
     App.price_list = App.Stock_price_list_stock_price_list = {
 	current_dpl_id: 0,
@@ -12,7 +12,9 @@
             this.initForm();
 	},
 	initDrag: function () {
-	    $('.connected').sortable('destroy');
+            
+            
+	    //$('.connected').sortable('destroy');
 	    $('.connected').sortable({
 		connectWith: '.connected'
 	    }).one('sortupdate', function (e, ui) {
@@ -245,10 +247,10 @@
 	    <div style="height:40px;">
 		<h3>Не используемые блоки прайс листа</h3>
 	    </div>
-	    <ul id="price_list_availables" class="connected available_items" style="width:435px;">
+	    <ul id="price_list_availables" class="connected available_items" style="width:450px;">
 		<!--{{availables}}-->
                     <!--{{if top_id}}-->
-                        <li style="clear:both"><!--{{label}}--><hr></li>
+                        <div style="clear:both"><!--{{label}}--><hr></div>
                     <!--{{else}}-->
                         <li data-id="{{id}}" data-type="category" title="{{path}}">
                             <span>{{text}}</span> ({{product_count}}) 
@@ -306,6 +308,7 @@
     .connected li{
 	list-style: none;
 	border: 1px solid #CCC;
+        box-sizing: content-box;
 	background: #fff;
 	margin: 2px;
 	padding: 5px;
