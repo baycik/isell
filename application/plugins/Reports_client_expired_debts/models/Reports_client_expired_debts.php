@@ -65,7 +65,7 @@ class Reports_client_expired_debts extends Catalog{
         $path_filter=$this->getAssignedPathWhere();
 	$having =$this->getDirectionFilter();
         $having.=$this->filter_value?"AND (".$this->or_like($this->filter_by,$this->filter_value).")":"";
-        $having.=" AND sell>$this->threshold AND buy>$this->threshold AND exp>$this->threshold";
+        $having.=" AND ( sell>$this->threshold OR buy>$this->threshold OR exp>$this->threshold )";
 
 	$sql="
 	    SELECT
