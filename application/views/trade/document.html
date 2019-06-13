@@ -960,7 +960,11 @@
 		   precision:2,
 		   onChange:function(val,old){Doc.head.update('doc_ratio',val,old)}
 		   ">
-	    <input name="extra_expenses" class="easyui-numberbox" title="Доп. расходы" onchange="Doc.head.update('extra_expenses',this.value)">
+	    <input name="extra_expenses" class="easyui-numberbox" title="Доп. расходы" data-options="
+		   min:0,
+		   precision:0,
+		   onChange:function(val,old){Doc.head.update('extra_expenses',val,old)}
+		   ">
 	    <div style="padding:1px;text-align: right;" class="transp60">
 		Дополнительные инструменты: 
 		<span class="icon-24 icon-import" title="Импортировать" onclick="Doc.head.import();"> </span>
