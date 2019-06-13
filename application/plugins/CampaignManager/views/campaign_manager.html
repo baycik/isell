@@ -57,6 +57,12 @@
                 Mark.globals.stock_categories = data.stock_category_list;
                 App.renderTpl('CampaignManager', data);
                 $("#CampaignManager").css('visibility','visible');
+                if( data.settings.subject_manager_include ){
+                    data.settings.subject_manager_include=data.settings.subject_manager_include.split(',');
+                }
+                if( data.settings.subject_manager_exclude ){
+                    data.settings.subject_manager_exclude=data.settings.subject_manager_exclude.split(',');
+                }
                 App.setupForm('#camp_manager_form', data.settings, 'use_inp_values').change(function (node) {
                     if (this.name.indexOf('-') > -1) {
                         var campaign_bonus_id = this.name.split('-')[1];
@@ -79,6 +85,9 @@
                 });
             },
             update: function (field, value, title) {
+                if( field==='subject_manager_include' || field==='subject_manager_exclude' ){
+                    value=value.join(',');
+                }
                 $.post("CampaignManager/campaignUpdate", {campaign_id: campaign_id, field: field, value: value}, function (ok) {
                     if (ok * 1) {
                         Campaign.reload();
@@ -384,15 +393,21 @@
                 <div>
                     <input type="text" title="Включить группу" name="subject_path_include">
                     <input type="text" title="Исключить группу" name="subject_path_exclude">
-                    <select name="subject_manager_include" title="Включить закрепленных">
-                        <!--{{staff_list}}-->
+                    <select name="subject_manager_include" title="Включить закрепленных" multiple size="6">
+                        <!--{{staff_list}}
+                        {{if full_name}}
+                        -->
                         <option value="{{user_id}}">{{full_name}}</option>
-                        <!--{{/staff_list}}-->
+                        <!--{{/if}}
+                        {{/staff_list}}-->
                     </select>
-                    <select name="subject_manager_exclude" title="Исключить закрепленных">
-                        <!--{{staff_list}}-->
+                    <select name="subject_manager_exclude" title="Исключить закрепленных" multiple size="6">
+                        <!--{{staff_list}}
+                        {{if full_name}}
+                        -->
                         <option value="{{user_id}}">{{full_name}}</option>
-                        <!--{{/staff_list}}-->
+                        <!--{{/if}}
+                        {{/staff_list}}-->
                     </select>
                 </div>
                 <div  style="max-width:920px;">

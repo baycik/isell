@@ -39,6 +39,7 @@ class CampaignManager extends Catalog{
     public function campaignGet( int $campaign_id ){
         $this->Hub->set_level(3);
         $settings=$this->get_row("SELECT * FROM plugin_campaign_list WHERE campaign_id='$campaign_id'");
+        //$settings->subject_manager_include=explode(',',$settings->subject_manager_include);
         return [
             'settings'=>$settings,
             'staff_list'=>$this->Hub->load_model("Pref")->getStaffList(),
@@ -82,10 +83,10 @@ class CampaignManager extends Catalog{
             $and_case[]=" path NOT LIKE '%".str_replace(",", "%' AND path NOT LIKE '%", $settings->subject_path_exclude)."%'";
         }
         if( $settings->subject_manager_include ){
-            $or_case[]=" manager_id = '".str_replace(",", "' OR manager_id = '", $settings->subject_manager_include)."'";
+            $or_case[]=" manager_id IN ($settings->subject_manager_include)";
         }
         if( $settings->subject_manager_exclude ){
-            $and_case[]=" manager_id <> '".str_replace(",", "' OR manager_id <> '", $settings->subject_manager_exclude)."'";
+            $and_case[]=" manager_id NOT IN ($settings->subject_manager_exclude)";
         }
         $where="";
         if( count($or_case) ){

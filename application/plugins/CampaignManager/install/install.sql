@@ -17,8 +17,8 @@ CREATE TABLE `plugin_campaign_list` (
   `campaign_name` varchar(45) DEFAULT NULL,
   `subject_path_include` varchar(255) DEFAULT NULL,
   `subject_path_exclude` varchar(255) DEFAULT NULL,
-  `subject_manager_include` int(11) DEFAULT NULL,
-  `subject_manager_exclude` int(11) DEFAULT NULL,
+  `subject_manager_include` varchar(45) DEFAULT NULL,
+  `subject_manager_exclude` varchar(45) DEFAULT NULL,
   PRIMARY KEY (`campaign_id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8 COMMENT='';
 
