@@ -765,10 +765,10 @@ class Document extends Data {
 	    $pnotcount = $prev_doc['notcount'];
 	    $psignsafterdot = $prev_doc['signs_after_dot'];
 	    $pusevatlessprice = $prev_doc['use_vatless_price'];
-            if( $vat_rate!==$prev_doc['vat_rate'] ){
+            /*if( $vat_rate!==$prev_doc['vat_rate'] ){
                 $this->Base->msg("Внимание! НДС в документе отличется от значения по умолчанию");
             }
-	    $vat_rate=$prev_doc['vat_rate'];
+	    $vat_rate=$prev_doc['vat_rate'];*/
 	} else {
 	    $pnotcount = 0;
 	    $psignsafterdot = 2;
