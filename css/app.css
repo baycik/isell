@@ -660,11 +660,9 @@ h2{
 }
 
 .document_comment{
-    width: 780px;
-    margin: 10px;
-    height: 70px;
-    padding: 7px;
-    resize: none;
+    width: 100%;
+    height: 40px;
+    background-color: #cfc;
 }
 
 .footer_table {
