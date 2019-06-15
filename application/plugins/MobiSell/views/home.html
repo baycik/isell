@@ -3,15 +3,21 @@
 	init: function () {
 	    this.focus();
             App.user.getData();
-            setTimeout(App.home.initSettings,111);
+            setTimeout(App.home.initSettings,1000);
 	},
 	focus: function () {
 	    App.title("Главная");
 	},
         initSettings:function(){
-            var device_has_numeric_keypad=localStorage.getItem('device_has_numeric_keypad')=='true'?1:0;
+            var device_has_numeric_keypad=localStorage.getItem('device_has_numeric_keypad')==='true'?1:0;
             $('input[name=device_has_numeric_keypad]').prop('checked', device_has_numeric_keypad);
+            
+            var disable_document_create_notification=localStorage.getItem('disable_document_create_notification')==='true'?1:0;
+            $('input[name=disable_document_create_notification]').prop('checked', disable_document_create_notification);
             $("#home_version_date").html(new Date(document.lastModified).toLocaleDateString());
+            
+            
+            console.log($('input[name=disable_document_create_notification]'));
         }
     };
 </script>
@@ -81,8 +87,16 @@
                             <label>Использовать цифровую клавиатуру</label>
                         </div>
                     </div>
+                    <div class="inverted item">
+                        <div class="ui slider checkbox disable_document_create_notification">
+                            <input name="disable_document_create_notification" class="" type="checkbox" onchange="localStorage.setItem('disable_document_create_notification',$(this).is(':checked'));">
+                            <label>Не уведомлять офис о создании документа</label>
+                        </div>
+                    </div>
 		</div>
 	    </div>
 	</div>
     </div>
 </div>
+
+<!--PLUGIN-PANELS-->

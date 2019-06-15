@@ -300,6 +300,9 @@ class Company extends Catalog{
 	    case 'discount':
 		return $this->discountUpdate($field,$value);
 	    case 'other':
+                if( $field=='skip_breakeven_check' ){
+                    $this->Hub->set_level(3);
+                }
 		if( in_array($field, array('deferment','debt_limit','curr_code','price_label','expense_label','manager_id','is_supplier','skip_breakeven_check','company_acc_list','language')) ){
 		    $passive_company_id = $this->Hub->pcomp('company_id');
 		    $this->query("UPDATE companies_list SET $field='$value' WHERE company_id=$passive_company_id");

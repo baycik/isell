@@ -164,7 +164,9 @@ class DocumentItems extends DocumentCore{
         if( $this->isReserved() ){
             $this->reservedCountUpdate();
         }
-        $this->entryBreakevenPriceUpdate($doc_entry_id);
+        if( $doc_entry_id*1 ){
+            $this->entryBreakevenPriceUpdate($doc_entry_id);
+        }
         return $doc_entry_id;
     }
     private function entryBreakevenPriceUpdate( $doc_entry_id=null, $doc_id=null ){

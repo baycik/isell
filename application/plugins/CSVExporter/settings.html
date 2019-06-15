@@ -1,3 +1,4 @@
+
 <form>
     <div class="plugin_settings">
         <table>
@@ -69,11 +70,16 @@
         <h1>Плагин не установлен</h1>
     </div>
     <div style="text-align: center">
-        
+        <label>Формат файла:</label>
+        <select style="width:80px; height:28px" onchange="App.csv_exporter_settings.changeMode(this.value)">
+            <option>csv</option>
+            <option>yml</option>
+        </select>
         <button type="button" onclick="App.csv_exporter_settings.addAutoBackupTask()"><img src="img/event.png" style="width:24px;"> Добавить автовыполнение</button>
         <button type="button" onclick="App.csv_exporter_settings.export()"><img src="img/export.png" style="width:24px;"> Экспорт</button>
     </div>
 </form>
+
 <style>
     #csv_Exporter_filters label b{
         width: 100px !important;
@@ -81,19 +87,34 @@
 </style>
 <script>
     App.csv_exporter_settings = {
+        mode:'',
         init: function () {
             if( Plugins.currentData.is_activated==1 ){
-                if( Plugins.currentData.plugin_settings.filters ){
+                if( Plugins.currentData.plugin_settings.active_mode ){
                     App.csv_exporter_settings.data = Plugins.currentData.plugin_settings;
                 } else {
                     App.csv_exporter_settings.data={
-                        filters: [],
-                        categories: [],
-                        publicUrl: '',
-                        pcomp_id:0,
-                        pcomp_name:''
+                        csv:{
+                            filters: [],
+                            categories: [],
+                            publicUrl: '',
+                            pcomp_id:0,
+                            pcomp_name:''
+                        },
+                        yml:{
+                            filters: [],
+                            categories: [],
+                            publicUrl: '',
+                            pcomp_id:0,
+                            pcomp_name:''
+                        },
+                        active_mode: 'csv'
                     };
                 }
+                App.csv_exporter_settings.mode = App.csv_exporter_settings.data.active_mode;
+                    $("input[name=pcomp_id]").val(App.csv_exporter_settings.data[App.csv_exporter_settings.mode].pcomp_id);
+                    $("input[name=pcomp_name]").val(App.csv_exporter_settings.data[App.csv_exporter_settings.mode].pcomp_name);
+                    $("input[name=publicUrl]").val(App.csv_exporter_settings.data[App.csv_exporter_settings.mode].publicUrl);
                 $(".plugin_settings").show();
                 $(".plugin_notinstalled").hide();
                 App.csv_exporter_settings.categories.init();
@@ -104,27 +125,36 @@
             }
         },
         render:function(){
-            
         },
         updateSettings: function () {
-            App.csv_exporter_settings.data.pcomp_id=$("input[name=pcomp_id]").val();
-            App.csv_exporter_settings.data.pcomp_name=$("input[name=pcomp_name]").val();
-            App.csv_exporter_settings.data.publicUrl=$("input[name=publicUrl]").val();
+            App.csv_exporter_settings.data[App.csv_exporter_settings.mode].pcomp_id=$("input[name=pcomp_id]").val();
+            App.csv_exporter_settings.data[App.csv_exporter_settings.mode].pcomp_name=$("input[name=pcomp_name]").val();
+            App.csv_exporter_settings.data[App.csv_exporter_settings.mode].publicUrl=$("input[name=publicUrl]").val();
+            App.csv_exporter_settings.data.active_mode = App.csv_exporter_settings.mode;
             $.post('CSVExporter/updateSettings', {settings: JSON.stringify(App.csv_exporter_settings.data)}, function (resp) {
                 if (resp) {
                     var response = App.json(resp);
                     App.csv_exporter_settings.data = response;
+                    $("input[name=pcomp_id]").val(App.csv_exporter_settings.data[App.csv_exporter_settings.mode].pcomp_id);
+                    $("input[name=pcomp_name]").val(App.csv_exporter_settings.data[App.csv_exporter_settings.mode].pcomp_name);
+                    $("input[name=publicUrl]").val(App.csv_exporter_settings.data[App.csv_exporter_settings.mode].publicUrl);
+                    App.csv_exporter_settings.categories.init();
+                    App.csv_exporter_settings.filters.load();
                 }
             });
         },
+        changeMode: function(mode){
+            App.csv_exporter_settings.updateSettings();
+            App.csv_exporter_settings.mode = mode;
+        },
         export: function () {
-            if (!App.csv_exporter_settings.data.pcomp_id) {
+            if (!App.csv_exporter_settings.data[App.csv_exporter_settings.mode].pcomp_id && App.csv_exporter_settings.mode !== 'yml') {
                 App.flash("Выберите клиента, цены которого будут использованы!");
                 return;
             }
-            $.post('CSVExporter/export', function (ok) {
+            $.post('CSVExporter/export_'+App.csv_exporter_settings.mode, function (ok) {
                 if (ok) {
-                    App.flash(ok+" Товаров было экспортировано в файл в публичной папке!<br>"+App.csv_exporter_settings.data.publicUrl+'/public');
+                    App.flash(ok+" Товаров было экспортировано в файл в публичной папке!<br>"+App.csv_exporter_settings.data[App.csv_exporter_settings.mode].publicUrl+'/public');
                 } else {
                     App.flash("Возникла ошибка при экспорте!");
                 }
@@ -137,7 +167,7 @@
                     if (resp) {
                         App.csv_exporter_settings.filters.list = App.json(resp);
                         App.renderTpl('filter_select', {filter_list: App.csv_exporter_settings.filters.list});
-                        App.renderTpl('filter_panel', {product_filters: App.csv_exporter_settings.data.filters});
+                        App.renderTpl('filter_panel', {product_filters: App.csv_exporter_settings.data[App.csv_exporter_settings.mode].filters});
                     }
                 });
             },
@@ -146,9 +176,9 @@
                 if (!confirm("Удалить атрибут " + $(node).data('name') + "?")) {
                     return;
                 };
-                for(var i = 0; i < App.csv_exporter_settings.data.filters.length; i++){
-                    if(attribute_id == App.csv_exporter_settings.data.filters[i].attribute_id){
-                        App.csv_exporter_settings.data.filters.splice(i, 1);
+                for(var i = 0; i < App.csv_exporter_settings.data[App.csv_exporter_settings.mode].filters.length; i++){
+                    if(attribute_id == App.csv_exporter_settings.data[App.csv_exporter_settings.mode].filters[i].attribute_id){
+                        App.csv_exporter_settings.data[App.csv_exporter_settings.mode].filters.splice(i, 1);
                         App.csv_exporter_settings.updateSettings();
                         App.csv_exporter_settings.filters.load();
                         return;
@@ -161,8 +191,8 @@
                     App.flash("Выберите фильтр");
                     return;
                 }
-                for(var i = 0; i < App.csv_exporter_settings.data.filters.length; i++){
-                    if(attribute_id == App.csv_exporter_settings.data.filters[i].attribute_id){
+                for(var i = 0; i < App.csv_exporter_settings.data[App.csv_exporter_settings.mode].filters.length; i++){
+                    if(attribute_id == App.csv_exporter_settings.data[App.csv_exporter_settings.mode].filters[i].attribute_id){
                         App.flash("Атрибут уже добавлен!");
                         return;
                     }
@@ -173,7 +203,7 @@
                         break;
                     }
                 }
-                App.csv_exporter_settings.data.filters.push(filter);
+                App.csv_exporter_settings.data[App.csv_exporter_settings.mode].filters.push(filter);
                 App.csv_exporter_settings.updateSettings();
                 App.csv_exporter_settings.filters.load();
 
@@ -185,13 +215,13 @@
                 this.render();
             },
             render: function () {
-                App.renderTpl('csv_Exporter_categories_panel', {categories: App.csv_exporter_settings.data.categories});
+                App.renderTpl('csv_Exporter_categories_panel', {categories: App.csv_exporter_settings.data[App.csv_exporter_settings.mode].categories});
             },
             add: function () {
                 App.loadWindow("page/stock/tree").progress(function (status, fvalue) {
                     if (status === 'select') {
-                        for (var i = 0; i < App.csv_exporter_settings.data.categories.length; i++) {
-                            if (App.csv_exporter_settings.data.categories[i].branch_id == fvalue.branch_id) {
+                        for (var i = 0; i < App.csv_exporter_settings.data[App.csv_exporter_settings.mode].categories.length; i++) {
+                            if (App.csv_exporter_settings.data[App.csv_exporter_settings.mode].categories[i].branch_id == fvalue.branch_id) {
                                 App.flash("Такая категория уже добавлена");
                                 return;
                             }
@@ -200,7 +230,7 @@
                             branch_id: fvalue.branch_id,
                             category_path: fvalue.path
                         };
-                        App.csv_exporter_settings.data.categories.push(category_obj);
+                        App.csv_exporter_settings.data[App.csv_exporter_settings.mode].categories.push(category_obj);
                         App.csv_exporter_settings.updateSettings();
                         App.csv_exporter_settings.categories.render();
                     }
@@ -211,9 +241,9 @@
                 if (!confirm("Удалить атрибут " + $(node).data('name') + "?")) {
                     return;
                 };
-                for (var i = 0; i < App.csv_exporter_settings.data.categories.length; i++) {
-                    if (App.csv_exporter_settings.data.categories[i].branch_id == branch_id) {
-                        App.csv_exporter_settings.data.categories.splice(i, 1);
+                for (var i = 0; i < App.csv_exporter_settings.data[App.csv_exporter_settings.mode].categories.length; i++) {
+                    if (App.csv_exporter_settings.data[App.csv_exporter_settings.mode].categories[i].branch_id == branch_id) {
+                        App.csv_exporter_settings.data[App.csv_exporter_settings.mode].categories.splice(i, 1);
                         break;
                     }
                 }
@@ -230,11 +260,11 @@
                 }
             });
         },
-	addAutoBackupTask:function(fvalue){
+	addAutoBackupTask:function(){
 	    var comment="Создание экспортного файла синхронизации";
 	    var program={
 		commands:[
-		    {model:'CSVExporter',method:'export',arguments:''}
+		    {model:'CSVExporter',method:'export_'+App.csv_exporter_settings.mode,arguments:''}
 		]
 	    };
 	    var task={

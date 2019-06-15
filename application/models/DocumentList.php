@@ -15,7 +15,7 @@ class DocumentList extends Catalog{
 	if( !in_array($sortby,$fields) ){
 	    throw new Exception("Invalid sortby fieldname: ".$sortby);
 	}
-	$andwhere='';
+	$andwhere='AND (doc_type=1 OR doc_type=2 OR doc_type=3 OR doc_type=4) ';
 	if( strpos($mode,'show_only_pcomp_docs')!==FALSE ){
 	    $pcomp_id=$this->Hub->pcomp('company_id');
             if( !$pcomp_id ){

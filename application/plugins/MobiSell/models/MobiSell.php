@@ -15,10 +15,15 @@ class MobiSell extends PluginManager {
         ob_start("ob_gzhandler");
         parent::__construct();
     }
-    public $index = [];
+
     public function index() {
         $this->load->view('index.html');
     }
+    
+    public function view( string $path ){
+	$this->load->view($path);
+    }
+    
     public $version = [];
     public function version() {
         $parent_dir=dirname(__DIR__);
@@ -176,11 +181,14 @@ class MobiSell extends PluginManager {
         }
         return $this->documentGet($doc_id);
     }
-    public $documentEntryUpdate = ['doc_id' => 'int', 'doc_entry_id' => 'int', 'product_code' => 'string', 'product_quantity' => 'int'];
-    public function documentEntryUpdate($doc_id, $doc_entry_id, $product_code, $product_quantity) {
+
+    public function documentEntryUpdate(int $doc_id, int $doc_entry_id=null, string $product_code, float $product_quantity, float $product_price=null) {
         $DocumentItems = $this->Hub->load_model("DocumentItems");
         if ($doc_entry_id) {
             $DocumentItems->entryUpdate($doc_id, $doc_entry_id, 'product_quantity', $product_quantity);
+            if( $product_price ){
+                $DocumentItems->entryUpdate($doc_id, $doc_entry_id, 'product_price', $product_price);
+            }
         } else {
             $DocumentItems->entryAdd($doc_id, $product_code, $product_quantity);
         }
@@ -231,9 +239,12 @@ class MobiSell extends PluginManager {
             }
         }
     }
-    public $notify_pending=[];
-    public function notify_pending(){
+    
+    public function notify_pending( string $custom_message='' ){
         $message=$this->Hub->svar('Mobisell_create_notification');
+        if( $message ){
+            $message['subject'].=" $custom_message";
+        }
         $this->notify($message['subject'],$message['view'],$message['data']);
     }
 }
