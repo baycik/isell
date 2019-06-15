@@ -1,42 +1,23 @@
-/*global Slick,holderId,Document,document_model,App*/
+/*global Slick,holderId,Document,Document.doc_extension,App*/
 
 Document.head={
-    pcompNode:null,
     suppress_update:true,
-    edit_passive_company: false,
     init:function(){
-	Document.head.initControls();
-	Document.head.initToolbar();
+	Document.head.controls.init();
+	Document.head.toolbar.init();
     },
-    render:function(head){
-        
-        Document.head.suppress_update = false;
-	Document.data.head=head;
-	$("#"+holderId+" .x-head form").form('load',head);
-	$("#"+holderId+" .x-head form input[name=is_commited]").prop("checked",head.is_commited*1);
-        $("#"+holderId+" .x-toolbar .icon-commit").css("filter","grayscale("+(head.is_commited*1?100:0)+"%)");
-        App.renderTpl('Doc_owners',Document.data.head);  
-	this.pcompNode && this.pcompNode.combobox("setText",head.label);
-        Document.head.suppress_update = true;
-        $('.document_comment').val(Document.data.head.doc_data);
-    },
-    add:function(){
-        var url=document_model+'/documentAdd';
-        var doc_type = $('Doc_type_cmb').val();
-	return $.post(url,{doc_type:doc_type},function(ok){
-	    if(ok*1){
-		App.flash('Документ создан');
-	    } else {
-		App.flash("Документ не создан");
-	    }
-	    Document.head.reload();
-	});
+    render:function(head_data){
+        //Document.head.suppress_update = false;
+	Document.data.head=head_data;
+        Document.head.controls.render(head_data);
+        App.renderTpl('Doc_owners',Document.data.head);
+        //Document.head.suppress_update = true;
     },
     destroy:function(){
         this.pcompNode && this.pcompNode.combobox && this.pcompNode.combobox('clear');
     },
     update:function(field,value,succes_msg){
-	var url=document_model+'/documentUpdate';
+	var url=Document.doc_extension+'/documentUpdate';
 	return $.post(url,{doc_id:Document.doc_id,field:field,value:value},function(ok){
 	    if(ok*1){
 		App.flash(succes_msg);
@@ -46,64 +27,46 @@ Document.head={
             Document.reload();
 	});
     },
-    initToolbar:function(){
-	$("#"+holderId+" .x-head .x-toolbar").click(function(e){
-	    var action=$(e.target).data('action');
-	    if( action ){
-		Document.head.do( action );
-	    }
-	});
-    },
-    do:function( action ){
-	Document.head[action] && Document.head[action]();
-    },
-    reload:function(){
-	Document.reload();
-    },
-    commit:function(){
-        if( Document.data.head.is_commited*1 ){
-            return;
-        }
-	Document.head.update('is_commited',1,'Документ проведен');
-    },
-    uncommit:function(){
-        if( Document.data.head.is_commited*1 ){
-            Document.head.update('is_commited',0,'Документ не проведен');
-        } else {
-            if( confirm("Удалить документ полностью?") ){
-                Document.delete();
-            }
-        }	
-    },
-    initControls:function(){
-	App.setupForm("#"+holderId+" .x-head form");
-	$.parser.parse("#"+holderId+" .x-head form");//for easy ui
-	Document.head.pcompComboInit();
-	$("#"+holderId+" .x-head form").form({
-            onChange: function(e){
-                if(Document.head.suppress_update === true){
-                    var name = $(e).attr('name') || $(e).attr('textboxname');
-                    if(name == 'is_commited'){
-                        if( Document.data.head.is_commited*1 ){
-                            var value = 0;
+    controls:{
+        init:function(){
+            App.setupForm("#"+holderId+" .x-head form");
+            $.parser.parse("#"+holderId+" .x-head form");//for easy ui
+            $("#"+holderId+" .x-head form").form({
+                onChange: function(e){
+                    if(Document.head.suppress_update === true){
+                        var name = $(e).attr('name') || $(e).attr('textboxname');
+                        if(name == 'is_commited'){
+                            if( Document.data.head.is_commited*1 ){
+                                var value = 0;
+                            } else {
+                                var value = 1;
+                            }	
                         } else {
-                            var value = 1;
-                        }	
-                    } else {
-                        var value = $(e).val();
+                            var value = $(e).val();
+                        }
+                        if(name == 'doc_date' && value == ''){
+                            App.flash("Пустая дата!");
+                            return;
+                        }
+                        Document.head.update( name, value, 'Параметры документа изменены!' );
                     }
-                    if(name == 'doc_date' && value == ''){
-                        App.flash("Пустая дата!");
-                        return;
-                    }
-                    Document.head.update( name, value, 'Параметры документа изменены!' );
                 }
-            }
-	});
-        $('textarea[name="doc_data"').change(function(e){
-            var value = $(e).val();
-            Document.head.update( 'doc_data', value, 'Параметры документа изменены!' );
-        });
+            });
+            //Document.head.pcompComboInit();
+            $("#"+holderId+" .x-head form textarea[name='doc_data']").change(function(e){
+                Document.head.update( 'doc_data', $(this).val(), 'Коментарий к документу изменен!' );
+            });
+        },
+        render:function(head_data){
+            $("#"+holderId+" .x-head form").form('load',head_data);
+            $("#"+holderId+" .x-head form input[name=is_commited]").prop("checked",head_data.is_commited*1);
+            $("#"+holderId+" .x-toolbar .icon-commit").css("filter","grayscale("+(head_data.is_commited*1?100:0)+"%)");
+            $("#"+holderId+" .document_comment").val(Document.data.head.doc_data);
+            this.pcompNode && this.pcompNode.combobox("setText",head.label);
+        },
+        handleChange:function(){
+            
+        }
     },
     pcompTree:function(){   
         App.loadWindow('page/company/tree',{}).progress(function(status,company){
@@ -156,45 +119,87 @@ Document.head={
     pcompDetails:function(){
 	App.loadWindow('page/company/details',{company_id:Document.data.head.passive_company_id});
     },
-    pay:function(){
-        App.loadWindow("page/accounts/document_pay",{doc_id:Document.doc_id,total:Document.data.foot.total}).done(function(fvalue){
-            App.flash("head_changed!");
-        });
-    },
-    sendsms:function(){
-        $.get("Company/companyGet/"+Document.data.head.passive_company_id, function ( xhr ) {
-            var passive_data=App.json(xhr);
-            var data={to:passive_data.company_mobile,body:Document.data.head.doc_data};
-            App.loadWindow('page/dialog/send_sms',data);	    
-        });
-    },
-    addevent:function(){
-        $.get("Company/companyGet/"+Document.data.head.passive_company_id, function ( xhr ) {
-            var passive_data=App.json(xhr);
-            var fvalue={
-                doc_id:Document.data.head.doc_id,
-                event_id:0,
-                event_label:'Доставка',
-                event_creator_user_id: App.user.props.user_id,
-                event_name: 'Документ №' + Document.data.head.doc_num,
-                event_descr: Document.data.head.doc_data,
-                event_target: passive_data.company_person + " (" + passive_data.label + ")",
-                event_place: passive_data.company_address,
-                event_note: passive_data.company_mobile
-            };
-            App.loadWindow('page/events/event',fvalue);	    
-        });
-    },
-    duplicate:function(){
-        if( confirm("Создать копию этого документа?") ){
-            App.post(document_model+"/documentDuplicate/"+Document.doc_id,function(doc_id){
-                if( doc_id*1 ){
-                    Document.doc_id = doc_id;
-                    Document.reload();
-                    //Document.handler.notify('created',doc_id);
-                    App.flash("Документ скопирован и загружен");
+    toolbar:{
+        init:function(){
+            $("#"+holderId+" .x-head .x-toolbar").click(function(e){
+                var action=$(e.target).data('action');
+                if( action ){
+                    Document.head.toolbar.actions[action] && Document.head.toolbar.actions[action]();
                 }
             });
+        },
+        actions:{
+            reload:function(){
+                Document.reload();
+            },
+            add:function(){
+                var url=Document.doc_extension+'/documentAdd';
+                var doc_type = $('Doc_type_cmb').val();
+                return $.post(url,{doc_type:doc_type},function(ok){
+                    if(ok*1){
+                        App.flash('Документ создан');
+                    } else {
+                        App.flash("Документ не создан");
+                    }
+                    Document.head.reload();
+                });
+            },
+            commit:function(){
+                if( Document.data.head.is_commited*1 ){
+                    return;
+                }
+                Document.head.update('is_commited',1,'Документ проведен');
+            },
+            uncommit:function(){
+                if( Document.data.head.is_commited*1 ){
+                    Document.head.update('is_commited',0,'Документ не проведен');
+                } else {
+                    if( confirm("Удалить документ полностью?") ){
+                        Document.delete();
+                    }
+                }	
+            },
+            duplicate:function(){
+                if( confirm("Создать копию этого документа?") ){
+                    App.post(Document.doc_extension+"/documentDuplicate/"+Document.doc_id,function(doc_id){
+                        if( doc_id*1 ){
+                            Document.doc_id = doc_id;
+                            Document.reload();
+                            //Document.handler.notify('created',doc_id);
+                            App.flash("Документ скопирован и загружен");
+                        }
+                    });
+                }
+            },
+            pay:function(){
+                App.loadWindow("page/accounts/document_pay",{doc_id:Document.doc_id,total:Document.data.foot.total}).done(function(fvalue){
+                    App.flash("head_changed!");
+                });
+            },
+            sendsms:function(){
+                $.get("Company/companyGet/"+Document.data.head.passive_company_id, function ( xhr ) {
+                    var passive_data=App.json(xhr);
+                    var data={to:passive_data.company_mobile,body:Document.data.head.doc_data};
+                    App.loadWindow('page/dialog/send_sms',data);	    
+                });
+            },
+            addevent:function(){
+                $.get("Company/companyGet/"+Document.data.head.passive_company_id, function ( xhr ) {
+                    var passive_data=App.json(xhr);
+                    var fvalue={
+                        doc_id:Document.data.head.doc_id,
+                        event_id:0,
+                        event_label:'Доставка',
+                        event_creator_user_id: App.user.props.user_id,
+                        event_name: 'Документ №' + Document.data.head.doc_num,
+                        event_descr: Document.data.head.doc_data,
+                        event_target: passive_data.company_person + " (" + passive_data.label + ")",
+                        event_place: passive_data.company_address,
+                        event_note: passive_data.company_mobile
+                    };
+                    App.loadWindow('page/events/event',fvalue);	    
+                });
+            },
         }
     }
 };
@@ -241,7 +246,7 @@ Document.body={
 		textboxextField: 'product_code',
 		formatter:suggFormatter,
 		selectOnNavigation:false,
-		url: document_model+'/entrySuggestFetch/',
+		url: Document.doc_extension+'/entrySuggestFetch/',
 		panelHeight:'auto',
 		mode: 'remote',
 		method:'get',
@@ -317,7 +322,7 @@ Document.body={
 		    enableColumnReorder: false,
 		    enableFilter:true,
 		    multiSelect :false,
-		    url:document_model+'/pickerListFetch'
+		    url:Document.doc_extension+'/pickerListFetch'
 		}
 	    };
 	    var picklist=$("#"+holderId+" .x-body .x-stock").slickgrid(settings);
@@ -371,7 +376,7 @@ Document.body={
 	    App.loadWindow('page/dialog/importer',{label:'документ',fields_to_import:config}).progress(function(status,fvalue,Importer){
 		if( status==='submit' ){
 		    fvalue.doc_id=Document.doc_id;
-		    App.post(document_model+"/entryImport/",fvalue,function(ok){
+		    App.post(Document.doc_extension+"/entryImport/",fvalue,function(ok){
 			App.flash("Импортировано "+ok);
 			Importer.reload();
 			Document.reload(["body","foot"]);
@@ -392,7 +397,7 @@ Document.body={
 	    for(var i in selected_rows){
 		table_to_delete.push(Document.body.table_sg.getDataItem(selected_rows[i]).doc_entry_id);
 	    }
-	    var url=document_model+'/entryDelete';
+	    var url=Document.doc_extension+'/entryDelete';
 	    $.post(url,{doc_id:Document.doc_id,doc_entry_ids:JSON.stringify(table_to_delete)},function(ok){
 		if( !(ok*1) ){
 		    App.flash("Строка не удалена");
@@ -403,7 +408,7 @@ Document.body={
         recalculate:function(){
 	    App.loadWindow('page/trade/document_recalculate').progress(function(state,data){
 		if( state==='submit' ){
-		    App.post(document_model+"/entryRecalc/"+Document.doc_id+'/'+(data.recalc_proc*1||0), function ( xhr ) {
+		    App.post(Document.doc_extension+"/entryRecalc/"+Document.doc_id+'/'+(data.recalc_proc*1||0), function ( xhr ) {
                         Document.reload(["body","foot"]);
                         App.flash("Перерасчет выполнен");
 		    });
@@ -463,7 +468,7 @@ Document.body={
                 location.hash="#Stock#stock_main_tabs=Резерв&product_code="+row_data.product_code;
             },
             err_breakeven:function(row_data){
-                var url=document_model+'/entryUpdate';
+                var url=Document.doc_extension+'/entryUpdate';
                 $.post(url,{doc_id:Document.doc_id,doc_entry_id:row_data.doc_entry_id,field:'product_price',value:row_data.breakeven_price},function(ok){
                     if( !(ok*1) ){
                         App.flash("Строка не изменена");
@@ -494,7 +499,7 @@ Document.body={
 	    }
 	},
 	entryAdd:function(product_code,product_quantity){
-	    var url=document_model+'/entryAdd';
+	    var url=Document.doc_extension+'/entryAdd';
 	    $.post(url,{doc_id:Document.doc_id,product_code:product_code,product_quantity:product_quantity},function(ok,status,xhr){
 		if( !(ok*1) ){
 		    App.flash("Строка не добавлена");
@@ -507,7 +512,7 @@ Document.body={
 	    });	
 	},
 	entryUpdate:function(doc_entry_id,field,value){
-	    var url=document_model+'/entryUpdate';
+	    var url=Document.doc_extension+'/entryUpdate';
 	    $.post(url,{doc_id:Document.doc_id,doc_entry_id:doc_entry_id,field:field,value:value},function(ok){
 		if( !(ok*1) ){
 		    App.flash("Строка не изменена");
@@ -538,7 +543,6 @@ Document.foot = {
 	$("#"+holderId+" .x-foot .x-suggest").combobox('destroy');
     }
 };
-
 Document.views={
     init:function(){
     },

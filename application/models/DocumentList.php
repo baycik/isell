@@ -53,6 +53,7 @@ class DocumentList extends Catalog{
 	    SELECT 
 		doc_id,
 		doc_type,
+                IF(doc_type=1,'DocumentSell','') doc_extension,
 		dl.cstamp,
 		doc_num,
 		label pcomp_label,

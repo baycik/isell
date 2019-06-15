@@ -1,8 +1,8 @@
 <form>
     <div style="background-color: white;padding: 10px;">
 	<label class="switch">
-	    <input type="checkbox"  name="is_commited" title="Проведен" value="1" data-skip="1">
-	    <div class="slider round"></div>
+	    <input name="is_commited" type="checkbox" title="Проведен" value="1" data-skip="1">
+	    <span class="slider round"></span>
 	</label>Проведен
         <div class="x-toolbar" style="text-align: right; float: right; ">
             <span class="icon-24 icon-commit" title="Провести документ" data-action="commit"> </span>
@@ -11,20 +11,14 @@
             <span class="icon-24 icon-lorry" title="Добавить в распорядок" data-action="addevent"> </span>
             <span class="icon-24 icon-sms" title="Отправить СМС" data-action="sendsms"> </span>
             <span class="icon-24 icon-duplicate" title="Копировать" data-action="duplicate"> </span>
-            <span id="load_views_button" class="icon-24 icon-print" title="Шаблоны печати" data-action="reload" onclick="$('#Document_view_tile').toggle('slow')"> </span> 
+            <span class="icon-24 icon-print" title="Шаблоны печати" data-action="reload" id="load_views_button" onclick="$('#Document_view_tile').toggle('slow')"> </span> 
             <span class="icon-24 icon-utils" title="Дополнительные свойства" onclick="$('.x-utils').toggle('slow')" ></span>
             <span class="icon-24 icon-refresh" title="Обновить" data-action="reload"> </span> 
     </div>
-    </div>	
-
-
-
-    <div style="display: grid;grid-template-columns: min-content min-content min-content auto; padding-top: 8px;">
+    </div>
+    <div style="display: grid;grid-template-columns: min-content min-content auto; padding-top: 8px;">
 	<div>
-
-	</div>
-	<div>
-            <select class="easyui-combobox head_input" id="Doc_type_cmb" name="doc_type" title="Тип" >
+            <select class="head_input c-doc_type" name="doc_type" title="Тип" >
 		<option value="1">Продажа</option>
 		<option value="-1">Возврат от покупателя</option>
 		<option value="2">Покупка</option>
@@ -35,14 +29,13 @@
 	    <input class="head_input" name="passive_company_id" title="Покупатель">
 	</div>
 	<div>
-	    <input type='number' min="1" class="head_input" name="doc_num" title="Номер" style="height: 28px;">
-            <input type='date' class="head_input" name="doc_date" title="Дата" style="height: 28px;">
+	    <input type='number' class="head_input" name="doc_num" title="Номер" min="1">
+            <input type='date' class="head_input" name="doc_date" title="Дата">
 	</div>
-        
     </div>
     <div class="x-utils" style="display: none">
 	<hr style="border-color: white">
-        <input class="easyui-combobox" name="doc_status_id" id="Doc_status_id" title="Статус" data-options="
+        <input name="doc_status_id" class="head_input c-doc_type" title="Статус" data-options="
                 showItemIcon:true,
                 valueField: 'doc_status_id',
                 textField: 'status_description',
@@ -51,16 +44,16 @@
                 selectOnNavigation:false,
                 panelHeight:''
                 ">
-	<select name="use_vatless_price" class="easyui-combobox" title="Цена" style="height: 28px;">
+	<select name="use_vatless_price"  class="head_input" title="Цена">
 	    <option value="0">В том числе НДС</option>
 	    <option value="1">Плюс НДС</option>
 	</select>
-	<select name="notcount"  class="easyui-combobox" title="На складе" style="height: 28px;">
+	<select name="notcount" title="На складе">
 	    <option value="0">Учитывать</option>
 	    <option value="1">Не учитывать</option>    
 	</select>
-        <input type="text" name="vat_rate" class="easyui-numberbox" title="НДС %">
-	<input class="easyui-numberbox" name="doc_ratio" title="Курс">
-	<input name="extra_expenses" class="easyui-numberbox" title="Доп. расходы">
+        <input name="vat_rate" type="text" title="НДС %">
+	<input name="doc_ratio" title="Курс">
+	<input name="extra_expenses" title="Доп. расходы">
     </div>
 </form>
