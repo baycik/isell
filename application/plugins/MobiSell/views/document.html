@@ -506,7 +506,7 @@
 		App.document.suggestion.search('');
 	    },
 	    render: function () {
-                if( App.user.props.user_level<2 ){
+                /*if( App.user.props.user_level<2 ){
                     for(var i in App.document.suggestion.entries){
                         var lo=App.document.suggestion.entries[i].leftover;
                         App.document.suggestion.entries[i].stared_leftover=(
@@ -515,7 +515,7 @@
                                 lo<100?'★★★☆☆':
                                 lo<500?'★★★★☆':'★★★★★');
                     }
-                }
+                }*/
 		App.renderTpl('doc_suggestion_entries', {entries: App.document.suggestion.entries});
 	    },
 	    handleClick: function (row_node) {

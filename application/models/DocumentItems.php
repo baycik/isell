@@ -1,8 +1,7 @@
 <?php
 require_once 'DocumentCore.php';
 class DocumentItems extends DocumentCore{
-    public $suggestFetch=['q'=>'string','offset'=>['int',0],'limit'=>['int',10],'doc_id'=>['int',0],'category_id'=>['int',0]];
-    public function suggestFetch($q,$offset,$limit,$doc_id,$category_id,$transliterated=false){
+    public function suggestFetch( string $q, int $offset=0,int $limit=10, int $doc_id=0, int $category_id=0, bool $transliterated=false ){
 	$price_query="0";
         $pcomp_id=$this->Hub->pcomp('company_id');
         $usd_ratio=$this->Hub->pref('usd_ratio');
@@ -107,7 +106,6 @@ class DocumentItems extends DocumentCore{
                     doc_entry_id,
                     ROUND(invoice_price * @curr_correction, 2) AS product_price_vatless,
                     ROUND(invoice_price * @curr_correction * product_quantity,2) product_sum_vatless,
-		    
                     ROUND(invoice_price * @curr_correction * @vat_ratio, 2) AS product_price_total,
 		    ROUND(invoice_price * @curr_correction * @vat_ratio * product_quantity,2) product_sum_total,
                     ROUND(breakeven_price,2) breakeven_price,
