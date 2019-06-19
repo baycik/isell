@@ -1,9 +1,9 @@
-<form>
+<form class="head_input">
     <div style="background-color: white;padding: 10px;">
-	<label class="switch">
-	    <input name="is_commited" type="checkbox" title="Проведен" value="1" data-skip="1">
-	    <span class="slider round"></span>
-	</label>Проведен
+        <label class="switch">
+            <input name="is_commited" type="checkbox" title="Проведен" value="1" data-skip="1">
+            <span class="slider round"></span>
+        </label>
         <div class="x-toolbar" style="text-align: right; float: right; ">
             <span class="icon-24 icon-commit" title="Провести документ" data-action="commit"> </span>
             <span class="icon-24 icon-uncommit" title="Отменить документ" data-action="uncommit"> </span>
@@ -14,46 +14,50 @@
             <span class="icon-24 icon-print" title="Шаблоны печати" data-action="reload" id="load_views_button" onclick="$('#Document_view_tile').toggle('slow')"> </span> 
             <span class="icon-24 icon-utils" title="Дополнительные свойства" onclick="$('.x-utils').toggle('slow')" ></span>
             <span class="icon-24 icon-refresh" title="Обновить" data-action="reload"> </span> 
+        </div>
     </div>
-    </div>
-    <div style="display: grid;grid-template-columns: min-content min-content auto; padding-top: 8px;">
-	<div>
-            <select class="head_input c-doc_type" name="doc_type" title="Тип" >
-		<option value="1">Продажа</option>
-		<option value="-1">Возврат от покупателя</option>
-		<option value="2">Покупка</option>
-		<option value="-2">Возврат поставщику</option>
-		<option value="3">Оказание услуги</option>
-		<option value="4">Получение услуги</option>
-	    </select>
-	    <input class="head_input" name="passive_company_id" title="Покупатель">
-	</div>
-	<div>
-	    <input type='number' class="head_input" name="doc_num" title="Номер" min="1">
-            <input type='date' class="head_input" name="doc_date" title="Дата">
-	</div>
+    <div style="display: grid;grid-template-columns:350px 350px">
+        <select class="c-doc_type" name="doc_type" title="Тип" >
+            <option value="1">Продажа</option>
+            <option value="-1">Возврат от покупателя</option>
+            <option value="2">Покупка</option>
+            <option value="-2">Возврат поставщику</option>
+            <option value="3">Оказание услуги</option>
+            <option value="4">Получение услуги</option>
+        </select>
+        <input name="doc_status_id" title="Статус" data-options="
+               showItemIcon:true,
+               valueField: 'doc_status_id',
+               textField: 'status_description',
+               url:'DocumentList/statusFetchList',
+               mode: 'remote',
+               selectOnNavigation:false,
+               panelHeight:''
+               ">
+        <input type='date' name="doc_date" title="Дата">
+        <input type='number' name="doc_num" title="Номер" min="1">
     </div>
     <div class="x-utils" style="display: none">
 	<hr style="border-color: white">
-        <input name="doc_status_id" class="head_input c-doc_type" title="Статус" data-options="
-                showItemIcon:true,
-                valueField: 'doc_status_id',
-                textField: 'status_description',
-                url:'DocumentList/statusFetchList',
-                mode: 'remote',
-                selectOnNavigation:false,
-                panelHeight:''
-                ">
-	<select name="use_vatless_price"  class="head_input" title="Цена">
-	    <option value="0">В том числе НДС</option>
-	    <option value="1">Плюс НДС</option>
-	</select>
-	<select name="notcount" title="На складе">
-	    <option value="0">Учитывать</option>
-	    <option value="1">Не учитывать</option>    
-	</select>
-        <input name="vat_rate" type="text" title="НДС %">
-	<input name="doc_ratio" title="Курс">
-	<input name="extra_expenses" title="Доп. расходы">
+        <div style="display: grid;grid-template-columns:350px 350px;">
+            <input name="active_company_id" title="Наша фирма">
+            <input name="passive_company_id" title="Клиент">
+            <input name="vat_rate" type="text" title="НДС %">
+            <input name="doc_ratio" title="Курс">
+            <div class="inp_group" style="width:320px;">
+                <b>Цена без НДС:</b>
+                <label class="switch">
+                    <input name="use_vatless_price" type="checkbox" title="Цена без НДС" value="1" data-skip="1">
+                    <span class="slider round"></span>
+                </label>
+            </div>
+            <div class="inp_group" style="width:320px;">
+                <b>Не учитывать:</b>
+                <label class="switch">
+                    <input name="notcount" type="checkbox" title="Не учитывать" value="1" data-skip="1">
+                    <span class="slider round"></span>
+                </label>
+            </div>
+        </div>
     </div>
 </form>

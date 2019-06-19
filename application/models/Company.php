@@ -22,28 +22,25 @@ class Company extends Catalog{
     public function listFetch( $mode='',$q,$transliterated=false ){
 	$assigned_path=$this->Hub->svar('user_assigned_path');
 	$level=$this->Hub->svar('user_level');
-	$companies=[];
-	if( $q ){
-	    $sql="SELECT 
-		    company_id,
-		    label,
-		    path
-		FROM
-		    companies_tree
-		JOIN 
-		    companies_list USING(branch_id)
-		WHERE
-		    label LIKE '%$q%'
-			AND
-		    is_leaf=1
-			AND
-		    path LIKE '$assigned_path%'
-			AND
-		    level<=$level
-                LIMIT 20";
-	    $companies=$this->get_list( $sql );
+        $and_where="AND path LIKE '$assigned_path%' AND level<=$level AND label LIKE '%$q%'";
+	if( $mode=='active_only' ){
+	    $and_where='AND is_active=1';
 	}
-	else if( $mode=='selected_passive_if_empty' ){
+        $sql="SELECT 
+                company_id,
+                label,
+                path
+            FROM
+                companies_tree
+            JOIN 
+                companies_list USING(branch_id)
+            WHERE
+                is_leaf=1
+                $and_where
+            LIMIT 20";
+        $companies=$this->get_list( $sql );
+        
+        if( $mode=='selected_passive_if_empty' ){
 	    array_push($companies,['company_id'=>$this->Hub->pcomp('company_id'),'label'=>$this->Hub->pcomp('label'),'path'=>$this->Hub->pcomp('path')]);
 	} else {
 	    array_push($companies,['company_id'=>0,'label'=>'-','path'=>'']);
