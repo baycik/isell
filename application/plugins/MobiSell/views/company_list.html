@@ -1,0 +1,70 @@
+<script>
+    App.company_list = {
+	init: function () {
+	    this.focus();
+	},
+	focus: function () {
+	    App.title("Список Контрагентов");
+            App.company_list.load();
+	},
+        render:function(data){
+            App.renderTpl('company_list_grid',data);
+        },
+        load:function(){
+            var q=$("#company_list input[name=company_filter]").val();
+            $.get('../Company/listFetch/selected_passive_if_empty',{q:q},function(resp){
+                var data = App.json(resp);
+                App.company_list.render({companies:data});
+            });
+        },
+        searchReset:function(){
+            $("#company_list input[name=company_filter]").val('');
+            App.company_list.load();
+        },
+        search:function(){
+            clearTimeout(App.company_list.searchClock);
+            App.company_list.searchClock=setTimeout(function(){
+                App.company_list.load();
+            },500);
+        }
+    }
+</script>
+<form class="ui form">
+    <div class="field">
+	<label>Клиент</label>
+	<div class="field">
+	    <div class="ui left icon right labeled input">
+		<i class="search icon"></i>
+		<input name="company_filter" placeholder="Название клиента" type="text" onkeyup="App.company_list.load()">
+                <div class="ui basic label" onclick="App.company_list.searchReset()"><i class="close icon"></i></div>
+	    </div>
+	</div>
+    </div>
+</form>
+
+<div class="ui segment blue covert" id="company_list_grid">
+    <table class="ui green selectable  table unstackable">
+	<thead>
+	    <tr>
+		<th>№</th>
+		<th>Клиент</th>
+		<th>Сумма</th>
+		<th>!</th>
+	    </tr>
+	</thead>
+	<tbody>
+	    <!-- {{if companies}} {{companies}} -->
+	    <tr data-doc-id="{{doc_id}}" onclick="App.document_list.handleClick(this)">
+		<td><i class="green icon arrow left"></i>{{doc_date}} <i style="color:#999">№{{doc_num}}</i></td>
+		<td>{{label}}</td>
+		<td style="text-align:right">{{amount}}</td>
+		<td style="text-align:right">{{if is_commited|more>0}}<i class="gray checkmark box icon"></i>{{else}}<i class="square outline icon"></i>{{/if}}</td>
+	    </tr>
+	    <!-- {{/companies}} {{else}}-->
+	    <tr>
+		<td colspan="4"><i class="red icon question"></i>Ничего не найдено</td>
+	    </tr>
+	    <!--{{/if}}-->
+	</tbody>
+    </table>
+</div>
