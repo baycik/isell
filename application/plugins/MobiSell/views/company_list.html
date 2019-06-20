@@ -1,0 +1,80 @@
+<script>
+    App.company_list = {
+        init: function () {
+            this.focus();
+        },
+        focus: function () {
+            App.title("Список Контрагентов");
+            App.company_list.load();
+        },
+        render: function () {
+            App.renderTpl('company_list_grid', {companies: App.company_list.list});
+        },
+        list: [],
+        load: function (loadMore) {
+            App.flash('Список контрагентов: загрузка...');
+            var q = $("#company_list input[name=company_filter]").val();
+            var offset = 0;
+            if (loadMore) {
+                offset = App.company_list.list.length || 0;
+            }
+            $.get('../Company/listFetch/', {q: q, offset: offset}, function (resp) {
+                if (loadMore) {
+                    App.company_list.list = App.company_list.list.concat(App.json(resp));
+                } else {
+                    App.company_list.list = App.json(resp);
+                }
+                App.flash('Список контрагентов: ОК');
+                App.company_list.render();
+            });
+        },
+        searchReset: function () {
+            $("#company_list input[name=company_filter]").val('');
+            App.company_list.load();
+        },
+        search: function () {
+            clearTimeout(App.company_list.searchClock);
+            App.company_list.searchClock = setTimeout(function () {
+                App.company_list.load();
+            }, 200);
+        }
+    }
+</script>
+<div class="ui blue segment">
+    <form class="ui form">
+        <div class="field">
+            <label>Клиент</label>
+            <div class="field">
+                <div class="ui left icon right labeled input">
+                    <i class="search icon"></i>
+                    <input name="company_filter" placeholder="Название клиента" type="text" oninput="App.company_list.search()">
+                    <div class="ui basic label" onclick="App.company_list.searchReset()"><i class="close icon"></i></div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<div class="covert" id="company_list_grid">
+    <table class="ui table unstackable">
+        <thead>
+            <tr>
+                <th>Клиент</th>
+                <th>Группа</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- {{if companies}} {{companies}} -->
+            <tr>
+                <td><i class="icon user"></i><a href="#company_cart.html#company_id={{company_id}}">{{label}}</a> </td>
+                <td><a href="#company_cart.html#company_id={{company_id}}">{{path}}</a> </td>
+            </tr>
+            <!-- {{/companies}} {{else}}-->
+            <tr>
+                <td colspan="2"><i class="red icon question"></i>Ничего не найдено</td>
+            </tr>
+            <!--{{/if}}-->
+        </tbody>
+    </table>
+</div>
+<button class="ui fluid button" onclick="App.company_list.load('more')">Показать еще...</button>
