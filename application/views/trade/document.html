@@ -554,6 +554,12 @@
 		});		
 	    }
 	},
+	calculate: function (value, row) {
+	    if( row.is_loss*1 ){
+		return '<span style="color:red;font-weight:bold">' + value + '</span>';
+	    }
+	    return value;
+	},
 	abcCalculate: function (value, row) {
             if( Doc.head.props.doc_type==2 ){
                var color=row.analyse_class.replace("A","rgba(0,255,0,0.3)").replace("B","rgba(255,255,0,0.5)").replace("C","rgba(255,0,0,0.3)");
@@ -954,7 +960,11 @@
 		   precision:2,
 		   onChange:function(val,old){Doc.head.update('doc_ratio',val,old)}
 		   ">
-	    <input name="extra_expenses" class="easyui-numberbox" title="Доп. расходы" onchange="Doc.head.update('extra_expenses',this.value)">
+	    <input name="extra_expenses" class="easyui-numberbox" title="Доп. расходы" data-options="
+		   min:0,
+		   precision:0,
+		   onChange:function(val,old){Doc.head.update('extra_expenses',val,old)}
+		   ">
 	    <div style="padding:1px;text-align: right;" class="transp60">
 		Дополнительные инструменты: 
 		<span class="icon-24 icon-import" title="Импортировать" onclick="Doc.head.import();"> </span>
@@ -1021,7 +1031,7 @@
 		    <th data-options="field:'product_name',width:300">Название</th>
 		    <th data-options="field:'product_quantity',width:50,align:'right',styler:Doc.entries.abcCalculate">Кол-во</th>
 		    <th data-options="field:'product_unit',width:40,align:'center'">Ед.</th>
-		    <th data-options="field:'product_price',width:60,align:'right'">Цена</th>
+		    <th data-options="field:'product_price',width:60,align:'right',formatter:Doc.entries.calculate">Цена</th>
 		    <th data-options="field:'product_sum',width:70,align:'right'">Сумма</th>
 		    <th data-options="field:'row_status',width:24,align:'center',formatter:Doc.entries.tooltip">!</th>
 		</tr>

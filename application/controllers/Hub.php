@@ -122,6 +122,7 @@ class Hub  extends CI_Controller{
 	    case 'int':
 		$var=(int) $var;
 		break;
+	    case 'float':
 	    case 'double':
 		$var=(float) $var;
 		break;
@@ -164,6 +165,7 @@ class Hub  extends CI_Controller{
 	    case 'int':
 		$var=(int) $var;
 		break;
+	    case 'float':
 	    case 'double':
 		$var=(float) $var;
 		break;
@@ -284,7 +286,8 @@ class Hub  extends CI_Controller{
 	$trigger_after=$this->svar('trigger_after');
 	if( isset($trigger_before[$name]) || isset($trigger_after[$name]) ){
 	    $name=isset($trigger_before[$name])?$trigger_before[$name]:$trigger_after[$name];
-            $this->load->add_package_path(APPPATH.'plugins/'.$name, FALSE);
+            $this->load->add_package_path(APPPATH.'plugins/'.$name, 1);
+            $this->load->add_package_path(BAY_STORAGE.'plugin_modifications/plugins/'.$name, 1);
         }
 	$this->load->model($name,null,true);
 	if( isset($this->{$name}->min_level) ){
