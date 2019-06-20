@@ -6,7 +6,7 @@
 	    this.node.window({
 		title: 'Редактирование проводки',
 		width: 450,
-		height: 330,
+		height: 'auto',
 		onClose: function(){
 		    App.page_accounts_shared_trans_edit.handler.notify('close',App.page_accounts_shared_trans_edit.data);
 		    App.page_accounts_shared_trans_edit.node.window('destroy');
@@ -108,7 +108,8 @@
 		success([{company_id:Tedit.data.passive_company_id,label:Tedit.data.label}]);
 		return ;
 	    }
-	    App.get('Company/listFetch/with_active', param, function (xhr) {
+            param.mode='with_active';
+	    App.get('Company/listFetch/', param, function (xhr) {
 		var resp = App.json(xhr);
 		success(resp[0] ? resp : []);
 	    });

@@ -1,8 +1,7 @@
 <?php
 require_once 'DocumentCore.php';
 class DocumentItems extends DocumentCore{
-    public $suggestFetch=['q'=>'string','offset'=>['int',0],'limit'=>['int',10],'doc_id'=>['int',0],'category_id'=>['int',0]];
-    public function suggestFetch($q,$offset,$limit,$doc_id,$category_id,$transliterated=false){
+    public function suggestFetch( string $q, int $offset=0,int $limit=10, int $doc_id=0, int $category_id=0, bool $transliterated=false ){
 	$price_query="0";
         $pcomp_id=$this->Hub->pcomp('company_id');
         $usd_ratio=$this->Hub->pref('usd_ratio');
@@ -100,10 +99,13 @@ class DocumentItems extends DocumentCore{
         $this->query("DROP TEMPORARY TABLE IF EXISTS tmp_doc_entries");
         $sql="CREATE TEMPORARY TABLE tmp_doc_entries ( INDEX(product_code) ) AS (
                 SELECT
+                    *,
+                    IF(doc_type=1,product_price_total-buy<0.01,product_price_total-buy>0.01) is_loss
+                FROM
+                (SELECT
                     doc_entry_id,
                     ROUND(invoice_price * @curr_correction, 2) AS product_price_vatless,
                     ROUND(invoice_price * @curr_correction * product_quantity,2) product_sum_vatless,
-		    
                     ROUND(invoice_price * @curr_correction * @vat_ratio, 2) AS product_price_total,
 		    ROUND(invoice_price * @curr_correction * @vat_ratio * product_quantity,2) product_sum_total,
                     ROUND(breakeven_price,2) breakeven_price,
@@ -119,7 +121,8 @@ class DocumentItems extends DocumentCore{
                     analyse_origin,
                     analyse_class,
                     self_price,
-                    buy*IF(curr_code && '$curr_code'<>ppl.curr_code,doc_ratio*@curr_correction,1) buy,
+                    buy*IF(curr_code IS NULL OR curr_code='' OR '$curr_code'=ppl.curr_code,1,doc_ratio*@curr_correction) buy,
+                        curr_code,
                     doc_type
                 FROM
                     document_list
@@ -131,7 +134,7 @@ class DocumentItems extends DocumentCore{
                     price_list ppl ON de.product_code=ppl.product_code AND label='$pcomp_price_label'
                 WHERE
                     doc_id='$doc_id'
-                ORDER BY pl.product_code
+                ORDER BY pl.product_code) t
                 )";
         $this->query($sql);
     }
@@ -160,7 +163,9 @@ class DocumentItems extends DocumentCore{
         if( $this->isReserved() ){
             $this->reservedCountUpdate();
         }
-        $this->entryBreakevenPriceUpdate($doc_entry_id);
+        if( $doc_entry_id*1 ){
+            $this->entryBreakevenPriceUpdate($doc_entry_id);
+        }
         return $doc_entry_id;
     }
     private function entryBreakevenPriceUpdate( $doc_entry_id=null, $doc_id=null ){

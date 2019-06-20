@@ -70,7 +70,7 @@
 		    var holder_id=App.url_file.split('.')[0];
 		    if( !$("#"+holder_id).length ){
 			$("#main_container").append("<div id='"+holder_id+"'></div>");
-			$("#"+holder_id).load(App.url_file,function(){
+			$("#"+holder_id).load('view/?path='+App.url_file,function(){
                             App[holder_id] && App[holder_id].init && App[holder_id].init();
                             //App[holder_id] && App[holder_id].focus && App[holder_id].focus();           
                         });

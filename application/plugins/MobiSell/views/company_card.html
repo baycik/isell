@@ -1,23 +1,23 @@
 
 <script>
-   App.company_cart = {
+   App.company_card = {
        list:[],
        init:function(){
-           App.company_cart.load();
+           App.company_card.load();
        },
        focus:function(){
-           App.company_cart.load();
+           App.company_card.load();
        },
        load:function(){
            $.post('../Company/companyGet/'+App.state.company_id, function(resp){
                var response = App.json(resp);
                console.log(response);
-               App.company_cart.list = response;
-               App.company_cart.render();
+               App.company_card.list = response;
+               App.company_card.render();
            })
        },
        render:function(){
-           App.renderTpl('cart_content', {info: App.company_cart.list});
+           App.renderTpl('cart_content', {info: App.company_card.list});
        }
        
    }

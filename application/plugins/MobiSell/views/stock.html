@@ -444,7 +444,7 @@
                         <img src="../Storage/image_flush/?size=50x50&path=/dynImg/{{product_img}}" >
                     </a>
                 </td>
-                <td data-row-index="{{#}}" onclick="App.document.suggestion.handleClick(this)">
+                <td data-index="{{#}}" onclick="App.stock.popup_add.take_product_info(this);">
                     <div class="ui grid stackable" style="{{if leftover|less>1}} color:red !important; {{/if}}">
                         <div class="six wide column" style="padding: .5rem !important">{{product_name}}</div>
                         <div class="six wide column" style="padding: .5rem !important">

@@ -3,9 +3,9 @@
  * User Level: 1
  * Plugin Name: Задолженность клиентов
  * Plugin URI: 
- * Version: 0.1
+ * Version: 1.9
  * Description: Выводит информацию о просроченной и общей задолженности клиентов
- * Author: baycik 2017
+ * Author: baycik 2019
  * Author URI: 
  * Trigger before: Reports_client_expired_debts
  */
@@ -19,7 +19,8 @@ class Reports_client_expired_debts extends Catalog{
 	$this->their_debts=$this->request('their_debts','bool');
 	$this->filter_by=$this->request('filter_by','\w+');
 	$this->filter_value=$this->request('filter_value');
-        $this->fdate=$this->dmy2iso( $this->request('fdate','\d\d.\d\d.\d\d\d\d') );
+        $this->fdate=$this->request('fdate');
+        $this->threshold=$this->request('threshold','int',0);
 	parent::__construct();
     }
     private function or_like($field,$value){
@@ -64,6 +65,8 @@ class Reports_client_expired_debts extends Catalog{
         $path_filter=$this->getAssignedPathWhere();
 	$having =$this->getDirectionFilter();
         $having.=$this->filter_value?"AND (".$this->or_like($this->filter_by,$this->filter_value).")":"";
+        $having.=" AND ( sell>$this->threshold OR buy>$this->threshold OR exp>$this->threshold )";
+
 	$sql="
 	    SELECT
 		label,
