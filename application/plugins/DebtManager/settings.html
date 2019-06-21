@@ -15,63 +15,49 @@
     }
 </style>
 <script>
-    App.csv_exporter_settings = {
+    App.debt_manager_settings = {
         mode:'',
         init: function () {
             if( Plugins.currentData.is_activated==1 ){
-                if( Plugins.currentData.plugin_settings.active_mode ){
-                    App.csv_exporter_settings.data = Plugins.currentData.plugin_settings;
-                } else {
-                    App.csv_exporter_settings.data={
-                        csv:{
-                            filters: [],
-                            categories: [],
-                            publicUrl: '',
-                            pcomp_id:0,
-                            pcomp_name:''
-                        },
-                        yml:{
-                            filters: [],
-                            categories: [],
-                            publicUrl: '',
-                            pcomp_id:0,
-                            pcomp_name:''
-                        },
-                        active_mode: 'csv'
-                    };
-                }
-                App.csv_exporter_settings.mode = App.csv_exporter_settings.data.active_mode;
-                    $("input[name=pcomp_id]").val(App.csv_exporter_settings.data[App.csv_exporter_settings.mode].pcomp_id);
-                    $("input[name=pcomp_name]").val(App.csv_exporter_settings.data[App.csv_exporter_settings.mode].pcomp_name);
-                    $("input[name=publicUrl]").val(App.csv_exporter_settings.data[App.csv_exporter_settings.mode].publicUrl);
+                App.debt_manager_settings.load();
                 $(".plugin_settings").show();
                 $(".plugin_notinstalled").hide();
-                App.csv_exporter_settings.categories.init();
-                App.csv_exporter_settings.filters.load();
             } else {
                 $(".plugin_settings").hide();
                 $(".plugin_notinstalled").show();
             }
         },
-        render:function(){
-        },
-        updateSettings: function () {
-            App.csv_exporter_settings.data[App.csv_exporter_settings.mode].pcomp_id=$("input[name=pcomp_id]").val();
-            App.csv_exporter_settings.data[App.csv_exporter_settings.mode].pcomp_name=$("input[name=pcomp_name]").val();
-            App.csv_exporter_settings.data[App.csv_exporter_settings.mode].publicUrl=$("input[name=publicUrl]").val();
-            App.csv_exporter_settings.data.active_mode = App.csv_exporter_settings.mode;
-            $.post('CSVExporter/updateSettings', {settings: JSON.stringify(App.csv_exporter_settings.data)}, function (resp) {
+        load: function(){
+            $.post('DebtManager/getDebts', function (resp) {
                 if (resp) {
                     var response = App.json(resp);
-                    App.csv_exporter_settings.data = response;
-                    $("input[name=pcomp_id]").val(App.csv_exporter_settings.data[App.csv_exporter_settings.mode].pcomp_id);
-                    $("input[name=pcomp_name]").val(App.csv_exporter_settings.data[App.csv_exporter_settings.mode].pcomp_name);
-                    $("input[name=publicUrl]").val(App.csv_exporter_settings.data[App.csv_exporter_settings.mode].publicUrl);
-                    App.csv_exporter_settings.categories.init();
-                    App.csv_exporter_settings.filters.load();
+                    console.log(response);
+                }
+            });
+        },
+        render:function(){
+            App.Topic('activeCompanySelected').subscribe(function (company) {
+                    App.debt_manager_settings.load();
+            });
+            
+        },
+        updateSettings: function () {
+            App.debt_manager_settings.data[App.debt_manager_settings.mode].pcomp_id=$("input[name=pcomp_id]").val();
+            App.debt_manager_settings.data[App.debt_manager_settings.mode].pcomp_name=$("input[name=pcomp_name]").val();
+            App.debt_manager_settings.data[App.debt_manager_settings.mode].publicUrl=$("input[name=publicUrl]").val();
+            App.debt_manager_settings.data.active_mode = App.debt_manager_settings.mode;
+            $.post('CSVExporter/updateSettings', {settings: JSON.stringify(App.debt_manager_settings.data)}, function (resp) {
+                if (resp) {
+                    var response = App.json(resp);
+                    App.debt_manager_settings.data = response;
+                    $("input[name=pcomp_id]").val(App.debt_manager_settings.data[App.debt_manager_settings.mode].pcomp_id);
+                    $("input[name=pcomp_name]").val(App.debt_manager_settings.data[App.debt_manager_settings.mode].pcomp_name);
+                    $("input[name=publicUrl]").val(App.debt_manager_settings.data[App.debt_manager_settings.mode].publicUrl);
+                    App.debt_manager_settings.categories.init();
+                    App.debt_manager_settings.filters.load();
                 }
             });
         }
     };
-    $(App.csv_exporter_settings.init);
+    $(App.debt_manager_settings.init);
 </script>
