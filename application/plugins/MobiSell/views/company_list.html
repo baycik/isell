@@ -18,7 +18,7 @@
             if (loadMore) {
                 offset = App.company_list.list.length || 0;
             }
-            $.get('../Company/listFetch/', {q: q, offset: offset}, function (resp) {
+            $.post('../Company/listFetch/', {q: q, offset: offset}, function (resp) {
                 if (loadMore) {
                     App.company_list.list = App.company_list.list.concat(App.json(resp));
                 } else {
