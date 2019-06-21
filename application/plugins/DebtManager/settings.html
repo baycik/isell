@@ -1,0 +1,63 @@
+
+<form>
+    <div class="plugin_settings">
+    </div>
+    <div class="plugin_notinstalled">
+        <h1>Плагин не установлен</h1>
+    </div>
+    <div style="text-align: center">
+    </div>
+</form>
+
+<style>
+    #csv_Exporter_filters label b{
+        width: 100px !important;
+    }
+</style>
+<script>
+    App.debt_manager_settings = {
+        mode:'',
+        init: function () {
+            if( Plugins.currentData.is_activated==1 ){
+                App.debt_manager_settings.load();
+                $(".plugin_settings").show();
+                $(".plugin_notinstalled").hide();
+            } else {
+                $(".plugin_settings").hide();
+                $(".plugin_notinstalled").show();
+            }
+        },
+        load: function(){
+            $.post('DebtManager/getDebts', function (resp) {
+                if (resp) {
+                    var response = App.json(resp);
+                    console.log(response);
+                }
+            });
+        },
+        render:function(){
+            App.Topic('activeCompanySelected').subscribe(function (company) {
+                    App.debt_manager_settings.load();
+            });
+            
+        },
+        updateSettings: function () {
+            App.debt_manager_settings.data[App.debt_manager_settings.mode].pcomp_id=$("input[name=pcomp_id]").val();
+            App.debt_manager_settings.data[App.debt_manager_settings.mode].pcomp_name=$("input[name=pcomp_name]").val();
+            App.debt_manager_settings.data[App.debt_manager_settings.mode].publicUrl=$("input[name=publicUrl]").val();
+            App.debt_manager_settings.data.active_mode = App.debt_manager_settings.mode;
+            $.post('CSVExporter/updateSettings', {settings: JSON.stringify(App.debt_manager_settings.data)}, function (resp) {
+                if (resp) {
+                    var response = App.json(resp);
+                    App.debt_manager_settings.data = response;
+                    $("input[name=pcomp_id]").val(App.debt_manager_settings.data[App.debt_manager_settings.mode].pcomp_id);
+                    $("input[name=pcomp_name]").val(App.debt_manager_settings.data[App.debt_manager_settings.mode].pcomp_name);
+                    $("input[name=publicUrl]").val(App.debt_manager_settings.data[App.debt_manager_settings.mode].publicUrl);
+                    App.debt_manager_settings.categories.init();
+                    App.debt_manager_settings.filters.load();
+                }
+            });
+        }
+    };
+    $(App.debt_manager_settings.init);
+</script>

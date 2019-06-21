@@ -183,6 +183,7 @@
 		    var config = [
 			{field: "supply_code", name: "Код пост.", required: true},
 			{field: "supply_name", name: "Название"},
+			{field: "supply_leftover", name: "Остаток"},
 			{field: "supply_buy", name: "Закупка база"},
 			{field: "supply_comment", name: "Комментарий"},
 			{field: "product_code", name: "Код наш"},
@@ -359,6 +360,7 @@
 			{id: "supplier_name", field: "supplier_name", name: "Поставщик", width: 110, editor: AutoCompleteEditor},
 			{id: "supply_code", field: "supply_code", name: "Артикул", width: 100, sortable: true, editor: Slick.Editors.Text},
 			{id: "supply_name", field: "supply_name", name: "Название", width: 300, sortable: true, editor: Slick.Editors.Text},
+			{id: "supply_leftover", field: "supply_leftover", name: "Остаток", width: 50, sortable: true, editor: Slick.Editors.Text},
 			{id: "supply_buy", field: "supply_buy", name: "Закупка база", width: 80, sortable: true, editor: Slick.Editors.Float, cssClass: 'slick-align-right'},
 			{id: "supply_self", field: "supply_self", name: "Себестоимость", width: 90, sortable: true, cssClass: 'slick-align-right'},
 			{id: "supply_sell_ratio", field: "supply_sell_ratio", formatter: perc, name: "Корректировка", width: 80, editor: Slick.Editors.Float, sortable: true, cssClass: 'slick-align-right'},
@@ -367,11 +369,11 @@
 			{id: "path", field: "path", name: "Категория на складе", sortable: true, width: 150},
 			{id: "supply_comment", field: "supply_comment", name: "Комментарий", width: 150, editor: Slick.Editors.Text},
 			{id: "supply_modified", field: "supply_modified", name: "Изменено", sortable: true, width: 70, formatter: dateFormatter},
-			{id: "supply_spack", field: "supply_spack", name: "В Коробке", sortable: true, width: 70, editor: Slick.Editors.Integer, cssClass: 'slick-align-right'},
-			{id: "supply_bpack", field: "supply_bpack", name: "В Ящике", sortable: true, width: 70, editor: Slick.Editors.Integer, cssClass: 'slick-align-right'},
+			{id: "supply_spack", field: "supply_spack", name: "В Коробке", sortable: true, width: 55, editor: Slick.Editors.Integer, cssClass: 'slick-align-right'},
+			{id: "supply_bpack", field: "supply_bpack", name: "В Ящике", sortable: true, width: 55, editor: Slick.Editors.Integer, cssClass: 'slick-align-right'},
 			{id: "supply_volume", field: "supply_volume", name: "Объем", sortable: true, width: 70, editor: Slick.Editors.Float, cssClass: 'slick-align-right'},
-			{id: "supply_weight", field: "supply_weight", name: "Вес", sortable: true, width: 70, editor: Slick.Editors.Float, cssClass: 'slick-align-right'},
-			{id: "supply_unit", field: "supply_unit", name: "Единица", sortable: true, width: 80, editor: Slick.Editors.Text, cssClass: 'slick-align-right'}
+			{id: "supply_weight", field: "supply_weight", name: "Вес", sortable: true, width: 50, editor: Slick.Editors.Float, cssClass: 'slick-align-right'},
+			{id: "supply_unit", field: "supply_unit", name: "Единица", sortable: true, width: 50, editor: Slick.Editors.Text, cssClass: 'slick-align-right'}
 		    ],
 		    options: {
 			editable: true,

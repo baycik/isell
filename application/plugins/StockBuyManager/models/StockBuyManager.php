@@ -40,6 +40,7 @@ class StockBuyManager extends Catalog{
 		sl.product_code,
 		supply_code,
 		supply_name,
+		supply_leftover,
 		ROUND(supply_buy,2) supply_buy,
 		supply_sell_ratio,
 		supply_comment,
@@ -101,7 +102,7 @@ class StockBuyManager extends Catalog{
 	$target = array_map('addslashes',$this->request('target','raw'));
         $source[]=$supplier_id;
         $target[]='supplier_id';
-	$this->entryImportFromTable('supply_list', $source, $target, '/supplier_id/product_code/supply_code/supply_name/supply_buy/supply_sell_ratio/supply_comment/supply_spack/supply_bpack/supply_volume/supply_weight/supply_unit/', $label);
+	$this->entryImportFromTable('supply_list', $source, $target, '/supplier_id/product_code/supply_code/supply_name/supply_leftover/supply_buy/supply_sell_ratio/supply_comment/supply_spack/supply_bpack/supply_volume/supply_weight/supply_unit/', $label);
 	$this->query("DELETE FROM imported_data WHERE {$source[0]} IN (SELECT supply_code FROM supply_list WHERE supplier_id={$supplier_id})");
 	$imported_count=$this->db->affected_rows();
         return  $imported_count;
