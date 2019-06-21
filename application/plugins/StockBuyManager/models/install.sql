@@ -9,6 +9,7 @@ CREATE TABLE `supply_list` (
   `product_code` varchar(45) DEFAULT NULL,
   `supply_code` varchar(45) DEFAULT NULL,
   `supply_name` varchar(255) DEFAULT NULL,
+  `supply_leftover` int(11) NOT NULL,
   `supply_buy` double DEFAULT '0',
   `supply_sell` double DEFAULT '0',
   `supply_sell_ratio` double DEFAULT '0',
@@ -21,7 +22,8 @@ CREATE TABLE `supply_list` (
   `supply_modified` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`supply_id`),
   UNIQUE KEY `supplier_id_UNIQUE` (`supply_code`,`supplier_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+
 
 
 CREATE TABLE `supplier_list` (
