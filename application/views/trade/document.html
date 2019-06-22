@@ -688,7 +688,9 @@
 	    }
 	},
 	formatter:function(row){
-	    return '<div class="img"><img src="Storage/image_flush/?size=30x30&path=/dynImg/'+row['product_img']+'"></div> <b>'+row['product_code']+'</b> <font color='+(row['leftover']>0?'black':'red')+'>'+row['product_name']+'</font> <div class="props">[x'+row['product_spack']+'] '+row['product_price_total']+' <font color=green>'+row['leftover']+row['product_unit']+'</font></div>';
+            App.renderTpl('suggest-template', row);
+            var template = $('#suggest-template').html();
+	    return template;
 	},
 	select:function(row){
 	    var code=Doc.suggest.prevCode=$('#Doc_suggest_cmb').combobox('getValue');
@@ -869,6 +871,23 @@
     .view_is_hidden{
 	display: none;
     }
+    .grid-container1{
+        display:grid;
+        grid-template-columns: 7% 70% 15% 8%;
+        border-top: 1px solid lightblue;
+        padding: 2px 0px;
+    }
+    .grid-container2{
+        display: grid;
+        grid-template-columns: 35% 30% 30%;
+        text-align: right;
+        border: 1px solid lightblue;
+        width: 46%;
+        float: inline-end;
+        margin-top: -14px;
+        margin-bottom: 0px;
+        background-color: white;
+    }
 </style>
 <form id="Doc_head_frm" onsubmit="return false;" style="-moz-user-select:none;">
     <!-- DOCUMENT HEADER -->
@@ -1009,6 +1028,23 @@
 		<span class="icon-24 icon-utils" title="Дополнительные свойства" onclick="$('#Doc_utils').toggle('slow')"> </span>
 	    </div>
 	</div>
+        <!-- 
+	----------------------------
+	DOCUMENT SUGGEST TEMPLATE 
+	----------------------------
+	-->
+        <div id="suggest-template" style='display: none; border-bottom: 1px solid #a7e3ff;'>
+            <div class="template-container">
+                <div class="grid-container1">
+                    <div class="img grid-item">
+                        <img src="Storage/image_flush/?size=30x30&path=/dynImg/{{ product_img }}">
+                    </div> 
+                    <div class="grid-item" style="color:{{if leftover|more>0}}black {{else}} red {{/if}}; padding: 0px 10px"><b>{{ product_code }}</b> {{ product_name }}</div> 
+                    <div class="grid-item">[x{{ product_spack}}] {{ product_price_total }} </div>
+                    <div class="grid-item" style="color:green">{{ leftover }}{{ product_unit }}</div></div>               
+            </div>    
+        </div>
+        
 	<!-- 
 	----------------------------
 	DOCUMENT ENTRIES 
