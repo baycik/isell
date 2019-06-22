@@ -1,10 +1,15 @@
 <?php
 date_default_timezone_set('Europe/Moscow');
 spl_autoload_register(function ($class_name) {
-    $filename=APPPATH.'models/'.$class_name . '.php';
-    if( file_exists($filename) ){
-	require_once $filename;
+    $model_packages=[BAY_STORAGE.'plugin_modifications/',APPPATH];
+    foreach($model_packages as $package){
+        $filename=$package.'models/'.$class_name . '.php';
+        if( file_exists($filename) ){
+            require_once $filename;
+            return true;
+        }
     }
+    throw new Exception("ISELL CLASS '$class_name' NOT FOUND");
 });
 
 

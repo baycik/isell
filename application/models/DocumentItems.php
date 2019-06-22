@@ -1,5 +1,4 @@
 <?php
-require_once 'DocumentCore.php';
 class DocumentItems extends DocumentCore{
     public function suggestFetch( string $q, int $offset=0,int $limit=10, int $doc_id=0, int $category_id=0, bool $transliterated=false ){
 	$price_query="0";

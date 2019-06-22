@@ -18,7 +18,7 @@
             if (loadMore) {
                 offset = App.company_list.list.length || 0;
             }
-            $.get('../Company/listFetch/', {q: q, offset: offset}, function (resp) {
+            $.post('../Company/listFetch/', {q: q, offset: offset}, function (resp) {
                 if (loadMore) {
                     App.company_list.list = App.company_list.list.concat(App.json(resp));
                 } else {
@@ -66,8 +66,8 @@
         <tbody>
             <!-- {{if companies}} {{companies}} -->
             <tr>
-                <td><i class="icon user"></i><a href="#company_cart.html#company_id={{company_id}}">{{label}}</a> </td>
-                <td><a href="#company_cart.html#company_id={{company_id}}">{{path}}</a> </td>
+                <td><i class="icon user"></i><a href="#company_card.html#company_id={{company_id}}">{{label}}</a> </td>
+                <td><a href="#company_card.html#company_id={{company_id}}">{{path}}</a> </td>
             </tr>
             <!-- {{/companies}} {{else}}-->
             <tr>
