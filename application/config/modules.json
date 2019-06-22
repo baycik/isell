@@ -1,9 +1,5 @@
 [
-
-
     {"level":"4","name":"Home","icon":"home.png","label":"Главная"},
-    {"level":"1","name":"Dashboard","icon":"trade.png","label":"Торговля"},
-
     {"level":"1","name":"Trade","icon":"trade.png","label":"Торговля"},
     {"level":"3","name":"Accounts","icon":"accounts.png","label":"Бухгалтерия"},
     {"level":"3","name":"Marketing","icon":"marketing.png","label":"Маркетинг"},
