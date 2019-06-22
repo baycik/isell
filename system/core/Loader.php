@@ -293,6 +293,7 @@ class CI_Loader {
 		$model = ucfirst($model);
 		if ( ! class_exists($model))
 		{
+                    echo $model;
 			foreach ($this->_ci_model_paths as $mod_path)
 			{
 				if ( ! file_exists($mod_path.'models/'.$path.$model.'.php'))
