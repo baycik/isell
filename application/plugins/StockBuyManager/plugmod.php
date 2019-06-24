@@ -52,6 +52,20 @@ $after[]=<<<EOT
 <button data-action="send_to_buy_manager"><img src="img/docnew.png" style="width:24px;height: 24px;"> Отправить в менеджер закупок</button><br>
 EOT;
 
+$filename[]=<<<EOT
+views/trade/document.html
+EOT;
+$search[]=<<<EOT
+formatter:function(row_data){
+EOT;
+$replace[]=<<<EOT
+EOT;
+$before[]=<<<EOT
+EOT;
+$after[]=<<<EOT
+            row_data.delivery_group?row_data.delivery_group=row_data.delivery_group.split(','):'';
+            row_data.supleftover? row_data.supleftover=row_data.supleftover.split(','):'';
+EOT;
 
 $filename[]=<<<EOT
 views/trade/document.html
@@ -64,49 +78,245 @@ EOT;
 $before[]=<<<EOT
 EOT;
 $after[]=<<<EOT
- {{ if supply_leftover|more>0 }}
-                <div class="grid-container2">
-                    <div class="grid-item">Под заказ:</div>
-                    <div class="grid-item">
-                        {{if supplier_delivery|more>0}}
-                            {{ supplier_delivery }} 
-                            {{if supplier_delivery|notequals>1}}
-                                {{if supplier_delivery|more>5}}
-                                    дней
-                                {{else}}
-                                    дня
-                                {{/if}}
+{{if delivery_group|notempty}}
+        <div class="product-delivery-available">
+                <div class="delivery-days">
+                    {{delivery_group}}
+                    <div>{{.}}
+                        {{if supleftover|notequals>1}}
+                            {{if supleftover|more>5}}
+                                дней:
                             {{else}}
-                                день
+                                дня:
                             {{/if}}
-                        {{/if}}
-                    </div>
-                    <div class="grid-item">{{ supply_leftover }} шт.</div>
+                        {{else}}
+                            день:
+                            {{/if}}
+                     </div>
+                    {{/delivery_group}}
+                </div> 
+                <div class="delivery-leftovers">
+                    {{supleftover}}
+                        <div>  
+                            {{.}}
+                        </div>
+                    {{/supleftover}}    
                 </div>
-                {{/if}}
+        </div>  
+    {{/if}}
 EOT;
-
 
 $filename[]=<<<EOT
-models/DocumentItems.php
+plugins/MobiSell/views/document.html
 EOT;
 $search[]=<<<EOT
-$output=$this->get_list($sql);
+var suggestion = App.json(resp);
 EOT;
 $replace[]=<<<EOT
 EOT;
 $before[]=<<<EOT
-        $sql = "SELECT 
-                    *, suprl.supplier_delivery, suprl.supplier_name, supll.supply_leftover 
-                FROM 
-            ( $sql ) AS tmp 
-                LEFT JOIN 
-            supply_list supll USING (product_code)
-                LEFT JOIN 
-            supplier_list suprl ON (supll.supplier_id = suprl.supplier_id) 
-            ";        
+EOT;
+$after[]=<<<EOT
+    for(var i in suggestion){
+        if(suggestion[i].delivery_group){
+            suggestion[i].delivery_group=suggestion[i].delivery_group.split(',');
+            for(var k in suggestion[i].delivery_group){
+                suggestion[i].delivery_group[k] = parseInt(suggestion[i].delivery_group[k],10);
+            }
+        }
+        else{
+            suggestion[i].delivery_group = '';
+        }
+        suggestion[i].supleftover? suggestion[i].supleftover=suggestion[i].supleftover.split(','):'';
+    };
+EOT;
+
+
+$filename[]=<<<EOT
+plugins/MobiSell/views/document.html
+EOT;
+$search[]=<<<EOT
+<div class="five wide column right aligned">{{if stared_leftover}} {{stared_leftover}} {{else}} {{leftover}}{{product_unit}} {{/if}}</div></div>
+EOT;
+$replace[]=<<<EOT
+EOT;
+$before[]=<<<EOT
+EOT;
+$after[]=<<<EOT
+{{if delivery_group|notempty}}
+   <div class="product-delivery-available ui right aligned grid" style="    margin-top: 0rem !important; opacity: 0.8; border-top: #e8e8ef 1px solid;color: #2185d0;">
+           <div class="four wide column" style="padding-left: .5rem !important; padding-top: 0.2rem !important;"></div>
+           <div class="delivery-days six wide column" style="padding-right: 0rem !important; padding-top: 0.2rem !important">
+               {{delivery_group}}
+               <div>{{.}}
+                   {{if .|notequals>1}}
+                       {{if .|more>4}}
+                           дней:
+                       {{else}}
+                           дня:
+                       {{/if}}
+                   {{else}}
+                       день:
+                       {{/if}}
+                </div>
+               {{/delivery_group}}
+           </div> 
+           <div class="delivery-leftovers six wide column" style="padding-right: .5rem !important;padding-left: 0rem !important; padding-top: 0.2rem !important">
+               {{supleftover}}
+                   <div>  
+                       {{.}}
+                   </div>
+               {{/supleftover}}    
+           </div>
+   </div>  
+{{/if}}    
+EOT;
+
+
+$filename[]=<<<EOT
+plugins/MobiSell/views/stock.html
+EOT;
+$search[]=<<<EOT
+if( !new_loaded_items ){return;}
+EOT;
+$replace[]=<<<EOT
+EOT;
+$before[]=<<<EOT
+EOT;
+$after[]=<<<EOT
+   for(var i in new_loaded_items){
+        if(new_loaded_items[i].delivery_group){
+            new_loaded_items[i].delivery_group=new_loaded_items[i].delivery_group.split(',');
+            for(var k in new_loaded_items[i].delivery_group){
+                new_loaded_items[i].delivery_group[k] = parseInt(new_loaded_items[i].delivery_group[k],10);
+            }
+        }
+        else{
+            new_loaded_items[i].delivery_group = '';
+        }
+        new_loaded_items[i].supleftover? new_loaded_items[i].supleftover=new_loaded_items[i].supleftover.split(','):'';
+    };
+EOT;
+
+
+$filename[]=<<<EOT
+plugins/MobiSell/views/stock.html
+EOT;
+$search[]=<<<EOT
+<div class="five wide column right aligned">{{if stared_leftover}} {{stared_leftover}} {{else}} {{leftover}}{{product_unit}} {{/if}}</div></div></div>
+EOT;
+$replace[]=<<<EOT
+EOT;
+$before[]=<<<EOT
+EOT;
+$after[]=<<<EOT
+{{if delivery_group|notempty}}
+    <div class="sixteen wide column" style="padding-left: .5rem !important; padding-top: 0.2rem !important;">
+        <div class="product-delivery-available ui right aligned grid" style="    margin-top: 0rem !important; opacity: 0.8; border-top: #e8e8ef 1px solid;color: #2185d0;">
+                <div class="four wide column" style="padding-left: .5rem !important; padding-top: 0.2rem !important;padding-bottom: 0rem !important;"></div>
+                <div class="delivery-days six wide column" style="padding-right: 0rem !important; padding-top: 0.2rem !important; padding-bottom: 0rem !important;">
+                    {{delivery_group}}
+                    <div>{{.}}
+                        {{if .|notequals>1}}
+                            {{if .|more>4}}
+                                дней:
+                            {{else}}
+                                дня:
+                            {{/if}}
+                        {{else}}
+                            день:
+                            {{/if}}
+                     </div>
+                    {{/delivery_group}}
+                </div> 
+                <div class="delivery-leftovers six wide column" style="padding-right: .5rem !important;padding-left: 0rem !important; padding-top: 0.2rem !important;padding-bottom: 0rem !important;">
+                    {{supleftover}}
+                        <div>  
+                            {{.}}
+                        </div>
+                    {{/supleftover}}    
+                </div>
+        </div>  
+    </div>
+ {{/if}}    
+EOT;
+
+$filename[]=<<<EOT
+plugins/MobiSell/views/stock.html
+EOT;
+$search[]=<<<EOT
+{{if is_promo}}<s>{{product_price_total_raw}}</s> {{/if}}{{product_price_total}}</div></div>
+EOT;
+$replace[]=<<<EOT
+EOT;
+$before[]=<<<EOT
+EOT;
+$after[]=<<<EOT
+        {{if delivery_group|notempty}}
+    <div class="product-delivery-available ui left aligned grid" style="    margin-top: 0rem !important; opacity: 0.8; border-top: #e8e8ef 1px solid;color: #2185d0;">
+            <div class="delivery-days six wide column" style="padding-right: 0rem !important; padding-top: 0.2rem !important">
+                {{delivery_group}}
+                <div>{{.}}
+                    {{if .|notequals>1}}
+                        {{if .|more>4}}
+                            дней:
+                        {{else}}
+                            дня:
+                        {{/if}}
+                    {{else}}
+                        день:
+                        {{/if}}
+                 </div>
+                {{/delivery_group}}
+            </div> 
+            <div class="delivery-leftovers six wide column" style="padding-right: .5rem !important;padding-left: 0.5rem !important; padding-top: 0.2rem !important">
+                {{supleftover}}
+                    <div>  
+                        {{.}}
+                    </div>
+                {{/supleftover}}    
+            </div>
+    </div>  
+ {{/if}}    
+EOT;
+
+$filename[]=<<<EOT
+models/DocumentItems.php
+EOT;
+$search[]=<<<'EOT'
+ GET_PRICE(product_code,{$pcomp_id},{$usd_ratio}) product_price_total_raw
+EOT;
+$replace[]=<<<EOT
+EOT;
+$before[]=<<<EOT
+EOT;
+$after[]=<<<EOT
+,fetch_count-DATEDIFF(NOW(),fetch_stamp) AS popularity 
+EOT;
+
+$filename[]=<<<EOT
+models/DocumentItems.php
+EOT;
+$search[]=<<<'EOT'
+$output=$this->get_list($sql);
+EOT;
+$replace[]=<<<EOT
+EOT;
+$before[]=<<<'EOT'
+$sql = "SELECT 
+            tmp.*, GROUP_CONCAT(IFNULL(srl.supplier_delivery, null)) as delivery_group, GROUP_CONCAT(COALESCE (CONCAT (sl.supply_leftover,' ',tmp.product_unit), CONCAT (sl1.supply_leftover,' ',tmp.product_unit), null)) as  supleftover
+        FROM 
+            (  $sql ) AS tmp 
+        LEFT JOIN 
+        supply_list sl ON (sl.product_code = tmp.product_code AND sl.supply_leftover > 0 ) 
+            LEFT JOIN 
+        supply_list sl1 ON (sl1.supply_code = tmp.product_code AND sl1.supply_leftover > 0 )
+            LEFT JOIN 
+        supplier_list srl ON (sl.supplier_id = srl.supplier_id) 
+        GROUP BY product_code 
+        ORDER BY tmp.popularity  DESC
+        ";       
 EOT;
 $after[]=<<<EOT
 EOT;
-
 
