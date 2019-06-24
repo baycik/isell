@@ -24,6 +24,7 @@ Document.head={
 	});
     },
     controls:{
+        suppress_update:true,
         init:function(){
             App.setupForm("#"+holderId+" .x-head form");
             Document.head.controls.initEasyUiWidgets();
@@ -92,10 +93,15 @@ Document.head={
                 panelHeight:''
             });
         },
-        handleChange:function( name, value, title ){
-            console.log(name,value,title);
+        handleChange:function( field, value, title ){
+            if( Document.head.controls.suppress_update ){
+                return;
+            }
+            Document.head.update(field,value,title);
+            console.log('SAVED',field,value,title);
         },
         render:function(head_data){
+            Document.head.controls.suppress_update=true;
             $("#"+holderId+" .x-head form").form('load',head_data);
             $("#"+holderId+" .x-toolbar .icon-commit").css("filter","grayscale("+(head_data.is_commited*1?100:0)+"%)");
             $("#"+holderId+" .x-foot .document_comment").val(Document.data.head.doc_data);
@@ -104,6 +110,7 @@ Document.head={
             });
             $("#"+holderId+"_pcomp").combobox('reload');
             $("#"+holderId+"_acomp").combobox('reload');
+            Document.head.controls.suppress_update=false;
         },
         companyTreeShow:function(){
             App.loadWindow('page/company/tree',{}).progress(function(status,company){

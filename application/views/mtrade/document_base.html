@@ -7,7 +7,7 @@
             extention:{
                 set:function( new_doc_extension ){
                     if( !new_doc_extension || Document.doc_extension===new_doc_extension ){
-                        console.log("Wrong extention"+new_doc_extension)
+                        !new_doc_extension && console.log("Wrong extention"+new_doc_extension)
                         return ;
                     }
                     Document.doc_extension=new_doc_extension;
