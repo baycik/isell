@@ -46,7 +46,7 @@ class DocumentItems extends DocumentCore{
 		stock_entries
 		    JOIN
 		prod_list USING(product_code)
-	    WHERE $where
+            WHERE $where
 	    ORDER BY fetch_count-DATEDIFF(NOW(),fetch_stamp) DESC, product_code
 	    LIMIT $limit OFFSET $offset";
         $output=$this->get_list($sql);

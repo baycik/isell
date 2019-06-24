@@ -509,7 +509,7 @@
                 /*if( App.user.props.user_level<2 ){
                     for(var i in App.document.suggestion.entries){
                         var lo=App.document.suggestion.entries[i].leftover;
-                        App.document.suggestion.entries[i].stared_leftover=(
+                        App.document.suggesfortion.entries[i].stared_leftover=(
                                 lo<10?'★☆☆☆☆':
                                 lo<50?'★★☆☆☆':
                                 lo<100?'★★★☆☆':
@@ -777,9 +777,8 @@
 					    <div class="ui grid" style="opacity:0.7">
 						<div class="six wide column">{{product_code}}</div>
 						<div class="five wide column right aligned">{{product_price_total}}р</div>
-						<div class="five wide column right aligned">{{if stared_leftover}} {{stared_leftover}} {{else}} {{leftover}}{{product_unit}} {{/if}}</div>
-					    </div>
-					</div>
+						<div class="five wide column right aligned">{{if stared_leftover}} {{stared_leftover}} {{else}} {{leftover}}{{product_unit}} {{/if}}</div></div>
+                                        </div>
 				    </div>
 				</td>
 			    </tr>

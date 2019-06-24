@@ -250,9 +250,8 @@
             $.post("./suggestFetch", params, function (response) {
                 App.flash("Загрузка товаров:ОК");
                 var new_loaded_items = App.json(response);
-                if( !new_loaded_items ){
-                    return;
-                }
+                if( !new_loaded_items ){return;}
+                
                 if (load_more) {
                     App.stock.list = App.stock.list.concat(new_loaded_items);
                 } else {
@@ -451,9 +450,8 @@
                             <div class="ui grid" style="color:#666">
                                 <div class="six wide column">{{product_code}}</div>
                                 <div class="five wide column right aligned">{{if is_promo}}<s>{{product_price_total_raw}}</s> {{/if}}<b>{{product_price_total}}</b></div>
-                                <div class="five wide column right aligned">{{if stared_leftover}} {{stared_leftover}} {{else}} {{leftover}}{{product_unit}} {{/if}}</div>
-                            </div>
-                        </div>
+                                <div class="five wide column right aligned">{{if stared_leftover}} {{stared_leftover}} {{else}} {{leftover}}{{product_unit}} {{/if}}</div></div></div>
+                        
                         <div class="four wide column">
                             {{if quantity_added|more>0}}
                             <div class="ui left labeled button" tabindex="0">
@@ -528,9 +526,8 @@
                     <div class = "five wide column" 
                          style = "text-align: center;color:#7a7a7a"><b>{{if stared_leftover}} {{stared_leftover}} {{else}} {{leftover}}{{product_unit}} {{/if}}</b></div>
                     <div class = "six wide column stock_product_price">
-                        {{if is_promo}}<s>{{product_price_total_raw}}</s> {{/if}}{{product_price_total}}
-                    </div>
-                </div>
+                        {{if is_promo}}<s>{{product_price_total_raw}}</s> {{/if}}{{product_price_total}}</div></div>
+                
             </td>
         </tr>
         <!-- {{/products}} -->
