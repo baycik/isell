@@ -478,6 +478,22 @@ class StockBuyManager extends Catalog{
 	}
 	return $doc_id;
     }
-    
+    public function ordersAbsentCreate(){
+        $list=$this->get_list("SELECT 
+                    de.*
+                FROM
+                    isell_db.document_list dl
+                        JOIN
+                    document_entries de USING (doc_id)
+                        JOIN
+                    stock_entries se USING (product_code)
+                        JOIN
+                    isell_db.supply_list sl USING (product_code)
+                WHERE
+                    dl.is_commited = 0 AND se.product_quantity = 0;");
+        print_r($list);
+        die;
+	
+    }
 
 }
