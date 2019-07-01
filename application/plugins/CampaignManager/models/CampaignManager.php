@@ -395,7 +395,7 @@ class CampaignManager extends Catalog{
             $table.=" JOIN prod_list pl ON de.product_code=pl.product_code AND ($brand_filter) AND ($type_filter)";
         }
         return [
-            'table'=>"(SELECT doc_id,doc_entry_id,product_code,invoice_price,de.product_quantity,de.breakeven_price,de.self_price FROM $table)",
+            'table'=>"(SELECT doc_id,doc_entry_id,de.product_code,invoice_price,de.product_quantity,de.breakeven_price,de.self_price FROM $table)",
             'where'=>$where
         ];
     }
