@@ -327,6 +327,12 @@
                 <input type="hidden" name="campaign_bonus_period_id" value="{{campaign_bonus_period_id}}">
                 <button>Сформировать</button>
             </form>
+            
+            <form method="GET" action="./CampaignManager/bonusPeriodBreakEvenRecalculate" target="_new">
+                <input type="hidden" name="campaign_bonus_period_id" value="{{campaign_bonus_period_id}}">
+                <button>BE RECALCULATE</button>
+            </form>
+            
         </div>
     </div>
     {{/period_cards}}

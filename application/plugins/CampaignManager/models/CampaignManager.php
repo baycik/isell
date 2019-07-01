@@ -662,4 +662,23 @@ class CampaignManager extends Catalog{
 	$ViewManager->store($dump);
 	$ViewManager->outRedirect($out_type);
     }
+    
+    
+    
+    
+    public function bonusPeriodBreakEvenRecalculate( int $campaign_bonus_period_id ){
+        $bonus_period=$this->get_row("SELECT * FROM plugin_campaign_bonus_periods JOIN plugin_campaign_bonus USING(campaign_bonus_id) WHERE campaign_bonus_period_id=$campaign_bonus_period_id");
+        $client_filter=$this->clientListFilterGet($bonus_period->campaign_id);
+        $sql="UPDATE 
+                    document_entries 
+                    JOIN
+                    document_list USING(doc_id)
+                SET 
+                    breakeven_price = ROUND(GET_BREAKEVEN_PRICE(product_code,passive_company_id,doc_ratio,self_price),2)
+                WHERE 
+                    YEAR(cstamp)=$bonus_period->period_year
+                    AND MONTH(cstamp)=$bonus_period->period_month
+                    AND passive_company_id IN (SELECT company_id FROM companies_list JOIN companies_tree USING(branch_id) WHERE $client_filter)";
+        return $this->query($sql);
+    }
 }
