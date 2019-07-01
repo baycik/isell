@@ -325,14 +325,14 @@
                 </select>
                 <input type="hidden" name="campaign_bonus_id" value="{{campaign_bonus_id}}">
                 <input type="hidden" name="campaign_bonus_period_id" value="{{campaign_bonus_period_id}}">
-                <button>Сформировать</button>
+                <button>Отчет</button>
             </form>
-            
+            {{if bonus_type|equals>PROFIT}}
             <form method="GET" action="./CampaignManager/bonusPeriodBreakEvenRecalculate" target="_new">
                 <input type="hidden" name="campaign_bonus_period_id" value="{{campaign_bonus_period_id}}">
-                <button>BE RECALCULATE</button>
+                <button>&#8635; Порог рент.</button>
             </form>
-            
+            {{/if}}
         </div>
     </div>
     {{/period_cards}}

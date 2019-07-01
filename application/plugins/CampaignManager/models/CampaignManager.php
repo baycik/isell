@@ -426,7 +426,7 @@ class CampaignManager extends Catalog{
     }
     private function bonusCalculateProfit($campaign_bonus,$period_on,$client_filter){
         $product_range= $this->bonusCalculateProductRange($campaign_bonus);
-        $select="COALESCE((invoice_price-GREATEST(breakeven_price,self_price)) * product_quantity * (dl.vat_rate/100+1),0)";
+        $select="COALESCE((invoice_price * (dl.vat_rate/100+1)-GREATEST(breakeven_price,self_price)) * product_quantity,0)";
         $table="
                     LEFT JOIN
                 document_list dl ON $period_on 
@@ -593,9 +593,9 @@ class CampaignManager extends Catalog{
                 SUM(product_quantity) product_quantity,
                 ROUND(AVG(self_price),2) self_price,
                 ROUND(AVG(breakeven_price),2) breakeven_price,
-                ROUND(AVG(invoice_price),2) sell_price,
+                ROUND(AVG(invoice_price * (dl.vat_rate/100+1)),2) sell_price,
                 ROUND(SUM(invoice_price*product_quantity* (dl.vat_rate/100+1))) sell_sum,
-                ROUND(COALESCE(AVG((invoice_price-GREATEST(breakeven_price,self_price)) * (dl.vat_rate/100+1)),0),2) diff_price,
+                ROUND(COALESCE(AVG((invoice_price * (dl.vat_rate/100+1)-GREATEST(breakeven_price,self_price))),0),2) diff_price,
                 ROUND(SUM({$bonus_base['select']})) bonus_base
             FROM
                 plugin_campaign_bonus pcb 
