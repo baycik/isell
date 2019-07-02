@@ -32,7 +32,7 @@ class CampaignManager extends Catalog{
     
     public function campaignListFetch(){
         $this->Hub->set_level(3);
-        $sql="SELECT * FROM plugin_campaign_list";
+        $sql="SELECT * FROM plugin_campaign_list ORDER BY campaign_name";
         return $this->get_list($sql);
     }
     
