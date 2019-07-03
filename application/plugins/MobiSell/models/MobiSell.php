@@ -143,7 +143,7 @@ class MobiSell extends PluginManager {
             'doc_id' => $doc_id,
             'event_id' => 0,
             'event_date' => date("Y-m-d"),
-            'event_label' => 'Доставка',
+            'event_label' => 'Доставка MobiSell',
             'event_creator_user_id' => $this->Hub->svar('user_id'),
             'event_name' => 'Документ №' . $head->doc_num,
             'event_descr' => $head->doc_data,
