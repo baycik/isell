@@ -55,7 +55,7 @@ App.page_events_scheduler={
             for( var i in event_list ){
                 if( event_label!==event_list[i].event_label && group.length>0 ){
                     groupped_events.push({
-                        label:event_list[i].event_label,
+                        label:event_label,
                         rows:group
                     });
                     group=[];
