@@ -64,10 +64,15 @@ App.page_events_scheduler={
                 group.push( event_list[i] );
                 event_label=event_list[i].event_label||'-';
             }
+            groupped_events.push({
+                label:event_label,
+                rows:group
+            });
             App.page_events_scheduler.tile.event_list=event_list;
             App.page_events_scheduler.tile.render(groupped_events);
         },
         render:function(groupped_events){
+            console.log(groupped_events,App.page_events_scheduler.tile.event_list);
             App.renderTpl('events_tile',{events:groupped_events});
         },
 	click:function( node ){
@@ -81,6 +86,11 @@ App.page_events_scheduler={
 		event.event_status='done';
 		App.page_events_scheduler.tile.updateEvent(event);
 	    }
+	},
+	docClick:function( node ){
+	    var i=$(node).parent().data('event-index');
+	    var doc_id=App.page_events_scheduler.tile.event_list[i].doc_id;
+	    App.loadWindow('page/trade/document',{doc_id:doc_id});
 	},
 	updateEvent:function(event){
             App.post('Events/eventSave/',event,function( resp ){
@@ -101,7 +111,7 @@ App.page_events_scheduler={
 	    App.page_events_scheduler.show_dialog(App.page_events_scheduler.tile.event_list[index]);
 	},
 	delete:function(node){
-	    var index=node?$(node).data('event-index'):$(".event_tile_item_row_selected").data('event-index');
+	    var index=node?$(node).data('event-index'):$(".selected").data('event-index');
             if (confirm('Удалить запись?') && App.page_events_scheduler.tile.event_list[index].event_id) {
                 App.post('Events/eventDelete/'+App.page_events_scheduler.tile.event_list[index].event_id,function(ok){
 		    if( ok*1 ){
@@ -115,7 +125,7 @@ App.page_events_scheduler={
 	},
 	move:function(node){
 	    var label=$(node).parent().data('header');
-	    var index=$(".event_tile_item_row_selected").data('event-index');
+	    var index=$(".selected").data('event-index');
 	    var event_id=index?App.page_events_scheduler.tile.event_list[index].event_id:0;
 	    App.loadWindow("page/events/move").progress(function(status,newdate,mode){
 		if( status==='move' ){
@@ -163,7 +173,7 @@ App.page_events_scheduler={
     .event_tile{
         width:100%;
         display: grid;
-        grid-template-columns:repeat(8, minmax(25px,auto));
+        grid-template-columns:repeat(9, minmax(25px,auto));
         gap:1px;
     }
     .event_tile > div > div {
@@ -225,33 +235,34 @@ App.page_events_scheduler={
 	background: url(img/ok.png) no-repeat center;
     }
 </style>
-<div id="event_calendar" class="easyui-calendar" style="width:220px;height:220px;display: inline-block" data-options="
-		 formatter:App.page_events_scheduler.calendar.formatter,
-		 onChange:App.page_events_scheduler.calendar.onChange"></div>
-<div style="display: inline-block;vertical-align: top;background-color: rgba(255,255,255,0.4);width:950px;padding: 10px;">
+<div style="display: grid;grid-template-columns:200px auto;">
+    <div id="event_calendar" class="easyui-calendar" data-options="
+                     formatter:App.page_events_scheduler.calendar.formatter,
+                     onChange:App.page_events_scheduler.calendar.onChange"></div>
     <div id="events_tile" class="covert">
-	{{if events|empty}}
-	<div style="text-align: center">
-	    <h1>Нет заданий на этот день</h1>
-	    <button onclick="App.page_events_scheduler.tile.create(this);"><img src="img/edit_add.png"> Добавить задание</button>
-	</div>
-	{{/if}}
-	{{events}}
-	    <div style="padding: 5px;padding-top: 20px;">
-		<div style="text-align: right;padding-right: 5px;float: right;" data-header="{{label}}">
-		    <span class="icon-24 icon-create" title="Добавить" onclick="App.page_events_scheduler.tile.create(this);"> </span>
-		    <span class="icon-24 icon-change" title="Изменить" onclick="App.page_events_scheduler.tile.edit();"> </span>
-		    <span class="icon-24 icon-delete" title="Удалить" onclick="App.page_events_scheduler.tile.delete();"> </span>
-		    <span class="icon-24" style="background-image: url(img/big_rightarrow.png);background-repeat: no-repeat;background-size: 24px 24px;" title="Перенести на другую дату" onclick="App.page_events_scheduler.tile.move(this);"> </span>
-		    <span class="icon-24 icon-refresh" title="Печать" onclick="App.page_events_scheduler.tile.load();"> </span>
-		    <span class="icon-24 icon-print" title="Печать" onclick="App.page_events_scheduler.tile.out($(this).parent().data('header'),'.print');"> </span>
-		</div>
-		<span style="font-size:18px;font-weight: bold">
-		    {{label}}{{if status|equals>undone}}<span style="color:red">  <img src="img/red.png">(невыполненные задания)</span> {{/if}}
-		</span>
-	    </div>
+        {{if events|empty}}
+        <div style="text-align: center">
+            <h1>Нет заданий на этот день</h1>
+            <button onclick="App.page_events_scheduler.tile.create(this);"><img src="img/edit_add.png"> Добавить задание</button>
+        </div>
+        {{/if}}
+        {{events}}
+            <div style="padding: 5px;padding-top: 20px;">
+                <div style="text-align: right;padding-right: 5px;float: right;" data-header="{{label}}">
+                    <span class="icon-24 icon-create" title="Добавить" onclick="App.page_events_scheduler.tile.create(this);"> </span>
+                    <span class="icon-24 icon-change" title="Изменить" onclick="App.page_events_scheduler.tile.edit();"> </span>
+                    <span class="icon-24 icon-delete" title="Удалить" onclick="App.page_events_scheduler.tile.delete();"> </span>
+                    <span class="icon-24" style="background-image: url(img/big_rightarrow.png);background-repeat: no-repeat;background-size: 24px 24px;" title="Перенести на другую дату" onclick="App.page_events_scheduler.tile.move(this);"> </span>
+                    <span class="icon-24 icon-refresh" title="Печать" onclick="App.page_events_scheduler.tile.load();"> </span>
+                    <span class="icon-24 icon-print" title="Печать" onclick="App.page_events_scheduler.tile.out($(this).parent().data('header'),'.print');"> </span>
+                </div>
+                <span style="font-size:18px;font-weight: bold">
+                    {{label}}{{if status|equals>undone}}<span style="color:red">  <img src="img/red.png">(невыполненные задания)</span> {{/if}}
+                </span>
+            </div>
             <div class="event_tile">
                 <div class="event_tile_header">
+                    <div></div>
                     <div></div>
                     <div></div>
                     <div>Дата</div>
@@ -264,6 +275,7 @@ App.page_events_scheduler={
                 {{rows}}
                 <div data-event-index="{{index}}" onclick="App.page_events_scheduler.tile.click(this);" ondblclick="App.page_events_scheduler.tile.edit(this);">
                     <div class="es_{{event_status}}" onclick="App.page_events_scheduler.tile.statusClick(this);"></div>
+                    <div onclick="App.page_events_scheduler.tile.docClick(this);" style="padding: 6px;">{{if doc_id}}<img src="img/document.png">{{/if}}</div>
                     <div> <div style="width: 20px;height: 20px;"  class="ep_{{event_priority}}"></div> </div>
                     <div>{{date_dmy}}</div>
                     <div>{{event_name}}</div>
@@ -274,6 +286,6 @@ App.page_events_scheduler={
                 </div>
                 {{/rows}}
             </div>
-	{{/events}}
+        {{/events}}
     </div>
 </div>
