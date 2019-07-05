@@ -150,7 +150,8 @@ class MobiSell extends PluginManager {
             'event_target' => $this->Hub->pcomp('company_person') . " (" . $this->Hub->pcomp('label') . ")",
             'event_place' => $this->Hub->pcomp('company_address'),
             'event_note' => $this->Hub->pcomp('company_mobile'),
-            'event_status' => 'undone'
+            'event_status' => 'undone',
+            'event_priority'=>'2high'
         ];
         return $this->create('event_list', $event);
     }
