@@ -735,7 +735,7 @@
 	    }
 	},
 	create:function(view_type_id){
-	    App.post("DocumentView/viewCreate/"+view_type_id,function(doc_view_id){
+	    App.post("DocumentView/viewCreate/",{view_type_id:view_type_id},function(doc_view_id){
 		if( doc_view_id*1 ){
 		    Doc.view.open(doc_view_id);
 		    Doc.view.loadTile();

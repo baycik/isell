@@ -615,7 +615,7 @@ h2{
   grid-template-columns: 60px auto;
   grid-auto-rows: minmax(100px, auto);
 }
-.view_button{
+.document_view_thumb{
     display: inline-block;
     border: 1px #bbb solid;
     color: #333;
@@ -631,22 +631,22 @@ h2{
     text-align: left;
 }
 
-.view_button:hover{
+.document_view_thumb:hover{
     border: 1px #528df3 solid;
     box-shadow: 1px 1px 3px lightgray;
 }
 
-.view_button img.Document_view_settings:hover{
+.document_view_thumb img.Document_view_settings:hover{
     border: 1px #528df3 solid !important;
     border-radius: 2px;
     box-shadow: 1px 1px 3px lightgray;
 }
 
-.view_button.view_is_hidden{
+.document_view_thumb.view_is_hidden{
     display: none;
 }
 
-.view_button .view_efields {
+.document_view_thumb .document_view_efields {
     background-color: white;
     position: absolute;
     margin-top: 1px;

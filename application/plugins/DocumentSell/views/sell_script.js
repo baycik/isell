@@ -609,22 +609,26 @@ Document.foot = {
 Document.views={
     init:function(){
     },
+    load_only_views:function(){
+        var url=Document.doc_extension+'/documentGet';
+        $.post(url,{doc_id:Document.doc_id,parts_to_load:'["views"]'},function(resp){
+            var doc=App.json(resp);
+            Document.views.render(doc.views);
+        });
+    },
     render: function(views){
         Document.views.view_list = Document.views.compile(views);
-        App.renderTpl('Document_view_tile',{views:Document.views.view_list});
+        App.renderTpl('.document_views_tile',{views:Document.views.view_list});
         Document.views.initControls();
     },
     initControls: function(){
-        $('#load_views_button').click(function(){
-            Document.views.render(Document.views.view_list);
-        });
-        $('#Document_view_tile img, #Document_view_tile .view_button').click(function(e){
+        $('.x-views .document_view_thumb').click(function(e){
             switch(e.target.className){
-                case 'Document_view_settings':
+                case 'document_view_settings':
                     Document.views.settings(e.target);
                     event.stopPropagation();
                     return;
-                case 'Document_view_arrow':
+                case 'document_views_arrow':
                     Document.views.togglehidden();
                     return;
                 default:
@@ -645,6 +649,7 @@ Document.views={
             for( var k in efield_labs ){
                 view_list[i].efields.push({field:k,label:efield_labs[k],value:efield_vals?efield_vals[k]||'':''});
             }
+            view_list[i].view_dmy_date=App.toDmy(view_list[i].view_date);
         }
         return view_list;
     },
@@ -652,9 +657,9 @@ Document.views={
         var i=$(node).attr('data-view-i');
         var view=Document.views.view_list[i];
         if( view.doc_view_id ){
-            App.loadWindow('page/trade/view_settings',view).progress(function(status){
-                if( status==='deleted' || status==='changed' || status==='close' ){
-                    Document.reload();
+            App.loadWindow('page/mtrade/view_settings',view).progress(function(status){
+                if( status==='close' ){// || status==='changed' status==='deleted' || 
+                    Document.views.load_only_views();
                 }
             });
         }
@@ -663,10 +668,10 @@ Document.views={
         if(!view_type_id){
             return;
         }
-        App.post("DocumentView/viewCreate/"+view_type_id,function(doc_view_id){
+        $.post("DocumentView/viewCreate/",{view_type_id:view_type_id},function(doc_view_id){
             if( doc_view_id*1 ){
                 Document.views.open(doc_view_id);
-                Document.reload();
+                Document.views.load_only_views();
             }
         });
     },
@@ -674,6 +679,7 @@ Document.views={
         window.open("./DocumentView/documentViewGet/?out_type=.print&doc_view_id="+doc_view_id, '_new');
     },
     click:function( node ){
+        console.log($(node).attr('data-view-id'));
         var doc_view_id=$(node).attr('data-view-id');
         var view_type_id=$(node).attr('data-view-type-id');
         if( doc_view_id*1 ){
@@ -686,8 +692,8 @@ Document.views={
     showhidden:false,
     togglehidden:function(){
         this.showhidden=!this.showhidden;
-        $('.Document_view_arrow').attr('src','img/arrow'+(this.showhidden?'left':'right')+'.png');
-        $('.view_is_hidden').css('display',(this.showhidden?'inline-block':'none'));
+        $('.document_views_arrow').attr('src','img/arrow'+(this.showhidden?'left':'right')+'.png');
+        $('.document_view_is_hidden').css('display',(this.showhidden?'inline-block':'none'));
     }
 };
 

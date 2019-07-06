@@ -39,8 +39,7 @@ class DocumentSell extends DocumentBase{
         return parent::documentDelete($doc_id);
     }
     
-    public $documentGet=['doc_id'=>'int','parts_to_load'=>'json'];
-    public function documentGet($doc_id,$parts_to_load){
+    public function documentGet(int $doc_id, array $parts_to_load){
 	$this->documentSelect($doc_id);
 	$doc_type=$this->doc('doc_type');
 	if( $doc_type!='1' && $doc_type!=1 ){
