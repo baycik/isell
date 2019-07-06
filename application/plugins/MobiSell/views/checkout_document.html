@@ -107,7 +107,9 @@
                   cstamp_dmy: now
               };
             }
-            App.renderTpl("doc_head", App.checkout_document.checkout_doc_head);
+            setTimeout(function(){
+                App.renderTpl("doc_head", App.checkout_document.checkout_doc_head);
+            },0);
         },
         generate_product_log: function () {
             var fvalue = $('#checkout_document_popup_quan_form').form('get values');
@@ -140,7 +142,7 @@
                     App.checkout_document.input_barcode = '';
                     $("#checkout_document_log_search_input").val('');
                     App.checkout_document.progress_update();
-                    //App.checkout_document.render_head(); in log render
+                    App.checkout_document.render_head();
                     App.checkout_document.entries.popup_mode='off';
                     App.renderTpl("checkout_entries", {products: App.checkout_document.entries.list});
                 },0);
@@ -415,6 +417,7 @@
                 return product_log.reverse();
             },
             render: function () {
+                
                 if( App.checkout_document.currentType!=="Log" ){
                     return;
                 }
