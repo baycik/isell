@@ -54,10 +54,10 @@
             <tr><td colspan="4">
                 {if="$num=count($value->rows)"}
                 {loop name="$value->rows"}
-                <div style="display: inline-block;width:49%">
+                <div style="display: inline-block;width:32%">
                     <div>
-                        <img src="../../Storage/image_flush/?size=300x300&path=/dynImg/{$value->product_img}#"
-                             onerror="this.onerror=null;this.src='../dynImg/{$value->product_img}_300x300.png';" width="100%" />
+                        <img src="../../Storage/image_flush/?size=200x200&path=/dynImg/{$value->product_img}#"
+                             onerror="this.onerror=null;this.src='../dynImg/{$value->product_img}_200x200.png';" width="100%" />
                     </div>
                     <div style="border-bottom: 1px solid black" {if="$value->product_price!=$value->promo_product_price"}class="promo"{/if}>
                         <div>
