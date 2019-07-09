@@ -38,7 +38,7 @@
 	font-size: 16px;
 	font-family: Calibri,Arial;
     }
-    .promo .product_code,.promo .product_name,.promo .product_price{
+    .promo ,.promo .product_code,.promo .product_name,.promo .product_price{
         background-color: #6f6;
     }
 </style>
@@ -50,45 +50,74 @@
         <tbody>
         {loop name="v->price_blocks"}
             {if="$value->type=='category'"}
+            {if="$value->catalog_view"}
+            <tr><td colspan="4">
                 {if="$num=count($value->rows)"}
                 {loop name="$value->rows"}
-                    <tr style="height: {$value1->rows_height}px;" {if="$value->product_price!=$value->promo_product_price"}class="promo"{/if}>
-                        <td class="product_code" {if="$value->in_stock"}style="color:black"{/if}>{$value->product_code}</td>
-                        <td class="product_name">{$value->product_name}</td>
-                        <td class="product_price"> 
+                <div style="display: inline-block;width:49%">
+                    <div>
+                        <img src="../../Storage/image_flush/?size=300x300&path=/dynImg/{$value->product_img}#"
+                             onerror="this.onerror=null;this.src='../dynImg/{$value->product_img}_300x300.png';" width="100%" />
+                    </div>
+                    <div style="border-bottom: 1px solid black" {if="$value->product_price!=$value->promo_product_price"}class="promo"{/if}>
+                        <div>
+                            <span class="product_code" {if="$value->in_stock"}style="color:black"{/if} >
+                                Код:<b>{$value->product_code}</b>
+                            </span>
+                            Цена:
                             {if="$value->product_price!=$value->promo_product_price"}
                                 <s>{$value->product_price}</s>
                                 <b>{$value->promo_product_price}</b>
                             {else}
-                                {$value->product_price}
+                                <b>{$value->product_price}</b>
                             {/if}
-                        </td>
-                        {if="$value1->allimg"}
-                        <td class="product_imgs" style="page-break-inside: avoid;">
-                            <div style="position: relative;margin: 1px;">
-                                <img src="../../Storage/image_flush/?size=140x140&path=/dynImg/{$value->product_img}#"
-				     onerror="this.onerror=null;this.src='../dynImg/{$value->product_img}_140x140.png';" />
-                            </div>
-                        </td>
-                        {else}
-                            {if="$counter==0"}
-                            <td class="product_imgs" rowspan="{$num}">
-                                <div style="overflow: hidden;height1:{$value1->rows_count*23}px;">
-                                {loop name="$value1->imgs"}
+                        </div>
+                        <i>{$value->product_name}</i>
+                    </div>
+                    
+                </div>
+                {/loop}
+                {/if}
+            </td></tr>
+            {else}
+                    {if="$num=count($value->rows)"}
+                    {loop name="$value->rows"}
+                        <tr style="height: {$value1->rows_height}px;" {if="$value->product_price!=$value->promo_product_price"}class="promo"{/if}>
+                            <td class="product_code" {if="$value->in_stock"}style="color:black"{/if}>{$value->product_code}</td>
+                            <td class="product_name">{$value->product_name}</td>
+                            <td class="product_price"> 
+                                {if="$value->product_price!=$value->promo_product_price"}
+                                    <s>{$value->product_price}</s>
+                                    <b>{$value->promo_product_price}</b>
+                                {else}
+                                    {$value->product_price}
+                                {/if}
+                            </td>
+                            {if="$value1->allimg"}
+                            <td class="product_imgs" style="page-break-inside: avoid;">
                                 <div style="position: relative;margin: 1px;">
-                                    <div style="position:absolute;left:3px;top:3px;background-color: rgba(255,255,255,.5)">{$value->product_code}</div>
-                                    <img src="../../Storage/image_flush/?size=140x{$value1->img_height}&path=/dynImg/{$value->product_img}#"
-                                         onerror="this.onerror=null;this.src='../dynImg/{$value->product_img}_140x{$value1->img_height}.png';" />
-                                </div>
-                                {/loop}
+                                    <img src="../../Storage/image_flush/?size=140x140&path=/dynImg/{$value->product_img}#"
+                                         onerror="this.onerror=null;this.src='../dynImg/{$value->product_img}_140x140.png';" />
                                 </div>
                             </td>
+                            {else}
+                                {if="$counter==0"}
+                                <td class="product_imgs" rowspan="{$num}">
+                                    <div style="overflow: hidden;">
+                                    {loop name="$value1->imgs"}
+                                    <div style="position: relative;margin: 1px;">
+                                        <div style="position:absolute;left:3px;top:3px;background-color: rgba(255,255,255,.5)">{$value->product_code}</div>
+                                        <img src="../../Storage/image_flush/?size=140x{$value1->img_height}&path=/dynImg/{$value->product_img}#"
+                                             onerror="this.onerror=null;this.src='../dynImg/{$value->product_img}_140x{$value1->img_height}.png';" />
+                                    </div>
+                                    {/loop}
+                                    </div>
+                                </td>
+                                {/if}
                             {/if}
-                        {/if}
-                    </tr>	
-                {/loop}
-                {else}
-                
+                        </tr>	
+                    {/loop}
+                    {/if}
                 {/if}
             {else}
             </tbody></table>
