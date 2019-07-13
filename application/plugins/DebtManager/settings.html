@@ -1,25 +1,89 @@
 
 <form>
     <div class="plugin_settings">
+        <div>
+            <label>Группировать дату по:</label>
+            <select name="group_by_date" onchange="App.debt_manager_settings.updateSettings()">
+                <option value="DAY">дням</option>
+                <option value="WEEK">неделям</option>
+                <option value="MONTH">месяцам</option>
+                <option value="QUARTER">кварталам</option>
+                <option value="YEAR">годам</option>
+            </select>
+        </div>
+        <div>
+            <label>Группировать по клиентам:</label>
+            <select name="group_by_pcomp"  onchange="App.debt_manager_settings.updateSettings()">
+                <option value="1">Да</option>
+                <option value="0">Нет</option>
+            </select>
+        </div>
+        <div>
+            <label>Показывать долги клиента: </label>
+            <div class="inp_group">
+                <input title="" name="pcomp_name" value="" readonly="readonly" required="required" style="width:100px" placeholder="Все"/>
+                <input name="pcomp_id" value="" type="hidden" required="required" style="width:100px"/>
+                <button type="button" class="tiny_button" onclick="App.debt_manager_settings.select_pcomp()"><img src="img/settings.png"> Выбрать</button>
+            </div>
+        </div>
+        <div>
+            <div>
+                <input type="checkbox" class="checkbox" name="buy_trans" onchange="App.debt_manager_settings.updateSettings()"
+                       checked>
+                <label for="buy_trans">Наши долги</label>
+            </div>
+            <div>
+                <input type="checkbox" class="checkbox"  name="sell_trans" onchange="App.debt_manager_settings.updateSettings()"
+                       checked>
+                <label for="sell_trans">Долги клиентов</label>
+            </div>
+        </div>
+        <div>
+            <input type="checkbox" class="checkbox"  name="notificate" onchange="App.debt_manager_settings.updateSettings()"
+                   checked>
+            <label for="notificate">Включить уведомления</label>
+        </div>
     </div>
     <div class="plugin_notinstalled">
         <h1>Плагин не установлен</h1>
     </div>
-    <div style="text-align: center">
-    </div>
 </form>
-
 <style>
-    #csv_Exporter_filters label b{
-        width: 100px !important;
-    }
+  
+    
 </style>
 <script>
     App.debt_manager_settings = {
-        mode:'',
+        data:{},
+        filter: {},
+        block:'',
+        block_template: '',
+        empty_block_template: '',
+        block_list:[],
+        current_id: 0,
         init: function () {
             if( Plugins.currentData.is_activated==1 ){
-                App.debt_manager_settings.load();
+                if(Plugins.currentData.plugin_settings.length>1){
+                    App.debt_manager_settings.data = Plugins.currentData.plugin_settings;
+                } else {
+                    App.debt_manager_settings.data = {
+                        group_by_date:'MONTH',
+                        group_by_pcomp:0,
+                        pcomp_id:0,
+                        buy_trans:true,
+                        sell_trans:true,
+                        notificate:true,
+                        event_id:false,
+                    }
+                }
+                
+                $("select[name='group_by_date']").val(App.debt_manager_settings.data.group_by_date);
+                $("select[name='group_by_pcomp']").val(App.debt_manager_settings.data.group_by_pcomp);
+                $("input[name='pcomp_name']").val(App.debt_manager_settings.data.pcomp_name);
+                $("input[name='pcomp_id']").val(App.debt_manager_settings.data.pcomp_id);
+                $("input[name='buy_trans']").prop('checked', App.debt_manager_settings.data.buy_trans);
+                $("input[name='sell_trans']").prop('checked', App.debt_manager_settings.data.sell_trans);
+                $("input[name='notificate']").prop('checked', App.debt_manager_settings.data.notificate);
                 $(".plugin_settings").show();
                 $(".plugin_notinstalled").hide();
             } else {
@@ -27,34 +91,45 @@
                 $(".plugin_notinstalled").show();
             }
         },
-        load: function(){
-            $.post('DebtManager/getDebts', function (resp) {
-                if (resp) {
-                    var response = App.json(resp);
-                    console.log(response);
-                }
-            });
-        },
-        render:function(){
-            App.Topic('activeCompanySelected').subscribe(function (company) {
-                    App.debt_manager_settings.load();
-            });
-            
-        },
+        
         updateSettings: function () {
-            App.debt_manager_settings.data[App.debt_manager_settings.mode].pcomp_id=$("input[name=pcomp_id]").val();
-            App.debt_manager_settings.data[App.debt_manager_settings.mode].pcomp_name=$("input[name=pcomp_name]").val();
-            App.debt_manager_settings.data[App.debt_manager_settings.mode].publicUrl=$("input[name=publicUrl]").val();
-            App.debt_manager_settings.data.active_mode = App.debt_manager_settings.mode;
-            $.post('CSVExporter/updateSettings', {settings: JSON.stringify(App.debt_manager_settings.data)}, function (resp) {
+            var checked = $("input[type=checkbox]:checked.checkbox").length;
+            if(!checked) { 
+                alert("Как минимум один параметр должен быть выбран.");
+                $("input[name='buy_trans']").prop('checked', true);
+                $("input[name='sell_trans']").prop('checked', true); 
+            }
+            App.debt_manager_settings.data.group_by_date = $("select[name='group_by_date']").val();
+            App.debt_manager_settings.data.group_by_pcomp = $("select[name='group_by_pcomp']").val();
+            App.debt_manager_settings.data.pcomp_name = $("input[name='pcomp_name']").val();
+            App.debt_manager_settings.data.pcomp_id = $("input[name='pcomp_id']").val();
+            App.debt_manager_settings.data.buy_trans = $("input[name='buy_trans']").is(":checked");
+            App.debt_manager_settings.data.sell_trans = $("input[name='sell_trans']").is(":checked");
+            App.debt_manager_settings.data.notificate = $("input[name='notificate']").is(":checked");
+            $.post('DebtManager/updateSettings', {user_settings: JSON.stringify(App.debt_manager_settings.data)}, function (resp) {
                 if (resp) {
                     var response = App.json(resp);
                     App.debt_manager_settings.data = response;
-                    $("input[name=pcomp_id]").val(App.debt_manager_settings.data[App.debt_manager_settings.mode].pcomp_id);
-                    $("input[name=pcomp_name]").val(App.debt_manager_settings.data[App.debt_manager_settings.mode].pcomp_name);
-                    $("input[name=publicUrl]").val(App.debt_manager_settings.data[App.debt_manager_settings.mode].publicUrl);
-                    App.debt_manager_settings.categories.init();
-                    App.debt_manager_settings.filters.load();
+                    $("input[name=pcomp_id]").val(App.debt_manager_settings.data.pcomp_id);
+                    $("input[name=pcomp_name]").val(App.debt_manager_settings.data.pcomp_name);
+                    $("select[name=group_by_date]").val(App.debt_manager_settings.data.group_by_date);
+                    $("select[name=group_by_pcomp]").val(App.debt_manager_settings.data.group_by_pcomp);
+                    $("input[name='buy_trans']").prop('checked', App.debt_manager_settings.data.buy_trans);
+                    $("input[name='sell_trans']").prop('checked', App.debt_manager_settings.data.sell_trans);
+                    $("input[name='notificate']").prop('checked', App.debt_manager_settings.data.notificate);
+                }
+            });
+        },
+        select_pcomp: function () {
+            App.user.pcompSelectionDialog().progress(function(status,pcomp){
+                if (status === 'select' ) {
+                    $("input[name=pcomp_name]").val(pcomp.label);
+                    $("input[name=pcomp_id]").val(pcomp.company_id);
+                    App.debt_manager_settings.updateSettings();
+                } else if(status === 'reset') {
+                    $("input[name=pcomp_name]").val("");
+                    $("input[name=pcomp_id]").val("");
+                    App.debt_manager_settings.updateSettings();
                 }
             });
         }
