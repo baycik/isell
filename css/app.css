@@ -624,7 +624,7 @@ h2{
     min-height: 52px;
     margin: 0px 0px 6px 0px;
     text-align: center;
-    background-color: #fff;
+    background:linear-gradient(#fff, #eee);
     cursor: pointer;
     vertical-align: top;
     padding: 7px;
@@ -636,13 +636,7 @@ h2{
     box-shadow: 1px 1px 3px lightgray;
 }
 
-.document_view_thumb img.Document_view_settings:hover{
-    border: 1px #528df3 solid !important;
-    border-radius: 2px;
-    box-shadow: 1px 1px 3px lightgray;
-}
-
-.document_view_thumb.view_is_hidden{
+.document_view_thumb.document_view_is_hidden{
     display: none;
 }
 
@@ -658,11 +652,17 @@ h2{
     z-index: 100;
     padding: 10px;
 }
-
+.document_views_arrow:hover{
+    border: 1px #528df3 solid;
+    box-shadow: 1px 1px 3px lightgray;
+    margin: -1px 0px 0px -1px;
+    cursor: pointer;
+}
 .document_comment{
     width: 100%;
     height: 40px;
-    background-color: #cfc;
+    background-color: #efe;
+    background:linear-gradient(#efe, #cfc);
 }
 .head_input input,.head_input select{
     height: 29px;

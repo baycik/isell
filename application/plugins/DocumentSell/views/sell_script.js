@@ -1,13 +1,14 @@
 /*global Slick,holderId,Document,Document.doc_extension,App*/
-
-Document.head={
+Document.head=  {
     init:function(){
 	Document.head.controls.init();
 	Document.head.toolbar.init();
     },
     render:function(head_data){
 	Document.data.head=head_data;
-        Document.head.controls.render(head_data);
+        setTimeout(function(){
+            Document.head.controls.render(head_data);
+        },0);
     },
     destroy:function(){
         this.pcompNode && this.pcompNode.combobox && this.pcompNode.combobox('clear');
@@ -92,13 +93,29 @@ Document.head={
                 selectOnNavigation:false,
                 panelHeight:''
             });
+            $("#"+holderId+" .x-head input[name=doc_type]").prop('id',holderId+'_doc_type');
+            $("#"+holderId+"_doc_type").combobox({
+                valueField: 'doc_type',
+                textField: 'doc_type_name',
+                url:'DocumentList/documentTypeListFetch',
+                mode: 'remote',
+                selectOnNavigation:false,
+                panelHeight:'',
+                showItemIcon:true,
+                loadFilter:function(data){
+                    data.forEach(function(element){
+                        element.iconCls="icon-"+element.icon_name;
+                    });
+                    return data;
+                }
+            });
         },
         handleChange:function( field, value, title ){
             if( Document.head.controls.suppress_update ){
                 return;
             }
             Document.head.update(field,value,title);
-            console.log('SAVED',field,value,title);
+            //console.log('SAVED',field,value,title);
         },
         render:function(head_data){
             Document.head.controls.suppress_update=true;
@@ -328,7 +345,7 @@ Document.body={
 	    }
 	    var settings={
 		columns:[
-		    {id:"product_code", field: "product_code",width:110,name: "Код", sortable: true },
+		    {id:"product_code", field: "product_code",width:100,name: "Код", sortable: true },
 		    {id:"ru", field: "ru",name: "Название",width:330, sortable: true},
 		    {id:"product_quantity", field: "product_quantity",width:70,name: "Остаток",cssClass:'slick-align-right', sortable: true,formatter:qty_color },
 		    {id:"price", field: "price",name: "Цена",width:70, sortable: true,cssClass:'slick-align-right' }
@@ -608,6 +625,21 @@ Document.foot = {
 };
 Document.views={
     init:function(){
+        $('.x-views').click(function(e){
+            var first_class_name=e.target.className.split(" ")[0];
+            switch(first_class_name){
+                case 'document_view_settings':
+                    Document.views.settings(e.target);
+                    event.stopPropagation();
+                    return;
+                case 'document_views_arrow':
+                    Document.views.togglehidden();
+                    return;
+                case 'document_view_thumb':
+                    Document.views.click(e.target);
+                    return;
+            }
+        });
     },
     load_only_views:function(){
         var url=Document.doc_extension+'/documentGet';
@@ -619,23 +651,6 @@ Document.views={
     render: function(views){
         Document.views.view_list = Document.views.compile(views);
         App.renderTpl('.document_views_tile',{views:Document.views.view_list});
-        Document.views.initControls();
-    },
-    initControls: function(){
-        $('.x-views .document_view_thumb').click(function(e){
-            switch(e.target.className){
-                case 'document_view_settings':
-                    Document.views.settings(e.target);
-                    event.stopPropagation();
-                    return;
-                case 'document_views_arrow':
-                    Document.views.togglehidden();
-                    return;
-                default:
-                    Document.views.click(e.target);
-                    return;
-            }
-        });
     },
     destroy:function(){
         
@@ -679,7 +694,6 @@ Document.views={
         window.open("./DocumentView/documentViewGet/?out_type=.print&doc_view_id="+doc_view_id, '_new');
     },
     click:function( node ){
-        console.log($(node).attr('data-view-id'));
         var doc_view_id=$(node).attr('data-view-id');
         var view_type_id=$(node).attr('data-view-type-id');
         if( doc_view_id*1 ){

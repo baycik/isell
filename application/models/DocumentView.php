@@ -5,7 +5,6 @@ class DocumentView extends DocumentItems{
     public $viewListFetch=['int'];
     public function viewListFetch( $doc_id ){
 	$blank_set=$this->Hub->pref('blank_set');
-        
 	$acomp_id=$this->Hub->acomp('company_id');
 	if( $doc_id ){
 	    $this->selectDoc($doc_id);
@@ -33,7 +32,7 @@ class DocumentView extends DocumentItems{
 		    GROUP BY 
 			view_type_id
 		    ORDER BY
-			view_hidden, pref_int-DATEDIFF(NOW(),pref_value) DESC
+			pref_int-DATEDIFF(NOW(),pref_value) DESC,ISNULL(doc_view_id),view_hidden
 		    ";
 	    return $this->get_list($sql);	    
 	} else {

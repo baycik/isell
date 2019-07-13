@@ -1,5 +1,5 @@
 <form class="head_input">
-    <div style="background-color: white;padding: 10px;">
+    <div style="background: url('img/bg_header_stripes.png');padding: 10px;margin: -5px -5px 0px -5px">
         <label class="switch">
             <input name="is_commited" type="checkbox" title="Проведен" value="1" data-skip="1">
             <span class="slider round"></span>
@@ -16,23 +16,8 @@
         </div>
     </div>
     <div style="display: grid;grid-template-columns:350px 350px">
-        <select class="c-doc_type" name="doc_type" title="Тип" >
-            <option value="1">Продажа</option>
-            <option value="-1">Возврат от покупателя</option>
-            <option value="2">Покупка</option>
-            <option value="-2">Возврат поставщику</option>
-            <option value="3">Оказание услуги</option>
-            <option value="4">Получение услуги</option>
-        </select>
-        <input name="doc_status_id" title="Статус" data-options="
-               showItemIcon:true,
-               valueField: 'doc_status_id',
-               textField: 'status_description',
-               url:'DocumentList/statusFetchList',
-               mode: 'remote',
-               selectOnNavigation:false,
-               panelHeight:''
-               ">
+        <input name="doc_type" title="Тип" >
+        <input name="doc_status_id" title="Статус">
         <input type='date' name="doc_date" title="Дата">
         <input type='number' name="doc_num" title="Номер" min="1">
     </div>
