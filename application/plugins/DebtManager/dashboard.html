@@ -1,83 +1,84 @@
-<div class="panel panel-htop">
-    <div class="panel-header">
-        <div class="panel-title" style="font-size:16px">Менеджер задолженностей</div>
-        <div class="panel-tool">
-            <a class="icon-24 icon-utils" title="Дополнительные свойства" onclick="$('.plugin_settings').toggle('slow')"> 
-            </a>
+<div class="panel-htop">
+    <div class="widget-header">
+        <div class='widget-icon'>
+            <img src="img/debtmanager.png" width="32" height="32">
+        </div>
+        <div class="widget-title" style="font-size:16px">Менеджер задолженностей</div>
+        <div class="widget-settings" onclick="$('.plugin_settings').slideToggle('fast')">
+            <img src="img/widget-settings.png" width="25" height="25">
+        </div>
+    </div>
+    <div class="plugin_settings panel-body" style='display: none'>
+        <div class="debt-settings-input">
+            <label>
+                <div class="explain" style="display:none; position:absolute">Выберите здесь способ группировки задолженностей.</div>
+                Группировать дату по:
+            </label>
+            <select name="group_by_date" onchange="App.debt_manager_settings.updateSettings()">
+                <option value="DAY">дням</option>
+                <option value="WEEK">неделям</option>
+                <option value="MONTH">месяцам</option>
+                <option value="QUARTER">кварталам</option>
+                <option value="YEAR">годам</option>
+            </select>
+        </div>
+        <div class="debt-settings-input">
+            <label>
+                <div class="explain" style="display:none; position:absolute">Если хотите сократить длину списка и сгруппировать долги по клиентам, выберите "Да".</div>
+                Группировать по клиентам:
+            </label>
+            <select name="group_by_pcomp"  onchange="App.debt_manager_settings.updateSettings()">
+                <option value="1">Да</option>
+                <option value="0">Нет</option>
+            </select>
+        </div>
+        <div class="debt-settings-input">
+            <label>
+                <div class="explain" style="display:none; position:absolute">Вы можете выбрать нужного контрагента и увидеть в списке только его задолженности.</div>
+                Показывать долги клиента: 
+            </label>
+
+            <div class="inp_group">
+                <input title="" name="pcomp_name" value="" readonly="readonly" required="required" style="width:100px" placeholder="Все"/>
+                <input name="pcomp_id" value="" type="hidden" required="required" style="width:100px"/>
+                <button type="button" class="tiny_button" onclick="App.debt_manager_settings.select_pcomp()"><img src="img/settings.png"> Выбрать</button>
+            </div>
+        </div>
+        <div >
+            <div class="debt-settings-checkbox">
+                <label for="buy_trans">
+                    <div class="explain" style="display:none; position:absolute">Показывать наши долги перед поставщиками.</div>
+                    Наши долги
+                </label>
+                <input type="checkbox" class="checkbox" name="buy_trans" onchange="App.debt_manager_settings.updateSettings()"
+                       checked>
+            </div>
+            <div class="debt-settings-checkbox">
+                <label for="sell_trans">
+                    <div class="explain" style="display:none; position:absolute">Показывать долги клиентов нашей фирме.</div>
+                    Долги клиентов
+                </label>
+                <input type="checkbox" class="checkbox"  name="sell_trans" onchange="App.debt_manager_settings.updateSettings()"
+                       checked>
+            </div>
+            <div class="debt-settings-checkbox">
+                <label for="notificate">
+                    <div class="explain" style="display:none; position:absolute">Отправлять уведомления о ближайших задолженностях в чат.</div>
+                    Включить уведомления
+                </label>
+                <input type="checkbox" class="checkbox"  name="notificate" onchange="App.debt_manager_settings.updateSettings()"
+                        checked>
+            </div>  
         </div>
     </div>
 </div>     
-<div class="plugin_settings panel-body">
-            <div class="debt-settings-input">
-                <label>
-                    <div class="explain" style="display:none; position:absolute">Выберите здесь способ группировки задолженностей.</div>
-                    Группировать дату по:
-                </label>
-                <select name="group_by_date" onchange="App.debt_manager_settings.updateSettings()">
-                    <option value="DAY">дням</option>
-                    <option value="WEEK">неделям</option>
-                    <option value="MONTH">месяцам</option>
-                    <option value="QUARTER">кварталам</option>
-                    <option value="YEAR">годам</option>
-                </select>
-            </div>
-            <div class="debt-settings-input">
-                <label>
-                    <div class="explain" style="display:none; position:absolute">Если хотите сократить длину списка и сгруппировать долги по клиентам, выберите "Да".</div>
-                    Группировать по клиентам:
-                </label>
-                <select name="group_by_pcomp"  onchange="App.debt_manager_settings.updateSettings()">
-                    <option value="1">Да</option>
-                    <option value="0">Нет</option>
-                </select>
-            </div>
-            <div class="debt-settings-input">
-                <label>
-                    <div class="explain" style="display:none; position:absolute">Вы можете выбрать нужного контрагента и увидеть в списке только его задолженности.</div>
-                    Показывать долги клиента: 
-                </label>
-                
-                <div class="inp_group">
-                    <input title="" name="pcomp_name" value="" readonly="readonly" required="required" style="width:100px" placeholder="Все"/>
-                    <input name="pcomp_id" value="" type="hidden" required="required" style="width:100px"/>
-                    <button type="button" class="tiny_button" onclick="App.debt_manager_settings.select_pcomp()"><img src="img/settings.png"> Выбрать</button>
-                </div>
-            </div>
-            <div >
-                <div class="debt-settings-checkbox">
-                    <label for="buy_trans">
-                        <div class="explain" style="display:none; position:absolute">Показывать наши долги перед поставщиками.</div>
-                        Наши долги
-                    </label>
-                    <input type="checkbox" class="checkbox" name="buy_trans" onchange="App.debt_manager_settings.updateSettings()"
-                           checked>
-                </div>
-                <div class="debt-settings-checkbox">
-                    <label for="sell_trans">
-                        <div class="explain" style="display:none; position:absolute">Показывать долги клиентов нашей фирме.</div>
-                        Долги клиентов
-                    </label>
-                    <input type="checkbox" class="checkbox"  name="sell_trans" onchange="App.debt_manager_settings.updateSettings()"
-                           checked>
-                </div>
-                <div class="debt-settings-checkbox">
-                    <label for="notificate">
-                        <div class="explain" style="display:none; position:absolute">Отправлять уведомления о ближайших задолженностях в чат.</div>
-                        Включить уведомления
-                    </label>
-                    <input type="checkbox" class="checkbox"  name="notificate" onchange="App.debt_manager_settings.updateSettings()"
-                            checked>
-                </div>  
-            </div>
-        </div>
-    <div>
-</div> 
+
 <div class="debt-container">
     <div id="debtList"></div> 
     <div class="load-more">Загрузка...</div>   
 </div>        
 <div style="display:none">
-    <div id="block_template" >
+    <div id="block_template">
         <div class="debt-block{{if date}}{{else}} expired{{/if}} {{if block|notempty}} normal{{else}} empty{{/if}} ester-scroll-viewed">
             {{if date}}
             <div class="date">
@@ -103,26 +104,27 @@
             <div></div>
             {{/if}}
             <div class="debt-all-rows">
+                {{if date}}{{else}}<div class='expired-title'>Просроченные платежи</div>{{/if}}
                 {{if block|notempty}}
                     {{block}}
                     <div class="debt-row {{ trans_type }}">
-                            <div class="debt-date" >{{pay_date}}</div>
-                            <div class="debt-company-name" >
-                                <div>{{company_label}}</div>
-                                <div class="debt-company-info" style="display:none ">
-                                    <div>{{company_name}}</div>
-                                    <div>{{company_person}}</div>
-                                    <div>{{company_mobile}}</div>
-                                    <div>{{company_email}}</div>
-                                    <div>{{company_address}}</div>
-                                </div>
+                        <div class="debt-date" >{{pay_date}}</div>
+                        <div class="debt-company-name" >
+                            <div>{{company_label}}</div>
+                            <div class="debt-company-info" style="display:none ">
+                                <div>{{company_name}}</div>
+                                <div>{{company_person}}</div>
+                                <div>{{company_mobile}}</div>
+                                <div>{{company_email}}</div>
+                                <div>{{company_address}}</div>
                             </div>
-                            <div class="debt-description" >
-                                <div>{{description}}</div>
-                                <div class="debt-description-info" style="display:none ">{{description}}</div> 
-                            </div>
-                            <div class="debt-amount sell">{{amount_sell}} </div>
-                            <div class="debt-amount buy">{{amount_buy}} </div>
+                        </div>
+                        <div class="debt-description" >
+                            <div style='overflow: hidden'>{{description}}</div>
+                            <div class="debt-description-info" style="display:none ">{{description}}</div> 
+                        </div>
+                        <div class="debt-amount sell">{{amount_sell}} </div>
+                        <div class="debt-amount buy">{{amount_buy}} </div>
                     </div>
                     {{/block}}
                     
@@ -164,25 +166,67 @@
     <div></div>
 </div>
 <style>
-    .plugin_settings{
-        background-color: rgba(255,255,255,0.7);
+    div{
+        
+    }
+    #DebtManager_dashboard_holder .plugin_settings{
+        background-color: rgba(255,255,255,1);
         padding:10px;
         position: relative;
-        box-shadow: 2px 3px 9px #878787;
         overflow: initial;
     }
-    .icon-utils{
+    #DebtManager_dashboard_holder{
+        box-shadow: 2px 2px 13px gray;
     }
-    .debt-settings-input label, .debt-settings-checbox label{
+    #DebtManager_dashboard_holder .panel-htop{
+        position: relative;
+        box-shadow: rgb(147, 0, 0) 0px 2px 12px;
+        z-index: 1;
+    }
+    #DebtManager_dashboard_holder .widget-header{
+        background-color: #1a36b8;
+        display: grid;
+        grid-template-columns: 14% 76% 6%;
+        height: 60px;
+        align-items: center;
+        text-align: center;
+        color: white;
+    }
+    #DebtManager_dashboard_holder .widget-title{
+        font-size: 16px;
+        border-bottom: 1px solid #76b9f0;
+        font-weight: bold;
+        display: inline-block;
+        width: max-content;
+    }
+    #DebtManager_dashboard_holder .widget-settings, 
+    #DebtManager_dashboard_holder .widget-icon{
+        filter: brightness(0) invert(1);
+    }
+    #DebtManager_dashboard_holder.widget-settings:hover{
+        transition: all 0.5s ease;
+        transform: rotateZ(180deg);  
+    }
+    #DebtManager_dashboard_holder .debt-settings-input label, 
+    #DebtManager_dashboard_holder .debt-settings-checbox label{
         cursor: help;
     }
-    .debt-settings-input label:hover .explain, .debt-settings-checkbox label:hover .explain{
+    #DebtManager_dashboard_holder .debt-settings-input label:hover .explain, 
+    #DebtManager_dashboard_holder .debt-settings-checkbox label:hover .explain{
         display: block !important;
     }
-    .explain:hover{
+    #DebtManager_dashboard_holder .debt-container{
+        overflow-y: scroll;
+        max-height: 78vh;
+        scrollbar-color: #1a36b8 #ffffff63;
+        scrollbar-width: thin;
+        background-color: white;
+        position: relative;
+    }
+    #DebtManager_dashboard_holder .explain:hover{
         display: none !important;
     }
-    .explain{
+    #DebtManager_dashboard_holder .explain{
         position: absolute;
         width: 40%;
         border: 1px solid lightgray;
@@ -193,86 +237,84 @@
         white-space: initial;
         z-index: 100;
     }
-    .debt-settings-input, .debt-settings-checkbox {
+    #DebtManager_dashboard_holder .debt-settings-input, .debt-settings-checkbox {
         padding: 3px;
     }
-    .debt-settings-input select{
+    #DebtManager_dashboard_holder .debt-settings-input select{
         height:24px;
     }
-    .debt-settings-checkbox input{
+    #DebtManager_dashboard_holder .debt-settings-checkbox input{
         height:20px;
         width:20px;
     }
-    .debt-settings-input{
+    #DebtManager_dashboard_holder .debt-settings-input{
         display: grid;
         grid-template-columns: 33% 33% 33%;
     }
-    .debt-settings-checkbox{
+    #DebtManager_dashboard_holder .debt-settings-checkbox{
         display: grid;
         grid-template-columns: 33% 33% 33%;
     }
-    .debt-block{
+    #DebtManager_dashboard_holder .debt-block{
         display: grid;
-        grid-template-columns: 20% 80%;
+        grid-template-columns: 18% 82%;
         grid-column-gap: inherit;
         border: 1px solid #bdbdbdb3;
-        margin: 5px 0px;
     }
-    .debt-block.expired{
+    #DebtManager_dashboard_holder .debt-block.expired{
         grid-template-columns: 100%;
     }
-
-    .debt-block.expired{
-        grid-template-columns: 100%;
+    #DebtManager_dashboard_holder .expired-title{
+        position: fixed;
+        background: white;
+        padding: 8px;
+        border: 1px solid #aeaeae;
+        z-index: 6;
+        margin-top: 8px;
+        border-radius: 10px;
+        box-shadow: 2px 2px 6px gray;
+        margin-left: 15em;
     }
-    
-    .debt-block.expired .debt-row{
-        border: 1px solid #ff00005c;
+    #DebtManager_dashboard_holder .debt-block.expired .debt-all-rows{
+        border-left: 7px solid #e61313;
     }
-    .debt-block.empty{
+    #DebtManager_dashboard_holder .debt-block.empty{
         background: #e6e6e68c;
-        margin-left: 10px;
     }
-    .debt-block.empty .date{
+    #DebtManager_dashboard_holder .debt-block.empty .date{
         background: #ccc;
         font-size: 20px;
         border-right: 4px solid #b4b4b4;
     }
-    .debt-block.empty .day{
+    #DebtManager_dashboard_holder .debt-block.empty .day,
+    #DebtManager_dashboard_holder .debt-block.empty .month, 
+    #DebtManager_dashboard_holder .debt-block.empty .year{
         font-size: 15px;
     }
-    .debt-block.empty .month{
-        font-size: 15px;
-    }
-    .debt-block.empty .year{
-        font-size: 15px;
-    }
-    .date{
-        border-right: 4px solid orange;
-        background-color: #53535391;
+    #DebtManager_dashboard_holder .date{
+        border-right: 4px solid white;
+        background-color: #3b7dce;
         padding: 5px;
     }
-    .date .day{
-        font-size: 20px;
+    #DebtManager_dashboard_holder .date .day, .date .month{
+        font-size: 16px;
         color: white;
         font-weight: bold;
         font-family: Arial Black, Arial Bold, Gadget, sans-serif;
     }
-    .date .month{
-        font-size: 20px;
-        color: white;
-        font-weight: bold;
-        font-family: Arial Black, Arial Bold, Gadget, sans-serif;
+    #DebtManager_dashboard_holder .date .day{
+        font-size: 18px;
     }
-    .date .year{
-        font-size: 20px;
+    #DebtManager_dashboard_holder .date .year{
+        font-size: 16px;
         color: white;
     }
-    .debt-block.normal .debt-all-rows {
-        background-color: #e4e4e4e6;
+    #DebtManager_dashboard_holder .debt-block.normal .debt-all-rows {
+        background-color: white;
         padding-left: 10px;
+        padding-right: 10px
     }
-    .debt-row{
+    #DebtManager_dashboard_holder .debt-row{
        display: grid;
        grid-template-columns: 16% 27% 23% 17% 18%;
        padding: 6px;
@@ -280,35 +322,37 @@
        padding-top: 7px;
        background-color: white;
        margin: 4px 0px;
-       border-radius: 5px;
-       border: 1px solid lightgrey;
+       align-items: center;
+       border-bottom: 1px solid #d0d0d0;
     }
     
-    .debt-row .debt-date, .debt-row .debt-amount, .debt-row .debt-company-name, .debt-row .debt-description, .debt-row .debt-amount{
-        border-right: 1px solid gray;
+    #DebtManager_dashboard_holder .debt-row .debt-date, .debt-row .debt-amount, 
+    #DebtManager_dashboard_holder .debt-row .debt-company-name, 
+    #DebtManager_dashboard_holder .debt-row .debt-description, 
+    #DebtManager_dashboard_holder .debt-row .debt-amount{
         padding-left: 6px;
         padding-right: 5px;
     }
-    .debt-description{
+    #DebtManager_dashboard_holder .debt-description{
         max-height: 3.5em;
         text-overflow: ellipsis;
         overflow: hidden;
         white-space: nowrap;
     }
-    .debt-row.buy .debt-amount{
+    #DebtManager_dashboard_holder .debt-row.buy .debt-amount{
         color: red;
     }  
-    .debt-row.sell .debt-amount{
+    #DebtManager_dashboard_holder .debt-row.sell .debt-amount{
         color: green;
     }  
-    .debt-amount{
+    #DebtManager_dashboard_holder .debt-amount{
         text-align: right;
         font-weight: bold;
     }
-    .debt-row .debt-amount.buy{
+    #DebtManager_dashboard_holder .debt-row .debt-amount.buy{
         border-right: none !important;
     }
-    .total-row{
+    #DebtManager_dashboard_holder .total-row{
         padding: 8px 8px;
         float: right;
         background-color: white;
@@ -319,26 +363,26 @@
         text-align: right;
         margin: 7px 0px;
     }
-    .total-row .total-label{
+    #DebtManager_dashboard_holder .total-row .total-label{
        margin: auto;
     }
-    .total-row .sell-total{
+    #DebtManager_dashboard_holder .total-row .sell-total{
        margin: auto;
        font-weight: bold;
        color: #026002;
     }
-    .total-row .buy-total{
+    #DebtManager_dashboard_holder .total-row .buy-total{
        margin: auto;
        font-weight: bold;
        color: red;
     }
-    .debt-company-name, .debt-description{
+    #DebtManager_dashboard_holder .debt-company-name, .debt-description{
         cursor: help;
     }
-    .debt-company-info{
+    #DebtManager_dashboard_holder .debt-company-info{
         display: inline-block;
         position: absolute;
-        width: 12%;
+        width: 46%;
         border: 1px solid lightgray;
         background-color: white;
         padding: 5px;
@@ -346,17 +390,17 @@
         margin-left: 35px;
         box-shadow: 3px 3px 10px #9b9b9b;
     }
-    .debt-company-info div{
+    #DebtManager_dashboard_holder .debt-company-info div{
         padding: 2px;
     }
-    .debt-company-name:hover .debt-company-info{
+    #DebtManager_dashboard_holder .debt-company-name:hover .debt-company-info{
         display: inline-block !important;
         cursor: pointer;
     }
-    .debt-description:hover .debt-description-info{
+    #DebtManager_dashboard_holder .debt-description:hover .debt-description-info{
         display: inline-block !important;
         position: absolute;
-        width: 10%;
+        width: 35%;
         border: 1px solid lightgray;
         background-color: white;
         padding: 5px;
@@ -365,7 +409,7 @@
         box-shadow: 3px 3px 10px #9b9b9b;
         white-space: initial;
     }
-    .load-more{
+    #DebtManager_dashboard_holder .load-more{
         transition: opacity 1s ease-in-out 0s;
         margin: 0px auto;
         display: table;
@@ -375,10 +419,6 @@
         text-align: center;
         border: 1px solid lightgray;
         border-radius: 5px;
-    }
-    .debt-container{
-        overflow-y: scroll;
-        max-height: 85vh;
     }
 </style>
 <script>
@@ -407,9 +447,16 @@
                 $('.load-more').each(function(){
                     $(this).css('transition', 'opacity 1s ease-in-out');
                     if(App.debt_manager_settings.is_loading == false){
-                        if(App.debt_manager_settings.isScrolledIntoView($(this))){
+                        if(App.debt_manager_settings.isScrolledIntoView($(this)) && App.debt_manager_settings.isScrolledIntoView($(this)) != 'expired'){
                             App.debt_manager_settings.load(App.debt_manager_settings.block_list.length-1);
                         }
+                    } 
+                    if (App.debt_manager_settings.isScrolledIntoView($(this)) == 'expired'){
+                        $('.panel-htop').css('box-shadow', '0px 2px 12px #930000 ');
+                        $('.expired-title').css('opacity', '1');
+                    } else {
+                        $('.panel-htop').css('box-shadow', '0px 2px 12px #070707');
+                        $('.expired-title').css('opacity', '0');
                     }
                 }) 
             });
@@ -528,9 +575,14 @@
         isScrolledIntoView: function(elem){
             var $elem = $(elem);
             var $viewport = $('.debt-container');
+            var $expired_block = $('.debt-block.expired');
             var elemTop = $elem.offset().top;
+            var expiredBlockBottom = $expired_block.offset().top + $expired_block.height();
             var viewScroll = $viewport.scrollTop();
             var viewHeight = $('#DebtManager_dashboard_holder').height();
+            if((expiredBlockBottom) > 80){
+                return 'expired';
+            } 
             return (((elemTop) - (viewHeight)) < 60 );
         },
         ajax_cancelling: function(){
