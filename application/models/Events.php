@@ -63,9 +63,8 @@ class Events extends Catalog{
 	return $this->get_row($sql);
     }
     
-    public function eventGetByDocId($doc_id){
-        $event_id=$this->get_value("SELECT event_id FROM event_list WHERE doc_id='$doc_id' LIMIT 1");
-        return $this->eventGet($event_id);
+    public function eventDeleteDocumentTasks( int $doc_id ){
+        return $this->delete("event_list",['doc_id'=>$doc_id,'event_label'=>'-TASK-']);
     }
     
     public $eventDelete=['int'];

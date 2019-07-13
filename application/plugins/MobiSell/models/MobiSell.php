@@ -143,14 +143,15 @@ class MobiSell extends PluginManager {
             'doc_id' => $doc_id,
             'event_id' => 0,
             'event_date' => date("Y-m-d"),
-            'event_label' => 'Доставка',
+            'event_label' => 'Доставка MobiSell',
             'event_creator_user_id' => $this->Hub->svar('user_id'),
             'event_name' => 'Документ №' . $head->doc_num,
             'event_descr' => $head->doc_data,
             'event_target' => $this->Hub->pcomp('company_person') . " (" . $this->Hub->pcomp('label') . ")",
             'event_place' => $this->Hub->pcomp('company_address'),
             'event_note' => $this->Hub->pcomp('company_mobile'),
-            'event_status' => 'undone'
+            'event_status' => 'undone',
+            'event_priority'=>'2high'
         ];
         return $this->create('event_list', $event);
     }

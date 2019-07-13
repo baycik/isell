@@ -367,7 +367,7 @@ class CampaignManager extends Catalog{
                 period_plan1,
                 period_plan2,
                 period_plan3,
-                {$bonus_base['select']} bonus_base
+                ROUND(SUM( {$bonus_base['select']} )) bonus_base
             FROM
                 plugin_campaign_bonus pcb 
                     JOIN
@@ -382,7 +382,6 @@ class CampaignManager extends Catalog{
             //die($sql);
         return $this->get_list($sql);
     }
-    
     private function bonusCalculateProductRange($campaign_bonus){
         $table="document_entries de";
         $where="";
@@ -396,7 +395,7 @@ class CampaignManager extends Catalog{
             $table.=" JOIN prod_list pl ON de.product_code=pl.product_code AND ($brand_filter) AND ($type_filter)";
         }
         return [
-            'table'=>"(SELECT doc_id,invoice_price,de.product_quantity,de.breakeven_price,de.self_price FROM $table)",
+            'table'=>"(SELECT doc_id,doc_entry_id,de.product_code,invoice_price,de.product_quantity,de.breakeven_price,de.self_price FROM $table)",
             'where'=>$where
         ];
     }
@@ -405,8 +404,8 @@ class CampaignManager extends Catalog{
         $product_range= $this->bonusCalculateProductRange($campaign_bonus);
         
         //print_r($product_range);
-        
-        $select="COALESCE(ROUND(SUM(invoice_price * product_quantity * (dl.vat_rate/100+1))),0)";
+        $detailed_select="";
+        $select="COALESCE(invoice_price * product_quantity * (dl.vat_rate/100+1),0)";
         $table="
                     LEFT JOIN
                 document_list dl ON $period_on 
@@ -427,7 +426,7 @@ class CampaignManager extends Catalog{
     }
     private function bonusCalculateProfit($campaign_bonus,$period_on,$client_filter){
         $product_range= $this->bonusCalculateProductRange($campaign_bonus);
-        $select="COALESCE(ROUND(SUM( (invoice_price-GREATEST(breakeven_price,self_price)) * product_quantity * (dl.vat_rate/100+1) )),0)";
+        $select="COALESCE((invoice_price * (dl.vat_rate/100+1)-GREATEST(breakeven_price,self_price)) * product_quantity,0)";
         $table="
                     LEFT JOIN
                 document_list dl ON $period_on 
@@ -448,7 +447,7 @@ class CampaignManager extends Catalog{
     }
     private function bonusCalculatePayment($campaign_bonus,$period_on,$client_filter){
         $payment_account="361";
-        $select="COALESCE(ROUND(SUM(amount)),0)";
+        $select="COALESCE(amount,0)";
         $table="
                     LEFT JOIN
                         acc_trans at ON $period_on
@@ -525,4 +524,161 @@ class CampaignManager extends Catalog{
         return $this->get_row($sql);
     }
     
+    
+    
+    
+    ///////////////////////////////////////////////////
+    //EXTENSION
+    ///////////////////////////////////////////////////
+    
+    
+    private function bonusCalculateDetailedResult( int $campaign_bonus_id, int $campaign_bonus_period_id, string $group_by ){
+        $campaign_bonus=$this->bonusGet($campaign_bonus_id);
+        if( !$campaign_bonus ){
+            return false;//notfound
+        }
+        $client_filter=$this->clientListFilterGet($campaign_bonus->campaign_id);
+        $is_current_detection="1";
+        switch( $campaign_bonus->campaign_grouping_interval ){
+            case 'MONTH':
+                $period_on=" YEAR(cstamp)=period_year AND MONTH(cstamp)=period_month ";
+                $is_current_detection="CONCAT(period_month,'.',period_year)=CONCAT(MONTH(NOW()),'.',YEAR(NOW()))";
+                break;
+            case 'QUARTER':
+                $period_on=" YEAR(cstamp)=period_year AND QUARTER(cstamp)=period_quarter";
+                $is_current_detection="CONCAT(period_quarter,'.',period_year)=CONCAT(QUARTER(NOW()),'.',YEAR(NOW()))";
+                break;
+            case 'YEAR':
+                $period_on=" YEAR(cstamp)=period_year ";
+                $is_current_detection="period_year=YEAR(NOW())";
+                break;
+            default :
+                $period_on=" 1 ";//whole period
+        }
+        switch( $campaign_bonus->bonus_type ){
+            case 'VOLUME':
+                $bonus_base= $this->bonusCalculateVolume($campaign_bonus,$period_on,$client_filter);
+                break;
+            case 'PROFIT':
+                $bonus_base= $this->bonusCalculateProfit($campaign_bonus,$period_on,$client_filter);
+                break;
+            case 'PAYMENT':
+                $bonus_base= $this->bonusCalculatePayment($campaign_bonus,$period_on,$client_filter);
+                break;
+            default:
+                return false;
+        }
+        
+        $current_filter="";
+//        if( $only_current_period ){
+//            $current_filter="AND $is_current_detection";
+//        }
+        
+        $sql="SELECT
+            *,
+            CONCAT('%',COALESCE(campaign_bonus_ratio1,''),'/',COALESCE(campaign_bonus_ratio2,''),'/',COALESCE(campaign_bonus_ratio3,'')) bonus_ratios,
+            ROUND(bonus_base*campaign_bonus_ratio1/100) result1,
+            ROUND(bonus_base*campaign_bonus_ratio2/100) result2,
+            ROUND(bonus_base*campaign_bonus_ratio3/100) result3
+        FROM (
+            SELECT
+                campaign_bonus_ratio1,
+                campaign_bonus_ratio2,
+                campaign_bonus_ratio3,
+                company_name,
+                analyse_brand,
+                analyse_type,
+                pl.product_code,
+                ru product_name,
+                SUM(product_quantity) product_quantity,
+                ROUND(AVG(self_price),2) self_price,
+                ROUND(AVG(breakeven_price),2) breakeven_price,
+                ROUND(AVG(invoice_price * (dl.vat_rate/100+1)),2) sell_price,
+                ROUND(SUM(invoice_price*product_quantity* (dl.vat_rate/100+1))) sell_sum,
+                ROUND(COALESCE(AVG((invoice_price * (dl.vat_rate/100+1)-GREATEST(breakeven_price,self_price))),0),2) diff_price,
+                ROUND(SUM({$bonus_base['select']})) bonus_base
+            FROM
+                plugin_campaign_bonus pcb 
+                    JOIN
+                plugin_campaign_bonus_periods pcbp USING (campaign_bonus_id)
+                {$bonus_base['table']}
+                    LEFT JOIN
+                prod_list pl USING(product_code)
+                    LEFT JOIN
+                companies_list ON company_id=passive_company_id
+            WHERE
+                campaign_bonus_id = $campaign_bonus_id
+                AND campaign_bonus_period_id=$campaign_bonus_period_id
+                {$bonus_base['where']}
+            GROUP BY $group_by
+            ORDER BY $group_by) tt";
+            //die($sql);
+        return $this->get_list($sql);
+    }
+    
+    public function campaignDetailedView( int $campaign_bonus_id, int $campaign_bonus_period_id, string $group_by='product_code' ){
+        $table=$this->bonusCalculateDetailedResult( $campaign_bonus_id, $campaign_bonus_period_id, $group_by );
+        
+        
+        
+        $out_type='.print';
+        
+        $struct=[
+            
+            ['Field'=>'company_name','Comment'=>'Клиент'],
+            ['Field'=>'analyse_brand','Comment'=>'Бренд'],
+            ['Field'=>'analyse_type','Comment'=>'Тип'],
+            ['Field'=>'product_code','Comment'=>'Код'],
+            ['Field'=>'product_name','Comment'=>'Название'],
+            ['Field'=>'product_quantity','Comment'=>'Кол-во'],
+            ['Field'=>'self_price','Comment'=>'Себ'],
+            ['Field'=>'breakeven_price','Comment'=>'Порог'],
+            ['Field'=>'sell_price','Comment'=>'Продажа'],
+            ['Field'=>'diff_price','Comment'=>'Разница'],
+            ['Field'=>'sell_sum','Comment'=>'Сумма'],
+            ['Field'=>'bonus_base','Comment'=>'База Б.'],
+            ['Field'=>'result1','Comment'=>'Рез1'],
+            ['Field'=>'result2','Comment'=>'Рез2'],
+            ['Field'=>'result3','Comment'=>'Рез3'],
+            ['Field'=>'bonus_ratios','Comment'=>'Бонусы'],
+            
+        ];
+        //return $table;
+        
+        
+	$dump=[
+	    'tpl_files'=>'/GridTpl.xlsx',
+	    'title'=>"Экспорт таблицы",
+	    'user_data'=>[
+		'email'=>$this->Hub->svar('pcomp')?$this->Hub->svar('pcomp')->company_email:'',
+		'text'=>'Доброго дня'
+	    ],
+	    'struct'=>$struct,
+	    'view'=>[
+		'rows'=>$table
+	    ]
+	];
+	$ViewManager=$this->Hub->load_model('ViewManager');
+	$ViewManager->store($dump);
+	$ViewManager->outRedirect($out_type);
+    }
+    
+    
+    
+    
+    public function bonusPeriodBreakEvenRecalculate( int $campaign_bonus_period_id ){
+        $bonus_period=$this->get_row("SELECT * FROM plugin_campaign_bonus_periods JOIN plugin_campaign_bonus USING(campaign_bonus_id) WHERE campaign_bonus_period_id=$campaign_bonus_period_id");
+        $client_filter=$this->clientListFilterGet($bonus_period->campaign_id);
+        $sql="UPDATE 
+                    document_entries 
+                    JOIN
+                    document_list USING(doc_id)
+                SET 
+                    breakeven_price = ROUND(GET_BREAKEVEN_PRICE(product_code,passive_company_id,doc_ratio,self_price),2)
+                WHERE 
+                    YEAR(cstamp)=$bonus_period->period_year
+                    AND MONTH(cstamp)=$bonus_period->period_month
+                    AND passive_company_id IN (SELECT company_id FROM companies_list JOIN companies_tree USING(branch_id) WHERE $client_filter)";
+        return $this->query($sql);
+    }
 }

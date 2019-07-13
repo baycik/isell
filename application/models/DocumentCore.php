@@ -268,10 +268,7 @@ class DocumentCore extends DocumentUtils{
     
     public function reservedTaskAdd($doc_id){
         $this->Hub->load_model('Events');
-        $event=$this->Hub->Events->eventGetByDocId($doc_id);
-        if( $event ){
-            return $this->Hub->Events->eventDelete( $event->event_id );
-        }
+        $this->Hub->Events->eventDeleteDocumentTasks($doc_id);
         $user_id=$this->Hub->svar('user_id');
         if( $this->doc('doc_type')==1 ){
             $day_limit=$this->Hub->pref('reserved_limit');
@@ -288,7 +285,10 @@ class DocumentCore extends DocumentUtils{
             'event_status'=>'undone',
             'event_label'=>'-TASK-',
             'event_date'=>date("Y-m-d H:i:s",$stamp),
-            'event_descr'=>$description,
+            'event_descr'=>$description
+        ];
+        $event_id=$this->Hub->Events->eventCreate($event);
+        $event_update=[
             'event_program'=>json_encode([
                 'commands'=>[
                     [
@@ -300,20 +300,24 @@ class DocumentCore extends DocumentUtils{
                         'model'=>'Chat',
                         'method'=>'addMessage',
                         'arguments'=>[$user_id,$alert]
+                    ],
+                    [
+                        'model'=>'Events',
+                        'method'=>'eventDelete',
+                        'arguments'=>[$event_id]
                     ]
                 ]
             ])
         ];
-        return $this->Hub->Events->eventCreate($event);
+        if( $event_id ){
+            $this->Hub->Events->eventChange($event_id, $event_update);
+        }
+        return $event_id;
     }
     
     public function reservedTaskRemove($doc_id){
         $this->Hub->load_model('Events');
-        $event=$this->Hub->Events->eventGetByDocId($doc_id);
-        if( $event ){
-            return $this->Hub->Events->eventDelete( $event->event_id );
-        }
-        return false;
+        return $this->Hub->Events->eventDeleteDocumentTasks($doc_id);
     }
     
     public function reservedCountUpdate(){
