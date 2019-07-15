@@ -45,7 +45,7 @@ class DebtManager extends Catalog {
     
     private function createTmp($filter) {
         $acomp = $this->Hub->svar('acomp');
-        $assigned_path=$this->Hub->svar('user_assigned_path');
+        
         $block_number = $filter['block_number'];
         $settings = $this->getUserSettings();
         $passive_company_id = '';
@@ -82,8 +82,8 @@ class DebtManager extends Catalog {
             $where .= "  AND DATE_ADD(cstamp, INTERVAL deferment DAY) > DATE_ADD(CURDATE(), INTERVAL '".($block_number-1)."' {$settings->group_by_date})";
             $where .= " AND DATE_ADD(cstamp, INTERVAL deferment DAY) < DATE_ADD(CURDATE(), INTERVAL '".($block_number+1)."' {$settings->group_by_date})";
         }
-        if(isset($assigned_path)){
-            $path = "AND (ct.path LIKE '%".str_replace(",", "%' OR ct.path LIKE '%", $assigned_path)."%')";
+        if(isset( $settings->user_assigned_path)){
+            $path = "AND (ct.path LIKE '%".str_replace(",", "%' OR ct.path LIKE '%", $settings->user_assigned_path)."%')";
         } else {
             $path = '';
         }
@@ -184,10 +184,9 @@ class DebtManager extends Catalog {
         }
     }
     
-    public function notificate($notificate){
+    public function notificate($notificate, $user_id){
         $Events=$this->Hub->load_model('Events');
-        $user_id = $this->Hub->svar('user_id');
-        if($notificate == 0){
+        if(!$notificate){
             $Events->eventDelete( $this->settings[$user_id]['event_id'] );
             return 0;
         }
@@ -195,13 +194,13 @@ class DebtManager extends Catalog {
             'commands' => [[
                 "model" => "DebtManager",
                 "method" => "sendNotification",
-                "arguments" => $this->Hub->svar('user_id'),
+                "arguments" => $user_id,
                 "async" => 0,
                 "disabled" => 0
             ]]
         ];
             $event_id= null;
-            $doc_id=$this->Hub->svar('user_id');
+            $doc_id='';
             $event_date=date("Y-m-d H:i:s");
             $event_priority='3medium';
             $event_name='Уведомление';
@@ -211,7 +210,7 @@ class DebtManager extends Catalog {
             $event_note='';
             $event_descr='Уведомление о задолженностях';
             $event_program = json_encode($program);
-            $event_repeat='0 0:1';
+            $event_repeat='0 7:0';
             $event_status='pending';
             $event_liable_user_id='';
             $event_is_private = '1';
@@ -271,19 +270,24 @@ class DebtManager extends Catalog {
         return $msg;
     }
     
-    public $updateSettings = ['user_settings' => 'json'];
-    public function updateSettings($user_settings) {
-        $this->settings = $this->getSettings();
-        $user_id = $this->Hub->svar('user_id');
+    public $updateSettings = ['user_settings' => 'json', 'user_id'=>'int'];
+    public function updateSettings($user_settings, $user_id = false) {
+        $user_settings['user_assigned_path'] = addslashes($user_settings['user_assigned_path']);
+        $this->settings = $this->getAllSettings();
+        if(!$user_id){
+            $user_id = $this->Hub->svar('user_id');
+        }
         if(empty($this->settings)){
             $user_settings['group_by_date'] = 'DAY';
             $this->settings[0] = $user_settings;
         } 
         $this->settings[$user_id] = $user_settings;
-        if($this->settings[$user_id]['notificate'] == true && (!isset($this->settings[$user_id]['event_id'])|| !$this->settings[$user_id]['event_id'])){
-            $this->settings[$user_id]['event_id'] = $this->notificate(1);
-        } else if($this->settings[$user_id]['notificate'] == false ){
-            $this->settings[$user_id]['event_id'] = $this->notificate(0);
+        if((bool)$this->settings[$user_id]['notificate']){
+            if(!(bool)$this->settings[$user_id]['event_id']){
+                $this->settings[$user_id]['event_id'] = $this->notificate(1,$user_id);
+            }
+        } else {
+            $this->settings[$user_id]['event_id'] = $this->notificate(0,$user_id);
         }
         $encoded = json_encode($this->settings, JSON_UNESCAPED_UNICODE);
         $sql = "
@@ -296,8 +300,8 @@ class DebtManager extends Catalog {
         $this->query($sql);
         return $this->settings[$user_id];
     }
-
-    public function getSettings() {
+    
+    public function getAllSettings() {
         $sql = "
             SELECT
                 plugin_settings
@@ -309,11 +313,14 @@ class DebtManager extends Catalog {
         return json_decode($row->plugin_settings, true);
     }
     
-    public function getUserSettings() {
-        if($this->system_user){
-            $user_id = 0;
-        }else {
-            $user_id = $this->Hub->svar('user_id');
+    public $getUserSettings = ['user_id' => 'int'];
+    public function getUserSettings($user_id = false) {
+        if(!$user_id){
+            if($this->system_user){
+                $user_id = 0;
+            }else {
+                $user_id = $this->Hub->svar('user_id');
+            }
         }
         $sql = "
             SELECT
@@ -323,11 +330,10 @@ class DebtManager extends Catalog {
             WHERE plugin_system_name = 'DebtManager'    
             ";
         $row = $this->get_row($sql);
-        $Events=$this->Hub->load_model('Events');
-        
         $user_settings = json_decode($row->plugin_settings);
         if(isset($user_settings->{$user_id})){
             if($user_id != 0){
+                $Events=$this->Hub->load_model('Events');
                 $event_id = $Events->eventGet($user_settings->{$user_id}->event_id);  
                 if(!$event_id){
                     $user_settings->{$user_id}->event_id = 0;
@@ -343,11 +349,13 @@ class DebtManager extends Catalog {
                 'pcomp_id'=> '',
                 'buy_trans'=> 'true',
                 'sell_trans'=> 'true',
-                'notificate'=> 'true'
-                ]);
+                'notificate'=> '0',
+                'event_id'=> '0',
+                'user_assigned_path'=> ''
+                ], $user_id);
         }
-        
     }
+    
     
     public function dashboard(){
         $this->Hub->set_level(2);

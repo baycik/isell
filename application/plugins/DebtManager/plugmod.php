@@ -14,7 +14,7 @@ $after[]=<<<EOT
 \n  <div class="widget-block"> 
             <div id="DebtManager_dashboard_holder" class="panel" style="margin: 10px;"></div>
             <script>
-                $("#DebtManager_dashboard_holder").load("../ayderIsell/DebtManager/dashboard");
+                $("#DebtManager_dashboard_holder").load("DebtManager/dashboard");
             </script>
         </div>
 EOT;
