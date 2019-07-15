@@ -1,4 +1,4 @@
-<div class="panel-htop">
+<div class="widget-panel">
     <div class="widget-header">
         <div class='widget-icon'>
             <img src="img/debtmanager.png" width="32" height="32">
@@ -180,7 +180,7 @@
     #DebtManager_dashboard_holder{
         box-shadow: 2px 2px 13px gray;
     }
-    #DebtManager_dashboard_holder .panel-htop{
+    #DebtManager_dashboard_holder .widget-panel{
         position: relative;
         box-shadow: rgb(147, 0, 0) 0px 2px 12px;
         z-index: 1;
@@ -449,10 +449,10 @@
                         }
                     } 
                     if (App.debt_manager_settings.isScrolledIntoView($(this)) == 'expired'){
-                        $('.panel-htop').css('box-shadow', '0px 2px 12px #930000 ');
+                        $('.widget-panel').css('box-shadow', '0px 2px 12px #930000 ');
                         $('.expired-title').css('opacity', '1');
                     } else {
-                        $('.panel-htop').css('box-shadow', '0px 2px 12px #070707');
+                        $('.widget-panel').css('box-shadow', '0px 2px 12px #070707');
                         $('.expired-title').css('opacity', '0');
                     }
                 }) 
