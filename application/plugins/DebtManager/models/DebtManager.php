@@ -98,7 +98,6 @@ class DebtManager extends Catalog {
                 CREATE TEMPORARY TABLE tmp  
                 SELECT 
                     DATE_FORMAT(DATE(TIMESTAMPADD(DAY, cl.deferment, acctr.cstamp)),'%Y%-%m%-%d') AS pay_date,
-                    DATE_FORMAT(DATE(TIMESTAMPADD(DAY, cl.deferment, acctr.cstamp)), '%d%-%m%-%Y') AS pay_date_formatted,
                     IF(acctr.acc_credit_code = '631', CONCAT('-', ROUND(SUM(acctr.amount),2)),'') as amount_buy,
                     IF(acctr.acc_credit_code = '631', '', ROUND(SUM(acctr.amount),2)) as amount_sell,
                     GROUP_CONCAT(acctr.description SEPARATOR ', ')  as description,
