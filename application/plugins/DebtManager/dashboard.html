@@ -109,7 +109,7 @@
                 {{if block|notempty}}
                     {{block}}
                     <div class="debt-row {{ trans_type }}">
-                        <div class="debt-date" >{{pay_date_formatted|pay_date|blank>}}</div>
+                        <div class="debt-date" >{{pay_date|pay_date|blank>}}</div>
                         <div class="debt-company-name" >
                             <div>{{company_label}}</div>
                             <div class="debt-company-info" style="display:none ">
@@ -431,7 +431,7 @@
             Mark.pipes.pay_date=function(date){
                 var new_date_arr = date.split('-');
                 var months = ['','января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря']
-                return parseInt(new_date_arr[0]) +' '+ months[parseInt(new_date_arr[1])] +' '+ new_date_arr[2];
+                return parseInt(new_date_arr[2]) +' '+ months[parseInt(new_date_arr[1])] +' '+ new_date_arr[0];
             };
             Mark.pipes.quarter=function(index){
                 return ['','Iкв','IIкв','IIIкв','IVкв'][index];
