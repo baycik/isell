@@ -71,6 +71,7 @@
             </div>  
         </div>
     </div>
+        <div class='expired-title'>Просроченные платежи</div>
 </div>     
 
 <div class="debt-container">
@@ -104,11 +105,11 @@
             <div></div>
             {{/if}}
             <div class="debt-all-rows">
-                {{if date}}{{else}}<div class='expired-title'>Просроченные платежи</div>{{/if}}
+                
                 {{if block|notempty}}
                     {{block}}
                     <div class="debt-row {{ trans_type }}">
-                        <div class="debt-date" >{{pay_date}}</div>
+                        <div class="debt-date" >{{pay_date_formatted|pay_date|blank>}}</div>
                         <div class="debt-company-name" >
                             <div>{{company_label}}</div>
                             <div class="debt-company-info" style="display:none ">
@@ -117,12 +118,13 @@
                                 <div>{{company_mobile}}</div>
                                 <div>{{company_email}}</div>
                                 <div>{{company_address}}</div>
+                                <div class="debt-description" >
+                                    <div><b>Документы: </b></div>
+                                    <div>{{description}}</div>
+                                </div>
                             </div>
                         </div>
-                        <div class="debt-description" >
-                            <div style='overflow: hidden'>{{description}}</div>
-                            <div class="debt-description-info" style="display:none ">{{description}}</div> 
-                        </div>
+                        
                         <div class="debt-amount sell">{{amount_sell}} </div>
                         <div class="debt-amount buy">{{amount_buy}} </div>
                     </div>
@@ -230,7 +232,8 @@
         position: absolute;
         width: 40%;
         border: 1px solid lightgray;
-        background-color: white;
+        background-color: #fffcdf;
+        margin-top: 17px;
         padding: 5px;
         padding-left: 5px;
         margin-left: 35px;
@@ -249,11 +252,11 @@
     }
     #DebtManager_dashboard_holder .debt-settings-input{
         display: grid;
-        grid-template-columns: 33% 33% 33%;
+        grid-template-columns: 33% 50%;
     }
     #DebtManager_dashboard_holder .debt-settings-checkbox{
         display: grid;
-        grid-template-columns: 33% 33% 33%;
+        grid-template-columns: 33% 50%;
     }
     #DebtManager_dashboard_holder .debt-block{
         display: grid;
@@ -265,15 +268,17 @@
         grid-template-columns: 100%;
     }
     #DebtManager_dashboard_holder .expired-title{
-        position: fixed;
+        position: absolute;
         background: white;
         padding: 8px;
         border: 1px solid #aeaeae;
         z-index: 6;
-        margin-top: 8px;
+        margin-top: 10px;
         border-radius: 10px;
         box-shadow: 2px 2px 6px gray;
-        margin-left: 15em;
+        margin-left: 40%;
+        width: 20%;
+        text-align: center;
     }
     #DebtManager_dashboard_holder .debt-block.expired .debt-all-rows{
         border-left: 7px solid #e61313;
@@ -316,7 +321,7 @@
     }
     #DebtManager_dashboard_holder .debt-row{
        display: grid;
-       grid-template-columns: 16% 27% 23% 17% 18%;
+       grid-template-columns: 18% 44% 17% 18%;
        padding: 6px;
        min-height: 2.6em;
        padding-top: 7px;
@@ -334,10 +339,9 @@
         padding-right: 5px;
     }
     #DebtManager_dashboard_holder .debt-description{
-        max-height: 3.5em;
         text-overflow: ellipsis;
         overflow: hidden;
-        white-space: nowrap;
+        max-width: 57%;
     }
     #DebtManager_dashboard_holder .debt-row.buy .debt-amount{
         color: red;
@@ -376,7 +380,7 @@
        font-weight: bold;
        color: red;
     }
-    #DebtManager_dashboard_holder .debt-company-name, .debt-description{
+    #DebtManager_dashboard_holder .debt-company-name{
         cursor: help;
     }
     #DebtManager_dashboard_holder .debt-company-info{
@@ -396,18 +400,6 @@
     #DebtManager_dashboard_holder .debt-company-name:hover .debt-company-info{
         display: inline-block !important;
         cursor: pointer;
-    }
-    #DebtManager_dashboard_holder .debt-description:hover .debt-description-info{
-        display: inline-block !important;
-        position: absolute;
-        width: 35%;
-        border: 1px solid lightgray;
-        background-color: white;
-        padding: 5px;
-        padding-left: 5px;
-        margin-left: 35px;
-        box-shadow: 3px 3px 10px #9b9b9b;
-        white-space: initial;
     }
     #DebtManager_dashboard_holder .load-more{
         transition: opacity 1s ease-in-out 0s;
@@ -435,6 +427,11 @@
             App.debt_manager_settings.ajax_cancelling();
             Mark.pipes.month=function(index){
                 return ['','Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'][index];
+            };
+            Mark.pipes.pay_date=function(date){
+                var new_date_arr = date.split('-');
+                var months = ['','января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря']
+                return parseInt(new_date_arr[0]) +' '+ months[parseInt(new_date_arr[1])] +' '+ new_date_arr[2];
             };
             Mark.pipes.quarter=function(index){
                 return ['','Iкв','IIкв','IIIкв','IVкв'][index];
