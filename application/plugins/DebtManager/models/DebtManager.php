@@ -20,7 +20,6 @@ class DebtManager extends Catalog {
     public function getBlock($filter){
         session_write_close();
         $this->Hub->set_level(2);
-        $user_id = $this->Hub->svar('user_id');
         $this->createTmp($filter);
         
         $list = $this->getEntries();
@@ -45,7 +44,7 @@ class DebtManager extends Catalog {
     
     private function createTmp($filter) {
         $acomp = $this->Hub->svar('acomp');
-        
+        $user_level = $this->Hub->svar('user_level');
         $block_number = $filter['block_number'];
         $settings = $this->getUserSettings();
         $passive_company_id = '';
@@ -120,8 +119,10 @@ class DebtManager extends Catalog {
                     $passive_company_id
                     AND active_company_id = '$acomp->company_id'
                     AND ($sell_trans OR $buy_trans)
+                    AND ct.level <= $user_level
                     $where
                 GROUP BY acctr.$group_by
+                HAVING amount_sell > 100 OR amount_buy > 100
                 ORDER BY pay_date ASC
         ";
         $this->query($sql);
@@ -342,6 +343,7 @@ class DebtManager extends Catalog {
             }
             return $user_settings->{$user_id};
         } else {
+            
             return $this->updateSettings($settings = [
                 'group_by_date' => 'WEEK',
                 'group_by_pcomp'=> '0',
@@ -351,7 +353,7 @@ class DebtManager extends Catalog {
                 'sell_trans'=> 'true',
                 'notificate'=> '0',
                 'event_id'=> '0',
-                'user_assigned_path'=> ''
+                'user_assigned_path'=> $this->Hub->svar('user_assigned_path')
                 ], $user_id);
         }
     }

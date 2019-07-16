@@ -6,39 +6,29 @@ class Chat extends Catalog{
     public $getUserList=[];
     public function getUserList(){
 	$my_id = $this->Hub->svar('user_id');
-        $sql="
-            SELECT 
-                t.*, 
-                (SELECT  1 FROM event_list WHERE
-                        created_by = t.user_id
-                            AND event_status = 'undone'
-                            AND event_date < NOW()
-                            AND event_liable_user_id = '41'
-                LIMIT 1) has_new
-            FROM (
-                SELECT 
+        $sql="SELECT 
                     user_id,
                     user_login,
-                    CONCAT(first_name, ' ', last_name) name,
+		CONCAT(first_name,' ',last_name) name,
                     user_is_staff,
-                    TIMESTAMPDIFF(MINUTE,
-                        last_activity,
-                        NOW()) < 3 is_online
+                TIMESTAMPDIFF(MINUTE,last_activity,NOW())<3 is_online, 
+		(SELECT 1 FROM event_list WHERE created_by=user_id AND event_status='undone' AND event_date<NOW() AND event_liable_user_id='$my_id' LIMIT 1) has_new
                 FROM 
                     user_list
-                UNION 
-                SELECT 
-                        0 AS user_id,
-                    'iSellBot' AS user_login,
-                    'Системные уведомления' AS name,
-                    '2' AS user_is_staff,
-                    '1' AS is_online
-                FROM 
-                     user_list
-                ) as t
-            ORDER BY t.user_is_staff DESC , t.name 
+            ORDER BY user_is_staff DESC,first_name
                 ";
-        return $this->get_list($sql);
+        $list = $this->get_list($sql);
+        $system_user = (object)[
+            'user_id'=>'0',
+            'user_login'=>'iSellBot',
+            'name'=>'Системные уведомления',
+            'user_is_staff'=>'2',
+            'is_online'=>'1'
+        ];
+        $list = array_unshift($list, $system_user);
+        print_r($list);
+        die;
+        return $list;
     }
     
     public $sendRecieve=['int'];
