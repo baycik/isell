@@ -19,17 +19,4 @@ $after[]=<<<EOT
         </div>
 EOT;
 
-$filename[]=<<<EOT
-plugins/MobiSell/views/home.html
-EOT;
-$search[]=<<<EOT
-<!--PLUGIN-PANELS-->
-EOT;
-$replace[]=<<<EOT
-EOT;
-$before[]=<<<EOT
-EOT;
-$after[]=<<<EOT
-EOT;
-
 
