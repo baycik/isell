@@ -15,9 +15,6 @@
             var disable_document_create_notification=localStorage.getItem('disable_document_create_notification')==='true'?1:0;
             $('input[name=disable_document_create_notification]').prop('checked', disable_document_create_notification);
             $("#home_version_date").html(new Date(document.lastModified).toLocaleDateString());
-            
-            
-            console.log($('input[name=disable_document_create_notification]'));
         }
     };
 </script>
