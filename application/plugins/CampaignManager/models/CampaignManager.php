@@ -611,25 +611,45 @@ class CampaignManager extends Catalog{
                 AND campaign_bonus_period_id=$campaign_bonus_period_id
                 {$bonus_base['where']}
             GROUP BY $group_by
-            ORDER BY $group_by) tt";
+            ORDER BY bonus_base DESC) tt";
             //die($sql);
         return $this->get_list($sql);
     }
     
     public function campaignDetailedView( int $campaign_bonus_id, int $campaign_bonus_period_id, string $group_by='product_code' ){
         $table=$this->bonusCalculateDetailedResult( $campaign_bonus_id, $campaign_bonus_period_id, $group_by );
-        
-        
-        
-        $out_type='.print';
-        
-        $struct=[
-            
-            ['Field'=>'company_name','Comment'=>'Клиент'],
-            ['Field'=>'analyse_brand','Comment'=>'Бренд'],
-            ['Field'=>'analyse_type','Comment'=>'Тип'],
-            ['Field'=>'product_code','Comment'=>'Код'],
-            ['Field'=>'product_name','Comment'=>'Название'],
+        switch($group_by){
+            case 'company_id':
+                $struct=[
+                    ['Field'=>'company_name','Comment'=>'Клиент']
+                ];
+                break;
+            case 'analyse_brand':
+                $struct=[
+                    ['Field'=>'analyse_brand','Comment'=>'Бренд']
+                ];
+                break;
+            case 'analyse_type':
+                $struct=[
+                    ['Field'=>'analyse_type','Comment'=>'Тип']
+                ];
+                break;
+            case 'product_code':
+                $struct=[
+                    ['Field'=>'product_code','Comment'=>'Код'],
+                    ['Field'=>'product_name','Comment'=>'Название']
+                ];
+                break;
+            default :
+                $struct=[
+                    ['Field'=>'company_name','Comment'=>'Клиент'],
+                    ['Field'=>'analyse_brand','Comment'=>'Бренд'],
+                    ['Field'=>'analyse_type','Comment'=>'Тип'],
+                    ['Field'=>'product_code','Comment'=>'Код'],
+                    ['Field'=>'product_name','Comment'=>'Название']
+                ];
+        }
+        $struct= array_merge($struct,[
             ['Field'=>'product_quantity','Comment'=>'Кол-во'],
             ['Field'=>'self_price','Comment'=>'Себ'],
             ['Field'=>'breakeven_price','Comment'=>'Порог'],
@@ -640,12 +660,25 @@ class CampaignManager extends Catalog{
             ['Field'=>'result1','Comment'=>'Рез1'],
             ['Field'=>'result2','Comment'=>'Рез2'],
             ['Field'=>'result3','Comment'=>'Рез3'],
-            ['Field'=>'bonus_ratios','Comment'=>'Бонусы'],
-            
-        ];
+            ['Field'=>'bonus_ratios','Comment'=>'Бонусы']
+        ]);
         //return $table;
         
+        $total_row=[
+            'bonus_ratios'=>'Итог'
+        ];
+        foreach($table as $row){
+            $total_row['result1']+=$row->result1;
+            $total_row['result2']+=$row->result1;
+            $total_row['result3']+=$row->result1;
+            $total_row['sell_sum']+=$row->sell_sum;
+            $total_row['bonus_base']+=$row->bonus_base;
+        }
+        $table[]=$total_row;
         
+        //print_r($table);die;
+        
+        $out_type='.print';
 	$dump=[
 	    'tpl_files'=>'/GridTpl.xlsx',
 	    'title'=>"Экспорт таблицы",
