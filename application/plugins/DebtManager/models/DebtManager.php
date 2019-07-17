@@ -2,10 +2,10 @@
 
 /* Group Name: Работа с клиентами
  * User Level: 2
- * Plugin Name: Менеджер задолженностей
+ * Plugin Name: Календарь платежей
  * Plugin URI: http://isellsoft.com
  * Version: 1.0
- * Description: Менеджер задолженностей и платежей клиентов 
+ * Description: Календарь платежей 
  * Author: baycik 2019
  * Author URI: http://isellsoft.com
  */
@@ -35,8 +35,8 @@ class DebtManager extends Catalog {
     public function getBlock($filter){
         session_write_close();
         $this->Hub->set_level(2);
-        $this->createTmp($filter);
-        
+        $user_id = $this->Hub->svar('user_id');
+        $this->createTmp($filter,$user_id);
         $list = $this->getEntries();
         if(isset($list[0])){
             $total = $this->getTotal();
@@ -57,63 +57,86 @@ class DebtManager extends Catalog {
         return ['date' => $view_date, 'list' => $list, 'total' => ['buy'=> $buy_total, 'sell'=> $sell_total] ];
     }
     
-    private function createTmp($filter) {
+    private function createTmp($filter,$user_id) {
         $acomp = $this->Hub->svar('acomp');
         $user_level = $this->Hub->svar('user_level');
         $block_number = $filter['block_number'];
-        $settings = $this->getUserSettings($this->Hub->svar('user_id'));
+        $settings = $this->getUserSettings($user_id);
         $passive_company_id = '';
+        
+        
+        
+        
+        $sell_code = "361";
+        $buy_code = "631";
+        
+        
+        $trans_type_filter="";
         if($settings->sell_trans == true){
-            $sell_code = "361";
-        } else {
-            $sell_code = ' 0 ';
+            $trans_type_filter.="acc_debit_code=$sell_code";
         }
         if($settings->buy_trans == true){
-            $buy_code = "631";
-        } else {
-            $buy_code = ' 0 ';
+            if($trans_type_filter!=""){
+                $trans_type_filter.=" OR ";
+            }
+            $trans_type_filter.="acc_credit_code=$buy_code";
         }
+        if( !$trans_type_filter ){
+            return false;
+        }
+        $amount_sell="ROUND(
+                    SUM(
+                        IF(acc_debit_code = $sell_code,
+                            IF(trans_status = 2, GET_PARTLY_PAYED(active_company_id , passive_company_id ,$sell_code),amount),
+                        0)
+                    )
+                ,2) AS amount_sell,";
+        $amount_buy="ROUND(
+                    SUM(
+                        IF(acc_credit_code = $buy_code,
+                            -1*IF(trans_status = 2, GET_PARTLY_PAYED(active_company_id , passive_company_id ,$buy_code),amount),
+                        0)
+                    )
+                ,2) AS amount_buy,";
         if(!isset($settings->group_by_date)){
             $settings->group_by_date = 'DAY';
         } 
+        $ofyear = 'OFYEAR';
         if($settings->group_by_date != 'DAY' && $settings->group_by_date != 'WEEK' ){
             $ofyear = '';
-        } else {
-            $ofyear = 'OFYEAR';
         }
         $this->current_group_by_date = $settings->group_by_date;
+        $pcomp_filter="";
         if($settings->pcomp_id != 0){
-            $passive_company_id = " AND passive_company_id = '$settings->pcomp_id'";
-        } else {
-            $passive_company_id = "";
+            $pcomp_filter = " AND passive_company_id = '$settings->pcomp_id'";
         }
         if($block_number == -1){
             $where = "AND DATE_ADD(cstamp, INTERVAL deferment DAY) < DATE_ADD(CURDATE(), INTERVAL 0 {$settings->group_by_date})";
             
         } else {
-            $where = "AND {$settings->group_by_date}$ofyear(DATE_ADD(cstamp, INTERVAL deferment DAY)) = {$settings->group_by_date}$ofyear(DATE_ADD(CURDATE(), INTERVAL $block_number {$settings->group_by_date}))";
+            $where  = " AND {$settings->group_by_date}$ofyear(DATE_ADD(cstamp, INTERVAL deferment DAY)) = {$settings->group_by_date}$ofyear(DATE_ADD(CURDATE(), INTERVAL $block_number {$settings->group_by_date}))";
             $where .= " AND DATE_ADD(cstamp, INTERVAL deferment DAY) > DATE_ADD(CURDATE(), INTERVAL 0 {$settings->group_by_date})";
-            $where .= "  AND DATE_ADD(cstamp, INTERVAL deferment DAY) > DATE_ADD(CURDATE(), INTERVAL '".($block_number-1)."' {$settings->group_by_date})";
+            $where .= " AND DATE_ADD(cstamp, INTERVAL deferment DAY) > DATE_ADD(CURDATE(), INTERVAL '".($block_number-1)."' {$settings->group_by_date})";
             $where .= " AND DATE_ADD(cstamp, INTERVAL deferment DAY) < DATE_ADD(CURDATE(), INTERVAL '".($block_number+1)."' {$settings->group_by_date})";
         }
+        
+        $path = '';
         if(isset( $settings->user_assigned_path)){
             $path = "AND (ct.path LIKE '%".str_replace(",", "%' OR ct.path LIKE '%", $settings->user_assigned_path)."%')";
-        } else {
-            $path = '';
         }
+        
         $where .= $path;
+        
+        $group_by = "trans_id ";
         if($settings->group_by_pcomp == true){
             $group_by = "passive_company_id ";
-        } else {
-            $group_by = 'trans_id ';
-        }
+        } 
         $this->query("DROP TABLE IF EXISTS tmp");
         $sql = "
                 CREATE TEMPORARY TABLE tmp  
                 SELECT 
                     DATE_FORMAT(DATE(TIMESTAMPADD(DAY, cl.deferment, acctr.cstamp)),'%Y%-%m%-%d') AS pay_date,
-                    ROUND(SUM(IF(acctr.acc_credit_code = '631', CONCAT('-', IF(trans_status = 2, GET_PARTLY_PAYED($acomp->company_id, acctr.passive_company_id ,$buy_code), acctr.amount)),'')),2) as amount_buy,
-                    ROUND(SUM(IF(acctr.acc_credit_code = '631', '', IF(trans_status = 2 ,GET_PARTLY_PAYED($acomp->company_id, acctr.passive_company_id ,$sell_code) ,acctr.amount))),2) as amount_sell,
+                    $amount_sell $amount_buy
                     GROUP_CONCAT(acctr.description SEPARATOR ', ')  as description,
                     acctr.passive_company_id,
                     ct.label as company_label,
@@ -127,14 +150,16 @@ class DebtManager extends Catalog {
                     trans_id
                 FROM
                     isell_db.acc_trans acctr
-                JOIN companies_list cl ON (acctr.passive_company_id = cl.company_id)
-                JOIN companies_tree ct ON (cl.branch_id = ct.branch_id)
+                        JOIN 
+                    companies_list cl ON (acctr.passive_company_id = cl.company_id)
+                        JOIN 
+                    companies_tree ct ON (cl.branch_id = ct.branch_id)
                 WHERE
                     trans_status IN (1,2,6,7) 
-                    $passive_company_id
                     AND active_company_id = '$acomp->company_id'
-                    AND (acc_debit_code = $sell_code OR acc_debit_code = $buy_code)
+                    AND ($trans_type_filter)
                     AND ct.level <= $user_level
+                    $pcomp_filter
                     $where
                 GROUP BY acctr.$group_by
                 HAVING amount_sell > 100 OR amount_buy > 100
@@ -251,24 +276,24 @@ class DebtManager extends Catalog {
     
     public $sendNotifications = ['user_id' => 'int'];
     public function sendNotification($user_id){
-        $msg = $this->composeMessage();
+        $msg = $this->composeMessage($user_id);
         $Chat=$this->Hub->load_model('Chat');
         $Chat->addMessage($user_id, $msg, true);
     }
     
-    public $composeMessage = [];
-    public function composeMessage(){
+    
+    private function composeMessage($user_id){
         $this->system_user = true;
-        $msg = $this->composeMessageTemplate();
+        $msg = $this->composeMessageTemplate($user_id);
         $this->system_user = false;
         return $msg;
     }
     
-    private function composeMessageTemplate() {
+    private function composeMessageTemplate($user_id) {
         $filter = [];
         $msg = 'Уважаемый '.$this->Hub->svar('user')->first_name.',</br>';
             $filter['block_number'] = -1;
-            $this->createTmp($filter);
+            $this->createTmp($filter,$user_id);
             $total = $this->getTotal()[0];
             if(empty($total->amount_buy) && empty($total->amount_sell)){
                 return;
