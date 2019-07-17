@@ -14,6 +14,21 @@
 class DebtManager extends Catalog {
     public $settings = [];
     
+    
+     public function install(){
+        $this->Hub->set_level(4);
+	$install_file=__DIR__."/../install/install.sql";
+	$this->load->model('Maintain');
+	return $this->Maintain->backupImportExecute($install_file);
+    }
+    
+    public function uninstall(){
+        $this->Hub->set_level(4);
+	$uninstall_file=__DIR__."/../install/uninstall.sql";
+	$this->load->model('Maintain');
+	return $this->Maintain->backupImportExecute($uninstall_file);
+    }
+    
     public $getBlock = ['filter' => 'json'];
     private $system_user = false;
     private $current_group_by_date = '';
@@ -46,17 +61,17 @@ class DebtManager extends Catalog {
         $acomp = $this->Hub->svar('acomp');
         $user_level = $this->Hub->svar('user_level');
         $block_number = $filter['block_number'];
-        $settings = $this->getUserSettings();
+        $settings = $this->getUserSettings($this->Hub->svar('user_id'));
         $passive_company_id = '';
         if($settings->sell_trans == true){
-            $sell_trans = " (acc_debit_code = 361 AND acc_credit_code = 702) ";
+            $sell_code = "361";
         } else {
-            $sell_trans = ' 0 ';
+            $sell_code = ' 0 ';
         }
         if($settings->buy_trans == true){
-            $buy_trans = " (acc_credit_code = 631) ";
+            $buy_code = "631";
         } else {
-            $buy_trans = ' 0 ';
+            $buy_code = ' 0 ';
         }
         if(!isset($settings->group_by_date)){
             $settings->group_by_date = 'DAY';
@@ -97,8 +112,8 @@ class DebtManager extends Catalog {
                 CREATE TEMPORARY TABLE tmp  
                 SELECT 
                     DATE_FORMAT(DATE(TIMESTAMPADD(DAY, cl.deferment, acctr.cstamp)),'%Y%-%m%-%d') AS pay_date,
-                    IF(acctr.acc_credit_code = '631', CONCAT('-', ROUND(SUM(acctr.amount),2)),'') as amount_buy,
-                    IF(acctr.acc_credit_code = '631', '', ROUND(SUM(acctr.amount),2)) as amount_sell,
+                    ROUND(SUM(IF(acctr.acc_credit_code = '631', CONCAT('-', IF(trans_status = 2, GET_PARTLY_PAYED($acomp->company_id, acctr.passive_company_id ,$buy_code), acctr.amount)),'')),2) as amount_buy,
+                    ROUND(SUM(IF(acctr.acc_credit_code = '631', '', IF(trans_status = 2 ,GET_PARTLY_PAYED($acomp->company_id, acctr.passive_company_id ,$sell_code) ,acctr.amount))),2) as amount_sell,
                     GROUP_CONCAT(acctr.description SEPARATOR ', ')  as description,
                     acctr.passive_company_id,
                     ct.label as company_label,
@@ -118,7 +133,7 @@ class DebtManager extends Catalog {
                     trans_status IN (1,2,6,7) 
                     $passive_company_id
                     AND active_company_id = '$acomp->company_id'
-                    AND ($sell_trans OR $buy_trans)
+                    AND (acc_debit_code = $sell_code OR acc_debit_code = $buy_code)
                     AND ct.level <= $user_level
                     $where
                 GROUP BY acctr.$group_by
@@ -211,7 +226,7 @@ class DebtManager extends Catalog {
             $event_note='';
             $event_descr='Уведомление о задолженностях';
             $event_program = json_encode($program);
-            $event_repeat='0 7:0';
+            $event_repeat='7 0:0';
             $event_status='pending';
             $event_liable_user_id='';
             $event_is_private = '1';
@@ -330,10 +345,11 @@ class DebtManager extends Catalog {
                 plugin_list
             WHERE plugin_system_name = 'DebtManager'    
             ";
+        
         $row = $this->get_row($sql);
         $user_settings = json_decode($row->plugin_settings);
         if(isset($user_settings->{$user_id})){
-            if($user_id != 0){
+            if($user_id){
                 $Events=$this->Hub->load_model('Events');
                 $event_id = $Events->eventGet($user_settings->{$user_id}->event_id);  
                 if(!$event_id){
@@ -343,8 +359,7 @@ class DebtManager extends Catalog {
             }
             return $user_settings->{$user_id};
         } else {
-            
-            return $this->updateSettings($settings = [
+            return $this->updateSettings($settings[] = [
                 'group_by_date' => 'WEEK',
                 'group_by_pcomp'=> '0',
                 'pcomp_name'=> '',

@@ -6,16 +6,19 @@ class Chat extends Catalog{
     public $getUserList=[];
     public function getUserList(){
 	$my_id = $this->Hub->svar('user_id');
-        $sql="SELECT 
-                    user_id,
-                    user_login,
-		CONCAT(first_name,' ',last_name) name,
-                    user_is_staff,
-                TIMESTAMPDIFF(MINUTE,last_activity,NOW())<3 is_online, 
-		(SELECT 1 FROM event_list WHERE created_by=user_id AND event_status='undone' AND event_date<NOW() AND event_liable_user_id='$my_id' LIMIT 1) has_new
-                FROM 
-                    user_list
-            ORDER BY user_is_staff DESC,first_name
+        $sql="SELECT
+                user_id,
+                user_login,
+                CONCAT(first_name, ' ', last_name) name,
+                user_is_staff,
+                MAX(IF(user_id = el.created_by AND el.event_status='undone' AND el.event_liable_user_id='$my_id', 1, 0)) AS has_new,
+                IF(user_id != '$my_id', MAX(IF('$my_id' = el.created_by OR '$my_id' = el.event_liable_user_id,DATEDIFF(event_date,NOW()),-10000)),-10000) popularity
+            FROM
+                user_list ul
+                    LEFT JOIN
+                event_list el ON user_id = el.created_by OR user_id = el.event_liable_user_id
+            GROUP BY user_id
+            ORDER BY has_new DESC, popularity DESC, user_is_staff DESC
                 ";
         $list = $this->get_list($sql);
         $system_user = (object)[
@@ -23,11 +26,11 @@ class Chat extends Catalog{
             'user_login'=>'iSellBot',
             'name'=>'Системные уведомления',
             'user_is_staff'=>'2',
-            'is_online'=>'1'
+            'is_online'=>'1',
+            'has_new' => $this->get_value("SELECT 1 FROM event_list WHERE created_by=0 AND event_status='undone' AND event_date<NOW() AND event_liable_user_id='$my_id' LIMIT 1"),
+             'popularity' => '0'   
         ];
-        $list = array_unshift($list, $system_user);
-        print_r($list);
-        die;
+        array_unshift($list, $system_user);
         return $list;
     }
     
