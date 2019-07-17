@@ -1,0 +1,1 @@
+DROP function IF EXISTS `GET_PARTLY_PAYED`;

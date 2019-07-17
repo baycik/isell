@@ -20,3 +20,16 @@ $after[]=<<<EOT
 EOT;
 
 
+$filename[]=<<<EOT
+EOT;
+$search[]=<<<EOT
+EOT;
+$replace[]=<<<EOT
+EOT;
+$before[]=<<<EOT
+EOT;
+$after[]=<<<EOT
+EOT;
+
+
+
