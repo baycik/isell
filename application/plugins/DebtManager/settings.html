@@ -40,17 +40,17 @@
             <div class="debt-settings-checkbox">
                 <label for="buy_trans">Наши долги</label>
                 <input type="checkbox" class="checkbox" name="buy_trans" onchange="App.debt_manager_settings.updateSettings()"
-                       checked>
+                       >
             </div>
             <div class="debt-settings-checkbox">
                 <label for="sell_trans">Долги клиентов</label>
                 <input type="checkbox" class="checkbox"  name="sell_trans" onchange="App.debt_manager_settings.updateSettings()"
-                       checked>
+                       >
             </div>
             <div  class="debt-settings-checkbox">
                 <label for="notificate">Включить уведомления</label>
                 <input type="checkbox" class="checkbox"  name="notificate" onchange="App.debt_manager_settings.updateSettings()"
-                       checked>
+                       >
             </div>
         </div>
         <div class="debt-settings-input">
@@ -183,6 +183,7 @@
                 $("input[name='sell_trans']").prop('checked', true); 
             }
             var user_id = $('select[name=manager_id]').val();
+            console.log($("input[name='sell_trans']").is(":checked"));
             App.debt_manager_settings.data.group_by_date = $("select[name='group_by_date']").val();
             App.debt_manager_settings.data.group_by_pcomp = $("select[name='group_by_pcomp']").val();
             App.debt_manager_settings.data.pcomp_name = $("input[name='pcomp_name']").val();
@@ -194,6 +195,7 @@
             $.post('DebtManager/updateSettings', {user_settings: JSON.stringify(App.debt_manager_settings.data), user_id:user_id}, function (resp) {
                 if (resp) {
                     var response = App.json(resp);
+                    App.flash('Настройки сохранены');
                     App.debt_manager_settings.data = response;
                     App.debt_manager_settings.render();
                 }

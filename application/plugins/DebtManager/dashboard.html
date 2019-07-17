@@ -4,6 +4,9 @@
             <img src="img/debtmanager.png" width="32" height="32">
         </div>
         <div class="widget-title" style="font-size:16px">Менеджер задолженностей</div>
+        <div class="widget-reload" onclick="App.debt_manager_settings.reload()">
+            <img src="img/widget-reload.png" width="25" height="25">
+        </div>
         <div class="widget-settings" onclick="$('.plugin_settings').slideToggle('fast')">
             <img src="img/widget-settings.png" width="25" height="25">
         </div>
@@ -37,14 +40,13 @@
                 <div class="explain" style="display:none; position:absolute">Вы можете выбрать нужного контрагента и увидеть в списке только его задолженности.</div>
                 Показывать долги клиента: 
             </label>
-
             <div class="inp_group">
                 <input title="" name="pcomp_name" value="" readonly="readonly" required="required" style="width:100px" placeholder="Все"/>
                 <input name="pcomp_id" value="" type="hidden" required="required" style="width:100px"/>
                 <button type="button" class="tiny_button" onclick="App.debt_manager_settings.select_pcomp()"><img src="img/settings.png"> Выбрать</button>
             </div>
         </div>
-        <div >
+        <div>
             <div class="debt-settings-checkbox">
                 <label for="buy_trans">
                     <div class="explain" style="display:none; position:absolute">Показывать наши долги перед поставщиками.</div>
@@ -68,10 +70,10 @@
                 </label>
                 <input type="checkbox" class="checkbox"  name="notificate" onchange="App.debt_manager_settings.updateSettings()"
                         checked>
-            </div>  
+            </div>
         </div>
     </div>
-        <div class='expired-title'>Просроченные платежи</div>
+     <div class='expired-title'>Просроченные платежи</div>
 </div>     
 
 <div class="debt-container">
@@ -188,7 +190,7 @@
     #DebtManager_dashboard_holder .widget-header{
         background-color: #1a36b8;
         display: grid;
-        grid-template-columns: 14% 76% 6%;
+        grid-template-columns: 14% 65% 6% 6%;
         height: 60px;
         align-items: center;
         text-align: center;
@@ -202,12 +204,17 @@
         width: max-content;
     }
     #DebtManager_dashboard_holder .widget-settings, 
-    #DebtManager_dashboard_holder .widget-icon{
+    #DebtManager_dashboard_holder .widget-icon,
+    #DebtManager_dashboard_holder .widget-reload{
         filter: brightness(0) invert(1);
     }
     #DebtManager_dashboard_holder .widget-settings:hover{
         transition: all 0.5s ease;
         transform: rotateZ(180deg);  
+    }
+    #DebtManager_dashboard_holder .widget-reload:hover{
+        transition: all 0.5s ease;
+        transform: rotateZ(360deg);  
     }
     #DebtManager_dashboard_holder .debt-settings-input label, 
     #DebtManager_dashboard_holder .debt-settings-checbox label{
@@ -268,6 +275,7 @@
         grid-template-columns: 100%;
     }
     #DebtManager_dashboard_holder .expired-title{
+        display: block;
         position: absolute;
         background: white;
         padding: 8px;
@@ -279,6 +287,9 @@
         margin-left: 40%;
         width: 20%;
         text-align: center;
+    }
+    #DebtManager_dashboard_holder .expired-title:hover{
+        display: none;
     }
     #DebtManager_dashboard_holder .debt-block.expired .debt-all-rows{
         border-left: 7px solid #e61313;
