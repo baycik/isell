@@ -183,7 +183,6 @@
                 $("input[name='sell_trans']").prop('checked', true); 
             }
             var user_id = $('select[name=manager_id]').val();
-            console.log($("input[name='sell_trans']").is(":checked"));
             App.debt_manager_settings.data.group_by_date = $("select[name='group_by_date']").val();
             App.debt_manager_settings.data.group_by_pcomp = $("select[name='group_by_pcomp']").val();
             App.debt_manager_settings.data.pcomp_name = $("input[name='pcomp_name']").val();
