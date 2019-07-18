@@ -58,19 +58,19 @@ class DebtManager extends Catalog {
     }
     
     private function createTmp($filter,$user_id) {
-        $acomp = $this->Hub->svar('acomp');
         $user_level = $this->Hub->svar('user_level');
         $block_number = $filter['block_number'];
         $settings = $this->getUserSettings($user_id);
-        $passive_company_id = '';
-        
-        
-        
-        
         $sell_code = "361";
         $buy_code = "631";
-        
-        
+        $acomp = "";
+        if(!isset($settings->acomp)){
+            $settings->acomp = 0;
+        }
+         if($settings->acomp){
+            $acomp = "AND active_company_id = {$this->Hub->svar('acomp')->company_id} ";
+        }
+           
         $trans_type_filter="";
         if($settings->sell_trans == true){
             $trans_type_filter.="acc_debit_code=$sell_code";
@@ -88,14 +88,14 @@ class DebtManager extends Catalog {
                     SUM(
                         IF(acc_debit_code = $sell_code,
                             IF(trans_status = 2, GET_PARTLY_PAYED(active_company_id , passive_company_id ,$sell_code),amount),
-                        0)
+                        NULL)
                     )
                 ,2) AS amount_sell,";
         $amount_buy="ROUND(
                     SUM(
                         IF(acc_credit_code = $buy_code,
                             -1*IF(trans_status = 2, GET_PARTLY_PAYED(active_company_id , passive_company_id ,$buy_code),amount),
-                        0)
+                        NULL)
                     )
                 ,2) AS amount_buy,";
         if(!isset($settings->group_by_date)){
@@ -156,13 +156,13 @@ class DebtManager extends Catalog {
                     companies_tree ct ON (cl.branch_id = ct.branch_id)
                 WHERE
                     trans_status IN (1,2,6,7) 
-                    AND active_company_id = '$acomp->company_id'
+                    $acomp
                     AND ($trans_type_filter)
                     AND ct.level <= $user_level
                     $pcomp_filter
                     $where
                 GROUP BY acctr.$group_by
-                HAVING amount_sell > 100 OR amount_buy > 100
+                HAVING amount_sell > 100 OR amount_buy < 100
                 ORDER BY pay_date ASC
         ";
         $this->query($sql);
@@ -391,6 +391,7 @@ class DebtManager extends Catalog {
                 'pcomp_id'=> '',
                 'buy_trans'=> 'true',
                 'sell_trans'=> 'true',
+                'acomp'=> '0',
                 'notificate'=> '0',
                 'event_id'=> '0',
                 'user_assigned_path'=> $this->Hub->svar('user_assigned_path')

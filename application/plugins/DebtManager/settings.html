@@ -47,6 +47,11 @@
                 <input type="checkbox" class="checkbox"  name="sell_trans" onchange="App.debt_manager_settings.updateSettings()"
                        >
             </div>
+            <div class="debt-settings-checkbox">
+                <label for="acomp"> Учитывать активную компанию</label>
+                <input type="checkbox" class="checkbox"  name="acomp" onchange="App.debt_manager_settings.updateSettings()"
+                        >
+            </div>
             <div  class="debt-settings-checkbox">
                 <label for="notificate">Включить уведомления</label>
                 <input type="checkbox" class="checkbox"  name="notificate" onchange="App.debt_manager_settings.updateSettings()"
@@ -131,6 +136,7 @@
                         pcomp_id:0,
                         buy_trans:true,
                         sell_trans:true,
+                        acomp:0,
                         notificate:0,
                         event_id:0,
                         user_assigned_path:''
@@ -153,6 +159,7 @@
             $("input[name='buy_trans']").prop('checked', App.debt_manager_settings.data.buy_trans);
             $("input[name='sell_trans']").prop('checked', App.debt_manager_settings.data.sell_trans);
             $("textarea[name='user_assigned_path']").val(App.debt_manager_settings.data.user_assigned_path);
+            $("input[name='acomp']").prop('checked', Boolean(Number(App.debt_manager_settings.data.acomp)));
             $("input[name='notificate']").prop('checked', Boolean(Number(App.debt_manager_settings.data.notificate)));
             $('.plugin_settings').show();
         },
@@ -189,6 +196,7 @@
             App.debt_manager_settings.data.pcomp_id = $("input[name='pcomp_id']").val();
             App.debt_manager_settings.data.buy_trans = $("input[name='buy_trans']").is(":checked");
             App.debt_manager_settings.data.sell_trans = $("input[name='sell_trans']").is(":checked");
+            App.debt_manager_settings.data.acomp = $("input[name='acomp']").is(":checked");
             App.debt_manager_settings.data.notificate = $("input[name='notificate']").is(":checked");
             App.debt_manager_settings.data.user_assigned_path = $("textarea[name='user_assigned_path']").val();
             $.post('DebtManager/updateSettings', {user_settings: JSON.stringify(App.debt_manager_settings.data), user_id:user_id}, function (resp) {

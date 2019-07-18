@@ -64,6 +64,14 @@
                        checked>
             </div>
             <div class="debt-settings-checkbox">
+                <label for="acomp">
+                    <div class="explain" style="display:none; position:absolute">Учитывать/не учитывать выбранную Вами активную компанию.</div>
+                    Учитывать активную компанию
+                </label>
+                <input type="checkbox" class="checkbox"  name="acomp" onchange="App.debt_manager_settings.updateSettings()"
+                        checked>
+            </div>
+            <div class="debt-settings-checkbox">
                 <label for="notificate">
                     <div class="explain" style="display:none; position:absolute">Отправлять уведомления о ближайших задолженностях в чат.</div>
                     Включить уведомления
@@ -73,7 +81,6 @@
             </div>
         </div>
     </div>
-     <div class='expired-title'>Просроченные платежи</div>
 </div>     
 
 <div class="debt-container">
@@ -127,20 +134,30 @@
                             </div>
                         </div>
                         
-                        <div class="debt-amount sell">{{amount_sell}} </div>
-                        <div class="debt-amount buy">{{amount_buy}} </div>
+                            <div class="debt-amount sell">{{if amount_sell|falsy}}
+                                    {{else}}{{amount_sell}}{{/if}}</div>
+                        
+                            <div class="debt-amount buy">{{if amount_buy|falsy}}
+                                    {{else}}{{amount_buy}}{{/if}} </div>
                     </div>
                     {{/block}}
                     
                     <div class="total-row">
                         {{if total}}
                         <div class="total-label">Итого:</div>
-                                <div class="sell-total" >
-                                    {{total.sell}}
-                                </div>
-                                <div class="buy-total">
-                                    {{total.buy}}
-                                </div>
+                        
+                                {{if total.sell|falsy}}
+                                {{else}}
+                                    <div class="sell-total" >
+                                        {{total.sell}}
+                                    </div>
+                                {{/if}}
+                                {{if total.buy|falsy}}
+                                {{else}}
+                                    <div class="buy-total">
+                                        {{total.buy}}
+                                    </div>
+                                {{/if}}
                         {{/if}} 
                     </div>
                 {{/if}}    
@@ -184,7 +201,7 @@
     }
     #DebtManager_dashboard_holder .widget-panel{
         position: relative;
-        box-shadow: rgb(147, 0, 0) 0px 2px 12px;
+        box-shadow: 0px 2px 10px #070707;
         z-index: 1;
     }
     #DebtManager_dashboard_holder .widget-header{
@@ -285,20 +302,6 @@
     }
     #DebtManager_dashboard_holder .debt-block.expired{
         grid-template-columns: 100%;
-    }
-    #DebtManager_dashboard_holder .expired-title{
-        display: block;
-        position: absolute;
-        background: white;
-        padding: 8px;
-        border: 1px solid #aeaeae;
-        z-index: 6;
-        margin-top: 10px;
-        border-radius: 10px;
-        box-shadow: 2px 2px 6px gray;
-        margin-left: 40%;
-        width: 20%;
-        text-align: center;
     }
     #DebtManager_dashboard_holder .expired-title:hover{
         display: none;
@@ -471,21 +474,20 @@
                             App.debt_manager_settings.load(App.debt_manager_settings.block_list.length-1);
                         }
                     } 
-                    if (App.debt_manager_settings.isScrolledIntoView($(this)) == 'expired'){
-                        $('.widget-panel').css('box-shadow', '0px 2px 12px #930000 ');
-                        $('.expired-title').css('opacity', '1');
-                    } else {
-                        $('.widget-panel').css('box-shadow', '0px 2px 12px #070707');
-                        $('.expired-title').css('opacity', '0');
-                    }
                 }) 
             });
+            App.Topic('activeCompanySelected').subscribe(function(){
+                App.debt_manager_settings.reload();
+            });
+            if($('.debt-container').scrollTop() == 0){
+               App.debt_manager_settings.load(App.debt_manager_settings.block_list.length-1);
+            }
         },
         load: function(offset){
             App.debt_manager_settings.filter.group_by_date = App.debt_manager_settings.data.group_by_date;
             App.debt_manager_settings.filter.block_number = offset;
             var html = '';
-            while (App.debt_manager_settings.filter.block_number <= offset+7) {
+            while (App.debt_manager_settings.filter.block_number <= offset + 9) {
                 App.debt_manager_settings.current_id = App.debt_manager_settings.filter.block_number;
                 $('#empty_container div').attr("id","block_"+App.debt_manager_settings.filter.block_number);
                 html += $('#empty_container').html();
@@ -541,6 +543,7 @@
                     $("input[name='pcomp_id']").val(App.debt_manager_settings.data.pcomp_id);
                     $("input[name='buy_trans']").prop('checked', App.debt_manager_settings.data.buy_trans);
                     $("input[name='sell_trans']").prop('checked', App.debt_manager_settings.data.sell_trans);
+                    $("input[name='acomp']").prop('checked', App.debt_manager_settings.data.acomp);
                     $("input[name='notificate']").prop('checked', App.debt_manager_settings.data.notificate);
                     return;
                 } 
@@ -560,6 +563,7 @@
             App.debt_manager_settings.data.pcomp_id = $("input[name='pcomp_id']").val();
             App.debt_manager_settings.data.buy_trans = $("input[name='buy_trans']").is(":checked");
             App.debt_manager_settings.data.sell_trans = $("input[name='sell_trans']").is(":checked");
+            App.debt_manager_settings.data.acomp = $("input[name='acomp']").is(":checked");
             App.debt_manager_settings.data.notificate = $("input[name='notificate']").is(":checked");
             $.post('DebtManager/updateSettings', {user_settings: JSON.stringify(App.debt_manager_settings.data)}, function (resp) {
                 if (resp) {
@@ -571,6 +575,7 @@
                     $("select[name=group_by_pcomp]").val(App.debt_manager_settings.data.group_by_pcomp);
                     $("input[name='buy_trans']").prop('checked', App.debt_manager_settings.data.buy_trans);
                     $("input[name='sell_trans']").prop('checked', App.debt_manager_settings.data.sell_trans);
+                    $("input[name='acomp']").prop('checked', App.debt_manager_settings.data.acomp);
                     $("input[name='notificate']").prop('checked', App.debt_manager_settings.data.notificate);
                     App.debt_manager_settings.reload();
                 }
@@ -592,17 +597,10 @@
         isScrolledIntoView: function(elem){
             var $elem = $(elem);
             var $viewport = $('.debt-container');
-            var $expired_block = $('.debt-block.expired');
             var elemTop = $elem.offset().top;
-            if($expired_block){
-                 var expiredBlockBottom = $expired_block.offset().top + $expired_block.height();
-            }
             var viewScroll = $viewport.scrollTop();
             var viewHeight = $('#DebtManager_dashboard_holder').height();
-            if((expiredBlockBottom) > 80){
-                return 'expired';
-            } 
-            return (((elemTop) - (viewHeight)) < 260 );
+            return (((elemTop) - (viewHeight)) < 60 );
         },
         ajax_cancelling: function(){
             $.xhrPool = []; // array of uncompleted requests
