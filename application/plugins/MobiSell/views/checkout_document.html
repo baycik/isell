@@ -138,7 +138,9 @@
                     return;
                 }
                 setTimeout(function(){
-                    App.checkout_document.current_entry_index = '';
+                    if(App.checkout_document.entries.popup_mode != 'on'){
+                        App.checkout_document.current_entry_index = '';
+                    }
                     App.checkout_document.input_barcode = '';
                     $("#checkout_document_log_search_input").val('');
                     App.checkout_document.progress_update();
@@ -151,6 +153,12 @@
                 var currentEntry=App.checkout_document.entries.list[App.checkout_document.current_entry_index];
                 var product_verified = currentEntry.product_quantity_verified*1 + operation_quantity*1;
                 var product_quantity = currentEntry.product_quantity * 1;
+                console.log('List: ');
+                console.log(App.checkout_document.entries.list);
+                console.log('Current_Entry_Index: '+App.checkout_document.current_entry_index);
+                console.log('Current_Entry: ');
+                console.log(currentEntry);
+                console.log('Operation_Quantity:  '+operation_quantity);
                 if (product_verified < 0){
                     App.flash("Орицательное количество!");
                     return true;
