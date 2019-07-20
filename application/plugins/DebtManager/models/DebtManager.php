@@ -260,7 +260,7 @@ class DebtManager extends Catalog {
             $event_note='';
             $event_descr='Уведомление о задолженностях';
             $event_program = json_encode($program);
-            $event_repeat='0 0:1';
+            $event_repeat='7 0:0';
             $event_status='pending';
             $event_liable_user_id='';
             $event_is_private = '1';
