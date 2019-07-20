@@ -31,4 +31,21 @@ $after[]=<<<EOT
 </script>
 EOT;
 
-
+$filename[]=<<<EOT
+views/home/home_main.html
+EOT;
+$search[]=<<<EOT
+<!--PLUGIN-WIDGETS-->
+EOT;
+$replace[]=<<<EOT
+EOT;
+$before[]=<<<EOT
+EOT;
+//$after[]=file_get_contents(__DIR__."/views/dashboard_isell.html");
+$after[]=<<<EOT
+<div id="CampaignManager_dashboard_holder" class="ui blue segment raised" style="margin: 10px;">
+    <script>
+        $("#CampaignManager_dashboard_holder").load("CampaignManager/dashboardiSell");
+    </script>
+</div>
+EOT;

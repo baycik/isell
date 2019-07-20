@@ -496,6 +496,11 @@ class CampaignManager extends Catalog{
         $this->load->view("dashboard_mobisell.html");
     }
     
+    public function dashboardiSell(){
+        $this->Hub->set_level(2);
+        $this->load->view("dashboard_isell.html");
+    }
+    
     public function dashboardManagerStatistics(){
         $this->Hub->set_level(2);
         $liable_user_id=$this->Hub->svar('user_id');
@@ -514,6 +519,9 @@ class CampaignManager extends Catalog{
                     AND NOT notcount 
                     AND passive_company_id IN (SELECT company_id FROM companies_list JOIN companies_tree USING(branch_id) WHERE $client_filter)
                     AND MONTH(cstamp) = MONTH(CURRENT_DATE()) AND YEAR(cstamp) = YEAR(CURRENT_DATE())";
+        }
+        if( !$sqls ){
+            return ['invoice_count'=>0,'client_count'=>0];
         }
         $super_table=implode(') UNION (',$sqls);
         $sql="
@@ -582,9 +590,9 @@ class CampaignManager extends Catalog{
             ROUND(bonus_base*campaign_bonus_ratio3/100) result3
         FROM (
             SELECT
-                campaign_bonus_ratio1,
-                campaign_bonus_ratio2,
-                campaign_bonus_ratio3,
+                COALESCE(campaign_bonus_ratio1,0) campaign_bonus_ratio1,
+                COALESCE(campaign_bonus_ratio2,0) campaign_bonus_ratio2,
+                COALESCE(campaign_bonus_ratio3,0) campaign_bonus_ratio3,
                 company_name,
                 analyse_brand,
                 analyse_type,
