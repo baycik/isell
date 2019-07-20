@@ -251,8 +251,15 @@ Document.body={
 	App.vocab=$.extend(App.vocab,this.vocab);
     },
     render:function(table){
+        Document.body.renderViewPortHeight(table.length);
 	Document.body.table_sg.setData(table);
 	Document.body.table_sg.render();
+    },
+    renderViewPortHeight:function(row_count){
+        let row_height=25;
+        let max_height=500;
+        let calculated_height=Math.min(row_height*(row_count)+20,max_height);
+        $("#"+holderId+" .x-body .slick-viewport").css('height',calculated_height);
     },
     destroy:function(){
 	$("#"+holderId+" .x-body .x-suggest").combobox('clear');
@@ -455,7 +462,7 @@ Document.body={
 		columns:[
 		    {id:"queue",name: "№", width: 30,formatter:Document.body.table.formatters.queue },
 		    {id:"product_code", field: "product_code",name: "Код", sortable: true, width: 80},
-		    {id:"product_name", field: "product_name",name: "Название", sortable: true, width: 388},
+		    {id:"product_name", field: "product_name",name: "Название", sortable: true, width: 380},
 		    {id:"product_quantity", field: "product_quantity",name: "Кол-во", sortable: true, width: 70, cssClass:'slick-align-right', editor: Slick.Editors.Integer},
 		    {id:"product_unit", field: "product_unit",name: "Ед.", width: 30, sortable: true },
 		    {id:"product_price", field: "product_price",name: "Цена", sortable: true, width: 70, cssClass:'slick-align-right',asyncPostRender:Document.body.table.formatters.priceisloss, editor: Slick.Editors.Float},
@@ -469,7 +476,6 @@ Document.body={
 		    editable: true,
 		    autoEdit: true,
 		    autoHeight: true,
-                    leaveSpaceForNewRows:true,
 		    enableCellNavigation: true,
 		    enableColumnReorder : false,
 		    enableFilter:false,
