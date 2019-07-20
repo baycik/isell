@@ -82,11 +82,11 @@ class Reports_manager_annual_sells extends Catalog{
         }
 	
         $group_by_fields=[];
-        $group_by_fields[]=$this->group_by;
+        $this->group_by && $group_by_fields[]=$this->group_by;
         $this->group_by2 && $group_by_fields[]=$this->group_by2;
         $this->group_by_manager && $group_by_fields[]='manager_name';
         $this->group_by_client && $group_by_fields[]='pcomp_name';
-        $group_by_concat="CONCAT(".implode(",'/ ',",$group_by_fields).")";
+        $group_by_concat=count($group_by_fields)?"CONCAT(".implode(",'/ ',",$group_by_fields).")":"'-'";
 
         
         $sql="
@@ -178,7 +178,7 @@ class Reports_manager_annual_sells extends Catalog{
                 $path_filter
             GROUP BY $group_by_concat
             $having
-            ORDER BY $group_by_concat
+            ORDER BY sum DESC
             ";
         $rows=$this->get_list($sql);
 	$view=[

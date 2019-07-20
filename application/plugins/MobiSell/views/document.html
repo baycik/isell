@@ -506,16 +506,16 @@
 		App.document.suggestion.search('');
 	    },
 	    render: function () {
-                if( App.user.props.user_level<2 ){
+                /*if( App.user.props.user_level<2 ){
                     for(var i in App.document.suggestion.entries){
                         var lo=App.document.suggestion.entries[i].leftover;
-                        App.document.suggestion.entries[i].stared_leftover=(
+                        App.document.suggesfortion.entries[i].stared_leftover=(
                                 lo<10?'★☆☆☆☆':
                                 lo<50?'★★☆☆☆':
                                 lo<100?'★★★☆☆':
                                 lo<500?'★★★★☆':'★★★★★');
                     }
-                }
+                }*/
 		App.renderTpl('doc_suggestion_entries', {entries: App.document.suggestion.entries});
 	    },
 	    handleClick: function (row_node) {
@@ -576,7 +576,7 @@
 		{{if doc_type|equals>-1}}Возврат от клиента{{/if}}
 		{{if doc_type|equals>-2}}Возврат поставщику{{/if}}
 	    </div>
-            <a href="#company_cart.html#company_id={{passive_company_id}}">{{label}}</a> 
+            <a href="#company_card.html#company_id={{passive_company_id}}">{{label}}</a> 
 	    {{if doc_type|divisible>2}}<i class="purple icon arrow right"></i>{{else}}<i class="green icon arrow left"></i>{{/if}}
 	    {{active_company_label}}
 	    <b>от</b> {{doc_date}} <b>№</b>{{doc_num}}
@@ -777,9 +777,8 @@
 					    <div class="ui grid" style="opacity:0.7">
 						<div class="six wide column">{{product_code}}</div>
 						<div class="five wide column right aligned">{{product_price_total}}р</div>
-						<div class="five wide column right aligned">{{if stared_leftover}} {{stared_leftover}} {{else}} {{leftover}}{{product_unit}} {{/if}}</div>
-					    </div>
-					</div>
+						<div class="five wide column right aligned">{{if stared_leftover}} {{stared_leftover}} {{else}} {{leftover}}{{product_unit}} {{/if}}</div></div>
+                                        </div>
 				    </div>
 				</td>
 			    </tr>

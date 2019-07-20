@@ -32,7 +32,7 @@ class CampaignManager extends Catalog{
     
     public function campaignListFetch(){
         $this->Hub->set_level(3);
-        $sql="SELECT * FROM plugin_campaign_list";
+        $sql="SELECT * FROM plugin_campaign_list ORDER BY campaign_name";
         return $this->get_list($sql);
     }
     
@@ -395,7 +395,7 @@ class CampaignManager extends Catalog{
             $table.=" JOIN prod_list pl ON de.product_code=pl.product_code AND ($brand_filter) AND ($type_filter)";
         }
         return [
-            'table'=>"(SELECT doc_id,doc_entry_id,product_code,invoice_price,de.product_quantity,de.breakeven_price,de.self_price FROM $table)",
+            'table'=>"(SELECT doc_id,doc_entry_id,de.product_code,invoice_price,de.product_quantity,de.breakeven_price,de.self_price FROM $table)",
             'where'=>$where
         ];
     }
@@ -426,7 +426,7 @@ class CampaignManager extends Catalog{
     }
     private function bonusCalculateProfit($campaign_bonus,$period_on,$client_filter){
         $product_range= $this->bonusCalculateProductRange($campaign_bonus);
-        $select="COALESCE((invoice_price-GREATEST(breakeven_price,self_price)) * product_quantity * (dl.vat_rate/100+1),0)";
+        $select="COALESCE((invoice_price * (dl.vat_rate/100+1)-GREATEST(breakeven_price,self_price)) * product_quantity,0)";
         $table="
                     LEFT JOIN
                 document_list dl ON $period_on 
@@ -496,6 +496,11 @@ class CampaignManager extends Catalog{
         $this->load->view("dashboard_mobisell.html");
     }
     
+    public function dashboardiSell(){
+        $this->Hub->set_level(2);
+        $this->load->view("dashboard_isell.html");
+    }
+    
     public function dashboardManagerStatistics(){
         $this->Hub->set_level(2);
         $liable_user_id=$this->Hub->svar('user_id');
@@ -514,6 +519,9 @@ class CampaignManager extends Catalog{
                     AND NOT notcount 
                     AND passive_company_id IN (SELECT company_id FROM companies_list JOIN companies_tree USING(branch_id) WHERE $client_filter)
                     AND MONTH(cstamp) = MONTH(CURRENT_DATE()) AND YEAR(cstamp) = YEAR(CURRENT_DATE())";
+        }
+        if( !$sqls ){
+            return ['invoice_count'=>0,'client_count'=>0];
         }
         $super_table=implode(') UNION (',$sqls);
         $sql="
@@ -582,9 +590,9 @@ class CampaignManager extends Catalog{
             ROUND(bonus_base*campaign_bonus_ratio3/100) result3
         FROM (
             SELECT
-                campaign_bonus_ratio1,
-                campaign_bonus_ratio2,
-                campaign_bonus_ratio3,
+                COALESCE(campaign_bonus_ratio1,0) campaign_bonus_ratio1,
+                COALESCE(campaign_bonus_ratio2,0) campaign_bonus_ratio2,
+                COALESCE(campaign_bonus_ratio3,0) campaign_bonus_ratio3,
                 company_name,
                 analyse_brand,
                 analyse_type,
@@ -593,9 +601,9 @@ class CampaignManager extends Catalog{
                 SUM(product_quantity) product_quantity,
                 ROUND(AVG(self_price),2) self_price,
                 ROUND(AVG(breakeven_price),2) breakeven_price,
-                ROUND(AVG(invoice_price),2) sell_price,
+                ROUND(AVG(invoice_price * (dl.vat_rate/100+1)),2) sell_price,
                 ROUND(SUM(invoice_price*product_quantity* (dl.vat_rate/100+1))) sell_sum,
-                ROUND(COALESCE(AVG((invoice_price-GREATEST(breakeven_price,self_price)) * (dl.vat_rate/100+1)),0),2) diff_price,
+                ROUND(COALESCE(AVG((invoice_price * (dl.vat_rate/100+1)-GREATEST(breakeven_price,self_price))),0),2) diff_price,
                 ROUND(SUM({$bonus_base['select']})) bonus_base
             FROM
                 plugin_campaign_bonus pcb 
@@ -611,25 +619,45 @@ class CampaignManager extends Catalog{
                 AND campaign_bonus_period_id=$campaign_bonus_period_id
                 {$bonus_base['where']}
             GROUP BY $group_by
-            ORDER BY $group_by) tt";
+            ORDER BY bonus_base DESC) tt";
             //die($sql);
         return $this->get_list($sql);
     }
     
     public function campaignDetailedView( int $campaign_bonus_id, int $campaign_bonus_period_id, string $group_by='product_code' ){
         $table=$this->bonusCalculateDetailedResult( $campaign_bonus_id, $campaign_bonus_period_id, $group_by );
-        
-        
-        
-        $out_type='.print';
-        
-        $struct=[
-            
-            ['Field'=>'company_name','Comment'=>'Клиент'],
-            ['Field'=>'analyse_brand','Comment'=>'Бренд'],
-            ['Field'=>'analyse_type','Comment'=>'Тип'],
-            ['Field'=>'product_code','Comment'=>'Код'],
-            ['Field'=>'product_name','Comment'=>'Название'],
+        switch($group_by){
+            case 'company_id':
+                $struct=[
+                    ['Field'=>'company_name','Comment'=>'Клиент']
+                ];
+                break;
+            case 'analyse_brand':
+                $struct=[
+                    ['Field'=>'analyse_brand','Comment'=>'Бренд']
+                ];
+                break;
+            case 'analyse_type':
+                $struct=[
+                    ['Field'=>'analyse_type','Comment'=>'Тип']
+                ];
+                break;
+            case 'product_code':
+                $struct=[
+                    ['Field'=>'product_code','Comment'=>'Код'],
+                    ['Field'=>'product_name','Comment'=>'Название']
+                ];
+                break;
+            default :
+                $struct=[
+                    ['Field'=>'company_name','Comment'=>'Клиент'],
+                    ['Field'=>'analyse_brand','Comment'=>'Бренд'],
+                    ['Field'=>'analyse_type','Comment'=>'Тип'],
+                    ['Field'=>'product_code','Comment'=>'Код'],
+                    ['Field'=>'product_name','Comment'=>'Название']
+                ];
+        }
+        $struct= array_merge($struct,[
             ['Field'=>'product_quantity','Comment'=>'Кол-во'],
             ['Field'=>'self_price','Comment'=>'Себ'],
             ['Field'=>'breakeven_price','Comment'=>'Порог'],
@@ -640,12 +668,25 @@ class CampaignManager extends Catalog{
             ['Field'=>'result1','Comment'=>'Рез1'],
             ['Field'=>'result2','Comment'=>'Рез2'],
             ['Field'=>'result3','Comment'=>'Рез3'],
-            ['Field'=>'bonus_ratios','Comment'=>'Бонусы'],
-            
-        ];
+            ['Field'=>'bonus_ratios','Comment'=>'Бонусы']
+        ]);
         //return $table;
         
+        $total_row=[
+            'bonus_ratios'=>'Итог'
+        ];
+        foreach($table as $row){
+            $total_row['result1']+=$row->result1;
+            $total_row['result2']+=$row->result1;
+            $total_row['result3']+=$row->result1;
+            $total_row['sell_sum']+=$row->sell_sum;
+            $total_row['bonus_base']+=$row->bonus_base;
+        }
+        $table[]=$total_row;
         
+        //print_r($table);die;
+        
+        $out_type='.print';
 	$dump=[
 	    'tpl_files'=>'/GridTpl.xlsx',
 	    'title'=>"Экспорт таблицы",
@@ -661,5 +702,24 @@ class CampaignManager extends Catalog{
 	$ViewManager=$this->Hub->load_model('ViewManager');
 	$ViewManager->store($dump);
 	$ViewManager->outRedirect($out_type);
+    }
+    
+    
+    
+    
+    public function bonusPeriodBreakEvenRecalculate( int $campaign_bonus_period_id ){
+        $bonus_period=$this->get_row("SELECT * FROM plugin_campaign_bonus_periods JOIN plugin_campaign_bonus USING(campaign_bonus_id) WHERE campaign_bonus_period_id=$campaign_bonus_period_id");
+        $client_filter=$this->clientListFilterGet($bonus_period->campaign_id);
+        $sql="UPDATE 
+                    document_entries 
+                    JOIN
+                    document_list USING(doc_id)
+                SET 
+                    breakeven_price = ROUND(GET_BREAKEVEN_PRICE(product_code,passive_company_id,doc_ratio,self_price),2)
+                WHERE 
+                    YEAR(cstamp)=$bonus_period->period_year
+                    AND MONTH(cstamp)=$bonus_period->period_month
+                    AND passive_company_id IN (SELECT company_id FROM companies_list JOIN companies_tree USING(branch_id) WHERE $client_filter)";
+        return $this->query($sql);
     }
 }

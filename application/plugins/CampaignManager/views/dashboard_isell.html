@@ -1,0 +1,243 @@
+<div>
+    <div style="padding: 5px;border-radius: 5px;margin-bottom: 5px;background-color: #ffffffaa">
+        <h1>Статистика продаж за месяц</h1>
+        <div id="CampaignStat" class="covert">
+            <div style="margin: 3px">
+                Клиентов за месяц: <b>{{client_count}}</b>
+            </div>
+            <div style="margin: 3px">
+                Накладных за месяц: <b>{{invoice_count}}</b>
+            </div>
+        </div>    
+    </div>
+    <div id="CampaignCharts" class="covert" style="display: grid; grid-template-columns: 50% 50%;grid-gap:3px;">
+        {{campaigns.bonuses}}
+        <div style="padding: 5px;border-radius: 5px;background-color: #ffffffaa">
+            <h3>
+                <!--{{current_result}}-->
+
+                <!--
+                {{product_category_label|blank>*}} 
+                {{product_brand_filter|blank>*}} 
+                {{product_type_filter|blank>*}}
+                -->
+                <!--{{/current_result}}-->
+            </h3>
+            <div>
+                <canvas id="campaign-chart{{current_result.0.campaign_bonus_id}}" style="width: 100%"></canvas>
+            </div>
+            <div>
+                <table style="width:100%;border-radius: 5px;background-color: #ffffffcc">
+                    <!--{{current_result}}-->
+                    <tbody>
+                        <tr>
+                            <td style="width:150px;">Период:</td>
+                            <td>
+                                {{if period_year|more>0}}
+                                {{if period_month|more>0 }}
+                                {{period_month|month|blank>}}
+                                {{else}}
+                                <b>{{period_quarter|quarter}}</b>
+                                {{/if}}
+                                {{period_year}}г
+                                {{else}}
+                                {{campaign_start_at|chop>10}} &Gt; {{campaign_finish_at|chop>10}}
+                                {{/if}}
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>База начисления:</td>
+                            <td>
+                                <!--
+                                {{if bonus_type|equals>VOLUME}}Оборот{{/if}}
+                                {{if bonus_type|equals>PROFIT}}Наценка{{/if}}
+                                {{if bonus_type|equals>PAYMENT}}Оплата{{/if}}
+                                -->
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Группа товара:</td>
+                            <td>
+                                <!--
+                                {{product_category_label|blank>*}} 
+                                {{product_brand_filter|blank>*}} 
+                                {{product_type_filter|blank>*}}
+                                -->
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Сумма:</td>
+                            <td>
+                                <!--{{if bonus_type|equals>PROFIT}}-->
+                                {{bonus_base|percent}} баллов
+                                <!--{{else}}-->
+                                {{bonus_base}}
+                                <!--{{/if}}-->
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td><div style="background:radial-gradient( farthest-corner at 4px 4px, #9f9, #6f6);width: 12px;height: 12px;border-radius: 10px;display: inline-block;"></div>
+                                <!--{{if bonus_type|equals>PROFIT}}-->
+                                Балл=<b>{{campaign_bonus_ratio1}}</b>:
+                                {{else}}
+                                План I ({{campaign_bonus_ratio1}}%):
+                                {{/if}}
+                            </td>
+                            <td>
+                                {{if period_plan1|more>0}} 
+
+                                    {{if bonus_type|equals>PROFIT}}
+                                        {{period_plan1|percent}}
+                                    {{else}}
+                                        {{period_plan1}}
+                                    {{/if}}
+
+                                {{else}} без ограничений {{/if}}</td>
+                        </tr>
+                        <!--{{if period_plan2|more>0}}-->
+                        <tr>
+                            <td><div style="background:radial-gradient( farthest-corner at 4px 4px, #9ef, #6cf);width: 12px;height: 12px;border-radius: 10px;display: inline-block;"></div>
+                                <!--{{if bonus_type|equals>PROFIT}}-->
+                                Балл=<b>{{campaign_bonus_ratio2}}</b>:
+                                {{else}}
+                                План II ({{campaign_bonus_ratio2}}%):
+                                {{/if}}
+                            </td>
+                            <td>
+                                {{if bonus_type|equals>PROFIT}}
+                                    {{period_plan2|percent}}
+                                {{else}}
+                                    {{period_plan2}}
+                                {{/if}}
+                            </td>
+                        </tr>
+                        <!--{{if period_plan3|more>0}}-->
+                        <tr>
+                            <td><div style="background:radial-gradient( farthest-corner at 4px 4px, #9cf, #69f);width: 12px;height: 12px;border-radius: 10px;display: inline-block;"></div>
+                                <!--{{if bonus_type|equals>PROFIT}}-->
+                                Балл=<b>{{campaign_bonus_ratio3}}</b>:
+                                {{else}}
+                                План III ({{campaign_bonus_ratio3}}%):
+                                {{/if}}
+                            </td>
+                            <td>
+                                {{if bonus_type|equals>PROFIT}}
+                                    {{period_plan3|percent}}
+                                {{else}}
+                                    {{period_plan3}}
+                                {{/if}}
+                            </td>
+                        </tr>
+                        <!--{{/if}}-->
+                        <!--{{/if}}-->
+                        <tr>
+                            <td>Результат:</td>
+                            <td>
+                                {{bonus_result}}
+                            </td>
+                        </tr>
+                    </tbody>
+                    <!--{{/current_result}}-->
+                </table>
+            </div>
+        </div>
+        {{/campaigns.bonuses}}
+    </div>
+</div>
+<script>
+(function(){
+    var dashboardCampaigns = {
+        init: function () {
+            if( App.user.props.user_level>1 ){
+
+                dashboardCampaigns.campaigns.load();
+                dashboardCampaigns.statistics.load();
+            }
+        },
+        campaigns: {
+            scriptDeffered:{},
+            load: function () {
+                let url="https://cdn.jsdelivr.net/npm/chart.js@2.8.0/dist/Chart.min.js";
+                this.scriptDeffered=$.ajax({url: url,dataType: "script",cache: true,async:true});
+                $.post("CampaignManager/bonusCalculatePersonal/", function (resp) {
+                    var personal_bonuses = App.json(resp);
+                    if (!personal_bonuses || !personal_bonuses.bonuses.length) {
+                        $("#CampaignCharts").html("<h2>Нет кампаний</h2>").removeClass('covert');
+                        return;
+                    }
+                    dashboardCampaigns.campaigns.render(personal_bonuses);
+                });
+            },
+            render: function (personal_bonuses) {
+                Mark.pipes.month = function (index) {
+                    return ['', 'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'][index];
+                };
+                Mark.pipes.quarter = function (index) {
+                    return ['', 'Iкв', 'IIкв', 'IIIкв', 'IVкв'][index];
+                };
+                Mark.pipes.percent=function(number){
+                    return Math.round(number/100);
+                }
+                App.renderTpl('CampaignCharts', {campaigns: personal_bonuses});
+                for (let i in personal_bonuses.bonuses) {
+                    dashboardCampaigns.campaigns.chartAdd(personal_bonuses.bonuses[i]);
+                }
+            },
+            chartAdd: function (bonus_data) {
+                var config = {
+                    type: 'doughnut',
+                    data: {
+                        labels: ["%", ""],
+                        datasets: []
+                    },
+                    options: {
+                        responsive: true,
+                        legend: {
+                            display: false
+                        },
+                        animation: {
+                            animateScale: true,
+                            animateRotate: true
+                        }
+                    }
+                };
+                config.data.datasets = dashboardCampaigns.campaigns.chartDatasetCalc(bonus_data);
+                let chart_id = "#campaign-chart" + bonus_data.current_result[0].campaign_bonus_id;
+                dashboardCampaigns.campaigns.scriptDeffered.done(function(){
+                    new Chart($(chart_id)[0].getContext('2d'), config);
+                });
+            },
+            chartDatasetCalc: function (bonus_data) {
+                var doughnut1 = this.chartDatasetCalcArc(bonus_data.current_result[0], 1);
+                var doughnut2 = this.chartDatasetCalcArc(bonus_data.current_result[0], 2);
+                var doughnut3 = this.chartDatasetCalcArc(bonus_data.current_result[0], 3);
+                return [
+                    {data: [doughnut3, 100 - doughnut3], backgroundColor: ['rgba(100,100,255)', 'white'], label: 'План I'},
+                    {data: [doughnut2, 100 - doughnut2], backgroundColor: ['rgba(100,230,255)', 'white'], label: 'План II'},
+                    {data: [doughnut1, 100 - doughnut1], backgroundColor: ['rgba(100,240,100)', 'white'], label: 'План III'}
+                ];
+            },
+            chartDatasetCalcArc: function (arc_data, i) {
+                return Math.round(Math.min(arc_data.bonus_base / arc_data['period_plan' + i] || 0.01, 1) * 100);
+            }
+        },
+        statistics:{
+            load:function(){
+                $.post("CampaignManager/dashboardManagerStatistics/", function (resp) {
+                    var stat = App.json(resp);
+                    if (!stat) {
+                        $("#CampaignCharts").html("<h2>Нет кампаний</h2>");
+                        return;
+                    }
+                    dashboardCampaigns.statistics.render(stat);
+                });
+            },
+            render:function(data){
+                App.renderTpl('CampaignStat',data);
+            }
+        }
+    };
+    dashboardCampaigns.init();
+})();
+</script>

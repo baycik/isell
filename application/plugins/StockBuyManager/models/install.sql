@@ -2,13 +2,13 @@
  * Author:  Baycik
  * Created: May 4, 2017
  */
-
 CREATE TABLE `supply_list` (
   `supply_id` int(11) NOT NULL AUTO_INCREMENT,
   `supplier_id` int(11) DEFAULT NULL,
   `product_code` varchar(45) DEFAULT NULL,
   `supply_code` varchar(45) DEFAULT NULL,
   `supply_name` varchar(255) DEFAULT NULL,
+  `supply_leftover` int(11) NOT NULL,
   `supply_buy` double DEFAULT '0',
   `supply_sell` double DEFAULT '0',
   `supply_sell_ratio` double DEFAULT '0',
@@ -20,8 +20,10 @@ CREATE TABLE `supply_list` (
   `supply_unit` varchar(5) DEFAULT 'шт',
   `supply_modified` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`supply_id`),
-  UNIQUE KEY `supplier_id_UNIQUE` (`supply_code`,`supplier_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+  UNIQUE KEY `supplier_id_UNIQUE` (`supply_code`,`supplier_id`),
+  KEY `product_code_INDEX` (`product_code`),
+  KEY `supply_code_INDEX` (`supply_code`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
 
 
 CREATE TABLE `supplier_list` (

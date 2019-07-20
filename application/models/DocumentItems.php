@@ -1,8 +1,6 @@
 <?php
-require_once 'DocumentCore.php';
 class DocumentItems extends DocumentCore{
-    public $suggestFetch=['q'=>'string','offset'=>['int',0],'limit'=>['int',10],'doc_id'=>['int',0],'category_id'=>['int',0]];
-    public function suggestFetch($q,$offset,$limit,$doc_id,$category_id,$transliterated=false){
+    public function suggestFetch( string $q, int $offset=0,int $limit=10, int $doc_id=0, int $category_id=0, bool $transliterated=false ){
 	$price_query="0";
         $pcomp_id=$this->Hub->pcomp('company_id');
         $usd_ratio=$this->Hub->pref('usd_ratio');
@@ -48,7 +46,7 @@ class DocumentItems extends DocumentCore{
 		stock_entries
 		    JOIN
 		prod_list USING(product_code)
-	    WHERE $where
+            WHERE $where
 	    ORDER BY fetch_count-DATEDIFF(NOW(),fetch_stamp) DESC, product_code
 	    LIMIT $limit OFFSET $offset";
         $output=$this->get_list($sql);

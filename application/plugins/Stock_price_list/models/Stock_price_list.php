@@ -71,6 +71,7 @@ class Stock_price_list extends Catalog{
 		    $updated_value->type='category';
                     $updated_value->hidden= isset($value->hidden)?$value->hidden:false;
                     $updated_value->allimg=isset($value->allimg)?$value->allimg:false;
+                    $updated_value->catalog_view=isset($value->catalog_view)?$value->catalog_view:false;
 		    $updated_items[]=$updated_value;
 		    continue;
 		}

@@ -260,6 +260,9 @@ class PluginManager extends Catalog{
     }
     
     private function mod_execute($filename='', $search='', $replace='', $before='', $after=''){
+        if( empty($filename) || empty($search) || !($replace || $before || $after) ){
+            return false;
+        }
 	$file_data=$this->Hub->Storage->file_restore('plugin_modifications/'.$filename);//looking for already modified file
 	if( !$file_data ){//if there is none load original one
 	    $original_file=APPPATH.$filename;
