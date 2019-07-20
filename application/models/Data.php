@@ -138,7 +138,6 @@ class Data extends Catalog {
 	$out_type=$this->request('out_type');
 	
 	$table=$this->tableData($table_name);
-	//print_r($table['rows']);exit;
 	
 	$dump=[
 	    'tpl_files'=>'/GridTpl.xlsx',

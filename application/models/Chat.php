@@ -13,13 +13,13 @@ class Chat extends Catalog{
                 user_is_staff,
                 TIMESTAMPDIFF(MINUTE,last_activity,NOW())<3 is_online, 
                 MAX(IF(user_id = el.created_by AND el.event_status='undone' AND el.event_liable_user_id='$my_id', 1, 0)) AS has_new,
-                IF(user_id != '$my_id', MAX(IF('$my_id' = el.created_by OR '$my_id' = el.event_liable_user_id,DATEDIFF(event_date,NOW()),-10000)),-10000) popularity
+                IF(user_id != '$my_id', MAX(IF('$my_id' = el.created_by OR '$my_id' = el.event_liable_user_id,event_date,-10000)),-10000) last_message
             FROM
                 user_list ul
                     LEFT JOIN
                 event_list el ON user_id = el.created_by OR user_id = el.event_liable_user_id
             GROUP BY user_id
-            ORDER BY has_new DESC, popularity DESC, user_is_staff DESC
+            ORDER BY has_new DESC, last_message DESC
                 ";
         $list = $this->get_list($sql);
         $system_user = (object)[

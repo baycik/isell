@@ -475,7 +475,6 @@
 		render:function(){
 		    Leftovers.grid.updateOptions({params:{mode:Leftovers.table.columnMode}});
 		    var cols=Leftovers.table.columnsGet();
-                    //console.log(cols);
                     Leftovers.table.columnSummaryWidth=0;
                     for( var i in cols ){
                         Leftovers.table.columnSummaryWidth+=cols[i].width;
