@@ -347,11 +347,19 @@ App.datagrid = {
     }
 };
 App.renderTpl=function( id, data, mode ){
-    if( !this.tplcache[id] || mode==='nocache' ){
-	this.tplcache[id]=$('#'+id).html().replace('&gt;','>').replace(/<!--/g,'').replace(/-->/g,'');
+    var query='#'+id;
+    if( id.match(/\W/) ){
+        query=id;
     }
-    $('#'+id).html( Mark.up(App.tplcache[id], data) );
-    $('#'+id).removeClass('covert');
+    if( !$(query).length ){
+        console.log('not found: '+query);
+        return;
+    }
+    if( !this.tplcache[query] || mode==='nocache' ){
+	this.tplcache[query]=$(query).html().replace('&gt;','>').replace(/<!--/g,'').replace(/-->/g,'');
+    }
+    $(query).html( Mark.up(App.tplcache[query], data) );
+    $(query).removeClass('covert');
 };
 App.setHTML=function( query, html ){
     $(query).html(html);
