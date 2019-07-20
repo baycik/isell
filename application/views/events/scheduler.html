@@ -72,7 +72,6 @@ App.page_events_scheduler={
             App.page_events_scheduler.tile.render(groupped_events);
         },
         render:function(groupped_events){
-            console.log(groupped_events,App.page_events_scheduler.tile.event_list);
             App.renderTpl('events_tile',{events:groupped_events});
         },
 	click:function( node ){
