@@ -28,6 +28,15 @@ class DebtManager extends Catalog {
 	$this->load->model('Maintain');
 	return $this->Maintain->backupImportExecute($uninstall_file);
     }
+    public function activate(){
+        $this->Hub->set_level(4);
+	$this->tasksMakeActive();
+    }
+    public function deactivate(){
+        $this->Hub->set_level(4);
+	$this->tasksDelete();
+	
+    }
     
     public $getBlock = ['filter' => 'json'];
     private $system_user = false;
@@ -242,7 +251,7 @@ class DebtManager extends Catalog {
         ];
             $event_id= null;
             $doc_id='';
-            $event_date=date("Y-m-d H:i:s");
+            $event_date= date( "Y-m-d H:i:s");// strtotime(date("Y-m-d H:i:s")."+7 day" ));
             $event_priority='3medium';
             $event_name='Уведомление';
             $event_label='-TASK-';
@@ -251,7 +260,7 @@ class DebtManager extends Catalog {
             $event_note='';
             $event_descr='Уведомление о задолженностях';
             $event_program = json_encode($program);
-            $event_repeat='7 0:0';
+            $event_repeat='0 0:1';
             $event_status='pending';
             $event_liable_user_id='';
             $event_is_private = '1';
@@ -274,13 +283,40 @@ class DebtManager extends Catalog {
         return $event_id;
     }
     
+    
+    private function tasksMakeActive(){
+        $settings = $this->getAllSettings();
+        foreach($settings as $user_id=>$user_settings){
+            if(isset($settings[$user_id]['event_disable']) && $settings[$user_id]['event_disable'] == '1' ){
+                $user_settings['event_disable'] = '0';
+                $this->updateSettings($user_settings, $user_id);
+            }
+        }
+    }
+    
+    private function tasksDelete(){
+        $settings = $this->getAllSettings();
+        foreach($settings as $user_id=>$user_settings){
+            if(isset($settings[$user_id]['event_id'])){
+                $event_id = $user_settings['event_id'];
+                $Events=$this->Hub->load_model('Events');
+                $Events->eventDelete($event_id);
+                $user_settings['event_id'] = '0';
+                $user_settings['event_disable'] = '1';
+                $this->updateSettings($user_settings, $user_id);
+            }
+        }
+    }
+
     public $sendNotifications = ['user_id' => 'int'];
     public function sendNotification($user_id){
         $msg = $this->composeMessage($user_id);
         $Chat=$this->Hub->load_model('Chat');
-        $Chat->addMessage($user_id, $msg, true);
+        if($msg){
+           $Chat->addMessage($user_id, $msg, true);
+        }
+        
     }
-    
     
     private function composeMessage($user_id){
         $this->system_user = true;
@@ -292,20 +328,23 @@ class DebtManager extends Catalog {
     private function composeMessageTemplate($user_id) {
         $filter = [];
         $msg = 'Уважаемый '.$this->Hub->svar('user')->first_name.',</br>';
-            $filter['block_number'] = -1;
-            $this->createTmp($filter,$user_id);
-            $total = $this->getTotal()[0];
-            if(empty($total->amount_buy) && empty($total->amount_sell)){
-                return;
+        $filter['block_number'] = -1;
+        $this->createTmp($filter,$user_id);
+        $total = $this->getTotal()[0];
+        if(empty($total)){
+            return false;
+        }
+        if(empty($total->amount_buy) && empty($total->amount_sell)){
+            return;
+        }
+        if($filter['block_number'] == -1){
+            if((int)$total->amount_sell != 0){
+                $msg .= 'Есть просроченные платежи от клиентов на сумму: <b>'.$total->amount_sell.'</b>.</br> ';
+            } 
+            if((int)$total->amount_buy != 0){
+                $msg .= 'Есть задолженность перед поставщиками в размере: <b>'.$total->amount_buy.'</b>.</br> ';
             }
-            if($filter['block_number'] == -1){
-                if((int)$total->amount_sell != 0){
-                    $msg .= 'Есть просроченные платежи от клиентов на сумму: <b>'.$total->amount_sell.'</b>.</br> ';
-                } 
-                if((int)$total->amount_buy != 0){
-                    $msg .= 'Есть задолженность перед поставщиками в размере: <b>'.$total->amount_buy.'</b>.</br> ';
-                }
-            }
+        }
             
         $msg .= 'Будьте любезны, получите больше информации в <a href="#Home#home_main_tabs" onclick="location="#Home#home_main_tabs">Менеджере задолженностей</a>.';
         return $msg;
@@ -314,6 +353,9 @@ class DebtManager extends Catalog {
     public $updateSettings = ['user_settings' => 'json', 'user_id'=>'int'];
     public function updateSettings($user_settings, $user_id = false) {
         $user_settings['user_assigned_path'] = addslashes($user_settings['user_assigned_path']);
+        if(!isset($user_settings['event_disable'])){
+            $user_settings['event_disable'] = '0';
+        }
         $this->settings = $this->getAllSettings();
         if(!$user_id){
             $user_id = $this->Hub->svar('user_id');
@@ -323,8 +365,8 @@ class DebtManager extends Catalog {
             $this->settings[0] = $user_settings;
         } 
         $this->settings[$user_id] = $user_settings;
-        if((bool)$this->settings[$user_id]['notificate']){
-            if(!(bool)$this->settings[$user_id]['event_id']){
+        if((bool)$this->settings[$user_id]['notificate'] && $this->settings[$user_id]['event_disable'] == '0'){
+            if(!(bool)$this->settings[$user_id]['event_id'] ){
                 $this->settings[$user_id]['event_id'] = $this->notificate(1,$user_id);
             }
         } else {
@@ -394,6 +436,7 @@ class DebtManager extends Catalog {
                 'acomp'=> '0',
                 'notificate'=> '0',
                 'event_id'=> '0',
+                'event_disable'=> '0',
                 'user_assigned_path'=> $this->Hub->svar('user_assigned_path')
                 ], $user_id);
         }

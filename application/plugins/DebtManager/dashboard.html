@@ -596,9 +596,7 @@
         },
         isScrolledIntoView: function(elem){
             var $elem = $(elem);
-            var $viewport = $('.debt-container');
             var elemTop = $elem.offset().top;
-            var viewScroll = $viewport.scrollTop();
             var viewHeight = $('#DebtManager_dashboard_holder').height();
             return (((elemTop) - (viewHeight)) < 60 );
         },

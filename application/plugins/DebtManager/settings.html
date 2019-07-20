@@ -1,77 +1,80 @@
-<div id='userList'>
-    <div class="user-name"><b>Пользователь:</b></div>
-    <select  name="manager_id" title="Закреплен за" onchange="App.debt_manager_settings.getSettings(this.value)">
-        {{staff_list}}
-        <option value="{{user_id}}">{{full_name}}</option>
-        {{/staff_list}}
-    </select>
-</div>
+
     
 
 
 <form>
-    <div class="plugin_settings" style="display:none;">
-        <div class="debt-settings-input">
-            <label>Группировать дату по:</label>
-            <select name="group_by_date" onchange="App.debt_manager_settings.updateSettings()">
-                <option value="DAY">дням</option>
-                <option value="WEEK">неделям</option>
-                <option value="MONTH">месяцам</option>
-                <option value="QUARTER">кварталам</option>
-                <option value="YEAR">годам</option>
+    <div class="plugin_settings">
+        <div id='userList'>
+            <div class="user-name"><b>Пользователь:</b></div>
+            <select  name="manager_id" title="Закреплен за" onchange="App.debt_manager_settings.getSettings(this.value)">
+                {{staff_list}}
+                <option value="{{user_id}}">{{full_name}}</option>
+                {{/staff_list}}
             </select>
-        </div>
-        <div class="debt-settings-input">
-            <label>Группировать по клиентам:</label>
-            <select name="group_by_pcomp"  onchange="App.debt_manager_settings.updateSettings()">
-                <option value="1">Да</option>
-                <option value="0">Нет</option>
-            </select>
-        </div>
-        <div class="debt-settings-input">
-            <label>Показывать долги клиента: </label>
-            <div class="inp_group">
-                <input title="" name="pcomp_name" value="" readonly="readonly" required="required" style="width:100px" placeholder="Все"/>
-                <input name="pcomp_id" value="" type="hidden" required="required" style="width:100px"/>
-                <button type="button" class="tiny_button" onclick="App.debt_manager_settings.select_pcomp()"><img src="img/settings.png"> Выбрать</button>
             </div>
-        </div>
-        <div>
-            <div class="debt-settings-checkbox">
-                <label for="buy_trans">Наши долги</label>
-                <input type="checkbox" class="checkbox" name="buy_trans" onchange="App.debt_manager_settings.updateSettings()"
-                       >
+        <div class="plugin_user_settings" style="display:none;">
+            <div class="debt-settings-input">
+                <label>Группировать дату по:</label>
+                <select name="group_by_date" onchange="App.debt_manager_settings.updateSettings()">
+                    <option value="DAY">дням</option>
+                    <option value="WEEK">неделям</option>
+                    <option value="MONTH">месяцам</option>
+                    <option value="QUARTER">кварталам</option>
+                    <option value="YEAR">годам</option>
+                </select>
             </div>
-            <div class="debt-settings-checkbox">
-                <label for="sell_trans">Долги клиентов</label>
-                <input type="checkbox" class="checkbox"  name="sell_trans" onchange="App.debt_manager_settings.updateSettings()"
-                       >
+            <div class="debt-settings-input">
+                <label>Группировать по клиентам:</label>
+                <select name="group_by_pcomp"  onchange="App.debt_manager_settings.updateSettings()">
+                    <option value="1">Да</option>
+                    <option value="0">Нет</option>
+                </select>
             </div>
-            <div class="debt-settings-checkbox">
-                <label for="acomp"> Учитывать активную компанию</label>
-                <input type="checkbox" class="checkbox"  name="acomp" onchange="App.debt_manager_settings.updateSettings()"
-                        >
-            </div>
-            <div  class="debt-settings-checkbox">
-                <label for="notificate">Включить уведомления</label>
-                <input type="checkbox" class="checkbox"  name="notificate" onchange="App.debt_manager_settings.updateSettings()"
-                       >
-            </div>
-        </div>
-        <div class="debt-settings-input">
-            <div>
-                <label for="notificate">Разрешенные клиенты:</label>
-            </div>
-            <div class="assigned-input">
-                <div>Добавить клиента</div>
-                <a class="icon-24 icon-create" onclick="App.debt_manager_settings.addPath()"></a>
-                <div>
-                    <textarea name="user_assigned_path" onchange="App.debt_manager_settings.updateSettings()"></textarea>
+            <div class="debt-settings-input">
+                <label>Показывать долги клиента: </label>
+                <div class="inp_group">
+                    <input title="" name="pcomp_name" value="" readonly="readonly" required="required" style="width:100px" placeholder="Все"/>
+                    <input name="pcomp_id" value="" type="hidden" required="required" style="width:100px"/>
+                    <button type="button" class="tiny_button" onclick="App.debt_manager_settings.select_pcomp()"><img src="img/settings.png"> Выбрать</button>
                 </div>
             </div>
-            
+            <div>
+                <div class="debt-settings-checkbox">
+                    <label for="buy_trans">Наши долги</label>
+                    <input type="checkbox" class="checkbox" name="buy_trans" onchange="App.debt_manager_settings.updateSettings()"
+                           >
+                </div>
+                <div class="debt-settings-checkbox">
+                    <label for="sell_trans">Долги клиентов</label>
+                    <input type="checkbox" class="checkbox"  name="sell_trans" onchange="App.debt_manager_settings.updateSettings()"
+                           >
+                </div>
+                <div class="debt-settings-checkbox">
+                    <label for="acomp"> Учитывать активную компанию</label>
+                    <input type="checkbox" class="checkbox"  name="acomp" onchange="App.debt_manager_settings.updateSettings()"
+                            >
+                </div>
+                <div  class="debt-settings-checkbox">
+                    <label for="notificate">Включить уведомления</label>
+                    <input type="checkbox" class="checkbox"  name="notificate" onchange="App.debt_manager_settings.updateSettings()"
+                           >
+                </div>
+            </div>
+            <div class="debt-settings-input">
+                <div>
+                    <label for="notificate">Разрешенные клиенты:</label>
+                </div>
+                <div class="assigned-input">
+                    <div>Добавить клиента</div>
+                    <a class="icon-24 icon-create" onclick="App.debt_manager_settings.addPath()"></a>
+                    <div>
+                        <textarea name="user_assigned_path" onchange="App.debt_manager_settings.updateSettings()"></textarea>
+                    </div>
+                </div>
+
+            </div>
         </div>
-    </div>
+    </div>    
     <div class="plugin_notinstalled">
         <h1>Плагин не установлен</h1>
     </div>
@@ -161,13 +164,14 @@
             $("textarea[name='user_assigned_path']").val(App.debt_manager_settings.data.user_assigned_path);
             $("input[name='acomp']").prop('checked', Boolean(Number(App.debt_manager_settings.data.acomp)));
             $("input[name='notificate']").prop('checked', Boolean(Number(App.debt_manager_settings.data.notificate)));
-            $('.plugin_settings').show();
+            $('.plugin_user_settings').show();
         },
 	loadUserList:function(){
 	    App.get('Company/companyPrefsGet',function(resp){
 		if( resp ){
                    var response = App.json(resp);
                    App.renderTpl('userList',response);
+                   $("select[name='manager_id']").val(App.user.props.user_id);
 		}
 	    });
 	},
