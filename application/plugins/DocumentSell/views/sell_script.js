@@ -257,8 +257,7 @@ Document.body={
     },
     renderViewPortHeight:function(row_count){
         let row_height=25;
-        let max_height=500;
-        let calculated_height=Math.min(row_height*(row_count)+20,max_height);
+        let calculated_height=row_height*row_count+20;
         $("#"+holderId+" .x-body .slick-viewport").css('height',calculated_height);
     },
     destroy:function(){
@@ -483,7 +482,8 @@ Document.body={
 		    enableAsyncPostRender: true
 		}
 	    };
-	    Document.body.table_sg = new Slick.Grid("#"+holderId+" .x-body .x-entries", [], settings.columns, settings.options);
+            $("#"+holderId+" .x-body .x-entries").html("<div></div>");
+	    Document.body.table_sg = new Slick.Grid("#"+holderId+" .x-body .x-entries div", [], settings.columns, settings.options);
 	    Document.body.table_sg.setSelectionModel(new Slick.RowSelectionModel());
 	    Document.body.table_sg.onCellChange.subscribe(function(e,data){
 		var updatedEntry=data.item;
