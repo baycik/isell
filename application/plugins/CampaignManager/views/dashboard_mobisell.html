@@ -6,15 +6,21 @@
     <div class="ui teal image label" style="margin: 3px">
         <i class="icon file alternate"></i> Накладных за месяц <div class="detail">{{invoice_count}}</div> 
     </div>
+    <div class="ui green image label" style="margin: 3px">
+        <i class="icon money"></i> Общий результат <div class="detail">{{total_result}}</div> 
+    </div>
 </div>
 <div class="ui header">Мотивации</div>
 <div id="CampaignCharts" class="covert">
-    <div class="ui green image label">
-        <i class="icon money"></i> Общий результат <div class="detail">{{campaigns.total}}</div> 
-    </div>
     {{campaigns.bonuses}}
     <div class="ui segment grid stackable">
         <div class="six wide column">
+            <b>
+            {{campaign_name}} / 
+            {{current_result}}
+                {{product_category_label|blank>*}} {{product_brand_filter|blank>*}} {{product_type_filter|blank>*}}
+            {{/current_result}}
+            </b>
             <canvas id="campaign-chart{{current_result.0.campaign_bonus_id}}" style="width: 100%"></canvas>
         </div>
         <div class="ten wide column">
@@ -150,6 +156,8 @@ App.dashboardCampaigns = {
                     $("#CampaignCharts").html("<h2>Нет кампаний</h2>").removeClass('covert');
                     return;
                 }
+                App.dashboardCampaigns.statistics.stat.total_result=personal_bonuses.total;
+                App.dashboardCampaigns.statistics.render();
                 App.dashboardCampaigns.campaigns.render(personal_bonuses);
             });
         },
@@ -197,28 +205,38 @@ App.dashboardCampaigns = {
             var doughnut2 = this.chartDatasetCalcArc(bonus_data.current_result[0], 2);
             var doughnut3 = this.chartDatasetCalcArc(bonus_data.current_result[0], 3);
             return [
-                {data: [doughnut3, 100 - doughnut3], backgroundColor: ['rgba(100,100,255)', 'white'], label: 'План I'},
-                {data: [doughnut2, 100 - doughnut2], backgroundColor: ['rgba(100,230,255)', 'white'], label: 'План II'},
-                {data: [doughnut1, 100 - doughnut1], backgroundColor: ['rgba(100,240,100)', 'white'], label: 'План III'}
+                {data: [doughnut3, 100 - doughnut3], backgroundColor: ['rgba(100,100,255)', '#ffffff66'], label: 'План I'},
+                {data: [doughnut2, 100 - doughnut2], backgroundColor: ['rgba(100,230,255)', '#ffffff66'], label: 'План II'},
+                {data: [doughnut1, 100 - doughnut1], backgroundColor: ['rgba(100,240,100)', '#ffffff66'], label: 'План III'}
             ];
         },
         chartDatasetCalcArc: function (arc_data, i) {
-            return Math.round(Math.min(arc_data.bonus_base / arc_data['period_plan' + i] || 0.01, 1) * 100);
+            if( arc_data['period_plan' + i]>0 ){
+                return Math.round( Math.min(arc_data.bonus_base / arc_data['period_plan' + i] || 0.01,1) * 100);
+            }
+            return null;
         }
     },
     statistics:{
+        stat:{
+            client_count:0,
+            invoice_count:0,
+            total_result:0
+        },
         load:function(){
-            $.post("../CampaignManager/dashboardManagerStatistics/", function (resp) {
+            $.post("CampaignManager/dashboardManagerStatistics/", function (resp) {
                 var stat = App.json(resp);
                 if (!stat) {
                     $("#CampaignCharts").html("<h2>Нет кампаний</h2>");
                     return;
                 }
-                App.dashboardCampaigns.statistics.render(stat);
+                App.dashboardCampaigns.statistics.stat.client_count=stat.client_count;
+                App.dashboardCampaigns.statistics.stat.invoice_count=stat.invoice_count;
+                App.dashboardCampaigns.statistics.render();
             });
         },
-        render:function(data){
-            App.renderTpl('CampaignStat',data);
+        render:function(){
+            App.renderTpl('CampaignStat',this.stat);
         }
     }
 };

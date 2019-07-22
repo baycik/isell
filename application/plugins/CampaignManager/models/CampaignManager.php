@@ -1,4 +1,4 @@
-<?php
+    <?php
 /* User Level: 2
  * Group Name: Продажи
  * Plugin Name: CampaignManager
