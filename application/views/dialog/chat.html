@@ -12,6 +12,15 @@
 		}
 	    });
 	    this.node.window('center');
+            Mark.pipes.date_simplify=function(date){
+                let now=new Date();
+                let then=new Date(date);
+                let simplified=`${then.getHours().toString().padStart(2, '0')}:${then.getMinutes().toString().padStart(2, '0')}`;
+                if( now.getTime()-then.getTime()>24*60*60*1000 || then.getDate()!==now.getDate() ){
+                    simplified=`${then.getDate().toString().padStart(2, '0')}.${(then.getMonth()+1).toString().padStart(2, '0')} ${simplified}`;
+                }
+                return simplified;
+            };
 	    $("#chat_form").submit(function (e) {
 		e.preventDefault();
 		var text = $("#chat_form input").val();
@@ -72,14 +81,16 @@
                 //return;
             }
             for(let item of dialog){
+                if( item.event_status==='done' ){
+                    $("#chat_msg"+item.event_id+" .blinkborder").removeClass('white blinkborder').addClass('yellow done');
+                    $("#chat_msg"+item.event_id+" .white").removeClass('white').addClass('blue');
+                }
                 if( App.page_dialog_chat.renderedMessages[item.event_id] || !item.is_chat ){
                     continue;
                 }
-                $("#chat_field .blinkborder").removeClass('white blinkborder').addClass('yellow done');
-                $("#chat_field .white").removeClass('white').addClass('blue');
                 App.page_dialog_chat.renderedMessages[item.event_id]=1;
                 let message_html=App.page_dialog_chat.renderMessage(item);
-                let chat_entry=$('<div></div>').html(message_html);
+                let chat_entry=$('<div></div>').prop('id','chat_msg'+item.event_id).html(message_html);
                 $("#chat_field").append(chat_entry);
                 
                 clearTimeout(animation_clock);
@@ -150,10 +161,12 @@
 	    <b>Цель:</b> {{event_target}}<br><br>
 	</div>
 	{{/if}}
+        <span style="color:#666"><!--{{event_date|date_simplify}}--> </span>
 	{{event_descr}}
     </div>
     {{else}}
     <div class="bubble {{if event_status|equals>undone}}white{{else}}blue{{/if}}" title="Отправлено {{time}}">
+        <span style="color:#666"><!--{{event_date|date_simplify}}--> </span>
         {{event_descr}}
     </div>
     {{/if}}

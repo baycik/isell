@@ -36,7 +36,6 @@ class Maintain extends CI_Model {
     public function updatePluginRefresh(){
         $PluginManager=$this->Hub->load_model('PluginManager');
 	return $PluginManager->mod_scan();
-	
     }
     
     private function updateDb(){

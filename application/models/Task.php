@@ -79,9 +79,13 @@ class Task extends Events {
 		$args[] = $arg;
 	    }
 	}
-	$Model = $this->Hub->load_model($command->model);
-	$return = call_user_func_array([$Model, $command->method], $args);
-	$this->log("TASK {$this->currentTask->event_name} {$command->model}->{$command->method}(".implode(',',$args)."): RETURNED VALUE:'$return'");
+        try{
+            $Model = $this->Hub->load_model($command->model);
+            $return = call_user_func_array([$Model, $command->method], $args);
+            $this->log("TASK {$this->currentTask->event_name} {$command->model}->{$command->method}(".implode(',',$args)."): RETURNED VALUE:'$return'");
+        } catch (Exception $ex) {
+            $this->log("TASK ERROR {$this->currentTask->event_name} {$command->model}->{$command->method}(".implode(',',$args)."): $ex");
+        }
 	return $return;
     }
     
