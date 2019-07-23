@@ -187,9 +187,6 @@ var App = {
 	    script.onload = ok;
 	    document.head.appendChild(script); //or something of the likes
 	}	
-    },
-    getHolderId:function(){
-        return document.scripts[document.scripts.length - 1].parentNode.id;
     }
 };
 
@@ -717,8 +714,8 @@ Mark.pipes.format = function (str) {
 		parseHTML:function(){
 		    $.parser.parse("#holder"+App.module.current);//for easy ui   
 		},
-		findTitle:function(){		
-		    //App.setTitle(App.user.props.module_list[App.module.current].label);
+		findTitle:function(){		    
+		    App.setTitle(App.user.props.module_list[App.module.current].label);
 		},
 		selectButton:function(){
 		    $(".ModuleButtonSelected").removeClass("ModuleButtonSelected");
@@ -751,7 +748,64 @@ Mark.pipes.format = function (str) {
 
 
 
-
-
-
-
+$.extend($.fn.datagrid.defaults, {
+    ctrlSelect:true,
+    onLoadSuccess: function (jq) {
+	var grid = $(this);
+	if( grid.data('initedEvents') ){
+	    return;
+	}
+	grid.data('initedEvents',true);
+	grid.datagrid('getPanel').panel('panel').attr('tabindex',0).on('keydown', function (e) {
+	    var selected = grid.datagrid('getSelected');
+	    var index = grid.datagrid('getRowIndex', selected);
+	    switch (e.keyCode) {
+		case 38:	// up
+		    e.preventDefault();
+		    grid.datagrid('unselectAll');
+		    if (selected && index>0){
+			grid.datagrid('selectRow', index-1);
+		    } else {
+			var rows = grid.datagrid('getRows');
+			grid.datagrid('selectRow', rows.length - 1);
+		    }
+		    break;
+		case 40:	// down
+		    e.preventDefault();
+		    grid.datagrid('unselectAll');
+		    var rows = grid.datagrid('getRows');
+		    if (selected && rows.length-1>index){
+			grid.datagrid('selectRow', index+1);
+		    } else {
+			grid.datagrid('selectRow', 0);
+		    }
+		    break;
+		case 13:
+		    grid.trigger('rowEdit');
+		    break;
+		    
+	    }
+	});
+	if( !grid.datagrid('options').singleSelect ){
+	    grid.datagrid('getPanel').find('table tr').on('click',function(e){
+		var currentIndex=$(this).attr('datagrid-row-index');
+		if( grid.lastClickedRow!==undefined && e.shiftKey ){
+		    var min=Math.min(currentIndex,grid.lastClickedRow);
+		    var max=Math.max(currentIndex,grid.lastClickedRow);
+		    $(this).parent().each(function(){
+			var index=$(this).data('datagrid-row-index');
+			if( index>min && index>max ){
+			    $(this).addClass("datagrid-row-checked datagrid-row-selected");
+			}
+		    });
+		    /*
+		    for( var i=Math.min(currentIndex,grid.lastClickedRow);i<Math.max(currentIndex,grid.lastClickedRow);i++ ){
+			//grid.datagrid('selectRow', i);
+			$(this).parent().find("")
+		    }*/
+		}
+		grid.lastClickedRow=currentIndex;
+	    });
+	}
+    }
+});
