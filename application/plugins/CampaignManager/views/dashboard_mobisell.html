@@ -53,9 +53,15 @@
                     <tr>
                         <td>Группа товара:</td>
                         <td>
-                            {{product_category_label|blank>*}} 
-                            {{product_brand_filter|blank>*}} 
-                            {{product_type_filter|blank>*}}
+                            {{if product_category_label}}
+                                Категория: {{product_category_label}}
+                            {{/if}}
+                            {{if product_brand_filter}}
+                                Бренд: {{product_brand_filter}}
+                            {{/if}}
+                            {{if product_type_filter}}
+                                Тип: {{product_type_filter}}
+                            {{/if}}
                         </td>
                     </tr>
                     <tr>
@@ -224,7 +230,7 @@ App.dashboardCampaigns = {
             total_result:0
         },
         load:function(){
-            $.post("CampaignManager/dashboardManagerStatistics/", function (resp) {
+            $.post("../CampaignManager/dashboardManagerStatistics/", function (resp) {
                 var stat = App.json(resp);
                 if (!stat) {
                     $("#CampaignCharts").html("<h2>Нет кампаний</h2>");
