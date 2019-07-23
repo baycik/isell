@@ -7,7 +7,7 @@
         <i class="icon file alternate"></i> Накладных за месяц <div class="detail">{{invoice_count}}</div> 
     </div>
     <div class="ui green image label" style="margin: 3px">
-        <i class="icon money"></i> Общий результат <div class="detail">{{total_result}}</div> 
+        <i class="icon money"></i> Общий результат <div class="detail">{{total_result|format}}</div> 
     </div>
 </div>
 <div class="ui header">Мотивации</div>
@@ -70,7 +70,7 @@
                             <!--{{if bonus_type|equals>PROFIT}}-->
                             {{bonus_base|percent}} баллов
                             <!--{{else}}-->
-                            {{bonus_base}}
+                            {{bonus_base|format}}
                             <!--{{/if}}-->
                         </td>
                     </tr>
@@ -88,7 +88,7 @@
                                 {{if bonus_type|equals>PROFIT}}
                                     {{period_plan1|percent}}
                                 {{else}}
-                                    {{period_plan1}}
+                                    {{period_plan1|format}}
                                 {{/if}}
                             
                             {{else}} без ограничений {{/if}}</td>
@@ -106,7 +106,7 @@
                             {{if bonus_type|equals>PROFIT}}
                                 {{period_plan2|percent}}
                             {{else}}
-                                {{period_plan2}}
+                                {{period_plan2|format}}
                             {{/if}}
                         </td>
                     </tr>
@@ -123,7 +123,7 @@
                             {{if bonus_type|equals>PROFIT}}
                                 {{period_plan3|percent}}
                             {{else}}
-                                {{period_plan3}}
+                                {{period_plan3|format}}
                             {{/if}}
                         </td>
                     </tr>
@@ -132,7 +132,7 @@
                     <tr>
                         <td>Результат:</td>
                         <td>
-                            {{bonus_result}}
+                            {{bonus_result|format}}
                         </td>
                     </tr>
                 </tbody>
@@ -176,6 +176,9 @@ App.dashboardCampaigns = {
             };
             Mark.pipes.percent=function(number){
                 return Math.round(number/100);
+            }
+            Mark.pipes.format=function(number){
+                return Number(number).toLocaleString();
             }
             App.renderTpl('CampaignCharts', {campaigns: personal_bonuses});
             for (let i in personal_bonuses.bonuses) {
