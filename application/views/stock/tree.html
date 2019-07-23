@@ -72,7 +72,6 @@
 	update:function(){
 	    var node=$('#Stree_tree').tree('getSelected');
 	    var newlabel=prompt("Введите новое название категории: "+node.label,node.label);
-	    console.log(node);
 	    if( newlabel && newlabel!==node.label ){
 		$.post('Stock/stockTreeUpdate/',{branch_id:node.branch_id,field:'label',value:newlabel},function(ok){
 		    if( ok*1 ){

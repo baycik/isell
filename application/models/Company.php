@@ -18,8 +18,7 @@ class Company extends Catalog{
 	return $this->treeFetch($table, $parent_id, 'top', $assigned_path, $level, 'is_active,is_leaf,label');
     }
     
-    public $listFetch=['string','q'=>['string',0]];
-    public function listFetch( $mode='',$q,$transliterated=false ){
+    public function listFetch(string $q='', string $mode='', bool $transliterated=false, int $offset=0, int $limit=20 ){
 	$assigned_path=$this->Hub->svar('user_assigned_path');
 	$level=$this->Hub->svar('user_level');
         $and_where="AND path LIKE '$assigned_path%' AND level<=$level AND label LIKE '%$q%'";
@@ -37,37 +36,38 @@ class Company extends Catalog{
             WHERE
                 is_leaf=1
                 $and_where
-            LIMIT 20";
+            ORDER BY path
+            LIMIT $limit OFFSET $offset";
         $companies=$this->get_list( $sql );
         
-        if( $mode=='selected_passive_if_empty' ){
-	    array_push($companies,['company_id'=>$this->Hub->pcomp('company_id'),'label'=>$this->Hub->pcomp('label'),'path'=>$this->Hub->pcomp('path')]);
-	} else {
-	    array_push($companies,['company_id'=>0,'label'=>'-','path'=>'']);
-	}
+//        if( $mode=='selected_passive_if_empty' && $this->Hub->pcomp('company_id') ){
+//	    array_push($companies,['company_id'=>$this->Hub->pcomp('company_id'),'label'=>$this->Hub->pcomp('label'),'path'=>$this->Hub->pcomp('path')]);
+//	} else {
+//	    array_push($companies,['company_id'=>0,'label'=>'-','path'=>'']);
+//	}
 	if( $mode=='with_active' ){
 	    array_push($companies,['company_id'=>$this->Hub->acomp('company_id'),'label'=>$this->Hub->acomp('company_name'),'path'=>'']);
 	}
         if( !count($companies) && !$transliterated ){
-            return $this->listFetch($mode, $this->transliterate($q), true);
+            return $this->listFetch($this->transliterate($q), $mode, true, $offset, $limit );
         }
-        if( !count($companies) ){
-            return $this->suggestTransliterate($mode,$q,$transliterated);
-        }
+//        if( !count($companies) ){
+//            return $this->suggestTransliterate($mode,$q,$transliterated);
+//        }
 	return $companies;
     }
     
-    private function suggestTransliterate($mode,$q,$transliterated){
-        if( $transliterated==false || $transliterated=='fromlatin' ){
-            if( $transliterated==false ){
-                $direction='fromlatin';
-            } else {
-                $direction='fromcyrilic';
-            }
-            return $this->listFetch($mode,$this->transliterate($q,$direction),$direction);
-        }
-        return [];
-    }
+//    private function suggestTransliterate($mode,$q,$transliterated){
+//        if( $transliterated==false || $transliterated=='fromlatin' ){
+//            if( $transliterated==false ){
+//                $direction='fromlatin';
+//            } else {
+//                $direction='fromcyrilic';
+//            }
+//            return $this->listFetch($mode,$this->transliterate($q,$direction),$direction);
+//        }
+//        return [];
+//    }
     
     public function listFetchAll($mode=NULL){
 	$assigned_path=$this->Hub->svar('user_assigned_path');

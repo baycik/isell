@@ -237,6 +237,9 @@
 			Order.submit(supplier_company_id);
 		    }
 		});
+                $('.create_orders').click(function(){
+                    Summary.tools.create_orders();
+                });
 	    },
 	    accordion:{
 		render:function(){
@@ -264,7 +267,12 @@
 	    tools:{
 		reload: function () {
 		    Summary.accordion.load();
-		}
+		},
+                create_orders: function(){
+                    $.post('StockBuyManager/ordersAbsentCreate', function (resp) {
+			Summary.accordion.render();
+		    });
+                }
 	    }
 	};
         init();
@@ -364,6 +372,7 @@
 		</div>
 	    {{/summary}}
 	</div>
+        <button class="create_orders"><img src="img/calc.png" style="width:24px;height: 24px;"> Сформировать заказы</button><br>
     </div>
     <div class="bmanager-order-entries">
 	<div style="margin-right: 20px" class="x-stock-buy-manager-order-tools">

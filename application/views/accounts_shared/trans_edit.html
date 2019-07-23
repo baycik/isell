@@ -108,7 +108,8 @@
 		success([{company_id:Tedit.data.passive_company_id,label:Tedit.data.label}]);
 		return ;
 	    }
-	    App.get('Company/listFetch/with_active', param, function (xhr) {
+            param.mode='with_active';
+	    App.get('Company/listFetch/', param, function (xhr) {
 		var resp = App.json(xhr);
 		success(resp[0] ? resp : []);
 	    });

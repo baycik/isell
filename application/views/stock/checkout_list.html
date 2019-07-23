@@ -32,7 +32,6 @@
                         App.page_stock_checkout_list.entries.load();
                     } 
                     App.Topic('hashChange').subscribe(function(state,module){
-                        console.log(state);
                         if(module == 'Stock'){
                             var selected_rows = App.page_stock_checkout_list.table.grid.getSelectedRows();
                             var row_data=App.page_stock_checkout_list.table.grid.getDataItem(selected_rows[0]);
@@ -141,7 +140,6 @@
                     });
                     return;
                 }; 
-                console.log(response['entries']);
                 var verified = 0;
                 var total = 0;
                 response['entries'].forEach(function(item){

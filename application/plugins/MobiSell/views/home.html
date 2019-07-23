@@ -15,9 +15,6 @@
             var disable_document_create_notification=localStorage.getItem('disable_document_create_notification')==='true'?1:0;
             $('input[name=disable_document_create_notification]').prop('checked', disable_document_create_notification);
             $("#home_version_date").html(new Date(document.lastModified).toLocaleDateString());
-            
-            
-            console.log($('input[name=disable_document_create_notification]'));
         }
     };
 </script>
@@ -45,21 +42,25 @@
 		<i class="cube icon"></i>
 		Каталог товаров
 	    </a>
-            <a href="#checkout_document_list.html" class="item">
-		<i class="clipboard list icon"></i>
-		Учет
+	    <a href="#document.html" class="item">
+		<i class="file outline icon"></i>
+		Создать документ
 	    </a>
 	    <a href="#document_list.html" class="item">
 		<i class="list layout icon"></i>
 		Список Документов
 	    </a>
-	    <a href="#document.html" class="item">
-		<i class="file outline icon"></i>
-		Создать документ
+	    <a href="#company_list.html" class="item">
+		<i class="users icon"></i>
+		Список Клиентов
 	    </a>
             <a href="#payments.html" class="item">
 		<i class="exchange icon"></i>
 		Взаиморасчет
+	    </a>
+            <a href="#checkout_document_list.html" class="item">
+		<i class="clipboard list icon"></i>
+		Учет
 	    </a>
 	    <div class="item">
 		<i class="settings icon"></i>

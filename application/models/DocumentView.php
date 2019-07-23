@@ -108,8 +108,6 @@ class DocumentView extends DocumentItems{
     public $documentViewGet=['doc_view_id'=>'int','out_type'=>'string'];
     public function documentViewGet($doc_view_id,$out_type){
         $dump=$this->fillDump($doc_view_id);
-	//print_r($dump);
-	//exit;
 	$ViewManager=$this->Hub->load_model('ViewManager');
 	$ViewManager->store($dump);
 	$ViewManager->outRedirect($out_type);
