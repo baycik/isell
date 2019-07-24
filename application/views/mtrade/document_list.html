@@ -45,9 +45,6 @@
         },
         table: {
             frm:{
-                round: function (row, cell, value, columnDef, dataContext) {
-                    return isNaN(value) ? '' : Number(value).toLocaleString("ru-RU", { style: 'currency', currency: 'RUB' });
-                },
                 tooltip: function (row, cell, value, columnDef, dataContext) {
                     if (!value) {
                         return '';
@@ -56,7 +53,7 @@
                     var cmd = parts.shift();
                     if (cmd) {
                         var style = 'max-width:16px;height:auto';
-                        return '<img src="img/' + cmd + '.png" data-action="'+cmd+'" style="' + style + '" title="' + parts.join(' ') + '">';
+                        return `<img src="img/${cmd}.png" data-command="${cmd}" style="${style}" title="${parts.join(' ')}">`;
                     } else {
                         return '';
                     }
@@ -87,73 +84,50 @@
                         multiSelect: false,
                         url: 'DocumentList/listFetch',
                         explicitInitialization: true,
-                        pagesize:20,
+                        pagesize:25,
                         params:{
                             mode:'add_empty_row'
                         }
                     }
                 };
-                DocList.grid = $("#doclist_sg").slickgrid(settings);
+                DocList.grid = new SlickInfinite("#doclist_sg", settings);
                 DocList.grid.onSelectedRowsChanged.subscribe(function (e, selection) {
-                    var doclistRow = selection.grid.getDataItem(selection.rows[0]);
-                    if(!doclistRow){
+                    DocList.table.current_row = selection.grid.getDataItem(selection.rows[0]);
+                    if( !DocList.table.current_row ){
                         return false;
                     }
-                    DocHolder.load(doclistRow.doc_id,doclistRow.doc_extension);
+                    DocHolder.load(DocList.table.current_row.doc_id,DocList.table.current_row.doc_extension);
                 });
                 DocList.grid.onRenderFinished.subscribe(function(){
-                    if( DocList.table.selected_doc_id ){
-                        var rows=DocList.grid.getData();
-                        for(var num in rows){
-                            if(rows[num].doc_id==DocList.table.selected_doc_id){
-                                DocList.grid.setSelectedRows([num]);
-                                break;
-                            }
-                        }
-                    } else {
-                        DocList.grid.setSelectedRows([0]);
-                    }
+                    DocList.grid.setSelectedRows([DocList.table.current_row.num || 0]);
                 });
-                DocList.grid.onClick.subscribe(function(e,cell){
-                    if( cell.cell==4 ){
-                        var row=DocList.grid.getDataItem(cell.row);
-                        if( row.trans_status ){
-                            var status=row.trans_status.split(' ')[0];
-                            if( "unpayed partly payed".indexOf(status)>-1 ){
-                                App.loadWindow("page/accounts/document_pay",{doc_id:row.doc_id,total:row.doc_total}).done(function(fvalue){
-                                    DocList.tools.reload();
-                                });
-                            } else if( "closing closed".indexOf(status)>-1 ){
-                                App.flash("Документ уже оплачен");
-                            }
-                        }
+                $("#doclist_sg").click(function(e){
+                    let command=$(e.target).data('command');
+                    if( "unpayed partly payed".indexOf(command)>-1 ){
+                        App.loadWindow("page/accounts/document_pay",{doc_id:DocList.table.current_row.doc_id,total:DocList.table.current_row.doc_total}).done(function(fvalue){
+                            DocList.tools.reload();
+                        });
+                    } else if( "closing closed".indexOf(command)>-1 ){
+                        App.flash("Документ уже оплачен");
                     }
-                });
-                DocList.grid.onRenderFinished.subscribe(function(e,args){
-                    DocList.table.setDimensions("#doclist_sg .slick-viewport",DocList.table.columnSummaryWidth);
                 });
                 App.Topic('activeCompanySelected').subscribe(function (company) {
                     DocList.grid.updateOptions({params: {mode: 'show_only_pcomp_docs,add_empty_row'}});
                     DocList.tools.reload();
-                    //App.Document.load(0);
                 });
                 App.Topic('passiveCompanySelected').subscribe(function (company) {
                     DocList.grid.updateOptions({params: {mode: 'show_only_pcomp_docs,add_empty_row'}});
                     DocList.tools.reload();
-                    //App.Document.load(0);
                 });
                 App.Topic('passiveCompanyReset').subscribe(function (company) {
                     DocList.grid.updateOptions({params: {mode: 'add_empty_row'}});
                     DocList.tools.reload();
-                    //App.Document.load(0);
                 });
                 App.Topic('documentUpdated').subscribe(function () {
-                    DocList.tools.reload();
-                    //App.Document.load(0);
+                    //DocList.tools.reload();
                 });
                 DocList.table.render();
                 DocList.grid.init();
-                //DocList.tools.reload();
             },
             columnsGet:function(){
                 var columns_lev1=[
@@ -233,13 +207,13 @@
     #doclistgrid {
 	display: grid;
 	grid-template-columns: min-content min-content;
-	grid-gap:5px;
+	grid-gap:1px;
     }
 </style>
-<div id="doclistgrid">
-    <div style="vertical-align: top;width:800px;padding: 5px;" class="x-doclist-holder transp60"></div>
+<div id="doclistgrid" class="transp60">
+    <div style="vertical-align: top;width:800px;padding: 5px;" class="x-doclist-holder "></div>
     <div style="overflow-x: auto;">
-        <div class="x-doclist-tools transp60" style="display: grid;grid-template-columns: 1fr 1fr;padding:10px;margin-bottom: 5px; height: 38px">
+        <div class="x-doclist-tools " style="display: grid;grid-template-columns: 1fr 1fr;padding:10px;margin-bottom: 5px; height: 38px;background-image: url('img/bg_header_stripes.png');">
 	    <div style="font-weight: bold;">
 		<img src="img/table16.png" style="width:16px;height: 16px;" /> Документы
 	    </div>

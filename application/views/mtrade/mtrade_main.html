@@ -1,11 +1,11 @@
 <script>
 (function($){
     function init(){
-	//showTree();
-	//initTabsOnce();
-        //_loadDoclist();
+	initTree();
+	initTabs();
     }
-    function showTree(){
+    init();
+    function initTree(){
 	App.loadModule('page/company/tree',{inline:true,clickselect:true},'mCtreeInline',/(Ctree|page_company_tree)([^\w]|_)/g,"mCtreeInline$2").progress(function(status,company){
 	    if( status==='select' ){
 		App.user.pcompSelect(company);
@@ -16,144 +16,20 @@
 	    }
 	});
     }
-    
-    
-    function _loadDoclist(){
-        $("#mtrade_main_container").load("page/mtrade/document_list.html");
-        App.renderTpl("#mtrade_main_tabs",tabs);
+    function initTabs(){
+        App.isellTabs('#mtrade_main_tabs',[
+            {title:"Документы",url:"page/mtrade/document_list.html"},
+            {title:"Взаиморасчет",url:"page/mtrade/payments.html",class:'tab_pcomp_only'},
+            {title:"Настройки",url:"page/company/prefs.html",class:'tab_pcomp_only'},
+            {title:"Реквизиты",url:"page/mtrade/details.html",class:'tab_pcomp_only'}
+        ]);
+        App.Topic('passiveCompanySelected').subscribe(function(){
+            $('#mtrade_main_tabs .tab_pcomp_only').removeClass('isell-tabs-disabled');
+        });
+        App.Topic('passiveCompanyReset').subscribe(function(){
+            $('#mtrade_main_tabs .tab_pcomp_only').addClass('isell-tabs-disabled');
+        });        
     }
-    
-    
-    
-    
-    
-    
-    
-    function isellTabs( query, tabdata ){
-        let tabs_tpl=
-            `<div class="isell-tabs-buttons">
-                {{.}}
-                    <div data-index="{{#}}" {{if class}}class="{{class}}"{{/if}}>{{title}}</div>
-                {{/.}}
-            </div>
-            <div class="isell-tabs-holders"></div>`;
-        let clear_query=query.replace(/\W/g,'');
-        let isellTabs={
-            init(){
-                $(query).html(tabs_tpl).addClass('isell-tabs');
-                isellTabs.renderButtons();
-                setTimeout(function(){
-                    isellTabs.initEvents();
-                },0);
-            },
-            initEvents(){
-                $(query+" .isell-tabs-buttons").click(function(e){
-                    let index=$(e.target).data('index');
-                    isellTabs.select(index);
-                });
-                App.Topic('hashChange').subscribe(function(state){
-                    let title=state[clear_query];
-                    isellTabs.selectTitle(title);
-                });
-            },
-            select(index){
-                if( index>-1 ){
-                    $(query+" .isell-tabs-buttons div").removeClass('isell-tabs-active');
-                    $(query+` .isell-tabs-buttons div[data-index='${index}']`).addClass('isell-tabs-active');
-                    isellTabs.loadContent( index );
-                    App.state[clear_query]=tabdata[index].title;
-                    location="#"+App.module.current+"#"+$.param(App.state).replace(/\+/g, '%20');
-                }
-            },
-            selectTitle(title){
-                for(var i=0;i<tabdata.length;i++){
-                    if(tabdata[i].title===title){
-                        isellTabs.select(i);
-                        break;
-                    }
-                }
-            },
-            renderButtons(){
-                App.renderTpl(query+" .isell-tabs-buttons",tabdata);
-            },
-            loadContent( index ){
-                $(query+" .isell-tabs-holders>div").css('left','-10000px');
-                let holder=$(query+` .isell-tabs-holders div[data-index='${index}']`);
-                if( holder.length<1 ){
-                    $(query+" .isell-tabs-holders").append(`<div data-index="${index}">Загрузка ...</div>`);
-                    holder=$(query+` .isell-tabs-holders div[data-index='${index}']`);
-                    $.get(tabdata[index].url).done(function(html){
-                        holder.html(html);
-                    });
-                }
-                holder.css('left',0);
-            }
-        };
-        isellTabs.init();
-        return isellTabs;
-    }
-    var tabs=[
-	{title:"Документы",url:"page/mtrade/document_list.html"},
-	{title:"Взаиморасчет",url:"page/mtrade/payments.html",class:'tab_pcomp_only'},
-	{title:"Настройки",url:"page/company/prefs.html",class:'tab_pcomp_only'},
-	{title:"Реквизиты",url:"page/mtrade/details.html",class:'tab_pcomp_only'}
-    ];
-    isellTabs('#mtrade_main_tabs',tabs);
-    App.Topic('passiveCompanyInited').subscribe(function(){
-        $('#mtrade_main_tabs .tab_pcomp_only').removeClass('.isell-tabs-disabled');
-    });
-    App.Topic('passiveCompanySelected').subscribe(function(){
-        $('#mtrade_main_tabs .tab_pcomp_only').removeClass('.isell-tabs-disabled');
-    });
-    App.Topic('passiveCompanyReset').subscribe(function(){
-        $('#mtrade_main_tabs .tab_pcomp_only').addClass('.isell-tabs-disabled');
-    });
-    
-    App.handler.progress(function(status){
-	    console.log(status);
-	});
-    
-    
-    
-    /*
-    
-    
-    
-    var isTabsInited=false;
-    function initTabsOnce (){
-	if( isTabsInited ){
-	    return;
-	}
-	isTabsInited=true;
-	$('#mtrade_main_tabs').tabs({border:true,pill:true});
-	for(var i in tabs){
-	    tabs[i].selected=false;
-	    $("#mtrade_main_tabs").tabs('add',tabs[i]);
-	}
-	App.initTabs('mtrade_main_tabs');
-	App.handler.progress(function(status){
-	    if( status==='passiveCompanyInited' || status==='passiveCompanySelected' || status==='passiveCompanyReset' ){
-		tabsTogglePcompSpecific();
-	    }
-	});
-	tabsTogglePcompSpecific();
-    }
-    function tabsTogglePcompSpecific(){
-	var first_nonspecific;
-	for(var i in tabs){
-	    if(tabs[i].pcompSpecific){
-		App.pcomp && $("#mtrade_main_tabs").tabs('enableTab',tabs[i].title);
-		!App.pcomp && $("#mtrade_main_tabs").tabs('disableTab',tabs[i].title);
-	    } else {
-		first_nonspecific=tabs[i].title;
-	    }
-	}
-	var selected_disabled=$("#mtrade_main_tabs").tabs('getSelected').panel('options').disabled;
-	if( selected_disabled ){
-	    $("#mtrade_main_tabs").tabs('select',first_nonspecific);
-	}
-    }*/
-    init();
 })(jQuery);
 </script>
 <style>
@@ -162,47 +38,10 @@
         gap:2px;
         grid-template-columns: min-content min-content;
     }
-    .isell-tabs .isell-tabs-buttons{
-        display: grid;
-        gap:2px;
-        grid-auto-flow: column;
-        grid-auto-columns: min-content;
-        margin-top: 1px;
-    }
-    .isell-tabs .isell-tabs-holders{
-        position: relative;
-    }
-    .isell-tabs .isell-tabs-holders>div{
-        position: absolute;
-    }
-    .isell-tabs .isell-tabs-buttons div{
-        padding: 10px;
-        background-color: #ffffffaa;
-        font-size: 14px;
-        border-bottom: 3px solid #666;
-    }
-    .isell-tabs .isell-tabs-buttons .isell-tabs-active, .isell-tabs .isell-tabs-buttons div:hover{
-        background-color: #ffffffee;
-        border-bottom-color: #0aF;
-        cursor: pointer;
-    }
-    .isell-tabs .isell-tabs-disabled{
-        pointer-events:none;
-        background-color: #888888aa !important;
-    }
 </style>
 <div class="mtrade_grid">
     <div>
         <div id="mCtreeInline" class="transp60"></div>
     </div>
-    
-    
     <div id="mtrade_main_tabs"></div>
-    
 </div>
-<!--
-<div style="float: left;margin-right: 3px;">
-    
-</div>
-<div id="mtrade_main_tabs" class="slim-tab" style="min-width:1000px;"></div>
--->

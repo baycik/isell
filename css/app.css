@@ -685,3 +685,34 @@ h2{
     padding: 4px;
     border: 1px solid #ccc;
 }
+
+
+
+.isell-tabs .isell-tabs-buttons{
+    display: grid;
+    gap:2px;
+    grid-auto-flow: column;
+    grid-auto-columns: min-content;
+    margin-top: 1px;
+}
+.isell-tabs .isell-tabs-holders{
+    position: relative;
+}
+.isell-tabs .isell-tabs-holders>div{
+    position: absolute;
+}
+.isell-tabs .isell-tabs-buttons div{
+    padding: 10px;
+    background-color: #ffffffaa;
+    font-size: 14px;
+    border-bottom: 3px solid #666;
+}
+.isell-tabs .isell-tabs-buttons .isell-tabs-active, .isell-tabs .isell-tabs-buttons div:hover{
+    background-color: #ffffffee;
+    border-bottom-color: #0aF;
+    cursor: pointer;
+}
+.isell-tabs .isell-tabs-disabled{
+    pointer-events:none;
+    background-color: #ccccccaa !important;
+}

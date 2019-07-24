@@ -68,6 +68,67 @@ var App = {
             }
         });
     },
+    isellTabs:function( query, tabdata ){
+        let tabs_tpl=
+            `<div class="isell-tabs-buttons">
+                {{.}}<div data-index="{{#}}" {{if class}}class="{{class}}"{{/if}}>{{title}}</div>{{/.}}
+            </div>
+            <div class="isell-tabs-holders"></div>`;
+        let clear_query=query.replace(/\W/g,'');
+        let isellTabs={
+            init(){
+                isellTabs.render();
+                setTimeout(function(){
+                    isellTabs.initEvents();
+                },0);
+            },
+            initEvents(){
+                $(query+" .isell-tabs-buttons").click(function(e){
+                    let index=$(e.target).data('index');
+                    isellTabs.select(index);
+                });
+                App.Topic('hashChange').subscribe(function(state){
+                    let title=state[clear_query];
+                    isellTabs.selectTitle(title);
+                });
+            },
+            select(index){
+                if( index>-1 ){
+                    $(query+" .isell-tabs-buttons div").removeClass('isell-tabs-active');
+                    $(query+` .isell-tabs-buttons div[data-index='${index}']`).addClass('isell-tabs-active');
+                    isellTabs.loadContent( index );
+                    App.state[clear_query]=tabdata[index].title;
+                    location="#"+App.module.current+"#"+$.param(App.state).replace(/\+/g, '%20');
+                }
+            },
+            selectTitle(title){
+                for(var i=0;i<tabdata.length;i++){
+                    if(tabdata[i].title===title){
+                        isellTabs.select(i);
+                        break;
+                    }
+                }
+            },
+            render(){
+                var rendered=Mark.up(tabs_tpl,tabdata);
+                $(query).html(rendered).addClass('isell-tabs');
+            },
+            loadContent( index ){
+                $(query+" .isell-tabs-holders>div").css('left','-10000px');
+                let holder=$(query+` .isell-tabs-holders div[data-index='${index}']`);
+                if( holder.length<1 ){
+                    $(query+" .isell-tabs-holders").append(`<div data-index="${index}">Загрузка ...</div>`);
+                    holder=$(query+` .isell-tabs-holders div[data-index='${index}']`);
+                    $.get(tabdata[index].url).done(function(html){
+                        holder.html(html);
+                    });
+                }
+                holder.css('left',0);
+            }
+        };
+        isellTabs.init();
+        return isellTabs;
+    },
     initModule: function(id,data,handler){
 	App[id].data = data;
 	App[id].handler = handler;
