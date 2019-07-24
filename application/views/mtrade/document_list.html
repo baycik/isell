@@ -62,7 +62,7 @@
                     }
                 },
                 currency:function(row, cell, value, columnDef, dataContext){
-                    return value*1 ? Number.parseFloat(value).toLocaleString('ru-RU',{ style: 'currency', currency: 'RUB' }) : '';
+                    return value*1 ? Number.parseFloat(value).toLocaleString('lookup',{ style: 'decimal',minimumFractionDigits:2 }) : '';
                 },
                 dateFormatter: function (row, cell, value, columnDef, dataContext) {
                     if( !value ){
@@ -73,7 +73,7 @@
                     return '<span title="' + value.split(' ')[1] + '">' + date + '</span>';
                 }
             },
-            columnMode: /*App.store('document_list_table_mode') || */'simple',
+            columnMode: App.store('document_list_table_mode') || 'simple',
             current_row: '',
             init: function () {
                 var settings = {
@@ -159,8 +159,8 @@
                 var columns_lev1=[
                     {id: "doc_type_icon", field: "doc_type_icon", name: "", width: 25, formatter: DocList.table.frm.tooltip},
                     {id: "doc_num", field: "doc_num", name: "Номер", width: 50, sortable: true, cssClass: 'slick-align-right'},
-                    {id: "cstamp", field: "cstamp", name: "Дата", width: 70, sortable: true, formatter: DocList.table.frm.dateFormatter},
-                    {id: "doc_total", field: "doc_total", name: "Сумма", width: 80, sortable: true, cssClass: 'slick-align-right', formatter: DocList.table.frm.currency},
+                    {id: "cstamp", field: "cstamp", name: "Дата", width: 75, sortable: true, formatter: DocList.table.frm.dateFormatter},
+                    {id: "doc_total", field: "doc_total", name: "Сумма", width: 90, sortable: true, cssClass: 'slick-align-right', formatter: DocList.table.frm.currency},
                     {id: "trans_status", field: "trans_status", name: "Оплачен", width: 25, sortable: true, formatter: DocList.table.frm.tooltip},
                 ];
                 var columns_adv=[
@@ -180,7 +180,7 @@
                 var cols=DocList.table.columnsGet();
                 DocList.table.columnSummaryWidth=0;
                 for( var i in cols ){
-                    DocList.table.columnSummaryWidth+=cols[i].width+1;
+                    DocList.table.columnSummaryWidth+=cols[i].width+2;
                 }
                 DocList.grid.setColumnsAndFilters(cols);
 
@@ -238,17 +238,17 @@
 </style>
 <div id="doclistgrid">
     <div style="vertical-align: top;width:800px;padding: 5px;" class="x-doclist-holder transp60"></div>
-    <div>
-        <div class="x-doclist-tools transp60" style="background: url('img/bg_header_stripes.png'); padding:10px;margin-bottom: 5px; height: 38px">
-	    <div style="display: inline-block; width: 48%;font-weight: bold;">
-		<img src="img/table16.png" style="width:16px;height: 16px;"> Документы
+    <div style="overflow-x: auto;">
+        <div class="x-doclist-tools transp60" style="display: grid;grid-template-columns: 1fr 1fr;padding:10px;margin-bottom: 5px; height: 38px">
+	    <div style="font-weight: bold;">
+		<img src="img/table16.png" style="width:16px;height: 16px;" /> Документы
 	    </div>
-	    <div style="float: right">
+	    <div style="text-align: right">
 		<span class="icon-24 icon-create" data-action="add" title="Создать документ"> </span> 
 		<span class="icon-24 icon-expand" data-action="expand_collapse" title="Полный/Сокращенный режим"> </span> 
 		<span class="icon-24 icon-refresh" data-action="reload" title="Обновить"> </span> 
 	    </div>
 	</div>
-	<div id="doclist_sg" style="height:700px"></div>
+	<div id="doclist_sg" style="height:700px;"></div>
     </div>
 </div>

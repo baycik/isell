@@ -187,6 +187,9 @@ var App = {
 	    script.onload = ok;
 	    document.head.appendChild(script); //or something of the likes
 	}	
+    },
+    getHolderId:function(){
+        return document.scripts[document.scripts.length - 1].parentNode.id;
     }
 };
 
