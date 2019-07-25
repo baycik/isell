@@ -98,6 +98,7 @@ class User extends Catalog {
             }
         }
     }
+
     private function generatePassword(){
         $alphabet = 'abcdefghijklmnopqrstuvwxyz1234567890';//ABCDEFGHIJKLMNOPQRSTUVWXYZ
         $password = array(); 
