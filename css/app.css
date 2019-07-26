@@ -705,10 +705,10 @@ h2{
     padding: 10px;
     background-color: #ffffffaa;
     font-size: 14px;
-    border-bottom: 3px solid #666;
+    border-bottom: 3px solid #999;
 }
 .isell-tabs .isell-tabs-buttons .isell-tabs-active, .isell-tabs .isell-tabs-buttons div:hover{
-    background-color: #ffffffee;
+    background-color: #fffe;
     border-bottom-color: #0aF;
     cursor: pointer;
 }

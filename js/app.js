@@ -76,6 +76,7 @@ var App = {
             <div class="isell-tabs-holders"></div>`;
         let clear_query=query.replace(/\W/g,'');
         let isellTabs={
+            selectedIndex:0,
             init(){
                 isellTabs.render();
                 setTimeout(function(){
@@ -99,15 +100,17 @@ var App = {
                     isellTabs.loadContent( index );
                     App.state[clear_query]=tabdata[index].title;
                     location="#"+App.module.current+"#"+$.param(App.state).replace(/\+/g, '%20');
+                    isellTabs.selectedIndex=index;
                 }
             },
             selectTitle(title){
                 for(var i=0;i<tabdata.length;i++){
                     if(tabdata[i].title===title){
                         isellTabs.select(i);
-                        break;
+                        return;
                     }
                 }
+                isellTabs.select(0);
             },
             render(){
                 var rendered=Mark.up(tabs_tpl,tabdata);

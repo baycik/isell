@@ -90,6 +90,7 @@ Document.head=  {
                 textField: 'status_description',
                 url:'DocumentList/statusFetchList',
                 mode: 'remote',
+                method:'get',
                 selectOnNavigation:false,
                 panelHeight:''
             });
@@ -99,6 +100,7 @@ Document.head=  {
                 textField: 'doc_type_name',
                 url:'DocumentList/documentTypeListFetch',
                 mode: 'remote',
+                method:'get',
                 selectOnNavigation:false,
                 panelHeight:'',
                 showItemIcon:true,
@@ -253,6 +255,7 @@ Document.body={
     render:function(table){
 	Document.body.table_sg.setData(table);
 	Document.body.table_sg.render();
+        Document.body.table_sg.autosizeColumns();
     },
     destroy:function(){
 	$("#"+holderId+" .x-body .x-suggest").combobox('clear');
@@ -454,13 +457,13 @@ Document.body={
 	    var settings={
 		columns:[
 		    {id:"queue",name: "№", width: 30,formatter:Document.body.table.formatters.queue },
-		    {id:"product_code", field: "product_code",name: "Код", sortable: true, width: 80},
-		    {id:"product_name", field: "product_name",name: "Название", sortable: true, width: 388},
-		    {id:"product_quantity", field: "product_quantity",name: "Кол-во", sortable: true, width: 70, cssClass:'slick-align-right', editor: Slick.Editors.Integer},
-		    {id:"product_unit", field: "product_unit",name: "Ед.", width: 30, sortable: true },
-		    {id:"product_price", field: "product_price",name: "Цена", sortable: true, width: 70, cssClass:'slick-align-right',asyncPostRender:Document.body.table.formatters.priceisloss, editor: Slick.Editors.Float},
-		    {id:"product_sum", field: "product_sum",name: "Сумма", sortable: true, width: 80,cssClass:'slick-align-right', editor: Slick.Editors.Float},
-		    {id:"row_status", field: "row_status",name: "!",sortable: true, width: 25,formatter:Document.body.table.formatters.tooltip },
+		    {id:"product_code", field: "product_code",name: "Код", width: 80},
+		    {id:"product_name", field: "product_name",name: "Название", width: 388},
+		    {id:"product_quantity", field: "product_quantity",name: "Кол-во", width: 70, cssClass:'slick-align-right', editor: Slick.Editors.Integer},
+		    {id:"product_unit", field: "product_unit",name: "Ед.", width: 30 },
+		    {id:"product_price", field: "product_price",name: "Цена", width: 70, cssClass:'slick-align-right',asyncPostRender:Document.body.table.formatters.priceisloss, editor: Slick.Editors.Float},
+		    {id:"product_sum", field: "product_sum",name: "Сумма", width: 80,cssClass:'slick-align-right', editor: Slick.Editors.Float},
+		    {id:"row_status", field: "row_status",name: "!", width: 25,formatter:Document.body.table.formatters.tooltip },
 		    //{id:"party_label",field:"party_label",name:"Партия",width:120, editor: Slick.Editors.Text},
 		    //{id:"analyse_origin",field:'analyse_origin',name:"Происхождение",width:70},
 		    //{id:"self_price",field:'self_price',name:"maliyet",width:60,cssClass:'slick-align-right'}
@@ -493,7 +496,6 @@ Document.body={
 		    Document.body.table.actions[ action ] && Document.body.table.actions[action](row_data);
 		}
             });
-             
 	},
         actions:{
             err_reserve:function(row_data){

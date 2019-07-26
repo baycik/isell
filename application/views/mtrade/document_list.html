@@ -16,8 +16,12 @@
                     }
                 });
             },
+            reloadTimer:0,
             reload:function(){
-                DocList.grid.reload();
+                clearTimeout(DocList.tools.reloadTimer);
+                DocList.tools.reloadTimer=setTimeout(function(){
+                    DocList.grid.reload();
+                },100);
             },
             add:function(){
                 //Document.load(0);
@@ -33,7 +37,6 @@
                 DocList.table.render();
                 DocList.tools.reload();
                 DocList.tools.swap_expand_collapse();
-                //DocList.table.setDimensions("#trade_main_tabs .panel-body");
             },
             swap_expand_collapse:function(){
                 if(DocList.table.columnMode === 'advanced'){
@@ -70,6 +73,18 @@
                     return '<span title="' + value.split(' ')[1] + '">' + date + '</span>';
                 }
             },
+            restoreLastSelectedDocument:function(){
+                let last_doc_id=App.store('document_list_last_doc_id') || 0;
+                let doc_list=DocList.grid.getData();
+                let row_number=0;
+                for( let i in doc_list){
+                    if( doc_list[i].doc_id==last_doc_id ){
+                        row_number=doc_list[i].num;
+                        break;
+                    }
+                }
+                DocList.grid.setSelectedRows([row_number]);
+            },
             columnMode: App.store('document_list_table_mode') || 'simple',
             current_row: '',
             init: function () {
@@ -97,9 +112,11 @@
                         return false;
                     }
                     DocHolder.load(DocList.table.current_row.doc_id,DocList.table.current_row.doc_extension);
+                    App.store('document_list_last_doc_id',DocList.table.current_row.doc_id);
                 });
                 DocList.grid.onRenderFinished.subscribe(function(){
-                    DocList.grid.setSelectedRows([DocList.table.current_row.num || 0]);
+                    DocList.table.restoreLastSelectedDocument();
+                    DocList.table.setDimensions("#doclist_sg",DocList.table.columnSummaryWidth);
                 });
                 $("#doclist_sg").click(function(e){
                     let command=$(e.target).data('command');
@@ -157,23 +174,15 @@
                     DocList.table.columnSummaryWidth+=cols[i].width+2;
                 }
                 DocList.grid.setColumnsAndFilters(cols);
-
-                DocList.table.setDimensions("#doclist_sg",DocList.table.columnSummaryWidth);
             },
-            setDimensions:function(query, dw, dh){
-                if( dw===undefined ){
-                    dw=0;
-                }
-                if( dh===undefined ){
-                    dh=0;
-                }
-                var div = $(query)[0];
+            setDimensions:function(query, dw){
+                var div = $(query+' .slick-viewport')[0];
                 var hasVerticalScrollbar = div.scrollHeight > div.clientHeight;
                 if(hasVerticalScrollbar){
                     dw+=20;
                 }
-                var width =(dw+5 || 0);
-                $("#doclist_sg").css('width', width + 'px');
+                var width =(dw || 0);
+                $(query).css('width', width + 'px');
             }
         }
     };
@@ -189,6 +198,7 @@
             });
         },
         load:function(doc_id,doc_extention){
+            doc_extention=doc_extention||1;
             if( !doc_extention ){/* TODO determine current doc_extension automatically*/
                 console.log('provide doc_extention please!!!');
                 return;

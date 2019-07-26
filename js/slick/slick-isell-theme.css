@@ -6,12 +6,13 @@ classes should alter those!
 */
 
 .slick-header-columns {
-    background:linear-gradient(#fff, #eee, #fff);
-    border-bottom: 1px solid silver;
+    
 }
 
-.slick-header-column {
+.slick-header-column.ui-state-default {
+    background:linear-gradient(#fffc, #eeec, #fffc);
     border-right: 1px solid silver;
+    border-bottom: 1px solid silver !important;
 }
 
 .slick-header-column:hover, .slick-header-column-active {
@@ -19,7 +20,7 @@ classes should alter those!
 }
 
 .slick-headerrow {
-    background: #fafafa;
+    -background: #fafafa;
 }
 
 .slick-headerrow-column {
