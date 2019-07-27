@@ -261,15 +261,11 @@ Document.body={
 	$("#"+holderId+" .x-body .x-suggest").combobox('clear');
     },
     suggest:{
+        row_template:'',
 	init:function(){
+            Document.body.suggest.row_template=$("#"+holderId+" .x-suggest-row-template").html();
 	    function suggFormatter(row){
-		var html ='<div class="sugg_'+(row['leftover']>0?'instock':'outofstock')+'">';
-		html+='<div class="sugg_img"><img src="Storage/image_flush/?size=30x30&path=/dynImg/'+row['product_img']+'"></div>';
-		html+='<div class="sugg_name"><div class="sugg_code">'+row['product_code']+'</div> '+row['product_name']+' [x'+row['product_spack']+row['product_unit']+']</div>';
-		html+='<div class="sugg_price">'+Number(row.product_price_total).toFixed(2)+'</div>';
-		html+='<div class="sugg_leftover">'+row['leftover']+row['product_unit']+'</div>';
-		html+='</div>';
-		return html;
+                return Mark.up(Document.body.suggest.row_template,row);
 	    };
 	    var suggPrevCode='';
 	    function suggOnselect( row ){
@@ -286,11 +282,13 @@ Document.body={
 		mode: 'remote',
 		method:'get',
 		hasDownArrow:false,
-		panelWidth:600,
-		panelMinWidth:400,
+		panelWidth:650,
 		prompt:'код, название или штрихкод',
 		onSelect: suggOnselect,
 		onBeforeLoad: function(param){
+                    if( !param.q ){
+                        return false;
+                    }
 		    param.doc_id = Document.doc_id;
 		}
 	    }).combobox('textbox').bind( 'keydown', function(e){

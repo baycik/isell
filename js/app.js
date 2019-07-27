@@ -307,9 +307,14 @@ App.calc=function( expression ){
     return eval(expression.toString().replace(/,/g,'.').match( /[\(\d\.\)\*\/\+-]*/ ).toString()) || 0;
 };
 App.formatNum = function (num, mode) {
-    if (num === undefined || num === null || mode === 'clear' && num * 1 === 0) {
+    if (num === undefined || num === null || mode === 'clear' && num * 1 === 0 || num==NaN) {
 	return '';
     }
+    
+    Number(num).toLocaleString();
+    
+    
+    
     return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 };
 App.formElements=function( fquery ){

@@ -5,6 +5,7 @@
             doc_id:0,
             doc_extension:'',
             extention:{
+                alreadyLoaded:$.Deferred(),
                 set:function( new_doc_extension ){
                     if( !new_doc_extension || Document.doc_extension===new_doc_extension ){
                         !new_doc_extension && console.log("Wrong extention"+new_doc_extension)
@@ -37,7 +38,8 @@
                         if( extension && extension.script ){
                             eval(extension.script);
                         }
-                        Document.init();		
+                        Document.init();
+                        Document.extention.alreadyLoaded.resolve();
                     }).fail(function(){
                         App.flash("Не удалось загрузить плагин документа");
                     });
@@ -50,17 +52,19 @@
 		Document.views.init();
 	    },
 	    render:function( render_data ){
-		render_data.head && Document.head.render(render_data.head);
-		render_data.body && Document.body.render(render_data.body);
-		render_data.foot && Document.foot.render(render_data.foot);
-		render_data.views && Document.views.render(render_data.views);
+                Document.extention.alreadyLoaded.then(function(){
+                    render_data.head  && Document.head.render(render_data.head);
+                    render_data.body  && Document.body.render(render_data.body);
+                    render_data.foot  && Document.foot.render(render_data.foot);
+                    render_data.views && Document.views.render(render_data.views);
+                });
 	    },
 	    destroy:function(){
 		Document.head.destroy();
 		Document.body.destroy();
 		Document.foot.destroy();
 		Document.views.destroy();
-                Document.reload();
+                //Document.reload();//?????????
 		//$("#"+holderId).find(".x-head, .x-body, .x-foot, .x-views").html("");
 	    },
 	    load:function(id,parts_to_load){
@@ -82,7 +86,6 @@
 	    },
 	    reload:function(){
 		var parts=["head","body","foot","views"];
-                App.Topic('documentUpdated').publish();//why???
                 Document.load(Document.doc_id,parts);
 	    },
             delete:function(){
