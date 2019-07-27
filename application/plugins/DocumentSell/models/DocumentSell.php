@@ -63,37 +63,15 @@ class DocumentSell extends DocumentBase{
     
     public function documentUpdate(int $doc_id, string $field, string $value){
         $this->documentSelect($doc_id);
+        parent::documentUpdate($doc_id,$field,$value); 
+        
+        
 	switch($field){
             case 'doc_status_id':
 		return $this->documentSetStatus($doc_id,$value);
             default:
                 return parent::documentUpdate($doc_id,$field,$value); 
 	}
-    }
-    
-    public function documentSetStatus($doc_id,$new_status_id){
-        if(!isset($new_status_id)){
-            return false;
-        }
-        if( $doc_id ){
-            $this->documentSelect($doc_id);
-        }else {
-            $doc_id=$this->doc('doc_id');
-        }
-        $this->Hub->set_level(2);
-        $commited_only=$this->get_value("SELECT commited_only FROM document_status_list WHERE doc_status_id='$new_status_id'");
-        if( $commited_only != $this->isCommited() ){
-            return false;
-        }
-        $status_change_ok=$this->update('document_list',['doc_status_id'=>$new_status_id],['doc_id'=>$doc_id]);
-        
-        if( $new_status_id==2 ){//reserved 
-            $this->reservedTaskAdd($doc_id);
-        } else {
-            $this->reservedTaskRemove($doc_id);
-        }
-        $this->reservedCountUpdate();
-        return $status_change_ok;
     }
     
     protected function bodyGet($doc_id){

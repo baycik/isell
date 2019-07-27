@@ -174,4 +174,41 @@ class Events extends Catalog{
 	$ViewManager->store($dump);
 	$ViewManager->outRedirect($out_type);
     }
+    
+    public function Topic( string $topic ){
+        $this->topic=$topic;
+        return $this;
+    }
+    public function subscribe( string $model, string $method, string $param='' ){
+        $event_liable_user_id=$this->Hub->svar('user_id');
+        $event=[
+            'event_place'=>$model,
+            'event_target'=>$method,
+            'event_note'=>$param,
+            'event_liable_user_id'=>$event_liable_user_id,
+            'label'=>'-TOPIC-'
+        ];
+        $this->eventCreate($event);
+    }
+    public function unsubscribe( string $model, string $method, int $event_liable_user_id=NULL ){
+        $user_case='';
+        if( $event_liable_user_id ){
+            $user_case=" AND event_liable_user_id='$event_liable_user_id'";
+        }
+        $this->query("DELETE FROM event_list WHERE event_place='$model' AND event_target='$method' $user_case");
+    }
+    public function publish( array $arguments=[] ){
+        $listener_list=$this->get_list("SELECT event_place,event_target,event_liable_user_id FROM event_list WHERE event_name='$this->topic'");
+        foreach($listener_list as $listener){
+            $Model=$this->Hub->load_model($listener->event_place);
+            $method=$listener->event_target;
+            $arguments[]=$listener->event_note;
+            try{
+                call_user_func_array([$Model, $method],$arguments);
+            } catch (Exception $ex) {
+                $this->unsubscribe( $listener->event_place, $listener->event_target, $listener->event_liable_user_id );
+                $this->log("Topic subscriber '{$listener->event_place}->{$listener->event_target}' has been removed due to error: ".$ex);
+            }
+        }
+    }
 }

@@ -263,7 +263,7 @@ Document.body={
     suggest:{
         row_template:'',
 	init:function(){
-            Document.body.suggest.row_template=$("#"+holderId+" .x-suggest-row-template").html();
+            Document.body.suggest.row_template=$("#"+holderId+" .x-suggest-row-template").html().replace(/&gt;/g,'>').replace(/<!--/g,'').replace(/-->/g,'');
 	    function suggFormatter(row){
                 return Mark.up(Document.body.suggest.row_template,row);
 	    };
@@ -274,7 +274,7 @@ Document.body={
 	    };
 	    $("#"+holderId+" .x-body .x-suggest").combobox({
 		valueField: 'product_code',
-		textboxextField: 'product_code',
+		textField: 'product_code',
 		formatter:suggFormatter,
 		selectOnNavigation:false,
 		url: Document.doc_extension+'/entrySuggestFetch/',

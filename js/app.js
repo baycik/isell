@@ -310,12 +310,7 @@ App.formatNum = function (num, mode) {
     if (num === undefined || num === null || mode === 'clear' && num * 1 === 0 || num==NaN) {
 	return '';
     }
-    
-    Number(num).toLocaleString();
-    
-    
-    
-    return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+    return Number.parseFloat(num).toLocaleString('lookup',{ style: 'decimal',minimumFractionDigits:2 })
 };
 App.formElements=function( fquery ){
     return $(fquery + " input," + fquery + " textarea," + fquery + " select");

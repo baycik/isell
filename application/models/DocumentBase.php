@@ -120,6 +120,9 @@ abstract class DocumentBase extends Catalog{
 	    case 'doc_ratio':
 		$ok=$this->transChangeCurrRatio( $value );
 		break;
+            case 'doc_status_id':
+                $ok=$this->documentChangeStatus( $value );
+                break;
 	    case 'vat_rate':
 		$ok=$this->transChangeVatRate( $value );
 		break;
@@ -141,6 +144,49 @@ abstract class DocumentBase extends Catalog{
 	$this->db_transaction_commit();
 	return true;
     }
+    
+    
+    
+    
+    private function documentChangeStatus($new_status_id){
+        if( !isset($new_status_id) ){
+            return false;
+        }
+        $commited_only=$this->get_value("SELECT commited_only FROM document_status_list WHERE doc_status_id='$new_status_id'");
+        if( $commited_only != $this->isCommited() ){
+            return false;
+        }
+        $old_status_id=$this->doc('doc_status_id');
+        $Event=$this->Hub->load_model("Event");
+        $Event->Topic('documentStatusChanged')->publish($old_status_id,$new_status_id);
+        
+        /*
+        if( $new_status_id==2 ){//reserved 
+            $this->reservedTaskAdd($doc_id);
+        } else {
+            $this->reservedTaskRemove($doc_id);
+        }
+        $this->reservedCountUpdate();
+        */
+        return true;
+    }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     private function duplicateEntries($new_doc_id,$old_doc_id){
 	$old_entries=$this->get_list("SELECT product_code,product_quantity,self_price,party_label,invoice_price FROM document_entries WHERE doc_id='$old_doc_id'");
 	foreach($old_entries as $entry){

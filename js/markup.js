@@ -46,9 +46,8 @@ var Mark = {
     },
 
     // Pass a value through a series of pipe expressions, e.g. _pipe(123, ["add>10","times>5"]).
-    _pipe: function (val, expressions) {
+    _pipe: function (val, expressions, context) {
         var expression, parts, fn, result;
-
         // If we have expressions, pull out the first one, e.g. "add>10".
         if ((expression = expressions.shift())) {
 
@@ -57,7 +56,15 @@ var Mark = {
 
             // Pull out the function name, e.g. "add".
             fn = parts.shift().trim();
-
+            
+            if( context ){
+                //baycik patch to try to evaluate vars in if statement
+                for(var i in parts){
+                    if( context[parts[i]] ){
+                        parts[i]=context[parts[i]];
+                    }
+                }
+            }
             try {
                 // Run the function, e.g. add(123, 10) ...
                 result = Mark.pipes[fn].apply(null, [val].concat(parts));
@@ -288,7 +295,7 @@ Mark.up = function (template, context, options) {
 
         // Evaluating an "if" statement.
         else if (testy) {
-            result = this._pipe(ctx, filters);
+            result = this._pipe(ctx, filters, context);//baycik patch to try to evaluate vars in if statement
         }
 
         // Evaluating an array, which might be a block expression.
