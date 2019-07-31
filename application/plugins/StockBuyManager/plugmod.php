@@ -245,7 +245,12 @@ $filename[]=<<<EOT
 plugins/MobiSell/views/stock.html
 EOT;
 $search[]=<<<EOT
-{{if is_promo}}<s>{{product_price_total_raw}}</s> {{/if}}{{product_price_total}}</div></div>
+                                {{if is_promo}}
+                                    <s>{{product_price_total_raw}}</s>
+                                    <b>{{product_price_total}}</b>
+                                {{else}} 
+                                    <b>{{product_price_total}}</b>
+                                {{/if}}
 EOT;
 $replace[]=<<<EOT
 EOT;
