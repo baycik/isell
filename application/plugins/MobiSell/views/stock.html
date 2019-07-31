@@ -321,7 +321,7 @@
                         }
                         product_object.quantity_in_cart = App.stock.cart.findInCart(product_object.product_id).product_quantity;
                         App.renderTpl('stock_product_info_modal', product_object);
-                        $("#stock_product_info_modal").modal({ inverted: true, duration:0}).modal('show');
+                        $("#stock_product_info_modal").modal({ inverted: true, duration:0}).modal('show').modal('can fit');;
                     });
             },
             composeAttributes: function(product_object){
@@ -345,13 +345,34 @@
         #stock_list:not(.grid-view) .product-list-grid, .grid-view .product-list-grid{
             grid-template-columns: 100% !important;
         }
-        #stock_list:not(.grid-view) .product-item-grid, .grid-view .product-item-grid{
+        .grid-view .product-item-grid{
             text-align: center !important;
             grid-template-columns: 100% !important;
         }
-        #stock_list:not(.grid-view) .product-image-column img, #stock_list:not(.grid-view) .product-image-column ,.grid-view .product-image-column ,.grid-view .product-image-column img{
+        #stock_list:not(.grid-view) .product-item-grid{
+             grid-template-columns: 12% 87% !important;
+             grid-column-gap: 1em !important;
+             font-size: smaller !important;
+             position: relative;
+        }
+        #stock_list:not(.grid-view) .product-info-column{
+            width: 43vw !important;
+        }
+        #stock_list:not(.grid-view) .product-action-column{
+           transform: scale(0.9) !important;
+           width: 54vw !important;
+           right: -12px !important;
+           position: absolute !important;
+           bottom: 0px !important;
+        }
+        
+        .grid-view .product-image-column ,.grid-view .product-image-column img{
             height: 130px !important;
             width: auto !important;
+        }
+        #stock_list:not(.grid-view) .product-image-column img, #stock_list:not(.grid-view) .product-image-column {
+           height: auto !important;
+           width: 40px !important;
         }
         #stock_product_info_modal .content{
             grid-template-columns: 100% !important;
@@ -373,6 +394,7 @@
             overflow-y: visible !important;
             overflow-x: visible !important;
         }
+        
     }  
     @media only screen and (min-width: 400px) and (max-width: 650px) {
         .categories-container{
@@ -381,14 +403,38 @@
         #stock_list:not(.grid-view) .product-clear-button-container{
             position: initial !important;
         }
-        #stock_list:not(.grid-view) .product-list-grid, .grid-view .product-list-grid{
+        grid-view .product-list-grid{
             grid-template-columns: 50% 50% !important;
         }
-        #stock_list:not(.grid-view) .product-item-grid, .grid-view .product-item-grid{
+        #stock_list:not(.grid-view) .product-list-grid{
+            grid-template-columns: 100% !important;
+        }
+        .grid-view .product-item-grid{
             grid-template-columns: 100% !important;
             text-align: center !important;
         }
-        #stock_list:not(.grid-view) .product-image-column img, #stock_list:not(.grid-view) .product-image-column ,.grid-view .product-image-column ,.grid-view .product-image-column img{
+        #stock_list:not(.grid-view) .product-item-grid{
+             grid-template-columns: 12% 87% !important;
+             grid-column-gap: 1em !important;
+             font-size: small !important;
+             position: relative;
+        }
+        #stock_list:not(.grid-view) .product-info-column{
+            width: 43vw !important;
+        }
+        #stock_list:not(.grid-view) .product-action-column{
+           transform: scale(0.9) !important;
+           width: 54vw !important;
+           right: -12px !important;
+           position: absolute !important;
+           bottom: 0px !important;
+        }
+        
+        #stock_list:not(.grid-view) .product-image-column img, #stock_list:not(.grid-view) .product-image-column {
+            height: auto !important;
+            width: 50px !important;
+        }
+        .grid-view .product-image-column ,.grid-view .product-image-column img{
             height: 130px !important;
             width: auto !important;
         }
@@ -614,6 +660,7 @@
     #stock_list .product-name-column{
         height: 4em;
         overflow: hidden;
+        padding-left: 0.4em;
     }
     #stock_list .product-clear-button:hover{
         transition: 0.3s ease-in;
@@ -644,6 +691,11 @@
     #stock_list:not(.grid-view) .product-clear-button-container{
         position: absolute;
         right: -10vw;
+    }
+    .product-info-column .eight.wide.column{
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        overflow: hidden;
     }
     .grid-view .product-list-grid{
         grid-template-columns: 25% 25% 25% 25%;
@@ -909,7 +961,7 @@
         <a href="#stock.html" class="ui secondary close icon button" style="float:right" onclick="$('#stock_product_info_modal').modal('hide');"><i class="icon close"></i></a>
     </div>
     <div class="content">
-        <div class="product-info-image">
+        <div class="product-info-image" style="height: 62vw;">
             <img style="max-width: 100%" src="../Storage/image_flush/?size=400x400&path=/dynImg/{{product_img}}"/>
         </div>
         <div class="product-info-details">
@@ -987,7 +1039,7 @@
             <div class="three wide field">
                 <label>Выбрать</label>
                 <button class=" ui floated right blue fluid button" id="category_All" data-category_id="All" >
-                        Все товары
+                        Все категории
                 </button>
             </div>
             <div id="categories_input" class="thirteen wide field">
