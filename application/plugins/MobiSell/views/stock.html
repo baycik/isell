@@ -1,346 +1,481 @@
 <script>
     App.stock = {
-        list: [],
-        offset: 0,
-        loading_finished: 0,
+        
         init: function () {
-            this.focus();
-            this.tree.load();
-            this.pcomp_init();
+            App.title("Каталог товаров");
+            App.stock.head.init();
+            App.stock.cart.init();
+            App.stock.entries.init();
+            App.stock.utils.initControls();
             App.Topic('passiveCompanySelected').subscribe(function () {
                 $("#stock_pcomp_notice").hide();
-                App.stock.load();
+                App.stock.entries.load();   
             });
             App.Topic('hashChange').subscribe(function () {
-                App.stock.popup_image(App.state['popup_image']);
-            });            
+                App.stock.productInfoModal.showProductInfo(App.state['productInfoModal.showProductInfo']);
+            }); 
         },
         focus: function () {
             App.title("Каталог товаров");
-            this.load();
+            App.stock.entries.load();    
         },
-        cart: {
-            list: [],
-            // Добавление товара в корзину
-            add: function (product_object) {
-                if (this.is_there(product_object.product_code)) {
-                    App.stock.cart.edit(product_object);
-                    return;
-                }
-                this.list.push(product_object);
-                App.stock.render();
+        render: function (){
+        },
+        head: {
+            init: function(){
+                App.stock.head.pcompInit();
+                App.stock.categories.init();
+                $('.limit-dropdown').dropdown();
             },
-            remove: function (node) {
-                if( !confirm("Удалить?") ){
-                    return;
-                }
-                var product_code = $(node).data('product_code');
-                for (var i = 0; i < App.stock.cart.list.length; i++) {
-                    if (product_code == App.stock.cart.list[i].product_code) {
-                        App.stock.cart.list.splice(i, 1);
-                        break;
+            pcompInit: function () {
+                $('.pcomp_id').dropdown({
+                    apiSettings: {
+                        url: 'compListFetch/'
+                    },
+                    fields: {
+                        value: 'company_id',
+                        name: 'label',
+                        text: 'label'
+                    },
+                    filterRemoteData: true,
+                    fullTextSearch: true,
+                    onChange: function (value, text, $choice) {
+                        if (value * 1 > 0) {
+                            App.user.setPassiveCompany({company_id: value, label: text});
+                        } else {
+                            $(".pcomp_id").dropdown('set text', "Выберите клиента");
+                            $(".pcomp_id").dropdown('show');
+                        }
                     }
-                }
-                App.stock.cart.render();
-                App.stock.render();
+                }).dropdown("set text", App.user.pcomp.label || '');
             },
-            edit: function (product_object) {
-                for (var i = 0; i < this.list.length; i++) {
-                    if (product_object.product_code == App.stock.cart.list[i].product_code) {
-                        App.stock.cart.list[i].product_quantity = product_object.product_quantity;
-                        App.stock.cart.render();
-                        App.stock.render();
-                    } else {
-                        continue;
-                    }
-                }
-            },
-            // Проверка наличия товара в корзине
-            is_there: function (product_code) {
-                for (var i = 0; i < App.stock.cart.list.length; i++) {
-                    if (product_code === App.stock.cart.list[i].product_code) {
-                        return App.stock.cart.list[i].product_quantity;
-                    };
-                };
-                return false;
-            },
-            create_document: function () {
-                location.hash = "#document.html";
-            },
-            render: function () {
-                App.renderTpl("stock_cart_content", {cart_list: App.stock.cart.list});
-                if(  App.stock.cart.list.length > 0 ) {
-                    $("#stock_cart_empty_msg").hide();
-                } else {
-                    $("#stock_cart_empty_msg").show();
-                }
+            clearSearchbar: function () {
+                App.stock.entries.show_cart = 0;
+                $("#stock_search_input").val('');
+                App.stock.entries.load();
             }
+            
         },
-        get_item_by_code:function(product_code,array){
-            for (var i = 0; i < array.length; i++) {
-                if (product_code == array[i].product_code) {
-                    return array[i];
-                };
-            };
-        },
-        pcomp_init: function () {
-            $('.pcomp_id').dropdown({
-                apiSettings: {
-                    url: 'compListFetch/'
-                },
-                fields: {
-                    value: 'company_id',
-                    name: 'label',
-                    text: 'label'
-                },
-                filterRemoteData: true,
-                fullTextSearch: true,
-                onChange: function (value, text, $choice) {
-                    if (value * 1 > 0) {
-                        App.user.setPassiveCompany({company_id: value, label: text});
-                    } else {
-                        $(".pcomp_id").dropdown('set text', "Выберите клиента");
-                        $(".pcomp_id").dropdown('show');
-                    }
-                }
-            }).dropdown("set text", App.user.pcomp.label || '');
-        },
-        tree: {
+        categories: {
+            list: [],
+            init: function (){
+                App.stock.categories.load();
+            },
             load: function () {
                 var params = {
                     id: 0,
                     depth: "all"
                 };
                 $.get("../Stock/branchFetch", params, function (response) {
-                    var tree_object = App.json(response);
-                    App.stock.tree.render(tree_object);
+                    App.stock.categories.list = App.json(response);
+                    App.stock.categories.render();
+                }); 
+            },
+             render: function () {
+                App.renderTpl("categories_container", {categories: App.stock.categories.list});
+            },
+            find: function(query){
+                if(query === ''){
+                    App.stock.categories.clearSearchbar();
+                    return;
+                }
+                var result = App.stock.categories.flatten(App.stock.categories.list,query.toLowerCase());
+                App.renderTpl("categories_search_container", {categories: result});
+                $("#categories_search_container").show();
+                $(".categories-container").hide();
+                
+            },
+            flatten: function(array,query){
+                var result = [];
+                array.forEach(function (a) {
+                    if(a.label.toLowerCase().indexOf(query) > -1){
+                       result.push(a);
+                    }
+                    
+                    if (Array.isArray(a.children)) {
+                        result = result.concat(App.stock.categories.flatten(a.children,query));
+                    }
+                });
+                return result;  
+            },
+            clearSearchbar: function () {
+                $("#categories_search_input").val('');
+                $("#categories_search_container").hide();
+                $(".categories-container").show();
+                
+            }
+        },
+        entries: {
+            list: [],
+            current_list: [],
+            offset: 0,
+            loading_finished: 0,
+            show_cart:0,
+            limit:12,
+            category_id:0,
+            init: function(){
+                App.stock.entries.load();
+            },
+            
+            load: function (load_more) {
+                if (!App.user.pcomp.company_id) {
+                    $("#stock_pcomp_notice").show();
+                    return;
+                };
+                if (load_more) {
+                    App.stock.entries.offset += App.stock.entries.limit;
+                } else {
+                    App.stock.entries.offset = 0;
+                };
+                var params = {
+                    q: $('#stock_search_input').val(),
+                    category_id: App.stock.entries.category_id,
+                    offset: App.stock.entries.offset,
+                    limit: App.stock.entries.limit+1,
+                    pcomp_id: App.user.pcomp.company_id
+                };
+                $('#stock_categories_header').html("");
+                App.flash("Загрузка товаров...");
+                $.post("./suggestFetch", params, function (response) {
+                    App.flash("Загрузка товаров:ОК");
+                    var new_loaded_items = App.json(response);
+                    if( !new_loaded_items ){return;}
+                    if (load_more) {
+                        App.stock.entries.list = App.stock.entries.list.concat(new_loaded_items);
+                    } else {
+                        App.stock.entries.list = new_loaded_items;
+                    };
+                    if (new_loaded_items.length < App.stock.entries.limit+1) {
+                        App.stock.entries.loading_finished = 1;
+                    } else {
+                        App.stock.entries.list.pop();
+                        App.stock.entries.loading_finished = 0;
+                    }
+                    App.stock.entries.render();
                 });
             },
-            make_backbone: function (tree_object, prefix) {
-                prefix += "&nbsp;&nbsp;&nbsp;&nbsp;- ";
-                var html = "";
-                for (var i in tree_object) {
-                    html += "<div class='item' data-value='" + tree_object[i].branch_id + "'>" + prefix + tree_object[i].label + "</div>";
-                    if (tree_object[i].children.length > 0) {
-                        html += App.stock.tree.make_backbone(tree_object[i].children, prefix);
-                    }
+            addSpecailProductFeatures: function () {
+                for (var i = 0; i < App.stock.entries.current_list.length; i++) {
+                    App.stock.entries.current_list[i].product_quantity = App.stock.cart.findInCart(App.stock.entries.current_list[i].product_id).product_quantity;
+                    App.stock.entries.current_list[i].is_promo = (App.stock.entries.current_list[i].product_price_total !== App.stock.entries.current_list[i].product_price_total_raw) ? 1 : 0;
                 }
-                return html;
             },
-            render: function (tree_object) {
-                var tree_html = "<div class='item' data-value='0'>Все категории</div>";
-                tree_html += App.stock.tree.make_backbone(tree_object, "");
-                $('#stock_category_tree .menu').html(tree_html);
-                $('#stock_category_tree').dropdown({
-		    fullTextSearch:true
-		});
-            }
-        },
-        clear_searchbar: function () {
-            $("#stock_search_input").val('');
-            App.stock.load();
-        },
-        // Popup указания количества 
-        popup_add: {
-            // Получение данных о выбранном товаре
-            take_product_info: function (node) {
-                var index = $(node).data('index');
-                var product = App.stock.list[index];
-                if ( product.leftover == 0 && !confirm("Товара нет в налиичии. Продолжить?")) {
-                    return;
+            render: function () {
+                if(App.stock.entries.show_cart){
+                    $('#stock_list').addClass('cart');
+                    App.stock.entries.current_list = App.stock.cart.list;
+                } else {
+                    $('#stock_list').removeClass('cart');
+                    App.stock.entries.current_list = App.stock.entries.list;
                 }
-                App.renderTpl("stock_popup_body", product);
-                $('#small_modal_header').html('Добавить в корзину');
-                $('#stock_popup_body').modal('show');
-            },
-            edit_cart_item: function (node) {
-                var product_code = $(node).data('product_code');
-                var product = App.stock.get_item_by_code(product_code,App.stock.cart.list);
-                App.renderTpl("stock_popup_body", product);
-                $('#small_modal_header').html('Изменить количество');
-                $('#stock_popup_body').modal('show');
-                App.stock.popup_add.calculate_price();
-            },
-            // Добавление товара в корзину
-            put_to_cart: function (node) {
-                var fvalue = $('#stock_popup_add_form').form('get values');
-                $('#stock_popup_body').modal('hide');
-                if( fvalue.product_quantity<1 ){
-                    return;
-                }
-                App.stock.cart.add(fvalue);
-            },
-            // Калькулятор для пользователя
-            calculate_price: function () {
-                var fvalue = $('#stock_popup_add_form').form('get values');
-                var quantity = Number(fvalue.product_quantity);
-                var leftover = Number(fvalue.leftover);
-                if (quantity > leftover) {
-                    $("#stock_popup_notice_quantity").html("Внимание, указанное <b> количество </b> превышает <b> остаток </b>!");
-                } else if (quantity <= leftover) {
-                    $("#stock_popup_notice_quantity").html("");
-                }
-                ;
-                var result_price = fvalue.product_quantity * fvalue.product_price_total;
-                $("#popup_add_price").html(result_price.toFixed(2) + "р.");
-            }
-        },
-        popup_cart: {
-            show_box: function () {
-                $('.ui.longer.modal').modal('show');
-                App.stock.cart.render();
-            }
-        },
-        popup_image: function (product_img) {
-            if( product_img ){
-                var img = {
-                    product_img:product_img,
-                    size_x:Math.min($(document).width()-20, 500),
-                    size_y:Math.min($(document).height()-20, 500)
-                };
-                App.renderTpl('stock_image_modal', img);
-                $("#stock_image_modal .content").css('height',img.size_y+20);
-                $("#stock_image_modal").modal('show');
-            } else {
-                $("#stock_image_modal").modal('hide');
-            }
-        },
-        edit_response: function () {
-            for (var i = 0; i < App.stock.list.length; i++) {
-                //Добавляем товару свойство is_in_cart
-                App.stock.list[i].quantity_added = App.stock.cart.is_there(App.stock.list[i].product_code);
-                App.stock.list[i].is_promo = (App.stock.list[i].product_price_total !== App.stock.list[i].product_price_total_raw) ? 1 : 0;
-                /*if( App.user.props.user_level<2 ){
-                    var lo=App.stock.list[i].leftover;
-                    App.stock.list[i].stared_leftover=
-                            lo<10?'★☆☆☆☆':
-                            lo<50?'★★☆☆☆':
-                            lo<100?'★★★☆☆':
-                            lo<500?'★★★★☆':'★★★★★';
-                }*/
-            }
-        },
-        // Рендеринг списка товаров
-        render: function () {
-            App.stock.edit_response();
-            var gridview=localStorage.getItem('stockGridView');
-            App.renderTpl("stock_list", {products: App.stock.list, loading_finished: App.stock.loading_finished, gridview:gridview});
-        },
-        // Получение списка товаров
-        load: function (load_more) {
-            if (!App.user.pcomp.company_id) {
-                $("#stock_pcomp_notice").show();
-                return;
-            }
-            if (load_more) {
-                App.stock.offset += 10;
-            } else {
-                App.stock.offset = 0;
-            }
-            ;
-            var params = {
-                q: $('#stock_search_input').val(),
-                category_id: $('#stock_category_tree').dropdown('get value'),
-                offset: App.stock.offset,
-                limit:12,
-                pcomp_id: App.user.pcomp.company_id
-            };
-            $('#stock_categories_header').html("");
-            App.flash("Загрузка товаров...");
-            $.post("./suggestFetch", params, function (response) {
-                App.flash("Загрузка товаров:ОК");
-                var new_loaded_items = App.json(response);
-                if( !new_loaded_items ){return;}
+                App.stock.entries.addSpecailProductFeatures();
+                var gridview=localStorage.getItem('stockGridView');
+                App.stock.entries.gridViewConfigure(gridview); 
+                App.stock.cart.renderButton(); 
+                $('.cart-quantity').html(App.stock.cart.list.length);
+                App.renderTpl("stock_list", {products: App.stock.entries.current_list, loading_finished: App.stock.entries.loading_finished, show_cart: App.stock.entries.show_cart});
                 
-                if (load_more) {
-                    App.stock.list = App.stock.list.concat(new_loaded_items);
+               
+            }, 
+            gridViewConfigure: function(gridview){
+                if(gridview>0){
+                    $('#stock_list').addClass('grid-view');
                 } else {
-                    App.stock.list = new_loaded_items;
+                    $('#stock_list').removeClass('grid-view');
                 }
-                ;
-                if (new_loaded_items.length < 10) {
-                    App.stock.loading_finished = 1;
-                } else {
-                    App.stock.loading_finished = 0;
-                }
-                ;
-                App.stock.render();
-            });
+                return;
+            },
+            gridViewToggle: function(enable){
+                localStorage.setItem('stockGridView',enable);
+                App.stock.entries.gridViewConfigure(enable);
+                App.stock.entries.render();
+            }
         },
-        gridViewEnable:function(enable){
-            localStorage.setItem('stockGridView',enable);
-            this.render();
+        utils: {
+            getEntryByCode: function(product_code,array){
+                for (var i = 0; i < array.length; i++) {
+                    if (product_code == array[i].product_code) {
+                        return array[i];
+                    };
+                };
+            },
+            initControls: function(){
+                $('#stock_render_mode').click(function(e){
+                    App.stock.entries.show_cart = $(e.target).data('show_cart');
+                    $(e.target).data('show_cart', !App.stock.entries.show_cart);
+                    App.stock.entries.render();
+                });
+                $('#stock_list').change(function(e){
+                    var index = $(e.target).data('index');
+                    var product_object = App.stock.entries.list[index];
+                    var new_quantity = e.target.value*1;
+                    App.stock.cart.update(product_object,0,new_quantity);
+                });
+                $('#stock_list').click(function(e){
+                    var delta = $(e.target).data('delta');
+                    if(delta){
+                        var index = $(e.target).data('index');
+                        var product_object = App.stock.entries.current_list[index];
+                        App.stock.cart.update(product_object,delta,0); 
+                    }
+                });
+                $('#stock_category_tree').click(function(e){
+                    $('#categoriesPopup').modal({ inverted: true, duration:0}).modal('show');
+                });
+                
+                $('.limit-dropdown').change(function(e){
+                    App.stock.entries.limit = $(this).dropdown('get value')*1;
+                    App.stock.entries.load();
+                });
+                
+                $(document).click(function(e){
+                    var expand = $(e.target).data('action');
+                    if(expand === 'expand_category'){
+                       var toggle_id = e.target.parentNode.id;
+                       $('#toggle_for_'+toggle_id.split('_')[1]).toggle('fast');
+                    }
+                    var category_id = $(e.target).data('category_id');
+                    if(!category_id && category_id !== '0'){return;};
+                    category_id === 'All' ? category_id = 0 : 0;
+                    $('#stock_category_tree label.placeholder').html($(e.target).html());
+                    App.stock.entries.category_id = category_id;
+                    App.stock.entries.load();
+                    $('#categoriesPopup').modal('hide');
+                }); 
+            }
+        },
+        cart: {
+            list: [],
+            total: '0.00',
+            init: function(){
+                App.stock.cart.restore();
+            },
+            renderButton: function(){
+                App.renderTpl("stock_render_mode", {show_cart: App.stock.entries.show_cart, cart_quantity: App.stock.cart.list.length, total: App.stock.cart.total});
+            },
+            update: function (product_object,delta,new_quantity) {
+                var founded_product=App.stock.cart.findInCart(product_object.product_id);
+                if( !founded_product ){
+                    if(!delta && new_quantity<=0){return};
+                    product_object.product_quantity = delta || new_quantity;
+                    App.stock.cart.add(product_object);
+                } else 
+                if( founded_product.product_quantity+delta<=0 && new_quantity<=0 || new_quantity+ founded_product.product_quantity<=0){
+                    App.stock.cart.delete(founded_product.index);
+                } else {
+                    App.stock.cart.modify(founded_product.index,delta,new_quantity);
+                }
+                App.stock.cart.setTotal();
+                App.stock.entries.render();
+                App.stock.cart.store();
+            },
+            delete: function(index){
+                App.stock.cart.list.splice(index, 1);
+            },
+            add:function(product_object){
+                App.stock.cart.list.push(product_object);
+            },
+            modify:function(index,delta,new_quantity){
+                delta ? App.stock.cart.list[index].product_quantity += delta : App.stock.cart.list[index].product_quantity = new_quantity ;
+            },
+            setTotal: function(){
+                var total = 0;
+                for (var i = 0; i < App.stock.cart.list.length; i++) {
+                    App.stock.cart.list[i].product_sum = (App.stock.cart.list[i].product_price_total * App.stock.cart.list[i].product_quantity).toFixed(2);
+                    total += App.stock.cart.list[i].product_sum*1 ;
+                };
+                App.stock.cart.total = total.toFixed(2);
+            },
+            findInCart: function (product_id) {
+                for (var i = 0; i < App.stock.cart.list.length; i++) {
+                    if (product_id === App.stock.cart.list[i].product_id) {
+                        App.stock.cart.list[i].index=i;
+                        return App.stock.cart.list[i];
+                    };
+                };
+                return false;
+            },
+            store:function(){
+                App.store('stock_cart_list',App.stock.cart.list);
+            },
+            restore:function(){
+                var cart_list = App.json(App.restore('stock_cart_list'));
+                if(cart_list){
+                    App.stock.cart.list = cart_list;
+                    App.stock.cart.setTotal();
+                };
+            },
+            createDocument: function () {
+                location.hash = "#document.html";
+            }
+        },
+        productInfoModal:{
+            showProductInfo: function (product_code) {
+                if(!product_code){return;}
+                $.post("./productGet", {product_code: product_code}, function (response) {
+                        App.flash("Загрузка товаров:ОК");
+                        var product_object = App.json(response);
+                        if( !product_object.product_id ){return;}
+                        if( product_object.attributes ){
+                            product_object.attributes = App.stock.productInfoModal.composeAttributes(product_object);
+                        }
+                        product_object.quantity_in_cart = App.stock.cart.findInCart(product_object.product_id).product_quantity;
+                        App.renderTpl('stock_product_info_modal', product_object);
+                        $("#stock_product_info_modal").modal({ inverted: true, duration:0}).modal('show');
+                    });
+            },
+            composeAttributes: function(product_object){
+                product_object.attributes = product_object.attributes.split(',');
+                var attributes = [];
+                for(var i = 0; i<product_object.attributes.length; i++){
+                    var attribute_item = product_object.attributes[i].split(': ');
+                    var attribute_object = {label: attribute_item[0], value: attribute_item[1]};
+                    attributes.push(attribute_object);
+                }
+                return attributes;
+            }
         }
     };
 </script>
 <style>
-    .stock_product_info_td{
-        margin-right: 120px;
-        width: 70%;
-    }
-    .popup_product_name{
-        margin: 1em;
-    }
-    .stock_list tr .stock_product_name{
-        max-height: 4.3em;
-        overflow: hidden;
-    }
-    #stock_cart_button{
-        position: fixed;
-        bottom: 15px;
-        right: 10px;
-        z-index: 2;
-        padding: 1.5em;
-        box-shadow: 0px 0px 10px 5px rgba(0,0,0,0.25);
-    }
-    #stock_category_tree.ui.selection.dropdown .menu{
-        max-height: 29.4rem;
-    }
-    
-    
-    
-    
-    
-    
-    #stock_list .stock_product_table{
-        width: calc(100% - 8px);
-        float: left;
-        -height: 10em;
-        margin: 4px;
-        border-radius: 3px;
-        box-shadow: 0px 0px 2px #ccc;
-    }
-    @media only screen and (min-width: 650px) {
+    @media only screen and (max-width: 400px) {
+        .categories-container{
+            grid-template-columns: 100% !important;
+        }
+        #stock_list:not(.grid-view) .product-list-grid, .grid-view .product-list-grid{
+            grid-template-columns: 100% !important;
+        }
+        #stock_list:not(.grid-view) .product-item-grid, .grid-view .product-item-grid{
+            text-align: center !important;
+            grid-template-columns: 100% !important;
+        }
+        #stock_list:not(.grid-view) .product-image-column img, #stock_list:not(.grid-view) .product-image-column ,.grid-view .product-image-column ,.grid-view .product-image-column img{
+            height: 130px !important;
+            width: auto !important;
+        }
+        #stock_product_info_modal .content{
+            grid-template-columns: 100% !important;
+        }
+        #stock_product_info_modal .content img{
+            max-width: 60% !important;
+        }
+        #stock_product_info_modal .product-info-image{
+            text-align: center;
+        }
+        #stock_product_info_modal .product-info-name{
+            font-size: 16px !important;
+        }
+        #stock_product_info_modal .content .info-row{
+            grid-template-columns: 60% 40% !important;
+        }
+        #stock_product_info_modal .product-info-details{
+            max-height: max-content !important;
+            overflow-y: visible !important;
+            overflow-x: visible !important;
+        }
+    }  
+    @media only screen and (min-width: 400px) and (max-width: 650px) {
+        .categories-container{
+            grid-template-columns: 50% 50% !important;
+        }
+        #stock_list:not(.grid-view) .product-clear-button-container{
+            position: initial !important;
+        }
+        #stock_list:not(.grid-view) .product-list-grid, .grid-view .product-list-grid{
+            grid-template-columns: 50% 50% !important;
+        }
+        #stock_list:not(.grid-view) .product-item-grid, .grid-view .product-item-grid{
+            grid-template-columns: 100% !important;
+            text-align: center !important;
+        }
+        #stock_list:not(.grid-view) .product-image-column img, #stock_list:not(.grid-view) .product-image-column ,.grid-view .product-image-column ,.grid-view .product-image-column img{
+            height: 130px !important;
+            width: auto !important;
+        }
+        #stock_list:not(.grid-view) .product-action-column,.grid-view  .product-action-column{
+            margin-top:1em;
+        }
+        #stock_product_info_modal .content{
+            grid-template-columns: 100% !important;
+        }
+        #stock_product_info_modal .content img{
+            max-width: 60% !important;
+        }
+        #stock_product_info_modal .product-info-image{
+            text-align: center;
+        }
+        #stock_product_info_modal .product-info-name{
+            font-size: 16px !important;
+        }
+        #stock_product_info_modal .content .info-row{
+            grid-template-columns: 60% 40% !important;
+        }
+        #stock_product_info_modal .product-info-details{
+            max-height: max-content !important;
+            overflow-y: visible !important;
+            overflow-x: visible !important;
+        }
+    } 
+    @media only screen and (min-width: 650px) and (max-width: 1000px) {
         #stock_list .stock_product_table{
             width: calc(50% - 8px);
         }
-    }
-    @media only screen and (min-width: 1000px) {
+        .categories-container{
+            grid-template-columns: 33% 33% 33% !important;
+        }
+         #stock_list:not(.grid-view) .product-list-grid{
+            grid-template-columns: 100% !important;
+        }
+        #stock_list:not(.grid-view) .product-item-grid{
+            grid-template-columns: 8% 25% 31% 35% !important
+        }
+        #stock_list:not(.grid-view) .product-image-column img{
+            width: 70px !important;
+        }
+        #stock_list:not(.grid-view) .product-clear-button-container{
+            position: initial !important;
+        }
+        .grid-view .product-list-grid{
+            grid-template-columns: 33% 33% 33% !important;
+        }
+        .grid-view .product-image-column img , .grid-view .product-image-column{
+            height: 130px !important;
+        }
+    } 
+    @media only screen and (min-width: 1000px) and (max-width: 1300px) {
         #stock_list .stock_product_table{
             width: calc(33% - 8px);
+        }
+        #stock_list:not(.grid-view) .product-clear-button-container{
+            position: absolute;
+            right: -10vw;
+        }
+        .grid-view .product-list-grid{
+            grid-template-columns: 33% 33% 33% !important;
+        }
+        .grid-view .product-image-column img , .grid-view .product-image-column{
+            height: 130px !important;
+        }
+        #categoriesPopup{
+            width: 80% !important;
+            left: 10% !important;
+        }
+        #categoriesPopup .categories-container{
+            grid-template-columns: 25% 25% 25% 25%  !important;
         }
     } 
     @media only screen and (min-width: 1300px) {
         #stock_list .stock_product_table{
             width: calc(25% - 8px);
         }
+        #categoriesPopup{
+            width: 80% !important;
+            left: 10% !important;
+        }
+        #categoriesPopup .categories-container{
+            grid-template-columns: 20% 20% 20% 20% 20% !important;
+        }
     } 
-    .stock_product_table s{
-        color: red;
-    }
-    .stock_product_price{
-        color: green;
-        text-align: right
-    }
-    .stock_product_image{
-        width:120px;
-        height:120px;
-    }
-    .stock_product_name div{
-        color: #106596;
-        height: 80px;
-        overflow: hidden;
-    }
     #stock_list .stock_product_promo{
         box-shadow: 0px 0px 6px #0c0;
     }
@@ -354,16 +489,37 @@
     #stock_list_header{
         color: #7a7a7a;
     }
-    #stock_header_prod_quan{
-        font-weight: bold;
-    }
     #stock_header_prod_name{
         font-weight: bold;
         color: #427796;
     }
-    .popup_product_name{
-        font-weight: bold;
-        color: #106596;
+    .product-action-column button.ui.button.plus-button:hover{
+        transition: 0.2s ease-in;
+        background-color: #51b951 !important;
+        color: white !important ;
+    }
+    .product-action-column button.ui.button.minus-button:hover{
+        transition: 0.2s ease-in;
+        background-color: #f75252 !important;
+        color: white !important;
+    }
+    .ui.basic.label.product-total{
+        border-top: none;
+        border-top-left-radius: 0px;
+        border-top-right-radius: 0px;
+        width: 97%;
+        margin: 0px auto;
+        background-color: #ffffff9e !important;
+    }
+    .product-image-column:hover{
+        transition: 0.3s ease-in;
+        opacity: 0.5;
+    }
+    .product-name-column a{
+        color:  black;
+    }
+    .product-name-column a:hover{
+        color:  #1678c2;
     }
     .ui.section.divider{
         margin-top: 0 !important;
@@ -375,12 +531,190 @@
         font-weight: bold;
         color: blue;
     }
+    .product-clear-button{
+        left: 5vw!important;
+    }
+    #stock_category_tree{
+       width: 100%;
+       overflow: hidden;
+       text-overflow: ellipsis;
+    }
+    #stock_category_tree i{
+        background-color: #2185d0;
+        border: 1px solid #2185d0;
+        color: white;
+    }
+    #stock_category_tree label{
+        font-weight: bold;
+        white-space: nowrap;
+    }
+    .categories-container{
+        display: grid;
+        grid-template-columns: 25% 25% 25% 25% ;
+    }
+    .grandmother-category{
+        padding: 5px;
+        border-left: 1px solid lightgray;
+        padding-left: 15px;
+    }
+    .grandmother-category-label{
+        font-size: 16px;
+        font-weight: bold;
+    }
+    .mothers-container{
+        padding: 5px;
+        margin-left: 10px;
+    }
+    .mother-category{
+        padding: 5px;
+    }
+    .daughters-container{
+        padding: 5px;
+        margin-left: 20px;
+    }
+    .daughter-category{
+        padding: 5px;
+    }
+    #categoriesPopup .categories-container, #stock_product_info_modal .product-info-details{
+        max-height: 70vh;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+    
+    #categories_container label:hover, #categories_search_container label:hover{
+        color: #1d588a;
+        border-bottom: 1px solid black;
+        transition: 1s;
+    }
+    #categories_search_container{
+        padding-left: 2em;
+    }
+    .category-has-children{
+        position: relative;
+        color:black;
+    }
+    .category-has-children .angle.down.icon{
+        margin-left: 4px;
+    }
+    .category-has-children .angle.down.icon:hover{
+        border: 1px solid gray;
+        border-radius: 3px;
+        margin-top: -1px;
+        margin-bottom: -1px;
+    }
+    .category-has-no-children{
+        color: #6f6f6f;
+    }
+    #stock_list .product-item{
+        background-color: white;
+        border: 1px solid lightgray;
+        margin-top: -1px;
+        margin-right: -1px;
+    }
+    #stock_list .product-name-column{
+        height: 4em;
+        overflow: hidden;
+    }
+    #stock_list .product-clear-button:hover{
+        transition: 0.3s ease-in;
+        transform: scale(1.05);
+        background-color: red !important;
+        color:white !important;
+    }
+    #stock_list:not(.grid-view) .product-list-grid{
+        grid-template-columns: 100%;
+    }
+    #stock_list:not(.grid-view) .product-item-grid{
+        text-align: left;
+        grid-template-columns: 10% 35% 27% 26%;
+        grid-column-gap: 1em;
+    }
+    #stock_list.cart:not(.grid-view) .product-item-grid{
+        text-align: left;
+        grid-template-columns: 10% 35% 27% 26%;
+        grid-column-gap: 1em;
+    }
+    .cart .product-total{
+        display:block !important;
+    }
+    #stock_list:not(.grid-view) .product-image-column, #stock_list:not(.grid-view) .product-image-column img{
+        height: auto;
+        width: 70px;
+    }
+    #stock_list:not(.grid-view) .product-clear-button-container{
+        position: absolute;
+        right: -10vw;
+    }
+    .grid-view .product-list-grid{
+        grid-template-columns: 25% 25% 25% 25%;
+    }
+    .grid-view .product-item-grid{
+        text-align: center;
+        grid-template-columns: 100%;
+    }
+    .grid-view .product-image-column {
+        height: 150px;
+        width: auto;
+    }
+    
+    .grid-view  .product-action-column{
+        margin-top:1em;
+    }
+    .product-price{
+        padding-left: 0px !important;
+    }
+    .product-price b, .product-price s{
+        white-space: nowrap;
+    }
+    .product-price s{
+        color: #ca6666;
+        position: absolute;
+        top: 0;
+    }
+    .product-list-grid{
+        display: grid !important;
+    }
+    .product-item-grid{
+        padding: 10px;
+        align-items: center;
+        text-align: center;
+        display: grid !important;
+    }
+    
+    #stock_product_info_modal .content{
+        display: grid;
+        grid-template-columns: 30% 70%;
+        text-align: left;
+    }
+    #stock_product_info_modal .content .product-info-name{
+        font-size: 20px;
+        font-weight: bold;
+        color: #1678c2;
+    }
+    #stock_product_info_modal .content .product-common-info,
+    #stock_product_info_modal .content .product-stock-details,
+    #stock_product_info_modal .content .product-secondary-info,
+    #stock_product_info_modal .content .product-attributes{
+        border-bottom: 1px solid lightgray;
+        padding: 1em;
+    }
+    #stock_product_info_modal .content .info-row{
+        display: grid;
+        grid-template-columns: 40% 60%;
+    }
+    #stock_product_info_modal .content .info-cell{
+        color: #5e5e5e;
+    }
+    #stock_product_info_modal .header-label{
+        font-size: 16px;
+        font-weight: bold;
+    }
 </style>
 
 
 <div  class="ui blue segment">
-    <form>
-        <div class="five wide field">
+    <form class="ui form">
+        <div class="field">
             <label>Клиент</label>
             <div class="ui fluid search selection remote dropdown pcomp_id">
                 <input name="pcomp_id" type="hidden">
@@ -394,288 +728,320 @@
             <i class="ui blue exclamation circle icon"></i>
             Выберите клиента
         </div>
-
-        <!--Строка категорий-->
-        <div class="ui field">
-            <label><b>Категории</b></label>
-            <div class="ui fluid search selection dropdown" id="stock_category_tree" onchange="App.stock.load()"> 
-                <input name="gender" type="hidden">
-                <i class="dropdown icon"></i>
-                <div class="default text">Выберите категорию</div>
-                <div class="menu" ></div>
+        
+        <div class="fields">
+            <div class="five wide field">
+                <label>Категории</label><div></div>
+                <div id='stock_category_tree' class='ui labeled basic blue  icon button'>
+                    <i class='bars icon'></i>
+                    <label class='placeholder'>Все</label>
+                </div>
+            </div>
+            <div id="stock_search" class="eleven wide field">
+                    <label>Поиск</label>
+                    <div class="ui left icon right labeled input fluid" style="margin-bottom: 5px;">
+                        <i class="search icon"></i>
+                        <input id="stock_search_input" placeholder="Введите название или код..." type="text"
+                               oninput="App.stock.entries.load()">
+                        <div class="ui basic label" onclick="App.stock.head.clearSearchbar()"><i class="close icon"></i></div>
+                    </div>
             </div>
         </div>
+    </form>
+    <div class="ui clearing divider ">
+     </div>
+    <div class="ui stackable grid">
+        <div class="six wide left floated column">
+            <div id="stock_render_mode" class="covert" tabindex="0"  >
+                <div class="ui labeled large button"  >
+                    {{if show_cart}}
+                    <div class="ui blue button" data-show_cart="0" >
+                      <i class="chevron left icon"></i> К товарам
+                    </div>
+                    {{else}}
+                    <div class="ui blue button" data-show_cart="1" >
+                      <i class="shopping cart icon"></i> Корзина
+                    </div>
+                    {{/if}}
+                    <a class="ui basic blue left pointing label" >
+                     {{ cart_quantity }} / {{ total }} ₽
+                    </a>
+                </div>
+            </div> 
+        </div> 
+        <div class="four wide right floated right aligned column">
+            <div class="ui selection labeled  dropdown limit-dropdown" style="min-width:auto">
+                <input type="hidden" name="gender">
+                    <i class="dropdown icon"></i>
+                    <div class="default text">12</div>
+                    <div class="menu">
+                        <div class="item" data-value="12">12</div>
+                        <div class="item" data-value="24">24</div>
+                        <div class="item" data-value="48">48</div>
+                        <div class="item" data-value="100">100</div>
+                    </div>
+            </div>
+            <div class="ui basic buttons">
+                    <button class="ui  icon button" onclick="App.stock.entries.gridViewToggle(0)"> <i class="list icon"></i></button>
+                    <button class="ui   icon button" onclick="App.stock.entries.gridViewToggle(1)"> <i class="table icon"></i></button>
+                </div>
+        </div> 
+    </div>
+</div>
 
-        <!--Строка поиска-->
 
-        <div id="stock_search" class="ui field">
-            <div class="ui field">
-                <label><b>Поиск</b></label>
+<div id="stock_list" class="covert">
+    <div class="product-list-grid" >
+            <!-- {{if products}} {{products}} -->
+            
+        <div class='product-item' style=" {{if is_promo}}  background-color: #cfc;{{/if}}{{ if product_quantity|more>0 }} background-color: #ffd; {{else }}{{/if}}"  >
+
+            
+            <div class="product-item-grid" >
+                <div class='product-image-column image-{{#}}' data-row-index="{{#}}" >
+                    <a href="#stock.html#productInfoModal.showProductInfo={{product_code}}">
+                        <img src="../Storage/image_flush/?size=150x150&path=/dynImg/{{product_img}}" >
+                    </a>
+                </div>
+                <div class="product-name-column">
+                    <a href="#stock.html#productInfoModal.showProductInfo={{product_code}}">
+                         {{product_name}}
+                    </a>
+                </div>
+                <div class="product-info-column">
+                    <div class="ui grid" style="color:#666">
+                            <div class="eight wide column">{{product_code}}</div>
+                            <div class="four wide column product-price" style="text-align: right">
+                                {{if is_promo}}
+                                    <s>{{product_price_total_raw}} ₽</s>
+                                    <b>{{product_price_total}} ₽</b>
+                                {{else}} 
+                                    <b>{{product_price_total}} ₽</b>
+                                {{/if}}
+                            </div>
+                            <div class="four wide column" style="text-align: right">{{if stared_leftover}} {{stared_leftover}} {{else}} {{leftover}}{{product_unit}} {{/if}}</div>
+
+                    </div>
+                </div>
+                <div class="product-action-column">
+                    <div class="ui centered grid">
+                        <div class="twelve wide column">
+                            <div class="ui left icon input tiny fluid"  >
+                                <input type='hidden' name='product_img' value='{{product_img}}'>
+                                <input type='hidden' name='product_name' value='{{product_name}}'>
+                                <input type='hidden' name='product_code' value='{{product_code}}'>
+                                <input type='hidden' name='product_id' value='{{product_id}}'>
+                                <input type='hidden' name='leftover' value='{{leftover}}'>
+                                <input type='hidden' name='product_price_total' value='{{product_price_total}}'>
+                                
+                                <button class="ui  {{if product_quantity|less>1}} disabled   {{/if}} left attached icon  button minus-button" data-delta="-1" data-index="{{#}}">
+                                    <i class="minus icon" data-delta="-1" data-index="{{#}}"></i>
+                                </button>
+                                <input type="number" name="product_quantity" placeholder="Количество" min="1" class="product_quantity"
+                                        style="border-radius: 0px;   
+                                        padding-left: 1em !important; 
+                                        padding-right: 0.5em !important;" 
+                                        data-index="{{#}}"
+                                        value="{{if product_quantity|more>0}}{{product_quantity|blank>1}}{{else}}0{{/if}}">
+                                <button class="ui right attached icon  button plus-button" data-delta="1" data-index="{{#}}">
+                                    <i class="plus icon" data-delta="1" data-index="{{#}}"></i>
+                                </button>
+                               
+                            </div> 
+                            <div class="ui basic  label product-total" style="display:none">{{if product_quantity|more>0}}{{product_sum}}{{else}}0{{/if}} ₽</div>
+                        </div>
+                                {{if product_quantity|more>0}}
+                        <div class="four wide column product-clear-button-container">
+                            
+                                <div class="ui circular icon button product-clear-button"  data-delta="-{{product_quantity}}" data-index="{{#}}">
+                                    <i class="trash alternate icon"  data-delta="-{{product_quantity}}"  data-index="{{#}}"></i>
+                                </div>
+                        </div>
+                                {{/if}}
+                    </div>
+                    
+                    
+                </div>
+                
+            </div>
+        </div>
+        <!-- {{/products}} {{else}}-->
+        <div>
+            <div >
+                <div class="ui message" style="clear: both;text-align: center;">
+                   Ничего не найдено
+                </div>  
+            </div>
+        </div>
+        <!--{{/if}}-->
+    </div>
+    
+    {{if show_cart|falsy}}
+        {{if loading_finished}} 
+        <div class="ui olive message" style="clear: both;text-align: center;">
+            Больше нет товаров для показа
+        </div>   
+        {{else}} 
+        <button id='stock_load_more' class='ui fluid  button'
+                onclick="App.stock.entries.load(1)"> 
+            Показать ещё...
+        </button>    
+        {{/if}} 
+     {{else}} 
+        {{if products|length|more>0}} 
+            <a class="ui approve green labeled icon button" href="#document.html" style="float: right; margin-top: 1em;">
+                <i class="check icon"></i>
+            Заказ
+            </a>
+        {{else}}
+        <div class="ui olive message" style="clear: both;text-align: center;">
+            <i class="exclamation icon"></i>
+            Вы не добавляли товары в корзину
+        </div>   
+        {{/if}}
+    {{/if}}
+</div>
+
+
+
+<div class="ui long modal" id="stock_product_info_modal">
+    <div class="header">Сведения о товаре 
+        <a href="#stock.html" class="ui secondary close icon button" style="float:right" onclick="$('#stock_product_info_modal').modal('hide');"><i class="icon close"></i></a>
+    </div>
+    <div class="content">
+        <div class="product-info-image">
+            <img style="max-width: 100%" src="../Storage/image_flush/?size=400x400&path=/dynImg/{{product_img}}"/>
+        </div>
+        <div class="product-info-details">
+            <div class="product-info-name">{{ru}}</div>
+            <div class="product-common-info">
+                <label class="header-label">Общие сведения</label>
+                <div class="info-row">
+                    <label>Код: </label>
+                    <div class="info-cell">{{product_code}}</div>
+                </div>
+                <div class="info-row">
+                    <label>Артикул: </label>
+                    <div class="info-cell">{{product_article}}</div>
+                </div>
+                <div class="info-row">
+                    <label>Штрихкод: </label>
+                    <div class="info-cell">{{product_barcode}}</div>
+                </div>
+                <div class="info-row">
+                    <label>Цена: </label>
+                    <div class="info-cell">
+                        <b>{{product_price_total}} ₽</b>
+                    </div>
+                </div>
+            </div>
+            <div class="product-stock-details">
+                <div class="info-row">
+                    <label>На складе: </label>
+                    <div class="info-cell">{{product_quantity}} {{product_unit}}</div>
+                </div>
+                {{if quantity_in_cart}}
+                <div class="info-row">
+                    <label>В корзине: </label>
+                    <div class="info-cell" style="color:green">(<b>{{quantity_in_cart}}</b> {{product_unit}})</div>
+                </div>
+                {{/if}}
+            </div>
+            <div class="product-secondary-info">
+                {{if product_bpack}}
+                <div class="info-row">
+                    <label>Большая упаковка: </label>
+                    <div class="info-cell">{{product_bpack}} {{product_unit}}</div>
+                </div>
+                {{/if}}
+                {{if product_spack}}
+                <div class="info-row">
+                    <label>Малая упаковка: </label>
+                    <div class="info-cell">{{product_spack}} {{product_unit}}</div>
+                </div>
+                {{/if}}
+                {{if product_volume}}
+                <div class="info-row">
+                    <label>Объем: </label>
+                    <div class="info-cell">{{product_volume}}</div>
+                </div>
+                {{/if}}
+                {{if product_weight}}
+                <div class="info-row">
+                    <label>Вес: </label>
+                    <div class="info-cell">{{product_weight}}</div>
+                </div>
+                {{/if}}
+            </div>
+            <div class="plugins"></div>
+        </div>
+    </div>
+</div>
+
+<div id="categoriesPopup" class="ui long modal" >
+    <div class="header" style='padding: 1em;'>Выберите категорию
+        <a  class="ui secondary close icon button" style="float:right" onclick="$('#categoriesPopup').modal('hide');"><i class="icon close"></i></a>
+    </div>
+    <div class="ui form" style="padding:1em">
+        <div class="ui fields">
+            <div class="three wide field">
+                <label>Выбрать</label>
+                <button class=" ui floated right blue fluid button" id="category_All" data-category_id="All" >
+                        Все товары
+                </button>
+            </div>
+            <div id="categories_input" class="thirteen wide field">
+                <label>Поиск</label>
                 <div class="ui left icon right labeled input fluid" style="margin-bottom: 5px;">
                     <i class="search icon"></i>
-                    <input id="stock_search_input" placeholder="Введите название или код..." type="text"
-                           oninput="App.stock.load()">
-                    <div class="ui basic label" onclick="App.stock.clear_searchbar()"><i class="close icon"></i></div>
+                    <input id="categories_search_input" placeholder="Введите название категории..." type="text" value=""
+                           oninput="App.stock.categories.find(this.value)">
+                    <div class="ui basic label" onclick="App.stock.categories.clearSearchbar()"><i class="close icon"></i></div>
                 </div>
-            </div>
+            </div> 
         </div>
-    </form>
-    <button class="ui fluid blue button" onclick="App.stock.popup_cart.show_box()">
-	<i class="shop icon"></i>
-	Сформировать заказ
-    </button>
-</div>
-
-
-
-<div id="stock_categories_header" class="ui centered header" style="margin-top: auto">Все категории</div>
-<!--Список товаров-->
-<button class="ui icon button" onclick="App.stock.gridViewEnable(0)"> <i class="list icon"></i></button>
-<button class="ui icon button" onclick="App.stock.gridViewEnable(1)"> <i class="table icon"></i></button>
-<div id="stock_list" class="covert">
-    <!--{{if gridview|less>1}}-->
-    <table class="ui very compact table unstackable">
-        <tbody>
-            <!-- {{if products}} {{products}} -->
-            <tr style=" {{if is_promo}}  background-color: #cfc; {{/if}}">
-                <td  style="height:50px" data-row-index="{{#}}">
-                    <a href="#stock.html#popup_image={{product_img}}">
-                        <img src="../Storage/image_flush/?size=50x50&path=/dynImg/{{product_img}}" >
-                    </a>
-                </td>
-                <td data-index="{{#}}" onclick="App.stock.popup_add.take_product_info(this);">
-                    <div class="ui grid stackable" style="{{if leftover|less>1}} color:red !important; {{/if}}">
-                        <div class="six wide column" style="padding: .5rem !important">{{product_name}}</div>
-                        <div class="six wide column" style="padding: .5rem !important">
-                            <div class="ui grid" style="color:#666">
-                                <div class="six wide column">{{product_code}}</div>
-                                <div class="five wide column right aligned">{{if is_promo}}<s>{{product_price_total_raw}}</s> {{/if}}<b>{{product_price_total}}</b></div>
-                                <div class="five wide column right aligned">{{if stared_leftover}} {{stared_leftover}} {{else}} {{leftover}}{{product_unit}} {{/if}}</div></div></div>
+    </div>
+    <div id="categories_search_container" style="display: none; height:max-content; border-top:1px solid lightgray">
+        <div class="daughter-category category-has-no-children" ><h3>Результаты поиска: </h3></div>
+        {{if categories}}
+        {{categories|limit>12}}
+                <div class="daughter-category category-has-no-children" id="suggest_category_{{branch_id}}">
+                    <label data-category_id="{{branch_id}}">{{label}}</label>
+                </div>
+        {{/categories}}
+        {{else}}
+        <div class="daughter-category category-has-no-children" >Ничего не найдено</div>
+        {{/if}}
+    </div>
+    <div class="ui divider"></div>
+    <div id="categories_container" class="categories-container">
+    {{categories}}
+    {{if parent_id|equals>0}}
+        <div class="grandmother-category" id="category_{{branch_id}}">
+            <label class='grandmother-category-label' data-category_id="{{branch_id}}">{{label}}</label>
+            {{if children}}
+                <div class="mothers-container ">
+                    {{children}}
+                    <div class="mother-category category-toggler 
+                         {{if children}}
+                         category-has-children" id="category_{{branch_id}}"><label data-category_id="{{branch_id}}">{{label}}</label><i class='angle down icon' data-action='expand_category'></i>
+                         {{else}}
+                         category-has-no-children" id="category_{{branch_id}}"><label data-category_id="{{branch_id}}">{{label}}</label>{{/if}}
                         
-                        <div class="four wide column">
-                            {{if quantity_added|more>0}}
-                            <div class="ui left labeled button" tabindex="0">
-                                <a class="ui basic label">
-                                    Добавлено: {{quantity_added}}
-                                </a>
-                                <button class="ui blue icon button" style="background-color: #0089ec; color:white" data-product_code="{{product_code}}"
-                                        onclick="App.stock.popup_add.edit_cart_item(this)">
-                                    <i class="edit icon"></i>
-                                </button>
-                                <button class="ui red icon button" data-product_code="{{product_code}}"
-                                        onclick="App.stock.cart.remove(this)">
-                                    <i class="trash alternate icon"></i>
-                                </button>
+                        {{if children}}
+                            <div class="daughters-container" id="toggle_for_{{branch_id}}" style="display: none">
+                                {{children}}
+                                <div class="daughter-category category-toggler {{if children}}category-has-children{{else}}category-has-no-children{{/if}}" id="category_{{branch_id}}" ><label data-category_id="{{branch_id}}">{{label}}</label></div>
+                                {{/children}}
                             </div>
-                            {{else}}
-                            <button class="ui button" data-index="{{#}}"
-                                    onclick="App.stock.popup_add.take_product_info(this)">Добавить <i class="cart plus icon"></i></button>
-                            {{/if}}
-                        </div>
+                        {{/if}}
+
                     </div>
-                </td>
-            </tr>
-            <!-- {{/products}} {{else}}-->
-            <tr>
-                <td colspan="2">Ничего не найдено</td>
-            </tr>
-            <!--{{/if}}-->
-        </tbody>
-    </table>
-    <!--{{/if}}-->
-    
-    <!--{{if gridview|more>0}}-->
-    <!-- {{products}} -->
-    <table class="stock_product_table {{if is_promo}}stock_product_promo{{/if}}">
-        <tr>
-            <td class="stock_product_image" rowspan="2" data-row-index="{{#}}">
-                <a href="#stock.html#popup_image={{product_img}}">
-                    <img src="../Storage/image_flush/?size=110x110&path=/dynImg/{{product_img}}" >
-                </a>
-            </td>
-            <td class="stock_product_name">
-                <div >{{##}}) {{product_name}}</div>
-            </td>
-        </tr>
-        <tr>     
-            <td class="ui buttons stock_product_buttons">
-                {{if quantity_added|more>0}}
-                <div class="ui left labeled button" tabindex="0">
-                    <a class="ui basic label">
-                        Добавлено: {{quantity_added}}
-                    </a>
-                    <button class="ui blue icon button" style="background-color: #0089ec; color:white" data-product_code="{{product_code}}"
-                            onclick="App.stock.popup_add.edit_cart_item(this)">
-                        <i class="edit icon"></i>
-                    </button>
-                    <button class="ui red icon button" data-product_code="{{product_code}}"
-                            onclick="App.stock.cart.remove(this)">
-                        <i class="trash alternate icon"></i>
-                    </button>
+                    {{/children}}
                 </div>
-                {{else}}
-                <button class="ui button" data-index="{{#}}"
-                        onclick="App.stock.popup_add.take_product_info(this)">Добавить <i class="cart plus icon"></i></button>
-                {{/if}}
-            </td> 
-        </tr>
-        <tr>
-            <td colspan="2">
-                <div class = "ui grid">
-                    <div class = "five wide column" style = "color:#7a7a7a">{{product_code}}</div>
-                    <div class = "five wide column" 
-                         style = "text-align: center;color:#7a7a7a"><b>{{if stared_leftover}} {{stared_leftover}} {{else}} {{leftover}}{{product_unit}} {{/if}}</b></div>
-                    <div class = "six wide column stock_product_price">
-                        {{if is_promo}}<s>{{product_price_total_raw}}</s> {{/if}}{{product_price_total}}</div></div>
-                
-            </td>
-        </tr>
-        <!-- {{/products}} -->
-        <!--{{/if}}-->
-    </table>
-    {{if loading_finished}} 
-    <div class="ui olive message" style="clear: both;text-align: center;">
-        Больше нет товаров для показа
-    </div>   
-    {{else}} 
-    <button id='stock_load_more' class='ui fluid  button'
-            onclick="App.stock.load(1)"> 
-        Показать ещё...
-    </button>    
-    {{/if}} 
-</div>
-
-<!--Popup для указания количества-->
-
-<div id="stock_popup_body" class="ui small modal">
-    <div id="small_modal_header" class="header">Добавить в корзину</div>
-    <table style="margin-left: 15px; width: 100%">
-        <tr style="height: 7em">
-            <td class="popup_image_td" rowspan="2">
-                <a href="#stock.html#popup_image={{product_img}}">
-                <img src="../Storage/image_flush/?size=110x110&path=/dynImg/{{product_img}}">
-                </a>
-            </td>
-            <td>
-                <div class="popup_product_name description"  style="padding: .5rem !important">{{product_name}}</div>
-            </td>
-        </tr>
-        <tr>
-            <td style="padding: .5rem !important" >
-                <div class="ui stackable grid" style="margin-left: 15px">
-                    <div class="six wide column">
-                        <div class="ui grid">
-                            <div class="eight wide column" style = "color:#7a7a7a; font-weight: bold">Код:</div>
-                            <div class="five wide column" style = "color:#7a7a7a">{{product_code}}</div>
-                        </div>
-                    </div>
-                    <div class="five wide column">
-                        <div id="stock_popup_add_leftover" class="ui grid">
-                            <div  class="eight wide column" style = "color:#7a7a7a; font-weight: bold">Остаток:</div>
-                            <div class="four wide column" style = "color:#7a7a7a">{{leftover}}</div>
-                        </div>
-                    </div>    
-                    <div class=" segment sixteen wide column">
-                        <div class="ui grid">
-                            <div class="eight wide column" style = "color:#7a7a7a; font-weight: bold">Сумма:</div>
-                            <div id="popup_add_price" class="four wide column" style = "color:#7a7a7a">{{product_price_total}}р.</div>
-                        </div>
-                    </div>
-                </div>
-            </td>
-        </tr>
-    </table>
-    <div id="stock_popup_notice_quantity" style="color:red;padding: 1em; font-style: italic"></div>
-    <form id="stock_popup_add_form" class="ui form segment" onsubmit='App.stock.popup_add.put_to_cart();return false;'>
-        <div class="field">
-            <label>Количество</label>
-            <input type='hidden' name='product_img' value='{{product_img}}'>
-            <input type='hidden' name='product_name' value='{{product_name}}'>
-            <input type='hidden' name='product_code' value='{{product_code}}'>
-            <input type='hidden' name='leftover' value='{{leftover}}'>
-            <input type='hidden' name='product_price_total' value='{{product_price_total}}'>
-            <input type="number" name="product_quantity" placeholder="Количество" min="1"
-                   onchange="App.stock.popup_add.calculate_price()" 
-                   onfocus="this.select()"
-                   value="{{product_quantity|blank>1}}">
+            {{/if}}
         </div>
-        <div class="actions" style="margin-left: auto; margin-right: auto">
-            <button type='submit' class="ui labeled green icon submit button">
-                <i class="plus icon"></i>
-                Сохранить
-            </button>
-            <div class="ui labeled icon cancel button" >
-                <i class="ban icon"></i>
-                Отмена
-            </div>
-            <div class="ui approve blue labeled icon button"
-                onclick="App.stock.popup_cart.show_box()" >
-               <i class="shop icon"></i>
-               Перейти в корзину
-           </div>
-        </div>
-    </form>
-</div>
-
-<!--Popup корзины-->
-
-<div  class="ui longer modal">
-    <div class="header">Корзина</div>
-    <div class="scrolling content">
-        <div id="stock_cart_content">
-            {{cart_list}}  
-            <table>
-                <tr>
-                    <td>
-                        <a href="#stock.html#popup_image={{product_img}}">
-                            <img style="float:left" src="../Storage/image_flush/?size=50x50&path=/dynImg/{{product_img}}">
-                        </a>
-                        {{product_name}}
-                        <div class="ui buttons">
-                            <button class="ui blue icon button" data-product_code="{{product_code}}"
-                                    onclick="App.stock.popup_add.edit_cart_item(this)">
-                                <i class="edit icon"></i>
-                            </button>
-                            <button class="ui red icon button" data-product_code="{{product_code}}"
-                                    onclick="App.stock.cart.remove(this)">
-                                <i class="trash alternate icon"></i>
-                            </button>
-                        </div>
-                    </td>
-                </tr>
-                <tr>
-                    <td style="padding: .5rem !important; width:100%">
-                        <div class="ui grid" style="margin-left:1px;">
-                            <div class="six wide column" style = "color:#7a7a7a">{{product_code}}</div>
-                            <div class="five wide column" style = "color:#7a7a7a">{{product_quantity}}</div>
-                            <div class="five wide column" style = "color:#7a7a7a">{{product_price_total}}р.</div>
-                        </div>
-                    </td>
-                </tr>
-                <div class="ui section divider"></div> 
-            </table>
-            {{/cart_list}}  
-        </div>
-        <div id="stock_cart_empty_msg">В корзине пусто!</div>
-    </div>
-    <div class="actions">
-        <div class="ui approve green labeled icon button"
-             onclick="App.stock.cart.create_document()" >
-            <i class="check icon"></i>
-            Заказ
-        </div>
-        <div class="ui cancel labeled icon button" >
-            <i class="right arrow icon"></i>
-            Назад</div>
-    </div>
-</div>
-
-
-<div class="ui modal fullscreen" id="stock_image_modal">
-    <div class="header">Изображение товара 
-        <a href="#stock.html" class="ui secondary close icon button" style="float:right" onclick="$('#stock_image_modal').modal('hide');"><i class="icon close"></i></a>
-    </div>
-    <div class=" content" style="text-align: center">
-        <img style="max-width: 100%" src="../Storage/image_flush/?size={{size_x}}x{{size_y}}&path=/dynImg/{{product_img}}" />
-    </div>
+    {{/if}}
+    {{/categories}}
+     </div>
 </div>

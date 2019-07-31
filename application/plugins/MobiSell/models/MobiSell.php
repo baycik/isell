@@ -216,7 +216,37 @@ class MobiSell extends PluginManager {
         }
         return $DocumentItems->suggestFetch($q, $offset, $limit, $doc_id, $category_id);
     }
-    
+    public $productGet = ['product_code' => 'string'];
+    public function productGet($product_code) {
+        $pcomp_id=$this->Hub->pcomp('company_id');
+        $usd_ratio=$this->Hub->pref('usd_ratio');
+          $sql = "SELECT
+		    st.label parent_label,
+		    pl.*,
+		    ROUND(product_volume,5) product_volume,
+		    ROUND(product_weight,5) product_weight,
+		    product_quantity leftover,
+                    product_img,
+                    product_unit,
+                    GET_SELL_PRICE(se.product_code,{$pcomp_id},{$usd_ratio}) product_price_total,
+                    GET_PRICE(se.product_code,{$pcomp_id},{$usd_ratio}) product_price_total_raw,
+		    pp.curr_code,
+		    se.party_label,
+		    se.product_quantity,
+		    se.product_img
+		FROM
+		    stock_entries se
+			JOIN
+		    prod_list pl ON pl.product_code=se.product_code
+			LEFT JOIN
+		    price_list pp ON pp.product_code=se.product_code AND pp.label=''
+			LEFT JOIN
+		    stock_tree st ON se.parent_id=branch_id
+		WHERE 
+		    se.product_code='{$product_code}'";
+        $product_data = $this->get_row($sql);
+        return $product_data;
+    }
     public $userPropsGet=[];
     public function userPropsGet(){
         $props=$this->Hub->load_model('User')->userFetch();

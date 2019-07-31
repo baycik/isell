@@ -35,7 +35,6 @@ class DebtManager extends Catalog {
     public function deactivate(){
         $this->Hub->set_level(4);
 	$this->tasksDelete();
-	
     }
     
     public $getBlock = ['filter' => 'json'];
@@ -251,7 +250,7 @@ class DebtManager extends Catalog {
         ];
             $event_id= null;
             $doc_id='';
-            $event_date= date( "Y-m-d H:i:s");// strtotime(date("Y-m-d H:i:s")."+7 day" ));
+            $event_date= date( "Y-m-d H:i:s", strtotime(date("Y-m-d H:i:s")."+7 day" ));
             $event_priority='3medium';
             $event_name='Уведомление';
             $event_label='-TASK-';
