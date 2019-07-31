@@ -368,7 +368,7 @@ class AccountsCore extends Catalog{
         }
     }
     private function checkTransLink($trans_id,$trans) {
-	if( isset($trans['check_id']) ){
+	if( $trans['check_id'] ){
 	    $this->update('acc_check_list',['trans_id'=>$trans_id],['check_id'=>$trans['check_id']]);
 	}
     }
@@ -378,7 +378,7 @@ class AccountsCore extends Catalog{
 	}	
     }
     private function transCrossLink($trans_id,$trans){
-	if( isset($trans['trans_ref']) ){
+	if( $trans['trans_ref'] ){
 	    $this->update('acc_trans', ['trans_ref'=>$trans['trans_ref'],'trans_status'=>5], ['trans_id'=>$trans_id]);
 	    $this->update('acc_trans', ['trans_ref'=>$trans_id,'trans_status'=>4], ['trans_id'=>$trans['trans_ref']]);
 	}
