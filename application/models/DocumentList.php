@@ -53,6 +53,7 @@ class DocumentList extends Catalog{
 	    SELECT 
 		doc_id,
 		doc_type,
+                IF(doc_type=1,'DocumentSell','') doc_extension,
 		dl.cstamp,
 		doc_num,
 		label pcomp_label,
@@ -93,6 +94,11 @@ class DocumentList extends Catalog{
     public $statusFetchList=[];
     public function statusFetchList(){
         $sql="SELECT * FROM document_status_list";
+        return $this->get_list($sql);
+    }
+    
+    public function documentTypeListFetch(){
+        $sql="SELECT * FROM document_types WHERE doc_type<10";
         return $this->get_list($sql);
     }
     

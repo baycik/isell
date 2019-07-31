@@ -13,7 +13,7 @@ class DocumentView extends DocumentItems{
 			doc_view_id,
 			view_num,
 			view_name,
-			DATE_FORMAT(tstamp, '%d.%m.%Y') AS view_date,
+			DATE_FORMAT(tstamp, '%Y-%m-%d') AS view_date,
                         tstamp,
 			dvt.view_type_id,
 			view_efield_values,
@@ -32,7 +32,7 @@ class DocumentView extends DocumentItems{
 		    GROUP BY 
 			view_type_id
 		    ORDER BY
-			view_hidden, pref_int-DATEDIFF(NOW(),pref_value) DESC
+			pref_int-DATEDIFF(NOW(),pref_value) DESC,ISNULL(doc_view_id),view_hidden
 		    ";
 	    return $this->get_list($sql);	    
 	} else {
@@ -40,9 +40,8 @@ class DocumentView extends DocumentItems{
 	}
 
     }
-    public $viewUpdate=['int','string','string','string'];
-    public function viewUpdate($doc_view_id, $is_extra, $field, $value='') {
-
+    
+    public function viewUpdate(int $doc_view_id, bool $is_extra, string $field, string $value='') {
 	if ( $this->isCommited() ){
 	    $this->Hub->set_level(2);
 	}
@@ -63,21 +62,21 @@ class DocumentView extends DocumentItems{
 	    }
 	    if ($field == 'view_date') {
 		$field = 'tstamp';
-		preg_match_all('/([0-9]{2})\.([0-9]{2})\.([0-9]{2,4})/', $value, $out);
-		$value = date("Y-m-d H:i:s", mktime(0, 0, 0, $out[2][0], $out[1][0], $out[3][0]));
+		//preg_match_all('/([0-9]{2})\.([0-9]{2})\.([0-9]{2,4})/', $value, $out);
+		//$value = date("Y-m-d H:i:s", mktime(0, 0, 0, $out[2][0], $out[1][0], $out[3][0]));
 	    }
 	}
 	$user_id = $this->Hub->svar('user_id');
 	$this->query("UPDATE document_view_list SET $field='$value',modified_by='$user_id' WHERE doc_view_id='$doc_view_id'");
 	return true;
     }
-    public $viewDelete=['int'];
-    public function viewDelete( $doc_view_id ){
+
+    public function viewDelete( int $doc_view_id ){
 	$Document2=$this->Hub->bridgeLoad('Document');
 	return $Document2->deleteView($doc_view_id);
     }
-    public $viewCreate=['int'];
-    public function viewCreate( $view_type_id ){
+
+    public function viewCreate( int $view_type_id ){
 	$Document2=$this->Hub->bridgeLoad('Document');
 	$view_id= $Document2->insertView($view_type_id);
 	$this->viewIncreaseFetchCount($view_type_id);

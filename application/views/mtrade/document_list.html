@@ -1,172 +1,238 @@
 <script>
-    App.page_mtrade_document_list = (function () {
-	var require = [
-	    "js/slick/lib/jquery.event.drag-2.3.0.js",
-	    ["js/slick/slick.core.js",
-	    "js/slick/slick.grid.js",
-	    "js/slick/plugins/slick.rowselectionmodel.js",
-	    "js/slick/slick.editors.js",
-	    "js/slick/slickinfinite.js"]
-	];
-	var DocList = {
-	    init:function(){
-		DocList.table.init();
-		$(".x-doclist-tools").click(function (e) {
-		    var action = $(e.target).data('action');
-		    if (action) {
-			DocList.tools[action] && DocList.tools[action]();
-		    }
-		});
-		DocList.tools.swap_expand_collapse();
-	    },
-	    tools:{
-		reload:function(){
-		    DocList.grid.reload();
-		},
-		expand_collapse:function(){
-		    if (DocList.table.columnMode === 'advanced') {
-			DocList.table.columnMode = 'simple';
-			App.store('document_list_table_mode', 'simple');
-		    } else {
-			DocList.table.columnMode = 'advanced';
-			App.store('document_list_table_mode', 'advanced');
-		    }
-		    DocList.table.render();
-		    DocList.grid.reload();
-		    DocList.tools.swap_expand_collapse();
-		},
-		swap_expand_collapse:function(){
-		    if(DocList.table.columnMode === 'advanced'){
-			$(".x-doclist-tools .icon-expand").removeClass("icon-expand").addClass("icon-collapse");
-		    } else {
-			$(".x-doclist-tools .icon-collapse").removeClass("icon-collapse").addClass("icon-expand");
-		    }
-		}
-	    },
-	    table: {
-		frm:{
-		    round: function (num) {
-			return isNaN(num) ? '' : Number.parseFloat(num).toFixed(2);
-		    },
-		    tooltip: function (row, cell, value, columnDef, dataContext) {
-			if (!value) {
-			    return '';
-			}
-			var parts = value.split(' ');
-			var cmd = parts.shift();
-			if (cmd) {
-			    var style = 'max-width:16px;height:auto';
-			    return '<img src="img/' + cmd + '.png" style="' + style + '" title="' + parts.join(' ') + '">';
-			} else {
-			    return '';
-			}
-		    },
-		    dateFormatter: function (row, cell, value, columnDef, dataContext) {
-			var date_parts = value.split(' ')[0].split('-');
-			var date = date_parts[2] + '.' + date_parts[1] + '.' + date_parts[0];
-			return '<span title="' + value.split(' ')[1] + '">' + date + '</span>';
-		    }
-		},
-		columnMode: App.store('document_list_table_mode') || 'simple',
-		init: function () {
-		    var settings = {
-			columns: [],
-			options: {
-			    enableCellNavigation: true,
-			    enableColumnReorder: false,
-			    enableFilter: true,
-			    multiSelect: false,
-			    url: 'DocumentList/listFetch',
-			    explicitInitialization: true
-			}
-		    };
-		    DocList.grid = $("#doclist_sg").slickgrid(settings);
-		    DocList.grid.onSelectedRowsChanged.subscribe(function (e, selection) {
-			var doclistRow = selection.grid.getDataItem(selection.rows[0]);
-			App.Document.init(doclistRow.doc_type);
-			App.Document.load(doclistRow.doc_id);
-		    });
-		    App.Topic('passiveCompanySelected').subscribe(function (company) {
-			DocList.grid.updateOptions({params: {mode: 'show_only_pcomp_docs'}});
-			DocList.grid.reload();
-		    });
-		    App.Topic('passiveCompanyReset').subscribe(function (company) {
-			DocList.grid.updateOptions({params: {mode: ''}});
-			DocList.grid.reload();
-		    });
-		    DocList.table.render();
-		    DocList.grid.init();
-		    DocList.grid.reload();
-		},
-		columnsGet:function(){
-                    var columns_lev1=[
-                        {id: "doc_type_icon", field: "doc_type_icon", name: "", width: 25, formatter: DocList.table.frm.tooltip},
-			{id: "doc_num", field: "doc_num", name: "Номер", width: 50, sortable: true, cssClass: 'slick-align-right'},
-			{id: "cstamp", field: "cstamp", name: "Дата", width: 70, sortable: true, formatter: DocList.table.frm.dateFormatter},
-			{id: "doc_total_frm", field: "doc_total_frm", name: "Сумма", width: 80, sortable: true, cssClass: 'slick-align-right'},
-			{id: "trans_status", field: "trans_status", name: "Оплачен", width: 25, sortable: true, formatter: DocList.table.frm.tooltip},
-                    ];
-                    var columns_adv=[
-			{id: "pcomp_label", field: "pcomp_label", name: "Контрагент", width: 120},
-			{id: "is_commited", field: "is_commited", name: "Проведен", width: 25, formatter: DocList.table.frm.tooltip},
-			{id: "doc_type_name", field: "doc_type_name", name: "Тип документа", sortable: true, width: 150},
-			{id: "views", field: "views", name: "Напечатано", width: 70}
-                    ];
-                    var columns=columns_lev1;
-		    if( DocList.table.columnMode==='advanced' ){
-			columns=columns.concat(columns_adv);
-		    }
-                    return columns;
-		},
-		render:function(){
-		    DocList.grid.updateOptions({params:{colmode:DocList.table.columnMode}});
-		    var cols=DocList.table.columnsGet();
-                    DocList.table.columnSummaryWidth=0;
-                    for( var i in cols ){
-                        DocList.table.columnSummaryWidth+=cols[i].width+1;
+(function () {
+    let DocumentInline=null;
+    let DocList = {
+        init:function(){
+            DocList.table.init();
+            DocList.tools.init();
+            DocList.tools.swap_expand_collapse();
+        },
+        tools:{
+            init:function(){
+                $(".x-doclist-tools").click(function (e) {
+                    var action = $(e.target).data('action');
+                    if (action) {
+                        DocList.tools[action] && DocList.tools[action]();
                     }
-		    DocList.grid.setColumnsAndFilters(cols);
-		    DocList.table.setDimensions("#doclist_sg",25,0);
-		},
-		setDimensions:function(query, dw, dh){
-		    var col_width = DocList.table.columnSummaryWidth+ (dw || 0);
-		    $(query).css('width', col_width + 'px');
-		}
-	    }
-	};
-	function init() {
-	    DocList.init();
-	    $("#Document").load("page/mtrade/document.html", function () {
-		App.Document.init('sell');
-		App.Document.load(7180);
-	    });
-	}
-	return {
-	    require: require,
-	    init: init
-	};
-    })();
+                });
+            },
+            reloadTimer:0,
+            reload:function(){
+                clearTimeout(DocList.tools.reloadTimer);
+                DocList.tools.reloadTimer=setTimeout(function(){
+                    DocList.grid.reload();
+                },100);
+            },
+            add:function(){
+                //Document.load(0);
+            },
+            expand_collapse:function(){
+                if (DocList.table.columnMode === 'advanced') {
+                    DocList.table.columnMode = 'simple';
+                    App.store('document_list_table_mode', 'simple');
+                } else {
+                    DocList.table.columnMode = 'advanced';
+                    App.store('document_list_table_mode', 'advanced');
+                }
+                DocList.table.render();
+                DocList.tools.reload();
+                DocList.tools.swap_expand_collapse();
+            },
+            swap_expand_collapse:function(){
+                if(DocList.table.columnMode === 'advanced'){
+                    $(".x-doclist-tools .icon-expand").removeClass("icon-expand").addClass("icon-collapse");
+                } else {
+                    $(".x-doclist-tools .icon-collapse").removeClass("icon-collapse").addClass("icon-expand");
+                }
+            }
+        },
+        table: {
+            frm:{
+                tooltip: function (row, cell, value, columnDef, dataContext) {
+                    if (!value) {
+                        return '';
+                    }
+                    var parts = value.split(' ');
+                    var cmd = parts.shift();
+                    if (cmd) {
+                        var style = 'max-width:16px;height:auto';
+                        return `<img src="img/${cmd}.png" data-command="${cmd}" style="${style}" title="${parts.join(' ')}">`;
+                    } else {
+                        return '';
+                    }
+                },
+                currency:function(row, cell, value, columnDef, dataContext){
+                    return value*1 ? Number.parseFloat(value).toLocaleString('lookup',{ style: 'decimal',minimumFractionDigits:2 }) : '';
+                },
+                dateFormatter: function (row, cell, value, columnDef, dataContext) {
+                    if( !value ){
+                        return '';
+                    }
+                    var date_parts = value.split(' ')[0].split('-');
+                    var date = date_parts[2] + '.' + date_parts[1] + '.' + date_parts[0];
+                    return '<span title="' + value.split(' ')[1] + '">' + date + '</span>';
+                }
+            },
+            restoreLastSelectedDocument:function(){
+                let last_doc_id=App.store('document_list_last_doc_id') || 0;
+                let doc_list=DocList.grid.getData();
+                let row_number=0;
+                for( let i in doc_list){
+                    if( doc_list[i].doc_id==last_doc_id ){
+                        row_number=doc_list[i].num;
+                        break;
+                    }
+                }
+                DocList.grid.setSelectedRows([row_number]);
+            },
+            columnMode: App.store('document_list_table_mode') || 'simple',
+            current_row: '',
+            init: function () {
+                var settings = {
+                    columns: [],
+                    options: {
+                        enableCellNavigation: true,
+                        enableColumnReorder: false,
+                        enableFilter: true,
+                        disableLoadScroll:true,
+                        disableAutoload:true,
+                        multiSelect: false,
+                        url: 'DocumentList/listFetch',
+                        explicitInitialization: true,
+                        pagesize:25,
+                        params:{
+                            mode:'add_empty_row'
+                        }
+                    }
+                };
+                DocList.grid = new SlickInfinite("#mtrade_doclist_sg", settings);
+                DocList.grid.onSelectedRowsChanged.subscribe(function (e, selection) {
+                    DocList.table.current_row = selection.grid.getDataItem(selection.rows[0]);
+                    if( !DocList.table.current_row ){
+                        return false;
+                    }
+                    DocHolder.load(DocList.table.current_row.doc_id,DocList.table.current_row.doc_extension);
+                    App.store('document_list_last_doc_id',DocList.table.current_row.doc_id);
+                });
+                DocList.grid.onRenderFinished.subscribe(function(){
+                    DocList.table.restoreLastSelectedDocument();
+                    DocList.table.setDimensions("#mtrade_doclist_sg",DocList.table.columnSummaryWidth);
+                });
+                $("#mtrade_doclist_sg").click(function(e){
+                    let command=$(e.target).data('command');
+                    if( "unpayed partly payed".indexOf(command)>-1 ){
+                        App.loadWindow("page/accounts/document_pay",{doc_id:DocList.table.current_row.doc_id,total:DocList.table.current_row.doc_total}).done(function(fvalue){
+                            DocList.tools.reload();
+                        });
+                    } else if( "closing closed".indexOf(command)>-1 ){
+                        App.flash("Документ уже оплачен");
+                    }
+                });
+                App.Topic('activeCompanySelected').subscribe(function (company) {
+                    DocList.grid.updateOptions({params: {mode: 'show_only_pcomp_docs,add_empty_row'}});
+                    DocList.tools.reload();
+                });
+                App.Topic('passiveCompanySelected').subscribe(function (company) {
+                    DocList.grid.updateOptions({params: {mode: 'show_only_pcomp_docs,add_empty_row'}});
+                    DocList.tools.reload();
+                });
+                App.Topic('passiveCompanyReset').subscribe(function (company) {
+                    DocList.grid.updateOptions({params: {mode: 'add_empty_row'}});
+                    DocList.tools.reload();
+                });
+                App.Topic('documentUpdated').subscribe(function () {
+                    //DocList.tools.reload();
+                });
+                DocList.table.render();
+                DocList.grid.init();
+            },
+            columnsGet:function(){
+                var columns_lev1=[
+                    {id: "doc_type_icon", field: "doc_type_icon", name: "", width: 25, formatter: DocList.table.frm.tooltip},
+                    {id: "doc_num", field: "doc_num", name: "Номер", width: 50, sortable: true, cssClass: 'slick-align-right'},
+                    {id: "cstamp", field: "cstamp", name: "Дата", width: 75, sortable: true, formatter: DocList.table.frm.dateFormatter},
+                    {id: "doc_total", field: "doc_total", name: "Сумма", width: 90, sortable: true, cssClass: 'slick-align-right', formatter: DocList.table.frm.currency},
+                    {id: "trans_status", field: "trans_status", name: "Оплачен", width: 25, sortable: true, formatter: DocList.table.frm.tooltip},
+                ];
+                var columns_adv=[
+                    {id: "pcomp_label", field: "pcomp_label", name: "Контрагент", width: 120},
+                    {id: "is_commited", field: "is_commited", name: "Проведен", width: 25, formatter: DocList.table.frm.tooltip},
+                    {id: "doc_type_name", field: "doc_type_name", name: "Тип документа", sortable: true, width: 150},
+                    {id: "views", field: "views", name: "Напечатано", width: 70}
+                ];
+                var columns=columns_lev1;
+                if( DocList.table.columnMode==='advanced' ){
+                    columns=columns.concat(columns_adv);
+                }
+                return columns;
+            },
+            render:function(){
+                DocList.grid.updateOptions({params:{colmode:DocList.table.columnMode}});
+                var cols=DocList.table.columnsGet();
+                DocList.table.columnSummaryWidth=0;
+                for( var i in cols ){
+                    DocList.table.columnSummaryWidth+=cols[i].width+2;
+                }
+                DocList.grid.setColumnsAndFilters(cols);
+            },
+            setDimensions:function(query, dw){
+                var div = $(query+' .slick-viewport')[0];
+                var hasVerticalScrollbar = div.scrollHeight > div.clientHeight;
+                if(hasVerticalScrollbar){
+                    dw+=20;
+                }
+                var width =(dw || 0);
+                $(query).css('width', width + 'px');
+            }
+        }
+    };
+    let DocHolder={
+        node_id:null,
+        prepareDocumentBase:$.Deferred(),
+        init:function(){
+            DocHolder.node_id='DocumentInline'+Date.now();
+            $("#mtrade_doclistgrid .x-doclist-holder").append("<div id='"+DocHolder.node_id+"'></div>");
+            $("#"+DocHolder.node_id).load("page/mtrade/document_base.html", function () {
+                DocumentInline=App[DocHolder.node_id];
+                DocHolder.prepareDocumentBase.resolve();
+            });
+        },
+        load:function(doc_id,doc_extention){
+            doc_extention=doc_extention||1;
+            if( !doc_extention ){/* TODO determine current doc_extension automatically*/
+                console.log('provide doc_extention please!!!');
+                return;
+            }
+            DocHolder.prepareDocumentBase.then(function(){
+                DocumentInline.extention.set(doc_extention);
+                DocumentInline.load(doc_id);
+            });
+        }
+    };
+    DocHolder.init();
+    DocList.init();
+})();
 </script>
 <style>
-    #doclistgrid {
-	margin: 1px;
+    #mtrade_doclistgrid {
 	display: grid;
 	grid-template-columns: min-content min-content;
-	grid-gap:5px;
+	grid-gap:1px;
     }
 </style>
-<div id="doclistgrid">
-    <div>
-	<div class="x-doclist-tools" class="transp60">
-	    <div style="float: left;font-weight: bold;padding-top: 8px;">
-		<img src="img/table16.png" style="width:16px;height: 16px;"> Документы
+<div id="mtrade_doclistgrid" class="transp60">
+    <div style="vertical-align: top;width:800px;padding: 5px;" class="x-doclist-holder "></div>
+    <div style="overflow-x: auto;">
+        <div class="x-doclist-tools " style="display: grid;grid-template-columns: 1fr 1fr;padding:10px;margin-bottom: 5px; height: 38px;background-image: url('img/bg_header_stripes.png');">
+	    <div style="font-weight: bold;">
+		<img src="img/table16.png" style="width:16px;height: 16px;" /> Документы
 	    </div>
-	    <div style="float: right">
+	    <div style="text-align: right">
+		<span class="icon-24 icon-create" data-action="add" title="Создать документ"> </span> 
 		<span class="icon-24 icon-expand" data-action="expand_collapse" title="Полный/Сокращенный режим"> </span> 
 		<span class="icon-24 icon-refresh" data-action="reload" title="Обновить"> </span> 
 	    </div>
 	</div>
-	<div id="doclist_sg" style="height:700px"></div>
+	<div id="mtrade_doclist_sg" style="height:700px;"></div>
     </div>
-    <div style="vertical-align: top;width:800px;" id="Document" class="transp60"></div>
 </div>

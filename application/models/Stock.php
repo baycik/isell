@@ -437,9 +437,42 @@ class Stock extends Catalog {
         return $this->db->affected_rows();
     }
 
-    public $reserveListFetch = ['offset' => ['int', 0], 'limit' => ['int', 0], 'sortby' => ['string','cstamp'], 'sortdir' => ['(ASC|DESC)','DESC'], 'filter' => 'json'];
+    
+    ////////////////////////////////////////////
+    // RESERVING SYSTEM
+    ////////////////////////////////////////////
+    
+    public function reserveSystemStatusChange( bool $active ){
+        $Events=$this->Hub->load_model("Events");
+        if( $active ){
+            $Events->Topic('documentStatusChanged')->subscribe('Stock','reserveStatusChange');
+            $Events->Topic('documentEntryChanged')->subscribe('Stock','reserveEntryChange');
+            $this->reserveCountUpdate();
+        } else {
+            $Events->Topic('documentStatusChanged')->unsubscribe('Stock','reserveStatusChange');
+            $Events->Topic('documentEntryChanged')->unsubscribe('Stock','reserveEntryChange');
+            $this->query("UPDATE stock_entries SET product_reserved = 0, product_awaiting = 0");
+        }
+    }
+    
+    public function reserveStatusChange( $old_status_id, $new_status_id, $doc ){
+        if( $new_status_id==2 ){//reserved 
+            $this->reserveTaskAdd($doc);
+            $this->reserveCountUpdate();
+        }
+        if( $old_status_id==2 ){
+            $this->reserveTaskRemove($doc);
+            $this->reserveCountUpdate();
+        }
+    }
 
-    public function reserveListFetch($offset, $limit, $sortby, $sortdir, $filter = null) {
+    public function reserveEntryChange( $doc_status_id ){
+        if( $doc_status_id==2 ){
+            $this->reserveCountUpdate();
+        }
+    }
+
+    public function reserveListFetch(int $offset=0, int $limit=0, string $sortby='cstamp', string $sortdir='DESC', array $filter = null) {
         $this->Hub->set_level(2);
         if (empty($sortby)) {
             $sortby = "cstamp";
@@ -491,5 +524,85 @@ class Stock extends Catalog {
         $rows[]=$this->get_row("SELECT 'Σ' product_name,@reserved_sum reserved,@awaiting_sum awaiting");
         return $rows;
     }
-
+    
+    private function reserveTaskAdd($doc){
+        $this->Hub->load_model('Events');
+        $this->Hub->Events->eventDeleteDocumentTasks($doc->doc_id);
+        $user_id=$this->Hub->svar('user_id');
+        if( $doc->doc_type==1 ){
+            $day_limit=$this->Hub->pref('reserved_limit');
+        } else {
+            $day_limit=$this->Hub->pref('awaiting_limit');
+        }
+        $stamp=time()+60*60*24*($day_limit?$day_limit:3);
+        $alert="Счет №".$doc->doc_num." для ".$this->Hub->pcomp('company_name')." снят с резерва";
+        $name="Снятие с резерва";
+        $description="$name счета №".$doc->doc_num." для ".$this->Hub->pcomp('company_name');
+        $event=[
+            'doc_id'=>$doc->doc_id,
+            'event_name'=>$name,
+            'event_status'=>'undone',
+            'event_label'=>'-TASK-',
+            'event_date'=>date("Y-m-d H:i:s",$stamp),
+            'event_descr'=>$description
+        ];
+        $event_id=$this->Hub->Events->eventCreate($event);
+        $event_update=[
+            'event_program'=>json_encode([
+                'commands'=>[
+                    [
+                        'model'=>'DocumentCore',
+                        'method'=>'setStatusByCode',
+                        'arguments'=>[$doc->doc_id,'created']
+                    ],
+                    [
+                        'model'=>'Chat',
+                        'method'=>'addMessage',
+                        'arguments'=>[$user_id,$alert]
+                    ],
+                    [
+                        'model'=>'Events',
+                        'method'=>'eventDelete',
+                        'arguments'=>[$event_id]
+                    ]
+                ]
+            ])
+        ];
+        if( $event_id ){
+            $this->Hub->Events->eventChange($event_id, $event_update);
+        }
+        return $event_id;
+    }
+    
+    private function reserveTaskRemove($doc){
+        $this->Hub->load_model('Events');
+        return $this->Hub->Events->eventDeleteDocumentTasks($doc->doc_id);
+    }
+    
+    public function reserveCountUpdate(){
+        $sql="
+        UPDATE 
+            stock_entries
+                LEFT JOIN
+            (SELECT 
+                product_code,
+                SUM(IF(doc_type = 1, de.product_quantity, 0)) reserved,
+                SUM(IF(doc_type = 2, de.product_quantity, 0)) awaiting
+            FROM
+                document_entries de
+            JOIN document_list USING (doc_id)
+            JOIN document_status_list dsl USING (doc_status_id)
+            WHERE
+                dsl.status_code = 'reserved'
+            GROUP BY product_code) reserve USING (product_code) 
+        SET 
+            product_reserved = COALESCE(reserved,0),
+            product_awaiting = COALESCE(awaiting,0)
+        WHERE 
+	product_reserved IS NOT NULL 
+        OR product_awaiting IS NOT NULL
+	OR reserved IS NOT NULL 
+        OR awaiting IS NOT NULL";
+        return $this->query($sql);
+    }
 }

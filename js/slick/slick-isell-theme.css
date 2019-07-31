@@ -6,21 +6,21 @@ classes should alter those!
 */
 
 .slick-header-columns {
-    background: url('images/header-columns-bg.gif') repeat-x center bottom;
-    border-bottom: 1px solid silver;
+    
 }
 
-.slick-header-column {
-    background: url('images/header-columns-bg.gif') repeat-x center bottom;
+.slick-header-column.ui-state-default {
+    background:linear-gradient(#fffc, #eeec, #fffc);
     border-right: 1px solid silver;
+    border-bottom: 1px solid silver !important;
 }
 
 .slick-header-column:hover, .slick-header-column-active {
-    background: white url('images/header-columns-over-bg.gif') repeat-x center bottom;
+    background:linear-gradient(#fff, #def, #fff);
 }
 
 .slick-headerrow {
-    background: #fafafa;
+    -background: #fafafa;
 }
 
 .slick-headerrow-column {

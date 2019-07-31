@@ -1,10 +1,11 @@
 <script>
 (function($){
     function init(){
-	showTree();
-	initTabsOnce();
+	//initTree();
+	initTabs();
     }
-    function showTree(){
+    init();
+    function initTree(){
 	App.loadModule('page/company/tree',{inline:true,clickselect:true},'mCtreeInline',/(Ctree|page_company_tree)([^\w]|_)/g,"mCtreeInline$2").progress(function(status,company){
 	    if( status==='select' ){
 		App.user.pcompSelect(company);
@@ -15,52 +16,32 @@
 	    }
 	});
     }
-    
-    var tabs=[
-	{title:"Документы",href:"page/mtrade/document_list.html",pcompSpecific:false},
-	{title:"Взаиморасчет",href:"page/mtrade/payments.html",pcompSpecific:true},
-	{title:"Настройки",href:"page/company/prefs.html",pcompSpecific:true},
-	{title:"Реквизиты",href:"page/mtrade/details.html",pcompSpecific:true}
-    ];
-    var isTabsInited=false;
-    function initTabsOnce (){
-	if( isTabsInited ){
-	    return;
-	}
-	isTabsInited=true;
-	$('#mtrade_main_tabs').tabs({border:true,pill:true});
-	for(var i in tabs){
-	    tabs[i].selected=false;
-	    $("#mtrade_main_tabs").tabs('add',tabs[i]);
-	}
-	App.initTabs('mtrade_main_tabs');
-	App.handler.progress(function(status){
-	    if( status==='passiveCompanyInited' || status==='passiveCompanySelected' || status==='passiveCompanyReset' ){
-		tabsTogglePcompSpecific();
-	    }
-	});
-	tabsTogglePcompSpecific();
+    function initTabs(){
+        App.isellTabs('#mtrade_main_tabs',[
+            {title:"Документы",url:"page/mtrade/document_list.html"},
+            {title:"Взаиморасчет",url:"page/mtrade/payments.html",class:'tab_pcomp_only'},
+            {title:"Настройки",url:"page/company/prefs.html",class:'tab_pcomp_only'},
+            {title:"Реквизиты",url:"page/mtrade/details.html",class:'tab_pcomp_only'}
+        ]);
+        App.Topic('passiveCompanySelected').subscribe(function(){
+            $('#mtrade_main_tabs .tab_pcomp_only').removeClass('isell-tabs-disabled');
+        });
+        App.Topic('passiveCompanyReset').subscribe(function(){
+            $('#mtrade_main_tabs .tab_pcomp_only').addClass('isell-tabs-disabled');
+        });        
     }
-    function tabsTogglePcompSpecific(){
-	var first_nonspecific;
-	for(var i in tabs){
-	    if(tabs[i].pcompSpecific){
-		App.pcomp && $("#mtrade_main_tabs").tabs('enableTab',tabs[i].title);
-		!App.pcomp && $("#mtrade_main_tabs").tabs('disableTab',tabs[i].title);
-	    } else {
-		first_nonspecific=tabs[i].title;
-	    }
-	}
-	var selected_disabled=$("#mtrade_main_tabs").tabs('getSelected').panel('options').disabled;
-	if( selected_disabled ){
-	    $("#mtrade_main_tabs").tabs('select',first_nonspecific);
-	}
-    }
-    init();
 })(jQuery);
 </script>
-<div style="float: left;margin-right: 3px;">
-    <div id="mCtreeInline" class="transp60"></div>
+<style>
+    .mtrade_grid{
+        display: grid;
+        gap:2px;
+        grid-template-columns: min-content min-content;
+    }
+</style>
+<div class="mtrade_grid">
+    <div>
+        <div id="mCtreeInline" class="transp60"></div>
+    </div>
+    <div id="mtrade_main_tabs"></div>
 </div>
-
-<div id="mtrade_main_tabs" class="slim-tab" style="min-width:1000px;"></div>

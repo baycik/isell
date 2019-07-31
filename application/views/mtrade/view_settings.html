@@ -1,21 +1,21 @@
 <script type="text/javascript">
     /*global App,Doc*/
-    App.page_trade_view_settings = {
+    App.page_mtrade_view_settings = {
 	init: function () {
 	    this.node.window({
-		title: 'Свойства бланка: '+App.page_trade_view_settings.data.view_name,
+		title: 'Свойства бланка: '+App.page_mtrade_view_settings.data.view_name,
 		width: 350,
 		height: 'auto',
 		onClose: function () {
-		    App.page_trade_view_settings.handler.notify('close');
-		    delete App.page_trade_view_settings;
+		    App.page_mtrade_view_settings.handler.notify('close');
+		    delete App.page_mtrade_view_settings;
 		}
 	    });
 	    this.initEfields(this.data);
 	    App.setupForm("#view_settings_frm",this.data,'use_inp_values').change(function(){
                 var field_type=$(this).data('notextra')>0?'notextra':'extra';
-		App.page_trade_view_settings.fieldChanged(this.name,this.value,field_type,this.title);
-            });
+		App.page_mtrade_view_settings.fieldChanged(this.name,this.value,field_type,this.title);
+	    });
 	    this.node.window('center');
 	},
 	initEfields:function(data){
@@ -26,7 +26,7 @@
 	},
 	fieldChanged:function( field, value, is_extra, title ){
             App.post( 'DocumentView/viewUpdate',{doc_view_id:this.data.doc_view_id,is_extra:is_extra,field:field,value:value}, function(ok){
-		App.page_trade_view_settings.handler.notify('changed');
+		App.page_mtrade_view_settings.handler.notify('changed');
                 if( ok*1 ){
                     App.flash("Сохранено: "+title);
                 } else {
@@ -36,9 +36,9 @@
 	},
 	deleteView:function(){
 	    App.post( 'DocumentView/viewDelete',{doc_view_id:this.data.doc_view_id}, function(ok){
-		App.page_trade_view_settings.handler.notify('deleted');
-		App.page_trade_view_settings.node.window('close');
-	    });	 
+		App.page_mtrade_view_settings.handler.notify('deleted');
+		App.page_mtrade_view_settings.node.window('close');
+	    });	    
 	}
     };
 </script>
@@ -55,7 +55,7 @@
     </div>
 </form>
 <div style="text-align: center">
-    <button onclick="App.page_trade_view_settings.node.window('close')"><img src="img/apply24.png" style="vertical-align: middle"> Закрыть</button>
-    <button onclick="App.page_trade_view_settings.deleteView();"><img src="img/delete.png" style="vertical-align: middle"> Удалить</button>
+    <button onclick="App.page_mtrade_view_settings.node.window('close')"><img src="img/apply24.png" style="vertical-align: middle"> Закрыть</button>
+    <button onclick="App.page_mtrade_view_settings.deleteView();"><img src="img/delete.png" style="vertical-align: middle"> Удалить</button>
 </div>
 <br>

@@ -97,6 +97,7 @@
 		    <textarea title="Порядок полей в файле .csv клиент банка" name="clientbank_fields" style="height: 200px"></textarea>
 		</div>
 		<div class="easyui-panel" title="Резервирование товара" data-options="collapsible:true,collapsed:true" style="width:340px;float:left">
+                    <input type="checkbox" title="Резервирование активно" name="reserveSystemActivated" onclick="$.get('Stock/reserveSystemStatusChange',{active:$(this).prop('checked')?1:0})"> <br>
                     <h2>Длительность резерва в днях</h2>
                     <input name="reserved_limit" title="Резерв" value="3" pattern="\d+">
                     <input name="awaiting_limit" title="Ожидание" value="14" pattern="\d+">

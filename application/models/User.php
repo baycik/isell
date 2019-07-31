@@ -122,7 +122,6 @@ class User extends Catalog {
 	$this->Hub->svar('user_assigned_path',$user_data->user_assigned_path);
         $this->Hub->svar('user',$user_data);
 	$this->Hub->svar('modules_allowed',$this->getModuleList());
-
 	$Company=$this->Hub->load_model("Company");
 	if( $user_data->company_id ){
 	    $Company->selectActiveCompany($user_data->company_id);

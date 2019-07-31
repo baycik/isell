@@ -42,7 +42,7 @@
                 e.preventDefault();
                 remoteModel.loadNext();
             });
-            a.css('backgroundColor','rgba(255,255,255,.6)').css("borderRadius","5px").css('padding','5px').css('margin','5px').css('cursor','pointer');
+            a.css('backgroundColor','rgba(255,255,255,.6)').css("borderRadius","5px").css('padding','5px').css('margin-top','5px').css('cursor','pointer');
         }
 
 	function initFilter() {

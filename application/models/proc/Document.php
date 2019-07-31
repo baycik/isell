@@ -1302,13 +1302,10 @@ class Document extends Data {
 	$doc_id = $this->doc('doc_id');
 	$trans_type = $acc_debit_code . "_" . $acc_credit_code;
 	$trans_id = $this->Base->get_row("SELECT trans_id FROM document_trans WHERE doc_id=$doc_id AND type='$trans_type'", 0);
-        
-        $active_company_id=$this->doc('active_company_id');
-        $passive_company_id=$this->doc('passive_company_id');
 
 	$this->Base->LoadClass('Accounts');
 	if (!$trans_id) {//Transaction does not exists
-	    $trans_id = $this->Base->Accounts->commitTransaction($acc_debit_code, $acc_credit_code, $amount, $description, false, $this->doc('cstamp'), $amount_alt, $active_company_id, $passive_company_id);
+	    $trans_id = $this->Base->Accounts->commitTransaction($acc_debit_code, $acc_credit_code, $amount, $description, false, $this->doc('cstamp'), NULL, $amount_alt);
 	    $this->Base->query("INSERT INTO document_trans SET doc_id=$doc_id, trans_id=$trans_id, type='$trans_type', trans_role='$trans_role'");
 	} else {
 	    $this->Base->Accounts->updateTransaction($trans_id, array('amount' => $amount, 'amount_alt' => $amount_alt, 'description' => $description));

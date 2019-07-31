@@ -164,7 +164,7 @@ class StockBuyManager extends Catalog{
 	}
 	$ids=implode(',',$supply_ids);
 	$sql="INSERT INTO
-		imported_data (label,A,B,C,D,E,F,G,H,I,J,K)
+		imported_data (label,A,B,C,D,E,F,G,H,I,J)
 	    (SELECT 
 		'склад' label,
 		IF(product_code IS NOT NULL,product_code,supply_code) A,
@@ -183,8 +183,7 @@ class StockBuyManager extends Catalog{
 		supply_weight G,
 		supply_volume H,
 		supply_unit I,
-		supply_comment J,
-                supply_code K
+		supply_comment J
 	    FROM
 		supply_list sl
 		    LEFT JOIN

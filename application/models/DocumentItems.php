@@ -160,12 +160,11 @@ class DocumentItems extends DocumentCore{
 	$Document2=$this->Hub->bridgeLoad('Document');
 	$add_duplicate_rows=(bool) $this->Hub->pref('add_duplicate_rows');
 	$doc_entry_id=$Document2->addEntry( $product_code, $quantity, $price, $add_duplicate_rows );
-        if( $this->isReserved() ){
-            $this->reservedCountUpdate();
-        }
         if( $doc_entry_id*1 ){
             $this->entryBreakevenPriceUpdate($doc_entry_id);
         }
+        $Events=$this->Hub->load_model("Events");
+        $Events->Topic('documentEntryChanged')->publish($doc_entry_id,$this->_doc);
         return $doc_entry_id;
     }
     private function entryBreakevenPriceUpdate( $doc_entry_id=null, $doc_id=null ){
@@ -220,9 +219,9 @@ class DocumentItems extends DocumentCore{
 	    case 'product_quantity':
                 $this->Hub->set_level(1);
                 $ok=$Document2->updateEntry($doc_entry_id, $value, NULL);
-                if( $this->isReserved() ){
-                    $this->reservedCountUpdate();
-                }
+//                if( $this->isReserved() ){
+//                    $this->reservedCountUpdate();
+//                }
                 $Document2->updateTrans();
 		return $ok;
 	    case 'product_price':
@@ -235,6 +234,8 @@ class DocumentItems extends DocumentCore{
                 $this->query("UPDATE document_entries SET party_label='$value' WHERE doc_entry_id='$doc_entry_id'");
 		return true;
 	}
+        $Events=$this->Hub->load_model("Events");
+        $Events->Topic('documentEntryChanged')->publish($doc_entry_id,$this->_doc);
     }
     public $entryDelete=['int','string'];
     public function entryDelete( $doc_id, $ids ){
@@ -246,9 +247,8 @@ class DocumentItems extends DocumentCore{
 	$this->selectDoc($doc_id);
 	$Document2=$this->Hub->bridgeLoad('Document');
 	$delete_ok=$Document2->deleteEntry($ids_arr);
-        if( $this->isReserved() ){
-            $this->reservedCountUpdate();
-        }
+        $Events=$this->Hub->load_model("Events");
+        $Events->Topic('documentEntryChanged')->publish($ids_arr,$this->_doc);
         return $delete_ok;
     }
     
