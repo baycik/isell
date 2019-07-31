@@ -750,8 +750,8 @@
     </form>
     <div class="ui clearing divider ">
      </div>
-    <div class="ui grid">
-        <div class="twelve wide left floated column">
+    <div class="ui stackable grid">
+        <div class="six wide left floated column">
             <div id="stock_render_mode" class="covert" tabindex="0"  >
                 <div class="ui labeled large button"  >
                     {{if show_cart}}
@@ -769,24 +769,22 @@
                 </div>
             </div> 
         </div> 
-        <div class="two wide right floated right aligned column">
-            <div class="ui selection dropdown limit-dropdown">
+        <div class="four wide right floated right aligned column">
+            <div class="ui selection labeled  dropdown limit-dropdown" style="min-width:auto">
                 <input type="hidden" name="gender">
                     <i class="dropdown icon"></i>
                     <div class="default text">12</div>
                     <div class="menu">
                         <div class="item" data-value="12">12</div>
-                        <div class="item" data-value="20">20</div>
-                        <div class="item" data-value="50">50</div>
+                        <div class="item" data-value="24">24</div>
+                        <div class="item" data-value="48">48</div>
                         <div class="item" data-value="100">100</div>
                     </div>
             </div>
-        </div> 
-        <div class="two wide right floated right aligned column">
             <div class="ui basic buttons">
-                <button class="ui  icon button" onclick="App.stock.entries.gridViewToggle(0)"> <i class="list icon"></i></button>
-                <button class="ui   icon button" onclick="App.stock.entries.gridViewToggle(1)"> <i class="table icon"></i></button>
-            </div>
+                    <button class="ui  icon button" onclick="App.stock.entries.gridViewToggle(0)"> <i class="list icon"></i></button>
+                    <button class="ui   icon button" onclick="App.stock.entries.gridViewToggle(1)"> <i class="table icon"></i></button>
+                </div>
         </div> 
     </div>
 </div>
