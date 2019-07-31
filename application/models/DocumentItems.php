@@ -34,6 +34,7 @@ class DocumentItems extends DocumentCore{
         }
 	$sql="
 	    SELECT
+		product_id,
 		product_code,
 		ru product_name,
 		product_spack,

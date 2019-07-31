@@ -329,6 +329,9 @@
 	    background-color: rgba(0,0,0,.8);
 	    border-radius: .3em;
 	}
+        #main_container{
+            background-color: #f7fafb;
+        }
         @media only screen and (min-width: 800px) {
             #main_container{
                 padding: 0 5% 0 5%;
@@ -336,7 +339,7 @@
         } 
         @media only screen and (min-width: 1000px) {
             #main_container{
-                padding: 0 10% 0 10%;
+                padding: 0 15% 0 15%;
             }
         } 
     </style>
@@ -400,14 +403,14 @@
 	<div class="header"><i class="sign in icon"></i>Вход в систему</div>
 	<div class="content">
 	    <form action="./?"  method="post" enctype="multipart/form-data">
-	    <div class="ui left icon fluid input">
-		<input placeholder="Логин" name="user_login">
-		<i class="user icon"></i>
-	    </div>
-	    <div class="ui left icon fluid input">
-		<input placeholder="Пароль" name="user_pass" type="password">
-		<i class="lock icon"></i>
-	    </div>
+                <div class="ui left icon fluid input">
+                    <input placeholder="Логин" name="user_login">
+                    <i class="user icon"></i>
+                </div>
+                <div class="ui left icon fluid input">
+                    <input placeholder="Пароль" name="user_pass" type="password">
+                    <i class="lock icon"></i>
+                </div>
 	    </form>
 	</div>
 	<div class="actions">
