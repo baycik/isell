@@ -105,7 +105,7 @@
                         }
                     }
                 };
-                DocList.grid = new SlickInfinite("#doclist_sg", settings);
+                DocList.grid = new SlickInfinite("#mtrade_doclist_sg", settings);
                 DocList.grid.onSelectedRowsChanged.subscribe(function (e, selection) {
                     DocList.table.current_row = selection.grid.getDataItem(selection.rows[0]);
                     if( !DocList.table.current_row ){
@@ -116,9 +116,9 @@
                 });
                 DocList.grid.onRenderFinished.subscribe(function(){
                     DocList.table.restoreLastSelectedDocument();
-                    DocList.table.setDimensions("#doclist_sg",DocList.table.columnSummaryWidth);
+                    DocList.table.setDimensions("#mtrade_doclist_sg",DocList.table.columnSummaryWidth);
                 });
-                $("#doclist_sg").click(function(e){
+                $("#mtrade_doclist_sg").click(function(e){
                     let command=$(e.target).data('command');
                     if( "unpayed partly payed".indexOf(command)>-1 ){
                         App.loadWindow("page/accounts/document_pay",{doc_id:DocList.table.current_row.doc_id,total:DocList.table.current_row.doc_total}).done(function(fvalue){
@@ -191,7 +191,7 @@
         prepareDocumentBase:$.Deferred(),
         init:function(){
             DocHolder.node_id='DocumentInline'+Date.now();
-            $("#doclistgrid .x-doclist-holder").append("<div id='"+DocHolder.node_id+"'></div>");
+            $("#mtrade_doclistgrid .x-doclist-holder").append("<div id='"+DocHolder.node_id+"'></div>");
             $("#"+DocHolder.node_id).load("page/mtrade/document_base.html", function () {
                 DocumentInline=App[DocHolder.node_id];
                 DocHolder.prepareDocumentBase.resolve();
@@ -214,13 +214,13 @@
 })();
 </script>
 <style>
-    #doclistgrid {
+    #mtrade_doclistgrid {
 	display: grid;
 	grid-template-columns: min-content min-content;
 	grid-gap:1px;
     }
 </style>
-<div id="doclistgrid" class="transp60">
+<div id="mtrade_doclistgrid" class="transp60">
     <div style="vertical-align: top;width:800px;padding: 5px;" class="x-doclist-holder "></div>
     <div style="overflow-x: auto;">
         <div class="x-doclist-tools " style="display: grid;grid-template-columns: 1fr 1fr;padding:10px;margin-bottom: 5px; height: 38px;background-image: url('img/bg_header_stripes.png');">
@@ -233,6 +233,6 @@
 		<span class="icon-24 icon-refresh" data-action="reload" title="Обновить"> </span> 
 	    </div>
 	</div>
-	<div id="doclist_sg" style="height:700px;"></div>
+	<div id="mtrade_doclist_sg" style="height:700px;"></div>
     </div>
 </div>

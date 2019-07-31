@@ -186,7 +186,8 @@ class Events extends Catalog{
             'event_target'=>$method,
             'event_note'=>$param,
             'event_liable_user_id'=>$event_liable_user_id,
-            'label'=>'-TOPIC-'
+            'event_label'=>'-TOPIC-',
+            'event_name'=>$this->topic
         ];
         $this->eventCreate($event);
     }
@@ -195,10 +196,11 @@ class Events extends Catalog{
         if( $event_liable_user_id ){
             $user_case=" AND event_liable_user_id='$event_liable_user_id'";
         }
-        $this->query("DELETE FROM event_list WHERE event_place='$model' AND event_target='$method' $user_case");
+        $this->query("DELETE FROM event_list WHERE event_label='-TOPIC-' AND event_name='$this->topic' AND event_place='$model' AND event_target='$method' $user_case");
     }
-    public function publish( array $arguments=[] ){
-        $listener_list=$this->get_list("SELECT event_place,event_target,event_liable_user_id FROM event_list WHERE event_name='$this->topic'");
+    public function publish(){
+        $arguments=func_get_args();
+        $listener_list=$this->get_list("SELECT event_place,event_target,event_liable_user_id,event_note FROM event_list WHERE event_label='-TOPIC-' AND event_name='$this->topic'");
         foreach($listener_list as $listener){
             $Model=$this->Hub->load_model($listener->event_place);
             $method=$listener->event_target;

@@ -201,7 +201,7 @@ class DocumentCore extends DocumentUtils{
 	    case 'doc_type':
 		return $this->setType($new_val);
 	    case 'doc_status_id':
-		return $this->setStatus(null,$new_val);
+		return $this->documentChangeStatus($new_val);//setStatus(null,$new_val);
 	    case 'extra_expenses':
 		return $this->setExtraExpenses($new_val);
 	}
@@ -213,8 +213,7 @@ class DocumentCore extends DocumentUtils{
     private function setExtraExpenses($expense){//not beautifull function at all
 	$doc_type=$this->doc('doc_type');
 	$doc_id=$this->doc('doc_id');
-	if($doc_id && $doc_type==2){
-	    //only for buy documents
+	if($doc_id && $doc_type==2){//only for buy documents
 	    $footer=$this->footerGet();
 	    $expense_ratio=$expense/$footer->vatless+1;
 	    return $this->query("UPDATE document_entries SET self_price=invoice_price*$expense_ratio WHERE doc_id=$doc_id");
@@ -223,8 +222,7 @@ class DocumentCore extends DocumentUtils{
     private function getExtraExpenses(){
 	$doc_type=$this->doc('doc_type');
 	$doc_id=$this->doc('doc_id');
-	if($doc_id && $doc_type==2){
-	    //only for buy documents
+	if($doc_id && $doc_type==2){//only for buy documents
 	    $footer=$this->footerGet();
 	    $expense_ratio=$this->get_value("SELECT self_price/invoice_price FROM document_entries WHERE doc_id=$doc_id LIMIT 1");
 	    $expense=$footer->vatless*($expense_ratio-1);
@@ -238,112 +236,50 @@ class DocumentCore extends DocumentUtils{
             return false;
         }
         $doc_status_id=$this->get_value("SELECT doc_status_id FROM document_status_list WHERE status_code='$new_status_code'");
-        return $this->setStatus($doc_id,$doc_status_id);
+        return $this->documentChangeStatus($new_status_id);//$this->setStatus($doc_id,$doc_status_id);
     }
     
-    public function setStatus($doc_id,$new_status_id){
-        if(!$new_status_id){
+    
+    private function documentChangeStatus($new_status_id){
+        if( !isset($new_status_id) ){
             return false;
         }
-        if( $doc_id ){
-            $this->loadDoc($doc_id);
-        }else {
-            $doc_id=$this->doc('doc_id');
-        }
-        $this->Hub->set_level(2);
         $commited_only=$this->get_value("SELECT commited_only FROM document_status_list WHERE doc_status_id='$new_status_id'");
         if( $commited_only != $this->isCommited() ){
             return false;
         }
-        $status_change_ok=$this->update('document_list',['doc_status_id'=>$new_status_id],['doc_id'=>$doc_id]);
+        $old_status_id=$this->doc('doc_status_id');
+        $Events=$this->Hub->load_model("Events");
+        $Events->Topic('documentStatusChanged')->publish($old_status_id,$new_status_id,$this->_doc);
         
-        if( $new_status_id==2 ){//reserved 
-            $this->reservedTaskAdd($doc_id);
-        } else {
-            $this->reservedTaskRemove($doc_id);
-        }
-        $this->reservedCountUpdate();
+        $status_change_ok=$this->update('document_list',['doc_status_id'=>$new_status_id],['doc_id'=>$this->doc('doc_id')]);
         return $status_change_ok;
     }
+
     
-    public function reservedTaskAdd($doc_id){
-        $this->Hub->load_model('Events');
-        $this->Hub->Events->eventDeleteDocumentTasks($doc_id);
-        $user_id=$this->Hub->svar('user_id');
-        if( $this->doc('doc_type')==1 ){
-            $day_limit=$this->Hub->pref('reserved_limit');
-        } else {
-            $day_limit=$this->Hub->pref('awaiting_limit');
-        }
-        $stamp=time()+60*60*24*($day_limit?$day_limit:3);
-        $alert="Счет №".$this->doc('doc_num')." для ".$this->Hub->pcomp('company_name')." снят с резерва";
-        $name="Снятие с резерва";
-        $description="$name счета №".$this->doc('doc_num')." для ".$this->Hub->pcomp('company_name');
-        $event=[
-            'doc_id'=>$doc_id,
-            'event_name'=>$name,
-            'event_status'=>'undone',
-            'event_label'=>'-TASK-',
-            'event_date'=>date("Y-m-d H:i:s",$stamp),
-            'event_descr'=>$description
-        ];
-        $event_id=$this->Hub->Events->eventCreate($event);
-        $event_update=[
-            'event_program'=>json_encode([
-                'commands'=>[
-                    [
-                        'model'=>'DocumentCore',
-                        'method'=>'setStatusByCode',
-                        'arguments'=>[$doc_id,'created']
-                    ],
-                    [
-                        'model'=>'Chat',
-                        'method'=>'addMessage',
-                        'arguments'=>[$user_id,$alert]
-                    ],
-                    [
-                        'model'=>'Events',
-                        'method'=>'eventDelete',
-                        'arguments'=>[$event_id]
-                    ]
-                ]
-            ])
-        ];
-        if( $event_id ){
-            $this->Hub->Events->eventChange($event_id, $event_update);
-        }
-        return $event_id;
-    }
+//    public function setStatus($doc_id,$new_status_id){
+//        if(!$new_status_id){
+//            return false;
+//        }
+//        if( $doc_id ){
+//            $this->loadDoc($doc_id);
+//        }else {
+//            $doc_id=$this->doc('doc_id');
+//        }
+//        $this->Hub->set_level(2);
+//        $commited_only=$this->get_value("SELECT commited_only FROM document_status_list WHERE doc_status_id='$new_status_id'");
+//        if( $commited_only != $this->isCommited() ){
+//            return false;
+//        }
+//        $status_change_ok=$this->update('document_list',['doc_status_id'=>$new_status_id],['doc_id'=>$doc_id]);
+//        
+//        if( $new_status_id==2 ){//reserved 
+//            $this->reservedTaskAdd($doc_id);
+//        } else {
+//            $this->reservedTaskRemove($doc_id);
+//        }
+//        $this->reservedCountUpdate();
+//        return $status_change_ok;
+//    }
     
-    public function reservedTaskRemove($doc_id){
-        $this->Hub->load_model('Events');
-        return $this->Hub->Events->eventDeleteDocumentTasks($doc_id);
-    }
-    
-    public function reservedCountUpdate(){
-        $sql="
-        UPDATE 
-            stock_entries
-                LEFT JOIN
-            (SELECT 
-                product_code,
-                SUM(IF(doc_type = 1, de.product_quantity, 0)) reserved,
-                SUM(IF(doc_type = 2, de.product_quantity, 0)) awaiting
-            FROM
-                document_entries de
-            JOIN document_list USING (doc_id)
-            JOIN document_status_list dsl USING (doc_status_id)
-            WHERE
-                dsl.status_code = 'reserved'
-            GROUP BY product_code) reserve USING (product_code) 
-        SET 
-            product_reserved = COALESCE(reserved,0),
-            product_awaiting = COALESCE(awaiting,0)
-        WHERE 
-	product_reserved IS NOT NULL 
-        OR product_awaiting IS NOT NULL
-	OR reserved IS NOT NULL 
-        OR awaiting IS NOT NULL";
-        return $this->query($sql);
-    }
 }
