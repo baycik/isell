@@ -236,7 +236,7 @@ class DocumentCore extends DocumentUtils{
             return false;
         }
         $doc_status_id=$this->get_value("SELECT doc_status_id FROM document_status_list WHERE status_code='$new_status_code'");
-        return $this->documentChangeStatus($new_status_id);//$this->setStatus($doc_id,$doc_status_id);
+        return $this->documentChangeStatus($doc_status_id);//$this->setStatus($doc_id,$doc_status_id);
     }
     
     
