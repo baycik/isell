@@ -426,10 +426,8 @@ App.renderTpl=function( id, data, mode ){
         this.tplcache[query]=$(query).html().replace('&gt;','>').replace(/<!--/g,'').replace(/-->/g,'');
     }
 
-    setTimeout(function(){
         $(query).html( Mark.up(App.tplcache[query], data) );
         $(query).removeClass('covert');
-    },0);
 };
 App.setHTML=function( query, html ){
     $(query).html(html);
