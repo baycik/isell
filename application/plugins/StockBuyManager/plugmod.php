@@ -203,33 +203,34 @@ $filename[]=<<<EOT
 plugins/MobiSell/views/stock.html
 EOT;
 $search[]=<<<EOT
-<div class="five wide column right aligned">{{if stared_leftover}} {{stared_leftover}} {{else}} {{leftover}}{{product_unit}} {{/if}}</div></div></div>
+<div class="four wide column" style="text-align: right">{{if stared_leftover}} {{stared_leftover}} {{else}} {{leftover}}{{product_unit}} {{/if}}</div>
 EOT;
 $replace[]=<<<EOT
 EOT;
 $before[]=<<<EOT
 EOT;
 $after[]=<<<EOT
+        
 {{if delivery_group|notempty}}
-    <div class="sixteen wide column" style="padding-left: .5rem !important; padding-top: 0.2rem !important;">
-        <div class="product-delivery-available ui right aligned grid" style="    margin-top: 0rem !important; opacity: 0.8; border-top: #e8e8ef 1px solid;color: #2185d0;">
-                <div class="four wide column" style="padding-left: .5rem !important; padding-top: 0.2rem !important;padding-bottom: 0rem !important;"></div>
-                <div class="delivery-days six wide column" style="padding-right: 0rem !important; padding-top: 0.2rem !important; padding-bottom: 0rem !important;">
+    <div class="sixteen wide column" style="padding-top: 0rem !important;">
+        <div class="product-delivery-available ui right aligned grid" style="color: #2185d0;">
+                <div class="delivery-days two wide column" style="padding: 0rem !important; "></div> 
+                <div class="delivery-days seven wide column" style="padding: 0rem !important; ">
                     {{delivery_group}}
-                    <div>{{.}}
-                        {{if .|notequals>1}}
-                            {{if .|more>4}}
-                                дней:
-                            {{else}}
-                                дня:
-                            {{/if}}
-                        {{else}}
-                            день:
-                            {{/if}}
-                     </div>
-                    {{/delivery_group}}
+                           <div>{{.}}
+                               {{if .|notequals>1}}
+                                   {{if .|more>4}}
+                                       дней:
+                                   {{else}}
+                                       дня:
+                                   {{/if}}
+                               {{else}}
+                                   день:
+                                   {{/if}}
+                            </div>
+                           {{/delivery_group}}
                 </div> 
-                <div class="delivery-leftovers six wide column" style="padding-right: .5rem !important;padding-left: 0rem !important; padding-top: 0.2rem !important;padding-bottom: 0rem !important;">
+                <div class="delivery-leftovers seven wide column" style="padding: 0rem !important; ">
                     {{supleftover}}
                         <div>  
                             {{.}}
@@ -245,7 +246,7 @@ $filename[]=<<<EOT
 plugins/MobiSell/views/stock.html
 EOT;
 $search[]=<<<EOT
-{{if is_promo}}<s>{{product_price_total_raw}}</s> {{/if}}{{product_price_total}}</div></div>
+<div class='product-item' style=" {{if is_promo}}  background-color: #cfc;{{/if}}{{ if product_quantity|more>0 }} background-color: #ffd; {{else }}{{/if}}">
 EOT;
 $replace[]=<<<EOT
 EOT;

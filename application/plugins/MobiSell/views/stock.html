@@ -177,6 +177,18 @@
                 
                
             }, 
+            renderItem: function (index, product_quantity){
+                console.log(index);
+                console.log($('#product_item_'+index+' .product-total'));
+                if(product_quantity<1 || !product_quantity){
+                    App.stock.entries.render();
+                }else{
+                    $('#product_item_'+index).css('background-color','#ffd');
+                    $('#product_item_'+index+' .minus-button').removeClass('disabled');
+                    $('#product_item_'+index+' .product_quantity').val(product_quantity);
+                    $('#product_item_'+index+' .product-total').html(App.stock.cart.list[index].product_sum + ' ₽');
+                }
+            },
             gridViewConfigure: function(gridview){
                 if(gridview>0){
                     $('#stock_list').addClass('grid-view');
@@ -209,14 +221,14 @@
                     var index = $(e.target).data('index');
                     var product_object = App.stock.entries.list[index];
                     var new_quantity = e.target.value*1;
-                    App.stock.cart.update(product_object,0,new_quantity);
+                    App.stock.cart.update(product_object,0,new_quantity, index);
                 });
                 $('#stock_list').click(function(e){
                     var delta = $(e.target).data('delta');
                     if(delta){
                         var index = $(e.target).data('index');
                         var product_object = App.stock.entries.current_list[index];
-                        App.stock.cart.update(product_object,delta,0); 
+                        App.stock.cart.update(product_object,delta,0, index); 
                     }
                 });
                 $('#stock_category_tree').click(function(e){
@@ -253,30 +265,35 @@
             renderButton: function(){
                 App.renderTpl("stock_render_mode", {show_cart: App.stock.entries.show_cart, cart_quantity: App.stock.cart.list.length, total: App.stock.cart.total});
             },
-            update: function (product_object,delta,new_quantity) {
+            update: function (product_object,delta,new_quantity, index) {
                 var founded_product=App.stock.cart.findInCart(product_object.product_id);
+                var product_quantity = 0;
                 if( !founded_product ){
                     if(!delta && new_quantity<=0){return};
                     product_object.product_quantity = delta || new_quantity;
-                    App.stock.cart.add(product_object);
+                    product_quantity = App.stock.cart.add(product_object);
                 } else 
                 if( founded_product.product_quantity+delta<=0 && new_quantity<=0 || new_quantity+ founded_product.product_quantity<=0){
-                    App.stock.cart.delete(founded_product.index);
+                    product_quantity = App.stock.cart.delete(founded_product.index);
                 } else {
-                    App.stock.cart.modify(founded_product.index,delta,new_quantity);
+                    product_quantity = App.stock.cart.modify(founded_product.index,delta,new_quantity);
                 }
                 App.stock.cart.setTotal();
-                App.stock.entries.render();
+                App.stock.cart.renderButton();
+                App.stock.entries.renderItem(index, product_quantity); 
                 App.stock.cart.store();
             },
             delete: function(index){
                 App.stock.cart.list.splice(index, 1);
+                return false;
             },
             add:function(product_object){
                 App.stock.cart.list.push(product_object);
+                return product_object.product_quantity;
             },
             modify:function(index,delta,new_quantity){
                 delta ? App.stock.cart.list[index].product_quantity += delta : App.stock.cart.list[index].product_quantity = new_quantity ;
+                return App.stock.cart.list[index].product_quantity;
             },
             setTotal: function(){
                 var total = 0;
@@ -403,7 +420,7 @@
         #stock_list:not(.grid-view) .product-clear-button-container{
             position: initial !important;
         }
-        grid-view .product-list-grid{
+        .grid-view .product-list-grid{
             grid-template-columns: 50% 50% !important;
         }
         #stock_list:not(.grid-view) .product-list-grid{
@@ -845,10 +862,8 @@
 <div id="stock_list" class="covert">
     <div class="product-list-grid" >
             <!-- {{if products}} {{products}} -->
-            
-        <div class='product-item' style=" {{if is_promo}}  background-color: #cfc;{{/if}}{{ if product_quantity|more>0 }} background-color: #ffd; {{else }}{{/if}}"  >
-
-            
+        <div class='product-item' id="product_item_{{#}}" style=" {{if is_promo}}  background-color: #cfc;{{/if}}{{ if product_quantity|more>0 }} background-color: #ffd; {{else }}{{/if}}">
+          
             <div class="product-item-grid" >
                 <div class='product-image-column image-{{#}}' data-row-index="{{#}}" >
                     <a href="#stock.html#productInfoModal.showProductInfo={{product_code}}">
@@ -861,7 +876,7 @@
                     </a>
                 </div>
                 <div class="product-info-column">
-                    <div class="ui grid" style="color:#666">
+                    <div class="ui grid" style="color:#666; padding-right:1.4em">
                             <div class="eight wide column">{{product_code}}</div>
                             <div class="four wide column product-price" style="text-align: right">
                                 {{if is_promo}}
@@ -872,6 +887,7 @@
                                 {{/if}}
                             </div>
                             <div class="four wide column" style="text-align: right">{{if stared_leftover}} {{stared_leftover}} {{else}} {{leftover}}{{product_unit}} {{/if}}</div>
+                            
 
                     </div>
                 </div>
