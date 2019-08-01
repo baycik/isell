@@ -47,16 +47,18 @@ $filename[]=<<<EOT
 plugins/MobiSell/models/MobiSell.php
 EOT;
 $search[]=<<<EOT
-se.product_img,
+se.product_img
 EOT;
 $replace[]=<<<EOT
 EOT;
 $before[]=<<<EOT
 EOT;
 $after[]=<<<EOT
- GROUP_CONCAT(CONCAT(al.attribute_name,': ',av.attribute_value,' ', al.attribute_unit)) attributes 
+ ,GROUP_CONCAT(CONCAT(al.attribute_name,': ',av.attribute_value,' ', al.attribute_unit)) attributes 
 EOT;
  
+
+
 $filename[]=<<<EOT
 plugins/MobiSell/models/MobiSell.php
 EOT;
