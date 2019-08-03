@@ -347,11 +347,11 @@ class CampaignManager extends Catalog{
         
         $sql="SELECT
             *,
-            ROUND(bonus_base*
-                IF(bonus_base>period_plan3 AND period_plan3 AND campaign_bonus_ratio3,campaign_bonus_ratio3,
-                IF(bonus_base>period_plan2 AND period_plan2 AND campaign_bonus_ratio2,campaign_bonus_ratio2,
-                IF(bonus_base>period_plan1,campaign_bonus_ratio1,0
-            )))/100) bonus_result,
+            ROUND(
+                IF(bonus_base>period_plan3 AND period_plan3,IF(period_reward3,period_reward3,bonus_base*campaign_bonus_ratio3/100),
+                IF(bonus_base>period_plan2 AND period_plan2,IF(period_reward2,period_reward2,bonus_base*campaign_bonus_ratio2/100),
+                IF(bonus_base>period_plan1,IF(period_reward1,period_reward1,bonus_base*campaign_bonus_ratio1/100),
+            0)))) bonus_result,
             ROUND(bonus_base/period_plan1*100) period_percent1,
             ROUND(bonus_base/period_plan2*100) period_percent2,
             ROUND(bonus_base/period_plan3*100) period_percent3,
@@ -367,6 +367,9 @@ class CampaignManager extends Catalog{
                 period_plan1,
                 period_plan2,
                 period_plan3,
+                period_reward1,
+                period_reward2,
+                period_reward3,
                 ROUND(SUM( {$bonus_base['select']} )) bonus_base
             FROM
                 plugin_campaign_bonus pcb 
@@ -382,6 +385,7 @@ class CampaignManager extends Catalog{
             //die($sql);
         return $this->get_list($sql);
     }
+    
     private function bonusCalculateProductRange($campaign_bonus){
         $table="document_entries de";
         $where="";
@@ -399,7 +403,6 @@ class CampaignManager extends Catalog{
             'where'=>$where
         ];
     }
-    
     private function bonusCalculateVolume($campaign_bonus,$period_on,$client_filter){
         $product_range= $this->bonusCalculateProductRange($campaign_bonus);
         
@@ -426,7 +429,7 @@ class CampaignManager extends Catalog{
     }
     private function bonusCalculateProfit($campaign_bonus,$period_on,$client_filter){
         $product_range= $this->bonusCalculateProductRange($campaign_bonus);
-        $select="COALESCE((invoice_price * (dl.vat_rate/100+1)-GREATEST(breakeven_price,self_price)) * product_quantity,0)";
+        $select="COALESCE(GREATEST(invoice_price * (dl.vat_rate/100+1)-GREATEST(breakeven_price,self_price),0) * product_quantity,0)";
         $table="
                     LEFT JOIN
                 document_list dl ON $period_on 
@@ -462,12 +465,10 @@ class CampaignManager extends Catalog{
             'where'=>$where
         ];
     }
-    
     public function bonusChartView(){
         $this->Hub->set_level(2);
         $this->load->view('bonus_chart.html');
     }
-    
     public function bonusCalculatePersonal(){
         $this->Hub->set_level(2);
         $liable_user_id=$this->Hub->svar('user_id');
@@ -476,31 +477,28 @@ class CampaignManager extends Catalog{
         $campaign_list=$this->get_list($sql);
         $result_total=0;
         foreach( $campaign_list as $campaign ){
-            $current_result=$this->bonusCalculateResult($campaign->campaign_bonus_id,true);
-            $personal_bonuses[]=[
-                'campaign_name'=>$campaign->campaign_name,
-                'current_result'=>$current_result
-            ];
-            $result_total+=$current_result[0]->bonus_result;
+            if( $campaign->bonus_visibility ){
+                $current_result=$this->bonusCalculateResult($campaign->campaign_bonus_id,true);
+                $personal_bonuses[]=[
+                    'campaign_name'=>$campaign->campaign_name,
+                    'current_result'=>$current_result
+                ];
+                $result_total+=$current_result[0]->bonus_result;
+            }
         }
         return [
                 'total'=>$result_total,
                 'bonuses'=>$personal_bonuses
                 ];
     }
-    
-    
-    
     public function dashboardMobiSell(){
         $this->Hub->set_level(2);
         $this->load->view("dashboard_mobisell.html");
     }
-    
     public function dashboardiSell(){
         $this->Hub->set_level(2);
         $this->load->view("dashboard_isell.html");
     }
-    
     public function dashboardManagerStatistics(){
         $this->Hub->set_level(2);
         $liable_user_id=$this->Hub->svar('user_id');
@@ -531,15 +529,9 @@ class CampaignManager extends Catalog{
             FROM (($super_table))t";
         return $this->get_row($sql);
     }
-    
-    
-    
-    
     ///////////////////////////////////////////////////
     //EXTENSION
     ///////////////////////////////////////////////////
-    
-    
     private function bonusCalculateDetailedResult( int $campaign_bonus_id, int $campaign_bonus_period_id, string $group_by ){
         $campaign_bonus=$this->bonusGet($campaign_bonus_id);
         if( !$campaign_bonus ){
@@ -677,8 +669,8 @@ class CampaignManager extends Catalog{
         ];
         foreach($table as $row){
             $total_row['result1']+=$row->result1;
-            $total_row['result2']+=$row->result1;
-            $total_row['result3']+=$row->result1;
+            $total_row['result2']+=$row->result2;
+            $total_row['result3']+=$row->result3;
             $total_row['sell_sum']+=$row->sell_sum;
             $total_row['bonus_base']+=$row->bonus_base;
         }
@@ -719,6 +711,7 @@ class CampaignManager extends Catalog{
                 WHERE 
                     YEAR(cstamp)=$bonus_period->period_year
                     AND MONTH(cstamp)=$bonus_period->period_month
+                    AND doc_type=1
                     AND passive_company_id IN (SELECT company_id FROM companies_list JOIN companies_tree USING(branch_id) WHERE $client_filter)";
         return $this->query($sql);
     }

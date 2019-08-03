@@ -11,6 +11,9 @@
         Mark.pipes.quarter=function(index){
             return ['','Iкв','IIкв','IIIкв','IVкв'][index];
         };
+        Mark.pipes.numberClear=function(number){
+            return Number(number)?number:'';
+        };
 
 
         var Campaign = {
@@ -282,15 +285,20 @@
         </div>
         <div>
             <div class="bonus-period-grid">
-                <div>База бонуса:</div><div>{{bonus_base}}</div>
-                <div>Результат:</div><div>{{bonus_result}}</div>
-                <div>План I:</div><div><input pattern="\d+" name="period_plan1--{{campaign_bonus_period_id}}" value="{{period_plan1}}"></div>
-                <!--{{if period_plan1|more>0}}-->
-                <div>План II:</div><div><input pattern="\d+" name="period_plan2--{{campaign_bonus_period_id}}" value="{{period_plan2}}"></div>
-                <!--{{if period_plan2|more>0}}-->
-                <div>План III:</div><div><input pattern="\d+" name="period_plan3--{{campaign_bonus_period_id}}" value="{{period_plan3}}"></div>
-                <!--{{/if}}-->
-                <!--{{/if}}-->
+                <div>База бонуса:</div><div>{{bonus_base}}</div><div></div>
+                <div>Результат:</div><div>{{bonus_result}}</div><div></div>
+                <div>План I:</div>
+                <div><input pattern="\d+" name="period_plan1--{{campaign_bonus_period_id}}" value="{{period_plan1|numberClear}}" placeholder="сумма"></div>
+                <div><input pattern="\d+" name="period_reward1--{{campaign_bonus_period_id}}" value="{{period_reward1|numberClear}}" placeholder="премия"></div>
+                {{if period_plan1|more>0}}
+                <div>План II:</div>
+                <div><input pattern="\d+" name="period_plan2--{{campaign_bonus_period_id}}" value="{{period_plan2|numberClear}}" placeholder="сумма"></div>
+                <div><input pattern="\d+" name="period_reward2--{{campaign_bonus_period_id}}" value="{{period_reward2|numberClear}}" placeholder="премия"></div>
+                {{if period_plan2|more>0}}
+                <div>План III:</div><div><input pattern="\d+" name="period_plan3--{{campaign_bonus_period_id}}" value="{{period_plan3|numberClear}}" placeholder="сумма"></div>
+                <div><input pattern="\d+" name="period_reward3--{{campaign_bonus_period_id}}" value="{{period_reward3|numberClear}}" placeholder="премия"></div>
+                {{/if}}
+                {{/if}}
             </div>
             <hr>
             <div id="bonus_chart-{{campaign_bonus_period_id}}">
@@ -353,22 +361,27 @@
             <div class="easyui-panel" title="Настройки Кампании" style="padding:10px">
                 <input type="text" title="Название" name="campaign_name">
                 <select name="liable_user_id" title="Менеджер">
-                    <!--{{staff_list}}-->
+                    {{staff_list}}
                     <option value="{{user_id}}">{{full_name}}</option>
-                    <!--{{/staff_list}}-->
+                    {{/staff_list}}
                 </select>
                 <hr>
                 <button id="Campaign_delete_btn"><img src="img/delete.png"> Удалить Кампанию</button>
             </div>
             <div class="easyui-panel" title="Расчет бонусов Кампании">
-                <!--{{bonuses}}-->
+                {{bonuses}}
                 <div class=" leftcol-grid">
                     <div style="padding: 5px">
                         <fieldset>
+                            <input type="date" name="campaign_start_at-{{campaign_bonus_id}}" title="Начало" required>
                             <select name="bonus_type-{{campaign_bonus_id}}" title="Вид бонуса" required>
                                 <option value="VOLUME">Бонус с объема</option>
                                 <option value="PROFIT">Бонус с наценки</option>
                                 <option value="PAYMENT">Бонус с оплаты</option>
+                            </select>
+                            <select name="bonus_visibility-{{campaign_bonus_id}}" title="Видимость" required>
+                                <option value="0">Только в этой панели</option>
+                                <option value="1">Показать в виджете</option>
                             </select>
 
                             <input type="date" name="campaign_start_at-{{campaign_bonus_id}}" title="Начало" required>
@@ -392,10 +405,10 @@
                             <input name="product_brand_filter-{{campaign_bonus_id}}" title="Бренд товара">
                             <input name="product_type_filter-{{campaign_bonus_id}}" title="Тип товара">
                         </fieldset>
-                        <!--{{/if}}-->
+                        {{/if}}
                         <fieldset>
                             <legend>Процент бонуса по планам</legend>
-                            <input pattern="[\d\.]+" name="campaign_bonus_ratio1-{{campaign_bonus_id}}" title="План I бонус %" required>
+                            <input pattern="[\d\.]+" name="campaign_bonus_ratio1-{{campaign_bonus_id}}" title="План I бонус %">
                             <input pattern="[\d\.]+" name="campaign_bonus_ratio2-{{campaign_bonus_id}}" title="План II бонус %">
                             <input pattern="[\d\.]+" name="campaign_bonus_ratio3-{{campaign_bonus_id}}" title="План III бонус %">
                         </fieldset>
@@ -409,7 +422,7 @@
                     </div>
                 </div>
                 <hr>
-                <!--{{/bonuses}}-->
+                {{/bonuses}}
                 <button id="CampaignManager_bonuses_add"><img src="img/add.png" > Добавить расчет</button>
             </div>
             <div class="easyui-panel leftcol-grid" title="Клиенты Кампании">
@@ -461,7 +474,7 @@
     .bonus-period-grid{
         display: grid;
         grid-gap:5px;
-        grid-template-columns: auto auto;
+        grid-template-columns: auto auto auto;
     }
     .bonus-period-grid div{
         text-align: right;
@@ -499,7 +512,8 @@
         padding: 5px;
     }
     .CampaignManager_bonus_period_cards input{
-        width:100px;
+        width:60px;
+        text-align: right;
     }
     .CampaignManager_bonus_period_cards .card-bar>div{
         height: 15px;

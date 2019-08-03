@@ -80,7 +80,12 @@
                             {{if bonus_type|equals>PROFIT}}
                             Балл=<b>{{campaign_bonus_ratio1}}</b>:
                             {{else}}
-                            План I ({{campaign_bonus_ratio1}}%):
+                            План I (
+                                {{if period_reward1|more>0}}
+                                    {{period_reward1}}
+                                {{else}}
+                                    {{campaign_bonus_ratio1}}%
+                                {{/if}}):
                             {{/if}}
                         </td>
                         <td>{{if period_plan1|more>0}} 
@@ -99,7 +104,12 @@
                             {{if bonus_type|equals>PROFIT}}
                             Балл=<b>{{campaign_bonus_ratio2}}</b>:
                             {{else}}
-                            План II ({{campaign_bonus_ratio2}}%):
+                            План II (
+                                {{if period_reward2|more>0}}
+                                    {{period_reward2}}
+                                {{else}}
+                                    {{campaign_bonus_ratio2}}%
+                                {{/if}}):
                             {{/if}}
                         </td>
                         <td>
@@ -116,7 +126,12 @@
                             {{if bonus_type|equals>PROFIT}}
                             Балл=<b>{{campaign_bonus_ratio3}}</b>:
                             {{else}}
-                            План III ({{campaign_bonus_ratio3}}%):
+                            План III (
+                                {{if period_reward3|more>0}}
+                                    {{period_reward3}}
+                                {{else}}
+                                    {{campaign_bonus_ratio3}}%
+                                {{/if}}):
                             {{/if}}
                         </td>
                         <td>
@@ -158,6 +173,7 @@ App.dashboardCampaigns = {
             this.scriptDeffered=$.ajax({url: url,dataType: "script",cache: true,async:true});
             $.post("../CampaignManager/bonusCalculatePersonal/", function (resp) {
                 var personal_bonuses = App.json(resp);
+                console.log(personal_bonuses);
                 if (!personal_bonuses || !personal_bonuses.bonuses.length) {
                     $("#CampaignCharts").html("<h2>Нет кампаний</h2>").removeClass('covert');
                     return;
@@ -214,9 +230,9 @@ App.dashboardCampaigns = {
             var doughnut2 = this.chartDatasetCalcArc(bonus_data.current_result[0], 2);
             var doughnut3 = this.chartDatasetCalcArc(bonus_data.current_result[0], 3);
             return [
-                {data: [doughnut3, 100 - doughnut3], backgroundColor: ['rgba(100,100,255)', '#ffffff66'], label: 'План I'},
-                {data: [doughnut2, 100 - doughnut2], backgroundColor: ['rgba(100,230,255)', '#ffffff66'], label: 'План II'},
-                {data: [doughnut1, 100 - doughnut1], backgroundColor: ['rgba(100,240,100)', '#ffffff66'], label: 'План III'}
+                {data: [doughnut3, 100 - doughnut3], backgroundColor: ['#06f', '#ffffff66'], label: 'План I'},
+                {data: [doughnut2, 100 - doughnut2], backgroundColor: ['#3cf', '#ffffff66'], label: 'План II'},
+                {data: [doughnut1, 100 - doughnut1], backgroundColor: ['#3c3', '#ffffff66'], label: 'План III'}
             ];
         },
         chartDatasetCalcArc: function (arc_data, i) {
