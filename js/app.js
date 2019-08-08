@@ -307,10 +307,10 @@ App.calc=function( expression ){
     return eval(expression.toString().replace(/,/g,'.').match( /[\(\d\.\)\*\/\+-]*/ ).toString()) || 0;
 };
 App.formatNum = function (num, mode) {
-    if (num === undefined || num === null || mode === 'clear' && num * 1 === 0 || num==NaN) {
+    if ( !num && num !== 0 || mode === 'clear' && num * 1 === 0) {
 	return '';
     }
-    return Number.parseFloat(num).toLocaleString('lookup',{ style: 'decimal',minimumFractionDigits:2 })
+    return Number.parseFloat(num).toLocaleString('en-US',{ style: 'decimal',minimumFractionDigits:2 }).replace(/,/g,' ');
 };
 App.formElements=function( fquery ){
     return $(fquery + " input," + fquery + " textarea," + fquery + " select");

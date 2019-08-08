@@ -159,7 +159,9 @@ class AccountsBank extends AccountsData{
             }
             if (strpos($field, 'date') !== false) {
                 preg_match_all('/(\d{2})[^\d](\d{2})[^\d](\d{4})( \d\d:\d\d(:\d\d)?)?/i', $value, $matches);
-                $value = "{$matches[3][0]}-{$matches[2][0]}-{$matches[1][0]}{$matches[4][0]}";
+                if( isset($matches[3][0]) && isset($matches[2][0]) && isset($matches[1][0]) ){
+                    $value = "{$matches[3][0]}-{$matches[2][0]}-{$matches[1][0]}".isset($matches[4][0])?$matches[4][0]:'';
+                }
             }
 	    $set[] = "$field='" . addslashes($value) . "' ";
         }
