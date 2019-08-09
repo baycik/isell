@@ -177,14 +177,12 @@ $filename[]=<<<EOT
 plugins/MobiSell/views/stock.html
 EOT;
 $search[]=<<<EOT
-if( !new_loaded_items ){return;}
+if ( load_more ) {
 EOT;
 $replace[]=<<<EOT
 EOT;
 $before[]=<<<EOT
-EOT;
-$after[]=<<<EOT
-   for(var i in new_loaded_items){
+    for(var i in new_loaded_items){
         if(new_loaded_items[i].delivery_group){
             new_loaded_items[i].delivery_group=new_loaded_items[i].delivery_group.split(',');
             for(var k in new_loaded_items[i].delivery_group){
@@ -196,6 +194,9 @@ $after[]=<<<EOT
         }
         new_loaded_items[i].supleftover? new_loaded_items[i].supleftover=new_loaded_items[i].supleftover.split(','):'';
     };
+EOT;
+$after[]=<<<EOT
+   
 EOT;
 
 
@@ -246,14 +247,12 @@ $filename[]=<<<EOT
 plugins/MobiSell/views/stock.html
 EOT;
 $search[]=<<<EOT
-<div class='product-item' style=" {{if is_promo}}  background-color: #cfc;{{/if}}{{ if product_quantity|more>0 }} background-color: #ffd; {{else }}{{/if}}">
+<div class="product-item-grid" >
 EOT;
 $replace[]=<<<EOT
 EOT;
 $before[]=<<<EOT
-EOT;
-$after[]=<<<EOT
-        {{if delivery_group|notempty}}
+{{if delivery_group|notempty}}
     <div class="product-delivery-available ui left aligned grid" style="    margin-top: 0rem !important; opacity: 0.8; border-top: #e8e8ef 1px solid;color: #2185d0;">
             <div class="delivery-days six wide column" style="padding-right: 0rem !important; padding-top: 0.2rem !important">
                 {{delivery_group}}
@@ -278,7 +277,9 @@ $after[]=<<<EOT
                 {{/supleftover}}    
             </div>
     </div>  
- {{/if}}    
+ {{/if}} 
+EOT;
+$after[]=<<<EOT
 EOT;
 
 $filename[]=<<<EOT
