@@ -299,7 +299,7 @@ $filename[]=<<<EOT
 models/DocumentItems.php
 EOT;
 $search[]=<<<'EOT'
-$output=$this->get_list($sql);
+$suggested=$this->get_list($sql);
 EOT;
 $replace[]=<<<EOT
 EOT;

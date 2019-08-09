@@ -85,6 +85,7 @@
                 $.post("CampaignManager/campaignGet", {campaign_id: campaign_id}, function (resp) {
                     var campaign = App.json(resp);
                     Campaign.render(campaign);
+                    Campaign.statistics.load();
                 });
             },
             update: function (field, value, title) {
@@ -122,6 +123,34 @@
                         App.flash("Ошибка добавления кампании");
                     }
                 });
+            },
+            statistics:{
+                stat:{
+                    client_count:0,
+                    invoice_count:0,
+                    total_result:0
+                },
+                load:function(){
+                    $.post("CampaignManager/dashboardManagerStatistics/", function (resp) {
+                        var stat = App.json(resp);
+                        if (!stat) {
+                            $("#CampaignManagerCharts").html("<h2>Нет кампаний</h2>");
+                            return;
+                        }
+                        Campaign.statistics.stat.client_count=stat.client_count;
+                        Campaign.statistics.stat.invoice_count=stat.invoice_count;
+                        Campaign.statistics.render();
+                    });
+                    /*$.post("CampaignManager/bonusCalculatePersonal/", function (resp) {
+                        var personal_bonuses = App.json(resp);
+                        Campaign.statistics.stat.total_result=personal_bonuses.total;
+                        Campaign.statistics.render();
+                    });   
+                     */            
+                },
+                render:function(){
+                    App.renderTpl('CampaignManagerCharts',this.stat);
+                }
             }
         };
 
@@ -361,12 +390,38 @@
             <div class="easyui-panel" title="Настройки Кампании" style="padding:10px">
                 <input type="text" title="Название" name="campaign_name">
                 <select name="liable_user_id" title="Менеджер">
-                    {{staff_list}}
+                    <!--{{staff_list}}-->
                     <option value="{{user_id}}">{{full_name}}</option>
-                    {{/staff_list}}
+                    <!--{{/staff_list}}-->
                 </select>
                 <hr>
                 <button id="Campaign_delete_btn"><img src="img/delete.png"> Удалить Кампанию</button>
+                
+                
+                
+                
+                
+                
+                
+        <div id="CampaignManagerCharts">
+            <div style="margin: 3px">
+                Клиентов за месяц: <b>{{client_count}}</b>
+            </div>
+            <div style="margin: 3px">
+                Накладных за месяц: <b>{{invoice_count}}</b>
+            </div>
+            <div style="margin: 3px">
+                Общий результат: <b>{{total_result|format}}</b>
+            </div>
+        </div>
+                
+                
+                
+                
+                
+                
+                
+
             </div>
             <div class="easyui-panel" title="Расчет бонусов Кампании">
                 {{bonuses}}

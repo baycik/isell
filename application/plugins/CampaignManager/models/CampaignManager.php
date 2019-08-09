@@ -299,7 +299,8 @@ class CampaignManager extends Catalog{
     }
     
     public function bonusCalculate( int $campaign_bonus_id ){
-        $this->Hub->set_level(3);$campaign_bonus=$this->bonusGet($campaign_bonus_id);
+        $this->Hub->set_level(3);
+        session_write_close();
         return $this->bonusCalculateResult($campaign_bonus_id);
     }
     
