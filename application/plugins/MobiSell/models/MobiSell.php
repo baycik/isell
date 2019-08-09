@@ -266,6 +266,19 @@ class MobiSell extends PluginManager {
 	    ORDER BY $order_by, product_code
 	    LIMIT $limit OFFSET $offset ) t
             ";
+        $sql = "SELECT 
+            tmp.*, GROUP_CONCAT(IFNULL(srl.supplier_delivery, null)) as delivery_group, GROUP_CONCAT(COALESCE (CONCAT (sl.supply_leftover,' ',tmp.product_unit), CONCAT (sl1.supply_leftover,' ',tmp.product_unit), null)) as  supleftover
+        FROM 
+            (  $sql ) AS tmp 
+        LEFT JOIN 
+        supply_list sl ON (sl.product_code = tmp.product_code AND sl.supply_leftover > 0 ) 
+            LEFT JOIN 
+        supply_list sl1 ON (sl1.supply_code = tmp.product_code AND sl1.supply_leftover > 0 )
+            LEFT JOIN 
+        supplier_list srl ON (sl.supplier_id = srl.supplier_id OR sl1.supplier_id = srl.supplier_id) 
+        GROUP BY product_code 
+        ORDER BY tmp.popularity  DESC
+        ";        
         $product_list = $this->get_list($sql);
         return ['product_list'=> $product_list, 'attribute_list'=> $attribute_list];
     }

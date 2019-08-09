@@ -243,44 +243,7 @@ $after[]=<<<EOT
  {{/if}}    
 EOT;
 
-$filename[]=<<<EOT
-plugins/MobiSell/views/stock.html
-EOT;
-$search[]=<<<EOT
-<div class="product-item-grid" >
-EOT;
-$replace[]=<<<EOT
-EOT;
-$before[]=<<<EOT
-{{if delivery_group|notempty}}
-    <div class="product-delivery-available ui left aligned grid" style="    margin-top: 0rem !important; opacity: 0.8; border-top: #e8e8ef 1px solid;color: #2185d0;">
-            <div class="delivery-days six wide column" style="padding-right: 0rem !important; padding-top: 0.2rem !important">
-                {{delivery_group}}
-                <div>{{.}}
-                    {{if .|notequals>1}}
-                        {{if .|more>4}}
-                            дней:
-                        {{else}}
-                            дня:
-                        {{/if}}
-                    {{else}}
-                        день:
-                        {{/if}}
-                 </div>
-                {{/delivery_group}}
-            </div> 
-            <div class="delivery-leftovers six wide column" style="padding-right: .5rem !important;padding-left: 0.5rem !important; padding-top: 0.2rem !important">
-                {{supleftover}}
-                    <div>  
-                        {{.}}
-                    </div>
-                {{/supleftover}}    
-            </div>
-    </div>  
- {{/if}} 
-EOT;
-$after[]=<<<EOT
-EOT;
+
 
 $filename[]=<<<EOT
 models/DocumentItems.php
@@ -295,6 +258,51 @@ EOT;
 $after[]=<<<EOT
 ,fetch_count-DATEDIFF(NOW(),fetch_stamp) AS popularity 
 EOT;
+
+
+$filename[]=<<<EOT
+plugins/MobiSell/models/MobiSell.php
+EOT;
+$search[]=<<<'EOT'
+GET_SELL_PRICE(t.product_code, {$pcomp_id}, {$usd_ratio}) product_price_total,
+EOT;
+$replace[]=<<<EOT
+EOT;
+$before[]=<<<EOT
+fetch_count-DATEDIFF(NOW(),fetch_stamp) AS popularity,
+EOT;
+$after[]=<<<EOT
+EOT;
+
+
+$filename[]=<<<EOT
+plugins/MobiSell/models/MobiSell.php
+EOT;
+$search[]=<<<'EOT'
+ $product_list = $this->get_list($sql);
+EOT;
+$replace[]=<<<EOT
+EOT;
+$before[]=<<<'EOT'
+        $sql = "SELECT 
+        tmp.*, GROUP_CONCAT(IFNULL(srl.supplier_delivery, null)) as delivery_group, GROUP_CONCAT(COALESCE (CONCAT (sl.supply_leftover,' ',tmp.product_unit), CONCAT (sl1.supply_leftover,' ',tmp.product_unit), null)) as  supleftover
+    FROM 
+        (  $sql ) AS tmp 
+    LEFT JOIN 
+    supply_list sl ON (sl.product_code = tmp.product_code AND sl.supply_leftover > 0 ) 
+        LEFT JOIN 
+    supply_list sl1 ON (sl1.supply_code = tmp.product_code AND sl1.supply_leftover > 0 )
+        LEFT JOIN 
+    supplier_list srl ON (sl.supplier_id = srl.supplier_id OR sl1.supplier_id = srl.supplier_id) 
+    GROUP BY product_code 
+    ORDER BY tmp.popularity  DESC
+    ";  
+EOT;
+$after[]=<<<EOT
+
+        
+EOT;
+
 
 $filename[]=<<<EOT
 models/DocumentItems.php
