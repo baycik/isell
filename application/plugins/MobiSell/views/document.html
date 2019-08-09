@@ -81,6 +81,7 @@
                     if( App.stock && App.stock.cart.list.length ){
                         fvalue.entries=JSON.stringify(App.stock.cart.list);
                         App.stock.cart.list=[];
+                        App.stock.cart.store();
                     }
 		    $.post("documentCreate/", fvalue, function (resp) {
 			var new_doc_id = resp * 1;

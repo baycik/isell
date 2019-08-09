@@ -6,6 +6,7 @@
             App.stock.head.init();
             App.stock.cart.init();
             App.stock.entries.init();
+            App.stock.attributes.init();
             App.stock.utils.initControls();
             App.Topic('passiveCompanySelected').subscribe(function () {
                 $("#stock_pcomp_notice").hide();
@@ -17,6 +18,8 @@
         },
         focus: function () {
             App.title("Каталог товаров");
+            App.stock.cart.setTotal();
+            App.stock.entries.show_cart = false;
             App.stock.entries.load();    
         },
         render: function (){
@@ -26,6 +29,7 @@
                 App.stock.head.pcompInit();
                 App.stock.categories.init();
                 $('.limit-dropdown').dropdown();
+                $('.order-by-dropdown').dropdown();
             },
             pcompInit: function () {
                 $('.pcomp_id').dropdown({
@@ -105,18 +109,92 @@
                 
             }
         },
+        attributes: {
+            list: [],
+            selected: [],
+            checked: [],
+            last_expanded: [],
+            init: function (){
+                $('#attributes_container').accordion({
+                        duration: 0, 
+                        exclusive: false,
+                        onOpen: function(){
+                            App.stock.attributes.last_expanded.push($(this).data('attribute_id'));
+                        },
+                        onClose: function(){
+                            var closed = $(this).data('attribute_id');
+                            var is_in_list = App.stock.attributes.isInList(App.stock.attributes.last_expanded, closed);
+                            App.stock.attributes.last_expanded.splice(is_in_list, 1);
+                        }
+                });
+            },
+            render: function () {
+                App.stock.attributes.checked = [];
+                App.stock.attributes.list.forEach(function iter(attribute) {
+                    if (App.stock.attributes.selected.includes(attribute.attribute_value_id)) {
+                        attribute.is_selected = 'checked';
+                        App.stock.attributes.checked.push(attribute);
+                    }
+                    Array.isArray( attribute.attribute_values) && attribute.attribute_values.forEach(iter);
+                });
+                if(!App.stock.attributes.checked.length){
+                    App.stock.attributes.selected = [];
+                }
+                App.renderTpl("attributes_container", {attributes: App.stock.attributes.list});
+                App.renderTpl("attributes_selected", {attributes_selected: App.stock.attributes.checked});
+                $('.stock-attributes-button .attributes-selected-length').html(App.stock.attributes.selected.length);
+                App.stock.attributes.last_expanded.forEach(function(attribute_id){
+                    $('#attribute_'+attribute_id).addClass('active');
+                    $('#content_attribute_'+attribute_id).addClass('active');
+                })
+            },
+            select: function(node){
+                var checked = $(node).prop('checked');
+                var attribute_value_id = $(node).data('attribute_value_id');
+                if(checked){
+                    App.stock.attributes.add(attribute_value_id);
+                } else {
+                    App.stock.attributes.remove(attribute_value_id);
+                }
+                App.stock.entries.show_cart = false;
+                App.stock.entries.load();
+            },
+            add: function(attribute_value_id){
+                App.stock.attributes.selected.push(attribute_value_id);
+            },
+            isInList: function(list,attribute_value_id){
+                var i = 0;
+                list.forEach(function(attribute, index){
+                    if(attribute === attribute_value_id){
+                        i = index;
+                    }
+                })
+                return i;
+            },
+            remove: function(attribute_value_id){
+                App.stock.attributes.selected.splice(App.stock.attributes.isInList(App.stock.attributes.selected, attribute_value_id), 1);
+            },
+            clearSelected: function(){
+                if(!App.stock.attributes.selected.length){
+                    return;
+                }
+                App.stock.attributes.selected = [];
+                App.stock.attributes.checked = [];
+                App.stock.entries.load();
+            }
+        },
         entries: {
             list: [],
             current_list: [],
             offset: 0,
             loading_finished: 0,
             show_cart:0,
+            order_by: 'fetch_count-DATEDIFF(NOW(),fetch_stamp) DESC',
             limit:12,
             category_id:0,
             init: function(){
                 App.stock.entries.load();
             },
-            
             load: function (load_more) {
                 if (!App.user.pcomp.company_id) {
                     $("#stock_pcomp_notice").show();
@@ -132,20 +210,30 @@
                     category_id: App.stock.entries.category_id,
                     offset: App.stock.entries.offset,
                     limit: App.stock.entries.limit+1,
-                    pcomp_id: App.user.pcomp.company_id
+                    order_by: App.stock.entries.order_by,
+                    pcomp_id: App.user.pcomp.company_id, 
+                    attribute_value_ids: JSON.stringify(App.stock.attributes.selected) 
                 };
                 $('#stock_categories_header').html("");
                 App.flash("Загрузка товаров...");
-                $.post("./suggestFetch", params, function (response) {
+                $.post("./productListFetch", params, function (resp) {
                     App.flash("Загрузка товаров:ОК");
-                    var new_loaded_items = App.json(response);
-                    if( !new_loaded_items ){return;}
-                    if (load_more) {
+                    var response = App.json(resp);
+                    var new_loaded_items = response.product_list;
+                    App.stock.attributes.list = response.attribute_list;
+                    if( !new_loaded_items.length ){
+                        if(App.stock.attributes.selected.length>0 && params.category_id != 0){
+                            App.stock.attributes.selected = [];
+                            App.stock.entries.load();
+                            return;
+                        }
+                    }
+                    if ( load_more ) {
                         App.stock.entries.list = App.stock.entries.list.concat(new_loaded_items);
                     } else {
                         App.stock.entries.list = new_loaded_items;
                     };
-                    if (new_loaded_items.length < App.stock.entries.limit+1) {
+                    if ( new_loaded_items.length < App.stock.entries.limit + 1 ) {
                         App.stock.entries.loading_finished = 1;
                     } else {
                         App.stock.entries.list.pop();
@@ -163,30 +251,35 @@
             render: function () {
                 if(App.stock.entries.show_cart){
                     $('#stock_list').addClass('cart');
+                    $('#stock_head_form .field').addClass('disabled');
                     App.stock.entries.current_list = App.stock.cart.list;
                 } else {
                     $('#stock_list').removeClass('cart');
+                    $('#stock_head_form .field').removeClass('disabled');
                     App.stock.entries.current_list = App.stock.entries.list;
                 }
                 App.stock.entries.addSpecailProductFeatures();
                 var gridview=localStorage.getItem('stockGridView');
                 App.stock.entries.gridViewConfigure(gridview); 
                 App.stock.cart.renderButton(); 
+                App.stock.attributes.render();
                 $('.cart-quantity').html(App.stock.cart.list.length);
                 App.renderTpl("stock_list", {products: App.stock.entries.current_list, loading_finished: App.stock.entries.loading_finished, show_cart: App.stock.entries.show_cart});
-                
-               
             }, 
-            renderItem: function (index, product_quantity){
-                console.log(index);
-                console.log($('#product_item_'+index+' .product-total'));
+            renderItem: function (index, product_quantity){    
+                var item_node = '#product_item_'+index;
                 if(product_quantity<1 || !product_quantity){
+                    $(item_node + ' .product-clear-button-container').hide();
                     App.stock.entries.render();
                 }else{
-                    $('#product_item_'+index).css('background-color','#ffd');
-                    $('#product_item_'+index+' .minus-button').removeClass('disabled');
-                    $('#product_item_'+index+' .product_quantity').val(product_quantity);
-                    $('#product_item_'+index+' .product-total').html(App.stock.cart.list[index].product_sum + ' ₽');
+                    $(item_node).css('background-color','#ffd');
+                    $(item_node + ' .minus-button').removeClass('disabled');
+                    $(item_node + ' .product-clear-button-container').show();
+                    $(item_node + ' .product_quantity').val(product_quantity);
+                    $(item_node + ' .product-clear-button').data('delta', product_quantity*-1);
+                    if(App.stock.entries.show_cart){
+                        $(item_node + ' .product-total').html(App.stock.cart.list[index].product_sum + ' ₽');
+                    }
                 }
             },
             gridViewConfigure: function(gridview){
@@ -219,27 +312,40 @@
                 });
                 $('#stock_list').change(function(e){
                     var index = $(e.target).data('index');
-                    var product_object = App.stock.entries.list[index];
+                    
+                    var product_object = App.stock.entries.current_list[index];
                     var new_quantity = e.target.value*1;
-                    App.stock.cart.update(product_object,0,new_quantity, index);
+                    App.stock.cart.update(product_object,false,new_quantity, index);
                 });
                 $('#stock_list').click(function(e){
                     var delta = $(e.target).data('delta');
-                    if(delta){
+                    var action = $(e.target).data('action');
+                    if(delta || action){
                         var index = $(e.target).data('index');
                         var product_object = App.stock.entries.current_list[index];
-                        App.stock.cart.update(product_object,delta,0, index); 
+                        if(action){
+                            App.stock.cart.update(product_object,0,product_object.product_quantity*-1, index); 
+                            return;
+                        } 
+                        App.stock.cart.update(product_object,delta,false, index); 
                     }
+                    
                 });
                 $('#stock_category_tree').click(function(e){
                     $('#categoriesPopup').modal({ inverted: true, duration:0}).modal('show');
                 });
-                
+                $('#stock_attributes').click(function(e){
+                    $('#attributesPopup').show();
+                    $('#stock_content').hide();
+                });
                 $('.limit-dropdown').change(function(e){
                     App.stock.entries.limit = $(this).dropdown('get value')*1;
                     App.stock.entries.load();
                 });
-                
+                $('.order-by-dropdown').change(function(e){
+                    App.stock.entries.order_by = $(this).dropdown('get value');
+                    App.stock.entries.load();
+                });
                 $(document).click(function(e){
                     var expand = $(e.target).data('action');
                     if(expand === 'expand_category'){
@@ -272,18 +378,20 @@
                     if(!delta && new_quantity<=0){return};
                     product_object.product_quantity = delta || new_quantity;
                     product_quantity = App.stock.cart.add(product_object);
-                } else 
-                if( founded_product.product_quantity+delta<=0 && new_quantity<=0 || new_quantity+ founded_product.product_quantity<=0){
-                    product_quantity = App.stock.cart.delete(founded_product.index);
                 } else {
-                    product_quantity = App.stock.cart.modify(founded_product.index,delta,new_quantity);
+                    if( founded_product.product_quantity+delta<=0 && new_quantity<=0 || new_quantity + founded_product.product_quantity<=0 || new_quantity===0 ){
+                        product_quantity = App.stock.cart.delete(founded_product.index);
+                    } else {
+                        product_quantity = App.stock.cart.modify(founded_product.index,delta,new_quantity);
+                    }
                 }
+                App.stock.cart.store();
                 App.stock.cart.setTotal();
                 App.stock.cart.renderButton();
                 App.stock.entries.renderItem(index, product_quantity); 
-                App.stock.cart.store();
             },
             delete: function(index){
+                
                 App.stock.cart.list.splice(index, 1);
                 return false;
             },
@@ -411,6 +519,22 @@
             overflow-y: visible !important;
             overflow-x: visible !important;
         }
+        #stock_container {
+            grid-template-columns: 100% !important;
+        }
+        #attributesPopup{
+            display:none;
+            width: 90%;
+            height: 100%;
+            margin: 0 auto;
+            z-index: 10;
+        }
+        #attributesPopup .ui.secondary.close.icon.button{
+            display:block !important;
+        }
+        .stock-attributes.five.wide.field{
+            display:block !important;
+        }
         
     }  
     @media only screen and (min-width: 400px) and (max-width: 650px) {
@@ -478,6 +602,22 @@
             overflow-y: visible !important;
             overflow-x: visible !important;
         }
+        #stock_container {
+            grid-template-columns: 100% !important;
+        }
+        #attributesPopup{
+            display:none;
+            width: 90%;
+            height: 100%;
+            margin: 0 auto;
+            z-index: 10;
+        }
+        #attributesPopup .ui.secondary.close.icon.button{
+            display:block !important;
+        }
+        .stock-attributes.five.wide.field{
+            display:block !important;
+        }
     } 
     @media only screen and (min-width: 650px) and (max-width: 1000px) {
         #stock_list .stock_product_table{
@@ -490,7 +630,7 @@
             grid-template-columns: 100% !important;
         }
         #stock_list:not(.grid-view) .product-item-grid{
-            grid-template-columns: 8% 25% 31% 35% !important
+            grid-template-columns: 8% 25% 31% 29% !important
         }
         #stock_list:not(.grid-view) .product-image-column img{
             width: 70px !important;
@@ -504,14 +644,30 @@
         .grid-view .product-image-column img , .grid-view .product-image-column{
             height: 130px !important;
         }
+        #stock_container {
+            grid-template-columns: 100% !important;
+        }
+        #attributesPopup{
+            display:none;
+            width: 90%;
+            height: 100%;
+            margin: 0 auto;
+            z-index: 10;
+        }
+        #attributesPopup .ui.secondary.close.icon.button{
+            display:block !important;
+        }
+        .stock-attributes-button.five.wide.field{
+            display:block !important;
+        }
     } 
     @media only screen and (min-width: 1000px) and (max-width: 1300px) {
         #stock_list .stock_product_table{
             width: calc(33% - 8px);
         }
         #stock_list:not(.grid-view) .product-clear-button-container{
-            position: absolute;
-            right: -10vw;
+             position: initial !important;
+            right: -16vw;
         }
         .grid-view .product-list-grid{
             grid-template-columns: 33% 33% 33% !important;
@@ -526,6 +682,9 @@
         #categoriesPopup .categories-container{
             grid-template-columns: 25% 25% 25% 25%  !important;
         }
+        #attributesPopup{
+            display:block !important;
+        }
     } 
     @media only screen and (min-width: 1300px) {
         #stock_list .stock_product_table{
@@ -535,8 +694,32 @@
             width: 80% !important;
             left: 10% !important;
         }
+        .grid-view .product-list-grid{
+            grid-template-columns: 33% 33% 33% !important;
+        }
         #categoriesPopup .categories-container{
             grid-template-columns: 20% 20% 20% 20% 20% !important;
+        }
+        #attributesPopup{
+            display:block !important;
+        }
+    } 
+    @media only screen and (min-width: 1600px) {
+        #stock_list .stock_product_table{
+            width: calc(25% - 8px);
+        }
+        #categoriesPopup{
+            width: 80% !important;
+            left: 10% !important;
+        }
+        .grid-view .product-list-grid{
+            grid-template-columns: 25% 25% 25% 25% !important;
+        }
+        #categoriesPopup .categories-container{
+            grid-template-columns: 20% 20% 20% 20% 20% !important;
+        }
+        #attributesPopup{
+            display:block !important;
         }
     } 
     #stock_list .stock_product_promo{
@@ -597,17 +780,17 @@
     .product-clear-button{
         left: 5vw!important;
     }
-    #stock_category_tree{
+    #stock_category_tree, #stock_attributes{
        width: 100%;
        overflow: hidden;
        text-overflow: ellipsis;
     }
-    #stock_category_tree i{
+    #stock_category_tree i, #stock_attributes i{
         background-color: #2185d0;
         border: 1px solid #2185d0;
         color: white;
     }
-    #stock_category_tree label{
+    #stock_category_tree label, #stock_attributes label{
         font-weight: bold;
         white-space: nowrap;
     }
@@ -638,7 +821,7 @@
     .daughter-category{
         padding: 5px;
     }
-    #categoriesPopup .categories-container, #stock_product_info_modal .product-info-details{
+    #categoriesPopup .categories-container, #stock_product_info_modal .product-info-details, #attributesPopup .attributes-container{
         max-height: 70vh;
         overflow-y: auto;
         overflow-x: hidden;
@@ -707,7 +890,7 @@
     }
     #stock_list:not(.grid-view) .product-clear-button-container{
         position: absolute;
-        right: -10vw;
+        right: -16vw;
     }
     .product-info-column .eight.wide.column{
         white-space: nowrap;
@@ -778,206 +961,344 @@
         font-size: 16px;
         font-weight: bold;
     }
-</style>
-
-
-<div  class="ui blue segment">
-    <form class="ui form">
-        <div class="field">
-            <label>Клиент</label>
-            <div class="ui fluid search selection remote dropdown pcomp_id">
-                <input name="pcomp_id" type="hidden">
-                <i class="dropdown icon"></i>
-                <div class="default text">Выбрать клиента</div>
-                <div class="menu"></div>
-            </div>
-        </div>
-
-        <div id="stock_pcomp_notice" style="display: none">
-            <i class="ui blue exclamation circle icon"></i>
-            Выберите клиента
-        </div>
-        
-        <div class="fields">
-            <div class="five wide field">
-                <label>Категории</label><div></div>
-                <div id='stock_category_tree' class='ui labeled basic blue  icon button'>
-                    <i class='bars icon'></i>
-                    <label class='placeholder'>Все</label>
-                </div>
-            </div>
-            <div id="stock_search" class="eleven wide field">
-                    <label>Поиск</label>
-                    <div class="ui left icon right labeled input fluid" style="margin-bottom: 5px;">
-                        <i class="search icon"></i>
-                        <input id="stock_search_input" placeholder="Введите название или код..." type="text"
-                               oninput="App.stock.entries.load()">
-                        <div class="ui basic label" onclick="App.stock.head.clearSearchbar()"><i class="close icon"></i></div>
-                    </div>
-            </div>
-        </div>
-    </form>
-    <div class="ui clearing divider ">
-     </div>
-    <div class="ui stackable grid">
-        <div class="six wide left floated column">
-            <div id="stock_render_mode" class="covert" tabindex="0"  >
-                <div class="ui labeled large button"  >
-                    {{if show_cart}}
-                    <div class="ui blue button" data-show_cart="0" >
-                      <i class="chevron left icon"></i> К товарам
-                    </div>
-                    {{else}}
-                    <div class="ui blue button" data-show_cart="1" >
-                      <i class="shopping cart icon"></i> Корзина
-                    </div>
-                    {{/if}}
-                    <a class="ui basic blue left pointing label" >
-                     {{ cart_quantity }} / {{ total }} ₽
-                    </a>
-                </div>
-            </div> 
-        </div> 
-        <div class="four wide right floated right aligned column">
-            <div class="ui selection labeled  dropdown limit-dropdown" style="min-width:auto">
-                <input type="hidden" name="gender">
-                    <i class="dropdown icon"></i>
-                    <div class="default text">12</div>
-                    <div class="menu">
-                        <div class="item" data-value="12">12</div>
-                        <div class="item" data-value="24">24</div>
-                        <div class="item" data-value="48">48</div>
-                        <div class="item" data-value="100">100</div>
-                    </div>
-            </div>
-            <div class="ui basic buttons">
-                    <button class="ui  icon button" onclick="App.stock.entries.gridViewToggle(0)"> <i class="list icon"></i></button>
-                    <button class="ui   icon button" onclick="App.stock.entries.gridViewToggle(1)"> <i class="table icon"></i></button>
-                </div>
-        </div> 
-    </div>
-</div>
-
-
-<div id="stock_list" class="covert">
-    <div class="product-list-grid" >
-            <!-- {{if products}} {{products}} -->
-        <div class='product-item' id="product_item_{{#}}" style=" {{if is_promo}}  background-color: #cfc;{{/if}}{{ if product_quantity|more>0 }} background-color: #ffd; {{else }}{{/if}}">
-          
-            <div class="product-item-grid" >
-                <div class='product-image-column image-{{#}}' data-row-index="{{#}}" >
-                    <a href="#stock.html#productInfoModal.showProductInfo={{product_code}}">
-                        <img src="../Storage/image_flush/?size=150x150&path=/dynImg/{{product_img}}" >
-                    </a>
-                </div>
-                <div class="product-name-column">
-                    <a href="#stock.html#productInfoModal.showProductInfo={{product_code}}">
-                         {{product_name}}
-                    </a>
-                </div>
-                <div class="product-info-column">
-                    <div class="ui grid" style="color:#666; padding-right:1.4em">
-                            <div class="eight wide column">{{product_code}}</div>
-                            <div class="four wide column product-price" style="text-align: right">
-                                {{if is_promo}}
-                                    <s>{{product_price_total_raw}}</s>
-                                    <b>{{product_price_total}}</b>
-                                {{else}} 
-                                    <b>{{product_price_total}}</b>
-                                {{/if}}
-                            </div>
-                            <div class="four wide column" style="text-align: right">{{if stared_leftover}} {{stared_leftover}} {{else}} {{leftover}}{{product_unit}} {{/if}}</div>
-                            
-
-                    </div>
-                </div>
-                <div class="product-action-column">
-                    <div class="ui centered grid">
-                        <div class="twelve wide column">
-                            <div class="ui left icon input tiny fluid"  >
-                                <input type='hidden' name='product_img' value='{{product_img}}'>
-                                <input type='hidden' name='product_name' value='{{product_name}}'>
-                                <input type='hidden' name='product_code' value='{{product_code}}'>
-                                <input type='hidden' name='product_id' value='{{product_id}}'>
-                                <input type='hidden' name='leftover' value='{{leftover}}'>
-                                <input type='hidden' name='product_price_total' value='{{product_price_total}}'>
-                                
-                                <button class="ui  {{if product_quantity|less>1}} disabled   {{/if}} left attached icon  button minus-button" data-delta="-1" data-index="{{#}}">
-                                    <i class="minus icon" data-delta="-1" data-index="{{#}}"></i>
-                                </button>
-                                <input type="number" name="product_quantity" placeholder="Количество" min="1" class="product_quantity"
-                                        style="border-radius: 0px;   
-                                        padding-left: 1em !important; 
-                                        padding-right: 0.5em !important;" 
-                                        data-index="{{#}}"
-                                        value="{{if product_quantity|more>0}}{{product_quantity|blank>1}}{{else}}0{{/if}}">
-                                <button class="ui right attached icon  button plus-button" data-delta="1" data-index="{{#}}">
-                                    <i class="plus icon" data-delta="1" data-index="{{#}}"></i>
-                                </button>
-                               
-                            </div> 
-                            <div class="ui basic  label product-total" style="display:none">{{if product_quantity|more>0}}{{product_sum}}{{else}}0{{/if}} ₽</div>
-                        </div>
-                                {{if product_quantity|more>0}}
-                        <div class="four wide column product-clear-button-container">
-                            
-                                <div class="ui circular icon button product-clear-button"  data-delta="-{{product_quantity}}" data-index="{{#}}">
-                                    <i class="trash alternate icon"  data-delta="-{{product_quantity}}"  data-index="{{#}}"></i>
-                                </div>
-                        </div>
-                                {{/if}}
-                    </div>
-                    
-                    
-                </div>
-                
-            </div>
-        </div>
-        <!-- {{/products}} {{else}}-->
-        <div>
-            <div >
-                <div class="ui message" style="clear: both;text-align: center;">
-                   Ничего не найдено
-                </div>  
-            </div>
-        </div>
-        <!--{{/if}}-->
-    </div>
     
-    {{if show_cart|falsy}}
-        {{if loading_finished}} 
-        <div class="ui olive message" style="clear: both;text-align: center;">
-            Больше нет товаров для показа
-        </div>   
-        {{else}} 
-        <button id='stock_load_more' class='ui fluid  button'
-                onclick="App.stock.entries.load(1)"> 
-            Показать ещё...
-        </button>    
-        {{/if}} 
-     {{else}} 
-        {{if products|length|more>0}} 
-            <a class="ui approve green labeled icon button" href="#document.html" style="float: right; margin-top: 1em;">
-                <i class="check icon"></i>
-            Заказ
+    
+    #attributes_container .content {
+        max-height: 18em;
+        overflow: auto;
+    }
+    #attributes_container .title {
+        color: black;
+    }
+    #attributes_container label {
+        color: rgb(55, 55, 55);
+    }
+    .ui.inverted.dimmer{
+        background-color: rgba(255, 255, 255, 0.3) !important;
+    }
+    #attributes_container .content{
+        border-bottom: 1px solid rgb(232, 232, 232);
+    }
+    #attributes_container .attribute-container .title:hover{
+        transition: 0.5s ease;
+        background-color: #eee;
+    }
+</style>
+ <link rel="stylesheet" href="stock.css">
+<div id="stock_container" style="display: grid; grid-template-columns: 25% 75%; grid-column-gap: 1em;">
+    <div id="attributesPopup" class="ui  segment " style="margin-bottom: auto;">
+        <a  class="ui secondary close icon button" style="float:right; display: none" onclick="$('#attributesPopup').hide();$('#stock_content').show();"><i class="icon close"></i></a>
+        <div class="header" style='padding: 1em;'><h4>Фильтр</h4></div>
+        <div class="ui divider"></div>
+        <div id="attributes_selected" class="covert">
+            <div class='title' style='margin-bottom: 5px'>
+                {{ if attributes_selected}}
+                <b>Выбрано:</b>
+                {{else}}
+                <i>Ничего не выбрано</i>
+                {{/if}}
+            </div>
+            <div class="ui blue  labels">
+            {{attributes_selected}}
+            <a class="ui  label">
+                {{attribute_name}}: {{attribute_prefix}} {{attribute_value}}{{attribute_unit}} 
+                <i class="delete icon" onclick="App.stock.attributes.remove('{{attribute_value_id}}');App.stock.entries.load()"></i>
             </a>
-        {{else}}
-        <div class="ui olive message" style="clear: both;text-align: center;">
-            <i class="exclamation icon"></i>
-            Вы не добавляли товары в корзину
-        </div>   
-        {{/if}}
-    {{/if}}
+            {{/attributes_selected}}
+            </div>
+        </div>
+        <div class="ui divider"></div>
+        <div class="ui form" style="padding:1em">
+            <div class="ui fields">
+                <div class="sixteen wide field">
+                    <button class=" ui floated right blue fluid button" onclick="App.stock.attributes.clearSelected()">
+                            Очистить
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="ui divider"></div>
+        <div id="attributes_container"  class="ui accordion covert">
+
+            {{attributes}}
+            <div class='attribute-container'>
+                <div class="active title" id="attribute_{{attribute_id}}" >
+                  <i class="dropdown icon"></i>
+                  {{attribute_name}}
+                  <label class="attributes_added"></label>
+                </div>
+                {{if attribute_values}}
+                <div class="content" id="content_attribute_{{attribute_id}}" data-attribute_id="{{attribute_id}}">
+                    <div class="ui form">
+                        <div class="grouped fields" >
+                            {{attribute_values}}
+                            <div class="field">
+                                <div class="ui child   checkbox" >
+                                    <input type="checkbox" name="size" value="small" {{is_selected}}
+                                           data-attribute_value_id="{{attribute_value_id}}" 
+                                           data-attribute_id="{{attribute_id}}" 
+                                           data-attribute_value="{{attribute_prefix}} {{attribute_value}} {{attribute_unit}}" 
+                                           onchange="App.stock.attributes.select(this)">
+                          <!--   <label  {{ if product_total|falsy }} style="color: gray" {{{/if}}>  -->
+
+                                 {{attribute_prefix}} {{attribute_value}} {{attribute_unit}} <span style="color: gray">({{product_total}})</span>
+
+                                  </label>
+                                </div>
+                            </div>
+                            {{/attribute_values}}
+                        </div>
+                    </div>  
+                 </div>
+                {{/if}}
+            </div>
+            {{/attributes}}
+        </div>
+    </div>
+
+    <div id="stock_content">
+        <div  class="ui blue segment">
+            <form class="ui form" id="stock_head_form">
+                <div class="field">
+                    <label>Клиент</label>
+                    <div class="ui fluid search selection remote dropdown pcomp_id">
+                        <input name="pcomp_id" type="hidden">
+                        <i class="dropdown icon"></i>
+                        <div class="default text">Выбрать клиента</div>
+                        <div class="menu"></div>
+                    </div>
+                </div>
+
+                <div id="stock_pcomp_notice" style="display: none">
+                    <i class="ui blue exclamation circle icon"></i>
+                    Выберите клиента
+                </div>
+
+                <div class="fields">
+                    <div class="five wide field">
+                        <label>Категории</label><div></div>
+                        <div id='stock_category_tree' class='ui labeled basic blue  icon button'>
+                            <i class='bars icon'></i>
+                            <label class='placeholder'>Все</label>
+                        </div>
+                    </div>
+                    <div class="stock-attributes-button five wide field" style="display:none">
+                        <label>Фильтр</label><div></div>
+                        <div class="ui labeled  button"  >
+                            <div id='stock_attributes' class='ui labeled basic blue  icon button'>
+                                <i class='filter icon'></i>
+                                <label class='placeholder'>Выбрать</label>  
+                            </div>
+                            <a class="ui basic red left pointing blue label attributes-selected-length">0</a>
+                        </div>
+                    </div>
+                    <div id="stock_search" class="eleven wide field">
+                            <label>Поиск</label>
+                            <div class="ui left icon right labeled input fluid" style="margin-bottom: 5px;">
+                                <i class="search icon"></i>
+                                <input id="stock_search_input" placeholder="Введите название или код..." type="text"
+                                       oninput="App.stock.entries.load()">
+                                <div class="ui basic label" onclick="App.stock.head.clearSearchbar()"><i class="close icon"></i></div>
+                            </div>
+                    </div>
+                </div>
+            </form>
+            <div class="ui clearing divider ">
+             </div>
+            <div class="ui stackable grid">
+                <div class="six wide left floated column">
+                            <label><b> </b></label>
+                    <div id="stock_render_mode" class="covert" tabindex="0"  >
+                        <div class="ui labeled large button"  >
+                            {{if show_cart}}
+                            <div class="ui blue button" data-show_cart="0" >
+                              <i class="chevron left icon"></i> К товарам
+                            </div>
+                            {{else}}
+                            <div class="ui blue button" data-show_cart="1" >
+                              <i class="shopping cart icon"></i> Корзина
+                            </div>
+                            {{/if}}
+                            <a class="ui basic blue left pointing label" >
+                             {{ cart_quantity }} / {{ total }} ₽
+                            </a>
+                        </div>
+                    </div> 
+                </div> 
+                <div class="ten wide right floated left aligned column">
+                    <div class='ui form'> 
+                        <div class='fields'> 
+                            <div class='eight wide left aligned field'>
+                                <label>Сортировка:</label>
+                                <div class="ui selection labeled  dropdown order-by-dropdown" style="min-width:auto">
+                                    <input type="hidden" name="gender">
+                                        <i class="dropdown icon"></i>
+                                        <div class="default text" style='white-space: nowrap;text-overflow: ellipsis;max-width: 100%;overflow: hidden;'>
+                                            Сначала популярные
+                                        </div>
+                                        <div class="menu">
+                                            <div class="item" data-value="fetch_count-DATEDIFF(NOW(),fetch_stamp) DESC">Сначала популярные</div>
+                                            <div class="item" data-value="fetch_count-DATEDIFF(NOW(),fetch_stamp) ASC">Сначала непопулярные</div>
+                                            <div class="item" data-value="product_name ASC">Название (По возрастанию)</div>
+                                            <div class="item" data-value="product_name DESC">Название (По убыванию)</div>
+                                            <div class="item" data-value="self_price DESC">Сначала дешевые</div>
+                                            <div class="item" data-value="self_price ASC">Сначала дорогие</div>
+                                            <div class="item" data-value="leftover ASC">Количество (По возрастанию)</div>
+                                            <div class="item" data-value="leftover DESC">Количество (По убыванию)</div>
+                                        </div>
+                                </div>
+                            </div>
+                            <div class='five wide left aligned field'>
+                                <label>Показывать:</label>
+                                <div class="ui selection labeled  dropdown limit-dropdown" style="min-width:auto">
+                                    <input type="hidden" name="gender">
+                                        <i class="dropdown icon"></i>
+                                        <div class="default text">12</div>
+                                        <div class="menu">
+                                            <div class="item" data-value="12">12</div>
+                                            <div class="item" data-value="24">24</div>
+                                            <div class="item" data-value="48">48</div>
+                                            <div class="item" data-value="100">100</div>
+                                        </div>
+                                </div>
+                            </div>
+                            <div class='three wide left aligned field'>
+                                <label>Вид:</label>
+                                <div class="ui basic buttons">
+                                    <button class="ui  icon button" onclick="App.stock.entries.gridViewToggle(0)"> <i class="list icon"></i></button>
+                                    <button class="ui   icon button" onclick="App.stock.entries.gridViewToggle(1)"> <i class="table icon"></i></button>
+                                </div>
+                            </div> 
+                        </div> 
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <div id="stock_list" class="covert">
+            <div class="product-list-grid" >
+                    <!-- {{if products}} {{products}} -->
+                <div class='product-item' id="product_item_{{#}}" style=" {{if is_promo}}  background-color: #cfc;{{/if}}{{ if product_quantity|more>0 }} background-color: #ffd; {{else }}{{/if}}">
+
+                    <div class="product-item-grid" >
+                        <div class='product-image-column image-{{#}}' data-row-index="{{#}}" >
+                            <a href="#stock.html#productInfoModal.showProductInfo={{product_code}}">
+                                <img src="../Storage/image_flush/?size=150x150&path=/dynImg/{{product_img}}" >
+                            </a>
+                        </div>
+                        <div class="product-name-column">
+                            <a href="#stock.html#productInfoModal.showProductInfo={{product_code}}">
+                                 {{product_name}}
+                            </a>
+                        </div>
+                        <div class="product-info-column">
+                            <div class="ui grid" style="color:#666; padding-right:1.4em">
+                                    <div class="eight wide column">{{product_code}}</div>
+                                    <div class="four wide column product-price" style="text-align: right">
+                                        {{if is_promo}}
+                                            <s>{{product_price_total_raw}}</s>
+                                            <b>{{product_price_total}}</b>
+                                        {{else}} 
+                                            <b>{{product_price_total}}</b>
+                                        {{/if}}
+                                    </div>
+                                    <div class="four wide column" style="text-align: right">{{if stared_leftover}} {{stared_leftover}} {{else}} {{leftover}}{{product_unit}} {{/if}}</div>
+
+
+                            </div>
+                        </div>
+                        <div class="product-action-column">
+                            <div class="ui centered grid">
+                                <div class="twelve wide column">
+                                    <div class="ui left icon input tiny fluid"  >
+                                        <input type='hidden' name='product_img' value='{{product_img}}'>
+                                        <input type='hidden' name='product_name' value='{{product_name}}'>
+                                        <input type='hidden' name='product_code' value='{{product_code}}'>
+                                        <input type='hidden' name='product_id' value='{{product_id}}'>
+                                        <input type='hidden' name='leftover' value='{{leftover}}'>
+                                        <input type='hidden' name='product_price_total' value='{{product_price_total}}'>
+
+                                        <button class="ui  {{if product_quantity|less>1}} disabled   {{/if}} left attached icon  button minus-button" data-delta="-1" data-index="{{#}}">
+                                            <i class="minus icon" data-delta="-1" data-index="{{#}}"></i>
+                                        </button>
+                                        <input type="number" name="product_quantity" placeholder="Количество" min="1" class="product_quantity"
+                                                style="border-radius: 0px;   
+                                                padding-left: 1em !important; 
+                                                padding-right: 0.5em !important;" 
+                                                data-index="{{#}}"
+                                                value="{{if product_quantity|more>0}}{{product_quantity|blank>1}}{{else}}0{{/if}}">
+                                        <button class="ui right attached icon  button plus-button" data-delta="1" data-index="{{#}}">
+                                            <i class="plus icon" data-delta="1" data-index="{{#}}"></i>
+                                        </button>
+
+                                    </div> 
+                                    <div class="ui basic  label product-total" style="display:none">{{if product_quantity|more>0}}{{product_sum}}{{else}}0{{/if}} ₽</div>
+                                </div>
+                                {{if product_quantity|more>0}}
+                                <div class="four wide column product-clear-button-container" >
+                                {{else}} 
+                                <div class="four wide column product-clear-button-container" style="display:none">
+                                {{/if}}
+                                    <div class="ui circular icon button product-clear-button"  data-action="clear" data-index="{{#}}">
+                                        <i class="trash alternate icon"  data-action="clear"  data-index="{{#}}"></i>
+                                    </div>
+                                </div>
+                                        
+                            </div>
+
+
+                        </div>
+
+                    </div>
+                </div>
+                <!-- {{/products}} {{else}}-->
+                {{if show_cart|falsy}}
+                <div>
+                    <div >
+                        <div class="ui message" style="clear: both;text-align: center;">
+                           Ничего не найдено
+                        </div>  
+                    </div>
+                </div>
+                {{/if}}
+                <!--{{/if}}-->
+            </div>
+
+            {{if show_cart|falsy}}
+                {{if loading_finished}} 
+                <div class="ui olive message" style="clear: both;text-align: center;">
+                    Больше нет товаров для показа
+                </div>   
+                {{else}} 
+                <button id='stock_load_more' class='ui fluid  button'
+                        onclick="App.stock.entries.load(1)"> 
+                    Показать ещё...
+                </button>    
+                {{/if}} 
+             {{else}} 
+                {{if products|length|more>0}} 
+                <a class="ui approve green labeled icon button" href="#document.html" style="float: right; margin-top: 1em;">
+                    <i class="check icon"></i>
+                    Заказ
+                </a>
+                {{else}}
+                <div class="ui olive message" style="clear: both;text-align: center;">
+                    <i class="exclamation icon"></i>
+                    Вы не добавляли товары в корзину
+                </div>   
+                {{/if}}
+            {{/if}}
+        </div>
+    </div>
 </div>
-
-
 
 <div class="ui long modal" id="stock_product_info_modal">
     <div class="header">Сведения о товаре 
         <a href="#stock.html" class="ui secondary close icon button" style="float:right" onclick="$('#stock_product_info_modal').modal('hide');"><i class="icon close"></i></a>
     </div>
     <div class="content">
-        <div class="product-info-image" style="height: 62vw;">
+        <div class="product-info-image" >
             <img style="max-width: 100%" src="../Storage/image_flush/?size=400x400&path=/dynImg/{{product_img}}"/>
         </div>
         <div class="product-info-details">
@@ -1113,3 +1434,4 @@
     {{/categories}}
      </div>
 </div>
+

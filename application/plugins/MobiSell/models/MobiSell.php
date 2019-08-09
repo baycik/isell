@@ -207,15 +207,178 @@ class MobiSell extends PluginManager {
         $Company->selectPassiveCompany($passive_company_id);
         return $Company->companyPrefsGet();
     }
-    public $suggestFetch = ['q' => 'string', 'offset' => ['int', 0], 'limit' => ['int', 10], 'doc_id' => ['int', 0], 'category_id' => ['int', 0], 'pcomp_id' => ['int', 0]];
-    public function suggestFetch($q, $offset, $limit, $doc_id, $category_id, $pcomp_id) {
-        $Company = $this->Hub->load_model("Company");
-        $DocumentItems = $this->Hub->load_model("DocumentItems");
-        if ($this->Hub->pcomp('company_id') != $pcomp_id) {
-            $Company->selectPassiveCompany($pcomp_id);
+    
+    //-----------PRODUCT LIST FETCHING---------------//
+    
+    public $productListFetch = ['q' => 'string', 'offset' => ['int', 0], 'limit' => ['int', 10],  'category_id' => ['int', 0], 'pcomp_id' => ['int', 0], 'order_by' => 'string','attribute_value_ids' => 'json'];
+    public function productListFetch($q, $offset, $limit, $category_id, $pcomp_id, $order_by, $attribute_value_ids) {
+	$price_query="0";
+        $usd_ratio=$this->Hub->pref('usd_ratio');
+	$where="1";
+        if( strlen($q)==13 && is_numeric($q) ){
+	    $where="product_barcode=$q";
+	} else if( $q ){
+	    $cases=[];
+	    $clues=  explode(' ', $q);
+	    foreach ($clues as $clue) {
+		if ($clue == ''){
+		    continue;
+		}
+		$cases[]="(product_code LIKE '%$clue%' OR ru LIKE '%$clue%')";
+	    }
+	    if( count($cases)>0 ){
+		$where=implode(' AND ',$cases);
+	    }
+	}
+        if( $category_id ){
+            $branch_ids = $this->treeGetSub('stock_tree', $category_id);
+            $where .= " AND parent_id IN (" . implode(',', $branch_ids) . ")";
+        } 
+        $this->productListCreateTemporary($where);
+        $attribute_list = $this->attributeListFetch($attribute_value_ids,$where);
+        $where="1";
+        if( $attribute_value_ids ){
+             foreach($attribute_value_ids as $index=>$attribute_value){
+                 $where .= " AND attribute_value_hash LIKE '%$attribute_value%' ";
+             }
         }
-        return $DocumentItems->suggestFetch($q, $offset, $limit, $doc_id, $category_id);
+	 $sql="
+	   SELECT 
+                t.product_id,
+                t.product_code,
+                t.product_spack,
+                t.leftover,
+                t.product_name,
+                t.product_img,
+                t.fetch_count,
+                t.fetch_stamp,
+                t.parent_id,
+                t.product_unit,
+                GET_SELL_PRICE(t.product_code, {$pcomp_id}, {$usd_ratio}) product_price_total,
+                GET_PRICE(t.product_code,{$pcomp_id}, {$usd_ratio}) product_price_total_raw
+            FROM
+                (SELECT 
+                *, ru product_name
+	    FROM
+		product_list_temp
+            WHERE $where
+            GROUP BY product_id
+	    ORDER BY $order_by, product_code
+	    LIMIT $limit OFFSET $offset ) t
+            ";
+        $sql = "SELECT 
+            tmp.*, GROUP_CONCAT(IFNULL(srl.supplier_delivery, null)) as delivery_group, GROUP_CONCAT(COALESCE (CONCAT (sl.supply_leftover,' ',tmp.product_unit), CONCAT (sl1.supply_leftover,' ',tmp.product_unit), null)) as  supleftover
+        FROM 
+            (  $sql ) AS tmp 
+        LEFT JOIN 
+        supply_list sl ON (sl.product_code = tmp.product_code AND sl.supply_leftover > 0 ) 
+            LEFT JOIN 
+        supply_list sl1 ON (sl1.supply_code = tmp.product_code AND sl1.supply_leftover > 0 )
+            LEFT JOIN 
+        supplier_list srl ON (sl.supplier_id = srl.supplier_id OR sl1.supplier_id = srl.supplier_id) 
+        GROUP BY product_code 
+        ORDER BY tmp.popularity  DESC
+        ";        
+        $product_list = $this->get_list($sql);
+        return ['product_list'=> $product_list, 'attribute_list'=> $attribute_list];
     }
+    
+    private function productListCreateTemporary($where){
+         $sql="
+            CREATE TEMPORARY TABLE product_list_temp
+            SELECT
+                pl.product_id,
+                se.product_code,
+                pl.ru,
+                product_spack,
+                product_quantity leftover,
+                product_img,
+                fetch_count,
+                fetch_stamp,
+                parent_id,
+                product_unit,
+                self_price
+                ,GROUP_CONCAT(DISTINCT av.attribute_value_hash SEPARATOR ',') attribute_value_hash
+            FROM
+                stock_entries se
+                    JOIN
+                prod_list pl USING(product_code)
+                    LEFT JOIN	
+                attribute_values av ON pl.product_id = av.product_id
+                    LEFT JOIN
+                attribute_list al USING(attribute_id)
+                WHERE $where
+                GROUP BY pl.product_id
+        ";
+        return $this->query($sql);
+    }
+    
+    private function attributeListFetch($attribute_value_ids, $where){
+        $this->query("CREATE TEMPORARY TABLE attributes_temp SELECT av.*, pl.parent_id FROM attribute_values av JOIN product_list_temp pl ON av.product_id = pl.product_id AND $where");
+        $attributes_where = '1';
+        if( $attribute_value_ids ){
+             foreach($attribute_value_ids as $index=>$attribute_value){
+                 $attributes_where .= " AND pl.attribute_value_hash LIKE '%$attribute_value%' ";
+             }
+        }
+        $sql="
+            SELECT 
+                *,
+                GROUP_CONCAT(DISTINCT CONCAT(t.attribute_value, '::', t.attribute_value_hash, '::', t.product_total) 
+                    ORDER BY t.attribute_id ASC, t.attribute_value*1 ASC
+                    SEPARATOR '|') attribute_values
+            FROM
+                (SELECT 
+                        al.attribute_id,
+                        al.attribute_name,
+                        al.attribute_unit,
+                        al.attribute_prefix,
+                        av.attribute_value,
+                        av.product_id,
+                        av.attribute_value_hash,
+                        IF(ptotal.product_total IS NOT NULL, ptotal.product_total, 0) product_total
+                    FROM
+                        attributes_temp av
+                        JOIN 
+                        attribute_list al USING (attribute_id)
+                    LEFT JOIN 
+                        (SELECT 
+                           av.attribute_value_hash,  parent_id, COUNT(product_id) as product_total
+                        FROM
+                                product_list_temp pl
+                                        JOIN 
+                        attribute_values av USING (product_id)
+                                        JOIN 
+                        attribute_list al USING (attribute_id)
+                        WHERE  $attributes_where  
+                        GROUP BY av.attribute_value_hash) ptotal ON  ptotal.attribute_value_hash = av.attribute_value_hash
+                    GROUP BY av.attribute_value_hash) t
+            GROUP BY t.attribute_id
+            ";
+        $attribute_list = $this->get_list($sql);
+        
+        return $this->attributeListCompose($attribute_list);
+    }
+    
+    private function attributeListCompose($attribute_list){
+        foreach($attribute_list as &$attribute){
+            $attribute->attribute_values = explode('|',$attribute->attribute_values);
+            foreach($attribute->attribute_values as &$attribute_value){
+                $attribute_value_exploded = explode('::', $attribute_value);
+                $attribute_value = [
+                    'attribute_value' => $attribute_value_exploded[0],
+                    'attribute_value_id' => $attribute_value_exploded[1],
+                    'product_total' => $attribute_value_exploded[2]*1,
+                    'attribute_id' => $attribute->attribute_id,
+                    'attribute_unit' => $attribute->attribute_unit,
+                    'attribute_name' => $attribute->attribute_name,
+                    'attribute_prefix' => $attribute->attribute_prefix
+                ];
+            }
+        }
+        return $attribute_list;
+    }
+    
     public $productGet = ['product_code' => 'string'];
     public function productGet($product_code) {
         $pcomp_id=$this->Hub->pcomp('company_id');
@@ -228,8 +391,8 @@ class MobiSell extends PluginManager {
 		    product_quantity leftover,
                     product_img,
                     product_unit,
-                    GET_SELL_PRICE(se.product_code,{$pcomp_id},{$usd_ratio}) product_price_total,
-                    GET_PRICE(se.product_code,{$pcomp_id},{$usd_ratio}) product_price_total_raw,
+                    GET_SELL_PRICE(se.product_code,'{$pcomp_id}','{$usd_ratio}') product_price_total,
+                    GET_PRICE(se.product_code,'{$pcomp_id}','{$usd_ratio}') product_price_total_raw,
 		    pp.curr_code,
 		    se.party_label,
 		    se.product_quantity,
