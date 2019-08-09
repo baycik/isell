@@ -249,10 +249,14 @@ class DocumentCore extends DocumentUtils{
             return false;
         }
         $old_status_id=$this->doc('doc_status_id');
+        /*
+         * First need to update doc status to proper calculate reserved count
+         */
+        $status_change_ok=$this->update('document_list',['doc_status_id'=>$new_status_id],['doc_id'=>$this->doc('doc_id')]);
+
         $Events=$this->Hub->load_model("Events");
         $Events->Topic('documentStatusChanged')->publish($old_status_id,$new_status_id,$this->_doc);
         
-        $status_change_ok=$this->update('document_list',['doc_status_id'=>$new_status_id],['doc_id'=>$this->doc('doc_id')]);
         return $status_change_ok;
     }
 
