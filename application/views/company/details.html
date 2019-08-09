@@ -78,7 +78,6 @@
                 count: 5,
                 /* Вызывается, когда пользователь выбирает одну из подсказок */
                 onSelect: function(s) {
-                    console.log(s);
 		    if( !s.data ){
 			return;
 		    }
@@ -93,7 +92,7 @@
  		    App.page_company_details.DaDataSet('company_code_registration',s.data.ogrn);
  		    App.page_company_details.DaDataSet('company_code',s.data.okpo);
                 }
-            }).css('width','420px');
+            }).css('width','410px');
 	    $("input[name=company_bank_name]").suggestions({
                 token: token,
                 type: "BANK",
@@ -129,10 +128,12 @@
             }).css('width','210px');
 	},
 	DaDataSet:function(name,value){
-            var current_value=App.page_company_details.data[name];
-	    if(current_value!=value && value!=null && value!='' ){
-		$("input[name="+name+"]").val(value);
-		App.page_company_details.updateField(name,value,$("input[name="+name+"]").attr('title'));
+            let $input=$("input[name="+name+"]");
+            let current_value=App.page_company_details.data[name];
+            $input.val(value);
+	    if(current_value!==value && value!==null && value!=='' ){
+                let title=$input.attr('title');
+                App.page_company_details.updateField(name,value,title);
 	    }
 	},
 	checkActive:function(){
