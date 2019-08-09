@@ -220,7 +220,6 @@
                     App.flash("Загрузка товаров:ОК");
                     var response = App.json(resp);
                     var new_loaded_items = response.product_list;
-                    console.log(new_loaded_items);
                     App.stock.attributes.list = response.attribute_list;
                     if( !new_loaded_items.length ){
                         if(App.stock.attributes.selected.length>0 && params.category_id != 0){
@@ -1299,7 +1298,7 @@
         <a href="#stock.html" class="ui secondary close icon button" style="float:right" onclick="$('#stock_product_info_modal').modal('hide');"><i class="icon close"></i></a>
     </div>
     <div class="content">
-        <div class="product-info-image" style="height: 62vw;">
+        <div class="product-info-image" >
             <img style="max-width: 100%" src="../Storage/image_flush/?size=400x400&path=/dynImg/{{product_img}}"/>
         </div>
         <div class="product-info-details">
