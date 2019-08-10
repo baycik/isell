@@ -207,13 +207,10 @@ class MobiSell extends PluginManager {
         $Company->selectPassiveCompany($passive_company_id);
         return $Company->companyPrefsGet();
     }
-    
-    //-----------PRODUCT LIST FETCHING---------------//
-    
-    public $productListFetch = ['q' => 'string', 'offset' => ['int', 0], 'limit' => ['int', 10],  'category_id' => ['int', 0], 'pcomp_id' => ['int', 0], 'order_by' => 'string','attribute_value_ids' => 'json'];
-    public function productListFetch($q, $offset, $limit, $category_id, $pcomp_id, $order_by, $attribute_value_ids) {
-	$price_query="0";
-        $usd_ratio=$this->Hub->pref('usd_ratio');
+    ////////////////////////////////////////////////////
+    //PRODUCT LIST FETCHING
+    ////////////////////////////////////////////////////
+    public function productListFetch(string $q, int $offset=0, int $limit=0, int $category_id=0, int $pcomp_id=0, string $order_by, array $attribute_value_ids) {
 	$where="1";
         if( strlen($q)==13 && is_numeric($q) ){
 	    $where="product_barcode=$q";
@@ -236,13 +233,16 @@ class MobiSell extends PluginManager {
         } 
         $this->productListCreateTemporary($where);
         $attribute_list = $this->attributeListFetch($attribute_value_ids,$where);
+        
+        
         $where="1";
         if( $attribute_value_ids ){
              foreach($attribute_value_ids as $index=>$attribute_value){
                  $where .= " AND attribute_value_hash LIKE '%$attribute_value%' ";
              }
         }
-	 $sql="
+        $usd_ratio=$this->Hub->pref('usd_ratio');
+        $sql="
 	   SELECT 
                 t.product_id,
                 t.product_code,
