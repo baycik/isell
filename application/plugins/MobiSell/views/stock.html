@@ -532,8 +532,18 @@
         #attributesPopup .ui.secondary.close.icon.button{
             display:block !important;
         }
-        .stock-attributes-button.five.wide.field{
+        .stock-attributes-button.eight.wide.field, #stock_secondary_prefs_button{
              display:block !important;
+        }
+        #stock_secondary_prefs_content{
+            display: none ;
+        }
+        #stock_list:not(.grid-view) .product-clear-button-container{
+            padding-left: 0px !important;
+            position: initial !important;
+        }
+        .ui.stackable.grid.secondary-preferences .eight.wide.column{
+            padding: 1em 0px !important;
         }
         
     }  
@@ -615,8 +625,14 @@
         #attributesPopup .ui.secondary.close.icon.button{
             display:block !important;
         }
-        .stock-attributes-button.five.wide.field{
+        .stock-attributes-button.eight.wide.field, #stock_secondary_prefs_button{
             display:block !important;
+        }
+        #stock_secondary_prefs_content{
+            display: none ;
+        }
+        .ui.stackable.grid.secondary-preferences .eight.wide.column{
+            padding: 1em 0px !important;
         }
     } 
     @media only screen and (min-width: 650px) and (max-width: 1000px) {
@@ -657,8 +673,11 @@
         #attributesPopup .ui.secondary.close.icon.button{
             display:block !important;
         }
-        .stock-attributes-button.five.wide.field{
+        .stock-attributes-button.eight.wide.field, #stock_secondary_prefs_button{
             display:block !important;
+        }
+        #stock_secondary_prefs_content{
+            display: none;
         }
     } 
     @media only screen and (min-width: 1000px) and (max-width: 1300px) {
@@ -685,6 +704,9 @@
         #attributesPopup{
             display:block !important;
         }
+        #stock_secondary_prefs_content{
+            display: block !important;
+        }
     } 
     @media only screen and (min-width: 1300px) {
         #stock_list .stock_product_table{
@@ -703,6 +725,9 @@
         #attributesPopup{
             display:block !important;
         }
+        #stock_secondary_prefs_content{
+            display: block !important;
+        }
     } 
     @media only screen and (min-width: 1600px) {
         #stock_list .stock_product_table{
@@ -720,6 +745,9 @@
         }
         #attributesPopup{
             display:block !important;
+        }
+        #stock_secondary_prefs_content{
+            display: block !important;
         }
     } 
     #stock_list .stock_product_promo{
@@ -786,8 +814,8 @@
        text-overflow: ellipsis;
     }
     #stock_category_tree i, #stock_attributes i{
-        background-color: #2185d0;
-        border: 1px solid #2185d0;
+        background-color: darkgray;
+        border: 1px solid darkgray;
         color: white;
     }
     #stock_category_tree label, #stock_attributes label{
@@ -1058,7 +1086,7 @@
 
     <div id="stock_content">
         <div  class="ui blue segment">
-            <form class="ui form" id="stock_head_form">
+            <form class="ui unstackable fluid form" id="stock_head_form">
                 <div class="field">
                     <label>Клиент</label>
                     <div class="ui fluid search selection remote dropdown pcomp_id">
@@ -1075,25 +1103,24 @@
                 </div>
 
                 <div class="fields">
-                    <div class="five wide field">
-                        <label>Категории</label><div></div>
-                        <div id='stock_category_tree' class='ui labeled basic blue  icon button'>
+                    <div class="eight wide field">
+                        <div id='stock_category_tree' class='ui labeled basic   icon button'>
                             <i class='bars icon'></i>
+                            <span><b>Категория: </b></span>
                             <label class='placeholder'>Все</label>
                         </div>
                     </div>
-                    <div class="stock-attributes-button five wide field" style="display:none">
-                        <label>Фильтр</label><div></div>
-                        <div class="ui labeled  button"  >
-                            <div id='stock_attributes' class='ui labeled basic blue  icon button'>
+                    <div class="stock-attributes-button eight wide field" style="display:none">
+                        <div class="ui labeled fluid    button"  >
+                            <div id='stock_attributes' class='ui labeled basic   icon button'>
                                 <i class='filter icon'></i>
-                                <label class='placeholder'>Выбрать</label>  
+                                <label class='placeholder'>Фильтр</label>  
                             </div>
-                            <a class="ui basic red left pointing blue label attributes-selected-length">0</a>
+                            <a class="ui basic  left pointing  label attributes-selected-length">0</a>
                         </div>
                     </div>
-                    <div id="stock_search" class="eleven wide field">
-                            <label>Поиск</label>
+                    <div id="stock_search" class="sixteen wide field">
+                            <label></label>
                             <div class="ui left icon right labeled input fluid" style="margin-bottom: 5px;">
                                 <i class="search icon"></i>
                                 <input id="stock_search_input" placeholder="Введите название или код..." type="text"
@@ -1105,31 +1132,39 @@
             </form>
             <div class="ui clearing divider ">
              </div>
-            <div class="ui stackable grid">
-                <div class="six wide left floated column">
-                            <label><b> </b></label>
-                    <div id="stock_render_mode" class="covert" tabindex="0"  >
-                        <div class="ui labeled large button"  >
-                            {{if show_cart}}
-                            <div class="ui blue button" data-show_cart="0" >
-                              <i class="chevron left icon"></i> К товарам
+            <div class="ui stackable grid secondary-preferences">
+                <div class="eight wide left floated column" >
+                    <div class="ui unstackable grid">
+                        <div class="fourteen wide left floated column" >
+                            <div id="stock_render_mode" class="covert" tabindex="0"  >
+                                <div class="ui labeled large button"  >
+                                    {{if show_cart}}
+                                    <div class="ui blue  button" data-show_cart="0" >
+                                      <i class="chevron left icon"></i> К товарам
+                                    </div>
+                                    {{else}}
+                                    <div class="ui blue  button" data-show_cart="1" >
+                                      <i class="shopping cart icon"></i> Корзина
+                                    </div>
+                                    {{/if}}
+                                    <a class="ui basic blue left pointing label" >
+                                     {{ cart_quantity }} / {{ total }} ₽
+                                    </a>
+                                </div>
                             </div>
-                            {{else}}
-                            <div class="ui blue button" data-show_cart="1" >
-                              <i class="shopping cart icon"></i> Корзина
-                            </div>
-                            {{/if}}
-                            <a class="ui basic blue left pointing label" >
-                             {{ cart_quantity }} / {{ total }} ₽
-                            </a>
+                        </div>
+                        <div class="two wide right floated column" id='stock_secondary_prefs_button' style="display: none">
+                            <div  class='ui  basic  icon button' onclick="$('#stock_secondary_prefs_content').toggle('fast')">
+                                <i class='settings icon'></i>
+                            </div>  
                         </div>
                     </div> 
                 </div> 
-                <div class="ten wide right floated left aligned column">
-                    <div class='ui form'> 
+                
+                <div class="eight wide right floated right aligned column" id="stock_secondary_prefs_content" >
+                    <div class='ui unstackable form'> 
                         <div class='fields'> 
                             <div class='eight wide left aligned field'>
-                                <label>Сортировка:</label>
                                 <div class="ui selection labeled  dropdown order-by-dropdown" style="min-width:auto">
                                     <input type="hidden" name="gender">
                                         <i class="dropdown icon"></i>
@@ -1148,8 +1183,7 @@
                                         </div>
                                 </div>
                             </div>
-                            <div class='five wide left aligned field'>
-                                <label>Показывать:</label>
+                            <div class='four  wide left aligned field'>
                                 <div class="ui selection labeled  dropdown limit-dropdown" style="min-width:auto">
                                     <input type="hidden" name="gender">
                                         <i class="dropdown icon"></i>
@@ -1163,7 +1197,6 @@
                                 </div>
                             </div>
                             <div class='three wide left aligned field'>
-                                <label>Вид:</label>
                                 <div class="ui basic buttons">
                                     <button class="ui  icon button" onclick="App.stock.entries.gridViewToggle(0)"> <i class="list icon"></i></button>
                                     <button class="ui   icon button" onclick="App.stock.entries.gridViewToggle(1)"> <i class="table icon"></i></button>
