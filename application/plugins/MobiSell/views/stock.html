@@ -532,8 +532,12 @@
         #attributesPopup .ui.secondary.close.icon.button{
             display:block !important;
         }
-        .stock-attributes-button.eight.wide.field, #stock_secondary_prefs_button{
+        .stock-attributes-button.eight.wide.field, #stock_secondary_prefs_button{ 
+            margin-left: initial !important;
              display:block !important;
+        }
+        .thirteen.wide.left.floated.column{
+             margin-right: initial !important;
         }
         #stock_secondary_prefs_content{
             display: none ;
@@ -1106,7 +1110,6 @@
                     <div class="eight wide field">
                         <div id='stock_category_tree' class='ui labeled basic   icon button'>
                             <i class='bars icon'></i>
-                            <span><b>Категория: </b></span>
                             <label class='placeholder'>Все</label>
                         </div>
                     </div>
@@ -1135,7 +1138,7 @@
             <div class="ui stackable grid secondary-preferences">
                 <div class="eight wide left floated column" >
                     <div class="ui unstackable grid">
-                        <div class="fourteen wide left floated column" >
+                        <div class="thirteen wide left floated column" >
                             <div id="stock_render_mode" class="covert" tabindex="0"  >
                                 <div class="ui labeled large button"  >
                                     {{if show_cart}}
