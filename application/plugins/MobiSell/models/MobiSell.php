@@ -207,18 +207,14 @@ class MobiSell extends PluginManager {
         $Company->selectPassiveCompany($passive_company_id);
         return $Company->companyPrefsGet();
     }
-    
-    //-----------PRODUCT LIST FETCHING---------------//
-    
-    public $productListFetch = ['q' => 'string', 'offset' => ['int', 0], 'limit' => ['int', 10],  'category_id' => ['int', 0], 'pcomp_id' => ['int', 0], 'order_by' => 'string','attribute_value_ids' => 'json'];
-    public function productListFetch($q, $offset, $limit, $category_id, $pcomp_id, $order_by, $attribute_value_ids) {
-	$price_query="0";
-        $usd_ratio=$this->Hub->pref('usd_ratio');
-	$where="1";
+    ////////////////////////////////////////////////////
+    //PRODUCT LIST FETCHING
+    ////////////////////////////////////////////////////
+    public function productListFetch(string $q, int $offset=0, int $limit=0, int $category_id=0, int $pcomp_id=0, string $order_by, array $selected_attribute_hashes=null) {
+        $cases=[];
         if( strlen($q)==13 && is_numeric($q) ){
-	    $where="product_barcode=$q";
+	    $cases[]="product_barcode=$q";
 	} else if( $q ){
-	    $cases=[];
 	    $clues=  explode(' ', $q);
 	    foreach ($clues as $clue) {
 		if ($clue == ''){
@@ -226,23 +222,34 @@ class MobiSell extends PluginManager {
 		}
 		$cases[]="(product_code LIKE '%$clue%' OR ru LIKE '%$clue%')";
 	    }
-	    if( count($cases)>0 ){
-		$where=implode(' AND ',$cases);
-	    }
 	}
-        if( $category_id ){
+        if( $category_id ){//maybe its good idea to switch to tree path filtering?
             $branch_ids = $this->treeGetSub('stock_tree', $category_id);
-            $where .= " AND parent_id IN (" . implode(',', $branch_ids) . ")";
+            $cases[]= " AND parent_id IN (" . implode(',', $branch_ids) . ")";
         } 
+        $where=$cases?implode(' AND ',$cases):'1';
         $this->productListCreateTemporary($where);
-        $attribute_list = $this->attributeListFetch($attribute_value_ids,$where);
+        
+        
+        
+        $attribute_list = $this->attributeListFetch($selected_attribute_hashes,$where);
+        
+        
         $where="1";
-        if( $attribute_value_ids ){
-             foreach($attribute_value_ids as $index=>$attribute_value){
-                 $where .= " AND attribute_value_hash LIKE '%$attribute_value%' ";
+        if( $selected_attribute_hashes ){
+             foreach($selected_attribute_hashes as $attribute_value_hash){
+                 $where .= " AND attribute_value_hash='$attribute_value_hash' ";
              }
         }
-	 $sql="
+        
+        
+        
+        
+        
+        
+        
+        $usd_ratio=$this->Hub->pref('usd_ratio');
+        $sql="
 	   SELECT 
                 t.product_id,
                 t.product_code,
@@ -283,16 +290,16 @@ class MobiSell extends PluginManager {
         return ['product_list'=> $product_list, 'attribute_list'=> $attribute_list];
     }
     
-    private function productListCreateTemporary($where){
+    private function productListCreateTemporary( $where ){
          $sql="
-            CREATE TEMPORARY TABLE product_list_temp
+            CREATE TEMPORARY TABLE tmp_product_list
             SELECT
                 pl.product_id,
-                se.product_code,
+                pl.product_code,
                 pl.ru,
-                product_spack,
-                product_quantity leftover,
-                product_img,
+                pl.product_spack,
+                se.product_quantity leftover,
+                se.product_img,
                 fetch_count,
                 fetch_stamp,
                 parent_id,
@@ -367,8 +374,8 @@ class MobiSell extends PluginManager {
                 $attribute_value_exploded = explode('::', $attribute_value);
                 $attribute_value = [
                     'attribute_value' => $attribute_value_exploded[0],
-                    'attribute_value_id' => $attribute_value_exploded[1],
-                    'product_total' => $attribute_value_exploded[2]*1,
+                    'attribute_value_id' => isset($attribute_value_exploded[1])?$attribute_value_exploded[1]:'',
+                    'product_total' => isset($attribute_value_exploded[2])?$attribute_value_exploded[2]*1:0,
                     'attribute_id' => $attribute->attribute_id,
                     'attribute_unit' => $attribute->attribute_unit,
                     'attribute_name' => $attribute->attribute_name,
@@ -378,38 +385,39 @@ class MobiSell extends PluginManager {
         }
         return $attribute_list;
     }
-    
-    public $productGet = ['product_code' => 'string'];
-    public function productGet($product_code) {
+    /*
+    //public $productGet = ['product_code' => 'string'];
+    public function productGet(string $product_code) {
         $pcomp_id=$this->Hub->pcomp('company_id');
         $usd_ratio=$this->Hub->pref('usd_ratio');
-          $sql = "SELECT
-		    st.label parent_label,
-		    pl.*,
-		    ROUND(product_volume,5) product_volume,
-		    ROUND(product_weight,5) product_weight,
-		    product_quantity leftover,
-                    product_img,
-                    product_unit,
-                    GET_SELL_PRICE(se.product_code,'{$pcomp_id}','{$usd_ratio}') product_price_total,
-                    GET_PRICE(se.product_code,'{$pcomp_id}','{$usd_ratio}') product_price_total_raw,
-		    pp.curr_code,
-		    se.party_label,
-		    se.product_quantity,
-		    se.product_img
-		FROM
-		    stock_entries se
-			JOIN
-		    prod_list pl ON pl.product_code=se.product_code
-			LEFT JOIN
-		    price_list pp ON pp.product_code=se.product_code AND pp.label=''
-			LEFT JOIN
-		    stock_tree st ON se.parent_id=branch_id
-		WHERE 
-		    se.product_code='{$product_code}'";
+        $sql = "SELECT
+                  st.label parent_label,
+                  pl.*,
+                  ROUND(product_volume,5) product_volume,
+                  ROUND(product_weight,5) product_weight,
+                  product_quantity leftover,
+                  product_img,
+                  product_unit,
+                  GET_SELL_PRICE(se.product_code,'{$pcomp_id}','{$usd_ratio}') product_price_total,
+                  GET_PRICE(se.product_code,'{$pcomp_id}','{$usd_ratio}') product_price_total_raw,
+                  pp.curr_code,
+                  se.party_label,
+                  se.product_quantity,
+                  se.product_img
+              FROM
+                  stock_entries se
+                      JOIN
+                  prod_list pl ON pl.product_code=se.product_code
+                      LEFT JOIN
+                  price_list pp ON pp.product_code=se.product_code AND pp.label=''
+                      LEFT JOIN
+                  stock_tree st ON se.parent_id=branch_id
+              WHERE 
+                  se.product_code='{$product_code}'";
         $product_data = $this->get_row($sql);
         return $product_data;
-    }
+    }*/
+    
     public $userPropsGet=[];
     public function userPropsGet(){
         $props=$this->Hub->load_model('User')->userFetch();
