@@ -210,7 +210,10 @@ class MobiSell extends PluginManager {
     ////////////////////////////////////////////////////
     //PRODUCT LIST FETCHING
     ////////////////////////////////////////////////////
-    public function productListFetch(string $q, int $offset=0, int $limit=0, int $category_id=0, int $pcomp_id=0, string $order_by, array $selected_attribute_hashes=null) {
+    public function productListFetch(string $q, int $offset=0, int $limit=0, string $sortby, string $sortdir, int $category_id=0, int $pcomp_id=0) {
+        $start= microtime(1);
+        
+        
         $cases=[];
         if( strlen($q)==13 && is_numeric($q) ){
 	    $cases[]="product_barcode=$q";
@@ -225,10 +228,58 @@ class MobiSell extends PluginManager {
 	}
         if( $category_id ){//maybe its good idea to switch to tree path filtering?
             $branch_ids = $this->treeGetSub('stock_tree', $category_id);
-            $cases[]= " AND parent_id IN (" . implode(',', $branch_ids) . ")";
+            $cases[]= "parent_id IN (" . implode(',', $branch_ids) . ")";
         } 
-        $where=$cases?implode(' AND ',$cases):'1';
+        $where=$cases?implode(' AND ',$cases):'';
         $this->productListCreateTemporary($where);
+        $this->Hub->msg("Duration: ".round(microtime(1)*1000-$start*1000)."ms");
+        
+        
+        return;
+        
+        $filtered="
+            SELECT
+                pl.product_id,
+                pl.product_code,
+                pl.ru product_name,
+                pl.product_spack,
+                pl.product_unit,
+                se.product_quantity leftover,
+                se.product_img,
+                se.fetch_count,
+                se.fetch_stamp,
+                se.parent_id
+            FROM
+                stock_entries se
+                    JOIN
+                prod_list pl USING(product_code)
+            WHERE $where";
+        
+        
+        
+        
+        
+        
+        $sql="
+            $filtered
+            LIMIT $limit OFFSET $offset
+        ";
+        
+        
+        return $this->get_list($sql);
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
         
         
         
@@ -290,33 +341,26 @@ class MobiSell extends PluginManager {
         return ['product_list'=> $product_list, 'attribute_list'=> $attribute_list];
     }
     
+
+    
     private function productListCreateTemporary( $where ){
-         $sql="
-            CREATE TEMPORARY TABLE tmp_product_list
+        echo $sql="CREATE TEMPORARY TABLE tmp_product_list 
             SELECT
                 pl.product_id,
                 pl.product_code,
-                pl.ru,
+                pl.ru product_name,
                 pl.product_spack,
+                pl.product_unit,
                 se.product_quantity leftover,
                 se.product_img,
-                fetch_count,
-                fetch_stamp,
-                parent_id,
-                product_unit,
-                self_price
-                ,GROUP_CONCAT(DISTINCT av.attribute_value_hash SEPARATOR ',') attribute_value_hash
+                se.fetch_count,
+                se.fetch_stamp,
+                se.parent_id
             FROM
                 stock_entries se
                     JOIN
                 prod_list pl USING(product_code)
-                    LEFT JOIN	
-                attribute_values av ON pl.product_id = av.product_id
-                    LEFT JOIN
-                attribute_list al USING(attribute_id)
-                WHERE $where
-                GROUP BY pl.product_id
-        ";
+            WHERE $where";
         return $this->query($sql);
     }
     

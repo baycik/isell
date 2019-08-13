@@ -68,7 +68,7 @@
             load: function () {
                 var params = {
                     id: 0,
-                    depth: "all"
+                    depth: "3"
                 };
                 $.get("../Stock/branchFetch", params, function (response) {
                     App.stock.categories.list = App.json(response);
@@ -219,8 +219,8 @@
                 $.post("./productListFetch", params, function (resp) {
                     App.flash("Загрузка товаров:ОК");
                     var response = App.json(resp);
-                    var new_loaded_items = response.product_list;
-                    App.stock.attributes.list = response.attribute_list;
+                    var new_loaded_items = response;//.product_list;
+                    //App.stock.attributes.list = response.attribute_list;
                     if( !new_loaded_items.length ){
                         if(App.stock.attributes.selected.length>0 && params.category_id != 0){
                             App.stock.attributes.selected = [];
@@ -452,7 +452,7 @@
             composeAttributes: function(product_object){
                 product_object.attributes = product_object.attributes.split(',');
                 var attributes = [];
-                for(var i = 0; i<product_object.attributes.length; i++){
+                for(var i = 0; i<product_object.attributes.length; i++ ){
                     var attribute_item = product_object.attributes[i].split(': ');
                     var attribute_object = {label: attribute_item[0], value: attribute_item[1]};
                     attributes.push(attribute_object);
@@ -1002,7 +1002,7 @@
             {{attributes_selected}}
             <a class="ui  label">
                 {{attribute_name}}: {{attribute_prefix}} {{attribute_value}}{{attribute_unit}} 
-                <i class="delete icon" onclick="App.stock.attributes.remove('{{attribute_value_id}}');App.stock.entries.load()"></i>
+                <i class="delete icon" onclick="App.stock.attributes.remove('<!--{{attribute_value_id}}-->'); App.stock.entries.load()"></i>
             </a>
             {{/attributes_selected}}
             </div>

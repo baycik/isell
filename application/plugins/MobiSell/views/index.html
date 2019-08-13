@@ -12,14 +12,9 @@
     <link rel="shortcut icon" type="image/png" href="/favicon.png" />
 
     <link rel="stylesheet" href="../js/Semantic-UI/semantic.min.css">
-    <link rel="stylesheet" href="../js/picker/themes/default.css">
-    <link rel="stylesheet" href="../js/picker/themes/default.date.css">
     <script type="text/javascript" src="../js/jquery-2.1.1.min.js"></script>
     <script type="text/javascript" src="../js/Semantic-UI/semantic.min.js"></script>
     <script type="text/javascript" src="../js/markup.min.js"></script>
-    <script type="text/javascript" src="../js/picker/picker.js"></script>
-    <script type="text/javascript" src="../js/picker/picker.date.js"></script>
-    <script type="text/javascript" src="../js/picker/translations/ru_RU.js"></script>
     <script type="text/javascript" src="app.js"></script>
     <script type="text/javascript">
         
@@ -286,6 +281,20 @@
 	    }
 	};
 	$(App.init);
+        
+        
+        
+        $(document).ajaxComplete(function (event, xhr, settings) {
+            var msg = xhr.getResponseHeader('X-isell-msg');
+            if (msg) {
+                var msg = decodeURIComponent(msg.replace(/\+/g, " "));
+                App.flash(msg);
+            }
+        });
+        
+        
+        
+        
 
 	if ( localStorage.getItem("disableSW")!=1 && ('serviceWorker' in navigator) ) {
 	    navigator.serviceWorker.register('../MobiSell/sw.js', {scope: '../MobiSell/'})
