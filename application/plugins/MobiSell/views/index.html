@@ -282,8 +282,6 @@
 	};
 	$(App.init);
         
-        
-        
         $(document).ajaxComplete(function (event, xhr, settings) {
             var msg = xhr.getResponseHeader('X-isell-msg');
             if (msg) {
@@ -292,10 +290,16 @@
             }
         });
         
+        Mark.pipes.format = function (num) {
+            return Number.parseFloat(num).toLocaleString(
+                    'en-US',
+                    { style: 'decimal',
+                        minimumFractionDigits:2,
+                        maximumFractionDigits:2
+                    })
+            .replace(/,/g,' ');
+        };
         
-        
-        
-
 	if ( localStorage.getItem("disableSW")!=1 && ('serviceWorker' in navigator) ) {
 	    navigator.serviceWorker.register('../MobiSell/sw.js', {scope: '../MobiSell/'})
 	    .then(function(reg) {

@@ -8,7 +8,7 @@
  * Author: baycik 2019
  * Author URI: http://isellsoft.com
  */
-class AttributeManager extends Catalog{
+class AttributeManager extends Stock{
     
     public $min_level=3;
     public function install(){
@@ -282,5 +282,11 @@ class AttributeManager extends Catalog{
                 'Comment'=>'Единица'
             ]
         ];
+    }
+    ////////////////////////////////////////////////////
+    //MATCHES LIST FETCHING
+    ////////////////////////////////////////////////////
+    public function matchesListFetch(string $q, int $limit=12, int $offset=0, string $sortby, string $sortdir, int $category_id=0, int $pcomp_id=0) {
+
     }
 }

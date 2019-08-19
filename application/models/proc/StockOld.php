@@ -138,10 +138,11 @@ class StockOld extends Data {
     }
 
     public function increaseFetchCount($product_code) {
+        $popularity_fading_rate=1;
         $sql = "UPDATE 
 	    " . BAY_DB_MAIN . ".stock_entries
 	SET 
-	    fetch_count=fetch_count+1,
+	    fetch_count=fetch_count+1-DATEDIFF(NOW(),fetch_stamp)*$popularity_fading_rate,
 	    fetch_stamp=NOW()
 	WHERE 
 	    product_code='$product_code'";

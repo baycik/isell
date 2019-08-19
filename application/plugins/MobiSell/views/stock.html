@@ -189,7 +189,7 @@
             offset: 0,
             loading_finished: 0,
             show_cart:0,
-            order_by: 'fetch_count-DATEDIFF(NOW(),fetch_stamp) DESC',
+            order_by: 'popularity,DESC',
             limit:12,
             category_id:0,
             init: function(){
@@ -210,19 +210,20 @@
                     category_id: App.stock.entries.category_id,
                     offset: App.stock.entries.offset,
                     limit: App.stock.entries.limit+1,
-                    order_by: App.stock.entries.order_by,
+                    sortby: App.stock.entries.order_by.split(',')[0],
+                    sortdir: App.stock.entries.order_by.split(',')[1],
                     pcomp_id: App.user.pcomp.company_id, 
                     attribute_value_ids: JSON.stringify(App.stock.attributes.selected) 
                 };
                 $('#stock_categories_header').html("");
                 App.flash("Загрузка товаров...");
-                $.post("./productListFetch", params, function (resp) {
+                $.post("../Stock/matchesListFetch", params, function (resp) {
                     App.flash("Загрузка товаров:ОК");
                     var response = App.json(resp);
                     var new_loaded_items = response;//.product_list;
                     //App.stock.attributes.list = response.attribute_list;
                     if( !new_loaded_items.length ){
-                        if(App.stock.attributes.selected.length>0 && params.category_id != 0){
+                        if(App.stock.attributes.selected.length>0 && params.category_id !== 0){
                             App.stock.attributes.selected = [];
                             App.stock.entries.load();
                             return;
@@ -1131,35 +1132,31 @@
                             <div class='eight wide left aligned field'>
                                 <label>Сортировка:</label>
                                 <div class="ui selection labeled  dropdown order-by-dropdown" style="min-width:auto">
-                                    <input type="hidden" name="gender">
-                                        <i class="dropdown icon"></i>
-                                        <div class="default text" style='white-space: nowrap;text-overflow: ellipsis;max-width: 100%;overflow: hidden;'>
-                                            Сначала популярные
-                                        </div>
-                                        <div class="menu">
-                                            <div class="item" data-value="fetch_count-DATEDIFF(NOW(),fetch_stamp) DESC">Сначала популярные</div>
-                                            <div class="item" data-value="fetch_count-DATEDIFF(NOW(),fetch_stamp) ASC">Сначала непопулярные</div>
-                                            <div class="item" data-value="product_name ASC">Название (По возрастанию)</div>
-                                            <div class="item" data-value="product_name DESC">Название (По убыванию)</div>
-                                            <div class="item" data-value="self_price DESC">Сначала дешевые</div>
-                                            <div class="item" data-value="self_price ASC">Сначала дорогие</div>
-                                            <div class="item" data-value="leftover ASC">Количество (По возрастанию)</div>
-                                            <div class="item" data-value="leftover DESC">Количество (По убыванию)</div>
-                                        </div>
+                                    <i class="dropdown icon"></i>
+                                    <div class="default text" style='white-space: nowrap;text-overflow: ellipsis;max-width: 100%;overflow: hidden;'>
+                                        Сначала популярные
+                                    </div>
+                                    <div class="menu">
+                                        <div class="item" data-value="popularity,DESC">Сначала популярные</div>
+                                        <div class="item" data-value="popularity,ASC">Сначала непопулярные</div>
+                                        <div class="item" data-value="price,DESC">Сначала дешевые</div>
+                                        <div class="item" data-value="price,ASC">Сначала дорогие</div>
+                                        <div class="item" data-value="newness,ASC">Сначала новинки</div>
+                                        <div class="item" data-value="newness,DESC">Сначала постоянные</div>
+                                    </div>
                                 </div>
                             </div>
                             <div class='five wide left aligned field'>
                                 <label>Показывать:</label>
                                 <div class="ui selection labeled  dropdown limit-dropdown" style="min-width:auto">
-                                    <input type="hidden" name="gender">
-                                        <i class="dropdown icon"></i>
-                                        <div class="default text">12</div>
-                                        <div class="menu">
-                                            <div class="item" data-value="12">12</div>
-                                            <div class="item" data-value="24">24</div>
-                                            <div class="item" data-value="48">48</div>
-                                            <div class="item" data-value="100">100</div>
-                                        </div>
+                                    <i class="dropdown icon"></i>
+                                    <div class="default text">12</div>
+                                    <div class="menu">
+                                        <div class="item" data-value="12">12</div>
+                                        <div class="item" data-value="24">24</div>
+                                        <div class="item" data-value="48">48</div>
+                                        <div class="item" data-value="100">100</div>
+                                    </div>
                                 </div>
                             </div>
                             <div class='three wide left aligned field'>
@@ -1196,16 +1193,14 @@
                             <div class="ui grid" style="color:#666; padding-right:1.4em">
                                     <div class="eight wide column">{{product_code}}</div>
                                     <div class="four wide column product-price" style="text-align: right">
-                                        {{if is_promo}}
-                                            <s>{{product_price_total_raw}}</s>
-                                            <b>{{product_price_total}}</b>
+                                        {{if price_promo}}
+                                            <s>{{price_basic|format}}</s>
+                                            <b>{{price_final|format}}</b>
                                         {{else}} 
-                                            <b>{{product_price_total}}</b>
+                                            <b>{{price_final|format}}</b>
                                         {{/if}}
                                     </div>
                                     <div class="four wide column" style="text-align: right">{{if stared_leftover}} {{stared_leftover}} {{else}} {{leftover}}{{product_unit}} {{/if}}</div>
-
-
                             </div>
                         </div>
                         <div class="product-action-column">

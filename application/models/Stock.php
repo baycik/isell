@@ -441,7 +441,6 @@ class Stock extends Catalog {
     ////////////////////////////////////////////
     // RESERVING SYSTEM
     ////////////////////////////////////////////
-    
     public function reserveSystemStatusChange( bool $active ){
         $Events=$this->Hub->load_model("Events");
         if( $active ){
@@ -603,6 +602,124 @@ class Stock extends Catalog {
         OR product_awaiting IS NOT NULL
 	OR reserved IS NOT NULL 
         OR awaiting IS NOT NULL";
+        return $this->query($sql);
+    }
+    ////////////////////////////////////////////////////
+    //MATCHES LIST FETCHING
+    ////////////////////////////////////////////////////
+    public function matchesListFetch(string $q, int $limit=12, int $offset=0, string $sortby, string $sortdir, int $category_id=0, int $pcomp_id=0) {
+        $where=     $this->matchesListGetWhere( $q, $category_id );
+        $order_by=  $this->matchesListGetOrderBy($sortby,$sortdir);
+        $this->matchesListCreateTemporary($where);
+        $sql="
+            SELECT
+                *,
+                COALESCE(price_promo,price_label,price_basic) price_final
+            FROM
+                tmp_matches_list
+            ORDER BY $order_by
+            LIMIT $limit OFFSET $offset";
+        $matches=$this->get_list($sql);
+        return $matches;
+    }
+    
+    protected function matchesListGetWhere( $q, $category_id ){
+        /*
+         * PREPEARING WHERE BY QUERY STRING AND CATEGORY
+         */
+        $lang='ru';
+        $cases=[];
+        if( strlen($q)==13 && is_numeric($q) ){
+	    $cases[]="pl.product_barcode=$q";
+	} else if( $q ){
+	    $clues=  explode(' ', $q);
+	    foreach ($clues as $clue) {
+		if ($clue == ''){
+		    continue;
+		}
+		$cases[]="(pl.product_code LIKE '%$clue%' OR pl.$lang LIKE '%$clue%')";
+	    }
+	}
+        if( $category_id ){//maybe its good idea to switch to tree path filtering?
+            $branch_ids = $this->treeGetSub('stock_tree', $category_id);
+            $cases[]= "se.parent_id IN (" . implode(',', $branch_ids) . ")";
+        }
+        //plugins where_cases goes here
+        return $cases?implode(' AND ',$cases):'1';
+    }
+    
+    protected function matchesListGetOrderBy($sortby,$sortdir){
+        /*
+         * PREPEARING ORDER BY
+         */
+        switch($sortby){
+            //plugins order_by_cases goes here
+            case 'price':
+                $order_by=" COALESCE(price_promo,price_label,price_basic)";
+                break;
+            case 'newness':
+                $order_by='product_id';
+                break;
+            case 'name':
+                $order_by='product_name';
+                break;
+            case 'popularity':
+            default :
+                $order_by='popularity';
+        }
+        if( $sortdir=='ASC' ){
+            $order_by.=" ASC";
+        } else {
+            $order_by.=" DESC";
+        }
+        return $order_by;
+    }
+    
+    protected function matchesListCreateTemporary( $where ){
+        $result_window_size=1000;
+        $usd_ratio=$this->Hub->pref('usd_ratio');
+        $pcomp_id=$this->Hub->pcomp('company_id');
+        $price_label=$this->Hub->pcomp('price_label');
+        $sql="CREATE TEMPORARY TABLE tmp_matches_list (PRIMARY KEY(product_id))
+            SELECT 
+                pl.product_id,
+                pl.product_code,
+                pl.ru product_name,
+                pl.product_spack,
+                pl.product_unit,
+                se.product_quantity leftover,
+                se.product_img,
+                se.fetch_count,
+                se.fetch_stamp,
+                fetch_count popularity,
+                se.parent_id,
+                prl_basic.sell*IF(prl_basic.curr_code='USD',$usd_ratio,1)*IF(discount,discount,1) price_basic,
+                prl_label.sell*IF(prl_label.curr_code='USD',$usd_ratio,1)*IF(discount,discount,1) price_label,
+                prl_promo.sell*IF(prl_promo.curr_code='USD',$usd_ratio,1)*IF(discount,discount,1) price_promo
+            FROM 
+                stock_entries se
+                    JOIN
+                prod_list pl USING(product_code)
+                    JOIN
+                stock_tree st ON st.branch_id=se.parent_id
+                    LEFT JOIN
+                companies_discounts cd ON st.top_id=cd.branch_id AND company_id=$pcomp_id
+                    LEFT JOIN
+                price_list prl_promo ON prl_promo.label='PROMO' AND se.product_code=prl_promo.product_code
+                    LEFT JOIN
+                price_list prl_label ON prl_label.label='$price_label' AND se.product_code=prl_label.product_code
+                    LEFT JOIN
+                price_list prl_basic ON prl_basic.label='' AND se.product_code=prl_basic.product_code
+            WHERE (SELECT MIN(fetch_count)
+                    FROM (SELECT
+                            fetch_count
+                        FROM
+                            stock_entries
+                        ORDER BY
+                            fetch_count DESC
+                        LIMIT $result_window_size) t) AND $where
+            ORDER BY fetch_count DESC
+            LIMIT $result_window_size;";
         return $this->query($sql);
     }
 }
