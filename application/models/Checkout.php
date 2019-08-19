@@ -110,10 +110,18 @@ class Checkout extends Stock {
 	$having = $this->makeStockFilter($filter);
         $sql = "
             SELECT 
-                checkout_entries.*,
-                ru,product_spack, product_bpack, product_code, product_unit, product_barcode,product_img
+                ce.*,
+                ce.product_quantity_verified-ce.product_quantity quantity_difference,
+                IF(ce.verification_status=1,'✔',IF(ce.verification_status=2,'±','')) verification_status_symbol,
+                ru,
+                product_spack, 
+                product_bpack, 
+                product_code, 
+                product_unit, 
+                product_barcode,
+                product_img
             FROM 
-                checkout_entries
+                checkout_entries ce
                     JOIN
                 prod_list USING(product_id)
                     JOIN
@@ -379,4 +387,28 @@ class Checkout extends Stock {
 //        return $final_array;
 //    }
 
+    public function checkoutViewGet($checkout_id){
+	$out_type=$this->request('out_type');
+	
+	$table=$this->checkoutDocumentGet ($checkout_id);
+	
+	$dump=[
+	    'tpl_files'=>'/CheckoutResult.xlsx',
+	    'title'=>"Проверка",
+	    'user_data'=>[
+		'email'=>$this->Hub->svar('pcomp')?$this->Hub->svar('pcomp')->company_email:'',
+		'text'=>'Доброго дня'
+	    ],
+	    'view'=>[
+                'head'=>$table['head'],
+		'rows'=>$table['entries']
+	    ]
+	];
+        
+        
+        //print_r($dump);
+	$ViewManager=$this->Hub->load_model('ViewManager');
+	$ViewManager->store($dump);
+	$ViewManager->outRedirect($out_type);
+    }
 }
