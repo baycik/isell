@@ -128,6 +128,81 @@
             };
             $('#checkout_progress_bar').progress("set percent", verified/total*100 );
         },
+        clear_searchbar: function () {
+            $("#checkout_document_log_search_input").val('');
+            App.checkout_document.log.render();
+        },
+        finish:{
+            init:function(){
+                App.checkout_document.finish.warning_entries = [];
+                App.checkout_document.blur();
+                for( let item of App.checkout_document.entries.list){
+                    var difference = item.product_quantity_verified - item.product_quantity;
+                    if(difference!==0){
+                        item.difference=difference;
+                        item.color="red";
+                        if( difference>0 ){
+                            item.difference="+"+difference;
+                            item.color="green";
+                        }
+                        App.checkout_document.finish.modal.warning_entries.push(item);
+                    }
+                }
+                if( App.checkout_document.finish.modal.warning_entries.length>0){
+                     App.checkout_document.finish.modal.open();
+                } else {
+                    App.checkout_document.finish.commit();
+                }
+            },
+            commit:function(){
+                App.checkout_document.finish.modal.close();
+                if(App.checkout_document.checkout_doc_head.parent_doc_id>0){
+                    $.post('../Checkout/checkoutDocumentOutput', {checkout_id: App.state.checkout_id}, function (resp) {
+                        var result=App.json(resp);
+                        if( result ){
+                            App.checkout_document.finish.show_result(result);
+                            App.holder.load("checkout_document_list.html");
+                        }
+                    });
+                } else {
+                    App.user.pcompSelect({company_id:App.user.acomp.company_id}).done(function(){
+                        $.post('../Checkout/checkoutDocumentOutput', {checkout_id: App.state.checkout_id}, function (resp) {
+                            App.alert("Созданы корректировочные накладные в <b>"+App.user.pcomp.label);
+                            App.holder.load("checkout_document_list.html");
+                        });
+                    });
+                }
+            },
+            show_result:function(result){
+                var msg='';
+                if( result.less>0 ){
+                    msg+=`Недостача: ${result.less} позиций<br>`;
+                }
+                if( result.more>0 ){
+                    msg+=`Избыток: ${result.more} позиций<br>`;
+                }
+                if( result.added>0 ){
+                    msg+=`Добавлено строк: ${result.added}<br>`;
+                }
+                if( result.deleted>0 ){
+                    msg+=`Удалено строк: ${result.deleted}<br>`;
+                }
+                if( result.updated>0 ){
+                    msg+=`Изменено строк: ${result.updated}<br>`;
+                }
+                App.alert("Результат проверки:<br>"+msg);
+            },
+            modal:{
+                warning_entries:[],
+                open: function(){
+                    App.renderTpl('checkout_confirm_warning', {products: App.checkout_document.finish.warning_entries});
+                    $('#checkout_confirm_warning').modal('show').modal('can fit');
+                },
+                close:function(){
+                    $('#checkout_confirm_warning').modal('hide');
+                }
+            }
+        },
         entries: { 
             list: [],
             temp_barcode: '',
@@ -556,77 +631,7 @@
 		App.renderTpl('document_product_image', suggest_entry);
 		$("#document_product_image").modal('show');
 	    }
-	},
-        clear_searchbar: function () {
-            $("#checkout_document_log_search_input").val('');
-            App.checkout_document.log.render();
-        },
-        commit_checkout: function () {
-            App.checkout_document.confirm_modal.warning_entries = [];
-            App.checkout_document.blur();
-            for( let item of App.checkout_document.entries.list){
-                var difference = item.product_quantity_verified - item.product_quantity;
-                if(difference!=0){
-                    item.difference=difference;
-                    item.color="red";
-                    if( difference>0 ){
-                        item.difference="+"+difference;
-                        item.color="green";
-                    }
-                    App.checkout_document.confirm_modal.warning_entries.push(item);
-                }
-            }
-            if( App.checkout_document.confirm_modal.warning_entries.length>0){
-                 App.checkout_document.confirm_modal.render();
-            } else {
-                App.checkout_document.confirm_modal.commit();
-            }
-        },
-        confirm_modal:{
-            warning_entries:[],
-            render: function(){
-                App.renderTpl('checkout_confirm_warning', {products: App.checkout_document.confirm_modal.warning_entries});
-                $('#checkout_confirm_warning').modal('show').modal('can fit');
-            },
-            commit:function(){
-                $('#checkout_confirm_warning').modal('hide');
-                if(App.checkout_document.checkout_doc_head.parent_doc_id>0){
-                    $.post('../Checkout/checkoutDocumentOutput', {checkout_id: App.state.checkout_id}, function (resp) {
-			var result=App.json(resp);
-			if( result ){
-			    App.checkout_document.confirm_modal.show_result(result);
-			    App.holder.load("checkout_document_list.html");
-			}
-                    });
-                } else {
-                    App.user.pcompSelect({company_id:App.user.acomp.company_id}).done(function(){
-                        $.post('../Checkout/checkoutDocumentOutput', {checkout_id: App.state.checkout_id}, function (resp) {
-                            App.alert("Созданы корректировочные накладные в <b>"+App.user.pcomp.label);
-                            App.holder.load("checkout_document_list.html");
-                        });
-                    });
-                }
-            },
-	    show_result:function(result){
-		var msg='';
-		if( result.less>0 ){
-		    msg+=`Недостача: ${result.less} позиций<br>`;
-		}
-		if( result.more>0 ){
-		    msg+=`Избыток: ${result.more} позиций<br>`;
-		}
-		if( result.added>0 ){
-		    msg+=`Добавлено строк: ${result.added}<br>`;
-		}
-		if( result.deleted>0 ){
-		    msg+=`Удалено строк: ${result.deleted}<br>`;
-		}
-		if( result.updated>0 ){
-		    msg+=`Изменено строк: ${result.updated}<br>`;
-		}
-		App.alert("Результат проверки:<br>"+msg);
-	    }
-        }
+	}
     };
 </script>    
 
@@ -744,7 +749,7 @@
 	{{/if}}
     </div>
     {{if checkout_status|equals>is_checking}}
-    <button class="ui fluid  primary button compact" onclick="App.checkout_document.commit_checkout(); return false"><i class="check icon"></i> Завершить проверку</button>
+    <button class="ui fluid  primary button compact" onclick="App.checkout_document.finish.init();" type="button"><i class="check icon"></i> Завершить проверку</button>
     {{/if}}
     <button class="ui icon button fluid" style="margin-top: 10px;" onclick="App.checkout_document.photos.checkout_upload()">
         <i class="ui photo icon"></i> 
@@ -1092,7 +1097,7 @@
                     <div class="ui center aligned grid">
                         <div class="ui equal width row">
                             <div class="column">
-                                <button type="submit" class="ui green submit icon button" onclick="App.checkout_document.confirm_modal.commit(); return false">
+                                <button type="submit" class="ui green submit icon button" onclick="App.checkout_document.finish.commit(); return false">
                                     Ок
                                 </button>
                             </div>

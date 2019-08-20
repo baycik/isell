@@ -38,11 +38,25 @@ class Checkout extends Stock {
     
     public $checkoutDocumentGet = ['checkout_id' => 'int'];
     public function checkoutDocumentGet ($checkout_id){
-        $assigned_path = $this->Hub->svar('user_assigned_path');
-        $level = $this->Hub->svar('user_level');
         if( !$checkout_id ){
             return null;
         }
+        $ch_document=[];
+        $ch_document['head']=$this->checkoutDocumentHeadGet( $checkout_id );
+        if( !$ch_document['head'] ){
+            return null;
+        }
+        if( $ch_document['head']->parent_doc_id ){
+            $this->checkoutDocumentRefresh($checkout_id, $ch_document['head']->parent_doc_id);
+        }
+        $ch_document['entries']=$this->checkoutEntriesFetch($checkout_id);
+        $ch_document['log']=$this->checkoutLogFetch($checkout_id);
+        return $ch_document;
+    }
+    
+    public function checkoutDocumentHeadGet( int $checkout_id ){
+        $assigned_path = $this->Hub->svar('user_assigned_path');
+        $level = $this->Hub->svar('user_level');
         $sql = "        
             SELECT
                 checkout_list.*,
@@ -59,18 +73,8 @@ class Checkout extends Stock {
 		companies_tree USING(branch_id)
             WHERE 
                 checkout_id='$checkout_id'
-                AND IF(checkout_list.parent_doc_id,level<='$level' AND path LIKE '$assigned_path%','$level'>1)
-                ";
-        
-        $head= $this->get_row($sql);
-        if( $head -> parent_doc_id ){
-            $this->checkoutDocumentRefresh($checkout_id, $head->parent_doc_id);
-        }    
-        return
-            ['head'=>$head,
-            'entries' => $this->checkoutEntriesFetch($checkout_id),
-            'log'=>$this->checkoutLogFetch($checkout_id)    
-            ];
+                AND IF(checkout_list.parent_doc_id,level<='$level' AND path LIKE '$assigned_path%','$level'>1)";
+        return $this->get_row($sql);
     }
     
     private function checkoutDocumentRefresh ($checkout_id,$parent_doc_id){
@@ -100,8 +104,8 @@ class Checkout extends Stock {
         $this->query($sql_update);
     }
 
-    public $checkoutEntriesFetch = ['checkout_id' => 'int', 'sortby' => 'string', 'sortdir' => '(ASC|DESC)', 'filter' => 'json'];
-    public function checkoutEntriesFetch ($checkout_id, $sortby=null, $sortdir=null, $filter = null  ){
+    
+    public function checkoutEntriesFetch ( int $checkout_id, int $offset=0, int $limit=0, string $sortby=null, string $sortdir=null, array $filter = null  ){
         $this->Hub->set_level(2);
         if (empty($sortby)) {
 	    $sortby = "cstamp";
@@ -129,7 +133,8 @@ class Checkout extends Stock {
             WHERE
                 checkout_id = '$checkout_id'
             HAVING {$having['inner']}
-            ORDER BY '$sortby' '$sortdir'";
+            ORDER BY '$sortby' '$sortdir'
+            LIMIT $limit OFFSET $offset";
         return $this->get_list($sql);
     }
     
@@ -197,19 +202,23 @@ class Checkout extends Stock {
         return true;
     }
     
-    public $checkoutLogFetch = ['checkout_id' => 'int'];
-    public function checkoutLogFetch ($checkout_id) {
+    public function checkoutLogFetch ( int $checkout_id, int $offset=0, int $limit=0 ) {
         $this->Hub->set_level(1);
         $sql = " 
             SELECT
-                checkout_log.*,
-                ru, product_code, product_unit
+                clg.*,
+                DATE_FORMAT(clg.cstamp, '%d.%m.%Y %H:%i') cstamp_dmy,
+                ru,
+                product_code,
+                product_unit
             FROM
-                checkout_log
+                checkout_log clg
                     JOIN
                 prod_list USING(product_id)
-             WHERE
-                checkout_id = '$checkout_id'";
+            WHERE
+                checkout_id = '$checkout_id'
+            ORDER BY cstamp ASC
+            LIMIT $limit OFFSET $offset";
         return $this->get_list($sql);        
     }
     
@@ -389,24 +398,21 @@ class Checkout extends Stock {
 
     public function checkoutViewGet($checkout_id){
 	$out_type=$this->request('out_type');
-	
-	$table=$this->checkoutDocumentGet ($checkout_id);
-	
+	$ch_document=$this->checkoutDocumentGet ($checkout_id);
 	$dump=[
 	    'tpl_files'=>'/CheckoutResult.xlsx',
-	    'title'=>"Проверка",
+	    'title'=>"Проверка-".$ch_document['head']->checkout_name,
 	    'user_data'=>[
 		'email'=>$this->Hub->svar('pcomp')?$this->Hub->svar('pcomp')->company_email:'',
 		'text'=>'Доброго дня'
 	    ],
 	    'view'=>[
-                'head'=>$table['head'],
-		'rows'=>$table['entries']
+                'head'=>$ch_document['head'],
+                'rows'=>$ch_document['entries'],
+                'log'=>$ch_document['log']
 	    ]
 	];
-        
-        
-        //print_r($dump);
+        //print_r($dump);die;
 	$ViewManager=$this->Hub->load_model('ViewManager');
 	$ViewManager->store($dump);
 	$ViewManager->outRedirect($out_type);
