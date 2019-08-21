@@ -136,6 +136,9 @@
                     }
                 };
                 App.page_stock_checkout_list.entries.grid = new SlickInfinite("#checkout_entries_sg", settings);
+                App.page_stock_checkout_list.entries.grid.onRenderFinished.subscribe(function(){
+                    App.page_stock_checkout_list.entries.calc_progress();
+                });
             },
             load:function(checkout_id){
                 if( !App.page_stock_checkout_list.entries.grid ){
@@ -150,26 +153,29 @@
                     var head = App.json(resp);
                     if(head){
                         App.page_stock_checkout_list.selected_document_head=head;
+                        App.renderTpl('checkout_document_head',head);
                         App.page_stock_checkout_list.photos.parse();
                     }
-                    
                 });
             },
             calc_progress:function(response){
-                if (response['head'].checkout_status === 'not_checked' ){
+                var entries_list=App.page_stock_checkout_list.entries.grid.getData();
+                var doc_head=App.page_stock_checkout_list.selected_document_head;
+                if ( doc_head && doc_head.checkout_status === 'not_checked' ){
                     $('#checkout_progress_bar').progressbar({
                         value: 0
                     });
                     return;
-                }; 
+                };
                 var verified = 0;
                 var total = 0;
-                response['entries'].forEach(function(item){
-                      verified += Math.min(item.product_quantity_verified, item.product_quantity);
-                      total += item.product_quantity*1;
-                });
-                if (verified > 0){
-                };
+                for(let i in entries_list){
+                    let item=entries_list[i];
+                    if(  item.product_quantity!==undefined ){
+                        verified += Math.min(item.product_quantity_verified, item.product_quantity);
+                        total += item.product_quantity*1;
+                    }
+                }
                 $('#checkout_progress_bar').progressbar({
 		    value: Math.round(verified/total*100)
                 });
@@ -341,8 +347,22 @@
             
             <td class="transp60">
                 <div style="padding:10px;">
-                    <button onclick="App.page_stock_checkout_list.finish.init();"><img src="img/ok.png"> Завершить проверку</button>
-                    <div id="checkout_progress_bar" class="easyui-progressbar" data-options="value:0" style="width:400px;float: right"></div>
+                    <div>
+                        
+                    </div>
+                    <div id="checkout_document_head" style="float:left;">
+                         {{if checkout_status|equals>is_checking}}
+                            <img src="img/bolt.png"> В процессе<br>
+                            <button onclick="App.page_stock_checkout_list.finish.init();"><img src="img/ok.png"> Завершить проверку</button>
+                        {{else}}
+                            {{if checkout_status|equals>checked_with_divergence}}
+                                Проверка завершена с исправлениями
+                            {{else}}
+                                Проверка завершена
+                            {{/if}}
+                        {{/if}}
+                    </div>
+                    <div id="checkout_progress_bar" class="easyui-progressbar" data-options="value:0" style="width:400px;"></div>
                 </div>
                 
                 <div class="easyui-tabs " style="width:605px ">
