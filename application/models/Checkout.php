@@ -261,8 +261,11 @@ class Checkout extends Stock {
         $this->Hub->set_level(2);
         $parent_doc_id = $this->get_value("SELECT parent_doc_id FROM checkout_list WHERE checkout_id=$checkout_id");
         if ($parent_doc_id){
-            $this->checkoutUpdateDocStatus($checkout_id, 'checked');
-            return $this->checkoutSourceDocUpdate($checkout_id);
+            $result=$this->checkoutSourceDocUpdate($checkout_id);
+            if( $result ){
+                $this->checkoutUpdateDocStatus($checkout_id, 'checked');
+            }
+            return $result;
         }else{
             return $this->checkoutCalcDifference($checkout_id);
         }
@@ -285,10 +288,16 @@ class Checkout extends Stock {
                 $doc_product_id = $this->get_value("SELECT product_id FROM prod_list WHERE product_code = '$entry_doc->product_code'");
                 if( $entry_check->product_id == $doc_product_id ){
                     if ( $entry_check->product_quantity_verified == 0 ){
-                        $DocumentItems->entryDeleteArray($source_doc_id, [[$entry_doc->doc_entry_id]]);
-			$result['deleted']++;
+                        $delete_ok=$DocumentItems->entryDeleteArray($source_doc_id, [[$entry_doc->doc_entry_id]]);
+                        if( !$delete_ok ){
+                            return false;
+                        }
+                        $result['deleted']++;
                     } else {
-                        $DocumentItems->entryUpdate($source_doc_id, $entry_doc->doc_entry_id, 'product_quantity', $entry_check->product_quantity_verified );
+                        $update_ok=$DocumentItems->entryUpdate($source_doc_id, $entry_doc->doc_entry_id, 'product_quantity', $entry_check->product_quantity_verified );
+                        if( !$update_ok ){
+                            return false;
+                        }
 			$result['updated']++;
                     }
                     $entry_exists_in_document=true;
@@ -296,7 +305,10 @@ class Checkout extends Stock {
             }
             if( !$entry_exists_in_document ){
                 $check_product_code = $this->get_value("SELECT product_code FROM prod_list WHERE product_id = '$entry_check->product_id'");
-                $DocumentItems->entryAdd(null,$check_product_code, $entry_check->product_quantity_verified );
+                $add_ok=$DocumentItems->entryAdd(null,$check_product_code, $entry_check->product_quantity_verified );
+                if( !$add_ok ){
+                    return false;
+                }
 		$result['added']++;
             }
         }

@@ -12,6 +12,11 @@
                 }
             });
         },
+        overall_reload:function(){
+            App.page_stock_checkout_list.table.grid.reload();
+            App.page_stock_checkout_list.entries.tools.reload(); 
+            App.page_stock_checkout_list.log.tools.reload(); 
+        },
         table:{
             current_id: '',
             list:[],
@@ -161,12 +166,6 @@
             calc_progress:function(response){
                 var entries_list=App.page_stock_checkout_list.entries.grid.getData();
                 var doc_head=App.page_stock_checkout_list.selected_document_head;
-                if ( doc_head && doc_head.checkout_status === 'not_checked' ){
-                    $('#checkout_progress_bar').progressbar({
-                        value: 0
-                    });
-                    return;
-                };
                 var verified = 0;
                 var total = 0;
                 for(let i in entries_list){
@@ -176,8 +175,26 @@
                         total += item.product_quantity*1;
                     }
                 }
+                var percent=Math.round(verified/total*100)||0;
+                var text="";
+                switch(doc_head.checkout_status){
+                    case 'checked':
+                        text=`Проверено ${percent}%`;
+                        break;
+                    case 'is_checking':
+                        text=`В процессе ${percent}%`;
+                        break;
+                    case 'checked_with_divergence':
+                        text=`Проверено с исправлениями ${percent}%`;
+                        break;
+                    case 'not_checked':
+                    default:
+                        text=`Непроверено ${percent}%`;
+                        break;
+                }
                 $('#checkout_progress_bar').progressbar({
-		    value: Math.round(verified/total*100)
+                    value:percent,
+		    text: text
                 });
             }
         },
@@ -287,12 +304,20 @@
                         var result=App.json(resp);
                         if( result ){
                             App.page_stock_checkout_list.finish.show_result(result);
+                            App.page_stock_checkout_list.overall_reload();
+                        } else {
+                            App.page_stock_checkout_list.finish.alert("Не удалось измененить накладную!");
                         }
                     });
                 } else {
                     App.user.pcompSelect({company_id:App.acomp.company_id}).done(function(){
                         $.post('Checkout/checkoutDocumentOutput', {checkout_id: App.state.checkout_id}, function (resp) {
-                            App.page_stock_checkout_list.finish.alert("Созданы корректировочные накладные в \n"+App.pcomp.label);
+                            if(resp){
+                                App.page_stock_checkout_list.finish.alert("Созданы корректировочные накладные в \n"+App.pcomp.label);
+                                App.page_stock_checkout_list.overall_reload();
+                            } else {
+                                App.page_stock_checkout_list.finish.alert("Не удалось создать корректировки накладную!");
+                            }
                         });
                     });
                 }
@@ -314,7 +339,7 @@
                 if( result.updated>0 ){
                     msg+=`Изменено строк: ${result.updated}\n`;
                 }
-                App.page_stock_checkout_list.finish.alert("Результат проверки: \n"+msg);
+                App.page_stock_checkout_list.finish.alert("В накладную были внесены изменения: \n"+msg);
             },
             modal:{
                 open: function(){
@@ -350,19 +375,12 @@
                     <div>
                         
                     </div>
-                    <div id="checkout_document_head" style="float:left;">
+                    <span id="checkout_document_head">
                          {{if checkout_status|equals>is_checking}}
-                            <img src="img/bolt.png"> В процессе<br>
                             <button onclick="App.page_stock_checkout_list.finish.init();"><img src="img/ok.png"> Завершить проверку</button>
-                        {{else}}
-                            {{if checkout_status|equals>checked_with_divergence}}
-                                Проверка завершена с исправлениями
-                            {{else}}
-                                Проверка завершена
-                            {{/if}}
                         {{/if}}
-                    </div>
-                    <div id="checkout_progress_bar" class="easyui-progressbar" data-options="value:0" style="width:400px;"></div>
+                    </span>
+                    <div id="checkout_progress_bar" class="easyui-progressbar" data-options="value:0" style="width:400px;float: right"></div>
                 </div>
                 
                 <div class="easyui-tabs " style="width:605px ">
@@ -404,19 +422,20 @@
             </td>
         <tr>
     </table>
-    <div class="easyui-dialog" id="checkout_confirm_warning" style="width:600px;height:500px;"
-		data-options="title:'Результат проверки',modal:true,closed:true,
-			buttons:[{
-                                text:'Создать корректировки',
-                                handler:function(){
-                                    App.page_stock_checkout_list.finish.commit();
-                                }
-			},{
-                                text:'Отменить',
-                                handler:function(){
-                                    $('#checkout_confirm_warning').dialog('close');
-                                }
-			}]">
+    <div class="easyui-dialog" id="checkout_confirm_warning" style="width:600px;height:500px;top:40px"
+		data-options="title:'Результат проверки',
+                closed:true,
+                buttons:[{
+                        text:'Создать корректировки / Исправить накладную',
+                        handler:function(){
+                            App.page_stock_checkout_list.finish.commit();
+                        }
+                },{
+                        text:'Отменить',
+                        handler:function(){
+                            $('#checkout_confirm_warning').dialog('close');
+                        }
+                }]">
 	{{products}}
         <div style="padding: 10px;border-bottom: 1px solid #999">
                 <div style="width:450px;display:inline-block"><b>{{product_code}}</b> {{ru}}</div> 
