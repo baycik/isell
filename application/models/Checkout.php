@@ -105,7 +105,7 @@ class Checkout extends Stock {
     }
 
     
-    public function checkoutEntriesFetch ( int $checkout_id, int $offset=0, int $limit=0, string $sortby=null, string $sortdir=null, array $filter = null  ){
+    public function checkoutEntriesFetch ( int $checkout_id, int $offset=0, int $limit=1000, string $sortby=null, string $sortdir=null, array $filter = null  ){
         $this->Hub->set_level(2);
         if (empty($sortby)) {
 	    $sortby = "cstamp";
@@ -202,7 +202,7 @@ class Checkout extends Stock {
         return true;
     }
     
-    public function checkoutLogFetch ( int $checkout_id, int $offset=0, int $limit=0 ) {
+    public function checkoutLogFetch ( int $checkout_id, int $offset=0, int $limit=1000 ) {
         $this->Hub->set_level(1);
         $sql = " 
             SELECT
