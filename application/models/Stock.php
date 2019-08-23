@@ -679,8 +679,9 @@ class Stock extends Catalog {
         $result_window_size=1000;
         $usd_ratio=$this->Hub->pref('usd_ratio');
         $pcomp_id=$this->Hub->pcomp('company_id');
-        $price_label=$this->Hub->pcomp('price_label');
-        $sql="CREATE TEMPORARY TABLE tmp_matches_list (PRIMARY KEY(product_id))
+        $price_label=$this->Hub->pcomp('price_label');#TEMPORARY
+        $this->query("DROP TABLE IF EXISTS tmp_matches_list");
+        $sql="CREATE  TABLE tmp_matches_list (PRIMARY KEY(product_id)) AS 
             SELECT 
                 pl.product_id,
                 pl.product_code,
@@ -703,7 +704,7 @@ class Stock extends Catalog {
                     JOIN
                 stock_tree st ON st.branch_id=se.parent_id
                     LEFT JOIN
-                companies_discounts cd ON st.top_id=cd.branch_id AND company_id=$pcomp_id
+                companies_discounts cd ON st.top_id=cd.branch_id AND company_id='$pcomp_id'
                     LEFT JOIN
                 price_list prl_promo ON prl_promo.label='PROMO' AND se.product_code=prl_promo.product_code
                     LEFT JOIN
@@ -718,7 +719,7 @@ class Stock extends Catalog {
                         ORDER BY
                             fetch_count DESC
                         LIMIT $result_window_size) t) AND $where
-            ORDER BY fetch_count DESC
+            #ORDER BY fetch_count DESC
             LIMIT $result_window_size;";
         return $this->query($sql);
     }

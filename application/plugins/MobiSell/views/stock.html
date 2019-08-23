@@ -109,80 +109,6 @@
                 
             }
         },
-        attributes: {
-            list: [],
-            selected: [],
-            checked: [],
-            last_expanded: [],
-            init: function (){
-                $('#attributes_container').accordion({
-                        duration: 0, 
-                        exclusive: false,
-                        onOpen: function(){
-                            App.stock.attributes.last_expanded.push($(this).data('attribute_id'));
-                        },
-                        onClose: function(){
-                            var closed = $(this).data('attribute_id');
-                            var is_in_list = App.stock.attributes.isInList(App.stock.attributes.last_expanded, closed);
-                            App.stock.attributes.last_expanded.splice(is_in_list, 1);
-                        }
-                });
-            },
-            render: function () {
-                App.stock.attributes.checked = [];
-                App.stock.attributes.list.forEach(function iter(attribute) {
-                    if (App.stock.attributes.selected.includes(attribute.attribute_value_id)) {
-                        attribute.is_selected = 'checked';
-                        App.stock.attributes.checked.push(attribute);
-                    }
-                    Array.isArray( attribute.attribute_values) && attribute.attribute_values.forEach(iter);
-                });
-                if(!App.stock.attributes.checked.length){
-                    App.stock.attributes.selected = [];
-                }
-                App.renderTpl("attributes_container", {attributes: App.stock.attributes.list});
-                App.renderTpl("attributes_selected", {attributes_selected: App.stock.attributes.checked});
-                $('.stock-attributes-button .attributes-selected-length').html(App.stock.attributes.selected.length);
-                App.stock.attributes.last_expanded.forEach(function(attribute_id){
-                    $('#attribute_'+attribute_id).addClass('active');
-                    $('#content_attribute_'+attribute_id).addClass('active');
-                })
-            },
-            select: function(node){
-                var checked = $(node).prop('checked');
-                var attribute_value_id = $(node).data('attribute_value_id');
-                if(checked){
-                    App.stock.attributes.add(attribute_value_id);
-                } else {
-                    App.stock.attributes.remove(attribute_value_id);
-                }
-                App.stock.entries.show_cart = false;
-                App.stock.entries.load();
-            },
-            add: function(attribute_value_id){
-                App.stock.attributes.selected.push(attribute_value_id);
-            },
-            isInList: function(list,attribute_value_id){
-                var i = 0;
-                list.forEach(function(attribute, index){
-                    if(attribute === attribute_value_id){
-                        i = index;
-                    }
-                })
-                return i;
-            },
-            remove: function(attribute_value_id){
-                App.stock.attributes.selected.splice(App.stock.attributes.isInList(App.stock.attributes.selected, attribute_value_id), 1);
-            },
-            clearSelected: function(){
-                if(!App.stock.attributes.selected.length){
-                    return;
-                }
-                App.stock.attributes.selected = [];
-                App.stock.attributes.checked = [];
-                App.stock.entries.load();
-            }
-        },
         entries: {
             list: [],
             current_list: [],
@@ -217,11 +143,11 @@
                 };
                 $('#stock_categories_header').html("");
                 App.flash("Загрузка товаров...");
-                $.post("../Stock/matchesListFetch", params, function (resp) {
+                $.post("../AttributeManager/matchesListFetch", params, function (resp) {
                     App.flash("Загрузка товаров:ОК");
                     var response = App.json(resp);
-                    var new_loaded_items = response;//.product_list;
-                    //App.stock.attributes.list = response.attribute_list;
+                    var new_loaded_items = response.matches;
+                    App.stock.attributes.render(response.groupped_filter);
                     if( !new_loaded_items.length ){
                         if(App.stock.attributes.selected.length>0 && params.category_id !== 0){
                             App.stock.attributes.selected = [];
@@ -962,100 +888,10 @@
         font-size: 16px;
         font-weight: bold;
     }
-    
-    
-    #attributes_container .content {
-        max-height: 18em;
-        overflow: auto;
-    }
-    #attributes_container .title {
-        color: black;
-    }
-    #attributes_container label {
-        color: rgb(55, 55, 55);
-    }
-    .ui.inverted.dimmer{
-        background-color: rgba(255, 255, 255, 0.3) !important;
-    }
-    #attributes_container .content{
-        border-bottom: 1px solid rgb(232, 232, 232);
-    }
-    #attributes_container .attribute-container .title:hover{
-        transition: 0.5s ease;
-        background-color: #eee;
-    }
 </style>
  <link rel="stylesheet" href="stock.css">
 <div id="stock_container" style="display: grid; grid-template-columns: 25% 75%; grid-column-gap: 1em;">
-    <div id="attributesPopup" class="ui  segment " style="margin-bottom: auto;">
-        <a  class="ui secondary close icon button" style="float:right; display: none" onclick="$('#attributesPopup').hide();$('#stock_content').show();"><i class="icon close"></i></a>
-        <div class="header" style='padding: 1em;'><h4>Фильтр</h4></div>
-        <div class="ui divider"></div>
-        <div id="attributes_selected" class="covert">
-            <div class='title' style='margin-bottom: 5px'>
-                {{ if attributes_selected}}
-                <b>Выбрано:</b>
-                {{else}}
-                <i>Ничего не выбрано</i>
-                {{/if}}
-            </div>
-            <div class="ui blue  labels">
-            {{attributes_selected}}
-            <a class="ui  label">
-                {{attribute_name}}: {{attribute_prefix}} {{attribute_value}}{{attribute_unit}} 
-                <i class="delete icon" onclick="App.stock.attributes.remove('<!--{{attribute_value_id}}-->'); App.stock.entries.load()"></i>
-            </a>
-            {{/attributes_selected}}
-            </div>
-        </div>
-        <div class="ui divider"></div>
-        <div class="ui form" style="padding:1em">
-            <div class="ui fields">
-                <div class="sixteen wide field">
-                    <button class=" ui floated right blue fluid button" onclick="App.stock.attributes.clearSelected()">
-                            Очистить
-                    </button>
-                </div>
-            </div>
-        </div>
-        <div class="ui divider"></div>
-        <div id="attributes_container"  class="ui accordion covert">
 
-            {{attributes}}
-            <div class='attribute-container'>
-                <div class="active title" id="attribute_{{attribute_id}}" >
-                  <i class="dropdown icon"></i>
-                  {{attribute_name}}
-                  <label class="attributes_added"></label>
-                </div>
-                {{if attribute_values}}
-                <div class="content" id="content_attribute_{{attribute_id}}" data-attribute_id="{{attribute_id}}">
-                    <div class="ui form">
-                        <div class="grouped fields" >
-                            {{attribute_values}}
-                            <div class="field">
-                                <div class="ui child   checkbox" >
-                                    <input type="checkbox" name="size" value="small" {{is_selected}}
-                                           data-attribute_value_id="{{attribute_value_id}}" 
-                                           data-attribute_id="{{attribute_id}}" 
-                                           data-attribute_value="{{attribute_prefix}} {{attribute_value}} {{attribute_unit}}" 
-                                           onchange="App.stock.attributes.select(this)">
-                          <!--   <label  {{ if product_total|falsy }} style="color: gray" {{{/if}}>  -->
-
-                                 {{attribute_prefix}} {{attribute_value}} {{attribute_unit}} <span style="color: gray">({{product_total}})</span>
-
-                                  </label>
-                                </div>
-                            </div>
-                            {{/attribute_values}}
-                        </div>
-                    </div>  
-                 </div>
-                {{/if}}
-            </div>
-            {{/attributes}}
-        </div>
-    </div>
 
     <div id="stock_content">
         <div  class="ui blue segment">

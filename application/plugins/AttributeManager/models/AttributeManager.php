@@ -8,7 +8,7 @@
  * Author: baycik 2019
  * Author URI: http://isellsoft.com
  */
-class AttributeManager extends Stock{
+class AttributeManager extends Catalog{
     
     public $min_level=3;
     public function install(){
@@ -287,6 +287,7 @@ class AttributeManager extends Stock{
     //MATCHES LIST FETCHING
     ////////////////////////////////////////////////////
     public function matchesListFetch(string $q, int $limit=12, int $offset=0, string $sortby, string $sortdir, int $category_id=0, int $pcomp_id=0) {
-
+        $AttributeFilter=$this->Hub->load_model('AttributeFilter');
+        return $AttributeFilter->matchesListFetch($q, $limit, $offset, $sortby, $sortdir, $category_id, $pcomp_id);
     }
 }
