@@ -22,6 +22,10 @@ class AttributeManager extends Catalog{
 	return $this->Maintain->backupImportExecute($uninstall_file);
     }
     
+    public function view( string $path ){
+	$this->load->view($path);
+    }
+    
     public $listFetch = ['offset' => ['int', 0], 'limit' => ['int', 5], 'sortby' => 'string', 'sortdir' => '(ASC|DESC)', 'filter' => 'json'];
     public function listFetch( $offset, $limit, $sortby, $sortdir, $filter = null){
         if (empty($sortby)) {

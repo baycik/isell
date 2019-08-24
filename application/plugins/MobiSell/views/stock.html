@@ -6,7 +6,6 @@
             App.stock.head.init();
             App.stock.cart.init();
             App.stock.entries.init();
-            App.stock.attributes.init();
             App.stock.utils.initControls();
             App.Topic('passiveCompanySelected').subscribe(function () {
                 $("#stock_pcomp_notice").hide();
@@ -14,7 +13,11 @@
             });
             App.Topic('hashChange').subscribe(function () {
                 App.stock.productInfoModal.showProductInfo(App.state['productInfoModal.showProductInfo']);
-            }); 
+            });
+            
+            
+            
+            
         },
         focus: function () {
             App.title("Каталог товаров");
@@ -138,23 +141,19 @@
                     limit: App.stock.entries.limit+1,
                     sortby: App.stock.entries.order_by.split(',')[0],
                     sortdir: App.stock.entries.order_by.split(',')[1],
-                    pcomp_id: App.user.pcomp.company_id, 
-                    attribute_value_ids: JSON.stringify(App.stock.attributes.selected) 
+                    pcomp_id: App.user.pcomp.company_id
                 };
+                
                 $('#stock_categories_header').html("");
                 App.flash("Загрузка товаров...");
-                $.post("../AttributeManager/matchesListFetch", params, function (resp) {
+                $.post("../Stock/matchesListFetch", params, function (resp) {
                     App.flash("Загрузка товаров:ОК");
-                    var response = App.json(resp);
-                    var new_loaded_items = response.matches;
-                    App.stock.attributes.render(response.groupped_filter);
-                    if( !new_loaded_items.length ){
-                        if(App.stock.attributes.selected.length>0 && params.category_id !== 0){
-                            App.stock.attributes.selected = [];
-                            App.stock.entries.load();
-                            return;
-                        }
-                    }
+                    var new_loaded_items = App.json(resp);
+                    
+                    
+                    console.log(new_loaded_items);
+                    return;
+                    
                     if ( load_more ) {
                         App.stock.entries.list = App.stock.entries.list.concat(new_loaded_items);
                     } else {
@@ -189,7 +188,6 @@
                 var gridview=localStorage.getItem('stockGridView');
                 App.stock.entries.gridViewConfigure(gridview); 
                 App.stock.cart.renderButton(); 
-                App.stock.attributes.render();
                 $('.cart-quantity').html(App.stock.cart.list.length);
                 App.renderTpl("stock_list", {products: App.stock.entries.current_list, loading_finished: App.stock.entries.loading_finished, show_cart: App.stock.entries.show_cart});
             }, 
@@ -260,10 +258,6 @@
                 });
                 $('#stock_category_tree').click(function(e){
                     $('#categoriesPopup').modal({ inverted: true, duration:0}).modal('show');
-                });
-                $('#stock_attributes').click(function(e){
-                    $('#attributesPopup').show();
-                    $('#stock_content').hide();
                 });
                 $('.limit-dropdown').change(function(e){
                     App.stock.entries.limit = $(this).dropdown('get value')*1;
@@ -368,27 +362,16 @@
                         App.flash("Загрузка товаров:ОК");
                         var product_object = App.json(response);
                         if( !product_object.product_id ){return;}
-                        if( product_object.attributes ){
-                            product_object.attributes = App.stock.productInfoModal.composeAttributes(product_object);
-                        }
                         product_object.quantity_in_cart = App.stock.cart.findInCart(product_object.product_id).product_quantity;
                         App.renderTpl('stock_product_info_modal', product_object);
                         $("#stock_product_info_modal").modal({ inverted: true, duration:0}).modal('show').modal('can fit');;
                     });
-            },
-            composeAttributes: function(product_object){
-                product_object.attributes = product_object.attributes.split(',');
-                var attributes = [];
-                for(var i = 0; i<product_object.attributes.length; i++ ){
-                    var attribute_item = product_object.attributes[i].split(': ');
-                    var attribute_object = {label: attribute_item[0], value: attribute_item[1]};
-                    attributes.push(attribute_object);
-                }
-                return attributes;
             }
         }
     };
 </script>
+<script src="../AttributeManager/view/?path=mobisell_filter_widget.js"></script>
+
 <style>
     @media only screen and (max-width: 400px) {
         .categories-container{
@@ -448,19 +431,6 @@
         }
         #stock_container {
             grid-template-columns: 100% !important;
-        }
-        #attributesPopup{
-            display:none;
-            width: 90%;
-            height: 100%;
-            margin: 0 auto;
-            z-index: 10;
-        }
-        #attributesPopup .ui.secondary.close.icon.button{
-            display:block !important;
-        }
-        .stock-attributes-button.five.wide.field{
-             display:block !important;
         }
         
     }  
@@ -532,19 +502,6 @@
         #stock_container {
             grid-template-columns: 100% !important;
         }
-        #attributesPopup{
-            display:none;
-            width: 90%;
-            height: 100%;
-            margin: 0 auto;
-            z-index: 10;
-        }
-        #attributesPopup .ui.secondary.close.icon.button{
-            display:block !important;
-        }
-        .stock-attributes-button.five.wide.field{
-            display:block !important;
-        }
     } 
     @media only screen and (min-width: 650px) and (max-width: 1000px) {
         #stock_list .stock_product_table{
@@ -574,19 +531,6 @@
         #stock_container {
             grid-template-columns: 100% !important;
         }
-        #attributesPopup{
-            display:none;
-            width: 90%;
-            height: 100%;
-            margin: 0 auto;
-            z-index: 10;
-        }
-        #attributesPopup .ui.secondary.close.icon.button{
-            display:block !important;
-        }
-        .stock-attributes-button.five.wide.field{
-            display:block !important;
-        }
     } 
     @media only screen and (min-width: 1000px) and (max-width: 1300px) {
         #stock_list .stock_product_table{
@@ -609,9 +553,6 @@
         #categoriesPopup .categories-container{
             grid-template-columns: 25% 25% 25% 25%  !important;
         }
-        #attributesPopup{
-            display:block !important;
-        }
     } 
     @media only screen and (min-width: 1300px) {
         #stock_list .stock_product_table{
@@ -627,9 +568,6 @@
         #categoriesPopup .categories-container{
             grid-template-columns: 20% 20% 20% 20% 20% !important;
         }
-        #attributesPopup{
-            display:block !important;
-        }
     } 
     @media only screen and (min-width: 1600px) {
         #stock_list .stock_product_table{
@@ -644,9 +582,6 @@
         }
         #categoriesPopup .categories-container{
             grid-template-columns: 20% 20% 20% 20% 20% !important;
-        }
-        #attributesPopup{
-            display:block !important;
         }
     } 
     #stock_list .stock_product_promo{
@@ -889,8 +824,20 @@
         font-weight: bold;
     }
 </style>
- <link rel="stylesheet" href="stock.css">
-<div id="stock_container" style="display: grid; grid-template-columns: 25% 75%; grid-column-gap: 1em;">
+
+
+
+
+
+<div id="filteeer_widget"></div> 
+
+
+
+
+
+
+
+<div id="stock_container" style="display: grid; grid-template-columns: 100%; grid-column-gap: 1em;">
 
 
     <div id="stock_content">
@@ -917,16 +864,6 @@
                         <div id='stock_category_tree' class='ui labeled basic blue  icon button'>
                             <i class='bars icon'></i>
                             <label class='placeholder'>Все</label>
-                        </div>
-                    </div>
-                    <div class="stock-attributes-button five wide field" style="display:none">
-                        <label>Фильтр</label><div></div>
-                        <div class="ui labeled  button"  >
-                            <div id='stock_attributes' class='ui labeled basic blue  icon button'>
-                                <i class='filter icon'></i>
-                                <label class='placeholder'>Выбрать</label>  
-                            </div>
-                            <a class="ui basic red left pointing blue label attributes-selected-length">0</a>
                         </div>
                     </div>
                     <div id="stock_search" class="eleven wide field">

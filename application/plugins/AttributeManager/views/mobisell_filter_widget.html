@@ -1,6 +1,6 @@
 <div id="attributesPopup" class="ui  segment " style="margin-bottom: auto;">
     <a  class="ui secondary close icon button" style="float:right; display: none" onclick="$('#attributesPopup').hide();
-        $('#stock_content').show();"><i class="icon close"></i></a>
+            $('#stock_content').show();"><i class="icon close"></i></a>
     <div class="header" style='padding: 1em;'><h4>Фильтр</h4></div>
     <div class="ui divider"></div>
     <div id="attributes_selected" class="covert">
@@ -15,7 +15,7 @@
             {{attributes_selected}}
             <a class="ui  label">
                 {{attribute_name}}: {{attribute_prefix}} {{attribute_value}}{{attribute_unit}} 
-                <i class="delete icon" onclick="App.stock.attributes.remove('<!--{{attribute_value_id}}-- > '); App.stock.entries.load()"></i>
+                <i class="delete icon" data-attribute_value_hash="{{attribute_value_hash}}" onclick="App.stock.filter.remove();"></i>
             </a>
             {{/attributes_selected}}
         </div>
@@ -24,7 +24,7 @@
     <div class="ui form" style="padding:1em">
         <div class="ui fields">
             <div class="sixteen wide field">
-                <button class=" ui floated right blue fluid button" onclick="App.stock.attributes.clearSelected()">
+                <button class=" ui floated right blue fluid button" onclick="App.stock.filter.clearSelected()">
                     Очистить
                 </button>
             </div>
@@ -45,15 +45,15 @@
                     <div class="grouped fields" >
                         {{attribute_values}}
                         <div class="field">
-                            <div class="ui child   checkbox" >
+                            <div class="ui child checkbox">
                                 <input type="checkbox" 
                                        name="size" 
                                        value="small" 
                                        checked="{{is_selected}}"
-                                       data-attribute_value_id="{{attribute_value_id}}" 
+                                       data-attribute_value_hash="{{attribute_value_hash}}" 
                                        data-attribute_id="{{attribute_id}}" 
                                        data-attribute_value="{{attribute_prefix}} {{attribute_value}} {{attribute_unit}}" 
-                                       onchange="App.stock.attributes.select(this)">
+                                       onchange="App.stock.filter.select(this)">
                                 <!--<label  {{ if product_total|falsy }} style="color: gray" {{{/if}}>-->
                                 {{attribute_prefix}} {{attribute_value}} {{attribute_unit}} <span style="color: gray">({{product_total}})</span>
                                 <!--</label>-->
@@ -68,83 +68,6 @@
         {{/attributes}}
     </div>
 </div>
-<script type="text/javascript">
-    App.stock.filter = {
-        tree: [],
-        selected: [],
-        checked: [],
-        last_expanded: [],
-        init: function () {
-            $('#attributes_container').accordion({
-                duration: 0,
-                exclusive: false,
-                onOpen: function () {
-                    App.stock.attributes.last_expanded.push($(this).data('attribute_id'));
-                },
-                onClose: function () {
-                    var closed = $(this).data('attribute_id');
-                    var is_in_list = App.stock.attributes.isInList(App.stock.attributes.last_expanded, closed);
-                    App.stock.attributes.last_expanded.splice(is_in_list, 1);
-                }
-            });
-        },
-        render: function (groupped_filter) {
-            App.stock.attributes.checked = [];
-            App.stock.attributes.list.forEach(function iter(attribute) {
-                if (App.stock.attributes.selected.includes(attribute.attribute_value_id)) {
-                    attribute.is_selected = 'checked';
-                    App.stock.attributes.checked.push(attribute);
-                }
-                Array.isArray(attribute.attribute_values) && attribute.attribute_values.forEach(iter)
-                        ;
-            });
-            if (!App.stock.attributes.checked.length) {
-                App.stock.attributes.selected = [];
-            }
-            App.renderTpl("attributes_container", {attributes: App.stock.attributes.list});
-            App.renderTpl("attributes_selected", {attributes_selected: App.stock.attributes.checked});
-            $('.stock-attributes-button .attributes-selected-length').html(App.stock.attributes.selected.length);
-            App.stock.attributes.last_expanded.forEach(function (attribute_id) {
-                $('#attribute_' + attribute_id).addClass('active');
-                $('#content_attribute_' + attribute_id).addClass('active');
-            });
-        },
-        select: function (node) {
-            var checked = $(node).prop('checked');
-            var attribute_value_id = $(node).data('attribute_value_id');
-            if (checked) {
-                App.stock.attributes.add(attribute_value_id);
-            } else {
-                App.stock.attributes.remove(attribute_value_id);
-            }
-            App.stock.entries.show_cart = false;
-            App.stock.entries.load();
-        },
-        add: function (attribute_value_id) {
-            App.stock.attributes.selected.push(attribute_value_id);
-        },
-        isInList: function (list, attribute_value_id) {
-            var i = 0;
-            list.forEach(function (attribute, index) {
-                if (attribute === attribute_value_id) {
-                    i = index;
-                }
-            });
-            return i;
-        },
-        remove: function (attribute_value_id) {
-            App.stock.attributes.selected.splice(App.stock.attributes.isInList(App.stock.attributes.selected, attribute_value_id), 1);
-        },
-        clearSelected: function () {
-            if (!App.stock.attributes.selected.length) {
-                return;
-            }
-            App.stock.attributes.selected = [];
-            App.stock.attributes.checked = [];
-            App.stock.entries.load();
-        }
-    };
-</script>
 <style type="text/css">
     #attributes_container .content {
         max-height: 18em;
@@ -166,4 +89,18 @@
         transition: 0.5s ease;
         background-color: #eee;
     } 
+
+    #attributesPopup{
+        display:none;
+        width: 90%;
+        height: 100%;
+        margin: 0 auto;
+        z-index: 10;
+    }
+    #attributesPopup .ui.secondary.close.icon.button{
+        display:block !important;
+    }
+    .stock-attributes-button.five.wide.field{
+        display:block !important;
+    }
 </style>
