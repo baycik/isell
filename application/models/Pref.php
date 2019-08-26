@@ -4,7 +4,7 @@ class Pref extends Catalog {
     public $min_level=1;
     public $getStaffList=[];
     public function getStaffList() {
-        $sql = "SELECT 
+        $sql = "(SELECT 
                     user_id,
                     user_position,
                     first_name,
@@ -20,7 +20,22 @@ class Pref extends Catalog {
                 FROM 
 		    " . BAY_DB_MAIN . ".user_list
                 WHERE 
-		    user_is_staff AND first_name IS NOT NULL AND last_name IS NOT NULL";
+		    user_is_staff AND first_name IS NOT NULL AND last_name IS NOT NULL)
+                UNION
+                (SELECT
+                    0,
+                    '-',
+                    '-',
+                    '-',
+                    '-',
+                    '-',
+                    '-',
+                    '-',
+                    '-',
+                    '-',
+                    '-',
+                    '-'
+                )";
         return $this->get_list($sql);
     }
     public $getPrefs=['[a-z_,]+'];
