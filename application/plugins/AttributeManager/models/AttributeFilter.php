@@ -1,24 +1,30 @@
 <?php
 
-class AttributeFilter extends Stock{
-    public function matchesListFetch(string $q, int $limit=12, int $offset=0, string $sortby, string $sortdir, int $category_id=0, int $pcomp_id=0) {
-        $where=     $this->matchesListGetWhere( $q, $category_id );
-        $order_by=  $this->matchesListGetOrderBy($sortby,$sortdir);
-        $this->matchesListCreateTemporary($where);
+class AttributeFilter extends Catalog{
+//    public function matchesListFetch(string $q, int $limit=12, int $offset=0, string $sortby, string $sortdir, int $category_id=0, int $pcomp_id=0) {
+//        $where=     $this->matchesListGetWhere( $q, $category_id );
+//        $order_by=  $this->matchesListGetOrderBy($sortby,$sortdir);
+//        $this->matchesListCreateTemporary($where);
+//        $groupped_filter=$this->constructFilter();
+//        $sql="
+//            SELECT
+//                *,
+//                COALESCE(price_promo,price_label,price_basic) price_final
+//            FROM
+//                tmp_matches_list
+//            ORDER BY $order_by
+//            LIMIT $limit OFFSET $offset";
+//        $matches=$this->get_list($sql);
+//        return [
+//            'groupped_filter'=>$groupped_filter,
+//            'matches'=>$matches
+//        ];
+//    }
+    
+    
+    public function filterOut(){
         $groupped_filter=$this->constructFilter();
-        $sql="
-            SELECT
-                *,
-                COALESCE(price_promo,price_label,price_basic) price_final
-            FROM
-                tmp_matches_list
-            ORDER BY $order_by
-            LIMIT $limit OFFSET $offset";
-        $matches=$this->get_list($sql);
-        return [
-            'groupped_filter'=>$groupped_filter,
-            'matches'=>$matches
-        ];
+        
     }
     
     private function constructFilter(){

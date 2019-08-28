@@ -370,8 +370,6 @@
         }
     };
 </script>
-<script src="../AttributeManager/view/?path=mobisell_filter_widget.js"></script>
-
 <style>
     @media only screen and (max-width: 400px) {
         .categories-container{
@@ -827,10 +825,14 @@
 
 
 
-
-
-<div id="filteeer_widget"></div> 
-
+<!-- INJECTION -->
+<script>
+    $(function(){
+        $("#filteeer_widget").load('AttributeManager/view/mobisell_filter_widget.html');
+    });
+</script>
+<div id="filteeer_widget"></div>
+<!-- INJECTION -->
 
 
 

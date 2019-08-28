@@ -287,11 +287,51 @@ class AttributeManager extends Catalog{
             ]
         ];
     }
-    ////////////////////////////////////////////////////
-    //MATCHES LIST FETCHING
-    ////////////////////////////////////////////////////
-    public function matchesListFetch(string $q, int $limit=12, int $offset=0, string $sortby, string $sortdir, int $category_id=0, int $pcomp_id=0) {
-        $AttributeFilter=$this->Hub->load_model('AttributeFilter');
-        return $AttributeFilter->matchesListFetch($q, $limit, $offset, $sortby, $sortdir, $category_id, $pcomp_id);
+    
+    
+    /////////////////////////////////////////////////////
+    //STOCK MATCHES FILTERING
+    /////////////////////////////////////////////////////
+    
+    public function filterOut(){
+        $groupped_filter=$this->constructFilter();
+        $this->Hub->svar('groupped_filter',$groupped_filter);
     }
+    
+    public function filterGet(){
+        return $this->Hub->svar('groupped_filter');
+    }
+    
+    private function constructFilter(){
+        $sql="
+        SELECT 
+            al.*,
+            attribute_value,
+            attribute_value_hash,
+            COUNT(*) product_count
+        FROM
+            tmp_matches_list
+                JOIN
+            attribute_values av USING(product_id)
+                JOIN
+            attribute_list al USING(attribute_id)
+        GROUP BY attribute_value_hash
+        ORDER BY attribute_name,attribute_value";
+        $filter_list=$this->get_list($sql);
+        $groupped_filter=[];
+        $current_attribute_id=0;
+        foreach($filter_list as $entry){
+            if( $current_attribute_id != $entry->attribute_id ){
+                $group_name="group_".$entry->attribute_id;
+                $groupped_filter[$group_name]=[
+                    'attribute_name'=>$entry->attribute_name,
+                    'entries'=>[]
+                ];
+                $current_attribute_id = $entry->attribute_id;
+            }
+            $groupped_filter[$group_name]['entries'][]=$entry;
+        }
+        return $groupped_filter;
+    }
+    
 }

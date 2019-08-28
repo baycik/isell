@@ -611,6 +611,18 @@ class Stock extends Catalog {
         $where=     $this->matchesListGetWhere( $q, $category_id );
         $order_by=  $this->matchesListGetOrderBy($sortby,$sortdir);
         $this->matchesListCreateTemporary($where);
+        
+        
+        //INJECTION
+        $AttributeManager=$this->Hub->load_model('AttributeFilter');
+        $AttributeManager->filterOut();
+        
+        //INJECTION
+        
+        
+        
+        
+        
         $sql="
             SELECT
                 *,
