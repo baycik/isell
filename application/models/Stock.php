@@ -614,7 +614,7 @@ class Stock extends Catalog {
         
         
         //INJECTION
-        $AttributeManager=$this->Hub->load_model('AttributeFilter');
+        $AttributeManager=$this->Hub->load_model('AttributeManager');
         $AttributeManager->filterOut();
         
         //INJECTION

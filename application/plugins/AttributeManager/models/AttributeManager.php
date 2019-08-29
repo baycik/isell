@@ -294,7 +294,12 @@ class AttributeManager extends Catalog{
     /////////////////////////////////////////////////////
     
     public function filterOut(){
-        $groupped_filter=$this->constructFilter();
+        $selected_hashes=$this->request('selected_hashes','[0-9a-f,]+');
+        $selected_list="0";
+        if( $selected_hashes ){
+            $selected_list= "'".str_replace(",", "','", $selected_hashes)."'";
+        }
+        $groupped_filter=$this->constructFilter( $selected_list );
         $this->Hub->svar('groupped_filter',$groupped_filter);
     }
     
@@ -302,13 +307,14 @@ class AttributeManager extends Catalog{
         return $this->Hub->svar('groupped_filter');
     }
     
-    private function constructFilter(){
+    private function constructFilter( $selected_list ){
         $sql="
         SELECT 
             al.*,
             attribute_value,
             attribute_value_hash,
-            COUNT(*) product_count
+            COUNT(*) product_count,
+            IF( attribute_value_hash IN ($selected_list),1,0) is_selected
         FROM
             tmp_matches_list
                 JOIN
@@ -319,17 +325,18 @@ class AttributeManager extends Catalog{
         ORDER BY attribute_name,attribute_value";
         $filter_list=$this->get_list($sql);
         $groupped_filter=[];
+        $group_index=-1;
         $current_attribute_id=0;
         foreach($filter_list as $entry){
             if( $current_attribute_id != $entry->attribute_id ){
-                $group_name="group_".$entry->attribute_id;
-                $groupped_filter[$group_name]=[
+                $group_index++;
+                $groupped_filter[$group_index]=[
                     'attribute_name'=>$entry->attribute_name,
-                    'entries'=>[]
+                    'attribute_values'=>[]
                 ];
                 $current_attribute_id = $entry->attribute_id;
             }
-            $groupped_filter[$group_name]['entries'][]=$entry;
+            $groupped_filter[$group_index]['attribute_values'][]=$entry;
         }
         return $groupped_filter;
     }

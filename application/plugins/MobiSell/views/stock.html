@@ -14,10 +14,6 @@
             App.Topic('hashChange').subscribe(function () {
                 App.stock.productInfoModal.showProductInfo(App.state['productInfoModal.showProductInfo']);
             });
-            
-            
-            
-            
         },
         focus: function () {
             App.title("Каталог товаров");
@@ -149,11 +145,6 @@
                 $.post("../Stock/matchesListFetch", params, function (resp) {
                     App.flash("Загрузка товаров:ОК");
                     var new_loaded_items = App.json(resp);
-                    
-                    
-                    console.log(new_loaded_items);
-                    return;
-                    
                     if ( load_more ) {
                         App.stock.entries.list = App.stock.entries.list.concat(new_loaded_items);
                     } else {
@@ -828,10 +819,10 @@
 <!-- INJECTION -->
 <script>
     $(function(){
-        $("#filteeer_widget").load('AttributeManager/view/mobisell_filter_widget.html');
+        $("#stock_filter_widget").load('../AttributeManager/view/?path=mobisell_filter_widget.html');
     });
 </script>
-<div id="filteeer_widget"></div>
+<div id="stock_filter_widget"></div>
 <!-- INJECTION -->
 
 
