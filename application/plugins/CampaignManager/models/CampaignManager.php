@@ -72,7 +72,7 @@ class CampaignManager extends Catalog{
         $user_level=     $this->Hub->svar('user_level');
         $or_case=[];
         $and_case=[];
-        $and_case[]=" level<= $user_level";
+        //$and_case[]=" level<= $user_level";
         if( $assigned_path ){
             $and_case[]=" path LIKE '%".str_replace(",", "%' OR path LIKE '%", $assigned_path)."%'";
         }
@@ -98,7 +98,7 @@ class CampaignManager extends Catalog{
             }
             $where.=implode(' AND ', $and_case);
         }
-        return $where?$where:0;
+        return $where?$where." AND level<= $user_level":0;
     }
     
     public function clientListFetch(int $campaign_id, int $offset=0,int $limit=30,string $sortby='label',string $sortdir='ASC',array $filter){
