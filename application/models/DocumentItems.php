@@ -64,7 +64,6 @@ class DocumentItems extends DocumentCore{
         $suggested=$this->get_list($sql);//for plugin modifications
         return $suggested;
     }
-
     protected function footerGet(){
         $this->entriesTmpCreate();
 	$use_total_as_base=(bool) $this->Hub->pref('use_total_as_base');
@@ -81,7 +80,6 @@ class DocumentItems extends DocumentCore{
 	} else {
 	    
 	}
-
 	return $this->get_row($sql);
     }
     
@@ -230,7 +228,7 @@ class DocumentItems extends DocumentCore{
 		return true;
 	}
         $Events=$this->Hub->load_model("Events");
-        $Events->Topic('documentEntryChanged')->publish($doc_entry_id,$this->doc('doc_id'));
+        $Events->Topic('documentEntryChanged')->publish($doc_entry_id,$this->_doc);
     }
     public $entryDelete=['int','string'];
     public function entryDelete( $doc_id, $ids ){
@@ -240,11 +238,11 @@ class DocumentItems extends DocumentCore{
     
     public function entryDeleteArray($doc_id,$ids_arr){
 	$this->selectDoc($doc_id);
-        
+        $this->loadDoc($doc_id);
 	$Document2=$this->Hub->bridgeLoad('Document');
 	$delete_ok=$Document2->deleteEntry($ids_arr);
         $Events=$this->Hub->load_model("Events");
-        $Events->Topic('documentEntryChanged')->publish($ids_arr,$this->doc('doc_id'));
+        $Events->Topic('documentEntryChanged')->publish($ids_arr,$this->_doc);
         return $delete_ok;
     }
     
