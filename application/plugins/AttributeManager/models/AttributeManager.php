@@ -326,6 +326,36 @@ class AttributeManager extends Catalog{
     }
     
     private function filterConstruct( $selected_list, $filter_join ){
+        $groupped_filter=[
+            'attributes'=>$this->filterConstructAttributes($selected_list, $filter_join),
+            'price_ranges'=>$this->filterConstructPriceRanges($selected_list, $filter_join)
+        ];
+        return $groupped_filter;
+    }
+    
+    private function filterConstructPriceRanges($selected_list, $filter_join){
+        $calc_rounded_fraction="
+        SELECT 
+            (@fraction:=MAX(price_final*1) / 5) +
+            (@roundto:=RPAD(1, CHAR_LENGTH(ROUND(@fraction)), 0)) +
+            (@rounded_fraction:=ROUND(@fraction / @roundto) * @roundto)
+        FROM
+            tmp_matches_list;";
+        $this->query($calc_rounded_fraction);
+        $calc_fraction_count="
+        SELECT
+            @rounded_fraction fraction,
+            SUM(ROUND(price_final/@rounded_fraction)=0) range1,
+            SUM(ROUND(price_final/@rounded_fraction)=1) range2,
+            SUM(ROUND(price_final/@rounded_fraction)=2) range3,
+            SUM(ROUND(price_final/@rounded_fraction)=3) range4,
+            SUM(ROUND(price_final/@rounded_fraction)=4) range5
+        FROM
+            tmp_matches_list";
+        return $this->get_list($calc_fraction_count);
+    }
+    
+    private function filterConstructAttributes($selected_list, $filter_join){
         $select_checker="0";
         if( $selected_list ){
             $select_checker=" IF( attribute_value_hash IN ($selected_list),1,0) ";
@@ -352,22 +382,24 @@ class AttributeManager extends Catalog{
             GROUP BY attribute_value_hash
             ORDER BY attribute_name,$counter=0,attribute_value";
         $filter_list=$this->get_list($sql);
-        $groupped_filter=[];
+        
+        $attributes=[];
         $group_index=-1;
         $current_attribute_id=0;
         foreach($filter_list as $entry){
             if( $current_attribute_id != $entry->attribute_id ){
                 $group_index++;
-                $groupped_filter[$group_index]=[
+                $attributes[$group_index]=[
                     'attribute_id'=>$entry->attribute_id,
                     'attribute_name'=>$entry->attribute_name,
                     'attribute_values'=>[]
                 ];
                 $current_attribute_id = $entry->attribute_id;
             }
-            $groupped_filter[$group_index]['attribute_values'][]=$entry;
+            $attributes[$group_index]['attribute_values'][]=$entry;
         }
-        return $groupped_filter;
+        return $attributes;        
     }
+    
     
 }

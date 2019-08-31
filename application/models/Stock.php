@@ -627,8 +627,7 @@ class Stock extends Catalog {
         
         $sql="
             SELECT
-                *,
-                COALESCE(price_promo,price_label,price_basic) price_final
+                *
             FROM
                 tmp_matches_list
                 #INJECTION ATTRIBUTE MANAGER
@@ -674,7 +673,7 @@ class Stock extends Catalog {
         switch($sortby){
             //plugins order_by_cases goes here
             case 'price':
-                $order_by=" COALESCE(price_promo,price_label,price_basic)";
+                $order_by="price_final";
                 break;
             case 'newness':
                 $order_by='product_id';
@@ -699,8 +698,8 @@ class Stock extends Catalog {
         $usd_ratio=$this->Hub->pref('usd_ratio');
         $pcomp_id=$this->Hub->pcomp('company_id');
         $price_label=$this->Hub->pcomp('price_label');#TEMPORARY
-        $this->query("DROP TEMPORARY TABLE IF EXISTS tmp_matches_list");
-        $sql="CREATE TEMPORARY TABLE tmp_matches_list (PRIMARY KEY(product_id)) AS 
+        $this->query("DROP  TABLE IF EXISTS tmp_matches_list");
+        $sql="CREATE  TABLE tmp_matches_list (PRIMARY KEY(product_id)) AS 
             SELECT 
                 pl.product_id,
                 pl.product_code,
@@ -713,9 +712,10 @@ class Stock extends Catalog {
                 se.fetch_stamp,
                 fetch_count popularity,
                 se.parent_id,
-                prl_basic.sell*IF(prl_basic.curr_code='USD',$usd_ratio,1)*IF(discount,discount,1) price_basic,
-                prl_label.sell*IF(prl_label.curr_code='USD',$usd_ratio,1)*IF(discount,discount,1) price_label,
-                prl_promo.sell*IF(prl_promo.curr_code='USD',$usd_ratio,1)*IF(discount,discount,1) price_promo
+                @price_basic:=prl_basic.sell*IF(prl_basic.curr_code='USD',$usd_ratio,1)*IF(discount,discount,1) price_basic,
+                @price_label:=prl_label.sell*IF(prl_label.curr_code='USD',$usd_ratio,1)*IF(discount,discount,1) price_label,
+                @price_promo:=prl_promo.sell*IF(prl_promo.curr_code='USD',$usd_ratio,1) price_promo,
+                COALESCE(@price_promo,@price_label,@price_basic) price_final
             FROM 
                 stock_entries se
                     JOIN
@@ -738,7 +738,6 @@ class Stock extends Catalog {
                         ORDER BY
                             fetch_count DESC
                         LIMIT $result_window_size) t) AND $where
-            #ORDER BY fetch_count DESC
             LIMIT $result_window_size;";
         return $this->query($sql);
     }

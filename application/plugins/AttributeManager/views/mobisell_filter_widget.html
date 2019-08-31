@@ -9,6 +9,11 @@ App.stock.filter = {
             exclusive: false,
             onOpen: function () {
                 App.stock.filter.last_expanded_filter_group=$(this).data('attribute_id');
+            },
+            onClose:function(){
+                if( App.stock.filter.last_expanded_filter_group===$(this).data('attribute_id') ){
+                    App.stock.filter.last_expanded_filter_group=0;
+                }
             }
         });
         $('#stock_filter_container').change(function(){
@@ -44,7 +49,7 @@ App.stock.filter = {
     render_prepare:function(filter_tree){
         let actualized_selected=[];
         let actualized_selected_count=0;
-        for(let group of filter_tree){
+        for(let group of filter_tree.attributes){
             for(let attribute of group.attribute_values){
                 if( attribute.is_selected==1 ){
                     actualized_selected.push(attribute);
@@ -125,7 +130,7 @@ App.stock.filter = {
             //only for responsivness until filter reloaded
             let actualized_selected=[];
             let actualized_selected_count=0;
-            for(let group of App.stock.filter.filter_tree){
+            for(let group of App.stock.filter.filter_tree.attributes){
                 for(let attribute of group.attribute_values){
                     if( selected_hashes_query.indexOf(attribute.attribute_value_hash)>-1 ){
                         actualized_selected.push(attribute);
@@ -179,6 +184,8 @@ App.stock.filter.init();
     <!--ACCORDION-->
     <div id="stock_filter_container"  class="ui accordion covert">
         {{filter_tree}}
+        
+        {{attributes}}
         <div class='attribute-container'>
             <div class="active title" id="stock_filter_attribute_{{attribute_id}}" >
                 <i class="dropdown icon"></i>
@@ -217,6 +224,8 @@ App.stock.filter.init();
             </div>
             {{/if}}
         </div>
+        {{/attributes}}
+        
         {{/filter_tree}}
     </div>
     <!--/ACCORDION-->
