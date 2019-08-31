@@ -1,24 +1,32 @@
 <script type="text/javascript">
 App.stock.filter = {
-    tree: [],
-    selected: {},
-    last_expanded: [],
+    filter_tree:{},
+    selected: [],
     init: function () {
-        $('#stock_attributes_container').accordion({
-            duration: 0,
-            exclusive: false,
-            onOpen: function () {
-                App.stock.filter.last_expanded.push($(this).data('attribute_id'));
-            },
-            onClose: function () {
-                var closed = $(this).data('attribute_id');
-                var is_in_list = App.stock.filter.isInList(App.stock.filter.last_expanded, closed);
-                App.stock.filter.last_expanded.splice(is_in_list, 1);
+        $('#stock_filter_container').accordion({
+            duration: 100,
+            exclusive: false
+        });
+        $('#stock_filter_container').change(function(){
+            App.stock.filter.changed();
+        });
+        $("#stock_filter_tags").click(function(e){
+            var attribute_value_hash=$(e.target).data('attribute_value_hash');
+            if(attribute_value_hash){
+                App.stock.filter.tags.remove(attribute_value_hash);
             }
         });
-        App.stock.filter.load();
+        App.Topic('StockEntriesRendered').subscribe(function(){
+            App.stock.filter.load();
+        });
     },
     load:function(){
+        //optimisation: reducing reload of filter. Reload only if category_id or q is changed
+        if( this.last_q===App.stock.entries.parameters.q && this.last_category_id===App.stock.entries.parameters.category_id ){
+            return;
+        }
+        this.last_q=App.stock.entries.parameters.q;
+        this.last_category_id=App.stock.entries.parameters.category_id;
         $.post("../AttributeManager/filterGet",function(resp){
             var filter_tree=App.json(resp);
             if( filter_tree ){
@@ -27,90 +35,126 @@ App.stock.filter = {
         });
     },
     render_prepare:function(filter_tree){
-        let actualized_selected={};
+        let actualized_selected=[];
         let actualized_selected_count=0;
-        for(let group in filter_tree){
-            for(let attribute in group){
-                if( attribute.is_checked ){
-                    actualized_selected[attribute.attribute_value_hash]=attribute;
+        for(let group of filter_tree){
+            for(let attribute of group.attribute_values){
+                if( attribute.is_selected==1 ){
+                    actualized_selected.push(attribute);
                     actualized_selected_count++;
                 }
             }
         }
+        App.stock.filter.filter_tree=filter_tree;
         App.stock.filter.selected=actualized_selected;
         App.stock.filter.selected_count=actualized_selected_count;
+        //App.store('stock_filter_selected',App.stock.filter.selected);
     },
-    render: function (filter_tree) {
+    render: function ( filter_tree ) {
         App.stock.filter.render_prepare(filter_tree);
-        App.renderTpl("stock_attributes_container",{filter_tree: filter_tree});
-        App.renderTpl("stock_attributes_selected", {stock_attributes_selected: App.stock.filter.selected});
-        App.stock.filter.last_expanded.forEach(function (attribute_id) {
-            $('#attribute_' + attribute_id).addClass('active');
-            $('#content_attribute_' + attribute_id).addClass('active');
-        });
+        App.stock.filter.tags.render();
+        App.renderTpl("stock_filter_container",{filter_tree: filter_tree});
+        /*App.stock.filter.last_expanded.forEach(function (attribute_id) {
+            $('#stock_filter_attribute_' + attribute_id).addClass('active');
+            $('#stock_filter_content_attribute_' + attribute_id).addClass('active');
+        });*/
         $('.stock-attributes-button .attributes-selected-length').html(App.stock.filter.selected_count);
+        $("#stock_filter_container input[data-attribute_is_selected=1]").prop('checked',1);
     },
-    select: function (node) {
-        var checked = $(node).prop('checked');
-        var attribute_value_hash = $(node).data('attribute_value_hash');
-        if (checked) {
-            App.stock.filter.add(attribute_value_hash);
-        } else {
-            App.stock.filter.remove(attribute_value_hash);
+    changed: function () {
+        let selected_hashes_query=App.stock.filter.compile();
+        App.stock.filter.tags.refresh(selected_hashes_query);
+        App.stock.filter.apply();
+    },
+    compile:function(){
+        let selected_hashes_query=''
+        let selected_hashes={};
+        $("#stock_filter_container input:checked").each(function(index,node){
+            let attribute_id=$(node).data('attribute_id');
+            let attribute_value_hash=$(node).data('attribute_value_hash');
+            !selected_hashes[attribute_id] && (selected_hashes[attribute_id]=[]);
+            selected_hashes[attribute_id].push(attribute_value_hash);
+        });
+        for( let i in selected_hashes){
+            selected_hashes_query+="&"+selected_hashes[i].join("|");
         }
+        App.store('stock_filter_selected_hashes_query',selected_hashes_query.substring(1));
+        return selected_hashes_query;
+    },
+    apply:function(){
+        let selected_hashes_query=App.restore('stock_filter_selected_hashes_query');
+        if( App.stock.entries.parameters.selected_hashes!==selected_hashes_query ){
+            App.stock.entries.parameters.selected_hashes=selected_hashes_query;
+            App.stock.filter.load_filtered_entries();
+        }
+    },
+    load_filtered_entries:function(){
         App.stock.entries.show_cart = false;
         App.stock.entries.load();
     },
-    isInList: function (list, attribute_value_hash) {
-        var i = 0;
-        list.forEach(function (attribute, index) {
-            if (attribute === attribute_value_hash) {
-                i = index;
-            }
-        });
-        return i;
-    },
-    add: function (attribute_value_hash) {
-        App.stock.filter.selected[attribute_value_hash] = 1;
-    },
-    remove: function (e) {
-        let attribute_value_hash = $(e.currentTarget).data('attribute_value_hash');
-        if (App.stock.filter.selected[attribute_value_hash]) {
-            delete App.stock.filter.selected[attribute_value_hash];
-        }
-    },
     clearSelected: function () {
-        if (!App.stock.filter.selected.length) {
-            return;
+        $("#stock_filter_container input:checked").prop('checked',0);
+        App.stock.filter.changed();
+    },
+    tags:{
+        render:function(){
+            App.renderTpl("stock_filter_tags", {stock_filter_tags: App.stock.filter.selected});
+        },
+        remove:function( attribute_value_hash ){
+            //only for responsivness until filter reloaded
+            for(let i in App.stock.filter.selected){
+                if( App.stock.filter.selected[i]['attribute_value_hash'] === attribute_value_hash ){
+                    App.stock.filter.selected.splice(i,1);
+                    break;
+                }
+            }
+            $("#stock_filter_container input[data-attribute_value_hash="+attribute_value_hash+"]").prop('checked',0);
+            App.stock.filter.changed();
+        },
+        refresh:function( selected_hashes_query ){
+            //only for responsivness until filter reloaded
+            let actualized_selected=[];
+            let actualized_selected_count=0;
+            for(let group of App.stock.filter.filter_tree){
+                for(let attribute of group.attribute_values){
+                    if( selected_hashes_query.indexOf(attribute.attribute_value_hash)>-1 ){
+                        actualized_selected.push(attribute);
+                        actualized_selected_count++;
+                    }
+                }
+            }
+            App.stock.filter.selected=actualized_selected;
+            App.stock.filter.selected_count=actualized_selected_count;
+            App.stock.filter.tags.render();
         }
-        App.stock.filter.selected = {};
-        //App.stock.entries.load();
     }
 };
 App.stock.filter.init();
 </script>
-<div id="stock_attribute_popup" class="ui  segment " style="margin-bottom: auto;">
-    <a  class="ui secondary close icon button" style="float:right; display: none" onclick="$('#stock_attribute_popup').hide();
+<div id="stock_filter_popup" class="ui  segment " style="margin-bottom: auto;">
+    <a  class="ui secondary close icon button" style="float:right; display: none" onclick="$('#stock_filter_popup').hide();
             $('#stock_content').show();"><i class="icon close"></i></a>
     <div class="header" style='padding: 1em;'><h4>Фильтр</h4></div>
     <div class="ui divider"></div>
-    <div id="stock_attributes_selected" class="covert">
+    <!--TAGS-->
+    <div id="stock_filter_tags" class="covert">
         <div class='title' style='margin-bottom: 5px'>
-            {{ if stock_attributes_selected}}
+            {{ if stock_filter_tags}}
             <b>Выбрано:</b>
             {{else}}
             <i>Ничего не выбрано</i>
             {{/if}}
         </div>
         <div class="ui blue  labels">
-            {{stock_attributes_selected}}
+            {{stock_filter_tags}}
             <a class="ui  label">
                 {{attribute_name}}: {{attribute_prefix}} {{attribute_value}}{{attribute_unit}} 
-                <i class="delete icon" data-attribute_value_hash="{{attribute_value_hash}}" onclick="App.stock.filter.remove();"></i>
+                <i class="delete icon" data-attribute_value_hash="{{attribute_value_hash}}"></i>
             </a>
-            {{/stock_attributes_selected}}
+            {{/stock_filter_tags}}
         </div>
     </div>
+    <!--/TAGS-->
     <div class="ui divider"></div>
     <div class="ui form" style="padding:1em">
         <div class="ui fields">
@@ -122,16 +166,17 @@ App.stock.filter.init();
         </div>
     </div>
     <div class="ui divider"></div>
-    <div id="stock_attributes_container"  class="ui accordion covert">
+    <!--ACCORDION-->
+    <div id="stock_filter_container"  class="ui accordion covert">
         {{filter_tree}}
         <div class='attribute-container'>
-            <div class="active title" id="attribute_{{attribute_id}}" >
+            <div class="active title" id="stock_filter_attribute_{{attribute_id}}" >
                 <i class="dropdown icon"></i>
                 {{attribute_name}}
                 <label class="attributes_added"></label>
             </div>
             {{if attribute_values}}
-            <div class="content" id="content_attribute_{{attribute_id}}" data-attribute_id="{{attribute_id}}">
+            <div class="content" id="stock_filter_content_attribute_{{attribute_id}}" data-attribute_id="{{attribute_id}}">
                 <div class="ui form">
                     <div class="grouped fields" >
                         {{attribute_values}}
@@ -142,11 +187,18 @@ App.stock.filter.init();
                                        value="small" 
                                        data-attribute_id="{{attribute_id}}" 
                                        data-attribute_value_hash="{{attribute_value_hash}}" 
+                                       data-attribute_is_selected="{{is_selected}}" 
                                        data-attribute_value="{{attribute_prefix}} {{attribute_value}} {{attribute_unit}}" 
-                                       onchange="App.stock.filter.select(this)">
-                                <!--<label  {{ if product_total|falsy }} style="color: gray" {{{/if}}>-->
-                                {{attribute_prefix}} {{attribute_value}} {{attribute_unit}} <span style="color: gray">({{product_count}})</span>
-                                <!--</label>-->
+                                       >
+                                <label>
+                                    {{if product_count|falsy}}
+                                    <span style="color: gray">
+                                    {{else}}
+                                    <span>
+                                    {{/if}}
+                                        {{attribute_prefix}} {{attribute_value}} {{attribute_unit}} <span style="color: gray">({{product_count}})</span>
+                                    </span>
+                                </label>
                             </div>
                         </div>
                         {{/attribute_values}}
@@ -157,37 +209,38 @@ App.stock.filter.init();
         </div>
         {{/filter_tree}}
     </div>
+    <!--/ACCORDION-->
 </div>
 <style type="text/css">
-    #stock_attributes_container .content {
+    #stock_filter_container .content {
         max-height: 18em;
         overflow: auto;
     }
-    #stock_attributes_container .title {
+    #stock_filter_container .title {
         color: black;
     }
-    #stock_attributes_container label {
+    #stock_filter_container label {
         color: rgb(55, 55, 55);
     }
     .ui.inverted.dimmer{
         background-color: rgba(255, 255, 255, 0.3) !important;
     }
-    #stock_attributes_container .content{
+    #stock_filter_container .content{
         border-bottom: 1px solid rgb(232, 232, 232);
     }
-    #stock_attributes_container .attribute-container .title:hover{
+    #stock_filter_container .attribute-container .title:hover{
         transition: 0.5s ease;
         background-color: #eee;
     } 
 
-    #stock_attribute_popup{
+    #stock_filter_popup{
         -display:none;
         width: 90%;
         height: 100%;
         margin: 0 auto;
         z-index: 10;
     }
-    #stock_attribute_popup .ui.secondary.close.icon.button{
+    #stock_filter_popup .ui.secondary.close.icon.button{
         display:block !important;
     }
     .stock-attributes-button.five.wide.field{

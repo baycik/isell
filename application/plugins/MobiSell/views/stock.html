@@ -111,38 +111,44 @@
         entries: {
             list: [],
             current_list: [],
-            offset: 0,
             loading_finished: 0,
-            show_cart:0,
-            order_by: 'popularity,DESC',
-            limit:12,
-            category_id:0,
+            parameters:{
+                category_id:0,
+                show_cart:0,
+                order_by: 'popularity,DESC',
+                offset: 0,
+                limit:12
+            },
             init: function(){
+                //INJECTION
+                let selected_hashes_string=App.restore('stock_filter_selected_hashes_query');
+                if( selected_hashes_string ){
+                    App.stock.entries.parameters.selected_hashes=selected_hashes_string;
+                }
+                //END OF INJECTION
                 App.stock.entries.load();
             },
+            load_prepare_params:function(load_more){
+                if (load_more) {
+                    App.stock.entries.parameters.offset += App.stock.entries.limit;
+                } else {
+                    App.stock.entries.parameters.offset = "0";
+                };
+                App.stock.entries.parameters.q=$('#stock_search_input').val();
+                App.stock.entries.parameters.sortby=App.stock.entries.parameters.order_by.split(',')[0];
+                App.stock.entries.parameters.sortdir=App.stock.entries.parameters.order_by.split(',')[1];
+                App.stock.entries.parameters.pcomp_id=App.user.pcomp.company_id;
+                $('#stock_categories_header').html("");
+            },
             load: function (load_more) {
-                if (!App.user.pcomp.company_id) {
+                if ( !App.user.pcomp.company_id ) {
                     $("#stock_pcomp_notice").show();
                     return;
                 };
-                if (load_more) {
-                    App.stock.entries.offset += App.stock.entries.limit;
-                } else {
-                    App.stock.entries.offset = 0;
-                };
-                var params = {
-                    q: $('#stock_search_input').val(),
-                    category_id: App.stock.entries.category_id,
-                    offset: App.stock.entries.offset,
-                    limit: App.stock.entries.limit+1,
-                    sortby: App.stock.entries.order_by.split(',')[0],
-                    sortdir: App.stock.entries.order_by.split(',')[1],
-                    pcomp_id: App.user.pcomp.company_id
-                };
+                App.stock.entries.load_prepare_params(load_more);
                 
-                $('#stock_categories_header').html("");
                 App.flash("Загрузка товаров...");
-                $.post("../Stock/matchesListFetch", params, function (resp) {
+                $.post("../Stock/matchesListFetch", App.stock.entries.parameters, function (resp) {
                     App.flash("Загрузка товаров:ОК");
                     var new_loaded_items = App.json(resp);
                     if ( load_more ) {
@@ -150,11 +156,10 @@
                     } else {
                         App.stock.entries.list = new_loaded_items;
                     };
-                    if ( new_loaded_items.length < App.stock.entries.limit + 1 ) {
+                    
+                    App.stock.entries.loading_finished = 0;
+                    if ( new_loaded_items.length < App.stock.entries.parameters.limit ) {
                         App.stock.entries.loading_finished = 1;
-                    } else {
-                        App.stock.entries.list.pop();
-                        App.stock.entries.loading_finished = 0;
                     }
                     App.stock.entries.render();
                 });
@@ -181,6 +186,7 @@
                 App.stock.cart.renderButton(); 
                 $('.cart-quantity').html(App.stock.cart.list.length);
                 App.renderTpl("stock_list", {products: App.stock.entries.current_list, loading_finished: App.stock.entries.loading_finished, show_cart: App.stock.entries.show_cart});
+                App.Topic('StockEntriesRendered').publish();
             }, 
             renderItem: function (index, product_quantity){    
                 var item_node = '#product_item_'+index;
@@ -255,7 +261,7 @@
                     App.stock.entries.load();
                 });
                 $('.order-by-dropdown').change(function(e){
-                    App.stock.entries.order_by = $(this).dropdown('get value');
+                    App.stock.entries.parameters.order_by = $(this).dropdown('get value');
                     App.stock.entries.load();
                 });
                 $(document).click(function(e){

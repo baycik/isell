@@ -80,8 +80,8 @@ App = {
     store: function (key, object) {
         localStorage.setItem(key, JSON.stringify(object));
     },
-    restore: function (key, object) {
-        return localStorage.getItem(key, object);
+    restore: function (key) {
+        return localStorage.getItem(key);
     },
     toIso: function (dmy) {
         if (!dmy) {

@@ -613,11 +613,10 @@ class Stock extends Catalog {
         $this->matchesListCreateTemporary($where);
         
         
-        //INJECTION
+        //INJECTION ATTRIBUTE MANAGER
         $AttributeManager=$this->Hub->load_model('AttributeManager');
-        $AttributeManager->filterOut();
-        
-        //INJECTION
+        $join_filter=$AttributeManager->filterOut();
+        //END OF INJECTION ATTRIBUTE MANAGER
         
         
         
@@ -629,6 +628,9 @@ class Stock extends Catalog {
                 COALESCE(price_promo,price_label,price_basic) price_final
             FROM
                 tmp_matches_list
+                #INJECTION ATTRIBUTE MANAGER
+                $join_filter
+                #ENF OF INJECTION ATTRIBUTE MANAGER
             ORDER BY $order_by
             LIMIT $limit OFFSET $offset";
         $matches=$this->get_list($sql);
@@ -692,8 +694,8 @@ class Stock extends Catalog {
         $usd_ratio=$this->Hub->pref('usd_ratio');
         $pcomp_id=$this->Hub->pcomp('company_id');
         $price_label=$this->Hub->pcomp('price_label');#TEMPORARY
-        $this->query("DROP TABLE IF EXISTS tmp_matches_list");
-        $sql="CREATE  TABLE tmp_matches_list (PRIMARY KEY(product_id)) AS 
+        $this->query("DROP TEMPORARY TABLE IF EXISTS tmp_matches_list");
+        $sql="CREATE TEMPORARY TABLE tmp_matches_list (PRIMARY KEY(product_id)) AS 
             SELECT 
                 pl.product_id,
                 pl.product_code,

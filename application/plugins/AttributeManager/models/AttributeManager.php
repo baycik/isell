@@ -292,29 +292,51 @@ class AttributeManager extends Catalog{
     /////////////////////////////////////////////////////
     //STOCK MATCHES FILTERING
     /////////////////////////////////////////////////////
-    
     public function filterOut(){
-        $selected_hashes=$this->request('selected_hashes','[0-9a-f,]+');
+        $selected_hashes=$this->request('selected_hashes','[0-9a-f\&\|]+');
         $selected_list="0";
         if( $selected_hashes ){
-            $selected_list= "'".str_replace(",", "','", $selected_hashes)."'";
+            $selected_list= "'".str_replace(["&","|"], "','", $selected_hashes)."'";
         }
-        $groupped_filter=$this->constructFilter( $selected_list );
+        $groupped_filter=$this->filterConstruct( $selected_list );
         $this->Hub->svar('groupped_filter',$groupped_filter);
+        
+        return $this->filterApply($selected_hashes);
     }
     
     public function filterGet(){
         return $this->Hub->svar('groupped_filter');
     }
     
-    private function constructFilter( $selected_list ){
+    private function filterApply( $selected_hashes ){
+        if( !$selected_hashes ){
+            return '';
+        }
+        $or_case="'".str_replace('|', "','", $selected_hashes)."'";
+        $and_case=" MAX(attribute_value_hash IN (".str_replace('&',"')) * MAX(attribute_value_hash IN ('",$or_case).")) ";
+        $sql="
+            JOIN 
+        (SELECT 
+            product_id
+        FROM
+            attribute_values
+        GROUP BY product_id
+        HAVING($and_case)) t USING(product_id)";
+        return $sql;
+    }
+    
+    private function filterConstruct( $selected_list ){
+        $select_checker="0";
+        if( $selected_list ){
+            $select_checker=" IF( attribute_value_hash IN ($selected_list),1,0) ";
+        }
         $sql="
         SELECT 
             al.*,
             attribute_value,
             attribute_value_hash,
             COUNT(*) product_count,
-            IF( attribute_value_hash IN ($selected_list),1,0) is_selected
+            $select_checker is_selected
         FROM
             tmp_matches_list
                 JOIN
@@ -331,6 +353,7 @@ class AttributeManager extends Catalog{
             if( $current_attribute_id != $entry->attribute_id ){
                 $group_index++;
                 $groupped_filter[$group_index]=[
+                    'attribute_id'=>$entry->attribute_id,
                     'attribute_name'=>$entry->attribute_name,
                     'attribute_values'=>[]
                 ];
