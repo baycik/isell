@@ -2,10 +2,14 @@
 App.stock.filter = {
     filter_tree:{},
     selected: [],
+    last_expanded_filter_group:0,
     init: function () {
         $('#stock_filter_container').accordion({
             duration: 100,
-            exclusive: false
+            exclusive: false,
+            onOpen: function () {
+                App.stock.filter.last_expanded_filter_group=$(this).data('attribute_id');
+            }
         });
         $('#stock_filter_container').change(function(){
             App.stock.filter.changed();
@@ -22,9 +26,12 @@ App.stock.filter = {
     },
     load:function(){
         //optimisation: reducing reload of filter. Reload only if category_id or q is changed
-        if( this.last_q===App.stock.entries.parameters.q && this.last_category_id===App.stock.entries.parameters.category_id ){
+        if( this.last_selected_hashes===App.stock.entries.parameters.selected_hashes
+            && this.last_q===App.stock.entries.parameters.q 
+            && this.last_category_id===App.stock.entries.parameters.category_id ){
             return;
         }
+        this.last_selected_hashes=App.stock.entries.parameters.selected_hashes;
         this.last_q=App.stock.entries.parameters.q;
         this.last_category_id=App.stock.entries.parameters.category_id;
         $.post("../AttributeManager/filterGet",function(resp){
@@ -48,16 +55,16 @@ App.stock.filter = {
         App.stock.filter.filter_tree=filter_tree;
         App.stock.filter.selected=actualized_selected;
         App.stock.filter.selected_count=actualized_selected_count;
-        //App.store('stock_filter_selected',App.stock.filter.selected);
     },
     render: function ( filter_tree ) {
         App.stock.filter.render_prepare(filter_tree);
         App.stock.filter.tags.render();
         App.renderTpl("stock_filter_container",{filter_tree: filter_tree});
-        /*App.stock.filter.last_expanded.forEach(function (attribute_id) {
+        if( App.stock.filter.last_expanded_filter_group ){
+            let attribute_id=App.stock.filter.last_expanded_filter_group;
             $('#stock_filter_attribute_' + attribute_id).addClass('active');
             $('#stock_filter_content_attribute_' + attribute_id).addClass('active');
-        });*/
+        }
         $('.stock-attributes-button .attributes-selected-length').html(App.stock.filter.selected_count);
         $("#stock_filter_container input[data-attribute_is_selected=1]").prop('checked',1);
     },
@@ -89,8 +96,11 @@ App.stock.filter = {
         }
     },
     load_filtered_entries:function(){
-        App.stock.entries.show_cart = false;
-        App.stock.entries.load();
+        clearTimeout(App.stock.filter.clock);
+        App.stock.filter.clock=setTimeout(function(){
+            App.stock.entries.show_cart = false;
+            App.stock.entries.load();
+        },300);
     },
     clearSelected: function () {
         $("#stock_filter_container input:checked").prop('checked',0);
@@ -191,7 +201,7 @@ App.stock.filter.init();
                                        data-attribute_value="{{attribute_prefix}} {{attribute_value}} {{attribute_unit}}" 
                                        >
                                 <label>
-                                    {{if product_count|falsy}}
+                                    {{if product_count|equals>0}}
                                     <span style="color: gray">
                                     {{else}}
                                     <span>

@@ -608,6 +608,9 @@ class Stock extends Catalog {
     //MATCHES LIST FETCHING
     ////////////////////////////////////////////////////
     public function matchesListFetch(string $q, int $limit=12, int $offset=0, string $sortby, string $sortdir, int $category_id=0, int $pcomp_id=0) {
+        $start= microtime(1);
+        
+        
         $where=     $this->matchesListGetWhere( $q, $category_id );
         $order_by=  $this->matchesListGetOrderBy($sortby,$sortdir);
         $this->matchesListCreateTemporary($where);
@@ -634,6 +637,8 @@ class Stock extends Catalog {
             ORDER BY $order_by
             LIMIT $limit OFFSET $offset";
         $matches=$this->get_list($sql);
+        
+        header("TT: ".(microtime(1)-$start));
         return $matches;
     }
     

@@ -298,10 +298,10 @@ class AttributeManager extends Catalog{
         if( $selected_hashes ){
             $selected_list= "'".str_replace(["&","|"], "','", $selected_hashes)."'";
         }
-        $groupped_filter=$this->filterConstruct( $selected_list );
+        $filter_join= $this->filterApply($selected_hashes);
+        $groupped_filter=$this->filterConstruct( $selected_list, $filter_join );
         $this->Hub->svar('groupped_filter',$groupped_filter);
-        
-        return $this->filterApply($selected_hashes);
+        return $filter_join;
     }
     
     public function filterGet(){
@@ -321,30 +321,36 @@ class AttributeManager extends Catalog{
         FROM
             attribute_values
         GROUP BY product_id
-        HAVING($and_case)) t USING(product_id)";
+        HAVING($and_case)) filter_join USING(product_id)";
         return $sql;
     }
     
-    private function filterConstruct( $selected_list ){
+    private function filterConstruct( $selected_list, $filter_join ){
         $select_checker="0";
         if( $selected_list ){
             $select_checker=" IF( attribute_value_hash IN ($selected_list),1,0) ";
         }
+        $counter="COUNT(*)";
+        if( $filter_join ){
+            $filter_join="LEFT $filter_join";
+            $counter="COUNT(filter_join.product_id)";
+        }
         $sql="
-        SELECT 
-            al.*,
-            attribute_value,
-            attribute_value_hash,
-            COUNT(*) product_count,
-            $select_checker is_selected
-        FROM
-            tmp_matches_list
-                JOIN
-            attribute_values av USING(product_id)
-                JOIN
-            attribute_list al USING(attribute_id)
-        GROUP BY attribute_value_hash
-        ORDER BY attribute_name,attribute_value";
+            SELECT 
+                al.*,
+                attribute_value,
+                attribute_value_hash,
+                $counter product_count,
+                $select_checker is_selected
+            FROM
+                tmp_matches_list
+                    JOIN
+                attribute_values av USING(product_id)
+                    JOIN
+                attribute_list al USING(attribute_id)
+                    $filter_join
+            GROUP BY attribute_value_hash
+            ORDER BY attribute_name,$counter=0,attribute_value";
         $filter_list=$this->get_list($sql);
         $groupped_filter=[];
         $group_index=-1;
