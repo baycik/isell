@@ -36,14 +36,14 @@ class CampaignManager extends Catalog{
         return $this->get_list($sql);
     }
     
-    public function campaignGet( int $campaign_id ){
+    public function campaignGet( int $campaign_id, int $visibility_filter=1 ){
         $this->Hub->set_level(3);
-        $settings=$this->get_row("SELECT * FROM plugin_campaign_list WHERE campaign_id='$campaign_id'");
+        $settings=$this->get_row("SELECT *,$visibility_filter visibility_filter FROM plugin_campaign_list WHERE campaign_id='$campaign_id'");
         //$settings->subject_manager_include=explode(',',$settings->subject_manager_include);
         return [
             'settings'=>$settings,
             'staff_list'=>$this->Hub->load_model("Pref")->getStaffList(),
-            'bonuses'=>$this->bonusesGet( $campaign_id ),
+            'bonuses'=>$this->bonusesGet( $campaign_id, $visibility_filter ),
             'stock_category_list'=>$this->treeFetch('stock_tree',0,'top')
         ];
     }
@@ -165,6 +165,20 @@ class CampaignManager extends Catalog{
         return $ok;
     }
     
+    private function bonusUpdateQueue($campaign_id){
+        $sql="
+            UPDATE 
+                plugin_campaign_bonus 
+            SET 
+                campaign_queue= (@queue:=@queue+1) 
+            WHERE 
+                campaign_id=$campaign_id
+                AND (@queue:=0)+1
+                AND bonus_visibility>0
+            ORDER BY campaign_queue";
+        $this->query($sql);
+    }
+    
     public function bonusRemove( int $campaign_bonus_id ){
         $this->Hub->set_level(3);
         $this->bonusPeriodsClear( $campaign_bonus_id );
@@ -174,11 +188,17 @@ class CampaignManager extends Catalog{
     private function bonusGet($campaign_bonus_id){
         return $this->get('plugin_campaign_bonus',['campaign_bonus_id'=>$campaign_bonus_id]);
     }
-    private function bonusesGet( int $campaign_id ){
-        $bonuses=$this->get_list("SELECT * FROM plugin_campaign_bonus WHERE campaign_id='$campaign_id'");
-//        foreach($bonuses as $bonus){
-//            $bonus->periods=$this->bonusCalculate($bonus->campaign_bonus_id);
-//        }
+    private function bonusesGet( int $campaign_id, int $visibility_filter ){
+        $this->bonusUpdateQueue($campaign_id);
+        $sql="SELECT
+            * 
+            FROM 
+                plugin_campaign_bonus 
+            WHERE 
+                campaign_id='$campaign_id' 
+                AND IF($visibility_filter>0,bonus_visibility>=$visibility_filter,COALESCE(bonus_visibility,0)=-$visibility_filter)
+            ORDER BY campaign_queue";
+        $bonuses=$this->get_list($sql);
         return $bonuses;
     }    
     
@@ -472,13 +492,13 @@ class CampaignManager extends Catalog{
     }
     public function bonusCalculatePersonal(){
         $this->Hub->set_level(2);
-        $liable_user_id=$this->Hub->svar('user_id');
+            $liable_user_id=$this->Hub->svar('user_id');
         $sql="SELECT * FROM plugin_campaign_list JOIN plugin_campaign_bonus USING(campaign_id) WHERE liable_user_id=$liable_user_id";
         $personal_bonuses=[];
         $campaign_list=$this->get_list($sql);
         $result_total=0;
         foreach( $campaign_list as $campaign ){
-            if( $campaign->bonus_visibility ){
+            if( $campaign->bonus_visibility==2 ){//visible in widget
                 $current_result=$this->bonusCalculateResult($campaign->campaign_bonus_id,true);
                 $personal_bonuses[]=[
                     'campaign_name'=>$campaign->campaign_name,
@@ -492,6 +512,21 @@ class CampaignManager extends Catalog{
                 'bonuses'=>$personal_bonuses
                 ];
     }
+    
+    public function bonusCalculateCampaignTotal( int $campaign_id =0 ){
+        $this->Hub->set_level(2);
+        $sql="SELECT * FROM plugin_campaign_list JOIN plugin_campaign_bonus USING(campaign_id) WHERE campaign_id=$campaign_id";
+        $campaign_list=$this->get_list($sql);
+        $result_total=0;
+        foreach( $campaign_list as $campaign ){
+            if( $campaign->bonus_visibility>0 ){
+                $current_result=$this->bonusCalculateResult($campaign->campaign_bonus_id,true);
+                $result_total+=$current_result[0]->bonus_result;
+            }
+        }
+        return $result_total;
+    }
+    
     public function dashboardMobiSell(){
         $this->Hub->set_level(2);
         $this->load->view("dashboard_mobisell.html");
