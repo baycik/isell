@@ -607,6 +607,45 @@ class Stock extends Catalog {
     ////////////////////////////////////////////////////
     //MATCHES LIST FETCHING
     ////////////////////////////////////////////////////
+    
+    
+    
+    private function matchesFilterPriceCreate(){
+        $sql_calc_fractions="
+        SELECT 
+            (@fraction:=MAX(price_final*1) / 4) +
+            (@roundto:=RPAD(1, CHAR_LENGTH(ROUND(@fraction)), 0)) +
+            (@rounded_fraction:=ROUND(@fraction / @roundto) * @roundto)
+        FROM
+            tmp_matches_list;";
+        $this->query($sql_calc_fractions);
+        
+        $sql_calc_ranges="
+        SELECT
+            @rounded_fraction fraction,
+            SUM(ROUND(price_final/@rounded_fraction)=0) range1,
+            SUM(ROUND(price_final/@rounded_fraction)=1) range2,
+            SUM(ROUND(price_final/@rounded_fraction)=2) range3,
+            SUM(ROUND(price_final/@rounded_fraction)=3) range4,
+            SUM(ROUND(price_final/@rounded_fraction)=4) range5
+        FROM
+            tmp_matches_list";
+        $filter_group=[
+            'selector'=>'price_final',
+            'collation'=>'between',
+            'options'=>$this->get_list($sql_calc_ranges)
+        ];
+        return $filter_group;
+    }
+    
+    private function matchesFilterStore($filter){
+        $this->Hub->svar('groupped_filter',$groupped_filter);
+    }
+    
+    public function matchesFilterGet(){
+        return $this->Hub->svar('groupped_filter');
+    }
+    
     public function matchesListFetch(string $q, int $limit=12, int $offset=0, string $sortby, string $sortdir, int $category_id=0, int $pcomp_id=0) {
         $start= microtime(1);
         
@@ -616,12 +655,20 @@ class Stock extends Catalog {
         $this->matchesListCreateTemporary($where);
         
         
+        //$filter=[];
+        //$filter[]=$this->matchesFilterPriceCreate();
+        
+        
+        //$this->matchesFilterStore($filter);
+        
         //INJECTION ATTRIBUTE MANAGER
         $AttributeManager=$this->Hub->load_model('AttributeManager');
         $join_filter=$AttributeManager->filterOut();
         //END OF INJECTION ATTRIBUTE MANAGER
         
-        
+        #INJECTION ATTRIBUTE MANAGER
+                #$join_filter
+                #ENF OF INJECTION ATTRIBUTE MANAGER
         
         
         
@@ -630,9 +677,11 @@ class Stock extends Catalog {
                 *
             FROM
                 tmp_matches_list
-                #INJECTION ATTRIBUTE MANAGER
-                $join_filter
-                #ENF OF INJECTION ATTRIBUTE MANAGER
+                
+            #INJECTION ATTRIBUTE MANAGER
+            $join_filter
+            #ENF OF INJECTION ATTRIBUTE MANAGER
+            
             ORDER BY $order_by
             LIMIT $limit OFFSET $offset";
         $matches=$this->get_list($sql);
@@ -715,7 +764,7 @@ class Stock extends Catalog {
                 @price_basic:=prl_basic.sell*IF(prl_basic.curr_code='USD',$usd_ratio,1)*IF(discount,discount,1) price_basic,
                 @price_label:=prl_label.sell*IF(prl_label.curr_code='USD',$usd_ratio,1)*IF(discount,discount,1) price_label,
                 @price_promo:=prl_promo.sell*IF(prl_promo.curr_code='USD',$usd_ratio,1) price_promo,
-                COALESCE(@price_promo,@price_label,@price_basic) price_final
+                CAST(COALESCE(@price_promo,@price_label,@price_basic) AS DECIMAL) price_final
             FROM 
                 stock_entries se
                     JOIN

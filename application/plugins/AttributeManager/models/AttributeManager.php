@@ -293,6 +293,9 @@ class AttributeManager extends Catalog{
     //STOCK MATCHES FILTERING
     /////////////////////////////////////////////////////
     public function filterOut(){
+        $selected_price_min=$this->request('selected_price_min','int');
+        $selected_price_max=$this->request('selected_price_max','int');
+        
         $selected_hashes=$this->request('selected_hashes','[0-9a-f\&\|]+');
         $selected_list="0";
         if( $selected_hashes ){
@@ -301,6 +304,10 @@ class AttributeManager extends Catalog{
         $filter_join= $this->filterApply($selected_hashes);
         $groupped_filter=$this->filterConstruct( $selected_list, $filter_join );
         $this->Hub->svar('groupped_filter',$groupped_filter);
+        
+        //print_r($groupped_filter);
+        
+        
         return $filter_join;
     }
     
@@ -334,25 +341,29 @@ class AttributeManager extends Catalog{
     }
     
     private function filterConstructPriceRanges($selected_list, $filter_join){
-        $calc_rounded_fraction="
-        SELECT 
-            (@fraction:=MAX(price_final*1) / 5) +
-            (@roundto:=RPAD(1, CHAR_LENGTH(ROUND(@fraction)), 0)) +
-            (@rounded_fraction:=ROUND(@fraction / @roundto) * @roundto)
-        FROM
-            tmp_matches_list;";
-        $this->query($calc_rounded_fraction);
+        $minmax=$this->get_row("SELECT MIN(price_final) price_min,MAX(price_final) price_max FROM tmp_matches_list");
+        
+        $fraction=$minmax->price_max/3;
+        $roundto=pow(10,strlen(round($fraction))-1);
+        $rounded_fraction=round($fraction/$roundto)*$roundto;
+        
         $calc_fraction_count="
         SELECT
-            @rounded_fraction fraction,
-            SUM(ROUND(price_final/@rounded_fraction)=0) range1,
-            SUM(ROUND(price_final/@rounded_fraction)=1) range2,
-            SUM(ROUND(price_final/@rounded_fraction)=2) range3,
-            SUM(ROUND(price_final/@rounded_fraction)=3) range4,
-            SUM(ROUND(price_final/@rounded_fraction)=4) range5
+            $rounded_fraction*1 range1,
+            $rounded_fraction*2 range2,
+            $rounded_fraction*3 range3,
+            $rounded_fraction*4 range4,
+            SUM(ROUND(price_final/$rounded_fraction)=0) range_count1,
+            SUM(ROUND(price_final/$rounded_fraction)=1) range_count2,
+            SUM(ROUND(price_final/$rounded_fraction)=2) range_count3,
+            SUM(ROUND(price_final/$rounded_fraction)>=3) range_count4,
+            COUNT(*) total_count
         FROM
             tmp_matches_list";
-        return $this->get_list($calc_fraction_count);
+        $ranges=$this->get_row($calc_fraction_count);
+        $ranges->min=$minmax->price_min;
+        $ranges->max=$minmax->price_max;
+        return [$ranges];
     }
     
     private function filterConstructAttributes($selected_list, $filter_join){

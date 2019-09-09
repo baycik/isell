@@ -1,150 +1,173 @@
 <script type="text/javascript">
-App.stock.filter = {
-    filter_tree:{},
-    selected: [],
-    last_expanded_filter_group:0,
-    init: function () {
-        $('#stock_filter_container').accordion({
-            duration: 100,
-            exclusive: false,
-            onOpen: function () {
-                App.stock.filter.last_expanded_filter_group=$(this).data('attribute_id');
-            },
-            onClose:function(){
-                if( App.stock.filter.last_expanded_filter_group===$(this).data('attribute_id') ){
-                    App.stock.filter.last_expanded_filter_group=0;
+    App.stock.filter = {
+        filter_tree: {},
+        selected: [],
+        last_expanded_filter_group: 0,
+        init: function () {
+            $('#stock_filter_container').accordion({
+                duration: 100,
+                exclusive: false,
+                onOpen: function () {
+                    App.stock.filter.last_expanded_filter_group = $(this).data('filter_group_id');
+                },
+                onClose: function () {
+                    if (App.stock.filter.last_expanded_filter_group === $(this).data('filter_group_id')) {
+                        App.stock.filter.last_expanded_filter_group = 0;
+                    }
                 }
-            }
-        });
-        $('#stock_filter_container').change(function(){
-            App.stock.filter.changed();
-        });
-        $("#stock_filter_tags").click(function(e){
-            var attribute_value_hash=$(e.target).data('attribute_value_hash');
-            if(attribute_value_hash){
-                App.stock.filter.tags.remove(attribute_value_hash);
-            }
-        });
-        App.Topic('StockEntriesRendered').subscribe(function(){
-            App.stock.filter.load();
-        });
-    },
-    load:function(){
-        //optimisation: reducing reload of filter. Reload only if category_id or q is changed
-        if( this.last_selected_hashes===App.stock.entries.parameters.selected_hashes
-            && this.last_q===App.stock.entries.parameters.q 
-            && this.last_category_id===App.stock.entries.parameters.category_id ){
-            return;
-        }
-        this.last_selected_hashes=App.stock.entries.parameters.selected_hashes;
-        this.last_q=App.stock.entries.parameters.q;
-        this.last_category_id=App.stock.entries.parameters.category_id;
-        $.post("../AttributeManager/filterGet",function(resp){
-            var filter_tree=App.json(resp);
-            if( filter_tree ){
-                App.stock.filter.render(filter_tree);
-            }
-        });
-    },
-    render_prepare:function(filter_tree){
-        let actualized_selected=[];
-        let actualized_selected_count=0;
-        for(let group of filter_tree.attributes){
-            for(let attribute of group.attribute_values){
-                if( attribute.is_selected==1 ){
-                    actualized_selected.push(attribute);
-                    actualized_selected_count++;
+            });
+            $('#stock_filter_container').change(function () {
+                App.stock.filter.changed();
+            });
+            $("#stock_filter_tags").click(function (e) {
+                var attribute_value_hash = $(e.target).data('attribute_value_hash');
+                if (attribute_value_hash) {
+                    App.stock.filter.tags.remove(attribute_value_hash);
                 }
-            }
-        }
-        App.stock.filter.filter_tree=filter_tree;
-        App.stock.filter.selected=actualized_selected;
-        App.stock.filter.selected_count=actualized_selected_count;
-    },
-    render: function ( filter_tree ) {
-        App.stock.filter.render_prepare(filter_tree);
-        App.stock.filter.tags.render();
-        App.renderTpl("stock_filter_container",{filter_tree: filter_tree});
-        if( App.stock.filter.last_expanded_filter_group ){
-            let attribute_id=App.stock.filter.last_expanded_filter_group;
-            $('#stock_filter_attribute_' + attribute_id).addClass('active');
-            $('#stock_filter_content_attribute_' + attribute_id).addClass('active');
-        }
-        $('.stock-attributes-button .attributes-selected-length').html(App.stock.filter.selected_count);
-        $("#stock_filter_container input[data-attribute_is_selected=1]").prop('checked',1);
-    },
-    changed: function () {
-        let selected_hashes_query=App.stock.filter.compile();
-        App.stock.filter.tags.refresh(selected_hashes_query);
-        App.stock.filter.apply();
-    },
-    compile:function(){
-        let selected_hashes_query=''
-        let selected_hashes={};
-        $("#stock_filter_container input:checked").each(function(index,node){
-            let attribute_id=$(node).data('attribute_id');
-            let attribute_value_hash=$(node).data('attribute_value_hash');
-            !selected_hashes[attribute_id] && (selected_hashes[attribute_id]=[]);
-            selected_hashes[attribute_id].push(attribute_value_hash);
-        });
-        for( let i in selected_hashes){
-            selected_hashes_query+="&"+selected_hashes[i].join("|");
-        }
-        App.store('stock_filter_selected_hashes_query',selected_hashes_query.substring(1));
-        return selected_hashes_query;
-    },
-    apply:function(){
-        let selected_hashes_query=App.restore('stock_filter_selected_hashes_query');
-        if( App.stock.entries.parameters.selected_hashes!==selected_hashes_query ){
-            App.stock.entries.parameters.selected_hashes=selected_hashes_query;
-            App.stock.filter.load_filtered_entries();
-        }
-    },
-    load_filtered_entries:function(){
-        clearTimeout(App.stock.filter.clock);
-        App.stock.filter.clock=setTimeout(function(){
-            App.stock.entries.show_cart = false;
-            App.stock.entries.load();
-        },300);
-    },
-    clearSelected: function () {
-        $("#stock_filter_container input:checked").prop('checked',0);
-        App.stock.filter.changed();
-    },
-    tags:{
-        render:function(){
-            App.renderTpl("stock_filter_tags", {stock_filter_tags: App.stock.filter.selected});
+            });
+            App.Topic('StockEntriesRendered').subscribe(function () {
+                App.stock.filter.load();
+            });
+            Mark.pipes.plusone = function (num) {
+                return num*1 + 1;
+            };
         },
-        remove:function( attribute_value_hash ){
-            //only for responsivness until filter reloaded
-            for(let i in App.stock.filter.selected){
-                if( App.stock.filter.selected[i]['attribute_value_hash'] === attribute_value_hash ){
-                    App.stock.filter.selected.splice(i,1);
-                    break;
-                }
+        load: function () {
+            //optimisation: reducing reload of filter. Reload only if category_id or q is changed
+            if (this.last_selected_hashes === App.stock.entries.parameters.selected_hashes
+                    && this.last_q === App.stock.entries.parameters.q
+                    && this.last_category_id === App.stock.entries.parameters.category_id) {
+                return;
             }
-            $("#stock_filter_container input[data-attribute_value_hash="+attribute_value_hash+"]").prop('checked',0);
-            App.stock.filter.changed();
+            this.last_selected_hashes = App.stock.entries.parameters.selected_hashes;
+            this.last_q = App.stock.entries.parameters.q;
+            this.last_category_id = App.stock.entries.parameters.category_id;
+            $.post("../AttributeManager/filterGet", function (resp) {
+                var filter_tree = App.json(resp);
+                if (filter_tree) {
+                    App.stock.filter.render(filter_tree);
+                }
+            });
         },
-        refresh:function( selected_hashes_query ){
-            //only for responsivness until filter reloaded
-            let actualized_selected=[];
-            let actualized_selected_count=0;
-            for(let group of App.stock.filter.filter_tree.attributes){
-                for(let attribute of group.attribute_values){
-                    if( selected_hashes_query.indexOf(attribute.attribute_value_hash)>-1 ){
+        render_prepare: function (filter_tree) {
+            let actualized_selected = [];
+            let actualized_selected_count = 0;
+            for (let group of filter_tree.attributes) {
+                for (let attribute of group.attribute_values) {
+                    if (attribute.is_selected == 1) {
                         actualized_selected.push(attribute);
                         actualized_selected_count++;
                     }
                 }
             }
-            App.stock.filter.selected=actualized_selected;
-            App.stock.filter.selected_count=actualized_selected_count;
+            App.stock.filter.filter_tree = filter_tree;
+            App.stock.filter.selected = actualized_selected;
+            App.stock.filter.selected_count = actualized_selected_count;
+        },
+        render: function (filter_tree) {
+            App.stock.filter.render_prepare(filter_tree);
             App.stock.filter.tags.render();
+            App.renderTpl("stock_filter_container", {filter_tree: filter_tree});
+            //if( App.stock.filter.last_expanded_filter_group ) {
+                let filter_group_id = App.stock.filter.last_expanded_filter_group;
+                $('#stock_filter_group_' + filter_group_id).addClass('active');
+                $('#stock_filter_group_content_' + filter_group_id).addClass('active');
+            //}
+            $('.stock-attributes-button .attributes-selected-length').html(App.stock.filter.selected_count);
+            $("#stock_filter_container input[data-attribute_is_selected=1]").prop('checked', 1);
+        },
+        changed: function () {
+            let selected_hashes_query = App.stock.filter.compile();
+            App.stock.filter.tags.refresh(selected_hashes_query);
+            App.stock.filter.apply();
+        },
+        compile: function () {
+            let selected_hashes_query = '';
+            let selected_hashes = {};
+            let price_min=1e10;
+            let price_max=0;
+            $("#stock_filter_container input:checked").each(function (index, node) {
+                if( $(node).data('attribute_id') ){
+                    let attribute_id = $(node).data('attribute_id');
+                    let attribute_value_hash = $(node).data('attribute_value_hash');
+                    !selected_hashes[attribute_id] && (selected_hashes[attribute_id] = []);
+                    selected_hashes[attribute_id].push(attribute_value_hash);
+                } else {
+                    let min=$(node).data('min');
+                    let max=$(node).data('max');
+                    price_min=Math.min(price_min,min);
+                    price_max=Math.max(price_max,max);
+                }
+            });
+            for (let i in selected_hashes) {
+                selected_hashes_query += "&" + selected_hashes[i].join("|");
+            }
+            App.store('stock_filter_selected_price_min', price_min);
+            App.store('stock_filter_selected_price_max', price_max);
+            App.store('stock_filter_selected_hashes_query', selected_hashes_query.substring(1));
+            return selected_hashes_query;
+        },
+        apply: function () {
+            let selected_hashes_query = App.restore('stock_filter_selected_hashes_query');
+            let selected_price_min=App.restore('stock_filter_selected_price_min');
+            let selected_price_max=App.restore('stock_filter_selected_price_max');
+            let reload_needed=false;
+            if( App.stock.entries.parameters.selected_hashes !== selected_hashes_query ) {
+                App.stock.entries.parameters.selected_hashes = selected_hashes_query;
+                reload_needed=true;
+            }
+            if( App.stock.entries.parameters.selected_price_min!==selected_price_min || App.stock.entries.parameters.selected_price_max!==selected_price_max ){
+                App.stock.entries.parameters.selected_price_min=selected_price_min;
+                App.stock.entries.parameters.selected_price_max=selected_price_max;
+                reload_needed=true;
+            }
+            reload_needed && App.stock.filter.load_filtered_entries();
+        },
+        load_filtered_entries: function () {
+            clearTimeout(App.stock.filter.clock);
+            App.stock.filter.clock = setTimeout(function () {
+                App.stock.entries.show_cart = false;
+                App.stock.entries.load();
+            }, 300);
+        },
+        clearSelected: function () {
+            $("#stock_filter_container input:checked").prop('checked', 0);
+            App.stock.filter.changed();
+        },
+        tags: {
+            render: function () {
+                App.renderTpl("stock_filter_tags", {stock_filter_tags: App.stock.filter.selected});
+            },
+            remove: function (attribute_value_hash) {
+                //only for responsivness until filter reloaded
+                for (let i in App.stock.filter.selected) {
+                    if (App.stock.filter.selected[i]['attribute_value_hash'] === attribute_value_hash) {
+                        App.stock.filter.selected.splice(i, 1);
+                        break;
+                    }
+                }
+                $("#stock_filter_container input[data-attribute_value_hash=" + attribute_value_hash + "]").prop('checked', 0);
+                App.stock.filter.changed();
+            },
+            refresh: function (selected_hashes_query) {
+                //only for responsivness until filter reloaded
+                let actualized_selected = [];
+                let actualized_selected_count = 0;
+                for (let group of App.stock.filter.filter_tree.attributes) {
+                    for (let attribute of group.attribute_values) {
+                        if (selected_hashes_query.indexOf(attribute.attribute_value_hash) > -1) {
+                            actualized_selected.push(attribute);
+                            actualized_selected_count++;
+                        }
+                    }
+                }
+                App.stock.filter.selected = actualized_selected;
+                App.stock.filter.selected_count = actualized_selected_count;
+                App.stock.filter.tags.render();
+            }
         }
-    }
-};
-App.stock.filter.init();
+    };
+    App.stock.filter.init();
 </script>
 <div id="stock_filter_popup" class="ui  segment " style="margin-bottom: auto;">
     <a  class="ui secondary close icon button" style="float:right; display: none" onclick="$('#stock_filter_popup').hide();
@@ -184,24 +207,112 @@ App.stock.filter.init();
     <!--ACCORDION-->
     <div id="stock_filter_container"  class="ui accordion covert">
         {{filter_tree}}
-        
+        <div class='filtergroup-container'>
+            <div class="title" id="stock_filter_price" id="stock_filter_group_0">
+                <i class="dropdown icon"></i>Цена
+            </div>
+            {{if price_ranges}}
+            <div class="filter_group_content content" id="stock_filter_group_content_0" data-filter_group_id="0">
+                {{price_ranges}}
+                <div class="ui form">
+                    <div class="fields">
+                        <div class="field">
+                            <label>От</label>
+                            <input type="text" placeholder="{{min}}" id="stock_filter_price_min">
+                        </div>
+                        <div class="field">
+                            <label>До</label>
+                            <input type="text" placeholder="{{max}}" id="stock_filter_price_max">
+                        </div>
+                    </div>
+                    <div class="grouped fields">
+                        <div class="field">
+                            <div class="ui child checkbox">
+                                <input type="radio" name="price_filter" data-min="{{min}}" data-max="{{max}}">
+                                <label>
+                                     Все цены <span style="color: gray">({{total_count}})</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="field">
+                            <div class="ui child checkbox">
+                                <input type="radio" name="price_filter" data-min="0" data-max="{{range1}}">
+                                <label>
+                                    {{if range_count1|equals>0}}
+                                    <span style="color: gray">
+                                        {{else}}
+                                        <span>
+                                            {{/if}}
+                                            Меньше {{range1}} <span style="color: gray">({{range_count1}})</span>
+                                        </span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="field">
+                            <div class="ui child checkbox">
+                                <input type="radio" name="price_filter" data-min="{{range1|plusone}}" data-max="{{range2}}">
+                                <label>
+                                    {{if range_count2|equals>0}}
+                                    <span style="color: gray">
+                                        {{else}}
+                                        <span>
+                                            {{/if}}
+                                            {{range1|plusone}}-{{range2}} <span style="color: gray">({{range_count2}})</span>
+                                        </span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="field">
+                            <div class="ui child checkbox">
+                                <input type="radio" name="price_filter" data-min="{{range2|plusone}}" data-max="{{range3}}">
+                                <label>
+                                    {{if range_count3|equals>0}}
+                                    <span style="color: gray">
+                                        {{else}}
+                                        <span>
+                                            {{/if}}
+                                            {{range2|plusone}}-{{range3}} <span style="color: gray">({{range_count3}})</span>
+                                        </span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="field">
+                            <div class="ui child checkbox">
+                                <input type="radio" name="price_filter" data-min="{{range3|plusone}}" data-max="{{max|plusone}}">
+                                <label>
+                                    {{if range_count4|equals>0}}
+                                    <span style="color: gray">
+                                        {{else}}
+                                        <span>
+                                            {{/if}}
+                                            Больше {{range3}} <span style="color: gray">({{range_count4}})</span>
+                                        </span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+                {{/price_ranges}}
+            </div>
+            {{/if}}
+        </div>
+
+
         {{attributes}}
-        <div class='attribute-container'>
-            <div class="active title" id="stock_filter_attribute_{{attribute_id}}" >
+        <div class='filtergroup-container'>
+            <div class="title" id="stock_filter_group_{{attribute_id}}" >
                 <i class="dropdown icon"></i>
                 {{attribute_name}}
-                <label class="attributes_added"></label>
             </div>
             {{if attribute_values}}
-            <div class="content" id="stock_filter_content_attribute_{{attribute_id}}" data-attribute_id="{{attribute_id}}">
+            <div class="filter_group_content content" id="stock_filter_group_content_{{attribute_id}}" data-filter_group_id="{{attribute_id}}">
                 <div class="ui form">
                     <div class="grouped fields" >
                         {{attribute_values}}
                         <div class="field">
                             <div class="ui child checkbox">
                                 <input type="checkbox" 
-                                       name="size" 
-                                       value="small" 
                                        data-attribute_id="{{attribute_id}}" 
                                        data-attribute_value_hash="{{attribute_value_hash}}" 
                                        data-attribute_is_selected="{{is_selected}}" 
@@ -210,11 +321,11 @@ App.stock.filter.init();
                                 <label>
                                     {{if product_count|equals>0}}
                                     <span style="color: gray">
-                                    {{else}}
-                                    <span>
-                                    {{/if}}
-                                        {{attribute_prefix}} {{attribute_value}} {{attribute_unit}} <span style="color: gray">({{product_count}})</span>
-                                    </span>
+                                        {{else}}
+                                        <span>
+                                            {{/if}}
+                                            {{attribute_prefix}} {{attribute_value}} {{attribute_unit}} <span style="color: gray">({{product_count}})</span>
+                                        </span>
                                 </label>
                             </div>
                         </div>
@@ -225,15 +336,16 @@ App.stock.filter.init();
             {{/if}}
         </div>
         {{/attributes}}
-        
+
         {{/filter_tree}}
     </div>
     <!--/ACCORDION-->
 </div>
 <style type="text/css">
-    #stock_filter_container .content {
+    #stock_filter_container .filter_group_content {
         max-height: 18em;
-        overflow: auto;
+        overflow-y: auto;
+        overflow-x: hidden;
     }
     #stock_filter_container .title {
         color: black;
@@ -244,10 +356,10 @@ App.stock.filter.init();
     .ui.inverted.dimmer{
         background-color: rgba(255, 255, 255, 0.3) !important;
     }
-    #stock_filter_container .content{
+    #stock_filter_container .filter_group_content{
         border-bottom: 1px solid rgb(232, 232, 232);
     }
-    #stock_filter_container .attribute-container .title:hover{
+    #stock_filter_container .filtergroup-container .title:hover{
         transition: 0.5s ease;
         background-color: #eee;
     } 
