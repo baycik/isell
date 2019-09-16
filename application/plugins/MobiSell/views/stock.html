@@ -120,21 +120,24 @@
                 limit:12
             },
             init: function(){
-                ///INJECTION
-                let selected_hashes_query=App.restore('stock_filter_selected_hashes_query');
-                let selected_price_min=App.restore('stock_filter_selected_price_min');
-                let selected_price_max=App.restore('stock_filter_selected_price_max');
-                if( selected_hashes_query ){
-                    App.stock.entries.parameters.selected_hashes=selected_hashes_query;
-                }
-                if( selected_price_min || selected_price_max ){
-                    App.stock.entries.parameters.selected_price_min=selected_price_min;
-                    App.stock.entries.parameters.selected_price_max=selected_price_max;
-                }
-                //END OF INJECTION
                 App.stock.entries.load();
             },
             load_prepare_params:function(load_more){
+                ///INJECTION
+                function filter_apply(){
+                    let selected_hashes_query=App.restore('stock_filter_selected_hashes_query');
+                    let selected_price_min=App.restore('stock_filter_selected_price_min');
+                    let selected_price_max=App.restore('stock_filter_selected_price_max');
+                    if( selected_hashes_query ){
+                        App.stock.entries.parameters.selected_hashes=selected_hashes_query;
+                    }
+                    if( selected_price_min || selected_price_max ){
+                        App.stock.entries.parameters.selected_price_min=selected_price_min||0;
+                        App.stock.entries.parameters.selected_price_max=selected_price_max||0;
+                    }
+                }
+                filter_apply();
+                //END OF INJECTION
                 if (load_more) {
                     App.stock.entries.parameters.offset += App.stock.entries.limit;
                 } else {

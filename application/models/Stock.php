@@ -653,37 +653,54 @@ class Stock extends Catalog {
         $where=     $this->matchesListGetWhere( $q, $category_id );
         $order_by=  $this->matchesListGetOrderBy($sortby,$sortdir);
         $this->matchesListCreateTemporary($where);
+        header("TMP: ".(microtime(1)-$start));
         
         
-        //$filter=[];
+        $filter_levels=[];
         //$filter[]=$this->matchesFilterPriceCreate();
         
         
         //$this->matchesFilterStore($filter);
         
+        
+                
+        
+        
+        
         //INJECTION ATTRIBUTE MANAGER
         $AttributeManager=$this->Hub->load_model('AttributeManager');
-        $join_filter=$AttributeManager->filterOut();
+        $filter_levels[]=$AttributeManager->filterOut();
         //END OF INJECTION ATTRIBUTE MANAGER
         
-        #INJECTION ATTRIBUTE MANAGER
-                #$join_filter
-                #ENF OF INJECTION ATTRIBUTE MANAGER
         
+        $select_sql='*';
+        $table_sql='tmp_matches_list ';
+        $where_sql='';
+        $having_sql='';
         
+//        foreach($filter_levels as $filter){
+//            $filter['select'] && $select_sql.=$filter['select'];
+//            $filter['table']  && $table_sql.=$filter['table'];
+//            $filter['where']  && $where_sql.=$filter['where'];
+//            $filter['having'] && $having_sql.=$filter['having'];
+//        }
+//        $where_sql && $where_sql='WHERE '.$where_sql;
+//        $having_sql && $having_sql='HAVING '.$having_sql;
         
+
         $sql="
             SELECT
-                *
+                $select_sql
             FROM
-                tmp_matches_list
-                
-            #INJECTION ATTRIBUTE MANAGER
-            $join_filter
-            #ENF OF INJECTION ATTRIBUTE MANAGER
-            
+                $table_sql
+            $where_sql
+            GROUP BY product_id
+            $having_sql
             ORDER BY $order_by
             LIMIT $limit OFFSET $offset";
+        
+       //echo ($sql);
+        
         $matches=$this->get_list($sql);
         
         header("TT: ".(microtime(1)-$start));
@@ -747,8 +764,8 @@ class Stock extends Catalog {
         $usd_ratio=$this->Hub->pref('usd_ratio');
         $pcomp_id=$this->Hub->pcomp('company_id');
         $price_label=$this->Hub->pcomp('price_label');#TEMPORARY
-        $this->query("DROP  TABLE IF EXISTS tmp_matches_list");
-        $sql="CREATE  TABLE tmp_matches_list (PRIMARY KEY(product_id)) AS 
+        $this->query("DROP TEMPORARY TABLE IF EXISTS tmp_matches_list");
+        $sql="CREATE TEMPORARY TABLE tmp_matches_list (PRIMARY KEY(product_id)) AS 
             SELECT 
                 pl.product_id,
                 pl.product_code,

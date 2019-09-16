@@ -97,6 +97,8 @@
                     let max=$(node).data('max');
                     price_min=Math.min(price_min,min);
                     price_max=Math.max(price_max,max);
+                    $("#stock_filter_price_min").val(price_min);
+                    $("#stock_filter_price_max").val(price_max);
                 }
             });
             for (let i in selected_hashes) {
@@ -112,13 +114,11 @@
             let selected_price_min=App.restore('stock_filter_selected_price_min');
             let selected_price_max=App.restore('stock_filter_selected_price_max');
             let reload_needed=false;
-            if( App.stock.entries.parameters.selected_hashes !== selected_hashes_query ) {
-                App.stock.entries.parameters.selected_hashes = selected_hashes_query;
+            let params=App.stock.entries.parameters;
+            if( params.selected_hashes !== selected_hashes_query ) {
                 reload_needed=true;
             }
-            if( App.stock.entries.parameters.selected_price_min!==selected_price_min || App.stock.entries.parameters.selected_price_max!==selected_price_max ){
-                App.stock.entries.parameters.selected_price_min=selected_price_min;
-                App.stock.entries.parameters.selected_price_max=selected_price_max;
+            if( params.selected_price_min!==selected_price_min || params.selected_price_max!==selected_price_max ){
                 reload_needed=true;
             }
             reload_needed && App.stock.filter.load_filtered_entries();

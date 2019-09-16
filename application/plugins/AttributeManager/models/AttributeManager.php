@@ -297,13 +297,13 @@ class AttributeManager extends Catalog{
         $selected_price_max=$this->request('selected_price_max','int');
         
         $selected_hashes=$this->request('selected_hashes','[0-9a-f\&\|]+');
-        $selected_list="0";
-        if( $selected_hashes ){
-            $selected_list= "'".str_replace(["&","|"], "','", $selected_hashes)."'";
-        }
-        $filter_join= $this->filterApply($selected_hashes);
-        $groupped_filter=$this->filterConstruct( $selected_list, $filter_join );
+
+        
+        
+        $groupped_filter=$this->filterConstruct( $selected_hashes );
         $this->Hub->svar('groupped_filter',$groupped_filter);
+        
+        $filter_join= $this->filterApply($selected_hashes);
         
         //print_r($groupped_filter);
         
@@ -317,33 +317,54 @@ class AttributeManager extends Catalog{
     
     private function filterApply( $selected_hashes ){
         if( !$selected_hashes ){
-            return '';
+            return false;
         }
         $or_case="'".str_replace('|', "','", $selected_hashes)."'";
         $and_case=" MAX(attribute_value_hash IN (".str_replace('&',"')) * MAX(attribute_value_hash IN ('",$or_case).")) ";
-        $sql="
-            JOIN 
-        (SELECT 
-            product_id
-        FROM
-            attribute_values
-        GROUP BY product_id
-        HAVING($and_case)) filter_join USING(product_id)";
-        return $sql;
+
+        $remove_sql="
+            DELETE
+                tmp_matches_list
+            FROM
+                tmp_matches_list
+                    LEFT JOIN
+                (SELECT 
+                    product_id
+                FROM
+                    attribute_values
+                GROUP BY product_id
+                HAVING $and_case) filter_join USING (product_id)
+            WHERE
+                filter_join.product_id IS NULL
+                ";
+        
+        //die($remove_sql);
+       $this->query($remove_sql);
+        return [];
+        
+        
+        
+        
+        $filter['select']=", $and_case attribute_match";
+        $filter['table']="JOIN attribute_values USING(product_id)";
+        $filter['having']="attribute_match";
+        $filter['where']='';
+        return $filter;
     }
     
-    private function filterConstruct( $selected_list, $filter_join ){
+    private function filterConstruct( $selected_hashes ){
         $groupped_filter=[
-            'attributes'=>$this->filterConstructAttributes($selected_list, $filter_join),
-            'price_ranges'=>$this->filterConstructPriceRanges($selected_list, $filter_join)
+            'attributes'=>$this->filterConstructAttributes( $selected_hashes ),
+            'price_ranges'=>$this->filterConstructPriceRanges()
         ];
         return $groupped_filter;
     }
     
-    private function filterConstructPriceRanges($selected_list, $filter_join){
+    private function filterConstructPriceRanges(){
         $minmax=$this->get_row("SELECT MIN(price_final) price_min,MAX(price_final) price_max FROM tmp_matches_list");
         
-        $fraction=$minmax->price_max/3;
+        $fraction_count=4;
+        $fraction=$minmax->price_max/($fraction_count-1);
         $roundto=pow(10,strlen(round($fraction))-1);
         $rounded_fraction=round($fraction/$roundto)*$roundto;
         
@@ -366,15 +387,15 @@ class AttributeManager extends Catalog{
         return [$ranges];
     }
     
-    private function filterConstructAttributes($selected_list, $filter_join){
+    private function filterConstructAttributes( $selected_hashes ){
         $select_checker="0";
-        if( $selected_list ){
-            $select_checker=" IF( attribute_value_hash IN ($selected_list),1,0) ";
-        }
         $counter="COUNT(*)";
-        if( $filter_join ){
-            $filter_join="LEFT $filter_join";
-            $counter="COUNT(filter_join.product_id)";
+        if( $selected_hashes ){
+            $or_case="'".str_replace('|', "','", $selected_hashes)."'";
+            $and_case=" (attribute_value_hash IN (".str_replace('&',"')) * (attribute_value_hash IN ('",$or_case).")) ";
+            $selected_list="'".str_replace(['|','&'], "','", $selected_hashes)."'";
+            $select_checker=" IF( attribute_value_hash IN ($selected_list),1,0) ";
+            $counter="SUM($and_case)";
         }
         $sql="
             SELECT 
@@ -389,7 +410,6 @@ class AttributeManager extends Catalog{
                 attribute_values av USING(product_id)
                     JOIN
                 attribute_list al USING(attribute_id)
-                    $filter_join
             GROUP BY attribute_value_hash
             ORDER BY attribute_name,$counter=0,attribute_value";
         $filter_list=$this->get_list($sql);
