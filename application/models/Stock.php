@@ -610,33 +610,41 @@ class Stock extends Catalog {
     
     
     
-    private function matchesFilterPriceCreate(){
-        $sql_calc_fractions="
-        SELECT 
-            (@fraction:=MAX(price_final*1) / 4) +
-            (@roundto:=RPAD(1, CHAR_LENGTH(ROUND(@fraction)), 0)) +
-            (@rounded_fraction:=ROUND(@fraction / @roundto) * @roundto)
-        FROM
-            tmp_matches_list;";
-        $this->query($sql_calc_fractions);
-        
-        $sql_calc_ranges="
-        SELECT
-            @rounded_fraction fraction,
-            SUM(ROUND(price_final/@rounded_fraction)=0) range1,
-            SUM(ROUND(price_final/@rounded_fraction)=1) range2,
-            SUM(ROUND(price_final/@rounded_fraction)=2) range3,
-            SUM(ROUND(price_final/@rounded_fraction)=3) range4,
-            SUM(ROUND(price_final/@rounded_fraction)=4) range5
-        FROM
-            tmp_matches_list";
-        $filter_group=[
-            'selector'=>'price_final',
-            'collation'=>'between',
-            'options'=>$this->get_list($sql_calc_ranges)
-        ];
-        return $filter_group;
-    }
+//    private function matchesFilterPriceCreate(){
+//        $minmax=$this->get_row("SELECT MIN(price_final) price_min,MAX(price_final) price_max FROM tmp_matches_list");
+//        
+//        $fraction_count=4;
+//        $fraction=$minmax->price_max/($fraction_count-1);
+//        $roundto=pow(10,strlen(round($fraction))-1);
+//        $rounded_fraction=round($fraction/$roundto)*$roundto;
+//        
+//        $calc_fraction_count="
+//        SELECT
+//            $rounded_fraction*1 range1,
+//            $rounded_fraction*2 range2,
+//            $rounded_fraction*3 range3,
+//            $rounded_fraction*4 range4,
+//            SUM(ROUND(price_final/$rounded_fraction)=0) range_count1,
+//            SUM(ROUND(price_final/$rounded_fraction)=1) range_count2,
+//            SUM(ROUND(price_final/$rounded_fraction)=2) range_count3,
+//            SUM(ROUND(price_final/$rounded_fraction)>=3) range_count4,
+//            COUNT(*) total_count
+//        FROM
+//            tmp_matches_list";
+//        $ranges=$this->get_row($calc_fraction_count);
+//        $ranges->min=$minmax->price_min;
+//        $ranges->max=$minmax->price_max;
+//        return [$ranges];
+//        
+//        
+//        
+//        $filter_group=[
+//            'selector'=>'price_final',
+//            'collation'=>'between',
+//            'options'=>$this->get_list($sql_calc_ranges)
+//        ];
+//        return $filter_group;
+//    }
     
     private function matchesFilterStore($filter){
         $this->Hub->svar('groupped_filter',$groupped_filter);
@@ -669,7 +677,7 @@ class Stock extends Catalog {
         
         //INJECTION ATTRIBUTE MANAGER
         $AttributeManager=$this->Hub->load_model('AttributeManager');
-        $filter_levels[]=$AttributeManager->filterOut();
+        $AttributeManager->filterOut();
         //END OF INJECTION ATTRIBUTE MANAGER
         
         
@@ -764,8 +772,8 @@ class Stock extends Catalog {
         $usd_ratio=$this->Hub->pref('usd_ratio');
         $pcomp_id=$this->Hub->pcomp('company_id');
         $price_label=$this->Hub->pcomp('price_label');#TEMPORARY
-        $this->query("DROP TEMPORARY TABLE IF EXISTS tmp_matches_list");
-        $sql="CREATE TEMPORARY TABLE tmp_matches_list (PRIMARY KEY(product_id)) AS 
+        $this->query("DROP  TABLE IF EXISTS tmp_matches_list");
+        $sql="CREATE  TABLE tmp_matches_list (PRIMARY KEY(product_id)) AS 
             SELECT 
                 pl.product_id,
                 pl.product_code,

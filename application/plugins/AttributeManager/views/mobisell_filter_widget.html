@@ -20,9 +20,9 @@
                 App.stock.filter.changed();
             });
             $("#stock_filter_tags").click(function (e) {
-                var attribute_value_hash = $(e.target).data('attribute_value_hash');
-                if (attribute_value_hash) {
-                    App.stock.filter.tags.remove(attribute_value_hash);
+                var filter_option_id = $(e.target).data('filter_option_id');
+                if (filter_option_id) {
+                    App.stock.filter.tags.remove(filter_option_id);
                 }
             });
             App.Topic('StockEntriesRendered').subscribe(function () {
@@ -36,10 +36,14 @@
             //optimisation: reducing reload of filter. Reload only if category_id or q is changed
             if (this.last_selected_hashes === App.stock.entries.parameters.selected_hashes
                     && this.last_q === App.stock.entries.parameters.q
-                    && this.last_category_id === App.stock.entries.parameters.category_id) {
+                    && this.last_category_id === App.stock.entries.parameters.category_id
+                    && this.last_price_min === App.stock.entries.parameters.price_min
+                    && this.last_price_max === App.stock.entries.parameters.price_max) {
                 return;
             }
             this.last_selected_hashes = App.stock.entries.parameters.selected_hashes;
+            this.last_price_min = App.stock.entries.parameters.price_min;
+            this.last_price_max = App.stock.entries.parameters.price_max;
             this.last_q = App.stock.entries.parameters.q;
             this.last_category_id = App.stock.entries.parameters.category_id;
             $.post("../AttributeManager/filterGet", function (resp) {
@@ -52,10 +56,10 @@
         render_prepare: function (filter_tree) {
             let actualized_selected = [];
             let actualized_selected_count = 0;
-            for (let group of filter_tree.attributes) {
-                for (let attribute of group.attribute_values) {
-                    if (attribute.is_selected == 1) {
-                        actualized_selected.push(attribute);
+            for (let group of filter_tree) {
+                for (let option of group.filter_group_options) {
+                    if (option.is_selected == 1) {
+                        actualized_selected.push(option);
                         actualized_selected_count++;
                     }
                 }
@@ -87,11 +91,11 @@
             let price_min=1e10;
             let price_max=0;
             $("#stock_filter_container input:checked").each(function (index, node) {
-                if( $(node).data('attribute_id') ){
-                    let attribute_id = $(node).data('attribute_id');
-                    let attribute_value_hash = $(node).data('attribute_value_hash');
-                    !selected_hashes[attribute_id] && (selected_hashes[attribute_id] = []);
-                    selected_hashes[attribute_id].push(attribute_value_hash);
+                if( $(node).data('filter_group_id') ){
+                    let filter_group_id = $(node).data('filter_group_id');
+                    let filter_option_id = $(node).data('filter_option_id');
+                    !selected_hashes[filter_group_id] && (selected_hashes[filter_group_id] = []);
+                    selected_hashes[filter_group_id].push(filter_option_id);
                 } else {
                     let min=$(node).data('min');
                     let max=$(node).data('max');
@@ -138,25 +142,25 @@
             render: function () {
                 App.renderTpl("stock_filter_tags", {stock_filter_tags: App.stock.filter.selected});
             },
-            remove: function (attribute_value_hash) {
+            remove: function (filter_option_id) {
                 //only for responsivness until filter reloaded
                 for (let i in App.stock.filter.selected) {
-                    if (App.stock.filter.selected[i]['attribute_value_hash'] === attribute_value_hash) {
+                    if (App.stock.filter.selected[i]['filter_option_id'] === filter_option_id) {
                         App.stock.filter.selected.splice(i, 1);
                         break;
                     }
                 }
-                $("#stock_filter_container input[data-attribute_value_hash=" + attribute_value_hash + "]").prop('checked', 0);
+                $("#stock_filter_container input[data-filter_option_id=" + filter_option_id + "]").prop('checked', 0);
                 App.stock.filter.changed();
             },
             refresh: function (selected_hashes_query) {
                 //only for responsivness until filter reloaded
                 let actualized_selected = [];
                 let actualized_selected_count = 0;
-                for (let group of App.stock.filter.filter_tree.attributes) {
-                    for (let attribute of group.attribute_values) {
-                        if (selected_hashes_query.indexOf(attribute.attribute_value_hash) > -1) {
-                            actualized_selected.push(attribute);
+                for (let group of App.stock.filter.filter_tree) {
+                    for (let option of group.filter_group_options) {
+                        if (selected_hashes_query.indexOf(option.filter_option_id) > -1) {
+                            actualized_selected.push(option);
                             actualized_selected_count++;
                         }
                     }
@@ -186,8 +190,8 @@
         <div class="ui blue  labels">
             {{stock_filter_tags}}
             <a class="ui  label">
-                {{attribute_name}}: {{attribute_prefix}} {{attribute_value}}{{attribute_unit}} 
-                <i class="delete icon" data-attribute_value_hash="{{attribute_value_hash}}"></i>
+                {{filter_group_name}}: {{filter_option_label}} 
+                <i class="delete icon" data-filter_option_id="{{filter_option_id}}"></i>
             </a>
             {{/stock_filter_tags}}
         </div>
@@ -208,135 +212,58 @@
     <div id="stock_filter_container"  class="ui accordion covert">
         {{filter_tree}}
         <div class='filtergroup-container'>
-            <div class="title" id="stock_filter_price" id="stock_filter_group_0">
-                <i class="dropdown icon"></i>Цена
+            <div class="title" id="stock_filter_group_{{filter_group_id}}" >
+                <i class="dropdown icon"></i>
+                {{filter_group_name}}
             </div>
-            {{if price_ranges}}
-            <div class="filter_group_content content" id="stock_filter_group_content_0" data-filter_group_id="0">
-                {{price_ranges}}
+            <div class="filter_group_content content" id="stock_filter_group_content_{{filter_group_id}}" data-filter_group_id="{{filter_group_id}}">
                 <div class="ui form">
+                    {{if filter_group_range}}
                     <div class="fields">
                         <div class="field">
                             <label>От</label>
-                            <input type="text" placeholder="{{min}}" id="stock_filter_price_min">
+                            <input type="text" 
+                                   placeholder="{{filter_group_range|split>_|limit>1>0|join>}}"
+                                   data-filter_group_id="{{filter_group_id}}"
+                                   data-value_type="min">
                         </div>
                         <div class="field">
                             <label>До</label>
-                            <input type="text" placeholder="{{max}}" id="stock_filter_price_max">
+                            <input type="text" 
+                                   placeholder="{{filter_group_range|split>_|limit>1>1|join>}}"
+                                   data-filter_group_id="{{filter_group_id}}"
+                                   data-value_type="max">
                         </div>
                     </div>
-                    <div class="grouped fields">
-                        <div class="field">
-                            <div class="ui child checkbox">
-                                <input type="radio" name="price_filter" data-min="{{min}}" data-max="{{max}}">
-                                <label>
-                                     Все цены <span style="color: gray">({{total_count}})</span>
-                                </label>
-                            </div>
-                        </div>
-                        <div class="field">
-                            <div class="ui child checkbox">
-                                <input type="radio" name="price_filter" data-min="0" data-max="{{range1}}">
-                                <label>
-                                    {{if range_count1|equals>0}}
-                                    <span style="color: gray">
-                                        {{else}}
-                                        <span>
-                                            {{/if}}
-                                            Меньше {{range1}} <span style="color: gray">({{range_count1}})</span>
-                                        </span>
-                                </label>
-                            </div>
-                        </div>
-                        <div class="field">
-                            <div class="ui child checkbox">
-                                <input type="radio" name="price_filter" data-min="{{range1|plusone}}" data-max="{{range2}}">
-                                <label>
-                                    {{if range_count2|equals>0}}
-                                    <span style="color: gray">
-                                        {{else}}
-                                        <span>
-                                            {{/if}}
-                                            {{range1|plusone}}-{{range2}} <span style="color: gray">({{range_count2}})</span>
-                                        </span>
-                                </label>
-                            </div>
-                        </div>
-                        <div class="field">
-                            <div class="ui child checkbox">
-                                <input type="radio" name="price_filter" data-min="{{range2|plusone}}" data-max="{{range3}}">
-                                <label>
-                                    {{if range_count3|equals>0}}
-                                    <span style="color: gray">
-                                        {{else}}
-                                        <span>
-                                            {{/if}}
-                                            {{range2|plusone}}-{{range3}} <span style="color: gray">({{range_count3}})</span>
-                                        </span>
-                                </label>
-                            </div>
-                        </div>
-                        <div class="field">
-                            <div class="ui child checkbox">
-                                <input type="radio" name="price_filter" data-min="{{range3|plusone}}" data-max="{{max|plusone}}">
-                                <label>
-                                    {{if range_count4|equals>0}}
-                                    <span style="color: gray">
-                                        {{else}}
-                                        <span>
-                                            {{/if}}
-                                            Больше {{range3}} <span style="color: gray">({{range_count4}})</span>
-                                        </span>
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
-                {{/price_ranges}}
-            </div>
-            {{/if}}
-        </div>
-
-
-        {{attributes}}
-        <div class='filtergroup-container'>
-            <div class="title" id="stock_filter_group_{{attribute_id}}" >
-                <i class="dropdown icon"></i>
-                {{attribute_name}}
-            </div>
-            {{if attribute_values}}
-            <div class="filter_group_content content" id="stock_filter_group_content_{{attribute_id}}" data-filter_group_id="{{attribute_id}}">
-                <div class="ui form">
+                    {{/if}}
+                    
+                    {{if filter_group_options}}
                     <div class="grouped fields" >
-                        {{attribute_values}}
+                        {{filter_group_options}}
                         <div class="field">
                             <div class="ui child checkbox">
                                 <input type="checkbox" 
-                                       data-attribute_id="{{attribute_id}}" 
-                                       data-attribute_value_hash="{{attribute_value_hash}}" 
-                                       data-attribute_is_selected="{{is_selected}}" 
-                                       data-attribute_value="{{attribute_prefix}} {{attribute_value}} {{attribute_unit}}" 
+                                       data-filter_group_id="{{filter_group_id}}" 
+                                       data-filter_option_id="{{filter_option_id}}"
+                                       data-attribute_is_selected="{{is_selected}}"
                                        >
                                 <label>
-                                    {{if product_count|equals>0}}
+                                    {{if match_count|equals>0}}
                                     <span style="color: gray">
                                         {{else}}
                                         <span>
                                             {{/if}}
-                                            {{attribute_prefix}} {{attribute_value}} {{attribute_unit}} <span style="color: gray">({{product_count}})</span>
+                                            {{filter_option_label}} <span style="color: gray">({{match_count}})</span>
                                         </span>
                                 </label>
                             </div>
                         </div>
-                        {{/attribute_values}}
+                        {{/filter_group_options}}
                     </div>
+                    {{/if}}
                 </div>  
             </div>
-            {{/if}}
         </div>
-        {{/attributes}}
-
         {{/filter_tree}}
     </div>
     <!--/ACCORDION-->
