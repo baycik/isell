@@ -13,7 +13,7 @@ class Checkout extends Stock {
         $null = null;
 	$having = $this->makeStockFilter($filter);
         $where = '';
-        $sql = "        
+        echo $sql = "        
             SELECT
                 checkout_list.*,
                 DATE_FORMAT(checkout_list.cstamp, '%d.%m.%Y %H:%i') cstamp_dmy, 
@@ -29,7 +29,7 @@ class Checkout extends Stock {
 		companies_tree USING(branch_id)
             WHERE
 		checkout_list.cstamp LIKE '$date%'
-                AND IF(checkout_list.parent_doc_id,level<='$level' AND path LIKE '$assigned_path%','$level'>1)
+                AND IF(checkout_list.parent_doc_id AND doc_id,level<='$level' AND path LIKE '$assigned_path%','$level'>1)
             HAVING {$having['inner']}
             ORDER BY $sortby $sortdir
             LIMIT $limit OFFSET $offset";
