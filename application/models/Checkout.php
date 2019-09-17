@@ -13,7 +13,7 @@ class Checkout extends Stock {
         $null = null;
 	$having = $this->makeStockFilter($filter);
         $where = '';
-        echo $sql = "        
+        $sql = "        
             SELECT
                 checkout_list.*,
                 DATE_FORMAT(checkout_list.cstamp, '%d.%m.%Y %H:%i') cstamp_dmy, 
