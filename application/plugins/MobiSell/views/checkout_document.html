@@ -312,6 +312,8 @@
                 $('#checkout_document_quantity_popup').modal({
 		    duration:0
 		}).modal('show');
+                var product_name=popup_product_data.ru.split(" ").splice(0,6).join(" ");//limiting name to 6 words
+                App.speech.say(product_name);
             },
             popup_quantity_backspace_emulate:function(){
                 var str=$("#checkout_document_popup_quan_form input[name=operation_quantity]").val();

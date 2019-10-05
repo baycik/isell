@@ -283,7 +283,16 @@
 		} else {
 		    $('#offline_popup').modal('show');
 		}
-	    }
+	    },
+            speech:{
+                say:function( text ){
+                    var synth = window.speechSynthesis;
+                    var utterThis = new SpeechSynthesisUtterance(text);
+                    utterThis.pitch = 1;
+                    utterThis.rate = 2;
+                    synth.speak(utterThis);
+                }
+            }
 	};
 	$(App.init);
 
