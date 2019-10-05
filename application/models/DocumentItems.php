@@ -1,7 +1,18 @@
 <?php
 class DocumentItems extends DocumentCore{
-    public function suggestFetch( string $q, int $offset=0,int $limit=10, int $doc_id=0, int $category_id=0, bool $transliterated=false ){
-	$price_query="0";
+    public function suggestFetch( string $q, int $offset=0,int $limit=10, int $doc_id=0, int $category_id=0 ){
+        session_write_close();
+        $matches=$this->suggestResultFetch($q, $offset, $limit, $doc_id, $category_id);
+        if( !$matches ){
+            $matches=$this->suggestResultFetch($this->transliterate($q,'fromlatin'), $offset, $limit, $doc_id, $category_id);
+        }
+        if( !$matches ){
+            $matches=$this->suggestResultFetch($this->transliterate($q,'fromcyrilic'), $offset, $limit, $doc_id, $category_id);
+        }
+        return $matches;
+    }
+    
+    private function suggestResultFetch( string $q, int $offset=0,int $limit=10, int $doc_id=0, int $category_id=0 ){
         $pcomp_id=$this->Hub->pcomp('company_id');
         $usd_ratio=$this->Hub->pref('usd_ratio');
 	if( $doc_id ){
@@ -50,24 +61,8 @@ class DocumentItems extends DocumentCore{
             WHERE $where
 	    ORDER BY fetch_count-DATEDIFF(NOW(),fetch_stamp) DESC, product_code
 	    LIMIT $limit OFFSET $offset";
-        $output=$this->get_list($sql);
-        if( !count($output) ){
-            return $this->suggestTransliterate($q,$transliterated,$offset,$limit,$doc_id,$category_id);
-        }
-        return $output;
-    }
-    
-    private function suggestTransliterate($q,$transliterated,$offset,$limit,$doc_id,$category_id){
-        if( $transliterated==false || $transliterated=='fromlatin' ){
-            if( $transliterated==false ){
-                $direction='fromlatin';
-            } else {
-                $direction='fromcyrilic';
-            }
-            
-            return $this->suggestFetch($this->transliterate($q,$direction),$offset,$limit,$doc_id,$category_id,$direction);
-        }
-        return [];
+        $suggested=$this->get_list($sql);//for plugin modifications
+        return $suggested;
     }
 
     protected function footerGet(){
@@ -245,6 +240,7 @@ class DocumentItems extends DocumentCore{
     
     public function entryDeleteArray($doc_id,$ids_arr){
 	$this->selectDoc($doc_id);
+        $this->loadDoc($doc_id);
 	$Document2=$this->Hub->bridgeLoad('Document');
 	$delete_ok=$Document2->deleteEntry($ids_arr);
         $Events=$this->Hub->load_model("Events");

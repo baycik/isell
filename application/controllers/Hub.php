@@ -12,7 +12,7 @@ spl_autoload_register(function ($class_name) {
 });
 
 
-class Hub  extends CI_Controller{ 
+class Hub extends CI_Controller{ 
     public $level_names=["Нет доступа","Ограниченный","Менеджер","Бухгалтер","Администратор"];
     private $rtype='OK';
     private $msg='';
@@ -60,7 +60,7 @@ class Hub  extends CI_Controller{
 	include "index.html";
     }
     
-    public function on( $model_name, $method='index' ){
+    public function on( $model_name, $method='index' ){    
 	$this->checkAnonymousAccess($model_name,$method);
 	$route_args =array_slice(func_get_args(), 2);
 	$this->pluginTriggerBefore($model_name,$method,$route_args);

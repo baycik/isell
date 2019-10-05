@@ -7,6 +7,9 @@ CREATE TABLE `plugin_campaign_bonus_periods` (
   `period_plan1` float NOT NULL,
   `period_plan2` float NOT NULL,
   `period_plan3` float NOT NULL,
+  `period_reward1` float NOT NULL,
+  `period_reward2` float NOT NULL,
+  `period_reward3` float NOT NULL,
   PRIMARY KEY (`campaign_bonus_period_id`),
   UNIQUE KEY `period_unique` (`campaign_bonus_id`,`period_year`,`period_quarter`,`period_month`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
@@ -36,5 +39,6 @@ CREATE TABLE `plugin_campaign_bonus` (
   `product_brand_filter` varchar(255) DEFAULT NULL,
   `product_type_filter` varchar(255) DEFAULT NULL,
   `bonus_type` varchar(45) DEFAULT NULL,
+  `bonus_visibility` tinyint(4) DEFAULT NULL,
   PRIMARY KEY (`campaign_bonus_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
