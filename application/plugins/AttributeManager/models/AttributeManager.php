@@ -1,7 +1,7 @@
 <?php
-/* Group Name: Склад
+/* Group Name: Р РЋР С”Р В»Р В°Р Т‘
  * User Level: 2
- * Plugin Name: Менеджер аттрибутов
+ * Plugin Name: Р СљР ВµР Р…Р ВµР Т‘Р В¶Р ВµРЎР‚ Р В°РЎвЂљРЎвЂљРЎР‚Р С‘Р В±РЎС“РЎвЂљР С•Р Р†
  * Plugin URI: http://isellsoft.com
  * Version: 1.0
  * Description: Tool for managing product attributes
@@ -251,10 +251,10 @@ class AttributeManager extends Catalog{
 	$dump=[
             'tpl_files_folder'=>"application/plugins/AttributeManager/views/",
 	    'tpl_files'=>'GridTpl.xlsx',
-	    'title'=>"Экспорт таблицы",
+	    'title'=>"Р В­Р С”РЎРѓР С—Р С•РЎР‚РЎвЂљ РЎвЂљР В°Р В±Р В»Р С‘РЎвЂ РЎвЂ№",
 	    'user_data'=>[
 		'email'=>$this->Hub->svar('pcomp')?$this->Hub->svar('pcomp')->company_email:'',
-		'text'=>'Доброго дня'
+		'text'=>'Р вЂќР С•Р В±РЎР‚Р С•Р С–Р С• Р Т‘Р Р…РЎРЏ'
 	    ],
 	    'struct'=>$this->tableStructure(),
 	    'view'=>[
@@ -271,19 +271,19 @@ class AttributeManager extends Catalog{
         return [
             [
                 'Field'=>'product_code',
-                'Comment'=>'Код'
+                'Comment'=>'Р С™Р С•Р Т‘'
             ],
             [
                 'Field'=>'attribute_name',
-                'Comment'=>'Атрибут'
+                'Comment'=>'Р С’РЎвЂљРЎР‚Р С‘Р В±РЎС“РЎвЂљ'
             ],
             [
                 'Field'=>'attribute_value',
-                'Comment'=>'Значение'
+                'Comment'=>'Р вЂ”Р Р…Р В°РЎвЂЎР ВµР Р…Р С‘Р Вµ'
             ],
             [
                 'Field'=>'attribute_unit',
-                'Comment'=>'Единица'
+                'Comment'=>'Р вЂўР Т‘Р С‘Р Р…Р С‘РЎвЂ Р В°'
             ]
         ];
     }
@@ -304,26 +304,33 @@ class AttributeManager extends Catalog{
     //STOCK MATCHES FILTERING
     /////////////////////////////////////////////////////
     public function filterOut(){
-        $selected_price_min=$this->request('selected_price_min','int');
-        $selected_price_max=$this->request('selected_price_max','int');
-        $selected_hashes=$this->request('selected_hashes','[0-9a-f\&\|]+');
-        
-        $this->filterConstruct( $selected_hashes );
-        $this->filterApply($selected_hashes,$selected_price_min,$selected_price_max);
+        $filter_selected_grouped=$this->request('filter_selected_grouped','json');
+        $this->filterConstruct( $filter_selected_grouped );
+        $this->filterApply( $filter_selected_grouped );
     }
     
     public function filterGet(){
-        
-        
+        //return $this->Hub->svar('filter_list');
         return $this->filterConstructTree();
     }
     
-    private function filterApply( $selected_hashes, $selected_price_min, $selected_price_max ){
+    private function filterApply( $filter_selected_grouped ){
+        $and_case='';
+        $and_delimeter='';
+        if( count($filter_selected_grouped) ){
+            foreach( $filter_selected_grouped as $filter_group_id=>$options ){
+                $id_chunks=explode('-',$filter_group_id);
+                if( $id_chunks[0]=='attribute_id' ){
+                    $or_case="'".implode("','",$options)."'";
+                    $and_case.=$and_delimeter." MAX(attribute_value_hash IN ($or_case)) ";
+                    $and_delimeter="*";
+                }
+            }
+        }
+        
         $join="";
         $where="0 ";
-        if( $selected_hashes ){
-            $or_case="'".str_replace('|', "','", $selected_hashes)."'";
-            $and_case=" MAX(attribute_value_hash IN (".str_replace('&',"')) * MAX(attribute_value_hash IN ('",$or_case).")) ";
+        if( $and_case ){
             $join="LEFT JOIN
                 (SELECT 
                     product_id
@@ -333,12 +340,6 @@ class AttributeManager extends Catalog{
                 HAVING $and_case) filter_join USING (product_id)";
             $where.="OR filter_join.product_id IS NULL";
         }
-        if( $selected_price_min ){
-            $where.=" OR price_final<=$selected_price_min";
-        }
-        if( $selected_price_max ){
-            $where.=" OR price_final>=$selected_price_max";
-        }
         $remove_sql="
             DELETE
                 tmp_matches_list
@@ -347,42 +348,42 @@ class AttributeManager extends Catalog{
                 $join
             WHERE
                 $where";
-        //die($remove_sql);
+        die($remove_sql);
         $this->query($remove_sql);
     }
     
-    private function filterConstruct( $selected_hashes ){
+    private function filterConstruct( $filter_selected_grouped ){
         $this->Hub->svar('filter_list',[]);
         $this->filterConstructPriceRanges();
-        $this->filterConstructAttributes( $selected_hashes );
+        $this->filterConstructAttributes( $filter_selected_grouped );
     }
     
-    private function filterConstructPriceRanges111(){
-        $minmax=$this->get_row("SELECT MIN(price_final) price_min,MAX(price_final) price_max FROM tmp_matches_list");
-        
-        $fraction_count=4;
-        $fraction=$minmax->price_max/($fraction_count-1);
-        $roundto=pow(10,strlen(round($fraction))-1);
-        $rounded_fraction=round($fraction/$roundto)*$roundto;
-        
-        $calc_fraction_count="
-        SELECT
-            $rounded_fraction*1 range1,
-            $rounded_fraction*2 range2,
-            $rounded_fraction*3 range3,
-            $rounded_fraction*4 range4,
-            SUM(FLOOR(price_final/$rounded_fraction)=0) range_count1,
-            SUM(FLOOR(price_final/$rounded_fraction)=1) range_count2,
-            SUM(FLOOR(price_final/$rounded_fraction)=2) range_count3,
-            SUM(FLOOR(price_final/$rounded_fraction)>=3) range_count4,
-            COUNT(*) total_count
-        FROM
-            tmp_matches_list";
-        $ranges=$this->get_row($calc_fraction_count);
-        $ranges->min=$minmax->price_min;
-        $ranges->max=$minmax->price_max;
-        return [$ranges];
-    }
+//    private function filterConstructPriceRanges111(){
+//        $minmax=$this->get_row("SELECT MIN(price_final) price_min,MAX(price_final) price_max FROM tmp_matches_list");
+//        
+//        $fraction_count=4;
+//        $fraction=$minmax->price_max/($fraction_count-1);
+//        $roundto=pow(10,strlen(round($fraction))-1);
+//        $rounded_fraction=round($fraction/$roundto)*$roundto;
+//        
+//        $calc_fraction_count="
+//        SELECT
+//            $rounded_fraction*1 range1,
+//            $rounded_fraction*2 range2,
+//            $rounded_fraction*3 range3,
+//            $rounded_fraction*4 range4,
+//            SUM(FLOOR(price_final/$rounded_fraction)=0) range_count1,
+//            SUM(FLOOR(price_final/$rounded_fraction)=1) range_count2,
+//            SUM(FLOOR(price_final/$rounded_fraction)=2) range_count3,
+//            SUM(FLOOR(price_final/$rounded_fraction)>=3) range_count4,
+//            COUNT(*) total_count
+//        FROM
+//            tmp_matches_list";
+//        $ranges=$this->get_row($calc_fraction_count);
+//        $ranges->min=$minmax->price_min;
+//        $ranges->max=$minmax->price_max;
+//        return [$ranges];
+//    }
     
     private function filterConstructPriceRanges(){
         $minmax=$this->get_row("SELECT MIN(price_final) price_min,MAX(price_final) price_max FROM tmp_matches_list");
@@ -412,32 +413,32 @@ class AttributeManager extends Catalog{
             (object) [
                 'filter_group_id'=>'price_final',
                 'filter_group_name'=>'Price',
-                'filter_group_range'=>"{$minmax->price_min}_{$minmax->price_max}",
-                'filter_option_id'=>1,
+                'filter_option_field'=>'price_final',
+                'filter_option_id'=>"0_{$ranges->range1}",
                 'filter_option_label'=>"Less than $ranges->range1",
                 'match_count'=>$ranges->range_count1
             ],
             (object) [
                 'filter_group_id'=>'price_final',
                 'filter_group_name'=>'Price',
-                'filter_group_range'=>"{$minmax->price_min}_{$minmax->price_max}",
-                'filter_option_id'=>2,
+                'filter_option_field'=>'price_final',
+                'filter_option_id'=>"{$ranges->range1}_{$ranges->range2}",
                 'filter_option_label'=>"$ranges->range1 - $ranges->range2",
                 'match_count'=>$ranges->range_count2
             ],
             (object) [
                 'filter_group_id'=>'price_final',
                 'filter_group_name'=>'Price',
-                'filter_group_range'=>"{$minmax->price_min}_{$minmax->price_max}",
-                'filter_option_id'=>3,
+                'filter_option_field'=>'price_final',
+                'filter_option_id'=>"{$ranges->range2}_{$ranges->range3}",
                 'filter_option_label'=>"$ranges->range2 - $ranges->range3",
                 'match_count'=>$ranges->range_count3
             ],
             (object) [
                 'filter_group_id'=>'price_final',
                 'filter_group_name'=>'Price',
-                'filter_group_range'=>"{$minmax->price_min}_{$minmax->price_max}",
-                'filter_option_id'=>4,
+                'filter_option_field'=>'price_final',
+                'filter_option_id'=>"{$ranges->range4}_{$minmax->price_max}",
                 'filter_option_label'=>"More than $ranges->range4",
                 'match_count'=>$ranges->range_count4
             ],
@@ -445,15 +446,27 @@ class AttributeManager extends Catalog{
         $this->filterStoreFilterOptions( $filter_options );
     }
     
-    private function filterConstructAttributes( $selected_hashes ){
-        $select_checker="0";
+    private function filterConstructAttributes( $filter_selected_grouped ){
+        $selected_checker="0";
+        $selected_list='';
+        $selected_delimeter='';
+        $and_case='';
+        $and_delimeter='';
         $counter="COUNT(*)";
-        if( $selected_hashes ){
-            $or_case="'".str_replace('|', "','", $selected_hashes)."'";
-            $and_case=" (attribute_value_hash IN (".str_replace('&',"')) * (attribute_value_hash IN ('",$or_case).")) ";
-            $selected_list="'".str_replace(['|','&'], "','", $selected_hashes)."'";
-            $select_checker=" IF( attribute_value_hash IN ($selected_list),1,0) ";
-            $counter="SUM($and_case)";
+        if( count($filter_selected_grouped) ){
+            foreach( $filter_selected_grouped as $filter_group_id=>$options ){
+                $id_chunks=explode('-',$filter_group_id);
+                if( $id_chunks[0]=='attribute_id' ){
+                    $or_case="'".implode("','",$options)."'";
+                    $selected_list.=$selected_delimeter.$or_case;
+                    $selected_delimeter=',';
+                    
+                    $and_case=$and_delimeter."(attribute_value_hash IN ($or_case))";
+                    $and_delimeter="*";
+                }
+            }
+            $selected_checker=" IF( attribute_value_hash IN ($selected_list),1,0) ";
+            $counter="333";
         }
         $sql="
             SELECT 
@@ -461,13 +474,15 @@ class AttributeManager extends Catalog{
                     filter_group_id,
                 attribute_name 
                     filter_group_name,
+                'attribute_value_hash'
+                    filter_option_field,
                 attribute_value_hash 
                     filter_option_id,
                 CONCAT(attribute_prefix,' ',attribute_value,' ',attribute_unit) 
                     filter_option_label,
                 $counter 
                     match_count,
-                $select_checker 
+                $selected_checker 
                     is_selected
             FROM
                 tmp_matches_list

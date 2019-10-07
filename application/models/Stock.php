@@ -646,7 +646,11 @@ class Stock extends Catalog {
 //        return $filter_group;
 //    }
     
-    private function matchesFilterStore($filter){
+    private function matchesFilterStore(){
+        
+        
+        
+        
         $this->Hub->svar('groupped_filter',$groupped_filter);
     }
     
@@ -654,13 +658,44 @@ class Stock extends Catalog {
         return $this->Hub->svar('groupped_filter');
     }
     
+    private function matchesFilterCreateTemporary(){
+        $this->query("DROP  TABLE IF EXISTS tmp_matches_list");
+        $sql="CREATE  TABLE tmp_matches_list (PRIMARY KEY(product_id)) AS ";
+    }
+    
+    private function matchesFilterApply(){
+        
+    }
+    
+    
+    
+    
+    
+    
+    
     public function matchesListFetch(string $q, int $limit=12, int $offset=0, string $sortby, string $sortdir, int $category_id=0, int $pcomp_id=0) {
         $start= microtime(1);
         
         
         $where=     $this->matchesListGetWhere( $q, $category_id );
         $order_by=  $this->matchesListGetOrderBy($sortby,$sortdir);
+        
+        
         $this->matchesListCreateTemporary($where);
+        $this->matchesFilterCreateTemporary();
+        $this->matchesFilterApply();
+        $this->matchesFilterStore();
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
         header("TMP: ".(microtime(1)-$start));
         
         
@@ -686,16 +721,8 @@ class Stock extends Catalog {
         $where_sql='';
         $having_sql='';
         
-//        foreach($filter_levels as $filter){
-//            $filter['select'] && $select_sql.=$filter['select'];
-//            $filter['table']  && $table_sql.=$filter['table'];
-//            $filter['where']  && $where_sql.=$filter['where'];
-//            $filter['having'] && $having_sql.=$filter['having'];
-//        }
-//        $where_sql && $where_sql='WHERE '.$where_sql;
-//        $having_sql && $having_sql='HAVING '.$having_sql;
         
-
+        
         $sql="
             SELECT
                 $select_sql
@@ -706,9 +733,6 @@ class Stock extends Catalog {
             $having_sql
             ORDER BY $order_by
             LIMIT $limit OFFSET $offset";
-        
-       //echo ($sql);
-        
         $matches=$this->get_list($sql);
         
         header("TT: ".(microtime(1)-$start));

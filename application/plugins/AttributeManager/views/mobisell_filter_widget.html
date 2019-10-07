@@ -33,19 +33,6 @@
             };
         },
         load: function () {
-            //optimisation: reducing reload of filter. Reload only if category_id or q is changed
-            if (this.last_selected_hashes === App.stock.entries.parameters.selected_hashes
-                    && this.last_q === App.stock.entries.parameters.q
-                    && this.last_category_id === App.stock.entries.parameters.category_id
-                    && this.last_price_min === App.stock.entries.parameters.price_min
-                    && this.last_price_max === App.stock.entries.parameters.price_max) {
-                return;
-            }
-            this.last_selected_hashes = App.stock.entries.parameters.selected_hashes;
-            this.last_price_min = App.stock.entries.parameters.price_min;
-            this.last_price_max = App.stock.entries.parameters.price_max;
-            this.last_q = App.stock.entries.parameters.q;
-            this.last_category_id = App.stock.entries.parameters.category_id;
             $.post("../AttributeManager/filterGet", function (resp) {
                 var filter_tree = App.json(resp);
                 if (filter_tree) {
@@ -53,79 +40,57 @@
                 }
             });
         },
-        render_prepare: function (filter_tree) {
-            let actualized_selected = [];
-            let actualized_selected_count = 0;
-            for (let group of filter_tree) {
-                for (let option of group.filter_group_options) {
-                    if (option.is_selected == 1) {
-                        actualized_selected.push(option);
-                        actualized_selected_count++;
-                    }
-                }
-            }
-            App.stock.filter.filter_tree = filter_tree;
-            App.stock.filter.selected = actualized_selected;
-            App.stock.filter.selected_count = actualized_selected_count;
-        },
         render: function (filter_tree) {
-            App.stock.filter.render_prepare(filter_tree);
-            App.stock.filter.tags.render();
+            App.stock.filter.filter_tree=filter_tree;
             App.renderTpl("stock_filter_container", {filter_tree: filter_tree});
-            //if( App.stock.filter.last_expanded_filter_group ) {
+            if( App.stock.filter.last_expanded_filter_group!==undefined ) {
                 let filter_group_id = App.stock.filter.last_expanded_filter_group;
                 $('#stock_filter_group_' + filter_group_id).addClass('active');
                 $('#stock_filter_group_content_' + filter_group_id).addClass('active');
-            //}
+            }
             $('.stock-attributes-button .attributes-selected-length').html(App.stock.filter.selected_count);
             $("#stock_filter_container input[data-attribute_is_selected=1]").prop('checked', 1);
+            
+            App.stock.filter.compile();//to actualize checked options that came from server
+            App.stock.filter.tags.render();
         },
         changed: function () {
-            let selected_hashes_query = App.stock.filter.compile();
-            App.stock.filter.tags.refresh(selected_hashes_query);
+            App.stock.filter.compile();
+            App.stock.filter.tags.render();
             App.stock.filter.apply();
         },
         compile: function () {
-            let selected_hashes_query = '';
-            let selected_hashes = {};
-            let price_min=1e10;
-            let price_max=0;
+            App.stock.filter.selected_count = 0;
+            App.stock.filter.selected=[];
+            App.stock.filter.selected_grouped={};
             $("#stock_filter_container input:checked").each(function (index, node) {
-                if( $(node).data('filter_group_id') ){
-                    let filter_group_id = $(node).data('filter_group_id');
-                    let filter_option_id = $(node).data('filter_option_id');
-                    !selected_hashes[filter_group_id] && (selected_hashes[filter_group_id] = []);
-                    selected_hashes[filter_group_id].push(filter_option_id);
-                } else {
-                    let min=$(node).data('min');
-                    let max=$(node).data('max');
-                    price_min=Math.min(price_min,min);
-                    price_max=Math.max(price_max,max);
-                    $("#stock_filter_price_min").val(price_min);
-                    $("#stock_filter_price_max").val(price_max);
+                let filter_group_id = $(node).data('filter_group_id');
+                let filter_option_id = $(node).data('filter_option_id');
+                let option=App.stock.filter.find_option_intree(filter_group_id,filter_option_id);
+                if( !App.stock.filter.selected_grouped[filter_group_id] ){
+                    App.stock.filter.selected_grouped[filter_group_id] = [];
                 }
+                App.stock.filter.selected.push(option);
+                App.stock.filter.selected_grouped[filter_group_id].push(option.filter_option_id);   
+                App.stock.filter.selected_count++;
             });
-            for (let i in selected_hashes) {
-                selected_hashes_query += "&" + selected_hashes[i].join("|");
+            App.store('filter_selected_grouped', App.stock.filter.selected_grouped);
+        },
+        find_option_intree:function(filter_group_id,filter_option_id){
+            for(let group of App.stock.filter.filter_tree){
+                if( group.filter_group_id === filter_group_id ){
+                    for (let option of group.filter_group_options) {
+                        if( option.filter_option_id===filter_option_id ) {
+                            console.log(option);
+                            return option;
+                        }
+                    }
+                }
             }
-            App.store('stock_filter_selected_price_min', price_min);
-            App.store('stock_filter_selected_price_max', price_max);
-            App.store('stock_filter_selected_hashes_query', selected_hashes_query.substring(1));
-            return selected_hashes_query;
+            return null;
         },
         apply: function () {
-            let selected_hashes_query = App.restore('stock_filter_selected_hashes_query');
-            let selected_price_min=App.restore('stock_filter_selected_price_min');
-            let selected_price_max=App.restore('stock_filter_selected_price_max');
-            let reload_needed=false;
-            let params=App.stock.entries.parameters;
-            if( params.selected_hashes !== selected_hashes_query ) {
-                reload_needed=true;
-            }
-            if( params.selected_price_min!==selected_price_min || params.selected_price_max!==selected_price_max ){
-                reload_needed=true;
-            }
-            reload_needed && App.stock.filter.load_filtered_entries();
+            App.stock.filter.load_filtered_entries();
         },
         load_filtered_entries: function () {
             clearTimeout(App.stock.filter.clock);
@@ -152,22 +117,6 @@
                 }
                 $("#stock_filter_container input[data-filter_option_id=" + filter_option_id + "]").prop('checked', 0);
                 App.stock.filter.changed();
-            },
-            refresh: function (selected_hashes_query) {
-                //only for responsivness until filter reloaded
-                let actualized_selected = [];
-                let actualized_selected_count = 0;
-                for (let group of App.stock.filter.filter_tree) {
-                    for (let option of group.filter_group_options) {
-                        if (selected_hashes_query.indexOf(option.filter_option_id) > -1) {
-                            actualized_selected.push(option);
-                            actualized_selected_count++;
-                        }
-                    }
-                }
-                App.stock.filter.selected = actualized_selected;
-                App.stock.filter.selected_count = actualized_selected_count;
-                App.stock.filter.tags.render();
             }
         }
     };
