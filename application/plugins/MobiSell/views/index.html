@@ -285,12 +285,16 @@
 		}
 	    },
             speech:{
+                synth:window.speechSynthesis,
                 say:function( text ){
-                    var synth = window.speechSynthesis;
+                    App.speech.hush();
                     var utterThis = new SpeechSynthesisUtterance(text);
                     utterThis.pitch = 1;
                     utterThis.rate = 2;
-                    synth.speak(utterThis);
+                    App.speech.synth.speak(utterThis);
+                },
+                hush:function(){
+                    App.speech.synth.cancel();
                 }
             }
 	};

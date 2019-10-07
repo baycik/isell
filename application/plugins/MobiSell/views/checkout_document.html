@@ -400,7 +400,10 @@
                 App.renderTpl("quan_popup_content", {products:popup_product_data});
                 $("#popup_quantity_message").hide();
                 $('#checkout_document_quantity_popup').modal({
-		    duration:0
+		    duration:0,
+                    onHidden:function(){
+                        App.speech.hush();
+                    }
 		}).modal('show');
                 var product_name=popup_product_data.ru.split(" ").splice(0,6).join(" ");//limiting name to 6 words
                 App.speech.say(product_name);
