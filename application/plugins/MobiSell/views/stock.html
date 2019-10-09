@@ -370,23 +370,25 @@
 
 
 
-<!-- INJECTION -->
-<script>
-    $(function(){
-        $("#stock_filter_widget").load('../AttributeManager/view/?path=mobisell_filter_widget.html');
-    });
-</script>
-<div id="stock_filter_widget"></div>
-<!-- INJECTION -->
 
 
 
 
 
 
-<div id="stock_container" style="display: grid; grid-template-columns: 100%; grid-column-gap: 1em;">
 
+<div id="stock_container" style="display: grid; grid-template-columns: 25% 75%; grid-column-gap: 1em;">
 
+    <!-- INJECTION -->
+    <script>
+        $(function(){
+            $("#stock_filter_widget").load('../AttributeManager/view/?path=mobisell_filter_widget.html');
+        });
+    </script>
+    <div id="stock_filter_widget"></div>
+    <!-- INJECTION -->
+    
+    
     <div id="stock_content">
         <div  class="ui blue segment">
             <form class="ui form" id="stock_head_form">
