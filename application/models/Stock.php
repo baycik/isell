@@ -604,6 +604,44 @@ class Stock extends Catalog {
         OR awaiting IS NOT NULL";
         return $this->query($sql);
     }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     ////////////////////////////////////////////////////
     //MATCHES LIST FETCHING
     ////////////////////////////////////////////////////
@@ -628,77 +666,101 @@ class Stock extends Catalog {
                     'filter_group_name'=>$entry->filter_group_name,
                     'filter_group_options'=>[]
                 ];
-                if( !empty($entry->filter_group_range) ){
+                if( $entry->filter_group_range ){
                     $group['filter_group_range']=$entry->filter_group_range;
                 }
                 $tree[$group_index]=$group;
                 $current_attribute_id = $entry->filter_group_id;
             }
-            $tree[$group_index]['filter_group_options'][]=$entry;
+            $tree[$group_index]['filter_group_options'][]=[
+                'filter_group_id'=>$entry->filter_group_id,
+                'filter_option_id'=>$entry->filter_option_id,
+                'filter_option_label'=>$entry->filter_option_label,
+                'is_selected'=>$entry->is_selected,
+                'match_count'=>44
+                ];
         }
         return $tree;
     }
     
     protected function matchesFilterBuildRange($range_field,$range_field_label){
         $minmax=$this->get_row("SELECT MIN($range_field) minval, MAX($range_field) maxval FROM tmp_matches_list");
+        $range_limits="{$minmax->minval}_{$minmax->maxval}";
         $fraction_count=5;
         $fraction=($minmax->maxval - $minmax->minval)/($fraction_count-1);
         $roundto=pow(10,strlen(round($fraction))-1);
         $rounded_fraction=round($fraction/$roundto)*$roundto;
         for( $i=1; $i<=$fraction_count; $i++ ){
-            $from=$rounded_fraction*($i-1);
-            $to=$rounded_fraction*$i;
+            $from =$from_label=$rounded_fraction*($i-1);
+            $to   =$rounded_fraction*$i;
             if( $from<=$minmax->minval ){
                 $from=$minmax->minval-1;
+                $from_label=$minmax->minval;
             }
             if( $to>$minmax->maxval ){
                 $to=$minmax->maxval;
             }
-            $option_label="$from - $to";
+            $option_label="$from_label - $to";
             $option_condition="$range_field>$from AND $range_field<=$to";
-            $this->matchesFilterBuildOption( $range_field, $range_field_label, $option_label, $option_condition );
+            $this->matchesFilterBuildOption( $range_field, $range_field_label, $range_limits, $option_label, $option_condition );
         }
     }
     
-    protected function matchesFilterBuildOption(  $group_id, $group_name, $option_label, $option_condition  ){
+    protected function matchesFilterBuildOption($group_id, $group_name, $group_range, $option_label, $option_condition){
         $option_id=substr(md5("$group_id-$option_condition"),0,10);//may be collisions. do we need collision check?
+        $is_selected=0;
+        foreach($this->filter_selected_grouped as $options){
+            if( in_array($option_id, $options) ){
+                $is_selected=1;
+                break;
+            }
+        }
         $this->filter_list[$option_id]=(object)[
-                'filter_group_id'=>$group_id,
-                'filter_group_name'=>$group_name,
-                'filter_option_id'=>$option_id,
-                'filter_option_label'=>$option_label,
-                'filter_option_condition'=>$option_condition
-            ];
+            'filter_group_range'=>$group_range,
+            'filter_group_id'=>$group_id,
+            'filter_group_name'=>$group_name,
+            'filter_option_id'=>$option_id,
+            'filter_option_label'=>$option_label,
+            'filter_option_condition'=>$option_condition,
+            'is_selected'=>$is_selected
+        ];
     }
     
     protected function matchesFilterBuild(){
         $this->filter_list=[];
+        $this->filter_selected_grouped=$this->request('filter_selected_grouped','json');
         $this->matchesFilterBuildPrice();
-        $this->matchesFilterApply();//for test
+        //$this->matchesFilterApply();//for test
     }
     protected function matchesFilterBuildPrice(){
         $range_field="price_final";
         $this->matchesFilterBuildRange($range_field,"Цена");
-        print_r($this->filter_list);
+        //print_r($this->filter_list);
     }
     
     protected function matchesFilterApply(){
-        //$filter_selected_grouped=$this->request('filter_selected_grouped','json');
-        $selected_options=["a0d3a00943"];
-        $conditions=[];
-        foreach( $selected_options as $option_id ){
-            if( isset($this->filter_list[$option_id]) ){
-                $conditions[]=$this->filter_list[$option_id]->filter_option_condition;
+        $and_case=[];
+        foreach($this->filter_selected_grouped as $options){
+            $or_case=[];
+            foreach( $options as $option_id ){
+                if( isset($this->filter_list[$option_id]) ){
+                    $or_case[]=$this->filter_list[$option_id]->filter_option_condition;
+                }
             }
+            $and_case[]=implode(" OR ",$or_case);
         }
-        $filter_clause=implode(" AND ",$conditions);
+        $having="";
+        if( $and_case ){
+            $filter_clause=implode(" AND ",$and_case);
+            $having="HAVING $filter_clause;";
+        }
         $this->query("DROP  TABLE IF EXISTS tmp_filtered_matches_list");
-        echo $sql="CREATE  TABLE tmp_filtered_matches_list AS 
+        $sql="CREATE  TABLE tmp_filtered_matches_list AS 
             SELECT
                 *
             FROM
                 tmp_matches_list
-            HAVING $filter_clause;";
+            $having";
         $this->query($sql);
     }
     
