@@ -610,119 +610,123 @@ class Stock extends Catalog {
     
     
     
-//    private function matchesFilterPriceCreate(){
-//        $minmax=$this->get_row("SELECT MIN(price_final) price_min,MAX(price_final) price_max FROM tmp_matches_list");
-//        
-//        $fraction_count=4;
-//        $fraction=$minmax->price_max/($fraction_count-1);
-//        $roundto=pow(10,strlen(round($fraction))-1);
-//        $rounded_fraction=round($fraction/$roundto)*$roundto;
-//        
-//        $calc_fraction_count="
-//        SELECT
-//            $rounded_fraction*1 range1,
-//            $rounded_fraction*2 range2,
-//            $rounded_fraction*3 range3,
-//            $rounded_fraction*4 range4,
-//            SUM(ROUND(price_final/$rounded_fraction)=0) range_count1,
-//            SUM(ROUND(price_final/$rounded_fraction)=1) range_count2,
-//            SUM(ROUND(price_final/$rounded_fraction)=2) range_count3,
-//            SUM(ROUND(price_final/$rounded_fraction)>=3) range_count4,
-//            COUNT(*) total_count
-//        FROM
-//            tmp_matches_list";
-//        $ranges=$this->get_row($calc_fraction_count);
-//        $ranges->min=$minmax->price_min;
-//        $ranges->max=$minmax->price_max;
-//        return [$ranges];
-//        
-//        
-//        
-//        $filter_group=[
-//            'selector'=>'price_final',
-//            'collation'=>'between',
-//            'options'=>$this->get_list($sql_calc_ranges)
-//        ];
-//        return $filter_group;
-//    }
     
-    private function matchesFilterStore(){
-        
-        
-        
-        
-        $this->Hub->svar('groupped_filter',$groupped_filter);
+    protected function matchesFilterStore(){
+        $this->Hub->svar('filter_list',$this->filter_list);
     }
     
     public function matchesFilterGet(){
-        return $this->Hub->svar('groupped_filter');
+        $filter_list=$this->Hub->svar('filter_list');
+        $tree=[];
+        $group_index=-1;
+        $current_attribute_id=0;
+        foreach($filter_list as $entry){
+            if( $current_attribute_id !== $entry->filter_group_id ){
+                $group_index++;
+                $group=[
+                    'filter_group_id'=>$entry->filter_group_id,
+                    'filter_group_name'=>$entry->filter_group_name,
+                    'filter_group_options'=>[]
+                ];
+                if( !empty($entry->filter_group_range) ){
+                    $group['filter_group_range']=$entry->filter_group_range;
+                }
+                $tree[$group_index]=$group;
+                $current_attribute_id = $entry->filter_group_id;
+            }
+            $tree[$group_index]['filter_group_options'][]=$entry;
+        }
+        return $tree;
     }
     
-    private function matchesFilterCreateTemporary(){
-        $this->query("DROP  TABLE IF EXISTS tmp_matches_list");
-        $sql="CREATE  TABLE tmp_matches_list (PRIMARY KEY(product_id)) AS ";
+    protected function matchesFilterBuildRange($range_field,$range_field_label){
+        $minmax=$this->get_row("SELECT MIN($range_field) minval, MAX($range_field) maxval FROM tmp_matches_list");
+        $fraction_count=5;
+        $fraction=($minmax->maxval - $minmax->minval)/($fraction_count-1);
+        $roundto=pow(10,strlen(round($fraction))-1);
+        $rounded_fraction=round($fraction/$roundto)*$roundto;
+        for( $i=1; $i<=$fraction_count; $i++ ){
+            $from=$rounded_fraction*($i-1);
+            $to=$rounded_fraction*$i;
+            if( $from<=$minmax->minval ){
+                $from=$minmax->minval-1;
+            }
+            if( $to>$minmax->maxval ){
+                $to=$minmax->maxval;
+            }
+            $option_label="$from - $to";
+            $option_condition="$range_field>$from AND $range_field<=$to";
+            $this->matchesFilterBuildOption( $range_field, $range_field_label, $option_label, $option_condition );
+        }
     }
     
-    private function matchesFilterApply(){
-        
+    protected function matchesFilterBuildOption(  $group_id, $group_name, $option_label, $option_condition  ){
+        $option_id=substr(md5("$group_id-$option_condition"),0,10);//may be collisions. do we need collision check?
+        $this->filter_list[$option_id]=(object)[
+                'filter_group_id'=>$group_id,
+                'filter_group_name'=>$group_name,
+                'filter_option_id'=>$option_id,
+                'filter_option_label'=>$option_label,
+                'filter_option_condition'=>$option_condition
+            ];
     }
     
+    protected function matchesFilterBuild(){
+        $this->filter_list=[];
+        $this->matchesFilterBuildPrice();
+        $this->matchesFilterApply();//for test
+    }
+    protected function matchesFilterBuildPrice(){
+        $range_field="price_final";
+        $this->matchesFilterBuildRange($range_field,"Цена");
+        print_r($this->filter_list);
+    }
     
-    
+    protected function matchesFilterApply(){
+        //$filter_selected_grouped=$this->request('filter_selected_grouped','json');
+        $selected_options=["a0d3a00943"];
+        $conditions=[];
+        foreach( $selected_options as $option_id ){
+            if( isset($this->filter_list[$option_id]) ){
+                $conditions[]=$this->filter_list[$option_id]->filter_option_condition;
+            }
+        }
+        $filter_clause=implode(" AND ",$conditions);
+        $this->query("DROP  TABLE IF EXISTS tmp_filtered_matches_list");
+        echo $sql="CREATE  TABLE tmp_filtered_matches_list AS 
+            SELECT
+                *
+            FROM
+                tmp_matches_list
+            HAVING $filter_clause;";
+        $this->query($sql);
+    }
     
     
     
     
     public function matchesListFetch(string $q, int $limit=12, int $offset=0, string $sortby, string $sortdir, int $category_id=0, int $pcomp_id=0) {
         $start= microtime(1);
-        
-        
         $where=     $this->matchesListGetWhere( $q, $category_id );
         $order_by=  $this->matchesListGetOrderBy($sortby,$sortdir);
         
-        
         $this->matchesListCreateTemporary($where);
-        $this->matchesFilterCreateTemporary();
+        $this->matchesFilterBuild();
         $this->matchesFilterApply();
         $this->matchesFilterStore();
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
         header("TMP: ".(microtime(1)-$start));
         
         
-        $filter_levels=[];
-        //$filter[]=$this->matchesFilterPriceCreate();
-        
-        
-        //$this->matchesFilterStore($filter);
-        
-        
-                
-        
-        
-        
         //INJECTION ATTRIBUTE MANAGER
-        $AttributeManager=$this->Hub->load_model('AttributeManager');
-        $AttributeManager->filterOut();
+        //$AttributeManager=$this->Hub->load_model('AttributeManager');
+        //$AttributeManager->filterOut();
         //END OF INJECTION ATTRIBUTE MANAGER
         
         
         $select_sql='*';
-        $table_sql='tmp_matches_list ';
+        $table_sql='tmp_filtered_matches_list ';
         $where_sql='';
         $having_sql='';
-        
-        
-        
         $sql="
             SELECT
                 $select_sql
@@ -734,7 +738,6 @@ class Stock extends Catalog {
             ORDER BY $order_by
             LIMIT $limit OFFSET $offset";
         $matches=$this->get_list($sql);
-        
         header("TT: ".(microtime(1)-$start));
         return $matches;
     }
