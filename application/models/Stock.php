@@ -336,7 +336,7 @@ class Stock extends Catalog {
         $sql = "SELECT
 		doc_id,
                 DATE_FORMAT(dl.cstamp,'%d.%m.%Y') oper_date,
-                CONCAT(dt.doc_type_name,IF(dl.is_reclamation,' (Возврат)',''),' #',dl.doc_num) doc,
+                CONCAT(dt.doc_type_name,IF(dl.is_reclamation,' (Р’РѕР·РІСЂР°С‚)',''),' #',dl.doc_num) doc,
 		(SELECT label FROM companies_tree JOIN companies_list USING(branch_id) WHERE company_id=passive_company_id) plabel,
 		(SELECT label FROM companies_tree JOIN companies_list USING(branch_id) WHERE company_id=active_company_id) alabel,
                 product_code,
@@ -498,7 +498,7 @@ class Stock extends Catalog {
                 doc_id,
                 (SELECT label FROM companies_tree JOIN companies_list USING(branch_id) WHERE company_id=active_company_id) acomp_name,
                 (SELECT label FROM companies_tree JOIN companies_list USING(branch_id) WHERE company_id=passive_company_id) pcomp_name,
-                CONCAT(dt.doc_type_name,IF(dl.is_reclamation,' (Возврат)',''),' #',dl.doc_num) doc,
+                CONCAT(dt.doc_type_name,IF(dl.is_reclamation,' (Р’РѕР·РІСЂР°С‚)',''),' #',dl.doc_num) doc,
                 product_code,
                 ru product_name,
                 IF(doc_type=1,product_quantity,'') reserved,
@@ -520,7 +520,7 @@ class Stock extends Catalog {
             LIMIT $limit OFFSET $offset) t
         ";
         $rows=$this->get_list($sql);
-        $rows[]=$this->get_row("SELECT 'Σ' product_name,@reserved_sum reserved,@awaiting_sum awaiting");
+        $rows[]=$this->get_row("SELECT 'ОЈ' product_name,@reserved_sum reserved,@awaiting_sum awaiting");
         return $rows;
     }
     
@@ -534,9 +534,9 @@ class Stock extends Catalog {
             $day_limit=$this->Hub->pref('awaiting_limit');
         }
         $stamp=time()+60*60*24*($day_limit?$day_limit:3);
-        $alert="Счет №".$doc->doc_num." для ".$this->Hub->pcomp('company_name')." снят с резерва";
-        $name="Снятие с резерва";
-        $description="$name счета №".$doc->doc_num." для ".$this->Hub->pcomp('company_name');
+        $alert="РЎС‡РµС‚ в„–".$doc->doc_num." РґР»СЏ ".$this->Hub->pcomp('company_name')." СЃРЅСЏС‚ СЃ СЂРµР·РµСЂРІР°";
+        $name="РЎРЅСЏС‚РёРµ СЃ СЂРµР·РµСЂРІР°";
+        $description="$name СЃС‡РµС‚Р° в„–".$doc->doc_num." РґР»СЏ ".$this->Hub->pcomp('company_name');
         $event=[
             'doc_id'=>$doc->doc_id,
             'event_name'=>$name,
@@ -657,21 +657,24 @@ class Stock extends Catalog {
         $filter_list=$this->Hub->svar('filter_list');
         $tree=[];
         $group_index=-1;
-        $current_attribute_id=0;
+        $current_group_id=0;
         foreach($filter_list as $entry){
-            if( $current_attribute_id !== $entry->filter_group_id ){
+            if( $current_group_id !== $entry->filter_group_id ){
                 $group_index++;
                 $group=[
                     'filter_group_id'=>$entry->filter_group_id,
                     'filter_group_name'=>$entry->filter_group_name,
                     'filter_group_options'=>[]
                 ];
-                if( $entry->filter_group_range ){
-                    $group['filter_group_range']=$entry->filter_group_range;
+                if( $entry->filter_group_minmax ){
+                    $group['filter_group_minmax']=$entry->filter_group_minmax;
                 }
                 $tree[$group_index]=$group;
-                $current_attribute_id = $entry->filter_group_id;
+                $current_group_id = $entry->filter_group_id;
             }
+//            if( $entry->is_selected ){
+//                $tree[$group_index]['filter_group_value']=$entry->filter_option_value;
+//            }
             $tree[$group_index]['filter_group_options'][]=[
                 'filter_group_id'=>$entry->filter_group_id,
                 'filter_option_id'=>$entry->filter_option_id,
@@ -709,14 +712,17 @@ class Stock extends Catalog {
     protected function matchesFilterBuildOption($group_id, $group_name, $group_range, $option_label, $option_condition){
         $option_id=substr(md5("$group_id-$option_condition"),0,10);//may be collisions. do we need collision check?
         $is_selected=0;
+        $fromto='';
         foreach($this->filter_selected_grouped as $options){
             if( in_array($option_id, $options) ){
                 $is_selected=1;
+                $fromto='';
                 break;
             }
         }
         $this->filter_list[$option_id]=(object)[
-            'filter_group_range'=>$group_range,
+            'filter_group_minmax'=>$group_range,
+            'filter_group_fromto'=>$fromto,
             'filter_group_id'=>$group_id,
             'filter_group_name'=>$group_name,
             'filter_option_id'=>$option_id,
@@ -747,10 +753,12 @@ class Stock extends Catalog {
                     $or_case[]=$this->filter_list[$option_id]->filter_option_condition;
                 }
             }
-            $and_case[]=implode(" OR ",$or_case);
+            if( $or_case ){
+                $and_case[]=implode(" OR ",$or_case);
+            }
         }
         $having="";
-        if( $and_case ){
+        if( count($and_case) ){
             $filter_clause=implode(" AND ",$and_case);
             $having="HAVING $filter_clause;";
         }

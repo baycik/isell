@@ -381,8 +381,8 @@
                         }
                     }
                 });
-                $('#stock_filter_container').change(function () {
-                    App.stock.filter.changed();
+                $('#stock_filter_container').change(function (e){
+                    App.stock.filter.changed(e.target);
                 });
                 $("#stock_filter_tags").click(function (e) {
                     var filter_option_id = $(e.target).data('filter_option_id');
@@ -392,6 +392,21 @@
                 });
                 Mark.pipes.plusone = function (num) {
                     return num*1 + 1;
+                };
+                Mark.pipes.find_selected=function(filter_group_id,side){
+                    let found_group=App.stock.filter.find_group_intree(filter_group_id);
+                    if( !found_group ){
+                        return '';
+                    }
+                    for (let option of found_group.filter_group_options) {
+                        if( option.is_selected>0 ) {
+                            if( side==='from' ){
+                                return option.filter_option_label.split(' - ')[0];
+                            }
+                            return option.filter_option_label.split(' - ')[1];
+                        }
+                    }
+                    return '';
                 };
             },
             load: function () {
@@ -416,10 +431,66 @@
                 App.stock.filter.compile();//to actualize checked options that came from server
                 App.stock.filter.tags.render();
             },
-            changed: function () {
+            /*rangeapply:function( node ){
+                //this needed for responsiveness only
+                let filter_group_id=$(node).data('filter_group_id');
+                let found_group=App.stock.filter.find_group_intree(filter_group_id);
+                for (let option of found_group.filter_group_options) {
+                    if( option.is_selected ){
+                        option.is_selected=0;
+                        break;
+                    }
+                }
+                if( found_group.filter_group_options[0].is_custom_range ) {
+                    found_group.filter_group_options.shift();
+                }
+                let minmax=found_group.filter_group_minmax.split('_');
+                let $from=$("#stock_filter_container input[data-filter_group_id="+filter_group_id+"][data-value_type=min]");
+                let $to=$("#stock_filter_container input[data-filter_group_id="+filter_group_id+"][data-value_type=max]");
+                let from=$from.val().replace(/,/g,'.')||minmax[0];
+                let to=$to.val().replace(/,/g,'.')||minmax[1];
+                let new_option={
+                    filter_group_id:filter_group_id,
+                    filter_option_id:`${from}_${to}`,
+                    filter_option_label:`${from}-${to}`,
+                    is_custom_range:true,
+                    is_selected:1,
+                    match_count:0
+                };
+                found_group.filter_group_options.unshift(new_option);
+                App.stock.filter.render(App.stock.filter.filter_tree);
+                
+                $from=$("#stock_filter_container input[data-filter_group_id="+filter_group_id+"][data-value_type=min]");
+                $to=$("#stock_filter_container input[data-filter_group_id="+filter_group_id+"][data-value_type=max]");
+                $from.val(from);
+                $to.val(to);
+            },*/
+            rangeapply2:function(node){
+                let filter_group_id=$(node).data('filter_group_id');
+                let found_group=App.stock.filter.find_group_intree(filter_group_id);
+                let minmax=found_group.filter_group_minmax.split('_');
+                let from=$("#stock_filter_container input[data-filter_group_id="+filter_group_id+"][data-value_type=min]").val().replace(/,/g,'.')||minmax[0];
+                let to=$("#stock_filter_container input[data-filter_group_id="+filter_group_id+"][data-value_type=max]").val().replace(/,/g,'.')||minmax[1];
+                let $custom_option=$(`#custom_option_${filter_group_id}`);
+                $custom_option.find('input').prop('checked',true);
+                $custom_option.find('label').html(`${from} - ${to}`);
+                $custom_option.data('filter_option_id',`${from}_${to}`);
+                
+                
+                
+                
+                
+                
+                $custom_option.show();
+            },
+            changed: function ( node ) {
+                let is_textbox=($(node).attr('type')==='text');
+                if( is_textbox ){
+                    App.stock.filter.rangeapply2(node);
+                }
                 App.stock.filter.compile();
                 App.stock.filter.tags.render();
-                App.stock.filter.apply();
+                //App.stock.filter.apply();
             },
             compile: function () {
                 App.stock.filter.selected_count = 0;
@@ -432,25 +503,30 @@
                     if( !option ){
                         return;
                     }
-                    
-                    
                     if( !App.stock.filter.selected_grouped[filter_group_id] ){
                         App.stock.filter.selected_grouped[filter_group_id] = [];
                     }
                     App.stock.filter.selected.push(option);
-                    App.stock.filter.selected_grouped[filter_group_id].push(option.filter_option_id);   
+                    App.stock.filter.selected_grouped[filter_group_id].push(filter_option_id);   
                     App.stock.filter.selected_count++;
                 });
+                console.log(App.stock.filter.selected_grouped);
+                
                 App.store('filter_selected_grouped', App.stock.filter.selected_grouped);
             },
             find_option_intree:function(filter_group_id,filter_option_id){
+                let found_group=App.stock.filter.find_group_intree(filter_group_id);
+                for (let option of found_group.filter_group_options) {
+                    if( option.filter_option_id===filter_option_id ) {
+                        return option;
+                    }
+                }
+                return null;
+            },
+            find_group_intree:function(filter_group_id){
                 for(let group of App.stock.filter.filter_tree){
                     if( group.filter_group_id === filter_group_id ){
-                        for (let option of group.filter_group_options) {
-                            if( option.filter_option_id===filter_option_id ) {
-                                return option;
-                            }
-                        }
+                        return group;
                     }
                 }
                 return null;
@@ -548,21 +624,27 @@
                     </div>
                     <div class="filter_group_content content" id="stock_filter_group_content_{{filter_group_id}}" data-filter_group_id="{{filter_group_id}}">
                         <div class="ui form">
-                            {{if filter_group_range}}
+                            {{if filter_group_minmax}}
                             <div class="fields">
                                 <div class="field">
                                     <label>От</label>
-                                    <input type="text" 
-                                           placeholder="{{filter_group_range|split>_|limit>1>0|join>}}"
+                                    <input type="text"
+                                           pattern="[0-9,\.]+"
+                                           value="{{filter_group_id|find_selected>from}}"
+                                           placeholder="{{filter_group_minmax|split>_|limit>1>0|join>}}"
                                            data-filter_group_id="{{filter_group_id}}"
-                                           data-value_type="min">
+                                           data-value_type="min"
+                                           onfocus="this.select()">
                                 </div>
                                 <div class="field">
                                     <label>До</label>
-                                    <input type="text" 
-                                           placeholder="{{filter_group_range|split>_|limit>1>1|join>}}"
+                                    <input type="text"
+                                           pattern="[0-9,\.]+"
+                                           value="{{filter_group_id|find_selected>to}}"
+                                           placeholder="{{filter_group_minmax|split>_|limit>1>1|join>}}"
                                            data-filter_group_id="{{filter_group_id}}"
-                                           data-value_type="max">
+                                           data-value_type="max"
+                                           onfocus="this.select()">
                                 </div>
                             </div>
                             {{/if}}
@@ -581,6 +663,15 @@
                                         </label>
                                     </div>
                                 </div>
+                                <div class="field" id="custom_option_{{filter_group_id}}" style="display:none">
+                                    <div class="ui child checkbox">
+                                        <input type="radio" 
+                                               name="{{filter_group_id}}"
+                                               data-filter_group_id="{{filter_group_id}}" 
+                                               >
+                                        <label></label>
+                                    </div>
+                                </div>
                                 {{filter_group_options}}
                                 <div class="field">
                                     <div class="ui child checkbox">
@@ -593,11 +684,11 @@
                                         <label>
                                             {{if match_count|equals>0}}
                                             <span style="color: gray">
-                                                {{else}}
-                                                <span>
-                                                    {{/if}}
-                                                    {{filter_option_label}} <span style="color: gray">({{match_count}})</span>
-                                                </span>
+                                            {{else}}
+                                            <span>
+                                            {{/if}}
+                                                {{filter_option_label}} <span style="color: gray">({{match_count}})</span>
+                                            </span>
                                         </label>
                                     </div>
                                 </div>
