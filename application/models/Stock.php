@@ -672,12 +672,10 @@ class Stock extends Catalog {
                 $tree[$group_index]=$group;
                 $current_group_id = $entry->filter_group_id;
             }
-//            if( $entry->is_selected ){
-//                $tree[$group_index]['filter_group_value']=$entry->filter_option_value;
-//            }
             $tree[$group_index]['filter_group_options'][]=[
                 'filter_group_id'=>$entry->filter_group_id,
                 'filter_option_id'=>$entry->filter_option_id,
+                'filter_option_range'=>$entry->filter_option_range,
                 'filter_option_label'=>$entry->filter_option_label,
                 'is_selected'=>$entry->is_selected,
                 'match_count'=>44
@@ -686,9 +684,9 @@ class Stock extends Catalog {
         return $tree;
     }
     
-    protected function matchesFilterBuildRange($range_field,$range_field_label){
+    protected function matchesFilterBuildRange( $range_field, $group_name ){
         $minmax=$this->get_row("SELECT MIN($range_field) minval, MAX($range_field) maxval FROM tmp_matches_list");
-        $range_limits="{$minmax->minval}_{$minmax->maxval}";
+        $group_minmax="{$minmax->minval}_{$minmax->maxval}";
         $fraction_count=5;
         $fraction=($minmax->maxval - $minmax->minval)/($fraction_count-1);
         $roundto=pow(10,strlen(round($fraction))-1);
@@ -703,33 +701,43 @@ class Stock extends Catalog {
             if( $to>$minmax->maxval ){
                 $to=$minmax->maxval;
             }
+            $option_range="{$from}_{$to}";
             $option_label="$from_label - $to";
             $option_condition="$range_field>$from AND $range_field<=$to";
-            $this->matchesFilterBuildOption( $range_field, $range_field_label, $range_limits, $option_label, $option_condition );
+            $this->matchesFilterBuildOption( $range_field, $group_name, $option_label, $option_condition, $option_range, $group_minmax );
         }
     }
     
-    protected function matchesFilterBuildOption($group_id, $group_name, $group_range, $option_label, $option_condition){
+    protected function matchesFilterBuildOption($group_id, $group_name, $option_label, $option_condition, $option_range=null, $group_minmax=null ){
         $option_id=substr(md5("$group_id-$option_condition"),0,10);//may be collisions. do we need collision check?
         $is_selected=0;
-        $fromto='';
-        foreach($this->filter_selected_grouped as $options){
-            if( in_array($option_id, $options) ){
-                $is_selected=1;
-                $fromto='';
-                break;
+        if( isset($this->filter_selected_grouped[$group_id]) ){
+            if( $option_range ){//option is range option
+                $selected_option_range=$this->filter_selected_grouped[$group_id];
+                if( $selected_option_range==$option_range){
+                    $is_selected=1;
+                    $this->filter_selected_grouped[$group_id]=[$option_id];
+                }
+            } else {
+                foreach($this->filter_selected_grouped[$group_id] as $selected_option_id){
+                    if($option_id==$selected_option_id){
+                        $is_selected=1;
+                        break;
+                    }
+                }
             }
         }
         $this->filter_list[$option_id]=(object)[
-            'filter_group_minmax'=>$group_range,
-            'filter_group_fromto'=>$fromto,
+            'filter_group_minmax'=>$group_minmax,
             'filter_group_id'=>$group_id,
             'filter_group_name'=>$group_name,
             'filter_option_id'=>$option_id,
             'filter_option_label'=>$option_label,
+            'filter_option_range'=>$option_range,
             'filter_option_condition'=>$option_condition,
             'is_selected'=>$is_selected
         ];
+        return $option_id;
     }
     
     protected function matchesFilterBuild(){

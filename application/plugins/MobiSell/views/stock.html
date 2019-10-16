@@ -426,7 +426,7 @@
                     $('#stock_filter_group_content_' + filter_group_id).addClass('active');
                 }
                 $('.stock-attributes-button .attributes-selected-length').html(App.stock.filter.selected_count);
-                $("#stock_filter_container input[data-attribute_is_selected=1]").prop('checked', 1);
+                $("#stock_filter_container input[data-is_selected=1]").prop('checked', 1);
 
                 App.stock.filter.compile();//to actualize checked options that came from server
                 App.stock.filter.tags.render();
@@ -474,13 +474,7 @@
                 let $custom_option=$(`#custom_option_${filter_group_id}`);
                 $custom_option.find('input').prop('checked',true);
                 $custom_option.find('label').html(`${from} - ${to}`);
-                $custom_option.data('filter_option_id',`${from}_${to}`);
-                
-                
-                
-                
-                
-                
+                $custom_option.data('filter_option_range',`${from}_${to}`);
                 $custom_option.show();
             },
             changed: function ( node ) {
@@ -499,15 +493,19 @@
                 $("#stock_filter_container input:checked").each(function (index, node) {
                     let filter_group_id = $(node).data('filter_group_id');
                     let filter_option_id = $(node).data('filter_option_id');
+                    let filter_option_range = $(node).data('filter_option_range');
                     let option=App.stock.filter.find_option_intree(filter_group_id,filter_option_id);
-                    if( !option ){
-                        return;
+                    let group_selection=App.stock.filter.selected_grouped[filter_group_id];
+                    if( filter_option_range ){
+                        group_selection=filter_option_range;
+                    } else {
+                        if( !group_selection ){
+                            group_selection = [];
+                        }
+                        group_selection.push(filter_option_id); 
                     }
-                    if( !App.stock.filter.selected_grouped[filter_group_id] ){
-                        App.stock.filter.selected_grouped[filter_group_id] = [];
-                    }
+                    App.stock.filter.selected_grouped[filter_group_id]=group_selection;
                     App.stock.filter.selected.push(option);
-                    App.stock.filter.selected_grouped[filter_group_id].push(filter_option_id);   
                     App.stock.filter.selected_count++;
                 });
                 console.log(App.stock.filter.selected_grouped);
@@ -518,6 +516,7 @@
                 let found_group=App.stock.filter.find_group_intree(filter_group_id);
                 for (let option of found_group.filter_group_options) {
                     if( option.filter_option_id===filter_option_id ) {
+                        option.filter_group_name=found_group.filter_group_name;
                         return option;
                     }
                 }
@@ -668,6 +667,7 @@
                                         <input type="radio" 
                                                name="{{filter_group_id}}"
                                                data-filter_group_id="{{filter_group_id}}" 
+                                               data-filter_option_range="{{filter_option_range}}"
                                                >
                                         <label></label>
                                     </div>
@@ -679,7 +679,8 @@
                                                name="{{filter_group_id}}"
                                                data-filter_group_id="{{filter_group_id}}" 
                                                data-filter_option_id="{{filter_option_id}}"
-                                               data-attribute_is_selected="{{is_selected}}"
+                                               data-filter_option_range="{{filter_option_range}}"
+                                               data-is_selected="{{is_selected}}"
                                                >
                                         <label>
                                             {{if match_count|equals>0}}
