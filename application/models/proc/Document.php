@@ -62,9 +62,14 @@ class Document extends Data {
     }
 
     protected function getNextDocNum($doc_type) {//Util
-	$active_company_id = $this->Base->acomp('company_id');
-	$next_num = $this->Base->get_row("SELECT MAX(doc_num)+1 FROM document_list WHERE doc_type='$doc_type' AND active_company_id='$active_company_id' AND cstamp>DATE_FORMAT(NOW(),'%Y')", 0);
-	return $next_num ? $next_num : 1;
+        $this->Base->LoadClass('PrefOld');
+        $next_num=1;
+        $pref=$this->Base->PrefOld->getPrefs('document_number');
+        if( isset($pref['document_number']) ){
+            $next_num=$pref['document_number']++;
+        }
+        $this->Base->PrefOld->setPrefs($pref);
+        return $next_num;
     }
 
     public function moveDoc($passive_company_id) {
