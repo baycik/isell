@@ -61,15 +61,18 @@ class Document extends Data {
 	}
     }
 
-    protected function getNextDocNum($doc_type) {//Util
+    protected function getNextDocNum($doc_type,$creation_mode) {//Util
         $this->Base->LoadClass('PrefOld');
-        $pref=$this->Base->PrefOld->getPrefs('document_number_'.$doc_type);
-        if( !isset($pref['document_number_'.$doc_type]) ){
-            $pref['document_number_'.$doc_type]=0;
+        $pref_name='document_number_'.$doc_type;
+        $pref=$this->Base->PrefOld->getPrefs($pref_name);
+        if( !isset($pref[$pref_name]) ){
+            $pref[$pref_name]=0;
         }
-        $pref['document_number_'.$doc_type]++;
-        $this->Base->PrefOld->setPrefs($pref);
-        return $pref['document_number_'.$doc_type];
+        $pref[$pref_name]++;
+        if( $creation_mode!=='not_increase_number'){
+            $this->Base->PrefOld->setPrefs($pref);
+        }
+        return $pref[$pref_name];
     }
 
     public function moveDoc($passive_company_id) {
@@ -747,7 +750,7 @@ class Document extends Data {
     /////////////////////////////////////////////
     // CRUD
     /////////////////////////////////////////////
-    public function add($doc_type=null) {
+    public function add($doc_type=null,$creation_mode) {
 	$user_id = $this->Base->svar('user_id');
 	$active_company_id = $this->Base->acomp('company_id');
 	$passive_company_id = $this->Base->pcomp('company_id');
@@ -765,7 +768,7 @@ class Document extends Data {
         if( !$doc_type ){
             return false;
         }
-	$next_doc_num = $this->getNextDocNum($doc_type);
+	$next_doc_num = $this->getNextDocNum($doc_type,$creation_mode);
 	if ($prev_doc) {
 	    $pnotcount = $prev_doc['notcount'];
 	    $psignsafterdot = $prev_doc['signs_after_dot'];
