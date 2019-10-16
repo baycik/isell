@@ -53,7 +53,7 @@ class Pref extends Catalog {
     public $setPrefs=['[a-zA-Z_]+','[^|]+'];
     public function setPrefs($field,$value='') {
 	$active_company_id=$this->Hub->acomp('company_id');
-	$this->Hub->set_level(3);
+	$this->Hub->set_level(2);
 	if( !$field ){
 	    return false;
 	}
