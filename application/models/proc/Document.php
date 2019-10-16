@@ -64,9 +64,9 @@ class Document extends Data {
     protected function getNextDocNum($doc_type) {//Util
         $this->Base->LoadClass('PrefOld');
         $next_num=1;
-        $pref=$this->Base->PrefOld->getPrefs('document_number');
-        if( isset($pref['document_number']) ){
-            $next_num=$pref['document_number']++;
+        $pref=$this->Base->PrefOld->getPrefs('document_number'.$doc_type);
+        if( isset($pref['document_number'.$doc_type]) ){
+            $next_num=$pref['document_number'.$doc_type]++;
         }
         $this->Base->PrefOld->setPrefs($pref);
         return $next_num;
