@@ -66,7 +66,7 @@ class DocumentCore extends DocumentUtils{
 	return array('rows'=>$result_rows,'total'=>$total_estimate);
     }
     
-    public function createDocument( string $doc_type=null, string $creation_mode ){
+    public function createDocument( string $doc_type=null, string $creation_mode='' ){
 	$pcomp_id=$this->Hub->pcomp('company_id');
 	if( $pcomp_id ){
 	    $Document2=$this->Hub->bridgeLoad('Document');
