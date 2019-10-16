@@ -63,13 +63,13 @@ class Document extends Data {
 
     protected function getNextDocNum($doc_type) {//Util
         $this->Base->LoadClass('PrefOld');
-        $next_num=1;
-        $pref=$this->Base->PrefOld->getPrefs('document_number'.$doc_type);
-        if( isset($pref['document_number'.$doc_type]) ){
-            $next_num=$pref['document_number'.$doc_type]++;
+        $pref=$this->Base->PrefOld->getPrefs('document_number_'.$doc_type);
+        if( !isset($pref['document_number_'.$doc_type]) ){
+            $pref['document_number_'.$doc_type]=0;
         }
+        $pref['document_number_'.$doc_type]++;
         $this->Base->PrefOld->setPrefs($pref);
-        return $next_num;
+        return $pref['document_number_'.$doc_type];
     }
 
     public function moveDoc($passive_company_id) {
