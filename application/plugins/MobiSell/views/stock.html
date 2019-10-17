@@ -14,6 +14,17 @@
             App.Topic('hashChange').subscribe(function () {
                 App.stock.productInfoModal.showProductInfo(App.state['productInfoModal.showProductInfo']);
             });
+            
+            
+            
+            
+            
+            
+                             
+                //!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                App.stock.filter.load();
+            
+            
         },
         focus: function () {
             App.title("Каталог товаров");
@@ -183,9 +194,6 @@
                 App.stock.cart.renderButton(); 
                 $('.cart-quantity').html(App.stock.cart.list.length);
                 App.renderTpl("stock_list", {products: App.stock.entries.current_list, loading_finished: App.stock.entries.loading_finished, show_cart: App.stock.entries.show_cart});
-                 
-                //!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                App.stock.filter.load();
             }, 
             renderItem: function (index, product_quantity){    
                 var item_node = '#product_item_'+index;
@@ -393,21 +401,6 @@
                 Mark.pipes.plusone = function (num) {
                     return num*1 + 1;
                 };
-                Mark.pipes.find_selected=function(filter_group_id,side){
-                    let found_group=App.stock.filter.find_group_intree(filter_group_id);
-                    if( !found_group ){
-                        return '';
-                    }
-                    for (let option of found_group.filter_group_options) {
-                        if( option.is_selected>0 ) {
-                            if( side==='from' ){
-                                return option.filter_option_label.split(' - ')[0];
-                            }
-                            return option.filter_option_label.split(' - ')[1];
-                        }
-                    }
-                    return '';
-                };
             },
             load: function () {
                 $.post("../Stock/matchesFilterGet", function (resp) {
@@ -465,26 +458,40 @@
                 $from.val(from);
                 $to.val(to);
             },*/
-            rangeapply2:function(node){
-                let filter_group_id=$(node).data('filter_group_id');
-                let found_group=App.stock.filter.find_group_intree(filter_group_id);
-                let minmax=found_group.filter_group_minmax.split('_');
-                let from=$("#stock_filter_container input[data-filter_group_id="+filter_group_id+"][data-value_type=min]").val().replace(/,/g,'.')||minmax[0];
-                let to=$("#stock_filter_container input[data-filter_group_id="+filter_group_id+"][data-value_type=max]").val().replace(/,/g,'.')||minmax[1];
-                let $custom_option=$(`#custom_option_${filter_group_id}`);
-                $custom_option.find('input').prop('checked',true);
-                $custom_option.find('label').html(`${from} - ${to}`);
-                $custom_option.data('filter_option_range',`${from}_${to}`);
-                $custom_option.show();
+            range:{
+                get:function(node){
+                    let filter_group_id=$(node).data('filter_group_id');
+                    let found_group=App.stock.filter.find_group_intree(filter_group_id);
+                    let minmax=found_group.filter_group_minmax.split('_');
+                    let from=$("#stock_filter_container input[data-filter_group_id="+filter_group_id+"][data-value_type=from]").val().replace(/,/g,'.')||minmax[0];
+                    let to=$("#stock_filter_container input[data-filter_group_id="+filter_group_id+"][data-value_type=to]").val().replace(/,/g,'.')||minmax[1];
+                    let $custom_option=$(`#custom_option_${filter_group_id}`);
+                    $custom_option.find('label').html(`${from} - ${to}`);
+                    $custom_option.find('input').prop('checked',true);
+                    $custom_option.find('input').data('filter_option_range',`${from}_${to}`);
+                    $custom_option.show();
+                },
+                set:function(filter_group_id,filter_option_range){
+                    let from='';
+                    let to='';
+                    if( filter_option_range!==-1 ){
+                        from=filter_option_range.split('_')[0];
+                        to=filter_option_range.split('_')[1];
+                    }
+                    let $from=$("#stock_filter_container input[data-filter_group_id="+filter_group_id+"][data-value_type=from]");
+                    let $to=$("#stock_filter_container input[data-filter_group_id="+filter_group_id+"][data-value_type=to]");
+                    $from.val(from);
+                    $to.val(to);
+                }
             },
             changed: function ( node ) {
                 let is_textbox=($(node).attr('type')==='text');
                 if( is_textbox ){
-                    App.stock.filter.rangeapply2(node);
+                    App.stock.filter.range.get(node);
                 }
                 App.stock.filter.compile();
                 App.stock.filter.tags.render();
-                //App.stock.filter.apply();
+                App.stock.filter.apply();
             },
             compile: function () {
                 App.stock.filter.selected_count = 0;
@@ -494,9 +501,14 @@
                     let filter_group_id = $(node).data('filter_group_id');
                     let filter_option_id = $(node).data('filter_option_id');
                     let filter_option_range = $(node).data('filter_option_range');
+                    console.log('filter_option_range',filter_option_range);
                     let option=App.stock.filter.find_option_intree(filter_group_id,filter_option_id);
                     let group_selection=App.stock.filter.selected_grouped[filter_group_id];
                     if( filter_option_range ){
+                        App.stock.filter.range.set(filter_group_id,filter_option_range);
+                        if( filter_option_range<0 ){//all range selected
+                            return;
+                        }
                         group_selection=filter_option_range;
                     } else {
                         if( !group_selection ){
@@ -508,8 +520,6 @@
                     App.stock.filter.selected.push(option);
                     App.stock.filter.selected_count++;
                 });
-                console.log(App.stock.filter.selected_grouped);
-                
                 App.store('filter_selected_grouped', App.stock.filter.selected_grouped);
             },
             find_option_intree:function(filter_group_id,filter_option_id){
@@ -629,20 +639,18 @@
                                     <label>От</label>
                                     <input type="text"
                                            pattern="[0-9,\.]+"
-                                           value="{{filter_group_id|find_selected>from}}"
                                            placeholder="{{filter_group_minmax|split>_|limit>1>0|join>}}"
                                            data-filter_group_id="{{filter_group_id}}"
-                                           data-value_type="min"
+                                           data-value_type="from"
                                            onfocus="this.select()">
                                 </div>
                                 <div class="field">
                                     <label>До</label>
                                     <input type="text"
                                            pattern="[0-9,\.]+"
-                                           value="{{filter_group_id|find_selected>to}}"
                                            placeholder="{{filter_group_minmax|split>_|limit>1>1|join>}}"
                                            data-filter_group_id="{{filter_group_id}}"
-                                           data-value_type="max"
+                                           data-value_type="to"
                                            onfocus="this.select()">
                                 </div>
                             </div>
@@ -656,6 +664,7 @@
                                                name="{{filter_group_id}}"
                                                data-filter_group_id="{{filter_group_id}}" 
                                                data-filter_option_id="0"
+                                               data-filter_option_range="-1"
                                                >
                                         <label>
                                             Все
@@ -666,8 +675,7 @@
                                     <div class="ui child checkbox">
                                         <input type="radio" 
                                                name="{{filter_group_id}}"
-                                               data-filter_group_id="{{filter_group_id}}" 
-                                               data-filter_option_range="{{filter_option_range}}"
+                                               data-filter_group_id="{{filter_group_id}}"
                                                >
                                         <label></label>
                                     </div>
