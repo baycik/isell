@@ -650,136 +650,130 @@ class Stock extends Catalog {
     
     
     protected function matchesFilterStore(){
-        $this->Hub->svar('filter_list',$this->filter_list);
+        $this->Hub->svar('filter_tree',$this->filter_tree);
     }
     
     public function matchesFilterGet(){
-        $filter_list=$this->Hub->svar('filter_list');
+        $filter_tree=$this->Hub->svar('filter_tree');
         $tree=[];
-        $group_index=-1;
-        $current_group_id=0;
-        foreach($filter_list as $entry){
-            if( $current_group_id !== $entry->filter_group_id ){
-                $group_index++;
-                $group=[
-                    'filter_group_id'=>$entry->filter_group_id,
-                    'filter_group_name'=>$entry->filter_group_name,
-                    'filter_group_options'=>[]
+        foreach($filter_tree as $group){
+            $filter_group_options=[];
+            foreach($group->options as $option){
+                $filter_group_options[]=[
+                    'filter_group_id'=>$option->filter_group_id,
+                    'filter_option_id'=>$option->filter_option_id,
+                    'filter_option_range'=>$option->filter_option_range,
+                    'filter_option_label'=>$option->filter_option_label,
+                    'is_selected'=>$option->is_selected,
+                    'match_count'=>$option->match_count
                 ];
-                if( $entry->filter_group_minmax ){
-                    $group['filter_group_minmax']=$entry->filter_group_minmax;
-                }
-                $tree[$group_index]=$group;
-                $current_group_id = $entry->filter_group_id;
             }
-            $tree[$group_index]['filter_group_options'][]=[
-                'filter_group_id'=>$entry->filter_group_id,
-                'filter_option_id'=>$entry->filter_option_id,
-                'filter_option_range'=>$entry->filter_option_range,
-                'filter_option_label'=>$entry->filter_option_label,
-                'is_selected'=>$entry->is_selected,
-                'match_count'=>44
-                ];
+            $tree[]=[
+                'filter_group_id'=>$group->filter_group_id,
+                'filter_group_name'=>$group->filter_group_name,
+                'filter_group_minmax'=>$group->filter_group_minmax,
+                'filter_group_options'=>$filter_group_options
+            ];
         }
         return $tree;
     }
     
     protected function matchesFilterBuildRange( $group_id, $group_name ){
         $minmax=$this->get_row("SELECT MIN($group_id) minval, MAX($group_id) maxval FROM tmp_matches_list");
-        $group_minmax="{$minmax->minval}_{$minmax->maxval}";
-        $fraction_count=5;
-        $fraction=($minmax->maxval - $minmax->minval)/($fraction_count-1);
-        $roundto=pow(10,strlen(round($fraction))-1);
+        $this->matchesFilterBuildGroup( $group_id, $group_name, "{$minmax->minval}_{$minmax->maxval}" );
+        $fraction_count=4;
+        $fraction=($minmax->maxval - $minmax->minval)/$fraction_count;
+        $roundto=pow(10,strlen(round($fraction))-2);
         $rounded_fraction=round($fraction/$roundto)*$roundto;
-        $custom_option_range='';
+        $custom_option_range=null;
         if( isset($this->filter_selected_grouped[$group_id]) ){
             $custom_option_range=$this->filter_selected_grouped[$group_id];
-            $range_parts=explode("_",$custom_option_range);
-            $from=$range_parts[0];
-            $to=$range_parts[1];
-            $lower_condition="<";
-            
-            $option_range="{$from}_{$to}";
-            $option_label="$from - $to";
-            $option_condition="$group_id $lower_condition $from AND $group_id <= $to";
-            $this->matchesFilterBuildOption( $group_id, $group_name, $option_label, $option_condition, $option_range, $group_minmax );
         }
         for( $i=1; $i<=$fraction_count; $i++ ){
-            $lower_condition="<";
             $from =$rounded_fraction*($i-1);
             $to   =$rounded_fraction*$i;
-            if( $from<=$minmax->minval ){
+            $is_selected=0;
+            $lower_condition=">";
+            if( $i==0 ){
                 $from=$minmax->minval;
-                $lower_condition="<=";
+                $lower_condition=">=";
             }
-            if( $to>$minmax->maxval ){
+            if( $i==$fraction_count ){
                 $to=$minmax->maxval;
             }
-            
-            $option_range="{$from}_{$to}";
-            if( $custom_option_range===$option_range ){
-                continue;
+            if( $custom_option_range!=null && $custom_option_range<$from ){
+                $custom_option_range_parts=explode("_",$custom_option_range);
+                $from=(float) $custom_option_range_parts[0];
+                $to  =(float) $custom_option_range_parts[1];
+                $i--;
             }
+            if( $custom_option_range!=null && $custom_option_range=="{$from}_{$to}" ){
+                $custom_option_range=null;
+                $is_selected=1;
+            }
+            $option_range="{$from}_{$to}";
             $option_label="$from - $to";
             $option_condition="$group_id $lower_condition $from AND $group_id <= $to";
-            $this->matchesFilterBuildOption( $group_id, $group_name, $option_label, $option_condition, $option_range, $group_minmax );
+            $this->matchesFilterBuildOption( $group_id, $option_label, $option_condition, $is_selected, $option_range );
         }
     }
     
-    protected function matchesFilterBuildOption($group_id, $group_name, $option_label, $option_condition, $option_range=null, $group_minmax=null ){
-        $option_id=substr(md5("$group_id-$option_condition"),0,10);//may be collisions. do we need collision check?
-        if( isset($this->filter_list[$option_id]) ){
-            return;
-        }
-        $is_selected=0;
-        if( isset($this->filter_selected_grouped[$group_id]) ){
-            if( $option_range ){//option is range option
-                $selected_option_range=$this->filter_selected_grouped[$group_id];
-                if( $selected_option_range==$option_range){
-                    $is_selected=1;
-                    $this->filter_selected_grouped[$group_id]=[$option_id];
-                }
-            } else {
-                foreach($this->filter_selected_grouped[$group_id] as $selected_option_id){
-                    if($option_id==$selected_option_id){
-                        $is_selected=1;
-                        break;
-                    }
-                }
-            }
-        }
-        $this->filter_list[$option_id]=(object)[
+    protected function matchesFilterBuildGroup( $group_id, $group_name, $group_minmax=null ){
+        $this->filter_tree[$group_id]=(object) [
             'filter_group_id'=>$group_id,
             'filter_group_name'=>$group_name,
             'filter_group_minmax'=>$group_minmax,
+            'options'=>[]
+        ];
+    }
+    
+    protected function matchesFilterBuildOption($group_id,  $option_label, $option_condition, $is_selected=false, $option_range=null ){
+        $option_id=substr(md5("$group_id-$option_condition"),0,10);//may be collisions. do we need collision check?
+        $this->filter_tree[$group_id]->options[$option_id]=(object)[
+            'filter_group_id'=>$group_id,
             'filter_option_id'=>$option_id,
             'filter_option_label'=>$option_label,
             'filter_option_range'=>$option_range,
             'filter_option_condition'=>$option_condition,
             'is_selected'=>$is_selected
         ];
-        return $option_id;
+    }
+    
+    protected function matchesFilterBuildCount(){
+        $count_fields=[];
+        foreach($this->filter_tree as $group){
+            foreach($group->options as $option){
+                $count_fields[]="SUM($option->filter_option_condition) `{$group->filter_group_id}___{$option->filter_option_id}`";
+            }
+        }
+        $select= implode(',', $count_fields);
+        $counts=$this->get_row("SELECT $select FROM tmp_matches_list");
+        foreach($counts as $field=>$count){
+            $ids=explode('___',$field);
+            $this->filter_tree[$ids[0]]->options[$ids[1]]->match_count=$count;
+        }
     }
     
     protected function matchesFilterBuild(){
-        $this->filter_list=[];
+        $this->filter_tree=[];
         $this->filter_selected_grouped=$this->request('filter_selected_grouped','json');
         $this->matchesFilterBuildPrice();
+        
+        $this->matchesFilterBuildCount();
         //$this->matchesFilterApply();//for test
     }
     protected function matchesFilterBuildPrice(){
         $group_id="price_final";
         $this->matchesFilterBuildRange($group_id,"Цена");
-        //print_r($this->filter_list);
     }
     
     protected function matchesFilterApply(){
         $and_case=[];
-        foreach($this->filter_selected_grouped as $options){
+        foreach($this->filter_tree as $group){
             $or_case=[];
-            foreach( $options as $option_id ){
-                if( isset($this->filter_list[$option_id]) ){
-                    $or_case[]=$this->filter_list[$option_id]->filter_option_condition;
+            foreach($group->options as $option){
+                if( $option->is_selected ){
+                    $or_case[]=$option->filter_option_condition;
                 }
             }
             if( $or_case ){
@@ -791,8 +785,8 @@ class Stock extends Catalog {
             $filter_clause=implode(" AND ",$and_case);
             $having="HAVING $filter_clause;";
         }
-        $this->query("DROP  TABLE IF EXISTS tmp_filtered_matches_list");
-        $sql="CREATE  TABLE tmp_filtered_matches_list AS 
+        $this->query("DROP TEMPORARY TABLE IF EXISTS tmp_filtered_matches_list");
+        $sql="CREATE TEMPORARY TABLE tmp_filtered_matches_list AS 
             SELECT
                 *
             FROM
@@ -814,6 +808,10 @@ class Stock extends Catalog {
         $this->matchesFilterApply();
         $this->matchesFilterStore();
         header("TMP: ".(microtime(1)-$start));
+        
+        
+        //print_r($this->filter_list);
+        
         
         
         //INJECTION ATTRIBUTE MANAGER
@@ -898,8 +896,8 @@ class Stock extends Catalog {
         $usd_ratio=$this->Hub->pref('usd_ratio');
         $pcomp_id=$this->Hub->pcomp('company_id');
         $price_label=$this->Hub->pcomp('price_label');#TEMPORARY
-        $this->query("DROP  TABLE IF EXISTS tmp_matches_list");
-        $sql="CREATE  TABLE tmp_matches_list (PRIMARY KEY(product_id)) AS 
+        $this->query("DROP TEMPORARY TABLE IF EXISTS tmp_matches_list");
+        $sql="CREATE TEMPORARY TABLE tmp_matches_list (PRIMARY KEY(product_id)) AS 
             SELECT 
                 pl.product_id,
                 pl.product_code,
