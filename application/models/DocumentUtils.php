@@ -71,19 +71,18 @@ class DocumentUtils extends Catalog{
 	$user_id = $this->Hub->svar('user_id');
 	$this->rowUpdateField( 'document_list', 'doc_id', $this->doc('doc_id'), 'modified_by', $user_id );
     }
-    protected function getNextDocNum($doc_type) {//Util
-	$active_company_id = $this->Hub->acomp('company_id');
-	$next_num = $this->get_value("
-	    SELECT 
-		MAX(doc_num)+1 
-	    FROM 
-		document_list 
-	    WHERE 
-	    IF('$doc_type'>0,doc_type='$doc_type' AND is_reclamation=0,doc_type=-'$doc_type' AND is_reclamation=1) 
-	    AND active_company_id='$active_company_id' 
-	    AND cstamp>DATE_FORMAT(NOW(),'%Y')
-	    ");
-	return $next_num ? $next_num : 1;
+    protected function getNextDocNum($doc_type, $save_nextnum=false) {//Util
+        $pref_name='document_number_'.$doc_type;
+        $this->Hub->load_model('Pref');
+        $pref=$this->Hub->Pref->getPrefs($pref_name);
+        if( !isset($pref->{$pref_name}) ){
+            $pref->{$pref_name}=0;
+        }
+        $pref->{$pref_name}++;
+        if( $save_nextnum ){
+            $this->Hub->Pref->setPrefs($pref_name,$pref->{$pref_name});
+        }
+        return $pref->{$pref_name};
     }
     protected function calcCorrections( $skip_vat_correction=false, $skip_curr_correction=false ) {
 	$doc_id=$this->doc('doc_id');

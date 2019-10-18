@@ -42,9 +42,9 @@
 	close:function(){
 	    Doc.data.open_in==='panel'?Doc.node.panel('close'):Doc.node.window('close');
 	},
-	create:function(){
+	create:function( creation_mode ){
 	    var createDef=$.Deferred();
-	    App.post('DocumentItems/createDocument',function(doc_id){
+	    $.post('DocumentItems/createDocument',{creation_mode:creation_mode},function(doc_id){
 		if( doc_id*1 ){
 		    Doc.head.load(doc_id,true,createDef);
                     createDef.notify('created');
@@ -205,7 +205,11 @@
 			Doc.handler.notify('pcomp_changed',value);
 			return;
 		    }
-		    Doc.create().progress(function(status){
+                    var creation_mode='';
+                    if( field==='doc_type' ){
+                        creation_mode='not_increase_number';
+                    }
+		    Doc.create(creation_mode).progress(function(status){
                         if( status==='created' ){
 			    Doc.isCreated=true;
                             Doc.head.update( field, value, oldval );

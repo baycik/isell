@@ -61,10 +61,18 @@ class Document extends Data {
 	}
     }
 
-    protected function getNextDocNum($doc_type) {//Util
-	$active_company_id = $this->Base->acomp('company_id');
-	$next_num = $this->Base->get_row("SELECT MAX(doc_num)+1 FROM document_list WHERE doc_type='$doc_type' AND active_company_id='$active_company_id' AND cstamp>DATE_FORMAT(NOW(),'%Y')", 0);
-	return $next_num ? $next_num : 1;
+    protected function getNextDocNum($doc_type,$creation_mode) {//Util
+        $this->Base->LoadClass('PrefOld');
+        $pref_name='document_number_'.$doc_type;
+        $pref=$this->Base->PrefOld->getPrefs($pref_name);
+        if( !isset($pref[$pref_name]) ){
+            $pref[$pref_name]=0;
+        }
+        $pref[$pref_name]++;
+        if( $creation_mode!=='not_increase_number'){
+            $this->Base->PrefOld->setPrefs($pref);
+        }
+        return $pref[$pref_name];
     }
 
     public function moveDoc($passive_company_id) {
@@ -742,7 +750,7 @@ class Document extends Data {
     /////////////////////////////////////////////
     // CRUD
     /////////////////////////////////////////////
-    public function add($doc_type=null) {
+    public function add($doc_type=null,$creation_mode) {
 	$user_id = $this->Base->svar('user_id');
 	$active_company_id = $this->Base->acomp('company_id');
 	$passive_company_id = $this->Base->pcomp('company_id');
@@ -760,7 +768,7 @@ class Document extends Data {
         if( !$doc_type ){
             return false;
         }
-	$next_doc_num = $this->getNextDocNum($doc_type);
+	$next_doc_num = $this->getNextDocNum($doc_type,$creation_mode);
 	if ($prev_doc) {
 	    $pnotcount = $prev_doc['notcount'];
 	    $psignsafterdot = $prev_doc['signs_after_dot'];
