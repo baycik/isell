@@ -1,64 +1,129 @@
 <?php
 
-/* Group Name: Синхронизация
- * User Level: 2
- * Plugin Name: XsdToXml
- * Plugin URI: http://isellsoft.com
- * Version: 1.0
- * Description: Tool for XsdToXml export 
- * Author: baycik 2019
- * Author URI: http://isellsoft.com
+/**
+ *  XsdToXml
+ *  -------
+ *
+ *  @version 0.9.1
  */
 
-class XsdToXml extends Catalog {
-    public $settings = [];
-    private $xsdChoices = [];
-    private $xsdRelations = [];
-    private $xsdSettings = [];
-    private $xsdExceptions = [];
+class XSDtoXML{
     
-    private $xsdTemplates = [];
-    private $mainInfo = [];
+    // -------------------------
+    // 	CONFIGURATION
+    // -------------------------
     
-    private $currentProductIndex = '';
-    private $currentDataBlock = '';
-    private $previousTag = '';
-    private $grandmotherNode = '';
-    private $fileName = '';
-        
-    public function index() {
-        $this->setInitialInfo();
-        $xsdSource = $this->loadFile();
-        $xsdArray = $this->parseXSDStructure($xsdSource);
+
+            /*
+            * XSD Preferences
+            */
+    
+            // XSD Choices. Helps the algorythm to choose between two possible variants in order to form final xml.
+            private $xsdChoices = [];
+            //----------------------
+            
+            
+            // XSD Relations. Defines which data value needs to be filled to certain attribute name.
+            private $xsdRelations = [];
+            //-----------------------
+            
+            
+            // XSD Settings. Defines seller, buyer, signer etc.
+            private $xsdSettings = [];
+            //-----------------------
+            
+            
+            // XSD Exceptions. Simple exceptions list. Yes, unfortunately, there is some stuff, that is impossible to generalize.
+            private $xsdExceptions = [];
+            //-------------------------
+
+
+             /*
+            * Information Blocks
+            */
+            
+             
+            // XSD Template directory. 
+            public $templateFileDir = [];
+            //-------------------------
+            
+            
+            // XSD Templates. List of xsd items, that used many times in different places.
+            private $xsdTemplates = [];
+            //-------------------------
+            
+            
+            // XSD main object.
+            private $mainInfo = [];
+            //-------------------------
+
+
+            /*
+            * Other Vars
+            */
+            
+            // Helpful to define number of current product. Also used in defining 'Product Number' attribute.
+            private $currentProductIndex = '';
+            //-------------------------
+            
+            
+            // Defines current data block (active, passive etc.).
+            private $currentDataBlock = '';
+            //-------------------------
+            
+            
+            // Defines previous tag name.
+            private $previousTag = '';
+            //-------------------------
+            
+            
+            // Defines the name of a tag, that is behind previous tag.
+            private $prePreviousTag = '';
+            //-------------------------
+            
+            
+            // Name of final xml file. Completely generated one.
+            private $fileName = '';
+            //-------------------------
+            
+            
+                    
+    public function runParsing() {
+        $xsdArray = $this->parseXSDStructure($this->xsdSource);
         $main_structure = $xsdArray['element'];
         $this->xsdTemplates = $xsdArray['complexType'];
+        if(empty($this->mainInfo)){
+            echo 'View is empty!';
+            die;
+        }
         $this->modifyInputData();
         $xmlObject = $this->composeXML([$main_structure]);
         return $this->exportResult($xmlObject->saveXML());
     }
-   
-    private function setInitialInfo() {
-        require_once 'settings.php';
-        $this->xsdChoices = $xsdChoices;
-        $this->xsdRelations = $xsdRelations;
-        $this->xsdSettings = $xsdSettings;  
-        $this->xsdExceptions = $xsdExceptions;  
-        $this->mainInfo = json_decode(file_get_contents('./application/plugins/XsdToXml/models/object.php'));
+         
+    public function loadSettings($xsdMainSetting) {
+        $this->xsdChoices = $xsdMainSetting['xsdChoices'];
+        $this->xsdRelations = $xsdMainSetting['xsdRelations'];
+        $this->xsdSettings = $xsdMainSetting['xsdSettings'];  
+        $this->xsdExceptions = $xsdMainSetting['xsdExceptions'];  
     }
      
-    private function loadFile() {
-        $file = './application/plugins/XsdToXml/models/ON_NSCHFDOPPR.xsd';
-        $xsdSource = file_get_contents($file);
+    
+    public function loadFile($templateFileName) {
+        $this->xsdSource = file_get_contents($templateFileName);
         $this->domDocument = new \DOMDocument('1.0');
         $this->domDocument->formatOutput = true;
         $this->domDocument->preserveWhiteSpace = false;
-        return $xsdSource;
+    }
+    
+    public function loadView($view){
+        $this->mainInfo = $view;
     }
     
     private function parseXSDStructure($xsdSource) {
         $xsdSource = str_replace('xs:', '', $xsdSource);
-        $xml_object = simplexml_load_string($xsdSource);
-        return $this->xmlToArray($xml_object);
+        $xmlObject = simplexml_load_string($xsdSource);
+        return $this->xmlToArray($xmlObject);
     }
     
     private function xmlToArray($xmlObject, $out = array()) {
@@ -71,7 +136,7 @@ class XsdToXml extends Catalog {
     private function exportResult($xml){
         $this->domDocument->loadXml($xml);
         $this->domDocument->encoding='windows-1251';
-        return $this->domDocument->save($this->fileName.'.xml');
+        return $this->domDocument->saveXML();
     } 
     
     /*==================  CREATING XML  ======================*/
@@ -165,7 +230,7 @@ class XsdToXml extends Catalog {
     /*==================  ENTRIES MANAGEMENT  ======================*/
     
     private function xmlEntriesAdd($element, $preparedElement, $resultXml){
-        $products = $this->mainInfo->view->rows;
+        $products = $this->mainInfo->rows;
         foreach ($products as $key => $product) {
             $this->currentProductIndex = $key;
             $delete = $this->composeXML([$element], $preparedElement->tagName, $resultXml);
@@ -214,7 +279,7 @@ class XsdToXml extends Catalog {
         foreach ($array as $key => $item) {
             foreach ($choices as $k => $choice) {
                 if ($this->checkIfChoiceIsCorrect($tagName, $k, $item['@attributes']['name'])) {
-                    $this->grandmotherNode = $this->previousTag;
+                    $this->prePreviousTag = $this->previousTag;
                     return $item;
                 }
             }
@@ -225,7 +290,7 @@ class XsdToXml extends Catalog {
     private function checkIfChoiceIsCorrect($currentElementName, $choice_key, $attribute_name ){
         if( $choice_key === $this->previousTag . '-' . $attribute_name || 
             $choice_key === $currentElementName . '-' . $attribute_name || 
-            $choice_key === $this->grandmotherNode . '-' . $attribute_name){
+            $choice_key === $this->prePreviousTag . '-' . $attribute_name){
             return true;
         }
         return false;
@@ -256,6 +321,7 @@ class XsdToXml extends Catalog {
                     if($value === '@'){
                         $value = $item['simpleType']['restriction']['enumeration']['@attributes']['value'];
                     }
+                   
                     if ($value) {
                         $resultXml->addAttribute($item['@attributes']['name'], $value);
                     } 
@@ -271,24 +337,25 @@ class XsdToXml extends Catalog {
     
     private function getAttributeByName($attribute_name) {
         $current_data_blocks = $this->getCurrentDataBlocks();
+         
         return $this->getDataByAttributeName($current_data_blocks, $attribute_name);
     }
     
     private function getCurrentDataBlocks(){
         $prepared_data = $this->prepareSettingsData();
-        $current_data_blocks = $prepared_data->view->head;
+        $current_data_blocks = $prepared_data->head;
         if (!empty($this->currentDataBlock)) {
-            $current_data_blocks = $prepared_data->view->{$this->xsdSettings[$this->currentDataBlock]};
+            $current_data_blocks = $prepared_data->{$this->xsdSettings[$this->currentDataBlock]};
         }
         if ($this->currentProductIndex !== '') {
-            $current_data_blocks = $prepared_data->view->rows[$this->currentProductIndex];
+            $current_data_blocks = $prepared_data->rows[$this->currentProductIndex];
         }
         return $current_data_blocks;
     }
     
     private function prepareSettingsData(){
-        $this->xsdRelations['ИдОтпр'] = $this->stringToHashAdapt($this->mainInfo->view->a->company_code+$this->mainInfo->view->a->company_id);
-        $this->xsdRelations['ИдПол'] = $this->stringToHashAdapt($this->mainInfo->view->p->company_code+$this->mainInfo->view->p->company_id);
+        $this->xsdRelations['ИдОтпр'] = $this->stringToHashAdapt($this->mainInfo->a->company_code+$this->mainInfo->a->company_id);
+        $this->xsdRelations['ИдПол'] = $this->stringToHashAdapt($this->mainInfo->p->company_code+$this->mainInfo->p->company_id);
         $this->fileName = $this->generateFileName();
         $this->xsdRelations['ДатаИнфПр'] = '#'.date('d.m.Y');
         $this->xsdRelations['ВремИнфПр'] = '#'.date('H.i.s');
@@ -302,8 +369,8 @@ class XsdToXml extends Catalog {
      private function getDataByAttributeName($current_data, $attribute_name){
         $straightText = false;
         $current_data = [$current_data];
-        $current_data[] = $this->mainInfo->view->head;
-        $current_data[] = $this->mainInfo->view->doc_view;
+        $current_data[] = $this->mainInfo->head;
+        $current_data[] = $this->mainInfo->doc_view;
         foreach ($this->xsdRelations as $key => $item) {
             if ($attribute_name === $key) {
                 foreach($current_data as $current_data_block){
@@ -333,12 +400,12 @@ class XsdToXml extends Catalog {
     private function modifyInputData(){
         $counter = ['a','p','doc_view','head','rows','footer'];
         foreach($counter as $blockName ){
-            $this->mainInfo->view->{$blockName} = $this->modifyInformationBlock($blockName);
+            $this->mainInfo->{$blockName} = $this->modifyInformationBlock($blockName);
         }
     }
     
     private function modifyInformationBlock($blockName){
-        $informationBlock = $this->mainInfo->view->{$blockName};
+        $informationBlock = $this->mainInfo->{$blockName};
         if(isset($informationBlock->company_jaddress)){
                 $informationBlock = $this->modifyAddress($informationBlock->company_jaddress, $informationBlock);
         }
@@ -397,7 +464,7 @@ class XsdToXml extends Catalog {
         $fileName = "ON_SCHFDOPPR_".
                 $this->xsdRelations['ИдПол'].'_'.
                  $this->xsdRelations['ИдОтпр'].'_'.
-                implode('',array_reverse(explode('.',$this->mainInfo->view->head->doc_date))).'_';
+                implode('',array_reverse(explode('.',$this->mainInfo->head->doc_date))).'_';
         $nameHash = $this->stringToHashAdapt($fileName);
         return $fileName .= $nameHash;
     }
@@ -409,34 +476,5 @@ class XsdToXml extends Catalog {
         }
         return $hash;
     }
-    
-    public $updateSettings = ['settings' => 'json'];
-    public function updateSettings($settings) {
-        $this->settings = $settings;
-        $encoded = json_encode($settings, JSON_UNESCAPED_UNICODE);
-        $sql = "
-            UPDATE
-                plugin_list
-            SET 
-                plugin_settings = '$encoded'
-            WHERE plugin_system_name = 'CSVExporter'    
-            ";
-        $this->query($sql);
-        return $this->getSettings();
-    }
-
-    public function getSettings() {
-        $sql = "
-            SELECT
-                plugin_settings
-            FROM 
-                plugin_list
-            WHERE plugin_system_name = 'CSVExporter'    
-            ";
-        $row = $this->get_row($sql);
-        return json_decode($row->plugin_settings);
-    }
+   
 }
-
-
-INSERT INTO `isell_db`.`document_view_types` (`doc_types`, `blank_set`, `view_name`, `view_role`, `view_tpl`) VALUES ('/1/3/', 'ru', 'Счет фактура', 'tax_bill', 'ru/doc/schet-faktura.xsd');

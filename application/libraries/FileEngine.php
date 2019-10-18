@@ -4,7 +4,8 @@ class FileEngine{
     private $conversion_table = [
 	'.html' => ['.doc' => 'Word Документ','.html' => 'Веб Страница','.pdf' => 'PDF'],
 	'.xlsx' => ['.xlsx' => 'Excel', '.xls' => 'Excel 2003', '.html' => 'Веб Страница','.pdf' => 'PDF'],
-	'.xml'  => ['.xml' => 'XML Экспорт Данных']
+	'.xml'  => ['.xml' => 'XML Экспорт Данных'],
+	'.xsd'  => ['.xml' => 'XML по XSD образцу']
     ];
     private $view;
     private $tpl_files;
@@ -55,6 +56,13 @@ class FileEngine{
             $this->rain->configure('tpl_dir', $this->tpl_dir);
             $this->rain->configure('tpl_ext', substr($this->tpl_ext, 1));
             $this->rain->configure('cache_dir', sys_get_temp_dir());
+        } else if ($this->tpl_ext == '.xsd'){
+            $this->compilator = 'XSDtoXML';
+            include 'application/libraries/report/XSDtoXML.php';
+            $this->tpl_file = substr($file_name, strrpos($file_name, '/') + 1, strrpos($file_name, '.') - strrpos($file_name, '/') - 1);
+            $this->tpl_dir = substr($file_name, 0, strrpos($file_name, '/') + 1);
+            $this->xsdtoxml = new XSDtoXML();
+            $this->xsdtoxml->loadFile($file_name);
         }
     }
     
@@ -72,6 +80,9 @@ class FileEngine{
         }
         else if ($this->compilator == 'Rain') {
             $this->rain->assign('v', $this->view);
+        }
+        else if ($this->compilator == 'XSDtoXML') {
+            $this->xsdtoxml->loadView($this->view);
         }
     }
 
@@ -184,6 +195,13 @@ class FileEngine{
                 $this->header('Content-type: text/xml; charset=windows-1251;');
                 $xml = $this->rain->draw($this->tpl_file, true);
                 echo iconv('utf-8', 'windows-1251', $xml);
+            }
+        } else
+        if ($this->compilator == 'XSDtoXML') {
+            if ($out_extension == '.xml') {
+                $this->header('Content-type: text/xml; charset=windows-1251;');
+                $xml = $this->xsdtoxml->runParsing();
+                echo $xml;
             }
         }
     }
