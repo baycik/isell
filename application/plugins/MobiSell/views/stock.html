@@ -376,17 +376,19 @@
         filter:{
             filter_tree: {},
             selected: [],
-            last_expanded_filter_group: 0,
+            last_expanded_filter_group: [],
             init: function () {
                 $('#stock_filter_container').accordion({
                     duration: 100,
                     exclusive: false,
                     onOpen: function () {
-                        App.stock.filter.last_expanded_filter_group = $(this).data('filter_group_id');
+                        App.stock.filter.last_expanded_filter_group.push( $(this).data('filter_group_id') );
                     },
                     onClose: function () {
-                        if (App.stock.filter.last_expanded_filter_group === $(this).data('filter_group_id')) {
-                            App.stock.filter.last_expanded_filter_group = 0;
+                        let expanded=App.stock.filter.last_expanded_filter_group;
+                        let index=expanded.indexOf($(this).data('filter_group_id'));
+                        if( index>-1 ){
+                            expanded.splice(index,1);
                         }
                     }
                 });
@@ -399,9 +401,6 @@
                         App.stock.filter.tags.remove(filter_option_id);
                     }
                 });
-                Mark.pipes.plusone = function (num) {
-                    return num*1 + 1;
-                };
             },
             load: function () {
                 $.post("../Stock/matchesFilterGet", function (resp) {
@@ -415,9 +414,11 @@
                 App.stock.filter.filter_tree=filter_tree;
                 App.renderTpl("stock_filter_container", {filter_tree: filter_tree});
                 if( App.stock.filter.last_expanded_filter_group!==undefined ) {
-                    let filter_group_id = App.stock.filter.last_expanded_filter_group;
-                    $('#stock_filter_group_' + filter_group_id).addClass('active');
-                    $('#stock_filter_group_content_' + filter_group_id).addClass('active');
+                    let expanded=App.stock.filter.last_expanded_filter_group;
+                    for( let filter_group_id of expanded ){
+                        $('#stock_filter_group_' + filter_group_id).addClass('active');
+                        $('#stock_filter_group_content_' + filter_group_id).addClass('active');
+                    }
                 }
                 $('.stock-attributes-button .attributes-selected-length').html(App.stock.filter.selected_count);
                 $("#stock_filter_container input[data-is_selected=1]").prop('checked', 1);
@@ -600,77 +601,96 @@
                     <div class="filter_group_content content" id="stock_filter_group_content_{{filter_group_id}}" data-filter_group_id="{{filter_group_id}}">
                         <div class="ui form">
                             {{if filter_group_minmax}}
-                            <div class="fields">
-                                <div class="field">
-                                    <label>От</label>
-                                    <input type="text"
-                                           pattern="[0-9,\.]+"
-                                           placeholder="{{filter_group_minmax|split>_|limit>1>0|join>}}"
-                                           data-filter_group_id="{{filter_group_id}}"
-                                           data-value_type="from"
-                                           onfocus="this.select()">
-                                </div>
-                                <div class="field">
-                                    <label>До</label>
-                                    <input type="text"
-                                           pattern="[0-9,\.]+"
-                                           placeholder="{{filter_group_minmax|split>_|limit>1>1|join>}}"
-                                           data-filter_group_id="{{filter_group_id}}"
-                                           data-value_type="to"
-                                           onfocus="this.select()">
-                                </div>
-                            </div>
-                            {{/if}}
-
-                            {{if filter_group_options}}
-                            <div class="grouped fields" >
-                                <div class="field">
-                                    <div class="ui child checkbox">
-                                        <input type="radio" 
-                                               id="{{filter_group_id}}__"
-                                               name="{{filter_group_id}}"
-                                               data-filter_group_id="{{filter_group_id}}" 
-                                               data-filter_option_id="0"
-                                               data-filter_option_range="-1"
-                                               >
-                                        <label for="{{filter_group_id}}__">
-                                            Все
-                                        </label>
-                                    </div>
-                                </div>
-                                <div class="field" id="custom_option_{{filter_group_id}}" style="display:none">
-                                    <div class="ui child checkbox">
-                                        <input type="radio" 
-                                               name="{{filter_group_id}}"
+                            <RANGEFILTER>
+                                <div class="fields">
+                                    <div class="field">
+                                        <label>От</label>
+                                        <input type="text"
+                                               pattern="[0-9,\.]+"
+                                               placeholder="{{filter_group_minmax|split>_|limit>1>0|join>}}"
                                                data-filter_group_id="{{filter_group_id}}"
-                                               >
-                                        <label></label>
+                                               data-value_type="from"
+                                               onfocus="this.select()">
+                                    </div>
+                                    <div class="field">
+                                        <label>До</label>
+                                        <input type="text"
+                                               pattern="[0-9,\.]+"
+                                               placeholder="{{filter_group_minmax|split>_|limit>1>1|join>}}"
+                                               data-filter_group_id="{{filter_group_id}}"
+                                               data-value_type="to"
+                                               onfocus="this.select()">
                                     </div>
                                 </div>
+                                <div class="grouped fields" >
+                                    <div class="field">
+                                        <div class="ui child checkbox">
+                                            <input type="radio" 
+                                                   id="{{filter_group_id}}__"
+                                                   name="{{filter_group_id}}"
+                                                   data-filter_group_id="{{filter_group_id}}" 
+                                                   data-filter_option_id="0"
+                                                   data-filter_option_range="-1"
+                                                   >
+                                            <label for="{{filter_group_id}}__">
+                                                Все
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="field" id="custom_option_{{filter_group_id}}" style="display:none">
+                                        <div class="ui child checkbox">
+                                            <input type="radio" 
+                                                   name="{{filter_group_id}}"
+                                                   data-filter_group_id="{{filter_group_id}}"
+                                                   >
+                                            <label></label>
+                                        </div>
+                                    </div>
+                                    {{filter_group_options}}
+                                    <div class="field">
+                                        <div class="ui child checkbox">
+                                            <input type="radio" 
+                                                   id="{{filter_option_id}}"
+                                                   name="{{filter_group_id}}"
+                                                   data-filter_group_id="{{filter_group_id}}" 
+                                                   data-filter_option_id="{{filter_option_id}}"
+                                                   data-filter_option_range="{{filter_option_range}}"
+                                                   data-is_selected="{{is_selected}}"
+                                                   >
+                                            <label for="{{filter_option_id}}">
+                                                {{if match_count|equals>0}}
+                                                <span style="color: gray">{{filter_option_label}}</span>
+                                                {{else}}
+                                                <span>{{filter_option_label}} <span style="color: gray">({{match_count}})</span>
+                                                {{/if}}
+                                            </label>
+                                        </div>
+                                    </div>
+                                    {{/filter_group_options}}
+                                </div>
+                            </RANGEFILTER>
+                            {{else}}
+                            <OPTIONFILTER>
                                 {{filter_group_options}}
-                                <div class="field">
-                                    <div class="ui child checkbox">
-                                        <input type="radio" 
-                                               id="{{filter_option_id}}"
-                                               name="{{filter_group_id}}"
-                                               data-filter_group_id="{{filter_group_id}}" 
-                                               data-filter_option_id="{{filter_option_id}}"
-                                               data-filter_option_range="{{filter_option_range}}"
-                                               data-is_selected="{{is_selected}}"
-                                               >
-                                        <label for="{{filter_option_id}}">
-                                            {{if match_count|equals>0}}
-                                            <span style="color: gray">
-                                            {{else}}
-                                            <span>
-                                            {{/if}}
-                                                {{filter_option_label}} <span style="color: gray">({{match_count}})</span>
-                                            </span>
-                                        </label>
+                                    <div class="field">
+                                        <div class="ui child checkbox">
+                                            <input type="checkbox" 
+                                                   id="{{filter_option_id}}"
+                                                   data-filter_group_id="{{filter_group_id}}" 
+                                                   data-filter_option_id="{{filter_option_id}}"
+                                                   data-is_selected="{{is_selected}}"
+                                                   >
+                                            <label for="{{filter_option_id}}">
+                                                {{if match_count|equals>0}}
+                                                <span style="color: gray">{{filter_option_label}}</span>
+                                                {{else}}
+                                                <span>{{filter_option_label}} <span style="color: gray">({{match_count}})</span>
+                                                {{/if}}
+                                            </label>
+                                        </div>
                                     </div>
-                                </div>
-                                {{/filter_group_options}}
-                            </div>
+                                    {{/filter_group_options}}
+                            </OPTIONFILTER>
                             {{/if}}
                         </div>  
                     </div>

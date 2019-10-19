@@ -650,6 +650,7 @@ class Stock extends Catalog {
     
     
     protected function matchesFilterStore(){
+        $this->matchesFilterBuildCount();
         $this->Hub->svar('filter_tree',$this->filter_tree);
     }
     
@@ -683,7 +684,7 @@ class Stock extends Catalog {
         $this->matchesFilterBuildGroup( $group_id, $group_name, "{$minmax->minval}_{$minmax->maxval}" );
         $fraction_count=4;
         $fraction=($minmax->maxval - $minmax->minval)/$fraction_count;
-        $roundto=pow(10,strlen(round($fraction))-2);
+        $roundto=pow(10,strlen(round($fraction))-1);
         $rounded_fraction=round($fraction/$roundto)*$roundto;
         $custom_option_range=null;
         if( isset($this->filter_selected_grouped[$group_id]) ){
@@ -727,8 +728,12 @@ class Stock extends Catalog {
         ];
     }
     
-    protected function matchesFilterBuildOption($group_id,  $option_label, $option_condition, $is_selected=false, $option_range=null ){
+    protected function matchesFilterBuildOption($group_id,  $option_label, $option_condition, $is_selected=null, $option_range=null ){
         $option_id=substr(md5("$group_id-$option_condition"),0,10);//may be collisions. do we need collision check?
+        if( $is_selected===null && isset($this->filter_selected_grouped[$group_id]) ){
+            $selected_options=$this->filter_selected_grouped[$group_id];
+            $is_selected=(int)in_array($option_id, $selected_options);
+        }
         $this->filter_tree[$group_id]->options[$option_id]=(object)[
             'filter_group_id'=>$group_id,
             'filter_option_id'=>$option_id,
@@ -737,39 +742,71 @@ class Stock extends Catalog {
             'filter_option_condition'=>$option_condition,
             'is_selected'=>$is_selected
         ];
+        return $option_id;
+    }
+    
+    protected function matchesFilterBuildOptionSelect($group_id,$option_id,$is_selected=true){
+        $this->filter_tree[$group_id]->options[$option_id]->is_selected=$is_selected;
     }
     
     protected function matchesFilterBuildCount(){
         $count_fields=[];
+        function getCountCondition($group_id,$filter_tree,$filter_selected_grouped){
+            $and_case=[];
+            foreach( $filter_selected_grouped as $selected_group_id=>$options ){
+                if( $group_id===$selected_group_id ){
+                    continue;
+                }
+                $and_case[]=$filter_tree[$selected_group_id]->condition;
+            }
+            return $and_case;
+        }
         foreach($this->filter_tree as $group){
+            $other_group_conditions=getCountCondition($group->filter_group_id,$this->filter_tree,$this->filter_selected_grouped);
             foreach($group->options as $option){
-                $count_fields[]="SUM($option->filter_option_condition) `{$group->filter_group_id}___{$option->filter_option_id}`";
+                $full_condition=array_merge($other_group_conditions,[$option->filter_option_condition]);
+                $option_condition='('.implode(") AND (",$full_condition).')';
+                $count_fields[]="SUM(IF($option_condition,1,0)) `{$group->filter_group_id}___{$option->filter_option_id}`";
             }
         }
         $select= implode(',', $count_fields);
         $counts=$this->get_row("SELECT $select FROM tmp_matches_list");
         foreach($counts as $field=>$count){
             $ids=explode('___',$field);
-            $this->filter_tree[$ids[0]]->options[$ids[1]]->match_count=$count;
+            $this->filter_tree[$ids[0]]->options[$ids[1]]->match_count=$count?$count:0;
         }
     }
     
-    protected function matchesFilterBuild(){
-        $this->filter_tree=[];
-        $this->filter_selected_grouped=$this->request('filter_selected_grouped','json');
-        $this->matchesFilterBuildPrice();
-        
-        $this->matchesFilterBuildCount();
-        //$this->matchesFilterApply();//for test
-    }
     protected function matchesFilterBuildPrice(){
         $group_id="price_final";
         $this->matchesFilterBuildRange($group_id,"Цена");
     }
     
+    protected function matchesFilterBuildAnalytics(){
+        $group_id='analyse_brand';
+        $group_name="Brend";
+        $options=$this->get_list("SELECT DISTINCT $group_id FROM tmp_matches_list ORDER BY $group_id");
+        $this->matchesFilterBuildGroup( $group_id, $group_name );
+        foreach( $options as $option ){
+            $option_value=$option->{$group_id};
+            $option_label=$option_value?$option_value:'OTHER';
+            $option_condition=" $group_id='$option_value'";
+            $this->matchesFilterBuildOption($group_id,  $option_label, $option_condition );
+        }
+        
+        $group_id='special_prices';
+        $group_name="Promo";
+        $this->matchesFilterBuildGroup( $group_id, $group_name );
+        
+        
+        $this->matchesFilterBuildOption($group_id,  'Promo', 'NOT ISNULL(price_promo)' );
+        $this->matchesFilterBuildOption($group_id,  'Discount', 'price_basic<price_fixed' );
+        $this->matchesFilterBuildOption($group_id,  'Special', 'price_label<price_basic' );
+    }
+    
     protected function matchesFilterApply(){
         $and_case=[];
-        foreach($this->filter_tree as $group){
+        foreach($this->filter_tree as &$group){
             $or_case=[];
             foreach($group->options as $option){
                 if( $option->is_selected ){
@@ -777,15 +814,16 @@ class Stock extends Catalog {
                 }
             }
             if( $or_case ){
-                $and_case[]=implode(" OR ",$or_case);
+                $group->condition=implode(" OR ",$or_case);
+                $and_case[]=$group->condition;
             }
         }
         $having="";
         if( count($and_case) ){
-            $filter_clause=implode(" AND ",$and_case);
+            $filter_clause='('.implode(") AND (",$and_case).')';
             $having="HAVING $filter_clause;";
         }
-        $this->query("DROP TEMPORARY TABLE IF EXISTS tmp_filtered_matches_list");
+        $this->query("DROP TEMPORARY TABLE IF EXISTS tmp_filtered_matches_list");#TEMPORARY
         $sql="CREATE TEMPORARY TABLE tmp_filtered_matches_list AS 
             SELECT
                 *
@@ -795,49 +833,6 @@ class Stock extends Catalog {
         $this->query($sql);
     }
     
-    
-    
-    
-    public function matchesListFetch(string $q, int $limit=12, int $offset=0, string $sortby, string $sortdir, int $category_id=0, int $pcomp_id=0) {
-        $start= microtime(1);
-        $where=     $this->matchesListGetWhere( $q, $category_id );
-        $order_by=  $this->matchesListGetOrderBy($sortby,$sortdir);
-        
-        $this->matchesListCreateTemporary($where);
-        $this->matchesFilterBuild();
-        $this->matchesFilterApply();
-        $this->matchesFilterStore();
-        header("TMP: ".(microtime(1)-$start));
-        
-        
-        //print_r($this->filter_list);
-        
-        
-        
-        //INJECTION ATTRIBUTE MANAGER
-        //$AttributeManager=$this->Hub->load_model('AttributeManager');
-        //$AttributeManager->filterOut();
-        //END OF INJECTION ATTRIBUTE MANAGER
-        
-        
-        $select_sql='*';
-        $table_sql='tmp_filtered_matches_list ';
-        $where_sql='';
-        $having_sql='';
-        $sql="
-            SELECT
-                $select_sql
-            FROM
-                $table_sql
-            $where_sql
-            GROUP BY product_id
-            $having_sql
-            ORDER BY $order_by
-            LIMIT $limit OFFSET $offset";
-        $matches=$this->get_list($sql);
-        header("TT: ".(microtime(1)-$start));
-        return $matches;
-    }
     
     protected function matchesListGetWhere( $q, $category_id ){
         /*
@@ -896,47 +891,104 @@ class Stock extends Catalog {
         $usd_ratio=$this->Hub->pref('usd_ratio');
         $pcomp_id=$this->Hub->pcomp('company_id');
         $price_label=$this->Hub->pcomp('price_label');#TEMPORARY
-        $this->query("DROP TEMPORARY TABLE IF EXISTS tmp_matches_list");
-        $sql="CREATE TEMPORARY TABLE tmp_matches_list (PRIMARY KEY(product_id)) AS 
+        $this->query("DROP  TABLE IF EXISTS tmp_matches_list");
+        $sql="CREATE  TABLE tmp_matches_list (PRIMARY KEY(product_id)) AS 
+            
             SELECT 
-                pl.product_id,
-                pl.product_code,
-                pl.ru product_name,
-                pl.product_spack,
-                pl.product_unit,
-                se.product_quantity leftover,
-                se.product_img,
-                se.fetch_count,
-                se.fetch_stamp,
-                fetch_count popularity,
-                se.parent_id,
-                @price_basic:=prl_basic.sell*IF(prl_basic.curr_code='USD',$usd_ratio,1)*IF(discount,discount,1) price_basic,
-                @price_label:=prl_label.sell*IF(prl_label.curr_code='USD',$usd_ratio,1)*IF(discount,discount,1) price_label,
-                @price_promo:=prl_promo.sell*IF(prl_promo.curr_code='USD',$usd_ratio,1) price_promo,
-                CAST(COALESCE(@price_promo,@price_label,@price_basic) AS DECIMAL) price_final
-            FROM 
-                stock_entries se
-                    JOIN
-                prod_list pl USING(product_code)
-                    JOIN
-                stock_tree st ON st.branch_id=se.parent_id
+                inner_tmp_matches_list.*
+                
+
+                ,GROUP_CONCAT(attribute_value_hash) product_attribute_hashes  
+                
+            FROM (
+                SELECT 
+                    pl.product_id,
+                    pl.product_code,
+                    pl.ru product_name,
+                    pl.product_spack,
+                    pl.product_unit,
+                    pl.analyse_brand,
+                    pl.analyse_type,
+                    se.product_quantity leftover,
+                    se.product_img,
+                    se.fetch_count,
+                    se.fetch_stamp,
+                    fetch_count popularity,
+                    se.parent_id,
+                    @price_fixed:=prl_basic.sell*IF(prl_basic.curr_code='USD',$usd_ratio,1) price_fixed,
+                    @price_basic:=prl_basic.sell*IF(prl_basic.curr_code='USD',$usd_ratio,1)*IF(discount,discount,1) price_basic,
+                    @price_label:=prl_label.sell*IF(prl_label.curr_code='USD',$usd_ratio,1)*IF(discount,discount,1) price_label,
+                    @price_promo:=prl_promo.sell*IF(prl_promo.curr_code='USD',$usd_ratio,1) price_promo,
+                    CAST(COALESCE(@price_promo,@price_label,@price_basic) AS DECIMAL) price_final
+                FROM 
+                    stock_entries se
+                        JOIN
+                    prod_list pl USING(product_code)
+                        JOIN
+                    stock_tree st ON st.branch_id=se.parent_id
+                        LEFT JOIN
+                    companies_discounts cd ON st.top_id=cd.branch_id AND company_id='$pcomp_id'
+                        LEFT JOIN
+                    price_list prl_promo ON prl_promo.label='PROMO' AND se.product_code=prl_promo.product_code
+                        LEFT JOIN
+                    price_list prl_label ON prl_label.label='$price_label' AND se.product_code=prl_label.product_code
+                        LEFT JOIN
+                    price_list prl_basic ON prl_basic.label='' AND se.product_code=prl_basic.product_code
+                WHERE (SELECT MIN(fetch_count)
+                        FROM (SELECT
+                                fetch_count
+                            FROM
+                                stock_entries
+                            ORDER BY
+                                fetch_count DESC
+                            LIMIT $result_window_size) t) AND $where
+                LIMIT $result_window_size) inner_tmp_matches_list
+                    
                     LEFT JOIN
-                companies_discounts cd ON st.top_id=cd.branch_id AND company_id='$pcomp_id'
-                    LEFT JOIN
-                price_list prl_promo ON prl_promo.label='PROMO' AND se.product_code=prl_promo.product_code
-                    LEFT JOIN
-                price_list prl_label ON prl_label.label='$price_label' AND se.product_code=prl_label.product_code
-                    LEFT JOIN
-                price_list prl_basic ON prl_basic.label='' AND se.product_code=prl_basic.product_code
-            WHERE (SELECT MIN(fetch_count)
-                    FROM (SELECT
-                            fetch_count
-                        FROM
-                            stock_entries
-                        ORDER BY
-                            fetch_count DESC
-                        LIMIT $result_window_size) t) AND $where
-            LIMIT $result_window_size;";
+                attribute_values USING(product_id)
+                
+                GROUP BY product_id
+            ";
         return $this->query($sql);
+    }
+    
+    protected function matchesFilterBuild(){
+        $this->filter_tree=[];
+        $this->filter_selected_grouped=$this->request('filter_selected_grouped','json');
+        $this->matchesFilterBuildPrice();
+        $this->matchesFilterBuildAnalytics();
+    }
+    
+    public function matchesListFetch(string $q, int $limit=12, int $offset=0, string $sortby, string $sortdir, int $category_id=0, int $pcomp_id=0) {
+        $start= microtime(1);
+        $where=     $this->matchesListGetWhere( $q, $category_id );
+        $order_by=  $this->matchesListGetOrderBy($sortby,$sortdir);
+        
+        $Events=$this->Hub->load_model("Events");
+        $Events->Topic('beforeMatchesTmpCreated')->publish($this);
+        $this->matchesListCreateTemporary($where);
+        $Events->Topic('afterMatchesTmpCreated')->publish($this);
+        $this->matchesFilterBuild();
+        $this->matchesFilterApply();
+        $this->matchesFilterStore();
+        
+        header("TMP: ".(microtime(1)-$start));
+        $select_sql='*';
+        $table_sql='tmp_filtered_matches_list ';
+        $where_sql='';
+        $having_sql='';
+        $sql="
+            SELECT
+                $select_sql
+            FROM
+                $table_sql
+            $where_sql
+            GROUP BY product_id
+            $having_sql
+            ORDER BY $order_by
+            LIMIT $limit OFFSET $offset";
+        $matches=$this->get_list($sql);
+        header("TT: ".(microtime(1)-$start));
+        return $matches;
     }
 }

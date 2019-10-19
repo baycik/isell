@@ -1,6 +1,42 @@
 <?php
 
 class AttributeFilter extends Catalog{
+        /////////////////////////////////////////////////////
+    //STOCK MATCHES FILTERING
+    /////////////////////////////////////////////////////
+    
+    
+    public function filterBuildAttributes( $Host ){
+        $group_id='analyse_brand';
+        $group_name="Brend";
+        $options=$this->get_list("SELECT DISTINCT $group_id FROM tmp_matches_list ORDER BY $group_id");
+        $this->matchesFilterBuildGroup( $group_id, $group_name );
+        foreach( $options as $option ){
+            $option_value=$option->{$group_id};
+            $option_label=$option_value?$option_value:'OTHER';
+            $option_condition=" $group_id='$option_value'";
+            $this->matchesFilterBuildOption($group_id,  $option_label, $option_condition );
+        }
+    }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
 //    public function matchesListFetch(string $q, int $limit=12, int $offset=0, string $sortby, string $sortdir, int $category_id=0, int $pcomp_id=0) {
 //        $where=     $this->matchesListGetWhere( $q, $category_id );
 //        $order_by=  $this->matchesListGetOrderBy($sortby,$sortdir);

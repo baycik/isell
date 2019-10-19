@@ -1,7 +1,7 @@
 <?php
-/* Group Name: Р РЋР С”Р В»Р В°Р Т‘
+/* Group Name: Склад
  * User Level: 2
- * Plugin Name: Р СљР ВµР Р…Р ВµР Т‘Р В¶Р ВµРЎР‚ Р В°РЎвЂљРЎвЂљРЎР‚Р С‘Р В±РЎС“РЎвЂљР С•Р Р†
+ * Plugin Name: Attribute manager
  * Plugin URI: http://isellsoft.com
  * Version: 1.0
  * Description: Tool for managing product attributes
@@ -21,6 +21,15 @@ class AttributeManager extends Catalog{
 	$this->load->model('Maintain');
 	return $this->Maintain->backupImportExecute($uninstall_file);
     }
+    public function activate(){
+        $Events=$this->Hub->load_model("Events");
+        $Events->Topic('beforeMatchesTmpCreated')->subscribe('AttributeManager','filterSetupMatchesTable');
+    }
+    public function deactivate(){
+        $Events=$this->Hub->load_model("Events");
+        $Events->Topic('beforeMatchesTmpCreated')->unsubscribe('AttributeManager','filterSetupMatchesTable');
+    }
+    
     
     public function view( string $path ){
 	$this->load->view($path);
@@ -28,6 +37,7 @@ class AttributeManager extends Catalog{
     
     public $listFetch = ['offset' => ['int', 0], 'limit' => ['int', 5], 'sortby' => 'string', 'sortdir' => '(ASC|DESC)', 'filter' => 'json'];
     public function listFetch( $offset, $limit, $sortby, $sortdir, $filter = null){
+        $this->Hub->set_level(3);
         if (empty($sortby)) {
 	    $sortby = "attribute_name";
 	    $sortdir = "ASC";
@@ -50,6 +60,7 @@ class AttributeManager extends Catalog{
     
     public $attributeUpdate = ['attribute_id' => 'int', 'attribute_name' => 'string', 'attribute_unit' => 'string', 'attribute_prefix' => 'string'];
     public function attributeUpdate( $attribute_id, $attribute_name, $attribute_unit, $attribute_prefix ){
+        $this->Hub->set_level(3);
         if($attribute_id == 0){
             $sql = "
                 INSERT INTO
@@ -75,6 +86,7 @@ class AttributeManager extends Catalog{
     
     public $attributeValueUpdate = ['attribute_id' => 'int', 'product_id' => 'int', 'attribute_value' => 'string'];
     public function attributeValueUpdate( $attribute_id, $product_id, $attribute_value ){
+        $this->Hub->set_level(3);
         if($attribute_id == 0){
             return;          
         };
@@ -92,6 +104,7 @@ class AttributeManager extends Catalog{
     
     public $attributeDelete = ['rows' => 'json'];
     public function attributeDelete( $rows ){
+        $this->Hub->set_level(3);
         foreach($rows as $row){
             $sql = "
             DELETE FROM 
@@ -105,6 +118,7 @@ class AttributeManager extends Catalog{
     
     public $getAttributes = [];
     public function getAttributes(){
+        $this->Hub->set_level(3);
         $sql = "
             SELECT 
                 *
@@ -114,8 +128,9 @@ class AttributeManager extends Catalog{
         return $this->get_list($sql);
     }
     
-     public $getAttributesByCode = ['product_code' => 'string'];
-    public function getAttributesByCode($product_code){
+
+    public function getAttributesByCode(string $product_code){
+        $this->Hub->set_level(3);
         $sql = "
             SELECT * 
             FROM 
@@ -129,9 +144,8 @@ class AttributeManager extends Catalog{
         return $this->get_list($sql);
     }
     
-    
-    public $addProduct = [ 'attribute_id' => 'string', 'product_code' => 'string', 'attribute_value' => 'string' ];
-    public function addProduct ($attribute_id, $product_code, $attribute_value){
+    public function addProduct (int $attribute_id, string $product_code, string $attribute_value){
+        $this->Hub->set_level(3);
         $sql = "
             INSERT INTO
                     attribute_values (attribute_id, product_id, attribute_value)
@@ -140,10 +154,9 @@ class AttributeManager extends Catalog{
         
         return $this->query($sql);        
     }
-       
     
-    public $deleteProduct = [ 'rows' => 'json' ];
-    public function deleteProduct ($rows){
+    public function deleteProduct ( array $rows){
+        $this->Hub->set_level(3);
         $cases=[];
         foreach($rows as $row){
             $cases[]="(product_id={$row['product_id']} AND attribute_id={$row['attribute_id']})";
@@ -155,10 +168,9 @@ class AttributeManager extends Catalog{
             WHERE $where";
         return $this->query($sql);        
     }
-        
     
-    public $getProducts = [ 'attribute_id' => 'int','offset' => ['int', 0], 'limit' => ['int', 5], 'sortby' => 'string', 'sortdir' => '(ASC|DESC)', 'filter' => 'json'];
-    public function getProducts( $attribute_id,$offset, $limit, $sortby, $sortdir, $filter = null ){
+    public function getProducts( int $attribute_id, int $offset=0, int $limit=0, string $sortby=null, string $sortdir='', array $filter = null ){
+        $this->Hub->set_level(3);
          if (empty($sortby)) {
 	    $sortby = "attribute_name";
 	    $sortdir = "ASC";
@@ -191,12 +203,14 @@ class AttributeManager extends Catalog{
     
     public $import = ['label' => 'string', 'source' => 'raw', 'target' => 'raw'];
     public function import($label, $source, $target ) {
+        $this->Hub->set_level(3);
 	$source = array_map('addslashes', $source);
 	$target = array_map('addslashes', $target);
 	return $this->importInTable( $source, $target, $label);
     }
 
     private function importInTable($src, $trg, $label) {
+        $this->Hub->set_level(3);
         $product_code_source_column='';
         $attributes=[];
         for ($i = 0; $i < count($src); $i++) {
@@ -245,8 +259,8 @@ class AttributeManager extends Catalog{
 	return $total_rows;
     }
     
-    public $tableViewGet=['out_type'=>['string','.print'],'attribute_id' => ['int',0], 'filter' => 'json'];
-    public function tableViewGet($out_type,$attribute_id,$filter){
+    public function tableViewGet( string $out_type='.print', int $attribute_id=0, array $filter ){
+        $this->Hub->set_level(3);
 	$rows=$this->getProducts( $attribute_id,0, 10000, null, null, $filter = null );
 	$dump=[
             'tpl_files_folder'=>"application/plugins/AttributeManager/views/",
@@ -268,262 +282,40 @@ class AttributeManager extends Catalog{
     }
     
     public function tableStructure(){
+        $this->Hub->set_level(3);
         return [
             [
                 'Field'=>'product_code',
-                'Comment'=>'Р С™Р С•Р Т‘'
+                'Comment'=>'Product code'
             ],
             [
                 'Field'=>'attribute_name',
-                'Comment'=>'Р С’РЎвЂљРЎР‚Р С‘Р В±РЎС“РЎвЂљ'
+                'Comment'=>'Attribute name'
             ],
             [
                 'Field'=>'attribute_value',
-                'Comment'=>'Р вЂ”Р Р…Р В°РЎвЂЎР ВµР Р…Р С‘Р Вµ'
+                'Comment'=>'Attribute value'
             ],
             [
                 'Field'=>'attribute_unit',
-                'Comment'=>'Р вЂўР Т‘Р С‘Р Р…Р С‘РЎвЂ Р В°'
+                'Comment'=>'Attribute unit'
             ]
         ];
     }
     
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    /////////////////////////////////////////////////////
-    //STOCK MATCHES FILTERING
-    /////////////////////////////////////////////////////
-    public function filterOut(){
-        $filter_selected_grouped=$this->request('filter_selected_grouped','json');
-        $this->filterConstruct( $filter_selected_grouped );
-        $this->filterApply( $filter_selected_grouped );
-    }
-    
-    public function filterGet(){
-        //return $this->Hub->svar('filter_list');
-        return $this->filterConstructTree();
-    }
-    
-    private function filterApply( $filter_selected_grouped ){
-        $and_case='';
-        $and_delimeter='';
-        if( count($filter_selected_grouped) ){
-            foreach( $filter_selected_grouped as $filter_group_id=>$options ){
-                $id_chunks=explode('-',$filter_group_id);
-                if( $id_chunks[0]=='attribute_id' ){
-                    $or_case="'".implode("','",$options)."'";
-                    $and_case.=$and_delimeter." MAX(attribute_value_hash IN ($or_case)) ";
-                    $and_delimeter="*";
-                }
-            }
-        }
-        
-        $join="";
-        $where="0 ";
-        if( $and_case ){
-            $join="LEFT JOIN
-                (SELECT 
-                    product_id
-                FROM
-                    attribute_values
-                GROUP BY product_id
-                HAVING $and_case) filter_join USING (product_id)";
-            $where.="OR filter_join.product_id IS NULL";
-        }
-        $remove_sql="
-            DELETE
-                tmp_matches_list
+    public function filterSetupMatchesTable( $Host ){
+        $attribute_groups_sql="
+            SELECT
+                CONCAT('attribute_id',attribute_id) filter_group_id,
+                attribute_name filter_group_name
             FROM
-                tmp_matches_list
-                $join
-            WHERE
-                $where";
-        die($remove_sql);
-        $this->query($remove_sql);
-    }
-    
-    private function filterConstruct( $filter_selected_grouped ){
-        $this->Hub->svar('filter_list',[]);
-        $this->filterConstructPriceRanges();
-        $this->filterConstructAttributes( $filter_selected_grouped );
-    }
-    
-//    private function filterConstructPriceRanges111(){
-//        $minmax=$this->get_row("SELECT MIN(price_final) price_min,MAX(price_final) price_max FROM tmp_matches_list");
-//        
-//        $fraction_count=4;
-//        $fraction=$minmax->price_max/($fraction_count-1);
-//        $roundto=pow(10,strlen(round($fraction))-1);
-//        $rounded_fraction=round($fraction/$roundto)*$roundto;
-//        
-//        $calc_fraction_count="
-//        SELECT
-//            $rounded_fraction*1 range1,
-//            $rounded_fraction*2 range2,
-//            $rounded_fraction*3 range3,
-//            $rounded_fraction*4 range4,
-//            SUM(FLOOR(price_final/$rounded_fraction)=0) range_count1,
-//            SUM(FLOOR(price_final/$rounded_fraction)=1) range_count2,
-//            SUM(FLOOR(price_final/$rounded_fraction)=2) range_count3,
-//            SUM(FLOOR(price_final/$rounded_fraction)>=3) range_count4,
-//            COUNT(*) total_count
-//        FROM
-//            tmp_matches_list";
-//        $ranges=$this->get_row($calc_fraction_count);
-//        $ranges->min=$minmax->price_min;
-//        $ranges->max=$minmax->price_max;
-//        return [$ranges];
-//    }
-    
-    private function filterConstructPriceRanges(){
-        $minmax=$this->get_row("SELECT MIN(price_final) price_min,MAX(price_final) price_max FROM tmp_matches_list");
+                    attributes_list
+                JOIN
+                    tmp_matches_list USING(product_id)
+            ORDER BY attribute_name
+        ";
+        return $this->query($attribute_groups_sql);
         
-        $fraction_count=4;
-        $fraction=$minmax->price_max/($fraction_count-1);
-        $roundto=pow(10,strlen(round($fraction))-1);
-        $rounded_fraction=round($fraction/$roundto)*$roundto;
-        
-        $calc_fraction_count="
-        SELECT
-            $rounded_fraction*1 range1,
-            $rounded_fraction*2 range2,
-            $rounded_fraction*3 range3,
-            $rounded_fraction*4 range4,
-            SUM(FLOOR(price_final/$rounded_fraction)=0) range_count1,
-            SUM(FLOOR(price_final/$rounded_fraction)=1) range_count2,
-            SUM(FLOOR(price_final/$rounded_fraction)=2) range_count3,
-            SUM(FLOOR(price_final/$rounded_fraction)>=3) range_count4,
-            COUNT(*) total_count
-        FROM
-            tmp_matches_list";
-        $ranges=$this->get_row($calc_fraction_count);
-        $ranges->min=$minmax->price_min;
-        $ranges->max=$minmax->price_max;
-        $filter_options=[
-            (object) [
-                'filter_group_id'=>'price_final',
-                'filter_group_name'=>'Price',
-                'filter_option_field'=>'price_final',
-                'filter_option_id'=>"0_{$ranges->range1}",
-                'filter_option_label'=>"Less than $ranges->range1",
-                'match_count'=>$ranges->range_count1
-            ],
-            (object) [
-                'filter_group_id'=>'price_final',
-                'filter_group_name'=>'Price',
-                'filter_option_field'=>'price_final',
-                'filter_option_id'=>"{$ranges->range1}_{$ranges->range2}",
-                'filter_option_label'=>"$ranges->range1 - $ranges->range2",
-                'match_count'=>$ranges->range_count2
-            ],
-            (object) [
-                'filter_group_id'=>'price_final',
-                'filter_group_name'=>'Price',
-                'filter_option_field'=>'price_final',
-                'filter_option_id'=>"{$ranges->range2}_{$ranges->range3}",
-                'filter_option_label'=>"$ranges->range2 - $ranges->range3",
-                'match_count'=>$ranges->range_count3
-            ],
-            (object) [
-                'filter_group_id'=>'price_final',
-                'filter_group_name'=>'Price',
-                'filter_option_field'=>'price_final',
-                'filter_option_id'=>"{$ranges->range4}_{$minmax->price_max}",
-                'filter_option_label'=>"More than $ranges->range4",
-                'match_count'=>$ranges->range_count4
-            ],
-        ];
-        $this->filterStoreFilterOptions( $filter_options );
+       // print_r($Host);
     }
-    
-    private function filterConstructAttributes( $filter_selected_grouped ){
-        $selected_checker="0";
-        $selected_list='';
-        $selected_delimeter='';
-        $and_case='';
-        $and_delimeter='';
-        $counter="COUNT(*)";
-        if( count($filter_selected_grouped) ){
-            foreach( $filter_selected_grouped as $filter_group_id=>$options ){
-                $id_chunks=explode('-',$filter_group_id);
-                if( $id_chunks[0]=='attribute_id' ){
-                    $or_case="'".implode("','",$options)."'";
-                    $selected_list.=$selected_delimeter.$or_case;
-                    $selected_delimeter=',';
-                    
-                    $and_case=$and_delimeter."(attribute_value_hash IN ($or_case))";
-                    $and_delimeter="*";
-                }
-            }
-            $selected_checker=" IF( attribute_value_hash IN ($selected_list),1,0) ";
-            $counter="333";
-        }
-        $sql="
-            SELECT 
-                CONCAT('attribute_id-',attribute_id) 
-                    filter_group_id,
-                attribute_name 
-                    filter_group_name,
-                'attribute_value_hash'
-                    filter_option_field,
-                attribute_value_hash 
-                    filter_option_id,
-                CONCAT(attribute_prefix,' ',attribute_value,' ',attribute_unit) 
-                    filter_option_label,
-                $counter 
-                    match_count,
-                $selected_checker 
-                    is_selected
-            FROM
-                tmp_matches_list
-                    JOIN
-                attribute_values av USING(product_id)
-                    JOIN
-                attribute_list al USING(attribute_id)
-            GROUP BY attribute_value_hash
-            ORDER BY attribute_name,attribute_id,attribute_value";
-        $filter_options=$this->get_list($sql);
-        $this->filterStoreFilterOptions( $filter_options );
-    }
-    
-    
-    private function filterStoreFilterOptions( $options ){
-        $filter_list=$this->Hub->svar('filter_list') OR $filter_list=[];
-        $this->Hub->svar('filter_list',array_merge($filter_list,$options));
-    }
-    
-    private function filterConstructTree(){
-        $filter_list=$this->Hub->svar('filter_list');
-        $tree=[];
-        $group_index=-1;
-        $current_attribute_id=0;
-        foreach($filter_list as $entry){
-            if( $current_attribute_id !== $entry->filter_group_id ){
-                $group_index++;
-                $group=[
-                    'filter_group_id'=>$entry->filter_group_id,
-                    'filter_group_name'=>$entry->filter_group_name,
-                    'filter_group_options'=>[]
-                ];
-                if( !empty($entry->filter_group_range) ){
-                    $group['filter_group_range']=$entry->filter_group_range;
-                }
-                $tree[$group_index]=$group;
-                $current_attribute_id = $entry->filter_group_id;
-            }
-            $tree[$group_index]['filter_group_options'][]=$entry;
-        }
-        return $tree;
-    }
-    
 }

@@ -201,16 +201,18 @@ class Events extends Catalog{
     public function publish(){
         $arguments=func_get_args();
         $listener_list=$this->get_list("SELECT event_place,event_target,event_liable_user_id,event_note FROM event_list WHERE event_label='-TOPIC-' AND event_name='$this->topic'");
+        $returns=[];
         foreach($listener_list as $listener){
             $Model=$this->Hub->load_model($listener->event_place);
             $method=$listener->event_target;
             $arguments[]=$listener->event_note;
             try{
-                call_user_func_array([$Model, $method],$arguments);
+                $returns[]=call_user_func_array([$Model, $method],$arguments);
             } catch (Exception $ex) {
                 $this->unsubscribe( $listener->event_place, $listener->event_target, $listener->event_liable_user_id );
                 $this->log("Topic subscriber '{$listener->event_place}->{$listener->event_target}' has been removed due to error: ".$ex);
             }
         }
+        return $returns;
     }
 }
