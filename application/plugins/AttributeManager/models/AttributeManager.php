@@ -304,17 +304,39 @@ class AttributeManager extends Catalog{
     }
     
     public function filterSetupMatchesTable( $Host ){
-        $attribute_groups_sql="
-            SELECT
-                CONCAT('attribute_id',attribute_id) filter_group_id,
-                attribute_name filter_group_name
+        $attribute_list_sql="
+            SELECT 
+                CONCAT('attribute_id','-', attribute_id) group_id,
+                attribute_name group_name,
+                attribute_value_hash,
+                CONCAT(attribute_prefix,attribute_value,attribute_unit) option_label
             FROM
-                    attributes_list
-                JOIN
-                    tmp_matches_list USING(product_id)
+                attribute_list
+                    JOIN
+                attribute_values USING (attribute_id)
+                    JOIN
+                tmp_matches_list USING (product_id)
+            GROUP BY attribute_id,attribute_value
             ORDER BY attribute_name
         ";
-        return $this->query($attribute_groups_sql);
+        $attribute_list=$this->query($attribute_list_sql);
+        
+        $attribute_tree=[];
+        $group_id=0;
+        foreach($attribute_list as $attribute){
+            if( $attribute->filter_group_id!==$group_id ){
+                $Host->matchesFilterBuildGroup($attribute->group_id, $attribute->group_name);
+                $group_id=$attribute->group_id;
+            }
+            $option_condition="MAX(";
+            
+            $Host->matchesFilterBuildOption($group_id,  $attribute->option_label, $option_condition);
+        }
+        
+        
+        
+        
+        
         
        // print_r($Host);
     }
