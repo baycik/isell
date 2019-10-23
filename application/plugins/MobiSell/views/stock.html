@@ -492,7 +492,7 @@
             find_option_intree:function(filter_group_id,filter_option_id){
                 let found_group=App.stock.filter.find_group_intree(filter_group_id);
                 for (let option of found_group.filter_group_options) {
-                    if( option.filter_option_id===filter_option_id ) {
+                    if( option.filter_option_id==filter_option_id ) {
                         option.filter_group_name=found_group.filter_group_name;
                         return option;
                     }

@@ -645,12 +645,7 @@ class Stock extends Catalog {
     ////////////////////////////////////////////////////
     //MATCHES LIST FETCHING
     ////////////////////////////////////////////////////
-    
-    
-    
-    
     protected function matchesFilterStore(){
-        $this->matchesFilterBuildCount();
         $this->Hub->svar('filter_tree',$this->filter_tree);
     }
     
@@ -719,7 +714,7 @@ class Stock extends Catalog {
         }
     }
     
-    protected function matchesFilterBuildGroup( $group_id, $group_name, $group_minmax=null ){
+    public function matchesFilterBuildGroup( $group_id, $group_name, $group_minmax=null ){
         $this->filter_tree[$group_id]=(object) [
             'filter_group_id'=>$group_id,
             'filter_group_name'=>$group_name,
@@ -728,7 +723,7 @@ class Stock extends Catalog {
         ];
     }
     
-    protected function matchesFilterBuildOption($group_id,  $option_label, $option_condition, $is_selected=null, $option_range=null ){
+    public function matchesFilterBuildOption($group_id,  $option_label, $option_condition, $is_selected=null, $option_range=null ){
         $option_id=substr(md5("$group_id-$option_condition"),0,10);//may be collisions. do we need collision check?
         if( $is_selected===null && isset($this->filter_selected_grouped[$group_id]) ){
             $selected_options=$this->filter_selected_grouped[$group_id];
@@ -784,7 +779,7 @@ class Stock extends Catalog {
     
     protected function matchesFilterBuildAnalytics(){
         $group_id='analyse_brand';
-        $group_name="Brend";
+        $group_name="Brand";
         $options=$this->get_list("SELECT DISTINCT $group_id FROM tmp_matches_list ORDER BY $group_id");
         $this->matchesFilterBuildGroup( $group_id, $group_name );
         foreach( $options as $option ){
@@ -797,11 +792,9 @@ class Stock extends Catalog {
         $group_id='special_prices';
         $group_name="Promo";
         $this->matchesFilterBuildGroup( $group_id, $group_name );
-        
-        
         $this->matchesFilterBuildOption($group_id,  'Promo', 'NOT ISNULL(price_promo)' );
-        $this->matchesFilterBuildOption($group_id,  'Discount', 'price_basic<price_fixed' );
-        $this->matchesFilterBuildOption($group_id,  'Special', 'price_label<price_basic' );
+        $this->matchesFilterBuildOption($group_id,  'Discount', 'price_basic < price_fixed' );
+        $this->matchesFilterBuildOption($group_id,  'Special', 'price_label < price_basic' );
     }
     
     protected function matchesFilterApply(){
@@ -892,7 +885,7 @@ class Stock extends Catalog {
         $pcomp_id=$this->Hub->pcomp('company_id');
         $price_label=$this->Hub->pcomp('price_label');#TEMPORARY
         $this->query("DROP  TABLE IF EXISTS tmp_matches_list");
-        $sql="CREATE  TABLE tmp_matches_list (PRIMARY KEY(product_id)) AS 
+        $sql="CREATE TEMPORARY TABLE tmp_matches_list (PRIMARY KEY(product_id)) AS 
             
             SELECT 
                 inner_tmp_matches_list.*
@@ -954,7 +947,7 @@ class Stock extends Catalog {
     
     protected function matchesFilterBuild(){
         $this->filter_tree=[];
-        $this->filter_selected_grouped=$this->request('filter_selected_grouped','json');
+        $this->filter_selected_grouped=$this->request('filter_selected_grouped','json',[]);
         $this->matchesFilterBuildPrice();
         $this->matchesFilterBuildAnalytics();
     }
@@ -969,10 +962,9 @@ class Stock extends Catalog {
         $this->matchesListCreateTemporary($where);
         $Events->Topic('afterMatchesTmpCreated')->publish($this);
         $this->matchesFilterBuild();
+        $Events->Topic('afterMatchesFilterBuilt')->publish($this);
         $this->matchesFilterApply();
-        $this->matchesFilterStore();
         
-        header("TMP: ".(microtime(1)-$start));
         $select_sql='*';
         $table_sql='tmp_filtered_matches_list ';
         $where_sql='';
@@ -988,7 +980,18 @@ class Stock extends Catalog {
             ORDER BY $order_by
             LIMIT $limit OFFSET $offset";
         $matches=$this->get_list($sql);
-        header("TT: ".(microtime(1)-$start));
-        return $matches;
+        $this->immediateResponse($matches);
+        
+        $this->matchesFilterBuildCount();
+        $this->matchesFilterStore();
+    }
+    private function immediateResponse( $response ){
+        ob_start();
+        echo json_encode($response);
+        header('Connection: close');
+        header('Content-Length: '.ob_get_length());
+        ob_end_flush();
+        ob_flush();
+        flush();
     }
 }

@@ -24,10 +24,12 @@ class AttributeManager extends Catalog{
     public function activate(){
         $Events=$this->Hub->load_model("Events");
         $Events->Topic('beforeMatchesTmpCreated')->subscribe('AttributeManager','filterSetupMatchesTable');
+        $Events->Topic('afterMatchesFilterBuilt')->subscribe('AttributeManager','filterBuildGroups');
     }
     public function deactivate(){
         $Events=$this->Hub->load_model("Events");
         $Events->Topic('beforeMatchesTmpCreated')->unsubscribe('AttributeManager','filterSetupMatchesTable');
+        $Events->Topic('afterMatchesFilterBuilt')->unsubscribe('AttributeManager','filterBuildGroups');
     }
     
     
@@ -304,6 +306,9 @@ class AttributeManager extends Catalog{
     }
     
     public function filterSetupMatchesTable( $Host ){
+    }
+    
+    public function filterBuildGroups( $Host ){
         $attribute_list_sql="
             SELECT 
                 CONCAT('attribute_id','-', attribute_id) group_id,
@@ -317,27 +322,28 @@ class AttributeManager extends Catalog{
                     JOIN
                 tmp_matches_list USING (product_id)
             GROUP BY attribute_id,attribute_value
-            ORDER BY attribute_name
-        ";
-        $attribute_list=$this->query($attribute_list_sql);
+            ORDER BY attribute_id,attribute_value*1,attribute_value";
+        $attribute_list=$this->get_list($attribute_list_sql);
         
-        $attribute_tree=[];
-        $group_id=0;
+        $group_id=null;
+        $other_condition=[];
         foreach($attribute_list as $attribute){
-            if( $attribute->filter_group_id!==$group_id ){
-                $Host->matchesFilterBuildGroup($attribute->group_id, $attribute->group_name);
+            if( $attribute->group_id!==$group_id ){
+                if( $other_condition ){
+                    $Host->matchesFilterBuildOption($group_id,  'OTHER', 'product_attribute_hashes IS NULL OR '.implode(' AND ',$other_condition));
+                    $other_condition=[];
+                }
                 $group_id=$attribute->group_id;
+                $Host->matchesFilterBuildGroup($group_id, $attribute->group_name);
+                
             }
-            $option_condition="MAX(";
-            
+            $option_condition="LOCATE('$attribute->attribute_value_hash',product_attribute_hashes)>0";
+            $other_condition[]="NOT $option_condition";
             $Host->matchesFilterBuildOption($group_id,  $attribute->option_label, $option_condition);
         }
-        
-        
-        
-        
-        
-        
-       // print_r($Host);
+        if( $other_condition ){
+            $Host->matchesFilterBuildOption($group_id,  'OTHER', 'product_attribute_hashes IS NULL OR '.implode(' AND ',$other_condition));
+            $other_condition=[];
+        }
     }
 }
