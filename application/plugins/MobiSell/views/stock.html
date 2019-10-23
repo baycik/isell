@@ -27,8 +27,18 @@
             init: function(){
                 App.stock.head.pcompInit();
                 App.stock.categories.init();
-                $('.limit-dropdown').dropdown();
-                $('.order-by-dropdown').dropdown();
+                $('.limit-dropdown').dropdown({
+                    onChange: function (value){
+                        App.stock.entries.parameters.limit=value;
+                        App.stock.entries.load();
+                    }
+                });
+                $('.order-by-dropdown').dropdown({
+                    onChange: function (value){
+                        App.stock.entries.parameters.order_by=value;
+                        App.stock.entries.load();
+                    }
+                });
             },
             pcompInit: function () {
                 $('.pcomp_id').dropdown({
@@ -176,13 +186,12 @@
                     $('#stock_head_form .field').removeClass('disabled');
                     App.stock.entries.current_list = App.stock.entries.list;
                 }
-                App.stock.entries.addSpecailProductFeatures();
                 var gridview=localStorage.getItem('stockGridView');
+                App.stock.filter.load();
+                App.stock.entries.addSpecailProductFeatures();
                 App.stock.entries.gridViewConfigure(gridview); 
                 App.stock.cart.renderButton(); 
-                $('.cart-quantity').html(App.stock.cart.list.length);
                 App.renderTpl("stock_list", {products: App.stock.entries.current_list, loading_finished: App.stock.entries.loading_finished, show_cart: App.stock.entries.show_cart});
-                App.stock.filter.load();
             }, 
             renderItem: function (index, product_quantity){    
                 var item_node = '#product_item_'+index;
@@ -284,6 +293,7 @@
             },
             renderButton: function(){
                 App.renderTpl("stock_render_mode", {show_cart: App.stock.entries.show_cart, cart_quantity: App.stock.cart.list.length, total: App.stock.cart.total});
+                $('.cart-quantity').html(App.stock.cart.list.length);
             },
             update: function (product_object,delta,new_quantity, index) {
                 var founded_product=App.stock.cart.findInCart(product_object.product_id);
@@ -520,7 +530,7 @@
                     App.renderTpl("stock_filter_tags", {stock_filter_tags: App.stock.filter.selected});
                 },
                 remove: function (filter_option_id) {
-                    //only for responsivness until filter reloaded
+                    //only for responsivness until filter is reloaded
                     for (let i in App.stock.filter.selected) {
                         if (App.stock.filter.selected[i]['filter_option_id'] === filter_option_id) {
                             App.stock.filter.selected.splice(i, 1);
@@ -537,16 +547,6 @@
 <style>
     @import "stock.css";
 </style>
-
-
-
-
-
-
-
-
-
-
 <div id="stock_container" style="display: grid; grid-template-columns: 25% 75%; grid-column-gap: 1em;">
     <div id="stock_filter_widget">
         <div id="stock_filter_popup" class="ui  segment " style="margin-bottom: auto;">
@@ -725,7 +725,7 @@
                             <div class="ui left icon right labeled input fluid" style="margin-bottom: 5px;">
                                 <i class="search icon"></i>
                                 <input id="stock_search_input" placeholder="Введите название или код..." type="text"
-                                       oninput="App.stock.entries.load()">
+                                       oninput="clearTimeout(App.stock.entries.clock);App.stock.entries.clock = setTimeout(function () {App.stock.entries.load()}, 600);">
                                 <div class="ui basic label" onclick="App.stock.head.clearSearchbar()"><i class="close icon"></i></div>
                             </div>
                     </div>
@@ -766,10 +766,10 @@
                                     <div class="menu">
                                         <div class="item" data-value="popularity,DESC">Сначала популярные</div>
                                         <div class="item" data-value="popularity,ASC">Сначала непопулярные</div>
-                                        <div class="item" data-value="price,DESC">Сначала дешевые</div>
-                                        <div class="item" data-value="price,ASC">Сначала дорогие</div>
-                                        <div class="item" data-value="newness,ASC">Сначала новинки</div>
-                                        <div class="item" data-value="newness,DESC">Сначала постоянные</div>
+                                        <div class="item" data-value="price,ASC">Сначала дешевые</div>
+                                        <div class="item" data-value="price,DESC">Сначала дорогие</div>
+                                        <div class="item" data-value="newness,DESC">Сначала новинки</div>
+                                        <div class="item" data-value="newness,ASC">Сначала постоянные</div>
                                     </div>
                                 </div>
                             </div>
@@ -825,7 +825,9 @@
                                     {{/if}}
                                     <b>{{price_final|format}}</b>
                                 </div>
-                                <div class="four wide column" style="text-align: right">{{if stared_leftover}} {{stared_leftover}} {{else}} {{leftover}}{{product_unit}} {{/if}}</div>
+                                <div class="four wide column" style="text-align: right">
+                                    {{leftover}}{{product_unit}}
+                                </div>
                             </div>
                         </div>
                         <div class="product-action-column">

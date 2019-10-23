@@ -407,6 +407,10 @@
     }
     .product-price s{
         color: #ca6666;
+        white-space: nowrap;
+    }
+    .product-price b{
+        white-space: nowrap;
     }
     .product-list-grid{
         display: grid !important;

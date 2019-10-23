@@ -498,7 +498,7 @@ class Stock extends Catalog {
                 doc_id,
                 (SELECT label FROM companies_tree JOIN companies_list USING(branch_id) WHERE company_id=active_company_id) acomp_name,
                 (SELECT label FROM companies_tree JOIN companies_list USING(branch_id) WHERE company_id=passive_company_id) pcomp_name,
-                CONCAT(dt.doc_type_name,IF(dl.is_reclamation,' (Р’РѕР·РІСЂР°С‚)',''),' #',dl.doc_num) doc,
+                CONCAT(dt.doc_type_name,IF(dl.is_reclamation,' (Возврат)',''),' #',dl.doc_num) doc,
                 product_code,
                 ru product_name,
                 IF(doc_type=1,product_quantity,'') reserved,
@@ -792,7 +792,9 @@ class Stock extends Catalog {
             $option_condition=" $group_id='$option_value'";
             $this->matchesFilterBuildOption($group_id,  $option_label, $option_condition );
         }
-        
+    }
+    
+    protected function matchesFilterBuildPromotions(){
         $group_id='special_prices';
         $group_name=$this->lang("Promotion");
         $this->matchesFilterBuildGroup( $group_id, $group_name );
@@ -800,7 +802,6 @@ class Stock extends Catalog {
         $this->matchesFilterBuildOption($group_id,  $this->lang("Discount"), 'price_basic < price_fixed' );
         $this->matchesFilterBuildOption($group_id,  $this->lang("Special_price"), 'price_label < price_basic' );
     }
-    
     
     
     protected function matchesListGetWhere( $q, $category_id ){
@@ -959,9 +960,10 @@ class Stock extends Catalog {
         $this->filter_tree=[];
         $this->filter_selected_grouped=$this->request('filter_selected_grouped','json',[]);
         $Events=$this->Hub->load_model("Events");
-        $Events->Topic('beforeMatchesFilterBuild')->publish($this);
         $this->matchesFilterBuildPrice();
+        $this->matchesFilterBuildPromotions();
         $this->matchesFilterBuildAnalytics();
+        $Events->Topic('beforeMatchesFilterBuild')->publish($this);
     }
     
     public function matchesListFetch(string $q, int $limit=12, int $offset=0, string $sortby, string $sortdir, int $category_id=0, int $pcomp_id=0) {
@@ -998,7 +1000,7 @@ class Stock extends Catalog {
         }
 
         $query=[
-            'select'=>'*',
+            'select'=>'tmp_matches_list.*',
             'table'=>'tmp_matches_list',
             'where'=>'',
             'having'=>$having,

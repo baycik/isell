@@ -20,6 +20,17 @@ class StockBuyManager extends Catalog{
 	$this->load->model('Maintain');
 	return $this->Maintain->backupImportExecute($uninstall_file);
     }
+    public function activate(){
+        $Events=$this->Hub->load_model("Events");
+        $Events->Topic('beforeMatchesGet')->subscribe('StockBuyManager','matchesAddCommingLeftovers');
+    }
+    public function deactivate(){
+        $Events=$this->Hub->load_model("Events");
+        $Events->Topic('beforeMatchesGet')->unsubscribe('StockBuyManager','matchesAddCommingLeftovers');
+    }
+    
+    
+    
     public $views=['string'];
     public function views($path){
 	header("X-isell-type:OK");
@@ -496,5 +507,13 @@ class StockBuyManager extends Catalog{
         die;
 	
     }
-
+    public function matchesAddCommingLeftovers( $query ){
+        $query['table'].="
+            LEFT JOIN
+                supply_list ON supply_list.product_code=tmp_matches_list.product_code AND supply_leftover>0
+            LEFT JOIN
+                supplier_list USING(supplier_id)";
+        $query['select'].=",GROUP_CONCAT(supply_leftover) supply_leftovers,GROUP_CONCAT(supplier_delivery) supplier_deliveries";
+        return $query;
+    }
 }
