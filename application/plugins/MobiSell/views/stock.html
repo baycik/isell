@@ -14,17 +14,6 @@
             App.Topic('hashChange').subscribe(function () {
                 App.stock.productInfoModal.showProductInfo(App.state['productInfoModal.showProductInfo']);
             });
-            
-            
-            
-            
-            
-            
-                             
-                //!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                App.stock.filter.load();
-            
-            
         },
         focus: function () {
             App.title("Каталог товаров");
@@ -134,15 +123,14 @@
                 App.stock.entries.load();
             },
             load_prepare_params:function(load_more){
-                ///INJECTION
-                App.stock.entries.parameters.filter_selected_grouped=App.restore('filter_selected_grouped');
-                //END OF INJECTION
                 if (load_more) {
-                    App.stock.entries.parameters.offset += App.stock.entries.limit;
+                    App.stock.entries.parameters.offset += App.stock.entries.parameters.limit;
                 } else {
-                    App.stock.entries.parameters.offset = "0";
+                    App.stock.entries.parameters.offset = 0;
                 };
                 App.stock.entries.parameters.q=$('#stock_search_input').val();
+                App.stock.entries.parameters.filter_selected_grouped=App.restore('filter_selected_grouped');
+                
                 App.stock.entries.parameters.sortby=App.stock.entries.parameters.order_by.split(',')[0];
                 App.stock.entries.parameters.sortdir=App.stock.entries.parameters.order_by.split(',')[1];
                 App.stock.entries.parameters.pcomp_id=App.user.pcomp.company_id;
@@ -282,7 +270,7 @@
                     if(!category_id && category_id !== '0'){return;};
                     category_id === 'All' ? category_id = 0 : 0;
                     $('#stock_category_tree label.placeholder').html($(e.target).html());
-                    App.stock.entries.category_id = category_id;
+                    App.stock.entries.parameters.category_id = category_id;
                     App.stock.entries.load();
                     $('#categoriesPopup').modal('hide');
                 }); 
@@ -374,6 +362,7 @@
             }
         },
         filter:{
+            full_query:null,
             filter_tree: {},
             selected: [],
             last_expanded_filter_group: [],
@@ -403,6 +392,11 @@
                 });
             },
             load: function () {
+                let full_query=App.stock.entries.parameters.q+'---'+App.stock.entries.parameters.category_id+'---'+App.stock.entries.parameters.filter_selected_grouped;
+                if( App.stock.filter.full_query===full_query ){
+                    return;
+                }
+                App.stock.filter.full_query=full_query;
                 $.post("../Stock/matchesFilterGet", function (resp) {
                     var filter_tree = App.json(resp);
                     if (filter_tree) {
@@ -681,10 +675,10 @@
                                                    data-is_selected="{{is_selected}}"
                                                    >
                                             <label for="{{filter_option_id}}">
-                                                {{if match_count|equals>0}}
-                                                <span style="color: gray">{{filter_option_label}}</span>
-                                                {{else}}
+                                                {{if match_count|more>0}}
                                                 <span>{{filter_option_label}} <span style="color: gray">({{match_count}})</span>
+                                                {{else}}
+                                                <span style="color: gray">{{filter_option_label}}</span>
                                                 {{/if}}
                                             </label>
                                         </div>
@@ -699,16 +693,7 @@
             </div>
             <!--/ACCORDION-->
         </div>
-        
-        
-        
-        
-        
-        
     </div>
-    <!-- INJECTION -->
-    
-    
     <div id="stock_content">
         <div  class="ui blue segment">
             <form class="ui form" id="stock_head_form">
@@ -820,7 +805,7 @@
                     <!-- {{if products}} {{products}} -->
                 <div class='product-item' id="product_item_{{#}}" style=" {{if is_promo}}  background-color: #cfc;{{/if}}{{ if product_quantity|more>0 }} background-color: #ffd; {{else }}{{/if}}">
 
-                    <div class="product-item-grid" >
+                    <div class="product-item-grid {{if price_promo}}product-item-promo{{/if}}" >
                         <div class='product-image-column image-{{#}}' data-row-index="{{#}}" >
                             <a href="#stock.html#productInfoModal.showProductInfo={{product_code}}">
                                 <img src="../Storage/image_flush/?size=150x150&path=/dynImg/{{product_img}}" >
@@ -833,16 +818,14 @@
                         </div>
                         <div class="product-info-column">
                             <div class="ui grid" style="color:#666; padding-right:1.4em">
-                                    <div class="eight wide column">{{product_code}}</div>
-                                    <div class="four wide column product-price" style="text-align: right">
-                                        {{if price_promo}}
-                                            <s>{{price_basic|format}}</s>
-                                            <b>{{price_final|format}}</b>
-                                        {{else}} 
-                                            <b>{{price_final|format}}</b>
-                                        {{/if}}
-                                    </div>
-                                    <div class="four wide column" style="text-align: right">{{if stared_leftover}} {{stared_leftover}} {{else}} {{leftover}}{{product_unit}} {{/if}}</div>
+                                <div class="eight wide column">{{product_code}}</div>
+                                <div class="four wide column product-price" style="text-align: right">
+                                    {{if price_promo}}
+                                        <s>{{price_basic|format}}</s>
+                                    {{/if}}
+                                    <b>{{price_final|format}}</b>
+                                </div>
+                                <div class="four wide column" style="text-align: right">{{if stared_leftover}} {{stared_leftover}} {{else}} {{leftover}}{{product_unit}} {{/if}}</div>
                             </div>
                         </div>
                         <div class="product-action-column">

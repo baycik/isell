@@ -402,13 +402,11 @@
     .product-price{
         padding-left: 0px !important;
     }
-    .product-price b, .product-price s{
-        white-space: nowrap;
+    .product-item-promo{
+        background-color: #dfd;
     }
     .product-price s{
         color: #ca6666;
-        position: absolute;
-        top: 0;
     }
     .product-list-grid{
         display: grid !important;

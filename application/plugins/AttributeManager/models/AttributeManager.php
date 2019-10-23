@@ -24,12 +24,12 @@ class AttributeManager extends Catalog{
     public function activate(){
         $Events=$this->Hub->load_model("Events");
         $Events->Topic('beforeMatchesTmpCreated')->subscribe('AttributeManager','filterSetupMatchesTable');
-        $Events->Topic('afterMatchesFilterBuilt')->subscribe('AttributeManager','filterBuildGroups');
+        $Events->Topic('beforeMatchesFilterBuild')->subscribe('AttributeManager','filterBuildGroups');
     }
     public function deactivate(){
         $Events=$this->Hub->load_model("Events");
         $Events->Topic('beforeMatchesTmpCreated')->unsubscribe('AttributeManager','filterSetupMatchesTable');
-        $Events->Topic('afterMatchesFilterBuilt')->unsubscribe('AttributeManager','filterBuildGroups');
+        $Events->Topic('beforeMatchesFilterBuild')->unsubscribe('AttributeManager','filterBuildGroups');
     }
     
     
@@ -305,7 +305,14 @@ class AttributeManager extends Catalog{
         ];
     }
     
-    public function filterSetupMatchesTable( $Host ){
+    public function filterSetupMatchesTable( $query, $previuos_return ){
+        if( $previuos_return ){
+            $query=$previuos_return;
+        }
+        $query['outer']['select'].=",GROUP_CONCAT(attribute_value_hash) product_attribute_hashes";
+        $query['outer']['table'].="LEFT JOIN
+                attribute_values USING(product_id)";
+        return $query;
     }
     
     public function filterBuildGroups( $Host ){
@@ -330,7 +337,7 @@ class AttributeManager extends Catalog{
         foreach($attribute_list as $attribute){
             if( $attribute->group_id!==$group_id ){
                 if( $other_condition ){
-                    $Host->matchesFilterBuildOption($group_id,  'OTHER', 'product_attribute_hashes IS NULL OR '.implode(' AND ',$other_condition));
+                    $Host->matchesFilterBuildOption($group_id,  $this->lang("Other"), 'product_attribute_hashes IS NULL OR '.implode(' AND ',$other_condition));
                     $other_condition=[];
                 }
                 $group_id=$attribute->group_id;
@@ -342,7 +349,7 @@ class AttributeManager extends Catalog{
             $Host->matchesFilterBuildOption($group_id,  $attribute->option_label, $option_condition);
         }
         if( $other_condition ){
-            $Host->matchesFilterBuildOption($group_id,  'OTHER', 'product_attribute_hashes IS NULL OR '.implode(' AND ',$other_condition));
+            $Host->matchesFilterBuildOption($group_id,  $this->lang("Other"), 'product_attribute_hashes IS NULL OR '.implode(' AND ',$other_condition));
             $other_condition=[];
         }
     }

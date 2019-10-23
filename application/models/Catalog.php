@@ -357,4 +357,17 @@ class Catalog extends CI_Model {
         return implode(' AND ', $having);
     }
 
+    
+    private $vocabulary=[
+        'Promotion'=>"Акция",
+        'Discount'=>"Скидка",
+        'Special_price'=>"Спец. цена",
+        'Other'=>"Другое",
+        'Price'=>"Цена",
+        'Brand'=>"Производитель"
+    ];
+    
+    protected function lang( $word ){
+        return isset($this->vocabulary[$word])?$this->vocabulary[$word]:'';
+    }
 }
