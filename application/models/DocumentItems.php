@@ -240,6 +240,7 @@ class DocumentItems extends DocumentCore{
     
     public function entryDeleteArray($doc_id,$ids_arr){
 	$this->selectDoc($doc_id);
+        $this->loadDoc($doc_id);
 	$Document2=$this->Hub->bridgeLoad('Document');
 	$delete_ok=$Document2->deleteEntry($ids_arr);
         $Events=$this->Hub->load_model("Events");

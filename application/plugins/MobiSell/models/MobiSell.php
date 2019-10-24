@@ -208,8 +208,98 @@ class MobiSell extends PluginManager {
         $Company->selectPassiveCompany($passive_company_id);
         return $Company->companyPrefsGet();
     }
-
-
+    
+    //-----------PRODUCT LIST FETCHING---------------//
+    
+    public $productListFetch = ['q' => 'string', 'offset' => ['int', 0], 'limit' => ['int', 10],  'category_id' => ['int', 0], 'pcomp_id' => ['int', 0], 'order_by' => 'string','attribute_value_ids' => 'json'];
+    public function productListFetch($q, $offset, $limit, $category_id, $pcomp_id, $order_by, $attribute_value_ids) {
+	$price_query="0";
+        $usd_ratio=$this->Hub->pref('usd_ratio');
+	$where="1";
+        if( strlen($q)==13 && is_numeric($q) ){
+	    $where="product_barcode=$q";
+	} else if( $q ){
+	    $cases=[];
+	    $clues=  explode(' ', $q);
+	    foreach ($clues as $clue) {
+		if ($clue == ''){
+		    continue;
+		}
+		$cases[]="(product_code LIKE '%$clue%' OR ru LIKE '%$clue%')";
+	    }
+	    if( count($cases)>0 ){
+		$where=implode(' AND ',$cases);
+	    }
+	}
+        if( $category_id ){
+            $branch_ids = $this->treeGetSub('stock_tree', $category_id);
+            $where .= " AND parent_id IN (" . implode(',', $branch_ids) . ")";
+        } 
+        $this->productListCreateTemporary($where);
+        $attribute_list = $this->attributeListFetch($attribute_value_ids,$where);
+        $where="1";
+        if( $attribute_value_ids ){
+             foreach($attribute_value_ids as $index=>$attribute_value){
+                 $where .= " AND attribute_value_hash LIKE '%$attribute_value%' ";
+             }
+        }
+	 $sql="
+	   SELECT 
+                t.product_id,
+                t.product_code,
+                t.product_spack,
+                t.leftover,
+                t.product_name,
+                t.product_img,
+                t.fetch_count,
+                t.fetch_stamp,
+                t.parent_id,
+                t.product_unit,
+                GET_SELL_PRICE(t.product_code, {$pcomp_id}, {$usd_ratio}) product_price_total,
+                GET_PRICE(t.product_code,{$pcomp_id}, {$usd_ratio}) product_price_total_raw
+            FROM
+                (SELECT 
+                *, ru product_name
+	    FROM
+		product_list_temp
+            WHERE $where
+            GROUP BY product_id
+	    ORDER BY $order_by, product_code
+	    LIMIT $limit OFFSET $offset ) t
+            ";  
+        $product_list = $this->get_list($sql);
+        return ['product_list'=> $product_list, 'attribute_list'=> $attribute_list];
+    }
+    
+    private function productListCreateTemporary($where){
+         $sql="
+            CREATE TEMPORARY TABLE product_list_temp
+            SELECT
+                pl.product_id,
+                se.product_code,
+                pl.ru,
+                product_spack,
+                product_quantity leftover,
+                product_img,
+                fetch_count,
+                fetch_stamp,
+                parent_id,
+                product_unit,
+                self_price
+                ,GROUP_CONCAT(DISTINCT av.attribute_value_hash SEPARATOR ',') attribute_value_hash
+            FROM
+                stock_entries se
+                    JOIN
+                prod_list pl USING(product_code)
+                    LEFT JOIN	
+                attribute_values av ON pl.product_id = av.product_id
+                    LEFT JOIN
+                attribute_list al USING(attribute_id)
+                WHERE $where
+                GROUP BY pl.product_id
+        ";
+        return $this->query($sql);
+    }
     
     private function attributeListFetch($attribute_value_ids, $where){
         $this->query("CREATE TEMPORARY TABLE attributes_temp SELECT av.*, pl.parent_id FROM attribute_values av JOIN product_list_temp pl ON av.product_id = pl.product_id AND $where");

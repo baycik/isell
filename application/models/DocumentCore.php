@@ -65,12 +65,12 @@ class DocumentCore extends DocumentUtils{
 	$total_estimate=$offset+(count($result_rows)==$rows?$rows+1:count($result_rows));
 	return array('rows'=>$result_rows,'total'=>$total_estimate);
     }
-    public $createDocument=['string'];
-    public function createDocument( $doc_type=null ){
+    
+    public function createDocument( string $doc_type=null, string $creation_mode='' ){
 	$pcomp_id=$this->Hub->pcomp('company_id');
 	if( $pcomp_id ){
 	    $Document2=$this->Hub->bridgeLoad('Document');
-	    return $Document2->add($doc_type);
+	    return $Document2->add($doc_type,$creation_mode);
 	}
 	return 0;
     }
@@ -156,7 +156,7 @@ class DocumentCore extends DocumentUtils{
 	}
 	else{
 	    $doc_id = $this->doc('doc_id');
-	    $next_doc_num = $this->getNextDocNum($doc_type);
+	    $next_doc_num = $this->getNextDocNum($doc_type,true);
 	    $this->query("DELETE FROM document_view_list WHERE doc_id='$doc_id'");
 	    $quantity_sign = $doc_type<0 ? -1 : 1;
 	    $this->query("UPDATE document_entries SET product_quantity=ABS(product_quantity)*$quantity_sign WHERE doc_id=$doc_id");
