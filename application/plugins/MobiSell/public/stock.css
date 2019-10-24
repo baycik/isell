@@ -57,6 +57,33 @@
         #stock_container {
             grid-template-columns: 100% !important;
         }
+        #stock_filter_popup{
+            display:none;
+            width: 90%;
+            height: 100%;
+            margin: 0 auto;
+            z-index: 10;
+        }
+        #stock_filter_popup .ui.secondary.close.icon.button{
+            display:block !important;
+        }
+        .stock-attributes-button.eight.wide.field, #stock_secondary_prefs_button{ 
+            margin-left: initial !important;
+             display:block !important;
+        }
+        .thirteen.wide.left.floated.column{
+             margin-right: initial !important;
+        }
+        #stock_secondary_prefs_content{
+            display: none ;
+        }
+        #stock_list:not(.grid-view) .product-clear-button-container{
+            padding-left: 0px !important;
+            position: initial !important;
+        }
+        .ui.stackable.grid.secondary-preferences .eight.wide.column{
+            padding: 1em 0px !important;
+        }
         
     }  
     @media only screen and (min-width: 400px) and (max-width: 650px) {
@@ -127,6 +154,25 @@
         #stock_container {
             grid-template-columns: 100% !important;
         }
+        #stock_filter_popup{
+            display:none;
+            width: 90%;
+            height: 100%;
+            margin: 0 auto;
+            z-index: 10;
+        }
+        #stock_filter_popup .ui.secondary.close.icon.button{
+            display:block !important;
+        }
+        .stock-attributes-button.eight.wide.field, #stock_secondary_prefs_button{
+            display:block !important;
+        }
+        #stock_secondary_prefs_content{
+            display: none ;
+        }
+        .ui.stackable.grid.secondary-preferences .eight.wide.column{
+            padding: 1em 0px !important;
+        }
     } 
     @media only screen and (min-width: 650px) and (max-width: 1000px) {
         #stock_list .stock_product_table{
@@ -156,6 +202,22 @@
         #stock_container {
             grid-template-columns: 100% !important;
         }
+        #stock_filter_popup{
+            display:none;
+            width: 90%;
+            height: 100%;
+            margin: 0 auto;
+            z-index: 10;
+        }
+        #stock_filter_popup .ui.secondary.close.icon.button{
+            display:block !important;
+        }
+        .stock-attributes-button.eight.wide.field, #stock_secondary_prefs_button{
+            display:block !important;
+        }
+        #stock_secondary_prefs_content{
+            display: none;
+        }
     } 
     @media only screen and (min-width: 1000px) and (max-width: 1300px) {
         #stock_list .stock_product_table{
@@ -178,6 +240,12 @@
         #categoriesPopup .categories-container{
             grid-template-columns: 25% 25% 25% 25%  !important;
         }
+        #stock_filter_popup{
+            display:block !important;
+        }
+        #stock_secondary_prefs_content{
+            display: block !important;
+        }
     } 
     @media only screen and (min-width: 1300px) {
         #stock_list .stock_product_table{
@@ -193,6 +261,12 @@
         #categoriesPopup .categories-container{
             grid-template-columns: 20% 20% 20% 20% 20% !important;
         }
+        #stock_filter_popup{
+            display:block !important;
+        }
+        #stock_secondary_prefs_content{
+            display: block !important;
+        }
     } 
     @media only screen and (min-width: 1600px) {
         #stock_list .stock_product_table{
@@ -207,6 +281,12 @@
         }
         #categoriesPopup .categories-container{
             grid-template-columns: 20% 20% 20% 20% 20% !important;
+        }
+        #stock_filter_popup{
+            display:block !important;
+        }
+        #stock_secondary_prefs_content{
+            display: block !important;
         }
     } 
     #stock_list .stock_product_promo{
@@ -273,8 +353,8 @@
        text-overflow: ellipsis;
     }
     #stock_category_tree i, #stock_attributes i{
-        background-color: #2185d0;
-        border: 1px solid #2185d0;
+        background-color: darkgray;
+        border: 1px solid darkgray;
         color: white;
     }
     #stock_category_tree label, #stock_attributes label{
@@ -488,6 +568,9 @@
         margin: 0 auto;
         z-index: 10;
     }
+    /*
     #stock_filter_popup .ui.secondary.close.icon.button{
         display:block !important;
-    }
+    }*/
+    
+   
