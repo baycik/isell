@@ -164,7 +164,7 @@
                     };
                     
                     App.stock.entries.loading_finished = 0;
-                    if ( 1 ) {
+                    if ( new_loaded_items.length<App.stock.entries.parameters.limit ) {
                         App.stock.entries.loading_finished = 1;
                     }
                     App.stock.entries.render();
@@ -334,7 +334,7 @@
             setTotal: function(){
                 var total = 0;
                 for (var i = 0; i < App.stock.cart.list.length; i++) {
-                    App.stock.cart.list[i].product_sum = (App.stock.cart.list[i].product_price_total * App.stock.cart.list[i].product_quantity).toFixed(2);
+                    App.stock.cart.list[i].product_sum = (App.stock.cart.list[i].price_final * App.stock.cart.list[i].product_quantity).toFixed(2);
                     total += App.stock.cart.list[i].product_sum*1 ;
                 };
                 App.stock.cart.total = total.toFixed(2);
@@ -371,7 +371,7 @@
                         if( !product_object.product_id ){return;}
                         product_object.quantity_in_cart = App.stock.cart.findInCart(product_object.product_id).product_quantity;
                         App.renderTpl('stock_product_info_modal', product_object);
-                        $("#stock_product_info_modal").modal({ inverted: true, duration:0}).modal('show').modal('can fit');;
+                        $("#stock_product_info_modal").modal({ inverted: true, duration:0}).modal('show');
                     });
             }
         },
@@ -898,7 +898,7 @@
                 {{if show_cart|falsy}}
                 <div>
                     <div >
-                        <div class="ui message" style="clear: both;text-align: center;">
+                        <div class="ui info message" style="clear: both;text-align: center;">
                            Ничего не найдено
                         </div>  
                     </div>
@@ -909,12 +909,11 @@
 
             {{if show_cart|falsy}}
                 {{if loading_finished}} 
-                <div class="ui olive message" style="clear: both;text-align: center;">
+                <div class="ui info message" style="clear: both;text-align: center;">
                     Больше нет товаров для показа
                 </div>   
                 {{else}} 
-                <button id='stock_load_more' class='ui fluid  button'
-                        onclick="App.stock.entries.load(1)"> 
+                <button id='stock_load_more' class='ui fluid  button' onclick="App.stock.entries.load(1)"> 
                     Показать ещё...
                 </button>    
                 {{/if}} 
@@ -925,7 +924,7 @@
                     Заказ
                 </a>
                 {{else}}
-                <div class="ui olive message" style="clear: both;text-align: center;">
+                <div class="ui info message" style="clear: both;text-align: center;">
                     <i class="exclamation icon"></i>
                     Вы не добавляли товары в корзину
                 </div>   
@@ -940,8 +939,8 @@
         <a href="#stock.html" class="ui secondary close icon button" style="float:right" onclick="$('#stock_product_info_modal').modal('hide');"><i class="icon close"></i></a>
     </div>
     <div class="content">
-        <div class="product-info-image" >
-            <img style="max-width: 100%" src="../Storage/image_flush/?size=400x400&path=/dynImg/{{product_img}}"/>
+        <div class="product-info-image">
+            <img style="max-width: 100%;" onload="$('#stock_product_info_modal').modal('refresh');" src="../Storage/image_flush/?size=400x400&path=/dynImg/{{product_img}}"/>
         </div>
         <div class="product-info-details">
             <div class="product-info-name">{{ru}}</div>

@@ -183,30 +183,27 @@
 		    }
 		});
 
-		var $input = $('.docdatepicker').pickadate();
-		App.document.picker = $input.pickadate('picker');
-		App.document.picker.on({
-		    set: function (val) {
-			var date = App.document.picker.get('select', 'dd.mm.yyyy');
-			App.document.head.update('doc_date', date);
-		    }
-		});
+		$('.doc_date').change(function(){
+                    var date_iso=$(this).val();
+                    console.log(date_iso);
+                    //App.document.head.update('doc_date', date);
+                });
 	    },
 	    set: function (head) {
-		App.document.head.suppressUpdate = true;
-		App.renderTpl('document_header', head);
-		$('.activecomp').dropdown('set value', head.active_company_id);
-		$('.activecomp').dropdown('set text', head.active_company_label);
-		$('.passivecomp').dropdown('set value', head.passive_company_id);
-		$('.passivecomp').dropdown('set text', head.label);
-		$('.doc_num').val(head.doc_num);
-		$('.doc_data').val(head.doc_data);
-		$('.is_commited').checkbox("set " + (head.is_commited > 0 ? "checked" : "unchecked"));
-		$('.is_event_created').checkbox("set " + (head.is_event_created > 0 ? "checked" : "unchecked"));
-		App.document.picker.set('select', new Date(App.toIso(head.doc_date)));
-		App.document.head.suppressUpdate = false;
+                App.document.head.suppressUpdate = true;
+                App.renderTpl('document_header', head);
+                $('.activecomp').dropdown('set value', head.active_company_id);
+                $('.activecomp').dropdown('set text', head.active_company_label);
+                $('.passivecomp').dropdown('set value', head.passive_company_id);
+                $('.passivecomp').dropdown('set text', head.label);
+                $('.doc_num').val(head.doc_num);
+                $('.doc_data').val(head.doc_data);
+                $('.is_commited').checkbox("set " + (head.is_commited > 0 ? "checked" : "unchecked"));
+                $('.is_event_created').checkbox("set " + (head.is_event_created > 0 ? "checked" : "unchecked"));
+                $('.doc_date').val(App.toIso(head.doc_date));
+                App.document.head.suppressUpdate = false;
                 App.renderTpl('document_checkout_button', {checkout_id: App.document.doc.head.checkout_id});
-		App.document.head.switchView(head);
+                App.document.head.switchView(head);
 	    },
 	    switchView: function (head) {
 		var hilight = (Math.abs(head.doc_type) === 1) ? 'green' : 'purple';
@@ -354,8 +351,12 @@
 			App.document.row.save(entry, index);
 		    },
 		    onVisible: function () {
-			$("#document_entry_dialog input").select();
-                        $('.ui.accordion').accordion();
+                        $("#document_entry_dialog input").select();
+                        $('.ui.accordion').accordion({
+                            onVisible:function(){
+                                $('#document_entry_dialog').modal('refresh');
+                            }
+                        });
 		    }
 		}).modal('show');
 		//$("#document_entry_dialog input[name=product_quantity]").val(entry.product_quantity);
@@ -687,7 +688,7 @@
 	    <div class="fields">
 		<div class="four wide field">
 		    <label>Дата</label>
-		    <input name="company_filter" placeholder="Дата" type="date" class="docdatepicker">
+		    <input placeholder="Дата" type="date" class="doc_date">
 		</div>
 		<div class="four wide field">
 		    <label>Номер</label>

@@ -255,7 +255,8 @@ class Session extends DataBase {
 class ProcessorBase extends Session {
 
     public function __construct($allowed_user_level = 0) {
-	parent::__construct();
+	return;
+        parent::__construct();
 	$this->set_level($allowed_user_level);
 
 	if ($this->request('mod')) {

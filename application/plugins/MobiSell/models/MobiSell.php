@@ -98,17 +98,21 @@ class MobiSell extends PluginManager {
             'results' => $this->Hub->load_model('Company')->listFetchAll($mode, $q)
         ];
     }
-    public $documentCreate = ["doc_type" => "int", "acomp_id" => "int",  "pcomp_id" => "int", 'entries' => ['json', null]];
-    public function documentCreate($doc_type, $acomp_id, $pcomp_id, $entries) {
+
+    public function documentCreate( int $doc_type, int $acomp_id, int $pcomp_id, array $entries=null ){
         $Company = $this->Hub->load_model("Company");
         $Company->selectPassiveCompany($pcomp_id);
         $Company->selectActiveCompany($acomp_id);
+        
+        
+        //$pcomppp_id=$this->Hub->pcomp('company_id');die("$pcomppp_id   iusrteusr"); 
+        
+        
         $DocumentItems = $this->Hub->load_model("DocumentItems");
         $doc_id = $DocumentItems->createDocument($doc_type);
-        if ($entries) {
+        if ( $entries ) {
             $this->documentEntryFill($doc_id, $entries);
         }
-        
         $message=[
             "subject"=>"MobiSell уведомление от ".$this->Hub->svar('user_sign'),
             "view"=>'document_created.html',
@@ -366,8 +370,7 @@ class MobiSell extends PluginManager {
         }
         return $attribute_list;
     }
-    /*
-    //public $productGet = ['product_code' => 'string'];
+    public $productGet = ['product_code' => 'string'];
     public function productGet(string $product_code) {
         $pcomp_id=$this->Hub->pcomp('company_id');
         $usd_ratio=$this->Hub->pref('usd_ratio');
@@ -397,7 +400,7 @@ class MobiSell extends PluginManager {
                   se.product_code='{$product_code}'";
         $product_data = $this->get_row($sql);
         return $product_data;
-    }*/
+    }
     
     public $userPropsGet=[];
     public function userPropsGet(){
