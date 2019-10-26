@@ -173,7 +173,7 @@
             addSpecailProductFeatures: function () {
                 for (var i = 0; i < App.stock.entries.current_list.length; i++) {
                     App.stock.entries.current_list[i].product_quantity = App.stock.cart.findInCart(App.stock.entries.current_list[i].product_id).product_quantity;
-                    App.stock.entries.current_list[i].is_promo = (App.stock.entries.current_list[i].product_price_total !== App.stock.entries.current_list[i].product_price_total_raw) ? 1 : 0;
+                    //App.stock.entries.current_list[i].is_promo = (App.stock.entries.current_list[i].price_final !== App.stock.entries.current_list[i].price_final_raw) ? 1 : 0;
                 }
             },
             render: function () {
@@ -859,7 +859,7 @@
                                         <input type='hidden' name='product_code' value='{{product_code}}'>
                                         <input type='hidden' name='product_id' value='{{product_id}}'>
                                         <input type='hidden' name='leftover' value='{{leftover}}'>
-                                        <input type='hidden' name='product_price_total' value='{{product_price_total}}'>
+                                        <input type='hidden' name='price_final' value='{{price_final}}'>
 
                                         <button class="ui  {{if product_quantity|less>1}} disabled   {{/if}} left attached icon  button minus-button" data-delta="-1" data-index="{{#}}">
                                             <i class="minus icon" data-delta="-1" data-index="{{#}}"></i>
@@ -943,7 +943,7 @@
             <img style="max-width: 100%;" onload="$('#stock_product_info_modal').modal('refresh');" src="../Storage/image_flush/?size=400x400&path=/dynImg/{{product_img}}"/>
         </div>
         <div class="product-info-details">
-            <div class="product-info-name">{{ru}}</div>
+            <div class="product-info-name">{{product_name}}</div>
             <div class="product-common-info">
                 <label class="header-label">Общие сведения</label>
                 <div class="info-row">
@@ -961,7 +961,7 @@
                 <div class="info-row">
                     <label>Цена: </label>
                     <div class="info-cell">
-                        <b>{{product_price_total}} ₽</b>
+                        <b>{{price_final}}</b>
                     </div>
                 </div>
             </div>

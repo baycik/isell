@@ -897,7 +897,7 @@ class Stock extends Catalog {
             @price_basic:=prl_basic.sell*IF(prl_basic.curr_code='USD',$usd_ratio,1)*IF(discount,discount,1) price_basic,
             @price_label:=prl_label.sell*IF(prl_label.curr_code='USD',$usd_ratio,1)*IF(discount,discount,1) price_label,
             @price_promo:=prl_promo.sell*IF(prl_promo.curr_code='USD',$usd_ratio,1) price_promo,
-            CAST(COALESCE(@price_promo,@price_label,@price_basic) AS DECIMAL) price_final";
+            CAST(COALESCE(@price_promo,@price_label,@price_basic) AS CHAR) price_final";
         $query['inner']['table']="
             stock_entries se
                 JOIN

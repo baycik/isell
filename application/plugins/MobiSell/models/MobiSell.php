@@ -372,18 +372,20 @@ class MobiSell extends PluginManager {
     }
     public $productGet = ['product_code' => 'string'];
     public function productGet(string $product_code) {
+        $lang='ru';
         $pcomp_id=$this->Hub->pcomp('company_id');
         $usd_ratio=$this->Hub->pref('usd_ratio');
         $sql = "SELECT
                   st.label parent_label,
+                  pl.$lang product_name,
                   pl.*,
                   ROUND(product_volume,5) product_volume,
                   ROUND(product_weight,5) product_weight,
                   product_quantity leftover,
                   product_img,
                   product_unit,
-                  GET_SELL_PRICE(se.product_code,'{$pcomp_id}','{$usd_ratio}') product_price_total,
-                  GET_PRICE(se.product_code,'{$pcomp_id}','{$usd_ratio}') product_price_total_raw,
+                  GET_SELL_PRICE(se.product_code,'{$pcomp_id}','{$usd_ratio}') price_final,
+                  GET_PRICE(se.product_code,'{$pcomp_id}','{$usd_ratio}') price_label,
                   pp.curr_code,
                   se.party_label,
                   se.product_quantity,
