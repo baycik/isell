@@ -711,7 +711,7 @@ class Stock extends Catalog {
                 continue;
             }
             $option_range="{$from}_{$to}";
-            $option_label="$from - $to";
+            $option_label=((int) $from)." - ".((int) $to);
             $option_condition="$group_id $lower_condition $from AND $group_id <= $to";
             $this->matchesFilterBuildOption( $group_id, $option_label, $option_condition, $is_selected, $option_range );
         }
