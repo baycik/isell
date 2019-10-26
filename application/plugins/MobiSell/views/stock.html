@@ -54,7 +54,7 @@
                     fullTextSearch: true,
                     onChange: function (value, text, $choice) {
                         if (value * 1 > 0) {
-                            App.user.setPassiveCompany({company_id: value, label: text});
+                            App.user.pcompSelect({company_id: value, label: text});
                         } else {
                             $(".pcomp_id").dropdown('set text', "Выберите клиента");
                             $(".pcomp_id").dropdown('show');
