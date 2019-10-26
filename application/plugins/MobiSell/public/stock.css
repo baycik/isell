@@ -34,26 +34,6 @@
            height: auto !important;
            width: 40px !important;
         }
-        #stock_product_info_modal .content{
-            grid-template-columns: 100% !important;
-        }
-        #stock_product_info_modal .content img{
-            max-width: 60% !important;
-        }
-        #stock_product_info_modal .product-info-image{
-            text-align: center;
-        }
-        #stock_product_info_modal .product-info-name{
-            font-size: 16px !important;
-        }
-        #stock_product_info_modal .content .info-row{
-            grid-template-columns: 60% 40% !important;
-        }
-        #stock_product_info_modal .product-info-details{
-            max-height: max-content !important;
-            overflow-y: visible !important;
-            overflow-x: visible !important;
-        }
         #stock_container {
             grid-template-columns: 100% !important;
         }
@@ -130,26 +110,6 @@
         }
         #stock_list:not(.grid-view) .product-action-column,.grid-view  .product-action-column{
             margin-top:1em;
-        }
-        #stock_product_info_modal .content{
-            grid-template-columns: 100% !important;
-        }
-        #stock_product_info_modal .content img{
-            max-width: 60% !important;
-        }
-        #stock_product_info_modal .product-info-image{
-            text-align: center;
-        }
-        #stock_product_info_modal .product-info-name{
-            font-size: 16px !important;
-        }
-        #stock_product_info_modal .content .info-row{
-            grid-template-columns: 60% 40% !important;
-        }
-        #stock_product_info_modal .product-info-details{
-            max-height: max-content !important;
-            overflow-y: visible !important;
-            overflow-x: visible !important;
         }
         #stock_container {
             grid-template-columns: 100% !important;
@@ -388,7 +348,7 @@
     .daughter-category{
         padding: 5px;
     }
-    #categoriesPopup .categories-container, #stock_product_info_modal .product-info-details{
+    #categoriesPopup .categories-container{
         max-height: 70vh;
         overflow-y: auto;
         overflow-x: hidden;
@@ -500,35 +460,6 @@
         align-items: center;
         text-align: center;
         display: grid !important;
-    }
-    
-    #stock_product_info_modal .content{
-        display: grid;
-        grid-template-columns: 30% 70%;
-        text-align: left;
-    }
-    #stock_product_info_modal .content .product-info-name{
-        font-size: 20px;
-        font-weight: bold;
-        color: #1678c2;
-    }
-    #stock_product_info_modal .content .product-common-info,
-    #stock_product_info_modal .content .product-stock-details,
-    #stock_product_info_modal .content .product-secondary-info,
-    #stock_product_info_modal .content .product-attributes{
-        border-bottom: 1px solid lightgray;
-        padding: 1em;
-    }
-    #stock_product_info_modal .content .info-row{
-        display: grid;
-        grid-template-columns: 40% 60%;
-    }
-    #stock_product_info_modal .content .info-cell{
-        color: #5e5e5e;
-    }
-    #stock_product_info_modal .header-label{
-        font-size: 16px;
-        font-weight: bold;
     }
     
     

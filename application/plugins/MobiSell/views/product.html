@@ -1,0 +1,134 @@
+<script>
+    App.product = {
+        init() {
+            App.Topic('hashChange').subscribe(function () {
+                App.product.load(App.state['product_id']);
+            });
+            this.focus();
+        },
+        focus() {
+            App.title("Сведения о товаре");
+        },
+        load(product_id) {
+            if (!product_id) {
+                return;
+            }
+            $.get("./productGet", {product_id: product_id}, function (response) {
+                App.flash("Загрузка товаров:ОК");
+                var product_object = App.json(response);
+                if (!product_object.product_id) {
+                    return;
+                }
+                product_object.quantity_in_cart = 0;
+                if (App.stock) {
+                    product_object.quantity_in_cart = App.stock.cart.findInCart(product_object.product_id).product_quantity;
+                }
+                App.renderTpl('product_info', product_object);
+            });
+        }
+    };
+</script>
+<style>
+
+</style>
+
+<div class="ui segment covert" id="product_info">
+    <div class="content">
+        <div class="ui header">{{product_name}}</div>
+        <div class="ui stackable two column grid">
+            <div class="eight wide column">
+                <a href="../Storage/image_flush/?size=1000x1000&path=/dynImg/{{product_img}}">
+                <img style="max-width: 100%;" src="../Storage/image_flush/?size=400x400&path=/dynImg/{{product_img}}"/>
+                </a>
+            </div>
+            <div class="eight wide column">
+                <table class="ui table">
+                    <thead>
+                        <tr>
+                            <th colspan="2">Общие сведения</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Код:</td>
+                            <td>{{product_code}}</td>
+                        </tr>
+                        <tr>
+                            <td>Название:</td>
+                            <td>{{product_name}}</td>
+                        </tr>
+                        <tr>
+                            <td>Цена со скидкой:</td>
+                            <td>
+                                {{if price_final|less>`price_label`}}
+                                    <s style="color:#c00">{{price_label|format}}</s>
+                                {{/if}}
+                                <b>{{price_final|format}}</b>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Остаток на складе:</td>
+                            <td>{{product_quantity}} {{product_unit}}</td>
+                        </tr>
+                        <!--{{if quantity_in_cart}}-->
+                        <tr>
+                            <td>В корзине:</td>
+                            <td class="positive"><b>{{quantity_in_cart}}</b> {{product_unit}}</td>
+                        </tr>
+                        <!--{{/if}}-->
+                    </tbody>
+                </table>
+                <table class="ui table">
+                    <thead>
+                        <tr>
+                            <th colspan="2">Дополнительные сведения</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Артикул:</td>
+                            <td>{{product_article}}</td>
+                        </tr>
+                        <tr>
+                            <td>Штрихкод:</td>
+                            <td>{{product_barcode}}</td>
+                        </tr>
+                        <tr>
+                            <td>Производитель:</td>
+                            <td>{{analyse_brand}}</td>
+                        </tr>
+                        <tr>
+                            <td>Происхождение:</td>
+                            <td>{{analyse_origin}}</td>
+                        </tr>
+                        <!--{{if product_spack}}-->
+                        <tr>
+                            <td>Малая упаковка:</td>
+                            <td>{{product_spack}}</td>
+                        </tr>
+                        <!--{{/if}}-->
+                        <!--{{if product_bpack}}-->
+                        <tr>
+                            <td>Большая упаковка:</td>
+                            <td>{{product_bpack}}</td>
+                        </tr>
+                        <!--{{/if}}-->
+                        <!--{{if product_volume}}-->
+                        <tr>
+                            <td>Объем единицы м3:</td>
+                            <td>{{product_volume}}</td>
+                        </tr>
+                        <!--{{/if}}-->
+                        <!--{{if product_weight}}-->
+                        <tr>
+                            <td>Вес единицы кг:</td>
+                            <td>{{product_weight}}</td>
+                        </tr>
+                        <!--{{/if}}-->
+                    </tbody>
+                </table>
+                <div class="plugins"></div>
+            </div>
+        </div>
+    </div>
+</div>

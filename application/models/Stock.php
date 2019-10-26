@@ -675,7 +675,7 @@ class Stock extends Catalog {
     }
     
     protected function matchesFilterBuildRange( $group_id, $group_name ){
-        $minmax=$this->get_row("SELECT MIN($group_id) minval, MAX($group_id) maxval FROM tmp_matches_list");
+        $minmax=$this->get_row("SELECT FLOOR(MIN($group_id)) minval, CEIL(MAX($group_id)) maxval FROM tmp_matches_list");
         $this->matchesFilterBuildGroup( $group_id, $group_name, "{$minmax->minval}_{$minmax->maxval}" );
         $fraction_count=4;
         $fraction=($minmax->maxval - $minmax->minval)/$fraction_count;
@@ -711,7 +711,7 @@ class Stock extends Catalog {
                 continue;
             }
             $option_range="{$from}_{$to}";
-            $option_label=((int) $from)." - ".((int) $to);
+            $option_label="$from - $to";
             $option_condition="$group_id $lower_condition $from AND $group_id <= $to";
             $this->matchesFilterBuildOption( $group_id, $option_label, $option_condition, $is_selected, $option_range );
         }

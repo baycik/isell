@@ -54,7 +54,7 @@ EOT;
 $before[]=<<<EOT
 EOT;
 $after[]=<<<EOT
- ,GROUP_CONCAT(CONCAT(al.attribute_name,': ',av.attribute_value,' ', al.attribute_unit)) attributes 
+ ,GROUP_CONCAT(CONCAT(al.attribute_name,':',al.attribute_prefix,av.attribute_value,'', al.attribute_unit) SEPARATOR '~') attributes 
 EOT;
  
 
@@ -78,7 +78,7 @@ EOT;
  
  
 $filename[]=<<<EOT
-plugins/MobiSell/views/stock.html
+plugins/MobiSell/views/product.html
 EOT;
 $search[]=<<<EOT
 <div class="plugins"></div>
@@ -88,18 +88,22 @@ EOT;
 $before[]=<<<EOT
 EOT;
 $after[]=<<<EOT
-{{if attributes}}
-<div class="product-attributes">
-    <label class="header-label">Характеристики</label>
-    {{attributes}}
-    <div class="attribute">
-        <div class="info-row">
-            <label>{{label}}: </label>
-            <div class="info-cell">{{value}}</div>
-        </div>
-    </div>
-    {{/attributes}}
-</div>    
-{{/if}}
+                {{if attributes}}
+                <table class="ui table">
+                    <thead>
+                        <tr>
+                            <th colspan="2">Характеристики</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    <!--{{attributes}}{{.|split>~}}-->
+                    <tr>
+                        <td>{{.|split>:|limit>1>0}}</td>
+                        <td>{{.|split>:|limit>10>1}}</td>
+                    </tr>
+                    <!--{{/.}}{{/attributes}}-->
+                    </tbody>
+                </table>
+                {{/if}}
 EOT;
  

@@ -9,10 +9,7 @@
             App.stock.utils.initControls();
             App.Topic('passiveCompanySelected').subscribe(function () {
                 $("#stock_pcomp_notice").hide();
-                App.stock.entries.load();   
-            });
-            App.Topic('hashChange').subscribe(function () {
-                App.stock.productInfoModal.showProductInfo(App.state['productInfoModal.showProductInfo']);
+                App.stock.entries.load();
             });
         },
         focus: function () {
@@ -362,19 +359,6 @@
                 location.hash = "#document.html";
             }
         },
-        productInfoModal:{
-            showProductInfo: function (product_code) {
-                if(!product_code){return;}
-                $.post("./productGet", {product_code: product_code}, function (response) {
-                        App.flash("Загрузка товаров:ОК");
-                        var product_object = App.json(response);
-                        if( !product_object.product_id ){return;}
-                        product_object.quantity_in_cart = App.stock.cart.findInCart(product_object.product_id).product_quantity;
-                        App.renderTpl('stock_product_info_modal', product_object);
-                        $("#stock_product_info_modal").modal({ inverted: true, duration:0}).modal('show');
-                    });
-            }
-        },
         filter:{
             full_query:null,
             filter_tree: {},
@@ -406,7 +390,7 @@
                 });
             },
             load: function () {
-                let full_query=App.stock.entries.parameters.q+'---'+App.stock.entries.parameters.category_id+'---'+App.stock.entries.parameters.filter_selected_grouped;
+                let full_query=App.stock.entries.parameters.q+'---'+App.stock.entries.parameters.category_id+'---'+App.stock.entries.parameters.filter_selected_grouped+'---'+App.user.pcomp.company_id;
                 if( App.stock.filter.full_query===full_query ){
                     return;
                 }
@@ -827,12 +811,12 @@
 
                     <div class="product-item-grid {{if price_promo}}product-item-promo{{/if}}" >
                         <div class='product-image-column image-{{#}}' data-row-index="{{#}}" >
-                            <a href="#stock.html#productInfoModal.showProductInfo={{product_code}}">
+                            <a href="#product.html#product_id={{product_id}}">
                                 <img src="../Storage/image_flush/?size=150x150&path=/dynImg/{{product_img}}" >
                             </a>
                         </div>
                         <div class="product-name-column">
-                            <a href="#stock.html#productInfoModal.showProductInfo={{product_code}}">
+                            <a href="#product.html#product_id={{product_id}}">
                                  {{product_name}}
                             </a>
                         </div>
@@ -930,80 +914,6 @@
                 </div>   
                 {{/if}}
             {{/if}}
-        </div>
-    </div>
-</div>
-
-<div class="ui long modal" id="stock_product_info_modal">
-    <div class="header">Сведения о товаре 
-        <a href="#stock.html" class="ui secondary close icon button" style="float:right" onclick="$('#stock_product_info_modal').modal('hide');"><i class="icon close"></i></a>
-    </div>
-    <div class="content">
-        <div class="product-info-image">
-            <img style="max-width: 100%;" onload="$('#stock_product_info_modal').modal('refresh');" src="../Storage/image_flush/?size=400x400&path=/dynImg/{{product_img}}"/>
-        </div>
-        <div class="product-info-details">
-            <div class="product-info-name">{{product_name}}</div>
-            <div class="product-common-info">
-                <label class="header-label">Общие сведения</label>
-                <div class="info-row">
-                    <label>Код: </label>
-                    <div class="info-cell">{{product_code}}</div>
-                </div>
-                <div class="info-row">
-                    <label>Артикул: </label>
-                    <div class="info-cell">{{product_article}}</div>
-                </div>
-                <div class="info-row">
-                    <label>Штрихкод: </label>
-                    <div class="info-cell">{{product_barcode}}</div>
-                </div>
-                <div class="info-row">
-                    <label>Цена: </label>
-                    <div class="info-cell">
-                        <b>{{price_final}}</b>
-                    </div>
-                </div>
-            </div>
-            <div class="product-stock-details">
-                <div class="info-row">
-                    <label>На складе: </label>
-                    <div class="info-cell">{{product_quantity}} {{product_unit}}</div>
-                </div>
-                {{if quantity_in_cart}}
-                <div class="info-row">
-                    <label>В корзине: </label>
-                    <div class="info-cell" style="color:green">(<b>{{quantity_in_cart}}</b> {{product_unit}})</div>
-                </div>
-                {{/if}}
-            </div>
-            <div class="product-secondary-info">
-                {{if product_bpack}}
-                <div class="info-row">
-                    <label>Большая упаковка: </label>
-                    <div class="info-cell">{{product_bpack}} {{product_unit}}</div>
-                </div>
-                {{/if}}
-                {{if product_spack}}
-                <div class="info-row">
-                    <label>Малая упаковка: </label>
-                    <div class="info-cell">{{product_spack}} {{product_unit}}</div>
-                </div>
-                {{/if}}
-                {{if product_volume}}
-                <div class="info-row">
-                    <label>Объем: </label>
-                    <div class="info-cell">{{product_volume}}</div>
-                </div>
-                {{/if}}
-                {{if product_weight}}
-                <div class="info-row">
-                    <label>Вес: </label>
-                    <div class="info-cell">{{product_weight}}</div>
-                </div>
-                {{/if}}
-            </div>
-            <div class="plugins"></div>
         </div>
     </div>
 </div>

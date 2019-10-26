@@ -370,8 +370,8 @@ class MobiSell extends PluginManager {
         }
         return $attribute_list;
     }
-    public $productGet = ['product_code' => 'string'];
-    public function productGet(string $product_code) {
+
+    public function productGet( int $product_id ) {
         $lang='ru';
         $pcomp_id=$this->Hub->pcomp('company_id');
         $usd_ratio=$this->Hub->pref('usd_ratio');
@@ -399,7 +399,7 @@ class MobiSell extends PluginManager {
                       LEFT JOIN
                   stock_tree st ON se.parent_id=branch_id
               WHERE 
-                  se.product_code='{$product_code}'";
+                  pl.product_id='{$product_id}'";
         $product_data = $this->get_row($sql);
         return $product_data;
     }
