@@ -207,8 +207,13 @@ App = {
             App.Topic('activeCompanySelected').publish(company);
         },
         restoreCompanies: function () {
-            App.user.pcomp = JSON.parse(localStorage.getItem('pcomp')) || {};
-            App.user.acomp = JSON.parse(localStorage.getItem('acomp')) || {};
+            var pcomp=JSON.parse(localStorage.getItem('pcomp')) || {};
+            var acomp=JSON.parse(localStorage.getItem('acomp')) || {};
+            App.user.pcompSelect(pcomp);
+            App.user.acompSelect(acomp);
+            
+            App.user.pcomp = pcomp;
+            App.user.acomp = acomp;
         },
         pcompSelect: function (company) {
             var company_id = company.company_id || 0;

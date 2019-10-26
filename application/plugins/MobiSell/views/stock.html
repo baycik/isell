@@ -58,6 +58,9 @@
                         }
                     }
                 }).dropdown("set text", App.user.pcomp.label || '');
+                if( App.user.pcomp ){
+                    
+                }
             },
             clearSearchbar: function () {
                 App.stock.entries.show_cart = 0;
@@ -127,7 +130,7 @@
                 limit:12
             },
             init: function(){
-                App.stock.entries.load();
+                //App.stock.entries.load();
             },
             load_prepare_params:function(load_more){
                 if (load_more) {
@@ -566,7 +569,7 @@
                 <div class="ui fields">
                     <div class="sixteen wide field">
                         <button class=" ui floated right blue fluid button" onclick="App.stock.filter.clearSelected()">
-                            Очистить
+                            Сбросить фильтры
                         </button>
                     </div>
                 </div>
@@ -883,7 +886,7 @@
                 <div>
                     <div >
                         <div class="ui info message" style="clear: both;text-align: center;">
-                           Ничего не найдено
+                            Ничего не найдено. Возможно необходимо <a href="javascript:App.stock.filter.clearSelected()">сбросить фильтры</a> или <a href="javascript:App.stock.head.clearSearchbar()">изменить поисковый запрос</a>.
                         </div>  
                     </div>
                 </div>
