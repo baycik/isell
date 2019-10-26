@@ -893,11 +893,10 @@ class Stock extends Catalog {
             se.fetch_stamp,
             fetch_count popularity,
             se.parent_id,
-            @price_fixed:=prl_basic.sell*IF(prl_basic.curr_code='USD',$usd_ratio,1) price_fixed,
-            @price_basic:=prl_basic.sell*IF(prl_basic.curr_code='USD',$usd_ratio,1)*IF(discount,discount,1) price_basic,
-            @price_label:=prl_label.sell*IF(prl_label.curr_code='USD',$usd_ratio,1)*IF(discount,discount,1) price_label,
-            @price_promo:=prl_promo.sell*IF(prl_promo.curr_code='USD',$usd_ratio,1) price_promo,
-            CAST(COALESCE(@price_promo,@price_label,@price_basic) AS CHAR) price_final";
+            prl_basic.sell*IF(prl_basic.curr_code='USD',$usd_ratio,1) price_fixed,
+            prl_basic.sell*IF(prl_basic.curr_code='USD',$usd_ratio,1)*IF(discount,discount,1) price_basic,
+            prl_label.sell*IF(prl_label.curr_code='USD',$usd_ratio,1)*IF(discount,discount,1) price_label,
+            prl_promo.sell*IF(prl_promo.curr_code='USD',$usd_ratio,1) price_promo";
         $query['inner']['table']="
             stock_entries se
                 JOIN
@@ -924,7 +923,8 @@ class Stock extends Catalog {
                     LIMIT $result_window_size) t) AND $where";
         $query['inner']['limit']="
             LIMIT $result_window_size";
-        $query['outer']['select']="inner_tmp_matches_list.*";
+        $query['outer']['select']="inner_tmp_matches_list.*,
+            CAST(COALESCE(price_promo,price_label,price_basic) AS CHAR) price_final";
         $query['outer']['table']="";
         $query['outer']['where']="";
         $query['outer']['limit']="";
