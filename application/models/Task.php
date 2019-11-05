@@ -6,7 +6,6 @@ class Task extends Events {
     public $doNext = [];
 
     public function doNext() {
-        $this->Hub->silence_msg=true;
 	$user_id = $this->Hub->svar('user_id');
 	$sql = "SELECT
 		*
@@ -21,7 +20,10 @@ class Task extends Events {
 	    LIMIT 1";
 	$this->currentTask = $this->get_row($sql);
 	if ($this->currentTask) {
-	    return $this->execute_task();
+            $this->Hub->silence_msg=true;
+                $result=$this->execute_task();
+            $this->Hub->silence_msg=false;
+	    return $result;
 	}
     }
 
