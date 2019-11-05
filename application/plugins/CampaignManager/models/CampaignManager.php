@@ -131,7 +131,8 @@ class CampaignManager extends Catalog{
                 campaign_start_at=DATE_FORMAT(NOW(),'%Y-%m-%d 00:00:00'),
                 campaign_finish_at=DATE_FORMAT(DATE_ADD(NOW(), INTERVAL 1 YEAR),'%Y-%m-%d 23:59:59'),
                 campaign_grouping_interval='NOGROUP',
-                campaign_bonus_ratio1=0";
+                campaign_bonus_ratio1=0,
+                bonus_visibility=1";
         $ok=$this->query($sql);
         $this->bonusPeriodsFill( $this->db->insert_id() );
         return $ok;
