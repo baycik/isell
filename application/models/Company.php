@@ -211,7 +211,7 @@ class Company extends Catalog{
     public $selectActiveCompany=['int'];
     public function selectActiveCompany( $company_id ){
 	$company=$this->companyGet( $company_id );
-	if( $company->is_active ){
+	if( $company && $company->is_active ){
 	    $this->Hub->svar('acomp',$company);
 	    
 	    $user_id=$this->Hub->svar('user_id');

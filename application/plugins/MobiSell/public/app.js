@@ -202,8 +202,8 @@ App = {
             App.Topic('passiveCompanySelected').publish(company);
         },
         setActiveCompany: function (company) {
-            App.user.pcomp = company;
-            localStorage.setItem('acomp', JSON.stringify(App.user.pcomp));
+            App.user.acomp = company;
+            localStorage.setItem('acomp', JSON.stringify(App.user.acomp));
             App.Topic('activeCompanySelected').publish(company);
         },
         restoreCompanies: function () {

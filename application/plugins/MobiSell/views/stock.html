@@ -8,7 +8,6 @@
             App.stock.filter.init();
             App.stock.utils.initControls();
             App.Topic('passiveCompanySelected').subscribe(function () {
-                $("#stock_pcomp_notice").hide();
                 App.stock.entries.load();
             });
         },
@@ -147,9 +146,8 @@
                 $('#stock_categories_header').html("");
             },
             load: function (load_more) {
-                if ( !App.user.pcomp.company_id ) {
-                    $("#stock_pcomp_notice").show();
-                    return;
+                if ( App.user.pcomp.company_id>0 && App.user.pcomp.company_id!==App.user.acomp.company_id ) {
+                    $("#stock_pcomp_notice").hide();
                 };
                 App.stock.entries.load_prepare_params(load_more);
                 
@@ -690,7 +688,7 @@
             <form class="ui form" id="stock_head_form">
                 <div class="field">
                     <label>Клиент</label>
-                    <div class="ui fluid search selection remote dropdown pcomp_id">
+                    <div class="ui fluid search selection remote dropdown pcomp_id required">
                         <input name="pcomp_id" type="hidden">
                         <i class="dropdown icon"></i>
                         <div class="default text">Выбрать клиента</div>
@@ -698,8 +696,8 @@
                     </div>
                 </div>
 
-                <div id="stock_pcomp_notice" style="display: none">
-                    <i class="ui blue exclamation circle icon"></i>
+                <div id="stock_pcomp_notice" class="ui negative message">
+                    <i class="ui red exclamation circle icon"></i>
                     Выберите клиента
                 </div>
 
@@ -886,7 +884,7 @@
                 <div>
                     <div >
                         <div class="ui info message" style="clear: both;text-align: center;">
-                            Ничего не найдено. Возможно необходимо <a href="javascript:App.stock.filter.clearSelected()">сбросить фильтры</a> или <a href="javascript:App.stock.head.clearSearchbar()">изменить поисковый запрос</a>.
+                            Ничего не найдено. Возможно необходимо <a href="javascript:App.stock.filter.clearSelected()" style="color:red">сбросить фильтры</a> или <a href="javascript:App.stock.head.clearSearchbar()" style="color:red">изменить поисковый запрос</a>.
                         </div>  
                     </div>
                 </div>
