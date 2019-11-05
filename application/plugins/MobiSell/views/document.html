@@ -280,7 +280,7 @@
 	prefs: {
 	    init: function () {
 		App.document.prefs.load();
-                if( App.user.props.user_level<2 ){
+                if( App.user.props && App.user.props.user_level<2 ){
                     $("#document_discounts input").prop("disabled",true);
                     $("#document_discounts").html("");
                 } else {

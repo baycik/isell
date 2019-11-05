@@ -13,7 +13,7 @@ class MobiSell extends PluginManager {
     function __construct() {
         ini_set('zlib.output_compression_level', 6);
         ob_start("ob_gzhandler");
-        session_write_close();
+        //session_write_close();notification is not working
         parent::__construct();
     }
 
@@ -103,10 +103,6 @@ class MobiSell extends PluginManager {
         $Company = $this->Hub->load_model("Company");
         $Company->selectPassiveCompany($pcomp_id);
         $Company->selectActiveCompany($acomp_id);
-        
-        
-        //$pcomppp_id=$this->Hub->pcomp('company_id');die("$pcomppp_id   iusrteusr"); 
-        
         
         $DocumentItems = $this->Hub->load_model("DocumentItems");
         $doc_id = $DocumentItems->createDocument($doc_type);

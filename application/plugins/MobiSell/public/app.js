@@ -91,6 +91,9 @@ App = {
         return chunks[2] + '-' + chunks[1] + '-' + chunks[0];
     },
     renderTpl: function (id, data, mode) {
+        if( $('#' + id).length==0 ){
+            return;
+        }
         if (!this.tplcache[id] || mode === 'nocache') {
             this.tplcache[id] = $('#' + id).html().replace(/&gt;/g, '>').replace(/<!--/g, '').replace(/-->/g, '');
         }
@@ -163,6 +166,9 @@ App = {
         init: function () {
             this.restoreCompanies();
             App.user.props = JSON.parse(localStorage.getItem('user_props'));
+            if( !App.user.props ){
+                App.user.getData();
+            }
         },
         getData: function () {
             $.post("./userPropsGet", function (resp) {
