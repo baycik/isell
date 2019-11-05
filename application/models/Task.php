@@ -6,6 +6,7 @@ class Task extends Events {
     public $doNext = [];
 
     public function doNext() {
+        $this->Hub->silence_msg=true;
 	$user_id = $this->Hub->svar('user_id');
 	$sql = "SELECT
 		*

@@ -323,7 +323,11 @@ class Hub extends CI_Controller{
 	die();
     }
     
+    public $silence_msg=false;
     public function msg($msg) {
+        if( $this->silence_msg ){
+            return false;
+        }
 	$this->msg.="$msg\n";
     }
     
