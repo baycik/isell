@@ -9,8 +9,6 @@
  * Author URI: http://isellsoft.com
  */
 class AttributeManager extends Catalog{
-    
-    public $min_level=3;
     public function install(){
 	$install_file=__DIR__."/install.sql";
 	$this->load->model('Maintain');

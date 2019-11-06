@@ -9,7 +9,7 @@
  * Author URI: http://isellsoft.com
  */
 class StockBuyManager extends Catalog{
-    public $min_level=2;
+    public $min_level=1;
     public function install(){
 	$install_file=__DIR__."/install.sql";
 	$this->load->model('Maintain');
@@ -39,6 +39,7 @@ class StockBuyManager extends Catalog{
     
     public $listFetch=['offset'=>'int','limit'=>'int','sortby'=>'string','sortdir'=>'(ASC|DESC)','filter'=>'json'];
     public function listFetch($offset,$limit,$sortby,$sortdir,$filter=null){
+        $this->Hub->set_level(2);
 	if( empty($sortby) ){
 	    $sortby="sl.product_code IS NULL,sl.product_code";
 	    //$sortdir="DESC";
@@ -87,6 +88,7 @@ class StockBuyManager extends Catalog{
     
     public $viewGet=['sortby'=>'string','sortdir'=>'(ASC|DESC)','filter'=>'json','out_type'=>'string'];
     public function viewGet($sortby,$sortdir,$filter,$out_type){
+        $this->Hub->set_level(2);
 	$table=$this->listFetch(0,10000,$sortby,$sortdir,$filter);
 	$dump=[
 	    'tpl_files_folder'=>__DIR__.'/../views/',
@@ -109,6 +111,7 @@ class StockBuyManager extends Catalog{
     
     public $entryImport=['supplier_id'=>'int','label'=>'string'];
     public function entryImport( $supplier_id,$label ){
+        $this->Hub->set_level(2);
 	$source = array_map('addslashes',$this->request('source','raw'));
 	$target = array_map('addslashes',$this->request('target','raw'));
         $source[]=$supplier_id;
@@ -120,6 +123,7 @@ class StockBuyManager extends Catalog{
     }
     
     private function entryImportFromTable( $table, $src, $trg, $filter, $label ){
+        $this->Hub->set_level(2);
 	$set=[];
 	$target=[];
 	$source=[];
@@ -145,6 +149,7 @@ class StockBuyManager extends Catalog{
     
     public $supplyCreate=['supplier_id'=>'int'];
     public function supplyCreate($supplier_id){
+        $this->Hub->set_level(2);
 	$insert_id=$this->create('supply_list',['supplier_id'=>$supplier_id]);
 	$this->update('supply_list',['supply_code'=>$insert_id],['supply_id'=>$insert_id]);
 	return $insert_id;
@@ -152,6 +157,7 @@ class StockBuyManager extends Catalog{
     
     public $supplyUpdate=['supply_id'=>'int','field'=>'string','value'=>'string'];
     public function supplyUpdate($supply_id,$field,$value){
+        $this->Hub->set_level(2);
 	if( $field=='supplier_name' ){
 	    $field='supplier_id';
 	    $value=$this->get_value("SELECT supplier_id FROM supplier_list WHERE supplier_name='$value'");
@@ -165,11 +171,13 @@ class StockBuyManager extends Catalog{
  
     public $supplyDelete=['supply_ids'=>'raw'];
     public function supplyDelete($supply_ids){
+        $this->Hub->set_level(2);
 	return $this->delete('supply_list','supply_id',$supply_ids);
     }
     
     public $supplyExport=['supply_ids'=>'raw'];
     public function supplyExport($supply_ids){
+        $this->Hub->set_level(2);
 	if( empty($supply_ids) ){
 	    return 0;
 	}
@@ -221,6 +229,7 @@ class StockBuyManager extends Catalog{
     
     public $supplierListFetch=[];
     public function supplierListFetch(){
+        $this->Hub->set_level(2);
 	$all_count=$this->get_value("SELECT COUNT(*) FROM supply_list");
 	$all=[['supplier_name'=>'* Все поставщики','supplier_id'=>0,'supplier_product_count'=>$all_count]];
 	$sql="
@@ -236,11 +245,13 @@ class StockBuyManager extends Catalog{
     
     public $supplierCreate=['supplier_company_id'=>'int','label'=>'string'];
     public function supplierCreate($supplier_company_id,$label){
+        $this->Hub->set_level(2);
 	return $this->create('supplier_list',['supplier_company_id'=>$supplier_company_id,'supplier_name'=>$label]);
     }
     
     public $supplierUpdate=['supplier_id'=>'int','field'=>'string','value'=>'string'];
     public function supplierUpdate($supplier_id,$field,$value){
+        $this->Hub->set_level(2);
 	$data=[$field=>$value];
 	if( $field =='supplier_sell_discount' ){
 	    $data['supplier_sell_gain']=0;
@@ -253,6 +264,7 @@ class StockBuyManager extends Catalog{
     
     public $supplierUpdatePrices=['supplier_id'=>'int'];
     public function supplierUpdatePrices($supplier_id){
+        $this->Hub->set_level(2);
         $sql="UPDATE 
                 price_list pl
                     JOIN
@@ -281,6 +293,7 @@ class StockBuyManager extends Catalog{
 
     public $supplierDelete=['supplier_id'=>'int','also_products'=>'bool'];
     public function supplierDelete($supplier_id,$also_products){
+        $this->Hub->set_level(2);
 	if( $also_products ){
 	    $this->delete('supply_list',['supplier_id'=>$supplier_id]);
 	} else {
@@ -291,6 +304,7 @@ class StockBuyManager extends Catalog{
 
     
     private function orderTmpCreate(){
+        $this->Hub->set_level(2);
 	$this->orderChartTmpCreate();
         $sql_clear="DROP TEMPORARY TABLE IF EXISTS tmp_supply_order;";# TEMPORARY
         $sql_prepare="CREATE TEMPORARY TABLE tmp_supply_order AS (SELECT
@@ -322,6 +336,7 @@ class StockBuyManager extends Catalog{
         $this->query($sql_prepare);
     }
     private function orderChartTmpCreate(){
+        $this->Hub->set_level(2);
         $sql_clear="DROP TEMPORARY TABLE IF EXISTS tmp_supply_order_chart;";# TEMPORARY
         $sql_prepare="CREATE TEMPORARY TABLE tmp_supply_order_chart AS (SELECT 
                         product_code,
@@ -343,6 +358,7 @@ class StockBuyManager extends Catalog{
     
     public $orderFetch=['offset'=>'int','limit'=>'int','sortby'=>'string','sortdir'=>'(ASC|DESC)','filter'=>'json'];
     public function orderFetch($offset,$limit,$sortby,$sortdir,$filter=null){
+        $this->Hub->set_level(2);
 	if( empty($sortby) ){
 	    $sortby="entry_id";
 	}
@@ -374,6 +390,7 @@ class StockBuyManager extends Catalog{
 
     public $orderSummaryFetch=[];
     public function orderSummaryFetch(){
+        $this->Hub->set_level(2);
     	$this->orderTmpCreate();
 	
 	$all_count=$this->get_value("SELECT COUNT(*) FROM tmp_supply_order");
@@ -396,21 +413,25 @@ class StockBuyManager extends Catalog{
     
     public $orderCreate=[];
     public function orderCreate(){
+        $this->Hub->set_level(2);
 	return $this->create('supply_order',['product_code'=>'']);
     }
     
     public $orderUpdate=['entry_id'=>'int','field'=>'string','value'=>'string'];
     public function orderUpdate($entry_id,$field,$value){
+        $this->Hub->set_level(2);
 	return $this->update('supply_order',[$field=>$value],['entry_id'=>$entry_id]);
     }
  
     public $orderDelete=['entry_ids'=>'raw'];
     public function orderDelete($entry_ids){
+        $this->Hub->set_level(2);
 	return $this->delete('supply_order','entry_id',$entry_ids);
     }
     
     public $orderFromStock=['parent_id'=>'int'];
     public function orderFromStock( $parent_id ){
+        $this->Hub->set_level(2);
         $stock_cat=$this->get_value("SELECT label FROM stock_tree WHERE branch_id='$parent_id'");
 	$where="1";
 	if( $parent_id ){
@@ -432,6 +453,7 @@ class StockBuyManager extends Catalog{
     
     public $viewOrderGet=['sortby'=>'string','sortdir'=>'(ASC|DESC)','filter'=>'json','out_type'=>'string'];
     public function viewOrderGet($sortby,$sortdir,$filter,$out_type){
+        $this->Hub->set_level(2);
 	$table=$this->orderFetch(0,10000,$sortby,$sortdir,$filter);
 	foreach($table as $row){
 	    $first='';
@@ -469,6 +491,7 @@ class StockBuyManager extends Catalog{
 
     public $orderSubmit=['supplier_company_id'=>'int'];
     public function orderSubmit($supplier_company_id){
+        $this->Hub->set_level(2);
 	$this->orderTmpCreate();
 	$buy_order=$this->get_list("SELECT 
 	    GROUP_CONCAT(entry_id) entry_ids,product_code,SUM(product_quantity) product_quantity,MIN(supply_buy)  supply_buy
@@ -491,6 +514,7 @@ class StockBuyManager extends Catalog{
 	return $doc_id;
     }
     public function ordersAbsentCreate(){
+        $this->Hub->set_level(2);
         $list=$this->get_list("SELECT 
                     de.*
                 FROM
@@ -508,6 +532,7 @@ class StockBuyManager extends Catalog{
 	
     }
     public function matchesAddCommingLeftovers( $query ){
+        $this->Hub->set_level(1);
         $query['table'].="
             LEFT JOIN
                 supply_list ON supply_list.product_code=tmp_matches_list.product_code AND supply_leftover>0

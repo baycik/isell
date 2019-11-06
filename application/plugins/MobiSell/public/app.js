@@ -111,13 +111,19 @@ App = {
         }
         App.state = newstate;
     },
+    current_status:'',
     flash: function (msg) {
         if (!msg) {
             return;
         }
-        $("#status").html(msg).show();
+        if( App.current_status ){
+            App.current_status+='<br>';
+        }
+        App.current_status+=msg;
+        $("#status").html(App.current_status).show();
         clearTimeout(App.flashClock);
         App.flashClock = setTimeout(function () {
+            App.current_status='';
             $("#status").hide();
         }, 1500);
     },

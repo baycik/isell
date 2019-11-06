@@ -651,6 +651,9 @@ class Stock extends Catalog {
     
     public function matchesFilterGet(){
         $filter_tree=$this->Hub->svar('filter_tree');
+        if( !$filter_tree ){
+            return [];
+        }
         $tree=[];
         foreach($filter_tree as $group){
             $filter_group_options=[];
