@@ -264,6 +264,7 @@ App = {
     },
     clearCache: function () {
         navigator.serviceWorker.controller && navigator.serviceWorker.controller.postMessage('clear_cache');
+        sessionStorage.clear();
         console.log("Cache cleared");
         location.reload();
     },
