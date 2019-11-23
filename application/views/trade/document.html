@@ -724,7 +724,16 @@
 		var efield_labs=App.json(view.view_efield_labels);
 		views[i].efields=[];
 		for( var k in efield_labs ){
-		    views[i].efields.push({field:k,label:efield_labs[k],value:efield_vals?efield_vals[k]||'':''});
+                    var extra_field={
+                            field:k,
+                            label:efield_labs[k],
+                            value:efield_vals && efield_vals[k]?efield_vals[k]||'':''
+                        };
+                    if( efield_labs[k].label ){
+                        extra_field.label=efield_labs[k].label;
+                        extra_field.type=efield_labs[k].type;
+                    }
+                    views[i].efields.push(extra_field);
 		}
 	    }
 	    return views;

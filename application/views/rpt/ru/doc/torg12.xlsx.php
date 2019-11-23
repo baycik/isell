@@ -1,26 +1,7 @@
 <?php
     $this->view->doc_view->total_spell=  num2str($this->view->footer->total);
     $this->view->doc_view->date_spell= daterus($this->view->doc_view->date_dot);
-    $this->view->p->all=getAll($this->view->p);
-    $this->view->a->all=getAll($this->view->a);
     
-    $okei=[
-        'шт'=>'796',
-        'м'=>'006'
-    ];
-    $this->view->total_qty=0;
-    foreach( $this->view->rows as &$row ){
-        $row->product_unit_code=$okei[$row->product_unit];
-        $this->view->total_qty+=$row->product_quantity;
-        
-        
-        $row->product_sum_vat=$row->product_sum_total-$row->product_sum;
-        //$row->product_sum_total=$row->product_sum+$row->product_sum_vat;
-    }
-    $this->view->row_count=count($this->view->rows);
-    
-    
-
     function getAll( $comp ) {
         $all ="$comp->company_name";
         $all.=$comp->company_tax_id?", ИНН/КПП:{$comp->company_tax_id}/{$comp->company_tax_id2}":'';
@@ -29,12 +10,65 @@
         return $all;
     }
     
-
-    function daterus($dmy) {
-        $dmy=  explode('.', $dmy);
-        $months = array('ноября', 'января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря');
-        return ' <' .$dmy[0] . '> ' . $months[$dmy[1]*1] . ' ' . $dmy[2] . ' года';
+    
+    $this->view->seller=$this->view->a;
+    $this->view->buyer=$this->view->p;
+    if( isset($this->view->doc_view->extra->reciever_company_id) ){
+        $this->Hub->load_model("Company");
+        $this->view->reciever=$this->Hub->Company->companyGet($this->view->doc_view->extra->reciever_company_id);
+    } else {
+        $this->view->reciever=$this->view->buyer;
     }
+    if( isset($this->view->doc_view->extra->sender_company_id) ){
+        $this->Hub->load_model("Company");
+        $this->view->sender=$this->Hub->Company->companyGet($this->view->doc_view->extra->sender_company_id);
+    } else {
+        $this->view->sender=$this->view->seller;
+    }
+    
+    $this->view->seller->all=getAll($this->view->seller);
+    $this->view->buyer->all=getAll($this->view->buyer);
+    $this->view->sender->all=getAll($this->view->sender);
+    $this->view->reciever->all=getAll($this->view->reciever);
+    
+    if( isset($this->view->doc_view->extra->reason_date) ){
+        $this->view->doc_view->extra->reason_date=todmy( $this->view->doc_view->extra->reason_date );
+    }
+    if( isset($this->view->doc_view->extra->transport_bill_date) ){
+        $this->view->doc_view->extra->transport_bill_date=todmy( $this->view->doc_view->extra->transport_bill_date );
+    }
+    
+    //print_r($this->view);die;
+    
+    
+    $okei=[
+        'шт'=>'796',
+        'м'=>'006'
+    ];
+    $this->view->total_qty=0;
+    foreach( $this->view->rows as &$row ){
+        $row->product_unit_code=$okei[$row->product_unit];
+        $row->product_sum_vat=$row->product_sum_total-$row->product_sum_vatless;
+        $row->product_vat_rate=$this->view->head->vat_rate/100;
+        $this->view->total_qty+=$row->product_quantity;
+        $row->skip='-';
+        //print_r($row);die;
+    }
+    $this->view->row_count=count($this->view->rows);
+    $this->view->row_count_spell= num2str($this->view->row_count,false);
+    $this->view->place_count_spell= num2str($this->view->doc_view->extra->place_count,false);
+    
+
+   function todmy( $iso ){
+       $ymd= explode('-', $iso);
+       return "$ymd[2].$ymd[1].$ymd[0]";
+   }
+
+function daterus($dmy) {
+    $dmy=  explode('.', $dmy);
+    $months = array('ноября', 'января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря');
+    return ' <' .$dmy[0] . '> ' . $months[$dmy[1]*1] . ' ' . $dmy[2] . ' года';
+}
 
 
 /**
@@ -42,7 +76,7 @@
  * @author runcore
  * @uses morph(...)
  */
-function num2str($num) {
+function num2str($num, $include_ruble=true) {
 	$nul='ноль';
 	$ten=array(
 		array('','один','два','три','четыре','пять','шесть','семь', 'восемь','девять'),
@@ -76,8 +110,10 @@ function num2str($num) {
 		} //foreach
 	}
 	else $out[] = $nul;
-	$out[] = morph(intval($rub), $unit[1][0],$unit[1][1],$unit[1][2]); // rub
-	$out[] = $kop.' '.morph($kop,$unit[0][0],$unit[0][1],$unit[0][2]); // kop
+        if( $include_ruble ){
+            $out[] = morph(intval($rub), $unit[1][0],$unit[1][1],$unit[1][2]); // rub
+            $out[] = $kop.' '.morph($kop,$unit[0][0],$unit[0][1],$unit[0][2]); // kop
+        }
 	return trim(preg_replace('/ {2,}/', ' ', join(' ',$out)));
 }
 

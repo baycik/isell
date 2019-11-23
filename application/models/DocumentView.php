@@ -41,7 +41,7 @@ class DocumentView extends DocumentItems{
 
     }
     
-    public function viewUpdate(int $doc_view_id, bool $is_extra, string $field, string $value='') {
+    public function viewUpdate(int $doc_view_id, string $is_extra, string $field, string $value='') {
 	if ( $this->isCommited() ){
 	    $this->Hub->set_level(2);
 	}
