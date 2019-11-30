@@ -43,10 +43,12 @@
         handle:{
             company:function( input_node ){
                 $input_node = $(input_node);
-                App.loadWindow('page/company/tree').done(function(company){
-                    $input_node.val(company.label);
-                    App.page_trade_view_settings.fieldChanged($input_node.attr('name'),company.label,'extra',$input_node.attr('title'));
-                    App.page_trade_view_settings.fieldChanged($input_node.attr('name')+'_company_id',company.company_id,'extra');
+                App.loadWindow('page/company/tree').progress(function(status,company){
+                    if( status==='select' ){
+                        $input_node.val(company.label);
+                        App.page_trade_view_settings.fieldChanged($input_node.attr('name'),company.label,'extra',$input_node.attr('title'));
+                        App.page_trade_view_settings.fieldChanged($input_node.attr('name')+'_company_id',company.company_id,'extra');
+                    }
                 });
             }
         }

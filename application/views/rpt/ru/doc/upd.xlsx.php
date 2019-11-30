@@ -1,49 +1,64 @@
 <?php
+    $this->setPageOrientation('landscape');
     $this->view->doc_view->total_spell=  num2str($this->view->footer->total);
     $this->view->doc_view->date_spell= daterus($this->view->doc_view->date_dot);
     
     function getAll( $comp ) {
         $all ="$comp->company_name";
-        $all.=$comp->company_tax_id?", ИНН/КПП:{$comp->company_tax_id}/{$comp->company_tax_id2}":'';
         $all.=$comp->company_jaddress?", $comp->company_jaddress":'';
-        $all.=$comp->company_phone?", тел.:{$comp->company_phone}":'';
         return $all;
     }
     
     
     $this->view->seller=$this->view->a;
     $this->view->buyer=$this->view->p;
+    
+    $this->view->supplier=$this->view->seller;
+    $this->view->reciever=$this->view->buyer;
     if( isset($this->view->doc_view->extra->reciever_company_id) ){
         $this->Hub->load_model("Company");
         $this->view->reciever=$this->Hub->Company->companyGet($this->view->doc_view->extra->reciever_company_id);
-    } else {
-        $this->view->reciever=$this->view->buyer;
     }
     if( isset($this->view->doc_view->extra->supplier_company_id) ){
         $this->Hub->load_model("Company");
         $this->view->supplier=$this->Hub->Company->companyGet($this->view->doc_view->extra->supplier_company_id);
-    } else {
-        $this->view->supplier=$this->view->seller;
     }
-    
     $this->view->seller->all=getAll($this->view->seller);
     $this->view->buyer->all=getAll($this->view->buyer);
     $this->view->supplier->all=getAll($this->view->supplier);
     $this->view->reciever->all=getAll($this->view->reciever);
     
+    if( $this->view->supplier->company_id==$this->view->seller->company_id ){
+        $this->view->supplier->all='он же';
+    }
     if( isset($this->view->doc_view->extra->reason_date) ){
         $this->view->doc_view->extra->reason_date=todmy( $this->view->doc_view->extra->reason_date );
-    }
-    if( isset($this->view->doc_view->extra->transport_bill_date) ){
-        $this->view->doc_view->extra->transport_bill_date=todmy( $this->view->doc_view->extra->transport_bill_date );
     }
     
     //print_r($this->view);die;
     
     
-    $okei=[
-        'шт'=>'796',
-        'м'=>'006'
+    $countries=[
+        'Турция'=>'792',
+        'Китай'=>'156',
+        'Беларусь'=>'112',
+        'ГЕРМАНИЯ'=>'276',
+        'ФРАНЦИЯ'=>'250'    
+    ];
+    $okei = [
+        'шт' => '796',
+        'руб'=>'383',
+        '1000 руб'=>'384',
+        'компл'=>'839',
+        'л'=>'112',
+        'усл. ед'=>'876',
+        'кг'=>'166',
+        'т'=>'168',
+        'ч'=>'356',
+        'м' => '006',
+        'м2'=>'055',
+        'пог. м'=>'018',
+        'упак'=>'778'
     ];
     $this->view->total_qty=0;
     foreach( $this->view->rows as &$row ){
@@ -51,7 +66,18 @@
         $row->product_sum_vat=$row->product_sum_total-$row->product_sum_vatless;
         $row->product_vat_rate=$this->view->head->vat_rate/100;
         $this->view->total_qty+=$row->product_quantity;
+        
+        $row->product_excise='без акциза';
         $row->skip='-';
+        $row->origin_name='-';
+        $row->origin_code='-';
+        if( !empty($countries[$row->analyse_origin]) ){
+            $row->origin_name=$row->analyse_origin;
+            $row->origin_code=$countries[$row->origin_name];
+        }
+        if( empty($row->party_label) ){
+            $row->party_label='-';
+        }
         //print_r($row);die;
     }
     $this->view->row_count=count($this->view->rows);
@@ -64,19 +90,19 @@
        return "$ymd[2].$ymd[1].$ymd[0]";
    }
 
-function daterus($dmy) {
-    $dmy=  explode('.', $dmy);
-    $months = array('ноября', 'января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря');
-    return ' <' .$dmy[0] . '> ' . $months[$dmy[1]*1] . ' ' . $dmy[2] . ' года';
-}
+    function daterus($dmy) {
+        $dmy=  explode('.', $dmy);
+        $months = array('ноября', 'января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря');
+        return ' ' .$dmy[0] . ' ' . $months[$dmy[1]*1] . ' ' . $dmy[2] . ' года';
+    }
 
 
-/**
- * Возвращает сумму прописью
- * @author runcore
- * @uses morph(...)
- */
-function num2str($num, $include_ruble=true) {
+    /**
+     * Возвращает сумму прописью
+     * @author runcore
+     * @uses morph(...)
+     */
+    function num2str($num, $include_ruble=true) {
 	$nul='ноль';
 	$ten=array(
 		array('','один','два','три','четыре','пять','шесть','семь', 'восемь','девять'),
@@ -115,17 +141,17 @@ function num2str($num, $include_ruble=true) {
             $out[] = $kop.' '.morph($kop,$unit[0][0],$unit[0][1],$unit[0][2]); // kop
         }
 	return trim(preg_replace('/ {2,}/', ' ', join(' ',$out)));
-}
+    }
 
-/**
- * Склоняем словоформу
- * @ author runcore
- */
-function morph($n, $f1, $f2, $f5) {
-	$n = abs(intval($n)) % 100;
-	if ($n>10 && $n<20) return $f5;
-	$n = $n % 10;
-	if ($n>1 && $n<5) return $f2;
-	if ($n==1) return $f1;
-	return $f5;
-}
+    /**
+     * Склоняем словоформу
+     * @ author runcore
+     */
+    function morph($n, $f1, $f2, $f5) {
+        $n = abs(intval($n)) % 100;
+        if ($n>10 && $n<20) return $f5;
+        $n = $n % 10;
+        if ($n>1 && $n<5) return $f2;
+        if ($n==1) return $f1;
+        return $f5;
+    }

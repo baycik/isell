@@ -96,7 +96,7 @@ if ( isset($word_header) ) {
 		    padding: 2px;
 		}
 	    }
-	    @media print{
+            @media print {
 		.page-break{
 		    page-break-after: always;
 		}
@@ -120,6 +120,16 @@ if ( isset($word_header) ) {
 		}
 	    }
 	</style>
+        <?php if( $this->page_orientation =='landscape' ): ?>
+        <style type="text/css">
+        @media print { 
+            @page{
+                size: landscape;
+            }
+        }
+        </style>
+        <?php endif;?>
+        
 	<script type="text/javascript">
 	    function sendemail(fext) {
 		var params={
@@ -158,6 +168,6 @@ if ( isset($word_header) ) {
 		<a href="javascript:window.print()"style="color:black;font-size:12px;">Напечатать <img src="../../img/print.png" border="0" align="absmiddle" /></a>
 	    </div>
 	</div>
-	<?php } echo "<div align='center' class='WordSection1'>$html</div>" ?>
+	<?php } echo "<div align='center' class='WordSection1 landscape'>$html</div>" ?>
     </body>
 </html>

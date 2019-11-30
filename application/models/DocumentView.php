@@ -79,7 +79,9 @@ class DocumentView extends DocumentItems{
     public function viewCreate( int $view_type_id ){
 	$Document2=$this->Hub->bridgeLoad('Document');
 	$view_id= $Document2->insertView($view_type_id);
-	$this->viewIncreaseFetchCount($view_type_id);
+        if( $view_id ){
+            $this->viewIncreaseFetchCount($view_type_id);
+        }
 	return $view_id;
     }
     private function viewIncreaseFetchCount($view_type_id){

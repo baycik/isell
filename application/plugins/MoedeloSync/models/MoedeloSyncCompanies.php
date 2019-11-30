@@ -6,7 +6,7 @@ class MoedeloSyncCompanies extends MoedeloSyncBase{
     public function checkout(){
         $request=[
             'pageNo'=>1,
-            'pageSize'=>100000,
+            'pageSize'=>10000,
             'afterDate'=>null,
             'beforeDate'=>null,
             'name'=>null
@@ -18,7 +18,11 @@ class MoedeloSyncCompanies extends MoedeloSyncBase{
         foreach($company_list->response->ResourceList as $company){
             $this->query("
                 SET
-                    @local_id:=(SELECT local_id FROM plugin_sync_entries WHERE sync_destination='$this->sync_destination' AND remote_id='$company->Id'),
+                    @local_id:=
+                    COALESCE(
+                        (SELECT local_id FROM plugin_sync_entries WHERE sync_destination='$this->sync_destination' AND remote_id='$company->Id' LIMIT 1),
+                        (SELECT company_id FROM companies_list WHERE '$company->Inn' AND company_tax_id='$company->Inn' LIMIT 1)
+                    ),
                     @remote_hash:=MD5(CONCAT(
                         '$company->Inn',
                         '$company->Ogrn',
@@ -64,8 +68,7 @@ class MoedeloSyncCompanies extends MoedeloSyncBase{
     
     private function getList($mode){
         $company_type=1;// seller buyer
-        
-        $limit = 50;
+        $limit = 300;
         
         $select='';
         $table='';
@@ -77,7 +80,11 @@ class MoedeloSyncCompanies extends MoedeloSyncBase{
                 $select=',cl.company_id';
                 $table = 'LEFT JOIN
                     plugin_sync_entries pse ON cl.company_id=pse.local_id';
-                $where= "WHERE local_id IS NULL AND company_id>1040";
+                $where= "WHERE 
+                    local_id IS NULL
+                    AND (LENGTH(company_tax_id)=10 OR LENGTH(company_tax_id)=12)
+                    AND (NOT COALESCE(company_code,'') OR LENGTH(company_code)=8)
+                    AND (NOT COALESCE(company_code_registration,'') OR LENGTH(company_code_registration)>=13)";
                 break;
             case 'UPDATE':
                 $select=',pse.*';
@@ -93,7 +100,7 @@ class MoedeloSyncCompanies extends MoedeloSyncBase{
                 $where= "WHERE sync_destination='$this->sync_destination' AND company_id IS NULL";
                 break;
         }
-        echo $sql="
+        $sql="
             SELECT
                 inner_table.*,
                 MD5(CONCAT(Inn,Ogrn,Okpo,Name,LegalAddress,ActualAddress)) current_hash
@@ -107,7 +114,7 @@ class MoedeloSyncCompanies extends MoedeloSyncBase{
                 COALESCE(company_address,'') ActualAddress,
                 
                 $company_type `Type`,
-                IF(company_tax_id,IF(company_tax_id2,1,2),3) `Form`
+                IF(company_tax_id,IF(LENGTH(company_tax_id)=10,1,2),3) `Form`
                 $select
             FROM
                 companies_list cl
@@ -135,34 +142,35 @@ class MoedeloSyncCompanies extends MoedeloSyncBase{
                 "Form" => $company->Form
             ];
             if($mode === 'INSERT'){
-                $response = $this->apiExecute('kontragent', 'POST', $company_object)->response;
-                if( isset($response->Id) ){
-                    $this->logInsert($this->sync_destination,$company->company_id,$company->current_hash,$response->Id);
+                $response = $this->apiExecute('kontragent', 'POST', $company_object);
+                if( isset($response->response) && isset($response->response->Id) ){
+                    $this->logInsert($this->sync_destination,$company->company_id,$company->current_hash,$response->response->Id);
                     $rows_done++;
                 } else {
-                    $this->log("{$this->sync_destination} INSERT is unsuccessfull company_name:{$company->Name}");
+                    $error=$this->getValidationErrors($response);
+                    $this->log("{$this->sync_destination} INSERT is unsuccessfull (HTTP CODE:$response->httpcode '$error') company_name:{$company->Name}");
                 }
             } else 
             if($mode === 'UPDATE'){
-                $httpcode = $this->apiExecute('kontragent', 'PUT', $company_object, $company->remote_id)->httpcode;
-                if( $httpcode==200 ){
+                $response = $this->apiExecute('kontragent', 'PUT', $company_object, $company->remote_id);
+                if( $response->httpcode==200 ){
                     $this->logUpdate($company->entry_id, $company->current_hash);
                     $rows_done++;
                 } else {
-                    $this->log("{$this->sync_destination} UPDATE is unsuccessfull company_name:{$company->Name}");
+                    $error=$this->getValidationErrors($response);
+                    $this->log("{$this->sync_destination} UPDATE is unsuccessfull (HTTP CODE:$response->httpcode '$error') company_name:{$company->Name}");
                 }
             } else 
             if($mode === 'DELETE'){
-                $httpcode = $this->apiExecute('kontragent', 'DELETE', null, $company->remote_id)->httpcode;
+                $response = $this->apiExecute('kontragent', 'DELETE', null, $company->remote_id);
                 $this->logDelete($company->entry_id);
                 $rows_done++;
-                if( $httpcode!=204 ) {
-                    $this->log("{$this->sync_destination} DELETE is unsuccessfull code:$httpcode company_name:{$company->Name}");
+                if( $response->httpcode!=204 ) {
+                    $error=$this->getValidationErrors($response);
+                    $this->log("{$this->sync_destination} DELETE is unsuccessfull (HTTP CODE:$response->httpcode '$error') company_name:{$company->Name}");
                 }
             }
         }
         return $rows_done;
     }
-    
-    
 }

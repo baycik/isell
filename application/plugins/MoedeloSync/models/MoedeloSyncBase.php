@@ -5,6 +5,11 @@ class MoedeloSyncBase extends Catalog{
     private $gateway_url=null;
     private $gateway_md_apikey=null;
     
+    function __construct() {
+        session_write_close();
+        set_time_limit(300);
+    }
+    
     public function setGateway( $url ){
         $this->gateway_url=$url;
     }
@@ -84,5 +89,17 @@ class MoedeloSyncBase extends Catalog{
                 plugin_sync_entries 
             WHERE entry_id = '$entry_id'";
         return $this->query($sql);
+    }
+    
+    protected function getValidationErrors( $response ){
+        $error_text='';
+        if( isset($response->response->ValidationErrors) ){
+            foreach( $response->response->ValidationErrors as $errors ){
+                foreach($errors as $err){
+                    $error_text.="$err;";
+                }
+            }
+        }
+        return $error_text;
     }
 }

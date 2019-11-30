@@ -1,13 +1,11 @@
 <?php
 require_once 'MoedeloSyncBase.php';
-class MoedeloSyncBill extends MoedeloSyncBase{
-    private $sync_destination='moedelo_documents';
-    
+class MoedeloSyncUPD extends MoedeloSyncBase{
     private function getDocConfig(){
         return (object)[
-            'remote_function'=>'sales/bill',
-            'local_view_type_id'=>136,
-            'sync_destination'=>'moedelo_doc_bill'
+            'remote_function'=>'sales/Upd',
+            'local_view_type_id'=>133,//UPD
+            'sync_destination'=>'moedelo_doc_upd'
         ];
     }
     
@@ -46,10 +44,10 @@ class MoedeloSyncBill extends MoedeloSyncBase{
                     AND view_num='{$document_head->Number}'
                     AND view_type_id='$doc_config->local_view_type_id'
                     AND SUBSTRING(tstamp,1,10)='{$document_head->DocDate}'";
-            $local_bill=$this->get_row($sql_find_local);
+            $local_id=$this->get_value($sql_find_local);
             $this->query("
                 SET
-                    @local_id:=$local_bill->local_id,
+                    @local_id:='$local_id',
                     @remote_id:='$document_head->Id',
                     @remote_hash:=MD5(CONCAT({$document_head->Number},';','{$document_head->DocDate}',';',{$document_head->KontragentId},';',REPLACE(FORMAT({$document_head->Sum}, 2),',',''),';'))
                 ");
@@ -68,7 +66,7 @@ class MoedeloSyncBill extends MoedeloSyncBase{
             $this->query($sql);
         }
         if( count($document_list)<$request['pageSize'] ){
-            //$this->query("DELETE FROM plugin_sync_entries WHERE sync_destination='$doc_config->sync_destination' AND remote_hash IS NULL AND remote_tstamp IS NULL");
+            $this->query("DELETE FROM plugin_sync_entries WHERE sync_destination='$doc_config->sync_destination' AND remote_hash IS NULL AND remote_tstamp IS NULL");
             return true;//down sync is finished
         }
         return false;
@@ -100,7 +98,7 @@ class MoedeloSyncBill extends MoedeloSyncBase{
             case 'INSERT':
                 $select='';
                 $table = "    LEFT JOIN
-                plugin_sync_entries doc_pse  ON dvl.doc_view_id=doc_pse.local_id AND doc_pse.sync_destination='$doc_config->sync_destination'";
+                plugin_sync_entries doc_pse ON dvl.doc_view_id=doc_pse.local_id AND doc_pse.sync_destination='$doc_config->sync_destination'";
                 $where= "WHERE doc_pse.local_id IS NULL 
                     AND active_company_id='$this->acomp_id'
                     AND view_type_id='$doc_config->local_view_type_id'";
@@ -108,18 +106,18 @@ class MoedeloSyncBill extends MoedeloSyncBase{
             case 'UPDATE':
                 $select=',doc_pse.*';
                 $table = "    LEFT JOIN
-                plugin_sync_entries doc_pse  ON dvl.doc_view_id=doc_pse.local_id AND doc_pse.sync_destination='$doc_config->sync_destination'";
+                plugin_sync_entries doc_pse ON dvl.doc_view_id=doc_pse.local_id AND doc_pse.sync_destination='$doc_config->sync_destination'";
                 $where= "WHERE doc_pse.sync_destination='$doc_config->sync_destination'";
                 $having="HAVING current_hash<>local_hash OR current_hash<>remote_hash";
                 break;
             case 'DELETE':
                 $select=',doc_pse.*';
                 $table = "    RIGHT JOIN
-                plugin_sync_entries doc_pse  ON dvl.doc_view_id=doc_pse.local_id AND doc_pse.sync_destination='$doc_config->sync_destination'";
+                plugin_sync_entries doc_pse ON dvl.doc_view_id=doc_pse.local_id AND doc_pse.sync_destination='$doc_config->sync_destination'";
                 $where= "WHERE doc_pse.sync_destination='$doc_config->sync_destination' AND doc_view_id IS NULL";
                 break;
         }
-        $sql_doclist="
+         $sql_doclist="
             SELECT
                 inner_table.*,
                 MD5(CONCAT(Number,';',SUBSTRING(DocDate,1,10),';',KontragentId,';',Sum,';')) current_hash
@@ -130,8 +128,16 @@ class MoedeloSyncBill extends MoedeloSyncBase{
                 dl.vat_rate,
                 view_num Number,
                 dvl.tstamp DocDate,
-                comp_pse.remote_id KontragentId,
                 SUM(ROUND(invoice_price*product_quantity*(1+dl.vat_rate/100),2)) Sum,
+                
+                Payer_pse.remote_id KontragentId,
+                Sender_pse.remote_id SenderId,
+                Supplier_pse.remote_id SupplierId,
+                Receiver_pse.remote_id ReceiverId,
+                Payer_pse.remote_id PayerId,
+                Stock_pse.remote_id StockId,
+
+
                 1 Type,
                 2 NdsPositionType,
                 NOW() ModifyDate,
@@ -146,12 +152,23 @@ class MoedeloSyncBill extends MoedeloSyncBase{
                     JOIN
 		user_list ON dl.modified_by=user_id
                     JOIN
-                plugin_sync_entries comp_pse ON passive_company_id=comp_pse.local_id AND comp_pse.sync_destination='moedelo_companies'
+                plugin_sync_entries Stock_pse ON 1=Stock_pse.local_id AND Stock_pse.sync_destination='moedelo_stocks'
+                    JOIN
+                plugin_sync_entries Payer_pse ON passive_company_id=Payer_pse.local_id AND Payer_pse.sync_destination='moedelo_companies'
+                    LEFT JOIN
+                plugin_sync_entries Sender_pse ON '$this->acomp_id'=Sender_pse.local_id AND Sender_pse.sync_destination='moedelo_companies'
+                    LEFT JOIN
+                plugin_sync_entries Supplier_pse ON JSON_UNQUOTE(JSON_EXTRACT(view_efield_values,'$.supplier_company_id'))=Supplier_pse.local_id AND Supplier_pse.sync_destination='moedelo_companies'
+                    LEFT JOIN
+                plugin_sync_entries Receiver_pse ON JSON_UNQUOTE(JSON_EXTRACT(view_efield_values,'$.reciever_company_id'))=Receiver_pse.local_id AND Receiver_pse.sync_destination='moedelo_companies'
                 $table
             $where
             GROUP BY doc_view_id
             LIMIT $limit) inner_table
             $having";
+        
+        //die($sql_doclist);
+        
         $doc_list=$this->get_list($sql_doclist);
         if( !$doc_list ){
             return [];
@@ -227,7 +244,6 @@ class MoedeloSyncBill extends MoedeloSyncBase{
         }
         return $rows_done;
     }
-
     
     
 }

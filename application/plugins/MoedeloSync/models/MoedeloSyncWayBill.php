@@ -1,12 +1,10 @@
 <?php
 require_once 'MoedeloSyncBase.php';
-class MoedeloSyncBill extends MoedeloSyncBase{
-    private $sync_destination='moedelo_documents';
-    
+class MoedeloSyncWayBill extends MoedeloSyncBase{
     private function getDocConfig(){
         return (object)[
             'remote_function'=>'sales/waybill',
-            'local_view_type_id'=>136,
+            'local_view_type_id'=>133,//torg12
             'sync_destination'=>'moedelo_doc_waybill'
         ];
     }
@@ -29,7 +27,7 @@ class MoedeloSyncBill extends MoedeloSyncBase{
             $document_head->DocDate= substr($document_head->DocDate, 0, 10);
             $sql_find_local="
                 SELECT
-                    doc_id local_id
+                    doc_view_id local_id
                 FROM
                     document_list dl
                         JOIN
@@ -37,7 +35,7 @@ class MoedeloSyncBill extends MoedeloSyncBase{
                         JOIN
                     document_entries USING(doc_id)
                         LEFT JOIN
-                    plugin_sync_entries doc_pse ON dl.doc_id=doc_pse.local_id AND doc_pse.sync_destination='$doc_config->sync_destination'
+                    plugin_sync_entries doc_pse ON dvl.doc_view_id=doc_pse.local_id AND doc_pse.sync_destination='$doc_config->sync_destination'
                 WHERE
                     doc_pse.remote_id='$document_head->Id'
                         OR
@@ -46,10 +44,10 @@ class MoedeloSyncBill extends MoedeloSyncBase{
                     AND view_num='{$document_head->Number}'
                     AND view_type_id='$doc_config->local_view_type_id'
                     AND SUBSTRING(tstamp,1,10)='{$document_head->DocDate}'";
-            $local_bill=$this->get_row($sql_find_local);
+            $local_id=$this->get_value($sql_find_local);
             $this->query("
                 SET
-                    @local_id:=$local_bill->local_id,
+                    @local_id:='$local_id',
                     @remote_id:='$document_head->Id',
                     @remote_hash:=MD5(CONCAT({$document_head->Number},';','{$document_head->DocDate}',';',{$document_head->KontragentId},';',REPLACE(FORMAT({$document_head->Sum}, 2),',',''),';'))
                 ");
@@ -68,7 +66,7 @@ class MoedeloSyncBill extends MoedeloSyncBase{
             $this->query($sql);
         }
         if( count($document_list)<$request['pageSize'] ){
-            //$this->query("DELETE FROM plugin_sync_entries WHERE sync_destination='$doc_config->sync_destination' AND remote_hash IS NULL AND remote_tstamp IS NULL");
+            $this->query("DELETE FROM plugin_sync_entries WHERE sync_destination='$doc_config->sync_destination' AND remote_hash IS NULL AND remote_tstamp IS NULL");
             return true;//down sync is finished
         }
         return false;
@@ -100,7 +98,7 @@ class MoedeloSyncBill extends MoedeloSyncBase{
             case 'INSERT':
                 $select='';
                 $table = "    LEFT JOIN
-                plugin_sync_entries doc_pse  ON dl.doc_id=doc_pse.local_id AND doc_pse.sync_destination='$doc_config->sync_destination'";
+                plugin_sync_entries doc_pse ON dvl.doc_view_id=doc_pse.local_id AND doc_pse.sync_destination='$doc_config->sync_destination'";
                 $where= "WHERE doc_pse.local_id IS NULL 
                     AND active_company_id='$this->acomp_id'
                     AND view_type_id='$doc_config->local_view_type_id'";
@@ -108,29 +106,38 @@ class MoedeloSyncBill extends MoedeloSyncBase{
             case 'UPDATE':
                 $select=',doc_pse.*';
                 $table = "    LEFT JOIN
-                plugin_sync_entries doc_pse  ON dl.doc_id=doc_pse.local_id AND doc_pse.sync_destination='$doc_config->sync_destination'";
+                plugin_sync_entries doc_pse ON dvl.doc_view_id=doc_pse.local_id AND doc_pse.sync_destination='$doc_config->sync_destination'";
                 $where= "WHERE doc_pse.sync_destination='$doc_config->sync_destination'";
                 $having="HAVING current_hash<>local_hash OR current_hash<>remote_hash";
                 break;
             case 'DELETE':
                 $select=',doc_pse.*';
                 $table = "    RIGHT JOIN
-                plugin_sync_entries doc_pse  ON dl.doc_id=doc_pse.local_id AND doc_pse.sync_destination='$doc_config->sync_destination'";
-                $where= "WHERE doc_pse.sync_destination='$doc_config->sync_destination' AND doc_id IS NULL";
+                plugin_sync_entries doc_pse ON dvl.doc_view_id=doc_pse.local_id AND doc_pse.sync_destination='$doc_config->sync_destination'";
+                $where= "WHERE doc_pse.sync_destination='$doc_config->sync_destination' AND doc_view_id IS NULL";
                 break;
         }
-        $sql_doclist="
+         $sql_doclist="
             SELECT
                 inner_table.*,
                 MD5(CONCAT(Number,';',SUBSTRING(DocDate,1,10),';',KontragentId,';',Sum,';')) current_hash
             FROM 
             (SELECT
                 dl.doc_id,
+                dvl.doc_view_id,
                 dl.vat_rate,
                 view_num Number,
                 dvl.tstamp DocDate,
-                comp_pse.remote_id KontragentId,
                 SUM(ROUND(invoice_price*product_quantity*(1+dl.vat_rate/100),2)) Sum,
+                
+                Payer_pse.remote_id KontragentId,
+                Sender_pse.remote_id SenderId,
+                Supplier_pse.remote_id SupplierId,
+                Receiver_pse.remote_id ReceiverId,
+                Payer_pse.remote_id PayerId,
+                Stock_pse.remote_id StockId,
+
+
                 1 Type,
                 2 NdsPositionType,
                 NOW() ModifyDate,
@@ -145,18 +152,29 @@ class MoedeloSyncBill extends MoedeloSyncBase{
                     JOIN
 		user_list ON dl.modified_by=user_id
                     JOIN
-                plugin_sync_entries comp_pse ON passive_company_id=comp_pse.local_id AND comp_pse.sync_destination='moedelo_companies'
+                plugin_sync_entries Stock_pse ON 1=Stock_pse.local_id AND Stock_pse.sync_destination='moedelo_stocks'
+                    JOIN
+                plugin_sync_entries Payer_pse ON passive_company_id=Payer_pse.local_id AND Payer_pse.sync_destination='moedelo_companies'
+                    LEFT JOIN
+                plugin_sync_entries Sender_pse ON '$this->acomp_id'=Sender_pse.local_id AND Sender_pse.sync_destination='moedelo_companies'
+                    LEFT JOIN
+                plugin_sync_entries Supplier_pse ON JSON_UNQUOTE(JSON_EXTRACT(view_efield_values,'$.supplier_company_id'))=Supplier_pse.local_id AND Supplier_pse.sync_destination='moedelo_companies'
+                    LEFT JOIN
+                plugin_sync_entries Receiver_pse ON JSON_UNQUOTE(JSON_EXTRACT(view_efield_values,'$.reciever_company_id'))=Receiver_pse.local_id AND Receiver_pse.sync_destination='moedelo_companies'
                 $table
             $where
-            GROUP BY doc_id
+            GROUP BY doc_view_id
             LIMIT $limit) inner_table
             $having";
+        
+        //die($sql_doclist);
+        
         $doc_list=$this->get_list($sql_doclist);
         if( !$doc_list ){
             return [];
         }
         foreach($doc_list as &$document){
-            if( !$document->doc_id ){
+            if( !$document->doc_view_id ){
                 continue;
             }
             $sql_entry="
@@ -188,35 +206,39 @@ class MoedeloSyncBill extends MoedeloSyncBase{
             return 0;
         }
         
-        print_r($document_list);
+        //echo $mode."  ";print_r($document_list);
         
         $doc_config=$this->getDocConfig();
         $rows_done = 0;
         foreach($document_list as $document){
             if($mode === 'INSERT'){
-                $response = $this->apiExecute($doc_config->remote_function, 'POST', (array) $document)->response;
-                if( isset($response->Id) ){
-                    $this->logInsert($doc_config->sync_destination,$document->doc_id,$document->current_hash,$response->Id);
+                $response = $this->apiExecute($doc_config->remote_function, 'POST', (array) $document);
+                if( isset($response->response) && isset($response->response->Id) ){
+                    $this->logInsert($doc_config->sync_destination,$document->doc_view_id,$document->current_hash,$response->response->Id);
                     $rows_done++;
                 } else {
-                    $this->log("{$doc_config->sync_destination} INSERT is unsuccessfull Number:#{$document->Number}");
+                    $error=$this->getValidationErrors($response);
+                    $this->log("{$doc_config->sync_destination} INSERT is unsuccessfull (HTTP CODE:$response->httpcode '$error') Number:#{$document->Number}");
                 }
             } else 
             if($mode === 'UPDATE'){
-                $httpcode = $this->apiExecute($doc_config->remote_function, 'PUT', (array) $document, $document->remote_id)->httpcode;
-                if( $httpcode==200 ){
+                $response = $this->apiExecute($doc_config->remote_function, 'PUT', (array) $document, $document->remote_id);
+                if( $response->httpcode==200 ){
                     $this->logUpdate($document->entry_id, $document->current_hash);
                     $rows_done++;
                 } else {
-                    $this->log("{$doc_config->sync_destination} UPDATE is unsuccessfull Number:#{$document->Number}");
+                    $error=$this->getValidationErrors($response);
+                    $this->log("{$doc_config->sync_destination} UPDATE is unsuccessfull (HTTP CODE:$response->httpcode '$error') Number:#{$document->Number}");
                 }
             } else 
             if($mode === 'DELETE'){
-                $httpcode = $this->apiExecute($doc_config->remote_function, 'DELETE', null, $document->remote_id)->httpcode;
+                $response = $this->apiExecute($doc_config->remote_function, 'DELETE', null, $document->remote_id);
+                
                 $this->logDelete($document->entry_id);
                 $rows_done++;
-                if( $httpcode!=204 ) {
-                    $this->log("{$doc_config->sync_destination} DELETE is unsuccessfull code:$httpcode Number:#{$document->Number}");
+                if( $response->httpcode!=204 ) {
+                    $error=$this->getValidationErrors($response);
+                    $this->log("{$doc_config->sync_destination} DELETE is unsuccessfull (HTTP CODE:$response->httpcode '$error') Number:#{$document->Number}");
                 }
             }
         }

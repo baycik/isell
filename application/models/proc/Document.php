@@ -342,7 +342,7 @@ class Document extends Data {
 		$amount = 0;
 	    }
 	}
-	if ($amount && !$this->moveProduct($entry['product_code'], $stock_action, $amount, $self)) {
+	if ($amount && !$this->moveProduct($entry['product_code'], $stock_action, $amount, $self, $party_label)) {
 	    return false;
 	}
 	//$signs_after_dot = $this->doc('signs_after_dot');
@@ -358,7 +358,7 @@ class Document extends Data {
 	return true;
     }
 
-    protected function moveProduct($product_code, $stock_action, $amount, $self_price) {
+    protected function moveProduct($product_code, $stock_action, $amount, $self_price, $party_label) {
 	if (!$amount) {
 	    return false;
 	}
@@ -372,10 +372,12 @@ class Document extends Data {
 	    if ($stock_action == 'increase') {
 		return $this->Base->StockOld->decreaseStock($product_code, $amount, $self_price, "Расходный документ $doc_num");
 	    } else {
+                $this->Base->StockOld->stockEntryPartyUpdate($product_code,$party_label);
 		return $this->Base->StockOld->increaseStock($product_code, $amount, $self_price, "Расходный документ $doc_num");
 	    }
 	} else if ($this->doc('doc_type') == 2) {//Buy Document
 	    if ($stock_action == 'increase') {
+                $this->Base->StockOld->stockEntryPartyUpdate($product_code,$party_label);
 		return $this->Base->StockOld->increaseStock($product_code, $amount, $self_price, "Приходный документ $doc_num");
 	    } else {
 		return $this->Base->StockOld->decreaseStock($product_code, $amount, $self_price, "Приходный документ $doc_num");
@@ -581,7 +583,7 @@ class Document extends Data {
 
 	function getExtraFields($labels, $values) {
 	    if (!$labels)
-		return;
+		return false;
 	    $efields = array();
 	    $labels = json_decode($labels);
 	    $values = json_decode($values);
@@ -706,7 +708,7 @@ class Document extends Data {
 	if ($view_type_props['view_role'] == 'tax_bill') {
 	    if (!$this->isCommited()) {
 		$this->Base->msg('Сначала сохраните документ!');
-		return;
+		return false;
 	    }
 	    $view_num = $this->getViewNextNum($view_type_id);
             if ($this->Base->pcomp('company_tax_id')){
@@ -720,7 +722,7 @@ class Document extends Data {
         if ($view_type_props['view_role'] == 'sell_bill') {
 	    if (!$this->isCommited()) {
 		$this->Base->msg('Сначала сохраните документ!');
-		return;
+		return false;
 	    }
 	    $view_num = $this->doc('doc_num');
 	    $efields = addslashes($this->getLastEfields($view_type_id));

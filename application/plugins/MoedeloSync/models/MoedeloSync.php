@@ -56,6 +56,23 @@ class MoedeloSync extends PluginManager {
     }
     
     
+    public function stocksCheckout(){
+        $MoedeloSyncStocks=$this->Hub->load_model('MoedeloSyncStocks');
+        $MoedeloSyncStocks->setGateway( $this->settings->gateway_url.'stock/api/v1/stock/' );
+        $MoedeloSyncStocks->setApiKey( $this->settings->gateway_md_apikey );
+        $finished=$MoedeloSyncStocks->checkout();
+        return $finished;
+    }
+    
+    public function stocksReplicate(){
+        $MoedeloSyncStocks=$this->Hub->load_model('MoedeloSyncStocks');
+        $MoedeloSyncStocks->setGateway( $this->settings->gateway_url.'stock/api/v1/stock/' );
+        $MoedeloSyncStocks->setApiKey( $this->settings->gateway_md_apikey );
+        $finished=$MoedeloSyncStocks->replicate();
+        return $finished;
+    }
+    
+    
     public function billCheckout(){
         $MoedeloSyncBill=$this->Hub->load_model('MoedeloSyncBill');
         $MoedeloSyncBill->setGateway( $this->settings->gateway_url.'accounting/api/v1/' );

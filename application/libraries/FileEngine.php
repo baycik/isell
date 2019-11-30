@@ -13,6 +13,7 @@ class FileEngine{
     private $compilator;
     private $compiled_html;
     private $post_processor=null;
+    private $page_orientation='portrait';
     public $header_mode='send_headers';
     public $user_data;
     public $file_name_override;
@@ -56,6 +57,10 @@ class FileEngine{
             $this->rain->configure('tpl_ext', substr($this->tpl_ext, 1));
             $this->rain->configure('cache_dir', sys_get_temp_dir());
         }
+    }
+    
+    public function setPageOrientation( $orientation ){
+        $this->page_orientation=$orientation;
     }
     
     private function compile($tpl_file) {
@@ -109,7 +114,7 @@ class FileEngine{
 	    $tmppdf = $parent."/pdf-tmp$rnd.pdf";
 	    $pdfengine = $parent.'/wkhtmltopdf.exe';
 	    file_put_contents($tmphtml,$full_html);
-	    exec("$pdfengine --zoom 1.2 $tmphtml $tmppdf  2>&1",$output);
+	    exec("$pdfengine --zoom 1.2 -O $this->page_orientation $tmphtml $tmppdf  2>&1",$output);
 	    if( count($output) ){
 		file_put_contents($parent.'/pdferror.log', implode( "\n", $output ));
 	    }

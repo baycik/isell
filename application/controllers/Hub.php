@@ -66,9 +66,9 @@ class Hub extends CI_Controller{
 	$this->pluginTriggerBefore($model_name,$method,$route_args);
 	$this->execute($model_name, $method, $route_args);
 	$this->pluginTriggerAfter($model_name,$method,$route_args);
-        if( !is_null($this->previous_return) ){
+        //if( !is_null($this->previous_return) ){
             $this->response($this->previous_return);
-        }
+        //}
     }
     
     
@@ -354,7 +354,7 @@ class Hub extends CI_Controller{
     public function response( $response ){
 	if( isset($this->bridge) && $this->bridge->msg ){
 	    $this->msg.=$this->bridge->msg;
-	}
+	} 
         if( $this->log_output_messages ){
             $this->load_model('Catalog')->log($this->svar('user_login').': '.$this->msg);
         } else {
