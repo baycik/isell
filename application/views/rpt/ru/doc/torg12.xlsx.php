@@ -11,8 +11,6 @@
     }
     
     
-    $this->view->seller=$this->view->a;
-    $this->view->buyer=$this->view->p;
     if( isset($this->view->doc_view->extra->reciever_company_id) ){
         $this->Hub->load_model("Company");
         $this->view->reciever=$this->Hub->Company->companyGet($this->view->doc_view->extra->reciever_company_id);

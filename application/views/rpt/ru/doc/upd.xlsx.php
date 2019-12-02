@@ -9,10 +9,6 @@
         return $all;
     }
     
-    
-    $this->view->seller=$this->view->a;
-    $this->view->buyer=$this->view->p;
-    
     $this->view->supplier=$this->view->seller;
     $this->view->reciever=$this->view->buyer;
     if( isset($this->view->doc_view->extra->reciever_company_id) ){

@@ -151,18 +151,23 @@ class DocumentView extends DocumentItems{
 	$head=$this->headGet($doc_view->doc_id);
 	$rows=$this->entriesFetch( 1 );
 	$footer=$this->footerGet();
+        
+        $acomp=$Company->companyGet( $this->doc('active_company_id') );
+        $pcomp=$Company->companyGet( $this->doc('passive_company_id') );
+        
+        
 	if( $head->doc_type==1 || $head->doc_type==3 ){
 	    /*if sell document use straight seller=acomp else buyer=pcomp*/
-	    $acomp=$Company->companyGet( $this->doc('active_company_id') );
-	    $pcomp=$Company->companyGet( $this->doc('passive_company_id') );
+	    $seller=$acomp;
+	    $buyer=$pcomp;
             
             $AccountsData=$this->Hub->load_model('AccountsData');
             $doc_view->debt=$AccountsData->clientDebtGet();
             
 	    $reciever_email=$pcomp->company_email;
 	} else {
-	    $pcomp=$Company->companyGet( $this->doc('active_company_id') );
-	    $acomp=$Company->companyGet( $this->doc('passive_company_id') );
+	    $seller=$pcomp;
+	    $buyer=$acomp;
 	    $reciever_email=$acomp->company_email;
 	}
         
@@ -191,6 +196,8 @@ class DocumentView extends DocumentItems{
 		'doc_view'=>$doc_view,
 		'a'=>$acomp,
 		'p'=>$pcomp,
+                'seller'=>$seller,
+                'buyer'=>$buyer,
                 'head'=>$head,
                 'rows'=>$rows,
                 'footer'=>$footer,

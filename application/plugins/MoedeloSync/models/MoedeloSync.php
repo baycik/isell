@@ -105,6 +105,34 @@ class MoedeloSync extends PluginManager {
         return $finished;
     }
     
+    public function invoiceCheckout(){
+        $MoedeloSyncInvoice=$this->Hub->load_model('MoedeloSyncInvoice');
+        $MoedeloSyncInvoice->setGateway( $this->settings->gateway_url.'accounting/api/v1/' );
+        $MoedeloSyncInvoice->setApiKey( $this->settings->gateway_md_apikey );
+        $finished=$MoedeloSyncInvoice->checkout();
+        return $finished;
+    }
+    
+    public function invoiceReplicate(){
+        $MoedeloSyncInvoice=$this->Hub->load_model('MoedeloSyncInvoice');
+        $MoedeloSyncInvoice->setGateway( $this->settings->gateway_url.'accounting/api/v1/' );
+        $MoedeloSyncInvoice->setApiKey( $this->settings->gateway_md_apikey );
+        $finished=$MoedeloSyncInvoice->replicate();
+        return $finished;
+    }
+    
+    public function updCheckout(){
+        return true;
+    }
+    
+    public function updReplicate(){
+        $MoedeloSyncUpd=$this->Hub->load_model('MoedeloSyncUpd');
+        $MoedeloSyncUpd->setGateway( $this->settings->gateway_url.'docs/api/v1/' );
+        $MoedeloSyncUpd->setApiKey( $this->settings->gateway_md_apikey );
+        $finished=$MoedeloSyncUpd->replicate();
+        return $finished;
+    }
+    
     
     
     

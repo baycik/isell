@@ -1,12 +1,12 @@
 <?php
 require_once 'MoedeloSyncBase.php';
-class MoedeloSyncUPD extends MoedeloSyncBase{
+class MoedeloSyncInvoice extends MoedeloSyncBase{
     
     private function getDocConfig(){
         return (object)[
-            'remote_function'=>'Sales/Upd',
-            'local_view_type_id'=>143,//UPD
-            'sync_destination'=>'moedelo_doc_upd'
+            'remote_function'=>'sales/invoice/common',
+            'local_view_type_id'=>140,//Schet Faktura
+            'sync_destination'=>'moedelo_doc_invoice'
         ];
     }
     
