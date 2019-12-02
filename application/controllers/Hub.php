@@ -66,9 +66,9 @@ class Hub extends CI_Controller{
 	$this->pluginTriggerBefore($model_name,$method,$route_args);
 	$this->execute($model_name, $method, $route_args);
 	$this->pluginTriggerAfter($model_name,$method,$route_args);
-        //if( !is_null($this->previous_return) ){
+        if( !is_null($this->previous_return) ){
             $this->response($this->previous_return);
-        //}
+        }
     }
     
     
