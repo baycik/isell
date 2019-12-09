@@ -31,7 +31,7 @@ class MoedeloSyncWayBill extends MoedeloSyncBase{
                 FROM
                     document_list dl
                         JOIN
-                    document_view_list USING(doc_id)
+                    document_view_list dvl USING(doc_id)
                         JOIN
                     document_entries USING(doc_id)
                         LEFT JOIN
@@ -108,7 +108,7 @@ class MoedeloSyncWayBill extends MoedeloSyncBase{
                 $table = "    LEFT JOIN
                 plugin_sync_entries doc_pse ON dvl.doc_view_id=doc_pse.local_id AND doc_pse.sync_destination='$doc_config->sync_destination'";
                 $where= "WHERE doc_pse.sync_destination='$doc_config->sync_destination'";
-                $having="HAVING current_hash<>local_hash OR current_hash<>remote_hash";
+                $having="HAVING current_hash<>COALESCE(local_hash,'') OR current_hash<>COALESCE(remote_hash,'')";
                 break;
             case 'DELETE':
                 $select=',doc_pse.*';

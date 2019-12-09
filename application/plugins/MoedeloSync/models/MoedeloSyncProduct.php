@@ -87,7 +87,7 @@ class MoedeloSyncProduct extends MoedeloSyncBase{
                 $table = 'JOIN
                     plugin_sync_entries pse ON pl.product_id=pse.local_id';
                 $where= "WHERE sync_destination='$this->sync_destination'";
-                $having="HAVING current_hash<>local_hash OR current_hash<>remote_hash";
+                $having="HAVING current_hash<>COALESCE(local_hash,'') OR current_hash<>COALESCE(remote_hash,'')";
                 break;
             case 'DELETE':
                 $select=',pse.*';
