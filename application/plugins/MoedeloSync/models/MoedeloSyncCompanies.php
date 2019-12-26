@@ -55,14 +55,14 @@ class MoedeloSyncCompanies extends MoedeloSyncBase{
     }
     
     public function replicate(){
-        $insert_list = $this->getList('INSERT');
-        $update_list = $this->getList('UPDATE');
-        $delete_list = $this->getList('DELETE');
+        $remote_insert_list = $this->getList('REMOTE_INSERT');
+        $remote_update_list = $this->getList('REMOTE_UPDATE');
+        $remote_delete_list = $this->getList('REMOTE_DELETE');
         
         $rows_done=0;
-        $rows_done += $this->send($insert_list, 'INSERT');
-        $rows_done += $this->send($update_list, 'UPDATE');
-        $rows_done += $this->send($delete_list, 'DELETE');
+        $rows_done += $this->send($remote_insert_list, 'REMOTE_INSERT');
+        $rows_done += $this->send($remote_update_list, 'REMOTE_UPDATE');
+        $rows_done += $this->send($remote_delete_list, 'REMOTE_DELETE');
         return $rows_done;
     }
     
@@ -76,7 +76,7 @@ class MoedeloSyncCompanies extends MoedeloSyncBase{
         $having='';
 
         switch( $mode ){
-            case 'INSERT':
+            case 'REMOTE_INSERT':
                 $select=',cl.company_id';
                 $table = 'LEFT JOIN
                     plugin_sync_entries pse ON cl.company_id=pse.local_id';
@@ -86,14 +86,14 @@ class MoedeloSyncCompanies extends MoedeloSyncBase{
                     AND (NOT COALESCE(company_code,'') OR LENGTH(company_code)=8)
                     AND (NOT COALESCE(company_code_registration,'') OR LENGTH(company_code_registration)>=13)";
                 break;
-            case 'UPDATE':
+            case 'REMOTE_UPDATE':
                 $select=',pse.*';
                 $table = 'JOIN
                     plugin_sync_entries pse ON cl.company_id=pse.local_id';
                 $where= "WHERE sync_destination='$this->sync_destination'";
                 $having="HAVING current_hash<>local_hash OR current_hash<>remote_hash";
                 break;
-            case 'DELETE':
+            case 'REMOTE_DELETE':
                 $select=',pse.*';
                 $table = 'RIGHT JOIN
                     plugin_sync_entries pse ON cl.company_id=pse.local_id';
@@ -141,7 +141,7 @@ class MoedeloSyncCompanies extends MoedeloSyncBase{
                 "Type" => $company->Type,
                 "Form" => $company->Form
             ];
-            if($mode === 'INSERT'){
+            if($mode === 'REMOTE_INSERT'){
                 $response = $this->apiExecute('kontragent', 'POST', $company_object);
                 if( isset($response->response) && isset($response->response->Id) ){
                     $this->logInsert($this->sync_destination,$company->company_id,$company->current_hash,$response->response->Id);
@@ -151,7 +151,7 @@ class MoedeloSyncCompanies extends MoedeloSyncBase{
                     $this->log("{$this->sync_destination} INSERT is unsuccessfull (HTTP CODE:$response->httpcode '$error') company_name:{$company->Name}");
                 }
             } else 
-            if($mode === 'UPDATE'){
+            if($mode === 'REMOTE_UPDATE'){
                 $response = $this->apiExecute('kontragent', 'PUT', $company_object, $company->remote_id);
                 if( $response->httpcode==200 ){
                     $this->logUpdate($company->entry_id, $company->current_hash);
@@ -161,8 +161,8 @@ class MoedeloSyncCompanies extends MoedeloSyncBase{
                     $this->log("{$this->sync_destination} UPDATE is unsuccessfull (HTTP CODE:$response->httpcode '$error') company_name:{$company->Name}");
                 }
             } else 
-            if($mode === 'DELETE'){
-                $response = $this->apiExecute('kontragent', 'DELETE', null, $company->remote_id);
+            if($mode === 'REMOTE_DELETE'){
+                $response = $this->apiExecute('kontragent', 'REMOTE_DELETE', null, $company->remote_id);
                 $this->logDelete($company->entry_id);
                 $rows_done++;
                 if( $response->httpcode!=204 ) {

@@ -2,6 +2,9 @@
 
 class MoedeloSyncBase extends Catalog{
     protected $acomp_id=2;
+    protected $sync_since="2019-11-01 00:00:00";
+    protected $sync_time_window=365;
+    
     private $gateway_url=null;
     private $gateway_md_apikey=null;
     
@@ -35,7 +38,7 @@ class MoedeloSyncBase extends Catalog{
                 curl_setopt($curl, CURLOPT_CUSTOMREQUEST, "DELETE");
                 break;
             case 'GET':
-                $query=http_build_query($data);
+                $query=$data?http_build_query($data):'';
                 $url .= "?$query";
                 break;
         }
@@ -61,7 +64,7 @@ class MoedeloSyncBase extends Catalog{
     protected function apiSend( $sync_destination, $remote_function, $document_list, $mode ){
         $rows_done=0;
         foreach($document_list as $document){
-            if($mode === 'INSERT'){
+            if($mode === 'REMOTE_INSERT'){
                 $response = $this->apiExecute($remote_function, 'POST', (array) $document);
                 if( isset($response->response) && isset($response->response->Id) ){
                     $this->logInsert($sync_destination,$document->local_id,$document->current_hash,$response->response->Id);
@@ -71,7 +74,7 @@ class MoedeloSyncBase extends Catalog{
                     $this->log("{$sync_destination} INSERT is unsuccessfull (HTTP CODE:$response->httpcode '$error') Number:#{$document->Number}");
                 }
             } else 
-            if($mode === 'UPDATE'){
+            if($mode === 'REMOTE_UPDATE'){
                 $response = $this->apiExecute($remote_function, 'PUT', (array) $document, $document->remote_id);
                 if( $response->httpcode==200 ){
                     $this->logUpdate($document->entry_id, $document->current_hash);
@@ -81,8 +84,8 @@ class MoedeloSyncBase extends Catalog{
                     $this->log("{$sync_destination} UPDATE is unsuccessfull (HTTP CODE:$response->httpcode '$error') Number:#{$document->Number}");
                 }
             } else 
-            if($mode === 'DELETE'){
-                $response = $this->apiExecute($remote_function, 'DELETE', null, $document->remote_id);
+            if($mode === 'REMOTE_DELETE'){
+                $response = $this->apiExecute($remote_function, 'REMOTE_DELETE', null, $document->remote_id);
                 $this->logDelete($document->entry_id);
                 $rows_done++;
                 if( $response->httpcode!=204 ) {
@@ -93,6 +96,8 @@ class MoedeloSyncBase extends Catalog{
         }
         return $rows_done;
     }
+    
+    
     
     
     
@@ -132,10 +137,6 @@ class MoedeloSyncBase extends Catalog{
     protected function getValidationErrors( $response ){
         $error_text='';
         if( isset($response->response->ValidationErrors) ){
-            
-            print_r($response->response->ValidationErrors);
-            
-            
             foreach( $response->response->ValidationErrors as $errors ){
                 foreach($errors as $key=>$err){
                     $error_text.="$key : $err;";
@@ -144,4 +145,66 @@ class MoedeloSyncBase extends Catalog{
         }
         return $error_text;
     }
+    
+    
+    public function checkout(){
+        $is_finished=false;
+        $result=$this->checkoutGetList( $this->doc_config->sync_destination, $this->doc_config->remote_function );
+        $nextPageNo=$result->pageNo+1;
+        if( $result->pageNo==1 ){
+            $this->query("UPDATE plugin_sync_entries SET remote_hash=NULL,remote_tstamp=NULL WHERE sync_destination='{$this->doc_config->sync_destination}'");
+        }        
+        foreach( $result->list as $item ){
+            $remote=$this->checkoutCalcRemote( $item );//MUST BE DEFINED IN CHILD CLASS
+            $sql="INSERT INTO
+                    plugin_sync_entries
+                SET
+                    sync_destination='{$this->doc_config->sync_destination}',
+                    local_id='$remote->local_id',
+                    remote_id='$remote->remote_id',
+                    remote_hash='$remote->remote_hash',
+                    remote_tstamp='$remote->remote_tstamp'
+                ON DUPLICATE KEY UPDATE
+                    remote_hash='$remote->remote_hash',
+                    remote_tstamp='$remote->remote_tstamp'
+                ";
+            $this->query($sql);
+        }
+        if( $result->pageIsLast ){//last page
+            $this->query("DELETE FROM plugin_sync_entries WHERE sync_destination='{$this->doc_config->sync_destination}' AND remote_hash IS NULL AND remote_tstamp IS NULL");
+            $is_finished=true;
+            $nextPageNo=1;
+        }
+        $this->query("UPDATE
+                plugin_list
+            SET 
+                plugin_json_data=JSON_SET(plugin_json_data,'$.{$this->doc_config->sync_destination}.checkoutPage','$nextPageNo'),
+                plugin_json_data=JSON_SET(plugin_json_data,'$.{$this->doc_config->sync_destination}.checkoutLastFinished',NOW())
+            WHERE 
+                plugin_system_name='MoedeloSync'");
+        return $is_finished;
+    }
+    
+    protected function checkoutGetList( $sync_destination, $remote_function ){
+        $pageNo=$this->get_value("SELECT COALESCE(JSON_EXTRACT(plugin_json_data,'$.{$sync_destination}.checkoutPage'),1) FROM plugin_list WHERE plugin_system_name='MoedeloSync'");
+        $pageSize=1000;
+        $request=[
+            'pageNo'=>$pageNo,
+            'pageSize'=>$pageSize,
+            'afterDate'=>null,
+            'beforeDate'=>null,
+            'name'=>null
+        ];
+        $response=$this->apiExecute( $remote_function, 'GET', $request);
+        $list=[];
+        if( isset($response->response->ResourceList) ){
+            $list=$response->response->ResourceList;
+        }
+        return (object) [
+            'pageNo'=>$pageNo,
+            'pageIsLast'=>count($list)<$pageSize?1:0,
+            'list'=>$list
+        ];
+    }
+
 }

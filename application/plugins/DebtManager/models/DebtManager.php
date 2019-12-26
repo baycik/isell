@@ -42,7 +42,7 @@ class DebtManager extends Catalog {
     private $current_group_by_date = '';
     public function getBlock($filter){
         session_write_close();
-        $this->Hub->set_level(2);
+        $this->Hub->set_level(1);
         $user_id = $this->Hub->svar('user_id');
         $this->createTmp($filter,$user_id);
         $list = $this->getEntries();
@@ -128,9 +128,10 @@ class DebtManager extends Catalog {
             $where .= " AND DATE_ADD(cstamp, INTERVAL deferment DAY) < DATE_ADD(CURDATE(), INTERVAL '".($block_number+1)."' {$settings->group_by_date})";
         }
         
+        $user_assigned_path=$this->Hub->svar('user_assigned_path');
         $path = '';
-        if(isset( $settings->user_assigned_path)){
-            $path = "AND (ct.path LIKE '%".str_replace(",", "%' OR ct.path LIKE '%", $settings->user_assigned_path)."%')";
+        if( $user_assigned_path ){
+            $path = "AND ct.path LIKE '$user_assigned_path%'";
         }
         
         $where .= $path;
@@ -248,7 +249,7 @@ class DebtManager extends Catalog {
                 "disabled" => 0
             ]]
         ];
-            $event_id= null;
+        $event_id= null;
             $doc_id='';
             $event_date= date( "Y-m-d H:i:s", strtotime(date("Y-m-d H:i:s")."+7 day" ));
             $event_priority='3medium';
@@ -364,12 +365,15 @@ class DebtManager extends Catalog {
             $this->settings[0] = $user_settings;
         } 
         $this->settings[$user_id] = $user_settings;
-        if((bool)$this->settings[$user_id]['notificate'] && $this->settings[$user_id]['event_disable'] == '0'){
-            if(!(bool)$this->settings[$user_id]['event_id'] ){
-                $this->settings[$user_id]['event_id'] = $this->notificate(1,$user_id);
+        $user_level = $this->Hub->svar('user_level');
+        if( $user_level>1 ){
+            if((bool)$this->settings[$user_id]['notificate'] && $this->settings[$user_id]['event_disable'] == '0'){
+                if(!(bool)$this->settings[$user_id]['event_id'] ){
+                    $this->settings[$user_id]['event_id'] = $this->notificate(1,$user_id);
+                }
+            } else {
+                $this->settings[$user_id]['event_id'] = $this->notificate(0,$user_id);
             }
-        } else {
-            $this->settings[$user_id]['event_id'] = $this->notificate(0,$user_id);
         }
         $encoded = json_encode($this->settings, JSON_UNESCAPED_UNICODE);
         $sql = "
@@ -414,8 +418,9 @@ class DebtManager extends Catalog {
         
         $row = $this->get_row($sql);
         $user_settings = json_decode($row->plugin_settings);
-        if(isset($user_settings->{$user_id})){
-            if($user_id){
+        if( isset($user_settings->{$user_id}) ){
+            $user_level = $this->Hub->svar('user_level');
+            if( $user_id && $user_level>1 ){
                 $Events=$this->Hub->load_model('Events');
                 $event_id = $Events->eventGet($user_settings->{$user_id}->event_id);  
                 if(!$event_id){
@@ -443,7 +448,7 @@ class DebtManager extends Catalog {
     
     
     public function dashboard(){
-        $this->Hub->set_level(2);
+        $this->Hub->set_level(1);
         $this->load->view("../dashboard.html");
     }
 

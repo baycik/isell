@@ -50,14 +50,14 @@ class MoedeloSyncProduct extends MoedeloSyncBase{
     }
     
     public function replicate(){
-        $insert_list = $this->getList('INSERT');
-        $update_list = $this->getList('UPDATE');
-        $delete_list = $this->getList('DELETE');
+        $remote_insert_list = $this->getList('REMOTE_INSERT');
+        $remote_update_list = $this->getList('REMOTE_UPDATE');
+        $remote_delete_list = $this->getList('REMOTE_DELETE');
         
         $rows_done=0;
-        $rows_done += $this->send($insert_list, 'INSERT');
-        $rows_done += $this->send($update_list, 'UPDATE');
-        $rows_done += $this->send($delete_list, 'DELETE');
+        $rows_done += $this->send($remote_insert_list, 'REMOTE_INSERT');
+        $rows_done += $this->send($remote_update_list, 'REMOTE_UPDATE');
+        $rows_done += $this->send($remote_delete_list, 'REMOTE_DELETE');
         return $rows_done;
     }
     
@@ -76,20 +76,20 @@ class MoedeloSyncProduct extends MoedeloSyncBase{
         $having='';
 
         switch( $mode ){
-            case 'INSERT':
+            case 'REMOTE_INSERT':
                 $select=',pl.product_id';
                 $table = 'LEFT JOIN
                     plugin_sync_entries pse ON pl.product_id=pse.local_id';
                 $where= "WHERE local_id IS NULL";
                 break;
-            case 'UPDATE':
+            case 'REMOTE_UPDATE':
                 $select=',pse.*';
                 $table = 'JOIN
                     plugin_sync_entries pse ON pl.product_id=pse.local_id';
                 $where= "WHERE sync_destination='$this->sync_destination'";
                 $having="HAVING current_hash<>COALESCE(local_hash,'') OR current_hash<>COALESCE(remote_hash,'')";
                 break;
-            case 'DELETE':
+            case 'REMOTE_DELETE':
                 $select=',pse.*';
                 $table = 'RIGHT JOIN
                     plugin_sync_entries pse ON pl.product_id=pse.local_id';
@@ -142,7 +142,7 @@ class MoedeloSyncProduct extends MoedeloSyncBase{
                 "NdsPositionType" => $product->NdsPositionType,
                 "Producer" => $product->Producer
             ];
-            if($mode === 'INSERT'){
+            if($mode === 'REMOTE_INSERT'){
                 $response = $this->apiExecute('good', 'POST', $product_object)->response;
                 if( isset($response->Id) ){
                     $this->logInsert($this->sync_destination,$product->product_id,$product->current_hash,$response->Id);
@@ -151,7 +151,7 @@ class MoedeloSyncProduct extends MoedeloSyncBase{
                     $this->log("{$this->sync_destination} INSERT is unsuccessfull product_code:{$product->Article}");
                 }
             } else 
-            if($mode === 'UPDATE'){
+            if($mode === 'REMOTE_UPDATE'){
                 $httpcode = $this->apiExecute('good', 'PUT', $product_object, $product->remote_id)->httpcode;
                 if( $httpcode==200 ){
                     $this->logUpdate($product->entry_id, $product->current_hash);
@@ -160,8 +160,8 @@ class MoedeloSyncProduct extends MoedeloSyncBase{
                     $this->log("{$this->sync_destination} UPDATE is unsuccessfull product_code:{$product->Article}");
                 }
             } else 
-            if($mode === 'DELETE'){
-                $httpcode = $this->apiExecute('good', 'DELETE', null, $product->remote_id)->httpcode;
+            if($mode === 'REMOTE_DELETE'){
+                $httpcode = $this->apiExecute('good', 'REMOTE_DELETE', null, $product->remote_id)->httpcode;
                 $this->logDelete($product->entry_id);
                 $rows_done++;
                 if( $httpcode!=204 ) {

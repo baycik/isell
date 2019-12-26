@@ -54,14 +54,14 @@ class MoedeloSyncStocks extends MoedeloSyncBase{
     
     
     public function replicate(){
-        $insert_list = $this->getList('INSERT');
-        $update_list = $this->getList('UPDATE');
-        $delete_list = $this->getList('DELETE');
+        $remote_insert_list = $this->getList('REMOTE_INSERT');
+        $remote_update_list = $this->getList('REMOTE_UPDATE');
+        $remote_delete_list = $this->getList('REMOTE_DELETE');
         
         $rows_done=0;
-        $rows_done += $this->send($insert_list, 'INSERT');
-        $rows_done += $this->send($update_list, 'UPDATE');
-        $rows_done += $this->send($delete_list, 'DELETE');
+        $rows_done += $this->send($remote_insert_list, 'REMOTE_INSERT');
+        $rows_done += $this->send($remote_update_list, 'REMOTE_UPDATE');
+        $rows_done += $this->send($remote_delete_list, 'REMOTE_DELETE');
         return $rows_done;
     }
     
@@ -75,20 +75,20 @@ class MoedeloSyncStocks extends MoedeloSyncBase{
         $having='';
 
         switch( $mode ){
-            case 'INSERT':
+            case 'REMOTE_INSERT':
                 $select='';
                 $table = "    LEFT JOIN
                 plugin_sync_entries pse  ON stock_id=pse.local_id AND pse.sync_destination='$doc_config->sync_destination'";
                 $where= "WHERE pse.local_id IS NULL ";
                 break;
-            case 'UPDATE':
+            case 'REMOTE_UPDATE':
                 $select=',pse.*';
                 $table = "    LEFT JOIN
                 plugin_sync_entries pse ON stock_id=pse.local_id AND pse.sync_destination='$doc_config->sync_destination'";
                 $where= "WHERE pse.sync_destination='$doc_config->sync_destination'";
                 $having="HAVING current_hash<>local_hash OR current_hash<>remote_hash";
                 break;
-            case 'DELETE':
+            case 'REMOTE_DELETE':
                 $select=',pse.*';
                 $table = "    RIGHT JOIN
                 plugin_sync_entries pse  ON stock_id=pse.local_id AND pse.sync_destination='$doc_config->sync_destination'";
@@ -139,7 +139,7 @@ class MoedeloSyncStocks extends MoedeloSyncBase{
         $doc_config=$this->getDocConfig();
         $rows_done = 0;
         foreach($stock_list as $stock){
-            if($mode === 'INSERT'){
+            if($mode === 'REMOTE_INSERT'){
                 $response = $this->apiExecute($doc_config->remote_function, 'POST', (array) $stock);
                 if( isset($response->response) && isset($response->response->Id) ){
                     $this->logInsert($this->sync_destination,$stock->company_id,$stock->current_hash,$response->response->Id);
@@ -149,7 +149,7 @@ class MoedeloSyncStocks extends MoedeloSyncBase{
                     $this->log("{$this->sync_destination} INSERT is unsuccessfull (HTTP CODE:$response->httpcode '$error') Name:#{$stock->Name}");
                 }
             } else 
-            if($mode === 'UPDATE'){
+            if($mode === 'REMOTE_UPDATE'){
                 $response = $this->apiExecute($doc_config->remote_function, 'PUT', (array) $stock, $stock->remote_id);
                 if( $response->httpcode==200 ){
                     $this->logUpdate($stock->entry_id, $stock->current_hash);
@@ -159,8 +159,8 @@ class MoedeloSyncStocks extends MoedeloSyncBase{
                     $this->log("{$this->sync_destination} UPDATE is unsuccessfull (HTTP CODE:$response->httpcode '$error') Name:#{$stock->Name}");
                 }
             } else 
-            if($mode === 'DELETE'){
-                $response = $this->apiExecute($doc_config->remote_function, 'DELETE', null, $stock->remote_id);
+            if($mode === 'REMOTE_DELETE'){
+                $response = $this->apiExecute($doc_config->remote_function, 'REMOTE_DELETE', null, $stock->remote_id);
                 
                 $this->logDelete($stock->entry_id);
                 $rows_done++;

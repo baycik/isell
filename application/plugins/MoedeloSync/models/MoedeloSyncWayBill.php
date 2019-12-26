@@ -74,14 +74,14 @@ class MoedeloSyncWayBill extends MoedeloSyncBase{
     
     
     public function replicateBills(){
-        $insert_list = $this->getList('INSERT');
-        $update_list = $this->getList('UPDATE');
-        $delete_list = $this->getList('DELETE');
+        $remote_insert_list = $this->getList('REMOTE_INSERT');
+        $remote_update_list = $this->getList('REMOTE_UPDATE');
+        $remote_delete_list = $this->getList('REMOTE_DELETE');
         
         $rows_done=0;
-        $rows_done += $this->send($insert_list, 'INSERT');
-        $rows_done += $this->send($update_list, 'UPDATE');
-        $rows_done += $this->send($delete_list, 'DELETE');
+        $rows_done += $this->send($remote_insert_list, 'REMOTE_INSERT');
+        $rows_done += $this->send($remote_update_list, 'REMOTE_UPDATE');
+        $rows_done += $this->send($remote_delete_list, 'REMOTE_DELETE');
         return $rows_done;
     }
     
@@ -95,7 +95,7 @@ class MoedeloSyncWayBill extends MoedeloSyncBase{
         $having='';
 
         switch( $mode ){
-            case 'INSERT':
+            case 'REMOTE_INSERT':
                 $select='';
                 $table = "    LEFT JOIN
                 plugin_sync_entries doc_pse ON dvl.doc_view_id=doc_pse.local_id AND doc_pse.sync_destination='$doc_config->sync_destination'";
@@ -103,14 +103,14 @@ class MoedeloSyncWayBill extends MoedeloSyncBase{
                     AND active_company_id='$this->acomp_id'
                     AND view_type_id='$doc_config->local_view_type_id'";
                 break;
-            case 'UPDATE':
+            case 'REMOTE_UPDATE':
                 $select=',doc_pse.*';
                 $table = "    LEFT JOIN
                 plugin_sync_entries doc_pse ON dvl.doc_view_id=doc_pse.local_id AND doc_pse.sync_destination='$doc_config->sync_destination'";
                 $where= "WHERE doc_pse.sync_destination='$doc_config->sync_destination'";
                 $having="HAVING current_hash<>COALESCE(local_hash,'') OR current_hash<>COALESCE(remote_hash,'')";
                 break;
-            case 'DELETE':
+            case 'REMOTE_DELETE':
                 $select=',doc_pse.*';
                 $table = "    RIGHT JOIN
                 plugin_sync_entries doc_pse ON dvl.doc_view_id=doc_pse.local_id AND doc_pse.sync_destination='$doc_config->sync_destination'";
@@ -211,7 +211,7 @@ class MoedeloSyncWayBill extends MoedeloSyncBase{
         $doc_config=$this->getDocConfig();
         $rows_done = 0;
         foreach($document_list as $document){
-            if($mode === 'INSERT'){
+            if($mode === 'REMOTE_INSERT'){
                 $response = $this->apiExecute($doc_config->remote_function, 'POST', (array) $document);
                 if( isset($response->response) && isset($response->response->Id) ){
                     $this->logInsert($doc_config->sync_destination,$document->doc_view_id,$document->current_hash,$response->response->Id);
@@ -221,7 +221,7 @@ class MoedeloSyncWayBill extends MoedeloSyncBase{
                     $this->log("{$doc_config->sync_destination} INSERT is unsuccessfull (HTTP CODE:$response->httpcode '$error') Number:#{$document->Number}");
                 }
             } else 
-            if($mode === 'UPDATE'){
+            if($mode === 'REMOTE_UPDATE'){
                 $response = $this->apiExecute($doc_config->remote_function, 'PUT', (array) $document, $document->remote_id);
                 if( $response->httpcode==200 ){
                     $this->logUpdate($document->entry_id, $document->current_hash);
@@ -231,8 +231,8 @@ class MoedeloSyncWayBill extends MoedeloSyncBase{
                     $this->log("{$doc_config->sync_destination} UPDATE is unsuccessfull (HTTP CODE:$response->httpcode '$error') Number:#{$document->Number}");
                 }
             } else 
-            if($mode === 'DELETE'){
-                $response = $this->apiExecute($doc_config->remote_function, 'DELETE', null, $document->remote_id);
+            if($mode === 'REMOTE_DELETE'){
+                $response = $this->apiExecute($doc_config->remote_function, 'REMOTE_DELETE', null, $document->remote_id);
                 
                 $this->logDelete($document->entry_id);
                 $rows_done++;
