@@ -752,7 +752,7 @@ class Document extends Data {
     /////////////////////////////////////////////
     // CRUD
     /////////////////////////////////////////////
-    public function add($doc_type=null,$creation_mode) {
+    public function add($doc_type=null,$creation_mode='increase_number') {
 	$user_id = $this->Base->svar('user_id');
 	$active_company_id = $this->Base->acomp('company_id');
 	$passive_company_id = $this->Base->pcomp('company_id');

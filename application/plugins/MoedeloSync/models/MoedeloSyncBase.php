@@ -147,31 +147,58 @@ class MoedeloSyncBase extends Catalog{
     }
     
     
-    public function checkout(){
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    protected function remoteCheckout( bool $is_full=false ){
+        $sync_destination=$this->doc_config->sync_destination;
+        $remote_function=$this->doc_config->remote_function;
         $is_finished=false;
-        $result=$this->checkoutGetList( $this->doc_config->sync_destination, $this->doc_config->remote_function );
+        if( $is_full ){
+            $afterDate=null;
+        } else {
+            $afterDate=$this->get_value("SELECT MAX(remote_tstamp) FROM plugin_sync_entries WHERE sync_destination='$sync_destination'");
+        }
+        $result=$this->remoteCheckoutGetList( $sync_destination, $remote_function, $afterDate );
         $nextPageNo=$result->pageNo+1;
-        if( $result->pageNo==1 ){
-            $this->query("UPDATE plugin_sync_entries SET remote_hash=NULL,remote_tstamp=NULL WHERE sync_destination='{$this->doc_config->sync_destination}'");
+        
+        $this->query("START TRANSACTION");
+        if( $is_full && $result->pageNo==1 ){
+            $this->query("UPDATE plugin_sync_entries SET remote_hash=NULL,remote_tstamp=NULL WHERE sync_destination='$sync_destination'");
         }        
         foreach( $result->list as $item ){
-            $remote=$this->checkoutCalcRemote( $item );//MUST BE DEFINED IN CHILD CLASS
+            $calculatedItem=$this->remoteCheckoutCalculateItem( $item );
             $sql="INSERT INTO
                     plugin_sync_entries
                 SET
-                    sync_destination='{$this->doc_config->sync_destination}',
-                    local_id='$remote->local_id',
-                    remote_id='$remote->remote_id',
-                    remote_hash='$remote->remote_hash',
-                    remote_tstamp='$remote->remote_tstamp'
+                    sync_destination='$sync_destination',
+                    local_id='$calculatedItem->local_id',
+                    remote_id='$calculatedItem->remote_id',
+                    remote_hash='$calculatedItem->remote_hash'
                 ON DUPLICATE KEY UPDATE
-                    remote_hash='$remote->remote_hash',
-                    remote_tstamp='$remote->remote_tstamp'
+                    remote_hash='$calculatedItem->remote_hash'
                 ";
             $this->query($sql);
         }
         if( $result->pageIsLast ){//last page
-            $this->query("DELETE FROM plugin_sync_entries WHERE sync_destination='{$this->doc_config->sync_destination}' AND remote_hash IS NULL AND remote_tstamp IS NULL");
             $is_finished=true;
             $nextPageNo=1;
         }
@@ -182,16 +209,24 @@ class MoedeloSyncBase extends Catalog{
                 plugin_json_data=JSON_SET(plugin_json_data,'$.{$this->doc_config->sync_destination}.checkoutLastFinished',NOW())
             WHERE 
                 plugin_system_name='MoedeloSync'");
+        $this->query("COMMIT");
         return $is_finished;
     }
-    
-    protected function checkoutGetList( $sync_destination, $remote_function ){
+    /**
+     * 
+     * @param string $sync_destination
+     * @param string $remote_function
+     * @param timestamp $afterDate
+     * @return responseobject
+     *  
+     */
+    protected function remoteCheckoutGetList( $sync_destination, $remote_function, $afterDate=null ){
         $pageNo=$this->get_value("SELECT COALESCE(JSON_EXTRACT(plugin_json_data,'$.{$sync_destination}.checkoutPage'),1) FROM plugin_list WHERE plugin_system_name='MoedeloSync'");
         $pageSize=1000;
         $request=[
             'pageNo'=>$pageNo,
             'pageSize'=>$pageSize,
-            'afterDate'=>null,
+            'afterDate'=>$afterDate,
             'beforeDate'=>null,
             'name'=>null
         ];

@@ -10,38 +10,80 @@ class MoedeloSyncAct extends MoedeloSyncBase{
         ];
     }
     
-    protected function checkoutCalcRemote( $item ){
-        $item->DocDate= substr($item->DocDate, 0, 10);
-        $item->Sum=number_format($item->Sum, 2, '.', '');
-        echo $sql_find_local="
-            SELECT
-                doc_view_id local_id
-            FROM
-                document_list dl
-                    JOIN
-                document_view_list dvl USING(doc_id)
-                    LEFT JOIN
-                plugin_sync_entries doc_pse ON dvl.doc_view_id=doc_pse.local_id AND doc_pse.sync_destination='{$this->doc_config->sync_destination}'
-                    LEFT JOIN
-                plugin_sync_entries comp_pse ON passive_company_id=comp_pse.local_id AND comp_pse.remote_id='{$item->KontragentId}' AND comp_pse.sync_destination='moedelo_companies'
-            WHERE
-                doc_pse.remote_id='$item->Id'
-                    OR
-                comp_pse.local_id IS NOT NULL
-                AND active_company_id='{$this->acomp_id}'
-                AND doc_type='{$this->doc_config->doc_type}'
-                AND view_num='{$item->Number}'
-                AND view_type_id='{$this->doc_config->local_view_type_id}'
-                AND SUBSTRING(tstamp,1,10)='{$item->DocDate}'";
-        $local_id=$this->get_value($sql_find_local);
+    protected function remoteCheckout( bool $is_full=false ){
+        $sync_destination=$this->doc_config->sync_destination;
+        $remote_function=$this->doc_config->remote_function;
+        $is_finished=false;
+        if( $is_full ){
+            $afterDate=null;
+        } else {
+            $afterDate=$this->get_value("SELECT MAX(remote_tstamp) FROM plugin_sync_entries WHERE sync_destination='$sync_destination'");
+        }
+        $result=$this->remoteCheckoutGetList( $sync_destination, $remote_function, $afterDate );
+        $nextPageNo=$result->pageNo+1;
         
+        $this->query("START TRANSACTION");
+        if( $is_full && $result->pageNo==1 ){
+            $this->query("UPDATE plugin_sync_entries SET remote_hash=NULL,remote_tstamp=NULL WHERE sync_destination='$sync_destination'");
+        }        
+        foreach( $result->list as $item ){
+            $calculatedItem=$this->remoteCheckoutCalculateItem( $item );
+            $sql="INSERT INTO
+                    plugin_sync_entries
+                SET
+                    sync_destination='$sync_destination',
+                    local_id='$calculatedItem->local_id',
+                    remote_id='$calculatedItem->remote_id',
+                    remote_hash='$calculatedItem->remote_hash'
+                ON DUPLICATE KEY UPDATE
+                    remote_hash='$calculatedItem->remote_hash'
+                ";
+            $this->query($sql);
+        }
+        if( $result->pageIsLast ){//last page
+            $is_finished=true;
+            $nextPageNo=1;
+        }
+        $this->query("UPDATE
+                plugin_list
+            SET 
+                plugin_json_data=JSON_SET(plugin_json_data,'$.{$this->doc_config->sync_destination}.checkoutPage','$nextPageNo'),
+                plugin_json_data=JSON_SET(plugin_json_data,'$.{$this->doc_config->sync_destination}.checkoutLastFinished',NOW())
+            WHERE 
+                plugin_system_name='MoedeloSync'");
+        $this->query("COMMIT");
+        return $is_finished;
+    }
+    /**
+     * 
+     * @param string $sync_destination
+     * @param string $remote_function
+     * @param timestamp $afterDate
+     * @return responseobject
+     *  
+     */
+    protected function remoteCheckoutGetList( $sync_destination, $remote_function, $afterDate=null ){
+        $pageNo=$this->get_value("SELECT COALESCE(JSON_EXTRACT(plugin_json_data,'$.{$sync_destination}.checkoutPage'),1) FROM plugin_list WHERE plugin_system_name='MoedeloSync'");
+        $pageSize=1000;
+        $request=[
+            'pageNo'=>$pageNo,
+            'pageSize'=>$pageSize,
+            'afterDate'=>$afterDate,
+            'beforeDate'=>null,
+            'name'=>null
+        ];
+        $response=$this->apiExecute( $remote_function, 'GET', $request);
+        $list=[];
+        if( isset($response->response->ResourceList) ){
+            $list=$response->response->ResourceList;
+        }
         return (object) [
-            'local_id'=>$local_id,
-            'remote_id'=>$item->Id,
-            'remote_hash'=>md5("{$item->Number};{$item->DocDate};{$item->KontragentId};{$item->Sum};"),
-            'remote_tstamp'=>date("Y-m-d H:i:s")
+            'pageNo'=>$pageNo,
+            'pageIsLast'=>count($list)<$pageSize?1:0,
+            'list'=>$list
         ];
     }
+
     
     
     

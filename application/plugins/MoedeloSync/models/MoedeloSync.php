@@ -133,20 +133,16 @@ class MoedeloSync extends PluginManager {
         return $finished;
     }
     
-    public function actCheckout(){
-        $MoedeloSyncAct=$this->Hub->load_model('MoedeloSyncAct');
-        $MoedeloSyncAct->setGateway( $this->settings->gateway_url.'accounting/api/v1/' );
-        $MoedeloSyncAct->setApiKey( $this->settings->gateway_md_apikey );
-        $finished=$MoedeloSyncAct->checkout();
-        return $finished;
-    }
-    
-    public function actReplicate(){
-        $MoedeloSyncAct=$this->Hub->load_model('MoedeloSyncAct');
-        $MoedeloSyncAct->setGateway( $this->settings->gateway_url.'accounting/api/v1/' );
-        $MoedeloSyncAct->setApiKey( $this->settings->gateway_md_apikey );
-        $finished=$MoedeloSyncAct->replicate();
-        return $finished;
+    public function actSync(){
+        $MoedeloSyncActSell=$this->Hub->load_model('MoedeloSyncActSell');
+        $MoedeloSyncActSell->setGateway( $this->settings->gateway_url.'accounting/api/v1/' );
+        $MoedeloSyncActSell->setApiKey( $this->settings->gateway_md_apikey );
+        
+        $MoedeloSyncActSell->localCheckout();
+        $MoedeloSyncActSell->remoteCheckout();
+        
+
+        $MoedeloSyncActSell->replicate();
     }
     
     
