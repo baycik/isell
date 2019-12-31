@@ -231,11 +231,12 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
         $passive_company_id=$this->localFind($remoteDoc->KontragentId, 'moedelo_companies');
         $doc_date= substr($remoteDoc->DocDate, 0, 10);
         $doc_sum=number_format($remoteDoc->Sum, 2, '.', '');
+        $doc_num=$remoteDoc->Number;
         /**
          * searching for existing documents with same date & sum
          */
         
-        
+        $this->localFindDocumentId( $passive_company_id, $doc_num, $doc_date, $doc_sum );
         
         
         
@@ -264,30 +265,31 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
         print_r($remoteDoc);
     }
     
-    private function localFindDocument( $passive_company_id, $doc_num, $doc_date, $doc_sum=0, $doc_view_type=null ){
+    private function localFindDocumentId( $passive_company_id, $doc_num, $doc_date, $doc_sum=0 ){
         $sql_find_doc="";
-        $item->DocDate= substr($item->DocDate, 0, 10);
-        $item->Sum=number_format($item->Sum, 2, '.', '');
-        $sql_find_local="
+        $doc_date= substr($doc_date, 0, 10);
+        echo $sql_find_local="
             SELECT
-                doc_view_id local_id
+                dl.doc_id,
+                SUM(ROUND(invoice_price*product_quantity*(1+dl.vat_rate/100),2))=$doc_sum*1 sum_equals,
+                doc_num='$doc_num' doc_num_equals,
+                view_num='$doc_num' view_num_equals
             FROM
                 document_list dl
                     JOIN
-                document_view_list dvl USING(doc_id)
+                document_entries de USING(doc_id)
+                    JOIN
+                plugin_sync_entries comp_pse ON passive_company_id=comp_pse.local_id AND comp_pse.sync_destination='moedelo_companies'
+                    LEFT JOIN
+                document_view_list dvl ON dl.doc_id=dvl.doc_id AND view_type_id='{$this->doc_config->local_view_type_id}'
                     LEFT JOIN
                 plugin_sync_entries doc_pse ON dvl.doc_view_id=doc_pse.local_id AND doc_pse.sync_destination='{$this->doc_config->sync_destination}'
-                    LEFT JOIN
-                plugin_sync_entries comp_pse ON passive_company_id=comp_pse.local_id AND comp_pse.remote_id='{$item->KontragentId}' AND comp_pse.sync_destination='moedelo_companies'
             WHERE
-                doc_pse.remote_id='$item->Id'
-                    OR
-                comp_pse.local_id IS NOT NULL
-                AND active_company_id='{$this->acomp_id}'
+                active_company_id='{$this->acomp_id}'
+                AND passive_company_id='$passive_company_id'
                 AND doc_type='{$this->doc_config->doc_type}'
-                AND view_num='{$item->Number}'
-                AND view_type_id='{$this->doc_config->local_view_type_id}'
-                AND SUBSTRING(tstamp,1,10)='{$item->DocDate}'";
+                AND SUBSTRING(cstamp,1,10)='$doc_date'
+            GROUP BY dl.doc_id";
         $local_id=$this->get_value($sql_find_local);
     }
     private function localFind( $remote_id, $sync_destination ){
