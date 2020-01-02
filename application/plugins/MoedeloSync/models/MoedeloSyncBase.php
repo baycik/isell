@@ -176,13 +176,13 @@ class MoedeloSyncBase extends Catalog{
             $afterDate=null;
         } else {
             $afterDate=$this->get_value("SELECT MAX(remote_tstamp) FROM plugin_sync_entries WHERE sync_destination='$sync_destination'");
-        }
+        }        
         $result=$this->remoteCheckoutGetList( $sync_destination, $remote_function, $afterDate );
         $nextPageNo=$result->pageNo+1;
         
         $this->query("START TRANSACTION");
         if( $is_full && $result->pageNo==1 ){
-            $this->query("UPDATE plugin_sync_entries SET remote_hash=NULL,remote_tstamp=NULL WHERE sync_destination='$sync_destination'");
+            $this->query("UPDATE plugin_sync_entries SET remote_deleted=1 WHERE sync_destination='$sync_destination'");
         }        
         foreach( $result->list as $item ){
             $calculatedItem=$this->remoteCheckoutCalculateItem( $item );
@@ -192,13 +192,16 @@ class MoedeloSyncBase extends Catalog{
                     sync_destination='$sync_destination',
                     local_id='$calculatedItem->local_id',
                     remote_id='$calculatedItem->remote_id',
-                    remote_hash='$calculatedItem->remote_hash'
+                    remote_hash='$calculatedItem->remote_hash',
+                    remote_deleted=0
                 ON DUPLICATE KEY UPDATE
-                    remote_hash='$calculatedItem->remote_hash'
+                    remote_hash='$calculatedItem->remote_hash',
+                    remote_deleted=0
                 ";
             $this->query($sql);
         }
         if( $result->pageIsLast ){//last page
+            $this->query("DELETE FROM plugin_sync_entries WHERE sync_destination='$sync_destination' AND remote_deleted=1");
             $is_finished=true;
             $nextPageNo=1;
         }
@@ -241,5 +244,12 @@ class MoedeloSyncBase extends Catalog{
             'list'=>$list
         ];
     }
-
+    
+    protected function checkUserPermission( $right ){
+        $user_data=$this->Hub->svar('user');
+        if( isset($user_data->user_permissions) && strpos($user_data->user_permissions, $right)!==false ){
+            return true;
+        }
+        return false;
+    }
 }

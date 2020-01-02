@@ -1,5 +1,4 @@
 <?php
-require_once 'DocumentItems.php';
 class DocumentView extends DocumentItems{
     public $min_level=1;
     public $viewListFetch=['int'];

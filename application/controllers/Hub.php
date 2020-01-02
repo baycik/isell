@@ -294,6 +294,7 @@ class Hub extends CI_Controller{
             $this->load->add_package_path(BAY_STORAGE.'plugin_modifications/plugins/'.$name, 1);
         }
 	$this->load->model($name,null,true);
+        
 	if( isset($this->{$name}->min_level) ){
 	    $this->set_level($this->{$name}->min_level);
 	}

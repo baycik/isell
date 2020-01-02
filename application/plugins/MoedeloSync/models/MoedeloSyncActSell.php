@@ -1,4 +1,5 @@
 <?php
+ini_set('html_errors', false);
 require_once 'MoedeloSyncBase.php';
 class MoedeloSyncActSell extends MoedeloSyncBase{
     function __construct(){
@@ -24,32 +25,8 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
      * @return calculated item
      */
     protected function remoteCheckoutCalculateItem( $item ){
-        $item->DocDate= substr($item->DocDate, 0, 10);
-        $item->Sum=number_format($item->Sum, 2, '.', '');
-        $sql_find_local="
-            SELECT
-                doc_view_id local_id
-            FROM
-                document_list dl
-                    JOIN
-                document_view_list dvl USING(doc_id)
-                    LEFT JOIN
-                plugin_sync_entries doc_pse ON dvl.doc_view_id=doc_pse.local_id AND doc_pse.sync_destination='{$this->doc_config->sync_destination}'
-                    LEFT JOIN
-                plugin_sync_entries comp_pse ON passive_company_id=comp_pse.local_id AND comp_pse.remote_id='{$item->KontragentId}' AND comp_pse.sync_destination='moedelo_companies'
-            WHERE
-                doc_pse.remote_id='$item->Id'
-                    OR
-                comp_pse.local_id IS NOT NULL
-                AND active_company_id='{$this->acomp_id}'
-                AND doc_type='{$this->doc_config->doc_type}'
-                AND view_num='{$item->Number}'
-                AND view_type_id='{$this->doc_config->local_view_type_id}'
-                AND SUBSTRING(tstamp,1,10)='{$item->DocDate}'";
-        $local_id=$this->get_value($sql_find_local);
-        
         return (object) [
-            'local_id'=>$local_id,
+            'local_id'=>0,
             'remote_id'=>$item->Id,
             'remote_hash'=>md5("{$item->Number};{$item->DocDate};{$item->KontragentId};{$item->Sum};"),
             'remote_tstamp'=>''
@@ -157,7 +134,7 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
                 SUBSTRING(dvl.tstamp,1,10) DocDate,
                 SUM(ROUND(invoice_price*product_quantity*(1+dl.vat_rate/100),2)) Sum,
                 Kontragent_pse.remote_id KontragentId,
-                GREATEST(dl.modified_at,MAX(de.modified_at)) local_tstamp
+                GREATEST(dl.modified_at,MAX(de.modified_at),dvl.modified_at) local_tstamp
             FROM
                 document_list dl
                     JOIN
@@ -225,61 +202,96 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
      */
     private function localInsert( $local_id, $remote_id ){
         $remoteDoc=$this->remoteGet($remote_id);
-        if( !$remoteDoc ){
+        if( !$remoteDoc || $this->Hub->svar( 'user_level' )<2 ){
             return false;
         }
         $passive_company_id=$this->localFind($remoteDoc->KontragentId, 'moedelo_companies');
-        $doc_date= substr($remoteDoc->DocDate, 0, 10);
-        $doc_sum=number_format($remoteDoc->Sum, 2, '.', '');
-        $doc_num=$remoteDoc->Number;
-        /**
-         * searching for existing documents with same date & sum
-         */
+        $local_doc=$this->localFindDocument( $passive_company_id, $remoteDoc->Number, $remoteDoc->DocDate, $remoteDoc->Sum );
         
-        $this->localFindDocumentId( $passive_company_id, $doc_num, $doc_date, $doc_sum );
+        //print_r($local_doc);
         
-        
-        
-        
-        
-        $DocumentItems=$this->Hub->load_model("DocumentItems");
-        $new_doc_id=$DocumentItems->createDocument($this->doc_config->doc_type);
-        
-        foreach( $remoteDoc->Items as $Item ){
-            $sql_get_product_code="
-                SELECT 
-                    product_code 
-                FROM 
-                    prod_list
-                JOIN
-                    plugin_sync_entries doc_pse ON local_id=product_id
-                WHERE 
-                    sync_destination='moedelo_products'
-                    AND remote_id='$Item->Id'
-                    ";
-            $product_code=$this->get_value($sql_get_product_code);
-            $DocumentItems->entryAdd( $new_doc_id, $product_code, $Item->Count, $Item->Price );
+        if( !$local_doc ){
+            $DocumentItems=$this->Hub->load_model("DocumentItems");
+            $new_doc_id=$DocumentItems->createDocument($this->doc_config->doc_type);
+            $sql_doc_update="
+                    UPDATE 
+                        document_list 
+                    SET 
+                        cstamp='$remoteDoc->DocDate',
+                        doc_num='$remoteDoc->Number'
+                    WHERE doc_id='$new_doc_id'";
+            $this->query($sql_doc_update);
+            foreach( $remoteDoc->Items as $Item ){
+                $sql_get_product_code="
+                    SELECT 
+                        product_code 
+                    FROM 
+                        prod_list
+                    WHERE 
+                        is_service=1
+                        AND product_unit='$Item->Unit'
+                        AND ru='$Item->Name'
+                        ";
+                $product_code=$this->get_value($sql_get_product_code);
+                if( !$product_code ){
+                    $product_code= mb_substr($Item->Name, 0, 5).rand(1,100);
+                    $sql_insert_service="
+                        INSERT INTO
+                            prod_list
+                        SET
+                            is_service=1,
+                            product_unit='$Item->Unit',
+                            ru='$Item->Name',
+                            product_code='$product_code'
+                        ";
+                    $this->query($sql_insert_service);
+                }
+                $DocumentItems->entryAdd( $new_doc_id, $product_code, $Item->Count, $Item->SumWithoutNds );
+            }
+            $DocumentItems->entryDocumentCommit($new_doc_id);
+            $local_doc=(object)[
+                'doc_id'=>$new_doc_id,
+                'modified_at'=>date("Y-m-d H:i:s")
+            ];
         }
-        
-        
-        print_r($remoteDoc);
+        if( empty($local_doc->doc_view_id) ){
+            $DocumentView=$this->Hub->load_model("DocumentView");
+            $new_doc_view_id=$DocumentView->viewCreate($this->doc_config->local_view_type_id);
+            $DocumentView->viewUpdate($new_doc_view_id,false,'view_num',$remoteDoc->Number);
+            $DocumentView->viewUpdate($new_doc_view_id,false,'view_date',$remoteDoc->DocDate);
+            $local_doc->doc_view_id=$new_doc_view_id;
+        }
+        $local_hash=md5("{$item->Number};{$item->DocDate};{$item->KontragentId};{$item->Sum};");
+        $sql_save_insert="
+            UPDATE 
+                plugin_sync_entries
+            SET
+                local_id='$local_doc->doc_view_id',
+                local_hash=$local_hash,
+                local_tstamp='$local_doc->modified_at',
+                remote_tstamp='{$remoteDoc->Context->ModifyDate}'
+            WHERE
+                sync_destination='{$this->doc_config->sync_destination}'
+                AND remote_id='$remote_id'
+                AND local_id='$local_id'
+            ";
+        $this->query($sql_save_insert);
+        return $local_doc->doc_view_id;
     }
     
-    private function localFindDocumentId( $passive_company_id, $doc_num, $doc_date, $doc_sum=0 ){
-        $sql_find_doc="";
-        $doc_date= substr($doc_date, 0, 10);
+    private function localFindDocument( $passive_company_id, $doc_num, $doc_date, $doc_sum=0 ){
         echo $sql_find_local="
             SELECT
                 dl.doc_id,
-                SUM(ROUND(invoice_price*product_quantity*(1+dl.vat_rate/100),2))=$doc_sum*1 sum_equals,
+                SUM(ROUND(invoice_price*product_quantity*(1+dl.vat_rate/100),2)) doc_sum,
+                GREATEST(dl.modified_at,MAX(de.modified_at),dvl.modified_at) modified_at,
+                dvl.doc_view_id,
                 doc_num='$doc_num' doc_num_equals,
                 view_num='$doc_num' view_num_equals
             FROM
                 document_list dl
                     JOIN
                 document_entries de USING(doc_id)
-                    JOIN
-                plugin_sync_entries comp_pse ON passive_company_id=comp_pse.local_id AND comp_pse.sync_destination='moedelo_companies'
                     LEFT JOIN
                 document_view_list dvl ON dl.doc_id=dvl.doc_id AND view_type_id='{$this->doc_config->local_view_type_id}'
                     LEFT JOIN
@@ -287,10 +299,14 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
             WHERE
                 active_company_id='{$this->acomp_id}'
                 AND passive_company_id='$passive_company_id'
+                AND is_commited
                 AND doc_type='{$this->doc_config->doc_type}'
-                AND SUBSTRING(cstamp,1,10)='$doc_date'
-            GROUP BY dl.doc_id";
-        $local_id=$this->get_value($sql_find_local);
+                AND DATEDIFF(cstamp,'$doc_date')=0
+            GROUP BY dl.doc_id
+            HAVING doc_sum=$doc_sum*1
+            ORDER BY doc_num_equals DESC,view_num_equals DESC
+            LIMIT 1";
+        return $this->get_row($sql_find_local);
     }
     private function localFind( $remote_id, $sync_destination ){
         $sql="SELECT

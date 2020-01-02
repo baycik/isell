@@ -21,7 +21,7 @@ class MoedeloSyncCompanies extends MoedeloSyncBase{
                     @local_id:=
                     COALESCE(
                         (SELECT local_id FROM plugin_sync_entries WHERE sync_destination='$this->sync_destination' AND remote_id='$company->Id' LIMIT 1),
-                        (SELECT company_id FROM companies_list WHERE '$company->Inn' AND company_tax_id='$company->Inn' LIMIT 1)
+                        (SELECT company_id FROM companies_list WHERE '$company->Inn' AND company_tax_id='$company->Inn' ORDER BY company_tax_id2='$company->Kpp' DESC LIMIT 1)
                     ),
                     @remote_hash:=MD5(CONCAT(
                         '$company->Inn',

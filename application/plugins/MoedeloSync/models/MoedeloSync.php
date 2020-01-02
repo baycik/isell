@@ -139,7 +139,7 @@ class MoedeloSync extends PluginManager {
         $MoedeloSyncActSell->setApiKey( $this->settings->gateway_md_apikey );
         
         $MoedeloSyncActSell->localCheckout();
-        $MoedeloSyncActSell->remoteCheckout();
+        $MoedeloSyncActSell->remoteCheckout(1);
         
 
         $MoedeloSyncActSell->replicate();

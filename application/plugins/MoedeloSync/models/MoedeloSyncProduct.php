@@ -18,7 +18,7 @@ class MoedeloSyncProduct extends MoedeloSyncBase{
         foreach($product_list->response->ResourceList as $product){
             $this->query("
                 SET
-                    @local_id:=(SELECT product_id FROM prod_list WHERE product_code='$product->Article'),
+                    @local_id:=COALESCE((SELECT product_id FROM prod_list WHERE product_code='$product->Article'),0),
                     @remote_hash:=MD5(CONCAT(
                         '$product->Name',
                         '$product->Article',
@@ -34,11 +34,9 @@ class MoedeloSyncProduct extends MoedeloSyncBase{
                     sync_destination='$this->sync_destination',
                     local_id=@local_id,
                     remote_id=@remote_id,
-                    remote_hash=@remote_hash,
-                    remote_tstamp=NOW()
+                    remote_hash=@remote_hash
                 ON DUPLICATE KEY UPDATE
-                    remote_hash=@remote_hash,
-                    remote_tstamp=NOW()
+                    remote_hash=@remote_hash
                 ";
             $this->query($sql);
         }
