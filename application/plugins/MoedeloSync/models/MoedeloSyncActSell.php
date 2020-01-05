@@ -25,10 +25,11 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
      * @return calculated item
      */
     protected function remoteCheckoutCalculateItem( $item ){
+        $DocDate= substr( $this->toTimezone($item->DocDate,'local') , 0, 10);
+        //echo "{$item->Number};{$DocDate};{$item->KontragentId};{$item->Sum};";
         return (object) [
-            'local_id'=>0,
             'remote_id'=>$item->Id,
-            'remote_hash'=>md5("{$item->Number};{$item->DocDate};{$item->KontragentId};{$item->Sum};"),
+            'remote_hash'=>md5("{$item->Number};{$DocDate};{$item->KontragentId};{$item->Sum};"),
             'remote_tstamp'=>''
         ];
     }
@@ -86,8 +87,12 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
     /**
      * Updates existing record on remote
      */
-    private function remoteUpdate(){
+    private function remoteUpdate( $local_id, $remote_id ){
         
+        
+        
+        
+        $this->localGet( $local_id );
     }
     
     /**
@@ -174,8 +179,8 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
             SELECT
                 local_id,
                 remote_id,
-                IF( local_id=0, 'localInsert',
-                IF( remote_id=0, 'remoteInsert',
+                IF( local_id IS NULL, 'localInsert',
+                IF( remote_id IS NULL, 'remoteInsert',
                 IF( local_deleted=1, 'localDelete',
                 IF( remote_deleted=1, 'remoteDelete',
                 IF( COALESCE(local_hash,'')<>COALESCE(remote_hash,''),
@@ -205,11 +210,10 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
         if( !$remoteDoc || $this->Hub->svar( 'user_level' )<2 ){
             return false;
         }
+        $remoteDoc->DocDate=$this->toTimezone($remoteDoc->DocDate,'local');
         $passive_company_id=$this->localFind($remoteDoc->KontragentId, 'moedelo_companies');
         $local_doc=$this->localFindDocument( $passive_company_id, $remoteDoc->Number, $remoteDoc->DocDate, $remoteDoc->Sum );
-        
-        //print_r($local_doc);
-        
+        print_r($remoteDoc);
         if( !$local_doc ){
             $DocumentItems=$this->Hub->load_model("DocumentItems");
             $new_doc_id=$DocumentItems->createDocument($this->doc_config->doc_type);
@@ -246,7 +250,7 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
                         ";
                     $this->query($sql_insert_service);
                 }
-                $DocumentItems->entryAdd( $new_doc_id, $product_code, $Item->Count, $Item->SumWithoutNds );
+                $DocumentItems->entryAdd( $new_doc_id, $product_code, $Item->Count, $Item->SumWithoutNds/$Item->Count );
             }
             $DocumentItems->entryDocumentCommit($new_doc_id);
             $local_doc=(object)[
@@ -254,26 +258,29 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
                 'modified_at'=>date("Y-m-d H:i:s")
             ];
         }
+        
+        $DocumentView=$this->Hub->load_model("DocumentView");
         if( empty($local_doc->doc_view_id) ){
-            $DocumentView=$this->Hub->load_model("DocumentView");
             $new_doc_view_id=$DocumentView->viewCreate($this->doc_config->local_view_type_id);
-            $DocumentView->viewUpdate($new_doc_view_id,false,'view_num',$remoteDoc->Number);
-            $DocumentView->viewUpdate($new_doc_view_id,false,'view_date',$remoteDoc->DocDate);
             $local_doc->doc_view_id=$new_doc_view_id;
         }
-        $local_hash=md5("{$item->Number};{$item->DocDate};{$item->KontragentId};{$item->Sum};");
+        $DocumentView->viewUpdate($local_doc->doc_view_id,false,'view_num',$remoteDoc->Number);
+        $DocumentView->viewUpdate($local_doc->doc_view_id,false,'view_date',$remoteDoc->DocDate);
+        $remoteDoc->DocDate= substr($remoteDoc->DocDate, 0, 10);
+        $local_hash=md5("{$remoteDoc->Number};{$remoteDoc->DocDate};{$remoteDoc->KontragentId};{$remoteDoc->Sum};");
+        
+        $remote_tstamp=$this->toTimezone($remoteDoc->Context->ModifyDate, 'local');
         $sql_save_insert="
             UPDATE 
                 plugin_sync_entries
             SET
                 local_id='$local_doc->doc_view_id',
-                local_hash=$local_hash,
+                local_hash='$local_hash',
                 local_tstamp='$local_doc->modified_at',
-                remote_tstamp='{$remoteDoc->Context->ModifyDate}'
+                remote_tstamp='$remote_tstamp'
             WHERE
                 sync_destination='{$this->doc_config->sync_destination}'
                 AND remote_id='$remote_id'
-                AND local_id='$local_id'
             ";
         $this->query($sql_save_insert);
         return $local_doc->doc_view_id;
@@ -331,5 +338,63 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
      */
     private function localDelete( $local_id, $remote_id ){
         
+    }
+    
+    
+    private function localGet( $local_id ){
+       echo  $sql_dochead="
+            SELECT
+                dl.doc_id,
+                dl.vat_rate,
+                
+                view_num Number,
+                dvl.tstamp DocDate,
+                '' PaymentNumber,
+                '' PaymentDate,
+                dl.cstamp ContextCreateDate,
+                GREATEST(dl.modified_at,MAX(de.modified_at),dvl.modified_at) ContextModifyDate,
+                user_sign ContextModifyUser,
+                SUM(ROUND(invoice_price*product_quantity*(1+dl.vat_rate/100),2)) Sum,
+                2 NdsPositionType,                
+                Kontragent_pse.remote_id KontragentId,
+                Stock_pse.remote_id StockId
+            FROM
+                document_list dl
+                    JOIN
+                document_entries de USING(doc_id)
+                    JOIN
+                document_view_list dvl USING(doc_id)
+                    JOIN
+		user_list ON dl.modified_by=user_id
+                    JOIN
+                plugin_sync_entries Stock_pse ON 1=Stock_pse.local_id AND Stock_pse.sync_destination='moedelo_stocks'
+                    JOIN
+                plugin_sync_entries Kontragent_pse ON passive_company_id=Kontragent_pse.local_id AND Kontragent_pse.sync_destination='moedelo_companies'
+                    LEFT JOIN
+                plugin_sync_entries doc_pse ON dvl.doc_view_id=doc_pse.local_id AND doc_pse.sync_destination='{$this->doc_config->sync_destination}'
+            WHERE doc_view_id='$local_id'";
+        $document=$this->get_row($sql_dochead);
+        if( $document->doc_id ){
+            $sql_entry="
+                SELECT
+                    prod_pse.remote_id Id,
+                    ru Name,
+                    product_quantity Count,
+                    product_unit Unit,
+                    IF(is_service=1,2,1) Type,
+                    ROUND(invoice_price*(1+{$document->vat_rate}/100),2) Price,
+                    {$document->vat_rate} NdsType,
+                    ROUND(invoice_price*product_quantity*(1+{$document->vat_rate}/100),2) SumWithNds
+                FROM
+                    document_entries
+                        JOIN
+                    prod_list USING(product_code)
+                        LEFT JOIN
+                    plugin_sync_entries prod_pse ON sync_destination='moedelo_products' AND local_id=product_id
+                WHERE
+                    doc_id={$document->doc_id}";
+            $document->Items=$this->get_list($sql_entry);
+        }
+        print_r($document);
     }
 }

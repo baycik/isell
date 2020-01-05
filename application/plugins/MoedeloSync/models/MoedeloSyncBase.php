@@ -2,6 +2,8 @@
 
 class MoedeloSyncBase extends Catalog{
     protected $acomp_id=2;
+    protected $local_tzone='+03:00';
+    protected $remote_tzone='+00:00';
     protected $sync_since="2019-11-01 00:00:00";
     protected $sync_time_window=365;
     
@@ -11,6 +13,18 @@ class MoedeloSyncBase extends Catalog{
     function __construct() {
         session_write_close();
         set_time_limit(300);
+    }
+    
+    function toTimezone($isotstamp,$zone='local'){
+        $from_tzone=$this->remote_tzone;
+        $to_tzone=$this->local_tzone;
+        if( $zone=='remote' ){
+            $to_tzone=$this->remote_tzone;
+            $from_tzone=$this->local_tzone;
+        }
+        $given = new DateTime("$isotstamp $from_tzone");
+        $given->setTimezone( new DateTimeZone($to_tzone) );
+        return $given->format("Y-m-d H:i:s");
     }
     
     public function setGateway( $url ){
@@ -175,7 +189,7 @@ class MoedeloSyncBase extends Catalog{
         if( $is_full ){
             $afterDate=null;
         } else {
-            $afterDate=$this->get_value("SELECT MAX(remote_tstamp) FROM plugin_sync_entries WHERE sync_destination='$sync_destination'");
+            $afterDate=$this->get_value("SELECT CONVERT_TZ(MAX(remote_tstamp),'$this->local_tzone','$this->remote_tzone') FROM plugin_sync_entries WHERE sync_destination='$sync_destination'");
         }        
         $result=$this->remoteCheckoutGetList( $sync_destination, $remote_function, $afterDate );
         $nextPageNo=$result->pageNo+1;
@@ -190,7 +204,6 @@ class MoedeloSyncBase extends Catalog{
                     plugin_sync_entries
                 SET
                     sync_destination='$sync_destination',
-                    local_id='$calculatedItem->local_id',
                     remote_id='$calculatedItem->remote_id',
                     remote_hash='$calculatedItem->remote_hash',
                     remote_deleted=0

@@ -133,11 +133,17 @@ class MoedeloSync extends PluginManager {
         return $finished;
     }
     
+    
+    
+    
+    
+    protected $local_tzone='+03:00';
+    protected $remote_tzone='+00:00';
     public function actSync(){
         $MoedeloSyncActSell=$this->Hub->load_model('MoedeloSyncActSell');
         $MoedeloSyncActSell->setGateway( $this->settings->gateway_url.'accounting/api/v1/' );
         $MoedeloSyncActSell->setApiKey( $this->settings->gateway_md_apikey );
-        
+
         $MoedeloSyncActSell->localCheckout();
         $MoedeloSyncActSell->remoteCheckout(1);
         

@@ -142,11 +142,11 @@ class MoedeloSyncStocks extends MoedeloSyncBase{
             if($mode === 'REMOTE_INSERT'){
                 $response = $this->apiExecute($doc_config->remote_function, 'POST', (array) $stock);
                 if( isset($response->response) && isset($response->response->Id) ){
-                    $this->logInsert($this->sync_destination,$stock->company_id,$stock->current_hash,$response->response->Id);
+                    $this->logInsert($doc_config->sync_destination,$stock->company_id,$stock->current_hash,$response->response->Id);
                     $rows_done++;
                 } else {
                     $error=$this->getValidationErrors($response);
-                    $this->log("{$this->sync_destination} INSERT is unsuccessfull (HTTP CODE:$response->httpcode '$error') Name:#{$stock->Name}");
+                    $this->log("{$doc_config->sync_destination} INSERT is unsuccessfull (HTTP CODE:$response->httpcode '$error') Name:#{$stock->Name}");
                 }
             } else 
             if($mode === 'REMOTE_UPDATE'){
@@ -156,7 +156,7 @@ class MoedeloSyncStocks extends MoedeloSyncBase{
                     $rows_done++;
                 } else {
                     $error=$this->getValidationErrors($response);
-                    $this->log("{$this->sync_destination} UPDATE is unsuccessfull (HTTP CODE:$response->httpcode '$error') Name:#{$stock->Name}");
+                    $this->log("{$doc_config->sync_destination} UPDATE is unsuccessfull (HTTP CODE:$response->httpcode '$error') Name:#{$stock->Name}");
                 }
             } else 
             if($mode === 'REMOTE_DELETE'){
