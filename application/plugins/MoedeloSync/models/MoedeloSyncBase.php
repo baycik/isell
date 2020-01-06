@@ -112,7 +112,16 @@ class MoedeloSyncBase extends Catalog{
     }
     
     
-    
+    protected function apiInsert($sync_destination,$remote_function,$document){
+        $response = $this->apiExecute($remote_function, 'POST', (array) $document);
+        if( isset($response->response) && isset($response->response->Id) ){
+            $this->logInsert($sync_destination,$document->local_id,$document->current_hash,$response->response->Id);
+            $rows_done++;
+        } else {
+            $error=$this->getValidationErrors($response);
+            $this->log("{$sync_destination} INSERT is unsuccessfull (HTTP CODE:$response->httpcode '$error') Number:#{$document->Number}");
+        }
+    }
     
     
     protected function logInsert( $sync_destination, $local_id, $local_hash, $remote_id ){
@@ -199,7 +208,11 @@ class MoedeloSyncBase extends Catalog{
             $this->query("UPDATE plugin_sync_entries SET remote_deleted=1 WHERE sync_destination='$sync_destination'");
         }        
         foreach( $result->list as $item ){
-            $calculatedItem=$this->remoteCheckoutCalculateItem( $item );
+            $calculatedItem=(object) [
+                'remote_id'=>$item->Id,
+                'remote_hash'=>remoteHashCalculate( $item ),
+                'remote_tstamp'=>''
+            ];
             $sql="INSERT INTO
                     plugin_sync_entries
                 SET
@@ -257,6 +270,93 @@ class MoedeloSyncBase extends Catalog{
             'list'=>$list
         ];
     }
+    public function remoteInsert( $local_id, $remote_id, $entry_id ){
+        $entity=$this->localGet( $local_id );
+        $response = $this->apiExecute($this->doc_config->remote_function, 'POST', $entity);
+        if( $response->httpcode==201 ){
+            $remote_hash=$this->remoteHashCalculate($entity);
+            $this->query("UPDATE 
+                        plugin_sync_entries
+                    SET
+                        remote_hash='$remote_hash',
+                        remote_tstamp=local_tstamp
+                    WHERE
+                        entry_id='$entry_id'");
+        } else {
+            $error=$this->getValidationErrors($response);
+            $this->log("{$this->doc_config->sync_destination} INSERT is unsuccessfull (HTTP CODE:$response->httpcode '$error') Number:#{$entity->Number}");
+            return false;
+        }
+        return true;
+    }
+    public function remoteUpdate( $local_id, $remote_id, $entry_id ){
+        $entity=$this->localGet( $local_id );
+        $response = $this->apiExecute($this->doc_config->remote_function, 'PUT', $entity, $remote_id);
+        if( $response->httpcode==200 ){
+            $remote_hash=$this->remoteHashCalculate($entity);
+            $this->query("UPDATE 
+                        plugin_sync_entries
+                    SET
+                        remote_hash='$remote_hash',
+                        remote_tstamp=local_tstamp
+                    WHERE
+                        entry_id='$entry_id'");
+        } else {
+            $error=$this->getValidationErrors($response);
+            $this->log("{$this->doc_config->sync_destination} UPDATE is unsuccessfull (HTTP CODE:$response->httpcode '$error') Number:#{$entity->Number}");
+            return false;
+        }
+        return true;
+    }
+    public function remoteDelete( $local_id, $remote_id, $entry_id ){
+        $response = $this->apiExecute($this->doc_config->remote_function, 'DELETE', null, $remote_id);
+        if( $response->httpcode==204 ){
+            $this->query("DELETE 
+                        plugin_sync_entries
+                    WHERE
+                        entry_id='$entry_id'");
+        } else {
+            $error=$this->getValidationErrors($response);
+            $this->log("{$this->doc_config->sync_destination} DELETE is unsuccessfull (HTTP CODE:$response->httpcode '$error')");
+            return false;
+        }
+        return true;
+    }
+    public function remoteGet( $remote_id ){
+        $response=$this->apiExecute($this->doc_config->remote_function, 'GET', null, $remote_id);
+        if( $response->httpcode==200 ){
+            return $response->response;
+        } else {
+            $error=$this->getValidationErrors($response);
+            $this->log("{$this->doc_config->sync_destination} GET is unsuccessfull (HTTP CODE:$response->httpcode '$error')");
+            return false;
+        }
+    }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     
     protected function checkUserPermission( $right ){
         $user_data=$this->Hub->svar('user');

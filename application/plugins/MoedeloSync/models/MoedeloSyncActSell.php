@@ -2,7 +2,11 @@
 ini_set('html_errors', false);
 require_once 'MoedeloSyncBase.php';
 class MoedeloSyncActSell extends MoedeloSyncBase{
+    ///////////////////////////////////////////////////////////////
+    // COMMON SECTION
+    ///////////////////////////////////////////////////////////////
     function __construct(){
+        parent::__construct();
         $this->doc_config=(object) [
             'remote_function'=>'sales/act',
             'local_view_type_id'=>137,//Act
@@ -10,112 +14,97 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
             'doc_type'=>3
         ];
     }
+    /**
+     * Finds changes that needs to be made on local and remote
+     */
+    public function checkout(){
+        $is_full=0;
+        $this->remoteCheckout($is_full);
+        $this->localCheckout($is_full);
+    }
+    /**
+     * Executes needed sync operations
+     */
+    public function replicate(){
+        $sql_action_list="
+            SELECT
+                entry_id,
+                local_id,
+                remote_id,
+                IF( local_id IS NULL, 'localInsert',
+                IF( remote_id IS NULL, 'remoteInsert',
+                IF( local_deleted=1, 'localDelete',
+                IF( remote_deleted=1, 'remoteDelete',
+                IF( COALESCE(local_hash,'')<>COALESCE(remote_hash,''),
+                IF( local_tstamp<remote_tstamp, 'localUpdate', 'remoteUpdate'),
+                'SKIP'))))) sync_action
+            FROM
+                plugin_sync_entries doc_pse
+            WHERE 
+                sync_destination='{$this->doc_config->sync_destination}'
+            ";
+        $action_list=$this->get_list($sql_action_list);
+        print_r($action_list);
+        foreach( $action_list as $action ){
+            if( method_exists( $this, $action->sync_action) ){
+                $this->{$action->sync_action}($action->local_id,$action->remote_id,$action->entry_id);
+            }
+        }
+    }
+    ///////////////////////////////////////////////////////////////
+    // REMOTE SECTION
+    ///////////////////////////////////////////////////////////////
     
     /**
-     * 
      * @param bool $is_full
      * Checks for updates on remote
      */
     public function remoteCheckout( bool $is_full=false ){
         parent::remoteCheckout( $is_full );
-    }    
-    /**
-     * 
-     * @param object $item
-     * @return calculated item
-     */
-    protected function remoteCheckoutCalculateItem( $item ){
-        $DocDate= substr( $this->toTimezone($item->DocDate,'local') , 0, 10);
-        //echo "{$item->Number};{$DocDate};{$item->KontragentId};{$item->Sum};";
-        return (object) [
-            'remote_id'=>$item->Id,
-            'remote_hash'=>md5("{$item->Number};{$DocDate};{$item->KontragentId};{$item->Sum};"),
-            'remote_tstamp'=>''
-        ];
     }
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    /**
-     * Finds changes that needs to be made on remote
-     */
-    public function remoteReplicate(){
-        
-    }
-    
     /**
      * Inserts new record on remote
      */
-    private function remoteInsert(){
-        
+    public function remoteInsert( $local_id, $remote_id, $entry_id ){
+        return parent::remoteInsert($local_id, $remote_id, $entry_id);
     }
-    
     /**
      * Updates existing record on remote
      */
-    private function remoteUpdate( $local_id, $remote_id ){
-        
-        
-        
-        
-        $this->localGet( $local_id );
+    public function remoteUpdate( $local_id, $remote_id, $entry_id ){
+        return parent::remoteUpdate($local_id, $remote_id, $entry_id);
     }
     
-    /**
+    /** 
      * Deletes existing record on remote
      */
-    private function remoteDelete(){
-        
+    public function remoteDelete( $local_id, $remote_id, $entry_id ){
+        return parent::remoteDelete($local_id, $remote_id, $entry_id);
     }
     
     /**
-     * Gets existing remord from remote
+     * 
+     * @param int $remote_id
+     * @return type
+     * Gets existing record from remote
      */
-    private function remoteGet( $remote_id ){
-        $response=$this->apiExecute($this->doc_config->remote_function, 'GET', null, $remote_id);
-        if( $response->httpcode==200 ){
-            return $response->response;
-        }
-        $this->log("Can't get document".$this->doc_config->remote_function);
+    public function remoteGet( int $remote_id ){
+        return parent::remoteGet($remote_id);
+    }
+    /**
+     * 
+     * @param object $entity
+     * @return type md5 hash
+     * Calculates remote entity hash
+     */
+    public function remoteHashCalculate( $entity ){
+        $DocDate=substr( $this->toTimezone($entity->DocDate,'local') , 0, 10);
+        return md5("{$entity->Number};{$DocDate};{$entity->KontragentId};{$entity->Sum};");
     }
     
-    
-    
-    
+    ///////////////////////////////////////////////////////////////
+    // LOCAL SECTION
+    ///////////////////////////////////////////////////////////////
     
     /**
      * 
@@ -170,38 +159,6 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
             ";
         $this->query("$sql_update_local_docs");
     }
-    
-    /**
-     * Finds changes that needs to be made on local
-     */
-    public function replicate(){
-        $sql_action_list="
-            SELECT
-                local_id,
-                remote_id,
-                IF( local_id IS NULL, 'localInsert',
-                IF( remote_id IS NULL, 'remoteInsert',
-                IF( local_deleted=1, 'localDelete',
-                IF( remote_deleted=1, 'remoteDelete',
-                IF( COALESCE(local_hash,'')<>COALESCE(remote_hash,''),
-                IF( local_tstamp<remote_tstamp, 'localUpdate', 'remoteUpdate'),
-                'SKIP'))))) sync_action
-            FROM
-                plugin_sync_entries doc_pse
-            WHERE 
-                sync_destination='{$this->doc_config->sync_destination}'
-            ";
-        $action_list=$this->get_list($sql_action_list);
-        
-        
-        print_r($action_list);
-        foreach( $action_list as $action ){
-            if( method_exists( $this, $action->sync_action) ){
-                $this->{$action->sync_action}($action->local_id,$action->remote_id);
-            }
-        }
-    }
-    
     /**
      * Inserts new record on local
      */
@@ -327,14 +284,14 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
     }
     
     /**
-     * Updates existing record on remote
+     * Updates existing record on local
      */
     private function localUpdate( $local_id, $remote_id ){
         
     }
     
     /**
-     * Deletes existing record on remote
+     * Deletes existing record on local
      */
     private function localDelete( $local_id, $remote_id ){
         
@@ -342,8 +299,10 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
     
     
     private function localGet( $local_id ){
-       echo  $sql_dochead="
+        $sql_dochead="
             SELECT
+                doc_pse.entry_id,
+                doc_pse.remote_id,
                 dl.doc_id,
                 dl.vat_rate,
                 
@@ -395,6 +354,17 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
                     doc_id={$document->doc_id}";
             $document->Items=$this->get_list($sql_entry);
         }
+        $document->Context=(object)[
+            'CreateDate'=>$this->toTimezone($document->ContextCreateDate,'remote'),
+            'ModifyDate'=>$this->toTimezone($document->ContextModifyDate,'remote'),
+            'ModifyUser'=>$document->ContextModifyUser
+        ];
         print_r($document);
+        return $document;
+    }
+    
+    protected function localHashCalculate( $entity ){
+        $DocDate=substr( $entity->DocDate, 0, 10);
+        return md5("{$entity->Number};{$DocDate};{$entity->KontragentId};{$entity->Sum};");
     }
 }
