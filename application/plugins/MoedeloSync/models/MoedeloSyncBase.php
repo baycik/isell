@@ -35,7 +35,7 @@ class MoedeloSyncBase extends Catalog{
     }
     
     
-    protected function apiExecute( string $function, string $method, array $data = null, int $remote_id = null){
+    protected function apiExecute( string $function, string $method, $data = null, int $remote_id = null){
         $url = "{$this->gateway_url}$function/$remote_id";
         
         $curl = curl_init(); 
@@ -198,7 +198,8 @@ class MoedeloSyncBase extends Catalog{
         if( $is_full ){
             $afterDate=null;
         } else {
-            $afterDate=$this->get_value("SELECT CONVERT_TZ(MAX(remote_tstamp),'$this->local_tzone','$this->remote_tzone') FROM plugin_sync_entries WHERE sync_destination='$sync_destination'");
+            $afterDate_local=$this->get_value("SELECT MAX(remote_tstamp) FROM plugin_sync_entries WHERE sync_destination='$sync_destination'");
+            $afterDate=$this->toTimezone($afterDate_local, 'remote');
         }        
         $result=$this->remoteCheckoutGetList( $sync_destination, $remote_function, $afterDate );
         $nextPageNo=$result->pageNo+1;
@@ -208,20 +209,16 @@ class MoedeloSyncBase extends Catalog{
             $this->query("UPDATE plugin_sync_entries SET remote_deleted=1 WHERE sync_destination='$sync_destination'");
         }        
         foreach( $result->list as $item ){
-            $calculatedItem=(object) [
-                'remote_id'=>$item->Id,
-                'remote_hash'=>remoteHashCalculate( $item ),
-                'remote_tstamp'=>''
-            ];
+            $remote_hash=$this->remoteHashCalculate( $item );
             $sql="INSERT INTO
                     plugin_sync_entries
                 SET
                     sync_destination='$sync_destination',
-                    remote_id='$calculatedItem->remote_id',
-                    remote_hash='$calculatedItem->remote_hash',
+                    remote_id='$item->Id',
+                    remote_hash='$remote_hash',
                     remote_deleted=0
                 ON DUPLICATE KEY UPDATE
-                    remote_hash='$calculatedItem->remote_hash',
+                    remote_hash='$remote_hash',
                     remote_deleted=0
                 ";
             $this->query($sql);
@@ -234,8 +231,8 @@ class MoedeloSyncBase extends Catalog{
         $this->query("UPDATE
                 plugin_list
             SET 
-                plugin_json_data=JSON_SET(plugin_json_data,'$.{$this->doc_config->sync_destination}.checkoutPage','$nextPageNo'),
-                plugin_json_data=JSON_SET(plugin_json_data,'$.{$this->doc_config->sync_destination}.checkoutLastFinished',NOW())
+                plugin_json_data=JSON_SET(COALESCE(plugin_json_data,'{}'),'$.{$this->doc_config->sync_destination}.checkoutPage','$nextPageNo'),
+                plugin_json_data=JSON_SET(COALESCE(plugin_json_data,'{}'),'$.{$this->doc_config->sync_destination}.checkoutLastFinished',NOW())
             WHERE 
                 plugin_system_name='MoedeloSync'");
         $this->query("COMMIT");
@@ -274,10 +271,14 @@ class MoedeloSyncBase extends Catalog{
         $entity=$this->localGet( $local_id );
         $response = $this->apiExecute($this->doc_config->remote_function, 'POST', $entity);
         if( $response->httpcode==201 ){
-            $remote_hash=$this->remoteHashCalculate($entity);
+            
+            print_r($response);
+            
+            $remote_hash=$this->remoteHashCalculate($response->response);
             $this->query("UPDATE 
                         plugin_sync_entries
                     SET
+                        remote_id='{$response->response->Id}',
                         remote_hash='$remote_hash',
                         remote_tstamp=local_tstamp
                     WHERE
@@ -310,8 +311,9 @@ class MoedeloSyncBase extends Catalog{
     }
     public function remoteDelete( $local_id, $remote_id, $entry_id ){
         $response = $this->apiExecute($this->doc_config->remote_function, 'DELETE', null, $remote_id);
-        if( $response->httpcode==204 ){
+        if( $response->httpcode==204 || $response->httpcode==404  ){
             $this->query("DELETE 
+                    FROM
                         plugin_sync_entries
                     WHERE
                         entry_id='$entry_id'");

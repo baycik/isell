@@ -20,7 +20,7 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
     public function checkout(){
         $is_full=0;
         $this->remoteCheckout($is_full);
-        $this->localCheckout($is_full);
+        $this->localCheckout(1);
     }
     /**
      * Executes needed sync operations
@@ -33,10 +33,11 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
                 remote_id,
                 IF( local_id IS NULL, 'localInsert',
                 IF( remote_id IS NULL, 'remoteInsert',
-                IF( local_deleted=1, 'localDelete',
-                IF( remote_deleted=1, 'remoteDelete',
+                IF( local_deleted=1, 'remoteDelete',
+                IF( remote_deleted=1, 'localDelete',
                 IF( COALESCE(local_hash,'')<>COALESCE(remote_hash,''),
-                IF( local_tstamp<remote_tstamp, 'localUpdate', 'remoteUpdate'),
+                IF( local_tstamp=remote_tstamp, 'remoteInspect',
+                IF( local_tstamp<remote_tstamp, 'localUpdate', 'remoteUpdate')),
                 'SKIP'))))) sync_action
             FROM
                 plugin_sync_entries doc_pse
@@ -88,7 +89,7 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
      * @return type
      * Gets existing record from remote
      */
-    public function remoteGet( int $remote_id ){
+    public function remoteGet( $remote_id ){
         return parent::remoteGet($remote_id);
     }
     /**
@@ -99,7 +100,21 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
      */
     public function remoteHashCalculate( $entity ){
         $DocDate=substr( $this->toTimezone($entity->DocDate,'local') , 0, 10);
-        return md5("{$entity->Number};{$DocDate};{$entity->KontragentId};{$entity->Sum};");
+        $entity->Sum*=1;
+        echo $check="{$entity->Number};{$DocDate};{$entity->KontragentId};{$entity->Sum};";
+        return md5($check);
+    }
+    /**
+     * 
+     * @param type $local_id
+     * @param type $remote_id
+     * @param type $entry_id
+     * Gets remote document and fetches its modify date. This function resolves locks when hashes different but tstamps same.
+     */
+    public function remoteInspect( $local_id, $remote_id, $entry_id ){
+        $remoteDoc=$this->remoteGet( $remote_id );
+        $remote_tstamp=$this->toTimezone($remoteDoc->Context->ModifyDate,'local');
+        $this->query("UPDATE plugin_sync_entries SET remote_tstamp='$remote_tstamp' WHERE entry_id='$entry_id'");
     }
     
     ///////////////////////////////////////////////////////////////
@@ -116,7 +131,7 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
             SELECT
                 '{$this->doc_config->sync_destination}',
                 local_id,
-                MD5(CONCAT(Number,';',DocDate,';',KontragentId,';',Sum,';')) local_hash,
+                MD5(CONCAT(Number,';',DocDate,';',KontragentId,';',TRIM(Sum)*1,';')) local_hash,
                 local_tstamp,
                 0 local_deleted,
                 remote_id
@@ -146,6 +161,7 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
             GROUP BY doc_view_id) inner_table";
         if( $is_full ){
             $afterDate='';
+            $this->query("UPDATE plugin_sync_entries SET local_deleted=1 WHERE sync_destination='{$this->doc_config->sync_destination}'");
         } else {
             $afterDate='';
         }
@@ -162,7 +178,7 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
     /**
      * Inserts new record on local
      */
-    private function localInsert( $local_id, $remote_id ){
+    public function localInsert( $local_id, $remote_id, $entry_id ){
         $remoteDoc=$this->remoteGet($remote_id);
         if( !$remoteDoc || $this->Hub->svar( 'user_level' )<2 ){
             return false;
@@ -195,7 +211,7 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
                         ";
                 $product_code=$this->get_value($sql_get_product_code);
                 if( !$product_code ){
-                    $product_code= mb_substr($Item->Name, 0, 5).rand(1,100);
+                    $product_code= mb_substr($Item->Name, 0, 5).rand(100,999);
                     $sql_insert_service="
                         INSERT INTO
                             prod_list
@@ -286,19 +302,19 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
     /**
      * Updates existing record on local
      */
-    private function localUpdate( $local_id, $remote_id ){
+    public function localUpdate( $local_id, $remote_id, $entry_id ){
         
     }
     
     /**
      * Deletes existing record on local
      */
-    private function localDelete( $local_id, $remote_id ){
+    public function localDelete( $local_id, $remote_id, $entry_id ){
         
     }
     
     
-    private function localGet( $local_id ){
+    public function localGet( $local_id ){
         $sql_dochead="
             SELECT
                 doc_pse.entry_id,
@@ -365,6 +381,8 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
     
     protected function localHashCalculate( $entity ){
         $DocDate=substr( $entity->DocDate, 0, 10);
-        return md5("{$entity->Number};{$DocDate};{$entity->KontragentId};{$entity->Sum};");
+        $entity->Sum*=1;
+        echo $check="{$entity->Number};{$DocDate};{$entity->KontragentId};{$entity->Sum};";
+        return md5($check);
     }
 }
