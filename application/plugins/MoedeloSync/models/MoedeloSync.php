@@ -144,8 +144,9 @@ class MoedeloSync extends PluginManager {
         $MoedeloSyncActSell->setGateway( $this->settings->gateway_url.'accounting/api/v1/' );
         $MoedeloSyncActSell->setApiKey( $this->settings->gateway_md_apikey );
 
-        $MoedeloSyncActSell->checkout();
-        $MoedeloSyncActSell->replicate();
+        //$MoedeloSyncActSell->checkout();
+        //$MoedeloSyncActSell->replicate();
+        $MoedeloSyncActSell->localUpdate( 26493,0,0 );
     }
     
     
