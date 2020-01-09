@@ -307,9 +307,49 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
 //        if( !$remoteDoc || $this->Hub->svar( 'user_level' )<2 ){
 //            return false;
 //        }
-//        $remoteDoc->DocDate=$this->toTimezone($remoteDoc->DocDate,'local');
+        $remoteDoc->DocDate=$this->toTimezone($remoteDoc->DocDate,'local');
         $localDoc=$this->localGet($remote_id);
+        if( $remoteDoc->Number!=$localDoc->Number || $remoteDoc->DocDate!=$localDoc->DocDate ){
+            $sql_dochead_update="
+                UPDATE
+                    document_list
+                SET
+                    tstamp='{$remoteDoc->DocDate}',
+                    doc_num='{$remoteDoc->Number}'
+                WHERE
+                    doc_id='{$localDoc->doc_id}'";
+            $this->query($sql_dochead_update);
+            $sql_view_update="
+                UPDATE
+                    document_view_list
+                SET
+                    tstamp='{$remoteDoc->DocDate}',
+                    view_num='{$remoteDoc->Number}'
+                WHERE
+                    doc_view_id='{$local_id}'";
+            $this->query($sql_view_update);
+        }
+        if(1){
+            $entryDictionary=[];
+            foreach ($localDoc->Items as $entry){
+                $entryDictionary[$entry->Id]=$entry;
+            }
+        }
+        
+        
+        
+        
+        
+        
         print_r($localDoc);
+    }
+    
+    private function localDocumentUpdate( $doc_id, $document ){
+        
+    }
+    
+    private function localDocumentGet( $doc_id ){
+        
     }
     
     /**
