@@ -194,14 +194,8 @@ class MoedeloSyncBase extends Catalog{
     protected function remoteCheckout( bool $is_full=false ){
         $sync_destination=$this->doc_config->sync_destination;
         $remote_function=$this->doc_config->remote_function;
-        $is_finished=false;
-        if( $is_full ){
-            $afterDate=null;
-        } else {
-            $afterDate_local=$this->get_value("SELECT MAX(remote_tstamp) FROM plugin_sync_entries WHERE sync_destination='$sync_destination'");
-            $afterDate=$this->toTimezone($afterDate_local, 'remote');
-        }        
-        $result=$this->remoteCheckoutGetList( $sync_destination, $remote_function, $afterDate );
+        $is_finished=false;  
+        $result=$this->remoteCheckoutGetList( $sync_destination, $remote_function, $is_full );
         $nextPageNo=$result->pageNo+1;
         
         $this->query("START TRANSACTION");
@@ -231,8 +225,13 @@ class MoedeloSyncBase extends Catalog{
         $this->query("UPDATE
                 plugin_list
             SET 
-                plugin_json_data=JSON_SET(COALESCE(plugin_json_data,'{}'),'$.{$this->doc_config->sync_destination}.checkoutPage','$nextPageNo'),
-                plugin_json_data=JSON_SET(COALESCE(plugin_json_data,'{}'),'$.{$this->doc_config->sync_destination}.checkoutLastFinished',NOW())
+                plugin_json_data=JSON_SET(
+                    COALESCE(plugin_json_data,'{}'),
+                    '$.{$this->doc_config->sync_destination}',JSON_OBJECT(
+                        'checkoutPage','$nextPageNo',
+                        'checkoutLastFinished',NOW()
+                    )
+                )
             WHERE 
                 plugin_system_name='MoedeloSync'");
         $this->query("COMMIT");
@@ -246,23 +245,28 @@ class MoedeloSyncBase extends Catalog{
      * @return responseobject
      *  
      */
-    protected function remoteCheckoutGetList( $sync_destination, $remote_function, $afterDate=null ){
-        $pageNo=$this->get_value("SELECT COALESCE(JSON_EXTRACT(plugin_json_data,'$.{$sync_destination}.checkoutPage'),1) FROM plugin_list WHERE plugin_system_name='MoedeloSync'");
+    protected function remoteCheckoutGetList( $sync_destination, $remote_function, $is_full=false ){
+        $previousCheckout=$this->get_row("SELECT 
+                    COALESCE(JSON_UNQUOTE(JSON_EXTRACT(plugin_json_data,'$.{$sync_destination}.checkoutPage')),1) pageNo,
+                    JSON_UNQUOTE(JSON_EXTRACT(plugin_json_data,'$.{$sync_destination}.checkoutLastFinished')) afterDate
+                FROM plugin_list WHERE plugin_system_name='MoedeloSync'");
+        $afterDate=$is_full?null:$previousCheckout->afterDate;
         $pageSize=1000;
         $request=[
-            'pageNo'=>$pageNo,
+            'pageNo'=>$previousCheckout->pageNo,
             'pageSize'=>$pageSize,
             'afterDate'=>$afterDate,
             'beforeDate'=>null,
             'name'=>null
         ];
         $response=$this->apiExecute( $remote_function, 'GET', $request);
+        //print_r($request);print_r($response);
         $list=[];
         if( isset($response->response->ResourceList) ){
             $list=$response->response->ResourceList;
         }
         return (object) [
-            'pageNo'=>$pageNo,
+            'pageNo'=>$previousCheckout->pageNo,
             'pageIsLast'=>count($list)<$pageSize?1:0,
             'list'=>$list
         ];

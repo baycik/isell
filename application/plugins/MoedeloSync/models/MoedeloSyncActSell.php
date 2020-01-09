@@ -20,7 +20,7 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
     public function checkout(){
         $is_full=0;
         $this->remoteCheckout($is_full);
-        $this->localCheckout(1);
+        $this->localCheckout($is_full);
     }
     /**
      * Executes needed sync operations
@@ -101,7 +101,7 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
     public function remoteHashCalculate( $entity ){
         $DocDate=substr( $this->toTimezone($entity->DocDate,'local') , 0, 10);
         $entity->Sum*=1;
-        echo $check="{$entity->Number};{$DocDate};{$entity->KontragentId};{$entity->Sum};";
+        $check="{$entity->Number};{$DocDate};{$entity->KontragentId};{$entity->Sum};";
         return md5($check);
     }
     /**
@@ -199,30 +199,7 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
                     WHERE doc_id='$new_doc_id'";
             $this->query($sql_doc_update);
             foreach( $remoteDoc->Items as $Item ){
-                $sql_get_product_code="
-                    SELECT 
-                        product_code 
-                    FROM 
-                        prod_list
-                    WHERE 
-                        is_service=1
-                        AND product_unit='$Item->Unit'
-                        AND ru='$Item->Name'
-                        ";
-                $product_code=$this->get_value($sql_get_product_code);
-                if( !$product_code ){
-                    $product_code= mb_substr($Item->Name, 0, 5).rand(100,999);
-                    $sql_insert_service="
-                        INSERT INTO
-                            prod_list
-                        SET
-                            is_service=1,
-                            product_unit='$Item->Unit',
-                            ru='$Item->Name',
-                            product_code='$product_code'
-                        ";
-                    $this->query($sql_insert_service);
-                }
+                $product_code=$this->localFindProduct( $Item );
                 $DocumentItems->entryAdd( $new_doc_id, $product_code, $Item->Count, $Item->SumWithoutNds/$Item->Count );
             }
             $DocumentItems->entryDocumentCommit($new_doc_id);
@@ -299,23 +276,54 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
         return $this->get_value($sql);
     }
     
+    private function localFindProduct( $Item ){
+        $sql_get_product_code="
+            SELECT 
+                product_code 
+            FROM 
+                prod_list
+            WHERE 
+                is_service=1
+                AND product_unit='$Item->Unit'
+                AND ru='$Item->Name'
+                ";
+        $product_code=$this->get_value($sql_get_product_code);
+        if( !$product_code ){
+            $product_code= mb_substr($Item->Name, 0, 5).rand(100,999);
+            $sql_insert_service="
+                INSERT INTO
+                    prod_list
+                SET
+                    is_service=1,
+                    product_unit='$Item->Unit',
+                    ru='$Item->Name',
+                    product_code='$product_code'
+                ";
+            $this->query($sql_insert_service);
+        }
+        return $product_code;
+    }
+    
     /**
      * Updates existing record on local
      */
     public function localUpdate( $local_id, $remote_id, $entry_id ){
-//        $remoteDoc=$this->remoteGet($remote_id);
-//        if( !$remoteDoc || $this->Hub->svar( 'user_level' )<2 ){
-//            return false;
-//        }
+        $remoteDoc=$this->remoteGet($remote_id);
+        if( !$remoteDoc || $this->Hub->svar( 'user_level' )<2 ){
+            return false;
+        }
         $remoteDoc->DocDate=$this->toTimezone($remoteDoc->DocDate,'local');
-        $localDoc=$this->localGet($remote_id);
+        $localDoc=$this->localGet($local_id);
+        //print_r($remoteDoc);print_r($localDoc);
+        
         if( $remoteDoc->Number!=$localDoc->Number || $remoteDoc->DocDate!=$localDoc->DocDate ){
             $sql_dochead_update="
                 UPDATE
                     document_list
                 SET
-                    tstamp='{$remoteDoc->DocDate}',
-                    doc_num='{$remoteDoc->Number}'
+                    cstamp='{$remoteDoc->DocDate}',
+                    doc_num='{$remoteDoc->Number}',
+                    use_vatless_price=0
                 WHERE
                     doc_id='{$localDoc->doc_id}'";
             $this->query($sql_dochead_update);
@@ -329,19 +337,38 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
                     doc_view_id='{$local_id}'";
             $this->query($sql_view_update);
         }
-        if(1){
-            $entryDictionary=[];
-            foreach ($localDoc->Items as $entry){
-                $entryDictionary[$entry->Id]=$entry;
-            }
+        
+        $DocumentItems=$this->Hub->load_model('DocumentItems');
+        $localEntryDictionary=[];
+        foreach ($localDoc->Items as $localEntry){
+            $localEntryDictionary[$localEntry->Name]=$localEntry;
         }
+        foreach ($remoteDoc->Items as $remoteEntry){
+            $product_code=$this->localFindProduct($remoteEntry);
+            $remoteEntry->Price=$remoteEntry->SumWithNds/$remoteEntry->Count;
+            
+            if( empty($localEntryDictionary[$remoteEntry->Name]) ){
+                //Need to insert entry in local document
+                $DocumentItems->entryAdd($localDoc->doc_id,$product_code,$remoteEntry->Count,$remoteEntry->Price);
+                continue;
+            }
+            $localEntry=$localEntryDictionary[$remoteEntry->Name];
+            if( $localEntry->Count !== $remoteEntry->Count || $localEntry->Price !== $remoteEntry->Price ){
+                //Update local entry
+                $DocumentItems->entryUpdate($localDoc->doc_id,$localEntry->doc_entry_id,'product_quantity',$remoteEntry->Count);
+                $DocumentItems->entryUpdate($localDoc->doc_id,$localEntry->doc_entry_id,'product_price',$remoteEntry->Price);
+            }
+            unset($localEntryDictionary[$remoteEntry->Id]);
+        }
+        $delete_entry_ids=[];
+        foreach( $localEntryDictionary as $localEntry ){
+            //Delete local entry
+            $delete_entry_ids[]=$localEntry->doc_entry_id;
+            
+        }
+        $DocumentItems->entryDeleteArray($localDoc->doc_id,$delete_entry_ids);
         
-        
-        
-        
-        
-        
-        print_r($localDoc);
+        //$this->query("UPDATE plugin_sync_entries SET remote_hash='{$remoteDoc->Context->ModifyDate}' WHERE entry_id='$entry_id'");
     }
     
     private function localDocumentUpdate( $doc_id, $document ){
@@ -398,6 +425,7 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
         if( $document->doc_id ){
             $sql_entry="
                 SELECT
+                    doc_entry_id,
                     prod_pse.remote_id Id,
                     ru Name,
                     product_quantity Count,
@@ -428,7 +456,7 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
     protected function localHashCalculate( $entity ){
         $DocDate=substr( $entity->DocDate, 0, 10);
         $entity->Sum*=1;
-        echo $check="{$entity->Number};{$DocDate};{$entity->KontragentId};{$entity->Sum};";
+        $check="{$entity->Number};{$DocDate};{$entity->KontragentId};{$entity->Sum};";
         return md5($check);
     }
 }
