@@ -505,7 +505,11 @@ class CampaignManager extends Catalog{
         $payment_account="361";
         $detailed_select="
             description,
-            ROUND(SUM(IF(acc_debit_code=$payment_account,amount,-amount))) total_sum,";
+            ROUND(SUM(IF(acc_debit_code=$payment_account,amount,-amount))) total_sum,
+            (SELECT ROUND(SUM(IF(acc_debit_code=$payment_account,amount,-amount))) FROM acc_trans at2 WHERE 
+                at2.passive_company_id=at.passive_company_id
+                AND YEAR(cstamp)<=period_year AND MONTH(cstamp)<=period_month
+                AND (acc_debit_code=$payment_account OR acc_credit_code=$payment_account)) debt_finish,";
         $select="COALESCE( IF( 
                                 acc_credit_code='$payment_account' 
                                 AND (acc_debit_code LIKE '30%' OR acc_debit_code LIKE '31%')
@@ -692,67 +696,71 @@ class CampaignManager extends Catalog{
         switch($group_by){
             case 'trans_id':
                 $struct=[
-                    ['Field'=>'company_name','Comment'=>'Клиент'],
-                    ['Field'=>'description','Comment'=>'Назначение']
+                    ['Field'=>'company_name','Comment'=>'Клиент','Width'=>40],
+                    ['Field'=>'description','Comment'=>'Назначение','Width'=>40]
                 ];
                 break;
             case 'company_id':
                 $struct=[
-                    ['Field'=>'company_name','Comment'=>'Клиент']
+                    ['Field'=>'company_name','Comment'=>'Клиент','Width'=>40]
                 ];
                 break;
             case 'analyse_brand':
                 $struct=[
-                    ['Field'=>'analyse_brand','Comment'=>'Бренд']
+                    ['Field'=>'analyse_brand','Comment'=>'Бренд','Width'=>20]
                 ];
                 break;
             case 'analyse_type':
                 $struct=[
-                    ['Field'=>'analyse_type','Comment'=>'Тип']
+                    ['Field'=>'analyse_type','Comment'=>'Тип','Width'=>20]
                 ];
                 break;
             case 'product_code':
                 $struct=[
-                    ['Field'=>'product_code','Comment'=>'Код'],
-                    ['Field'=>'product_name','Comment'=>'Название']
+                    ['Field'=>'product_code','Comment'=>'Код','Width'=>20],
+                    ['Field'=>'product_name','Comment'=>'Название','Width'=>30]
                 ];
                 break;
             default :
                 $struct=[
-                    ['Field'=>'company_name','Comment'=>'Клиент'],
-                    ['Field'=>'analyse_brand','Comment'=>'Бренд'],
-                    ['Field'=>'analyse_type','Comment'=>'Тип'],
-                    ['Field'=>'product_code','Comment'=>'Код'],
-                    ['Field'=>'product_name','Comment'=>'Название']
+                    ['Field'=>'company_name','Comment'=>'Клиент','Width'=>20],
+                    ['Field'=>'analyse_brand','Comment'=>'Бренд','Width'=>20],
+                    ['Field'=>'analyse_type','Comment'=>'Тип','Width'=>20],
+                    ['Field'=>'product_code','Comment'=>'Код','Width'=>20],
+                    ['Field'=>'product_name','Comment'=>'Название','Width'=>30]
                 ];
         }
         
         if( $table['campaign_bonus']->bonus_type=='PAYMENT' ){
             $struct= array_merge($struct,[
-            ['Field'=>'total_sum','Comment'=>'Изменение долга']
+            ['Field'=>'debt_start','Comment'=>'Начальный долг','Align'=>'right','Width'=>20],
+            ['Field'=>'total_sum','Comment'=>'Изменение долга','Align'=>'right','Width'=>20],
+            ['Field'=>'debt_finish','Comment'=>'Конечный долг','Align'=>'right','Width'=>20],
+            ['Field'=>'bonus_base','Comment'=>'Оплаты','Width'=>20,'Align'=>'right'],
             ]);
         } else {
             $struct= array_merge($struct,[
-            ['Field'=>'product_quantity','Comment'=>'Кол-во'],
-            ['Field'=>'self_price','Comment'=>'Себ'],
-            ['Field'=>'breakeven_price','Comment'=>'Порог'],
-            ['Field'=>'sell_price','Comment'=>'Продажа'],
-            ['Field'=>'diff_price','Comment'=>'Разница'],
-            ['Field'=>'total_sum','Comment'=>'Сумма']
+            ['Field'=>'bonus_base','Comment'=>'База Бонуса','Width'=>20,'Align'=>'right'],
+            ['Field'=>'product_quantity','Comment'=>'Кол-во','Width'=>10,'Align'=>'right'],
+            ['Field'=>'self_price','Comment'=>'Себ','Width'=>10,'Align'=>'right'],
+            ['Field'=>'breakeven_price','Comment'=>'Порог','Width'=>10,'Align'=>'right'],
+            ['Field'=>'sell_price','Comment'=>'Продажа','Width'=>10,'Align'=>'right'],
+            ['Field'=>'diff_price','Comment'=>'Разница','Width'=>10,'Align'=>'right'],
+            ['Field'=>'total_sum','Comment'=>'Сумма','Width'=>10,'Align'=>'right']
             ]);
         }
         $additional_cols=[
-            ['Field'=>'bonus_base','Comment'=>'База Бонуса'],
-            ['Field'=>'bonus_ratios','Comment'=>'%'],
-            ['Field'=>'result1','Comment'=>'Рез1']
+            
+            ['Field'=>'bonus_ratios','Comment'=>'%','Width'=>15,'Align'=>'center'],
+            ['Field'=>'result1','Comment'=>'Рез1','Width'=>10,'Align'=>'right']
             ];
         
         if( $table['entries'][0]->campaign_bonus_ratio1 != $table['entries'][0]->campaign_bonus_ratio2 ){
-            $additional_cols[]=['Field'=>'result2','Comment'=>'Рез2'];
+            $additional_cols[]=['Field'=>'result2','Comment'=>'Рез2','Width'=>10,'Align'=>'right'];
             
         }
         if( $table['entries'][0]->campaign_bonus_ratio1 != $table['entries'][0]->campaign_bonus_ratio3 ){
-            $additional_cols[]=['Field'=>'result3','Comment'=>'Рез3'];
+            $additional_cols[]=['Field'=>'result3','Comment'=>'Рез3','Width'=>10,'Align'=>'right'];
         }
         $struct= array_merge($struct,$additional_cols);
         
@@ -764,7 +772,9 @@ class CampaignManager extends Catalog{
             'result2'=>0,
             'result3'=>0,
             'total_sum'=>0,
-            'bonus_base'=>0
+            'bonus_base'=>0,
+            'debt_finish'=>0,
+            'debt_start'=>0
         ];
         
         
@@ -777,6 +787,11 @@ class CampaignManager extends Catalog{
             $total_row['result3']+=$row->result3;
             $total_row['total_sum']+=$row->total_sum;
             $total_row['bonus_base']+=$row->bonus_base;
+            if( isset($row->debt_finish) ){
+                $row->debt_start=$row->debt_finish-$row->total_sum;
+                $total_row['debt_start']+=$row->debt_start;
+                $total_row['debt_finish']+=$row->debt_finish;
+            }
         }
         array_unshift($table['entries'],$total_row);
         
