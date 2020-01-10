@@ -429,8 +429,20 @@ class CampaignManager extends Catalog{
         $product_range= $this->bonusCalculateProductRange($campaign_bonus);
         
         //print_r($product_range);
-        $detailed_select="";
-        $select="COALESCE(invoice_price * product_quantity * (dl.vat_rate/100+1),0)";
+        $detailed_select="
+            analyse_brand,
+            analyse_type,
+            pl.product_code,
+            ru product_name,
+            SUM(product_quantity) product_quantity,
+            ROUND(AVG(self_price),2) self_price,
+            ROUND(AVG(breakeven_price),2) breakeven_price,
+            ROUND(AVG(invoice_price * (dl.vat_rate/100+1)),2) sell_price,
+            ROUND(SUM(invoice_price*product_quantity* (dl.vat_rate/100+1))) total_sum,
+            ROUND(COALESCE(AVG((invoice_price * (dl.vat_rate/100+1)-GREATEST(breakeven_price,self_price))),0),2) diff_price,
+            ";
+        $select="
+                COALESCE(invoice_price * product_quantity * (dl.vat_rate/100+1),0)";
         $table="
                     LEFT JOIN
                 document_list dl ON $period_on 
@@ -441,17 +453,33 @@ class CampaignManager extends Catalog{
                                     AND dl.cstamp>'{$campaign_bonus->campaign_start_at}' AND dl.cstamp<'{$campaign_bonus->campaign_finish_at}'
                     LEFT JOIN
                 {$product_range['table']} product_range USING (doc_id)
+                    LEFT JOIN
+                prod_list pl USING(product_code)
                 ";
         $where="";
         return [
             'select'=>$select,
+            'detailed_select'=>$detailed_select,
             'table'=>$table,
             'where'=>$where
         ];
     }
     private function bonusCalculateProfit($campaign_bonus,$period_on,$client_filter){
         $product_range= $this->bonusCalculateProductRange($campaign_bonus);
-        $select="COALESCE(GREATEST(invoice_price * (dl.vat_rate/100+1)-GREATEST(breakeven_price,self_price),0) * product_quantity,0)";
+        $detailed_select="
+            analyse_brand,
+            analyse_type,
+            pl.product_code,
+            ru product_name,
+            SUM(product_quantity) product_quantity,
+            ROUND(AVG(self_price),2) self_price,
+            ROUND(AVG(breakeven_price),2) breakeven_price,
+            ROUND(AVG(invoice_price * (dl.vat_rate/100+1)),2) sell_price,
+            ROUND(SUM(invoice_price*product_quantity* (dl.vat_rate/100+1))) total_sum,
+            ROUND(COALESCE(AVG((invoice_price * (dl.vat_rate/100+1)-GREATEST(breakeven_price,self_price))),0),2) diff_price,
+            ";
+        $select="
+                COALESCE(GREATEST(invoice_price * (dl.vat_rate/100+1)-GREATEST(breakeven_price,self_price),0) * product_quantity,0)";
         $table="
                     LEFT JOIN
                 document_list dl ON $period_on 
@@ -462,27 +490,37 @@ class CampaignManager extends Catalog{
                                     AND dl.cstamp>'{$campaign_bonus->campaign_start_at}' AND dl.cstamp<'{$campaign_bonus->campaign_finish_at}'
                     LEFT JOIN
                 {$product_range['table']} product_range USING (doc_id)
+                    LEFT JOIN
+                prod_list pl USING(product_code)
                 ";
         $where="";
         return [
             'select'=>$select,
+            'detailed_select'=>$detailed_select,
             'table'=>$table,
             'where'=>$where
         ];
     }
     private function bonusCalculatePayment($campaign_bonus,$period_on,$client_filter){
         $payment_account="361";
-        $select="COALESCE(amount,0)";
+        $detailed_select="
+            description,
+            ROUND(SUM(IF(acc_debit_code=$payment_account,amount,-amount))) total_sum,";
+        $select="COALESCE( IF( 
+                                acc_credit_code='$payment_account' 
+                                AND (acc_debit_code LIKE '30%' OR acc_debit_code LIKE '31%')
+                                AND at.cstamp>'{$campaign_bonus->campaign_start_at}' AND at.cstamp<'{$campaign_bonus->campaign_finish_at}', 
+                            amount,0),0)";
         $table="
                     LEFT JOIN
                         acc_trans at ON $period_on
                             AND passive_company_id IN (SELECT company_id FROM companies_list JOIN companies_tree USING(branch_id) WHERE $client_filter)
-                            AND acc_credit_code='$payment_account'
-                            AND at.cstamp>'{$campaign_bonus->campaign_start_at}' AND at.cstamp<'{$campaign_bonus->campaign_finish_at}'
+                            AND (acc_debit_code=$payment_account OR acc_credit_code=$payment_account)
                 ";
         $where="";
         return [
             'select'=>$select,
+            'detailed_select'=>$detailed_select,
             'table'=>$table,
             'where'=>$where
         ];
@@ -613,7 +651,11 @@ class CampaignManager extends Catalog{
         
         $sql="SELECT
             *,
-            CONCAT('%',COALESCE(campaign_bonus_ratio1,''),'/',COALESCE(campaign_bonus_ratio2,''),'/',COALESCE(campaign_bonus_ratio3,'')) bonus_ratios,
+            CONCAT(
+            '%',COALESCE(ROUND(campaign_bonus_ratio1,1),''),
+            '/',COALESCE(ROUND(campaign_bonus_ratio2,1),''),
+            '/',COALESCE(ROUND(campaign_bonus_ratio3,1),'')
+            ) bonus_ratios,
             ROUND(bonus_base*campaign_bonus_ratio1/100) result1,
             ROUND(bonus_base*campaign_bonus_ratio2/100) result2,
             ROUND(bonus_base*campaign_bonus_ratio3/100) result3
@@ -623,24 +665,13 @@ class CampaignManager extends Catalog{
                 COALESCE(campaign_bonus_ratio2,0) campaign_bonus_ratio2,
                 COALESCE(campaign_bonus_ratio3,0) campaign_bonus_ratio3,
                 company_name,
-                analyse_brand,
-                analyse_type,
-                pl.product_code,
-                ru product_name,
-                SUM(product_quantity) product_quantity,
-                ROUND(AVG(self_price),2) self_price,
-                ROUND(AVG(breakeven_price),2) breakeven_price,
-                ROUND(AVG(invoice_price * (dl.vat_rate/100+1)),2) sell_price,
-                ROUND(SUM(invoice_price*product_quantity* (dl.vat_rate/100+1))) sell_sum,
-                ROUND(COALESCE(AVG((invoice_price * (dl.vat_rate/100+1)-GREATEST(breakeven_price,self_price))),0),2) diff_price,
-                ROUND(SUM({$bonus_base['select']})) bonus_base
+                {$bonus_base['detailed_select']}
+                ROUND(SUM( {$bonus_base['select']} )) bonus_base
             FROM
                 plugin_campaign_bonus pcb 
                     JOIN
                 plugin_campaign_bonus_periods pcbp USING (campaign_bonus_id)
                 {$bonus_base['table']}
-                    LEFT JOIN
-                prod_list pl USING(product_code)
                     LEFT JOIN
                 companies_list ON company_id=passive_company_id
             WHERE
@@ -650,12 +681,21 @@ class CampaignManager extends Catalog{
             GROUP BY $group_by
             ORDER BY bonus_base DESC) tt";
             //die($sql);
-        return $this->get_list($sql);
+        return [
+                    'entries'=>$this->get_list($sql),
+                    'campaign_bonus'=>$campaign_bonus
+                ];
     }
     
     public function campaignDetailedView( int $campaign_bonus_id, int $campaign_bonus_period_id, string $group_by='product_code' ){
         $table=$this->bonusCalculateDetailedResult( $campaign_bonus_id, $campaign_bonus_period_id, $group_by );
         switch($group_by){
+            case 'trans_id':
+                $struct=[
+                    ['Field'=>'company_name','Comment'=>'Клиент'],
+                    ['Field'=>'description','Comment'=>'Назначение']
+                ];
+                break;
             case 'company_id':
                 $struct=[
                     ['Field'=>'company_name','Comment'=>'Клиент']
@@ -686,32 +726,59 @@ class CampaignManager extends Catalog{
                     ['Field'=>'product_name','Comment'=>'Название']
                 ];
         }
-        $struct= array_merge($struct,[
+        
+        if( $table['campaign_bonus']->bonus_type=='PAYMENT' ){
+            $struct= array_merge($struct,[
+            ['Field'=>'total_sum','Comment'=>'Изменение долга']
+            ]);
+        } else {
+            $struct= array_merge($struct,[
             ['Field'=>'product_quantity','Comment'=>'Кол-во'],
             ['Field'=>'self_price','Comment'=>'Себ'],
             ['Field'=>'breakeven_price','Comment'=>'Порог'],
             ['Field'=>'sell_price','Comment'=>'Продажа'],
             ['Field'=>'diff_price','Comment'=>'Разница'],
-            ['Field'=>'sell_sum','Comment'=>'Сумма'],
-            ['Field'=>'bonus_base','Comment'=>'База Б.'],
-            ['Field'=>'result1','Comment'=>'Рез1'],
-            ['Field'=>'result2','Comment'=>'Рез2'],
-            ['Field'=>'result3','Comment'=>'Рез3'],
-            ['Field'=>'bonus_ratios','Comment'=>'Бонусы']
-        ]);
+            ['Field'=>'total_sum','Comment'=>'Сумма']
+            ]);
+        }
+        $additional_cols=[
+            ['Field'=>'bonus_base','Comment'=>'База Бонуса'],
+            ['Field'=>'bonus_ratios','Comment'=>'%'],
+            ['Field'=>'result1','Comment'=>'Рез1']
+            ];
+        
+        if( $table['entries'][0]->campaign_bonus_ratio1 != $table['entries'][0]->campaign_bonus_ratio2 ){
+            $additional_cols[]=['Field'=>'result2','Comment'=>'Рез2'];
+            
+        }
+        if( $table['entries'][0]->campaign_bonus_ratio1 != $table['entries'][0]->campaign_bonus_ratio3 ){
+            $additional_cols[]=['Field'=>'result3','Comment'=>'Рез3'];
+        }
+        $struct= array_merge($struct,$additional_cols);
+        
         //return $table;
         
         $total_row=[
-            'bonus_ratios'=>'Итог'
+            'bonus_ratios'=>'',
+            'result1'=>0,
+            'result2'=>0,
+            'result3'=>0,
+            'total_sum'=>0,
+            'bonus_base'=>0
         ];
-        foreach($table as $row){
+        
+        
+        
+        
+        
+        foreach($table['entries'] as $row){
             $total_row['result1']+=$row->result1;
             $total_row['result2']+=$row->result2;
             $total_row['result3']+=$row->result3;
-            $total_row['sell_sum']+=$row->sell_sum;
+            $total_row['total_sum']+=$row->total_sum;
             $total_row['bonus_base']+=$row->bonus_base;
         }
-        $table[]=$total_row;
+        array_unshift($table['entries'],$total_row);
         
         //print_r($table);die;
         
@@ -725,7 +792,7 @@ class CampaignManager extends Catalog{
 	    ],
 	    'struct'=>$struct,
 	    'view'=>[
-		'rows'=>$table
+		'rows'=>$table['entries']
 	    ]
 	];
 	$ViewManager=$this->Hub->load_model('ViewManager');

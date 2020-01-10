@@ -351,11 +351,21 @@
                 {{/if}}
             </div>
             
-            
+            {{if bonus_type|equals>PAYMENT}}
             <form method="GET" action="./CampaignManager/campaignDetailedView" target="_new">
                 <select name="group_by" style="width:70px" data-skip-update="1">
-                    <option value="doc_entry_id">Всё</option>
                     <option value="company_id">Клиент</option>
+                    <option value="trans_id">Всё</option>
+                </select>
+                <input type="hidden" name="campaign_bonus_id" value="{{campaign_bonus_id}}">
+                <input type="hidden" name="campaign_bonus_period_id" value="{{campaign_bonus_period_id}}">
+                <button>Отчет</button>
+            </form>
+            {{else}}
+            <form method="GET" action="./CampaignManager/campaignDetailedView" target="_new">
+                <select name="group_by" style="width:70px" data-skip-update="1">
+                    <option value="company_id">Клиент</option>
+                    <option value="doc_entry_id">Всё</option>
                     <option value="analyse_brand">Бренд</option>
                     <option value="analyse_type">Тип</option>
                     <option value="product_code">Код</option>
@@ -364,6 +374,7 @@
                 <input type="hidden" name="campaign_bonus_period_id" value="{{campaign_bonus_period_id}}">
                 <button>Отчет</button>
             </form>
+            {{/if}}
             {{if bonus_type|equals>PROFIT}}
             <form method="GET" action="./CampaignManager/bonusPeriodBreakEvenRecalculate" target="_new">
                 <input type="hidden" name="campaign_bonus_period_id" value="{{campaign_bonus_period_id}}">
