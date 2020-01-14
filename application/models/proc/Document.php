@@ -295,7 +295,9 @@ class Document extends Data {
     }
 
     protected function alterEntry($action = 'update', $doc_entry_id, $new_quantity = NULL, $new_invoice = NULL, $new_party_label = NULL) {//Must be called within db transaction
-        
+	if ($this->isCommited()) {
+	    $this->Base->set_level(2);
+	}        
 	$entry = $this->Base->get_row("SELECT * FROM document_entries WHERE doc_entry_id=$doc_entry_id");
 	if ($this->doc('doc_id') != $entry['doc_id']) {
 	    $this->Base->msg("Trying to update entry of unselected Doc!!!");
@@ -388,9 +390,6 @@ class Document extends Data {
     }
 
     public function updateEntry($doc_entry_id, $new_quantity = NULL, $new_invoice = NULL, $new_party_label = NULL) {
-	if ($this->isCommited()) {
-	    $this->Base->set_level(2);
-	}
 	if ($this->Base->pcomp('curr_code') == 'USD') {
 	    $new_invoice*=$this->doc('doc_ratio');
 	}
