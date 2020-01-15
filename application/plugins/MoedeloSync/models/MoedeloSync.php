@@ -19,7 +19,28 @@ class MoedeloSync extends PluginManager {
         header("Content-type:text/plain");
     }
     
-    public function sync(){
+    public function tick(){
+        $joblist=[
+            'productCheckout',
+            'productReplicate',
+    /*        'companyCheckout',
+            'companyReplicate',
+            'stocksCheckout',
+            'stocksReplicate',
+            'billCheckout',
+            'billReplicate',
+            'wayBillCheckout',
+            'wayBillReplicate',
+            'invoiceCheckout',
+            'invoiceReplicate',
+            'updReplicate'    */
+        ];
+        
+        if( isset($this->settings->lastDoneJob) ){
+            
+        }
+        
+        
         
     }
     
@@ -190,32 +211,5 @@ class MoedeloSync extends PluginManager {
         $row = $this->get_row($sql);
         return json_decode($row->plugin_settings);
     }
-
-
-    private function getCategories($category_id) {
-        $branches = $this->treeGetSub('stock_tree', $category_id);
-        return $branches;
-    }
-
-    
-    
-    public $syncCompanies = [];
-    public function syncCompanies(){
-        $modes = ['POST'];
-        $limit = 10;
-        return;
-        foreach($modes as $mode){
-            $product_list = $this->productGetList($mode, $limit);
-            
-            
-            
-            
-            
-            if(!empty($product_list)){
-                $rows_done = $this->productSync($product_list, $mode);
-            }
-        }
-    }
-    
 
 }
