@@ -70,8 +70,7 @@ class MoedeloSync extends Catalog {
 
     public function tick(){
         $joblist=[
-            'productCheckout',
-            'productReplicate',
+            'productSync',
     /*      'companyCheckout',
             'companyReplicate',
             'stocksCheckout',
@@ -86,24 +85,37 @@ class MoedeloSync extends Catalog {
         ];
         
 
-        $currentJob=$joblist[0];
+        $currentJob=$joblist[0];        
         if( isset($this->settings->lastDoneJob) ){
             $last_done_key=array_search($this->settings->lastDoneJob,$joblist);
-            if( $last_done_key &&  $last_done_key<count($joblist) ){
+            if( is_numeric($last_done_key) &&  $last_done_key+1<count($joblist) ){
                 $currentJob=$joblist[$last_done_key+1];
             }
         } 
         try{
+            echo "starting $currentJob\n";
             $finished=$this->{$currentJob}();
             if( $finished ){
                 $this->settings->lastDoneJob=$currentJob;
                 $this->updateSettings($this->settings);
+                echo "done $currentJob\n";
             }
         } catch (Exception $ex) {
             $this->log($ex);
             echo $ex;
         }
     }
+    
+    public function productSync(){
+        $MoedeloSyncProduct=$this->Hub->load_model('MoedeloSyncProduct');
+        $MoedeloSyncProduct->setGateway( $this->settings->gateway_url.'stock/api/v1/' );
+        $MoedeloSyncProduct->setApiKey( $this->settings->gateway_md_apikey );
+
+        $MoedeloSyncProduct->checkout(1);
+        $MoedeloSyncProduct->replicate(1);
+    }
+    
+    
     
     public function productCheckout(){
         $MoedeloSyncProduct=$this->Hub->load_model('MoedeloSyncProduct');
@@ -230,6 +242,8 @@ class MoedeloSync extends Catalog {
         $MoedeloSyncActSell->replicate();
         //$MoedeloSyncActSell->localUpdate( 26493,0,0 );
     }
+    
+
     
     
     

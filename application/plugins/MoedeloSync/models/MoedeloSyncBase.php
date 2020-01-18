@@ -190,7 +190,37 @@ class MoedeloSyncBase extends Catalog{
     
     
     
-    
+    /**
+     * Executes needed sync operations
+     */
+    public function replicate(){
+        $sql_action_list="
+            SELECT
+                entry_id,
+                local_id,
+                remote_id,
+                IF( local_id IS NULL, 'localInsert',
+                IF( remote_id IS NULL, 'remoteInsert',
+                IF( local_deleted=1, 'remoteDelete',
+                IF( remote_deleted=1, 'localDelete',
+                IF( COALESCE(local_hash,'')<>COALESCE(remote_hash,''),
+                IF( local_tstamp=remote_tstamp, 'remoteInspect',
+                IF( local_tstamp<remote_tstamp, 'localUpdate', 'remoteUpdate')),
+                'SKIP'))))) sync_action
+            FROM
+                plugin_sync_entries doc_pse
+            WHERE 
+                sync_destination='{$this->doc_config->sync_destination}'
+            ";
+        $action_list=$this->get_list($sql_action_list);
+        print_r($action_list);
+        foreach( $action_list as $action ){
+            if( method_exists( $this, $action->sync_action) ){
+                $this->{$action->sync_action}($action->local_id,$action->remote_id,$action->entry_id);
+            }
+        }
+        return true;
+    }
     protected function remoteCheckout( bool $is_full=false ){
         $sync_destination=$this->doc_config->sync_destination;
         $remote_function=$this->doc_config->remote_function;
@@ -260,7 +290,9 @@ class MoedeloSyncBase extends Catalog{
             'name'=>null
         ];
         $response=$this->apiExecute( $remote_function, 'GET', $request);
-        //print_r($request);print_r($response);
+        if( $response->httpcode!=200 || 0 ){
+            print_r($request);print_r($response);
+        }
         $list=[];
         if( isset($response->response->ResourceList) ){
             $list=$response->response->ResourceList;

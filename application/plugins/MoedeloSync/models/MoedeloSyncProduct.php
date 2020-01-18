@@ -1,174 +1,220 @@
 <?php
 require_once 'MoedeloSyncBase.php';
 class MoedeloSyncProduct extends MoedeloSyncBase{
-    private $sync_destination='moedelo_products';
-    
-    public function checkout(){
-        $request=[
-            'pageNo'=>1,
-            'pageSize'=>100000,
-            'afterDate'=>null,
-            'beforeDate'=>null,
-            'name'=>null
+    function __construct(){
+        parent::__construct();
+        $this->doc_config=(object) [
+            'remote_function'=>'good',
+            'sync_destination'=>'moedelo_products',
+            
+            'nomenclature_id'=>'11780959',
+            'usd_rate'=>0,
+            'vat_rate'=>20,
+            'vat_position'=>2,
+            'product_type'=>0
+            
         ];
-        if( $request['pageNo']==1 ){
-            $this->query("UPDATE plugin_sync_entries SET remote_hash=NULL,remote_tstamp=NULL WHERE sync_destination='$this->sync_destination'");
-        }
-        $product_list=$this->apiExecute( 'good', 'GET', $request);
-        foreach($product_list->response->ResourceList as $product){
-            $this->query("
-                SET
-                    @local_id:=COALESCE((SELECT product_id FROM prod_list WHERE product_code='$product->Article'),0),
-                    @remote_hash:=MD5(CONCAT(
-                        '$product->Name',
-                        '$product->Article',
-                        '$product->UnitOfMeasurement',
-                        ROUND('$product->SalePrice',5),
-                        '$product->Producer'
-                        )),
-                    @remote_id:='$product->Id'
-                ");
-            $sql="INSERT INTO
-                    plugin_sync_entries
-                SET
-                    sync_destination='$this->sync_destination',
-                    local_id=@local_id,
-                    remote_id=@remote_id,
-                    remote_hash=@remote_hash
-                ON DUPLICATE KEY UPDATE
-                    remote_hash=@remote_hash
-                ";
-            $this->query($sql);
-        }
-        if( count($product_list)<$request['pageSize'] ){
-            $this->query("DELETE FROM plugin_sync_entries WHERE sync_destination='$this->sync_destination' AND remote_hash IS NULL AND remote_tstamp IS NULL");
-            return true;//down sync is finished
-        }
-        return false;
     }
     
+    /**
+     * Finds changes that needs to be made on local and remote
+     */
+    public function checkout( $is_full ){
+        $this->remoteCheckout($is_full);
+        $this->localCheckout($is_full);
+    }
+    /**
+     * Executes needed sync operations
+     */
     public function replicate(){
-        $remote_insert_list = $this->getList('REMOTE_INSERT');
-        $remote_update_list = $this->getList('REMOTE_UPDATE');
-        $remote_delete_list = $this->getList('REMOTE_DELETE');
-        
-        $rows_done=0;
-        $rows_done += $this->send($remote_insert_list, 'REMOTE_INSERT');
-        $rows_done += $this->send($remote_update_list, 'REMOTE_UPDATE');
-        $rows_done += $this->send($remote_delete_list, 'REMOTE_DELETE');
-        return $rows_done;
+        return parent::replicate();
     }
     
-    private function getList($mode){
-        $nomenclature_id = '11780959';
-        $usd_rate=$this->Hub->pref('usd_ratio');
-        $vat_rate = 20;
-        $vat_position = 2;
-        $product_type=0;
-        
-        $limit = 50;
-        
-        $select='';
-        $table='';
-        $where = '';
-        $having='';
-
-        switch( $mode ){
-            case 'REMOTE_INSERT':
-                $select=',pl.product_id';
-                $table = 'LEFT JOIN
-                    plugin_sync_entries pse ON pl.product_id=pse.local_id';
-                $where= "WHERE local_id IS NULL";
-                break;
-            case 'REMOTE_UPDATE':
-                $select=',pse.*';
-                $table = 'JOIN
-                    plugin_sync_entries pse ON pl.product_id=pse.local_id';
-                $where= "WHERE sync_destination='$this->sync_destination'";
-                $having="HAVING current_hash<>COALESCE(local_hash,'') OR current_hash<>COALESCE(remote_hash,'')";
-                break;
-            case 'REMOTE_DELETE':
-                $select=',pse.*';
-                $table = 'RIGHT JOIN
-                    plugin_sync_entries pse ON pl.product_id=pse.local_id';
-                $where= "WHERE sync_destination='$this->sync_destination' AND product_id IS NULL";
-                break;
-        }
-        $sql="
+    
+    ///////////////////////////////////////////////////////////////
+    // REMOTE SECTION
+    ///////////////////////////////////////////////////////////////
+    
+    /**
+     * @param bool $is_full
+     * Checks for updates on remote
+     */
+    public function remoteCheckout( bool $is_full=false ){
+        parent::remoteCheckout( $is_full );
+    }
+    /**
+     * Inserts new record on remote
+     */
+    public function remoteInsert( $local_id, $remote_id, $entry_id ){
+        return parent::remoteInsert($local_id, $remote_id, $entry_id);
+    }
+    /**
+     * Updates existing record on remote
+     */
+    public function remoteUpdate( $local_id, $remote_id, $entry_id ){
+        return parent::remoteUpdate($local_id, $remote_id, $entry_id);
+    }
+    
+    /** 
+     * Deletes existing record on remote
+     */
+    public function remoteDelete( $local_id, $remote_id, $entry_id ){
+        return parent::remoteDelete($local_id, $remote_id, $entry_id);
+    }
+    
+    /**
+     * 
+     * @param int $remote_id
+     * @return type
+     * Gets existing record from remote
+     */
+    public function remoteGet( $remote_id ){
+        return parent::remoteGet($remote_id);
+    }
+    /**
+     * 
+     * @param object $entity
+     * @return type md5 hash
+     * Calculates remote entity hash
+     */
+    public function remoteHashCalculate( $entity ){
+        $entity->SalePrice= number_format($entity->SalePrice, 5,'.','');
+        $check="{$entity->Article};{$entity->UnitOfMeasurement};{$entity->SalePrice};{$entity->Producer};";
+        //echo "remote check-$check";
+        return md5($check);
+    }
+    /**
+     * 
+     * @param type $local_id
+     * @param type $remote_id
+     * @param type $entry_id
+     * Gets remote document and fetches its modify date. This function resolves locks when hashes different but tstamps same.
+     */
+    public function remoteInspect( $local_id, $remote_id, $entry_id ){
+        $this->remoteUpdate( $local_id, $remote_id, $entry_id );
+    }
+    
+    
+    
+    
+    
+    ///////////////////////////////////////////////////////////////
+    // LOCAL SECTION
+    ///////////////////////////////////////////////////////////////
+    
+    /**
+     * 
+     * @param bool $is_full
+     * Checks for updates on local
+     */
+    public function localCheckout( bool $is_full=false ){
+        $this->doc_config->usd_rate=$this->Hub->pref('usd_ratio');
+        $sql_local_docs="
             SELECT
-                inner_table.*,
-                MD5(CONCAT(Name,Article,UnitOfMeasurement,SalePrice,Producer)) current_hash
-            FROM
+                '{$this->doc_config->sync_destination}' sync_destination,
+                local_id,
+                MD5(CONCAT(Article,';',UnitOfMeasurement,';',ROUND(SalePrice,5),';',Producer,';')) local_hash,
+                local_tstamp,
+                0 local_deleted,
+                remote_id
+            FROM 
             (SELECT
-                $nomenclature_id NomenclatureId,
+                {$this->doc_config->nomenclature_id} NomenclatureId,
                 ru Name,
                 se.product_code Article,
                 product_unit UnitOfMeasurement,
-                $vat_rate Nds,
-                ROUND(IF(pre.curr_code='USD',$usd_rate,1)*sell, 2) SalePrice,
-                $product_type Type,
-                $vat_position NdsPositionType,
-                analyse_brand Producer
-                $select
+                {$this->doc_config->vat_rate} Nds,
+                ROUND(IF(pre.curr_code='USD',{$this->doc_config->usd_rate},1)*sell, 2) SalePrice,
+                {$this->doc_config->product_type} Type,
+                {$this->doc_config->vat_position} NdsPositionType,
+                analyse_brand Producer,
+                
+                pl.product_id local_id,
+                pse.remote_id,
+                GREATEST(se.modified_at,pl.modified_at,pre.modified_at) local_tstamp
             FROM
                 stock_entries se
                     JOIN
                 prod_list pl ON se.product_code=pl.product_code
                     JOIN
                 price_list pre ON se.product_code=pre.product_code AND label=''
-                    $table
-            $where) AS inner_table
-            $having
-            LIMIT $limit";
-        return $this->get_list($sql);
+                    LEFT JOIN
+                plugin_sync_entries pse ON pl.product_id=pse.local_id AND pse.sync_destination='{$this->doc_config->sync_destination}'
+            ) inner_table";
+        if( $is_full ){
+            $afterDate='';
+            $this->query("UPDATE plugin_sync_entries SET local_deleted=1 WHERE sync_destination='{$this->doc_config->sync_destination}'");
+        } else {
+            $afterDate='';
+        }
+        $sql_update_local_docs="
+            INSERT INTO
+                plugin_sync_entries
+            (sync_destination,local_id,local_hash,local_tstamp,local_deleted,remote_id)
+            SELECT * FROM ($sql_local_docs) local_sync_list
+            ON DUPLICATE KEY UPDATE 
+                local_hash=local_sync_list.local_hash,local_tstamp=local_sync_list.local_tstamp,local_deleted=0
+            ";
+        $this->query("$sql_update_local_docs");
+        //print_r($this->get_list($sql_local_docs));
+    }
+    /**
+     * Inserts new record on local
+     */
+    public function localInsert( $local_id, $remote_id, $entry_id ){
+        $this->remoteDelete( $local_id, $remote_id, $entry_id );
     }
     
-    private function send($product_list, $mode){
-        if( empty($product_list) ){
-            return 0;
-        }
-        $rows_done = 0;
-        foreach($product_list as $product){
-            $product_object = [
-                "NomenclatureId" => $product->NomenclatureId,
-                "Name" => $product->Name,
-                "Article" => $product->Article,
-                "UnitOfMeasurement" => $product->UnitOfMeasurement,
-                "Nds" => $product->Nds,
-                "SalePrice" => $product->SalePrice,
-                "Type" => $product->Type,
-                "NdsPositionType" => $product->NdsPositionType,
-                "Producer" => $product->Producer
-            ];
-            if($mode === 'REMOTE_INSERT'){
-                $response = $this->apiExecute('good', 'POST', $product_object)->response;
-                if( isset($response->Id) ){
-                    $this->logInsert($this->sync_destination,$product->product_id,$product->current_hash,$response->Id);
-                    $rows_done++;
-                } else {
-                    $this->log("{$this->sync_destination} INSERT is unsuccessfull product_code:{$product->Article}");
-                }
-            } else 
-            if($mode === 'REMOTE_UPDATE'){
-                $httpcode = $this->apiExecute('good', 'PUT', $product_object, $product->remote_id)->httpcode;
-                if( $httpcode==200 ){
-                    $this->logUpdate($product->entry_id, $product->current_hash);
-                    $rows_done++;
-                } else {
-                    $this->log("{$this->sync_destination} UPDATE is unsuccessfull product_code:{$product->Article}");
-                }
-            } else 
-            if($mode === 'REMOTE_DELETE'){
-                $httpcode = $this->apiExecute('good', 'REMOTE_DELETE', null, $product->remote_id)->httpcode;
-                $this->logDelete($product->entry_id);
-                $rows_done++;
-                if( $httpcode!=204 ) {
-                    $this->log("{$this->sync_destination} DELETE is unsuccessfull code:$httpcode product_code:{$product->Article}");
-                }
-            }
-        }
-        return $rows_done;
+    /**
+     * Updates existing record on local
+     */
+    public function localUpdate( $local_id, $remote_id, $entry_id ){
+        $this->remoteUpdate( $local_id, $remote_id, $entry_id );
     }
     
+    /**
+     * Deletes existing record on local
+     */
+    public function localDelete( $local_id, $remote_id, $entry_id ){
+        $this->remoteInsert( $local_id, $remote_id, $entry_id );
+    }
+
+//    protected function localHashCalculate( $entity ){
+//        $check="{$entity->Article};{$entity->UnitOfMeasurement};".round($entity->SalePrice,5).";{$entity->Producer};";
+//        echo "local check-$check";
+//        return md5($check);
+//    }
     
+    
+    public function localGet( $local_id ){
+        $this->doc_config->usd_rate=$this->Hub->pref('usd_ratio');
+        $sql_local="
+            SELECT
+                {$this->doc_config->nomenclature_id} NomenclatureId,
+                ru Name,
+                se.product_code Article,
+                product_unit UnitOfMeasurement,
+                {$this->doc_config->vat_rate} Nds,
+                ROUND(IF(pre.curr_code='USD',{$this->doc_config->usd_rate},1)*sell, 2) SalePrice,
+                {$this->doc_config->product_type} Type,
+                {$this->doc_config->vat_position} NdsPositionType,
+                analyse_brand Producer,
+                
+                se.product_code Number,
+                pl.product_id local_id,
+                pse.remote_id,
+                GREATEST(se.modified_at,pl.modified_at,pre.modified_at) local_tstamp
+            FROM
+                stock_entries se
+                    JOIN
+                prod_list pl ON se.product_code=pl.product_code
+                    JOIN
+                price_list pre ON se.product_code=pre.product_code AND label=''
+                    LEFT JOIN
+                plugin_sync_entries pse ON pl.product_id=pse.local_id AND pse.sync_destination='{$this->doc_config->sync_destination}'
+            WHERE
+                product_id='$local_id'
+           ";
+        return $this->get_row($sql_local);
+    }
 }
