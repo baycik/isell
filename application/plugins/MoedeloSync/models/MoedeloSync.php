@@ -11,19 +11,68 @@
  */
 
 
-class MoedeloSync extends PluginManager {
+class MoedeloSync extends Catalog {
     
     function __construct() {
         parent::__construct();
-        $this->settings=$this->settingsDataFetch('MoedeloSync')->plugin_settings;
+        $this->settings=$this->getSettings();
         header("Content-type:text/plain");
+        if( empty($this->settings->gateway_url) || empty($this->settings->gateway_md_apikey) ){
+            throw new Exception('Gateway or API key is not set');
+        }
+    }
+    private function updateSettings($settings) {
+        $this->settings = $settings;
+        $encoded = json_encode($settings, JSON_UNESCAPED_UNICODE);
+        $sql = "
+            UPDATE
+                plugin_list
+            SET 
+                plugin_settings = '$encoded'
+            WHERE plugin_system_name = 'MoedeloSync'    
+            ";
+        $this->query($sql);
+        return $this->getSettings();
+    }
+
+    private function getSettings() {
+        $sql = "
+            SELECT
+                plugin_settings
+            FROM 
+                plugin_list
+            WHERE plugin_system_name = 'MoedeloSync'    
+            ";
+        $row = $this->get_row($sql);
+        return json_decode($row->plugin_settings);
     }
     
+    public function install(){
+        $this->Hub->set_level(4);
+	$install_file=__DIR__."/../install/install.sql";
+	$this->load->model('Maintain');
+	return $this->Maintain->backupImportExecute($install_file);
+    }
+    
+    public function uninstall(){
+        $this->Hub->set_level(4);
+	$uninstall_file=__DIR__."/../install/uninstall.sql";
+	$this->load->model('Maintain');
+	return $this->Maintain->backupImportExecute($uninstall_file);
+    }
+    public function activate(){
+        
+    }
+    public function deactivate(){
+        
+    }    
+
+
     public function tick(){
         $joblist=[
             'productCheckout',
             'productReplicate',
-    /*        'companyCheckout',
+    /*      'companyCheckout',
             'companyReplicate',
             'stocksCheckout',
             'stocksReplicate',
@@ -36,12 +85,24 @@ class MoedeloSync extends PluginManager {
             'updReplicate'    */
         ];
         
+
+        $currentJob=$joblist[0];
         if( isset($this->settings->lastDoneJob) ){
-            
+            $last_done_key=array_search($this->settings->lastDoneJob,$joblist);
+            if( $last_done_key &&  $last_done_key<count($joblist) ){
+                $currentJob=$joblist[$last_done_key+1];
+            }
+        } 
+        try{
+            $finished=$this->{$currentJob}();
+            if( $finished ){
+                $this->settings->lastDoneJob=$currentJob;
+                $this->updateSettings($this->settings);
+            }
+        } catch (Exception $ex) {
+            $this->log($ex);
+            echo $ex;
         }
-        
-        
-        
     }
     
     public function productCheckout(){
@@ -184,32 +245,7 @@ class MoedeloSync extends PluginManager {
     
     
 
-    public $updateSettings = ['settings' => 'json'];
 
-    public function updateSettings($settings) {
-        $this->settings = $settings;
-        $encoded = json_encode($settings, JSON_UNESCAPED_UNICODE);
-        $sql = "
-            UPDATE
-                plugin_list
-            SET 
-                plugin_settings = '$encoded'
-            WHERE plugin_system_name = 'CSVExporter'    
-            ";
-        $this->query($sql);
-        return $this->getSettings();
-    }
 
-    public function getSettings() {
-        $sql = "
-            SELECT
-                plugin_settings
-            FROM 
-                plugin_list
-            WHERE plugin_system_name = 'CSVExporter'    
-            ";
-        $row = $this->get_row($sql);
-        return json_decode($row->plugin_settings);
-    }
 
 }
