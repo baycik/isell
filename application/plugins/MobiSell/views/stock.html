@@ -813,7 +813,7 @@
                     <div class="product-item-grid {{if price_promo}}product-item-promo{{/if}}" >
                         <div class='product-image-column image-{{#}}' data-row-index="{{#}}" >
                             <a href="#product.html#product_id={{product_id}}">
-                                <img src="../Storage/image_flush/?size=150x150&path=/dynImg/{{product_img}}" >
+                                <img src="../Storage/image_flush/?size=250x250&path=/dynImg/{{product_img}}" >
                             </a>
                         </div>
                         <div class="product-name-column">
@@ -831,7 +831,13 @@
                                     <b>{{price_final|format}}</b>
                                 </div>
                                 <div class="four wide column" style="text-align: right">
+                                    {{if leftover|more>0}}
+                                    <span>
+                                    {{else}}
+                                    <span style="color:red">
+                                    {{/if}}
                                     {{leftover}}{{product_unit}}
+                                    </span>
                                 </div>
                             </div>
                         </div>

@@ -849,7 +849,7 @@ class Stock extends Catalog {
                 break;
             case 'popularity':
             default :
-                $order_by='popularity';
+                $order_by='leftover=0,price_promo>0 DESC,popularity';
         }
         if( $sortdir=='ASC' ){
             $order_by.=" ASC";
@@ -890,11 +890,12 @@ class Stock extends Catalog {
             pl.product_unit,
             pl.analyse_brand,
             pl.analyse_type,
+            pl.analyse_class,
             se.product_quantity leftover,
             se.product_img,
             se.fetch_count,
             se.fetch_stamp,
-            fetch_count popularity,
+            fetch_count-DATEDIFF(NOW(),COALESCE(se.fetch_stamp,se.modified_at)) popularity,
             se.parent_id,
             prl_basic.sell*IF(prl_basic.curr_code='USD',$usd_ratio,1) price_fixed,
             prl_basic.sell*IF(prl_basic.curr_code='USD',$usd_ratio,1)*IF(discount,discount,1) price_basic,
@@ -976,6 +977,9 @@ class Stock extends Catalog {
         $this->matchesListCreateTemporary($where);
         $this->matchesFilterBuild();
         $matches=$this->matchesGet($order_by,$limit,$offset);
+        foreach($matches as &$product){
+            $product->product_name= htmlentities($product->product_name);
+        }
         $this->immediateResponse($matches);
         
         $this->matchesFilterBuildCount();
