@@ -849,7 +849,7 @@ class Stock extends Catalog {
                 break;
             case 'popularity':
             default :
-                $order_by='leftover=0,price_promo>0 DESC,popularity';
+                $order_by='popularity';
         }
         if( $sortdir=='ASC' ){
             $order_by.=" ASC";
