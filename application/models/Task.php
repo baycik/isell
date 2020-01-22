@@ -141,7 +141,7 @@ class Task extends Events {
 	$sql="
 	    SELECT
 		*,
-		DATE_FORMAT(event_date,'%d.%m.%Y %H:%i:%s') event_date_dmyt,
+		DATE_FORMAT(event_date,'%d.%m.%Y') event_date_dmy,
 		(SELECT nick FROM user_list WHERE user_id=created_by) created_by,
 		(SELECT nick FROM user_list WHERE user_id=modified_by) modified_by
 	    FROM

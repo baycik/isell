@@ -520,7 +520,7 @@ class Stock extends Catalog {
             LIMIT $limit OFFSET $offset) t
         ";
         $rows=$this->get_list($sql);
-        $rows[]=$this->get_row("SELECT 'ОЈ' product_name,@reserved_sum reserved,@awaiting_sum awaiting");
+        $rows[]=$this->get_row("SELECT 'Σ' product_name,@reserved_sum reserved,@awaiting_sum awaiting");
         return $rows;
     }
     
@@ -534,9 +534,9 @@ class Stock extends Catalog {
             $day_limit=$this->Hub->pref('awaiting_limit');
         }
         $stamp=time()+60*60*24*($day_limit?$day_limit:3);
-        $alert="РЎС‡РµС‚ в„–".$doc->doc_num." РґР»СЏ ".$this->Hub->pcomp('company_name')." СЃРЅСЏС‚ СЃ СЂРµР·РµСЂРІР°";
-        $name="РЎРЅСЏС‚РёРµ СЃ СЂРµР·РµСЂРІР°";
-        $description="$name СЃС‡РµС‚Р° в„–".$doc->doc_num." РґР»СЏ ".$this->Hub->pcomp('company_name');
+        $alert="Документ №".$doc->doc_num." для ".$this->Hub->pcomp('company_name')." снят с резерва";
+        $name="Снятие с резерва";
+        $description="$name Снятие с резерва счета №".$doc->doc_num." для ".$this->Hub->pcomp('company_name');
         $event=[
             'doc_id'=>$doc->doc_id,
             'event_name'=>$name,
