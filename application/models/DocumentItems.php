@@ -306,7 +306,7 @@ class DocumentItems extends DocumentCore{
 	$doc_id=$this->doc('doc_id');
 	return $this->get_value("SELECT JSON_EXTRACT(doc_settings,'$key') FROM document_list WHERE doc_id='$doc_id'");	
     }
-
+    public $entryDocumentCommit=['int'];
     public function entryDocumentCommit( $doc_id ){
 	$this->selectDoc($doc_id);
         $passive_company_id=$this->doc('passive_company_id');
