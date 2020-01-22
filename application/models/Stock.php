@@ -557,7 +557,7 @@ class Stock extends Catalog {
                     [
                         'model'=>'Chat',
                         'method'=>'addMessage',
-                        'arguments'=>[$user_id,$alert]
+                        'arguments'=>[$user_id,$alert,true]
                     ],
                     [
                         'model'=>'Events',
