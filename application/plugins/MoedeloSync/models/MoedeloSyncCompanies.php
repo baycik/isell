@@ -130,6 +130,7 @@ class MoedeloSyncCompanies extends MoedeloSyncBase{
             return 0;
         }
         $rows_done = 0;
+        //echo $mode;print_r($company_list);
         foreach($company_list as $company){
             $company_object = [
                 "Inn" => $company->Inn,
@@ -167,7 +168,7 @@ class MoedeloSyncCompanies extends MoedeloSyncBase{
                 $rows_done++;
                 if( $response->httpcode!=204 ) {
                     $error=$this->getValidationErrors($response);
-                    $this->log("{$this->sync_destination} DELETE is unsuccessfull (HTTP CODE:$response->httpcode '$error') company_name:{$company->Name}");
+                    $this->log("{$this->sync_destination} DELETE is unsuccessfull (HTTP CODE:$response->httpcode '$error') company_name:".($response->response->Name ?? ''));
                 }
             }
         }

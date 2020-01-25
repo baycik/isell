@@ -157,6 +157,11 @@ class MoedeloSyncBase extends Catalog{
         return $this->query($sql);
     }
     
+    public function log( $message ){
+        parent::log($message);
+        echo "$message\n";
+    }
+    
     protected function getValidationErrors( $response ){
         $error_text='';
         if( isset($response->response->ValidationErrors) ){

@@ -16,11 +16,11 @@ class MoedeloSync extends Catalog {
     function __construct() {
         parent::__construct();
         $this->settings=$this->getSettings();
+        //print_r($this->settings);
     }
     
     private function updateSettings($settings) {
-        $this->settings = $settings;
-        $encoded = json_encode($settings, JSON_UNESCAPED_UNICODE);
+        $encoded = json_encode($settings);
         $sql = "
             UPDATE
                 plugin_list
@@ -29,7 +29,8 @@ class MoedeloSync extends Catalog {
             WHERE plugin_system_name = 'MoedeloSync'    
             ";
         $this->query($sql);
-        return $this->getSettings();
+        $this->settings=$this->getSettings();
+        return $this->settings;
     }
 
     private function getSettings() {
@@ -41,7 +42,8 @@ class MoedeloSync extends Catalog {
             WHERE plugin_system_name = 'MoedeloSync'    
             ";
         $row = $this->get_row($sql);
-        return json_decode($row->plugin_settings);
+        $settings=json_decode($row->plugin_settings);
+        return $settings;
     }
     
     public function install(){
@@ -71,10 +73,10 @@ class MoedeloSync extends Catalog {
         if( empty($this->settings->gateway_url) || empty($this->settings->gateway_md_apikey) ){
             throw new Exception('Gateway or API key is not set');
         }
-        $full_checkout_lap=" + 1 days";
+        $full_interval=" + 1 days";
         $joblist=[
-            'productCheckout',
-            'productReplicate',
+            //'productCheckout',
+            //'productReplicate',
             'companyCheckout',
             'companyReplicate',
     /*      'stocksCheckout',
@@ -98,28 +100,21 @@ class MoedeloSync extends Catalog {
         } 
         try{
             echo "starting $currentJob\n";
-            $is_checkout_job=strpos($currentJob, 'Checkout')>0;
-            
-            
-            if( $is_checkout_job ){
-                /*
-                 * This is checkout function so we need to trigger it as full checkout in $full_checkout_lap intervals
-                 */
-                $next_full_launch=1;
-                if( isset($this->settings->{$currentJob.'LastFull'}) ){
-                    $next_full_launch=strtotime($this->settings->{$currentJob.'LastFull'}. ' + 1 days');
-                }
-                $is_full=$next_full_launch<time()?1:0;
+            $next_full_launch=1;
+            if( isset($this->settings->{$currentJob.'LastFull'}) ){//Actually is_full=1 only needed for checkouts
+                $next_full_launch=strtotime($this->settings->{$currentJob.'LastFull'}. $full_interval);
             }
-            
-            
-            
-            
-            $finished=$this->{$currentJob}();
+            $is_full=$next_full_launch<time()?1:0;
+            $finished=$this->{$currentJob}($is_full);
             if( $finished ){
+                if( $is_full ){
+                    $this->settings->{$currentJob.'LastFull'}=time();
+                }
                 $this->settings->lastDoneJob=$currentJob;
                 $this->updateSettings($this->settings);
                 echo "done $currentJob\n";
+            } else {
+                echo "undone. continue on next tick: $currentJob\n";
             }
         } catch (Exception $ex) {
             $this->log($ex);
