@@ -1,6 +1,6 @@
 <?php
 
-/* Group Name: РЎРёРЅС…СЂРѕРЅРёР·Р°С†РёСЏ
+/* Group Name: Синхронизация
  * User Level: 3
  * Plugin Name: MoedeloSync
  * Plugin URI: http://isellsoft.com
@@ -16,11 +16,8 @@ class MoedeloSync extends Catalog {
     function __construct() {
         parent::__construct();
         $this->settings=$this->getSettings();
-        header("Content-type:text/plain");
-        if( empty($this->settings->gateway_url) || empty($this->settings->gateway_md_apikey) ){
-            throw new Exception('Gateway or API key is not set');
-        }
     }
+    
     private function updateSettings($settings) {
         $this->settings = $settings;
         $encoded = json_encode($settings, JSON_UNESCAPED_UNICODE);
@@ -60,20 +57,27 @@ class MoedeloSync extends Catalog {
 	$this->load->model('Maintain');
 	return $this->Maintain->backupImportExecute($uninstall_file);
     }
+    
     public function activate(){
         
     }
+    
     public function deactivate(){
         
-    }    
-
+    }
 
     public function tick(){
+        header("Content-type:text/plain");
+        if( empty($this->settings->gateway_url) || empty($this->settings->gateway_md_apikey) ){
+            throw new Exception('Gateway or API key is not set');
+        }
+        $full_checkout_lap=" + 1 days";
         $joblist=[
-            'productSync',
-    /*      'companyCheckout',
+            'productCheckout',
+            'productReplicate',
+            'companyCheckout',
             'companyReplicate',
-            'stocksCheckout',
+    /*      'stocksCheckout',
             'stocksReplicate',
             'billCheckout',
             'billReplicate',
@@ -94,6 +98,23 @@ class MoedeloSync extends Catalog {
         } 
         try{
             echo "starting $currentJob\n";
+            $is_checkout_job=strpos($currentJob, 'Checkout')>0;
+            
+            
+            if( $is_checkout_job ){
+                /*
+                 * This is checkout function so we need to trigger it as full checkout in $full_checkout_lap intervals
+                 */
+                $next_full_launch=1;
+                if( isset($this->settings->{$currentJob.'LastFull'}) ){
+                    $next_full_launch=strtotime($this->settings->{$currentJob.'LastFull'}. ' + 1 days');
+                }
+                $is_full=$next_full_launch<time()?1:0;
+            }
+            
+            
+            
+            
             $finished=$this->{$currentJob}();
             if( $finished ){
                 $this->settings->lastDoneJob=$currentJob;
@@ -106,22 +127,22 @@ class MoedeloSync extends Catalog {
         }
     }
     
-    public function productSync(){
+//    public function productSync(){
+//        $MoedeloSyncProduct=$this->Hub->load_model('MoedeloSyncProduct');
+//        $MoedeloSyncProduct->setGateway( $this->settings->gateway_url.'stock/api/v1/' );
+//        $MoedeloSyncProduct->setApiKey( $this->settings->gateway_md_apikey );
+//
+//        $MoedeloSyncProduct->checkout(1);
+//        $MoedeloSyncProduct->replicate();
+//    }
+    
+    
+    
+    public function productCheckout( $is_full ){
         $MoedeloSyncProduct=$this->Hub->load_model('MoedeloSyncProduct');
         $MoedeloSyncProduct->setGateway( $this->settings->gateway_url.'stock/api/v1/' );
         $MoedeloSyncProduct->setApiKey( $this->settings->gateway_md_apikey );
-
-        $MoedeloSyncProduct->checkout(1);
-        $MoedeloSyncProduct->replicate(1);
-    }
-    
-    
-    
-    public function productCheckout(){
-        $MoedeloSyncProduct=$this->Hub->load_model('MoedeloSyncProduct');
-        $MoedeloSyncProduct->setGateway( $this->settings->gateway_url.'stock/api/v1/' );
-        $MoedeloSyncProduct->setApiKey( $this->settings->gateway_md_apikey );
-        $finished=$MoedeloSyncProduct->checkout();
+        $finished=$MoedeloSyncProduct->checkout($is_full);
         return $finished;
     }
     

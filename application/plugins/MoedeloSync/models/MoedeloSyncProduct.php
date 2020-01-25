@@ -20,8 +20,7 @@ class MoedeloSyncProduct extends MoedeloSyncBase{
      * Finds changes that needs to be made on local and remote
      */
     public function checkout( $is_full ){
-        $this->remoteCheckout($is_full);
-        $this->localCheckout($is_full);
+        return $this->remoteCheckout($is_full) && $this->localCheckout($is_full);
     }
     /**
      * Executes needed sync operations
@@ -40,7 +39,7 @@ class MoedeloSyncProduct extends MoedeloSyncBase{
      * Checks for updates on remote
      */
     public function remoteCheckout( bool $is_full=false ){
-        parent::remoteCheckout( $is_full );
+        return parent::remoteCheckout( $is_full );
     }
     /**
      * Inserts new record on remote
@@ -79,7 +78,7 @@ class MoedeloSyncProduct extends MoedeloSyncBase{
      */
     public function remoteHashCalculate( $entity ){
         $entity->SalePrice= number_format($entity->SalePrice, 5,'.','');
-        $check="{$entity->Article};{$entity->UnitOfMeasurement};{$entity->SalePrice};{$entity->Producer};";
+        $check="{$entity->Article};{$entity->Name};{$entity->UnitOfMeasurement};{$entity->SalePrice};{$entity->Producer};{$entity->SalePrice};";
         //echo "remote check-$check";
         return md5($check);
     }
@@ -113,7 +112,7 @@ class MoedeloSyncProduct extends MoedeloSyncBase{
             SELECT
                 '{$this->doc_config->sync_destination}' sync_destination,
                 local_id,
-                MD5(CONCAT(Article,';',UnitOfMeasurement,';',ROUND(SalePrice,5),';',Producer,';')) local_hash,
+                MD5(CONCAT(Article,';',Name,';',UnitOfMeasurement,';',ROUND(SalePrice,5),';',Producer,';',SalePrice,';')) local_hash,
                 local_tstamp,
                 0 local_deleted,
                 remote_id
@@ -157,6 +156,7 @@ class MoedeloSyncProduct extends MoedeloSyncBase{
             ";
         $this->query("$sql_update_local_docs");
         //print_r($this->get_list($sql_local_docs));
+        return true;
     }
     /**
      * Inserts new record on local
