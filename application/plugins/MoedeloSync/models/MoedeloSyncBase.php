@@ -405,4 +405,18 @@ class MoedeloSyncBase extends Catalog{
         }
         return false;
     }
+    
+    
+    
+    
+    protected function setPluginData( array $path, string $value ){
+        
+    }
+    
+    protected function getPluginData( array $path ){
+        
+    }
+    
+    
+    
 }

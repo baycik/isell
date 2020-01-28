@@ -15,6 +15,7 @@ class MoedeloSyncCompanies extends MoedeloSyncBase{
             $this->query("UPDATE plugin_sync_entries SET remote_hash=NULL,remote_tstamp=NULL WHERE sync_destination='$this->sync_destination'");
         }
         $company_list=$this->apiExecute( 'kontragent', 'GET', $request);
+        print_r($company_list->response->ResourceList);
         foreach($company_list->response->ResourceList as $company){
             $this->query("
                 SET

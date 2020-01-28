@@ -149,11 +149,11 @@ class MoedeloSync extends Catalog {
         return $finished;
     }
     
-    public function companyCheckout(){
+    public function companyCheckout( $is_full ){
         $MoedeloSyncCompanies=$this->Hub->load_model('MoedeloSyncCompanies');
         $MoedeloSyncCompanies->setGateway( $this->settings->gateway_url.'kontragents/api/v1/' );
         $MoedeloSyncCompanies->setApiKey( $this->settings->gateway_md_apikey );
-        $finished=$MoedeloSyncCompanies->checkout();
+        $finished=$MoedeloSyncCompanies->checkout( $is_full );
         return $finished;
     }
     
