@@ -354,9 +354,9 @@ class StockBuyManager extends Catalog{
     }
     private function orderChartTmpCreate(){
         $this->Hub->set_level(2);
-        $sql_clear="DROP  TABLE IF EXISTS tmp_supply_order_chart;";# TEMPORARY
-        $sql_prepare="CREATE  TABLE tmp_supply_order_chart AS (SELECT 
-                        product_code,
+        $sql_clear="DROP TEMPORARY TABLE IF EXISTS tmp_supply_order_chart;";# TEMPORARY
+        $sql_prepare="CREATE TEMPORARY TABLE tmp_supply_order_chart AS (SELECT 
+                        sl.product_code,
                         supplier_id,
                         (SELECT label FROM companies_tree JOIN companies_list USING(branch_id) WHERE company_id=spl.supplier_company_id) supplier_company_label,
                         supply_id,
@@ -370,16 +370,15 @@ class StockBuyManager extends Catalog{
                             JOIN
                         supply_list sl USING(supplier_id)
                             LEFT JOIN
-                        stock_entries se USING(product_code)
+                        stock_entries se ON sl.product_code=se.product_code AND se.product_wrn_quantity > se.product_quantity
                             LEFT JOIN
-                        document_entries de USING(product_code)
+                        document_entries de ON sl.product_code=de.product_code
                             LEFT JOIN
-                        document_list dl USING(doc_id)
+                        document_list dl ON dl.doc_id=de.doc_id AND doc_type=1 AND NOT is_commited AND dl.doc_status_id=2
                     WHERE 
-                        se.product_wrn_quantity>se.product_quantity
-                        AND NOT is_commited
-                        AND supply_leftover>0 
-                    GROUP BY product_code);";
+                        supply_leftover > 0
+                    GROUP BY supplier_id,product_code
+                    HAVING supply_need>0 OR supply_reserve>0);";
         $this->query($sql_clear);
         $this->query($sql_prepare);
     }
