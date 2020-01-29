@@ -144,7 +144,7 @@
 			{id: "product_quantity", field: "product_quantity", name: "Sımarış", width: 80, sortable: true, formatter:Order.frm.selectedRow, editor: Slick.Editors.Integer, cssClass: 'slick-align-right'},
 			{id: "supply_need", field: "supply_need", name: "İhtiyaç", width: 80, sortable: true, cssClass: 'slick-align-right'},
 			{id: "supply_reserve", field: "supply_reserve", name: "Yedek", width: 80, sortable: true, cssClass: 'slick-align-right'},
-			{id: "suggestion", field: "suggestion", name: "Tedarikçi variantları", width: 900, sortable: true, formatter: Order.selector.make}
+			{id: "suggestion", field: "suggestion", name: "Tedarikçi fiyat variantları", width: 900, sortable: true, formatter: Order.selector.make}
 		    ],
 		    options: {
 			editable: true,
@@ -392,8 +392,8 @@
 	    <img src="img/table16.png" style="width:16px;height: 16px;"> Заказ
 	</div>
 	<div style="float: right;" class="x-stock-buy-manager-summary-tools">
-	    <span class="icon-24 icon-delete" title="Удалить стоку" data-action="entryDelete"> </span>
-	    <span class="icon-24 icon-refresh" title="Обновить" data-action="reload"> </span> 
+	    <span class="icon-24 icon-delete" title="Satırnı sil" data-action="entryDelete"> </span>
+	    <span class="icon-24 icon-refresh" title="Yanıla" data-action="reload"> </span> 
 	</div>
 	<div id="supply_order_summary_ac" style="overflow-y: auto;clear: both;" class="covert">
 	    {{summary}}
@@ -406,7 +406,7 @@
 		    <label>Acım м3: <span style="font-size:14px">{{if volume_more|more>0}}>{{/if}}</span><input name="summary_volume" value="{{summary_volume|blank>}}"></label>
 		    <label>Ağılıq м3: <span style="font-size:14px">{{if weight_more|more>0}}>{{/if}}</span><input name="summary_weight" value="{{summary_weight|blank>}}"></label>
 		    <div style="background: rgba(255,255,255,.6);padding: 3px;"> 
-		    <button style="width:180px;margin: 5px;text-align: left" data-supplier-company-id="{{supplier_company_id}}"><img src="img/docnew.png" style="width:24px;height: 24px;"> Сформировать заказ</button>
+		    <button style="width:180px;margin: 5px;text-align: left" data-supplier-company-id="{{supplier_company_id}}"><img src="img/docnew.png" style="width:24px;height: 24px;"> Satırnı yarat</button>
 		    </div>
 		    {{/if}}
 		</div>
