@@ -11,7 +11,7 @@ EOT;
 $before[]=<<<EOT
 EOT;
 $after[]=<<<EOT
-\n  <div title="Менеджер закупок" href="StockBuyManager/views/stock_buy_manager_main.html" ></div>
+\n  <div title="Satın alma idarecisi" href="StockBuyManager/views/stock_buy_manager_main.html" ></div>
 EOT;
     
 $filename[]=<<<EOT
@@ -30,27 +30,15 @@ $after[]=<<<EOT
 		var params = Leftovers.table.currentParamsGet();
 		$.post("StockBuyManager/orderFromStock/", params, function (ok) {
 		    if (ok * 1) {
-			App.flash("Заказ загружен в менеджер закупок");
+			App.flash("Sımarış satın alma idarecisine yüklendi");
 		    } else {
-			App.flash("Заказ не сформирован");
+			App.flash("Sımarış yaratılmadı");
 		    }
 		});
 	    }
 EOT;
 
-$filename[]=<<<EOT
-views/stock/leftovers.html
-EOT;
-$search[]=<<<EOT
-<!--PLUGIN-BUTTONS-->
-EOT;
-$replace[]=<<<EOT
-EOT;
-$before[]=<<<EOT
-EOT;
-$after[]=<<<EOT
-<button data-action="send_to_buy_manager"><img src="img/docnew.png" style="width:24px;height: 24px;"> Отправить в менеджер закупок</button><br>
-EOT;
+
 
 $filename[]=<<<EOT
 views/trade/document.html

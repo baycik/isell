@@ -291,6 +291,23 @@ class StockBuyManager extends Catalog{
         return  $this->db->affected_rows();
     }
 
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     public $supplierDelete=['supplier_id'=>'int','also_products'=>'bool'];
     public function supplierDelete($supplier_id,$also_products){
         $this->Hub->set_level(2);
@@ -337,30 +354,42 @@ class StockBuyManager extends Catalog{
     }
     private function orderChartTmpCreate(){
         $this->Hub->set_level(2);
-        $sql_clear="DROP TEMPORARY TABLE IF EXISTS tmp_supply_order_chart;";# TEMPORARY
-        $sql_prepare="CREATE TEMPORARY TABLE tmp_supply_order_chart AS (SELECT 
+        $sql_clear="DROP  TABLE IF EXISTS tmp_supply_order_chart;";# TEMPORARY
+        $sql_prepare="CREATE  TABLE tmp_supply_order_chart AS (SELECT 
                         product_code,
                         supplier_id,
                         (SELECT label FROM companies_tree JOIN companies_list USING(branch_id) WHERE company_id=spl.supplier_company_id) supplier_company_label,
                         supply_id,
                         ROUND(supply_buy*(1-supplier_buy_discount/100)*(1+supplier_buy_expense/100),2) self,
-			ROUND(supply_buy*(1-supplier_buy_discount/100),2) supply_buy
+			ROUND(supply_buy*(1-supplier_buy_discount/100),2) supply_buy,
+                        supply_leftover,
+                        se.product_wrn_quantity-se.product_quantity supply_need,
+                        SUM(IF(dl.doc_status_id=2,de.product_quantity,0)) supply_reserve
                     FROM 
                         supplier_list spl
                             JOIN
                         supply_list sl USING(supplier_id)
+                            LEFT JOIN
+                        stock_entries se USING(product_code)
+                            LEFT JOIN
+                        document_entries de USING(product_code)
+                            LEFT JOIN
+                        document_list dl USING(doc_id)
                     WHERE 
-                        product_code IN (SELECT product_code FROM supply_order) );";
+                        se.product_wrn_quantity>se.product_quantity
+                        AND NOT is_commited
+                        AND supply_leftover>0 
+                    GROUP BY product_code);";
         $this->query($sql_clear);
         $this->query($sql_prepare);
     }
     
     
-    public $orderFetch=['offset'=>'int','limit'=>'int','sortby'=>'string','sortdir'=>'(ASC|DESC)','filter'=>'json'];
-    public function orderFetch($offset,$limit,$sortby,$sortdir,$filter=null){
+
+    public function orderFetch( int $offset, int $limit, string $sortby, string $sortdir, array $filter=null){
         $this->Hub->set_level(2);
 	if( empty($sortby) ){
-	    $sortby="entry_id";
+	    $sortby="product_code";
 	}
 	$having=$this->makeFilter($filter);
 	$this->orderChartTmpCreate();
@@ -371,24 +400,30 @@ class StockBuyManager extends Catalog{
                 ru product_name,
                 product_quantity,
                 product_comment,
-                supply_id,
-                (SELECT 
-                    CONCAT(IF(so.supply_id IS NULL,'#',''),GROUP_CONCAT(CONCAT_WS(':',CONCAT(IF(soc.supply_id=so.supply_id,'#',''),supplier_company_label),supply_id,self) ORDER BY self SEPARATOR '|')) 
+                analyse_class,
+                supply_need,
+                supply_reserve,
+                so.supply_id,
+                soc.supply_id suggested_supply_id,
+                    CONCAT(
+                    IF(so.supply_id IS NULL,'#',''),
+                        GROUP_CONCAT(
+                            CONCAT_WS(':',CONCAT(IF(soc.supply_id=so.supply_id,'#',''),supplier_company_label),soc.supply_id,self,supply_leftover)
+                        ORDER BY self SEPARATOR '|')
+                    ) suggestion
                 FROM 
-                    tmp_supply_order_chart soc 
-                WHERE soc.product_code=so.product_code
-		) suggestion
-                FROM 
-                    supply_order so
+                    tmp_supply_order_chart soc
+                        LEFT JOIN
+                    supply_order so  USING(product_code)
                         LEFT JOIN
                     prod_list USING(product_code)
+            GROUP BY product_code
             HAVING $having
-	    ORDER BY $sortby $sortdir
+	    ORDER BY analyse_class,$sortby $sortdir
 	    LIMIT $limit OFFSET $offset";
 	return $this->get_list($sql_fetch);
     }
 
-    public $orderSummaryFetch=[];
     public function orderSummaryFetch(){
         $this->Hub->set_level(2);
     	$this->orderTmpCreate();
@@ -417,9 +452,12 @@ class StockBuyManager extends Catalog{
 	return $this->create('supply_order',['product_code'=>'']);
     }
     
-    public $orderUpdate=['entry_id'=>'int','field'=>'string','value'=>'string'];
-    public function orderUpdate($entry_id,$field,$value){
+
+    public function orderUpdate( int $entry_id=null, string $field, string $value, string $product_code, int $suggested_supply_id ){
         $this->Hub->set_level(2);
+        if( !$entry_id ){
+            $entry_id=$this->create('supply_order',['product_code'=>$product_code,'supply_id'=>$suggested_supply_id]);
+        }
 	return $this->update('supply_order',[$field=>$value],['entry_id'=>$entry_id]);
     }
  
@@ -462,10 +500,10 @@ class StockBuyManager extends Catalog{
 	    foreach($options as $option){
 		$option_arr=explode(':',$option);
 		if($option_arr[0][0]=='#'){
-		    $first=$option_arr[2]." $option_arr[0] | ";
+		    $first=$option_arr[2]."[$option_arr[3]] $option_arr[0] | ";
 		    $row->product_price=$option_arr[2];
 		} else {
-		    $other.=$option_arr[2]." $option_arr[0] | ";
+		    $other.=$option_arr[2]."[$option_arr[3]] $option_arr[0] | ";
 		}
 	    }
 	    $row->suggestion=$first.$other;
@@ -500,15 +538,13 @@ class StockBuyManager extends Catalog{
 	    WHERE 
 		supplier_company_id='$supplier_company_id'
 	    GROUP BY product_code");
-	
-	
 	$Company=$this->Hub->load_model('Company');
 	$Company->selectPassiveCompany($supplier_company_id);
 	$DocumentItems=$this->Hub->load_model("DocumentItems");
 	$doc_id=$DocumentItems->createDocument(2);//create buy document
 	$vat_correction=$DocumentItems->headGet( $doc_id )->vat_rate/100+1;
 	foreach($buy_order as $row){
-	   $DocumentItems->entryAdd($row->product_code,$row->product_quantity,$row->supply_buy/$vat_correction);
+	   $DocumentItems->entryAdd($doc_id, $row->product_code,$row->product_quantity,$row->supply_buy/$vat_correction);
 	   $this->query("DELETE FROM supply_order WHERE entry_id IN ($row->entry_ids)");
 	}
 	return $doc_id;
