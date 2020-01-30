@@ -143,7 +143,8 @@
 			{id: "analyse_class", field: "analyse_class", name: "Sınıf", width: 60, sortable: true, formatter:Order.frm.abc, cssClass: 'slick-align-right'},
 			{id: "product_quantity", field: "product_quantity", name: "Sımarış", width: 80, sortable: true, formatter:Order.frm.selectedRow, editor: Slick.Editors.Integer, cssClass: 'slick-align-right'},
 			{id: "supply_need", field: "supply_need", name: "İhtiyaç", width: 80, sortable: true, cssClass: 'slick-align-right'},
-			{id: "supply_reserve", field: "supply_reserve", name: "Yedek", width: 80, sortable: true, cssClass: 'slick-align-right'},
+			{id: "supply_reserve", field: "supply_reserve", name: "Yedek Esapları", width: 90, sortable: true, cssClass: 'slick-align-right'},
+			{id: "supply_allbills", field: "supply_allbills", name: "Bütün Esaplar", width: 90, sortable: true, cssClass: 'slick-align-right'},
 			{id: "suggestion", field: "suggestion", name: "Tedarikçi fiyat variantları", width: 900, sortable: true, formatter: Order.selector.make}
 		    ],
 		    options: {
@@ -153,7 +154,13 @@
 			enableColumnReorder: false,
 			enableFilter: true,
 			multiSelect: true,
-			url: 'StockBuyManager/orderFetch'
+			url: 'StockBuyManager/orderFetch',
+                        params:{
+                            count_all:$('.x-stock-buy-manager-order-holder input[name=count_all]').is(':checked') ? 1 : 0,
+                            count_needed:$('.x-stock-buy-manager-order-holder input[name=count_needed]').is(':checked') ? 1 : 0,
+                            count_reserve:$('.x-stock-buy-manager-order-holder input[name=count_reserve]').is(':checked') ? 1 : 0,
+                            count_notcommited:$('.x-stock-buy-manager-order-holder input[name=count_notcommited]').is(':checked') ? 1 : 0
+                        }
 		    }
 		};
 		Order.grid = new SlickInfinite("#supply_order_sg", settings);
@@ -265,7 +272,12 @@
                 $('.create_orders').click(function(){
                     //Summary.tools.create_orders();
                 });
-                /*$('.x-stock-buy-manager-order-holder input[name=count_needed]').change(function(){
+                $('.x-stock-buy-manager-order-holder input[name=count_all]').change(function(){
+                    var checked=$(this).is(':checked') ? 1 : 0;
+                    Order.grid.updateOptions( {params:{count_all:checked}} );
+                    Order.grid.reload();
+                });
+                $('.x-stock-buy-manager-order-holder input[name=count_needed]').change(function(){
                     var checked=$(this).is(':checked') ? 1 : 0;
                     Order.grid.updateOptions( {params:{count_needed:checked}} );
                     Order.grid.reload();
@@ -279,7 +291,7 @@
                     var checked=$(this).is(':checked') ? 1 : 0;
                     Order.grid.updateOptions( {params:{count_notcommited:checked}} );
                     Order.grid.reload();
-                });*/
+                });
 	    },
 	    accordion:{
 		render:function(){
@@ -297,7 +309,13 @@
 		    };
 		},
 		load:function(){
-		    $.get('StockBuyManager/orderSummaryFetch', function (resp) {
+                    var params={
+                        count_all:$('.x-stock-buy-manager-order-holder input[name=count_all]').is(':checked') ? 1 : 0,
+                        count_needed:$('.x-stock-buy-manager-order-holder input[name=count_needed]').is(':checked') ? 1 : 0,
+                        count_reserve:$('.x-stock-buy-manager-order-holder input[name=count_reserve]').is(':checked') ? 1 : 0,
+                        count_notcommited:$('.x-stock-buy-manager-order-holder input[name=count_notcommited]').is(':checked') ? 1 : 0
+                    };
+		    $.get('StockBuyManager/orderSummaryFetch',params, function (resp) {
 			Summary.list = App.json(resp);
 			App.renderTpl('supply_order_summary_ac', {summary: Summary.list});
 			Summary.accordion.render();
@@ -412,6 +430,24 @@
 		</div>
 	    {{/summary}}
 	</div>
+        <div class="inp_group">
+            <label>
+                <b>Hepsi</b>
+                <input type="checkbox" name="count_all">
+            </label>
+            <label>
+                <b>Eksikler</b>
+                <input type="checkbox" name="count_needed" checked="checked">
+            </label>
+            <label>
+                <b>Yedek Esaplar</b>
+                <input type="checkbox" name="count_reserve">
+            </label>
+            <label>
+                <b>Bütün Esaplar</b>
+                <input type="checkbox" name="count_notcommited">
+            </label>
+        </div>
     </div>
     <div class="bmanager-order-entries">
 	<div style="margin-right: 20px" class="x-stock-buy-manager-order-tools">

@@ -320,9 +320,9 @@ class StockBuyManager extends Catalog{
     }
 
     
-    private function orderTmpCreate(){
+    private function orderTmpCreate( $count_needed, $count_reserve, $count_notcommited ){
         $this->Hub->set_level(2);
-	$this->orderChartTmpCreate();
+	$this->orderChartTmpCreate( $count_needed, $count_reserve, $count_notcommited );
         $sql_clear="DROP TEMPORARY TABLE IF EXISTS tmp_supply_order;";# TEMPORARY
         $sql_prepare="CREATE TEMPORARY TABLE tmp_supply_order AS (SELECT
 	    entry_id,
@@ -352,10 +352,10 @@ class StockBuyManager extends Catalog{
 	$this->query($sql_clear);
         $this->query($sql_prepare);
     }
-    private function orderChartTmpCreate(){
+    private function orderChartTmpCreate( int $count_needed=0, int $count_reserve=0, int $count_notcommited=0, int $count_all=0 ){
         $this->Hub->set_level(2);
-        $sql_clear="DROP TEMPORARY TABLE IF EXISTS tmp_supply_order_chart;";# TEMPORARY
-        $sql_prepare="CREATE TEMPORARY TABLE tmp_supply_order_chart AS (SELECT 
+        $sql_clear="DROP  TABLE IF EXISTS tmp_supply_order_chart;";# TEMPORARY
+         $sql_prepare="CREATE  TABLE tmp_supply_order_chart AS (SELECT 
                         sl.product_code,
                         supplier_id,
                         (SELECT label FROM companies_tree JOIN companies_list USING(branch_id) WHERE company_id=spl.supplier_company_id) supplier_company_label,
@@ -364,34 +364,37 @@ class StockBuyManager extends Catalog{
 			ROUND(supply_buy*(1-supplier_buy_discount/100),2) supply_buy,
                         supply_leftover,
                         se.product_wrn_quantity-se.product_quantity supply_need,
-                        SUM(IF(dl.doc_status_id=2,de.product_quantity,0)) supply_reserve
+                        SUM(IF(dl.doc_status_id=2,de.product_quantity,0)) supply_reserve,
+                        SUM(IF(dl.is_commited=0,de.product_quantity,0)) supply_allbills
                     FROM 
                         supplier_list spl
                             JOIN
                         supply_list sl USING(supplier_id)
                             LEFT JOIN
-                        stock_entries se ON sl.product_code=se.product_code AND se.product_wrn_quantity > se.product_quantity
+                        stock_entries se ON sl.product_code=se.product_code AND ($count_all OR se.product_wrn_quantity > se.product_quantity)
                             LEFT JOIN
                         document_entries de ON sl.product_code=de.product_code
                             LEFT JOIN
-                        document_list dl ON dl.doc_id=de.doc_id AND doc_type=1 AND NOT is_commited AND dl.doc_status_id=2
+                        document_list dl ON dl.doc_id=de.doc_id AND doc_type=1 AND NOT is_commited
                     WHERE 
                         supply_leftover > 0
+                        AND se.product_code IS NOT NULL 
                     GROUP BY supplier_id,product_code
-                    HAVING supply_need>0 OR supply_reserve>0);";
+                    HAVING $count_all OR supply_need*$count_needed>0 OR supply_reserve*$count_reserve OR supply_allbills*$count_notcommited
+                    );";
         $this->query($sql_clear);
         $this->query($sql_prepare);
     }
     
     
 
-    public function orderFetch( int $offset, int $limit, string $sortby, string $sortdir, array $filter=null){
+    public function orderFetch( int $offset, int $limit, string $sortby, string $sortdir, array $filter=null, int $count_needed=0, int $count_reserve=0, int $count_notcommited=0, int $count_all=0 ){
         $this->Hub->set_level(2);
 	if( empty($sortby) ){
 	    $sortby="product_code";
 	}
 	$having=$this->makeFilter($filter);
-	$this->orderChartTmpCreate();
+	$this->orderChartTmpCreate($count_needed,$count_reserve,$count_notcommited,$count_all);
         $sql_fetch="
 	    SELECT 
                 entry_id,
@@ -402,6 +405,7 @@ class StockBuyManager extends Catalog{
                 analyse_class,
                 supply_need,
                 supply_reserve,
+                supply_allbills,
                 so.supply_id,
                 soc.supply_id suggested_supply_id,
                     CONCAT(
@@ -423,9 +427,9 @@ class StockBuyManager extends Catalog{
 	return $this->get_list($sql_fetch);
     }
 
-    public function orderSummaryFetch(){
+    public function orderSummaryFetch( int $count_needed=0, int $count_reserve=0, int $count_notcommited=0, int $count_all=0 ){
         $this->Hub->set_level(2);
-    	$this->orderTmpCreate();
+    	$this->orderTmpCreate( $count_needed, $count_reserve, $count_notcommited,$count_all );
 	
 	$all_count=$this->get_value("SELECT COUNT(*) FROM tmp_supply_order");
 	$all=[['supplier_company_label'=>'* Все товары','supplier_company_id'=>0,'summary_count'=>$all_count]];
