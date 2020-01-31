@@ -137,7 +137,6 @@
 	    tableInit:function(){
 		var settings = {
 		    columns: [
-			{id: "product_comment", field: "product_comment", name: "İzaat", width: 120, sortable: true, editor: Slick.Editors.Text},
 			{id: "product_code", field: "product_code", name: "Kod", width: 100, sortable: true},
 			{id: "product_name", field: "product_name", name: "İsim", width: 300, sortable: true},
 			{id: "analyse_class", field: "analyse_class", name: "Sınıf", width: 60, sortable: true, formatter:Order.frm.abc, cssClass: 'slick-align-right'},
@@ -145,7 +144,8 @@
 			{id: "supply_need", field: "supply_need", name: "İhtiyaç", width: 80, sortable: true, cssClass: 'slick-align-right'},
 			{id: "supply_reserve", field: "supply_reserve", name: "Yedek Esapları", width: 90, sortable: true, cssClass: 'slick-align-right'},
 			{id: "supply_allbills", field: "supply_allbills", name: "Bütün Esaplar", width: 90, sortable: true, cssClass: 'slick-align-right'},
-			{id: "suggestion", field: "suggestion", name: "Tedarikçi fiyat variantları", width: 900, sortable: true, formatter: Order.selector.make}
+			{id: "suggestion", field: "suggestion", name: "Tedarikçi fiyat variantları", width: 900, sortable: true, formatter: Order.selector.make},
+			{id: "product_comment", field: "product_comment", name: "İzaat", width: 120, sortable: true, editor: Slick.Editors.Text}
 		    ],
 		    options: {
 			editable: true,

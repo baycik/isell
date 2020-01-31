@@ -354,8 +354,8 @@ class StockBuyManager extends Catalog{
     }
     private function orderChartTmpCreate( int $count_needed=0, int $count_reserve=0, int $count_notcommited=0, int $count_all=0 ){
         $this->Hub->set_level(2);
-        $sql_clear="DROP  TABLE IF EXISTS tmp_supply_order_chart;";# TEMPORARY
-         $sql_prepare="CREATE  TABLE tmp_supply_order_chart AS (SELECT 
+        $sql_clear="DROP TEMPORARY TABLE IF EXISTS tmp_supply_order_chart;";# TEMPORARY
+         $sql_prepare="CREATE TEMPORARY TABLE tmp_supply_order_chart AS (SELECT 
                         sl.product_code,
                         supplier_id,
                         (SELECT label FROM companies_tree JOIN companies_list USING(branch_id) WHERE company_id=spl.supplier_company_id) supplier_company_label,
