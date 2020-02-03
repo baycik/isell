@@ -10,9 +10,10 @@ class MoedeloSyncBase extends Catalog{
     private $gateway_url=null;
     private $gateway_md_apikey=null;
     
-    function __construct() {
+    function init() {
         session_write_close();
-        set_time_limit(300);
+        set_time_limit(600);
+        $this->Hub->MoedeloSync->getSettings();
     }
     
     function toTimezone($isotstamp,$zone='local'){
@@ -24,7 +25,7 @@ class MoedeloSyncBase extends Catalog{
         }
         $given = new DateTime("$isotstamp $from_tzone");
         $given->setTimezone( new DateTimeZone($to_tzone) );
-        return $given->format("Y-m-d H:i:s");
+        return $given->format("Y-m-d\TH:i:s");
     }
     
     public function setGateway( $url ){
@@ -36,7 +37,7 @@ class MoedeloSyncBase extends Catalog{
     
     
     protected function apiExecute( string $function, string $method, $data = null, int $remote_id = null){
-        $url = "{$this->gateway_url}$function/$remote_id";
+        $url = "{$this->Hub->MoedeloSync->settings->gateway_url}$function/$remote_id";
         
         $curl = curl_init(); 
         switch( $method ){
@@ -60,12 +61,12 @@ class MoedeloSyncBase extends Catalog{
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
         curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($curl, CURLOPT_HTTPHEADER, ["md-api-key: {$this->gateway_md_apikey}","Content-Type: application/json"]);
+        curl_setopt($curl, CURLOPT_HTTPHEADER, ["md-api-key: {$this->Hub->MoedeloSync->settings->gateway_md_apikey}","Content-Type: application/json"]);
 
         $result = curl_exec($curl);
         $httpcode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
         if( curl_error($curl) ){
-            $this->log("{$this->sync_destination} API Execute error: ".curl_error($curl));
+            $this->log("{$this->doc_config->sync_destination} API Execute error: ".curl_error($curl));
             die(curl_error($curl));
         }
         curl_close($curl);
@@ -75,7 +76,7 @@ class MoedeloSyncBase extends Catalog{
             ];
     }
     
-    protected function apiSend( $sync_destination, $remote_function, $document_list, $mode ){
+/*    protected function apiSend( $sync_destination, $remote_function, $document_list, $mode ){
         $rows_done=0;
         foreach($document_list as $document){
             if($mode === 'REMOTE_INSERT'){
@@ -121,7 +122,7 @@ class MoedeloSyncBase extends Catalog{
             $error=$this->getValidationErrors($response);
             $this->log("{$sync_destination} INSERT is unsuccessfull (HTTP CODE:$response->httpcode '$error') Number:#{$document->Number}");
         }
-    }
+    }*/
     
     
     protected function logInsert( $sync_destination, $local_id, $local_hash, $remote_id ){
@@ -233,8 +234,11 @@ class MoedeloSyncBase extends Catalog{
         if( $is_full ){
             $afterDate=null;
         } else {
-            $afterDate_local=$this->get_value("SELECT MAX(remote_tstamp) FROM plugin_sync_entries WHERE sync_destination='$sync_destination'");
-            $afterDate=$this->toTimezone($afterDate_local, 'remote');
+            $afterDate_local=$this->sync_since;
+            if( isset($this->Hub->MoedeloSync->plugin_data->{$this->doc_config->sync_destination}->checkoutLastFinished) ){
+                $afterDate_local=$this->Hub->MoedeloSync->plugin_data->{$this->doc_config->sync_destination}->checkoutLastFinished;
+            }
+            $afterDate= $afterDate_local;$this->toTimezone($afterDate_local, 'remote');
         }        
         $result=$this->remoteCheckoutGetList( $sync_destination, $remote_function, $afterDate );
         $nextPageNo=$result->pageNo+1;
@@ -263,13 +267,14 @@ class MoedeloSyncBase extends Catalog{
             $is_finished=true;
             $nextPageNo=1;
         }
-        $this->query("UPDATE
-                plugin_list
-            SET 
-                plugin_json_data=JSON_SET(COALESCE(plugin_json_data,'{}'),'$.{$this->doc_config->sync_destination}.checkoutPage','$nextPageNo'),
-                plugin_json_data=JSON_SET(COALESCE(plugin_json_data,'{}'),'$.{$this->doc_config->sync_destination}.checkoutLastFinished',NOW())
-            WHERE 
-                plugin_system_name='MoedeloSync'");
+        
+        if( !isset($this->Hub->MoedeloSync->plugin_data->{$this->doc_config->sync_destination}) ){
+            $this->Hub->MoedeloSync->plugin_data->{$this->doc_config->sync_destination}=(object)[];
+        }
+        $this->Hub->MoedeloSync->plugin_data->{$this->doc_config->sync_destination}->checkoutPage=$nextPageNo;
+        $this->Hub->MoedeloSync->plugin_data->{$this->doc_config->sync_destination}->checkoutLastFinished=date('Y-m-d H:i:s');
+        $this->Hub->MoedeloSync->updateSettings();
+        
         $this->query("COMMIT");
         return $is_finished;
     }
@@ -282,8 +287,11 @@ class MoedeloSyncBase extends Catalog{
      *  
      */
     protected function remoteCheckoutGetList( $sync_destination, $remote_function, $afterDate ){
-        $pageNo=$this->get_value("SELECT COALESCE(JSON_EXTRACT(plugin_json_data,'$.{$sync_destination}.checkoutPage'),1) FROM plugin_list WHERE plugin_system_name='MoedeloSync'");
-        $pageSize=1000;
+        $pageNo=1;
+        if( isset($this->Hub->MoedeloSync->plugin_data->{$this->doc_config->sync_destination}->checkoutPage) ){
+            $pageNo=$this->Hub->MoedeloSync->plugin_data->{$this->doc_config->sync_destination}->checkoutPage;
+        }
+        $pageSize=500;
         $request=[
             'pageNo'=>$pageNo,
             'pageSize'=>$pageSize,
@@ -309,9 +317,7 @@ class MoedeloSyncBase extends Catalog{
         $entity=$this->localGet( $local_id );
         $response = $this->apiExecute($this->doc_config->remote_function, 'POST', $entity);
         if( $response->httpcode==201 ){
-            
-            print_r($response);
-            
+            //print_r($response);
             $remote_hash=$this->remoteHashCalculate($response->response);
             $this->query("UPDATE 
                         plugin_sync_entries
@@ -323,7 +329,7 @@ class MoedeloSyncBase extends Catalog{
                         entry_id='$entry_id'");
         } else {
             $error=$this->getValidationErrors($response);
-            $this->log("{$this->doc_config->sync_destination} INSERT is unsuccessfull (HTTP CODE:$response->httpcode '$error') Number:#{$entity->Number}");
+            $this->log("{$this->doc_config->sync_destination} INSERT is unsuccessfull (HTTP CODE:$response->httpcode '$error') {$entity->ErrorTitle}");
             return false;
         }
         return true;
@@ -342,7 +348,7 @@ class MoedeloSyncBase extends Catalog{
                         entry_id='$entry_id'");
         } else {
             $error=$this->getValidationErrors($response);
-            $this->log("{$this->doc_config->sync_destination} UPDATE is unsuccessfull (HTTP CODE:$response->httpcode '$error') Number:#{$entity->Number}");
+            $this->log("{$this->doc_config->sync_destination} UPDATE is unsuccessfull (HTTP CODE:$response->httpcode '$error') {$entity->ErrorTitle}");
             return false;
         }
         return true;
@@ -372,32 +378,6 @@ class MoedeloSyncBase extends Catalog{
             return false;
         }
     }
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
     protected function checkUserPermission( $right ){
         $user_data=$this->Hub->svar('user');
         if( isset($user_data->user_permissions) && strpos($user_data->user_permissions, $right)!==false ){
@@ -405,18 +385,4 @@ class MoedeloSyncBase extends Catalog{
         }
         return false;
     }
-    
-    
-    
-    
-    protected function setPluginData( array $path, string $value ){
-        
-    }
-    
-    protected function getPluginData( array $path ){
-        
-    }
-    
-    
-    
 }

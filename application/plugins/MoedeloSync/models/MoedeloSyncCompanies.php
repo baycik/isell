@@ -1,112 +1,183 @@
 <?php
 require_once 'MoedeloSyncBase.php';
 class MoedeloSyncCompanies extends MoedeloSyncBase{
-    private $sync_destination='moedelo_companies';
-    
-    public function checkout(){
-        $request=[
-            'pageNo'=>1,
-            'pageSize'=>10000,
-            'afterDate'=>null,
-            'beforeDate'=>null,
-            'name'=>null
+    function __construct(){
+        parent::__construct();
+        $this->doc_config=(object) [
+            'remote_function'=>'kontragents/api/v1/kontragent',
+            'sync_destination'=>'moedelo_companies'
         ];
-        if( $request['pageNo']==1 ){
-            $this->query("UPDATE plugin_sync_entries SET remote_hash=NULL,remote_tstamp=NULL WHERE sync_destination='$this->sync_destination'");
-        }
-        $company_list=$this->apiExecute( 'kontragent', 'GET', $request);
-        print_r($company_list->response->ResourceList);
-        foreach($company_list->response->ResourceList as $company){
-            $this->query("
-                SET
-                    @local_id:=
-                    COALESCE(
-                        (SELECT local_id FROM plugin_sync_entries WHERE sync_destination='$this->sync_destination' AND remote_id='$company->Id' LIMIT 1),
-                        (SELECT company_id FROM companies_list WHERE '$company->Inn' AND company_tax_id='$company->Inn' ORDER BY company_tax_id2='$company->Kpp' DESC LIMIT 1)
-                    ),
-                    @remote_hash:=MD5(CONCAT(
-                        '$company->Inn',
-                        '$company->Ogrn',
-                        '$company->Okpo',
-                        '$company->Name',
-                        '$company->LegalAddress',
-                        '$company->ActualAddress'
-                        )),
-                    @remote_id:='$company->Id'
-                ");
-            $sql="INSERT INTO
-                    plugin_sync_entries
-                SET
-                    sync_destination='$this->sync_destination',
-                    local_id=@local_id,
-                    remote_id=@remote_id,
-                    remote_hash=@remote_hash,
-                    remote_tstamp=NOW()
-                ON DUPLICATE KEY UPDATE
-                    remote_hash=@remote_hash,
-                    remote_tstamp=NOW()
-                ";
-            $this->query($sql);
-        }
-        if( count($company_list)<$request['pageSize'] ){
-            $this->query("DELETE FROM plugin_sync_entries WHERE sync_destination='$this->sync_destination' AND remote_hash IS NULL AND remote_tstamp IS NULL");
-            return true;//down sync is finished
-        }
-        return false;
     }
     
+    /**
+     * Finds changes that needs to be made on local and remote
+     */
+    public function checkout( $is_full ){
+        //return $this->remoteCheckout($is_full) && $this->localCheckout($is_full);
+    }
+    /**
+     * Executes needed sync operations
+     */
     public function replicate(){
-        $remote_insert_list = $this->getList('REMOTE_INSERT');
-        $remote_update_list = $this->getList('REMOTE_UPDATE');
-        $remote_delete_list = $this->getList('REMOTE_DELETE');
-        
-        $rows_done=0;
-        $rows_done += $this->send($remote_insert_list, 'REMOTE_INSERT');
-        $rows_done += $this->send($remote_update_list, 'REMOTE_UPDATE');
-        $rows_done += $this->send($remote_delete_list, 'REMOTE_DELETE');
-        return $rows_done;
+        return parent::replicate();
     }
     
-    private function getList($mode){
-        $company_type=1;// seller buyer
-        $limit = 300;
-        
-        $select='';
-        $table='';
-        $where = '';
-        $having='';
-
-        switch( $mode ){
-            case 'REMOTE_INSERT':
-                $select=',cl.company_id';
-                $table = 'LEFT JOIN
-                    plugin_sync_entries pse ON cl.company_id=pse.local_id';
-                $where= "WHERE 
-                    local_id IS NULL
-                    AND (LENGTH(company_tax_id)=10 OR LENGTH(company_tax_id)=12)
-                    AND (NOT COALESCE(company_code,'') OR LENGTH(company_code)=8)
-                    AND (NOT COALESCE(company_code_registration,'') OR LENGTH(company_code_registration)>=13)";
-                break;
-            case 'REMOTE_UPDATE':
-                $select=',pse.*';
-                $table = 'JOIN
-                    plugin_sync_entries pse ON cl.company_id=pse.local_id';
-                $where= "WHERE sync_destination='$this->sync_destination'";
-                $having="HAVING current_hash<>local_hash OR current_hash<>remote_hash";
-                break;
-            case 'REMOTE_DELETE':
-                $select=',pse.*';
-                $table = 'RIGHT JOIN
-                    plugin_sync_entries pse ON cl.company_id=pse.local_id';
-                $where= "WHERE sync_destination='$this->sync_destination' AND company_id IS NULL";
-                break;
-        }
-        $sql="
+    
+    ///////////////////////////////////////////////////////////////
+    // REMOTE SECTION
+    ///////////////////////////////////////////////////////////////
+    
+    /**
+     * @param bool $is_full
+     * Checks for updates on remote
+     */
+    public function remoteCheckout( bool $is_full=false ){
+        return parent::remoteCheckout( $is_full );
+    }
+    /**
+     * Inserts new record on remote
+     */
+    public function remoteInsert( $local_id, $remote_id, $entry_id ){
+        return parent::remoteInsert($local_id, $remote_id, $entry_id);
+    }
+    /**
+     * Updates existing record on remote
+     */
+    public function remoteUpdate( $local_id, $remote_id, $entry_id ){
+        return parent::remoteUpdate($local_id, $remote_id, $entry_id);
+    }
+    
+    /** 
+     * Deletes existing record on remote
+     */
+    public function remoteDelete( $local_id, $remote_id, $entry_id ){
+        return parent::remoteDelete($local_id, $remote_id, $entry_id);
+    }
+    
+    /**
+     * 
+     * @param int $remote_id
+     * @return type
+     * Gets existing record from remote
+     */
+    public function remoteGet( $remote_id ){
+        return parent::remoteGet($remote_id);
+    }
+    /**
+     * 
+     * @param object $entity
+     * @return type md5 hash
+     * Calculates remote entity hash
+     */
+    public function remoteHashCalculate( $entity ){
+        $check="{$entity->Inn};{$entity->Ogrn};{$entity->Okpo};{$entity->Name};{$entity->LegalAddress};{$entity->ActualAddress};";
+        //echo "remote check-$check";
+        return md5($check);
+    }
+    /**
+     * 
+     * @param type $local_id
+     * @param type $remote_id
+     * @param type $entry_id
+     * Gets remote document and fetches its modify date. This function resolves locks when hashes different but tstamps same.
+     */
+    public function remoteInspect( $local_id, $remote_id, $entry_id ){
+        $this->remoteUpdate( $local_id, $remote_id, $entry_id );
+    }
+    
+    
+    
+    
+    
+    ///////////////////////////////////////////////////////////////
+    // LOCAL SECTION
+    ///////////////////////////////////////////////////////////////
+    
+    /**
+     * 
+     * @param bool $is_full
+     * Checks for updates on local
+     */
+    public function localCheckout( bool $is_full=false ){
+        $sql_local_docs="
             SELECT
-                inner_table.*,
-                MD5(CONCAT(Inn,Ogrn,Okpo,Name,LegalAddress,ActualAddress)) current_hash
-            FROM
+                '{$this->doc_config->sync_destination}' sync_destination,
+                local_id,
+                MD5(CONCAT(Inn,';',Ogrn,';',Okpo,';',Name,';',LegalAddress,';',ActualAddress,';')) local_hash,
+                local_tstamp,
+                0 local_deleted,
+                remote_id
+            FROM 
             (SELECT
+                company_id local_id,
+                NOW() local_tstamp,
+                pse.remote_id,
+
+                COALESCE(company_tax_id,'') Inn,
+                COALESCE(company_code_registration,'') Ogrn,
+                COALESCE(company_code,'') Okpo,
+                COALESCE(company_name,'') Name,
+                COALESCE(company_jaddress,'') LegalAddress,
+                COALESCE(company_address,'') ActualAddress
+            FROM
+                companies_list cl
+                    LEFT JOIN
+                plugin_sync_entries pse ON cl.company_id=pse.local_id AND pse.sync_destination='{$this->doc_config->sync_destination}'
+            WHERE
+                (LENGTH(company_tax_id)=10 OR LENGTH(company_tax_id)=12)
+                AND (NOT COALESCE(company_code,'') OR LENGTH(company_code)=8)
+                AND (NOT COALESCE(company_code_registration,'') OR LENGTH(company_code_registration)>=13)
+                AND company_name IS NOT NULL 
+            ) inner_table";
+        if( $is_full ){
+            $afterDate='';
+            $this->query("UPDATE plugin_sync_entries SET local_deleted=1 WHERE sync_destination='{$this->doc_config->sync_destination}'");
+        } else {
+            $afterDate='';
+        }
+        $sql_update_local_docs="
+            INSERT INTO
+                plugin_sync_entries
+            (sync_destination,local_id,local_hash,local_tstamp,local_deleted,remote_id)
+            SELECT * FROM ($sql_local_docs) local_sync_list
+            ON DUPLICATE KEY UPDATE 
+                local_hash=local_sync_list.local_hash,local_tstamp=local_sync_list.local_tstamp,local_deleted=0
+            ";
+        $this->query("$sql_update_local_docs");
+        //print_r($this->get_list($sql_local_docs));
+        return true;
+    }
+    /**
+     * Inserts new record on local
+     */
+    public function localInsert( $local_id, $remote_id, $entry_id ){
+        $this->remoteDelete( $local_id, $remote_id, $entry_id );
+    }
+    
+    /**
+     * Updates existing record on local
+     */
+    public function localUpdate( $local_id, $remote_id, $entry_id ){
+        $this->remoteUpdate( $local_id, $remote_id, $entry_id );
+    }
+    
+    /**
+     * Deletes existing record on local
+     */
+    public function localDelete( $local_id, $remote_id, $entry_id ){
+        $this->remoteInsert( $local_id, $remote_id, $entry_id );
+    }
+
+//    protected function localHashCalculate( $entity ){
+//        $check="{$entity->Article};{$entity->UnitOfMeasurement};".round($entity->SalePrice,5).";{$entity->Producer};";
+//        echo "local check-$check";
+//        return md5($check);
+//    }
+    
+    
+    public function localGet( $local_id ){
+        $sql_local="
+            SELECT
                 COALESCE(company_tax_id,'') Inn,
                 COALESCE(company_code_registration,'') Ogrn,
                 COALESCE(company_code,'') Okpo,
@@ -114,65 +185,14 @@ class MoedeloSyncCompanies extends MoedeloSyncBase{
                 COALESCE(company_jaddress,'') LegalAddress,
                 COALESCE(company_address,'') ActualAddress,
                 
-                $company_type `Type`,
+                company_name ErrorTitle,
+                
+                1 `Type`,
                 IF(company_tax_id,IF(LENGTH(company_tax_id)=10,1,2),3) `Form`
-                $select
             FROM
                 companies_list cl
-                    $table
-            $where) AS inner_table
-            $having
-            LIMIT $limit";
-        return $this->get_list($sql);
-    }
-    
-    private function send($company_list, $mode){
-        if( empty($company_list) ){
-            return 0;
-        }
-        $rows_done = 0;
-        //echo $mode;print_r($company_list);
-        foreach($company_list as $company){
-            $company_object = [
-                "Inn" => $company->Inn,
-                "Ogrn" => $company->Ogrn,
-                "Okpo" => $company->Okpo,
-                "Name" => $company->Name,
-                "LegalAddress" => $company->LegalAddress,
-                "ActualAddress" => $company->ActualAddress,
-                "Type" => $company->Type,
-                "Form" => $company->Form
-            ];
-            if($mode === 'REMOTE_INSERT'){
-                $response = $this->apiExecute('kontragent', 'POST', $company_object);
-                if( isset($response->response) && isset($response->response->Id) ){
-                    $this->logInsert($this->sync_destination,$company->company_id,$company->current_hash,$response->response->Id);
-                    $rows_done++;
-                } else {
-                    $error=$this->getValidationErrors($response);
-                    $this->log("{$this->sync_destination} INSERT is unsuccessfull (HTTP CODE:$response->httpcode '$error') company_name:{$company->Name}");
-                }
-            } else 
-            if($mode === 'REMOTE_UPDATE'){
-                $response = $this->apiExecute('kontragent', 'PUT', $company_object, $company->remote_id);
-                if( $response->httpcode==200 ){
-                    $this->logUpdate($company->entry_id, $company->current_hash);
-                    $rows_done++;
-                } else {
-                    $error=$this->getValidationErrors($response);
-                    $this->log("{$this->sync_destination} UPDATE is unsuccessfull (HTTP CODE:$response->httpcode '$error') company_name:{$company->Name}");
-                }
-            } else 
-            if($mode === 'REMOTE_DELETE'){
-                $response = $this->apiExecute('kontragent', 'REMOTE_DELETE', null, $company->remote_id);
-                $this->logDelete($company->entry_id);
-                $rows_done++;
-                if( $response->httpcode!=204 ) {
-                    $error=$this->getValidationErrors($response);
-                    $this->log("{$this->sync_destination} DELETE is unsuccessfull (HTTP CODE:$response->httpcode '$error') company_name:".($response->response->Name ?? ''));
-                }
-            }
-        }
-        return $rows_done;
+            WHERE company_id='$local_id'
+           ";
+        return $this->get_row($sql_local);
     }
 }

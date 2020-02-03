@@ -4,7 +4,7 @@ class MoedeloSyncStocks extends MoedeloSyncBase{
     
     private function getDocConfig(){
         return (object)[
-            'remote_function'=>'',
+            'remote_function'=>'/stock/api/v1/stock/',
             'sync_destination'=>'moedelo_stocks'
         ];
     }

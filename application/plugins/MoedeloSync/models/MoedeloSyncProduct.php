@@ -4,7 +4,7 @@ class MoedeloSyncProduct extends MoedeloSyncBase{
     function __construct(){
         parent::__construct();
         $this->doc_config=(object) [
-            'remote_function'=>'good',
+            'remote_function'=>'stock/api/v1/good',
             'sync_destination'=>'moedelo_products',
             
             'nomenclature_id'=>'11780959',
@@ -78,7 +78,7 @@ class MoedeloSyncProduct extends MoedeloSyncBase{
      */
     public function remoteHashCalculate( $entity ){
         $entity->SalePrice= number_format($entity->SalePrice, 5,'.','');
-        $check="{$entity->Article};{$entity->Name};{$entity->UnitOfMeasurement};{$entity->SalePrice};{$entity->Producer};{$entity->SalePrice};";
+        $check="{$entity->Article};{$entity->Name};{$entity->UnitOfMeasurement};{$entity->SalePrice};";
         //echo "remote check-$check";
         return md5($check);
     }
@@ -112,7 +112,7 @@ class MoedeloSyncProduct extends MoedeloSyncBase{
             SELECT
                 '{$this->doc_config->sync_destination}' sync_destination,
                 local_id,
-                MD5(CONCAT(Article,';',Name,';',UnitOfMeasurement,';',ROUND(SalePrice,5),';',Producer,';',SalePrice,';')) local_hash,
+                MD5(CONCAT(Article,';',Name,';',UnitOfMeasurement,';',ROUND(SalePrice,5),';')) local_hash,
                 local_tstamp,
                 0 local_deleted,
                 remote_id
@@ -200,7 +200,7 @@ class MoedeloSyncProduct extends MoedeloSyncBase{
                 {$this->doc_config->vat_position} NdsPositionType,
                 analyse_brand Producer,
                 
-                se.product_code Number,
+                ru ErrorTitle,
                 pl.product_id local_id,
                 pse.remote_id,
                 GREATEST(se.modified_at,pl.modified_at,pre.modified_at) local_tstamp
