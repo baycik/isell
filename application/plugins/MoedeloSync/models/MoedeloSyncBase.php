@@ -164,6 +164,8 @@ class MoedeloSyncBase extends Catalog{
     }
     
     protected function getValidationErrors( $response ){
+        print_r($response);
+        
         $error_text='';
         if( isset($response->response->ValidationErrors) ){
             foreach( $response->response->ValidationErrors as $errors ){

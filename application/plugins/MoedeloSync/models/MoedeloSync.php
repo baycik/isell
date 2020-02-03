@@ -48,15 +48,19 @@ class MoedeloSync extends Catalog {
             throw new Exception('Gateway or API key is not set');
         }
         $joblist=[
-            'MoedeloSyncProduct/localCheckout/10 minutes/1 days',
+            /*'MoedeloSyncProduct/localCheckout/10 minutes/1 days',
             'MoedeloSyncProduct/remoteCheckout/1 days/1 days',
             'MoedeloSyncProduct/replicate/10 minutes/',
             'MoedeloSyncCompanies/localCheckout/10 minutes/1 days',
             'MoedeloSyncCompanies/remoteCheckout/1 hours/1 days',
             'MoedeloSyncCompanies/replicate/10 minutes/',
-            'MoedeloSyncStocks/checkout/1 years/',
-            'MoedeloSyncStocks/replicate/1 years/',
-        /*    'billCheckout',
+            'MoedeloSyncStocks/checkout/1 years/',*/
+            
+            'MoedeloSyncBill/localCheckout/1 seconds/1 days',
+            'MoedeloSyncBill/remoteCheckout/1 seconds/1 days',
+            'MoedeloSyncBill/replicate/1 seconds/',
+        /*    'MoedeloSyncStocks/replicate/1 years/',
+            'billCheckout',
             'billReplicate',
             'wayBillCheckout',
             'wayBillReplicate',
