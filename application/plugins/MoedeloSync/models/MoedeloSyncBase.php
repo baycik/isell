@@ -4,7 +4,7 @@ class MoedeloSyncBase extends Catalog{
     protected $acomp_id=2;
     protected $local_tzone='+03:00';
     protected $remote_tzone='+00:00';
-    protected $sync_since="2020-02-01 00:00:00";
+    protected $sync_since="";
     protected $sync_time_window=365;
     
     private $gateway_url=null;
@@ -14,6 +14,7 @@ class MoedeloSyncBase extends Catalog{
         session_write_close();
         set_time_limit(600);
         $this->Hub->MoedeloSync->getSettings();
+        $this->sync_since=$this->Hub->MoedeloSync->settings->sync_since;
     }
     
     function toTimezone($isotstamp,$zone='local'){
