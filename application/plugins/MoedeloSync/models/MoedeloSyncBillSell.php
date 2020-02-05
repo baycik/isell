@@ -6,7 +6,7 @@ class MoedeloSyncBillSell extends MoedeloSyncBase{
         $this->doc_config=(object) [
             'remote_function'=>'accounting/api/v1/sales/bill',
             'local_view_type_id'=>136,
-            'sync_destination'=>'moedelo_doc_bill',
+            'sync_destination'=>'moedelo_doc_billsell',
             'doc_type'=>1
         ];
     }

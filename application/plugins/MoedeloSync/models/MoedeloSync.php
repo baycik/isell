@@ -64,16 +64,17 @@ class MoedeloSync extends Catalog {
             'updReplicate'    */
         ];
     
-    public function tick( $iterations_left=null ){
+    public function tick( $iterations_left ){
         header("Content-type:text/plain");
-        if( $iterations_left==null ){
-            $iterations_left=count($this->joblist);
-        }
-        if( $iterations_left<1 ){
-            return false;
-        }
         if( empty($this->settings->gateway_url) || empty($this->settings->gateway_md_apikey) ){
             throw new Exception('Gateway or API key is not set');
+        }
+        if( !$iterations_left ){
+            $iterations_left=count($this->joblist)+1;
+        }
+        if( $iterations_left<=1 ){
+            echo 'iterations finished';
+            return false;
         }
         
         $currentJob=$this->joblist[0];        
@@ -89,7 +90,7 @@ class MoedeloSync extends Catalog {
         $is_short=$jobParts[2] && strtotime("$last_launch + $jobParts[2]")<time()?1:0;
         $is_full= $jobParts[3] && strtotime("$last_full_launch + $jobParts[3]")<time()?1:0;
         if( !$is_short && !$is_full ){
-            echo "skipped $currentJob\n";
+            echo "$iterations_left:skipped $currentJob\n";
             $this->plugin_data->lastDoneJob=$currentJob;
             $this->updateSettings();
             $this->tick( $iterations_left-1 );
