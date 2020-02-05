@@ -4,7 +4,7 @@ class MoedeloSyncBase extends Catalog{
     protected $acomp_id=2;
     protected $local_tzone='+03:00';
     protected $remote_tzone='+00:00';
-    protected $sync_since="2020-01-01 00:00:00";
+    protected $sync_since="2020-02-01 00:00:00";
     protected $sync_time_window=365;
     
     private $gateway_url=null;
@@ -164,13 +164,11 @@ class MoedeloSyncBase extends Catalog{
     }
     
     protected function getValidationErrors( $response ){
-        print_r($response);
-        
-        $error_text='';
+        $error_text=$response->response->Message??'';
         if( isset($response->response->ValidationErrors) ){
-            foreach( $response->response->ValidationErrors as $errors ){
-                foreach($errors as $key=>$err){
-                    $error_text.="$key : $err;";
+            foreach( $response->response->ValidationErrors as $key1=>$errors ){
+                foreach($errors as $key2=>$err){
+                    $error_text.=" $key1 $key2 : $err;";
                 }
             }
         }
@@ -240,7 +238,7 @@ class MoedeloSyncBase extends Catalog{
             if( isset($this->Hub->MoedeloSync->plugin_data->{$this->doc_config->sync_destination}->checkoutLastFinished) ){
                 $afterDate_local=$this->Hub->MoedeloSync->plugin_data->{$this->doc_config->sync_destination}->checkoutLastFinished;
             }
-            $afterDate= $afterDate_local;$this->toTimezone($afterDate_local, 'remote');
+            $afterDate= $this->toTimezone($afterDate_local, 'remote');
         }        
         $result=$this->remoteCheckoutGetList( $sync_destination, $remote_function, $afterDate );
         $nextPageNo=$result->pageNo+1;
@@ -319,7 +317,7 @@ class MoedeloSyncBase extends Catalog{
         $entity=$this->localGet( $local_id );
         $response = $this->apiExecute($this->doc_config->remote_function, 'POST', $entity);
         if( $response->httpcode==201 ){
-            //print_r($response);
+            print_r($response);
             $remote_hash=$this->remoteHashCalculate($response->response);
             $this->query("UPDATE 
                         plugin_sync_entries

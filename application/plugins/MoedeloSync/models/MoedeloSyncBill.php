@@ -34,6 +34,9 @@ class MoedeloSyncBill extends MoedeloSyncBase{
      * Checks for updates on remote
      */
     public function remoteCheckout( bool $is_full=false ){
+        
+        //print_r( parent::remoteGet(262385803) );
+        
         return parent::remoteCheckout( $is_full );
     }
     /**
@@ -151,6 +154,7 @@ class MoedeloSyncBill extends MoedeloSyncBase{
                 local_hash=local_sync_list.local_hash,local_tstamp=local_sync_list.local_tstamp,local_deleted=0
             ";
         $this->query("$sql_update_local_docs");
+        $this->query("DELETE FROM plugin_sync_entries WHERE local_deleted=1 AND sync_destination='{$this->doc_config->sync_destination}'");
         return true;
     }
     /**
@@ -189,8 +193,10 @@ class MoedeloSyncBill extends MoedeloSyncBase{
                 dl.doc_id,
                 dl.vat_rate,
                 
+                1 Type,
+                view_num ErrorTitle,
                 view_num Number,
-                dvl.tstamp DocDate,
+                REPLACE(dvl.tstamp,' ','T') DocDate,
                 '' PaymentNumber,
                 '' PaymentDate,
                 dl.cstamp ContextCreateDate,
@@ -208,7 +214,7 @@ class MoedeloSyncBill extends MoedeloSyncBase{
                 document_view_list dvl USING(doc_id)
                     JOIN
 		user_list ON dl.modified_by=user_id
-                    JOIN
+                    LEFT JOIN
                 plugin_sync_entries Stock_pse ON 1=Stock_pse.local_id AND Stock_pse.sync_destination='moedelo_stocks'
                     JOIN
                 plugin_sync_entries Kontragent_pse ON passive_company_id=Kontragent_pse.local_id AND Kontragent_pse.sync_destination='moedelo_companies'
@@ -219,15 +225,15 @@ class MoedeloSyncBill extends MoedeloSyncBase{
         if( $document->doc_id ){
             $sql_entry="
                 SELECT
-                    doc_entry_id,
-                    prod_pse.remote_id Id,
+                    0 DiscountRate,
                     ru Name,
                     product_quantity Count,
                     product_unit Unit,
                     IF(is_service=1,2,1) Type,
-                    ROUND(invoice_price*(1+{$document->vat_rate}/100),2) Price,
                     {$document->vat_rate} NdsType,
-                    ROUND(invoice_price*product_quantity*(1+{$document->vat_rate}/100),2) SumWithNds
+                    ROUND(invoice_price*(1+{$document->vat_rate}/100),2) Price,
+                    ROUND(invoice_price*product_quantity*(1+{$document->vat_rate}/100),2) SumWithNds,
+                    prod_pse.remote_id StockProductId
                 FROM
                     document_entries
                         JOIN
@@ -243,7 +249,7 @@ class MoedeloSyncBill extends MoedeloSyncBase{
             'ModifyDate'=>$this->toTimezone($document->ContextModifyDate,'remote'),
             'ModifyUser'=>$document->ContextModifyUser
         ];
-        //print_r($document);
+        print_r($document);
         return $document;
     }
     

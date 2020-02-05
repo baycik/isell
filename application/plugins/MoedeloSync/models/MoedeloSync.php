@@ -17,7 +17,7 @@ class MoedeloSync extends Catalog {
     
     function init() {
         $this->getSettings();
-        print_r($this->plugin_data);
+        //print_r($this->plugin_data);
     }
     
     public function install(){
@@ -42,37 +42,45 @@ class MoedeloSync extends Catalog {
         
     }
 
-    public function tick(){
-        header("Content-type:text/plain");
-        if( empty($this->settings->gateway_url) || empty($this->settings->gateway_md_apikey) ){
-            throw new Exception('Gateway or API key is not set');
-        }
-        $joblist=[
-            /*'MoedeloSyncProduct/localCheckout/10 minutes/1 days',
+    //'MoedeloSyncStocks/replicate/1 years/','MoedeloSyncStocks/checkout/1 years/',
+    private $joblist=[
+            'MoedeloSyncProduct/localCheckout/10 minutes/1 days',
             'MoedeloSyncProduct/remoteCheckout/1 days/1 days',
             'MoedeloSyncProduct/replicate/10 minutes/',
+        
             'MoedeloSyncCompanies/localCheckout/10 minutes/1 days',
             'MoedeloSyncCompanies/remoteCheckout/1 hours/1 days',
             'MoedeloSyncCompanies/replicate/10 minutes/',
-            'MoedeloSyncStocks/checkout/1 years/',*/
             
-            'MoedeloSyncBill/localCheckout/1 seconds/1 days',
-            'MoedeloSyncBill/remoteCheckout/1 seconds/1 days',
-            'MoedeloSyncBill/replicate/1 seconds/',
-        /*    'MoedeloSyncStocks/replicate/1 years/',
-            'billCheckout',
-            'billReplicate',
+            'MoedeloSyncBillSell/localCheckout/10 minutes/60 minutes',
+            'MoedeloSyncBillSell/remoteCheckout/10 minutes/1 days',
+            'MoedeloSyncBillSell/replicate/10 minutes/',
+            
+        /*   
             'wayBillCheckout',
             'wayBillReplicate',
             'invoiceCheckout',
             'invoiceReplicate',
             'updReplicate'    */
         ];
-        $currentJob=$joblist[0];        
+    
+    public function tick( $iterations_left=null ){
+        header("Content-type:text/plain");
+        if( $iterations_left==null ){
+            $iterations_left=count($this->joblist);
+        }
+        if( $iterations_left<1 ){
+            return false;
+        }
+        if( empty($this->settings->gateway_url) || empty($this->settings->gateway_md_apikey) ){
+            throw new Exception('Gateway or API key is not set');
+        }
+        
+        $currentJob=$this->joblist[0];        
         if( isset($this->plugin_data->lastDoneJob) ){
-            $last_done_key=array_search($this->plugin_data->lastDoneJob,$joblist)??0;
-            if( is_numeric($last_done_key) &&  $last_done_key+1<count($joblist) ){
-                $currentJob=$joblist[$last_done_key+1];
+            $last_done_key=array_search($this->plugin_data->lastDoneJob,$this->joblist)??0;
+            if( is_numeric($last_done_key) &&  $last_done_key+1<count($this->joblist) ){
+                $currentJob=$this->joblist[$last_done_key+1];
             }
         }
         $jobParts=explode('/',$currentJob);
@@ -84,6 +92,7 @@ class MoedeloSync extends Catalog {
             echo "skipped $currentJob\n";
             $this->plugin_data->lastDoneJob=$currentJob;
             $this->updateSettings();
+            $this->tick( $iterations_left-1 );
             return true;
         }
         $this->jobExecute($currentJob,$jobParts,$is_full);

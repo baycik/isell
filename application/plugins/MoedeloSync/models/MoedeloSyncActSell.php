@@ -175,6 +175,8 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
                 local_hash=local_sync_list.local_hash,local_tstamp=local_sync_list.local_tstamp,local_deleted=0
             ";
         $this->query("$sql_update_local_docs");
+        $this->query("DELETE FROM plugin_sync_entries WHERE local_deleted=1 AND sync_destination='{$this->doc_config->sync_destination}'");
+        return true;
     }
     /**
      * Inserts new record on local
