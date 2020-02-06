@@ -564,7 +564,6 @@ class Stock extends Catalog {
     }
     
     public function reserveTaskExecute($doc_id,$user_id,$alert,$event_id){
-        
         $status_change_ok=$this->Hub->load_model("DocumentCore")->setStatusByCode($doc_id,'created');
         if( $status_change_ok ){
             $this->Hub->load_model("Chat")->addMessage($user_id,$alert,true);
