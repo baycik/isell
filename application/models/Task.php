@@ -62,7 +62,7 @@ class Task extends Events {
 	    $this->currentTask->event_target = $i+1;
 	    if ($this->currentTask->event_target == $program_length) {
 		$this->currentTask->event_target = 0;
-		return true;
+		return $this->currentTask->event_note;
 	    }
 	    if ($command->async == true) {
 		break;

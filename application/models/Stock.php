@@ -550,19 +550,9 @@ class Stock extends Catalog {
             'event_program'=>json_encode([
                 'commands'=>[
                     [
-                        'model'=>'DocumentCore',
-                        'method'=>'setStatusByCode',
-                        'arguments'=>[$doc->doc_id,'created']
-                    ],
-                    [
-                        'model'=>'Chat',
-                        'method'=>'addMessage',
-                        'arguments'=>[$user_id,$alert,true]
-                    ],
-                    [
-                        'model'=>'Events',
-                        'method'=>'eventDelete',
-                        'arguments'=>[$event_id]
+                        'model'=>'Stock',
+                        'method'=>'reserveTaskExecute',
+                        'arguments'=>[$doc->doc_id,$user_id,$alert,$event_id]
                     ]
                 ]
             ])
@@ -571,6 +561,17 @@ class Stock extends Catalog {
             $this->Hub->Events->eventChange($event_id, $event_update);
         }
         return $event_id;
+    }
+    
+    public function reserveTaskExecute($doc_id,$user_id,$alert,$event_id){
+        
+        $status_change_ok=$this->Hub->load_model("DocumentCore")->setStatusByCode($doc_id,'created');
+        if( $status_change_ok ){
+            $this->Hub->load_model("Chat")->addMessage($user_id,$alert,true);
+            $this->Hub->load_model("Events")->eventDelete($event_id);
+            return false;
+        }
+        return false;
     }
     
     private function reserveTaskRemove($doc){
