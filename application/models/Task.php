@@ -87,6 +87,7 @@ class Task extends Events {
             $return = call_user_func_array([$Model, $command->method], $args);
             $this->log("TASK {$this->currentTask->event_name} {$command->model}->{$command->method}(".implode(',',$args)."): RETURNED VALUE:'$return'");
         } catch (Exception $ex) {
+            $return=false;
             $this->log("TASK ERROR {$this->currentTask->event_name} {$command->model}->{$command->method}(".implode(',',$args)."): $ex");
         }
 	return $return;
@@ -126,7 +127,7 @@ class Task extends Events {
     }
 
     public function postpone($interval) {
-	$this->currentTask->event_date=$this->get_value("SELECT DATE_ADD('{$this->currentTask->event_date}',INTERVAL $interval)");
+	$this->currentTask->event_date=$this->get_value("SELECT DATE_ADD(NOW(),INTERVAL $interval)");//'{$this->currentTask->event_date}'
 	$this->currentTask->event_status='pending';
 	$this->log("TASK {$this->currentTask->event_name} postponed $interval");
     }

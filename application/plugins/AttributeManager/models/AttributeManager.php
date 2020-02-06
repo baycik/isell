@@ -265,10 +265,10 @@ class AttributeManager extends Catalog{
 	$dump=[
             'tpl_files_folder'=>"application/plugins/AttributeManager/views/",
 	    'tpl_files'=>'GridTpl.xlsx',
-	    'title'=>"Р В­Р С”РЎРѓР С—Р С•РЎР‚РЎвЂљ РЎвЂљР В°Р В±Р В»Р С‘РЎвЂ РЎвЂ№",
+	    'title'=>"Атрибуты",
 	    'user_data'=>[
 		'email'=>$this->Hub->svar('pcomp')?$this->Hub->svar('pcomp')->company_email:'',
-		'text'=>'Р вЂќР С•Р В±РЎР‚Р С•Р С–Р С• Р Т‘Р Р…РЎРЏ'
+		'text'=>'Добрый день'
 	    ],
 	    'struct'=>$this->tableStructure(),
 	    'view'=>[

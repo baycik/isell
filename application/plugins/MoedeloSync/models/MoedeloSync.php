@@ -112,6 +112,7 @@ class MoedeloSync extends Catalog {
                 $this->plugin_data->lastDoneJob=$currentJob;
                 $this->updateSettings();
                 echo "done $currentJob\n";
+                return true;
             } else {
                 echo "undone. continue on next tick: $currentJob\n";
             }
@@ -119,6 +120,7 @@ class MoedeloSync extends Catalog {
             $this->log($ex);
             echo $ex;
         }
+        return false;
     }
     
     
