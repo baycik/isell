@@ -39,7 +39,7 @@ class MoedeloSync extends Catalog {
     }
     
     public function deactivate(){
-        
+         
     }
 
     //'MoedeloSyncStocks/replicate/1 years/','MoedeloSyncStocks/checkout/1 years/',
