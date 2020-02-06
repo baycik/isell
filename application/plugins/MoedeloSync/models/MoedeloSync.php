@@ -96,7 +96,7 @@ class MoedeloSync extends Catalog {
             $this->tick( $iterations_left-1 );
             return true;
         }
-        $this->jobExecute($currentJob,$jobParts,$is_full);
+        return $this->jobExecute($currentJob,$jobParts,$is_full);
     }
     
     private function jobExecute($currentJob,$jobParts,$is_full){
