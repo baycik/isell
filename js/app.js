@@ -296,7 +296,7 @@ App.toDmyt = function (iso) {
 	date=new Date(iso);
     }
     if( date instanceof Date ){
-	 return String("0" + date.getDate()).slice(-2) + '.' + String("0" + (date.getMonth() + 1)).slice(-2) + '.' + date.getFullYear()+' '+date.getHours()+':'+date.getMinutes();
+	 return String("0" + date.getDate()).slice(-2) + '.' + String("0" + (date.getMonth() + 1)).slice(-2) + '.' + date.getFullYear()+' '+ String("0" + date.getHours()).slice(-2)+':'+ String("0" + date.getMinutes()).slice(-2);
     }
     return null;
 };
