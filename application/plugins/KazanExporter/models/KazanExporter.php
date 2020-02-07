@@ -23,6 +23,7 @@ class KazanExporter extends Catalog {
     public function start($filename){
         $product_codes = $this->getSettings();
         $this->viewGet($product_codes, $filename);
+        return true;
     }
 
     private function viewGet($product_codes, $filename){
