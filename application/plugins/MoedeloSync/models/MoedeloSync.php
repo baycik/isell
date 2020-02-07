@@ -48,9 +48,9 @@ class MoedeloSync extends Catalog {
             'MoedeloSyncProduct/remoteCheckout/1 days/1 days',
             'MoedeloSyncProduct/replicate/10 minutes/',
         
-            'MoedeloSyncCompanies/localCheckout/10 minutes/1 days',
-            'MoedeloSyncCompanies/remoteCheckout/1 hours/1 days',
-            'MoedeloSyncCompanies/replicate/10 minutes/',
+            'MoedeloSyncCompanies/localCheckout/1 seconds/1 seconds',
+            'MoedeloSyncCompanies/remoteCheckout/1 years/1 seconds',
+            'MoedeloSyncCompanies/replicate/1 seconds/',
             
             'MoedeloSyncBillSell/localCheckout/10 minutes/60 minutes',
             'MoedeloSyncBillSell/remoteCheckout/10 minutes/1 days',

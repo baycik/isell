@@ -82,7 +82,10 @@ class MoedeloSyncCompanies extends MoedeloSyncBase{
      * Gets remote document and fetches its modify date. This function resolves locks when hashes different but tstamps same.
      */
     public function remoteInspect( $local_id, $remote_id, $entry_id ){
-        $this->remoteUpdate( $local_id, $remote_id, $entry_id );
+        echo 'inspect';
+        die($remote_id);
+        
+        //$this->remoteUpdate( $local_id, $remote_id, $entry_id );
     }
     
     
@@ -151,7 +154,36 @@ class MoedeloSyncCompanies extends MoedeloSyncBase{
      * Inserts new record on local
      */
     public function localInsert( $local_id, $remote_id, $entry_id ){
-        $this->remoteDelete( $local_id, $remote_id, $entry_id );
+        $remoteCompany=$this->remoteGet($remote_id);
+        $sql="SELECT 
+                company_id local_id,
+                NOW() local_tstamp,
+
+                COALESCE(company_tax_id,'') Inn,
+                COALESCE(company_code_registration,'') Ogrn,
+                COALESCE(company_code,'') Okpo,
+                COALESCE(company_name,'') Name,
+                COALESCE(company_jaddress,'') LegalAddress,
+                COALESCE(company_address,'') ActualAddress
+            FROM
+                companies_list
+            WHERE
+                company_tax_id='$remoteCompany->Inn'
+            ";
+        $localCompany=$this->get_row($sql);
+        $local_hash=$this->localHashCalculate($localCompany);
+        $this->query("UPDATE 
+                        plugin_sync_entries 
+                    SET 
+                        local_id='$localCompany->local_id',
+                        local_tstamp='$localCompany->local_tstamp',
+                        local_hash='$local_hash',
+                        local_deleted=0,
+                            
+                        remote_tstamp=NOW()
+                    WHERE
+                        entry_id='$entry_id'
+                ");
     }
     
     /**
@@ -168,11 +200,11 @@ class MoedeloSyncCompanies extends MoedeloSyncBase{
         $this->remoteInsert( $local_id, $remote_id, $entry_id );
     }
 
-//    protected function localHashCalculate( $entity ){
-//        $check="{$entity->Article};{$entity->UnitOfMeasurement};".round($entity->SalePrice,5).";{$entity->Producer};";
-//        echo "local check-$check";
-//        return md5($check);
-//    }
+    protected function localHashCalculate( $entity ){
+        $check="{$entity->Inn};{$entity->Ogrn};{$entity->Okpo};{$entity->Name};{$entity->LegalAddress};{$entity->ActualAddress};";
+        //echo "local check-$check";
+        return md5($check);
+    }
     
     
     public function localGet( $local_id ){
