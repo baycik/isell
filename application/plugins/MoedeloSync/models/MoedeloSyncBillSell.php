@@ -34,9 +34,6 @@ class MoedeloSyncBillSell extends MoedeloSyncBase{
      * Checks for updates on remote
      */
     public function remoteCheckout( bool $is_full=false ){
-        
-        //print_r( parent::remoteGet(262385803) );
-        
         return parent::remoteCheckout( $is_full );
     }
     /**
@@ -249,7 +246,6 @@ class MoedeloSyncBillSell extends MoedeloSyncBase{
             'ModifyDate'=>$this->toTimezone($document->ContextModifyDate,'remote'),
             'ModifyUser'=>$document->ContextModifyUser
         ];
-        print_r($document);
         return $document;
     }
     
