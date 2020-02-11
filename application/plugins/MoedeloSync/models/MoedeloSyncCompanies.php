@@ -131,6 +131,7 @@ class MoedeloSyncCompanies extends MoedeloSyncBase{
                 AND (NOT COALESCE(company_code,'') OR LENGTH(company_code)=8)
                 AND (NOT COALESCE(company_code_registration,'') OR LENGTH(company_code_registration)>=13)
                 AND company_name IS NOT NULL 
+                AND company_name<>''
             ) inner_table";
         if( $is_full ){
             $afterDate='';
