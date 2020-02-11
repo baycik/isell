@@ -158,7 +158,7 @@ class Catalog extends CI_Model {
 
     public function log($message) {
         $class = get_class($this);
-        $url = "http://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI] User:".$this->svar('user_login');
+        $url = "http://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI] User:".$this->Hub->svar('user_login');
         $this->create('log_list', ['message' => $message, 'url' => $url, 'log_class' => $class]);
     }
 
