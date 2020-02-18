@@ -492,10 +492,12 @@ class StockBuyManager extends Catalog{
         return $this->query($sql);
     }
     
-    public $viewOrderGet=['sortby'=>'string','sortdir'=>'(ASC|DESC)','filter'=>'json','out_type'=>'string'];
-    public function viewOrderGet($sortby,$sortdir,$filter,$out_type){
+    //public $viewOrderGet=['sortby'=>'string','sortdir'=>'(ASC|DESC)','filter'=>'json','out_type'=>'string'];
+    public function viewOrderGet(string $sortby=null, string $sortdir=null, array $filter=null, string $out_type='', int $count_needed=0, int $count_reserve=0, int $count_notcommited=0, int $count_all=0){
         $this->Hub->set_level(2);
-	$table=$this->orderFetch(0,10000,$sortby,$sortdir,$filter);
+	$table=$this->orderFetch(0,10000,$sortby??'product_code',$sortdir??'ASC',$filter,$count_needed,$count_reserve, $count_notcommited, $count_all);
+        $table=count()?$table:[[]];
+        
 	foreach($table as $row){
 	    $first='';
 	    $other='';
@@ -533,7 +535,7 @@ class StockBuyManager extends Catalog{
     public $orderSubmit=['supplier_company_id'=>'int'];
     public function orderSubmit($supplier_company_id){
         $this->Hub->set_level(2);
-	$this->orderTmpCreate();
+	$this->orderTmpCreate(0,0,0);
 	$buy_order=$this->get_list("SELECT 
 	    GROUP_CONCAT(entry_id) entry_ids,product_code,SUM(product_quantity) product_quantity,MIN(supply_buy)  supply_buy
 	    FROM 

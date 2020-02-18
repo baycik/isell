@@ -101,9 +101,15 @@
 			sortby: sorted.length ? sorted[0].columnId : '',
 			sortdir: sorted.length ? (sorted[0].sortAsc ? 'ASC' : 'DESC') : '',
 			filter: JSON.stringify(Order.grid.getFilter()),
-			out_type: (out_type || '.xlsx')
-		    };
+			out_type: (out_type || '.xlsx'),
+                        count_all:$('.x-stock-buy-manager-order-holder input[name=count_all]').is(':checked') ? 1 : 0,
+                        count_needed:$('.x-stock-buy-manager-order-holder input[name=count_needed]').is(':checked') ? 1 : 0,
+                        count_reserve:$('.x-stock-buy-manager-order-holder input[name=count_reserve]').is(':checked') ? 1 : 0,
+                        count_notcommited:$('.x-stock-buy-manager-order-holder input[name=count_notcommited]').is(':checked') ? 1 : 0
+                    };
+                    
 		    var url = 'StockBuyManager/viewOrderGet/?' + $.param(params);
+                    console.log(url);
 		    if (out_type === '.print') {
 			window.open(url, 'print_tab');
 		    } else {
