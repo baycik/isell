@@ -496,7 +496,7 @@ class StockBuyManager extends Catalog{
     public function viewOrderGet(string $sortby=null, string $sortdir=null, array $filter=null, string $out_type='', int $count_needed=0, int $count_reserve=0, int $count_notcommited=0, int $count_all=0){
         $this->Hub->set_level(2);
 	$table=$this->orderFetch(0,10000,$sortby??'product_code',$sortdir??'ASC',$filter,$count_needed,$count_reserve, $count_notcommited, $count_all);
-        $table=count()?$table:[[]];
+        //$table=count()?$table:[[]];
         
 	foreach($table as $row){
 	    $first='';
