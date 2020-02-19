@@ -218,7 +218,7 @@ class MoedeloSyncCompanies extends MoedeloSyncBase{
                 COALESCE(company_jaddress,'') LegalAddress,
                 COALESCE(company_address,'') ActualAddress,
                 
-                company_name ErrorTitle,
+                CONCAT(company_name,company_id) ErrorTitle,
                 
                 1 `Type`,
                 IF(company_tax_id,IF(LENGTH(company_tax_id)=10,1,2),3) `Form`
