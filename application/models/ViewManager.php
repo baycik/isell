@@ -39,6 +39,7 @@ class ViewManager extends CI_Model{
 	if( $this->dump ){
 	    $this->load->library('FileEngine');
 	    $FileEngine=new FileEngine();
+            $FileEngine->Hub=$this->Hub;
 	    if( isset($this->dump->tpl_files_folder) ){
 		$FileEngine->tpl_files_folder=$this->dump->tpl_files_folder;
 	    }
@@ -78,16 +79,32 @@ class ViewManager extends CI_Model{
             $headerTpl = $Worksheet->getCellByColumnAndRow($headerX, $headerY)->getValue();
             $cellTpl = $Worksheet->getCellByColumnAndRow($headerX, $headerY + 1)->getValue();
             foreach ($this->dump->struct as $i => $column) {
-		if( preg_match("/(int|decimal|double)/", $column->Type) ){
+                if( $column->Width ){
+                    
+                } else if( preg_match("/(int|decimal|double)/", $column->Type) ){
 		    $column->Width=8;
 		} else if( preg_match("/varchar\((\d+)\)/", $column->Type, $matches) ){
 		    $column->Width=$matches[1]<50?15:50;
 		} else {
-		    $column->Width=15;
+		    $column->Width=25;
 		}
                 $Worksheet->getColumnDimension(chr(65 + $headerX + $i))->setWidth($column->Width);
                 $Worksheet->getCellByColumnAndRow($headerX + $i, $headerY)->setValue(str_replace('_title_', $column->Comment?$column->Comment:$column->Field, $headerTpl));
                 $Worksheet->getCellByColumnAndRow($headerX + $i, $contentY)->setValue(str_replace('_field_', $column->Field, $cellTpl));
+//                if( isset($column->Align) ){
+//                    $style=['alignment'=>['horizontal'=>PHPExcel_Style_Alignment::HORIZONTAL_RIGHT]];
+//                    if( $column->Align=='right' ){
+//                        $style=['alignment'=>['horizontal'=>PHPExcel_Style_Alignment::HORIZONTAL_RIGHT]];
+//                    }
+//                    if( $column->Align=='center' ){
+//                        $style=['alignment'=>['horizontal'=>PHPExcel_Style_Alignment::HORIZONTAL_CENTER]];
+//                    }
+//                    $alphaHeader=chr(65 + $headerX + $i);
+//                    echo "$alphaHeader$contentY";
+//                    print_r($style);
+//                    
+//                    $Worksheet->getStyle("$alphaHeader$contentY")->applyFromArray($style);
+//                }
             }
             $alfaHeaderStart = chr(65 + $headerX);
             $alfaHeaderStop = chr(65 + $headerX + $i);

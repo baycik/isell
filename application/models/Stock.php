@@ -336,7 +336,7 @@ class Stock extends Catalog {
         $sql = "SELECT
 		doc_id,
                 DATE_FORMAT(dl.cstamp,'%d.%m.%Y') oper_date,
-                CONCAT(dt.doc_type_name,IF(dl.is_reclamation,' (Возврат)',''),' #',dl.doc_num) doc,
+                CONCAT(dt.doc_type_name,IF(dl.is_reclamation,' (Р’РѕР·РІСЂР°С‚)',''),' #',dl.doc_num) doc,
 		(SELECT label FROM companies_tree JOIN companies_list USING(branch_id) WHERE company_id=passive_company_id) plabel,
 		(SELECT label FROM companies_tree JOIN companies_list USING(branch_id) WHERE company_id=active_company_id) alabel,
                 product_code,
@@ -441,7 +441,6 @@ class Stock extends Catalog {
     ////////////////////////////////////////////
     // RESERVING SYSTEM
     ////////////////////////////////////////////
-    
     public function reserveSystemStatusChange( bool $active ){
         $Events=$this->Hub->load_model("Events");
         if( $active ){
@@ -535,9 +534,9 @@ class Stock extends Catalog {
             $day_limit=$this->Hub->pref('awaiting_limit');
         }
         $stamp=time()+60*60*24*($day_limit?$day_limit:3);
-        $alert="Счет №".$doc->doc_num." для ".$this->Hub->pcomp('company_name')." снят с резерва";
+        $alert="Документ №".$doc->doc_num." для ".$this->Hub->pcomp('company_name')." снят с резерва";
         $name="Снятие с резерва";
-        $description="$name счета №".$doc->doc_num." для ".$this->Hub->pcomp('company_name');
+        $description="$name Снятие с резерва счета №".$doc->doc_num." для ".$this->Hub->pcomp('company_name');
         $event=[
             'doc_id'=>$doc->doc_id,
             'event_name'=>$name,
@@ -551,19 +550,9 @@ class Stock extends Catalog {
             'event_program'=>json_encode([
                 'commands'=>[
                     [
-                        'model'=>'DocumentCore',
-                        'method'=>'setStatusByCode',
-                        'arguments'=>[$doc->doc_id,'created']
-                    ],
-                    [
-                        'model'=>'Chat',
-                        'method'=>'addMessage',
-                        'arguments'=>[$user_id,$alert]
-                    ],
-                    [
-                        'model'=>'Events',
-                        'method'=>'eventDelete',
-                        'arguments'=>[$event_id]
+                        'model'=>'Stock',
+                        'method'=>'reserveTaskExecute',
+                        'arguments'=>[$doc->doc_id,$user_id,$alert,$event_id]
                     ]
                 ]
             ])
@@ -572,6 +561,16 @@ class Stock extends Catalog {
             $this->Hub->Events->eventChange($event_id, $event_update);
         }
         return $event_id;
+    }
+    
+    public function reserveTaskExecute($doc_id,$user_id,$alert,$event_id){
+        $status_change_ok=$this->Hub->load_model("DocumentCore")->setStatusByCode($doc_id,'created');
+        if( $status_change_ok ){
+            $this->Hub->load_model("Chat")->addMessage($user_id,$alert,true);
+            $this->Hub->load_model("Events")->eventDelete($event_id);
+            return false;
+        }
+        return false;
     }
     
     private function reserveTaskRemove($doc){
@@ -604,5 +603,445 @@ class Stock extends Catalog {
 	OR reserved IS NOT NULL 
         OR awaiting IS NOT NULL";
         return $this->query($sql);
+    }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    ////////////////////////////////////////////////////
+    //MATCHES LIST FETCHING
+    ////////////////////////////////////////////////////
+    protected function matchesFilterStore(){
+        $this->Hub->svar('filter_tree',$this->filter_tree);
+    }
+    
+    public function matchesFilterGet(){
+        $filter_tree=$this->Hub->svar('filter_tree');
+        if( !$filter_tree ){
+            return [];
+        }
+        $tree=[];
+        foreach($filter_tree as $group){
+            $filter_group_options=[];
+            foreach($group->options as $option){
+                $filter_group_options[]=[
+                    'filter_group_id'=>$option->filter_group_id,
+                    'filter_option_id'=>$option->filter_option_id,
+                    'filter_option_range'=>$option->filter_option_range,
+                    'filter_option_label'=>$option->filter_option_label,
+                    'is_selected'=>$option->is_selected,
+                    'match_count'=>$option->match_count
+                ];
+            }
+            $tree[]=[
+                'filter_group_id'=>$group->filter_group_id,
+                'filter_group_name'=>$group->filter_group_name,
+                'filter_group_minmax'=>$group->filter_group_minmax,
+                'filter_group_options'=>$filter_group_options
+            ];
+        }
+        return $tree;
+    }
+    
+    protected function matchesFilterBuildRange( $group_id, $group_name ){
+        $minmax=$this->get_row("SELECT FLOOR(MIN($group_id)) minval, CEIL(MAX($group_id)) maxval FROM tmp_matches_list");
+        $this->matchesFilterBuildGroup( $group_id, $group_name, "{$minmax->minval}_{$minmax->maxval}" );
+        $fraction_count=4;
+        $fraction=($minmax->maxval - $minmax->minval)/$fraction_count;
+        $roundto=pow(10,strlen(round($fraction))-1);
+        $rounded_fraction=round($fraction/$roundto)*$roundto;
+        $custom_option_range=null;
+        if( isset($this->filter_selected_grouped[$group_id]) ){
+            $custom_option_range=$this->filter_selected_grouped[$group_id];
+        }
+        for( $i=1; $i<=$fraction_count; $i++ ){
+            $from =$rounded_fraction*($i-1);
+            $to   =$rounded_fraction*$i;
+            $is_selected=0;
+            $lower_condition=">";
+            if( $i==0 ){
+                $from=$minmax->minval;
+                $lower_condition=">=";
+            }
+            if( $i==$fraction_count ){
+                $to=$minmax->maxval;
+            }
+            if( $custom_option_range!=null && $custom_option_range<$from ){
+                $custom_option_range_parts=explode("_",$custom_option_range);
+                $from=(float) $custom_option_range_parts[0];
+                $to  =(float) $custom_option_range_parts[1];
+                $i--;
+            }
+            if( $custom_option_range!=null && $custom_option_range=="{$from}_{$to}" ){
+                $custom_option_range=null;
+                $is_selected=1;
+            }
+            if( $from===null || $to===null ){
+                continue;
+            }
+            $option_range="{$from}_{$to}";
+            $option_label="$from - $to";
+            $option_condition="$group_id $lower_condition $from AND $group_id <= $to";
+            $this->matchesFilterBuildOption( $group_id, $option_label, $option_condition, $is_selected, $option_range );
+        }
+    }
+    
+    public function matchesFilterBuildGroup( $group_id, $group_name, $group_minmax=null ){
+        $this->filter_tree[$group_id]=(object) [
+            'filter_group_id'=>$group_id,
+            'filter_group_name'=>$group_name,
+            'filter_group_minmax'=>$group_minmax,
+            'options'=>[]
+        ];
+    }
+    
+    public function matchesFilterBuildOption($group_id,  $option_label, $option_condition, $is_selected=null, $option_range=null ){
+        $option_id=substr(md5("$group_id-$option_condition"),0,10);//may be collisions. do we need collision check?
+        if( $is_selected===null && isset($this->filter_selected_grouped[$group_id]) ){
+            $selected_options=$this->filter_selected_grouped[$group_id];
+            $is_selected=(int)in_array($option_id, $selected_options);
+        }
+        $this->filter_tree[$group_id]->options[$option_id]=(object)[
+            'filter_group_id'=>$group_id,
+            'filter_option_id'=>$option_id,
+            'filter_option_label'=>$option_label,
+            'filter_option_range'=>$option_range,
+            'filter_option_condition'=>$option_condition,
+            'is_selected'=>$is_selected,
+            'match_count'=>''
+        ];
+        return $option_id;
+    }
+    
+    protected function matchesFilterBuildOptionSelect($group_id,$option_id,$is_selected=true){
+        $this->filter_tree[$group_id]->options[$option_id]->is_selected=$is_selected;
+    }
+    
+    protected function matchesFilterBuildCount(){
+        $count_fields=[];
+        function getCountCondition($group_id,$filter_tree,$filter_selected_grouped){
+            $and_case=[];
+            foreach( $filter_selected_grouped as $selected_group_id=>$options ){
+                if( $group_id===$selected_group_id ){
+                    continue;
+                }
+                $and_case[]=$filter_tree[$selected_group_id]->condition;
+            }
+            return $and_case;
+        }
+        foreach($this->filter_tree as $group){
+            $other_group_conditions=getCountCondition($group->filter_group_id,$this->filter_tree,$this->filter_selected_grouped);
+            foreach($group->options as $option){
+                $full_condition=array_merge($other_group_conditions,[$option->filter_option_condition]);
+                $option_condition='('.implode(") AND (",$full_condition).')';
+                $count_fields[]="SUM(IF($option_condition,1,0)) `{$group->filter_group_id}___{$option->filter_option_id}`";
+            }
+        }
+        $select= implode(',', $count_fields);
+        $counts=$this->get_row("SELECT $select FROM tmp_matches_list");
+        foreach($counts as $field=>$count){
+            $ids=explode('___',$field);
+            $this->filter_tree[$ids[0]]->options[$ids[1]]->match_count=$count?$count:0;
+        }
+    }
+    
+    protected function matchesFilterBuildPrice(){
+        $group_id="price_final";
+        $this->matchesFilterBuildRange($group_id,$this->lang("Price"));
+    }
+    
+    protected function matchesFilterBuildAnalytics(){
+        $group_id='analyse_brand';
+        $group_name=$this->lang("Brand");
+        $options=$this->get_list("SELECT DISTINCT $group_id FROM tmp_matches_list ORDER BY $group_id");
+        $this->matchesFilterBuildGroup( $group_id, $group_name );
+        foreach( $options as $option ){
+            $option_value=$option->{$group_id};
+            $option_label=$option_value?$option_value:$this->lang("Other");
+            $option_condition=" $group_id='$option_value'";
+            $this->matchesFilterBuildOption($group_id,  $option_label, $option_condition );
+        }
+    }
+    
+    protected function matchesFilterBuildPromotions(){
+        $group_id='special_prices';
+        $group_name=$this->lang("Promotion");
+        $this->matchesFilterBuildGroup( $group_id, $group_name );
+        $this->matchesFilterBuildOption($group_id,  $this->lang("Promotion"), 'NOT ISNULL(price_promo)' );
+        $this->matchesFilterBuildOption($group_id,  $this->lang("Discount"), 'price_basic < price_fixed' );
+        $this->matchesFilterBuildOption($group_id,  $this->lang("Special_price"), 'price_label < price_basic' );
+    }
+    
+    
+    protected function matchesListGetWhere( $q, $category_id ){
+        /*
+         * PREPEARING WHERE BY QUERY STRING AND CATEGORY
+         */
+        $lang='ru';
+        $cases=[];
+        if( strlen($q)==13 && is_numeric($q) ){
+	    $cases[]="pl.product_barcode=$q";
+	} else if( $q ){
+	    $clues=  explode(' ', $q);
+	    foreach ($clues as $clue) {
+		if ($clue == ''){
+		    continue;
+		}
+		$cases[]="(pl.product_code LIKE '%$clue%' OR pl.$lang LIKE '%$clue%')";
+	    }
+	}
+        if( $category_id ){//maybe its good idea to switch to tree path filtering?
+            $branch_ids = $this->treeGetSub('stock_tree', $category_id);
+            $cases[]= "se.parent_id IN (" . implode(',', $branch_ids) . ")";
+        }
+        //plugins where_cases goes here
+        return $cases?implode(' AND ',$cases):'1';
+    }
+    
+    protected function matchesListGetOrderBy($sortby,$sortdir){
+        /*
+         * PREPEARING ORDER BY
+         */
+        switch($sortby){
+            //plugins order_by_cases goes here
+            case 'price':
+                $order_by="price_final";
+                break;
+            case 'newness':
+                $order_by='product_id';
+                break;
+            case 'name':
+                $order_by='product_name';
+                break;
+            case 'popularity':
+            default :
+                $order_by='leftover=0,popularity';
+        }
+        if( $sortdir=='ASC' ){
+            $order_by.=" ASC";
+        } else {
+            $order_by.=" DESC";
+        }
+        return $order_by;
+    }
+    
+    protected function matchesListCreateTemporary( $where ){
+        $result_window_size=1000;
+        $usd_ratio=$this->Hub->pref('usd_ratio');
+        $pcomp_id=$this->Hub->pcomp('company_id');
+        $price_label=$this->Hub->pcomp('price_label');
+        
+        $query=[
+            'inner'=>[
+                'select'=>'',
+                'table'=>'',
+                'where'=>'',
+                'limit'=>'',
+                'groupby'=>''
+            ],
+            'outer'=>[
+                'select'=>'',
+                'table'=>'',
+                'where'=>'',
+                'limit'=>'',
+                'groupby'=>''
+            ]
+        ];
+        
+        $query['inner']['select']="
+            pl.product_id,
+            pl.product_code,
+            pl.ru product_name,
+            pl.product_spack,
+            pl.product_unit,
+            pl.analyse_brand,
+            pl.analyse_type,
+            pl.analyse_class,
+            se.product_quantity leftover,
+            se.product_img,
+            se.fetch_count,
+            se.fetch_stamp,
+            fetch_count-DATEDIFF(NOW(),COALESCE(se.fetch_stamp,se.modified_at)) popularity,
+            se.parent_id,
+            prl_basic.sell*IF(prl_basic.curr_code='USD',$usd_ratio,1) price_fixed,
+            prl_basic.sell*IF(prl_basic.curr_code='USD',$usd_ratio,1)*IF(discount,discount,1) price_basic,
+            prl_label.sell*IF(prl_label.curr_code='USD',$usd_ratio,1)*IF(discount,discount,1) price_label,
+            prl_promo.sell*IF(prl_promo.curr_code='USD',$usd_ratio,1) price_promo";
+        $query['inner']['table']="
+            stock_entries se
+                JOIN
+            prod_list pl USING(product_code)
+                JOIN
+            stock_tree st ON st.branch_id=se.parent_id
+                LEFT JOIN
+            companies_discounts cd ON st.top_id=cd.branch_id AND company_id='$pcomp_id'
+                LEFT JOIN
+            price_list prl_promo ON prl_promo.label='PROMO' AND se.product_code=prl_promo.product_code
+                LEFT JOIN
+            price_list prl_label ON prl_label.label='$price_label' AND se.product_code=prl_label.product_code
+                LEFT JOIN
+            price_list prl_basic ON prl_basic.label='' AND se.product_code=prl_basic.product_code";
+        $query['inner']['where']="
+            WHERE 
+            (SELECT MIN(fetch_count)
+                FROM (SELECT
+                        fetch_count
+                    FROM
+                        stock_entries
+                    ORDER BY
+                        fetch_count DESC
+                    LIMIT $result_window_size) t) AND $where";
+        $query['inner']['limit']="
+            LIMIT $result_window_size";
+        $query['outer']['select']="inner_tmp_matches_list.*,
+            CAST(COALESCE(price_promo,price_label,price_basic) AS CHAR) price_final";
+        $query['outer']['table']="";
+        $query['outer']['where']="";
+        $query['outer']['limit']="";
+        $query['outer']['groupby']="GROUP BY product_id";
+        
+        $Events=$this->Hub->load_model("Events");
+        $modified_query=$Events->Topic('beforeMatchesTmpCreated')->publish( $query );
+        if( $modified_query ){
+            $query=$modified_query;
+        }
+        
+        //$this->query("DROP  TABLE IF EXISTS tmp_matches_list");#TEMPORARY
+        $sql="CREATE TEMPORARY TABLE tmp_matches_list (PRIMARY KEY(product_id)) AS 
+            SELECT 
+                {$query['outer']['select']}
+            FROM (
+                SELECT 
+                    {$query['inner']['select']}
+                FROM 
+                    {$query['inner']['table']}
+                    {$query['inner']['where']}
+                    {$query['inner']['limit']}
+                    {$query['inner']['groupby']}
+                ) inner_tmp_matches_list
+                {$query['outer']['table']}
+                {$query['outer']['where']}
+                {$query['outer']['limit']}
+                {$query['outer']['groupby']}";
+        return $this->query($sql);
+    }
+    
+    protected function matchesFilterBuild(){
+        $this->filter_tree=[];
+        $this->filter_selected_grouped=$this->request('filter_selected_grouped','json',[]);
+        $Events=$this->Hub->load_model("Events");
+        $this->matchesFilterBuildPrice();
+        $this->matchesFilterBuildPromotions();
+        $this->matchesFilterBuildAnalytics();
+        $Events->Topic('beforeMatchesFilterBuild')->publish($this);
+    }
+    
+    public function matchesListFetch(string $q, int $limit=12, int $offset=0, string $sortby, string $sortdir, int $category_id=0, int $pcomp_id=0) {
+        $where=     $this->matchesListGetWhere( $q, $category_id );
+        $order_by=  $this->matchesListGetOrderBy($sortby,$sortdir);
+        
+        $this->matchesListCreateTemporary($where);
+        $this->matchesFilterBuild();
+        $matches=$this->matchesGet($order_by,$limit,$offset);
+        foreach($matches as &$product){
+            $product->product_name= htmlentities($product->product_name);
+        }
+        $this->immediateResponse($matches);
+        
+        $this->matchesFilterBuildCount();
+        $this->matchesFilterStore();
+    }
+    
+    private function matchesGet( $order_by, $limit, $offset ){
+        $and_case=[];
+        foreach($this->filter_tree as &$group){
+            $or_case=[];
+            foreach($group->options as $option){
+                if( $option->is_selected ){
+                    $or_case[]=$option->filter_option_condition;
+                }
+            }
+            if( $or_case ){
+                $group->condition=implode(" OR ",$or_case);
+                $and_case[]=$group->condition;
+            }
+        }
+        $having="";
+        if( count($and_case) ){
+            $filter_clause='('.implode(") AND (",$and_case).')';
+            $having="HAVING $filter_clause";
+        }
+
+        $query=[
+            'select'=>'tmp_matches_list.*',
+            'table'=>'tmp_matches_list',
+            'where'=>'',
+            'having'=>$having,
+            'order_by'=>"ORDER BY $order_by",
+            'group_by'=>'GROUP BY product_id',
+            'limit'=>"LIMIT $limit OFFSET $offset"
+        ];
+
+        $Events=$this->Hub->load_model("Events");
+        $modified_query=$Events->Topic('beforeMatchesGet')->publish($query);
+        if( $modified_query ){
+            $query=$modified_query;
+        }
+        
+        $sql="
+            SELECT
+                {$query['select']}
+            FROM
+                {$query['table']}
+            {$query['where']}
+            {$query['group_by']}
+            {$query['having']}
+            {$query['order_by']}
+            {$query['limit']}";
+        return $this->get_list($sql);
+    }
+    
+    private function immediateResponse( $response ){
+        ob_start();
+        echo json_encode($response);
+        header('Connection: close');
+        header('Content-Length: '.ob_get_length());
+        ob_end_flush();
+        ob_flush();
+        flush();
     }
 }

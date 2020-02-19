@@ -112,8 +112,7 @@ class Chat extends Catalog{
         return ['dialog'=>$dialog,'has_new'=>$this->checkNew('skip_tasks')];
     }
     
-    public $checkNew=[];
-    public function checkNew($mode=''){
+    public function checkNew( string $mode='' ){
 	$my_id = $this->Hub->svar('user_id');
 	$sql="SELECT 
 		COUNT(*) 

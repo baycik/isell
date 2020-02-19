@@ -11,7 +11,7 @@
 		    delete App.page_trade_view_settings;
 		}
 	    });
-	    this.initEfields(this.data);
+	    this.initEfields(this.data);            
 	    App.setupForm("#view_settings_frm",this.data,'use_inp_values').change(function(){
                 var field_type=$(this).data('notextra')>0?'notextra':'extra';
 		App.page_trade_view_settings.fieldChanged(this.name,this.value,field_type,this.title);
@@ -28,7 +28,7 @@
             App.post( 'DocumentView/viewUpdate',{doc_view_id:this.data.doc_view_id,is_extra:is_extra,field:field,value:value}, function(ok){
 		App.page_trade_view_settings.handler.notify('changed');
                 if( ok*1 ){
-                    App.flash("Сохранено: "+title);
+                    title && App.flash("Сохранено: "+title);
                 } else {
                     App.flash("Ошибка сохранения "+title);
                 }
@@ -39,17 +39,33 @@
 		App.page_trade_view_settings.handler.notify('deleted');
 		App.page_trade_view_settings.node.window('close');
 	    });	 
-	}
+	},
+        handle:{
+            company:function( input_node ){
+                $input_node = $(input_node);
+                App.loadWindow('page/company/tree').progress(function(status,company){
+                    if( status==='select' ){
+                        $input_node.val(company.label);
+                        App.page_trade_view_settings.fieldChanged($input_node.attr('name'),company.label,'extra',$input_node.attr('title'));
+                        App.page_trade_view_settings.fieldChanged($input_node.attr('name')+'_company_id',company.company_id,'extra');
+                    }
+                });
+            }
+        }
     };
 </script>
 <form id="view_settings_frm">
     <input name="view_date" type="date" title="Дата" required="required" data-notextra="1">
-    <input name="view_num" type="number" title="Дата" required="required" data-notextra="1">
+    <input name="view_num" type="number" title="Номер" required="required" data-notextra="1">
     <div class="inp_rule"></div>
     <div id="view_settings_efields">
     {{if efields}}
 	{{efields}}
-	<input type="text" name="{{field}}" title="{{label}}" value="{{value}}">
+        <!--{{if type|equals>company_id}}-->
+        <input type="text" name="{{field}}" title="{{label}}" value="{{value}}" class="company_picker" onclick="App.page_trade_view_settings.handle.company(this)">
+        <!--{{else}}-->
+        <input type="{{type|blank>text}}" name="{{field}}" title="{{label}}" value="{{value}}">
+        <!--{{/if}}-->
 	{{/efields}}
     {{/if}}
     </div>
@@ -59,3 +75,11 @@
     <button onclick="App.page_trade_view_settings.deleteView();"><img src="img/delete.png" style="vertical-align: middle"> Удалить</button>
 </div>
 <br>
+<style>
+    #view_settings_efields .company_picker{
+        background: url('img/settings.png');
+        background-position:right;
+        background-repeat:no-repeat;
+        background-color: white;
+    }
+</style>

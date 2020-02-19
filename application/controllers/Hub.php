@@ -294,6 +294,7 @@ class Hub extends CI_Controller{
             $this->load->add_package_path(BAY_STORAGE.'plugin_modifications/plugins/'.$name, 1);
         }
 	$this->load->model($name,null,true);
+        
 	if( isset($this->{$name}->min_level) ){
 	    $this->set_level($this->{$name}->min_level);
 	}
@@ -323,7 +324,11 @@ class Hub extends CI_Controller{
 	die();
     }
     
+    public $silence_msg=false;
     public function msg($msg) {
+        if( $this->silence_msg ){
+            return false;
+        }
 	$this->msg.="$msg\n";
     }
     
@@ -350,7 +355,7 @@ class Hub extends CI_Controller{
     public function response( $response ){
 	if( isset($this->bridge) && $this->bridge->msg ){
 	    $this->msg.=$this->bridge->msg;
-	}
+	} 
         if( $this->log_output_messages ){
             $this->load_model('Catalog')->log($this->svar('user_login').': '.$this->msg);
         } else {

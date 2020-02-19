@@ -14,6 +14,7 @@ class FileEngine{
     private $compilator;
     private $compiled_html;
     private $post_processor=null;
+    private $page_orientation='portrait';
     public $header_mode='send_headers';
     public $user_data;
     public $file_name_override;
@@ -64,6 +65,10 @@ class FileEngine{
             $this->xsdtoxml = new XSDtoXML();
             $this->xsdtoxml->loadFile($file_name);
         }
+    }
+    
+    public function setPageOrientation( $orientation ){
+        $this->page_orientation=$orientation;
     }
     
     private function compile($tpl_file) {
@@ -120,7 +125,7 @@ class FileEngine{
 	    $tmppdf = $parent."/pdf-tmp$rnd.pdf";
 	    $pdfengine = $parent.'/wkhtmltopdf.exe';
 	    file_put_contents($tmphtml,$full_html);
-	    exec("$pdfengine --zoom 1.2 $tmphtml $tmppdf  2>&1",$output);
+	    exec("$pdfengine --zoom 1.2 -O $this->page_orientation $tmphtml $tmppdf  2>&1",$output);
 	    if( count($output) ){
 		file_put_contents($parent.'/pdferror.log', implode( "\n", $output ));
 	    }

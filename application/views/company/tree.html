@@ -64,12 +64,14 @@
 	},
 	reset:function(){
 	    Ctree.handler.notify('reset');
+            Ctree.handler.reject();
 	    Ctree.unselectTree();
 	},
 	selectTree: function () {
 	    var branch=$('#Ctree_tree').tree('getSelected');
 	    if( branch.company_id>0 ){
-		Ctree.handler.notify('select', branch);
+                Ctree.handler.notify('select', branch);
+                //Ctree.handler.resolve(branch);
 		//Ctree.unselectCombo(branch.label);
 	    } else {
 		Ctree.handler.notify('selectFolder', branch);
@@ -81,6 +83,7 @@
 	selectCombo:function(company,oldVal){
 	    if( company.company_id ){
 		Ctree.handler.notify('select', company);
+                //Ctree.handler.resolve(company);
 		Ctree.unselectTree();
                 if (!Ctree.data.inline) {
                     setTimeout(function(){

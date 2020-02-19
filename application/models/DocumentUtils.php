@@ -26,7 +26,11 @@ class DocumentUtils extends Catalog{
                     document_status_list dsl USING(doc_status_id)
                 WHERE doc_id='$doc_id'";
             $document_head=$this->get_row($sql);
-            if($document_head){ $passive_company=$this->Hub->load_model('Company')->companyGet($document_head->passive_company_id);}else{ return false;};
+            if($document_head){ 
+                $passive_company=$this->Hub->load_model('Company')->companyGet($document_head->passive_company_id);
+            } else { 
+                return false;
+            }
             /*
              * IF cant get company than it is not permitted to user
              */

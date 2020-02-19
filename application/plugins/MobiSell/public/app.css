@@ -1,0 +1,26 @@
+.covert{
+    display: none;
+    visibility: hidden;
+}
+#status{
+    padding: .5em;
+    color:#fff;
+    position: absolute;
+    right: 0px;
+    margin: 3px;
+    background-color: rgba(0,0,0,.8);
+    border-radius: .3em;
+}
+#main_container{
+    background-color: #f7fafb;
+}
+@media only screen and (min-width: 800px) {
+    #main_container{
+        padding: 0 5% 0 5%;
+    }
+} 
+@media only screen and (min-width: 1200px) {
+    #main_container{
+        padding: 0 10% 0 10%;
+    }
+} 

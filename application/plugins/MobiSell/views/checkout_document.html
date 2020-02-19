@@ -280,6 +280,7 @@
                 };
                 currentEntry.product_quantity_verified = product_verified;
                 App.checkout_document.log.write_to_log(operation_quantity, currentEntry);
+                App.speech.say(operation_quantity+currentEntry.product_unit);
             },
             search_barcode:function ( code_or_barcode ){
                 let found_entry_index=App.checkout_document.entries.select( code_or_barcode );

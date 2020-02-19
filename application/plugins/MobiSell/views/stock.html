@@ -1,20 +1,15 @@
 <script>
     App.stock = {
-        
         init: function () {
             App.title("Каталог товаров");
             App.stock.head.init();
             App.stock.cart.init();
             App.stock.entries.init();
-            App.stock.attributes.init();
+            App.stock.filter.init();
             App.stock.utils.initControls();
             App.Topic('passiveCompanySelected').subscribe(function () {
-                $("#stock_pcomp_notice").hide();
-                App.stock.entries.load();   
+                App.stock.entries.load();
             });
-            App.Topic('hashChange').subscribe(function () {
-                App.stock.productInfoModal.showProductInfo(App.state['productInfoModal.showProductInfo']);
-            }); 
         },
         focus: function () {
             App.title("Каталог товаров");
@@ -28,8 +23,18 @@
             init: function(){
                 App.stock.head.pcompInit();
                 App.stock.categories.init();
-                $('.limit-dropdown').dropdown();
-                $('.order-by-dropdown').dropdown();
+                $('.limit-dropdown').dropdown({
+                    onChange: function (value){
+                        App.stock.entries.parameters.limit=value;
+                        App.stock.entries.load();
+                    }
+                });
+                $('.order-by-dropdown').dropdown({
+                    onChange: function (value){
+                        App.stock.entries.parameters.order_by=value;
+                        App.stock.entries.load();
+                    }
+                });
             },
             pcompInit: function () {
                 $('.pcomp_id').dropdown({
@@ -45,13 +50,16 @@
                     fullTextSearch: true,
                     onChange: function (value, text, $choice) {
                         if (value * 1 > 0) {
-                            App.user.setPassiveCompany({company_id: value, label: text});
+                            App.user.pcompSelect({company_id: value, label: text});
                         } else {
                             $(".pcomp_id").dropdown('set text', "Выберите клиента");
                             $(".pcomp_id").dropdown('show');
                         }
                     }
                 }).dropdown("set text", App.user.pcomp.label || '');
+                if( App.user.pcomp ){
+                    
+                }
             },
             clearSearchbar: function () {
                 App.stock.entries.show_cart = 0;
@@ -68,7 +76,7 @@
             load: function () {
                 var params = {
                     id: 0,
-                    depth: "all"
+                    depth: "3"
                 };
                 $.get("../Stock/branchFetch", params, function (response) {
                     App.stock.categories.list = App.json(response);
@@ -109,135 +117,53 @@
                 
             }
         },
-        attributes: {
-            list: [],
-            selected: [],
-            checked: [],
-            last_expanded: [],
-            init: function (){
-                $('#attributes_container').accordion({
-                        duration: 0, 
-                        exclusive: false,
-                        onOpen: function(){
-                            App.stock.attributes.last_expanded.push($(this).data('attribute_id'));
-                        },
-                        onClose: function(){
-                            var closed = $(this).data('attribute_id');
-                            var is_in_list = App.stock.attributes.isInList(App.stock.attributes.last_expanded, closed);
-                            App.stock.attributes.last_expanded.splice(is_in_list, 1);
-                        }
-                });
-            },
-            render: function () {
-                App.stock.attributes.checked = [];
-                App.stock.attributes.list.forEach(function iter(attribute) {
-                    if (App.stock.attributes.selected.includes(attribute.attribute_value_id)) {
-                        attribute.is_selected = 'checked';
-                        App.stock.attributes.checked.push(attribute);
-                    }
-                    Array.isArray( attribute.attribute_values) && attribute.attribute_values.forEach(iter);
-                });
-                if(!App.stock.attributes.checked.length){
-                    App.stock.attributes.selected = [];
-                }
-                App.renderTpl("attributes_container", {attributes: App.stock.attributes.list});
-                App.renderTpl("attributes_selected", {attributes_selected: App.stock.attributes.checked});
-                $('.stock-attributes-button .attributes-selected-length').html(App.stock.attributes.selected.length);
-                App.stock.attributes.last_expanded.forEach(function(attribute_id){
-                    $('#attribute_'+attribute_id).addClass('active');
-                    $('#content_attribute_'+attribute_id).addClass('active');
-                })
-            },
-            select: function(node){
-                var checked = $(node).prop('checked');
-                var attribute_value_id = $(node).data('attribute_value_id');
-                if(checked){
-                    App.stock.attributes.add(attribute_value_id);
-                } else {
-                    App.stock.attributes.remove(attribute_value_id);
-                }
-                App.stock.entries.show_cart = false;
-                App.stock.entries.load();
-            },
-            add: function(attribute_value_id){
-                App.stock.attributes.selected.push(attribute_value_id);
-            },
-            isInList: function(list,attribute_value_id){
-                var i = 0;
-                list.forEach(function(attribute, index){
-                    if(attribute === attribute_value_id){
-                        i = index;
-                    }
-                })
-                return i;
-            },
-            remove: function(attribute_value_id){
-                App.stock.attributes.selected.splice(App.stock.attributes.isInList(App.stock.attributes.selected, attribute_value_id), 1);
-            },
-            clearSelected: function(){
-                if(!App.stock.attributes.selected.length){
-                    return;
-                }
-                App.stock.attributes.selected = [];
-                App.stock.attributes.checked = [];
-                App.stock.entries.load();
-            }
-        },
         entries: {
             list: [],
             current_list: [],
-            offset: 0,
             loading_finished: 0,
-            show_cart:0,
-            order_by: 'fetch_count-DATEDIFF(NOW(),fetch_stamp) DESC',
-            limit:12,
-            category_id:0,
+            parameters:{
+                category_id:0,
+                show_cart:0,
+                order_by: 'popularity,DESC',
+                offset: 0,
+                limit:12
+            },
             init: function(){
-                App.stock.entries.load();
+                //App.stock.entries.load();
+            },
+            load_prepare_params:function(load_more){
+                if (load_more) {
+                    App.stock.entries.parameters.offset += App.stock.entries.parameters.limit;
+                } else {
+                    App.stock.entries.parameters.offset = 0;
+                };
+                App.stock.entries.parameters.q=$('#stock_search_input').val();
+                App.stock.entries.parameters.filter_selected_grouped=App.restore('filter_selected_grouped');
+                
+                App.stock.entries.parameters.sortby=App.stock.entries.parameters.order_by.split(',')[0];
+                App.stock.entries.parameters.sortdir=App.stock.entries.parameters.order_by.split(',')[1];
+                App.stock.entries.parameters.pcomp_id=App.user.pcomp.company_id;
+                $('#stock_categories_header').html("");
             },
             load: function (load_more) {
-                if (!App.user.pcomp.company_id) {
-                    $("#stock_pcomp_notice").show();
-                    return;
+                if ( App.user.pcomp.company_id>0 && App.user.pcomp.company_id!==App.user.acomp.company_id ) {
+                    $("#stock_pcomp_notice").hide();
                 };
-                if (load_more) {
-                    App.stock.entries.offset += App.stock.entries.limit;
-                } else {
-                    App.stock.entries.offset = 0;
-                };
-                var params = {
-                    q: $('#stock_search_input').val(),
-                    category_id: App.stock.entries.category_id,
-                    offset: App.stock.entries.offset,
-                    limit: App.stock.entries.limit+1,
-                    order_by: App.stock.entries.order_by,
-                    pcomp_id: App.user.pcomp.company_id, 
-                    attribute_value_ids: JSON.stringify(App.stock.attributes.selected) 
-                };
-                $('#stock_categories_header').html("");
+                App.stock.entries.load_prepare_params(load_more);
+                
                 App.flash("Загрузка товаров...");
-                $.post("./productListFetch", params, function (resp) {
+                $.post("../Stock/matchesListFetch", App.stock.entries.parameters, function (resp) {
                     App.flash("Загрузка товаров:ОК");
-                    var response = App.json(resp);
-                    var new_loaded_items = response.product_list;
-                    App.stock.attributes.list = response.attribute_list;
-                    if( !new_loaded_items.length ){
-                        if(App.stock.attributes.selected.length>0 && params.category_id != 0){
-                            App.stock.attributes.selected = [];
-                            App.stock.entries.load();
-                            return;
-                        }
-                    }
+                    var new_loaded_items = App.json(resp);
                     if ( load_more ) {
                         App.stock.entries.list = App.stock.entries.list.concat(new_loaded_items);
                     } else {
                         App.stock.entries.list = new_loaded_items;
                     };
-                    if ( new_loaded_items.length < App.stock.entries.limit + 1 ) {
+                    
+                    App.stock.entries.loading_finished = 0;
+                    if ( new_loaded_items.length<App.stock.entries.parameters.limit ) {
                         App.stock.entries.loading_finished = 1;
-                    } else {
-                        App.stock.entries.list.pop();
-                        App.stock.entries.loading_finished = 0;
                     }
                     App.stock.entries.render();
                 });
@@ -245,7 +171,7 @@
             addSpecailProductFeatures: function () {
                 for (var i = 0; i < App.stock.entries.current_list.length; i++) {
                     App.stock.entries.current_list[i].product_quantity = App.stock.cart.findInCart(App.stock.entries.current_list[i].product_id).product_quantity;
-                    App.stock.entries.current_list[i].is_promo = (App.stock.entries.current_list[i].product_price_total !== App.stock.entries.current_list[i].product_price_total_raw) ? 1 : 0;
+                    //App.stock.entries.current_list[i].is_promo = (App.stock.entries.current_list[i].price_final !== App.stock.entries.current_list[i].price_final_raw) ? 1 : 0;
                 }
             },
             render: function () {
@@ -258,12 +184,11 @@
                     $('#stock_head_form .field').removeClass('disabled');
                     App.stock.entries.current_list = App.stock.entries.list;
                 }
-                App.stock.entries.addSpecailProductFeatures();
                 var gridview=localStorage.getItem('stockGridView');
+                App.stock.filter.load();
+                App.stock.entries.addSpecailProductFeatures();
                 App.stock.entries.gridViewConfigure(gridview); 
                 App.stock.cart.renderButton(); 
-                App.stock.attributes.render();
-                $('.cart-quantity').html(App.stock.cart.list.length);
                 App.renderTpl("stock_list", {products: App.stock.entries.current_list, loading_finished: App.stock.entries.loading_finished, show_cart: App.stock.entries.show_cart});
             }, 
             renderItem: function (index, product_quantity){    
@@ -334,16 +259,16 @@
                 $('#stock_category_tree').click(function(e){
                     $('#categoriesPopup').modal({ inverted: true, duration:0}).modal('show');
                 });
-                $('#stock_attributes').click(function(e){
-                    $('#attributesPopup').show();
-                    $('#stock_content').hide();
-                });
                 $('.limit-dropdown').change(function(e){
                     App.stock.entries.limit = $(this).dropdown('get value')*1;
                     App.stock.entries.load();
                 });
+                $('#stock_attributes').click(function(e){
+                    $('#stock_filter_popup').show();
+                    $('#stock_content').hide();
+                });
                 $('.order-by-dropdown').change(function(e){
-                    App.stock.entries.order_by = $(this).dropdown('get value');
+                    App.stock.entries.parameters.order_by = $(this).dropdown('get value');
                     App.stock.entries.load();
                 });
                 $(document).click(function(e){
@@ -356,7 +281,7 @@
                     if(!category_id && category_id !== '0'){return;};
                     category_id === 'All' ? category_id = 0 : 0;
                     $('#stock_category_tree label.placeholder').html($(e.target).html());
-                    App.stock.entries.category_id = category_id;
+                    App.stock.entries.parameters.category_id = category_id;
                     App.stock.entries.load();
                     $('#categoriesPopup').modal('hide');
                 }); 
@@ -370,6 +295,7 @@
             },
             renderButton: function(){
                 App.renderTpl("stock_render_mode", {show_cart: App.stock.entries.show_cart, cart_quantity: App.stock.cart.list.length, total: App.stock.cart.total});
+                $('.cart-quantity').html(App.stock.cart.list.length);
             },
             update: function (product_object,delta,new_quantity, index) {
                 var founded_product=App.stock.cart.findInCart(product_object.product_id);
@@ -406,7 +332,7 @@
             setTotal: function(){
                 var total = 0;
                 for (var i = 0; i < App.stock.cart.list.length; i++) {
-                    App.stock.cart.list[i].product_sum = (App.stock.cart.list[i].product_price_total * App.stock.cart.list[i].product_quantity).toFixed(2);
+                    App.stock.cart.list[i].product_sum = (App.stock.cart.list[i].price_final * App.stock.cart.list[i].product_quantity).toFixed(2);
                     total += App.stock.cart.list[i].product_sum*1 ;
                 };
                 App.stock.cart.total = total.toFixed(2);
@@ -434,666 +360,335 @@
                 location.hash = "#document.html";
             }
         },
-        productInfoModal:{
-            showProductInfo: function (product_code) {
-                if(!product_code){return;}
-                $.post("./productGet", {product_code: product_code}, function (response) {
-                        App.flash("Загрузка товаров:ОК");
-                        var product_object = App.json(response);
-                        if( !product_object.product_id ){return;}
-                        if( product_object.attributes ){
-                            product_object.attributes = App.stock.productInfoModal.composeAttributes(product_object);
+        filter:{
+            full_query:null,
+            filter_tree: {},
+            selected: [],
+            last_expanded_filter_group: [],
+            init: function () {
+                $('#stock_filter_container').accordion({
+                    duration: 100,
+                    exclusive: false,
+                    onOpen: function () {
+                        App.stock.filter.last_expanded_filter_group.push( $(this).data('filter_group_id') );
+                    },
+                    onClose: function () {
+                        let expanded=App.stock.filter.last_expanded_filter_group;
+                        let index=expanded.indexOf($(this).data('filter_group_id'));
+                        if( index>-1 ){
+                            expanded.splice(index,1);
                         }
-                        product_object.quantity_in_cart = App.stock.cart.findInCart(product_object.product_id).product_quantity;
-                        App.renderTpl('stock_product_info_modal', product_object);
-                        $("#stock_product_info_modal").modal({ inverted: true, duration:0}).modal('show').modal('can fit');;
-                    });
+                    }
+                });
+                $('#stock_filter_container').change(function (e){
+                    App.stock.filter.changed(e.target);
+                });
+                $("#stock_filter_tags").click(function (e) {
+                    var filter_option_id = $(e.target).data('filter_option_id');
+                    if (filter_option_id) {
+                        App.stock.filter.tags.remove(filter_option_id);
+                    }
+                });
             },
-            composeAttributes: function(product_object){
-                product_object.attributes = product_object.attributes.split(',');
-                var attributes = [];
-                for(var i = 0; i<product_object.attributes.length; i++){
-                    var attribute_item = product_object.attributes[i].split(': ');
-                    var attribute_object = {label: attribute_item[0], value: attribute_item[1]};
-                    attributes.push(attribute_object);
+            load: function () {
+                let full_query=App.stock.entries.parameters.q+'---'+App.stock.entries.parameters.category_id+'---'+App.stock.entries.parameters.filter_selected_grouped+'---'+App.user.pcomp.company_id;
+                if( App.stock.filter.full_query===full_query ){
+                    return;
                 }
-                return attributes;
+                App.stock.filter.full_query=full_query;
+                $.post("../Stock/matchesFilterGet", function (resp) {
+                    var filter_tree = App.json(resp);
+                    if (filter_tree) {
+                        App.stock.filter.render(filter_tree);
+                    }
+                });
+            },
+            render: function (filter_tree) {
+                App.stock.filter.filter_tree=filter_tree;
+                App.renderTpl("stock_filter_container", {filter_tree: filter_tree});
+                if( App.stock.filter.last_expanded_filter_group!==undefined ) {
+                    let expanded=App.stock.filter.last_expanded_filter_group;
+                    for( let filter_group_id of expanded ){
+                        $('#stock_filter_group_' + filter_group_id).addClass('active');
+                        $('#stock_filter_group_content_' + filter_group_id).addClass('active');
+                    }
+                }
+                $('.stock-attributes-button .attributes-selected-length').html(App.stock.filter.selected.length);
+                $("#stock_filter_container input[data-is_selected=1]").prop('checked', 1);
+
+                App.stock.filter.compile();//to actualize checked options that came from server
+                App.stock.filter.tags.render();
+            },
+            range:{
+                get:function(node){
+                    let filter_group_id=$(node).data('filter_group_id');
+                    let found_group=App.stock.filter.find_group_intree(filter_group_id);
+                    let minmax=found_group.filter_group_minmax.split('_');
+                    let from=$("#stock_filter_container input[data-filter_group_id="+filter_group_id+"][data-value_type=from]").val().replace(/,/g,'.')||minmax[0];
+                    let to=$("#stock_filter_container input[data-filter_group_id="+filter_group_id+"][data-value_type=to]").val().replace(/,/g,'.')||minmax[1];
+                    let $custom_option=$(`#custom_option_${filter_group_id}`);
+                    $custom_option.find('label').html(`${from} - ${to}`);
+                    $custom_option.find('input').prop('checked',true);
+                    $custom_option.find('input').data('filter_option_range',`${from}_${to}`);
+                    $custom_option.show();
+                },
+                set:function(filter_group_id,filter_option_range){
+                    let from='';
+                    let to='';
+                    if( filter_option_range!==-1 ){
+                        from=filter_option_range.split('_')[0];
+                        to=filter_option_range.split('_')[1];
+                    }
+                    let $from=$("#stock_filter_container input[data-filter_group_id="+filter_group_id+"][data-value_type=from]");
+                    let $to=$("#stock_filter_container input[data-filter_group_id="+filter_group_id+"][data-value_type=to]");
+                    $from.val(from);
+                    $to.val(to);
+                }
+            },
+            changed: function ( node ) {
+                let is_textbox=($(node).attr('type')==='text');
+                if( is_textbox ){
+                    App.stock.filter.range.get(node);
+                }
+                App.stock.filter.compile();
+                App.stock.filter.tags.render();
+                App.stock.filter.apply();
+            },
+            compile: function () {
+                App.stock.filter.selected_count = 0;
+                App.stock.filter.selected=[];
+                App.stock.filter.selected_grouped={};
+                $("#stock_filter_container input:checked").each(function (index, node) {
+                    let filter_group_id = $(node).data('filter_group_id');
+                    let filter_option_id = $(node).data('filter_option_id');
+                    let filter_option_range = $(node).data('filter_option_range');
+                    let option=App.stock.filter.find_option_intree(filter_group_id,filter_option_id);
+                    let group_selection=App.stock.filter.selected_grouped[filter_group_id];
+                    if( filter_option_range ){
+                        App.stock.filter.range.set(filter_group_id,filter_option_range);
+                        if( filter_option_range<0 ){//all range selected
+                            return;
+                        }
+                        group_selection=filter_option_range;
+                    } else {
+                        if( !group_selection ){
+                            group_selection = [];
+                        }
+                        group_selection.push(filter_option_id); 
+                    }
+                    App.stock.filter.selected_grouped[filter_group_id]=group_selection;
+                    App.stock.filter.selected.push(option);
+                    App.stock.filter.selected_count++;
+                });
+                App.store('filter_selected_grouped', App.stock.filter.selected_grouped);
+            },
+            find_option_intree:function(filter_group_id,filter_option_id){
+                let found_group=App.stock.filter.find_group_intree(filter_group_id);
+                for (let option of found_group.filter_group_options) {
+                    if( option.filter_option_id==filter_option_id ) {
+                        option.filter_group_name=found_group.filter_group_name;
+                        return option;
+                    }
+                }
+                return null;
+            },
+            find_group_intree:function(filter_group_id){
+                for(let group of App.stock.filter.filter_tree){
+                    if( group.filter_group_id === filter_group_id ){
+                        return group;
+                    }
+                }
+                return null;
+            },
+            apply: function () {
+                App.stock.filter.load_filtered_entries();
+            },
+            load_filtered_entries: function () {
+                clearTimeout(App.stock.filter.clock);
+                App.stock.filter.clock = setTimeout(function () {
+                    App.stock.entries.show_cart = false;
+                    App.stock.entries.load();
+                }, 300);
+            },
+            clearSelected: function () {
+                $("#stock_filter_container input:checked").prop('checked', 0);
+                App.stock.filter.changed();
+            },
+            tags: {
+                render: function () {
+                    App.renderTpl("stock_filter_tags", {stock_filter_tags: App.stock.filter.selected});
+                },
+                remove: function (filter_option_id) {
+                    //only for responsivness until filter is reloaded
+                    for (let i in App.stock.filter.selected) {
+                        if (App.stock.filter.selected[i]['filter_option_id'] === filter_option_id) {
+                            App.stock.filter.selected.splice(i, 1);
+                            break;
+                        }
+                    }
+                    $("#stock_filter_container input[data-filter_option_id=" + filter_option_id + "]").prop('checked', 0);
+                    App.stock.filter.changed();
+                }
             }
         }
     };
 </script>
 <style>
-    @media only screen and (max-width: 400px) {
-        .categories-container{
-            grid-template-columns: 100% !important;
-        }
-        #stock_list:not(.grid-view) .product-list-grid, .grid-view .product-list-grid{
-            grid-template-columns: 100% !important;
-        }
-        .grid-view .product-item-grid{
-            text-align: center !important;
-            grid-template-columns: 100% !important;
-        }
-        #stock_list:not(.grid-view) .product-item-grid{
-             grid-template-columns: 12% 87% !important;
-             grid-column-gap: 1em !important;
-             font-size: smaller !important;
-             position: relative;
-        }
-        #stock_list:not(.grid-view) .product-info-column{
-            width: 43vw !important;
-        }
-        #stock_list:not(.grid-view) .product-action-column{
-           transform: scale(0.9) !important;
-           width: 54vw !important;
-           right: -12px !important;
-           position: absolute !important;
-           bottom: 0px !important;
-        }
-        
-        .grid-view .product-image-column ,.grid-view .product-image-column img{
-            height: 130px !important;
-            width: auto !important;
-        }
-        #stock_list:not(.grid-view) .product-image-column img, #stock_list:not(.grid-view) .product-image-column {
-           height: auto !important;
-           width: 40px !important;
-        }
-        #stock_product_info_modal .content{
-            grid-template-columns: 100% !important;
-        }
-        #stock_product_info_modal .content img{
-            max-width: 60% !important;
-        }
-        #stock_product_info_modal .product-info-image{
-            text-align: center;
-        }
-        #stock_product_info_modal .product-info-name{
-            font-size: 16px !important;
-        }
-        #stock_product_info_modal .content .info-row{
-            grid-template-columns: 60% 40% !important;
-        }
-        #stock_product_info_modal .product-info-details{
-            max-height: max-content !important;
-            overflow-y: visible !important;
-            overflow-x: visible !important;
-        }
-        #stock_container {
-            grid-template-columns: 100% !important;
-        }
-        #attributesPopup{
-            display:none;
-            width: 90%;
-            height: 100%;
-            margin: 0 auto;
-            z-index: 10;
-        }
-        #attributesPopup .ui.secondary.close.icon.button{
-            display:block !important;
-        }
-        .stock-attributes-button.eight.wide.field, #stock_secondary_prefs_button{ 
-            margin-left: initial !important;
-             display:block !important;
-        }
-        .thirteen.wide.left.floated.column{
-             margin-right: initial !important;
-        }
-        #stock_secondary_prefs_content{
-            display: none ;
-        }
-        #stock_list:not(.grid-view) .product-clear-button-container{
-            padding-left: 0px !important;
-            position: initial !important;
-        }
-        .ui.stackable.grid.secondary-preferences .eight.wide.column{
-            padding: 1em 0px !important;
-        }
-        
-    }  
-    @media only screen and (min-width: 400px) and (max-width: 650px) {
-        .categories-container{
-            grid-template-columns: 50% 50% !important;
-        }
-        #stock_list:not(.grid-view) .product-clear-button-container{
-            position: initial !important;
-        }
-        .grid-view .product-list-grid{
-            grid-template-columns: 50% 50% !important;
-        }
-        #stock_list:not(.grid-view) .product-list-grid{
-            grid-template-columns: 100% !important;
-        }
-        .grid-view .product-item-grid{
-            grid-template-columns: 100% !important;
-            text-align: center !important;
-        }
-        #stock_list:not(.grid-view) .product-item-grid{
-             grid-template-columns: 12% 87% !important;
-             grid-column-gap: 1em !important;
-             font-size: small !important;
-             position: relative;
-        }
-        #stock_list:not(.grid-view) .product-info-column{
-            width: 43vw !important;
-        }
-        #stock_list:not(.grid-view) .product-action-column{
-           transform: scale(0.9) !important;
-           width: 54vw !important;
-           right: -12px !important;
-           position: absolute !important;
-           bottom: 0px !important;
-        }
-        
-        #stock_list:not(.grid-view) .product-image-column img, #stock_list:not(.grid-view) .product-image-column {
-            height: auto !important;
-            width: 50px !important;
-        }
-        .grid-view .product-image-column ,.grid-view .product-image-column img{
-            height: 130px !important;
-            width: auto !important;
-        }
-        #stock_list:not(.grid-view) .product-action-column,.grid-view  .product-action-column{
-            margin-top:1em;
-        }
-        #stock_product_info_modal .content{
-            grid-template-columns: 100% !important;
-        }
-        #stock_product_info_modal .content img{
-            max-width: 60% !important;
-        }
-        #stock_product_info_modal .product-info-image{
-            text-align: center;
-        }
-        #stock_product_info_modal .product-info-name{
-            font-size: 16px !important;
-        }
-        #stock_product_info_modal .content .info-row{
-            grid-template-columns: 60% 40% !important;
-        }
-        #stock_product_info_modal .product-info-details{
-            max-height: max-content !important;
-            overflow-y: visible !important;
-            overflow-x: visible !important;
-        }
-        #stock_container {
-            grid-template-columns: 100% !important;
-        }
-        #attributesPopup{
-            display:none;
-            width: 90%;
-            height: 100%;
-            margin: 0 auto;
-            z-index: 10;
-        }
-        #attributesPopup .ui.secondary.close.icon.button{
-            display:block !important;
-        }
-        .stock-attributes-button.eight.wide.field, #stock_secondary_prefs_button{
-            display:block !important;
-        }
-        #stock_secondary_prefs_content{
-            display: none ;
-        }
-        .ui.stackable.grid.secondary-preferences .eight.wide.column{
-            padding: 1em 0px !important;
-        }
-    } 
-    @media only screen and (min-width: 650px) and (max-width: 1000px) {
-        #stock_list .stock_product_table{
-            width: calc(50% - 8px);
-        }
-        .categories-container{
-            grid-template-columns: 33% 33% 33% !important;
-        }
-         #stock_list:not(.grid-view) .product-list-grid{
-            grid-template-columns: 100% !important;
-        }
-        #stock_list:not(.grid-view) .product-item-grid{
-            grid-template-columns: 8% 25% 31% 29% !important
-        }
-        #stock_list:not(.grid-view) .product-image-column img{
-            width: 70px !important;
-        }
-        #stock_list:not(.grid-view) .product-clear-button-container{
-            position: initial !important;
-        }
-        .grid-view .product-list-grid{
-            grid-template-columns: 33% 33% 33% !important;
-        }
-        .grid-view .product-image-column img , .grid-view .product-image-column{
-            height: 130px !important;
-        }
-        #stock_container {
-            grid-template-columns: 100% !important;
-        }
-        #attributesPopup{
-            display:none;
-            width: 90%;
-            height: 100%;
-            margin: 0 auto;
-            z-index: 10;
-        }
-        #attributesPopup .ui.secondary.close.icon.button{
-            display:block !important;
-        }
-        .stock-attributes-button.eight.wide.field, #stock_secondary_prefs_button{
-            display:block !important;
-        }
-        #stock_secondary_prefs_content{
-            display: none;
-        }
-    } 
-    @media only screen and (min-width: 1000px) and (max-width: 1300px) {
-        #stock_list .stock_product_table{
-            width: calc(33% - 8px);
-        }
-        #stock_list:not(.grid-view) .product-clear-button-container{
-             position: initial !important;
-            right: -16vw;
-        }
-        .grid-view .product-list-grid{
-            grid-template-columns: 33% 33% 33% !important;
-        }
-        .grid-view .product-image-column img , .grid-view .product-image-column{
-            height: 130px !important;
-        }
-        #categoriesPopup{
-            width: 80% !important;
-            left: 10% !important;
-        }
-        #categoriesPopup .categories-container{
-            grid-template-columns: 25% 25% 25% 25%  !important;
-        }
-        #attributesPopup{
-            display:block !important;
-        }
-        #stock_secondary_prefs_content{
-            display: block !important;
-        }
-    } 
-    @media only screen and (min-width: 1300px) {
-        #stock_list .stock_product_table{
-            width: calc(25% - 8px);
-        }
-        #categoriesPopup{
-            width: 80% !important;
-            left: 10% !important;
-        }
-        .grid-view .product-list-grid{
-            grid-template-columns: 33% 33% 33% !important;
-        }
-        #categoriesPopup .categories-container{
-            grid-template-columns: 20% 20% 20% 20% 20% !important;
-        }
-        #attributesPopup{
-            display:block !important;
-        }
-        #stock_secondary_prefs_content{
-            display: block !important;
-        }
-    } 
-    @media only screen and (min-width: 1600px) {
-        #stock_list .stock_product_table{
-            width: calc(25% - 8px);
-        }
-        #categoriesPopup{
-            width: 80% !important;
-            left: 10% !important;
-        }
-        .grid-view .product-list-grid{
-            grid-template-columns: 25% 25% 25% 25% !important;
-        }
-        #categoriesPopup .categories-container{
-            grid-template-columns: 20% 20% 20% 20% 20% !important;
-        }
-        #attributesPopup{
-            display:block !important;
-        }
-        #stock_secondary_prefs_content{
-            display: block !important;
-        }
-    } 
-    #stock_list .stock_product_promo{
-        box-shadow: 0px 0px 6px #0c0;
-    }
-    .stock_product_promo .stock_product_name{
-        color: #0c0;
-    }
-    .ui.stackable.two.column.grid > .column:not(.row){
-        padding-top: 0.3em !important;
-        padding-bottom: 0.3em !important;
-    }
-    #stock_list_header{
-        color: #7a7a7a;
-    }
-    #stock_header_prod_name{
-        font-weight: bold;
-        color: #427796;
-    }
-    .product-action-column button.ui.button.plus-button:hover{
-        transition: 0.2s ease-in;
-        background-color: #51b951 !important;
-        color: white !important ;
-    }
-    .product-action-column button.ui.button.minus-button:hover{
-        transition: 0.2s ease-in;
-        background-color: #f75252 !important;
-        color: white !important;
-    }
-    .ui.basic.label.product-total{
-        border-top: none;
-        border-top-left-radius: 0px;
-        border-top-right-radius: 0px;
-        width: 97%;
-        margin: 0px auto;
-        background-color: #ffffff9e !important;
-    }
-    .product-image-column:hover{
-        transition: 0.3s ease-in;
-        opacity: 0.5;
-    }
-    .product-name-column a{
-        color:  black;
-    }
-    .product-name-column a:hover{
-        color:  #1678c2;
-    }
-    .ui.section.divider{
-        margin-top: 0 !important;
-        margin-bottom: 0 !important;
-        margin: 0 !important;
-    }
-    #stock_pcomp_notice{
-        margin-left: 10px;
-        font-weight: bold;
-        color: blue;
-    }
-    .product-clear-button{
-        left: 5vw!important;
-    }
-    #stock_category_tree, #stock_attributes{
-       width: 100%;
-       overflow: hidden;
-       text-overflow: ellipsis;
-    }
-    #stock_category_tree i, #stock_attributes i{
-        background-color: darkgray;
-        border: 1px solid darkgray;
-        color: white;
-    }
-    #stock_category_tree label, #stock_attributes label{
-        font-weight: bold;
-        white-space: nowrap;
-    }
-    .categories-container{
-        display: grid;
-        grid-template-columns: 25% 25% 25% 25% ;
-    }
-    .grandmother-category{
-        padding: 5px;
-        border-left: 1px solid lightgray;
-        padding-left: 15px;
-    }
-    .grandmother-category-label{
-        font-size: 16px;
-        font-weight: bold;
-    }
-    .mothers-container{
-        padding: 5px;
-        margin-left: 10px;
-    }
-    .mother-category{
-        padding: 5px;
-    }
-    .daughters-container{
-        padding: 5px;
-        margin-left: 20px;
-    }
-    .daughter-category{
-        padding: 5px;
-    }
-    #categoriesPopup .categories-container, #stock_product_info_modal .product-info-details, #attributesPopup .attributes-container{
-        max-height: 70vh;
-        overflow-y: auto;
-        overflow-x: hidden;
-    }
-    
-    #categories_container label:hover, #categories_search_container label:hover{
-        color: #1d588a;
-        border-bottom: 1px solid black;
-        transition: 1s;
-    }
-    #categories_search_container{
-        padding-left: 2em;
-    }
-    .category-has-children{
-        position: relative;
-        color:black;
-    }
-    .category-has-children .angle.down.icon{
-        margin-left: 4px;
-    }
-    .category-has-children .angle.down.icon:hover{
-        border: 1px solid gray;
-        border-radius: 3px;
-        margin-top: -1px;
-        margin-bottom: -1px;
-    }
-    .category-has-no-children{
-        color: #6f6f6f;
-    }
-    #stock_list .product-item{
-        background-color: white;
-        border: 1px solid lightgray;
-        margin-top: -1px;
-        margin-right: -1px;
-    }
-    #stock_list .product-name-column{
-        height: 4em;
-        overflow: hidden;
-        padding-left: 0.4em;
-    }
-    #stock_list .product-clear-button:hover{
-        transition: 0.3s ease-in;
-        transform: scale(1.05);
-        background-color: red !important;
-        color:white !important;
-    }
-    #stock_list:not(.grid-view) .product-list-grid{
-        grid-template-columns: 100%;
-    }
-    #stock_list:not(.grid-view) .product-item-grid{
-        text-align: left;
-        grid-template-columns: 10% 35% 27% 26%;
-        grid-column-gap: 1em;
-    }
-    #stock_list.cart:not(.grid-view) .product-item-grid{
-        text-align: left;
-        grid-template-columns: 10% 35% 27% 26%;
-        grid-column-gap: 1em;
-    }
-    .cart .product-total{
-        display:block !important;
-    }
-    #stock_list:not(.grid-view) .product-image-column, #stock_list:not(.grid-view) .product-image-column img{
-        height: auto;
-        width: 70px;
-    }
-    #stock_list:not(.grid-view) .product-clear-button-container{
-        position: absolute;
-        right: -16vw;
-    }
-    .product-info-column .eight.wide.column{
-        white-space: nowrap;
-        text-overflow: ellipsis;
-        overflow: hidden;
-    }
-    .grid-view .product-list-grid{
-        grid-template-columns: 25% 25% 25% 25%;
-    }
-    .grid-view .product-item-grid{
-        text-align: center;
-        grid-template-columns: 100%;
-    }
-    .grid-view .product-image-column {
-        height: 150px;
-        width: auto;
-    }
-    
-    .grid-view  .product-action-column{
-        margin-top:1em;
-    }
-    .product-price{
-        padding-left: 0px !important;
-    }
-    .product-price b, .product-price s{
-        white-space: nowrap;
-    }
-    .product-price s{
-        color: #ca6666;
-        position: absolute;
-        top: 0;
-    }
-    .product-list-grid{
-        display: grid !important;
-    }
-    .product-item-grid{
-        padding: 10px;
-        align-items: center;
-        text-align: center;
-        display: grid !important;
-    }
-    
-    #stock_product_info_modal .content{
-        display: grid;
-        grid-template-columns: 30% 70%;
-        text-align: left;
-    }
-    #stock_product_info_modal .content .product-info-name{
-        font-size: 20px;
-        font-weight: bold;
-        color: #1678c2;
-    }
-    #stock_product_info_modal .content .product-common-info,
-    #stock_product_info_modal .content .product-stock-details,
-    #stock_product_info_modal .content .product-secondary-info,
-    #stock_product_info_modal .content .product-attributes{
-        border-bottom: 1px solid lightgray;
-        padding: 1em;
-    }
-    #stock_product_info_modal .content .info-row{
-        display: grid;
-        grid-template-columns: 40% 60%;
-    }
-    #stock_product_info_modal .content .info-cell{
-        color: #5e5e5e;
-    }
-    #stock_product_info_modal .header-label{
-        font-size: 16px;
-        font-weight: bold;
-    }
-    
-    
-    #attributes_container .content {
-        max-height: 18em;
-        overflow: auto;
-    }
-    #attributes_container .title {
-        color: black;
-    }
-    #attributes_container label {
-        color: rgb(55, 55, 55);
-    }
-    .ui.inverted.dimmer{
-        background-color: rgba(255, 255, 255, 0.3) !important;
-    }
-    #attributes_container .content{
-        border-bottom: 1px solid rgb(232, 232, 232);
-    }
-    #attributes_container .attribute-container .title:hover{
-        transition: 0.5s ease;
-        background-color: #eee;
-    }
+    @import "stock.css";
 </style>
- <link rel="stylesheet" href="stock.css">
 <div id="stock_container" style="display: grid; grid-template-columns: 25% 75%; grid-column-gap: 1em;">
-    <div id="attributesPopup" class="ui  segment " style="margin-bottom: auto;">
-        <a  class="ui secondary close icon button" style="float:right; display: none" onclick="$('#attributesPopup').hide();$('#stock_content').show();"><i class="icon close"></i></a>
-        <div class="header" style='padding: 1em;'><h4>Фильтр</h4></div>
-        <div class="ui divider"></div>
-        <div id="attributes_selected" class="covert">
-            <div class='title' style='margin-bottom: 5px'>
-                {{ if attributes_selected}}
-                <b>Выбрано:</b>
-                {{else}}
-                <i>Ничего не выбрано</i>
-                {{/if}}
-            </div>
-            <div class="ui blue  labels">
-            {{attributes_selected}}
-            <a class="ui  label">
-                {{attribute_name}}: {{attribute_prefix}} {{attribute_value}}{{attribute_unit}} 
-                <i class="delete icon" onclick="App.stock.attributes.remove('{{attribute_value_id}}');App.stock.entries.load()"></i>
-            </a>
-            {{/attributes_selected}}
-            </div>
-        </div>
-        <div class="ui divider"></div>
-        <div class="ui form" style="padding:1em">
-            <div class="ui fields">
-                <div class="sixteen wide field">
-                    <button class=" ui floated right blue fluid button" onclick="App.stock.attributes.clearSelected()">
-                            Очистить
-                    </button>
+    <div id="stock_filter_widget">
+        <div id="stock_filter_popup" class="ui  segment " style="margin-bottom: auto;">
+            <a  class="ui secondary close icon button" style="float:right; display: none" onclick="$('#stock_filter_popup').hide();
+                    $('#stock_content').show();"><i class="icon close"></i></a>
+            <div class="header" style='padding: 1em;'><h4>Фильтр</h4></div>
+            <div class="ui divider"></div>
+            <!--TAGS-->
+            <div id="stock_filter_tags" class="covert">
+                <div class='title' style='margin-bottom: 5px'>
+                    {{ if stock_filter_tags}}
+                    <b>Выбрано:</b>
+                    {{else}}
+                    <i>Ничего не выбрано</i>
+                    {{/if}}
+                </div>
+                <div class="ui blue  labels">
+                    {{stock_filter_tags}}
+                    <a class="ui  label">
+                        {{filter_group_name}}: {{filter_option_label}} 
+                        <i class="delete icon" data-filter_option_id="{{filter_option_id}}"></i>
+                    </a>
+                    {{/stock_filter_tags}}
                 </div>
             </div>
-        </div>
-        <div class="ui divider"></div>
-        <div id="attributes_container"  class="ui accordion covert">
-
-            {{attributes}}
-            <div class='attribute-container'>
-                <div class="active title" id="attribute_{{attribute_id}}" >
-                  <i class="dropdown icon"></i>
-                  {{attribute_name}}
-                  <label class="attributes_added"></label>
+            <!--/TAGS-->
+            <div class="ui divider"></div>
+            <div class="ui form" style="padding:1em">
+                <div class="ui fields">
+                    <div class="sixteen wide field">
+                        <button class=" ui floated right blue fluid button" onclick="App.stock.filter.clearSelected()">
+                            Сбросить фильтры
+                        </button>
+                    </div>
                 </div>
-                {{if attribute_values}}
-                <div class="content" id="content_attribute_{{attribute_id}}" data-attribute_id="{{attribute_id}}">
-                    <div class="ui form">
-                        <div class="grouped fields" >
-                            {{attribute_values}}
-                            <div class="field">
-                                <div class="ui child   checkbox" >
-                                    <input type="checkbox" name="size" value="small" {{is_selected}}
-                                           data-attribute_value_id="{{attribute_value_id}}" 
-                                           data-attribute_id="{{attribute_id}}" 
-                                           data-attribute_value="{{attribute_prefix}} {{attribute_value}} {{attribute_unit}}" 
-                                           onchange="App.stock.attributes.select(this)">
-                          <!--   <label  {{ if product_total|falsy }} style="color: gray" {{{/if}}>  -->
-
-                                 {{attribute_prefix}} {{attribute_value}} {{attribute_unit}} <span style="color: gray">({{product_total}})</span>
-
-                                  </label>
+            </div>
+            <div class="ui divider"></div>
+            <!--ACCORDION-->
+            <div id="stock_filter_container"  class="ui accordion covert">
+                {{filter_tree}}
+                <div class='filtergroup-container'>
+                    <div class="title" id="stock_filter_group_{{filter_group_id}}" >
+                        <i class="dropdown icon"></i>
+                        {{filter_group_name}}
+                    </div>
+                    <div class="filter_group_content content" id="stock_filter_group_content_{{filter_group_id}}" data-filter_group_id="{{filter_group_id}}">
+                        <div class="ui form">
+                            {{if filter_group_minmax}}
+                            <RANGEFILTER>
+                                <div class="fields">
+                                    <div class="field">
+                                        <label>От</label>
+                                        <input type="text"
+                                               pattern="[0-9,\.]+"
+                                               placeholder="{{filter_group_minmax|split>_|limit>1>0|join>}}"
+                                               data-filter_group_id="{{filter_group_id}}"
+                                               data-value_type="from"
+                                               onfocus="this.select()">
+                                    </div>
+                                    <div class="field">
+                                        <label>До</label>
+                                        <input type="text"
+                                               pattern="[0-9,\.]+"
+                                               placeholder="{{filter_group_minmax|split>_|limit>1>1|join>}}"
+                                               data-filter_group_id="{{filter_group_id}}"
+                                               data-value_type="to"
+                                               onfocus="this.select()">
+                                    </div>
                                 </div>
-                            </div>
-                            {{/attribute_values}}
-                        </div>
-                    </div>  
-                 </div>
-                {{/if}}
+                                <div class="grouped fields" >
+                                    <div class="field">
+                                        <div class="ui child checkbox">
+                                            <input type="radio" 
+                                                   id="{{filter_group_id}}__"
+                                                   name="{{filter_group_id}}"
+                                                   data-filter_group_id="{{filter_group_id}}" 
+                                                   data-filter_option_id="0"
+                                                   data-filter_option_range="-1"
+                                                   >
+                                            <label for="{{filter_group_id}}__">
+                                                Все
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="field" id="custom_option_{{filter_group_id}}" style="display:none">
+                                        <div class="ui child checkbox">
+                                            <input type="radio" 
+                                                   name="{{filter_group_id}}"
+                                                   data-filter_group_id="{{filter_group_id}}"
+                                                   >
+                                            <label></label>
+                                        </div>
+                                    </div>
+                                    {{filter_group_options}}
+                                    <div class="field">
+                                        <div class="ui child checkbox">
+                                            <input type="radio" 
+                                                   id="{{filter_option_id}}"
+                                                   name="{{filter_group_id}}"
+                                                   data-filter_group_id="{{filter_group_id}}" 
+                                                   data-filter_option_id="{{filter_option_id}}"
+                                                   data-filter_option_range="{{filter_option_range}}"
+                                                   data-is_selected="{{is_selected}}"
+                                                   >
+                                            <label for="{{filter_option_id}}">
+                                                {{if match_count|equals>0}}
+                                                <span style="color: gray">{{filter_option_label}}</span>
+                                                {{else}}
+                                                <span>{{filter_option_label}} <span style="color: gray">({{match_count}})</span>
+                                                {{/if}}
+                                            </label>
+                                        </div>
+                                    </div>
+                                    {{/filter_group_options}}
+                                </div>
+                            </RANGEFILTER>
+                            {{else}}
+                            <OPTIONFILTER>
+                                {{filter_group_options}}
+                                    <div class="field">
+                                        <div class="ui child checkbox">
+                                            <input type="checkbox" 
+                                                   id="{{filter_option_id}}"
+                                                   data-filter_group_id="{{filter_group_id}}" 
+                                                   data-filter_option_id="{{filter_option_id}}"
+                                                   data-is_selected="{{is_selected}}"
+                                                   >
+                                            <label for="{{filter_option_id}}">
+                                                {{if match_count|more>0}}
+                                                <span>{{filter_option_label}} <span style="color: gray">({{match_count}})</span>
+                                                {{else}}
+                                                <span style="color: gray">{{filter_option_label}}</span>
+                                                {{/if}}
+                                            </label>
+                                        </div>
+                                    </div>
+                                    {{/filter_group_options}}
+                            </OPTIONFILTER>
+                            {{/if}}
+                        </div>  
+                    </div>
+                </div>
+                {{/filter_tree}}
             </div>
-            {{/attributes}}
+            <!--/ACCORDION-->
         </div>
     </div>
-
     <div id="stock_content">
         <div  class="ui blue segment">
-            <form class="ui unstackable fluid form" id="stock_head_form">
+            <form class="ui form" id="stock_head_form">
                 <div class="field">
                     <label>Клиент</label>
-                    <div class="ui fluid search selection remote dropdown pcomp_id">
+                    <div class="ui fluid search selection remote dropdown pcomp_id required">
                         <input name="pcomp_id" type="hidden">
                         <i class="dropdown icon"></i>
                         <div class="default text">Выбрать клиента</div>
@@ -1101,33 +696,32 @@
                     </div>
                 </div>
 
-                <div id="stock_pcomp_notice" style="display: none">
-                    <i class="ui blue exclamation circle icon"></i>
-                    Выберите клиента
+                <div id="stock_pcomp_notice" class="ui negative message">
+                    <i class="ui red exclamation circle icon"></i>
+                    Выберите клиента. Цены могут быть не точными.
                 </div>
 
                 <div class="fields">
-                    <div class="eight wide field">
-                        <div id='stock_category_tree' class='ui labeled basic   icon button'>
+                    <div class="five wide field">
+                        <div id='stock_category_tree' class='ui labeled basic gray  icon button'>
                             <i class='bars icon'></i>
                             <label class='placeholder'>Все</label>
                         </div>
                     </div>
-                    <div class="stock-attributes-button eight wide field" style="display:none">
-                        <div class="ui labeled fluid    button"  >
-                            <div id='stock_attributes' class='ui labeled basic   icon button'>
-                                <i class='filter icon'></i>
-                                <label class='placeholder'>Фильтр</label>  
+                    <div class="stock-attributes-button eight wide field" style="display: none">
+                        <div class="ui labeled fluid button">
+                            <div id="stock_attributes" class="ui labeled basic icon button">
+                                <i class="filter icon"></i>
+                                <label class="placeholder">Фильтр</label>
                             </div>
-                            <a class="ui basic  left pointing  label attributes-selected-length">0</a>
+                            <a class="ui basic left pointing label attributes-selected-length"></a>
                         </div>
                     </div>
-                    <div id="stock_search" class="sixteen wide field">
-                            <label></label>
+                    <div id="stock_search" class="eleven wide field">
                             <div class="ui left icon right labeled input fluid" style="margin-bottom: 5px;">
                                 <i class="search icon"></i>
                                 <input id="stock_search_input" placeholder="Введите название или код..." type="text"
-                                       oninput="App.stock.entries.load()">
+                                       oninput="clearTimeout(App.stock.entries.clock);App.stock.entries.clock = setTimeout(function () {App.stock.entries.load()}, 600);">
                                 <div class="ui basic label" onclick="App.stock.head.clearSearchbar()"><i class="close icon"></i></div>
                             </div>
                     </div>
@@ -1135,68 +729,67 @@
             </form>
             <div class="ui clearing divider ">
              </div>
+            
             <div class="ui stackable grid secondary-preferences">
                 <div class="eight wide left floated column" >
                     <div class="ui unstackable grid">
                         <div class="thirteen wide left floated column" >
+
                             <div id="stock_render_mode" class="covert" tabindex="0"  >
                                 <div class="ui labeled large button"  >
                                     {{if show_cart}}
-                                    <div class="ui blue  button" data-show_cart="0" >
-                                      <i class="chevron left icon"></i> К товарам
+                                    <div class="ui blue button" data-show_cart="0" >
+                                        <i class="chevron left icon"></i> К товарам
                                     </div>
                                     {{else}}
-                                    <div class="ui blue  button" data-show_cart="1" >
-                                      <i class="shopping cart icon"></i> Корзина
+                                    <div class="ui blue button" data-show_cart="1" >
+                                        <i class="shopping cart icon"></i> Корзина
                                     </div>
                                     {{/if}}
                                     <a class="ui basic blue left pointing label" >
-                                     {{ cart_quantity }} / {{ total }} ₽
+                                        {{ cart_quantity }} / {{ total }} ₽
                                     </a>
                                 </div>
-                            </div>
-                        </div>
+                            </div> 
+                        </div> 
                         <div class="two wide right floated column" id='stock_secondary_prefs_button' style="display: none">
                             <div  class='ui  basic  icon button' onclick="$('#stock_secondary_prefs_content').toggle('fast')">
                                 <i class='settings icon'></i>
                             </div>  
                         </div>
-                    </div> 
-                </div> 
-                
+
+                    </div>
+                </div>
+
                 <div class="eight wide right floated right aligned column" id="stock_secondary_prefs_content" >
                     <div class='ui unstackable form'> 
                         <div class='fields'> 
                             <div class='eight wide left aligned field'>
                                 <div class="ui selection labeled  dropdown order-by-dropdown" style="min-width:auto">
-                                    <input type="hidden" name="gender">
-                                        <i class="dropdown icon"></i>
-                                        <div class="default text" style='white-space: nowrap;text-overflow: ellipsis;max-width: 100%;overflow: hidden;'>
-                                            Сначала популярные
-                                        </div>
-                                        <div class="menu">
-                                            <div class="item" data-value="fetch_count-DATEDIFF(NOW(),fetch_stamp) DESC">Сначала популярные</div>
-                                            <div class="item" data-value="fetch_count-DATEDIFF(NOW(),fetch_stamp) ASC">Сначала непопулярные</div>
-                                            <div class="item" data-value="product_name ASC">Название (По возрастанию)</div>
-                                            <div class="item" data-value="product_name DESC">Название (По убыванию)</div>
-                                            <div class="item" data-value="self_price DESC">Сначала дешевые</div>
-                                            <div class="item" data-value="self_price ASC">Сначала дорогие</div>
-                                            <div class="item" data-value="leftover ASC">Количество (По возрастанию)</div>
-                                            <div class="item" data-value="leftover DESC">Количество (По убыванию)</div>
-                                        </div>
+                                    <i class="dropdown icon"></i>
+                                    <div class="default text" style='white-space: nowrap;text-overflow: ellipsis;max-width: 100%;overflow: hidden;'>
+                                        Сначала популярные
+                                    </div>
+                                    <div class="menu">
+                                        <div class="item" data-value="popularity,DESC">Сначала популярные</div>
+                                        <div class="item" data-value="popularity,ASC">Сначала непопулярные</div>
+                                        <div class="item" data-value="price,ASC">Сначала дешевые</div>
+                                        <div class="item" data-value="price,DESC">Сначала дорогие</div>
+                                        <div class="item" data-value="newness,DESC">Сначала новинки</div>
+                                        <div class="item" data-value="newness,ASC">Сначала постоянные</div>
+                                    </div>
                                 </div>
                             </div>
-                            <div class='four  wide left aligned field'>
+                            <div class='four wide left aligned field'>
                                 <div class="ui selection labeled  dropdown limit-dropdown" style="min-width:auto">
-                                    <input type="hidden" name="gender">
-                                        <i class="dropdown icon"></i>
-                                        <div class="default text">12</div>
-                                        <div class="menu">
-                                            <div class="item" data-value="12">12</div>
-                                            <div class="item" data-value="24">24</div>
-                                            <div class="item" data-value="48">48</div>
-                                            <div class="item" data-value="100">100</div>
-                                        </div>
+                                    <i class="dropdown icon"></i>
+                                    <div class="default text">12</div>
+                                    <div class="menu">
+                                        <div class="item" data-value="12">12</div>
+                                        <div class="item" data-value="24">24</div>
+                                        <div class="item" data-value="48">48</div>
+                                        <div class="item" data-value="100">100</div>
+                                    </div>
                                 </div>
                             </div>
                             <div class='three wide left aligned field'>
@@ -1217,31 +810,35 @@
                     <!-- {{if products}} {{products}} -->
                 <div class='product-item' id="product_item_{{#}}" style=" {{if is_promo}}  background-color: #cfc;{{/if}}{{ if product_quantity|more>0 }} background-color: #ffd; {{else }}{{/if}}">
 
-                    <div class="product-item-grid" >
+                    <div class="product-item-grid {{if price_promo}}product-item-promo{{/if}}" >
                         <div class='product-image-column image-{{#}}' data-row-index="{{#}}" >
-                            <a href="#stock.html#productInfoModal.showProductInfo={{product_code}}">
-                                <img src="../Storage/image_flush/?size=150x150&path=/dynImg/{{product_img}}" >
+                            <a href="#product.html#product_id={{product_id}}">
+                                <img src="../Storage/image_flush/?size=250x250&path=/dynImg/{{product_img}}" >
                             </a>
                         </div>
                         <div class="product-name-column">
-                            <a href="#stock.html#productInfoModal.showProductInfo={{product_code}}">
+                            <a href="#product.html#product_id={{product_id}}">
                                  {{product_name}}
                             </a>
                         </div>
                         <div class="product-info-column">
                             <div class="ui grid" style="color:#666; padding-right:1.4em">
-                                    <div class="eight wide column">{{product_code}}</div>
-                                    <div class="four wide column product-price" style="text-align: right">
-                                        {{if is_promo}}
-                                            <s>{{product_price_total_raw}}</s>
-                                            <b>{{product_price_total}}</b>
-                                        {{else}} 
-                                            <b>{{product_price_total}}</b>
-                                        {{/if}}
-                                    </div>
-                                    <div class="four wide column" style="text-align: right">{{if stared_leftover}} {{stared_leftover}} {{else}} {{leftover}}{{product_unit}} {{/if}}</div>
-
-
+                                <div class="eight wide column">{{product_code}}</div>
+                                <div class="four wide column product-price" style="text-align: right">
+                                    {{if price_promo}}
+                                        <s>{{price_basic|format}}</s>
+                                    {{/if}}
+                                    <b>{{price_final|format}}</b>
+                                </div>
+                                <div class="four wide column" style="text-align: right">
+                                    {{if leftover|more>0}}
+                                    <span>
+                                    {{else}}
+                                    <span style="color:red">
+                                    {{/if}}
+                                    {{leftover}}{{product_unit}}
+                                    </span>
+                                </div>
                             </div>
                         </div>
                         <div class="product-action-column">
@@ -1253,7 +850,7 @@
                                         <input type='hidden' name='product_code' value='{{product_code}}'>
                                         <input type='hidden' name='product_id' value='{{product_id}}'>
                                         <input type='hidden' name='leftover' value='{{leftover}}'>
-                                        <input type='hidden' name='product_price_total' value='{{product_price_total}}'>
+                                        <input type='hidden' name='price_final' value='{{price_final}}'>
 
                                         <button class="ui  {{if product_quantity|less>1}} disabled   {{/if}} left attached icon  button minus-button" data-delta="-1" data-index="{{#}}">
                                             <i class="minus icon" data-delta="-1" data-index="{{#}}"></i>
@@ -1292,8 +889,8 @@
                 {{if show_cart|falsy}}
                 <div>
                     <div >
-                        <div class="ui message" style="clear: both;text-align: center;">
-                           Ничего не найдено
+                        <div class="ui info message" style="clear: both;text-align: center;">
+                            Ничего не найдено. Возможно необходимо <a href="javascript:App.stock.filter.clearSelected()" style="color:red">сбросить фильтры</a> или <a href="javascript:App.stock.head.clearSearchbar()" style="color:red">изменить поисковый запрос</a>.
                         </div>  
                     </div>
                 </div>
@@ -1303,12 +900,11 @@
 
             {{if show_cart|falsy}}
                 {{if loading_finished}} 
-                <div class="ui olive message" style="clear: both;text-align: center;">
+                <div class="ui info message" style="clear: both;text-align: center;">
                     Больше нет товаров для показа
                 </div>   
                 {{else}} 
-                <button id='stock_load_more' class='ui fluid  button'
-                        onclick="App.stock.entries.load(1)"> 
+                <button id='stock_load_more' class='ui fluid  button' onclick="App.stock.entries.load(1)"> 
                     Показать ещё...
                 </button>    
                 {{/if}} 
@@ -1319,86 +915,12 @@
                     Заказ
                 </a>
                 {{else}}
-                <div class="ui olive message" style="clear: both;text-align: center;">
+                <div class="ui info message" style="clear: both;text-align: center;">
                     <i class="exclamation icon"></i>
                     Вы не добавляли товары в корзину
                 </div>   
                 {{/if}}
             {{/if}}
-        </div>
-    </div>
-</div>
-
-<div class="ui long modal" id="stock_product_info_modal">
-    <div class="header">Сведения о товаре 
-        <a href="#stock.html" class="ui secondary close icon button" style="float:right" onclick="$('#stock_product_info_modal').modal('hide');"><i class="icon close"></i></a>
-    </div>
-    <div class="content">
-        <div class="product-info-image" >
-            <img style="max-width: 100%" src="../Storage/image_flush/?size=400x400&path=/dynImg/{{product_img}}"/>
-        </div>
-        <div class="product-info-details">
-            <div class="product-info-name">{{ru}}</div>
-            <div class="product-common-info">
-                <label class="header-label">Общие сведения</label>
-                <div class="info-row">
-                    <label>Код: </label>
-                    <div class="info-cell">{{product_code}}</div>
-                </div>
-                <div class="info-row">
-                    <label>Артикул: </label>
-                    <div class="info-cell">{{product_article}}</div>
-                </div>
-                <div class="info-row">
-                    <label>Штрихкод: </label>
-                    <div class="info-cell">{{product_barcode}}</div>
-                </div>
-                <div class="info-row">
-                    <label>Цена: </label>
-                    <div class="info-cell">
-                        <b>{{product_price_total}} ₽</b>
-                    </div>
-                </div>
-            </div>
-            <div class="product-stock-details">
-                <div class="info-row">
-                    <label>На складе: </label>
-                    <div class="info-cell">{{product_quantity}} {{product_unit}}</div>
-                </div>
-                {{if quantity_in_cart}}
-                <div class="info-row">
-                    <label>В корзине: </label>
-                    <div class="info-cell" style="color:green">(<b>{{quantity_in_cart}}</b> {{product_unit}})</div>
-                </div>
-                {{/if}}
-            </div>
-            <div class="product-secondary-info">
-                {{if product_bpack}}
-                <div class="info-row">
-                    <label>Большая упаковка: </label>
-                    <div class="info-cell">{{product_bpack}} {{product_unit}}</div>
-                </div>
-                {{/if}}
-                {{if product_spack}}
-                <div class="info-row">
-                    <label>Малая упаковка: </label>
-                    <div class="info-cell">{{product_spack}} {{product_unit}}</div>
-                </div>
-                {{/if}}
-                {{if product_volume}}
-                <div class="info-row">
-                    <label>Объем: </label>
-                    <div class="info-cell">{{product_volume}}</div>
-                </div>
-                {{/if}}
-                {{if product_weight}}
-                <div class="info-row">
-                    <label>Вес: </label>
-                    <div class="info-cell">{{product_weight}}</div>
-                </div>
-                {{/if}}
-            </div>
-            <div class="plugins"></div>
         </div>
     </div>
 </div>

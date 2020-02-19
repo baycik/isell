@@ -158,7 +158,7 @@ class Catalog extends CI_Model {
 
     public function log($message) {
         $class = get_class($this);
-        $url = "http://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]";
+        $url = "http://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI] User:".$this->Hub->svar('user_login');
         $this->create('log_list', ['message' => $message, 'url' => $url, 'log_class' => $class]);
     }
 
@@ -187,22 +187,31 @@ class Catalog extends CI_Model {
     // CORE TREE FUNCTIONS
     ////////////////////////////////////////////////////
     protected function treeFetch($table, $parent_id = null, $depth = 'all', $super_path = '', $level = 0, $order = "is_leaf,label") {
-        $where = array("level IS NULL OR level<=$level");
+        if ($depth == 'top'){
+            $depth=1;
+        } else if ($depth == 'all') {
+            $depth=20;
+        }
+        if( $depth<1 ){
+            return [];
+        }
+        $depth--;
+        
+        $case = ["level IS NULL OR level<=$level"];
         if ($super_path !== '') {
-            $where[] = "path LIKE '$super_path" . ($parent_id === null ? '' : '%') . "'";
+            $case[] = "path LIKE '$super_path" . ($parent_id === null ? '' : '%') . "'";
         }
         if ($parent_id !== null) {
-            $where[] = "parent_id=$parent_id";
+            $case[] = "parent_id=$parent_id";
         }
-        $where = implode(' AND ', $where);
+        $where = implode(' AND ', $case);
         $res = $this->db->query("SELECT * FROM $table WHERE $where ORDER BY $order");
-        $branches = array();
+        $branches = [];
         foreach ($res->result() as $row) {
-            //$this->treeUpdatePath($table, $row->branch_id);
-            if ($depth == 'top') {
+            if( $depth == 0 ) {
                 $row->state = $row->is_leaf ? '' : 'closed';
             } else {
-                $row->children = $this->treeFetch($table, $row->branch_id, 'all');
+                $row->children = $this->treeFetch($table, $row->branch_id, $depth);
             }
             $branches[] = $row;
         }
@@ -348,4 +357,17 @@ class Catalog extends CI_Model {
         return implode(' AND ', $having);
     }
 
+    
+    private $vocabulary=[
+        'Promotion'=>"Акция",
+        'Discount'=>"Скидка",
+        'Special_price'=>"Спец. цена",
+        'Other'=>"Другое",
+        'Price'=>"Цена",
+        'Brand'=>"Производитель"
+    ];
+    
+    protected function lang( $word ){
+        return isset($this->vocabulary[$word])?$this->vocabulary[$word]:'';
+    }
 }

@@ -295,7 +295,9 @@ class Document extends Data {
     }
 
     protected function alterEntry($action = 'update', $doc_entry_id, $new_quantity = NULL, $new_invoice = NULL, $new_party_label = NULL) {//Must be called within db transaction
-        
+	if ($this->isCommited()) {
+	    $this->Base->set_level(2);
+	}        
 	$entry = $this->Base->get_row("SELECT * FROM document_entries WHERE doc_entry_id=$doc_entry_id");
 	if ($this->doc('doc_id') != $entry['doc_id']) {
 	    $this->Base->msg("Trying to update entry of unselected Doc!!!");
@@ -342,7 +344,7 @@ class Document extends Data {
 		$amount = 0;
 	    }
 	}
-	if ($amount && !$this->moveProduct($entry['product_code'], $stock_action, $amount, $self)) {
+	if ($amount && !$this->moveProduct($entry['product_code'], $stock_action, $amount, $self, $party_label)) {
 	    return false;
 	}
 	//$signs_after_dot = $this->doc('signs_after_dot');
@@ -358,7 +360,7 @@ class Document extends Data {
 	return true;
     }
 
-    protected function moveProduct($product_code, $stock_action, $amount, $self_price) {
+    protected function moveProduct($product_code, $stock_action, $amount, $self_price, $party_label) {
 	if (!$amount) {
 	    return false;
 	}
@@ -372,10 +374,12 @@ class Document extends Data {
 	    if ($stock_action == 'increase') {
 		return $this->Base->StockOld->decreaseStock($product_code, $amount, $self_price, "Расходный документ $doc_num");
 	    } else {
+                $this->Base->StockOld->stockEntryPartyUpdate($product_code,$party_label);
 		return $this->Base->StockOld->increaseStock($product_code, $amount, $self_price, "Расходный документ $doc_num");
 	    }
 	} else if ($this->doc('doc_type') == 2) {//Buy Document
 	    if ($stock_action == 'increase') {
+                $this->Base->StockOld->stockEntryPartyUpdate($product_code,$party_label);
 		return $this->Base->StockOld->increaseStock($product_code, $amount, $self_price, "Приходный документ $doc_num");
 	    } else {
 		return $this->Base->StockOld->decreaseStock($product_code, $amount, $self_price, "Приходный документ $doc_num");
@@ -386,9 +390,6 @@ class Document extends Data {
     }
 
     public function updateEntry($doc_entry_id, $new_quantity = NULL, $new_invoice = NULL, $new_party_label = NULL) {
-	if ($this->isCommited()) {
-	    $this->Base->set_level(2);
-	}
 	if ($this->Base->pcomp('curr_code') == 'USD') {
 	    $new_invoice*=$this->doc('doc_ratio');
 	}
@@ -581,7 +582,7 @@ class Document extends Data {
 
 	function getExtraFields($labels, $values) {
 	    if (!$labels)
-		return;
+		return false;
 	    $efields = array();
 	    $labels = json_decode($labels);
 	    $values = json_decode($values);
@@ -706,7 +707,7 @@ class Document extends Data {
 	if ($view_type_props['view_role'] == 'tax_bill') {
 	    if (!$this->isCommited()) {
 		$this->Base->msg('Сначала сохраните документ!');
-		return;
+		return false;
 	    }
 	    $view_num = $this->getViewNextNum($view_type_id);
             if ($this->Base->pcomp('company_tax_id')){
@@ -720,7 +721,7 @@ class Document extends Data {
         if ($view_type_props['view_role'] == 'sell_bill') {
 	    if (!$this->isCommited()) {
 		$this->Base->msg('Сначала сохраните документ!');
-		return;
+		return false;
 	    }
 	    $view_num = $this->doc('doc_num');
 	    $efields = addslashes($this->getLastEfields($view_type_id));
@@ -729,7 +730,7 @@ class Document extends Data {
 	    $efields = addslashes($this->getLastEfields($view_type_id));
 	}
 	$cstamp = $this->doc('cstamp');
-	$this->Base->query("INSERT INTO document_view_list SET doc_id='$doc_id', view_type_id='$view_type_id', view_efield_values='$efields', tstamp='$cstamp', view_num='$view_num', view_role='{$view_type_props['view_role']}'");
+	$this->Base->query("INSERT INTO document_view_list SET doc_id='$doc_id', view_type_id='$view_type_id', view_efield_values=IF('$efields','$efields',NULL), tstamp='$cstamp', view_num='$view_num', view_role='{$view_type_props['view_role']}'");
 	return mysqli_insert_id($this->Base->db_link);
     }
     
@@ -750,7 +751,7 @@ class Document extends Data {
     /////////////////////////////////////////////
     // CRUD
     /////////////////////////////////////////////
-    public function add($doc_type=null,$creation_mode) {
+    public function add($doc_type=null,$creation_mode='increase_number') {
 	$user_id = $this->Base->svar('user_id');
 	$active_company_id = $this->Base->acomp('company_id');
 	$passive_company_id = $this->Base->pcomp('company_id');

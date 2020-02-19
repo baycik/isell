@@ -1,7 +1,7 @@
 <?php
 /* Group Name: Склад
  * User Level: 2
- * Plugin Name: Менеджер аттрибутов
+ * Plugin Name: Attribute manager
  * Plugin URI: http://isellsoft.com
  * Version: 1.0
  * Description: Tool for managing product attributes
@@ -9,8 +9,6 @@
  * Author URI: http://isellsoft.com
  */
 class AttributeManager extends Catalog{
-    
-    public $min_level=3;
     public function install(){
 	$install_file=__DIR__."/install.sql";
 	$this->load->model('Maintain');
@@ -21,9 +19,25 @@ class AttributeManager extends Catalog{
 	$this->load->model('Maintain');
 	return $this->Maintain->backupImportExecute($uninstall_file);
     }
+    public function activate(){
+        $Events=$this->Hub->load_model("Events");
+        $Events->Topic('beforeMatchesTmpCreated')->subscribe('AttributeManager','filterSetupMatchesTable');
+        $Events->Topic('beforeMatchesFilterBuild')->subscribe('AttributeManager','filterBuildGroups');
+    }
+    public function deactivate(){
+        $Events=$this->Hub->load_model("Events");
+        $Events->Topic('beforeMatchesTmpCreated')->unsubscribe('AttributeManager','filterSetupMatchesTable');
+        $Events->Topic('beforeMatchesFilterBuild')->unsubscribe('AttributeManager','filterBuildGroups');
+    }
+    
+    
+    public function view( string $path ){
+	$this->load->view($path);
+    }
     
     public $listFetch = ['offset' => ['int', 0], 'limit' => ['int', 5], 'sortby' => 'string', 'sortdir' => '(ASC|DESC)', 'filter' => 'json'];
     public function listFetch( $offset, $limit, $sortby, $sortdir, $filter = null){
+        $this->Hub->set_level(3);
         if (empty($sortby)) {
 	    $sortby = "attribute_name";
 	    $sortdir = "ASC";
@@ -46,6 +60,7 @@ class AttributeManager extends Catalog{
     
     public $attributeUpdate = ['attribute_id' => 'int', 'attribute_name' => 'string', 'attribute_unit' => 'string', 'attribute_prefix' => 'string'];
     public function attributeUpdate( $attribute_id, $attribute_name, $attribute_unit, $attribute_prefix ){
+        $this->Hub->set_level(3);
         if($attribute_id == 0){
             $sql = "
                 INSERT INTO
@@ -71,6 +86,7 @@ class AttributeManager extends Catalog{
     
     public $attributeValueUpdate = ['attribute_id' => 'int', 'product_id' => 'int', 'attribute_value' => 'string'];
     public function attributeValueUpdate( $attribute_id, $product_id, $attribute_value ){
+        $this->Hub->set_level(3);
         if($attribute_id == 0){
             return;          
         };
@@ -88,6 +104,7 @@ class AttributeManager extends Catalog{
     
     public $attributeDelete = ['rows' => 'json'];
     public function attributeDelete( $rows ){
+        $this->Hub->set_level(3);
         foreach($rows as $row){
             $sql = "
             DELETE FROM 
@@ -101,6 +118,7 @@ class AttributeManager extends Catalog{
     
     public $getAttributes = [];
     public function getAttributes(){
+        $this->Hub->set_level(3);
         $sql = "
             SELECT 
                 *
@@ -110,8 +128,9 @@ class AttributeManager extends Catalog{
         return $this->get_list($sql);
     }
     
-     public $getAttributesByCode = ['product_code' => 'string'];
-    public function getAttributesByCode($product_code){
+
+    public function getAttributesByCode(string $product_code){
+        $this->Hub->set_level(3);
         $sql = "
             SELECT * 
             FROM 
@@ -125,9 +144,8 @@ class AttributeManager extends Catalog{
         return $this->get_list($sql);
     }
     
-    
-    public $addProduct = [ 'attribute_id' => 'string', 'product_code' => 'string', 'attribute_value' => 'string' ];
-    public function addProduct ($attribute_id, $product_code, $attribute_value){
+    public function addProduct (int $attribute_id, string $product_code, string $attribute_value){
+        $this->Hub->set_level(3);
         $sql = "
             INSERT INTO
                     attribute_values (attribute_id, product_id, attribute_value)
@@ -136,10 +154,9 @@ class AttributeManager extends Catalog{
         
         return $this->query($sql);        
     }
-       
     
-    public $deleteProduct = [ 'rows' => 'json' ];
-    public function deleteProduct ($rows){
+    public function deleteProduct ( array $rows){
+        $this->Hub->set_level(3);
         $cases=[];
         foreach($rows as $row){
             $cases[]="(product_id={$row['product_id']} AND attribute_id={$row['attribute_id']})";
@@ -151,10 +168,9 @@ class AttributeManager extends Catalog{
             WHERE $where";
         return $this->query($sql);        
     }
-        
     
-    public $getProducts = [ 'attribute_id' => 'int','offset' => ['int', 0], 'limit' => ['int', 5], 'sortby' => 'string', 'sortdir' => '(ASC|DESC)', 'filter' => 'json'];
-    public function getProducts( $attribute_id,$offset, $limit, $sortby, $sortdir, $filter = null ){
+    public function getProducts( int $attribute_id, int $offset=0, int $limit=0, string $sortby=null, string $sortdir='', array $filter = null ){
+        $this->Hub->set_level(3);
          if (empty($sortby)) {
 	    $sortby = "attribute_name";
 	    $sortdir = "ASC";
@@ -187,12 +203,14 @@ class AttributeManager extends Catalog{
     
     public $import = ['label' => 'string', 'source' => 'raw', 'target' => 'raw'];
     public function import($label, $source, $target ) {
+        $this->Hub->set_level(3);
 	$source = array_map('addslashes', $source);
 	$target = array_map('addslashes', $target);
 	return $this->importInTable( $source, $target, $label);
     }
 
     private function importInTable($src, $trg, $label) {
+        $this->Hub->set_level(3);
         $product_code_source_column='';
         $attributes=[];
         for ($i = 0; $i < count($src); $i++) {
@@ -241,16 +259,16 @@ class AttributeManager extends Catalog{
 	return $total_rows;
     }
     
-    public $tableViewGet=['out_type'=>['string','.print'],'attribute_id' => ['int',0], 'filter' => 'json'];
-    public function tableViewGet($out_type,$attribute_id,$filter){
+    public function tableViewGet( string $out_type='.print', int $attribute_id=0, array $filter ){
+        $this->Hub->set_level(3);
 	$rows=$this->getProducts( $attribute_id,0, 10000, null, null, $filter = null );
 	$dump=[
             'tpl_files_folder'=>"application/plugins/AttributeManager/views/",
 	    'tpl_files'=>'GridTpl.xlsx',
-	    'title'=>"Экспорт таблицы",
+	    'title'=>"Атрибуты",
 	    'user_data'=>[
 		'email'=>$this->Hub->svar('pcomp')?$this->Hub->svar('pcomp')->company_email:'',
-		'text'=>'Доброго дня'
+		'text'=>'Добрый день'
 	    ],
 	    'struct'=>$this->tableStructure(),
 	    'view'=>[
@@ -264,23 +282,73 @@ class AttributeManager extends Catalog{
     }
     
     public function tableStructure(){
+        $this->Hub->set_level(3);
         return [
             [
                 'Field'=>'product_code',
-                'Comment'=>'Код'
+                'Comment'=>'Product code'
             ],
             [
                 'Field'=>'attribute_name',
-                'Comment'=>'Атрибут'
+                'Comment'=>'Attribute name'
             ],
             [
                 'Field'=>'attribute_value',
-                'Comment'=>'Значение'
+                'Comment'=>'Attribute value'
             ],
             [
                 'Field'=>'attribute_unit',
-                'Comment'=>'Единица'
+                'Comment'=>'Attribute unit'
             ]
         ];
+    }
+    
+    public function filterSetupMatchesTable( $query, $previuos_return ){
+        if( $previuos_return ){
+            $query=$previuos_return;
+        }
+        $query['outer']['select'].=",GROUP_CONCAT(attribute_value_hash) product_attribute_hashes";
+        $query['outer']['table'].="LEFT JOIN
+                attribute_values USING(product_id)";
+        return $query;
+    }
+    
+    public function filterBuildGroups( $Host ){
+        $attribute_list_sql="
+            SELECT 
+                CONCAT('attribute_id','-', attribute_id) group_id,
+                attribute_name group_name,
+                attribute_value_hash,
+                CONCAT(attribute_prefix,attribute_value,attribute_unit) option_label
+            FROM
+                attribute_list
+                    JOIN
+                attribute_values USING (attribute_id)
+                    JOIN
+                tmp_matches_list USING (product_id)
+            GROUP BY attribute_id,attribute_value
+            ORDER BY attribute_id,attribute_value*1,attribute_value";
+        $attribute_list=$this->get_list($attribute_list_sql);
+        
+        $group_id=null;
+        $other_condition=[];
+        foreach($attribute_list as $attribute){
+            if( $attribute->group_id!==$group_id ){
+                if( $other_condition ){
+                    $Host->matchesFilterBuildOption($group_id,  $this->lang("Other"), 'product_attribute_hashes IS NULL OR '.implode(' AND ',$other_condition));
+                    $other_condition=[];
+                }
+                $group_id=$attribute->group_id;
+                $Host->matchesFilterBuildGroup($group_id, $attribute->group_name);
+                
+            }
+            $option_condition="LOCATE('$attribute->attribute_value_hash',product_attribute_hashes)>0";
+            $other_condition[]="NOT $option_condition";
+            $Host->matchesFilterBuildOption($group_id,  $attribute->option_label, $option_condition);
+        }
+        if( $other_condition ){
+            $Host->matchesFilterBuildOption($group_id,  $this->lang("Other"), 'product_attribute_hashes IS NULL OR '.implode(' AND ',$other_condition));
+            $other_condition=[];
+        }
     }
 }

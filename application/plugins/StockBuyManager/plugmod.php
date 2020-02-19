@@ -11,7 +11,7 @@ EOT;
 $before[]=<<<EOT
 EOT;
 $after[]=<<<EOT
-\n  <div title="Менеджер закупок" href="StockBuyManager/views/stock_buy_manager_main.html" ></div>
+\n  <div title="Satın alma idarecisi" href="StockBuyManager/views/stock_buy_manager_main.html" ></div>
 EOT;
     
 $filename[]=<<<EOT
@@ -30,27 +30,15 @@ $after[]=<<<EOT
 		var params = Leftovers.table.currentParamsGet();
 		$.post("StockBuyManager/orderFromStock/", params, function (ok) {
 		    if (ok * 1) {
-			App.flash("Заказ загружен в менеджер закупок");
+			App.flash("Sımarış satın alma idarecisine yüklendi");
 		    } else {
-			App.flash("Заказ не сформирован");
+			App.flash("Sımarış yaratılmadı");
 		    }
 		});
 	    }
 EOT;
 
-$filename[]=<<<EOT
-views/stock/leftovers.html
-EOT;
-$search[]=<<<EOT
-<!--PLUGIN-BUTTONS-->
-EOT;
-$replace[]=<<<EOT
-EOT;
-$before[]=<<<EOT
-EOT;
-$after[]=<<<EOT
-<button data-action="send_to_buy_manager"><img src="img/docnew.png" style="width:24px;height: 24px;"> Отправить в менеджер закупок</button><br>
-EOT;
+
 
 $filename[]=<<<EOT
 views/trade/document.html
@@ -177,71 +165,65 @@ $filename[]=<<<EOT
 plugins/MobiSell/views/stock.html
 EOT;
 $search[]=<<<EOT
-if ( load_more ) {
+</script>
 EOT;
 $replace[]=<<<EOT
 EOT;
 $before[]=<<<EOT
-    for(var i in new_loaded_items){
-        if(new_loaded_items[i].delivery_group){
-            new_loaded_items[i].delivery_group=new_loaded_items[i].delivery_group.split(',');
-            for(var k in new_loaded_items[i].delivery_group){
-                new_loaded_items[i].delivery_group[k] = parseInt(new_loaded_items[i].delivery_group[k],10);
+    App.stock.suppliers_delivery_count=function(){
+        for(let item of App.stock.entries.current_list){
+            let delivery_list='';
+            if(item.supply_leftovers){
+                let leftovers=item.supply_leftovers.split(',');
+                let deliveries=item.supplier_deliveries.split(',');
+                for(let i in leftovers){
+                    delivery_list=`\${leftovers[i]}(\${deliveries[i]}дн)<br>`;
+                }
             }
+            item.delivery_list=`<span style="color:blue">\${delivery_list}</span>`;;
         }
-        else{
-            new_loaded_items[i].delivery_group = '';
-        }
-        new_loaded_items[i].supleftover? new_loaded_items[i].supleftover=new_loaded_items[i].supleftover.split(','):'';
-    };
+    }
 EOT;
 $after[]=<<<EOT
-   
 EOT;
-
 
 $filename[]=<<<EOT
 plugins/MobiSell/views/stock.html
 EOT;
 $search[]=<<<EOT
-<div class="four wide column" style="text-align: right">{{if stared_leftover}} {{stared_leftover}} {{else}} {{leftover}}{{product_unit}} {{/if}}</div>
+App.renderTpl("stock_list"
+EOT;
+$replace[]=<<<EOT
+EOT;
+$before[]=<<<EOT
+                App.stock.suppliers_delivery_count();//INJECTION
+
+EOT;
+$after[]=<<<EOT
+EOT;
+
+$filename[]=<<<EOT
+plugins/MobiSell/views/stock.html
+EOT;
+$search[]=<<<EOT
+{{leftover}}{{product_unit}}
 EOT;
 $replace[]=<<<EOT
 EOT;
 $before[]=<<<EOT
 EOT;
 $after[]=<<<EOT
-        
-{{if delivery_group|notempty}}
-    <div class="sixteen wide column" style="padding-top: 0rem !important;">
-        <div class="product-delivery-available ui right aligned grid" style="color: #2185d0;">
-                <div class="delivery-days two wide column" style="padding: 0rem !important; "></div> 
-                <div class="delivery-days seven wide column" style="padding: 0rem !important; ">
-                    {{delivery_group}}
-                           <div>{{.}}
-                               {{if .|notequals>1}}
-                                   {{if .|more>4}}
-                                       дней:
-                                   {{else}}
-                                       дня:
-                                   {{/if}}
-                               {{else}}
-                                   день:
-                                   {{/if}}
-                            </div>
-                           {{/delivery_group}}
-                </div> 
-                <div class="delivery-leftovers seven wide column" style="padding: 0rem !important; ">
-                    {{supleftover}}
-                        <div>  
-                            {{.}}
-                        </div>
-                    {{/supleftover}}    
-                </div>
-        </div>  
-    </div>
- {{/if}}    
+ {{delivery_list}}
 EOT;
+
+
+
+
+
+
+
+
+
 
 
 
@@ -257,50 +239,6 @@ $before[]=<<<EOT
 EOT;
 $after[]=<<<EOT
 ,fetch_count-DATEDIFF(NOW(),fetch_stamp) AS popularity 
-EOT;
-
-
-$filename[]=<<<EOT
-plugins/MobiSell/models/MobiSell.php
-EOT;
-$search[]=<<<'EOT'
-GET_SELL_PRICE(t.product_code, {$pcomp_id}, {$usd_ratio}) product_price_total,
-EOT;
-$replace[]=<<<EOT
-EOT;
-$before[]=<<<EOT
-fetch_count-DATEDIFF(NOW(),fetch_stamp) AS popularity,
-EOT;
-$after[]=<<<EOT
-EOT;
-
-
-$filename[]=<<<EOT
-plugins/MobiSell/models/MobiSell.php
-EOT;
-$search[]=<<<'EOT'
- $product_list = $this->get_list($sql);
-EOT;
-$replace[]=<<<EOT
-EOT;
-$before[]=<<<'EOT'
-        $sql = "SELECT 
-        tmp.*, GROUP_CONCAT(IFNULL(srl.supplier_delivery, null)) as delivery_group, GROUP_CONCAT(COALESCE (CONCAT (sl.supply_leftover,' ',tmp.product_unit), CONCAT (sl1.supply_leftover,' ',tmp.product_unit), null)) as  supleftover
-    FROM 
-        (  $sql ) AS tmp 
-    LEFT JOIN 
-    supply_list sl ON (sl.product_code = tmp.product_code AND sl.supply_leftover > 0 ) 
-        LEFT JOIN 
-    supply_list sl1 ON (sl1.supply_code = tmp.product_code AND sl1.supply_leftover > 0 )
-        LEFT JOIN 
-    supplier_list srl ON (sl.supplier_id = srl.supplier_id OR sl1.supplier_id = srl.supplier_id) 
-    GROUP BY product_code 
-    ORDER BY tmp.popularity  DESC
-    ";  
-EOT;
-$after[]=<<<EOT
-
-        
 EOT;
 
 

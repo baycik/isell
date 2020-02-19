@@ -209,11 +209,10 @@ class Session extends DataBase {
 	    if ($this->svar('user_level') == 0) {
 		$this->msg("Текущий уровень <b>" . $this->level_names[$this->svar('user_level') * 1] . "</b><br>");
 		$this->msg("Необходим уровень доступа <b>" . $this->level_names[$allowed_level] . "</b>");
-            print_r($pass);
             die;
 		$this->kick_out();
 	    } else {
-		$this->response_wrn("Текущий уровень '" . $this->level_names[$this->svar('user_level') * 1] . "'\nНеобходим мин. уровень доступа '" . $this->level_names[$allowed_level] . "'");
+		$this->msg("Текущий уровень '" . $this->level_names[$this->svar('user_level') * 1] . "'\nНеобходим мин. уровень доступа '" . $this->level_names[$allowed_level] . "'");
 	    }
 	}
     }
@@ -255,7 +254,8 @@ class Session extends DataBase {
 class ProcessorBase extends Session {
 
     public function __construct($allowed_user_level = 0) {
-	parent::__construct();
+	return;
+        parent::__construct();
 	$this->set_level($allowed_user_level);
 
 	if ($this->request('mod')) {

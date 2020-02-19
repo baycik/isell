@@ -88,6 +88,7 @@ class Reports_manager_annual_sells extends Catalog{
         $this->group_by_client && $group_by_fields[]='pcomp_name';
         $group_by_concat=count($group_by_fields)?"CONCAT(".implode(",'/ ',",$group_by_fields).")":"'-'";
 
+        $language='ru';
         
         $sql="
             SELECT 
@@ -134,6 +135,7 @@ class Reports_manager_annual_sells extends Catalog{
             FROM 
                 (SELECT 
                     product_code,
+                    $language product_name,
                     analyse_type,
                     analyse_brand,
                     analyse_class,

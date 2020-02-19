@@ -1,0 +1,30 @@
+<script>
+    function moedelo_addautosync(){
+        var comment="Синхронизация с сервисом moedelo.org";
+        var program={
+            commands:[
+                {model:'MoedeloSync',method:'tick',arguments:''}
+            ]
+        };
+        var task={
+            event_program:JSON.stringify(program),
+            event_name:"Синхронизация с сервисом moedelo.org",
+            event_descr:comment,
+            event_label:"-TASK-",
+            event_repeat:"0 0:1"
+        };
+        App.loadWindow('page/events/event', task);
+    }
+</script>
+<form>
+    <div>
+	<h2>Настройки Подключения к МОЕ ДЕЛО</h2>
+	<input name="gateway_url" title="Адрес API">
+	<textarea name="gateway_md_apikey" title="API Key"></textarea>
+        <input name="sync_since" title="Синхронизировать после" type="date">
+    </div>
+    <div style="text-align: center">
+        <button onclick="moedelo_addautosync()"><img src="img/event.png" style="width: 24px;height: auto;"> Добавить задание</button>
+	<button type="submit"><img src="img/Save-24.png" style="width:24px;height: auto"> Сохранить</button>
+    </div>
+</form>

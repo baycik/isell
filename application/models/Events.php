@@ -1,7 +1,7 @@
 <?php
 require_once 'Catalog.php';
 class Events extends Catalog{
-    public $min_level=2;
+    public $min_level=1;
     /*
      * event_statuses
      * undone
@@ -10,6 +10,7 @@ class Events extends Catalog{
      */
     public $activeDatesGet=[];
     public function activeDatesGet() {//must be optimized
+        $this->Hub->set_level(2);
 	$user_id = $this->Hub->svar('user_id');
 	$user_level = $this->Hub->svar('user_level');
 	$sql="SELECT 
@@ -26,6 +27,7 @@ class Events extends Catalog{
     
     public $listFetch=['\d\d\d\d-\d\d-\d\d','string'];
     public function listFetch( $date, $label=null ){
+        $this->Hub->set_level(2);
 	$label_filter=$label?" AND event_label='$label'":'';
 	$sql="
 	    SELECT
@@ -50,6 +52,7 @@ class Events extends Catalog{
     
     public $eventGet=['int'];
     public function eventGet( $event_id ){
+        $this->Hub->set_level(2);
 	$sql="SELECT
 		*,
 		DATE_FORMAT(event_date,'%d.%m.%Y') event_date_dmy,
@@ -64,15 +67,18 @@ class Events extends Catalog{
     }
     
     public function eventDeleteDocumentTasks( int $doc_id ){
+        $this->Hub->set_level(2);
         return $this->delete("event_list",['doc_id'=>$doc_id,'event_label'=>'-TASK-']);
     }
     
     public $eventDelete=['int'];
     public function eventDelete( $event_id ){
+        $this->Hub->set_level(2);
 	return $this->delete("event_list",['event_id'=>$event_id]);
     }
     
     public function eventChange($event_id, $event){
+        $this->Hub->set_level(2);
         $event['modified_by']=$this->Hub->svar('user_id');
 	return $this->update('event_list', $event, ['event_id'=>$event_id]);
     }
@@ -84,6 +90,7 @@ class Events extends Catalog{
     }
     
     public function eventCreate($event){
+        $this->Hub->set_level(2);
         $event['created_by']=$this->Hub->svar('user_id');
         $event['event_creator_user_id']=$this->Hub->svar('user_id');
         return $this->create('event_list', $event);
@@ -147,6 +154,7 @@ class Events extends Catalog{
     
     public $eventMove=['int','\d\d\d\d-\d\d-\d\d','string','\d\d\d\d-\d\d-\d\d','string'];
     public function eventMove( $event_id, $newdate, $mode=null, $olddate=null, $label=null ){
+        $this->Hub->set_level(2);
 	if( $mode=='all' ){
 	    $this->query("UPDATE event_list SET event_date='$newdate' WHERE DATE(event_date)='$olddate' AND event_label='$label'");
 	    return $this->db->affected_rows();
@@ -156,6 +164,7 @@ class Events extends Catalog{
     
     public $eventViewGet=['label'=>'string','event_date'=>'\d\d\d\d-\d\d-\d\d','out_type'=>'string'];
     public function eventViewGet($label,$event_date,$out_type){	
+        $this->Hub->set_level(2);
 	$rows=$this->listFetch($event_date,$label);
 	$dump=[
 	    'tpl_files'=>$this->Hub->acomp('language').'/EventList.xlsx',
@@ -201,16 +210,19 @@ class Events extends Catalog{
     public function publish(){
         $arguments=func_get_args();
         $listener_list=$this->get_list("SELECT event_place,event_target,event_liable_user_id,event_note FROM event_list WHERE event_label='-TOPIC-' AND event_name='$this->topic'");
+        $previuos_return=null;
         foreach($listener_list as $listener){
             $Model=$this->Hub->load_model($listener->event_place);
             $method=$listener->event_target;
-            $arguments[]=$listener->event_note;
+            $arguments[]=$listener->event_note;//custom registerer parameter
+            $arguments[]=&$previuos_return;//previous events results
             try{
-                call_user_func_array([$Model, $method],$arguments);
+                $previuos_return=call_user_func_array([$Model, $method],$arguments);
             } catch (Exception $ex) {
                 $this->unsubscribe( $listener->event_place, $listener->event_target, $listener->event_liable_user_id );
                 $this->log("Topic subscriber '{$listener->event_place}->{$listener->event_target}' has been removed due to error: ".$ex);
             }
         }
+        return $previuos_return;
     }
 }

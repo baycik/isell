@@ -14,13 +14,13 @@
 		},1000);
 	    },
 	    adjustHolders:function(){
-		//Layout.calcDimensions("#supply_order_sg");
+		Layout.calcDimensions("#supply_order_sg");
 	    },
 	    calcDimensions:function(query, dw, dh){
 		var wheight = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
-		var height = (wheight - $(query).position().top - 20 + (dh || 0)) + 'px';// - $(query).position().top - 0
+		var height = (wheight  + (dh || 0)) + 'px';// - $(query).position().top - 0
 		var width = $(query).parent().width() + (dw || 0);
-		$(query).css('min-height', height);
+		$(query).css('height', height);
 		$(query).css('width', width);
 	    },
 	    Accordion:function(query){
@@ -101,9 +101,15 @@
 			sortby: sorted.length ? sorted[0].columnId : '',
 			sortdir: sorted.length ? (sorted[0].sortAsc ? 'ASC' : 'DESC') : '',
 			filter: JSON.stringify(Order.grid.getFilter()),
-			out_type: (out_type || '.xlsx')
-		    };
+			out_type: (out_type || '.xlsx'),
+                        count_all:$('.x-stock-buy-manager-order-holder input[name=count_all]').is(':checked') ? 1 : 0,
+                        count_needed:$('.x-stock-buy-manager-order-holder input[name=count_needed]').is(':checked') ? 1 : 0,
+                        count_reserve:$('.x-stock-buy-manager-order-holder input[name=count_reserve]').is(':checked') ? 1 : 0,
+                        count_notcommited:$('.x-stock-buy-manager-order-holder input[name=count_notcommited]').is(':checked') ? 1 : 0
+                    };
+                    
 		    var url = 'StockBuyManager/viewOrderGet/?' + $.param(params);
+                    //console.log(url);
 		    if (out_type === '.print') {
 			window.open(url, 'print_tab');
 		    } else {
@@ -114,14 +120,38 @@
 		    this.out('.print');
 		}
 	    },
+            frm:{
+                abc:function(row, cell, value, columnDef, dataContext) {
+                    if(value==="A"){
+                        return "<div class='sg_round' style='background-color:rgba(0,255,0,.3);text-align:center'>A</div>";
+                    }
+                    if(value==="B"){
+                        return "<div class='sg_round' style='background-color:rgba(255,255,0,.3);text-align:center'>B</div>";
+                    }
+                    if(value==="C"){
+                        return "<div class='sg_round' style='background-color:rgba(255,0,0,.3);text-align:center'>C</div>";
+                    }
+                    return value;
+                },
+                selectedRow:function(row, cell, value, columnDef, dataContext){
+                    if(value>0){
+                        return "<div style='background-color:rgba(0,0,0,.3);text-align:center'>"+value+"</div>";
+                    }
+                    return value;
+                }
+            },
 	    tableInit:function(){
 		var settings = {
 		    columns: [
-			{id: "product_comment", field: "product_comment", name: "Коментарий", width: 120, sortable: true, editor: Slick.Editors.Text},
-			{id: "product_code", field: "product_code", name: "Код", width: 100, sortable: true, editor: Slick.Editors.Text},
-			{id: "product_name", field: "product_name", name: "Название", width: 300, sortable: true},
-			{id: "product_quantity", field: "product_quantity", name: "Кол-во", width: 60, sortable: true, editor: Slick.Editors.Integer, cssClass: 'slick-align-right'},
-			{id: "suggestion", field: "suggestion", name: "Варианты цен поставщиков", width: 900, sortable: true, formatter: Order.selector.make}
+			{id: "product_code", field: "product_code", name: "Kod", width: 100, sortable: true},
+			{id: "product_name", field: "product_name", name: "İsim", width: 300, sortable: true},
+			{id: "analyse_class", field: "analyse_class", name: "Sınıf", width: 60, sortable: true, formatter:Order.frm.abc, cssClass: 'slick-align-right'},
+			{id: "product_quantity", field: "product_quantity", name: "Sımarış", width: 80, sortable: true, formatter:Order.frm.selectedRow, editor: Slick.Editors.Integer, cssClass: 'slick-align-right'},
+			{id: "supply_need", field: "supply_need", name: "İhtiyaç", width: 80, sortable: true, cssClass: 'slick-align-right'},
+			{id: "supply_reserve", field: "supply_reserve", name: "Yedek Esapları", width: 90, sortable: true, cssClass: 'slick-align-right'},
+			{id: "supply_allbills", field: "supply_allbills", name: "Bütün Esaplar", width: 90, sortable: true, cssClass: 'slick-align-right'},
+			{id: "suggestion", field: "suggestion", name: "Tedarikçi fiyat variantları", width: 900, sortable: true, formatter: Order.selector.make},
+			{id: "product_comment", field: "product_comment", name: "İzaat", width: 120, sortable: true, editor: Slick.Editors.Text}
 		    ],
 		    options: {
 			editable: true,
@@ -130,7 +160,13 @@
 			enableColumnReorder: false,
 			enableFilter: true,
 			multiSelect: true,
-			url: 'StockBuyManager/orderFetch'
+			url: 'StockBuyManager/orderFetch',
+                        params:{
+                            count_all:$('.x-stock-buy-manager-order-holder input[name=count_all]').is(':checked') ? 1 : 0,
+                            count_needed:$('.x-stock-buy-manager-order-holder input[name=count_needed]').is(':checked') ? 1 : 0,
+                            count_reserve:$('.x-stock-buy-manager-order-holder input[name=count_reserve]').is(':checked') ? 1 : 0,
+                            count_notcommited:$('.x-stock-buy-manager-order-holder input[name=count_notcommited]').is(':checked') ? 1 : 0
+                        }
 		    }
 		};
 		Order.grid = new SlickInfinite("#supply_order_sg", settings);
@@ -138,7 +174,9 @@
 		    var updatedEntry = data.item;
 		    var field = settings.columns[data.cell].field;
 		    var value = updatedEntry[field];
-		    Order.entryUpdate(updatedEntry.entry_id, field, value).done(function () {
+                    var suggested_supply_id=$("[name=r_"+data.row+"]").val();
+                    
+		    Order.entryUpdate(updatedEntry.entry_id, field, value, updatedEntry.product_code, suggested_supply_id).done(function () {
 			Order.grid.rowReload(data.row);
 		    });
 		});
@@ -165,7 +203,7 @@
 		    function controller_render(option,checked){
 			var controller="";
 			controller+='<div class="selector_token selector_tag" title="'+option[0]+'" style="border-left:solid 8px rgb('+255*red_ratio+','+200*green_ratio+',0)"><label>';
-			controller+='<div class="selector_token" style="width:60px;">'+option[2]+'</div>';
+			controller+='<div class="selector_token" style="width:90px;">'+option[2]+'['+option[3]+']</div>';
 			controller+='<div class="selector_token" style="height:16px;width:16px;"><input type="radio" value="'+option[1]+'" name="r_'+row+'" '+checked+'></div>';
 			controller+='<div class="selector_token" >'+option[0]+'</div>';
 			controller+='</label></div>';
@@ -195,24 +233,24 @@
 		    }
 		}
 	    },
-	    entryUpdate:function(entry_id, field, value){
-		return $.post('StockBuyManager/orderUpdate', {entry_id: entry_id, field: field, value: value}, function (ok) {
+	    entryUpdate:function(entry_id, field, value, product_code, suggested_supply_id){
+		return $.post('StockBuyManager/orderUpdate', {entry_id: entry_id, field: field, value: value, product_code:product_code, suggested_supply_id: suggested_supply_id}, function (ok) {
 		    if (ok < 1) {
 			Order.grid.reload();
-			Summary.accordion.load();
 		    }
+                    Summary.accordion.load();
 		});
 	    },
 	    submit:function(supplier_company_id){
 		$.post('StockBuyManager/orderSubmit',{supplier_company_id:supplier_company_id},function(doc_id){
 		    if( doc_id*1 ){
-			App.flash("Заказ сформирован");
+			App.flash("Sımarış yaratıldı");
 			App.loadWindow('page/trade/document',{doc_id:doc_id});
 			Order.grid.reload();
 			Summary.accordion.load();
 			Order.grid.setFilter({suggestion:''});
 		    } else {
-			App.flash("Заказ не сформирован");
+			App.flash("Sımarış yaratılmadı");
 		    }
 		});
 	    }
@@ -238,7 +276,27 @@
 		    }
 		});
                 $('.create_orders').click(function(){
-                    Summary.tools.create_orders();
+                    //Summary.tools.create_orders();
+                });
+                $('.x-stock-buy-manager-order-holder input[name=count_all]').change(function(){
+                    var checked=$(this).is(':checked') ? 1 : 0;
+                    Order.grid.updateOptions( {params:{count_all:checked}} );
+                    Order.grid.reload();
+                });
+                $('.x-stock-buy-manager-order-holder input[name=count_needed]').change(function(){
+                    var checked=$(this).is(':checked') ? 1 : 0;
+                    Order.grid.updateOptions( {params:{count_needed:checked}} );
+                    Order.grid.reload();
+                });
+                $('.x-stock-buy-manager-order-holder input[name=count_reserve]').change(function(){
+                    var checked=$(this).is(':checked') ? 1 : 0;
+                    Order.grid.updateOptions( {params:{count_reserve:checked}} );
+                    Order.grid.reload();
+                });
+                $('.x-stock-buy-manager-order-holder input[name=count_notcommited]').change(function(){
+                    var checked=$(this).is(':checked') ? 1 : 0;
+                    Order.grid.updateOptions( {params:{count_notcommited:checked}} );
+                    Order.grid.reload();
                 });
 	    },
 	    accordion:{
@@ -257,7 +315,13 @@
 		    };
 		},
 		load:function(){
-		    $.get('StockBuyManager/orderSummaryFetch', function (resp) {
+                    var params={
+                        count_all:$('.x-stock-buy-manager-order-holder input[name=count_all]').is(':checked') ? 1 : 0,
+                        count_needed:$('.x-stock-buy-manager-order-holder input[name=count_needed]').is(':checked') ? 1 : 0,
+                        count_reserve:$('.x-stock-buy-manager-order-holder input[name=count_reserve]').is(':checked') ? 1 : 0,
+                        count_notcommited:$('.x-stock-buy-manager-order-holder input[name=count_notcommited]').is(':checked') ? 1 : 0
+                    };
+		    $.get('StockBuyManager/orderSummaryFetch',params, function (resp) {
 			Summary.list = App.json(resp);
 			App.renderTpl('supply_order_summary_ac', {summary: Summary.list});
 			Summary.accordion.render();
@@ -327,7 +391,7 @@
         white-space: nowrap;
     }
     .selector_tag{
-        width:150px;
+        width:200px;
 	border-right:1px dotted black;
         margin:-2px;
         margin-right: 4px;
@@ -352,39 +416,56 @@
 	    <img src="img/table16.png" style="width:16px;height: 16px;"> Заказ
 	</div>
 	<div style="float: right;" class="x-stock-buy-manager-summary-tools">
-	    <span class="icon-24 icon-delete" title="Удалить стоку" data-action="entryDelete"> </span>
-	    <span class="icon-24 icon-refresh" title="Обновить" data-action="reload"> </span> 
+	    <span class="icon-24 icon-delete" title="Satırnı sil" data-action="entryDelete"> </span>
+	    <span class="icon-24 icon-refresh" title="Yanıla" data-action="reload"> </span> 
 	</div>
 	<div id="supply_order_summary_ac" style="overflow-y: auto;clear: both;" class="covert">
 	    {{summary}}
 		<button class="accordion">{{supplier_company_label}} ({{summary_count}})</button>
 		<div class="accordion_panel" data-index="{{#}}">
 		    {{if supplier_company_id}}
-		    <div style="background: rgba(255,255,255,.6);padding: 3px;">Стоимость заказа</div>
-		    <label>Сумма: <input name="summary_sum" value="{{summary_sum|blank>}}"></label>
-		    <div style="background: rgba(255,255,255,.6);padding: 3px;">Характаристики заказа</div>
-		    <label>Объем м3: <span style="font-size:14px">{{if volume_more|more>0}}>{{/if}}</span><input name="summary_volume" value="{{summary_volume|blank>}}"></label>
-		    <label>Вес м3: <span style="font-size:14px">{{if weight_more|more>0}}>{{/if}}</span><input name="summary_weight" value="{{summary_weight|blank>}}"></label>
+		    <div style="background: rgba(255,255,255,.6);padding: 3px;">Sımarış Tutarı</div>
+		    <label>Toplam: <input name="summary_sum" value="{{summary_sum|blank>}}"></label>
+		    <div style="background: rgba(255,255,255,.6);padding: 3px;">Sımarış vasıfları</div>
+		    <label>Acım м3: <span style="font-size:14px">{{if volume_more|more>0}}>{{/if}}</span><input name="summary_volume" value="{{summary_volume|blank>}}"></label>
+		    <label>Ağılıq м3: <span style="font-size:14px">{{if weight_more|more>0}}>{{/if}}</span><input name="summary_weight" value="{{summary_weight|blank>}}"></label>
 		    <div style="background: rgba(255,255,255,.6);padding: 3px;"> 
-		    <button style="width:180px;margin: 5px;text-align: left" data-supplier-company-id="{{supplier_company_id}}"><img src="img/docnew.png" style="width:24px;height: 24px;"> Сформировать заказ</button>
+		    <button style="width:180px;margin: 5px;text-align: left" data-supplier-company-id="{{supplier_company_id}}"><img src="img/docnew.png" style="width:24px;height: 24px;"> Sımarışnı yarat</button>
 		    </div>
 		    {{/if}}
 		</div>
 	    {{/summary}}
 	</div>
-        <button class="create_orders"><img src="img/calc.png" style="width:24px;height: 24px;"> Сформировать заказы</button><br>
+        <div class="inp_group">
+            <label>
+                <b>Hepsi</b>
+                <input type="checkbox" name="count_all">
+            </label>
+            <label>
+                <b>İhtiyaç</b>
+                <input type="checkbox" name="count_needed" checked="checked">
+            </label>
+            <label>
+                <b>Yedek Esaplar</b>
+                <input type="checkbox" name="count_reserve">
+            </label>
+            <label>
+                <b>Bütün Esaplar</b>
+                <input type="checkbox" name="count_notcommited">
+            </label>
+        </div>
     </div>
     <div class="bmanager-order-entries">
 	<div style="margin-right: 20px" class="x-stock-buy-manager-order-tools">
 	    <div style="float: left;font-weight: bold;padding-top: 8px;">
-		<img src="img/table16.png" style="width:16px;height: 16px;"> Заказ
+		<img src="img/table16.png" style="width:16px;height: 16px;"> Sımarış 
 	    </div>
 	    <div style="float: right;font-weight: bold;padding-top: 8px;">
-	    <span class="icon-24 icon-create" title="Добавить стоку" data-action="entryCreate"> </span>
-	    <span class="icon-24 icon-delete" title="Удалить стоку" data-action="entryDelete"> </span>
-	    <span class="icon-24 icon-download" title="Скачать таблицу" data-action="out"> </span> 
-	    <span class="icon-24 icon-print" title="Напечатать" data-action="print"> </span> 
-	    <span class="icon-24 icon-refresh" title="Обновить" data-action="reload"> </span>
+	    <span class="icon-24 icon-create" title="Satırnı koş" data-action="entryCreate"> </span>
+	    <span class="icon-24 icon-delete" title="Satırnı sil" data-action="entryDelete"> </span>
+	    <span class="icon-24 icon-download" title="Tablonı indir" data-action="out"> </span> 
+	    <span class="icon-24 icon-print" title="Yazdır" data-action="print"> </span> 
+	    <span class="icon-24 icon-refresh" title="Yanıla" data-action="reload"> </span>
 	    </div>
 	</div>
 	<div id="supply_order_sg" style="clear: both;height: 500px;"></div>		

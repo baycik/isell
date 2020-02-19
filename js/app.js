@@ -296,7 +296,7 @@ App.toDmyt = function (iso) {
 	date=new Date(iso);
     }
     if( date instanceof Date ){
-	 return String("0" + date.getDate()).slice(-2) + '.' + String("0" + (date.getMonth() + 1)).slice(-2) + '.' + date.getFullYear()+' '+date.getHours()+':'+date.getMinutes();
+	 return String("0" + date.getDate()).slice(-2) + '.' + String("0" + (date.getMonth() + 1)).slice(-2) + '.' + date.getFullYear()+' '+ String("0" + date.getHours()).slice(-2)+':'+ String("0" + date.getMinutes()).slice(-2);
     }
     return null;
 };
@@ -474,7 +474,11 @@ App.updaterInit=function(){
 };
 App.chatCheck=function(){
     if( App.user.signedIn ){
-	$.get('Chat/checkNew',function(resp){
+        var mode='';
+        if( location.href.match(/(localhost)|(127.0.0.1)/) && !localStorage.getItem('executeTasks') ){
+            mode='skip_tasks';//do not execute tasks on developing
+        }
+	$.get('Chat/checkNew',{mode:mode},function(resp){
 	    var count=resp*1;
             if( App.chatPrevCount !== count ){
                 App.renderTpl('chat_panel',{count:count});

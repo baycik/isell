@@ -21,11 +21,11 @@ class iSellBase extends ProcessorBase{
         $this->svar('user_assigned_stat',$user_data['user_assigned_stat']);
         $this->svar('user_assigned_path',$user_data['user_assigned_path']);
         $this->selectActiveCompany( $user_data['company_id'] );
-        $this->selectPassiveCompany( $user_data['company_id'] );//WTF
+        //$this->selectPassiveCompany( $user_data['company_id'] );//WTF
     }
     public function selectActiveCompany( $active_company_id ){
         $acomp_data=$active_company_id?(object)$this->get_row("SELECT * FROM companies_list LEFT JOIN curr_list USING(curr_code) WHERE company_id='$active_company_id'"):NULL;
-        $this->_acomp=$_SESSION['acomp']= $acomp_data;
+        $acomp=$_SESSION['acomp']= $acomp_data;
     }
     public function selectPassiveCompany( $passive_company_id ){
         if( $this->acomp('company_id') === $passive_company_id )
@@ -53,20 +53,22 @@ class iSellBase extends ProcessorBase{
         $this->selectActiveCompany( $this->acomp('company_id') );
     }
     public function acomp($name,$warn=true){
-        if( is_array($this->_acomp) && isset($this->_acomp[$name]) ){
-	    return $this->_acomp[$name];
+        $acomp=$this->svar('acomp');
+        if( is_array($acomp) && isset($acomp[$name]) ){
+	    return $acomp[$name];
 	}
-	else if( is_object($this->_acomp) && isset($this->_acomp->$name) ){
-	     return $this->_acomp->$name;
+	else if( is_object($acomp) && isset($acomp->$name) ){
+	     return $acomp->$name;
 	}
         return NULL;
     }
     public function pcomp($name,$warn=true){
-        if( is_array($this->_pcomp) && isset($this->_pcomp[$name]) ){
-	    return $this->_pcomp[$name];
+        $pcomp=$this->svar('pcomp');
+        if( is_array($pcomp) && isset($pcomp[$name]) ){
+	    return $pcomp[$name];
 	}
-	else if( is_object($this->_pcomp) && isset($this->_pcomp->$name) ){
-	     return $this->_pcomp->$name;
+	else if( is_object($pcomp) && isset($pcomp->$name) ){
+	     return $pcomp->$name;
 	}
         return NULL;
     }

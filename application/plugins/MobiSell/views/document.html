@@ -184,30 +184,27 @@
 		    }
 		});
 
-		var $input = $('.docdatepicker').pickadate();
-		App.document.picker = $input.pickadate('picker');
-		App.document.picker.on({
-		    set: function (val) {
-			var date = App.document.picker.get('select', 'dd.mm.yyyy');
-			App.document.head.update('doc_date', date);
-		    }
-		});
+		$('.doc_date').change(function(){
+                    var date_iso=$(this).val();
+                    console.log(date_iso);
+                    //App.document.head.update('doc_date', date);
+                });
 	    },
 	    set: function (head) {
-		App.document.head.suppressUpdate = true;
-		App.renderTpl('document_header', head);
-		$('.activecomp').dropdown('set value', head.active_company_id);
-		$('.activecomp').dropdown('set text', head.active_company_label);
-		$('.passivecomp').dropdown('set value', head.passive_company_id);
-		$('.passivecomp').dropdown('set text', head.label);
-		$('.doc_num').val(head.doc_num);
-		$('.doc_data').val(head.doc_data);
-		$('.is_commited').checkbox("set " + (head.is_commited > 0 ? "checked" : "unchecked"));
-		$('.is_event_created').checkbox("set " + (head.is_event_created > 0 ? "checked" : "unchecked"));
-		App.document.picker.set('select', new Date(App.toIso(head.doc_date)));
-		App.document.head.suppressUpdate = false;
+                App.document.head.suppressUpdate = true;
+                App.renderTpl('document_header', head);
+                $('.activecomp').dropdown('set value', head.active_company_id);
+                $('.activecomp').dropdown('set text', head.active_company_label);
+                $('.passivecomp').dropdown('set value', head.passive_company_id);
+                $('.passivecomp').dropdown('set text', head.label);
+                $('.doc_num').val(head.doc_num);
+                $('.doc_data').val(head.doc_data);
+                $('.is_commited').checkbox("set " + (head.is_commited > 0 ? "checked" : "unchecked"));
+                $('.is_event_created').checkbox("set " + (head.is_event_created > 0 ? "checked" : "unchecked"));
+                $('.doc_date').val(App.toIso(head.doc_date));
+                App.document.head.suppressUpdate = false;
                 App.renderTpl('document_checkout_button', {checkout_id: App.document.doc.head.checkout_id});
-		App.document.head.switchView(head);
+                App.document.head.switchView(head);
 	    },
 	    switchView: function (head) {
 		var hilight = (Math.abs(head.doc_type) === 1) ? 'green' : 'purple';
@@ -284,7 +281,7 @@
 	prefs: {
 	    init: function () {
 		App.document.prefs.load();
-                if( App.user.props.user_level<2 ){
+                if( App.user.props && App.user.props.user_level<2 ){
                     $("#document_discounts input").prop("disabled",true);
                     $("#document_discounts").html("");
                 } else {
@@ -355,8 +352,12 @@
 			App.document.row.save(entry, index);
 		    },
 		    onVisible: function () {
-			$("#document_entry_dialog input").select();
-                        $('.ui.accordion').accordion();
+                        $("#document_entry_dialog input").select();
+                        $('.ui.accordion').accordion({
+                            onVisible:function(){
+                                $('#document_entry_dialog').modal('refresh');
+                            }
+                        });
 		    }
 		}).modal('show');
 		//$("#document_entry_dialog input[name=product_quantity]").val(entry.product_quantity);
@@ -524,14 +525,6 @@
 		var index = $(row_node).data('row-index');
 		var suggest_entry = App.document.suggestion.entries[index];
 		App.document.row.add(suggest_entry);
-	    },
-	    popImage: function (row_node) {
-		var index = $(row_node).data('row-index');
-		var suggest_entry = App.document.suggestion.entries[index];
-		suggest_entry.size_x = Math.min($(document).width(), 500);
-		suggest_entry.size_y = Math.min($(document).height(), 500);
-		App.renderTpl('document_product_image', suggest_entry);
-		$("#document_product_image").modal('show');
 	    }
 	},
         go_to_checkout: function(){
@@ -688,7 +681,7 @@
 	    <div class="fields">
 		<div class="four wide field">
 		    <label>Дата</label>
-		    <input name="company_filter" placeholder="Дата" type="date" class="docdatepicker">
+		    <input placeholder="Дата" type="date" class="doc_date">
 		</div>
 		<div class="four wide field">
 		    <label>Номер</label>
@@ -769,8 +762,10 @@
 			<tbody>
 			    <!-- {{if entries}} {{entries}} -->
 			    <tr>
-				<td  style="height:50px" data-row-index="{{#}}" onclick="App.document.suggestion.popImage(this)">
+				<td  style="height:50px" data-row-index="{{#}}">
+                                    <a href="#product.html#product_id={{product_id}}">
 				    <img style="width:50px" src="../Storage/image_flush/?size=50x50&path=/dynImg/{{product_img}}">
+                                    </a>
 				</td>
 				<td data-row-index="{{#}}" onclick="App.document.suggestion.handleClick(this)">
 				    <div class="ui grid stackable" style="{{if leftover|less>1}} color:red !important {{/if}}">
@@ -877,7 +872,7 @@
             </div>
             <!--{{if user_level|more>1}}-->
             <div class="ui horizontal divider"></div>
-            <div class="ui styled fluid accordion" style="text-align: left">
+            <div class="ui styled fluid accordion" style="text-align: left" onclick="$('#document_entry_dialog').modal('refresh');">
                 <div class="title">
                     <i class="dropdown icon"></i>
                     Еще действия
@@ -899,26 +894,16 @@
                                 {{breakeven_price}}
                             </div>
                         </div>
-                        <div class="sixteen wide column">
+                        <div class="eight wide column">
                             <div class="ui negative deny button"><i class="trash alternate icon"></i> Удалить</div>
+                        </div>
+                        <div class="eight wide column">
+                            <a onclick="$('#document_entry_dialog').modal('hide');" href="#product.html#product_id={{product_id}}">Карточка товара</a>
                         </div>
                     </div>
                 </div>
             </div>
             <!--{{/if}}-->
         </div>
-    </div>
-</div>
-
-<div class="ui modal" id="document_product_image">
-    <div class="header">{{product_code}}</div>
-    <div class="image content" style="height: 400px">
-	<img class="image" src="../Storage/image_flush/?size={{size_x}}x{{size_y}}&path=/dynImg/{{product_img}}" onload='$("#document_product_image").modal("show");' style="margin-left: auto;margin-right: auto" />
-    </div>
-    <div class="description" style="margin-bottom: 15px">
-	{{product_name}}
-    </div>
-    <div class="actions">
-	<div class="ui secondary close button"  onclick="$('#document_product_image').modal('hide');"><i class="icon close"></i> Закрыть</div>
     </div>
 </div>

@@ -1,5 +1,4 @@
 <?php
-require_once 'DocumentItems.php';
 class DocumentView extends DocumentItems{
     public $min_level=1;
     public $viewListFetch=['int'];
@@ -41,7 +40,7 @@ class DocumentView extends DocumentItems{
 
     }
     
-    public function viewUpdate(int $doc_view_id, bool $is_extra, string $field, string $value='') {
+    public function viewUpdate(int $doc_view_id, string $is_extra, string $field, string $value='') {
 	if ( $this->isCommited() ){
 	    $this->Hub->set_level(2);
 	}
@@ -79,7 +78,9 @@ class DocumentView extends DocumentItems{
     public function viewCreate( int $view_type_id ){
 	$Document2=$this->Hub->bridgeLoad('Document');
 	$view_id= $Document2->insertView($view_type_id);
-	$this->viewIncreaseFetchCount($view_type_id);
+        if( $view_id ){
+            $this->viewIncreaseFetchCount($view_type_id);
+        }
 	return $view_id;
     }
     private function viewIncreaseFetchCount($view_type_id){
@@ -149,18 +150,23 @@ class DocumentView extends DocumentItems{
 	$head=$this->headGet($doc_view->doc_id);
 	$rows=$this->entriesFetch( 1 );
 	$footer=$this->footerGet();
+        
+        $acomp=$Company->companyGet( $this->doc('active_company_id') );
+        $pcomp=$Company->companyGet( $this->doc('passive_company_id') );
+        
+        
 	if( $head->doc_type==1 || $head->doc_type==3 ){
 	    /*if sell document use straight seller=acomp else buyer=pcomp*/
-	    $acomp=$Company->companyGet( $this->doc('active_company_id') );
-	    $pcomp=$Company->companyGet( $this->doc('passive_company_id') );
+	    $seller=$acomp;
+	    $buyer=$pcomp;
             
             $AccountsData=$this->Hub->load_model('AccountsData');
             $doc_view->debt=$AccountsData->clientDebtGet();
             
 	    $reciever_email=$pcomp->company_email;
 	} else {
-	    $pcomp=$Company->companyGet( $this->doc('active_company_id') );
-	    $acomp=$Company->companyGet( $this->doc('passive_company_id') );
+	    $seller=$pcomp;
+	    $buyer=$acomp;
 	    $reciever_email=$acomp->company_email;
 	}
         
@@ -189,6 +195,8 @@ class DocumentView extends DocumentItems{
 		'doc_view'=>$doc_view,
 		'a'=>$acomp,
 		'p'=>$pcomp,
+                'seller'=>$seller,
+                'buyer'=>$buyer,
                 'head'=>$head,
                 'rows'=>$rows,
                 'footer'=>$footer,

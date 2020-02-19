@@ -13,6 +13,7 @@ class MobiSell extends PluginManager {
     function __construct() {
         ini_set('zlib.output_compression_level', 6);
         ob_start("ob_gzhandler");
+        //session_write_close();notification is not working
         parent::__construct();
     }
 
@@ -97,17 +98,17 @@ class MobiSell extends PluginManager {
             'results' => $this->Hub->load_model('Company')->listFetchAll($mode, $q)
         ];
     }
-    public $documentCreate = ["doc_type" => "int", "acomp_id" => "int",  "pcomp_id" => "int", 'entries' => ['json', null]];
-    public function documentCreate($doc_type, $acomp_id, $pcomp_id, $entries) {
+
+    public function documentCreate( int $doc_type, int $acomp_id, int $pcomp_id, array $entries=null ){
         $Company = $this->Hub->load_model("Company");
         $Company->selectPassiveCompany($pcomp_id);
         $Company->selectActiveCompany($acomp_id);
+        
         $DocumentItems = $this->Hub->load_model("DocumentItems");
         $doc_id = $DocumentItems->createDocument($doc_type);
-        if ($entries) {
+        if ( $entries ) {
             $this->documentEntryFill($doc_id, $entries);
         }
-        
         $message=[
             "subject"=>"MobiSell уведомление от ".$this->Hub->svar('user_sign'),
             "view"=>'document_created.html',
@@ -354,8 +355,8 @@ class MobiSell extends PluginManager {
                 $attribute_value_exploded = explode('::', $attribute_value);
                 $attribute_value = [
                     'attribute_value' => $attribute_value_exploded[0],
-                    'attribute_value_id' => $attribute_value_exploded[1],
-                    'product_total' => $attribute_value_exploded[2]*1,
+                    'attribute_value_id' => isset($attribute_value_exploded[1])?$attribute_value_exploded[1]:'',
+                    'product_total' => isset($attribute_value_exploded[2])?$attribute_value_exploded[2]*1:0,
                     'attribute_id' => $attribute->attribute_id,
                     'attribute_unit' => $attribute->attribute_unit,
                     'attribute_name' => $attribute->attribute_name,
@@ -365,38 +366,40 @@ class MobiSell extends PluginManager {
         }
         return $attribute_list;
     }
-    
-    public $productGet = ['product_code' => 'string'];
-    public function productGet($product_code) {
+
+    public function productGet( int $product_id ) {
+        $lang='ru';
         $pcomp_id=$this->Hub->pcomp('company_id');
         $usd_ratio=$this->Hub->pref('usd_ratio');
-          $sql = "SELECT
-		    st.label parent_label,
-		    pl.*,
-		    ROUND(product_volume,5) product_volume,
-		    ROUND(product_weight,5) product_weight,
-		    product_quantity leftover,
-                    product_img,
-                    product_unit,
-                    GET_SELL_PRICE(se.product_code,'{$pcomp_id}','{$usd_ratio}') product_price_total,
-                    GET_PRICE(se.product_code,'{$pcomp_id}','{$usd_ratio}') product_price_total_raw,
-		    pp.curr_code,
-		    se.party_label,
-		    se.product_quantity,
-		    se.product_img
-		FROM
-		    stock_entries se
-			JOIN
-		    prod_list pl ON pl.product_code=se.product_code
-			LEFT JOIN
-		    price_list pp ON pp.product_code=se.product_code AND pp.label=''
-			LEFT JOIN
-		    stock_tree st ON se.parent_id=branch_id
-		WHERE 
-		    se.product_code='{$product_code}'";
+        $sql = "SELECT
+                  st.label parent_label,
+                  pl.$lang product_name,
+                  pl.*,
+                  ROUND(product_volume,5) product_volume,
+                  ROUND(product_weight,5) product_weight,
+                  product_quantity leftover,
+                  product_img,
+                  product_unit,
+                  GET_SELL_PRICE(se.product_code,'{$pcomp_id}','{$usd_ratio}') price_final,
+                  GET_PRICE(se.product_code,'{$pcomp_id}','{$usd_ratio}') price_label,
+                  pp.curr_code,
+                  se.party_label,
+                  se.product_quantity,
+                  se.product_img
+              FROM
+                  stock_entries se
+                      JOIN
+                  prod_list pl ON pl.product_code=se.product_code
+                      LEFT JOIN
+                  price_list pp ON pp.product_code=se.product_code AND pp.label=''
+                      LEFT JOIN
+                  stock_tree st ON se.parent_id=branch_id
+              WHERE 
+                  pl.product_id='{$product_id}'";
         $product_data = $this->get_row($sql);
         return $product_data;
     }
+    
     public $userPropsGet=[];
     public function userPropsGet(){
         $props=$this->Hub->load_model('User')->userFetch();

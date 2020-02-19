@@ -20,7 +20,10 @@ class Task extends Events {
 	    LIMIT 1";
 	$this->currentTask = $this->get_row($sql);
 	if ($this->currentTask) {
-	    return $this->execute_task();
+            $this->Hub->silence_msg=true;
+                $result=$this->execute_task();
+            $this->Hub->silence_msg=false;
+	    return $result;
 	}
     }
 
@@ -59,7 +62,7 @@ class Task extends Events {
 	    $this->currentTask->event_target = $i+1;
 	    if ($this->currentTask->event_target == $program_length) {
 		$this->currentTask->event_target = 0;
-		return true;
+		return $this->currentTask->event_note;
 	    }
 	    if ($command->async == true) {
 		break;
@@ -84,6 +87,7 @@ class Task extends Events {
             $return = call_user_func_array([$Model, $command->method], $args);
             $this->log("TASK {$this->currentTask->event_name} {$command->model}->{$command->method}(".implode(',',$args)."): RETURNED VALUE:'$return'");
         } catch (Exception $ex) {
+            $return=false;
             $this->log("TASK ERROR {$this->currentTask->event_name} {$command->model}->{$command->method}(".implode(',',$args)."): $ex");
         }
 	return $return;
@@ -123,7 +127,7 @@ class Task extends Events {
     }
 
     public function postpone($interval) {
-	$this->currentTask->event_date=$this->get_value("SELECT DATE_ADD('{$this->currentTask->event_date}',INTERVAL $interval)");
+	$this->currentTask->event_date=$this->get_value("SELECT DATE_ADD(NOW(),INTERVAL $interval)");//'{$this->currentTask->event_date}'
 	$this->currentTask->event_status='pending';
 	$this->log("TASK {$this->currentTask->event_name} postponed $interval");
     }
@@ -138,7 +142,7 @@ class Task extends Events {
 	$sql="
 	    SELECT
 		*,
-		DATE_FORMAT(event_date,'%d.%m.%Y %H:%i:%s') event_date_dmyt,
+		DATE_FORMAT(event_date,'%d.%m.%Y') event_date_dmy,
 		(SELECT nick FROM user_list WHERE user_id=created_by) created_by,
 		(SELECT nick FROM user_list WHERE user_id=modified_by) modified_by
 	    FROM
