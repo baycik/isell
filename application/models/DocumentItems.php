@@ -64,6 +64,7 @@ class DocumentItems extends DocumentCore{
         $suggested=$this->get_list($sql);//for plugin modifications
         return $suggested;
     }
+
     protected function footerGet(){
         $this->entriesTmpCreate();
 	$use_total_as_base=(bool) $this->Hub->pref('use_total_as_base');
@@ -80,6 +81,7 @@ class DocumentItems extends DocumentCore{
 	} else {
 	    
 	}
+
 	return $this->get_row($sql);
     }
     
@@ -105,6 +107,7 @@ class DocumentItems extends DocumentCore{
                     product_quantity*product_weight weight,
                     product_quantity*product_volume volume,
                     pl.product_code,
+                    pl.product_id,
                     $company_lang product_name,
                     (product_quantity+0) product_quantity,
                     CHK_ENTRY(doc_entry_id) AS row_status,
@@ -303,6 +306,7 @@ class DocumentItems extends DocumentCore{
 	$doc_id=$this->doc('doc_id');
 	return $this->get_value("SELECT JSON_EXTRACT(doc_settings,'$key') FROM document_list WHERE doc_id='$doc_id'");	
     }
+    
     public $entryDocumentCommit=['int'];
     public function entryDocumentCommit( $doc_id ){
 	$this->selectDoc($doc_id);
@@ -318,6 +322,7 @@ class DocumentItems extends DocumentCore{
         }
 	return $commit_ok;
     }
+    
     public $entryDocumentUncommit=['int'];
     public function entryDocumentUncommit( $doc_id ){
 	$this->selectDoc($doc_id);
@@ -477,5 +482,5 @@ class DocumentItems extends DocumentCore{
 	$ViewManager=$this->Hub->load_model('ViewManager');
 	$ViewManager->store($dump);
 	$ViewManager->outRedirect($out_type);
-    }
+    } 
 }
