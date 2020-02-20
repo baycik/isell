@@ -258,10 +258,9 @@ class MoedeloSyncBase extends Catalog{
                     remote_deleted=0
                 WHERE
                     sync_destination='$sync_destination'
-                    AND (remote_id='$item->Id' OR local_hash='$remote_hash')";
+                    AND (remote_id='$item->Id' OR local_hash='$remote_hash' AND remote_id IS NULL)";
             $this->query($sql);
-            $rows_matched=(int) explode('Rows matched: ',mysqli_info())[1];
-            if( $rows_matched>0 ){
+            if( mysqli_errno($this->db->conn_id) || (int) explode('Rows matched: ',mysqli_info($this->db->conn_id))[1] ){
                 continue;
             }
             $sql="INSERT INTO
@@ -270,11 +269,16 @@ class MoedeloSyncBase extends Catalog{
                     sync_destination='$sync_destination',
                     remote_id='$item->Id',
                     remote_hash='$remote_hash',
-                    remote_deleted=0";
+                    remote_deleted=0
+                ON DUPLICATE KEY UPDATE
+                    remote_id='$item->Id',
+                    remote_hash='$remote_hash',
+                    remote_deleted=0
+                    ";
             $this->query($sql);
         }
         if( $result->pageIsLast ){//last page
-            $this->query("DELETE FROM plugin_sync_entries WHERE sync_destination='$sync_destination' AND remote_deleted=1");
+            //$this->query("DELETE FROM plugin_sync_entries WHERE sync_destination='$sync_destination' AND remote_deleted=1");
             $is_finished=true;
             $nextPageNo=1;
         }
