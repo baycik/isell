@@ -108,13 +108,11 @@ class MoedeloSyncCompanies extends MoedeloSyncBase{
                 local_id,
                 MD5(CONCAT(Inn,';',Ogrn,';',Okpo,';',Name,';',LegalAddress,';',ActualAddress,';')) local_hash,
                 local_tstamp,
-                0 local_deleted,
-                remote_id
-            FROM 
+                0 local_deleted
+            FROM
             (SELECT
                 company_id local_id,
                 NOW() local_tstamp,
-                pse.remote_id,
 
                 COALESCE(company_tax_id,'') Inn,
                 COALESCE(company_code_registration,'') Ogrn,
@@ -124,15 +122,21 @@ class MoedeloSyncCompanies extends MoedeloSyncBase{
                 COALESCE(company_address,'') ActualAddress
             FROM
                 companies_list cl
-                    LEFT JOIN
-                plugin_sync_entries pse ON cl.company_id=pse.local_id AND pse.sync_destination='{$this->doc_config->sync_destination}'
             WHERE
                 (LENGTH(company_tax_id)=10 OR LENGTH(company_tax_id)=12)
                 AND (NOT COALESCE(company_code,'') OR LENGTH(company_code)=8)
                 AND (NOT COALESCE(company_code_registration,'') OR LENGTH(company_code_registration)>=13)
                 AND company_name IS NOT NULL 
-                AND company_name<>''
-            ) inner_table";
+                AND company_name<>'') inner_table";
+                
+                
+                
+                
+                
+                
+                
+                
+        $this->query("START TRANSACTION");
         if( $is_full ){
             $afterDate='';
             $this->query("UPDATE plugin_sync_entries SET local_deleted=1 WHERE sync_destination='{$this->doc_config->sync_destination}'");
@@ -143,11 +147,21 @@ class MoedeloSyncCompanies extends MoedeloSyncBase{
             INSERT INTO
                 plugin_sync_entries
             (sync_destination,local_id,local_hash,local_tstamp,local_deleted,remote_id)
-            SELECT * FROM ($sql_local_docs) local_sync_list
+                SELECT 
+                    local_sync_list.*,remote_id 
+                FROM 
+                    ($sql_local_docs) local_sync_list
+                        LEFT JOIN
+                    plugin_sync_entries pse ON pse.sync_destination=local_docs.sync_destination AND (pse.local_id=local_docs.local_id OR pse.remote_hash=local_docs.local_hash)
+            
             ON DUPLICATE KEY UPDATE 
                 local_hash=local_sync_list.local_hash,local_tstamp=local_sync_list.local_tstamp,local_deleted=0
             ";
         $this->query("$sql_update_local_docs");
+        if( $is_full ){
+            $this->query("DELETE FROM plugin_sync_entries WHERE sync_destination='{$this->doc_config->sync_destination}' AND local_deleted=1");
+        }
+        $this->query("COMMIT");
         //print_r($this->get_list($sql_local_docs));
         return true;
     }
