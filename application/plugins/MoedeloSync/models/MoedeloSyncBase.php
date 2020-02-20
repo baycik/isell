@@ -211,8 +211,8 @@ class MoedeloSyncBase extends Catalog{
                 IF( local_deleted=1, 'remoteDelete',
                 IF( remote_deleted=1, 'localDelete',
                 IF( COALESCE(local_hash,'')<>COALESCE(remote_hash,''),
-                IF( local_tstamp=remote_tstamp, 'remoteInspect',
-                IF( local_tstamp<remote_tstamp, 'localUpdate', 'remoteUpdate')),
+                    IF( local_tstamp=remote_tstamp, 'remoteInspect',
+                    IF( local_tstamp<remote_tstamp, 'localUpdate', 'remoteUpdate')),
                 'SKIP'))))) sync_action
             FROM
                 plugin_sync_entries doc_pse
@@ -250,17 +250,27 @@ class MoedeloSyncBase extends Catalog{
         }        
         foreach( $result->list as $item ){
             $remote_hash=$this->remoteHashCalculate( $item );
+            $sql="UPDATE
+                    plugin_sync_entries
+                SET
+                    remote_id='$item->Id',
+                    remote_hash='$remote_hash',
+                    remote_deleted=0
+                WHERE
+                    sync_destination='$sync_destination'
+                    AND (remote_id='$item->Id' OR local_hash='$remote_hash')";
+            $this->query($sql);
+            $rows_matched=(int) explode('Rows matched: ',mysqli_info())[1];
+            if( $rows_matched>0 ){
+                continue;
+            }
             $sql="INSERT INTO
                     plugin_sync_entries
                 SET
                     sync_destination='$sync_destination',
                     remote_id='$item->Id',
                     remote_hash='$remote_hash',
-                    remote_deleted=0
-                ON DUPLICATE KEY UPDATE
-                    remote_hash='$remote_hash',
-                    remote_deleted=0
-                ";
+                    remote_deleted=0";
             $this->query($sql);
         }
         if( $result->pageIsLast ){//last page
