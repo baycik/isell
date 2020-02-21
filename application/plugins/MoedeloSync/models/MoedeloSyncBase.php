@@ -250,32 +250,40 @@ class MoedeloSyncBase extends Catalog{
         }        
         foreach( $result->list as $item ){
             $remote_hash=$this->remoteHashCalculate( $item );
-            $sql="UPDATE
+            $find_corresponding_entry="
+                SELECT
+                    entry_id
+                FROM
+                    plugin_sync_entries
+                WHERE
+                    sync_destination='$sync_destination'
+                    AND (remote_id='$item->Id' OR local_hash='$remote_hash')
+                ORDER BY local_id IS NULL
+                LIMIT 1
+                ";
+            $corresponding_entry_id=$this->get_value($find_corresponding_entry);
+            
+            if( $corresponding_entry_id ){
+                $update_corresponding_sql="UPDATE
                     plugin_sync_entries
                 SET
                     remote_id='$item->Id',
                     remote_hash='$remote_hash',
                     remote_deleted=0
                 WHERE
-                    sync_destination='$sync_destination'
-                    AND (remote_id='$item->Id' OR local_hash='$remote_hash' AND remote_id IS NULL)";
-            $this->query($sql);
-            if( mysqli_errno($this->db->conn_id) || (int) explode('Rows matched: ',mysqli_info($this->db->conn_id))[1] ){
+                    entry_id=$corresponding_entry_id";
+                $this->query($update_corresponding_sql);
                 continue;
             }
-            $sql="INSERT INTO
+            
+            $insert_absent_sql="INSERT INTO
                     plugin_sync_entries
                 SET
                     sync_destination='$sync_destination',
                     remote_id='$item->Id',
                     remote_hash='$remote_hash',
-                    remote_deleted=0
-                ON DUPLICATE KEY UPDATE
-                    remote_id='$item->Id',
-                    remote_hash='$remote_hash',
-                    remote_deleted=0
-                    ";
-            $this->query($sql);
+                    remote_deleted=0";
+            $this->query($insert_absent_sql);
         }
         if( $result->pageIsLast ){//last page
             //$this->query("DELETE FROM plugin_sync_entries WHERE sync_destination='$sync_destination' AND remote_deleted=1");
