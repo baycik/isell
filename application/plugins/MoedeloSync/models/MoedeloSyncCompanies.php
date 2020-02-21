@@ -129,13 +129,6 @@ class MoedeloSyncCompanies extends MoedeloSyncBase{
                 AND company_name IS NOT NULL 
                 AND company_name<>'') inner_table";
                 
-                
-                
-                
-                
-                
-                
-                
         $this->query("START TRANSACTION");
         if( $is_full ){
             $afterDate='';
@@ -169,36 +162,37 @@ class MoedeloSyncCompanies extends MoedeloSyncBase{
      * Inserts new record on local
      */
     public function localInsert( $local_id, $remote_id, $entry_id ){
-        $remoteCompany=$this->remoteGet($remote_id);
-        $sql="SELECT 
-                company_id local_id,
-                NOW() local_tstamp,
-
-                COALESCE(company_tax_id,'') Inn,
-                COALESCE(company_code_registration,'') Ogrn,
-                COALESCE(company_code,'') Okpo,
-                COALESCE(company_name,'') Name,
-                COALESCE(company_jaddress,'') LegalAddress,
-                COALESCE(company_address,'') ActualAddress
-            FROM
-                companies_list
-            WHERE
-                company_tax_id='$remoteCompany->Inn'
-            ";
-        $localCompany=$this->get_row($sql);
-        $local_hash=$this->localHashCalculate($localCompany);
-        $this->query("UPDATE 
-                        plugin_sync_entries 
-                    SET 
-                        local_id='$localCompany->local_id',
-                        local_tstamp='$localCompany->local_tstamp',
-                        local_hash='$local_hash',
-                        local_deleted=0,
-                            
-                        remote_tstamp=NOW()
-                    WHERE
-                        entry_id='$entry_id'
-                ");
+        $this->remoteDelete($local_id, $remote_id, $entry_id);
+//        $remoteCompany=$this->remoteGet($remote_id);
+//        $sql="SELECT 
+//                company_id local_id,
+//                NOW() local_tstamp,
+//
+//                COALESCE(company_tax_id,'') Inn,
+//                COALESCE(company_code_registration,'') Ogrn,
+//                COALESCE(company_code,'') Okpo,
+//                COALESCE(company_name,'') Name,
+//                COALESCE(company_jaddress,'') LegalAddress,
+//                COALESCE(company_address,'') ActualAddress
+//            FROM
+//                companies_list
+//            WHERE
+//                company_tax_id='$remoteCompany->Inn'
+//            ";
+//        $localCompany=$this->get_row($sql);
+//        $local_hash=$this->localHashCalculate($localCompany);
+//        $this->query("UPDATE 
+//                        plugin_sync_entries 
+//                    SET 
+//                        local_id='$localCompany->local_id',
+//                        local_tstamp='$localCompany->local_tstamp',
+//                        local_hash='$local_hash',
+//                        local_deleted=0,
+//                            
+//                        remote_tstamp=NOW()
+//                    WHERE
+//                        entry_id='$entry_id'
+//                ");
     }
     
     /**
