@@ -190,7 +190,9 @@ class Stock extends Catalog {
         $this->query("UPDATE stock_entries JOIN prod_list USING(product_code) JOIN price_list USING(product_code) SET $field='$value' WHERE product_code='$product_code'");
         return $this->db->affected_rows();
     }
-
+    private function stripWhite( $sentence ){
+        return trim(preg_replace('/\s+/', ' ', $sentence));
+    }
     public $productSave = [];
 
     public function productSave() {
@@ -207,11 +209,11 @@ class Stock extends Catalog {
         }
         $product_code = $product_code_new;
         $prod_list = [
-            'product_code' => $product_code,
-            'ru' => $this->request('ru'),
-            'ua' => $this->request('ua'),
-            'en' => $this->request('en'),
-            'product_unit' => $this->request('product_unit'),
+            'product_code' => $this->stripWhite($product_code),
+            'ru' => $this->stripWhite($this->request('ru')),
+            'ua' => $this->stripWhite($this->request('ua')),
+            'en' => $this->stripWhite($this->request('en')),
+            'product_unit' => $this->stripWhite($this->request('product_unit')),
             'product_spack' => $this->request('product_spack', 'int'),
             'product_bpack' => $this->request('product_bpack', 'int'),
             'product_weight' => $this->request('product_weight', 'double'),
@@ -298,8 +300,22 @@ class Stock extends Catalog {
         }
         $target_list = implode(',', $target);
         $source_list = implode(',', $source);
-        $set_list = implode(',', $set);
-        $this->query("INSERT INTO $table ($target_list) SELECT $source_list FROM imported_data WHERE label LIKE '%$label%' ON DUPLICATE KEY UPDATE $set_list");
+        
+        
+        
+        
+        $import_list=$this->get_list("SELECT $source_list FROM imported_data WHERE label LIKE '%$label%'");
+        foreach($import_list as $product){
+            $set=[];
+            foreach($target as $i=>$field){
+                $set[]="$field='".$this->stripWhite($product->{$source[$i]})."'";
+            }
+            $set_list = implode(',', $set);
+            $this->query("INSERT INTO $table SET $set_list ON DUPLICATE KEY UPDATE $set_list");
+        }
+        
+        //$set_list = implode(',', $set);
+        //$this->query("INSERT INTO $table ($target_list) SELECT $source_list FROM imported_data WHERE label LIKE '%$label%' ON DUPLICATE KEY UPDATE $set_list");
         //print("INSERT INTO $table ($target_list) SELECT $source_list FROM imported_data WHERE label='$label' ON DUPLICATE KEY UPDATE $set_list");
         return $this->db->affected_rows();
     }
