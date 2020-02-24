@@ -46,8 +46,8 @@ class DocumentItems extends DocumentCore{
 	$sql="
             SELECT
                 *,
-		GET_SELL_PRICE(product_code,{$pcomp_id},{$usd_ratio}) product_price_total,
-                GET_PRICE(product_code,{$pcomp_id},{$usd_ratio}) product_price_total_raw
+		ROUND(GET_SELL_PRICE(product_code,{$pcomp_id},{$usd_ratio}),2) product_price_total,
+                ROUND(GET_PRICE(product_code,{$pcomp_id},{$usd_ratio}),2) product_price_total_raw
             FROM (
                 SELECT
                     product_id,
@@ -57,7 +57,11 @@ class DocumentItems extends DocumentCore{
                     product_quantity leftover,
                     product_img,
                     product_unit,
-                    fetch_count-DATEDIFF(NOW(),fetch_stamp) popularity
+                    CONCAT( 
+                        product_quantity<>0,
+                        prl.product_code IS NOT NULL,
+                        LPAD(fetch_count-DATEDIFF(NOW(),fetch_stamp),6,'0')
+                    ) popularity
                 FROM
                     stock_entries se
                         JOIN
@@ -66,8 +70,6 @@ class DocumentItems extends DocumentCore{
                     price_list prl ON se.product_code=prl.product_code AND label='PROMO'
                 WHERE $where
                 ORDER BY 
-                    product_quantity>0 DESC,
-                    prl.product_code DESC,
                     popularity DESC,
                     pl.product_code
                 LIMIT $limit OFFSET $offset) inner_table";
