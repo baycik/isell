@@ -44,24 +44,17 @@ class MoedeloSync extends Catalog {
 
     //'MoedeloSyncStocks/replicate/1 years/','MoedeloSyncStocks/checkout/1 years/',
     private $joblist=[
-            'MoedeloSyncProduct/localCheckout/9 minutes/9 seconds',
-            'MoedeloSyncProduct/remoteCheckout/1 days/1 seconds',
-            'MoedeloSyncProduct/replicate/1 minutes/',
+            'MoedeloSyncProduct/localCheckout/9 minutes/9 minutes',
+            'MoedeloSyncProduct/remoteCheckout/1 days/1 days',
+            'MoedeloSyncProduct/replicate/10 minutes/',
         
-        /*    'MoedeloSyncCompanies/localCheckout/10 minutes/10 minutes',
+            'MoedeloSyncCompanies/localCheckout/9 minutes/9 minutes',
             'MoedeloSyncCompanies/remoteCheckout/1 days/1 days',
-            'MoedeloSyncCompanies/replicate/11 minutes/',
+            'MoedeloSyncCompanies/replicate/10 minutes/',
             
-            /*'MoedeloSyncBillSell/localCheckout/10 minutes/60 minutes',
-            'MoedeloSyncBillSell/remoteCheckout/10 minutes/1 days',
-            'MoedeloSyncBillSell/replicate/10 minutes/',
-            
-           
-            'wayBillCheckout',
-            'wayBillReplicate',
-            'invoiceCheckout',
-            'invoiceReplicate',
-            'updReplicate'    */
+            'MoedeloSyncBillSell/localCheckout/9 minutes/60 minutes',
+            'MoedeloSyncBillSell/remoteCheckout/9 minutes/1 days',
+            'MoedeloSyncBillSell/replicate/10 minutes/'
         ];
     
     public function tick( $iterations_left ){
