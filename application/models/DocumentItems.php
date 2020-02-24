@@ -56,7 +56,8 @@ class DocumentItems extends DocumentCore{
                     product_spack,
                     product_quantity leftover,
                     product_img,
-                    product_unit
+                    product_unit,
+                    fetch_count-DATEDIFF(NOW(),fetch_stamp) popularity
                 FROM
                     stock_entries se
                         JOIN
@@ -67,7 +68,7 @@ class DocumentItems extends DocumentCore{
                 ORDER BY 
                     product_quantity>0 DESC,
                     prl.product_code DESC,
-                    fetch_count-DATEDIFF(NOW(),fetch_stamp) DESC,
+                    popularity DESC,
                     pl.product_code
                 LIMIT $limit OFFSET $offset) inner_table";
         $suggested=$this->get_list($sql);//for plugin modifications

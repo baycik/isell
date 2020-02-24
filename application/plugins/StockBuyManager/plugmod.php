@@ -227,19 +227,7 @@ EOT;
 
 
 
-$filename[]=<<<EOT
-models/DocumentItems.php
-EOT;
-$search[]=<<<'EOT'
- GET_PRICE(product_code,{$pcomp_id},{$usd_ratio}) product_price_total_raw
-EOT;
-$replace[]=<<<EOT
-EOT;
-$before[]=<<<EOT
-EOT;
-$after[]=<<<EOT
-,fetch_count-DATEDIFF(NOW(),fetch_stamp) AS popularity 
-EOT;
+
 
 
 $filename[]=<<<EOT
