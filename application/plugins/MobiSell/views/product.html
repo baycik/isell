@@ -24,7 +24,9 @@
                     product_object.quantity_in_cart = App.stock.cart.findInCart(product_object.product_id).product_quantity;
                 }
                 App.renderTpl('product_info', product_object);
-                    window.scrollTo(0, 0);
+                setTimeout(function(){
+                    window.scrollTo(0, 0); 
+                },100);
             });
         }
     };
