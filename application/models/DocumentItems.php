@@ -60,7 +60,7 @@ class DocumentItems extends DocumentCore{
                     CONCAT( 
                         product_quantity<>0,
                         prl.product_code IS NOT NULL,
-                        LPAD(fetch_count-DATEDIFF(NOW(),fetch_stamp),6,'0')
+                        LPAD(fetch_count-DATEDIFF(NOW(),COALESCE(se.fetch_stamp,se.modified_at)),6,'0')
                     ) popularity
                 FROM
                     stock_entries se

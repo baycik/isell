@@ -919,7 +919,11 @@ class Stock extends Catalog {
             se.product_img,
             se.fetch_count,
             se.fetch_stamp,
-            fetch_count-DATEDIFF(NOW(),COALESCE(se.fetch_stamp,se.modified_at)) popularity,
+            CONCAT( 
+                product_quantity<>0,
+                prl_promo.product_code IS NOT NULL,
+                LPAD(fetch_count-DATEDIFF(NOW(),COALESCE(se.fetch_stamp,se.modified_at)),6,'0')
+            ) popularity,
             se.parent_id,
             prl_basic.sell*IF(prl_basic.curr_code='USD',$usd_ratio,1) price_fixed,
             prl_basic.sell*IF(prl_basic.curr_code='USD',$usd_ratio,1)*IF(discount,discount,1) price_basic,
