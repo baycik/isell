@@ -143,8 +143,18 @@ class MoedeloSyncProduct extends MoedeloSyncBase{
                 prod_list pl ON se.product_code=pl.product_code
                     JOIN
                 price_list pre ON se.product_code=pre.product_code AND label=''
+                    JOIN
+                document_entries de ON se.product_code=de.product_code
+                    JOIN
+                document_list dl USING(doc_id)
                     LEFT JOIN
                 plugin_sync_entries pse ON pl.product_id=pse.local_id AND pse.sync_destination='{$this->doc_config->sync_destination}'
+            WHERE
+                is_commited 
+                AND NOT notcount 
+                AND dl.cstamp>'$this->sync_since'
+                AND active_company_id='$this->acomp_id'
+            GROUP BY product_id
             ) inner_table";
         if( $is_full ){
             $afterDate='';
@@ -168,11 +178,7 @@ class MoedeloSyncProduct extends MoedeloSyncBase{
      * Inserts new record on local
      */
     public function localInsert( $local_id, $remote_id, $entry_id ){
-        $ok=$this->remoteDelete( $local_id, $remote_id, $entry_id );
-//        if( !$ok ){
-//            $entity=$this->remoteGet($remote_id);
-//            $product_id=$this->get_value("SELECT product_id FROM prod_list WHERE product_code='$entity->Article'");
-//        }
+        $this->remoteDelete( $local_id, $remote_id, $entry_id );
     }
     
     /**
