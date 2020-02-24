@@ -386,7 +386,7 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
      * Deletes existing record on local
      */
     public function localDelete( $local_id, $remote_id, $entry_id ){
-        
+        $this->query("DELETE FROM plugin_sync_entries WHERE entry_id='$entry_id'");
     }
     
     

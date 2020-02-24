@@ -82,10 +82,7 @@ class MoedeloSyncCompanies extends MoedeloSyncBase{
      * Gets remote document and fetches its modify date. This function resolves locks when hashes different but tstamps same.
      */
     public function remoteInspect( $local_id, $remote_id, $entry_id ){
-        echo 'inspect';
-        die($remote_id);
-        
-        //$this->remoteUpdate( $local_id, $remote_id, $entry_id );
+        $this->remoteUpdate( $local_id, $remote_id, $entry_id );
     }
     
     
@@ -124,11 +121,10 @@ class MoedeloSyncCompanies extends MoedeloSyncBase{
                 companies_list cl
             WHERE
                 (LENGTH(company_tax_id)=10 OR LENGTH(company_tax_id)=12)
-                AND (NOT COALESCE(company_code,'') OR LENGTH(company_code)=8)
-                AND (NOT COALESCE(company_code_registration,'') OR LENGTH(company_code_registration)>=13)
-                AND company_name IS NOT NULL 
-                AND company_name<>'') inner_table";
-                
+                AND (COALESCE(company_code,'')='' OR LENGTH(company_code)=8)
+                AND (COALESCE(company_code_registration,'')='' OR LENGTH(company_code_registration)=13 OR LENGTH(company_code_registration)=15)
+                AND COALESCE(company_name,'')<>''
+            ) inner_table";
         $this->query("START TRANSACTION");
         if( $is_full ){
             $afterDate='';
@@ -145,17 +141,13 @@ class MoedeloSyncCompanies extends MoedeloSyncBase{
                 FROM 
                     ($sql_local_docs) local_sync_list
                         LEFT JOIN
-                    plugin_sync_entries pse ON pse.sync_destination=local_sync_list.sync_destination AND (pse.local_id=local_sync_list.local_id OR pse.remote_hash=local_sync_list.local_hash)
+                    plugin_sync_entries pse ON pse.sync_destination=local_sync_list.sync_destination AND pse.local_id=local_sync_list.local_id
             
             ON DUPLICATE KEY UPDATE 
                 local_hash=local_sync_list.local_hash,local_tstamp=local_sync_list.local_tstamp,local_deleted=0
             ";
         $this->query("$sql_update_local_docs");
-        if( $is_full ){
-            //$this->query("DELETE FROM plugin_sync_entries WHERE sync_destination='{$this->doc_config->sync_destination}' AND local_deleted=1");
-        }
         $this->query("COMMIT");
-        //print_r($this->get_list($sql_local_docs));
         return true;
     }
     /**
@@ -163,36 +155,6 @@ class MoedeloSyncCompanies extends MoedeloSyncBase{
      */
     public function localInsert( $local_id, $remote_id, $entry_id ){
         $this->remoteDelete($local_id, $remote_id, $entry_id);
-//        $remoteCompany=$this->remoteGet($remote_id);
-//        $sql="SELECT 
-//                company_id local_id,
-//                NOW() local_tstamp,
-//
-//                COALESCE(company_tax_id,'') Inn,
-//                COALESCE(company_code_registration,'') Ogrn,
-//                COALESCE(company_code,'') Okpo,
-//                COALESCE(company_name,'') Name,
-//                COALESCE(company_jaddress,'') LegalAddress,
-//                COALESCE(company_address,'') ActualAddress
-//            FROM
-//                companies_list
-//            WHERE
-//                company_tax_id='$remoteCompany->Inn'
-//            ";
-//        $localCompany=$this->get_row($sql);
-//        $local_hash=$this->localHashCalculate($localCompany);
-//        $this->query("UPDATE 
-//                        plugin_sync_entries 
-//                    SET 
-//                        local_id='$localCompany->local_id',
-//                        local_tstamp='$localCompany->local_tstamp',
-//                        local_hash='$local_hash',
-//                        local_deleted=0,
-//                            
-//                        remote_tstamp=NOW()
-//                    WHERE
-//                        entry_id='$entry_id'
-//                ");
     }
     
     /**
@@ -228,8 +190,10 @@ class MoedeloSyncCompanies extends MoedeloSyncBase{
                 
                 CONCAT(company_name,company_id) ErrorTitle,
                 
-                1 `Type`,
-                IF(company_tax_id,IF(LENGTH(company_tax_id)=10,1,2),3) `Form`
+                '1' `Type`,
+                IF(LENGTH(company_tax_id)=10,1,
+                IF(LENGTH(company_tax_id)=12,'2'
+                ,'3')) `Form`
             FROM
                 companies_list cl
             WHERE company_id='$local_id'

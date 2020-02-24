@@ -79,7 +79,13 @@ class MoedeloSyncProduct extends MoedeloSyncBase{
     public function remoteHashCalculate( $entity ){
         $entity->SalePrice= number_format($entity->SalePrice, 5,'.','');
         $check="{$entity->Article};{$entity->Name};{$entity->UnitOfMeasurement};{$entity->SalePrice};";
-        //echo "remote check-$check";
+        
+        if( $entity->Id==16685380 ){
+            echo "remote check-$check >>>>>".md5($check);
+        }
+        
+        
+        //
         return md5($check);
     }
     /**
@@ -162,7 +168,11 @@ class MoedeloSyncProduct extends MoedeloSyncBase{
      * Inserts new record on local
      */
     public function localInsert( $local_id, $remote_id, $entry_id ){
-        $this->remoteDelete( $local_id, $remote_id, $entry_id );
+        $ok=$this->remoteDelete( $local_id, $remote_id, $entry_id );
+//        if( !$ok ){
+//            $entity=$this->remoteGet($remote_id);
+//            $product_id=$this->get_value("SELECT product_id FROM prod_list WHERE product_code='$entity->Article'");
+//        }
     }
     
     /**
@@ -203,7 +213,11 @@ class MoedeloSyncProduct extends MoedeloSyncBase{
                 ru ErrorTitle,
                 pl.product_id local_id,
                 pse.remote_id,
-                GREATEST(se.modified_at,pl.modified_at,pre.modified_at) local_tstamp
+                GREATEST(se.modified_at,pl.modified_at,pre.modified_at) local_tstamp,
+                
+                product_code,
+                ru,
+                product_unit
             FROM
                 stock_entries se
                     JOIN
@@ -215,6 +229,17 @@ class MoedeloSyncProduct extends MoedeloSyncBase{
             WHERE
                 product_id='$local_id'
            ";
-        return $this->get_row($sql_local);
+        $product=$this->get_row($sql_local);
+        $product->Name=$this->stripWhite($product->Name);
+        $product->Article=$this->stripWhite($product->Article);
+        $product->UnitOfMeasurement=$this->stripWhite($product->UnitOfMeasurement);
+        if( $product->Name!=$product->ru || $product->Article!=$product->product_code || $product->UnitOfMeasurement!=$product->product_unit ){
+            $this->query("UPDATE prod_list SET ru='$product->Name', product_code='$product->Article', product_unit='$product->UnitOfMeasurement' WHERE product_id='$product->local_id'");
+        }
+        return $product;
+    }
+    
+    private function stripWhite( $sentence ){
+        return trim(preg_replace('/\s+/', ' ', $sentence));
     }
 }

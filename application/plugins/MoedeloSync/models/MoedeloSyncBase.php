@@ -191,16 +191,51 @@ class MoedeloSyncBase extends Catalog{
     
     
     
-    
-    
-    
-    
-    
-    
+    /**
+     * Links remote and local entities on same sync_destination and hash
+     */
+    private function linkByHash(){
+        $create_link_list="
+            CREATE TEMPORARY TABLE tmp_linked_enries AS 
+            (SELECT 
+                 pse_local.sync_destination,
+                 pse_local.entry_id local_entry_id,
+                 pse_local.local_id,
+                 pse_local.local_hash,
+                 pse_local.local_tstamp,
+                 pse_remote.entry_id remote_entry_id,
+                 pse_remote.remote_id,
+                 pse_remote.remote_hash,
+                 pse_remote.remote_tstamp
+             FROM 
+                 plugin_sync_entries pse_remote
+                     JOIN
+                 plugin_sync_entries pse_local ON pse_remote.remote_hash=pse_local.local_hash AND pse_local.sync_destination=pse_remote.sync_destination
+             WHERE
+                 (pse_remote.local_id IS NULL OR pse_local.local_id IS NULL)
+                 AND pse_local.sync_destination='{$this->doc_config->sync_destination}'
+             GROUP BY local_entry_id);";
+        $clear_unlinked_entries="
+            DELETE pse FROM 
+                plugin_sync_entries pse
+                    JOIN
+                tmp_linked_enries ON (entry_id=local_entry_id OR entry_id=remote_entry_id)";
+        $fill_linked_entries="
+            INSERT INTO plugin_sync_entries 
+                (sync_destination,local_id,local_hash,local_tstamp,remote_id,remote_hash,remote_tstamp)
+            SELECT 
+                sync_destination,local_id,local_hash,local_tstamp,remote_id,remote_hash,remote_tstamp
+            FROM
+                tmp_linked_enries;";
+        $this->query($create_link_list);
+        $this->query($clear_unlinked_entries);
+        $this->query($fill_linked_entries);
+    }
     /**
      * Executes needed sync operations
      */
     public function replicate(){
+        $this->linkByHash();
         $sql_action_list="
             SELECT
                 entry_id,
@@ -220,9 +255,9 @@ class MoedeloSyncBase extends Catalog{
                 sync_destination='{$this->doc_config->sync_destination}'
             ";
         $action_list=$this->get_list($sql_action_list);
-        //print_r($action_list);
+        print_r($action_list);
         foreach( $action_list as $action ){
-            if( method_exists( $this, $action->sync_action) ){
+            if( $action->sync_action!='SKIP' && method_exists( $this, $action->sync_action) ){
                 $this->{$action->sync_action}($action->local_id,$action->remote_id,$action->entry_id);
             }
         }
@@ -247,46 +282,23 @@ class MoedeloSyncBase extends Catalog{
         $this->query("START TRANSACTION");
         if( $is_full && $result->pageNo==1 ){
             $this->query("UPDATE plugin_sync_entries SET remote_deleted=1 WHERE sync_destination='$sync_destination'");
-        }        
+        }
         foreach( $result->list as $item ){
             $remote_hash=$this->remoteHashCalculate( $item );
-            $find_corresponding_entry="
-                SELECT
-                    entry_id
-                FROM
-                    plugin_sync_entries
-                WHERE
-                    sync_destination='$sync_destination'
-                    AND (remote_id='$item->Id' OR local_hash='$remote_hash')
-                ORDER BY local_id IS NULL
-                LIMIT 1
-                ";
-            $corresponding_entry_id=$this->get_value($find_corresponding_entry);
-            
-            if( $corresponding_entry_id ){
-                $update_corresponding_sql="UPDATE
-                    plugin_sync_entries
-                SET
-                    remote_id='$item->Id',
-                    remote_hash='$remote_hash',
-                    remote_deleted=0
-                WHERE
-                    entry_id=$corresponding_entry_id";
-                $this->query($update_corresponding_sql);
-                continue;
-            }
-            
-            $insert_absent_sql="INSERT INTO
+            $sql="INSERT INTO
                     plugin_sync_entries
                 SET
                     sync_destination='$sync_destination',
                     remote_id='$item->Id',
                     remote_hash='$remote_hash',
-                    remote_deleted=0";
-            $this->query($insert_absent_sql);
+                    remote_deleted=0
+                ON DUPLICATE KEY UPDATE
+                    remote_hash='$remote_hash',
+                    remote_deleted=0
+                ";
+            $this->query($sql);
         }
         if( $result->pageIsLast ){//last page
-            //$this->query("DELETE FROM plugin_sync_entries WHERE sync_destination='$sync_destination' AND remote_deleted=1");
             $is_finished=true;
             $nextPageNo=1;
         }
@@ -340,7 +352,6 @@ class MoedeloSyncBase extends Catalog{
         $entity=$this->localGet( $local_id );
         $response = $this->apiExecute($this->doc_config->remote_function, 'POST', $entity);
         if( $response->httpcode==201 ){
-            print_r($response);
             $remote_hash=$this->remoteHashCalculate($response->response);
             $this->query("UPDATE 
                         plugin_sync_entries
@@ -360,6 +371,14 @@ class MoedeloSyncBase extends Catalog{
     public function remoteUpdate( $local_id, $remote_id, $entry_id ){
         $entity=$this->localGet( $local_id );
         $response = $this->apiExecute($this->doc_config->remote_function, 'PUT', $entity, $remote_id);
+        
+        
+        
+        
+        print_r($entity);
+        
+        
+        
         if( $response->httpcode==200 ){
             $remote_hash=$this->remoteHashCalculate($entity);
             $this->query("UPDATE 
@@ -387,6 +406,8 @@ class MoedeloSyncBase extends Catalog{
         } else {
             $error=$this->getValidationErrors($response);
             $this->log("{$this->doc_config->sync_destination} DELETE is unsuccessfull (HTTP CODE:$response->httpcode '$error')");
+            $entity=$this->remoteGet( $remote_id );
+            print_r($entity);
             return false;
         }
         return true;

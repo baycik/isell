@@ -44,13 +44,13 @@ class MoedeloSync extends Catalog {
 
     //'MoedeloSyncStocks/replicate/1 years/','MoedeloSyncStocks/checkout/1 years/',
     private $joblist=[
-            /*'MoedeloSyncProduct/localCheckout/10 minutes/1 days',
-            'MoedeloSyncProduct/remoteCheckout/1 days/1 days',
-            'MoedeloSyncProduct/replicate/10 minutes/',*/
+            'MoedeloSyncProduct/localCheckout/9 minutes/9 seconds',
+            'MoedeloSyncProduct/remoteCheckout/1 days/1 seconds',
+            'MoedeloSyncProduct/replicate/1 minutes/',
         
-            'MoedeloSyncCompanies/localCheckout/10 minutes/1 seconds',
-            'MoedeloSyncCompanies/remoteCheckout/10 minutes/1 seconds',
-            'MoedeloSyncCompanies/replicate/1 seconds/',
+            'MoedeloSyncCompanies/localCheckout/10 minutes/10 minutes',
+            'MoedeloSyncCompanies/remoteCheckout/1 days/1 days',
+            'MoedeloSyncCompanies/replicate/11 minutes/',
             
             /*'MoedeloSyncBillSell/localCheckout/10 minutes/60 minutes',
             'MoedeloSyncBillSell/remoteCheckout/10 minutes/1 days',
@@ -96,7 +96,7 @@ class MoedeloSync extends Catalog {
             $this->tick( $iterations_left-1 );
             return true;
         }
-        return $this->jobExecute($currentJob,$jobParts,$is_full);
+        $this->jobExecute($currentJob,$jobParts,$is_full);
     }
     
     private function jobExecute($currentJob,$jobParts,$is_full){
