@@ -308,7 +308,15 @@ class Stock extends Catalog {
         foreach($import_list as $product){
             $set=[];
             foreach($target as $i=>$field){
-                $set[]="$field='".$this->stripWhite($product->{$source[$i]})."'";
+                if( $field=='parent_id' ){
+                    $value=$source[$i];
+                } else {
+                    $value=$this->stripWhite($product->{$source[$i]});
+                }
+                if( $field=='product_code' && !$value ){
+                    continue 2;
+                }
+                $set[]="$field='$value'";
             }
             $set_list = implode(',', $set);
             $this->query("INSERT INTO $table SET $set_list ON DUPLICATE KEY UPDATE $set_list");
