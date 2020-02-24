@@ -221,9 +221,9 @@ class MoedeloSyncProduct extends MoedeloSyncBase{
                 pse.remote_id,
                 GREATEST(se.modified_at,pl.modified_at,pre.modified_at) local_tstamp,
                 
-                product_code,
-                ru,
-                product_unit
+                pl.product_code,
+                pl.ru,
+                pl.product_unit
             FROM
                 stock_entries se
                     JOIN
