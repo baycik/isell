@@ -79,13 +79,6 @@ class MoedeloSyncProduct extends MoedeloSyncBase{
     public function remoteHashCalculate( $entity ){
         $entity->SalePrice= number_format($entity->SalePrice, 5,'.','');
         $check="{$entity->Article};{$entity->Name};{$entity->UnitOfMeasurement};{$entity->SalePrice};";
-        
-        if( $entity->Id==16685380 ){
-            echo "remote check-$check >>>>>".md5($check);
-        }
-        
-        
-        //
         return md5($check);
     }
     /**
