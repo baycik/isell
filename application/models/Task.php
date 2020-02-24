@@ -100,10 +100,20 @@ class Task extends Events {
 	    global $_this;
 	    $message = "Type: " . get_class( $e ) . "; Message: {$e->getMessage()}; File: {$e->getFile()}; Line: {$e->getLine()};";
 	    $_this->log($message);
-            $_this->postpone("'0 3:0' DAY_MINUTE");
+            $severity =
+                1 * E_ERROR |
+                1 * E_PARSE |
+                1 * E_CORE_ERROR |
+                1 * E_COMPILE_ERROR |
+                1 * E_USER_ERROR |
+                1 * E_STRICT |
+                1 * E_RECOVERABLE_ERROR; 
+            if( ($e->getSeverity() & $severity) != 0 ){
+                $_this->postpone("'0 3:0' DAY_MINUTE");
+            }
 	}
-	function log_error( $num, $str, $file, $line ){
-	    log_exception( new ErrorException( $str, 0, $num, $file, $line ) );
+	function log_error( $severity, $str, $file, $line ){
+	    log_exception( new ErrorException( $str, 0, $severity, $file, $line ) );
 	}
 	function check_for_fatal(){
 	    global $_this;
