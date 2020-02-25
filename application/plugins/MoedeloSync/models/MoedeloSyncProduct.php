@@ -143,9 +143,7 @@ class MoedeloSyncProduct extends MoedeloSyncBase{
                     LEFT JOIN
                 plugin_sync_entries pse ON pl.product_id=pse.local_id AND pse.sync_destination='{$this->doc_config->sync_destination}'
             WHERE
-                is_commited 
-                AND NOT notcount 
-                AND dl.cstamp>'$this->sync_since'
+                dl.cstamp>'$this->sync_since'
                 AND active_company_id='$this->acomp_id'
             GROUP BY product_id
             ) inner_table";
