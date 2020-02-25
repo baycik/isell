@@ -54,7 +54,11 @@ class MoedeloSync extends Catalog {
             
             'MoedeloSyncBillSell/localCheckout/9 minutes/60 minutes',
             'MoedeloSyncBillSell/remoteCheckout/9 minutes/1 days',
-            'MoedeloSyncBillSell/replicate/10 minutes/'
+            'MoedeloSyncBillSell/replicate/10 minutes/',
+            
+            'MoedeloSyncWayBillSell/localCheckout/9 seconds/60 seconds',
+            //'MoedeloSyncWayBillSell/remoteCheckout/9 minutes/1 days',
+            'MoedeloSyncWayBillSell/replicate/10 seconds/'
         ];
     
     public function tick( $iterations_left ){

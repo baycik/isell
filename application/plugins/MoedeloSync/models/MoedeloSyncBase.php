@@ -375,7 +375,7 @@ class MoedeloSyncBase extends Catalog{
         
         
         
-        print_r($entity);
+        //print_r($entity);
         
         
         
@@ -422,6 +422,65 @@ class MoedeloSyncBase extends Catalog{
             return false;
         }
     }
+    
+    
+    
+    
+    
+    protected function localCheckout( bool $is_full=false ){
+        $local_sync_list_sql=$this->localCheckoutGetList( $is_full, '' );
+        $this->query("START TRANSACTION");
+        if( $is_full ){
+            $afterDate='';
+            $this->query("UPDATE plugin_sync_entries SET local_deleted=1 WHERE sync_destination='{$this->doc_config->sync_destination}'");
+        } else {
+            $afterDate='';
+        }
+        $sql_update_local_docs="
+            INSERT INTO
+                plugin_sync_entries
+            (sync_destination,local_id,local_hash,local_tstamp,local_deleted,remote_id)
+                SELECT 
+                    local_sync_list.sync_destination,
+                    local_sync_list.local_id,
+                    local_sync_list.local_hash,
+                    local_sync_list.local_tstamp,
+                    0 local_deleted,
+                    remote_id 
+                FROM 
+                    ($local_sync_list_sql) local_sync_list
+                        LEFT JOIN
+                    plugin_sync_entries pse ON pse.sync_destination=local_sync_list.sync_destination AND pse.local_id=local_sync_list.local_id
+            
+            ON DUPLICATE KEY UPDATE 
+                local_hash=local_sync_list.local_hash,local_tstamp=local_sync_list.local_tstamp,local_deleted=0
+            ";
+        $this->query("$sql_update_local_docs");
+        $this->query("COMMIT");
+        return true;
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     protected function checkUserPermission( $right ){
         $user_data=$this->Hub->svar('user');
         if( isset($user_data->user_permissions) && strpos($user_data->user_permissions, $right)!==false ){

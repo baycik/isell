@@ -92,14 +92,21 @@ class MoedeloSyncCompanies extends MoedeloSyncBase{
     ///////////////////////////////////////////////////////////////
     // LOCAL SECTION
     ///////////////////////////////////////////////////////////////
-    
     /**
      * 
      * @param bool $is_full
      * Checks for updates on local
      */
     public function localCheckout( bool $is_full=false ){
-        $sql_local_docs="
+        return parent::localCheckout($is_full);
+    }
+    /**
+     * 
+     * @param bool $is_full
+     * Create local doc list to sync
+     */    
+    protected function localCheckoutGetList( $is_full ){
+        $local_sync_list_sql="
             SELECT
                 '{$this->doc_config->sync_destination}' sync_destination,
                 local_id,
@@ -124,31 +131,8 @@ class MoedeloSyncCompanies extends MoedeloSyncBase{
                 AND (COALESCE(company_code,'')='' OR LENGTH(company_code)=8)
                 AND (COALESCE(company_code_registration,'')='' OR LENGTH(company_code_registration)=13 OR LENGTH(company_code_registration)=15)
                 AND COALESCE(company_name,'')<>''
-            ) inner_table";
-        $this->query("START TRANSACTION");
-        if( $is_full ){
-            $afterDate='';
-            $this->query("UPDATE plugin_sync_entries SET local_deleted=1 WHERE sync_destination='{$this->doc_config->sync_destination}'");
-        } else {
-            $afterDate='';
-        }
-        $sql_update_local_docs="
-            INSERT INTO
-                plugin_sync_entries
-            (sync_destination,local_id,local_hash,local_tstamp,local_deleted,remote_id)
-                SELECT 
-                    local_sync_list.*,remote_id 
-                FROM 
-                    ($sql_local_docs) local_sync_list
-                        LEFT JOIN
-                    plugin_sync_entries pse ON pse.sync_destination=local_sync_list.sync_destination AND pse.local_id=local_sync_list.local_id
-            
-            ON DUPLICATE KEY UPDATE 
-                local_hash=local_sync_list.local_hash,local_tstamp=local_sync_list.local_tstamp,local_deleted=0
-            ";
-        $this->query("$sql_update_local_docs");
-        $this->query("COMMIT");
-        return true;
+            ) inner_table";  
+        return $local_sync_list_sql;
     }
     /**
      * Inserts new record on local
