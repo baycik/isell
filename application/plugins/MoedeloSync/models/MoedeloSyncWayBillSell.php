@@ -74,7 +74,11 @@ class MoedeloSyncWayBillSell extends MoedeloSyncBase{
     public function remoteHashCalculate( $entity ){
         $DocDate=substr( $this->toTimezone($entity->DocDate,'local') , 0, 10);
         $entity->Sum*=1;
-        $check="{$entity->Number};{$DocDate};{$entity->KontragentId};{$entity->Sum};";
+        $entity->SenderId=$entity->SenderId??0;
+        $entity->SupplierId=$entity->SupplierId??0;
+        $entity->ReceiverId=$entity->ReceiverId??0;
+        
+        $check="{$entity->Number};{$DocDate};{$entity->Sum};{$entity->KontragentId};{$entity->SenderId};{$entity->SupplierId};{$entity->ReceiverId};{$entity->PayerId};";
         //echo "remote check-$check";
         return md5($check);
     }
@@ -211,6 +215,7 @@ class MoedeloSyncWayBillSell extends MoedeloSyncBase{
                 1 Type,
                 2 NdsPositionType,
                 
+                {$this->remote_stock_id} StockId,
                 Payer_pse.remote_id KontragentId,
                 Sender_pse.remote_id SenderId,
                 Supplier_pse.remote_id SupplierId,

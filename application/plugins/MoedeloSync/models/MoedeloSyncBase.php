@@ -5,7 +5,7 @@ class MoedeloSyncBase extends Catalog{
     protected $local_tzone='+03:00';
     protected $remote_tzone='+00:00';
     protected $sync_since="";
-    protected $sync_time_window=365;
+    protected $remote_stock_id=10871469;
     
     private $gateway_url=null;
     private $gateway_md_apikey=null;
@@ -236,6 +236,7 @@ class MoedeloSyncBase extends Catalog{
      */
     public function replicate(){
         $this->linkByHash();
+        //return true;
         $sql_action_list="
             SELECT
                 entry_id,
@@ -371,14 +372,6 @@ class MoedeloSyncBase extends Catalog{
     public function remoteUpdate( $local_id, $remote_id, $entry_id ){
         $entity=$this->localGet( $local_id );
         $response = $this->apiExecute($this->doc_config->remote_function, 'PUT', $entity, $remote_id);
-        
-        
-        
-        
-        //print_r($entity);
-        
-        
-        
         if( $response->httpcode==200 ){
             $remote_hash=$this->remoteHashCalculate($entity);
             $this->query("UPDATE 
@@ -451,9 +444,10 @@ class MoedeloSyncBase extends Catalog{
                     ($local_sync_list_sql) local_sync_list
                         LEFT JOIN
                     plugin_sync_entries pse ON pse.sync_destination=local_sync_list.sync_destination AND pse.local_id=local_sync_list.local_id
-            
             ON DUPLICATE KEY UPDATE 
-                local_hash=local_sync_list.local_hash,local_tstamp=local_sync_list.local_tstamp,local_deleted=0
+                local_hash=local_sync_list.local_hash,
+                local_tstamp=local_sync_list.local_tstamp,
+                local_deleted=0
             ";
         $this->query("$sql_update_local_docs");
         $this->query("COMMIT");
