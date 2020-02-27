@@ -76,106 +76,7 @@ class MoedeloSyncBase extends Catalog{
             'response'=>json_decode($result)
             ];
     }
-    
-/*    protected function apiSend( $sync_destination, $remote_function, $document_list, $mode ){
-        $rows_done=0;
-        foreach($document_list as $document){
-            if($mode === 'REMOTE_INSERT'){
-                $response = $this->apiExecute($remote_function, 'POST', (array) $document);
-                if( isset($response->response) && isset($response->response->Id) ){
-                    $this->logInsert($sync_destination,$document->local_id,$document->current_hash,$response->response->Id);
-                    $rows_done++;
-                } else {
-                    $error=$this->getValidationErrors($response);
-                    $this->log("{$sync_destination} INSERT is unsuccessfull (HTTP CODE:$response->httpcode '$error') Number:#{$document->Number}");
-                }
-            } else 
-            if($mode === 'REMOTE_UPDATE'){
-                $response = $this->apiExecute($remote_function, 'PUT', (array) $document, $document->remote_id);
-                if( $response->httpcode==200 ){
-                    $this->logUpdate($document->entry_id, $document->current_hash);
-                    $rows_done++;
-                } else {
-                    $error=$this->getValidationErrors($response);
-                    $this->log("{$sync_destination} UPDATE is unsuccessfull (HTTP CODE:$response->httpcode '$error') Number:#{$document->Number}");
-                }
-            } else 
-            if($mode === 'REMOTE_DELETE'){
-                $response = $this->apiExecute($remote_function, 'REMOTE_DELETE', null, $document->remote_id);
-                $this->logDelete($document->entry_id);
-                $rows_done++;
-                if( $response->httpcode!=204 ) {
-                    $error=$this->getValidationErrors($response);
-                    $this->log("{$sync_destination} DELETE is unsuccessfull (HTTP CODE:$response->httpcode '$error') Number:#{$document->Number}");
-                }
-            }
-        }
-        return $rows_done;
-    }
-    
-    
-    protected function apiInsert($sync_destination,$remote_function,$document){
-        $response = $this->apiExecute($remote_function, 'POST', (array) $document);
-        if( isset($response->response) && isset($response->response->Id) ){
-            $this->logInsert($sync_destination,$document->local_id,$document->current_hash,$response->response->Id);
-            $rows_done++;
-        } else {
-            $error=$this->getValidationErrors($response);
-            $this->log("{$sync_destination} INSERT is unsuccessfull (HTTP CODE:$response->httpcode '$error') Number:#{$document->Number}");
-        }
-    }*/
-    
-    
-    protected function logInsert( $sync_destination, $local_id, $local_hash, $remote_id ){
-        $sql = "
-            INSERT INTO 
-                plugin_sync_entries 
-            SET
-                sync_destination = '$sync_destination',
-                local_id = '$local_id', 
-                local_hash = '$local_hash', 
-                local_tstamp = NOW(), 
-                remote_id = '$remote_id'";
-        return $this->query($sql);
-    }
-    
-    protected function logUpdate($entry_id,$local_hash){
-        $sql = "
-            UPDATE 
-                plugin_sync_entries 
-            SET
-                remote_hash = '$local_hash',
-                local_hash = '$local_hash',
-                local_tstamp=NOW()
-            WHERE entry_id = '$entry_id'";
-        return $this->query($sql);
-    }
-    
-    protected function logDelete($entry_id){
-        $sql = "
-            DELETE FROM 
-                plugin_sync_entries 
-            WHERE entry_id = '$entry_id'";
-        return $this->query($sql);
-    }
-    
-    public function log( $message ){
-        parent::log($message);
-        echo "$message\n";
-    }
-    
-    protected function getValidationErrors( $response ){
-        $error_text=$response->response->Message??'';
-        if( isset($response->response->ValidationErrors) ){
-            foreach( $response->response->ValidationErrors as $key1=>$errors ){
-                foreach($errors as $key2=>$err){
-                    $error_text.=" $key1 $key2 : $err;";
-                }
-            }
-        }
-        return $error_text;
-    }
-    
+        
     
     
     
@@ -337,7 +238,7 @@ class MoedeloSyncBase extends Catalog{
         ];
         $response=$this->apiExecute( $remote_function, 'GET', $request);
         if( $response->httpcode!=200 || 0 ){
-            print_r($request);print_r($response);
+            echo $remote_function;print_r($request);print_r($response);
         }
         $list=[];
         if( isset($response->response->ResourceList) ){
@@ -416,10 +317,6 @@ class MoedeloSyncBase extends Catalog{
         }
     }
     
-    
-    
-    
-    
     protected function localCheckout( bool $is_full=false ){
         $local_sync_list_sql=$this->localCheckoutGetList( $is_full, '' );
         $this->query("START TRANSACTION");
@@ -474,6 +371,56 @@ class MoedeloSyncBase extends Catalog{
 
 
 
+   
+    protected function logInsert( $sync_destination, $local_id, $local_hash, $remote_id ){
+        $sql = "
+            INSERT INTO 
+                plugin_sync_entries 
+            SET
+                sync_destination = '$sync_destination',
+                local_id = '$local_id', 
+                local_hash = '$local_hash', 
+                local_tstamp = NOW(), 
+                remote_id = '$remote_id'";
+        return $this->query($sql);
+    }
+    
+    protected function logUpdate($entry_id,$local_hash){
+        $sql = "
+            UPDATE 
+                plugin_sync_entries 
+            SET
+                remote_hash = '$local_hash',
+                local_hash = '$local_hash',
+                local_tstamp=NOW()
+            WHERE entry_id = '$entry_id'";
+        return $this->query($sql);
+    }
+    
+    protected function logDelete($entry_id){
+        $sql = "
+            DELETE FROM 
+                plugin_sync_entries 
+            WHERE entry_id = '$entry_id'";
+        return $this->query($sql);
+    }
+    
+    public function log( $message ){
+        parent::log($message);
+        echo "$message\n";
+    }
+    
+    protected function getValidationErrors( $response ){
+        $error_text=$response->response->Message??'';
+        if( isset($response->response->ValidationErrors) ){
+            foreach( $response->response->ValidationErrors as $key1=>$errors ){
+                foreach($errors as $key2=>$err){
+                    $error_text.=" $key1 $key2 : $err;";
+                }
+            }
+        }
+        return $error_text;
+    }
 
     protected function checkUserPermission( $right ){
         $user_data=$this->Hub->svar('user');

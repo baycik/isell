@@ -1,4 +1,51 @@
 <?php
+    function getAll( $comp ) {
+        $all ="$comp->company_name";
+        $all.=$comp->company_tax_id?", ИНН/КПП:{$comp->company_tax_id}/{$comp->company_tax_id2}":'';
+        $all.=$comp->company_jaddress?", $comp->company_jaddress":'';
+        $all.=$comp->company_phone?", тел.:{$comp->company_phone}":'';
+        return $all;
+    }
+    
+    
+    if( isset($this->view->doc_view->extra->reciever_company_id) ){
+        $this->Hub->load_model("Company");
+        $this->view->reciever=$this->Hub->Company->companyGet($this->view->doc_view->extra->reciever_company_id);
+    } else {
+        $this->view->reciever=$this->view->buyer;
+    }
+    if( isset($this->view->doc_view->extra->supplier_company_id) ){
+        $this->Hub->load_model("Company");
+        $this->view->supplier=$this->Hub->Company->companyGet($this->view->doc_view->extra->supplier_company_id);
+    } else {
+        $this->view->supplier=$this->view->seller;
+    }
+    
+    
+    
+    
+    
+    $this->view->seller->all=getAll($this->view->seller);
+    $this->view->buyer->all=getAll($this->view->buyer);
+    $this->view->supplier->all=getAll($this->view->supplier);
+    $this->view->reciever->all=getAll($this->view->reciever);
+    
+    if( isset($this->view->doc_view->extra->reason_date) ){
+        $this->view->doc_view->extra->reason_date=todmy( $this->view->doc_view->extra->reason_date );
+    }
+    if( isset($this->view->doc_view->extra->transport_bill_date) ){
+        $this->view->doc_view->extra->transport_bill_date=todmy( $this->view->doc_view->extra->transport_bill_date );
+    }
+    function todmy( $iso ){
+       $ymd= explode('-', $iso);
+       return "$ymd[2].$ymd[1].$ymd[0]";
+   }
+
+
+
+
+
+
 $okei = [
     'шт' => '796',
     'руб'=>'383',
@@ -57,10 +104,9 @@ $this->view->total_pages = num2str($this->view->tables_count + 1, true);
 $this->view->total_rows = num2str($i, true);
 $this->view->doc_view->total_spell = num2str($this->view->footer->total);
 $this->view->doc_view->date_spell = daterus($this->view->doc_view->date_dot);
-$this->view->p->all = getAll($this->view->p);
-$this->view->a->all = getAll($this->view->a);
-$this->view->goods_reciever=$this->view->p->all;
-$this->view->goods_reciever_okpo=$this->view->p->company_code;
+
+
+$this->setPageOrientation( "landscape" );
 
 if( $this->view->doc_view->extra->goods_reciever_okpo ){
     $this->view->goods_reciever_okpo=$this->view->doc_view->extra->goods_reciever_okpo;
@@ -87,13 +133,7 @@ if( $this->view->doc_view->extra->goods_reciever ){
 function format($num){
     return number_format($num, 2,'.','');
 }
-function getAll($comp) {
-    $all = "$comp->company_name";
-    $all.=$comp->company_tax_id ? ", ИНН/КПП:{$comp->company_tax_id}/{$comp->company_tax_id2}" : '';
-    $all.=$comp->company_jaddress ? ", $comp->company_jaddress" : '';
-    $all.=$comp->company_phone ? ", тел.:{$comp->company_phone}" : '';
-    return $all;
-}
+
 
 function daterus($dmy) {
     $dmy = explode('.', $dmy);

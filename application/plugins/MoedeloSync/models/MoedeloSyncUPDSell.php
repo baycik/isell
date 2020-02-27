@@ -1,12 +1,12 @@
 <?php
 require_once 'MoedeloSyncBase.php';
-class MoedeloSyncWayBillSell extends MoedeloSyncBase{
+class MoedeloSyncUPDSell extends MoedeloSyncBase{
     function __construct(){
         parent::__construct();
         $this->doc_config=(object) [
-            'remote_function'=>'accounting/api/v1/sales/waybill',
-            'local_view_type_id'=>133,//torg12
-            'sync_destination'=>'moedelo_doc_waybillsell',
+            'remote_function'=>'docs/api/v1/Sales/Upd',
+            'local_view_type_id'=>143,//upd
+            'sync_destination'=>'moedelo_doc_updsell',
             'doc_type'=>1
         ];
     }
@@ -72,8 +72,11 @@ class MoedeloSyncWayBillSell extends MoedeloSyncBase{
      * Calculates remote entity hash
      */
     public function remoteHashCalculate( $entity ){
-        $DocDate=substr( $this->toTimezone($entity->DocDate,'local') , 0, 10);
-        $entity->Sum*=1;
+        $DocDate=substr( $this->toTimezone($entity->Date,'local') , 0, 10);
+        $entity->Sum=0;
+        foreach( $entity->Items as $Item ){
+            $entity->Sum+=$Item->SumWithNds;
+        }
         $check="{$entity->Number};{$DocDate};{$entity->KontragentId};{$entity->Sum};";
         //echo "remote check-$check";
         return md5($check);
@@ -192,18 +195,15 @@ class MoedeloSyncWayBillSell extends MoedeloSyncBase{
                 dvl.doc_view_id local_id,
                 dl.vat_rate,
                 view_num Number,
-                REPLACE(dvl.tstamp,' ','T') DocDate,
-                '' PaymentNumber,
-                '' PaymentDate,
-                dl.cstamp ContextCreateDate,
-                GREATEST(dl.modified_at,MAX(de.modified_at),dvl.modified_at) ContextModifyDate,
-                user_sign ContextModifyUser,
-                SUM(ROUND(invoice_price*product_quantity*(1+dl.vat_rate/100),2)) Sum,
-                1 Type,
+                REPLACE(dvl.tstamp,' ','T') Date,
+                1 Status,
+                
+                2 TaxSystem,
                 2 NdsPositionType,
                 
-                CONCAT('Торг12 ',view_num,dvl.tstamp) ErrorTitle,
-
+                CONCAT('УПД ',view_num,dvl.tstamp) ErrorTitle,
+                
+                SUM(ROUND(invoice_price*product_quantity*(1+dl.vat_rate/100),2)) Sum,
                 {$this->remote_stock_id} StockId,
                 Payer_pse.remote_id KontragentId,
                 Sender_pse.remote_id SenderId,
@@ -240,7 +240,7 @@ class MoedeloSyncWayBillSell extends MoedeloSyncBase{
                     product_quantity Count,
                     product_unit Unit,
                     IF(is_service=1,2,1) Type,
-                    {$document->vat_rate} NdsType,
+                    IF({$document->vat_rate},1,0) NdsType,
                     ROUND(invoice_price*(1+{$document->vat_rate}/100),2) Price,
                     ROUND(invoice_price*product_quantity*(1+{$document->vat_rate}/100),2) SumWithNds,
                     prod_pse.remote_id StockProductId
@@ -254,16 +254,12 @@ class MoedeloSyncWayBillSell extends MoedeloSyncBase{
                     doc_id={$document->doc_id}";
             $document->Items=$this->get_list($sql_entry);
         }
-        $document->Context=(object)[
-            'CreateDate'=>$this->toTimezone($document->ContextCreateDate,'remote'),
-            'ModifyDate'=>$this->toTimezone($document->ContextModifyDate,'remote'),
-            'ModifyUser'=>$document->ContextModifyUser
-        ];
         
         
-        print_r($document);die;
+        //print_r($document);//die;
         
         
         return $document;
-    }
+    }    
+    
 }

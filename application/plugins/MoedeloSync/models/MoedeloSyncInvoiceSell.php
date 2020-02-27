@@ -1,12 +1,12 @@
 <?php
 require_once 'MoedeloSyncBase.php';
-class MoedeloSyncWayBillSell extends MoedeloSyncBase{
+class MoedeloSyncInvoiceSell extends MoedeloSyncBase{
     function __construct(){
         parent::__construct();
         $this->doc_config=(object) [
-            'remote_function'=>'accounting/api/v1/sales/waybill',
-            'local_view_type_id'=>133,//torg12
-            'sync_destination'=>'moedelo_doc_waybillsell',
+            'remote_function'=>'accounting/api/v1/sales/invoice/common',
+            'local_view_type_id'=>140,//invoice
+            'sync_destination'=>'moedelo_doc_invoicesell',
             'doc_type'=>1
         ];
     }
@@ -202,9 +202,8 @@ class MoedeloSyncWayBillSell extends MoedeloSyncBase{
                 1 Type,
                 2 NdsPositionType,
                 
-                CONCAT('Торг12 ',view_num,dvl.tstamp) ErrorTitle,
+                CONCAT('СчетФактура ',view_num,dvl.tstamp) ErrorTitle,
 
-                {$this->remote_stock_id} StockId,
                 Payer_pse.remote_id KontragentId,
                 Sender_pse.remote_id SenderId,
                 Supplier_pse.remote_id SupplierId,
@@ -261,9 +260,10 @@ class MoedeloSyncWayBillSell extends MoedeloSyncBase{
         ];
         
         
-        print_r($document);die;
+        //print_r($document);//die;
         
         
         return $document;
-    }
+    }    
+    
 }
