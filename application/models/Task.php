@@ -73,7 +73,7 @@ class Task extends Events {
 
     private function execute_command($command, $previous_return) {
 	$args = [];
-	$arguments=  explode(',', $command->arguments);
+	$arguments=  $command->arguments;//explode(',', $command->arguments);
 	if( is_array($arguments) ){
 	    foreach ($arguments as $arg) {
 		if ($arg == '-PREVIOUS-RETURN-') {
