@@ -479,7 +479,7 @@ class Stock extends Catalog {
     }
     
     public function reserveStatusChange( $old_status_id, $new_status_id, $doc ){
-        if( $new_status_id==2 ){//reserved 
+        if( $new_status_id==2 ){//reserved
             $this->reserveTaskAdd($doc);
             $this->reserveCountUpdate();
         }
@@ -588,11 +588,13 @@ class Stock extends Catalog {
     }
     
     public function reserveTaskExecute($doc_id,$user_id,$alert,$event_id){
-        $status_change_ok=$this->Hub->load_model("DocumentCore")->setStatusByCode($doc_id,'created');
-        if( $status_change_ok ){
+        $DocumentItems=$this->Hub->load_model("DocumentItems");
+        $DocumentItems->setStatusByCode($doc_id,'created');
+        $new_status_id=$DocumentItems->documentStatusGet();
+        if( $new_status_id!=2 ){//document is not reserved anymore
             $this->Hub->load_model("Chat")->addMessage($user_id,$alert,true);
-            $this->Hub->load_model("Events")->eventDelete($event_id);
-            return false;
+            //$this->Hub->load_model("Events")->eventDelete($event_id);
+            return true;
         }
         return false;
     }
