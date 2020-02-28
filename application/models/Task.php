@@ -72,16 +72,15 @@ class Task extends Events {
     }
 
     private function execute_command($command, $previous_return) {
-	$args = [];
-	$arguments=  $command->arguments;//explode(',', $command->arguments);
-	if( is_array($arguments) ){
-	    foreach ($arguments as $arg) {
-		if ($arg == '-PREVIOUS-RETURN-') {
-		    $arg = $previous_return;
-		}
-		$args[] = $arg;
-	    }
-	}
+        if( !is_array($command->arguments) ){
+            $command->arguments=explode(',', $command->arguments??'');
+        }
+        foreach ($command->arguments as $arg) {
+            if ($arg == '-PREVIOUS-RETURN-') {
+                $arg = $previous_return;
+            }
+            $args[] = $arg;
+        }
         try{
             $Model = $this->Hub->load_model($command->model);
             $return = call_user_func_array([$Model, $command->method], $args);
