@@ -215,6 +215,27 @@ class CampaignManager extends Catalog{
         return $this->update('plugin_campaign_bonus_periods',[$field=>$value],['campaign_bonus_period_id'=>$campaign_bonus_period_id]);
     }
     
+    public function bonusPeriodDuplicate ( int $this_period_id, int $prev_period_id ){
+        $sql="
+            UPDATE
+                plugin_campaign_bonus_periods pcbp_this
+                    JOIN
+                plugin_campaign_bonus_periods pcbp_prev
+            SET
+                pcbp_this.period_plan1=pcbp_prev.period_plan1,
+                pcbp_this.period_plan2=pcbp_prev.period_plan2,
+                pcbp_this.period_plan3=pcbp_prev.period_plan3,
+                
+                pcbp_this.period_reward1=pcbp_prev.period_reward1,
+                pcbp_this.period_reward2=pcbp_prev.period_reward2,
+                pcbp_this.period_reward3=pcbp_prev.period_reward3
+            WHERE
+                pcbp_this.campaign_bonus_period_id = $this_period_id
+                AND pcbp_prev.campaign_bonus_period_id = $prev_period_id
+                ";
+        $this->query($sql);
+    }
+    
     private function bonusPeriodsFill( $campaign_bonus_id ){
         $bonus=$this->bonusGet($campaign_bonus_id);
         if( $bonus->campaign_grouping_interval && $bonus->campaign_start_at && $bonus->campaign_finish_at ){
