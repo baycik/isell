@@ -259,11 +259,6 @@ class MoedeloSyncWayBillSell extends MoedeloSyncBase{
             'ModifyDate'=>$this->toTimezone($document->ContextModifyDate,'remote'),
             'ModifyUser'=>$document->ContextModifyUser
         ];
-        
-        
-        print_r($document);die;
-        
-        
         return $document;
     }
 }
