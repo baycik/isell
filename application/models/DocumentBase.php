@@ -9,44 +9,69 @@ abstract class DocumentBase extends Catalog{
     // UTILS SECTION
     //////////////////////////////////////////
     protected function doc($field=null,$value=null){
-        //TODO//
-        //add security check//
 	if( !isset($this->document_properties) ){
-	    if( !isset($this->doc_id) ){
-		throw new Exception("Can't use properties because Document is not selected");
-	    }
-	    $this->document_properties=$this->get_row("SELECT * FROM document_list WHERE doc_id='$this->doc_id'");
+            throw new Exception("Can't use properties because Document is not selected");
 	}
 	if( isset($value) ){
-	    return $this->document_properties->$field=$value;
+            $this->Hub->set_level(2);
+            $this->document_properties->$field=$value;
+            $this->documentFlush();
+	    return $value;
 	}
-	return isset($this->document_properties->$field)?$this->document_properties->$field:null;
+	return $this->document_properties->$field??null;
     }
-    protected function isCommited(){
-	return $this->doc('is_commited')=='1';
-    }
-    //////////////////////////////////////////
-    // DOCUMENT SECTION
-    //////////////////////////////////////////
-    protected function documentSelect( $doc_id ){
-	$this->doc_id=$doc_id;
+    public function documentSelect( $doc_id ){
 	unset($this->document_properties);
+        $document_properties=$this->get_row("SELECT * FROM document_list WHERE doc_id='$doc_id'");
+        $is_access_granted=$this->documentCheckPermission( $document_properties->passive_company_id );
+        if( $is_access_granted ){
+            $this->doc_id=$doc_id;
+            $this->document_properties=$document_properties;
+            return true;
+        }
+        throw new Exception("Access denied for selection of this document");
     }
-    protected function documentFlush(){
+    private function documentCheckPermission( $passive_company_id ){
+        $user_level=$this->Hub->svar('user_id');
+        $user_assigned_path=$this->Hub->svar('user_assigned_path');
+        $access_check="SELECT
+                1 access_granted
+            FROM
+                companies_list cl
+                        JOIN
+                companies_tree ct USING(branch_id)
+            WHERE
+                cl.company_id=222
+            AND ct.level<=$user_level
+            AND ct.path LIKE '$user_assigned_path%'";
+        return $this->get_value($access_check);
+    }
+    private function documentFlush(){
 	if( !$this->document_properties ){
 	    throw new Exception("Can't flush properties because they are not loaded");
 	}
 	return $this->update('document_list',$this->document_properties,['doc_id'=>$this->document_properties->doc_id]);
     }
-    protected function documentCurrencyCorrectionGet(){
-	$native_curr=$this->Hub->pcomp('curr_code') && ($this->Hub->pcomp('curr_code') != $this->Hub->acomp('curr_code'))?0:1;
-	return $native_curr?1:1/$this->doc('doc_ratio');
+    protected function isCommited(){
+	return $this->doc('is_commited')=='1';
     }
-    protected function documentSetLevel($level){
-	return false;
+    protected function documentNumNext( $doc_type, $creation_mode=null ){
+        $Pref=$this->Hub->load_model('Pref');
+        $pref_name='document_number_'.$doc_type;
+        $pref=$Pref->getPrefs($pref_name);
+        if( !isset($pref[$pref_name]) ){
+            $pref[$pref_name]=0;
+        }
+        $pref[$pref_name]++;
+        if( $creation_mode!=='not_increase_number'){
+            $Pref->setPrefs($pref);
+        }
+        return $pref[$pref_name];
     }
-
-    protected function documentAdd( $doc_type ){
+    //////////////////////////////////////////
+    // DOCUMENT CRUD SECTION
+    //////////////////////////////////////////
+    protected function documentCreate( $doc_type ){
 	$this->Hub->set_level(1);
 	$user_id=$this->Hub->svar('user_id');
 	$acomp_id=$this->Hub->acomp('company_id');
@@ -65,44 +90,29 @@ abstract class DocumentBase extends Catalog{
 	    'modified_by'=>$user_id,
 	    'use_vatless_price'=>0,
 	    'notcount'=>0,
-	    'doc_num'=>0,
+	    'doc_num'=>$this->documentNumNext($doc_type),
 	    'doc_status_id'=>1
 	];
 	$prev_document=$this->headPreviousGet($acomp_id, $pcomp_id);
-	if( $prev_document && !is_numeric($prev_document->doc_type) ){
+	if( $prev_document ){
 	    $new_document['doc_type']=$prev_document->doc_type;
 	    $new_document['notcount']=$prev_document->notcount;
 	    $new_document['signs_after_dot']=$prev_document->signs_after_dot;
 	    $new_document['use_vatless_price']=$prev_document->use_vatless_price;
 	    $new_document['vat_rate']=$prev_document->vat_rate;
 	}
-	$new_document['doc_num']=$this->documentNumNext($acomp_id,$doc_type);
+        
 	$new_doc_id=$this->create('document_list', $new_document);
         $this->documentChangeCommitTransactions(1);
         $this->Hub->msg('Document created!');
 	return $new_doc_id;
     }
-    protected function documentNumNext($acomp_id,$doc_type){
-	$sql="SELECT 
-		MAX(doc_num)+1 
-	    FROM 
-		document_list 
-	    WHERE 
-		doc_type='$doc_type' 
-		AND active_company_id='$acomp_id' 
-		AND cstamp>DATE_FORMAT(NOW(),'%Y')";
-	
-	$next_num = $this->get_value($sql);
-	return $next_num ? $next_num : 1;
-    }
+    
     
     public function documentUpdate( int $doc_id, string $field, string $value){
-	$this->Hub->set_level(2);
         if(!$doc_id){
-            $doc_id = $this->documentAdd();
-            $this->documentSelect($doc_id);
+            $doc_id = $this->documentCreate();
         }
-        $this->doc_id = $doc_id;
 	$this->documentSelect($doc_id);
         
 	$ok=true;
@@ -113,9 +123,6 @@ abstract class DocumentBase extends Catalog{
 		break;
 	    case 'notcount':
 		$ok=$this->transChangeNotcount((bool) $value );
-		break;
-	    case 'use_vatless_price':
-                $this->query("UPDATE document_list SET use_vatless_price = '$value' WHERE doc_id='$doc_id'");
 		break;
 	    case 'doc_ratio':
 		$ok=$this->transChangeCurrRatio( $value );
@@ -132,7 +139,7 @@ abstract class DocumentBase extends Catalog{
 	    case 'doc_num':
 		if( !is_int((int)$value)){
 		    return false;
-		};
+		}
 	    case 'extra_expenses':
 		return $this->documentSetExtraExpenses($value);   
 	}
@@ -140,7 +147,6 @@ abstract class DocumentBase extends Catalog{
 	    return false;
 	}
 	$this->doc($field,$value);
-	$this->documentFlush();
 	$this->db_transaction_commit();
 	return true;
     }
@@ -204,7 +210,7 @@ abstract class DocumentBase extends Catalog{
 	$this->Hub->set_level(2);
 	$this->documentSelect($old_doc_id);
 	$old_doc_type = $this->doc('doc_type');
-	$new_doc_id=$this->documentAdd($old_doc_type);
+	$new_doc_id=$this->documentCreate($old_doc_type);
 	$this->duplicateEntries($new_doc_id, $old_doc_id);
 	$this->duplicateHead($new_doc_id, $old_doc_id);
 	return $new_doc_id;
@@ -351,23 +357,16 @@ abstract class DocumentBase extends Catalog{
             $def_head['doc_type']=$prev_doc->doc_type;
             $def_head['signs_after_dot']=$prev_doc->signs_after_dot;
         }
-        $def_head['doc_num']=$this->getNextDocNum($def_head['doc_type']);
+        $def_head['doc_num']=$this->documentNumNext($def_head['doc_type'],'not_increase_number');
         return ['head'=>$def_head, 'body'=>[], 'foot'=>[], 'vews'=>[]];
     }
     
-    protected function getNextDocNum($doc_type) {//Util
-	$active_company_id = $this->Hub->acomp('company_id');
-	$next_num = $this->get_value("
-	    SELECT 
-		MAX(doc_num)+1 
-	    FROM 
-		document_list 
-	    WHERE 
-	    IF('$doc_type'>0,doc_type='$doc_type' AND is_reclamation=0,doc_type=-'$doc_type' AND is_reclamation=1) 
-	    AND active_company_id='$active_company_id' 
-	    ");
-	return $next_num ? $next_num : 1;
+      protected function documentCurrencyCorrectionGet(){
+	$native_curr=$this->Hub->pcomp('curr_code') && ($this->Hub->pcomp('curr_code') != $this->Hub->acomp('curr_code'))?0:1;
+	return $native_curr?1:1/$this->doc('doc_ratio');
     }
+
+
     protected function calcCorrections( $skip_vat_correction=false, $skip_curr_correction=false ) {
 	$doc_id=$this->doc('doc_id');
 	$curr_code=$this->Hub->pcomp('curr_code');
@@ -402,7 +401,7 @@ abstract class DocumentBase extends Catalog{
 	$doc_id=$this->doc('doc_id');
 	$this->calcCorrections( $skip_vat_correction, $skip_curr_correction );
         $curr_code=$this->Hub->acomp('curr_code');
-	$company_lang = $this->Hub->pcomp('language');
+	$company_lang = $this->Hub->pcomp('language')??'ru';
         $pcomp_price_label=$this->Hub->pcomp('price_label');
         $this->query("DROP TEMPORARY TABLE IF EXISTS tmp_doc_entries");
         $sql="CREATE TEMPORARY TABLE tmp_doc_entries ( INDEX(product_code) ) AS (

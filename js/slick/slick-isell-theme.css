@@ -148,3 +148,18 @@ classes should alter those!
     border: none;
     outline: none;
 }
+.slick-viewport{
+    scrollbar-width: thin;
+}
+.slick-viewport:hover{
+    scrollbar-width: thin;
+}
+.slick-viewport::-webkit-scrollbar{
+    width:7px;
+}
+.slick-viewport::-webkit-scrollbar-track {
+  background: #eee;
+}
+.slick-viewport::-webkit-scrollbar-thumb {
+  background: #ccc; 
+}

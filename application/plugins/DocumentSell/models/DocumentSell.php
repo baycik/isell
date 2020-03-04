@@ -13,12 +13,10 @@
  * @author Baycik
  */
 class DocumentSell extends DocumentBase{
-    private $errtype='ok';
-    private $errmsg='';
     public function index(){
 	echo 'hello';
     }
-    public $extensionGet=[];
+    
     public function extensionGet(){
 	return [
 	    'script'=>$this->load->view('sell_script.js',[],true),
@@ -34,8 +32,7 @@ class DocumentSell extends DocumentBase{
 	return parent::documentAdd($doc_type);
     }
     
-    public $documentDelete=['doc_id'=>'int'];
-    public function documentDelete( $doc_id ){
+    public function documentDelete( int $doc_id ){
         return parent::documentDelete($doc_id);
     }
     
@@ -96,8 +93,8 @@ class DocumentSell extends DocumentBase{
 	$curr_correction=$this->documentCurrencyCorrectionGet();
 	return round($price,2)/$doc_vat_ratio/$curr_correction;	
     }
-    public $entryAdd=['doc_id'=>'int','product_code'=>'string','product_quantity'=>'int'];
-    public function entryAdd($doc_id,$product_code,$product_quantity){
+
+    public function entryAdd( int $doc_id, string $product_code, int $product_quantity){
 	$this->documentSelect($doc_id);
 	$pcomp_id=$this->doc('passive_company_id');
         if(!isset($pcomp_id)){
@@ -176,8 +173,8 @@ class DocumentSell extends DocumentBase{
 	$this->db_transaction_commit();
 	return true;
     }
-    public $entryDelete=['doc_id'=>'int','doc_entry_ids'=>'json'];
-    public function entryDelete($doc_id,$doc_entry_ids){
+
+    public function entryDelete( int $doc_id, array $doc_entry_ids){
 	return parent::entryDelete($doc_id, $doc_entry_ids);
     }    
     /*
@@ -186,16 +183,20 @@ class DocumentSell extends DocumentBase{
     private function stockLeftoverGet($product_code){
 	return $this->get_value("SELECT product_quantity FROM stock_entries WHERE product_code='$product_code'");
     }
+    
     private function stockLeftoverSet($product_code,$leftover,$self_price,$party_label){
 	return $this->update('stock_entries',['product_quantity'=>$leftover,'self_price'=>$self_price,'party_label'=>$party_label],['product_code'=>$product_code]);
     }
+    
     private function entryGet($doc_entry_id){
 	$sql="SELECT * FROM document_entries WHERE doc_entry_id='$doc_entry_id'";
 	return $this->get_row($sql);
     }
+    
     protected function entryUncommit($doc_entry_id){
 	return $this->entryCommit($doc_entry_id, 0);
     }
+    
     protected function entryCommit($doc_entry_id,$new_product_quantity=NULL){
 	$this->documentSetLevel(2);
 	$entry_data=$this->entryGet($doc_entry_id);
@@ -223,6 +224,7 @@ class DocumentSell extends DocumentBase{
 	$this->stockLeftoverSet($entry_data->product_code,$new_leftover,$new_leftover_calculated->self_price,$new_leftover_calculated->party_label);
 	return true;
     }
+    
     public function entryBreakevenPriceUpdate( int $doc_entry_id=null, int $doc_id=null ){
         if( !$doc_entry_id&&!$doc_id ){
             return;
@@ -255,7 +257,7 @@ class DocumentSell extends DocumentBase{
                 WHERE 
                     $where";
         }
-;        $this->query($sql);
+        $this->query($sql);
     }
     
     /*
@@ -315,22 +317,9 @@ class DocumentSell extends DocumentBase{
 		    @sold_quantity > @total_sold) t2;";
 	return $this->get_row($sql);
     }
-    protected function getProductSellSelfPrice($product_code, $invoice_qty,$fdate) {
-        return $this->Base->get_row("SELECT LEFTOVER_CALC('$product_code','$fdate','$invoice_qty','all')",0);
-
-//	$this->Base->LoadClass('StockOld');
-//	$stock_self = $this->Base->StockOld->getEntrySelfPrice($product_code);
-//	if ($stock_self > 0)
-//	    return $stock_self;
-//	/*
-//	 * IF self price is not set
-//	 * qty=0 or something else set
-//	 * selfPrice as current buy price
-//	 */
-//	$price = $this->getRawProductPrice($product_code, $this->doc('doc_ratio'));
-//	$price_self = $price['buy'] ? $price['buy'] : $price['sell'];
-//	//$this->Base->StockOld->setEntrySelfPrice($product_code, $price_self);
-//	return $price_self;
+    
+    protected function getProductSellSelfPrice( $product_code, $invoice_qty, $fdate ) {
+        return $this->Hub->get_row("SELECT LEFTOVER_CALC('$product_code','$fdate','$invoice_qty','all')",0);
     }
 
     
