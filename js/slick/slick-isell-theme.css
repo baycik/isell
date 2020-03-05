@@ -64,6 +64,7 @@ classes should alter those!
 }
 .slick-cell.selected {
     background-color: #Fe9;
+    background-color: #e1e1e1;
 }
 
 .slick-group {
