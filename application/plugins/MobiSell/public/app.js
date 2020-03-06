@@ -271,7 +271,6 @@ App = {
     retryConnection: function () {
         $('#offline_popup').modal('hide');
         if (navigator.onLine) {
-            console.log();
             location.reload();
         } else {
             $('#offline_popup').modal('show');
@@ -293,7 +292,7 @@ App = {
     utils:{
         sendmail:function( params ){
             if( params.to ){
-                App.post('../Utils/postEmail',params,function(ok){
+                $.post('../Utils/postEmail',params,function(ok){
                     if( ok*1 ){
                         App.flash("Сообщение было отправлено на "+params.to);
                     } else {
