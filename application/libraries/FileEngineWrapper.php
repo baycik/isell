@@ -142,10 +142,14 @@ if ( isset($word_header) ) {
 		    send_file:1
 		};
 		var main=opener||parent;
-		if (main && main.App) {
-		    main.App.loadWindow('page/dialog/send_email',params);
-		    main.alert("Файл '"+params.subject+fext+"' прикреплен к письму");
-		}
+                if( main && main.App && main.App.utils.sendmail ){
+                    main.App.utils.sendmail(params);
+                    window.close();
+                }
+                if( main && main.App && main.App.loadWindow ){
+                    main.App.loadWindow('page/dialog/send_email',params);
+                    main.alert("Файл '"+params.subject+fext+"' прикреплен к письму");
+                }
 	    }
 	</script>
 	<div class="no_print appbar" align="center">
