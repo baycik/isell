@@ -291,15 +291,21 @@ App = {
     },
     utils:{
         sendmail:function( params ){
-            if( params.to ){
-                $.post('../Utils/postEmail',params,function(ok){
-                    if( ok*1 ){
-                        App.alert("Сообщение было отправлено на "+params.to);
-                    } else {
-                        App.flash("Не удалось отправить сообщение");
-                    }
-                });
-            }
+            App.prompt('Емаил для отправки: ',params.to).done(function(email){
+                params.to=email;
+                if( params.to ){
+                    App.flash("Сообщение отправляется...");
+                    $.post('../Utils/postEmail',params,function(ok){
+                        if( ok*1 ){
+                            App.alert("Сообщение было отправлено на "+params.to);
+                        } else {
+                            App.flash("Не удалось отправить сообщение");
+                        }
+                    });
+                } else {
+                    App.alert("Емаил не указан");
+                }
+            });
         }
     }
 };
