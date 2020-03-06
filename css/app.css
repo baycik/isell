@@ -291,11 +291,11 @@ div .combobox-item-hover{
 .datagrid-cell-rownumber,
 .tree-title,
 .panel-body,body{
-  font-size: 12px !important;
+  font-size: 13px !important;
 }
 input,textarea,.textbox,select{
     border-radius: 2px;
-    font-size: 12px !important;
+    font-size: 13px !important;
 }
 
 
