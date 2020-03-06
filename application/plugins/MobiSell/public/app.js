@@ -294,7 +294,7 @@ App = {
             if( params.to ){
                 $.post('../Utils/postEmail',params,function(ok){
                     if( ok*1 ){
-                        App.flash("Сообщение было отправлено на "+params.to);
+                        App.alert("Сообщение было отправлено на "+params.to);
                     } else {
                         App.flash("Не удалось отправить сообщение");
                     }
