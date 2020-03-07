@@ -164,7 +164,28 @@ abstract class DocumentBase extends Catalog{
     //////////////////////////////////////////
     // HEAD SECTION
     //////////////////////////////////////////
-    public function headUpdate( string $field, string $value=null ):string{
+    public function headGet( int $doc_id=0 ){
+	if( $doc_id==0 ){
+	    return $this->headDefaultGet();
+	}
+	$this->documentSelect($doc_id);
+        $this->document_properties->active_company_label=$this->get_value("SELECT label FROM companies_tree JOIN companies_list USING(branch_id) WHERE company_id={$this->document_properties->active_company_id}");
+        $this->document_properties->passive_company_label=$this->get_value("SELECT label FROM companies_tree JOIN companies_list USING(branch_id) WHERE company_id={$this->document_properties->passive_company_id}");
+        $this->document_properties->created_by=$this->get_value("SELECT last_name FROM user_list WHERE user_id={$this->document_properties->created_by}");
+        $this->document_properties->modified_by=$this->get_value("SELECT last_name FROM user_list WHERE user_id={$this->document_properties->modified_by}");
+        $this->document_properties->child_documents=$this->get_list("SELECT doc_id,cstamp,doc_num FROM document_list WHERE parent_doc_id={$doc_id}");
+	$this->document_properties->extra_expenses=$this->headGetExtraExpenses();
+        
+        $checkout=$this->get_row("SELECT * FROM checkout_list WHERE parent_doc_id={$doc_id}");
+        if( $checkout ){
+            $this->document_properties->checkout_id=$checkout->checkout_id;
+            $this->document_properties->checkout_status=$checkout->checkout_status;
+            $this->document_properties->checkout_modified_by=$this->get_value("SELECT last_name FROM user_list WHERE user_id={$checkout->modified_by}");
+        }
+	return $this->document_properties;
+    }
+    
+    public function headUpdate( int $doc_id, string $field, string $value=null ):string{
         $fieldCamelCase=str_replace(' ', '', ucwords(str_replace('_', ' ', $field)));
         $this->db_transaction_start();
         $this->doc( $field, $value );
@@ -175,49 +196,109 @@ abstract class DocumentBase extends Catalog{
         }
         $this->db_transaction_commit();
     }
-    
-    
-    public function documentHeadUpdate( int $doc_id, string $field, string $value){
-        if(!$doc_id){
-            $doc_id = $this->documentCreate();
-        }
-	$this->documentSelect($doc_id);
-        
-	$ok=true;
-	$this->db_transaction_start();
-	switch($field){
-	    case 'is_commited':
-		$ok=$this->documentChangeCommit( $value );
-		break;
-	    case 'notcount':
-		$ok=$this->transChangeNotcount((bool) $value );
-		break;
-	    case 'doc_ratio':
-		$ok=$this->transChangeCurrRatio( $value );
-		break;
-            case 'doc_status_id':
-                $ok=$this->documentChangeStatus( $value );
-                break;
-	    case 'vat_rate':
-		$ok=$this->transChangeVatRate( $value );
-		break;
-	    case 'doc_date':
-		$field='cstamp';
-		break;
-	    case 'doc_num':
-		if( !is_int((int)$value)){
-		    return false;
-		}
-	    case 'extra_expenses':
-		return $this->documentSetExtraExpenses($value);   
-	}
-	if( !$ok ){
-	    return false;
-	}
-	$this->doc($field,$value);
-	$this->db_transaction_commit();
-	return true;
+
+    protected function headPreviousGet($acomp_id,$pcomp_id){
+	$sql="SELECT 
+		* 
+	    FROM 
+		document_list 
+	    WHERE 
+		active_company_id='$acomp_id' 
+		AND passive_company_id='$pcomp_id' 
+		AND doc_type<10 
+		AND is_commited=1 
+	    ORDER BY cstamp DESC LIMIT 1";
+	return 	$this->get_row($sql);
     }
+
+    protected function headDefaultGet(){
+	$active_company_id=$this->Hub->acomp('company_id');
+	$passive_company_id = $this->Hub->pcomp('company_id');
+        $def_head=[
+	    'doc_id'=>0,
+            'doc_date'=>date('Y-m-d'),
+            'doc_num'=>0,
+            'doc_data'=>'',
+            'doc_ratio'=>$this->Hub->pref('usd_ratio'),
+            'doc_status_id'=>'',
+            'label'=>$this->Hub->pcomp('label'),
+            'passive_company_id'=>$passive_company_id,
+            'curr_code'=>$this->Hub->pcomp('curr_code'),
+            'vat_rate'=>$this->Hub->acomp('company_vat_rate'),
+            'doc_type'=>1,
+            'signs_after_dot'=>3,
+            'doc_status_id'=>1
+        ];
+	$prev_doc = $this->get_row("SELECT 
+		doc_type,
+		signs_after_dot 
+	    FROM 
+		document_list 
+	    WHERE 
+		passive_company_id='$passive_company_id' 
+		AND active_company_id='$active_company_id' 
+		AND doc_type<10 
+		AND is_commited=1 
+	    ORDER BY cstamp DESC LIMIT 1");
+        if( $prev_doc ){
+            $def_head['doc_type']=$prev_doc->doc_type;
+            $def_head['signs_after_dot']=$prev_doc->signs_after_dot;
+        }
+        $def_head['doc_num']=$this->documentNumNext($def_head['doc_type'],'not_increase_number');
+        return ['head'=>$def_head, 'body'=>[], 'foot'=>[], 'vews'=>[]];
+    }
+    
+    private function headGetExtraExpenses(){
+	$doc_type=$this->doc('doc_type');
+	$doc_id=$this->doc('doc_id');
+	if($doc_id && $doc_type==2){//only for buy documents
+	    return $this->get_value("SELECT ROUND(SUM(self_price-invoice_price),2) FROM document_entries WHERE doc_id=$doc_id LIMIT 1");
+	}
+	return 0;
+    }
+    
+    
+//    public function documentHeadUpdate( int $doc_id, string $field, string $value){
+//        if(!$doc_id){
+//            $doc_id = $this->documentCreate();
+//        }
+//	$this->documentSelect($doc_id);
+//        
+//	$ok=true;
+//	$this->db_transaction_start();
+//	switch($field){
+//	    case 'is_commited':
+//		$ok=$this->documentChangeCommit( $value );
+//		break;
+//	    case 'notcount':
+//		$ok=$this->transChangeNotcount((bool) $value );
+//		break;
+//	    case 'doc_ratio':
+//		$ok=$this->transChangeCurrRatio( $value );
+//		break;
+//            case 'doc_status_id':
+//                $ok=$this->documentChangeStatus( $value );
+//                break;
+//	    case 'vat_rate':
+//		$ok=$this->transChangeVatRate( $value );
+//		break;
+//	    case 'doc_date':
+//		$field='cstamp';
+//		break;
+//	    case 'doc_num':
+//		if( !is_int((int)$value)){
+//		    return false;
+//		}
+//	    case 'extra_expenses':
+//		return $this->documentSetExtraExpenses($value);   
+//	}
+//	if( !$ok ){
+//	    return false;
+//	}
+//	$this->doc($field,$value);
+//	$this->db_transaction_commit();
+//	return true;
+//    }
     
     
     
@@ -331,93 +412,7 @@ abstract class DocumentBase extends Catalog{
     //////////////////////////////////////////
     // HEADER SECTION
     //////////////////////////////////////////
-    public function headGet( $doc_id ){
-	if( $doc_id==0 ){
-	    return $this->headDefaultGet();
-	}
-	//$this->documentSelect($doc_id);
-	$sql="
-	    SELECT
-		doc_id,
-		active_company_id,
-                (SELECT label FROM companies_tree JOIN companies_list USING(branch_id) WHERE company_id=active_company_id) active_company_label,
-		passive_company_id,
-                (SELECT label FROM companies_tree JOIN companies_list USING(branch_id) WHERE company_id=passive_company_id) label,
-		IF(is_reclamation,-doc_type,doc_type) doc_type,
-		is_reclamation,
-		is_commited,
-		notcount,
-		vat_rate,
-		use_vatless_price,
-		signs_after_dot,
-		doc_ratio,
-		doc_num,
-                doc_status_id,
-		DATE_FORMAT(document_list.cstamp,'%Y-%m-%d') doc_date,
-		doc_data,
-		(SELECT last_name FROM user_list WHERE user_id=document_list.created_by) created_by,
-		(SELECT last_name FROM user_list WHERE user_id=document_list.modified_by) modified_by,
-                (SELECT last_name FROM user_list WHERE user_id=checkout_list.modified_by) checkout_modifier,
-                checkout_status, checkout_id
-	    FROM
-		document_list
-                    LEFT JOIN
-                checkout_list ON checkout_list.parent_doc_id=document_list.doc_id
-	    WHERE doc_id=$doc_id"
-	;
-	$head=$this->get_row($sql);
-	$head->extra_expenses=$this->documentGetExtraExpenses();
-	return $head;
-    }
-    protected function headPreviousGet($acomp_id,$pcomp_id){
-	$sql="SELECT 
-		* 
-	    FROM 
-		document_list 
-	    WHERE 
-		active_company_id='$acomp_id' 
-		AND passive_company_id='$pcomp_id' 
-		AND doc_type<10 
-		AND is_commited=1 
-	    ORDER BY cstamp DESC LIMIT 1";
-	return 	$this->get_row($sql);
-    }
-    protected function headDefaultGet(){
-	$active_company_id=$this->Hub->acomp('company_id');
-	$passive_company_id = $this->Hub->pcomp('company_id');
-        $def_head=[
-	    'doc_id'=>0,
-            'doc_date'=>date('Y-m-d'),
-            'doc_num'=>0,
-            'doc_data'=>'',
-            'doc_ratio'=>$this->Hub->pref('usd_ratio'),
-            'doc_status_id'=>'',
-            'label'=>$this->Hub->pcomp('label'),
-            'passive_company_id'=>$passive_company_id,
-            'curr_code'=>$this->Hub->pcomp('curr_code'),
-            'vat_rate'=>$this->Hub->acomp('company_vat_rate'),
-            'doc_type'=>1,
-            'signs_after_dot'=>3,
-            'doc_status_id'=>1
-        ];
-	$prev_doc = $this->get_row("SELECT 
-		doc_type,
-		signs_after_dot 
-	    FROM 
-		document_list 
-	    WHERE 
-		passive_company_id='$passive_company_id' 
-		AND active_company_id='$active_company_id' 
-		AND doc_type<10 
-		AND is_commited=1 
-	    ORDER BY cstamp DESC LIMIT 1");
-        if( $prev_doc ){
-            $def_head['doc_type']=$prev_doc->doc_type;
-            $def_head['signs_after_dot']=$prev_doc->signs_after_dot;
-        }
-        $def_head['doc_num']=$this->documentNumNext($def_head['doc_type'],'not_increase_number');
-        return ['head'=>$def_head, 'body'=>[], 'foot'=>[], 'vews'=>[]];
-    }
+
     
       protected function documentCurrencyCorrectionGet(){
 	$native_curr=$this->Hub->pcomp('curr_code') && ($this->Hub->pcomp('curr_code') != $this->Hub->acomp('curr_code'))?0:1;
@@ -825,17 +820,5 @@ abstract class DocumentBase extends Catalog{
 	    $expense_ratio=$expense/$footer->vatless+1;
 	    return $this->query("UPDATE document_entries SET self_price=invoice_price*$expense_ratio WHERE doc_id=$doc_id");
 	}
-    }
-    private function documentGetExtraExpenses(){
-	$doc_type=$this->doc('doc_type');
-	$doc_id=$this->doc('doc_id');
-	if($doc_id && $doc_type==2){
-	    //only for buy documents
-	    $footer=$this->footerGet();
-	    $expense_ratio=$this->get_value("SELECT self_price/invoice_price FROM document_entries WHERE doc_id=$doc_id LIMIT 1");
-	    $expense=$footer->vatless*($expense_ratio-1);
-	    return $expense;
-	}
-	return 0;
     }
 }    
