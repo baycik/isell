@@ -166,7 +166,7 @@ abstract class DocumentBase extends Catalog{
     //////////////////////////////////////////
     public function headGet( int $doc_id=0 ){
 	if( $doc_id==0 ){
-	    return $this->headDefaultGet();
+	    return $this->headCreate();
 	}
 	$this->documentSelect($doc_id);
         $this->document_properties->active_company_label=$this->get_value("SELECT label FROM companies_tree JOIN companies_list USING(branch_id) WHERE company_id={$this->document_properties->active_company_id}");
@@ -175,7 +175,6 @@ abstract class DocumentBase extends Catalog{
         $this->document_properties->modified_by=$this->get_value("SELECT last_name FROM user_list WHERE user_id={$this->document_properties->modified_by}");
         $this->document_properties->child_documents=$this->get_list("SELECT doc_id,cstamp,doc_num FROM document_list WHERE parent_doc_id={$doc_id}");
 	$this->document_properties->extra_expenses=$this->headGetExtraExpenses();
-        
         $checkout=$this->get_row("SELECT * FROM checkout_list WHERE parent_doc_id={$doc_id}");
         if( $checkout ){
             $this->document_properties->checkout_id=$checkout->checkout_id;
@@ -185,9 +184,39 @@ abstract class DocumentBase extends Catalog{
 	return $this->document_properties;
     }
     
+    private function headCreate(){
+	$active_company_id = $this->Hub->acomp('company_id');
+	$passive_company_id = $this->Hub->pcomp('company_id');
+        if( !$active_company_id || !$passive_company_id ){
+            throw new Exception("Passive or active company is not selected");
+        }
+	$prevHead = $this->get_row("SELECT 
+		doc_type
+	    FROM 
+		document_list 
+	    WHERE 
+		passive_company_id='$passive_company_id' 
+		AND active_company_id='$active_company_id' 
+		AND doc_type<10 
+		AND is_commited=1 
+	    ORDER BY cstamp DESC LIMIT 1");
+        $defHead=(object)[];
+        $defHead->doc_id=0;
+        $defHead->doc_date=date("Y-m-d");
+        $defHead->doc_type=$prevHead->doc_type??1;
+        $defHead->doc_data='';
+        $defHead->doc_status_id=1;
+        $defHead->doc_num=$this->documentNumNext($def_head['doc_type'],'not_increase_number');
+        $defHead->doc_ratio=$this->Hub->pref('usd_ratio');
+        $defHead->curr_code=$this->Hub->pcomp('curr_code');
+        $defHead->vat_rate=$this->Hub->pcomp('vat_rate');
+        return $defHead;
+    }
+    
     public function headUpdate( int $doc_id, string $field, string $value=null ):string{
         $fieldCamelCase=str_replace(' ', '', ucwords(str_replace('_', ' ', $field)));
         $this->db_transaction_start();
+        $this->documentSelect($doc_id);
         $this->doc( $field, $value );
         $ok=$this->Topic('documentChange'.$fieldCamelCase)->publish( $field, $value, $this->document_properties );
         if( $ok===false ){
@@ -195,9 +224,14 @@ abstract class DocumentBase extends Catalog{
             return false;
         }
         $this->db_transaction_commit();
+        return true;
     }
-
-    protected function headPreviousGet($acomp_id,$pcomp_id){
+    
+    public function headDelete(){
+        throw new Exception("Function Not exists");
+    }
+    //HEAD UTILS
+    private function headPreviousGet($acomp_id,$pcomp_id){
 	$sql="SELECT 
 		* 
 	    FROM 
@@ -210,43 +244,6 @@ abstract class DocumentBase extends Catalog{
 	    ORDER BY cstamp DESC LIMIT 1";
 	return 	$this->get_row($sql);
     }
-
-    protected function headDefaultGet(){
-	$active_company_id=$this->Hub->acomp('company_id');
-	$passive_company_id = $this->Hub->pcomp('company_id');
-        $def_head=[
-	    'doc_id'=>0,
-            'doc_date'=>date('Y-m-d'),
-            'doc_num'=>0,
-            'doc_data'=>'',
-            'doc_ratio'=>$this->Hub->pref('usd_ratio'),
-            'doc_status_id'=>'',
-            'label'=>$this->Hub->pcomp('label'),
-            'passive_company_id'=>$passive_company_id,
-            'curr_code'=>$this->Hub->pcomp('curr_code'),
-            'vat_rate'=>$this->Hub->acomp('company_vat_rate'),
-            'doc_type'=>1,
-            'signs_after_dot'=>3,
-            'doc_status_id'=>1
-        ];
-	$prev_doc = $this->get_row("SELECT 
-		doc_type,
-		signs_after_dot 
-	    FROM 
-		document_list 
-	    WHERE 
-		passive_company_id='$passive_company_id' 
-		AND active_company_id='$active_company_id' 
-		AND doc_type<10 
-		AND is_commited=1 
-	    ORDER BY cstamp DESC LIMIT 1");
-        if( $prev_doc ){
-            $def_head['doc_type']=$prev_doc->doc_type;
-            $def_head['signs_after_dot']=$prev_doc->signs_after_dot;
-        }
-        $def_head['doc_num']=$this->documentNumNext($def_head['doc_type'],'not_increase_number');
-        return ['head'=>$def_head, 'body'=>[], 'foot'=>[], 'vews'=>[]];
-    }
     
     private function headGetExtraExpenses(){
 	$doc_type=$this->doc('doc_type');
@@ -256,6 +253,45 @@ abstract class DocumentBase extends Catalog{
 	}
 	return 0;
     }
+    //////////////////////////////////////////
+    // BODY SECTION
+    //////////////////////////////////////////
+    public function entryListGet( int $doc_id ){
+        
+    }
+    public function entryListCreate( int $doc_id, array $entry_list ){
+        
+    }
+    public function entryListUpdate( int $doc_id, array $entry_list ){
+        
+    }
+    public function entryListDelete( int $doc_id, array $entry_id_list ) {
+        
+    }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     
     
 //    public function documentHeadUpdate( int $doc_id, string $field, string $value){
