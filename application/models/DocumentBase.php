@@ -8,19 +8,33 @@ abstract class DocumentBase extends Catalog{
     //////////////////////////////////////////
     // UTILS SECTION
     //////////////////////////////////////////
-    protected function doc($field=null,$value=null){
+    /**
+     * Getter/setter for document_list table for selected document
+     * @param string $field
+     * @param string $value
+     * @param bool $flush is needed to save changes immediately
+     * @return string
+     * @throws Exception
+     */
+    public function doc( string $field=null, string $value=null, bool $flush=true ):string{
 	if( !isset($this->document_properties) ){
             throw new Exception("Can't use properties because Document is not selected");
 	}
 	if( isset($value) ){
             $this->Hub->set_level(2);
             $this->document_properties->$field=$value;
-            $this->documentFlush();
+            $flush && $this->documentFlush();
 	    return $value;
 	}
 	return $this->document_properties->$field??null;
     }
-    public function documentSelect( $doc_id ){
+    /**
+     * Loads document head to memory and checks permissions
+     * @param int $doc_id
+     * @return boolean
+     * @throws Exception
+     */
+    public function documentSelect( int $doc_id ){
 	unset($this->document_properties);
         $document_properties=$this->get_row("SELECT * FROM document_list WHERE doc_id='$doc_id'");
         $is_access_granted=$this->documentCheckPermission( $document_properties->passive_company_id );
@@ -31,7 +45,12 @@ abstract class DocumentBase extends Catalog{
         }
         throw new Exception("Access denied for selection of this document");
     }
-    private function documentCheckPermission( $passive_company_id ){
+    /**
+     * Checks permission for user to this passive company id
+     * @param int $passive_company_id
+     * @return bool
+     */
+    private function documentCheckPermission( int $passive_company_id ):bool{
         $user_level=$this->Hub->svar('user_id');
         $user_assigned_path=$this->Hub->svar('user_assigned_path');
         $access_check="SELECT
@@ -41,21 +60,29 @@ abstract class DocumentBase extends Catalog{
                         JOIN
                 companies_tree ct USING(branch_id)
             WHERE
-                cl.company_id=222
+                cl.company_id='$passive_company_id'
             AND ct.level<=$user_level
             AND ct.path LIKE '$user_assigned_path%'";
-        return $this->get_value($access_check);
+        return (bool) $this->get_value($access_check);
     }
-    private function documentFlush(){
+    /**
+     * Saves document head from memory
+     * @return bool
+     * @throws Exception
+     */
+    
+    private function documentFlush():bool{
 	if( !$this->document_properties ){
 	    throw new Exception("Can't flush properties because they are not loaded");
 	}
 	return $this->update('document_list',$this->document_properties,['doc_id'=>$this->document_properties->doc_id]);
     }
-    protected function isCommited(){
+    
+    public function isCommited(){
 	return $this->doc('is_commited')=='1';
     }
-    protected function documentNumNext( $doc_type, $creation_mode=null ){
+    
+    public function documentNumNext( $doc_type, $creation_mode=null ){
         $Pref=$this->Hub->load_model('Pref');
         $pref_name='document_number_'.$doc_type;
         $pref=$Pref->getPrefs($pref_name);
@@ -71,6 +98,11 @@ abstract class DocumentBase extends Catalog{
     //////////////////////////////////////////
     // DOCUMENT CRUD SECTION
     //////////////////////////////////////////
+    public function documentGet( int $doc_id, array $parts_to_load ){
+        $this->documentSelect($doc_id);
+
+    }
+    
     protected function documentCreate( $doc_type ){
 	$this->Hub->set_level(1);
 	$user_id=$this->Hub->svar('user_id');
@@ -78,6 +110,12 @@ abstract class DocumentBase extends Catalog{
 	$pcomp_id=$this->Hub->pcomp('company_id');
 	$vat_rate = $this->Hub->acomp('company_vat_rate');
 	$usd_ratio=$this->Hub->pref('usd_ratio');
+        
+        $is_access_granted=$this->documentCheckPermission( $pcomp_id );
+        if( !$is_access_granted ){
+            throw new Exception("Access denied for creation document for this company"); 
+        }
+        
 	$new_document=[
 	    'doc_type'=>($doc_type?$doc_type:'1'),
 	    'cstamp'=>date('Y-m-d H:i:s'),
@@ -108,8 +146,38 @@ abstract class DocumentBase extends Catalog{
 	return $new_doc_id;
     }
     
+    public function documentUpdate( int $doc_id, $document ){
+        $this->documentSelect($doc_id);
+    }
     
-    public function documentUpdate( int $doc_id, string $field, string $value){
+    public function documentDelete( int $doc_id ){
+        $this->documentSelect($doc_id);
+        
+	$this->db_transaction_start();
+	$this->delete('document_entries',['doc_id'=>$doc_id]);
+	$this->delete('document_view_list',['doc_id'=>$doc_id]);
+	$this->transClear();
+	$ok=$this->delete('document_list',['doc_id'=>$doc_id,'is_commited'=>0]);
+	$this->db_transaction_commit();
+	return $ok;        
+    }
+    //////////////////////////////////////////
+    // HEAD SECTION
+    //////////////////////////////////////////
+    public function headUpdate( string $field, string $value=null ):string{
+        $fieldCamelCase=str_replace(' ', '', ucwords(str_replace('_', ' ', $field)));
+        $this->db_transaction_start();
+        $this->doc( $field, $value );
+        $ok=$this->Topic('documentChange'.$fieldCamelCase)->publish( $field, $value, $this->document_properties );
+        if( $ok===false ){
+            $this->db_transaction_rollback();
+            return false;
+        }
+        $this->db_transaction_commit();
+    }
+    
+    
+    public function documentHeadUpdate( int $doc_id, string $field, string $value){
         if(!$doc_id){
             $doc_id = $this->documentCreate();
         }
@@ -164,7 +232,7 @@ abstract class DocumentBase extends Catalog{
         }
         $old_status_id=$this->doc('doc_status_id');
         $Event=$this->Hub->load_model("Event");
-        $Event->Topic('documentStatusChanged')->publish($old_status_id,$new_status_id);
+        $Event->Topic('documentChangeDocStatusId')->publish($old_status_id,$new_status_id);
         
         /*
         if( $new_status_id==2 ){//reserved 
@@ -217,16 +285,6 @@ abstract class DocumentBase extends Catalog{
     }
     protected function documentUpdateRatio( $new_ratio ){
 	
-    }
-    protected function documentDelete( $doc_id ){
-        $this->doc_id = $doc_id;
-	$this->db_transaction_start();
-	$this->delete('document_entries',['doc_id'=>$doc_id]);
-	$this->delete('document_view_list',['doc_id'=>$doc_id]);
-	$this->transClear();
-	$ok=$this->delete('document_list',['doc_id'=>$doc_id,'is_commited'=>0]);
-	$this->db_transaction_commit();
-	return $ok;
     }
     //////////////////////////////////////////
     // COMMIT SECTION
