@@ -148,6 +148,10 @@ abstract class DocumentBase extends Catalog{
     
     public function documentUpdate( int $doc_id, $document ){
         $this->documentSelect($doc_id);
+        $this->headUpdate( $doc_id, $document->head??null );
+        $this->entryListUpdate( $doc_id, $document->entries??null );
+        $this->viewListUpdate( $doc_id, $document->views??null );
+        $this->transListUpdate( $doc_id, $document->trans??null );
     }
     
     public function documentDelete( int $doc_id ){
@@ -256,6 +260,19 @@ abstract class DocumentBase extends Catalog{
     //////////////////////////////////////////
     // BODY SECTION
     //////////////////////////////////////////
+    public function entryGet( int $doc_entry_id ){
+        
+    }
+    public function entryCreate( int $doc_id, object $entry ){
+        
+    }
+    public function entryUpdate( int $doc_entry_id, object $entry ){
+        
+    }
+    public function entryDelete( int $doc_entry_id ){
+        
+    }
+
     public function entryListGet( int $doc_id ){
         
     }
@@ -268,6 +285,54 @@ abstract class DocumentBase extends Catalog{
     public function entryListDelete( int $doc_id, array $entry_id_list ) {
         
     }
+    //////////////////////////////////////////
+    // FOOTER SECTION
+    //////////////////////////////////////////
+    public function footGet( $doc_id ){
+        
+    }
+    //////////////////////////////////////////
+    // VIEWS SECTION
+    //////////////////////////////////////////
+    public function viewGet( int $doc_view_id ){
+        
+    }
+    public function viewCreate( int $doc_id, object $view ){
+        
+    }
+    public function viewUpdate( int $doc_view_id, object $view ){
+        
+    }
+    public function viewDelete( int $doc_view_id ){
+        
+    }
+    
+    public function viewListGet( int $doc_id ){
+        
+    }
+    public function viewListCreate( int $doc_id, array $view_list ){
+        
+    }
+    public function viewListUpdate( int $doc_id, array $view_list ){
+        
+    }
+    public function viewListDelete( int $doc_id, array $view_id_list ){
+        
+    }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     
     
     
@@ -540,7 +605,7 @@ abstract class DocumentBase extends Catalog{
     protected function entryUpdate(){
 	
     }*/
-    public function entryDelete($doc_id,$doc_entry_ids){
+    public function entryDelete222($doc_id,$doc_entry_ids){
 	$this->documentSelect($doc_id);
 	$this->db_transaction_start();
 	foreach($doc_entry_ids as $doc_entry_id){
@@ -699,7 +764,7 @@ abstract class DocumentBase extends Catalog{
     //////////////////////////////////////////
     // FOOT SECTION
     //////////////////////////////////////////
-    protected function footGet(){
+    protected function footGet2222(){
         $this->entriesTmpCreate( $this->doc_id );
 	$curr_code=$this->Hub->pcomp('curr_code');
 	$curr_symbol=$this->get_value("SELECT curr_symbol FROM curr_list WHERE curr_code='$curr_code'");
