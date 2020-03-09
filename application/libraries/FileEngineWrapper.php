@@ -142,7 +142,7 @@ if ( isset($word_header) ) {
 		    send_file:1
 		};
 		var main=opener||parent;
-                if( main && main.App && main.App.utils.sendmail ){
+                if( main && main.App && main.App.utils && main.App.utils.sendmail ){
                     main.App.utils.sendmail(params);
                     window.close();
                 }
