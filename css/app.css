@@ -3,9 +3,9 @@ body{
     padding:0px;
     font-family: 'Trebuchet MS',Arial !important;
     font-size: 12px !important;
-    background: url(../img/rainbow.jpg) repeat-x fixed;
+    -background: url(../img/rainbow.jpg) repeat-x fixed;
     -background: url(../img/bg.jpg) repeat-x fixed;
-    -background: url(../img/greenbg.jpg)  no-repeat center center fixed;
+    background: url(../img/greebg.jpg)  no-repeat center center fixed;
     -background: url(../img/bluebg.jpg)  no-repeat center center fixed;
     background-size: cover;
     overflow-y: scroll;
