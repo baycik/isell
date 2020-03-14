@@ -34,36 +34,21 @@ abstract class DocumentBase extends Catalog{
      * @return boolean
      * @throws Exception
      */
-    public function documentSelect( int $doc_id ){
+    public function documentSelect( int $doc_id, bool $skip_if_same_doc=true ){
+        if( $skip_if_same_doc && $this->doc_id==$doc_id ){
+            return true;
+        }
 	unset($this->document_properties);
         $document_properties=$this->get_row("SELECT * FROM document_list WHERE doc_id='$doc_id'");
-        $is_access_granted=$this->documentCheckPermission( $document_properties->passive_company_id );
+        $Company=$this->Hub->load_model("Company");
+        $document_properties->pcomp=$Company->companyGet( $document_properties->passive_company_id );
+        $is_access_granted=$document_properties->pcomp?1:0;
         if( $is_access_granted ){
             $this->doc_id=$doc_id;
             $this->document_properties=$document_properties;
             return true;
         }
-        throw new Exception("Access denied for selection of this document");
-    }
-    /**
-     * Checks permission for user to this passive company id
-     * @param int $passive_company_id
-     * @return bool
-     */
-    private function documentCheckPermission( int $passive_company_id ):bool{
-        $user_level=$this->Hub->svar('user_id');
-        $user_assigned_path=$this->Hub->svar('user_assigned_path');
-        $access_check="SELECT
-                1 access_granted
-            FROM
-                companies_list cl
-                        JOIN
-                companies_tree ct USING(branch_id)
-            WHERE
-                cl.company_id='$passive_company_id'
-            AND ct.level<=$user_level
-            AND ct.path LIKE '$user_assigned_path%'";
-        return (bool) $this->get_value($access_check);
+        throw new Exception("Access denied for selection of this document",403);
     }
     /**
      * Saves document head from memory
@@ -103,7 +88,7 @@ abstract class DocumentBase extends Catalog{
 
     }
     
-    protected function documentCreate( $doc_type ){
+    protected function documentCreate( int $doc_type, string $doc_handler=null ){
 	$this->Hub->set_level(1);
 	$user_id=$this->Hub->svar('user_id');
 	$acomp_id=$this->Hub->acomp('company_id');
@@ -111,13 +96,16 @@ abstract class DocumentBase extends Catalog{
 	$vat_rate = $this->Hub->acomp('company_vat_rate');
 	$usd_ratio=$this->Hub->pref('usd_ratio');
         
-        $is_access_granted=$this->documentCheckPermission( $pcomp_id );
+        
+        $Company=$this->Hub->load_model("Company");
+        $is_access_granted=$Company->companyCheckUserPermission( $pcomp_id );
         if( !$is_access_granted ){
             throw new Exception("Access denied for creation document for this company"); 
         }
         
 	$new_document=[
 	    'doc_type'=>($doc_type?$doc_type:'1'),
+            'doc_handler'=>$doc_handler,
 	    'cstamp'=>date('Y-m-d H:i:s'),
 	    'active_company_id'=>$acomp_id,
 	    'passive_company_id'=>$pcomp_id,
@@ -217,7 +205,13 @@ abstract class DocumentBase extends Catalog{
         return $defHead;
     }
     
-    public function headUpdate( int $doc_id, string $field, string $value=null ):string{
+    public function headUpdate( int $doc_id, object $head ){
+        foreach( $head as $field=>$value ){
+            $this->headFieldUpdate( $doc_id, $field, $value );
+        }
+    }
+    
+    public function headFieldUpdate( int $doc_id, string $field, string $value=null ):string{
         $fieldCamelCase=str_replace(' ', '', ucwords(str_replace('_', ' ', $field)));
         $this->db_transaction_start();
         $this->documentSelect($doc_id);
@@ -260,30 +254,56 @@ abstract class DocumentBase extends Catalog{
     //////////////////////////////////////////
     // BODY SECTION
     //////////////////////////////////////////
-    public function entryGet( int $doc_entry_id ){
-        
+    public function entryGet( int $doc_id, int $doc_entry_id ){
+        $entry_list=$this->entryListGet( $doc_id, $doc_entry_id );
+        return $entry_list[0];
     }
     public function entryCreate( int $doc_id, object $entry ){
-        
+        $this->db_transaction_start();
+        $doc_entry_id=$this->create('document_entries', ['doc_id'=>$doc_id]);
+        $update_ok=$this->entryUpdate( $doc_id, $doc_entry_id, $entry );
+        if( $update_ok ){
+            $this->db_transaction_commit();
+            return true;
+        }
+        $this->db_transaction_rollback();
+        return false;
     }
-    public function entryUpdate( int $doc_entry_id, object $entry ){
-        
+    public function entryUpdate( int $doc_id, int $doc_entry_id, object $entry ){
+        return null;
     }
-    public function entryDelete( int $doc_entry_id ){
-        
+    public function entryDelete( int $doc_id, int $doc_entry_id ){
+        $this->documentSelect($doc_id);
+        $entry=(object)[
+            'product_quantity'=>0
+        ];
+        $this->db_transaction_start();
+        $update_ok=$this->entryUpdate( $doc_id, $doc_entry_id, $entry );
+        $delete_ok=$this->delete('document_entries',['doc_entry_id'=>$doc_entry_id]);
+        if( $update_ok && $delete_ok ){
+            $this->db_transaction_commit();
+            return true;
+        }
+        $this->db_transaction_rollback();
+        return false;
     }
 
-    public function entryListGet( int $doc_id ){
-        
+    public function entryListGet( int $doc_id, int $doc_entry_id=0 ){
+        $this->entryListCreate( $doc_id, $doc_entry_id );
+        return $this->get_list("SELECT * FROM tmp_entry_list ORDER BY pl.product_code");
     }
-    public function entryListCreate( int $doc_id, array $entry_list ){
-        
+    public function entryListCreate( int $doc_id, int $doc_entry_id=0 ){
+        return null;
     }
     public function entryListUpdate( int $doc_id, array $entry_list ){
-        
+        return null;
     }
     public function entryListDelete( int $doc_id, array $entry_id_list ) {
-        
+        $this->documentSelect($doc_id);
+        foreach( $entry_id_list as $doc_entry_id ){
+            $this->entryDelete( $doc_id, $doc_entry_id );
+        }
+        return true;
     }
     //////////////////////////////////////////
     // FOOTER SECTION
@@ -295,31 +315,45 @@ abstract class DocumentBase extends Catalog{
     // VIEWS SECTION
     //////////////////////////////////////////
     public function viewGet( int $doc_view_id ){
-        
+        return null;
     }
     public function viewCreate( int $doc_id, object $view ){
-        
+        return null;
     }
     public function viewUpdate( int $doc_view_id, object $view ){
-        
+        return null;
     }
     public function viewDelete( int $doc_view_id ){
-        
+        return null;
     }
     
     public function viewListGet( int $doc_id ){
-        
+        return null;
     }
     public function viewListCreate( int $doc_id, array $view_list ){
-        
+        return null;
     }
     public function viewListUpdate( int $doc_id, array $view_list ){
-        
+        return null;
     }
     public function viewListDelete( int $doc_id, array $view_id_list ){
+        return null;
+    }
+    //////////////////////////////////////////
+    // TRANSACTIONS SECTION
+    //////////////////////////////////////////
+    public $transaction_table=[
+        
+    ];
+    public function transListCreate(){
         
     }
-    
+    public function transListUpdate(){
+        
+    }
+    public function transListDelete(){
+        
+    }
     
     
     

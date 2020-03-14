@@ -37,7 +37,6 @@ class DocumentView extends DocumentItems{
 	} else {
 	    return [];
 	}
-
     }
     
     public function viewUpdate(int $doc_view_id, string $is_extra, string $field, string $value='') {

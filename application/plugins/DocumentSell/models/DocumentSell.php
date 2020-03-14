@@ -26,16 +26,9 @@ class DocumentSell extends DocumentBase{
 	    'views'=>$this->load->view('views.html',[],true)
 	];
     }
-    
-    public function documentAdd( $doc_type=null ){
-	$doc_type='1';
-	return parent::documentAdd($doc_type);
-    }
-    
-    public function documentDelete( int $doc_id ){
-        return parent::documentDelete($doc_id);
-    }
-    
+    //////////////////////////////////////////
+    // DOCUMENT SECTION
+    //////////////////////////////////////////
     public function documentGet(int $doc_id, array $parts_to_load){
 	$this->documentSelect($doc_id);
 	$doc_type=$this->doc('doc_type');
@@ -58,28 +51,142 @@ class DocumentSell extends DocumentBase{
 	return $document;
     }
     
-    public function documentUpdate(int $doc_id, string $field, string $value){
-        $this->documentSelect($doc_id);
-        parent::documentUpdate($doc_id,$field,$value); 
-        
-        
-	switch($field){
-            case 'doc_status_id':
-		return $this->documentSetStatus($doc_id,$value);
-            default:
-                return parent::documentUpdate($doc_id,$field,$value); 
-	}
+    public function documentCreate( $doc_type=null ){
+	$doc_type=1;
+	return parent::documentCreate( $doc_type, 'DocumentSell' );
     }
     
-    protected function bodyGet($doc_id){
-	$this->entriesTmpCreate( $doc_id );
-	if( $this->doc('use_vatless_price') ){
-            $sql="SELECT *, product_price_vatless product_price, product_sum_vatless product_sum FROM tmp_doc_entries";
-        } else {
-            $sql="SELECT *, product_price_total product_price, product_sum_total product_sum FROM tmp_doc_entries";
-        }
-        return $this->get_list($sql);
+    public function documentUpdate( int $doc_id, object $document ){
+        return parent::documentUpdate($doc_id,$document);
     }
+    
+    public function documentDelete( int $doc_id ){
+        return parent::documentDelete($doc_id);
+    }
+    //////////////////////////////////////////
+    // HEAD SECTION
+    //////////////////////////////////////////
+    
+    
+    //////////////////////////////////////////
+    // BODY SECTION
+    //////////////////////////////////////////
+    public function bodyGet( int $doc_id ){
+        return $this->entryListGet( $doc_id );
+    }
+    public function entryListGet( $doc_id, int $doc_entry_id=0 ){
+        return parent::entryListGet($doc_entry_id, $doc_entry_id);
+    }
+    
+    /**
+     * Function creates temporary table of entries
+     * @param int $doc_id
+     * @return bool
+     */
+    protected $entryListCreated=false;
+    protected function entryListCreate( int $doc_id, int $doc_entry_id=0 ){
+        if( $this->entryListCreated ){
+            return true;
+        }
+        $this->documentSelect($doc_id);
+        
+        $entry_filter=$doc_entry_id?" AND doc_entry_id=$doc_entry_id":"";
+        $is_curr_native = $this->doc('pcomp')->curr_code == $this->Hub->acomp('curr_code')?1:0;
+        $doc_curr_correction=$is_curr_native?1:1/$this->doc('doc_ratio');
+        $doc_vat_ratio=$this->doc('vat_rate')/100+1;
+        $doc_lang=$this->doc('pcomp')->language??'ru';
+        $sql_create="CREATE TEMPORARY TABLE tmp_entry_list AS (
+            SELECT
+                *,
+                IF(use_vatless_price,entry_price_vatless,entry_price_total) entry_price,
+                IF(use_vatless_price,entry_sum_vatless,entry_sum_total) entry_sum
+            FROM
+                (SELECT
+                    doc_entry_id,
+                    ROUND(invoice_price * $doc_curr_correction, 2) AS entry_price_vatless,
+                    ROUND(invoice_price * $doc_curr_correction * product_quantity,2) entry_sum_vatless,
+                    ROUND(invoice_price * $doc_curr_correction * $doc_vat_ratio, 2) AS entry_price_total,
+                    ROUND(invoice_price * $doc_curr_correction * $doc_vat_ratio * product_quantity,2) entry_sum_total,
+                    ROUND(self_price,2) self_price,
+                    ROUND(breakeven_price,2) breakeven_price,
+                    product_quantity*product_weight entry_weight_total,
+                    product_quantity*product_volume entry_volume_total,
+                    product_quantity*1 product_quantity,
+                    party_label,
+                    pl.product_id,
+                    pl.product_code,
+                    pl.$doc_lang product_name,
+                    pl.product_unit,
+                    pl.product_article,
+                    pl.analyse_origin,
+                    pl.analyse_class,
+                    dl.use_vatless_price,
+                    CHK_ENTRY(doc_entry_id) AS row_status
+                FROM
+                    document_list dl
+                        JOIN
+                    document_entries de USING(doc_id)
+                        JOIN 
+                    prod_list pl USING(product_code)
+                WHERE
+                    doc_id='$doc_id'
+                    $entry_filter) entry_list";
+        $this->query($sql_create);
+        $this->entryListCreated=true;
+        return true;
+    }
+    
+    public function entryListDelete(int $doc_id, array $entry_id_list) {
+        parent::entryListDelete($doc_id, $entry_id_list);
+    }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     private function viewsGet($doc_id){
         $DocumentView = $this->Hub->load_model("DocumentView");
         return $DocumentView->viewListFetch($doc_id);
