@@ -66,7 +66,7 @@ class Company extends Catalog{
         return (bool) $company??false;
     }
     
-    public function companyFindByCode( int $company_code=null, int $company_tax_id=null, int $company_bank_account=null ){
+    public function companyFindByCode( string $company_code=null, string $company_tax_id=null, string $company_bank_account=null ){
         $sql="SELECT 
                 company_id 
             FROM 
