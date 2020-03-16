@@ -313,7 +313,7 @@
 		App.flash("Документ пуст.");
 		return;
 	    }
-	    $.get("Company/companyGet/"+Doc.head.props.passive_company_id, function ( xhr ) {
+	    $.get("Company/companyGet/",{company_id:Doc.head.props.passive_company_id}, function ( xhr ) {
 		var passive_data=App.json(xhr);
 		var data={to:passive_data.company_mobile,body:Doc.head.props.doc_data};
 		App.loadWindow('page/dialog/send_sms',data);	    
