@@ -1,1 +1,80 @@
-Under construction
+<script>
+(function(){
+    var holder_id="PluginMailing";
+    var $holder=$("#"+holder_id);
+    var ClientFilter={
+        load:function(){
+            $.get("MailingManager/clientFilterGet",function(resp){
+                var data=App.json(resp);
+                ClientFilter.render(data);
+            });
+        },
+        render:function( fvalue ){
+            if( fvalue.subject_manager_include ){
+                fvalue.subject_manager_include=fvalue.subject_manager_include.split(',');
+            }
+            if( fvalue.subject_manager_exclude ){
+                fvalue.subject_manager_exclude=fvalue.subject_manager_exclude.split(',');
+            }
+            App.setupForm('#camp_manager_form', fvalue, 'use_inp_values').change(function (node) {
+                if (this.name.indexOf('-') > -1) {
+                    var campaign_bonus_id = this.name.split('-')[1];
+                    var field = this.name.split('-')[0];
+                    Bonuses.update(field, App.val(this), this.title, campaign_bonus_id);
+                } else if( this.name==='visibility_filter' ){
+                    visibility_filter=this.value;
+                    Campaign.get();
+                } else {
+                    Campaign.update(this.name, App.val(this), this.title);
+                }
+            });
+        },
+        save:function(){
+            
+        }
+    };
+})();
+</script>
+
+<div id="PluginMailing" style="display: grid;grid-template-columns:1fr 1fr;grid-gap:5px;padding: 5px;">
+    
+    <div class="easyui-panel" title="Клиенты Кампании">
+        <div style="display: grid;grid-template-columns:220px auto">
+            <div class="easyui-panel x-client_filter" title="Фильтр клиентов" data-options="collapsed:false,collapsible:true">
+                Filter open close
+                <div>
+                    <input type="text" title="Включить группу" name="subject_path_include">
+                    <select name="subject_manager_include" title="Включить закрепленных" multiple size="6">
+                        <!--{{staff_list}}
+                        {{if full_name}}
+                        -->
+                        <option value="{{user_id}}">{{full_name}}</option>
+                        <!--{{/if}}
+                        {{/staff_list}}-->
+                    </select>
+                    <hr>
+                    <input type="text" title="Исключить группу" name="subject_path_exclude">
+                    <select name="subject_manager_exclude" title="Исключить закрепленных" multiple size="6">
+                        <!--{{staff_list}}
+                        {{if full_name}}
+                        -->
+                        <option value="{{user_id}}">{{full_name}}</option>
+                        <!--{{/if}}
+                        {{/staff_list}}-->
+                    </select>
+                </div>
+                <div>
+                    selected client list
+                </div>
+            </div>
+            <div>
+                Message compose
+            </div>
+        </div>
+    </div>
+    
+    
+    <div>
+        Message list
+    </div>
+</div>
