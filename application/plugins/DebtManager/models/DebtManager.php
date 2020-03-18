@@ -451,9 +451,14 @@ class DebtManager extends Catalog {
     
     public function dashboard(){
         $this->Hub->set_level(1);
-        $this->load->view("../dashboard.html");
+        $this->load->view("dashboard.html");
     }
     
+    public function views( string $path ){
+	header("X-isell-type:OK");
+	$this->load->view($path);
+    }
+
     
     
     

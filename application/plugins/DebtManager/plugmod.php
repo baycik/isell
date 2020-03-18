@@ -12,11 +12,12 @@ $before[]=<<<EOT
 EOT;
 $after[]=<<<EOT
 \n  <div class="widget-block"> 
-            <div id="DebtManager_dashboard_holder" class="panel" style="margin: 10px;"></div>
+        <div id="DebtManager_dashboard_holder" class="DebtManager_dashboard_holder  panel" style="margin: 10px;">
             <script>
-                $("#DebtManager_dashboard_holder").load("DebtManager/dashboard");
+                $("#DebtManager_dashboard_holder").load("DebtManager/views/?path=dashboard.html");
             </script>
         </div>
+    </div>
 EOT;
 
 
@@ -31,7 +32,7 @@ EOT;
 $before[]=<<<EOT
 EOT;
 $after[]=<<<EOT
-\n  <div title="Менеджер Задолженностей" href="DebtManager/index" style="min-height: 500px;"></div>
+\n  <div title="⏲ Задолженности" href="DebtManager/index" style="min-height: 500px;"></div>
 EOT;
 
 

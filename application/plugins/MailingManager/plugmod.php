@@ -1,6 +1,4 @@
 <?php
-
-
 $filename[]=<<<EOT
 views/marketing/marketing_main.html
 EOT;
@@ -12,7 +10,7 @@ EOT;
 $before[]=<<<EOT
 EOT;
 $after[]=<<<EOT
-\n  <div title="Менеджер Рассылок" href="MaillingManager/index" style="min-height: 500px;"></div>
+\n  <div title="✉ Рассылки" href="MailingManager/index" style="min-height: 500px;"></div>
 EOT;
 
 

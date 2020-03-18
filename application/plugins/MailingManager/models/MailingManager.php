@@ -2,16 +2,16 @@
 
 /* Group Name: Работа с клиентами
  * User Level: 2
- * Plugin Name: Календарь платежей
+ * Plugin Name: Массовые рассылки
  * Plugin URI: http://isellsoft.com
  * Version: 1.0
- * Description: Календарь платежей 
- * Author: baycik 2019
+ * Description: Массовые рассылки
+ * Author: baycik 2020
  * Author URI: http://isellsoft.com
  */
 
 
-class DebtManager extends Catalog {
+class MailingManager extends Catalog {
     public $settings = [];
     public function index(){
         $this->Hub->set_level(3);
