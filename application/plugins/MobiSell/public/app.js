@@ -271,7 +271,6 @@ App = {
     retryConnection: function () {
         $('#offline_popup').modal('hide');
         if (navigator.onLine) {
-            console.log();
             location.reload();
         } else {
             $('#offline_popup').modal('show');
@@ -288,6 +287,25 @@ App = {
         },
         hush:function(){
             App.speech.synth.cancel();
+        }
+    },
+    utils:{
+        sendmail:function( params ){
+            App.prompt('Емаил для отправки: ',params.to).done(function(email){
+                params.to=email;
+                if( params.to ){
+                    App.flash("Сообщение отправляется...");
+                    $.post('../Utils/postEmail',params,function(ok){
+                        if( ok*1 ){
+                            App.alert("Сообщение было отправлено на "+params.to);
+                        } else {
+                            App.flash("Не удалось отправить сообщение");
+                        }
+                    });
+                } else {
+                    App.alert("Емаил не указан");
+                }
+            });
         }
     }
 };

@@ -31,6 +31,20 @@
                         title!=="+ Добавить кампанию" && App.store('campaign_active_tab',title);
                     }
                 });
+                $("#CampaignManager").click(function(e){
+                    var thisCardId=$(e.target).data('button_period_id');
+                    if( thisCardId ){
+                        var campaign_bonus_id=$(e.target).data('campaign_bonus_id');
+                        var $next=$("#campaignBonusPeriodId_"+thisCardId).next();
+                        if( !$next ){
+                            return;
+                        }
+                        var prevCardId=$next.prop('id').split('_')[1];
+                        $.post("CampaignManager/bonusPeriodDuplicate",{this_period_id:thisCardId,prev_period_id:prevCardId},function(resp){
+                            Bonuses.periodsLoad(campaign_bonus_id);
+                        });
+                    }
+                });
                 this.load();
             },
             data: {},
@@ -297,7 +311,7 @@
 <script id="CampaignManager_bonus_periods_tpl" type = "text/html">
     {{if period_cards}}
     {{period_cards}}
-    <div style=""  class="is_current-{{is_current}}">
+    <div style=""  class="is_current-{{is_current}}" id="campaignBonusPeriodId_{{campaign_bonus_period_id}}">
         <div style="height: 30px;font-size: 16px;padding: 4px;">
             {{if period_year|more>0}}
                 {{if period_month|more>0 }}
@@ -380,6 +394,10 @@
                 <input type="hidden" name="campaign_bonus_period_id" value="{{campaign_bonus_period_id}}">
                 <button>&#8635; Порог рент.</button>
             </form>
+            {{/if}}
+            {{if period_plan1|equals>0}}
+            <hr>
+            <button data-button_period_id="{{campaign_bonus_period_id}}" data-campaign_bonus_id="{{campaign_bonus_id}}" title="Скопировать предыдущий период"><img src="img/copy.png"> Повторить</button>
             {{/if}}
         </div>
     </div>

@@ -1,0 +1,245 @@
+.DebtManager_dashboard_holder .plugin_settings{
+        background-color: rgba(255,255,255,1);
+        padding:10px;
+        position: relative;
+        overflow: initial;
+    }
+    .DebtManager_dashboard_holder{
+        box-shadow: 2px 2px 13px gray;
+    }
+    .DebtManager_dashboard_holder .widget-panel{
+        position: relative;
+        box-shadow: 0px 2px 10px #070707;
+        z-index: 1;
+    }
+    .DebtManager_dashboard_holder .widget-header{
+        background-color: #1a36b8;
+        display: grid;
+        grid-template-columns: 14% 72% 6% 6%;
+        height: 60px;
+        align-items: center;
+        text-align: center;
+        color: white;
+    }
+    .DebtManager_dashboard_holder .widget-title{
+        font-size: 16px;
+        border-bottom: 1px solid #76b9f0;
+        font-weight: bold;
+        display: inline-block;
+        width: max-content;
+    }
+    .DebtManager_dashboard_holder .widget-settings:hover{
+        transition: all 0.5s ease;
+        transform: rotateZ(-180deg);  
+        filter: brightness(0%) invert(100%) drop-shadow(2px 2px 5px #1ba2ff);
+    }
+    .DebtManager_dashboard_holder .widget-settings:active{
+        transition: all 0.5s ease;
+        transform: scale(0.85);  
+        filter: brightness(0%) invert(100%) drop-shadow(2px 2px 5px black);
+    }
+    .DebtManager_dashboard_holder .widget-reload:hover {
+        transition: all 0.5s ease;
+        transform: rotateZ(-360deg);  
+        filter: brightness(0%) invert(100%) drop-shadow(2px 2px 5px #1ba2ff);
+    }
+    .DebtManager_dashboard_holder .widget-reload:active{
+        transition: all 0.5s ease;
+        transform: rotateZ(-720deg) scale(0.85);  
+        filter: brightness(0%) invert(100%) drop-shadow(2px 2px 5px black);
+    }
+    .DebtManager_dashboard_holder .debt-settings-input label, 
+    .DebtManager_dashboard_holder .debt-settings-checbox label{
+        cursor: help;
+    }
+    .DebtManager_dashboard_holder .debt-settings-input label:hover .explain, 
+    .DebtManager_dashboard_holder .debt-settings-checkbox label:hover .explain{
+        display: block !important;
+    }
+    .DebtManager_dashboard_holder .debt-container{
+        overflow-y: scroll;
+        max-height: 78vh;
+        scrollbar-width: thin;
+        background-color: white;
+        position: relative;
+    }
+    .DebtManager_dashboard_holder .explain:hover{
+        display: none !important;
+    }
+    .DebtManager_dashboard_holder .explain{
+        position: absolute;
+        width: 40%;
+        border: 1px solid lightgray;
+        background-color: #fffcdf;
+        margin-top: 17px;
+        padding: 5px;
+        padding-left: 5px;
+        margin-left: 35px;
+        white-space: initial;
+        z-index: 100;
+    }
+    .DebtManager_dashboard_holder .debt-settings-input, .debt-settings-checkbox {
+        padding: 3px;
+    }
+    .DebtManager_dashboard_holder .debt-settings-input select{
+        height:24px;
+    }
+    .DebtManager_dashboard_holder .debt-settings-checkbox input{
+        height:20px;
+        width:20px;
+    }
+    .DebtManager_dashboard_holder .debt-settings-input{
+        display: grid;
+        grid-template-columns: 33% 50%;
+    }
+    .DebtManager_dashboard_holder .debt-settings-checkbox{
+        display: grid;
+        grid-template-columns: 33% 50%;
+    }
+    .DebtManager_dashboard_holder .debt-block{
+        display: grid;
+        grid-template-columns: 18% 82%;
+        grid-column-gap: inherit;
+        border: 1px solid #bdbdbdb3;
+    }
+    .DebtManager_dashboard_holder .debt-block.expired{
+        grid-template-columns: 100%;
+    }
+    .DebtManager_dashboard_holder .expired-title:hover{
+        display: none;
+    }
+    .DebtManager_dashboard_holder .debt-block.expired .debt-all-rows{
+        border-left: 7px solid #e61313;
+    }
+    .DebtManager_dashboard_holder .debt-block.empty{
+        background: #e6e6e68c;
+    }
+    .DebtManager_dashboard_holder .debt-block.empty .date{
+        background: #ccc;
+        font-size: 20px;
+        border-right: 4px solid #b4b4b4;
+    }
+    .DebtManager_dashboard_holder .debt-block.empty .day,
+    .DebtManager_dashboard_holder .debt-block.empty .month, 
+    .DebtManager_dashboard_holder .debt-block.empty .year{
+        font-size: 15px;
+    }
+    .DebtManager_dashboard_holder .date{
+        border-right: 4px solid white;
+        background-color: #3b7dce;
+        padding: 5px;
+    }
+    .DebtManager_dashboard_holder .date .day, .date .month{
+        font-size: 16px;
+        color: white;
+        font-weight: bold;
+        font-family: Arial Black, Arial Bold, Gadget, sans-serif;
+    }
+    .DebtManager_dashboard_holder .date .day{
+        font-size: 18px;
+    }
+    .DebtManager_dashboard_holder .date .year{
+        font-size: 16px;
+        color: white;
+    }
+    .DebtManager_dashboard_holder .debt-block.normal .debt-all-rows {
+        background-color: white;
+        padding-left: 10px;
+        padding-right: 10px
+    }
+    .DebtManager_dashboard_holder .debt-row{
+       display: grid;
+       grid-template-columns: 18% 44% 17% 18%;
+       padding: 6px;
+       min-height: 2.6em;
+       padding-top: 7px;
+       background-color: white;
+       margin: 0px 0px;
+       align-items: center;
+       border-bottom: 1px solid #d0d0d0;
+    }
+    .DebtManager_dashboard_holder .debt-row:hover{
+        background-color: lightyellow;
+    }
+    
+    .DebtManager_dashboard_holder .debt-row .debt-date, .debt-row .debt-amount, 
+    .DebtManager_dashboard_holder .debt-row .debt-company-name, 
+    .DebtManager_dashboard_holder .debt-row .debt-description, 
+    .DebtManager_dashboard_holder .debt-row .debt-amount{
+        padding-left: 6px;
+        padding-right: 5px;
+    }
+    .DebtManager_dashboard_holder .debt-description{
+        text-overflow: ellipsis;
+        overflow: hidden;
+        max-width: 70%;
+    }
+    .DebtManager_dashboard_holder .debt-row.buy .debt-amount.buy, .DebtManager_dashboard_holder .debt-row.sell .debt-amount.buy{
+        color: red;
+    }  
+    .DebtManager_dashboard_holder .debt-row.sell .debt-amount.sell, .DebtManager_dashboard_holder .debt-row.buy .debt-amount.sell{
+        color: green;
+    }  
+    .DebtManager_dashboard_holder .debt-amount{
+        text-align: right;
+        font-weight: bold;
+    }
+    .DebtManager_dashboard_holder .debt-row .debt-amount.buy{
+        border-right: none !important;
+    }
+    .DebtManager_dashboard_holder .total-row{
+        padding: 8px 8px;
+        float: right;
+        background-color: white;
+        border: 1px solid lightgray;
+        display: grid;
+        grid-template-columns: 26% 40% 28%;
+        width: 48%;
+        text-align: right;
+        margin: 7px 0px;
+    }
+    .DebtManager_dashboard_holder .total-row .total-label{
+       margin: auto;
+    }
+    .DebtManager_dashboard_holder .total-row .sell-total{
+       margin: auto;
+       font-weight: bold;
+       color: #026002;
+    }
+    .DebtManager_dashboard_holder .total-row .buy-total{
+       margin: auto;
+       font-weight: bold;
+       color: red;
+    }
+    .DebtManager_dashboard_holder .debt-company-name{
+        cursor: help;
+    }
+    .DebtManager_dashboard_holder .debt-company-info{
+        display: inline-block;
+        position: absolute;
+        width: 46%;
+        border: 1px solid lightgray;
+        background-color: white;
+        padding: 5px;
+        padding-left: 5px;
+        margin-left: 35px;
+        box-shadow: 3px 3px 10px #9b9b9b;
+    }
+    .DebtManager_dashboard_holder .debt-company-info div{
+        padding: 2px;
+    }
+    .DebtManager_dashboard_holder .debt-company-name:hover .debt-company-info{
+        display: inline-block !important;
+        cursor: pointer;
+    }
+    .DebtManager_dashboard_holder .load-more{
+        transition: opacity 1s ease-in-out 0s;
+        margin: 0px auto;
+        display: table;
+        padding: 7px;
+        background-color: #f3f3f378;
+        width: 20%;
+        text-align: center;
+        border: 1px solid lightgray;
+        border-radius: 5px;
+    }

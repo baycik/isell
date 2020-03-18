@@ -30,7 +30,7 @@ class DocumentItems extends DocumentCore{
 		if ($clue == ''){
 		    continue;
 		}
-		$cases[]="(product_code LIKE '%$clue%' OR ru LIKE '%$clue%')";
+		$cases[]="(pl.product_code LIKE '%$clue%' OR ru LIKE '%$clue%')";
 	    }
 	    if( count($cases)>0 ){
 		$where=implode(' AND ',$cases);
@@ -44,23 +44,35 @@ class DocumentItems extends DocumentCore{
             $where .= " AND is_service=1";
         }
 	$sql="
-	    SELECT
-		product_id,
-		product_code,
-		ru product_name,
-		product_spack,
-		product_quantity leftover,
-                product_img,
-		product_unit,
-		GET_SELL_PRICE(product_code,{$pcomp_id},{$usd_ratio}) product_price_total,
-                GET_PRICE(product_code,{$pcomp_id},{$usd_ratio}) product_price_total_raw
-	    FROM
-		stock_entries
-		    JOIN
-		prod_list USING(product_code)
-            WHERE $where
-	    ORDER BY fetch_count-DATEDIFF(NOW(),fetch_stamp) DESC, product_code
-	    LIMIT $limit OFFSET $offset";
+            SELECT
+                *,
+		ROUND(GET_SELL_PRICE(product_code,{$pcomp_id},{$usd_ratio}),2) product_price_total,
+                ROUND(GET_PRICE(product_code,{$pcomp_id},{$usd_ratio}),2) product_price_total_raw
+            FROM (
+                SELECT
+                    product_id,
+                    pl.product_code,
+                    ru product_name,
+                    product_spack,
+                    product_quantity leftover,
+                    product_img,
+                    product_unit,
+                    CONCAT( 
+                        product_quantity<>0,
+                        prl.product_code IS NOT NULL,
+                        LPAD(fetch_count-DATEDIFF(NOW(),COALESCE(se.fetch_stamp,se.modified_at)),6,'0')
+                    ) popularity
+                FROM
+                    stock_entries se
+                        JOIN
+                    prod_list pl USING(product_code)
+                        LEFT JOIN
+                    price_list prl ON se.product_code=prl.product_code AND label='PROMO'
+                WHERE $where
+                ORDER BY 
+                    popularity DESC,
+                    pl.product_code
+                LIMIT $limit OFFSET $offset) inner_table";
         $suggested=$this->get_list($sql);//for plugin modifications
         return $suggested;
     }

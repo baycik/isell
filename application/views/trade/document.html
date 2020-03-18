@@ -172,15 +172,15 @@
 		switch(doc_type){
 		    case 1:
 		    case 3:
-			color='#cfc';
+			color='#0f53';
 			break;
 		    case 2:
 		    case 4:
-			color='#fcf';
+			color='#f0f3';
 			break;
 		}
 	    }
-	    $('#Doc_tool_bar').css('background-color',color);
+            document.getElementById('Doc_head_frm').style.backgroundColor=color;
 	    if( Doc.head.props.notcount*1 ){
 		$('#Doc_utils').show();
 		$('#Doc_notcount_cmb').combobox('textbox').css('background-color','#ffb');
@@ -313,7 +313,7 @@
 		App.flash("Документ пуст.");
 		return;
 	    }
-	    $.get("Company/companyGet/"+Doc.head.props.passive_company_id, function ( xhr ) {
+	    $.get("Company/companyGet/",{company_id:Doc.head.props.passive_company_id}, function ( xhr ) {
 		var passive_data=App.json(xhr);
 		var data={to:passive_data.company_mobile,body:Doc.head.props.doc_data};
 		App.loadWindow('page/dialog/send_sms',data);	    
@@ -324,7 +324,7 @@
 		App.flash("Документ пуст.");
 		return;
 	    }
-	    $.get("Company/companyGet/"+Doc.head.props.passive_company_id, function ( xhr ) {
+	    $.get("Company/companyGet/",{company_id:Doc.head.props.passive_company_id}, function ( xhr ) {
 		var passive_data=App.json(xhr);
 		var fvalue={
 		    doc_id:Doc.head.props.doc_id,
@@ -693,6 +693,11 @@
 	},
         row_template:'',
 	formatter:function(row_data){
+            row_data.bgcolor="";
+            if( row_data.product_price_total_raw-row_data.product_price_total>0 ){
+                row_data.bgcolor="#00ff0033";
+                row_data.product_price_total="<s>"+row_data.product_price_total_raw+"</s><br>"+row_data.product_price_total;
+            }
             var row_html=Mark.up(Doc.suggest.row_template,row_data);
 	    return row_html;
 	},
@@ -809,7 +814,7 @@
     }
 
     .document_comment{
-	width: 660px;
+	width: 670px;
 	height:30px;
 	margin-left:0px;
 	margin-top: 3px;
@@ -846,13 +851,14 @@
 	min-height: 32px;
 	margin: 0px 0px 6px 0px;
 	text-align: center;
-	background-image: linear-gradient(rgba(255,255,255,0.9) 0%,  rgba(255,255,255,0.1) 100%);
-	background-color:#cfd;
+	background-image: linear-gradient(#fff 0%, #e0eeff 100%);
+	background-color:#def;
 	cursor: pointer;
 	vertical-align: top;
+            transition: 3s;
     }
     .view_button b{
-	color:#090;
+	color:#333;
     }
     .view_button img{
 	visibility: hidden;
@@ -862,7 +868,7 @@
 	visibility: visible;
     }
     .view_button:hover{
-	border: 1px #5c5 solid;
+	border: 1px #ccc solid;
 	background-image: none;
 	z-index:100;	
     }
@@ -875,7 +881,7 @@
 	margin-top:1px;
 	text-align: left;
 	width:155px;
-	border: 1px #5c5 solid;
+	border: 1px #666 solid;
 	overflow: hidden;
 	display: none;
 	margin-left:-1px;
@@ -886,7 +892,7 @@
     }
     .grid-container1{
         display:grid;
-        grid-template-columns: 7% 70% 15% 8%;
+        grid-template-columns: 7% 65% 15% 13%;
         padding: 2px 0px;
     }
     .product-delivery-available{
@@ -965,7 +971,7 @@
 		   required:'required',
 		   onChange:function(val,old){Doc.head.update('doc_date',val,old)}
 		   ">
-	    <input type="text" name="doc_num" class="easyui-numberspinner" title="Номер" data-options="
+	    <input type="text" name="doc_num" class="easyui-textbox" title="Номер" data-options="
 		   min:1,
 		   required:'required',
 		   onChange:function(val,old){Doc.head.update('doc_num',val,old)}
@@ -1036,7 +1042,7 @@
 			   mode: 'remote',
 			   method:'get',
 			   hasDownArrow:false,
-			   panelWidth:550,
+			   panelWidth:650,
 			   panelMinWidth:400,
 			   prompt:'код, название или штрихкод',
 			   onSelect: Doc.suggest.select
@@ -1065,13 +1071,13 @@
 	-->
         <div id="suggest-template" style='display: none; border-bottom: 1px solid #a7e3ff;'>
             <div class="template-container">
-                <div class="grid-container1">
+                <div class="grid-container1" style="background-color:{{bgcolor}}">
                     <div class="img grid-item">
                         <img src="Storage/image_flush/?size=30x30&path=/dynImg/{{ product_img }}">
                     </div> 
                     <div class="grid-item" style="color:{{if leftover|more>0}}black {{else}} red {{/if}}; padding: 0px 10px"><b>{{ product_code }}</b> {{ product_name }}</div> 
-                    <div class="grid-item">[x{{ product_spack}}] {{ product_price_total }} </div>
-                    <div class="grid-item" style="color:green">{{ leftover }}{{ product_unit }}</div></div> 
+                    <div class="grid-item">{{ product_price_total }}</div>
+                    <div class="grid-item" style="color:green">[x{{ product_spack}}] {{ leftover }}{{ product_unit }}</div></div> 
             </div>    
         </div>
         

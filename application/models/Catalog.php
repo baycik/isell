@@ -160,6 +160,9 @@ class Catalog extends CI_Model {
         $class = get_class($this);
         $url = "http://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI] User:".$this->Hub->svar('user_login');
         $this->create('log_list', ['message' => $message, 'url' => $url, 'log_class' => $class]);
+        if( rand(1,1000)==1 ){
+            $this->query("DELETE FROM log_list WHERE DATEDIFF(NOW(),cstamp)>3*30");
+        }
     }
 
     private $db_transaction_nested_count = 0;
@@ -369,5 +372,51 @@ class Catalog extends CI_Model {
     
     protected function lang( $word ){
         return isset($this->vocabulary[$word])?$this->vocabulary[$word]:'';
+    }
+    /*
+     * HANDLING OF DYNAMICAL + PERMANENT EVENTS
+     */
+    public function Topic( string $topic ){
+        $this->topic=$topic;
+        return $this;
+    }
+    public function subscribe( string $model, string $method, string $param='' ){
+        $event_liable_user_id=$this->Hub->svar('user_id');
+        $event=(object) [
+            'event_place'=>$model,
+            'event_target'=>$method,
+            'event_note'=>$param,
+            'event_liable_user_id'=>$event_liable_user_id,
+            'event_label'=>'-TOPIC-',
+            'event_name'=>$this->topic
+        ];
+        $this->topic_listener_list[$this->topic][]=$event;
+    }
+    public function unsubscribe( string $model, string $method, int $event_liable_user_id=NULL ){
+        foreach($this->topic_listener_list[$this->topic] as $i=>$event){
+            if( $event->event_place==$model && $event->event_target==$method && ( !$event_liable_user_id || $event->event_liable_user_id==$event_liable_user_id) ){
+                unset($this->topic_listener_list[$this->topic][$i]);
+            }
+        }
+    }
+    private $topic_listener_list=[];
+    public function publish(){
+        $arguments=func_get_args();
+        $permanent_listener_list=$this->get_list("SELECT event_place,event_target,event_liable_user_id,event_note FROM event_list WHERE event_label='-TOPIC-' AND event_name='$this->topic' ORDER BY event_priority");
+        $listener_list= array_merge($permanent_listener_list,$this->topic_listener_list[$this->topic]??[]);
+        $previuos_return=null;
+        foreach($listener_list as $listener){
+            $Model=$this->Hub->load_model($listener->event_place);
+            $method=$listener->event_target;
+            $arguments[]=$listener->event_note;//custom registerer parameter
+            $arguments[]=&$previuos_return;//previous events results
+            try{
+                $previuos_return=call_user_func_array([$Model, $method],$arguments);
+            } catch (Exception $ex) {
+                $this->unsubscribe( $listener->event_place, $listener->event_target, $listener->event_liable_user_id );
+                $this->log("Topic subscriber '{$listener->event_place}->{$listener->event_target}' has been removed due to error: ".$ex);
+            }
+        }
+        return $previuos_return;
     }
 }

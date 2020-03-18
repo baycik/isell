@@ -8,53 +8,104 @@ abstract class DocumentBase extends Catalog{
     //////////////////////////////////////////
     // UTILS SECTION
     //////////////////////////////////////////
-    protected function doc($field=null,$value=null){
-        //TODO//
-        //add security check//
+    /**
+     * Getter/setter for document_list table for selected document
+     * @param string $field
+     * @param string $value
+     * @param bool $flush is needed to save changes immediately
+     * @return string
+     * @throws Exception
+     */
+    public function doc( string $field=null, string $value=null, bool $flush=true ):string{
 	if( !isset($this->document_properties) ){
-	    if( !isset($this->doc_id) ){
-		throw new Exception("Can't use properties because Document is not selected");
-	    }
-	    $this->document_properties=$this->get_row("SELECT * FROM document_list WHERE doc_id='$this->doc_id'");
+            throw new Exception("Can't use properties because Document is not selected");
 	}
 	if( isset($value) ){
-	    return $this->document_properties->$field=$value;
+            $this->Hub->set_level(2);
+            $this->document_properties->$field=$value;
+            $flush && $this->documentFlush();
+	    return $value;
 	}
-	return isset($this->document_properties->$field)?$this->document_properties->$field:null;
+	return $this->document_properties->$field??null;
     }
-    protected function isCommited(){
-	return $this->doc('is_commited')=='1';
-    }
-    //////////////////////////////////////////
-    // DOCUMENT SECTION
-    //////////////////////////////////////////
-    protected function documentSelect( $doc_id ){
-	$this->doc_id=$doc_id;
+    /**
+     * Loads document head to memory and checks permissions
+     * @param int $doc_id
+     * @return boolean
+     * @throws Exception
+     */
+    public function documentSelect( int $doc_id, bool $skip_if_same_doc=true ){
+        if( $skip_if_same_doc && $this->doc_id==$doc_id ){
+            return true;
+        }
 	unset($this->document_properties);
+        $document_properties=$this->get_row("SELECT * FROM document_list WHERE doc_id='$doc_id'");
+        $Company=$this->Hub->load_model("Company");
+        $document_properties->pcomp=$Company->companyGet( $document_properties->passive_company_id );
+        $is_access_granted=$document_properties->pcomp?1:0;
+        if( $is_access_granted ){
+            $this->doc_id=$doc_id;
+            $this->document_properties=$document_properties;
+            return true;
+        }
+        throw new Exception("Access denied for selection of this document",403);
     }
-    protected function documentFlush(){
+    /**
+     * Saves document head from memory
+     * @return bool
+     * @throws Exception
+     */
+    
+    private function documentFlush():bool{
 	if( !$this->document_properties ){
 	    throw new Exception("Can't flush properties because they are not loaded");
 	}
 	return $this->update('document_list',$this->document_properties,['doc_id'=>$this->document_properties->doc_id]);
     }
-    protected function documentCurrencyCorrectionGet(){
-	$native_curr=$this->Hub->pcomp('curr_code') && ($this->Hub->pcomp('curr_code') != $this->Hub->acomp('curr_code'))?0:1;
-	return $native_curr?1:1/$this->doc('doc_ratio');
+    
+    public function isCommited(){
+	return $this->doc('is_commited')=='1';
     }
-    protected function documentSetLevel($level){
-	return false;
+    
+    public function documentNumNext( $doc_type, $creation_mode=null ){
+        $Pref=$this->Hub->load_model('Pref');
+        $pref_name='document_number_'.$doc_type;
+        $pref=$Pref->getPrefs($pref_name);
+        if( !isset($pref[$pref_name]) ){
+            $pref[$pref_name]=0;
+        }
+        $pref[$pref_name]++;
+        if( $creation_mode!=='not_increase_number'){
+            $Pref->setPrefs($pref);
+        }
+        return $pref[$pref_name];
     }
+    //////////////////////////////////////////
+    // DOCUMENT CRUD SECTION
+    //////////////////////////////////////////
+    public function documentGet( int $doc_id, array $parts_to_load ){
+        $this->documentSelect($doc_id);
 
-    protected function documentAdd( $doc_type ){
+    }
+    
+    protected function documentCreate( int $doc_type, string $doc_handler=null ){
 	$this->Hub->set_level(1);
 	$user_id=$this->Hub->svar('user_id');
 	$acomp_id=$this->Hub->acomp('company_id');
 	$pcomp_id=$this->Hub->pcomp('company_id');
 	$vat_rate = $this->Hub->acomp('company_vat_rate');
 	$usd_ratio=$this->Hub->pref('usd_ratio');
+        
+        
+        $Company=$this->Hub->load_model("Company");
+        $is_access_granted=$Company->companyCheckUserPermission( $pcomp_id );
+        if( !$is_access_granted ){
+            throw new Exception("Access denied for creation document for this company"); 
+        }
+        
 	$new_document=[
 	    'doc_type'=>($doc_type?$doc_type:'1'),
+            'doc_handler'=>$doc_handler,
 	    'cstamp'=>date('Y-m-d H:i:s'),
 	    'active_company_id'=>$acomp_id,
 	    'passive_company_id'=>$pcomp_id,
@@ -65,85 +116,324 @@ abstract class DocumentBase extends Catalog{
 	    'modified_by'=>$user_id,
 	    'use_vatless_price'=>0,
 	    'notcount'=>0,
-	    'doc_num'=>0,
+	    'doc_num'=>$this->documentNumNext($doc_type),
 	    'doc_status_id'=>1
 	];
 	$prev_document=$this->headPreviousGet($acomp_id, $pcomp_id);
-	if( $prev_document && !is_numeric($prev_document->doc_type) ){
+	if( $prev_document ){
 	    $new_document['doc_type']=$prev_document->doc_type;
 	    $new_document['notcount']=$prev_document->notcount;
 	    $new_document['signs_after_dot']=$prev_document->signs_after_dot;
 	    $new_document['use_vatless_price']=$prev_document->use_vatless_price;
 	    $new_document['vat_rate']=$prev_document->vat_rate;
 	}
-	$new_document['doc_num']=$this->documentNumNext($acomp_id,$doc_type);
+        
 	$new_doc_id=$this->create('document_list', $new_document);
         $this->documentChangeCommitTransactions(1);
         $this->Hub->msg('Document created!');
 	return $new_doc_id;
     }
-    protected function documentNumNext($acomp_id,$doc_type){
-	$sql="SELECT 
-		MAX(doc_num)+1 
+    
+    public function documentUpdate( int $doc_id, $document ){
+        $this->documentSelect($doc_id);
+        $this->headUpdate( $doc_id, $document->head??null );
+        $this->entryListUpdate( $doc_id, $document->entries??null );
+        $this->viewListUpdate( $doc_id, $document->views??null );
+        $this->transListUpdate( $doc_id, $document->trans??null );
+    }
+    
+    public function documentDelete( int $doc_id ){
+        $this->documentSelect($doc_id);
+        
+	$this->db_transaction_start();
+	$this->delete('document_entries',['doc_id'=>$doc_id]);
+	$this->delete('document_view_list',['doc_id'=>$doc_id]);
+	$this->transClear();
+	$ok=$this->delete('document_list',['doc_id'=>$doc_id,'is_commited'=>0]);
+	$this->db_transaction_commit();
+	return $ok;        
+    }
+    //////////////////////////////////////////
+    // HEAD SECTION
+    //////////////////////////////////////////
+    public function headGet( int $doc_id=0 ){
+	if( $doc_id==0 ){
+	    return $this->headCreate();
+	}
+	$this->documentSelect($doc_id);
+        $this->document_properties->active_company_label=$this->get_value("SELECT label FROM companies_tree JOIN companies_list USING(branch_id) WHERE company_id={$this->document_properties->active_company_id}");
+        $this->document_properties->passive_company_label=$this->get_value("SELECT label FROM companies_tree JOIN companies_list USING(branch_id) WHERE company_id={$this->document_properties->passive_company_id}");
+        $this->document_properties->created_by=$this->get_value("SELECT last_name FROM user_list WHERE user_id={$this->document_properties->created_by}");
+        $this->document_properties->modified_by=$this->get_value("SELECT last_name FROM user_list WHERE user_id={$this->document_properties->modified_by}");
+        $this->document_properties->child_documents=$this->get_list("SELECT doc_id,cstamp,doc_num FROM document_list WHERE parent_doc_id={$doc_id}");
+	$this->document_properties->extra_expenses=$this->headGetExtraExpenses();
+        $checkout=$this->get_row("SELECT * FROM checkout_list WHERE parent_doc_id={$doc_id}");
+        if( $checkout ){
+            $this->document_properties->checkout_id=$checkout->checkout_id;
+            $this->document_properties->checkout_status=$checkout->checkout_status;
+            $this->document_properties->checkout_modified_by=$this->get_value("SELECT last_name FROM user_list WHERE user_id={$checkout->modified_by}");
+        }
+	return $this->document_properties;
+    }
+    
+    private function headCreate(){
+	$active_company_id = $this->Hub->acomp('company_id');
+	$passive_company_id = $this->Hub->pcomp('company_id');
+        if( !$active_company_id || !$passive_company_id ){
+            throw new Exception("Passive or active company is not selected");
+        }
+	$prevHead = $this->get_row("SELECT 
+		doc_type
 	    FROM 
 		document_list 
 	    WHERE 
-		doc_type='$doc_type' 
-		AND active_company_id='$acomp_id' 
-		AND cstamp>DATE_FORMAT(NOW(),'%Y')";
-	
-	$next_num = $this->get_value($sql);
-	return $next_num ? $next_num : 1;
+		passive_company_id='$passive_company_id' 
+		AND active_company_id='$active_company_id' 
+		AND doc_type<10 
+		AND is_commited=1 
+	    ORDER BY cstamp DESC LIMIT 1");
+        $defHead=(object)[];
+        $defHead->doc_id=0;
+        $defHead->doc_date=date("Y-m-d");
+        $defHead->doc_type=$prevHead->doc_type??1;
+        $defHead->doc_data='';
+        $defHead->doc_status_id=1;
+        $defHead->doc_num=$this->documentNumNext($def_head['doc_type'],'not_increase_number');
+        $defHead->doc_ratio=$this->Hub->pref('usd_ratio');
+        $defHead->curr_code=$this->Hub->pcomp('curr_code');
+        $defHead->vat_rate=$this->Hub->pcomp('vat_rate');
+        return $defHead;
     }
     
-    public function documentUpdate( int $doc_id, string $field, string $value){
-	$this->Hub->set_level(2);
-        if(!$doc_id){
-            $doc_id = $this->documentAdd();
-            $this->documentSelect($doc_id);
+    public function headUpdate( int $doc_id, object $head ){
+        foreach( $head as $field=>$value ){
+            $this->headFieldUpdate( $doc_id, $field, $value );
         }
-        $this->doc_id = $doc_id;
-	$this->documentSelect($doc_id);
-        
-	$ok=true;
-	$this->db_transaction_start();
-	switch($field){
-	    case 'is_commited':
-		$ok=$this->documentChangeCommit( $value );
-		break;
-	    case 'notcount':
-		$ok=$this->transChangeNotcount((bool) $value );
-		break;
-	    case 'use_vatless_price':
-                $this->query("UPDATE document_list SET use_vatless_price = '$value' WHERE doc_id='$doc_id'");
-		break;
-	    case 'doc_ratio':
-		$ok=$this->transChangeCurrRatio( $value );
-		break;
-            case 'doc_status_id':
-                $ok=$this->documentChangeStatus( $value );
-                break;
-	    case 'vat_rate':
-		$ok=$this->transChangeVatRate( $value );
-		break;
-	    case 'doc_date':
-		$field='cstamp';
-		break;
-	    case 'doc_num':
-		if( !is_int((int)$value)){
-		    return false;
-		};
-	    case 'extra_expenses':
-		return $this->documentSetExtraExpenses($value);   
-	}
-	if( !$ok ){
-	    return false;
-	}
-	$this->doc($field,$value);
-	$this->documentFlush();
-	$this->db_transaction_commit();
-	return true;
     }
+    
+    public function headFieldUpdate( int $doc_id, string $field, string $value=null ):string{
+        $fieldCamelCase=str_replace(' ', '', ucwords(str_replace('_', ' ', $field)));
+        $this->db_transaction_start();
+        $this->documentSelect($doc_id);
+        $this->doc( $field, $value );
+        $ok=$this->Topic('documentChange'.$fieldCamelCase)->publish( $field, $value, $this->document_properties );
+        if( $ok===false ){
+            $this->db_transaction_rollback();
+            return false;
+        }
+        $this->db_transaction_commit();
+        return true;
+    }
+    
+    public function headDelete(){
+        throw new Exception("Function Not exists");
+    }
+    //HEAD UTILS
+    private function headPreviousGet($acomp_id,$pcomp_id){
+	$sql="SELECT 
+		* 
+	    FROM 
+		document_list 
+	    WHERE 
+		active_company_id='$acomp_id' 
+		AND passive_company_id='$pcomp_id' 
+		AND doc_type<10 
+		AND is_commited=1 
+	    ORDER BY cstamp DESC LIMIT 1";
+	return 	$this->get_row($sql);
+    }
+    
+    private function headGetExtraExpenses(){
+	$doc_type=$this->doc('doc_type');
+	$doc_id=$this->doc('doc_id');
+	if($doc_id && $doc_type==2){//only for buy documents
+	    return $this->get_value("SELECT ROUND(SUM(self_price-invoice_price),2) FROM document_entries WHERE doc_id=$doc_id LIMIT 1");
+	}
+	return 0;
+    }
+    //////////////////////////////////////////
+    // BODY SECTION
+    //////////////////////////////////////////
+    public function entryGet( int $doc_id, int $doc_entry_id ){
+        $entry_list=$this->entryListGet( $doc_id, $doc_entry_id );
+        return $entry_list[0];
+    }
+    public function entryCreate( int $doc_id, object $entry ){
+        $this->db_transaction_start();
+        $doc_entry_id=$this->create('document_entries', ['doc_id'=>$doc_id]);
+        $update_ok=$this->entryUpdate( $doc_id, $doc_entry_id, $entry );
+        if( $update_ok ){
+            $this->db_transaction_commit();
+            return true;
+        }
+        $this->db_transaction_rollback();
+        return false;
+    }
+    public function entryUpdate( int $doc_id, int $doc_entry_id, object $entry ){
+        return null;
+    }
+    public function entryDelete( int $doc_id, int $doc_entry_id ){
+        $this->documentSelect($doc_id);
+        $entry=(object)[
+            'product_quantity'=>0
+        ];
+        $this->db_transaction_start();
+        $update_ok=$this->entryUpdate( $doc_id, $doc_entry_id, $entry );
+        $delete_ok=$this->delete('document_entries',['doc_entry_id'=>$doc_entry_id]);
+        if( $update_ok && $delete_ok ){
+            $this->db_transaction_commit();
+            return true;
+        }
+        $this->db_transaction_rollback();
+        return false;
+    }
+
+    public function entryListGet( int $doc_id, int $doc_entry_id=0 ){
+        $this->entryListCreate( $doc_id, $doc_entry_id );
+        return $this->get_list("SELECT * FROM tmp_entry_list ORDER BY pl.product_code");
+    }
+    public function entryListCreate( int $doc_id, int $doc_entry_id=0 ){
+        return null;
+    }
+    public function entryListUpdate( int $doc_id, array $entry_list ){
+        return null;
+    }
+    public function entryListDelete( int $doc_id, array $entry_id_list ) {
+        $this->documentSelect($doc_id);
+        foreach( $entry_id_list as $doc_entry_id ){
+            $this->entryDelete( $doc_id, $doc_entry_id );
+        }
+        return true;
+    }
+    //////////////////////////////////////////
+    // FOOTER SECTION
+    //////////////////////////////////////////
+    public function footGet( $doc_id ){
+        
+    }
+    //////////////////////////////////////////
+    // VIEWS SECTION
+    //////////////////////////////////////////
+    public function viewGet( int $doc_view_id ){
+        return null;
+    }
+    public function viewCreate( int $doc_id, object $view ){
+        return null;
+    }
+    public function viewUpdate( int $doc_view_id, object $view ){
+        return null;
+    }
+    public function viewDelete( int $doc_view_id ){
+        return null;
+    }
+    
+    public function viewListGet( int $doc_id ){
+        return null;
+    }
+    public function viewListCreate( int $doc_id, array $view_list ){
+        return null;
+    }
+    public function viewListUpdate( int $doc_id, array $view_list ){
+        return null;
+    }
+    public function viewListDelete( int $doc_id, array $view_id_list ){
+        return null;
+    }
+    //////////////////////////////////////////
+    // TRANSACTIONS SECTION
+    //////////////////////////////////////////
+    public $transaction_table=[
+        
+    ];
+    public function transListCreate(){
+        
+    }
+    public function transListUpdate(){
+        
+    }
+    public function transListDelete(){
+        
+    }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+//    public function documentHeadUpdate( int $doc_id, string $field, string $value){
+//        if(!$doc_id){
+//            $doc_id = $this->documentCreate();
+//        }
+//	$this->documentSelect($doc_id);
+//        
+//	$ok=true;
+//	$this->db_transaction_start();
+//	switch($field){
+//	    case 'is_commited':
+//		$ok=$this->documentChangeCommit( $value );
+//		break;
+//	    case 'notcount':
+//		$ok=$this->transChangeNotcount((bool) $value );
+//		break;
+//	    case 'doc_ratio':
+//		$ok=$this->transChangeCurrRatio( $value );
+//		break;
+//            case 'doc_status_id':
+//                $ok=$this->documentChangeStatus( $value );
+//                break;
+//	    case 'vat_rate':
+//		$ok=$this->transChangeVatRate( $value );
+//		break;
+//	    case 'doc_date':
+//		$field='cstamp';
+//		break;
+//	    case 'doc_num':
+//		if( !is_int((int)$value)){
+//		    return false;
+//		}
+//	    case 'extra_expenses':
+//		return $this->documentSetExtraExpenses($value);   
+//	}
+//	if( !$ok ){
+//	    return false;
+//	}
+//	$this->doc($field,$value);
+//	$this->db_transaction_commit();
+//	return true;
+//    }
     
     
     
@@ -158,7 +448,7 @@ abstract class DocumentBase extends Catalog{
         }
         $old_status_id=$this->doc('doc_status_id');
         $Event=$this->Hub->load_model("Event");
-        $Event->Topic('documentStatusChanged')->publish($old_status_id,$new_status_id);
+        $Event->Topic('documentChangeDocStatusId')->publish($old_status_id,$new_status_id);
         
         /*
         if( $new_status_id==2 ){//reserved 
@@ -204,23 +494,13 @@ abstract class DocumentBase extends Catalog{
 	$this->Hub->set_level(2);
 	$this->documentSelect($old_doc_id);
 	$old_doc_type = $this->doc('doc_type');
-	$new_doc_id=$this->documentAdd($old_doc_type);
+	$new_doc_id=$this->documentCreate($old_doc_type);
 	$this->duplicateEntries($new_doc_id, $old_doc_id);
 	$this->duplicateHead($new_doc_id, $old_doc_id);
 	return $new_doc_id;
     }
     protected function documentUpdateRatio( $new_ratio ){
 	
-    }
-    protected function documentDelete( $doc_id ){
-        $this->doc_id = $doc_id;
-	$this->db_transaction_start();
-	$this->delete('document_entries',['doc_id'=>$doc_id]);
-	$this->delete('document_view_list',['doc_id'=>$doc_id]);
-	$this->transClear();
-	$ok=$this->delete('document_list',['doc_id'=>$doc_id,'is_commited'=>0]);
-	$this->db_transaction_commit();
-	return $ok;
     }
     //////////////////////////////////////////
     // COMMIT SECTION
@@ -267,107 +547,14 @@ abstract class DocumentBase extends Catalog{
     //////////////////////////////////////////
     // HEADER SECTION
     //////////////////////////////////////////
-    public function headGet( $doc_id ){
-	if( $doc_id==0 ){
-	    return $this->headDefaultGet();
-	}
-	//$this->documentSelect($doc_id);
-	$sql="
-	    SELECT
-		doc_id,
-		active_company_id,
-                (SELECT label FROM companies_tree JOIN companies_list USING(branch_id) WHERE company_id=active_company_id) active_company_label,
-		passive_company_id,
-                (SELECT label FROM companies_tree JOIN companies_list USING(branch_id) WHERE company_id=passive_company_id) label,
-		IF(is_reclamation,-doc_type,doc_type) doc_type,
-		is_reclamation,
-		is_commited,
-		notcount,
-		vat_rate,
-		use_vatless_price,
-		signs_after_dot,
-		doc_ratio,
-		doc_num,
-                doc_status_id,
-		DATE_FORMAT(document_list.cstamp,'%Y-%m-%d') doc_date,
-		doc_data,
-		(SELECT last_name FROM user_list WHERE user_id=document_list.created_by) created_by,
-		(SELECT last_name FROM user_list WHERE user_id=document_list.modified_by) modified_by,
-                (SELECT last_name FROM user_list WHERE user_id=checkout_list.modified_by) checkout_modifier,
-                checkout_status, checkout_id
-	    FROM
-		document_list
-                    LEFT JOIN
-                checkout_list ON checkout_list.parent_doc_id=document_list.doc_id
-	    WHERE doc_id=$doc_id"
-	;
-	$head=$this->get_row($sql);
-	$head->extra_expenses=$this->documentGetExtraExpenses();
-	return $head;
-    }
-    protected function headPreviousGet($acomp_id,$pcomp_id){
-	$sql="SELECT 
-		* 
-	    FROM 
-		document_list 
-	    WHERE 
-		active_company_id='$acomp_id' 
-		AND passive_company_id='$pcomp_id' 
-		AND doc_type<10 
-		AND is_commited=1 
-	    ORDER BY cstamp DESC LIMIT 1";
-	return 	$this->get_row($sql);
-    }
-    protected function headDefaultGet(){
-	$active_company_id=$this->Hub->acomp('company_id');
-	$passive_company_id = $this->Hub->pcomp('company_id');
-        $def_head=[
-	    'doc_id'=>0,
-            'doc_date'=>date('Y-m-d'),
-            'doc_num'=>0,
-            'doc_data'=>'',
-            'doc_ratio'=>$this->Hub->pref('usd_ratio'),
-            'doc_status_id'=>'',
-            'label'=>$this->Hub->pcomp('label'),
-            'passive_company_id'=>$passive_company_id,
-            'curr_code'=>$this->Hub->pcomp('curr_code'),
-            'vat_rate'=>$this->Hub->acomp('company_vat_rate'),
-            'doc_type'=>1,
-            'signs_after_dot'=>3,
-            'doc_status_id'=>1
-        ];
-	$prev_doc = $this->get_row("SELECT 
-		doc_type,
-		signs_after_dot 
-	    FROM 
-		document_list 
-	    WHERE 
-		passive_company_id='$passive_company_id' 
-		AND active_company_id='$active_company_id' 
-		AND doc_type<10 
-		AND is_commited=1 
-	    ORDER BY cstamp DESC LIMIT 1");
-        if( $prev_doc ){
-            $def_head['doc_type']=$prev_doc->doc_type;
-            $def_head['signs_after_dot']=$prev_doc->signs_after_dot;
-        }
-        $def_head['doc_num']=$this->getNextDocNum($def_head['doc_type']);
-        return ['head'=>$def_head, 'body'=>[], 'foot'=>[], 'vews'=>[]];
-    }
+
     
-    protected function getNextDocNum($doc_type) {//Util
-	$active_company_id = $this->Hub->acomp('company_id');
-	$next_num = $this->get_value("
-	    SELECT 
-		MAX(doc_num)+1 
-	    FROM 
-		document_list 
-	    WHERE 
-	    IF('$doc_type'>0,doc_type='$doc_type' AND is_reclamation=0,doc_type=-'$doc_type' AND is_reclamation=1) 
-	    AND active_company_id='$active_company_id' 
-	    ");
-	return $next_num ? $next_num : 1;
+      protected function documentCurrencyCorrectionGet(){
+	$native_curr=$this->Hub->pcomp('curr_code') && ($this->Hub->pcomp('curr_code') != $this->Hub->acomp('curr_code'))?0:1;
+	return $native_curr?1:1/$this->doc('doc_ratio');
     }
+
+
     protected function calcCorrections( $skip_vat_correction=false, $skip_curr_correction=false ) {
 	$doc_id=$this->doc('doc_id');
 	$curr_code=$this->Hub->pcomp('curr_code');
@@ -402,7 +589,7 @@ abstract class DocumentBase extends Catalog{
 	$doc_id=$this->doc('doc_id');
 	$this->calcCorrections( $skip_vat_correction, $skip_curr_correction );
         $curr_code=$this->Hub->acomp('curr_code');
-	$company_lang = $this->Hub->pcomp('language');
+	$company_lang = $this->Hub->pcomp('language')??'ru';
         $pcomp_price_label=$this->Hub->pcomp('price_label');
         $this->query("DROP TEMPORARY TABLE IF EXISTS tmp_doc_entries");
         $sql="CREATE TEMPORARY TABLE tmp_doc_entries ( INDEX(product_code) ) AS (
@@ -452,7 +639,7 @@ abstract class DocumentBase extends Catalog{
     protected function entryUpdate(){
 	
     }*/
-    public function entryDelete($doc_id,$doc_entry_ids){
+    public function entryDelete222($doc_id,$doc_entry_ids){
 	$this->documentSelect($doc_id);
 	$this->db_transaction_start();
 	foreach($doc_entry_ids as $doc_entry_id){
@@ -611,7 +798,7 @@ abstract class DocumentBase extends Catalog{
     //////////////////////////////////////////
     // FOOT SECTION
     //////////////////////////////////////////
-    protected function footGet(){
+    protected function footGet2222(){
         $this->entriesTmpCreate( $this->doc_id );
 	$curr_code=$this->Hub->pcomp('curr_code');
 	$curr_symbol=$this->get_value("SELECT curr_symbol FROM curr_list WHERE curr_code='$curr_code'");
@@ -768,17 +955,5 @@ abstract class DocumentBase extends Catalog{
 	    $expense_ratio=$expense/$footer->vatless+1;
 	    return $this->query("UPDATE document_entries SET self_price=invoice_price*$expense_ratio WHERE doc_id=$doc_id");
 	}
-    }
-    private function documentGetExtraExpenses(){
-	$doc_type=$this->doc('doc_type');
-	$doc_id=$this->doc('doc_id');
-	if($doc_id && $doc_type==2){
-	    //only for buy documents
-	    $footer=$this->footerGet();
-	    $expense_ratio=$this->get_value("SELECT self_price/invoice_price FROM document_entries WHERE doc_id=$doc_id LIMIT 1");
-	    $expense=$footer->vatless*($expense_ratio-1);
-	    return $expense;
-	}
-	return 0;
     }
 }    

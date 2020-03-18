@@ -11,7 +11,7 @@ EOT;
 $before[]=<<<EOT
 EOT;
 $after[]=<<<EOT
-\n  <div title="Менеджер Мотиваций" href="CampaignManager/index" style="min-height: 500px;"></div>
+\n  <div title="％ Мотивации" href="CampaignManager/index" style="min-height: 500px;"></div>
 EOT;
 
 $filename[]=<<<EOT

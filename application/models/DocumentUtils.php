@@ -4,9 +4,9 @@ class DocumentUtils extends Catalog{
     public $min_level=1;
     protected function selectDoc( $doc_id ){
 	if( $doc_id!=$this->Hub->svar('doc_id') ){
-	    $this->Hub->svar('doc_id',$doc_id);
-	    unset( $this->_doc );
-	}
+            $this->Hub->svar('doc_id',$doc_id);
+            unset( $this->_doc );
+        }
     }
     private function checkPassiveLoad(){
 	if( $this->Hub->pcomp('company_id')!==$this->_doc->passive_company_id  ){

@@ -59,28 +59,18 @@ $filename[]=<<<EOT
 views/trade/document.html
 EOT;
 $search[]=<<<EOT
-<div class="grid-item" style="color:green">{{ leftover }}{{ product_unit }}</div></div>
+<div class="grid-item" style="color:green">[x{{ product_spack}}] {{ leftover }}{{ product_unit }}</div></div>
 EOT;
 $replace[]=<<<EOT
 EOT;
 $before[]=<<<EOT
 EOT;
 $after[]=<<<EOT
-{{if delivery_group|notempty}}
+    {{if delivery_group|notempty}}
         <div class="product-delivery-available">
                 <div class="delivery-days">
                     {{delivery_group}}
-                    <div>{{.}}
-                        {{if supleftover|notequals>1}}
-                            {{if supleftover|more>5}}
-                                дней:
-                            {{else}}
-                                дня:
-                            {{/if}}
-                        {{else}}
-                            день:
-                            {{/if}}
-                     </div>
+                    <div>{{.}}дн</div>
                     {{/delivery_group}}
                 </div> 
                 <div class="delivery-leftovers">
@@ -227,19 +217,7 @@ EOT;
 
 
 
-$filename[]=<<<EOT
-models/DocumentItems.php
-EOT;
-$search[]=<<<'EOT'
- GET_PRICE(product_code,{$pcomp_id},{$usd_ratio}) product_price_total_raw
-EOT;
-$replace[]=<<<EOT
-EOT;
-$before[]=<<<EOT
-EOT;
-$after[]=<<<EOT
-,fetch_count-DATEDIFF(NOW(),fetch_stamp) AS popularity 
-EOT;
+
 
 
 $filename[]=<<<EOT

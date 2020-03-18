@@ -7,96 +7,7 @@
 require_once 'Catalog.php';
 class Company extends Catalog{
     
-    public $branchFetch=['id'=>['int',0]];
-    public function branchFetch($parent_id) {
-	$table = "companies_tree LEFT JOIN companies_list USING(branch_id)";
-	$assigned_path=  $this->Hub->svar('user_assigned_path');
-        if( $assigned_path && $parent_id==0 ){
-            $parent_id=null;
-        }
-	$level=$this->Hub->svar('user_level');
-	return $this->treeFetch($table, $parent_id, 'top', $assigned_path, $level, 'is_active,is_leaf,label');
-    }
-    
-    public function listFetch(string $q='', string $mode='', bool $transliterated=false, int $offset=0, int $limit=20 ){
-	$assigned_path=$this->Hub->svar('user_assigned_path');
-	$level=$this->Hub->svar('user_level');
-        $and_where="AND path LIKE '$assigned_path%' AND level<=$level AND label LIKE '%$q%'";
-	if( $mode=='active_only' ){
-	    $and_where='AND is_active=1';
-	}
-        $sql="SELECT 
-                company_id,
-                label,
-                path
-            FROM
-                companies_tree
-            JOIN 
-                companies_list USING(branch_id)
-            WHERE
-                is_leaf=1
-                $and_where
-            ORDER BY path
-            LIMIT $limit OFFSET $offset";
-        $companies=$this->get_list( $sql );
-        
-//        if( $mode=='selected_passive_if_empty' && $this->Hub->pcomp('company_id') ){
-//	    array_push($companies,['company_id'=>$this->Hub->pcomp('company_id'),'label'=>$this->Hub->pcomp('label'),'path'=>$this->Hub->pcomp('path')]);
-//	} else {
-//	    array_push($companies,['company_id'=>0,'label'=>'-','path'=>'']);
-//	}
-	if( $mode=='with_active' ){
-	    array_push($companies,['company_id'=>$this->Hub->acomp('company_id'),'label'=>$this->Hub->acomp('company_name'),'path'=>'']);
-	}
-        if( !count($companies) && !$transliterated ){
-            return $this->listFetch($this->transliterate($q), $mode, true, $offset, $limit );
-        }
-//        if( !count($companies) ){
-//            return $this->suggestTransliterate($mode,$q,$transliterated);
-//        }
-	return $companies;
-    }
-    
-//    private function suggestTransliterate($mode,$q,$transliterated){
-//        if( $transliterated==false || $transliterated=='fromlatin' ){
-//            if( $transliterated==false ){
-//                $direction='fromlatin';
-//            } else {
-//                $direction='fromcyrilic';
-//            }
-//            return $this->listFetch($mode,$this->transliterate($q,$direction),$direction);
-//        }
-//        return [];
-//    }
-    
-    public function listFetchAll($mode=NULL){
-	$assigned_path=$this->Hub->svar('user_assigned_path');
-	$level=$this->Hub->svar('user_level');
-	$where='';
-	if( $mode=='active_only' ){
-	    $where.='AND is_active=1';
-            $assigned_path='';
-	}
-	$sql="SELECT 
-		company_id,
-		label,
-		path
-	    FROM
-		companies_tree
-	    JOIN 
-		companies_list USING(branch_id)
-	    WHERE
-		is_leaf=1
-		    AND
-		path LIKE '$assigned_path%'
-		    AND
-		level<=$level
-		$where";
-	return $this->get_list( $sql );
-    }
-
-    public $companyGet=['int'];
-    public function companyGet( $company_id=0 ){
+    public function companyGet( int $company_id=0 ){
 	if( $company_id==0 ){
 	    return false;
 	}
@@ -119,21 +30,7 @@ class Company extends Catalog{
 	return $this->get_row($sql);
     }
     
-    public $companyFindByCode=['int','int'];
-    public function companyFindByCode( $company_code=null, $company_tax_id=null, $company_bank_account=null ){
-        $sql="SELECT 
-                company_id 
-            FROM 
-                companies_list 
-            WHERE 
-                IF('$company_code',company_code='$company_code',0) 
-                OR IF('$company_tax_id',company_tax_id='$company_tax_id',0)
-                OR IF('$company_bank_account',company_bank_account='$company_bank_account',0)";
-        return $this->get_value($sql);
-    }
-    
-    public $companyUpdate=['company_id'=>'int','field'=>'[a-z_0-9]+','value'=>'string'];
-    public function companyUpdate($company_id, $field, $value='') {
+    public function companyUpdate( int $company_id, string $field, string $value='' ) {
 	$this->Hub->set_level(2);
 	$assigned_path=$this->Hub->svar('user_assigned_path');
 	if( $this->Hub->acomp('company_id')==$company_id ){
@@ -162,6 +59,95 @@ class Company extends Catalog{
 	    $this->selectPassiveCompany($company_id);
 	}
 	return $ok;
+    }
+    
+    public function companyCheckUserPermission( int $passive_company_id ){
+        $company=$this->companyGet( $passive_company_id );
+        return (bool) $company??false;
+    }
+    
+    public function companyFindByCode( string $company_code=null, string $company_tax_id=null, string $company_bank_account=null ){
+        $sql="SELECT 
+                company_id 
+            FROM 
+                companies_list 
+            WHERE 
+                IF('$company_code',company_code='$company_code',0) 
+                OR IF('$company_tax_id',company_tax_id='$company_tax_id',0)
+                OR IF('$company_bank_account',company_bank_account='$company_bank_account',0)";
+        return $this->get_value($sql);
+    }
+    
+    //////////////////////////////////////////////
+    // COMPANY LIST SECTION
+    //////////////////////////////////////////////
+    public function listFetch( string $q='', string $mode='', bool $transliterated=false, int $offset=0, int $limit=20 ){
+	$assigned_path=$this->Hub->svar('user_assigned_path');
+	$level=$this->Hub->svar('user_level');
+        $and_where="AND path LIKE '$assigned_path%' AND level<=$level AND label LIKE '%$q%'";
+	if( $mode=='active_only' ){
+	    $and_where='AND is_active=1';
+	}
+        $sql="SELECT 
+                company_id,
+                label,
+                path
+            FROM
+                companies_tree
+            JOIN 
+                companies_list USING(branch_id)
+            WHERE
+                is_leaf=1
+                $and_where
+            ORDER BY path
+            LIMIT $limit OFFSET $offset";
+        $companies=$this->get_list( $sql );
+	if( $mode=='with_active' ){
+	    array_push($companies,['company_id'=>$this->Hub->acomp('company_id'),'label'=>$this->Hub->acomp('company_name'),'path'=>'']);
+	}
+        if( !count($companies) && !$transliterated ){
+            return $this->listFetch($this->transliterate($q), $mode, true, $offset, $limit );
+        }
+	return $companies;
+    }
+    
+    public function listFetchAll( $mode=NULL ){
+	$assigned_path=$this->Hub->svar('user_assigned_path');
+	$level=$this->Hub->svar('user_level');
+	$where='';
+	if( $mode=='active_only' ){
+	    $where.='AND is_active=1';
+            $assigned_path='';
+	}
+	$sql="SELECT 
+		company_id,
+		label,
+		path
+	    FROM
+		companies_tree
+	    JOIN 
+		companies_list USING(branch_id)
+	    WHERE
+		is_leaf=1
+		    AND
+		path LIKE '$assigned_path%'
+		    AND
+		level<=$level
+		$where";
+	return $this->get_list( $sql );
+    }    
+    //////////////////////////////////////////////
+    // COMPANY TREE SECTION
+    //////////////////////////////////////////////
+    public $branchFetch=['id'=>['int',0]];
+    public function branchFetch($parent_id) {
+	$table = "companies_tree LEFT JOIN companies_list USING(branch_id)";
+	$assigned_path=  $this->Hub->svar('user_assigned_path');
+        if( $assigned_path && $parent_id==0 ){
+            $parent_id=null;
+        }
+	$level=$this->Hub->svar('user_level');
+	return $this->treeFetch($table, $parent_id, 'top', $assigned_path, $level, 'is_active,is_leaf,label');
     }
     
     public $companyTreeCreate=['parent_id'=>['int',0],'label'=>'string','branch_type'=>'string'];
@@ -297,7 +283,7 @@ class Company extends Catalog{
 	    case 'discount':
 		return $this->discountUpdate($field,$value);
 	    case 'other':
-                if( $field=='skip_breakeven_check' ){
+                if( in_array($field, array('deferment','debt_limit','skip_breakeven_check')) ){
                     $this->Hub->set_level(3);
                 }
 		if( in_array($field, array('deferment','debt_limit','curr_code','price_label','expense_label','manager_id','is_supplier','skip_breakeven_check','company_acc_list','language')) ){

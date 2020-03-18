@@ -261,7 +261,7 @@
                 }
             },
             create:function(view_type_id){
-                $.post("../DocumentView/viewCreate/"+view_type_id,function(doc_view_id){
+                $.post("../DocumentView/viewCreate/",{view_type_id:view_type_id},function(doc_view_id){
                     if( doc_view_id*1 ){
                         App.document.blanks.open(doc_view_id);
                         App.document.blanks.load();

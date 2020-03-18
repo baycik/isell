@@ -201,7 +201,7 @@ class DocumentCore extends DocumentUtils{
 	    case 'doc_type':
 		return $this->setType($new_val);
 	    case 'doc_status_id':
-		return $this->documentChangeStatus($new_val);//setStatus(null,$new_val);
+		return $this->documentStatusChange($new_val);//setStatus(null,$new_val);
 	    case 'extra_expenses':
 		return $this->setExtraExpenses($new_val);
 	}
@@ -237,11 +237,10 @@ class DocumentCore extends DocumentUtils{
         }
         $doc_status_id=$this->get_value("SELECT doc_status_id FROM document_status_list WHERE status_code='$new_status_code'");
         $this->selectDoc($doc_id);
-        return $this->documentChangeStatus($doc_status_id);//$this->setStatus($doc_id,$doc_status_id);
+        return $this->documentStatusChange($doc_status_id);//$this->setStatus($doc_id,$doc_status_id);
     }
     
-    
-    private function documentChangeStatus($new_status_id){
+    private function documentStatusChange($new_status_id){
         if( !isset($new_status_id) ){
             return false;
         }
@@ -254,11 +253,20 @@ class DocumentCore extends DocumentUtils{
          * First need to update doc status to proper calculate reserved count
          */
         $status_change_ok=$this->update('document_list',['doc_status_id'=>$new_status_id],['doc_id'=>$this->doc('doc_id')]);
-
+        
+        $this->loadDoc($this->doc('doc_id'));
         $Events=$this->Hub->load_model("Events");
-        $Events->Topic('documentStatusChanged')->publish($old_status_id,$new_status_id,$this->_doc);
+        $Events->Topic('documentChangeDocStatusId')->publish($old_status_id,$new_status_id,$this->_doc);
         
         return $status_change_ok;
+    }
+    
+    public function documentStatusGet( $doc_id=null ){
+        if( $doc_id ){
+            $this->selectDoc($doc_id);
+            $this->loadDoc($doc_id);
+        }
+        return $this->doc('doc_status_id');
     }
 
     

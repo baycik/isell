@@ -183,17 +183,16 @@ class Events extends Catalog{
 	$ViewManager->store($dump);
 	$ViewManager->outRedirect($out_type);
     }
-    
-    public function Topic( string $topic ){
-        $this->topic=$topic;
-        return $this;
-    }
-    public function subscribe( string $model, string $method, string $param='' ){
+    /*
+     * HANDLING OF PERMANENT EVENTS
+     */
+    public function subscribe( string $model, string $method, string $param='', int $priority=10 ){
         $event_liable_user_id=$this->Hub->svar('user_id');
         $event=[
             'event_place'=>$model,
             'event_target'=>$method,
             'event_note'=>$param,
+            'event_priority'=>$priority,
             'event_liable_user_id'=>$event_liable_user_id,
             'event_label'=>'-TOPIC-',
             'event_name'=>$this->topic
@@ -206,23 +205,5 @@ class Events extends Catalog{
             $user_case=" AND event_liable_user_id='$event_liable_user_id'";
         }
         $this->query("DELETE FROM event_list WHERE event_label='-TOPIC-' AND event_name='$this->topic' AND event_place='$model' AND event_target='$method' $user_case");
-    }
-    public function publish(){
-        $arguments=func_get_args();
-        $listener_list=$this->get_list("SELECT event_place,event_target,event_liable_user_id,event_note FROM event_list WHERE event_label='-TOPIC-' AND event_name='$this->topic'");
-        $previuos_return=null;
-        foreach($listener_list as $listener){
-            $Model=$this->Hub->load_model($listener->event_place);
-            $method=$listener->event_target;
-            $arguments[]=$listener->event_note;//custom registerer parameter
-            $arguments[]=&$previuos_return;//previous events results
-            try{
-                $previuos_return=call_user_func_array([$Model, $method],$arguments);
-            } catch (Exception $ex) {
-                $this->unsubscribe( $listener->event_place, $listener->event_target, $listener->event_liable_user_id );
-                $this->log("Topic subscriber '{$listener->event_place}->{$listener->event_target}' has been removed due to error: ".$ex);
-            }
-        }
-        return $previuos_return;
     }
 }

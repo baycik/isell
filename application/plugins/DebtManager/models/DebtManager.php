@@ -13,6 +13,10 @@
 
 class DebtManager extends Catalog {
     public $settings = [];
+    public function index(){
+        $this->Hub->set_level(3);
+        $this->load->view('debt_manager.html');
+    }
     
     
      public function install(){
@@ -58,9 +62,9 @@ class DebtManager extends Catalog {
         }
         $buy_total = '';
         $sell_total = '';
-        if(isset($total[0])){
-            $buy_total = $total[0]->amount_buy; 
-            $sell_total = $total[0]->amount_sell;
+        if(isset($total)){
+            $buy_total = $total->amount_buy; 
+            $sell_total = $total->amount_sell;
         } 
         return ['date' => $view_date, 'list' => $list, 'total' => ['buy'=> $buy_total, 'sell'=> $sell_total] ];
     }
@@ -181,7 +185,7 @@ class DebtManager extends Catalog {
         return $this->get_list("SELECT * FROM tmp");
     }
     private function getTotal(){
-        return $this->get_list("SELECT ROUND(SUM(amount_buy), 2) as amount_buy, ROUND(SUM(amount_sell), 2) as amount_sell FROM tmp");
+        return $this->get_row("SELECT ROUND(SUM(amount_buy), 2) as amount_buy, ROUND(SUM(amount_sell), 2) as amount_sell FROM tmp");
     }
     
     private function composeDate($group_by, $block_number ){
@@ -249,21 +253,20 @@ class DebtManager extends Catalog {
                 "disabled" => 0
             ]]
         ];
-        $event_id= null;
-            $doc_id='';
-            $event_date= date( "Y-m-d H:i:s", strtotime(date("Y-m-d H:i:s")."+7 day" ));
-            $event_priority='3medium';
-            $event_name='Уведомление';
-            $event_label='-TASK-';
-            $event_target='0';
-            $event_place='';
-            $event_note='';
-            $event_descr='Уведомление о задолженностях';
-            $event_program = json_encode($program);
-            $event_repeat='7 0:0';
-            $event_status='pending';
-            $event_liable_user_id='';
-            $event_is_private = '1';
+        $doc_id='';
+        $event_date= date( "Y-m-d H:i:s", strtotime(date("Y-m-d H:i:s")."+7 day" ));
+        $event_priority='3medium';
+        $event_name='Уведомление';
+        $event_label='-TASK-';
+        $event_target='0';
+        $event_place='';
+        $event_note='';
+        $event_descr='Уведомление о задолженностях';
+        $event_program = json_encode($program);
+        $event_repeat='7 0:0';
+        $event_status='pending';
+        $event_liable_user_id='';
+        $event_is_private = '1';
         $event_id = $Events->eventSave($event_id, 
                 $doc_id, 
                 $event_date,
@@ -330,7 +333,7 @@ class DebtManager extends Catalog {
         $msg = 'Уважаемый '.$this->Hub->svar('user')->first_name.',</br>';
         $filter['block_number'] = -1;
         $this->createTmp($filter,$user_id);
-        $total = $this->getTotal()[0];
+        $total = $this->getTotal();
         if(empty($total)){
             return false;
         }
@@ -340,12 +343,11 @@ class DebtManager extends Catalog {
         if($filter['block_number'] == -1){
             if((int)$total->amount_sell != 0){
                 $msg .= 'Есть просроченные платежи от клиентов на сумму: <b>'.$total->amount_sell.'</b>.</br> ';
-            } 
+            }
             if((int)$total->amount_buy != 0){
                 $msg .= 'Есть задолженность перед поставщиками в размере: <b>'.$total->amount_buy.'</b>.</br> ';
             }
         }
-            
         $msg .= 'Будьте любезны, получите больше информации в <a href="#Home#home_main_tabs" onclick="location="#Home#home_main_tabs">Менеджере задолженностей</a>.';
         return $msg;
     }
@@ -449,7 +451,20 @@ class DebtManager extends Catalog {
     
     public function dashboard(){
         $this->Hub->set_level(1);
-        $this->load->view("../dashboard.html");
+        $this->load->view("dashboard.html");
     }
+    
+    public function views( string $path ){
+	header("X-isell-type:OK");
+	$this->load->view($path);
+    }
+
+    
+    
+    
+    
+    
+    
+    
 
 }

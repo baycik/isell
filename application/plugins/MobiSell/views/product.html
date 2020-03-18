@@ -24,17 +24,19 @@
                     product_object.quantity_in_cart = App.stock.cart.findInCart(product_object.product_id).product_quantity;
                 }
                 App.renderTpl('product_info', product_object);
+                setTimeout(function(){
+                    window.scrollTo(0, 0); 
+                },100);
             });
         }
     };
 </script>
 <style>
-
 </style>
 
 <div class="ui segment covert" id="product_info">
     <div class="content">
-        <div class="ui header">{{product_name}}</div>
+        <div class="ui header">{{product_name}}<a name="product_id"></a></div>
         <div class="ui stackable two column grid">
             <div class="eight wide column">
                 <a href="../Storage/image_flush/?size=1000x1000&path=/dynImg/{{product_img}}">

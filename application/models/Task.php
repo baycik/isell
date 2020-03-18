@@ -72,16 +72,15 @@ class Task extends Events {
     }
 
     private function execute_command($command, $previous_return) {
-	$args = [];
-	$arguments=  explode(',', $command->arguments);
-	if( is_array($arguments) ){
-	    foreach ($arguments as $arg) {
-		if ($arg == '-PREVIOUS-RETURN-') {
-		    $arg = $previous_return;
-		}
-		$args[] = $arg;
-	    }
-	}
+        if( !is_array($command->arguments) ){
+            $command->arguments=explode(',', $command->arguments??'');
+        }
+        foreach ($command->arguments as $arg) {
+            if ($arg == '-PREVIOUS-RETURN-') {
+                $arg = $previous_return;
+            }
+            $args[] = $arg;
+        }
         try{
             $Model = $this->Hub->load_model($command->model);
             $return = call_user_func_array([$Model, $command->method], $args);
@@ -100,10 +99,24 @@ class Task extends Events {
 	    global $_this;
 	    $message = "Type: " . get_class( $e ) . "; Message: {$e->getMessage()}; File: {$e->getFile()}; Line: {$e->getLine()};";
 	    $_this->log($message);
-            $_this->postpone("'0 3:0' DAY_MINUTE");
+            if( $e instanceof ErrorException ){
+                $critical_exceptions =
+                    1 * E_ERROR |
+                    1 * E_PARSE |
+                    1 * E_CORE_ERROR |
+                    1 * E_COMPILE_ERROR |
+                    1 * E_USER_ERROR |
+                    1 * E_STRICT |
+                    1 * E_RECOVERABLE_ERROR;
+                if( $e->getSeverity() & $critical_exceptions == 0 ){
+                    //only warning or notice no need to postpone
+                    return;
+                }
+            }
+            $_this->postpone("'0 1:0' DAY_MINUTE");
 	}
-	function log_error( $num, $str, $file, $line ){
-	    log_exception( new ErrorException( $str, 0, $num, $file, $line ) );
+	function log_error( $severity, $str, $file, $line ){
+	    log_exception( new ErrorException( $str, 0, $severity, $file, $line ) );
 	}
 	function check_for_fatal(){
 	    global $_this;

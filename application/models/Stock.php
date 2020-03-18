@@ -190,7 +190,9 @@ class Stock extends Catalog {
         $this->query("UPDATE stock_entries JOIN prod_list USING(product_code) JOIN price_list USING(product_code) SET $field='$value' WHERE product_code='$product_code'");
         return $this->db->affected_rows();
     }
-
+    private function stripWhite( $sentence ){
+        return trim(preg_replace('/\s+/', ' ', $sentence));
+    }
     public $productSave = [];
 
     public function productSave() {
@@ -207,11 +209,11 @@ class Stock extends Catalog {
         }
         $product_code = $product_code_new;
         $prod_list = [
-            'product_code' => $product_code,
-            'ru' => $this->request('ru'),
-            'ua' => $this->request('ua'),
-            'en' => $this->request('en'),
-            'product_unit' => $this->request('product_unit'),
+            'product_code' => $this->stripWhite($product_code),
+            'ru' => $this->stripWhite($this->request('ru')),
+            'ua' => $this->stripWhite($this->request('ua')),
+            'en' => $this->stripWhite($this->request('en')),
+            'product_unit' => $this->stripWhite($this->request('product_unit')),
             'product_spack' => $this->request('product_spack', 'int'),
             'product_bpack' => $this->request('product_bpack', 'int'),
             'product_weight' => $this->request('product_weight', 'double'),
@@ -298,8 +300,30 @@ class Stock extends Catalog {
         }
         $target_list = implode(',', $target);
         $source_list = implode(',', $source);
-        $set_list = implode(',', $set);
-        $this->query("INSERT INTO $table ($target_list) SELECT $source_list FROM imported_data WHERE label LIKE '%$label%' ON DUPLICATE KEY UPDATE $set_list");
+        
+        
+        
+        
+        $import_list=$this->get_list("SELECT $source_list FROM imported_data WHERE label LIKE '%$label%'");
+        foreach($import_list as $product){
+            $set=[];
+            foreach($target as $i=>$field){
+                if( $field=='parent_id' ){
+                    $value=$source[$i];
+                } else {
+                    $value=$this->stripWhite($product->{$source[$i]});
+                }
+                if( $field=='product_code' && !$value ){
+                    continue 2;
+                }
+                $set[]="$field='$value'";
+            }
+            $set_list = implode(',', $set);
+            $this->query("INSERT INTO $table SET $set_list ON DUPLICATE KEY UPDATE $set_list");
+        }
+        
+        //$set_list = implode(',', $set);
+        //$this->query("INSERT INTO $table ($target_list) SELECT $source_list FROM imported_data WHERE label LIKE '%$label%' ON DUPLICATE KEY UPDATE $set_list");
         //print("INSERT INTO $table ($target_list) SELECT $source_list FROM imported_data WHERE label='$label' ON DUPLICATE KEY UPDATE $set_list");
         return $this->db->affected_rows();
     }
@@ -444,18 +468,18 @@ class Stock extends Catalog {
     public function reserveSystemStatusChange( bool $active ){
         $Events=$this->Hub->load_model("Events");
         if( $active ){
-            $Events->Topic('documentStatusChanged')->subscribe('Stock','reserveStatusChange');
+            $Events->Topic('documentChangeDocStatusId')->subscribe('Stock','reserveStatusChange');
             $Events->Topic('documentEntryChanged')->subscribe('Stock','reserveEntryChange');
             $this->reserveCountUpdate();
         } else {
-            $Events->Topic('documentStatusChanged')->unsubscribe('Stock','reserveStatusChange');
+            $Events->Topic('documentChangeDocStatusId')->unsubscribe('Stock','reserveStatusChange');
             $Events->Topic('documentEntryChanged')->unsubscribe('Stock','reserveEntryChange');
             $this->query("UPDATE stock_entries SET product_reserved = 0, product_awaiting = 0");
         }
     }
     
     public function reserveStatusChange( $old_status_id, $new_status_id, $doc ){
-        if( $new_status_id==2 ){//reserved 
+        if( $new_status_id==2 ){//reserved
             $this->reserveTaskAdd($doc);
             $this->reserveCountUpdate();
         }
@@ -564,11 +588,13 @@ class Stock extends Catalog {
     }
     
     public function reserveTaskExecute($doc_id,$user_id,$alert,$event_id){
-        $status_change_ok=$this->Hub->load_model("DocumentCore")->setStatusByCode($doc_id,'created');
-        if( $status_change_ok ){
+        $DocumentItems=$this->Hub->load_model("DocumentItems");
+        $DocumentItems->setStatusByCode($doc_id,'created');
+        $new_status_id=$DocumentItems->documentStatusGet();
+        if( $new_status_id!=2 ){//document is not reserved anymore
             $this->Hub->load_model("Chat")->addMessage($user_id,$alert,true);
             $this->Hub->load_model("Events")->eventDelete($event_id);
-            return false;
+            return true;
         }
         return false;
     }
@@ -895,7 +921,11 @@ class Stock extends Catalog {
             se.product_img,
             se.fetch_count,
             se.fetch_stamp,
-            fetch_count-DATEDIFF(NOW(),COALESCE(se.fetch_stamp,se.modified_at)) popularity,
+            CONCAT( 
+                product_quantity<>0,
+                prl_promo.product_code IS NOT NULL,
+                LPAD(fetch_count-DATEDIFF(NOW(),COALESCE(se.fetch_stamp,se.modified_at)),6,'0')
+            ) popularity,
             se.parent_id,
             prl_basic.sell*IF(prl_basic.curr_code='USD',$usd_ratio,1) price_fixed,
             prl_basic.sell*IF(prl_basic.curr_code='USD',$usd_ratio,1)*IF(discount,discount,1) price_basic,

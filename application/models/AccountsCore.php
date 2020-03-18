@@ -7,6 +7,60 @@
  */
 class AccountsCore extends Catalog{
     public $min_level=1;
+    
+    //////////////////////////////////////////////
+    // TRANS SECTION
+    //////////////////////////////////////////////
+    public function transGet( int $trans_id ){
+	$sql="SELECT * FROM acc_trans trans WHERE trans_id='$trans_id'";
+	return $this->get_row($sql);
+    }
+    
+    public function transCreate( array $trans_data ){
+        
+    }
+    
+    public function transUpdate( int $trans_id, array $trans_data, bool $update_trans_data=true ){
+	$this->Hub->set_level(2);
+        $ok=true;
+        if( $update_trans_data ){
+            $this->update('acc_trans', $trans_data, ['trans_id'=>$trans_id]);
+            $ok= $this->db->affected_rows()>0?true:false;
+        }
+        $this->checkTransLink($trans_id,$trans_data);
+	$this->transCrossLink($trans_id,$trans_data);
+	$this->transCalculate($trans_data);
+        return $ok;
+    }
+    
+    public function transDelete( int $trans_id ){
+	$this->Hub->set_level(2);
+	$trans=$this->transGet($trans_id);
+	if( $trans && $this->transCheckLevel($trans->acc_debit_code.'_'.$trans->acc_credit_code) ){
+	    $this->delete('acc_trans',['trans_id'=>$trans_id,'editable'=>1]);
+            $ok=$this->db->affected_rows()>0?true:false;
+	    $this->checkTransBreakLink($trans->check_id);
+	    $this->transBreakLink($trans->trans_ref);
+            $this->transPaymentCalculateIfNeeded( $trans->passive_company_id, $trans->acc_debit_code );
+            $this->transPaymentCalculateIfNeeded( $trans->passive_company_id, $trans->acc_credit_code );
+	    return $ok;
+	}
+	$this->Hub->msg('access denied');
+	return false;        
+    }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    //////////////////////////////////////////////
+    // ACCOUNTS SECTION
+    //////////////////////////////////////////////
     protected function getAccountProperties( $acc_code, $calc_balance=false, $use_passive_filter=false ) {
 	$active_company_id=$this->Hub->acomp('company_id');
 	$default_curr_id=$this->Hub->acomp('curr_id');
@@ -36,6 +90,65 @@ class AccountsCore extends Catalog{
 		    JOIN curr_list cl ON IF(at.curr_id,cl.curr_id=at.curr_id,cl.curr_id='$default_curr_id')
             WHERE acc_code='$acc_code'";
         return $this->get_row($sql);
+    }
+    
+    //////////////////////////////////////////////
+    // LEDGER SECTION
+    //////////////////////////////////////////////
+    public $ledgerFetch=[
+	'acc_code'=>'string',
+	'idate'=>'\d\d\d\d-\d\d-\d\d',
+	'fdate'=>'\d\d\d\d-\d\d-\d\d',
+	'page'=>['int',1],
+	'rows'=>['int',30],
+	'use_passive_filter'=>['int',0]
+	];
+    public function ledgerFetch( string $acc_code, $idate='', $fdate='', $page=1, $rows=30, $use_passive_filter=false ){
+	$idate.=' 00:00:00';
+	$fdate.=' 23:59:59';
+        
+	$props=$this->getAccountProperties( $acc_code, false, $use_passive_filter );
+	if( $use_passive_filter ){
+	    $this->Hub->set_level(1);
+            $props->curr_id=$this->Hub->pcomp('curr_id');
+            $props->curr_symbol=$this->Hub->pcomp('curr_symbol');
+	} else {
+	    $this->Hub->set_level(3);
+	}
+	if( !$acc_code || !$idate || !$fdate ){
+	    return [];
+	}
+	$using_alt_currency=false;
+	if( $props->curr_id ){
+	    $default_curr_id=$this->Hub->acomp('curr_id');
+	    $using_alt_currency=$default_curr_id!=$props->curr_id;
+	}
+	$this->ledgerCreate($acc_code, $using_alt_currency, $use_passive_filter );
+	
+	$having=$this->decodeFilterRules();
+	$offset=$page>0?($page-1)*$rows:0;
+	$sql="SELECT * FROM tmp_ledger 
+		WHERE '$idate'<cstamp AND cstamp<='$fdate'
+		HAVING $having
+		ORDER BY cstamp DESC 
+		LIMIT $rows OFFSET $offset";
+	$result_rows=$this->get_list($sql);
+	$total_estimate=$offset+(count($result_rows)==$rows?$rows+1:count($result_rows));
+	
+	$sub_totals=$this->ledgerGetSubtotals($idate, $fdate, $having);
+	return ['rows'=>$result_rows,'total'=>$total_estimate,'props'=>$props,'sub_totals'=>$sub_totals,'using_alt_currency'=>$using_alt_currency];
+    }
+    
+    public $ledgerPaymentFetch=[
+	'acc_code'=>'string',
+	'idate'=>'\d\d\d\d-\d\d-\d\d',
+	'fdate'=>'\d\d\d\d-\d\d-\d\d',
+	'page'=>['int',1],
+	'rows'=>['int',30],
+	'use_passive_filter'=>['int',0]
+	];
+    public function ledgerPaymentFetch( $acc_code, $idate='', $fdate='', $page=1, $rows=30 ){
+	return $this->ledgerFetch($acc_code, $idate, $fdate, $page, $rows, true);
     }
     private function ledgerCreate( $acc_code, $using_alt_currency=false, $use_passive_filter=false ){
 	$active_company_id=$this->Hub->acomp('company_id');
@@ -92,65 +205,9 @@ class AccountsCore extends Catalog{
                 WHERE $having";
 	return $this->get_row($sql);
     }
-    
-    
-    
-    public $ledgerFetch=[
-	'acc_code'=>'string',
-	'idate'=>'\d\d\d\d-\d\d-\d\d',
-	'fdate'=>'\d\d\d\d-\d\d-\d\d',
-	'page'=>['int',1],
-	'rows'=>['int',30],
-	'use_passive_filter'=>['int',0]
-	];
-    public function ledgerFetch( $acc_code, $idate='', $fdate='', $page=1, $rows=30, $use_passive_filter=false ){
-	$idate.=' 00:00:00';
-	$fdate.=' 23:59:59';
-        
-	$props=$this->getAccountProperties( $acc_code, false, $use_passive_filter );
-	if( $use_passive_filter ){
-	    $this->Hub->set_level(1);
-            $props->curr_id=$this->Hub->pcomp('curr_id');
-            $props->curr_symbol=$this->Hub->pcomp('curr_symbol');
-	} else {
-	    $this->Hub->set_level(3);
-	}
-	if( !$acc_code || !$idate || !$fdate ){
-	    return [];
-	}
-	$using_alt_currency=false;
-	if( $props->curr_id ){
-	    $default_curr_id=$this->Hub->acomp('curr_id');
-	    $using_alt_currency=$default_curr_id!=$props->curr_id;
-	}
-	$this->ledgerCreate($acc_code, $using_alt_currency, $use_passive_filter );
-	
-	$having=$this->decodeFilterRules();
-	$offset=$page>0?($page-1)*$rows:0;
-	$sql="SELECT * FROM tmp_ledger 
-		WHERE '$idate'<cstamp AND cstamp<='$fdate'
-		HAVING $having
-		ORDER BY cstamp DESC 
-		LIMIT $rows OFFSET $offset";
-	$result_rows=$this->get_list($sql);
-	$total_estimate=$offset+(count($result_rows)==$rows?$rows+1:count($result_rows));
-	
-	$sub_totals=$this->ledgerGetSubtotals($idate, $fdate, $having);
-	return ['rows'=>$result_rows,'total'=>$total_estimate,'props'=>$props,'sub_totals'=>$sub_totals,'using_alt_currency'=>$using_alt_currency];
-    }
-    
-    public $ledgerPaymentFetch=[
-	'acc_code'=>'string',
-	'idate'=>'\d\d\d\d-\d\d-\d\d',
-	'fdate'=>'\d\d\d\d-\d\d-\d\d',
-	'page'=>['int',1],
-	'rows'=>['int',30],
-	'use_passive_filter'=>['int',0]
-	];
-    public function ledgerPaymentFetch( $acc_code, $idate='', $fdate='', $page=1, $rows=30 ){
-	return $this->ledgerFetch($acc_code, $idate, $fdate, $page, $rows, true);
-    }
-    
+    //////////////////////////////////////////////
+    // BALANCE TREE SECTION
+    //////////////////////////////////////////////
     public $accountBalanceTreeFetch=[
 	'int',
 	'\d\d\d\d-\d\d-\d\d',
@@ -233,7 +290,9 @@ class AccountsCore extends Catalog{
 	}
 	return $acc_code;
     }
-
+    //////////////////////////////////////////////
+    // TRANS UTILS SECTION
+    //////////////////////////////////////////////
     public $transFullGet=['trans_id'=>'int'];
     public function transFullGet( $trans_id ){
 	$this->check($trans_id,'int');
@@ -262,16 +321,9 @@ class AccountsCore extends Catalog{
 	return $this->get_row($sql);
     }
     
-    public $transGet=['int'];
-    public function transGet( $trans_id ){
-	$this->check($trans_id,'int');
-	$sql="SELECT * FROM acc_trans trans WHERE trans_id='$trans_id'";
-	return $this->get_row($sql);	
-    }
     
     public $transGetDocId=['int'];
-    public function transGetDocId( $trans_id ){
-	$this->check($trans_id,'int');
+    public function transGetDocId( int $trans_id ){
 	$sql="SELECT doc_id FROM document_trans WHERE trans_id='$trans_id'";
 	return $this->get_value($sql);	
     }
@@ -441,35 +493,7 @@ class AccountsCore extends Catalog{
 	return $trans_id;
     }
     
-    private function transUpdate( $trans_id, $trans_data, $update_trans_data=true ){
-	$this->Hub->set_level(2);
-        $ok=true;
-        if( $update_trans_data ){
-            $this->update('acc_trans', $trans_data, ['trans_id'=>$trans_id]);
-            $ok= $this->db->affected_rows()>0?true:false;
-        }
-        $this->checkTransLink($trans_id,$trans_data);
-	$this->transCrossLink($trans_id,$trans_data);
-	$this->transCalculate($trans_data);
-        return $ok;
-    }
     
-    public $transDelete=['int'];
-    public function transDelete( $trans_id ){
-	$this->Hub->set_level(2);
-	$trans=$this->transGet($trans_id);
-	if( $trans && $this->transCheckLevel($trans->acc_debit_code.'_'.$trans->acc_credit_code) ){
-	    $this->delete('acc_trans',['trans_id'=>$trans_id,'editable'=>1]);
-            $ok=$this->db->affected_rows()>0?true:false;
-	    $this->checkTransBreakLink($trans->check_id);
-	    $this->transBreakLink($trans->trans_ref);
-            $this->transPaymentCalculateIfNeeded( $trans->passive_company_id, $trans->acc_debit_code );
-            $this->transPaymentCalculateIfNeeded( $trans->passive_company_id, $trans->acc_credit_code );
-	    return $ok;
-	}
-	$this->Hub->msg('access denied');
-	return false;
-    }
     //////////////////////////////////////////
     // DOCUMENT TRANS SECTION
     //////////////////////////////////////////
