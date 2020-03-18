@@ -5,7 +5,7 @@ class MoedeloSyncBase extends Catalog{
     protected $local_tzone='+03:00';
     protected $remote_tzone='+00:00';
     protected $sync_since="";
-    protected $sync_time_window=365;
+    protected $remote_stock_id=10871469;
     
     private $gateway_url=null;
     private $gateway_md_apikey=null;
@@ -76,56 +76,302 @@ class MoedeloSyncBase extends Catalog{
             'response'=>json_decode($result)
             ];
     }
+        
     
-/*    protected function apiSend( $sync_destination, $remote_function, $document_list, $mode ){
-        $rows_done=0;
-        foreach($document_list as $document){
-            if($mode === 'REMOTE_INSERT'){
-                $response = $this->apiExecute($remote_function, 'POST', (array) $document);
-                if( isset($response->response) && isset($response->response->Id) ){
-                    $this->logInsert($sync_destination,$document->local_id,$document->current_hash,$response->response->Id);
-                    $rows_done++;
-                } else {
-                    $error=$this->getValidationErrors($response);
-                    $this->log("{$sync_destination} INSERT is unsuccessfull (HTTP CODE:$response->httpcode '$error') Number:#{$document->Number}");
-                }
-            } else 
-            if($mode === 'REMOTE_UPDATE'){
-                $response = $this->apiExecute($remote_function, 'PUT', (array) $document, $document->remote_id);
-                if( $response->httpcode==200 ){
-                    $this->logUpdate($document->entry_id, $document->current_hash);
-                    $rows_done++;
-                } else {
-                    $error=$this->getValidationErrors($response);
-                    $this->log("{$sync_destination} UPDATE is unsuccessfull (HTTP CODE:$response->httpcode '$error') Number:#{$document->Number}");
-                }
-            } else 
-            if($mode === 'REMOTE_DELETE'){
-                $response = $this->apiExecute($remote_function, 'REMOTE_DELETE', null, $document->remote_id);
-                $this->logDelete($document->entry_id);
-                $rows_done++;
-                if( $response->httpcode!=204 ) {
-                    $error=$this->getValidationErrors($response);
-                    $this->log("{$sync_destination} DELETE is unsuccessfull (HTTP CODE:$response->httpcode '$error') Number:#{$document->Number}");
-                }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    /**
+     * Links remote and local entities on same sync_destination and hash
+     */
+    private function linkByHash(){
+        $create_link_list="
+            CREATE TEMPORARY TABLE tmp_linked_enries AS 
+            (SELECT 
+                 pse_local.sync_destination,
+                 pse_local.entry_id local_entry_id,
+                 pse_local.local_id,
+                 pse_local.local_hash,
+                 pse_local.local_tstamp,
+                 pse_remote.entry_id remote_entry_id,
+                 pse_remote.remote_id,
+                 pse_remote.remote_hash,
+                 pse_remote.remote_tstamp
+             FROM 
+                 plugin_sync_entries pse_remote
+                     JOIN
+                 plugin_sync_entries pse_local ON pse_remote.remote_hash=pse_local.local_hash AND pse_local.sync_destination=pse_remote.sync_destination
+             WHERE
+                 (pse_remote.local_id IS NULL OR pse_local.local_id IS NULL)
+                 AND pse_local.sync_destination='{$this->doc_config->sync_destination}'
+             GROUP BY local_entry_id);";
+        $clear_unlinked_entries="
+            DELETE pse FROM 
+                plugin_sync_entries pse
+                    JOIN
+                tmp_linked_enries ON (entry_id=local_entry_id OR entry_id=remote_entry_id)";
+        $fill_linked_entries="
+            INSERT INTO plugin_sync_entries 
+                (sync_destination,local_id,local_hash,local_tstamp,remote_id,remote_hash,remote_tstamp)
+            SELECT 
+                sync_destination,local_id,local_hash,local_tstamp,remote_id,remote_hash,remote_tstamp
+            FROM
+                tmp_linked_enries;";
+        $this->query($create_link_list);
+        $this->query($clear_unlinked_entries);
+        $this->query($fill_linked_entries);
+    }
+    /**
+     * Executes needed sync operations
+     */
+    public function replicate(){
+        $this->linkByHash();
+        //return true;
+        $sql_action_list="
+            SELECT
+                entry_id,
+                local_id,
+                remote_id,
+                IF( local_id IS NULL, 'localInsert',
+                IF( remote_id IS NULL, 'remoteInsert',
+                IF( local_deleted=1, 'remoteDelete',
+                IF( remote_deleted=1, 'localDelete',
+                IF( COALESCE(local_hash,'')<>COALESCE(remote_hash,''),
+                    IF( local_tstamp=remote_tstamp, 'remoteInspect',
+                    IF( local_tstamp<remote_tstamp, 'localUpdate', 'remoteUpdate')),
+                'SKIP'))))) sync_action
+            FROM
+                plugin_sync_entries doc_pse
+            WHERE 
+                sync_destination='{$this->doc_config->sync_destination}'
+            ";
+        $action_list=$this->get_list($sql_action_list);
+        //print_r($action_list);
+        foreach( $action_list as $action ){
+            if( $action->sync_action!='SKIP' && method_exists( $this, $action->sync_action) ){
+                $this->{$action->sync_action}($action->local_id,$action->remote_id,$action->entry_id);
             }
         }
-        return $rows_done;
+        return true;
     }
-    
-    
-    protected function apiInsert($sync_destination,$remote_function,$document){
-        $response = $this->apiExecute($remote_function, 'POST', (array) $document);
-        if( isset($response->response) && isset($response->response->Id) ){
-            $this->logInsert($sync_destination,$document->local_id,$document->current_hash,$response->response->Id);
-            $rows_done++;
+    protected function remoteCheckout( bool $is_full=false ){
+        $sync_destination=$this->doc_config->sync_destination;
+        $remote_function=$this->doc_config->remote_function;
+        $is_finished=false;
+        if( $is_full ){
+            $afterDate=null;
+        } else {
+            $afterDate_local=$this->sync_since;
+            if( isset($this->Hub->MoedeloSync->plugin_data->{$this->doc_config->sync_destination}->checkoutLastFinished) ){
+                $afterDate_local=$this->Hub->MoedeloSync->plugin_data->{$this->doc_config->sync_destination}->checkoutLastFinished;
+            }
+            $afterDate= $this->toTimezone($afterDate_local, 'remote');
+        }        
+        $result=$this->remoteCheckoutGetList( $sync_destination, $remote_function, $afterDate );
+        $nextPageNo=$result->pageNo+1;
+        
+        $this->query("START TRANSACTION");
+        if( $is_full && $result->pageNo==1 ){
+            $this->query("UPDATE plugin_sync_entries SET remote_deleted=1 WHERE sync_destination='$sync_destination'");
+        }
+        foreach( $result->list as $item ){
+            $remote_hash=$this->remoteHashCalculate( $item );
+            $sql="INSERT INTO
+                    plugin_sync_entries
+                SET
+                    sync_destination='$sync_destination',
+                    remote_id='$item->Id',
+                    remote_hash='$remote_hash',
+                    remote_deleted=0
+                ON DUPLICATE KEY UPDATE
+                    remote_hash='$remote_hash',
+                    remote_deleted=0
+                ";
+            $this->query($sql);
+        }
+        if( $result->pageIsLast ){//last page
+            $is_finished=true;
+            $nextPageNo=1;
+        }
+        
+        if( !isset($this->Hub->MoedeloSync->plugin_data->{$this->doc_config->sync_destination}) ){
+            $this->Hub->MoedeloSync->plugin_data->{$this->doc_config->sync_destination}=(object)[];
+        }
+        $this->Hub->MoedeloSync->plugin_data->{$this->doc_config->sync_destination}->checkoutPage=$nextPageNo;
+        $this->Hub->MoedeloSync->plugin_data->{$this->doc_config->sync_destination}->checkoutLastFinished=date('Y-m-d H:i:s');
+        $this->Hub->MoedeloSync->updateSettings();
+        
+        $this->query("COMMIT");
+        return $is_finished;
+    }
+    /**
+     * 
+     * @param string $sync_destination
+     * @param string $remote_function
+     * @param timestamp $afterDate
+     * @return responseobject
+     *  
+     */
+    protected function remoteCheckoutGetList( $sync_destination, $remote_function, $afterDate ){
+        $pageNo=1;
+        if( isset($this->Hub->MoedeloSync->plugin_data->{$this->doc_config->sync_destination}->checkoutPage) ){
+            $pageNo=$this->Hub->MoedeloSync->plugin_data->{$this->doc_config->sync_destination}->checkoutPage;
+        }
+        $pageSize=500;
+        $request=[
+            'pageNo'=>$pageNo,
+            'pageSize'=>$pageSize,
+            'afterDate'=>$afterDate,
+            'beforeDate'=>null,
+            'name'=>null
+        ];
+        $response=$this->apiExecute( $remote_function, 'GET', $request);
+        if( $response->httpcode!=200 || 0 ){
+            echo $remote_function;print_r($request);print_r($response);
+        }
+        $list=[];
+        if( isset($response->response->ResourceList) ){
+            $list=$response->response->ResourceList;
+        }
+        return (object) [
+            'pageNo'=>$pageNo,
+            'pageIsLast'=>count($list)<$pageSize?1:0,
+            'list'=>$list
+        ];
+    }
+    public function remoteInsert( $local_id, $remote_id, $entry_id ){
+        $entity=$this->localGet( $local_id );
+        $response = $this->apiExecute($this->doc_config->remote_function, 'POST', $entity);
+        if( $response->httpcode==201 ){
+            $remote_hash=$this->remoteHashCalculate($response->response);
+            $this->query("UPDATE 
+                        plugin_sync_entries
+                    SET
+                        remote_id='{$response->response->Id}',
+                        remote_hash='$remote_hash',
+                        remote_tstamp=local_tstamp
+                    WHERE
+                        entry_id='$entry_id'");
         } else {
             $error=$this->getValidationErrors($response);
-            $this->log("{$sync_destination} INSERT is unsuccessfull (HTTP CODE:$response->httpcode '$error') Number:#{$document->Number}");
+            $this->log("{$this->doc_config->sync_destination} INSERT is unsuccessfull (HTTP CODE:$response->httpcode '$error') {$entity->ErrorTitle}");
+            return false;
         }
-    }*/
+        return true;
+    }
+    public function remoteUpdate( $local_id, $remote_id, $entry_id ){
+        $entity=$this->localGet( $local_id );
+        $response = $this->apiExecute($this->doc_config->remote_function, 'PUT', $entity, $remote_id);
+        if( $response->httpcode==200 ){
+            $remote_hash=$this->remoteHashCalculate($entity);
+            $this->query("UPDATE 
+                        plugin_sync_entries
+                    SET
+                        remote_hash='$remote_hash',
+                        remote_tstamp=local_tstamp
+                    WHERE
+                        entry_id='$entry_id'");
+        } else {
+            $error=$this->getValidationErrors($response);
+            $this->log("{$this->doc_config->sync_destination} UPDATE is unsuccessfull (HTTP CODE:$response->httpcode '$error') {$entity->ErrorTitle}");
+            return false;
+        }
+        return true;
+    }
+    public function remoteDelete( $local_id, $remote_id, $entry_id ){
+        $response = $this->apiExecute($this->doc_config->remote_function, 'DELETE', null, $remote_id);
+        if( $response->httpcode==204 || $response->httpcode==404  ){
+            $this->query("DELETE 
+                    FROM
+                        plugin_sync_entries
+                    WHERE
+                        entry_id='$entry_id'");
+        } else {
+            $error=$this->getValidationErrors($response);
+            $this->log("{$this->doc_config->sync_destination} DELETE is unsuccessfull (HTTP CODE:$response->httpcode '$error')");
+            $entity=$this->remoteGet( $remote_id );
+            print_r($entity);
+            return false;
+        }
+        return true;
+    }
+    public function remoteGet( $remote_id ){
+        $response=$this->apiExecute($this->doc_config->remote_function, 'GET', null, $remote_id);
+        if( $response->httpcode==200 ){
+            return $response->response;
+        } else {
+            $error=$this->getValidationErrors($response);
+            $this->log("{$this->doc_config->sync_destination} GET is unsuccessfull (HTTP CODE:$response->httpcode '$error')");
+            return false;
+        }
+    }
     
-    
+    protected function localCheckout( bool $is_full=false ){
+        $local_sync_list_sql=$this->localCheckoutGetList( $is_full, '' );
+        $this->query("START TRANSACTION");
+        if( $is_full ){
+            $afterDate='';
+            $this->query("UPDATE plugin_sync_entries SET local_deleted=1 WHERE sync_destination='{$this->doc_config->sync_destination}'");
+        } else {
+            $afterDate='';
+        }
+        $sql_update_local_docs="
+            INSERT INTO
+                plugin_sync_entries
+            (sync_destination,local_id,local_hash,local_tstamp,local_deleted,remote_id)
+                SELECT 
+                    local_sync_list.sync_destination,
+                    local_sync_list.local_id,
+                    local_sync_list.local_hash,
+                    local_sync_list.local_tstamp,
+                    0 local_deleted,
+                    remote_id 
+                FROM 
+                    ($local_sync_list_sql) local_sync_list
+                        LEFT JOIN
+                    plugin_sync_entries pse ON pse.sync_destination=local_sync_list.sync_destination AND pse.local_id=local_sync_list.local_id
+            ON DUPLICATE KEY UPDATE 
+                local_hash=local_sync_list.local_hash,
+                local_tstamp=local_sync_list.local_tstamp,
+                local_deleted=0
+            ";
+        $this->query("$sql_update_local_docs");
+        $this->query("COMMIT");
+        return true;
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+   
     protected function logInsert( $sync_destination, $local_id, $local_hash, $remote_id ){
         $sql = "
             INSERT INTO 
@@ -175,221 +421,7 @@ class MoedeloSyncBase extends Catalog{
         }
         return $error_text;
     }
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    /**
-     * Executes needed sync operations
-     */
-    public function replicate(){
-        $sql_action_list="
-            SELECT
-                entry_id,
-                local_id,
-                remote_id,
-                IF( local_id IS NULL, 'localInsert',
-                IF( remote_id IS NULL, 'remoteInsert',
-                IF( local_deleted=1, 'remoteDelete',
-                IF( remote_deleted=1, 'localDelete',
-                IF( COALESCE(local_hash,'')<>COALESCE(remote_hash,''),
-                    IF( local_tstamp=remote_tstamp, 'remoteInspect',
-                    IF( local_tstamp<remote_tstamp, 'localUpdate', 'remoteUpdate')),
-                'SKIP'))))) sync_action
-            FROM
-                plugin_sync_entries doc_pse
-            WHERE 
-                sync_destination='{$this->doc_config->sync_destination}'
-            ";
-        $action_list=$this->get_list($sql_action_list);
-        //print_r($action_list);
-        foreach( $action_list as $action ){
-            if( method_exists( $this, $action->sync_action) ){
-                $this->{$action->sync_action}($action->local_id,$action->remote_id,$action->entry_id);
-            }
-        }
-        return true;
-    }
-    protected function remoteCheckout( bool $is_full=false ){
-        $sync_destination=$this->doc_config->sync_destination;
-        $remote_function=$this->doc_config->remote_function;
-        $is_finished=false;
-        if( $is_full ){
-            $afterDate=null;
-        } else {
-            $afterDate_local=$this->sync_since;
-            if( isset($this->Hub->MoedeloSync->plugin_data->{$this->doc_config->sync_destination}->checkoutLastFinished) ){
-                $afterDate_local=$this->Hub->MoedeloSync->plugin_data->{$this->doc_config->sync_destination}->checkoutLastFinished;
-            }
-            $afterDate= $this->toTimezone($afterDate_local, 'remote');
-        }        
-        $result=$this->remoteCheckoutGetList( $sync_destination, $remote_function, $afterDate );
-        $nextPageNo=$result->pageNo+1;
-        
-        //$this->query("START TRANSACTION");
-        if( $is_full && $result->pageNo==1 ){
-            $this->query("UPDATE plugin_sync_entries SET remote_deleted=1 WHERE sync_destination='$sync_destination'");
-        }    
-        $count = 0;
-        foreach( $result->list as $item ){
-            $remote_hash=$this->remoteHashCalculate( $item );
-            $sql="
-                UPDATE
-                    plugin_sync_entries
-                SET
-                    remote_id='$item->Id',
-                    remote_hash='$remote_hash',
-                    remote_deleted=0
-                WHERE
-                    sync_destination='$sync_destination'
-                    AND (remote_id='$item->Id' OR (local_hash='$remote_hash' AND remote_hash IS NOT NULL))";
-            $this->query($sql);
-            if( mysqli_errno($this->db->conn_id)==1062 || (int) explode('Rows matched: ',mysqli_info($this->db->conn_id))[1] ){
-                continue;
-            }
-            $sql="
-                INSERT INTO
-                    plugin_sync_entries
-                SET
-                    sync_destination='$sync_destination',
-                    remote_id='$item->Id',
-                    remote_hash='$remote_hash',
-                    remote_deleted=0";
-            $this->query($sql);
-        }
-        
-        if( $result->pageIsLast ){//last page
-            $this->query("DELETE FROM plugin_sync_entries WHERE sync_destination='$sync_destination' AND remote_deleted=1");
-            $is_finished=true;
-            $nextPageNo=1;
-        }
-        if( !isset($this->Hub->MoedeloSync->plugin_data->{$this->doc_config->sync_destination}) ){
-            $this->Hub->MoedeloSync->plugin_data->{$this->doc_config->sync_destination}=(object)[];
-        }
-        $this->Hub->MoedeloSync->plugin_data->{$this->doc_config->sync_destination}->checkoutPage=$nextPageNo;
-        $this->Hub->MoedeloSync->plugin_data->{$this->doc_config->sync_destination}->checkoutLastFinished=date('Y-m-d H:i:s');
-        $this->Hub->MoedeloSync->updateSettings();
-        //$this->query("COMMIT");
-        return $is_finished;
-    }
-    /**
-     * 
-     * @param string $sync_destination
-     * @param string $remote_function
-     * @param timestamp $afterDate
-     * @return responseobject
-     *  
-     */
-    protected function remoteCheckoutGetList( $sync_destination, $remote_function, $afterDate ){
-        $pageNo=1;
-        if( isset($this->Hub->MoedeloSync->plugin_data->{$this->doc_config->sync_destination}->checkoutPage) ){
-            $pageNo=$this->Hub->MoedeloSync->plugin_data->{$this->doc_config->sync_destination}->checkoutPage;
-        }
-        $pageSize=500;
-        $request=[
-            'pageNo'=>$pageNo,
-            'pageSize'=>$pageSize,
-            'afterDate'=>$afterDate,
-            'beforeDate'=>null,
-            'name'=>null
-        ];
-        $response=$this->apiExecute( $remote_function, 'GET', $request);
-        if( $response->httpcode!=200 || 0 ){
-            print_r($request);print_r($response);
-        }
-        $list=[];
-        if( isset($response->response->ResourceList) ){
-            $list=$response->response->ResourceList;
-        }
-        return (object) [
-            'pageNo'=>$pageNo,
-            'pageIsLast'=>count($list)<$pageSize?1:0,
-            'list'=>$list
-        ];
-    }
-    public function remoteInsert( $local_id, $remote_id, $entry_id ){
-        $entity=$this->localGet( $local_id );
-        $response = $this->apiExecute($this->doc_config->remote_function, 'POST', $entity);
-        if( $response->httpcode==201 ){
-            print_r($response);
-            $remote_hash=$this->remoteHashCalculate($response->response);
-            $this->query("UPDATE 
-                        plugin_sync_entries
-                    SET
-                        remote_id='{$response->response->Id}',
-                        remote_hash='$remote_hash',
-                        remote_tstamp=local_tstamp
-                    WHERE
-                        entry_id='$entry_id'");
-        } else {
-            $error=$this->getValidationErrors($response);
-            $this->log("{$this->doc_config->sync_destination} INSERT is unsuccessfull (HTTP CODE:$response->httpcode '$error') {$entity->ErrorTitle}");
-            return false;
-        }
-        return true;
-    }
-    public function remoteUpdate( $local_id, $remote_id, $entry_id ){
-        $entity=$this->localGet( $local_id );
-        $response = $this->apiExecute($this->doc_config->remote_function, 'PUT', $entity, $remote_id);
-        if( $response->httpcode==200 ){
-            $remote_hash=$this->remoteHashCalculate($entity);
-            $this->query("UPDATE 
-                        plugin_sync_entries
-                    SET
-                        remote_hash='$remote_hash',
-                        remote_tstamp=local_tstamp
-                    WHERE
-                        entry_id='$entry_id'");
-        } else {
-            $error=$this->getValidationErrors($response);
-            $this->log("{$this->doc_config->sync_destination} UPDATE is unsuccessfull (HTTP CODE:$response->httpcode '$error') {$entity->ErrorTitle}");
-            return false;
-        }
-        return true;
-    }
-    public function remoteDelete( $local_id, $remote_id, $entry_id ){
-        $response = $this->apiExecute($this->doc_config->remote_function, 'DELETE', null, $remote_id);
-        if( $response->httpcode==204 || $response->httpcode==404  ){
-            $this->query("DELETE 
-                    FROM
-                        plugin_sync_entries
-                    WHERE
-                        entry_id='$entry_id'");
-        } else {
-            $error=$this->getValidationErrors($response);
-            $this->log("{$this->doc_config->sync_destination} DELETE is unsuccessfull (HTTP CODE:$response->httpcode '$error')");
-            return false;
-        }
-        return true;
-    }
-    public function remoteGet( $remote_id ){
-        $response=$this->apiExecute($this->doc_config->remote_function, 'GET', null, $remote_id);
-        if( $response->httpcode==200 ){
-            return $response->response;
-        } else {
-            $error=$this->getValidationErrors($response);
-            $this->log("{$this->doc_config->sync_destination} GET is unsuccessfull (HTTP CODE:$response->httpcode '$error')");
-            return false;
-        }
-    }
+
     protected function checkUserPermission( $right ){
         $user_data=$this->Hub->svar('user');
         if( isset($user_data->user_permissions) && strpos($user_data->user_permissions, $right)!==false ){
