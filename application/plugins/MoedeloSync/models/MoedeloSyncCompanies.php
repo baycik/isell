@@ -128,22 +128,18 @@ class MoedeloSyncCompanies extends MoedeloSyncBase{
                 AND (NOT COALESCE(company_code_registration,'') OR LENGTH(company_code_registration)>=13)
                 AND company_name IS NOT NULL 
                 AND company_name<>'') inner_table";
+         
                 
-                
-                
-                
-                
-                
-                
-                
-        $this->query("START TRANSACTION");
+             
+        //$this->query("START TRANSACTION");
         if( $is_full ){
             $afterDate='';
             $this->query("UPDATE plugin_sync_entries SET local_deleted=1 WHERE sync_destination='{$this->doc_config->sync_destination}'");
         } else {
             $afterDate='';
         }
-        $sql_update_local_docs="
+       
+         $sql_update_local_docs="
             INSERT INTO
                 plugin_sync_entries
             (sync_destination,local_id,local_hash,local_tstamp,local_deleted,remote_id)
@@ -152,7 +148,7 @@ class MoedeloSyncCompanies extends MoedeloSyncBase{
                 FROM 
                     ($sql_local_docs) local_sync_list
                         LEFT JOIN
-                    plugin_sync_entries pse ON pse.sync_destination=local_docs.sync_destination AND (pse.local_id=local_docs.local_id OR pse.remote_hash=local_docs.local_hash)
+                    plugin_sync_entries pse ON pse.sync_destination=local_sync_list.sync_destination AND (pse.local_id=local_sync_list.local_id OR pse.remote_hash=local_sync_list.local_hash)
             
             ON DUPLICATE KEY UPDATE 
                 local_hash=local_sync_list.local_hash,local_tstamp=local_sync_list.local_tstamp,local_deleted=0
@@ -161,7 +157,7 @@ class MoedeloSyncCompanies extends MoedeloSyncBase{
         if( $is_full ){
             $this->query("DELETE FROM plugin_sync_entries WHERE sync_destination='{$this->doc_config->sync_destination}' AND local_deleted=1");
         }
-        $this->query("COMMIT");
+        //$this->query("COMMIT");
         //print_r($this->get_list($sql_local_docs));
         return true;
     }

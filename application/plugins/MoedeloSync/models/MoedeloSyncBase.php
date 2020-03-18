@@ -244,13 +244,15 @@ class MoedeloSyncBase extends Catalog{
         $result=$this->remoteCheckoutGetList( $sync_destination, $remote_function, $afterDate );
         $nextPageNo=$result->pageNo+1;
         
-        $this->query("START TRANSACTION");
+        //$this->query("START TRANSACTION");
         if( $is_full && $result->pageNo==1 ){
             $this->query("UPDATE plugin_sync_entries SET remote_deleted=1 WHERE sync_destination='$sync_destination'");
-        }        
+        }    
+        $count = 0;
         foreach( $result->list as $item ){
             $remote_hash=$this->remoteHashCalculate( $item );
-            $sql="UPDATE
+            $sql="
+                UPDATE
                     plugin_sync_entries
                 SET
                     remote_id='$item->Id',
@@ -258,13 +260,13 @@ class MoedeloSyncBase extends Catalog{
                     remote_deleted=0
                 WHERE
                     sync_destination='$sync_destination'
-                    AND (remote_id='$item->Id' OR local_hash='$remote_hash')";
+                    AND (remote_id='$item->Id' OR (local_hash='$remote_hash' AND remote_hash IS NOT NULL))";
             $this->query($sql);
-            $rows_matched=(int) explode('Rows matched: ',mysqli_info())[1];
-            if( $rows_matched>0 ){
+            if( mysqli_errno($this->db->conn_id)==1062 || (int) explode('Rows matched: ',mysqli_info($this->db->conn_id))[1] ){
                 continue;
             }
-            $sql="INSERT INTO
+            $sql="
+                INSERT INTO
                     plugin_sync_entries
                 SET
                     sync_destination='$sync_destination',
@@ -273,20 +275,19 @@ class MoedeloSyncBase extends Catalog{
                     remote_deleted=0";
             $this->query($sql);
         }
+        
         if( $result->pageIsLast ){//last page
             $this->query("DELETE FROM plugin_sync_entries WHERE sync_destination='$sync_destination' AND remote_deleted=1");
             $is_finished=true;
             $nextPageNo=1;
         }
-        
         if( !isset($this->Hub->MoedeloSync->plugin_data->{$this->doc_config->sync_destination}) ){
             $this->Hub->MoedeloSync->plugin_data->{$this->doc_config->sync_destination}=(object)[];
         }
         $this->Hub->MoedeloSync->plugin_data->{$this->doc_config->sync_destination}->checkoutPage=$nextPageNo;
         $this->Hub->MoedeloSync->plugin_data->{$this->doc_config->sync_destination}->checkoutLastFinished=date('Y-m-d H:i:s');
         $this->Hub->MoedeloSync->updateSettings();
-        
-        $this->query("COMMIT");
+        //$this->query("COMMIT");
         return $is_finished;
     }
     /**

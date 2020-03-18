@@ -44,18 +44,21 @@ class MoedeloSync extends Catalog {
 
     //'MoedeloSyncStocks/replicate/1 years/','MoedeloSyncStocks/checkout/1 years/',
     private $joblist=[
+        /*
             'MoedeloSyncProduct/localCheckout/10 minutes/1 days',
             'MoedeloSyncProduct/remoteCheckout/1 days/1 days',
             'MoedeloSyncProduct/replicate/10 minutes/',
+        */
         
-            'MoedeloSyncCompanies/localCheckout/10 minutes/60 minutes',
-            'MoedeloSyncCompanies/remoteCheckout/10 minutes/1 days',
-            'MoedeloSyncCompanies/replicate/10 minutes/',
-            
+            'MoedeloSyncCompanies/localCheckout/10 minutes/1 seconds',
+            'MoedeloSyncCompanies/remoteCheckout/10 minutes/1 seconds',
+            //'MoedeloSyncCompanies/replicate/1 seconds/',
+          
+        /*
             'MoedeloSyncBillSell/localCheckout/10 minutes/60 minutes',
             'MoedeloSyncBillSell/remoteCheckout/10 minutes/1 days',
             'MoedeloSyncBillSell/replicate/10 minutes/',
-            
+            */
         /*   
             'wayBillCheckout',
             'wayBillReplicate',
