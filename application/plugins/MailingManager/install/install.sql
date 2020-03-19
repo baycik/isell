@@ -1,6 +1,7 @@
 CREATE TABLE `plugin_message_list` (
   `message_id` int(11) NOT NULL AUTO_INCREMENT,
   `message_handler` varchar(45) DEFAULT NULL COMMENT 'Sms, Email, Viber',
+  `message_reason` varchar(45) DEFAULT NULL,
   `message_note` varchar(45) DEFAULT NULL,
   `message_status` varchar(45) DEFAULT NULL,
   `message_recievers` varchar(255) DEFAULT NULL,

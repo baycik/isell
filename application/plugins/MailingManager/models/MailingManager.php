@@ -111,6 +111,7 @@ class MailingManager extends Catalog {
         $message_record=[
             'message_handler'=>$handler,
             'message_status'=>'created',
+            'message_reason'=>$message->reason,
             'message_note'=>$message->note,
             'message_recievers'=>$message->recievers,
             'message_subject'=>$message->subject,
@@ -119,6 +120,35 @@ class MailingManager extends Catalog {
             'modified_by'=>$user_id
         ];
         return $this->create('plugin_message_list',$message_record);
+    }
+    
+    public function messageListGet( string $filter_handler='', string $filter_reason='', string $filter_date='' ){
+        $msg_list_msg="
+            SELECT
+                *
+            FROM
+                plugin_message_list
+            WHERE
+                message_handler LIKE '%$filter_handler%'
+                AND message_reason LIKE '%$filter_reason%'
+                AND created_at LIKE '%$filter_date%'
+            ";
+        return $this->get_list($msg_list_msg);
+    }
+    
+    public function messageGroupListGet(){
+        $msg_list_msg="
+            SELECT
+                message_handler,
+                message_reason,
+                SUBSTRING(created_at, 1, 13) group_created_at,
+                COUNT(*) message_count
+            FROM
+                plugin_message_list
+            GROUP BY
+                CONCAT(message_handler,message_reason,SUBSTRING(created_at, 1, 13))
+            ";
+        return $this->get_list($msg_list_msg);        
     }
     
     
