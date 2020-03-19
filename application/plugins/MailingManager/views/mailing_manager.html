@@ -1,6 +1,5 @@
 <script>
 (function(){
-
     Mark.pipes.date_simplify=function(date){
         let now=new Date();
         let then=new Date(date);
@@ -10,7 +9,6 @@
         }
         return simplified;
     };
-    
     var holder_id="PluginMailing";
     var $holder=$("#"+holder_id);
     function init() {
@@ -94,6 +92,7 @@
             }
         },
         list:{
+            selected_id:0,
             load:function( group_entry ){
                 var filter={
                     filter_handler:group_entry.message_handler,
@@ -106,8 +105,22 @@
                 });
             },
             render:function(maillist){
+                var $list=$(`#PluginMailingManager_maillist div[data-index=${MailList.group.selected_index}]`);
                 var html=Mark.up(MailList.list.tpl,maillist);
-                $(`#PluginMailingManager_maillist div[data-index=${MailList.group.selected_index}]`).html(html);
+                $list.html(html).click(function(e){
+                    var id=$(e.target.parentNode).data('id');
+                    MailList.list.select(id);
+                });
+            },
+            select:function(id){
+                MailList.list.selected_id=id;
+                $(`#PluginMailingManager_maillist .PluginMailingManager_list_row_selected`).removeClass('PluginMailingManager_list_row_selected');
+                if( !id ){
+                    return;
+                }
+                var $selected_row=$(`#PluginMailingManager_maillist div[data-id=${MailList.list.selected_id}]`);
+                $selected_row.addClass("PluginMailingManager_list_row_selected");
+                console.log(MailList.list.selected_id);
             }
         }
     };
@@ -117,9 +130,11 @@
 <script type="text/tpl" id="PluginMailingManager_list_tpl">
     <div class="PluginMailingManager_list">
         {{.}}
-            <div>{{message_recievers}}</div>
-            <div>{{message_note}}</div>
-            <div>{{created_at}}</div>
+            <div data-id="{{message_id}}" style="display: contents;" class="PluginMailingManager_list_row">
+                <div>{{message_recievers}}</div>
+                <div>{{message_note}}</div>
+                <div>{{message_subject}}</div>
+            </div>
         {{/.}}
     </div>
 </script>
@@ -159,16 +174,25 @@
     }
     .PluginMailingManager_list{
         display: grid;
-        grid-template-columns:auto auto auto;
+        grid-template-columns:auto auto 150px;
         grid-row-gap:2px;
         margin-left:10px;
         padding-top: 2px;
         padding-bottom: 2px;
     }
     .PluginMailingManager_list div{
-        background-color: #fffa;
-        height: 30px;
-        text-align: center;
-        padding-top: 5px;
+        background-color: #fff6;
+        height: 25px;
+        padding: 2px;
+        padding-top: 3px;
+        text-overflow:elipsis;
     }
+    .PluginMailingManager_list_row:hover div{
+        background-color: #fffd;
+        cursor: pointer;
+    }
+    .PluginMailingManager_list_row_selected div{
+        background-color: #fffd;    
+    }
+    
 </style>

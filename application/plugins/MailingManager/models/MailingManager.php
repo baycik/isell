@@ -141,7 +141,7 @@ class MailingManager extends Catalog {
             SELECT
                 message_handler,
                 message_reason,
-                SUBSTRING(created_at, 1, 13) group_created_at,
+                created_at,
                 COUNT(*) message_count
             FROM
                 plugin_message_list
