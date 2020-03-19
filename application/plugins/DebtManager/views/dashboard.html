@@ -106,7 +106,7 @@
                 
                 {{if block|notempty}}
                     {{block}}
-                    <div class="debt-row {{ trans_type }}">
+                    <div class="debt-row {{ trans_type }}" data-pcomp_id="{{passive_company_id}}">
                         <div class="debt-date" >{{pay_date|pay_date|blank>}}</div>
                         <div class="debt-company-name" >
                             <div>{{company_label}}</div>

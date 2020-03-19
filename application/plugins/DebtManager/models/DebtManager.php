@@ -62,7 +62,7 @@ class DebtManager extends Catalog {
         }
         $buy_total = '';
         $sell_total = '';
-        if(isset($total)){
+        if(!empty($total)){
             $buy_total = $total->amount_buy; 
             $sell_total = $total->amount_sell;
         } 
@@ -119,6 +119,9 @@ class DebtManager extends Catalog {
         }
         $this->current_group_by_date = $settings->group_by_date;
         $pcomp_filter="";
+        if(!empty($filter['pcomp_id'])){
+            $settings->pcomp_id = $filter['pcomp_id'];
+        }
         if($settings->pcomp_id != 0){
             $pcomp_filter = " AND passive_company_id = '$settings->pcomp_id'";
         }
@@ -150,6 +153,7 @@ class DebtManager extends Catalog {
                 SELECT 
                     DATE_FORMAT(DATE(TIMESTAMPADD(DAY, cl.deferment, acctr.cstamp)),'%Y%-%m%-%d') AS pay_date,
                     $amount_sell $amount_buy
+                    ROUND(SUM(amount), 2) as total_amount,
                     GROUP_CONCAT(acctr.description SEPARATOR ', ')  as description,
                     acctr.passive_company_id,
                     ct.label as company_label,
@@ -159,6 +163,7 @@ class DebtManager extends Catalog {
                     cl.company_mobile,
                     cl.company_address,
                     IF(acctr.acc_credit_code = '631', 'buy', 'sell') as trans_type,
+                    DATE_FORMAT(acctr.cstamp,'%Y%-%m%-%d') doc_date,
                     acc_credit_code,
                     trans_id
                 FROM
@@ -417,7 +422,6 @@ class DebtManager extends Catalog {
                 plugin_list
             WHERE plugin_system_name = 'DebtManager'    
             ";
-        
         $row = $this->get_row($sql);
         $user_settings = json_decode($row->plugin_settings);
         if( isset($user_settings->{$user_id}) ){
@@ -460,11 +464,96 @@ class DebtManager extends Catalog {
     }
 
     
+    /*=================================*/
+    
+    public $messageRender = ['type' => 'string', 'pcomp_id' => 'int'];
+    public function messageRender($type, $pcomp_id){
+        $settings = $this->getUserSettings($this->Hub->svar('user_id'));
+        $filter= [];
+        $filter['pcomp_id'] = $pcomp_id;
+        $filter['group_by_date'] = $settings->group_by_date;
+        $pcomp = $this->passiveCompanyGet($filter['pcomp_id']);
+        $table = $this->blockListRender($filter);
+        $data = [
+            'passive_company' => $pcomp->company_name,
+            'table' => $table
+        ];
+        return $this->load->view('debt_mail_template', $data, true);
+    }
+    
+    public $blockListRender = ['filter' => 'json'];
+    public function blockListRender($filter){
+        $list = $this->blockListGet($filter);
+        $data['list'] = $list;
+        $table = $this->load->view('debt_table_template', $data, true);
+        return $table;
+    }
+    
+    private $blockListGet = ['filter' => 'json'];
+    private function blockListGet($filter){
+        $block_list = [];
+        $last_transaction = $this->lastTransactionGet($filter);
+        $last_block = $this->datediffInWeeks(date('Y-m-d'), $last_transaction, $filter['group_by_date']);
+        for($i = 0; $i <= $last_block; $i++){
+            $filter['block_number'] = $i-1;
+            $block = $this->getBlock($filter);
+            if(!empty($block['list'])){
+                $block_list[] = $block;
+            }
+            
+        }
+        return $block_list;
+    }
     
     
+    private $lastTransactionGet = ['filter' => 'json'];
+    private function lastTransactionGet($filter){
+        $pcomp_id = $filter['pcomp_id'];
+        $sql = "
+            SELECT 
+                MAX(DATE_FORMAT(DATE(TIMESTAMPADD(DAY, cl.deferment, acctr.cstamp)),'%Y%-%m%-%d')) pay_date
+            FROM 
+                isell_db.acc_trans acctr
+                    JOIN 
+                companies_list cl ON (acctr.passive_company_id = cl.company_id)
+            WHERE 
+                passive_company_id = '$pcomp_id'
+            AND acc_debit_code = 361
+            AND active_company_id = 1
+            ";
+        return $this->get_row($sql)->pay_date;
+    }
     
+    private $datediffInWeeks = ['date_from' => 'string', 'date_to' => 'string'];
+    private function datediffInWeeks($date_from, $date_to, $date_group_by){
+        if($date_from > $date_to) return false;
+        $measure = 1;
+        if($date_group_by == 'WEEK'){
+            $measure = 7;
+        } else if($date_group_by == 'MONTH'){
+            $measure = 30;
+        } else if($date_group_by == 'QUARTER'){
+            $measure = 90;
+        } else {
+            $measure = 365;
+        }
+        $first = DateTime::createFromFormat('Y-m-d', $date_from);
+        $second = DateTime::createFromFormat('Y-m-d', $date_to);
+        return floor($first->diff($second)->days/$measure);
+    }
     
-    
+    private $passiveCompanyGet = ['pcomp_id' => 'int'];
+    private function passiveCompanyGet($pcomp_id){
+        $sql = "
+            SELECT 
+                *
+            FROM 
+                companies_list 
+            WHERE 
+                company_id = '$pcomp_id'
+            ";
+        return $this->get_row($sql);
+    }
     
 
 }
