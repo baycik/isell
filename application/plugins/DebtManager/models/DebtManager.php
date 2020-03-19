@@ -62,7 +62,7 @@ class DebtManager extends Catalog {
         }
         $buy_total = '';
         $sell_total = '';
-        if( isset($total) && is_object($total)){
+        if( !empty($total) ){
             $buy_total = $total->amount_buy; 
             $sell_total = $total->amount_sell;
         } 
