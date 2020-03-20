@@ -71,11 +71,16 @@
     };
     var MailList={
         current_filter:'',
+        search_clock:0,
         init:function(){
             MailList.group.load();
             MailList.list.tpl=$("#PluginMailingManager_list_tpl").html();
             $("#PluginMailingManager_list_filter").on('input',function(){
                 MailList.current_filter=$(this).val();
+                clearTimeout(MailList.search_clock);
+                MailList.search_clock=setTimeout(function(){
+                    MailList.group.load();
+                },800);
             });
         },
         group:{
@@ -145,7 +150,7 @@
 </script>
 <div id="PluginMailingManager" style="display: grid;grid-template-columns:400px auto">
     <div>
-        <input type="search" id="PluginMailingManager_list_filter" style="width:100%;height: 35px" placeholder="Фильтр">
+        <input type="search" id="PluginMailingManager_list_filter" style="width:100%;height: 35px;background-color: #fffd" placeholder="Фильтр">
         <div id="PluginMailingManager_maillist" class="iss_accordion">
             {{.}}
                 <button class="iss_accordion" data-index="{{#}}">{{message_handler}} / {{message_reason}} / {{created_at|date_simplify}}</button>

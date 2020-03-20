@@ -125,9 +125,12 @@ class MailingManager extends Catalog {
     
     
     private function messageListFilterGet( $filter ){
+        if( empty($filter) ){
+            return '1';
+        }
         $signature="CONCAT(message_handler,' ',message_reason,' ',message_note,' ',message_recievers,' ',message_subject)";
-        $parts=explode(" ",$filter);
-        $having=" $signature LIKE '%".implode("%' OR $signature LIKE '%",$filter)."%'";
+        $parts=explode(" ",trim($filter));
+        $having=" $signature LIKE '%".implode("%' OR $signature LIKE '%",$parts)."%'";
         return $having;
     }
     
