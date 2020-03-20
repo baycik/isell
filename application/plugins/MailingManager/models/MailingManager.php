@@ -106,7 +106,8 @@ class MailingManager extends Catalog {
     
     
     
-    public function messageCreate( string $handler, array $message ){
+
+    public function messageCreate( string $handler, object $message ){
         $user_id=$this->Hub->svar('user_id');
         $message_record=[
             'message_handler'=>$handler,
@@ -142,6 +143,7 @@ class MailingManager extends Catalog {
                 message_handler,
                 message_reason,
                 SUBSTRING(created_at, 1, 13) group_created_at,
+                created_at,
                 COUNT(*) message_count
             FROM
                 plugin_message_list
