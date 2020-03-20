@@ -117,6 +117,7 @@ class MoedeloSyncCompanies extends MoedeloSyncBase{
             (SELECT
                 company_id local_id,
                 NOW() local_tstamp,
+
                 COALESCE(company_tax_id,'') Inn,
                 COALESCE(company_code_registration,'') Ogrn,
                 COALESCE(company_code,'') Okpo,

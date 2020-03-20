@@ -191,7 +191,7 @@
 	    if( !confirm("Удалить проводку?") ){
 		return;
 	    }
-	    App.post("AccountsCore/transDelete/"+Tedit.data.trans_id,function(ok){
+	    App.post("AccountsCore/transDelete/",{trans_id:Tedit.data.trans_id},function(ok){
 		if( ok*1 ){
 		    App.flash("Проводка удалена");
 		    Tedit.handler.notify('delete',Tedit.data);

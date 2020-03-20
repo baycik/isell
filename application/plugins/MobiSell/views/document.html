@@ -30,7 +30,6 @@
 	    $("#document_create_dialog").hide();
 	    App.flash('Документ: загрузка...');
 	    $.post("documentGet/", {doc_id: doc_id}, function (resp) {
-                console.log(resp);
 		App.document.set(App.json(resp));
 		App.flash('Документ: ОК');
 	    });

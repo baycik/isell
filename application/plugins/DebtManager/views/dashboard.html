@@ -176,9 +176,9 @@
     <div></div>
 </div>
 <link href="DebtManager/debtmanager.css"  rel="stylesheet" type="text/css">
-<script>
+<script class="x-debt-manager-script">
 (function(){
-    var $holder=$(document.scripts[document.scripts.length - 1].parentNode.firstElementChild);
+    var $holder=$('.x-debt-manager-script').last().parent();
     var debt_manager_settings = {
         data:{},
         filter: {},

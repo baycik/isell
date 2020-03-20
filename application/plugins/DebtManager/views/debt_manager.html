@@ -7,6 +7,48 @@
         </div>
     </div>
     <div class="widget-block"> 
-        <div  style="margin: 10px;"></div>
-    </div>
-</div> 
+        <div  style="margin: 10px;">
+            <button class="debitors_list_create">Список должников</button>
+            <div class="debitors-progress" style="display: none">
+                <p>Дождитесь окончания оповещения</p>
+                <span class="debitors-done">0</span>/
+                <span class="debitors-total"></span>
+            </div>
+        </div>
+</div>
+</div>
+<script>
+    $("#DebtManager_dashboard_holder_tab").load("DebtManager/views/?path=dashboard.html");
+    $('button.debitors_list_create').click(function(){
+        debitorsListGet();
+    });    
+    function debitorsListGet(){
+        var companies_list = [];
+        $('#DebtManager_dashboard_holder_tab .block_-1 .debt-row ').each(function(){
+            var pcomp_id = $(this).attr('data-pcomp_id');
+            companies_list.push(pcomp_id);
+        })
+        console.log(companies_list);
+        $('.debitors-total').html(companies_list.length);
+        $('.debitors-progress').show('fast');
+        debitorMessageRender(companies_list, 0);
+    }
+    
+    function debitorMessageRender(companies_list, debitors_done){
+            $.post('DebtManager/messageRender', {pcomp_id: companies_list[0]}, function (resp) {
+                if(companies_list.length == 0){
+                    alert('Done');
+                    return;
+                }
+                if (resp && companies_list.length > 0) {
+                    debitors_done++;
+                    companies_list.shift();
+                    $('.debitors-done').html(debitors_done);
+                    return debitorMessageRender(companies_list, debitors_done);
+                } else {
+                    alert('Error');
+                }
+            });
+        
+    }
+</script>

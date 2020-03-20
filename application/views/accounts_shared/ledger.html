@@ -310,7 +310,7 @@
 	    rowDelete:function(){
 		var row=$('#account_ledger_dg').datagrid('getSelected');
 		if( row.editable*1 && row.trans_id && confirm("Удалить проводку?") ){
-		    App.post("AccountsCore/transDelete/"+row.trans_id,function(ok){
+		    App.post("AccountsCore/transDelete/",{trans_id:row.trans_id},function(ok){
 			if( ok*1 ){
 			    App.flash("Проводка удалена");
 			    $('#account_ledger_dg').datagrid('reload');

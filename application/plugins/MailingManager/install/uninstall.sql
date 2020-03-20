@@ -1,0 +1,1 @@
+DROP TABLE `plugin_message_list`;

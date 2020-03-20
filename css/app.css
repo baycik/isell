@@ -742,6 +742,7 @@ h2{
     background-color: #ffffffaa;
     font-size: 14px;
     border-bottom: 3px solid #999;
+    white-space: nowrap;
 }
 .isell-tabs .isell-tabs-buttons .isell-tabs-active, .isell-tabs .isell-tabs-buttons div:hover{
     background-color: #fffe;

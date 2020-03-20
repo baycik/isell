@@ -1,1 +1,174 @@
-Under construction
+<script>
+(function(){
+
+    Mark.pipes.date_simplify=function(date){
+        let now=new Date();
+        let then=new Date(date);
+        let simplified=`${then.getHours().toString().padStart(2, '0')}:${then.getMinutes().toString().padStart(2, '0')}`;
+        if( now.getTime()-then.getTime()>24*60*60*1000 || then.getDate()!==now.getDate() ){
+            simplified=`${then.getDate().toString().padStart(2, '0')}.${(then.getMonth()+1).toString().padStart(2, '0')} ${simplified}`;
+        }
+        return simplified;
+    };
+    
+    var holder_id="PluginMailing";
+    var $holder=$("#"+holder_id);
+    function init() {
+        Layout.init();
+        MailList.init();
+    }
+    
+    var Layout={
+        init:function(){
+            Layout.adjustHolders();
+            setTimeout(function(){
+                Layout.adjustHolders();
+            },1000);
+        },
+        adjustHolders:function(){
+            Layout.calcDimensions("#PluginMailingManager_maillist",0,-30);
+        },
+        calcDimensions:function(query, dw, dh){
+            var wheight = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
+            var height = (wheight  + (dh || 0)) + 'px';// - $(query).position().top - 0
+            var width = $(query).parent().width() + (dw || 0);
+            $(query).css('height', height);
+            $(query).css('width', width);
+        },
+        Accordion:function(query){
+            var container = $(query);
+            var observer = {
+                onselect: function () {}
+            };
+            function collapse(mode) {
+                container.find(".iss_accordion").each(function (i) {
+                    if( mode==='first_is_open' && i===0 ){
+                        $(this).addClass("active");
+                        observer.onselect(this);
+                        return;
+                    }
+                    $(this).removeClass("active");
+                    if ($(this).data('for')) {
+                        $("#" + $(this).data('for')).addClass("hidden");
+                    } else {
+                        $(this).next().addClass("hidden");
+                    }
+                });
+            }
+            container.find(".iss_accordion").on("click", function () {
+                collapse();
+                $(this).addClass("active");
+                if ($(this).data('for')) {
+                    $("#" + $(this).data('for')).removeClass("hidden");
+                } else {
+                    $(this).next().removeClass("hidden");
+                }
+                observer.onselect(this);
+            });
+            setTimeout(function(){
+                collapse('first_is_open');
+            },0);
+            return observer;
+        }
+    };
+    var MailList={
+        init:function(){
+            MailList.group.load();
+            MailList.list.tpl=$("#PluginMailingManager_list_tpl").html();
+        },
+        group:{
+            group_list:[],
+            selected_index:0,
+            load:function(){
+                $.get("MailingManager/messageGroupListGet").done(function(resp){
+                    MailList.group.group_list=App.json(resp);
+                    MailList.group.render();
+                });
+            },
+            render:function(){
+                App.renderTpl('PluginMailingManager_maillist',MailList.group.group_list);
+                Layout.Accordion('#PluginMailingManager_maillist').onselect=function( node ){
+                    MailList.group.selected_index=$(node).data('index');
+                    MailList.list.load(MailList.group.group_list[MailList.group.selected_index]);
+                };
+            }
+        },
+        list:{
+            load:function( group_entry ){
+                var filter={
+                    filter_handler:group_entry.message_handler,
+                    filter_reason:group_entry.message_reason,
+                    filter_date:group_entry.group_created_at
+                };
+                $.get("MailingManager/messageListGet",filter,function(resp){
+                    var maillist=App.json(resp);
+                    MailList.list.render(maillist);
+                });
+            },
+            render:function(maillist){
+                var html=Mark.up(MailList.list.tpl,maillist);
+                $(`#PluginMailingManager_maillist div[data-index=${MailList.group.selected_index}]`).html(html);
+            }
+        }
+    };
+    init();
+})();
+</script>
+<script type="text/tpl" id="PluginMailingManager_list_tpl">
+    <div class="PluginMailingManager_list">
+        {{.}}
+            <div>{{message_recievers}}</div>
+            <div>{{message_note}}</div>
+            <div>{{created_at}}</div>
+        {{/.}}
+    </div>
+</script>
+<div id="PluginMailingManager" style="display: grid;grid-template-columns:400px auto">
+    <div>
+        <div id="PluginMailingManager_maillist" class="iss_accordion">
+            {{.}}
+                <button class="iss_accordion" data-index="{{#}}">{{message_handler}} / {{message_reason}} / {{created_at|date_simplify}}</button>
+                <div class="iss_accordion_panel" data-index="{{#}}"></div>
+            {{/.}}
+        </div>
+    </div>
+    <div id="PluginMailingManager_mailview"></div>
+</div>
+<style>
+    button.iss_accordion {
+        color: #444;
+        cursor: pointer;
+        padding: 5px;
+        margin-bottom: 1px;
+        width: 100%;
+        border: none;
+        border-radius: 0px;
+        text-align: left;
+        outline: none;
+        font-size: 12px;
+        transition: 0.8s;
+        background: #Fff; 
+        height: 35px;
+    }
+    button.iss_accordion.active, button.iss_accordion:hover {
+        background-color: #Fe9; 
+    }
+    .iss_accordion_panel {
+        display: block;
+        background-color: rgba(255,255,255,.3);
+    }
+    .PluginMailingManager_list{
+        display: grid;
+        grid-template-columns:auto auto auto;
+        grid-row-gap:2px;
+        margin-left:10px;
+        padding-top: 2px;
+        padding-bottom: 2px;
+    }
+    .PluginMailingManager_list div{
+        background-color: #fffa;
+        height: 30px;
+        text-align: center;
+        padding-top: 5px;
+    }
+</style>
