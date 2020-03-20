@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema attributeFormDefault="unqualified" elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="atom">
+    <xs:complexType>
+      <xs:simpleContent>
+        <xs:extension base="xs:string">
+          <xs:attribute type="xs:string" name="name"/>
+        </xs:extension>
+      </xs:simpleContent>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="stall">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="pic" maxOccurs="unbounded" minOccurs="0"/>
+        <xs:element ref="donkey" maxOccurs="unbounded" minOccurs="0"/>
+        <xs:element ref="cow"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="donkey">
+    <xs:complexType>
+      <xs:simpleContent>
+        <xs:extension base="xs:string">
+          <xs:attribute type="xs:string" name="name" use="optional"/>
+          <xs:attribute type="xs:string" name="birthday" use="optional"/>
+        </xs:extension>
+      </xs:simpleContent>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="cornfield">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="created"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="vehicle">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="tractor"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="cow">
+    <xs:complexType>
+      <xs:simpleContent>
+        <xs:extension base="xs:string">
+          <xs:attribute type="xs:string" name="name"/>
+          <xs:attribute type="xs:string" name="birthday"/>
+        </xs:extension>
+      </xs:simpleContent>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="pic">
+    <xs:complexType>
+      <xs:simpleContent>
+        <xs:extension base="xs:string">
+          <xs:attribute type="xs:string" name="name" use="optional"/>
+          <xs:attribute type="xs:string" name="birthday" use="optional"/>
+        </xs:extension>
+      </xs:simpleContent>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="corn">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="molecule"/>
+      </xs:sequence>
+      <xs:attribute type="xs:string" name="number"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="field">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="cornfield"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="farm">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="stall"/>
+        <xs:element ref="vehicle"/>
+        <xs:element ref="field"/>
+      </xs:sequence>
+      <xs:attribute type="xs:string" name="name"/>
+      <xs:attribute type="xs:string" name="size"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="created">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="corn"/>
+      </xs:sequence>
+      <xs:attribute type="xs:string" name="date"/>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="molecule">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element ref="atom"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  <xs:element name="tractor">
+    <xs:complexType>
+      <xs:simpleContent>
+        <xs:extension base="xs:string">
+          <xs:attribute type="xs:string" name="name"/>
+        </xs:extension>
+      </xs:simpleContent>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

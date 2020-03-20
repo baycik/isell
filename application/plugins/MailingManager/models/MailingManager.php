@@ -106,16 +106,17 @@ class MailingManager extends Catalog {
     
     
     
+
     public function messageCreate( string $handler, object $message ){
         $user_id=$this->Hub->svar('user_id');
         $message_record=[
             'message_handler'=>$handler,
             'message_status'=>'created',
-            'message_reason'=>$message->reason,
-            'message_note'=>$message->note,
-            'message_recievers'=>$message->recievers,
-            'message_subject'=>$message->subject,
-            'message_body'=>$message->body,
+            'message_reason'=>$message['reason'],
+            'message_note'=>$message['note'],
+            'message_recievers'=>$message['recievers'],
+            'message_subject'=>$message['subject'],
+            'message_body'=>$message['body'],
             'created_by'=>$user_id,
             'modified_by'=>$user_id
         ];
@@ -141,6 +142,7 @@ class MailingManager extends Catalog {
             SELECT
                 message_handler,
                 message_reason,
+                SUBSTRING(created_at, 1, 13) group_created_at,
                 created_at,
                 COUNT(*) message_count
             FROM
