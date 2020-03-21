@@ -91,8 +91,7 @@ class DocumentSell extends DocumentBase{
         $this->documentSelect($doc_id);
         
         $entry_filter=$doc_entry_id?" AND doc_entry_id=$doc_entry_id":"";
-        $is_curr_native = $this->doc('pcomp')->curr_code == $this->Hub->acomp('curr_code')?1:0;
-        $doc_curr_correction=$is_curr_native?1:1/$this->doc('doc_ratio');
+        $doc_curr_correction=$this->documentCurrCorrectionGet();
         $doc_vat_ratio=$this->doc('vat_rate')/100+1;
         $doc_lang=$this->doc('pcomp')->language??'ru';
         $sql_create="CREATE TEMPORARY TABLE tmp_entry_list AS (

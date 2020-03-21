@@ -39,7 +39,7 @@ abstract class DocumentBase extends Catalog{
             return true;
         }
 	unset($this->document_properties);
-        $document_properties=$this->get_row("SELECT * FROM document_list WHERE doc_id='$doc_id'");
+        $document_properties=$this->get_row("SELECT * FROM document_list JOIN document_types USING(doc_type) WHERE doc_id='$doc_id'");
         $Company=$this->Hub->load_model("Company");
         $document_properties->pcomp=$Company->companyGet( $document_properties->passive_company_id );
         $is_access_granted=$document_properties->pcomp?1:0;
@@ -79,6 +79,11 @@ abstract class DocumentBase extends Catalog{
             $Pref->setPrefs($pref);
         }
         return $pref[$pref_name];
+    }
+    
+    protected function documentCurrCorrectionGet(){
+        $is_curr_native = $this->doc('pcomp')->curr_code == $this->Hub->acomp('curr_code')?1:0;
+        return $is_curr_native?1:1/$this->doc('doc_ratio');
     }
     //////////////////////////////////////////
     // DOCUMENT CRUD SECTION
@@ -343,16 +348,52 @@ abstract class DocumentBase extends Catalog{
     // TRANSACTIONS SECTION
     //////////////////////////////////////////
     public $transaction_table=[
-        
+        'total'=>[],
+        'vat'=>[],
+        'vatless'=>[],
+        'self'=>[],
+        'profit'=>[]
     ];
     public function transListCreate(){
-        
+        $trans=[
+            'doc_id'=>$this->doc('doc_id'),
+            'active_company_id'=>$this->doc('active_company_id'),
+            'passive_company_id'=>$this->doc('passive_company_id')
+        ];
+        foreach( $this->transaction_table as $trans_role=>$trans_type ){
+            $trans['trans_role']=$trans_role;
+            $trans['acc_debit_code']=$trans_type[0];
+            $trans['acc_credit_code']=$trans_type[1];
+            $trans_id=$this->create('acc_trans',$trans);
+            /* COMPABILITY PATCH */
+            $this->create('document_trans',['trans_id'=>$trans_id,'doc_id'=>$trans['doc_id'],'trans_role'=>$trans_role,'trans_type'=>implode('_',$trans_type)]);
+        }
+        return true;
     }
     public function transListUpdate(){
-        
+        $foot=$this->footGet( $this->doc_id );
+        $AccountsCore=$this->Hub->load_model('AccountsCore');
+        $trans_list=$this->get_list("SELECT * FROM acc_trans WHERE doc_id='{$this->doc_id}'");
+        foreach($trans_list as $trans){
+            /* COMPABILITY PATCH */
+            if( !$trans['trans_role'] ){
+                $trans['trans_role']=$this->get_value("SELECT trans_role FROM document_trans WHERE trans_id='{$trans['trans_id']}'");
+            }
+            $trans['description'] =$this->doc('doc_type_name');
+            $trans['description'].=$this->doc('is_reclamation')?" (Возврат)":"";
+            $trans['description'].=" #".$this->doc('doc_num');
+            
+            $trans['amount']=$foot[$trans['trans_role']];
+            $doc_curr_correction=$this->documentCurrCorrectionGet();
+            if( $doc_curr_correction!=1 ){
+                $trans['amount_alt']=$trans['amount']*$doc_curr_correction;
+            }
+            $AccountsCore->transUpdate( $trans['trans_id'], $trans );
+        }
     }
     public function transListDelete(){
-        
+        $this->delete('document_trans',['doc_id'=>$this->doc_id]);//only for compability with older engine
+        return $this->delete('acc_trans',['doc_id'=>$this->doc_id]);
     }
     
     

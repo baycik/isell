@@ -8,6 +8,26 @@
 class AccountsCore extends Catalog{
     public $min_level=1;
     
+    
+    //////////////////////////////////////////////
+    // TRANS UTILS SECTION
+    //////////////////////////////////////////////
+    private function transLevelCheck( $trans_type ){
+	$user_level=$this->Hub->svar('user_level');
+	if( $user_level>=3 ){
+	    return true;
+	}
+	$sql="SELECT 
+                1 
+            FROM 
+                acc_trans_names 
+            WHERE 
+                CONCAT(acc_debit_code,'_',acc_credit_code)='$trans_type' 
+                AND user_level<='$user_level'";
+	return $this->get_value($sql);
+    }
+
+    
     //////////////////////////////////////////////
     // TRANS SECTION
     //////////////////////////////////////////////
@@ -17,12 +37,46 @@ class AccountsCore extends Catalog{
     }
     
     public function transCreate( array $trans_data ){
-        
+	if( !$this->transLevelCheck($trans_type) ){
+	    $this->Hub->msg('access denied');
+	    return false;
+	}
+	$user_id=$this->Hub->svar('user_id');
+	$acc_codes=  explode('_',$trans_type);
+	$trans_data=[
+	    'trans_ref'=>$trans_ref,
+	    'check_id'=>$check_id,
+	    'passive_company_id'=>$passive_company_id,
+	    'acc_debit_code'=>$acc_codes[0],
+	    'acc_credit_code'=>$acc_codes[1],
+            'trans_article'=>$trans_article,
+	    'cstamp'=>$trans_date.date(" H:i:s"),
+	    'amount'=>$amount,
+	    'amount_alt'=>$amount_alt,
+	    'description'=>$description
+	];
+        $update_trans_data=true;
+        if( !$trans_id ){
+            $this->Hub->set_level(2);
+	    $trans_data['editable']=1;
+	    $trans_data['active_company_id']=$this->Hub->acomp('company_id');
+	    $trans_data['created_by']=$user_id;
+	    if( $trans_data['trans_ref'] && $this->transAlreadyLinked($trans_data['trans_ref']) ){//Check whether referenced trans is already linked
+		return false;
+	    }
+	    $this->create('acc_trans', $trans_data);
+	    $trans_id= $this->db->insert_id();
+            $update_trans_data=false;
+        }
+        $this->transUpdate($trans_id, $trans_data, $update_trans_data);
+	return $trans_id;        
     }
     
     public function transUpdate( int $trans_id, array $trans_data, bool $update_trans_data=true ){
 	$this->Hub->set_level(2);
         $ok=true;
+        $user_id=$this->Hub->svar('user_id');
+        $trans_data['modified_by']=$user_id;
         if( $update_trans_data ){
             $this->update('acc_trans', $trans_data, ['trans_id'=>$trans_id]);
             $ok= $this->db->affected_rows()>0?true:false;
@@ -36,7 +90,7 @@ class AccountsCore extends Catalog{
     public function transDelete( int $trans_id ){
 	$this->Hub->set_level(2);
 	$trans=$this->transGet($trans_id);
-	if( $trans && $this->transCheckLevel($trans->acc_debit_code.'_'.$trans->acc_credit_code) ){
+	if( $trans && $this->transLevelCheck($trans->acc_debit_code.'_'.$trans->acc_credit_code) ){
 	    $this->delete('acc_trans',['trans_id'=>$trans_id,'editable'=>1]);
             $ok=$this->db->affected_rows()>0?true:false;
 	    $this->checkTransBreakLink($trans->check_id);
@@ -48,6 +102,18 @@ class AccountsCore extends Catalog{
 	$this->Hub->msg('access denied');
 	return false;        
     }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     
     
     
@@ -328,15 +394,7 @@ class AccountsCore extends Catalog{
 	return $this->get_value($sql);	
     }
     
-    public $transCheckLevel=['string'];
-    public function transCheckLevel($trans_type){
-	$user_level=$this->Hub->svar('user_level');
-	if( $user_level>=3 ){
-	    return true;
-	}
-	$sql="SELECT 1 FROM acc_trans_names WHERE CONCAT(acc_debit_code,'_',acc_credit_code)='$trans_type' AND user_level<='$user_level'";
-	return $this->get_value($sql);
-    }
+
     /******************
       STATUS
       1 unpayed
@@ -457,7 +515,7 @@ class AccountsCore extends Catalog{
 	'trans_article'=>'string'
     ];
     public function transCreateUpdate($trans_id,$check_id,$passive_company_id,$trans_type,$trans_date,$trans_ref,$amount,$amount_alt,$description,$trans_article=''){
-	if( !$this->transCheckLevel($trans_type) ){
+	if( !$this->transLevelCheck($trans_type) ){
 	    $this->Hub->msg('access denied');
 	    return false;
 	}
@@ -473,15 +531,14 @@ class AccountsCore extends Catalog{
 	    'cstamp'=>$trans_date.date(" H:i:s"),
 	    'amount'=>$amount,
 	    'amount_alt'=>$amount_alt,
-	    'description'=>$description,
-	    'modified_by'=>$user_id
+	    'description'=>$description
 	];
         $update_trans_data=true;
         if( !$trans_id ){
             $this->Hub->set_level(2);
 	    $trans_data['editable']=1;
 	    $trans_data['active_company_id']=$this->Hub->acomp('company_id');
-	    $trans_data['created_by']=$trans_data['modified_by'];
+	    $trans_data['created_by']=$user_id;
 	    if( $trans_data['trans_ref'] && $this->transAlreadyLinked($trans_data['trans_ref']) ){//Check whether referenced trans is already linked
 		return false;
 	    }
