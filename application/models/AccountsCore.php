@@ -544,6 +544,7 @@ class AccountsCore extends Catalog{
 	    $trans_data['editable']=1;
 	    $trans_data['active_company_id']=$this->Hub->acomp('company_id');
 	    $trans_data['created_by']=$user_id;
+            $trans_data['modified_by']=$user_id;
 	    if( $trans_data['trans_ref'] && $this->transAlreadyLinked($trans_data['trans_ref']) ){//Check whether referenced trans is already linked
 		return false;
 	    }
