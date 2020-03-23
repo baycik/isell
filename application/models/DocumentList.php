@@ -66,7 +66,7 @@ class DocumentList extends Catalog{
 			acc_trans 
 			    JOIN 
 			document_trans dtr USING(trans_id)
-		    WHERE dtr.doc_id=dl.doc_id AND trans_role='total'
+		    WHERE dtr.doc_id=dl.doc_id AND dtr.trans_role='total'
 		    LIMIT 1) doc_total,
 		(SELECT CONCAT(code,' ',descr) FROM acc_trans_status JOIN acc_trans USING(trans_status) JOIN document_trans dt USING(trans_id) WHERE dt.doc_id=dl.doc_id ORDER BY trans_id LIMIT 1) trans_status
 	    FROM 
