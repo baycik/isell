@@ -383,7 +383,7 @@ abstract class DocumentBase extends Catalog{
             $trans['description'].=$this->doc('is_reclamation')?" (Возврат)":"";
             $trans['description'].=" #".$this->doc('doc_num');
             
-            $trans['amount']=$foot[$trans['trans_role']];
+            $trans['amount']=$foot[$trans['trans_role']]??0;
             $doc_curr_correction=$this->documentCurrCorrectionGet();
             if( $doc_curr_correction!=1 ){
                 $trans['amount_alt']=$trans['amount']*$doc_curr_correction;

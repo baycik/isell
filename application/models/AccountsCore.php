@@ -37,6 +37,12 @@ class AccountsCore extends Catalog{
     }
     
     public function transCreate( array $trans_data ){
+        
+        
+        
+        
+        
+        
 	if( !$this->transLevelCheck($trans_type) ){
 	    $this->Hub->msg('access denied');
 	    return false;
@@ -78,8 +84,7 @@ class AccountsCore extends Catalog{
         $user_id=$this->Hub->svar('user_id');
         $trans_data['modified_by']=$user_id;
         if( $update_trans_data ){
-            $this->update('acc_trans', $trans_data, ['trans_id'=>$trans_id]);
-            $ok= $this->db->affected_rows()>0?true:false;
+            $ok= $this->update('acc_trans', $trans_data, ['trans_id'=>$trans_id]);
         }
         $this->checkTransLink($trans_id,$trans_data);
 	$this->transCrossLink($trans_id,$trans_data);
