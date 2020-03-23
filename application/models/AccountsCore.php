@@ -594,12 +594,12 @@ class AccountsCore extends Catalog{
 		trans_id,
 		type
 	    FROM 
-		document_trans 
+		document_trans dtr
 		    JOIN 
-		acc_trans USING(trans_id) 
+		acc_trans at USING(trans_id) 
 	    WHERE 
 		doc_id='$doc_id' 
-		AND trans_role='total' 
+		AND dtr.trans_role='total' 
 		AND amount='$amount'";
 	$trans=$this->get_row($sql);
 	if( $trans->trans_id ){
