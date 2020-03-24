@@ -70,15 +70,24 @@
         }
     };
     var MailList={
+        current_filter:'',
+        search_clock:0,
         init:function(){
             MailList.group.load();
             MailList.list.tpl=$("#PluginMailingManager_list_tpl").html();
+            $("#PluginMailingManager_list_filter").on('input',function(){
+                MailList.current_filter=$(this).val();
+                clearTimeout(MailList.search_clock);
+                MailList.search_clock=setTimeout(function(){
+                    MailList.group.load();
+                },800);
+            });
         },
         group:{
             group_list:[],
             selected_index:0,
             load:function(){
-                $.get("MailingManager/messageGroupListGet").done(function(resp){
+                $.get("MailingManager/messageGroupListGet",{filter:MailList.current_filter},function(resp){
                     MailList.group.group_list=App.json(resp);
                     MailList.group.render();
                 });
@@ -95,6 +104,7 @@
             selected_id:0,
             load:function( group_entry ){
                 var filter={
+                    filter:MailList.current_filter,
                     filter_handler:group_entry.message_handler,
                     filter_reason:group_entry.message_reason,
                     filter_date:group_entry.group_created_at
@@ -140,9 +150,11 @@
 </script>
 <div id="PluginMailingManager" style="display: grid;grid-template-columns:400px auto">
     <div>
+        <input type="search" id="PluginMailingManager_list_filter" style="width:100%;height: 35px;background-color: #fffd" placeholder="Фильтр">
         <div id="PluginMailingManager_maillist" class="iss_accordion">
+            <button class="iss_accordion" data-index="--">Новая рассылка</button>
             {{.}}
-                <button class="iss_accordion" data-index="{{#}}">{{message_handler}} / {{message_reason}} / {{created_at|date_simplify}}</button>
+                <button class="iss_accordion" data-index="{{#}}">{{message_handler}} ({{message_count}}) / {{message_reason}} / {{created_at|date_simplify}}</button>
                 <div class="iss_accordion_panel" data-index="{{#}}"></div>
             {{/.}}
         </div>

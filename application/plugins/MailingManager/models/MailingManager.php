@@ -123,21 +123,36 @@ class MailingManager extends Catalog {
         return $this->create('plugin_message_list',$message_record);
     }
     
-    public function messageListGet( string $filter_handler='', string $filter_reason='', string $filter_date='' ){
+    
+    private function messageListFilterGet( $filter ){
+        if( empty($filter) ){
+            return '1';
+        }
+        $signature="CONCAT(message_handler,' ',message_reason,' ',message_note,' ',message_recievers,' ',message_subject)";
+        $parts=explode(" ",trim($filter));
+        $having=" $signature LIKE '%".implode("%' OR $signature LIKE '%",$parts)."%'";
+        return $having;
+    }
+    
+    public function messageListGet( string $filter='', string $filter_handler='', string $filter_reason='', string $filter_date='' ){
+        $where = $this->messageListFilterGet( $filter );
         $msg_list_msg="
             SELECT
-                *
+                *,
+                CONCAT(message_handler,' ',message_reason,' ',message_note,' ',message_recievers,' ',message_subject) signature
             FROM
                 plugin_message_list
             WHERE
                 message_handler LIKE '%$filter_handler%'
                 AND message_reason LIKE '%$filter_reason%'
                 AND created_at LIKE '%$filter_date%'
+                AND $where
             ";
         return $this->get_list($msg_list_msg);
     }
     
-    public function messageGroupListGet(){
+    public function messageGroupListGet( string $filter ){
+        $where = $this->messageListFilterGet( $filter );
         $msg_list_msg="
             SELECT
                 message_handler,
@@ -147,6 +162,8 @@ class MailingManager extends Catalog {
                 COUNT(*) message_count
             FROM
                 plugin_message_list
+            WHERE
+                $where
             GROUP BY
                 CONCAT(message_handler,message_reason,SUBSTRING(created_at, 1, 13))
             ";
