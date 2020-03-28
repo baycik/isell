@@ -1,0 +1,1 @@
+UPDATE `document_view_types` SET `doc_types` = '/1/2/' WHERE (`view_type_id` = '133');
