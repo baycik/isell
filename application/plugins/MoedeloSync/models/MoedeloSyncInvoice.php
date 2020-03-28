@@ -143,7 +143,7 @@ class MoedeloSyncInvoice extends MoedeloSyncBase{
                 Supplier_pse.remote_id SupplierId,
                 Receiver_pse.remote_id ReceiverId,
                 Payer_pse.remote_id PayerId,
-                Stock_pse.remote_id StockId
+                {$this->remote_stock_id} StockId
                 
                 $select
             FROM
@@ -154,8 +154,6 @@ class MoedeloSyncInvoice extends MoedeloSyncBase{
                 document_view_list dvl USING(doc_id)
                     JOIN
 		user_list ON dl.modified_by=user_id
-                    JOIN
-                plugin_sync_entries Stock_pse ON 1=Stock_pse.local_id AND Stock_pse.sync_destination='moedelo_stocks'
                     JOIN
                 plugin_sync_entries Payer_pse ON passive_company_id=Payer_pse.local_id AND Payer_pse.sync_destination='moedelo_companies'
                     LEFT JOIN

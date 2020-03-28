@@ -283,6 +283,7 @@ class MoedeloSyncBase extends Catalog{
                     WHERE
                         entry_id='$entry_id'");
         } else {
+            print_r($entity);
             $error=$this->getValidationErrors($response);
             $this->log("{$this->doc_config->sync_destination} UPDATE is unsuccessfull (HTTP CODE:$response->httpcode '$error') {$entity->ErrorTitle}");
             return false;

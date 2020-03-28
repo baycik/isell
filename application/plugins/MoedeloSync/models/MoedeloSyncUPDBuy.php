@@ -1,33 +1,15 @@
 <?php
-require_once 'MoedeloSyncBase.php';
-class MoedeloSyncInvoiceSell extends MoedeloSyncBase{
+require_once 'MoedeloSyncUPDSell.php';
+class MoedeloSyncUPDBuy extends MoedeloSyncUPDSell{
     function __construct(){
         parent::__construct();
         $this->doc_config=(object) [
-            'remote_function'=>'accounting/api/v1/sales/invoice/common',
-            'local_view_type_id'=>140,//invoice
-            'sync_destination'=>'moedelo_doc_invoicesell',
+            'remote_function'=>'docs/api/v1/Purchases/Upd',
+            'local_view_type_id'=>143,//upd
+            'sync_destination'=>'moedelo_doc_upd_buy',
             'doc_type'=>1
         ];
     }
-    
-    /**
-     * Finds changes that needs to be made on local and remote
-     */
-    public function checkout( $is_full ){
-        return false;
-    }
-    /**
-     * Executes needed sync operations
-     */
-    public function replicate(){
-        return parent::replicate();
-    }
-    
-    
-    ///////////////////////////////////////////////////////////////
-    // REMOTE SECTION
-    ///////////////////////////////////////////////////////////////
     
     /**
      * @param bool $is_full
@@ -52,7 +34,7 @@ class MoedeloSyncInvoiceSell extends MoedeloSyncBase{
                 2 NdsPositionType,
                 GREATEST(dl.modified_at,MAX(de.modified_at),dvl.modified_at) local_tstamp,
                 
-                Payer_pse.remote_id KontragentId,
+                Sender_pse.remote_id KontragentId,
                 Sender_pse.remote_id SenderId,
                 Supplier_pse.remote_id SupplierId,
                 Receiver_pse.remote_id ReceiverId,
@@ -64,9 +46,9 @@ class MoedeloSyncInvoiceSell extends MoedeloSyncBase{
                     JOIN
                 document_view_list dvl USING(doc_id)
                     JOIN
-                plugin_sync_entries Payer_pse ON passive_company_id=Payer_pse.local_id AND Payer_pse.sync_destination='moedelo_companies'
+                plugin_sync_entries Sender_pse ON passive_company_id=Payer_pse.local_id AND Payer_pse.sync_destination='moedelo_companies'
                     LEFT JOIN
-                plugin_sync_entries Sender_pse ON '$this->acomp_id'=Sender_pse.local_id AND Sender_pse.sync_destination='moedelo_companies'
+                plugin_sync_entries Payer_pse ON '$this->acomp_id'=Sender_pse.local_id AND Sender_pse.sync_destination='moedelo_companies'
                     LEFT JOIN
                 plugin_sync_entries Supplier_pse ON JSON_UNQUOTE(JSON_EXTRACT(view_efield_values,'$.supplier_company_id'))=Supplier_pse.local_id AND Supplier_pse.sync_destination='moedelo_companies'
                     LEFT JOIN
@@ -81,33 +63,6 @@ class MoedeloSyncInvoiceSell extends MoedeloSyncBase{
     }
     
     
-    /**
-     * Inserts new record on local
-     */
-    public function localInsert( $local_id, $remote_id, $entry_id ){
-        $this->remoteDelete( $local_id, $remote_id, $entry_id );
-    }
-    
-    /**
-     * Updates existing record on local
-     */
-    public function localUpdate( $local_id, $remote_id, $entry_id ){
-        $this->remoteUpdate( $local_id, $remote_id, $entry_id );
-    }
-    
-    /**
-     * Deletes existing record on local
-     */
-    public function localDelete( $local_id, $remote_id, $entry_id ){
-        $this->remoteInsert( $local_id, $remote_id, $entry_id );
-    }
-
-//    protected function localHashCalculate( $entity ){
-//        $check="{$entity->Article};{$entity->UnitOfMeasurement};".round($entity->SalePrice,5).";{$entity->Producer};";
-//        echo "local check-$check";
-//        return md5($check);
-//    }
-    
     
     public function localGet( $local_id ){
         $sql_dochead="
@@ -116,19 +71,17 @@ class MoedeloSyncInvoiceSell extends MoedeloSyncBase{
                 dvl.doc_view_id local_id,
                 dl.vat_rate,
                 view_num Number,
-                REPLACE(dvl.tstamp,' ','T') DocDate,
-                '' PaymentNumber,
-                '' PaymentDate,
-                dl.cstamp ContextCreateDate,
-                GREATEST(dl.modified_at,MAX(de.modified_at),dvl.modified_at) ContextModifyDate,
-                user_sign ContextModifyUser,
-                SUM(ROUND(invoice_price*product_quantity*(1+dl.vat_rate/100),2)) Sum,
-                1 Type,
+                REPLACE(dvl.tstamp,' ','T') Date,
+                1 Status,
+                
+                2 TaxSystem,
                 2 NdsPositionType,
                 
-                CONCAT('СчетФактура ',view_num,dvl.tstamp) ErrorTitle,
-
-                Payer_pse.remote_id KontragentId,
+                CONCAT('УПД ',view_num,dvl.tstamp) ErrorTitle,
+                
+                SUM(ROUND(invoice_price*product_quantity*(1+dl.vat_rate/100),2)) Sum,
+                {$this->remote_stock_id} StockId,
+                Sender_pse.remote_id KontragentId,
                 Sender_pse.remote_id SenderId,
                 Supplier_pse.remote_id SupplierId,
                 Receiver_pse.remote_id ReceiverId,
@@ -143,9 +96,9 @@ class MoedeloSyncInvoiceSell extends MoedeloSyncBase{
                     JOIN
 		user_list ON dl.modified_by=user_id 
                     JOIN
-                plugin_sync_entries Payer_pse ON passive_company_id=Payer_pse.local_id AND Payer_pse.sync_destination='moedelo_companies'
+                plugin_sync_entries Sender_pse ON passive_company_id=Payer_pse.local_id AND Payer_pse.sync_destination='moedelo_companies'
                     LEFT JOIN
-                plugin_sync_entries Sender_pse ON '$this->acomp_id'=Sender_pse.local_id AND Sender_pse.sync_destination='moedelo_companies'
+                plugin_sync_entries Payer_pse ON '$this->acomp_id'=Sender_pse.local_id AND Sender_pse.sync_destination='moedelo_companies'
                     LEFT JOIN
                 plugin_sync_entries Supplier_pse ON JSON_UNQUOTE(JSON_EXTRACT(view_efield_values,'$.supplier_company_id'))=Supplier_pse.local_id AND Supplier_pse.sync_destination='moedelo_companies'
                     LEFT JOIN
@@ -163,7 +116,7 @@ class MoedeloSyncInvoiceSell extends MoedeloSyncBase{
                     product_quantity Count,
                     product_unit Unit,
                     IF(is_service=1,2,1) Type,
-                    {$document->vat_rate} NdsType,
+                    IF({$document->vat_rate},1,0) NdsType,
                     ROUND(invoice_price*(1+{$document->vat_rate}/100),2) Price,
                     ROUND(invoice_price*product_quantity*(1+{$document->vat_rate}/100),2) SumWithNds,
                     prod_pse.remote_id StockProductId
@@ -177,11 +130,6 @@ class MoedeloSyncInvoiceSell extends MoedeloSyncBase{
                     doc_id={$document->doc_id}";
             $document->Items=$this->get_list($sql_entry);
         }
-        $document->Context=(object)[
-            'CreateDate'=>$this->toTimezone($document->ContextCreateDate,'remote'),
-            'ModifyDate'=>$this->toTimezone($document->ContextModifyDate,'remote'),
-            'ModifyUser'=>$document->ContextModifyUser
-        ];
         
         
         //print_r($document);//die;

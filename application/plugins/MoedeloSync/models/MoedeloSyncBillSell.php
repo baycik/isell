@@ -202,7 +202,7 @@ class MoedeloSyncBillSell extends MoedeloSyncBase{
                 SUM(ROUND(invoice_price*product_quantity*(1+dl.vat_rate/100),2)) Sum,
                 2 NdsPositionType,                
                 Kontragent_pse.remote_id KontragentId,
-                Stock_pse.remote_id StockId
+                {$this->remote_stock_id} StockId
             FROM
                 document_list dl
                     JOIN
@@ -211,8 +211,6 @@ class MoedeloSyncBillSell extends MoedeloSyncBase{
                 document_view_list dvl USING(doc_id)
                     JOIN
 		user_list ON dl.modified_by=user_id
-                    LEFT JOIN
-                plugin_sync_entries Stock_pse ON 1=Stock_pse.local_id AND Stock_pse.sync_destination='moedelo_stocks'
                     JOIN
                 plugin_sync_entries Kontragent_pse ON passive_company_id=Kontragent_pse.local_id AND Kontragent_pse.sync_destination='moedelo_companies'
                     LEFT JOIN

@@ -1,110 +1,16 @@
 <?php
-require_once 'MoedeloSyncBase.php';
-class MoedeloSyncWayBillSell extends MoedeloSyncBase{
+require_once 'MoedeloSyncWayBillSell.php';
+class MoedeloSyncWayBillBuy extends MoedeloSyncWayBillSell{
     function __construct(){
         parent::__construct();
         $this->doc_config=(object) [
             'remote_function'=>'accounting/api/v1/purchases/waybill',
             'local_view_type_id'=>133,//torg12
-            'sync_destination'=>'moedelo_doc_waybillbuy',
+            'sync_destination'=>'moedelo_doc_waybill_buy',
             'doc_type'=>2
         ];
     }
     
-    /**
-     * Finds changes that needs to be made on local and remote
-     */
-    public function checkout( $is_full ){
-        return false;
-    }
-    /**
-     * Executes needed sync operations
-     */
-    public function replicate(){
-        return parent::replicate();
-    }
-    
-    
-    ///////////////////////////////////////////////////////////////
-    // REMOTE SECTION
-    ///////////////////////////////////////////////////////////////
-    
-    /**
-     * @param bool $is_full
-     * Checks for updates on remote
-     */
-    public function remoteCheckout( bool $is_full=false ){
-        return parent::remoteCheckout( $is_full );
-    }
-    /**
-     * Inserts new record on remote
-     */
-    public function remoteInsert( $local_id, $remote_id, $entry_id ){
-        return parent::remoteInsert($local_id, $remote_id, $entry_id);
-    }
-    /**
-     * Updates existing record on remote
-     */
-    public function remoteUpdate( $local_id, $remote_id, $entry_id ){
-        return parent::remoteUpdate($local_id, $remote_id, $entry_id);
-    }
-    
-    /** 
-     * Deletes existing record on remote
-     */
-    public function remoteDelete( $local_id, $remote_id, $entry_id ){
-        return parent::remoteDelete($local_id, $remote_id, $entry_id);
-    }
-    
-    /**
-     * 
-     * @param int $remote_id
-     * @return type
-     * Gets existing record from remote
-     */
-    public function remoteGet( $remote_id ){
-        return parent::remoteGet($remote_id);
-    }
-    /**
-     * 
-     * @param object $entity
-     * @return type md5 hash
-     * Calculates remote entity hash
-     */
-    public function remoteHashCalculate( $entity ){
-        $DocDate=substr( $this->toTimezone($entity->DocDate,'local') , 0, 10);
-        $entity->Sum*=1;
-        $check="{$entity->Number};{$DocDate};{$entity->KontragentId};{$entity->Sum};";
-        //echo "remote check-$check";
-        return md5($check);
-    }
-    /**
-     * 
-     * @param type $local_id
-     * @param type $remote_id
-     * @param type $entry_id
-     * Gets remote document and fetches its modify date. This function resolves locks when hashes different but tstamps same.
-     */
-    public function remoteInspect( $local_id, $remote_id, $entry_id ){
-        $this->remoteUpdate( $local_id, $remote_id, $entry_id );
-    }
-    
-    
-    
-    
-    
-    ///////////////////////////////////////////////////////////////
-    // LOCAL SECTION
-    ///////////////////////////////////////////////////////////////
-    
-    /**
-     * 
-     * @param bool $is_full
-     * Checks for updates on local
-     */
-    public function localCheckout( bool $is_full=false ){
-        return parent::localCheckout($is_full);
-    }
     /**
      * @param bool $is_full
      * Create local doc list to sync
@@ -128,7 +34,7 @@ class MoedeloSyncWayBillSell extends MoedeloSyncBase{
                 2 NdsPositionType,
                 GREATEST(dl.modified_at,MAX(de.modified_at),dvl.modified_at) local_tstamp,
                 
-                Payer_pse.remote_id KontragentId,
+                Sender_pse.remote_id KontragentId,
                 Sender_pse.remote_id SenderId,
                 Supplier_pse.remote_id SupplierId,
                 Receiver_pse.remote_id ReceiverId,
@@ -140,9 +46,9 @@ class MoedeloSyncWayBillSell extends MoedeloSyncBase{
                     JOIN
                 document_view_list dvl USING(doc_id)
                     JOIN
-                plugin_sync_entries Payer_pse ON passive_company_id=Payer_pse.local_id AND Payer_pse.sync_destination='moedelo_companies'
+                plugin_sync_entries Payer_pse ON '$this->acomp_id'=Payer_pse.local_id AND Payer_pse.sync_destination='moedelo_companies'
                     LEFT JOIN
-                plugin_sync_entries Sender_pse ON '$this->acomp_id'=Sender_pse.local_id AND Sender_pse.sync_destination='moedelo_companies'
+                plugin_sync_entries Sender_pse ON passive_company_id=Sender_pse.local_id AND Sender_pse.sync_destination='moedelo_companies'
                     LEFT JOIN
                 plugin_sync_entries Supplier_pse ON JSON_UNQUOTE(JSON_EXTRACT(view_efield_values,'$.supplier_company_id'))=Supplier_pse.local_id AND Supplier_pse.sync_destination='moedelo_companies'
                     LEFT JOIN
@@ -155,35 +61,6 @@ class MoedeloSyncWayBillSell extends MoedeloSyncBase{
             GROUP BY doc_view_id) inner_table";
         return $local_sync_list_sql;
     }
-    
-    
-    /**
-     * Inserts new record on local
-     */
-    public function localInsert( $local_id, $remote_id, $entry_id ){
-        $this->remoteDelete( $local_id, $remote_id, $entry_id );
-    }
-    
-    /**
-     * Updates existing record on local
-     */
-    public function localUpdate( $local_id, $remote_id, $entry_id ){
-        $this->remoteUpdate( $local_id, $remote_id, $entry_id );
-    }
-    
-    /**
-     * Deletes existing record on local
-     */
-    public function localDelete( $local_id, $remote_id, $entry_id ){
-        $this->remoteInsert( $local_id, $remote_id, $entry_id );
-    }
-
-//    protected function localHashCalculate( $entity ){
-//        $check="{$entity->Article};{$entity->UnitOfMeasurement};".round($entity->SalePrice,5).";{$entity->Producer};";
-//        echo "local check-$check";
-//        return md5($check);
-//    }
-    
     
     public function localGet( $local_id ){
         $sql_dochead="
@@ -205,7 +82,7 @@ class MoedeloSyncWayBillSell extends MoedeloSyncBase{
                 CONCAT('Торг12 ',view_num,dvl.tstamp) ErrorTitle,
 
                 {$this->remote_stock_id} StockId,
-                Payer_pse.remote_id KontragentId,
+                Sender_pse.remote_id KontragentId,
                 Sender_pse.remote_id SenderId,
                 Supplier_pse.remote_id SupplierId,
                 Receiver_pse.remote_id ReceiverId,
@@ -220,9 +97,9 @@ class MoedeloSyncWayBillSell extends MoedeloSyncBase{
                     JOIN
 		user_list ON dl.modified_by=user_id 
                     JOIN
-                plugin_sync_entries Payer_pse ON passive_company_id=Payer_pse.local_id AND Payer_pse.sync_destination='moedelo_companies'
+                plugin_sync_entries Payer_pse ON '$this->acomp_id'=Payer_pse.local_id AND Payer_pse.sync_destination='moedelo_companies'
                     LEFT JOIN
-                plugin_sync_entries Sender_pse ON '$this->acomp_id'=Sender_pse.local_id AND Sender_pse.sync_destination='moedelo_companies'
+                plugin_sync_entries Sender_pse ON passive_company_id=Sender_pse.local_id AND Sender_pse.sync_destination='moedelo_companies'
                     LEFT JOIN
                 plugin_sync_entries Supplier_pse ON JSON_UNQUOTE(JSON_EXTRACT(view_efield_values,'$.supplier_company_id'))=Supplier_pse.local_id AND Supplier_pse.sync_destination='moedelo_companies'
                     LEFT JOIN

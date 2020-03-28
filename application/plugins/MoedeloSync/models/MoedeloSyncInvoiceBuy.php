@@ -1,34 +1,15 @@
 <?php
-require_once 'MoedeloSyncBase.php';
-class MoedeloSyncInvoiceSell extends MoedeloSyncBase{
+require_once 'MoedeloSyncInvoiceSell.php';
+class MoedeloSyncInvoiceBuy extends MoedeloSyncInvoiceSell{
     function __construct(){
         parent::__construct();
         $this->doc_config=(object) [
-            'remote_function'=>'accounting/api/v1/sales/invoice/common',
+            'remote_function'=>'accounting/api/v1/purchases/invoice/common',
             'local_view_type_id'=>140,//invoice
-            'sync_destination'=>'moedelo_doc_invoicesell',
-            'doc_type'=>1
+            'sync_destination'=>'moedelo_doc_invoice_buy',
+            'doc_type'=>2
         ];
     }
-    
-    /**
-     * Finds changes that needs to be made on local and remote
-     */
-    public function checkout( $is_full ){
-        return false;
-    }
-    /**
-     * Executes needed sync operations
-     */
-    public function replicate(){
-        return parent::replicate();
-    }
-    
-    
-    ///////////////////////////////////////////////////////////////
-    // REMOTE SECTION
-    ///////////////////////////////////////////////////////////////
-    
     /**
      * @param bool $is_full
      * Create local doc list to sync
@@ -52,7 +33,7 @@ class MoedeloSyncInvoiceSell extends MoedeloSyncBase{
                 2 NdsPositionType,
                 GREATEST(dl.modified_at,MAX(de.modified_at),dvl.modified_at) local_tstamp,
                 
-                Payer_pse.remote_id KontragentId,
+                Sender_pse.remote_id KontragentId,
                 Sender_pse.remote_id SenderId,
                 Supplier_pse.remote_id SupplierId,
                 Receiver_pse.remote_id ReceiverId,
@@ -64,9 +45,9 @@ class MoedeloSyncInvoiceSell extends MoedeloSyncBase{
                     JOIN
                 document_view_list dvl USING(doc_id)
                     JOIN
-                plugin_sync_entries Payer_pse ON passive_company_id=Payer_pse.local_id AND Payer_pse.sync_destination='moedelo_companies'
+                plugin_sync_entries Sender_pse ON passive_company_id=Payer_pse.local_id AND Payer_pse.sync_destination='moedelo_companies'
                     LEFT JOIN
-                plugin_sync_entries Sender_pse ON '$this->acomp_id'=Sender_pse.local_id AND Sender_pse.sync_destination='moedelo_companies'
+                plugin_sync_entries Payer_pse ON '$this->acomp_id'=Sender_pse.local_id AND Sender_pse.sync_destination='moedelo_companies'
                     LEFT JOIN
                 plugin_sync_entries Supplier_pse ON JSON_UNQUOTE(JSON_EXTRACT(view_efield_values,'$.supplier_company_id'))=Supplier_pse.local_id AND Supplier_pse.sync_destination='moedelo_companies'
                     LEFT JOIN
@@ -79,35 +60,6 @@ class MoedeloSyncInvoiceSell extends MoedeloSyncBase{
             GROUP BY doc_view_id) inner_table";
         return $local_sync_list_sql;
     }
-    
-    
-    /**
-     * Inserts new record on local
-     */
-    public function localInsert( $local_id, $remote_id, $entry_id ){
-        $this->remoteDelete( $local_id, $remote_id, $entry_id );
-    }
-    
-    /**
-     * Updates existing record on local
-     */
-    public function localUpdate( $local_id, $remote_id, $entry_id ){
-        $this->remoteUpdate( $local_id, $remote_id, $entry_id );
-    }
-    
-    /**
-     * Deletes existing record on local
-     */
-    public function localDelete( $local_id, $remote_id, $entry_id ){
-        $this->remoteInsert( $local_id, $remote_id, $entry_id );
-    }
-
-//    protected function localHashCalculate( $entity ){
-//        $check="{$entity->Article};{$entity->UnitOfMeasurement};".round($entity->SalePrice,5).";{$entity->Producer};";
-//        echo "local check-$check";
-//        return md5($check);
-//    }
-    
     
     public function localGet( $local_id ){
         $sql_dochead="
@@ -143,9 +95,9 @@ class MoedeloSyncInvoiceSell extends MoedeloSyncBase{
                     JOIN
 		user_list ON dl.modified_by=user_id 
                     JOIN
-                plugin_sync_entries Payer_pse ON passive_company_id=Payer_pse.local_id AND Payer_pse.sync_destination='moedelo_companies'
+                plugin_sync_entries Sender_pse ON passive_company_id=Payer_pse.local_id AND Payer_pse.sync_destination='moedelo_companies'
                     LEFT JOIN
-                plugin_sync_entries Sender_pse ON '$this->acomp_id'=Sender_pse.local_id AND Sender_pse.sync_destination='moedelo_companies'
+                plugin_sync_entries Payer_pse ON '$this->acomp_id'=Sender_pse.local_id AND Sender_pse.sync_destination='moedelo_companies'
                     LEFT JOIN
                 plugin_sync_entries Supplier_pse ON JSON_UNQUOTE(JSON_EXTRACT(view_efield_values,'$.supplier_company_id'))=Supplier_pse.local_id AND Supplier_pse.sync_destination='moedelo_companies'
                     LEFT JOIN

@@ -44,11 +44,11 @@ class MoedeloSync extends Catalog {
 
     //'MoedeloSyncStocks/replicate/1 years/','MoedeloSyncStocks/checkout/1 years/',
     private $joblist=[
-            'MoedeloSyncProduct/localCheckout/9 minutes/9 minutes',
-            'MoedeloSyncProduct/remoteCheckout/9 minutes/9 minutes',
-            'MoedeloSyncProduct/replicate/10 minutes/',
+            //'MoedeloSyncProduct/localCheckout/9 minutes/9 minutes',
+            //'MoedeloSyncProduct/remoteCheckout/9 seconds/9 hours',
+            //'MoedeloSyncProduct/replicate/10 minutes/',
         
-            'MoedeloSyncCompanies/localCheckout/9 minutes/9 minutes',
+            /*'MoedeloSyncCompanies/localCheckout/9 minutes/9 minutes',
             'MoedeloSyncCompanies/remoteCheckout/1 minutes/1 minutes',
             'MoedeloSyncCompanies/replicate/10 minutes/',
             
@@ -66,7 +66,24 @@ class MoedeloSync extends Catalog {
             
             'MoedeloSyncUPDSell/localCheckout/9 seconds/60 minutes',
             //'MoedeloSyncUPDSell/remoteCheckout/9 seconds/1 days',
-            'MoedeloSyncUPDSell/replicate/10 seconds/'
+            'MoedeloSyncUPDSell/replicate/10 seconds/'*/
+        
+            'MoedeloSyncActSell/localCheckout/9 minutes/60 minutes',
+            'MoedeloSyncActSell/remoteCheckout/9 minutes/1 days',
+            'MoedeloSyncActSell/replicate/10 minutes/',
+        
+            'MoedeloSyncActBuy/localCheckout/9 minutes/60 minutes',
+            'MoedeloSyncActBuy/remoteCheckout/9 minutes/1 days',
+            'MoedeloSyncActBuy/replicate/10 minutes/',
+        
+            'MoedeloSyncWayBillBuy/localCheckout/9 minutes/60 minutes',
+            'MoedeloSyncWayBillBuy/remoteCheckout/9 minutes/1 days',
+            'MoedeloSyncWayBillBuy/replicate/10 minutes/',
+            
+            'MoedeloSyncInvoiceBuy/localCheckout/9 minutes/60 minutes',
+            'MoedeloSyncInvoiceBuy/remoteCheckout/9 minutes/1 days',
+            'MoedeloSyncInvoiceBuy/replicate/10 minutes/',
+            
         ];
     
     public function tick( $iterations_left ){
