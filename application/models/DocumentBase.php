@@ -16,15 +16,17 @@ abstract class DocumentBase extends Catalog{
      * @return string
      * @throws Exception
      */
-    public function doc( string $field=null, string $value=null, bool $flush=true ):string{
+    public function doc( string $field=null, string $value=null, bool $flush=true ){
 	if( !isset($this->document_properties) ){
             throw new Exception("Can't use properties because Document is not selected");
 	}
 	if( isset($value) ){
             $this->Hub->set_level(2);
+            if( $this->document_properties->$field==$value ){
+                return false;
+            }
             $this->document_properties->$field=$value;
             $flush && $this->documentFlush();
-	    return $value;
 	}
 	return $this->document_properties->$field??null;
     }
@@ -39,7 +41,7 @@ abstract class DocumentBase extends Catalog{
             return true;
         }
 	unset($this->document_properties);
-        $document_properties=$this->get_row("SELECT * FROM document_list JOIN document_types USING(doc_type) WHERE doc_id='$doc_id'");
+        $document_properties=$this->get_row("SELECT * FROM document_list WHERE doc_id='$doc_id'");
         $Company=$this->Hub->load_model("Company");
         $document_properties->pcomp=$Company->companyGet( $document_properties->passive_company_id );
         $is_access_granted=$document_properties->pcomp?1:0;
@@ -139,7 +141,7 @@ abstract class DocumentBase extends Catalog{
 	return $new_doc_id;
     }
     
-    public function documentUpdate( int $doc_id, $document ){
+    public function documentUpdate( int $doc_id, object $document ){
         $this->documentSelect($doc_id);
         $this->headUpdate( $doc_id, $document->head??null );
         $this->entryListUpdate( $doc_id, $document->entries??null );
@@ -157,6 +159,9 @@ abstract class DocumentBase extends Catalog{
 	$ok=$this->delete('document_list',['doc_id'=>$doc_id,'is_commited'=>0]);
 	$this->db_transaction_commit();
 	return $ok;        
+    }
+    public function documentNameGet(){
+        return "???";
     }
     //////////////////////////////////////////
     // HEAD SECTION
@@ -203,7 +208,7 @@ abstract class DocumentBase extends Catalog{
         $defHead->doc_type=$prevHead->doc_type??1;
         $defHead->doc_data='';
         $defHead->doc_status_id=1;
-        $defHead->doc_num=$this->documentNumNext($def_head['doc_type'],'not_increase_number');
+        $defHead->doc_num=$this->documentNumNext($defHead->doc_type,'not_increase_number');
         $defHead->doc_ratio=$this->Hub->pref('usd_ratio');
         $defHead->curr_code=$this->Hub->pcomp('curr_code');
         $defHead->vat_rate=$this->Hub->pcomp('vat_rate');
@@ -220,8 +225,12 @@ abstract class DocumentBase extends Catalog{
         $fieldCamelCase=str_replace(' ', '', ucwords(str_replace('_', ' ', $field)));
         $this->db_transaction_start();
         $this->documentSelect($doc_id);
-        $this->doc( $field, $value );
-        $ok=$this->Topic('documentChange'.$fieldCamelCase)->publish( $field, $value, $this->document_properties );
+        $saved_value=$this->doc( $field, $value );
+        if( $value==$saved_value ){
+            $ok=$this->Topic('documentChange'.$fieldCamelCase)->publish( $field, $value, $this->document_properties );
+        } else {
+            $ok=true;//$value not changed
+        }
         if( $ok===false ){
             $this->db_transaction_rollback();
             return false;
@@ -259,14 +268,16 @@ abstract class DocumentBase extends Catalog{
     //////////////////////////////////////////
     // BODY SECTION
     //////////////////////////////////////////
-    public function entryGet( int $doc_id, int $doc_entry_id ){
-        $entry_list=$this->entryListGet( $doc_id, $doc_entry_id );
-        return $entry_list[0];
+    public function entryGet( int $doc_entry_id ){
+        $entry_light=$this->get_row("SELECT * FROM document_entries JOIN prod_list USING(product_code) WHERE doc_entry_id=$doc_entry_id");
+        $this->documentSelect($entry_light->doc_id);
+        return $entry_light;
     }
     public function entryCreate( int $doc_id, object $entry ){
+        $this->documentSelect($doc_id);
         $this->db_transaction_start();
         $doc_entry_id=$this->create('document_entries', ['doc_id'=>$doc_id]);
-        $update_ok=$this->entryUpdate( $doc_id, $doc_entry_id, $entry );
+        $update_ok=$this->entryUpdate( $doc_entry_id, $entry );
         if( $update_ok ){
             $this->db_transaction_commit();
             return true;
@@ -274,16 +285,21 @@ abstract class DocumentBase extends Catalog{
         $this->db_transaction_rollback();
         return false;
     }
-    public function entryUpdate( int $doc_id, int $doc_entry_id, object $entry ){
+    public function entryUpdate( int $doc_entry_id, object $entry ){
         return null;
     }
-    public function entryDelete( int $doc_id, int $doc_entry_id ){
-        $this->documentSelect($doc_id);
-        $entry=(object)[
-            'product_quantity'=>0
-        ];
+    public function entryDelete( int $doc_entry_id ){
+        if( !$this->doc_id ){//document must be selected
+            return false;
+        }
         $this->db_transaction_start();
-        $update_ok=$this->entryUpdate( $doc_id, $doc_entry_id, $entry );
+        $update_ok=1;
+        if( $this->isCommited() ){
+            $entry=(object)[
+                'product_quantity'=>0
+            ];
+            $update_ok=$this->entryUpdate( $doc_entry_id, $entry );
+        }
         $delete_ok=$this->delete('document_entries',['doc_entry_id'=>$doc_entry_id]);
         if( $update_ok && $delete_ok ){
             $this->db_transaction_commit();
@@ -295,9 +311,9 @@ abstract class DocumentBase extends Catalog{
 
     public function entryListGet( int $doc_id, int $doc_entry_id=0 ){
         $this->entryListCreate( $doc_id, $doc_entry_id );
-        return $this->get_list("SELECT * FROM tmp_entry_list ORDER BY pl.product_code");
+        return $this->get_list("SELECT * FROM tmp_entry_list ORDER BY product_code");
     }
-    public function entryListCreate( int $doc_id, int $doc_entry_id=0 ){
+    protected function entryListCreate( int $doc_id, int $doc_entry_id=0 ){
         return null;
     }
     public function entryListUpdate( int $doc_id, array $entry_list ){
@@ -374,14 +390,13 @@ abstract class DocumentBase extends Catalog{
         $foot=$this->footGet( $this->doc_id );
         $AccountsCore=$this->Hub->load_model('AccountsCore');
         $trans_list=$this->get_list("SELECT * FROM acc_trans WHERE doc_id='{$this->doc_id}'");
+        $this->db_transaction_start();
         foreach($trans_list as $trans){
             /* COMPABILITY PATCH */
             if( !$trans['trans_role'] ){
                 $trans['trans_role']=$this->get_value("SELECT trans_role FROM document_trans WHERE trans_id='{$trans['trans_id']}'");
             }
-            $trans['description'] =$this->doc('doc_type_name');
-            $trans['description'].=$this->doc('is_reclamation')?" (Возврат)":"";
-            $trans['description'].=" #".$this->doc('doc_num');
+            $trans['description'] =$this->documentNameGet();
             
             $trans['amount']=$foot[$trans['trans_role']]??0;
             $doc_curr_correction=$this->documentCurrCorrectionGet();
@@ -390,11 +405,47 @@ abstract class DocumentBase extends Catalog{
             }
             $AccountsCore->transUpdate( $trans['trans_id'], $trans );
         }
+        $this->db_transaction_commit();
+        return true;
     }
     public function transListDelete(){
         $this->delete('document_trans',['doc_id'=>$this->doc_id]);//only for compability with older engine
         return $this->delete('acc_trans',['doc_id'=>$this->doc_id]);
     }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     
     
     
@@ -615,16 +666,16 @@ abstract class DocumentBase extends Catalog{
     //////////////////////////////////////////
     // BODY SECTION
     //////////////////////////////////////////
-    protected function bodyGet($doc_id){
-	$this->entriesTmpCreate( $doc_id );
-        if( $this->doc('use_vatless_price') ){
-            $sql="SELECT *, product_price_vatless product_price, product_sum_vatless product_sum FROM tmp_doc_entries";
-        } else {
-            $sql="SELECT *, product_price_total product_price, product_sum_total product_sum FROM tmp_doc_entries";
-        }
-        return $this->get_list($sql);
-    }
-    
+//    protected function bodyGet( int $doc_id ){
+//	$this->entriesTmpCreate( $doc_id );
+//        if( $this->doc('use_vatless_price') ){
+//            $sql="SELECT *, product_price_vatless product_price, product_sum_vatless product_sum FROM tmp_doc_entries";
+//        } else {
+//            $sql="SELECT *, product_price_total product_price, product_sum_total product_sum FROM tmp_doc_entries";
+//        }
+//        return $this->get_list($sql);
+//    }
+//    
     
     protected function entriesTmpCreate( $doc_id, $skip_vat_correction = false, $skip_curr_correction = false ){
 	$doc_id=$this->doc('doc_id');
@@ -889,8 +940,8 @@ abstract class DocumentBase extends Catalog{
 	}
         $Trans=$this->Hub->load_model("AccountsCore");
         $this->db_transaction_start();
-        $ok=$Trans->documentTransUpdate( $this->doc('doc_id'), $foot,  $doc_ratio);
-        if( $ok ){
+        $update_ok=$Trans->documentTransUpdate( $this->doc('doc_id'), $foot,  $doc_ratio);
+        if( $update_ok ){
             $this->db_transaction_commit();
             return true;
         }

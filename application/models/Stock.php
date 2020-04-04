@@ -4,6 +4,76 @@ require_once 'Catalog.php';
 
 class Stock extends Catalog {
 
+    public function productQuantityModify( int $product_id, float $delta_quantity, int $stock_id=1  ){
+        if( $delta_quantity==0 ){
+            return true;
+        }
+        $modify_qty_sql="
+            UPDATE
+                stock_entries
+            SET
+                product_quantity=product_quantity+$delta_quantity
+            WHERE
+                product_id=$product_id
+                AND stock_id=$stock_id
+                AND product_quantity+$delta_quantity>=0";
+        $this->query($modify_qty_sql);
+        return $this->db->affected_rows();
+    }
+
+    public function productGet( string $product_code ) {
+        $sql = "SELECT
+		    st.label parent_label,
+		    pl.*,
+		    ROUND(product_volume,5) product_volume,
+		    ROUND(product_weight,5) product_weight,
+		    ROUND(pp.sell,5) sell,
+		    ROUND(pp.buy,5) buy,
+		    pp.curr_code,
+		    se.stock_entry_id,
+		    se.parent_id,
+		    se.party_label,
+		    se.product_quantity,
+		    se.product_wrn_quantity,
+		    se.product_img,
+		    se.self_price
+		FROM
+		    stock_entries se
+			JOIN
+		    prod_list pl ON pl.product_code=se.product_code
+			LEFT JOIN
+		    price_list pp ON pp.product_code=se.product_code AND pp.label=''
+			LEFT JOIN
+		    stock_tree st ON se.parent_id=branch_id
+		WHERE 
+		    se.product_code='{$product_code}'";
+        $product_data = $this->get_row($sql);
+        return $product_data;
+    }
+    
+
+    public function productUpdate( string $product_code, string $field, string $value ) {
+        $this->Hub->set_level(2);
+        $this->query("UPDATE stock_entries JOIN prod_list USING(product_code) JOIN price_list USING(product_code) SET $field='$value' WHERE product_code='$product_code'");
+        return $this->db->affected_rows();
+    }    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     public $branchFetch = ['id' => ['int', 0], 'depth' => ['string', 'top']];
 
     public function branchFetch($parent_id = 0, $depth) {
@@ -123,37 +193,7 @@ class Stock extends Catalog {
         return $this->get_list("SELECT branch_id,label FROM stock_tree WHERE label LIKE '%$q%'");
     }
 
-    public $productGet = ['product_code' => 'string'];
 
-    public function productGet($product_code) {
-        $sql = "SELECT
-		    st.label parent_label,
-		    pl.*,
-		    ROUND(product_volume,5) product_volume,
-		    ROUND(product_weight,5) product_weight,
-		    ROUND(pp.sell,5) sell,
-		    ROUND(pp.buy,5) buy,
-		    pp.curr_code,
-		    se.stock_entry_id,
-		    se.parent_id,
-		    se.party_label,
-		    se.product_quantity,
-		    se.product_wrn_quantity,
-		    se.product_img,
-		    se.self_price
-		FROM
-		    stock_entries se
-			JOIN
-		    prod_list pl ON pl.product_code=se.product_code
-			LEFT JOIN
-		    price_list pp ON pp.product_code=se.product_code AND pp.label=''
-			LEFT JOIN
-		    stock_tree st ON se.parent_id=branch_id
-		WHERE 
-		    se.product_code='{$product_code}'";
-        $product_data = $this->get_row($sql);
-        return $product_data;
-    }
 
     public $productGetLabeledPrices = ['product_code' => 'string'];
 
@@ -183,13 +223,6 @@ class Stock extends Catalog {
         return $this->create("price_list", ['product_code' => $product_code, 'label' => $label]);
     }
 
-    public $productUpdate = ['product_code' => 'string', 'field' => 'string', 'value' => 'string'];
-
-    public function productUpdate($product_code, $field, $value) {
-        $this->Hub->set_level(2);
-        $this->query("UPDATE stock_entries JOIN prod_list USING(product_code) JOIN price_list USING(product_code) SET $field='$value' WHERE product_code='$product_code'");
-        return $this->db->affected_rows();
-    }
     private function stripWhite( $sentence ){
         return trim(preg_replace('/\s+/', ' ', $sentence));
     }
