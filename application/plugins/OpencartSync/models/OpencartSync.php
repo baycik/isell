@@ -62,17 +62,18 @@ class OpencartSync extends OpencartSyncUtils{
         $this->Hub->load_model('Stock');
 
         $sql = "SELECT
-                    model,ean,quantity,price,weight,name,manufacturer_name,
+                    model,ean,sku,quantity,price,weight,name,manufacturer_name,
                     volume,
                     posl.*,
                     product_img local_img_filename,
-                    MD5(CONCAT(ean,quantity,ROUND(price,2),ROUND(weight,4),name,COALESCE(manufacturer_name,''))) local_field_hash
+                    MD5(CONCAT(ean,sku,quantity,ROUND(price,2),ROUND(weight,4),name,COALESCE(manufacturer_name,''))) local_field_hash
                 FROM
                     plugin_opencart_sync_list posl
                 LEFT JOIN
                     (SELECT
                         product_code model,
                         product_barcode ean,
+                        st.path sku,
                         product_quantity quantity,
                         GET_SELL_PRICE(product_code,'$pcomp_id','$dratio') price,
                         product_weight weight,
@@ -83,7 +84,10 @@ class OpencartSync extends OpencartSyncUtils{
                     FROM
                         stock_entries se
                             JOIN
-                        prod_list USING(product_code) ) t ON remote_model=model 
+                        stock_tree st ON se.parent_id=st.branch_id
+                            JOIN
+                        prod_list USING(product_code)
+                        ) t ON remote_model=model 
                     LIMIT $rowcount_limit";
         $products=$this->get_list($sql);
         
@@ -93,6 +97,7 @@ class OpencartSync extends OpencartSyncUtils{
             $item['action']='skip';
             if( $this->settings->plugin_settings->fields_up && $product->local_field_hash!=$product->remote_field_hash){
                 $item['ean']=$product->ean;
+                $item['sku']=$product->sku;
                 $item['quantity']=$product->quantity;
                 $item['price']=$product->price;
                 $item['weight']=$product->weight;
@@ -134,7 +139,7 @@ class OpencartSync extends OpencartSyncUtils{
             $requestsize_total+=$item_size;
             if( $requestsize_total>$requestsize_limit ){
                 $products_skipped[]=$product->model;
-                $this->message.="Size of image of product {$product->model} is too big! ";
+                $this->message.="Size of image of product {$product->sku} {$product->model} is too big! ";
                 break;
             }
             if( time()>$requesttime_limit ){
