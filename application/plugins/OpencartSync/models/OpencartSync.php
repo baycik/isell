@@ -51,7 +51,7 @@ class OpencartSync extends OpencartSyncUtils{
     private function productSend(){
         $rowcount_limit=300; 
         $requestsize_total=0;
-        $requestsize_limit=3*1024*1024;
+        $requestsize_limit=6*1024*1024;
         $requesttime_limit=time()+4;
         $request=[];
         $products_skipped=[];
@@ -253,6 +253,7 @@ class OpencartSync extends OpencartSyncUtils{
     
     public $sync=['step'=>['string','fetch_digest']];
     public function sync($current_step){
+        session_write_close();
         $this->message="";
         switch($current_step){
             case 'fetch_digest':
