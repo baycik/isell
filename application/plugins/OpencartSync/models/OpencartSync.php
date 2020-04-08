@@ -77,7 +77,7 @@ class OpencartSync extends OpencartSyncUtils{
                         st.path sku,
                         product_quantity quantity,
                         ROUND(GET_SELL_PRICE(product_code,'$pcomp_id','$dratio'),2) price,
-                        ROUND(GET_PRICE(product_code,{$pcomp_id},{$dratio}),2) price_raw,
+                        ROUND(GET_PRICE(product_code,'{$pcomp_id}','{$dratio}'),2) price_raw,
                         product_weight weight,
                         ru name,
                         product_volume volume,
