@@ -187,8 +187,8 @@ class ControllerApiSync extends SyncUtils {
         }
         try{
             foreach ($products as $product) {
-                if( $product['price_raw']!=$product['price'] ){
-                    $product['product_special']=$this->composeProductSpecial($product['price_raw']);
+                if( $product['price_promo']!=$product['price'] ){
+                    $product['product_special']=$this->composeProductSpecial($product['price_promo']);
                 } else {
                     $product['product_special']=[];
                 }
