@@ -159,6 +159,17 @@ class ControllerApiSync extends SyncUtils {
         return $current_product;
     }
 
+    private function composeProductSpecial($price) {
+        $product_special_object[] = [
+            'customer_group_id' => 1,
+            'priority'=> 1,
+            'price' => $price,
+            'date_start' => date("Y-m-d"),
+            'date_end'=> date('Y-m-d', strtotime("+2 years"))
+        ];
+        return $product_special_object;
+    }
+    
     public function productsUpdate() {
         $synced_models=[];
         $this->load_admin_model('catalog/product');
@@ -176,6 +187,12 @@ class ControllerApiSync extends SyncUtils {
         }
         try{
             foreach ($products as $product) {
+                if( $product['price_raw']!=$product['price'] ){
+                    $product['product_special']=$this->composeProductSpecial($product['price_raw']);
+                } else {
+                    $product['product_special']=[];
+                }
+                
                 if( isset($product['local_img_data']) ){
                     $product['image']='catalog/synced/'.$product['remote_img_filename'];
                     $img_filename=DIR_IMAGE.$product['image'];

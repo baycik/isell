@@ -75,7 +75,8 @@ class OpencartSync extends OpencartSyncUtils{
                         product_barcode ean,
                         st.path sku,
                         product_quantity quantity,
-                        GET_SELL_PRICE(product_code,'$pcomp_id','$dratio') price,
+                        ROUND(GET_SELL_PRICE(product_code,'$pcomp_id','$dratio'),2) price,
+                        ROUND(GET_PRICE(product_code,{$pcomp_id},{$dratio}),2) price_raw,
                         product_weight weight,
                         ru name,
                         product_volume volume,
@@ -272,7 +273,7 @@ class OpencartSync extends OpencartSyncUtils{
                 } else {
                     $this->message.="Syncronisation finished! <a href='../log_show'>Logfile</a>";
                     $this->log($this->message);
-                    die();
+                    die($this->message);
                 }
                 break;
         }
