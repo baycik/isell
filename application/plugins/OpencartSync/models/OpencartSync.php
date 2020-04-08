@@ -101,6 +101,7 @@ class OpencartSync extends OpencartSyncUtils{
                 $item['sku']=$product->sku;
                 $item['quantity']=$product->quantity;
                 $item['price']=$product->price;
+                $item['price_raw']=$product->price_raw;
                 $item['weight']=$product->weight;
                 $item['volume']=$product->volume;
                 $item['name']=$product->name;
