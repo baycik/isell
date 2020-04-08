@@ -63,7 +63,7 @@ class OpencartSync extends OpencartSyncUtils{
 
         $sql = "SELECT
                     model,ean,sku,quantity,price,weight,name,manufacturer_name,
-                    price_raw,
+                    price_promo,
                     volume,
                     posl.*,
                     product_img local_img_filename,
@@ -76,8 +76,8 @@ class OpencartSync extends OpencartSyncUtils{
                         product_barcode ean,
                         st.path sku,
                         product_quantity quantity,
-                        ROUND(GET_SELL_PRICE(product_code,'$pcomp_id','$dratio'),2) price,
-                        ROUND(GET_PRICE(product_code,'{$pcomp_id}','{$dratio}'),2) price_raw,
+                        ROUND(GET_SELL_PRICE(product_code,'$pcomp_id','$dratio'),2) price_promo,
+                        ROUND(GET_PRICE(product_code,'{$pcomp_id}','{$dratio}'),2) price,
                         product_weight weight,
                         ru name,
                         product_volume volume,
@@ -102,7 +102,7 @@ class OpencartSync extends OpencartSyncUtils{
                 $item['sku']=$product->sku;
                 $item['quantity']=$product->quantity;
                 $item['price']=$product->price;
-                $item['price_raw']=$product->price_raw;
+                $item['price_promo']=$product->price_promo;
                 $item['weight']=$product->weight;
                 $item['volume']=$product->volume;
                 $item['name']=$product->name;
