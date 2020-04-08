@@ -63,6 +63,7 @@ class OpencartSync extends OpencartSyncUtils{
 
         $sql = "SELECT
                     model,ean,sku,quantity,price,weight,name,manufacturer_name,
+                    price_raw,
                     volume,
                     posl.*,
                     product_img local_img_filename,
