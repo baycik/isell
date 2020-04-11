@@ -919,10 +919,11 @@ class Stock extends Catalog {
     }
     
     protected function matchesListCreateTemporary( $where ){
-        $result_window_size=1000;
+        $result_window_size=10000;
         $usd_ratio=$this->Hub->pref('usd_ratio');
         $pcomp_id=$this->Hub->pcomp('company_id');
         $price_label=$this->Hub->pcomp('price_label');
+        $this->query("SET @promo_limit:=4;");
         
         $query=[
             'inner'=>[
@@ -956,8 +957,8 @@ class Stock extends Catalog {
             se.fetch_stamp,
             CONCAT( 
                 product_quantity<>0,
-                prl_promo.product_code IS NOT NULL,
-                LPAD(fetch_count-DATEDIFF(NOW(),COALESCE(se.fetch_stamp,se.modified_at)),6,'0')
+                IF( prl_promo.product_code IS NOT NULL AND (@promo_limit:=@promo_limit-1)>=0,1,0),
+                LPAD(fetch_count,6,'0')
             ) popularity,
             se.parent_id,
             prl_basic.sell*IF(prl_basic.curr_code='USD',$usd_ratio,1) price_fixed,
@@ -980,14 +981,7 @@ class Stock extends Catalog {
             price_list prl_basic ON prl_basic.label='' AND se.product_code=prl_basic.product_code";
         $query['inner']['where']="
             WHERE 
-            (SELECT MIN(fetch_count)
-                FROM (SELECT
-                        fetch_count
-                    FROM
-                        stock_entries
-                    ORDER BY
-                        fetch_count DESC
-                    LIMIT $result_window_size) t) AND $where";
+             $where";
         $query['inner']['limit']="
             LIMIT $result_window_size";
         $query['outer']['select']="inner_tmp_matches_list.*,
@@ -1023,6 +1017,17 @@ class Stock extends Catalog {
         return $this->query($sql);
     }
     
+    private function matchesListCalibrate(){
+        if( rand(1,100)!=1 ){
+            return;
+        }
+        $this->query("
+            UPDATE 
+                stock_entries 
+            SET 
+                fetch_count = GREATEST(COALESCE(fetch_count - DATEDIFF(NOW(), fetch_stamp),0),0)");
+    }
+    
     protected function matchesFilterBuild(){
         $this->filter_tree=[];
         $this->filter_selected_grouped=$this->request('filter_selected_grouped','json',[]);
@@ -1037,6 +1042,7 @@ class Stock extends Catalog {
         $where=     $this->matchesListGetWhere( $q, $category_id );
         $order_by=  $this->matchesListGetOrderBy($sortby,$sortdir);
         
+        $this->matchesListCalibrate();
         $this->matchesListCreateTemporary($where);
         $this->matchesFilterBuild();
         $matches=$this->matchesGet($order_by,$limit,$offset);
