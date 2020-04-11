@@ -43,6 +43,7 @@ class DocumentItems extends DocumentCore{
         if( $this->doc('doc_type')==3 || $this->doc('doc_type')==4 ){
             $where .= " AND is_service=1";
         }
+        $this->query("SET @promo_limit:=3;");
 	$sql="
             SELECT
                 *,
@@ -59,7 +60,7 @@ class DocumentItems extends DocumentCore{
                     product_unit,
                     CONCAT( 
                         product_quantity<>0,
-                        prl.product_code IS NOT NULL,
+                        IF( prl.product_code IS NOT NULL AND (@promo_limit:=@promo_limit-1)>=0,1,0),
                         LPAD(fetch_count-DATEDIFF(NOW(),COALESCE(se.fetch_stamp,se.modified_at)),6,'0')
                     ) popularity
                 FROM
@@ -76,7 +77,7 @@ class DocumentItems extends DocumentCore{
         $suggested=$this->get_list($sql);//for plugin modifications
         return $suggested;
     }
-
+    
     protected function footerGet(){
         $this->entriesTmpCreate();
 	$use_total_as_base=(bool) $this->Hub->pref('use_total_as_base');
