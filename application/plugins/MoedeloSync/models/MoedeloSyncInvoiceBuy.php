@@ -45,9 +45,9 @@ class MoedeloSyncInvoiceBuy extends MoedeloSyncInvoiceSell{
                     JOIN
                 document_view_list dvl USING(doc_id)
                     JOIN
-                plugin_sync_entries Sender_pse ON passive_company_id=Payer_pse.local_id AND Payer_pse.sync_destination='moedelo_companies'
+                plugin_sync_entries Sender_pse ON passive_company_id=Sender_pse.local_id AND Sender_pse.sync_destination='moedelo_companies'
                     LEFT JOIN
-                plugin_sync_entries Payer_pse ON '$this->acomp_id'=Sender_pse.local_id AND Sender_pse.sync_destination='moedelo_companies'
+                plugin_sync_entries Payer_pse ON '$this->acomp_id'=Payer_pse.local_id AND Payer_pse.sync_destination='moedelo_companies'
                     LEFT JOIN
                 plugin_sync_entries Supplier_pse ON JSON_UNQUOTE(JSON_EXTRACT(view_efield_values,'$.supplier_company_id'))=Supplier_pse.local_id AND Supplier_pse.sync_destination='moedelo_companies'
                     LEFT JOIN
@@ -95,9 +95,9 @@ class MoedeloSyncInvoiceBuy extends MoedeloSyncInvoiceSell{
                     JOIN
 		user_list ON dl.modified_by=user_id 
                     JOIN
-                plugin_sync_entries Sender_pse ON passive_company_id=Payer_pse.local_id AND Payer_pse.sync_destination='moedelo_companies'
+                plugin_sync_entries Sender_pse ON passive_company_id=Sender_pse.local_id AND Sender_pse.sync_destination='moedelo_companies'
                     LEFT JOIN
-                plugin_sync_entries Payer_pse ON '$this->acomp_id'=Sender_pse.local_id AND Sender_pse.sync_destination='moedelo_companies'
+                plugin_sync_entries Payer_pse ON '$this->acomp_id'=Payer_pse.local_id AND Payer_pse.sync_destination='moedelo_companies'
                     LEFT JOIN
                 plugin_sync_entries Supplier_pse ON JSON_UNQUOTE(JSON_EXTRACT(view_efield_values,'$.supplier_company_id'))=Supplier_pse.local_id AND Supplier_pse.sync_destination='moedelo_companies'
                     LEFT JOIN
