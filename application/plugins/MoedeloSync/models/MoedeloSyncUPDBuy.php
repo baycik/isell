@@ -54,7 +54,7 @@ class MoedeloSyncUPDBuy extends MoedeloSyncUPDSell{
                     LEFT JOIN
                 plugin_sync_entries Receiver_pse ON JSON_UNQUOTE(JSON_EXTRACT(view_efield_values,'$.reciever_company_id'))=Receiver_pse.local_id AND Receiver_pse.sync_destination='moedelo_companies'
             WHERE 
-                active_company_id='{$this->acomp_id}'
+                active_company_id='{$this->acomp_id}' 
                 AND doc_type='{$this->doc_config->doc_type}'
                 AND view_type_id='{$this->doc_config->local_view_type_id}'
                 AND dvl.tstamp>'{$this->sync_since}'
