@@ -24,6 +24,13 @@ class MoedeloSyncInvoiceSell extends MoedeloSyncBase{
         return parent::replicate();
     }
     
+    ///////////////////////////////////////////////////////////////
+    // REMOTE SECTION
+    ///////////////////////////////////////////////////////////////
+    public function remoteCheckout(bool $is_full = false){
+        return parent::remoteCheckout($is_full);
+    }
+    
     
     ///////////////////////////////////////////////////////////////
     // LOCAL SECTION
