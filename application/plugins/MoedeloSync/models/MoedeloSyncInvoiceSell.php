@@ -27,8 +27,55 @@ class MoedeloSyncInvoiceSell extends MoedeloSyncBase{
     ///////////////////////////////////////////////////////////////
     // REMOTE SECTION
     ///////////////////////////////////////////////////////////////
-    public function remoteCheckout(bool $is_full = false){
-        return parent::remoteCheckout($is_full);
+    
+    /**
+     * @param bool $is_full
+     * Checks for updates on remote
+     */
+    public function remoteCheckout( bool $is_full=false ){
+        return parent::remoteCheckout( $is_full );
+    }
+    /**
+     * Inserts new record on remote
+     */
+    public function remoteInsert( $local_id, $remote_id, $entry_id ){
+        return parent::remoteInsert($local_id, $remote_id, $entry_id);
+    }
+    /**
+     * Updates existing record on remote
+     */
+    public function remoteUpdate( $local_id, $remote_id, $entry_id ){
+        return parent::remoteUpdate($local_id, $remote_id, $entry_id);
+    }
+    
+    /** 
+     * Deletes existing record on remote
+     */
+    public function remoteDelete( $local_id, $remote_id, $entry_id ){
+        return parent::remoteDelete($local_id, $remote_id, $entry_id);
+    }
+    
+    /**
+     * 
+     * @param int $remote_id
+     * @return type
+     * Gets existing record from remote
+     */
+    public function remoteGet( $remote_id ){
+        return parent::remoteGet($remote_id);
+    }
+    /**
+     * 
+     * @param object $entity
+     * @return type md5 hash
+     * Calculates remote entity hash
+     */
+    public function remoteHashCalculate( $entity ){
+        $DocDate=substr( $this->toTimezone($entity->DocDate,'local') , 0, 10);
+        $entity->Sum*=1;
+        $check="{$entity->Number};{$DocDate};{$entity->KontragentId};{$entity->Sum};";
+        //echo "remote check-$check";
+        return md5($check);
     }
     
     
