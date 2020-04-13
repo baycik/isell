@@ -96,7 +96,7 @@ class MoedeloSyncUPDBuy extends MoedeloSyncUPDSell{
                     JOIN
 		user_list ON dl.modified_by=user_id 
                     JOIN
-                plugin_sync_entries Sender_pse ON passive_company_id=Payer_pse.local_id AND Sender_pse.sync_destination='moedelo_companies'
+                plugin_sync_entries Sender_pse ON passive_company_id=Sender_pse.local_id AND Sender_pse.sync_destination='moedelo_companies'
                     LEFT JOIN
                 plugin_sync_entries Payer_pse ON '$this->acomp_id'=Payer_pse.local_id AND Payer_pse.sync_destination='moedelo_companies'
                     LEFT JOIN
