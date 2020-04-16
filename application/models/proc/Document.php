@@ -712,6 +712,7 @@ class Document extends Data {
 
     public function insertView($view_type_id) {
 	$doc_id = $this->doc('doc_id');
+        $doc_type = $this->doc('doc_type');
 	$view_type_props = $this->Base->get_row("SELECT * FROM document_view_types WHERE view_type_id='$view_type_id'");
         $efields = addslashes($this->getLastEfields($view_type_id));
         $view_num = $this->doc('doc_num');
@@ -736,7 +737,11 @@ class Document extends Data {
                 $this->Base->msg('Бланк такого типа уже сформирован!');
                 return false;
             }
-	    $view_num = $this->getViewNextNum($view_type_id);
+            if( $doc_type==1 || $doc_type==3 ){
+                $view_num = $this->getViewNextNum($view_type_id);
+            } else {
+                $view_num='';
+            }
 	} else if ($view_type_props['view_role'] == 'sell_bill') {
 	    if (!$this->isCommited()) {
 		$this->Base->msg('Сначала сохраните документ!');
