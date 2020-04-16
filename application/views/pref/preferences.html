@@ -15,6 +15,7 @@
 	    App.get("Pref/getPrefs/", function (text) {
 		App.page_pref_preferences.prefData = App.json(text);
 		App.setupForm('#AcompPrefs', App.page_pref_preferences.prefData);
+                App.page_pref_preferences.counters.init();
 	    });
 	},
 	initFormOnce: function () {
@@ -39,7 +40,66 @@
 		    App.flash("Сохраненние не удалось: " + title);
 		}
 	    });
-	}
+	},
+        counters:{
+            init:function(){
+                $.get("Pref/prefListGet",{pref_name_query:'counter%'},function(resp){
+                    var counters=App.json(resp);
+                    for(let i in counters){
+                        counters[i].data=App.json(counters[i].pref_value);
+                    }
+                    App.renderTpl('pref_counters',counters);
+                });
+                
+                $("#pref_counters").change(function(e){
+                    let $input= $(e.target);
+                    let pref_field=$input.data('field');
+                    let pref_name=$input.attr('name');
+                    let pref_title=$input.attr('title');
+                    let pref_value=$input.val();
+                    let request={
+                        counter_name:pref_name,
+                        counter_acomp_id:App.acomp.company_id,
+                        counter_data:{}
+                    };
+                    
+                    if( pref_field==='counterPrefix' ){
+                        request.counter_data=JSON.stringify({counter_prefix:pref_value});
+                    }
+                    if( pref_field==='counterInt' ){
+                        request.counter_int=pref_value;
+                    }
+                    $.post("Pref/counterUpdate",request,function(ok){
+                        if( ok*1 ){
+                            App.flash("Нумератор сохранен: "+pref_title);
+                        } else {
+                            App.flash("Не сохранен нумератор: "+pref_title);
+                        }
+                    });
+                });
+                $("#pref_counters").click(function(e){
+                    let $node= $(e.target);
+                    let pref_name=$node.data('pref_name');
+                    let pref_title=$node.attr('title');
+                    if( !pref_name || !confirm("Удалить нумератор "+pref_title+"?") ){
+                        return;
+                    }
+                    let request={
+                        counter_name:pref_name,
+                        counter_acomp_id:App.acomp.company_id
+                    };
+                    $.post("Pref/counterDelete",request,function(ok){
+                        if( ok*1 ){
+                            App.flash("Нумератор удален: "+pref_title);
+                            App.page_pref_preferences.counters.init();
+                        } else {
+                            App.flash("Не удален нумератор: "+pref_title);
+                        }
+                    })
+                })
+            }
+            
+        }
     };
 </script>
 <form id="AcompPrefs">
@@ -76,6 +136,22 @@
                     <input name="document_number_3" title="Акт выполненных работ">
                     <input name="document_number_4" title="Акт полученых услуг">
 		</div>
+                
+                <div class="easyui-panel" title="Настройки нумерации" data-options="collapsible:true,collapsed:false" style="width:340px;float:left;padding: 10px">
+                    <div id="pref_counters" style="display:grid;grid-template-columns:30px 50% auto auto;gap:5px;" class="covert">
+                    {{if .}}
+                        <div></div><div></div><div>Префикс</div><div>Значение</div>
+                    {{.}}
+                        <div><img src="img/delete.png" style="width:16px;height: auto;cursor: pointer" data-pref_name="{{pref_name}}" title="{{data.counter_title}}"></div>
+                        <div>{{data.counter_title}}</div>
+                        <div><input type="text" title="{{data.counter_title}}" data-skip="1" data-field="counterPrefix" value="{{data.counter_prefix|blank>}}" name="{{pref_name}}" style="width:100%"></div>
+                        <div><input type="text" title="{{data.counter_title}}" data-skip="1" data-field="counterInt" value="{{pref_int}}" name="{{pref_name}}" style="width:100%"></div>
+                    {{/.}}
+                    {{/if}}
+                    </div>
+		</div>                
+                
+                
 		<div class="easyui-panel" title="Настройки Емаил SMTP" data-options="collapsible:true,collapsed:true" style="width:340px;float:left">
 		    <input name="SMTP_SERVER" title="SMTP Сервер">
 		    <input name="SMTP_USER" title="Пользователь">

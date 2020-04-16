@@ -156,7 +156,7 @@ class Hub extends CI_Controller{
     public function request( $name, $type=null, $default=null ){
 	$value=$this->input->get_post($name);
 	if( !is_array($value) && strlen($value)==0 ){
-	    $value=$default;
+	    return $default;
 	}
         $this->check($value,$type);
 	return $value;

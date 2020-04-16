@@ -75,18 +75,19 @@ class DocumentUtils extends Catalog{
 	$user_id = $this->Hub->svar('user_id');
 	$this->rowUpdateField( 'document_list', 'doc_id', $this->doc('doc_id'), 'modified_by', $user_id );
     }
-    protected function getNextDocNum($doc_type, $save_nextnum=false) {//Util
-        $pref_name='document_number_'.$doc_type;
-        $this->Hub->load_model('Pref');
-        $pref=$this->Hub->Pref->getPrefs($pref_name);
-        if( !isset($pref->{$pref_name}) ){
-            $pref->{$pref_name}=0;
+    protected function getNextDocNum($doc_type, $creation_mode=false) {//Util
+        $Pref=$this->Hub->load_model('Pref');
+        
+        $counter_increase=$creation_mode=='not_increase_number'?0:1;
+        $counter_name="counterDocNum_".$doc_type;
+        $nextNum=$Pref->counterNumGet($counter_name,null,$counter_increase);
+        if( !$nextNum ){
+            $doc_type_row=$this->get_row("SELECT * FROM document_types WHERE doc_type='$doc_type'");
+            $counter_title=$doc_type_row->doc_type_name??'???';
+            $Pref->counterCreate($counter_name,null,$counter_title);
+            $nextNum=$Pref->counterNumGet($counter_name,null,$counter_increase);
         }
-        $pref->{$pref_name}++;
-        if( $save_nextnum ){
-            $this->Hub->Pref->setPrefs($pref_name,$pref->{$pref_name});
-        }
-        return $pref->{$pref_name};
+        return $nextNum;
     }
     protected function calcCorrections( $skip_vat_correction=false, $skip_curr_correction=false ) {
 	$doc_id=$this->doc('doc_id');

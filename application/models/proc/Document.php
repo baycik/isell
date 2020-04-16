@@ -63,17 +63,21 @@ class Document extends Data {
 
     protected function getNextDocNum($doc_type,$creation_mode) {//Util
         $this->Base->LoadClass('PrefOld');
-        $pref_name='document_number_'.$doc_type;
-        $pref=$this->Base->PrefOld->getPrefs($pref_name);
-        if( !isset($pref[$pref_name]) ){
-            $pref[$pref_name]=0;
+        
+        $counter_increase=$creation_mode=='not_increase_number'?0:1;
+        $counter_name="counterDocNum_".$doc_type;
+        $nextNum=$this->Base->PrefOld->counterNumGet($counter_name,null,$counter_increase);
+        if( !$nextNum ){
+            $doc_type_row=$this->Base->get_row("SELECT * FROM document_types WHERE doc_type='$doc_type'");
+            $counter_title=$doc_type_row['doc_type_name']??'???';
+            $this->Base->PrefOld->counterCreate($counter_name,null,$counter_title);
+            $nextNum=$this->Base->PrefOld->counterNumGet($counter_name,null,$counter_increase);
         }
-        $pref[$pref_name]++;
-        if( $creation_mode!=='not_increase_number'){
-            $this->Base->PrefOld->setPrefs($pref);
-        }
-        return $pref[$pref_name];
+        return $nextNum;
     }
+    
+
+    
 
     public function moveDoc($passive_company_id) {
 	if (!$this->isCommited()) {
@@ -693,14 +697,25 @@ class Document extends Data {
     }
 
     protected function getViewNextNum($view_type_id) {
-        $acomp_id=$this->Base->acomp('company_id');
-	$num=$this->Base->get_row("SELECT MAX(view_num)+1 FROM document_view_list JOIN document_list USING(doc_id) WHERE active_company_id='$acomp_id' AND view_type_id=$view_type_id AND tstamp>DATE_FORMAT(NOW(),'%Y')", 0);
-        return $num?$num:1;
+        $this->Base->LoadClass('PrefOld');
+        $counter_increase=1;
+        $view_type_row=$this->Base->get_row("SELECT * FROM document_view_types WHERE view_type_id='$view_type_id'");
+        $counter_name="counterViewNum_{$view_type_row['view_role']}";
+        $nextNum=$this->Base->PrefOld->counterNumGet($counter_name,null,$counter_increase);
+        if( !$nextNum ){
+            $counter_title=$view_type_row['view_name']??'???';
+            $this->Base->PrefOld->counterCreate($counter_name,null,$counter_title);
+            $nextNum=$this->Base->PrefOld->counterNumGet($counter_name,null,$counter_increase);
+        }
+        return $nextNum;
     }
 
     public function insertView($view_type_id) {
 	$doc_id = $this->doc('doc_id');
 	$view_type_props = $this->Base->get_row("SELECT * FROM document_view_types WHERE view_type_id='$view_type_id'");
+        $efields = addslashes($this->getLastEfields($view_type_id));
+        $view_num = $this->doc('doc_num');
+        
 	if ($view_type_props['view_role'] != 'bill') {
 	    $this->Base->set_level(2);
 	}
@@ -709,26 +724,25 @@ class Document extends Data {
 		$this->Base->msg('Сначала сохраните документ!');
 		return false;
 	    }
+            $sql="SELECT 
+                    doc_view_id 
+                FROM 
+                    document_view_list dvl
+                WHERE 
+                    doc_id=$doc_id 
+                    AND view_role='tax_bill'";
+            $already_exists=$this->Base->get_row($sql,0);
+            if( $already_exists ){
+                $this->Base->msg('Бланк такого типа уже сформирован!');
+                return false;
+            }
 	    $view_num = $this->getViewNextNum($view_type_id);
-            if ($this->Base->pcomp('company_tax_id')){
-                $efields = '{"sign":"' . $this->Base->acomp('company_director') . '"}';
-            }
-	    else{
-                $efields = '{"sign":"' . $this->Base->acomp('company_director') . '","type_of_reason":"02"}';
-            }
-            
-	} else
-        if ($view_type_props['view_role'] == 'sell_bill') {
+	} else if ($view_type_props['view_role'] == 'sell_bill') {
 	    if (!$this->isCommited()) {
 		$this->Base->msg('Сначала сохраните документ!');
 		return false;
 	    }
-	    $view_num = $this->doc('doc_num');
-	    $efields = addslashes($this->getLastEfields($view_type_id));
-        } else {
-	    $view_num = $this->doc('doc_num');
-	    $efields = addslashes($this->getLastEfields($view_type_id));
-	}
+        }
 	$cstamp = $this->doc('cstamp');
 	$this->Base->query("INSERT INTO document_view_list SET doc_id='$doc_id', view_type_id='$view_type_id', view_efield_values=IF('$efields','$efields',NULL), tstamp='$cstamp', view_num='$view_num', view_role='{$view_type_props['view_role']}'");
 	return mysqli_insert_id($this->Base->db_link);
