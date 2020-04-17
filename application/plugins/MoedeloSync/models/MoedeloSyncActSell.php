@@ -23,8 +23,8 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
     /**
      * Executes needed sync operations
      */
-    public function replicate(){
-        return parent::replicate();
+    public function replicate( $filter_local_id=null ){
+        return parent::replicate( $filter_local_id );
     }
     ///////////////////////////////////////////////////////////////
     // REMOTE SECTION
@@ -100,7 +100,12 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
      * @param bool $is_full
      * Checks for updates on local
      */
-    public function localCheckout( bool $is_full=false ){
+    public function localCheckout( bool $is_full=false, $filter_local_id=null ){
+        if( $filter_local_id ){
+            $filter_local="AND doc_pse.local_id='$filter_local_id'";
+        } else {
+            $filter_local='';
+        }
         $sql_local_docs="
             SELECT
                 '{$this->doc_config->sync_destination}',
@@ -133,6 +138,7 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
                 AND doc_type='{$this->doc_config->doc_type}'
                 AND view_type_id='{$this->doc_config->local_view_type_id}'
                 AND dvl.tstamp>'{$this->sync_since}'
+                $filter_local
             GROUP BY doc_view_id) inner_table";
         if( $is_full ){
             $afterDate='';

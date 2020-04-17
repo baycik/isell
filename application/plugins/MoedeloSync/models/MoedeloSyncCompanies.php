@@ -18,8 +18,8 @@ class MoedeloSyncCompanies extends MoedeloSyncBase{
     /**
      * Executes needed sync operations
      */
-    public function replicate(){
-        return parent::replicate();
+    public function replicate( $filter_local_id=null ){
+        return parent::replicate( $filter_local_id );
     }
     
     

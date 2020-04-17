@@ -152,8 +152,14 @@ class FileEngine{
 		$html=$style.$page;
                 $export_types = $this->export_types;
                 $show_controls = $this->show_controls;
-                $user_data = $this->user_data;
-                include 'FileEngineWrapper.php';
+                
+                $context=[
+                    'export_types'=>$this->export_types,
+                    'show_controls'=>$this->show_controls,
+                    'html'=>$html,
+                    'view'=>$this->view
+                ];
+                $this->Hub->load->view('rpt/FileEngineWrapper',$context);
             } else if ($out_extension == '.xls') {
                 $this->header('Content-Type: application/vnd.ms-excel');
                 $this->Writer = PHPExcel_IOFactory::createWriter($this->PHPexcel, 'Excel5');
@@ -172,10 +178,13 @@ class FileEngine{
                 } else {
                     $html = $this->rain->draw($this->tpl_file, true);
                 }
-                $export_types = $this->export_types;
-                $show_controls = $this->show_controls;
-                $user_data = $this->user_data;
-                include 'FileEngineWrapper.php';
+                $context=[
+                    'export_types'=>$this->export_types,
+                    'show_controls'=>$this->show_controls,
+                    'html'=>$html,
+                    'view'=>$this->view
+                ];
+                $this->Hub->load->view('rpt/FileEngineWrapper',$context);
             } else if ($out_extension == '.doc') {
                 $this->header("Content-type: application/octet-stream");
                 if ($this->compiled_html) {

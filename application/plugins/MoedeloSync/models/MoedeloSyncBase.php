@@ -37,7 +37,7 @@ class MoedeloSyncBase extends Catalog{
     }
     
     
-    protected function apiExecute( string $function, string $method, $data = null, int $remote_id = null){
+    public function apiExecute( string $function, string $method, $data = null, int $remote_id = null){
         $url = "{$this->Hub->MoedeloSync->settings->gateway_url}$function/$remote_id";
         
         $curl = curl_init(); 
@@ -65,6 +65,9 @@ class MoedeloSyncBase extends Catalog{
         curl_setopt($curl, CURLOPT_HTTPHEADER, ["md-api-key: {$this->Hub->MoedeloSync->settings->gateway_md_apikey}","Content-Type: application/json"]);
 
         $result = curl_exec($curl);
+        if( $method!='DOWNLOAD' ){
+            $result=json_decode($result);
+        }
         $httpcode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
         if( curl_error($curl) ){
             $this->log("{$this->doc_config->sync_destination} API Execute error: ".curl_error($curl));
@@ -73,7 +76,7 @@ class MoedeloSyncBase extends Catalog{
         curl_close($curl);
         return (object)[
             'httpcode'=>$httpcode,
-            'response'=>json_decode($result)
+            'response'=>$result
             ];
     }
         
@@ -135,9 +138,14 @@ class MoedeloSyncBase extends Catalog{
     /**
      * Executes needed sync operations
      */
-    public function replicate(){
-        $this->linkByHash();
-        //return true;
+    public function replicate( $filter_local_id=null ){
+        if( $filter_local_id ){
+            $filter_local="AND local_id='$filter_local_id'";
+        } else {
+            $filter_local='';
+            $this->linkByHash();
+        }
+        
         $sql_action_list="
             SELECT
                 entry_id,
@@ -155,6 +163,7 @@ class MoedeloSyncBase extends Catalog{
                 plugin_sync_entries doc_pse
             WHERE 
                 sync_destination='{$this->doc_config->sync_destination}'
+                $filter_local
             ";
         $action_list=$this->get_list($sql_action_list);
         //print_r($action_list);
@@ -307,6 +316,7 @@ class MoedeloSyncBase extends Catalog{
         }
         return true;
     }
+    
     public function remoteGet( $remote_id ){
         $response=$this->apiExecute($this->doc_config->remote_function, 'GET', null, $remote_id);
         if( $response->httpcode==200 ){
@@ -318,7 +328,30 @@ class MoedeloSyncBase extends Catalog{
         }
     }
     
-    protected function localCheckout( bool $is_full=false ){
+    public function remotePush( $local_id ){
+        $this->localCheckout( false, $local_id );
+        $this->replicate( $local_id );
+        $sql="SELECT
+                remote_id
+            FROM 
+                plugin_sync_entries
+            WHERE
+                local_id=$local_id
+            ";
+        return $this->get_value($sql);
+    }
+    
+    
+    ///////////////////////////////////////////////////
+    //LOCAL SECTION
+    ///////////////////////////////////////////////////
+    
+    protected function localCheckout( bool $is_full=false, $filter_local_id ){
+        if( $filter_local_id ){
+            $filter_local="WHERE pse.local_id='$filter_local_id'";
+        } else {
+            $filter_local='';
+        }
         $local_sync_list_sql=$this->localCheckoutGetList( $is_full, '' );
         $this->query("START TRANSACTION");
         if( $is_full ){
@@ -342,6 +375,7 @@ class MoedeloSyncBase extends Catalog{
                     ($local_sync_list_sql) local_sync_list
                         LEFT JOIN
                     plugin_sync_entries pse ON pse.sync_destination=local_sync_list.sync_destination AND pse.local_id=local_sync_list.local_id
+                $filter_local
             ON DUPLICATE KEY UPDATE 
                 local_hash=local_sync_list.local_hash,
                 local_tstamp=local_sync_list.local_tstamp,
