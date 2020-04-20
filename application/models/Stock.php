@@ -3,7 +3,13 @@
 require_once 'Catalog.php';
 
 class Stock extends Catalog {
-
+    /**
+     * Changes quantity on particular depot stock
+     * @param int $product_id
+     * @param float $delta_quantity
+     * @param int $stock_id
+     * @return boolean
+     */
     public function productQuantityModify( int $product_id, float $delta_quantity, int $stock_id=1  ){
         if( $delta_quantity==0 ){
             return true;

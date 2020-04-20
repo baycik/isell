@@ -164,11 +164,11 @@ class DocumentSell extends DocumentBase{
         parent::entryListDelete($doc_id, $entry_id_list);
     }
     
-    private function entryListChangeCommit( $new_is_commited ){
+    private function entryListChangeCommit( bool $new_is_commited ){
         $doc_id=$this->doc('doc_id');
         $current_is_commited=$this->doc('is_commited');
         if( $new_is_commited==$current_is_commited ){
-            return false;
+            return true;
         }
         $entry_list=$this->entryListGet($doc_id);
         $this->db_transaction_start();
