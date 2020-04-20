@@ -97,8 +97,8 @@ class MoedeloSyncCompanies extends MoedeloSyncBase{
      * @param bool $is_full
      * Checks for updates on local
      */
-    public function localCheckout( bool $is_full=false ){
-        return parent::localCheckout($is_full);
+    public function localCheckout( bool $is_full=false, $filter_local_id=null ){
+        return parent::localCheckout($is_full,$filter_local_id);
     }
     /**
      * 
