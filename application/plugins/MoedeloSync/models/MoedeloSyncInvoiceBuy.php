@@ -14,7 +14,7 @@ class MoedeloSyncInvoiceBuy extends MoedeloSyncInvoiceSell{
      * @param bool $is_full
      * Create local doc list to sync
      */    
-    protected function localCheckoutGetList( $is_full, $afterDate ){
+    protected function localCheckoutGetList( $is_full, $afterDate, $filter_local='' ){
         $local_sync_list_sql="
             SELECT
                 '{$this->doc_config->sync_destination}' sync_destination,
@@ -57,6 +57,7 @@ class MoedeloSyncInvoiceBuy extends MoedeloSyncInvoiceSell{
                 AND doc_type='{$this->doc_config->doc_type}'
                 AND view_type_id='{$this->doc_config->local_view_type_id}'
                 AND dvl.tstamp>'{$this->sync_since}'
+                $filter_local
             GROUP BY doc_view_id) inner_table";
         return $local_sync_list_sql;
     }
