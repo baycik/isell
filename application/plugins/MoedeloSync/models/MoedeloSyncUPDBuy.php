@@ -7,7 +7,7 @@ class MoedeloSyncUPDBuy extends MoedeloSyncUPDSell{
             'remote_function'=>'docs/api/v1/Purchases/Upd',
             'local_view_type_id'=>143,//upd
             'sync_destination'=>'moedelo_doc_upd_buy',
-            'doc_type'=>1
+            'doc_type'=>2
         ];
     }
     
