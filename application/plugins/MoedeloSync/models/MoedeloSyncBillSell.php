@@ -104,7 +104,7 @@ class MoedeloSyncBillSell extends MoedeloSyncBase{
      */
     public function localCheckout( bool $is_full=false, $filter_local_id=null ){
         if( $filter_local_id ){
-            $filter_local="AND doc_pse.local_id='$filter_local_id'";
+            $filter_local="AND dvl.doc_view_id='$filter_local_id'";
         } else {
             $filter_local='';
         }

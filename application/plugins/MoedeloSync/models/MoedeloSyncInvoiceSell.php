@@ -91,7 +91,7 @@ class MoedeloSyncInvoiceSell extends MoedeloSyncBase{
      * @param bool $is_full
      * Create local doc list to sync
      */    
-    protected function localCheckoutGetList( $is_full, $afterDate ){
+    protected function localCheckoutGetList( $is_full, $afterDate, $filter_local='' ){
         $local_sync_list_sql="
             SELECT
                 '{$this->doc_config->sync_destination}' sync_destination,

@@ -348,11 +348,11 @@ class MoedeloSyncBase extends Catalog{
     
     protected function localCheckout( bool $is_full=false, $filter_local_id ){
         if( $filter_local_id ){
-            $filter_local="WHERE pse.local_id='$filter_local_id'";
+            $filter_local="AND dvl.doc_view_id='$filter_local_id'";
         } else {
             $filter_local='';
         }
-        $local_sync_list_sql=$this->localCheckoutGetList( $is_full, '' );
+        $local_sync_list_sql=$this->localCheckoutGetList( $is_full, '', $filter_local );
         $this->query("START TRANSACTION");
         if( $is_full ){
             $afterDate='';
@@ -375,7 +375,7 @@ class MoedeloSyncBase extends Catalog{
                     ($local_sync_list_sql) local_sync_list
                         LEFT JOIN
                     plugin_sync_entries pse ON pse.sync_destination=local_sync_list.sync_destination AND pse.local_id=local_sync_list.local_id
-                $filter_local
+                
             ON DUPLICATE KEY UPDATE 
                 local_hash=local_sync_list.local_hash,
                 local_tstamp=local_sync_list.local_tstamp,
