@@ -154,6 +154,7 @@ class FileEngine{
                 $show_controls = $this->show_controls;
                 
                 $context=[
+                    'user_data'=> $this->user_data,
                     'export_types'=>$this->export_types,
                     'show_controls'=>$this->show_controls,
                     'html'=>$html,
