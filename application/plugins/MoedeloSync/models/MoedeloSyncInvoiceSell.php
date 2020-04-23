@@ -225,7 +225,9 @@ class MoedeloSyncInvoiceSell extends MoedeloSyncBase{
                     {$document->vat_rate} NdsType,
                     ROUND(invoice_price*(1+{$document->vat_rate}/100),2) Price,
                     ROUND(invoice_price*product_quantity*(1+{$document->vat_rate}/100),2) SumWithNds,
-                    prod_pse.remote_id StockProductId
+                    prod_pse.remote_id StockProductId,
+                    party_label Declaration,
+                    analyse_origin Country
                 FROM
                     document_entries
                         JOIN
