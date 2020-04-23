@@ -23,7 +23,7 @@ abstract class DocumentBase extends Catalog{
 	if( isset($value) ){
             $this->Hub->set_level(2);
             if( $this->document_properties->$field==$value ){
-                return false;
+                return false;//should it be $value?
             }
             $this->document_properties->$field=$value;
             $flush && $this->documentFlush();
@@ -285,9 +285,48 @@ abstract class DocumentBase extends Catalog{
         $this->db_transaction_rollback();
         return false;
     }
-    public function entryUpdate( int $doc_entry_id, object $entry ){
-        return null;
+    
+    /**
+     * Makes changes to entry depend on commitment status. 
+     * Must be called within transaction
+     * 
+     * @param int $doc_entry_id
+     * @param object $new_entry_data
+     * @param object $current_entry_data
+     */
+    protected function entrySave( int $doc_entry_id, object $new_entry_data, object $current_entry_data ){
+        return false;
     }
+    
+    /**
+     * 
+     * @param int $doc_entry_id
+     * @param object $new_entry_data
+     * @return boolean
+     */
+    public function entryUpdate( int $doc_entry_id, object $new_entry_data ){
+        $current_entry_data=$this->entryGet($doc_entry_id);
+        if( !$this->doc_id ){//document must be selected
+            return false;
+        }
+        $this->db_transaction_start();
+        $update_ok=$this->entrySave($doc_entry_id, $new_entry_data, $current_entry_data);
+        if( !$update_ok ){
+            $this->db_transaction_rollback();
+            return false;
+        }
+        if( $this->isCommited() ){
+            $this->transUpdate();
+        }
+        $this->db_transaction_commit();
+        return true;
+    }
+    
+    /**
+     * Deletes entry by id
+     * @param int $doc_entry_id
+     * @return boolean
+     */
     public function entryDelete( int $doc_entry_id ){
         if( !$this->doc_id ){//document must be selected
             return false;
@@ -309,6 +348,12 @@ abstract class DocumentBase extends Catalog{
         return false;
     }
 
+    /**
+     * 
+     * @param int $doc_id
+     * @param int $doc_entry_id
+     * @return type
+     */
     public function entryListGet( int $doc_id, int $doc_entry_id=0 ){
         $this->entryListCreate( $doc_id, $doc_entry_id );
         return $this->get_list("SELECT * FROM tmp_entry_list ORDER BY product_code");

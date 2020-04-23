@@ -10,19 +10,19 @@ class Stock extends Catalog {
      * @param int $stock_id
      * @return boolean
      */
-    public function productQuantityModify( int $product_id, float $delta_quantity, int $stock_id=1  ){
-        if( $delta_quantity==0 ){
+    public function productQuantityModify( string $product_code, float $product_delta_quantity, int $stock_id=1  ){
+        if( $product_delta_quantity==0 ){
             return true;
         }
         $modify_qty_sql="
             UPDATE
                 stock_entries
             SET
-                product_quantity=product_quantity+$delta_quantity
+                product_quantity=product_quantity+$product_delta_quantity
             WHERE
-                product_id=$product_id
+                product_code='$product_code'
                 AND stock_id=$stock_id
-                AND product_quantity+$delta_quantity>=0";
+                AND product_quantity+$product_delta_quantity>=0";
         $this->query($modify_qty_sql);
         return $this->db->affected_rows();
     }

@@ -141,7 +141,10 @@ class Hub extends CI_Controller{
                 break;
 	    case 'json':
 	    case 'array':
-                $var= json_decode( $var ,true);
+                $var= json_decode( $var,true );
+                break;
+            case 'object':
+                $var= json_decode( $var,false );
                 break;
 	    default:
 		if( $type ){
