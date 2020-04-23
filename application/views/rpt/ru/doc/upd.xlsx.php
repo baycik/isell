@@ -35,9 +35,9 @@
     
     
     $countries=[
-        'Турция'=>'792',
-        'Китай'=>'156',
-        'Беларусь'=>'112',
+        'ТУРЦИЯ'=>'792',
+        'КИТАЙ'=>'156',
+        'БЕЛАРУСЬ'=>'112',
         'ГЕРМАНИЯ'=>'276',
         'ФРАНЦИЯ'=>'250'    
     ];
@@ -67,9 +67,11 @@
         $row->skip='-';
         $row->origin_name='-';
         $row->origin_code='-';
-        if( !empty($countries[$row->analyse_origin]) ){
-            $row->origin_name=$row->analyse_origin;
-            $row->origin_code=$countries[$row->origin_name];
+        
+        $upper_origin=mb_strtoupper($row->analyse_origin);
+        if( !empty($countries[$upper_origin]) ){
+            $row->origin_name=$upper_origin;
+            $row->origin_code=$countries[$upper_origin];
         }
         if( empty($row->party_label) ){
             $row->party_label='-';
