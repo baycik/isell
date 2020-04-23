@@ -34,49 +34,24 @@
     //print_r($this->view);die;
     
     
-    $countries=[
-        'ТУРЦИЯ'=>'792',
-        'КИТАЙ'=>'156',
-        'БЕЛАРУСЬ'=>'112',
-        'ГЕРМАНИЯ'=>'276',
-        'ФРАНЦИЯ'=>'250'    
-    ];
-    $okei = [
-        'шт' => '796',
-        'руб'=>'383',
-        '1000 руб'=>'384',
-        'компл'=>'839',
-        'л'=>'112',
-        'усл. ед'=>'876',
-        'кг'=>'166',
-        'т'=>'168',
-        'ч'=>'356',
-        'м' => '006',
-        'м2'=>'055',
-        'пог. м'=>'018',
-        'упак'=>'778'
-    ];
+    include 'BlankDatatables.php';
     $this->view->total_qty=0;
     foreach( $this->view->rows as &$row ){
-        $row->product_unit_code=$okei[$row->product_unit];
         $row->product_sum_vat=$row->product_sum_total-$row->product_sum_vatless;
         $row->product_vat_rate=$this->view->head->vat_rate/100;
         $this->view->total_qty+=$row->product_quantity;
-        
         $row->product_excise='без акциза';
         $row->skip='-';
-        $row->origin_name='-';
-        $row->origin_code='-';
-        
-        $upper_origin=mb_strtoupper($row->analyse_origin);
-        if( !empty($countries[$upper_origin]) ){
-            $row->origin_name=$upper_origin;
-            $row->origin_code=$countries[$upper_origin];
-        }
         if( empty($row->party_label) ){
             $row->party_label='-';
         }
-        //print_r($row);die;
+        $unit=unit_code($row->product_unit);
+        $row->product_unit=$unit['name'];
+        $row->product_unit_code=$unit['code'];
+        
+        $country= country_code($row->analyse_origin);
+        $row->origin_name=$country['name'];
+        $row->origin_code=$country['code'];
     }
     $this->view->row_count=count($this->view->rows);
     $this->view->row_count_spell= num2str($this->view->row_count,false);
