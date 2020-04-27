@@ -202,8 +202,8 @@ class MoedeloSync extends Catalog {
             ];
             $full_filename=rawurlencode("$file_name.$file_type");
             header($file_types[$file_type]);
-            header("Content-Disposition:inline;filename=$full_filename");
-            header("Content-Disposition:inline;filename*=UTF-8''$full_filename");
+            header("Content-Disposition:attachment;filename=$full_filename");
+            header("Content-Disposition:attachment;filename*=UTF-8''$full_filename");
             echo $file_data->response;
         }
     }
