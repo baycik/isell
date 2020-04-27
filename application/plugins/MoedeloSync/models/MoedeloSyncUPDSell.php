@@ -256,6 +256,12 @@ class MoedeloSyncUPDSell extends MoedeloSyncBase{
                 WHERE
                     doc_id={$document->doc_id}";
             $document->Items=$this->get_list($sql_entry);
+            for($i=0;$i<count($document->Items);$i++){
+                $declar_len=strlen($document->Items[$i]->Declaration);
+                if($declar_len<23 || $declar_len>27){
+                    unset($document->Items[$i]->Declaration);
+                }
+            }
         }
         
         
