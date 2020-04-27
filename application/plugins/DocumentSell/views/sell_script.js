@@ -42,6 +42,77 @@ Document.head=  {
             });
         },
         initEasyUiWidgets:function(){
+            $.fn.api.settings.successTest = function(response) {
+                return true;
+            };
+            
+            
+            
+            
+            $('#'+holderId+' .x-doc_type').dropdown({
+                    on:'hover',
+                    apiSettings   : {
+                    cache:false,
+                    onResponse: function(resp) {
+                        var response = {
+                            results : []
+                        };
+                        $.each(resp, function(index, item) {
+                            var label=`<img src="img/${item.icon_name}.png" class="ui avatar image"> ${item.doc_type_name}`;
+                            response.results.push({
+                                value:item.doc_type,
+                                name:label,
+                                selected: (item.doc_type==1)?1:0
+                            });
+                        });
+                        console.log(response);
+                        return response;
+                    }
+                }
+            }).api({on:'now',url: 'DocumentList/documentTypeListFetch',onResponse: function(resp) {
+                        var response = {
+                            results : []
+                        };
+                        $.each(resp, function(index, item) {
+                            var label=`<img src="img/${item.icon_name}.png" class="ui avatar image"> ${item.doc_type_name}`;
+                            response.results.push({
+                                value:item.doc_type,
+                                name:label,
+                                selected: (item.doc_type==1)?1:0
+                            });
+                        });
+                        console.log(response);
+                        return response;
+                    }});
+            
+            
+            setTimeout (function(){ 
+                
+                
+                $('.x-doc_type').dropdown('refresh').dropdown('set selected',1);
+            
+            
+            
+            }, 500);
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            return;
             //$.parser.parse("#"+holderId+" .x-head form");//for easy ui
             $("#"+holderId+" .x-head input[name=passive_company_id]").prop('id',holderId+'_pcomp');
             $("#"+holderId+"_pcomp").combobox({
@@ -94,7 +165,9 @@ Document.head=  {
                 selectOnNavigation:false,
                 panelHeight:''
             });
-            $("#"+holderId+" .x-head input[name=doc_type]").prop('id',holderId+'_doc_type');
+            
+            /*
+            $("#"+holderId+" .x-head div[data-field=doc_type]").prop('id',holderId+'_doc_type');
             $("#"+holderId+"_doc_type").combobox({
                 valueField: 'doc_type',
                 textField: 'doc_type_name',
@@ -110,7 +183,7 @@ Document.head=  {
                     });
                     return data;
                 }
-            });
+            });*/
         },
         handleChange:function( field, value, title ){
             if( Document.head.controls.suppress_update ){
@@ -121,6 +194,10 @@ Document.head=  {
         },
         render:function(head_data){
             Document.head.controls.suppress_update=true;
+            
+            
+             //$('.dropdown').dropdown('set selected', '1'); 
+            
             $("#"+holderId+" .x-head form").form('load',head_data);
             $("#"+holderId+" .x-toolbar .icon-commit").css("filter","grayscale("+(head_data.is_commited*1?100:0)+"%)");
             $("#"+holderId+" .x-foot .document_comment").val(Document.data.head.doc_data);
