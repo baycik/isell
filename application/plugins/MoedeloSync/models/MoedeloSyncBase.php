@@ -328,8 +328,21 @@ class MoedeloSyncBase extends Catalog{
         }
     }
     
-    public function remotePush( $local_id ){
+    public function remotePush( $local_id, $force_update=false ){
         $this->localCheckout( false, $local_id );
+        if( $force_update ){
+            $force_sql="
+                UPDATE
+                    plugin_sync_entries
+                SET
+                    remote_hash=MD5(''),
+                    remote_tstamp=NOW()
+                WHERE
+                    local_id='$local_id'
+                    AND sync_destination='{$this->doc_config->sync_destination}'
+                ";
+            $this->query($force_sql);
+        }
         $this->replicate( $local_id );
         $sql="SELECT
                 remote_id
@@ -337,6 +350,7 @@ class MoedeloSyncBase extends Catalog{
                 plugin_sync_entries
             WHERE
                 local_id=$local_id
+                AND sync_destination='{$this->doc_config->sync_destination}'
             ";
         return $this->get_value($sql);
     }
