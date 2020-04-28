@@ -132,7 +132,7 @@ class Stock extends Catalog {
     private function columnsGet($mode) {
         $lvl1 = "product_id, parent_id,parent_label,t.product_code,ru,t.product_quantity,product_unit,product_reserved,product_awaiting";
         $lvl2 = ",product_id, product_wrn_quantity,SUM(IF(TO_DAYS(NOW()) - TO_DAYS(dl.cstamp) <= 30,de.product_quantity,0)) m1,ROUND( SUM(IF(TO_DAYS(NOW()) - TO_DAYS(dl.cstamp) <= 92,de.product_quantity,0))/3 ) m3";
-        $adv = ",product_id, t.self_price,sell,buy,curr_code,product_img,product_spack,product_bpack,product_weight,product_volume,analyse_origin,analyse_origin,product_barcode,analyse_type,analyse_brand,analyse_class,product_article";
+        $adv = ",product_id, t.self_price,sell,buy,curr_code,product_img,product_spack,product_bpack,product_weight,product_volume,party_label,analyse_origin,product_barcode,analyse_type,analyse_brand,analyse_class,product_article";
         if ($this->Hub->svar('user_level') < 2) {
             return $lvl1;
         }
