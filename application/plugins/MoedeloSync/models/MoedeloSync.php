@@ -205,6 +205,8 @@ class MoedeloSync extends Catalog {
             header("Content-Disposition:attachment;filename=$full_filename");
             header("Content-Disposition:attachment;filename*=UTF-8''$full_filename");
             echo $file_data->response;
+        } else {
+            die($file_data->response);
         }
     }
 }
