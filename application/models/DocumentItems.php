@@ -102,7 +102,7 @@ class DocumentItems extends DocumentCore{
 	$doc_id=$this->doc('doc_id');
 	$this->calcCorrections( $skip_vat_correction, $skip_curr_correction );
         $curr_code=$this->Hub->acomp('curr_code');
-	$company_lang = $this->Hub->pcomp('language');
+	$company_lang = $this->Hub->pcomp('language')??'ru';
         $pcomp_price_label=$this->Hub->pcomp('price_label');
         $this->query("DROP TEMPORARY TABLE IF EXISTS tmp_doc_entries");
         $sql="CREATE TEMPORARY TABLE tmp_doc_entries ( INDEX(product_code) ) AS (
