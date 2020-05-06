@@ -166,6 +166,7 @@ class MoedeloSyncCompanies extends MoedeloSyncBase{
         $sql_local="
             SELECT
                 COALESCE(company_tax_id,'') Inn,
+                COALESCE(company_tax_id2,'') Kpp,
                 COALESCE(company_code_registration,'') Ogrn,
                 COALESCE(company_code,'') Okpo,
                 COALESCE(company_name,'') Name,
