@@ -46,23 +46,23 @@ class MoedeloSync extends Catalog {
     //'MoedeloSyncStocks/replicate/1 years/','MoedeloSyncStocks/checkout/1 years/',
     private $joblist=[
             'MoedeloSyncProduct/localCheckout/9 minutes/60 minutes',
-            'MoedeloSyncProduct/remoteCheckout/9 minutes/1 days',
+            'MoedeloSyncProduct/remoteCheckout/6 hours/1 days',
             'MoedeloSyncProduct/replicate/10 minutes/',
         
             'MoedeloSyncCompanies/localCheckout/9 minutes/60 minutes',
-            'MoedeloSyncCompanies/remoteCheckout/9 minutes/1 days',
+            'MoedeloSyncCompanies/remoteCheckout/6 hours/1 days',
             'MoedeloSyncCompanies/replicate/10 minutes/',
             
             'MoedeloSyncBillSell/localCheckout/9 minutes/60 minutes',
-            'MoedeloSyncBillSell/remoteCheckout/9 minutes/1 days',
+            'MoedeloSyncBillSell/remoteCheckout/6 hours/1 days',
             'MoedeloSyncBillSell/replicate/10 minutes/',
             
             'MoedeloSyncWayBillSell/localCheckout/9 minutes/60 minutes',
-            'MoedeloSyncWayBillSell/remoteCheckout/9 minutes/1 days',
+            'MoedeloSyncWayBillSell/remoteCheckout/6 hours/1 days',
             'MoedeloSyncWayBillSell/replicate/10 minutes/',
             
             'MoedeloSyncInvoiceSell/localCheckout/9 minutes/60 minutes',
-            'MoedeloSyncInvoiceSell/remoteCheckout/9 minutes/1 days',
+            'MoedeloSyncInvoiceSell/remoteCheckout/6 hours/1 days',
             'MoedeloSyncInvoiceSell/replicate/10 minutes/',
             
             'MoedeloSyncUPDSell/localCheckout/9 minutes/60 minutes',
@@ -72,19 +72,19 @@ class MoedeloSync extends Catalog {
             'MoedeloSyncUPDBuy/replicate/10 minutes/',
         
             'MoedeloSyncActSell/localCheckout/9 minutes/60 minutes',
-            'MoedeloSyncActSell/remoteCheckout/9 minutes/1 days',
+            'MoedeloSyncActSell/remoteCheckout/6 hours/1 days',
             'MoedeloSyncActSell/replicate/10 minutes/',
         
             'MoedeloSyncActBuy/localCheckout/9 minutes/60 minutes',
-            'MoedeloSyncActBuy/remoteCheckout/9 minutes/1 days',
+            'MoedeloSyncActBuy/remoteCheckout/6 hours/1 days',
             'MoedeloSyncActBuy/replicate/10 minutes/',
         
             'MoedeloSyncWayBillBuy/localCheckout/9 minutes/60 minutes',
-            'MoedeloSyncWayBillBuy/remoteCheckout/9 minutes/1 days',
+            'MoedeloSyncWayBillBuy/remoteCheckout/6 hours/1 days',
             'MoedeloSyncWayBillBuy/replicate/10 minutes/',
             
             'MoedeloSyncInvoiceBuy/localCheckout/9 minutes/60 minutes',
-            'MoedeloSyncInvoiceBuy/remoteCheckout/9 minutes/1 days',
+            'MoedeloSyncInvoiceBuy/remoteCheckout/6 hours/1 days',
             'MoedeloSyncInvoiceBuy/replicate/10 minutes/'
         ];
     
