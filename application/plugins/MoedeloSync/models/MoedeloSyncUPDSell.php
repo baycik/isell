@@ -240,7 +240,7 @@ class MoedeloSyncUPDSell extends MoedeloSyncBase{
                     ru Name,
                     product_quantity Count,
                     product_unit Unit,
-                    IF(is_service=1,2,1) Type,
+                    IF({$this->doc_config->doc_type}=1 OR {$this->doc_config->doc_type}=2,1,2) Type,
                     IF({$document->vat_rate},5,1) NdsType,
                     ROUND(invoice_price*(1+{$document->vat_rate}/100),2) Price,
                     ROUND(invoice_price*product_quantity*(1+{$document->vat_rate}/100),2) SumWithNds,

@@ -116,9 +116,10 @@ class MoedeloSyncUPDBuy extends MoedeloSyncUPDSell{
                     ru Name,
                     product_quantity Count,
                     product_unit Unit,
-                    IF(is_service=1,2,1) Type,
+                    IF({$this->doc_config->doc_type}=1 OR {$this->doc_config->doc_type}=2,1,2) Type,
                     IF({$document->vat_rate},5,0) NdsType,
                     ROUND(invoice_price*(1+{$document->vat_rate}/100),2) Price,
+                    ROUND(invoice_price*product_quantity,2) SumWithoutNds,
                     ROUND(invoice_price*product_quantity*(1+{$document->vat_rate}/100),2) SumWithNds,
                     prod_pse.remote_id StockProductId
                 FROM
@@ -131,11 +132,6 @@ class MoedeloSyncUPDBuy extends MoedeloSyncUPDSell{
                     doc_id={$document->doc_id}";
             $document->Items=$this->get_list($sql_entry);
         }
-        
-        
-        //print_r($document);//die;
-        
-        
         return $document;
     }    
     

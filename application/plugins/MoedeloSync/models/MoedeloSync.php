@@ -17,6 +17,7 @@ class MoedeloSync extends Catalog {
     
     function init() {
         $this->getSettings();
+        //$this->Hub->load_model('MoedeloSyncUPDBuy')->localGet(33383);
         //print_r($this->plugin_data);
     }
     
