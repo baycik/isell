@@ -114,10 +114,13 @@ class MoedeloSyncBase extends Catalog{
              FROM 
                  plugin_sync_entries pse_remote
                      JOIN
-                 plugin_sync_entries pse_local ON pse_remote.remote_hash=pse_local.local_hash AND pse_local.sync_destination=pse_remote.sync_destination
+                 plugin_sync_entries pse_local ON 
+                    pse_remote.remote_hash=pse_local.local_hash 
+                    AND pse_local.sync_destination=pse_remote.sync_destination
              WHERE
-                 (pse_remote.local_id IS NULL OR pse_local.local_id IS NULL)
-                 AND pse_local.sync_destination='{$this->doc_config->sync_destination}'
+                (pse_local.local_id IS NULL OR pse_local.remote_id IS NULL)
+                AND (pse_remote.local_id IS NULL OR pse_remote.remote_id IS NULL)
+                AND pse_local.sync_destination='{$this->doc_config->sync_destination}'
              GROUP BY local_entry_id);";
         $clear_unlinked_entries="
             DELETE pse FROM 
@@ -187,7 +190,7 @@ class MoedeloSyncBase extends Catalog{
             }
             $afterDate= $this->toTimezone($afterDate_local, 'remote');
         }        
-        $result=$this->remoteCheckoutGetList( $sync_destination, $remote_function, $afterDate );
+        $result=$this->remoteCheckoutGetList( $remote_function, $afterDate );
         $nextPageNo=$result->pageNo+1;
         
         $this->query("START TRANSACTION");
@@ -232,7 +235,7 @@ class MoedeloSyncBase extends Catalog{
      * @return responseobject
      *  
      */
-    protected function remoteCheckoutGetList( $sync_destination, $remote_function, $afterDate ){
+    protected function remoteCheckoutGetList( $remote_function, $afterDate ){
         $pageNo=1;
         if( isset($this->Hub->MoedeloSync->plugin_data->{$this->doc_config->sync_destination}->checkoutPage) ){
             $pageNo=$this->Hub->MoedeloSync->plugin_data->{$this->doc_config->sync_destination}->checkoutPage;
