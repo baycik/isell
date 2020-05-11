@@ -70,7 +70,7 @@ class MoedeloSyncCompanies extends MoedeloSyncBase{
      * Calculates remote entity hash
      */
     public function remoteHashCalculate( $entity ){
-        $check="{$entity->Inn};{$entity->Ogrn};{$entity->Okpo};{$entity->Name};{$entity->LegalAddress};{$entity->ActualAddress};";
+        $check="{$entity->Inn};{$entity->Kpp};{$entity->Ogrn};{$entity->Okpo};{$entity->Name};{$entity->LegalAddress};{$entity->ActualAddress};";
         //echo "remote check-$check";
         return md5($check);
     }
@@ -110,7 +110,7 @@ class MoedeloSyncCompanies extends MoedeloSyncBase{
             SELECT
                 '{$this->doc_config->sync_destination}' sync_destination,
                 local_id,
-                MD5(CONCAT(Inn,';',Ogrn,';',Okpo,';',Name,';',LegalAddress,';',ActualAddress,';')) local_hash,
+                MD5(CONCAT(Inn,';',Kpp,';',Ogrn,';',Okpo,';',Name,';',LegalAddress,';',ActualAddress,';')) local_hash,
                 local_tstamp,
                 0 local_deleted
             FROM
@@ -119,6 +119,7 @@ class MoedeloSyncCompanies extends MoedeloSyncBase{
                 NOW() local_tstamp,
 
                 COALESCE(company_tax_id,'') Inn,
+                COALESCE(company_tax_id2,'') Kpp,
                 COALESCE(company_code_registration,'') Ogrn,
                 COALESCE(company_code,'') Okpo,
                 COALESCE(company_name,'') Name,
