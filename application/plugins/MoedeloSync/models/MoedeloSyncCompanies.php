@@ -119,7 +119,7 @@ class MoedeloSyncCompanies extends MoedeloSyncBase{
                 NOW() local_tstamp,
 
                 COALESCE(company_tax_id,'') Inn,
-                COALESCE(company_tax_id2,'') Kpp,
+                IF(LENGTH(company_tax_id2)=9,company_tax_id2,'') Kpp,
                 COALESCE(company_code_registration,'') Ogrn,
                 COALESCE(company_code,'') Okpo,
                 COALESCE(company_name,'') Name,
@@ -167,7 +167,7 @@ class MoedeloSyncCompanies extends MoedeloSyncBase{
         $sql_local="
             SELECT
                 COALESCE(company_tax_id,'') Inn,
-                COALESCE(company_tax_id2,'') Kpp,
+                IF(LENGTH(company_tax_id2)=9,company_tax_id2,'') Kpp,
                 COALESCE(company_code_registration,'') Ogrn,
                 COALESCE(company_code,'') Okpo,
                 COALESCE(company_name,'') Name,
