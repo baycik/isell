@@ -44,7 +44,7 @@ class PriceManager extends Catalog{
     }
     
     
-    public function breakevenResultListFetch( int $branch_id=0, int $company_id, int $offset, int $limit, string $sortby, string $sortdir, array $filter ){
+    public function breakevenResultListFetch( int $branch_id=0, int $company_id=0, int $offset, int $limit, string $sortby='', string $sortdi='', array $filter=[] ){
         if (empty($sortby)) {
             $sortby = "pl.product_code";
             $sortdir = "ASC";
