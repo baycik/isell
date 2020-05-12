@@ -210,7 +210,7 @@ class CampaignManager extends Catalog{
         $this->delete('plugin_campaign_bonus_periods',['campaign_bonus_id'=>$campaign_bonus_id]);
     }
     
-    public function bonusPeriodUpdate( int $campaign_bonus_period_id, string $field, string $value){
+    public function bonusPeriodUpdate( int $campaign_bonus_period_id, string $field, string $value='' ){
         $this->Hub->set_level(3);
         return $this->update('plugin_campaign_bonus_periods',[$field=>$value],['campaign_bonus_period_id'=>$campaign_bonus_period_id]);
     }
