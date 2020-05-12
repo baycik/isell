@@ -1,7 +1,7 @@
 <?php
 class PriceManager extends Catalog{
     public $min_level=3;
-    public function breakevenListFetch( int $offset, int $limit, string $sortby, string $sortdir, array $filter ){
+    public function breakevenListFetch( int $offset, int $limit, string $sortby='', string $sortdir='', array $filter=[] ){
         if (empty($sortby)) {
             $sortby = "st.label, ct.label";
             $sortdir = "ASC";
@@ -44,7 +44,7 @@ class PriceManager extends Catalog{
     }
     
     
-    public function breakevenResultListFetch( int $branch_id, int $company_id, int $offset, int $limit, string $sortby, string $sortdir, array $filter ){
+    public function breakevenResultListFetch( int $branch_id=0, int $company_id, int $offset, int $limit, string $sortby, string $sortdir, array $filter ){
         if (empty($sortby)) {
             $sortby = "pl.product_code";
             $sortdir = "ASC";
