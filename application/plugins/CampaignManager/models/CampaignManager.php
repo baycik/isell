@@ -138,7 +138,7 @@ class CampaignManager extends Catalog{
         return $ok;
     }
     
-    public function bonusUpdate( int $campaign_bonus_id, string $field, string $value){
+    public function bonusUpdate( int $campaign_bonus_id, string $field, string $value=''){
         $this->Hub->set_level(3);
         $period_fill_is_needed=false;
         function validate_period($date){
