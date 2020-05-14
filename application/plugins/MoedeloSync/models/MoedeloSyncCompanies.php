@@ -70,8 +70,11 @@ class MoedeloSyncCompanies extends MoedeloSyncBase{
      * Calculates remote entity hash
      */
     public function remoteHashCalculate( $entity ){
+        $entity->Kpp=$entity->Kpp??'';
         $check="{$entity->Inn};{$entity->Kpp};{$entity->Ogrn};{$entity->Okpo};{$entity->Name};{$entity->LegalAddress};{$entity->ActualAddress};";
-        //echo "remote check-$check";
+//        if( $entity->Inn=='920300111527' ){
+//            echo "remote check-$check ->".md5($check);
+//        }
         return md5($check);
     }
     /**

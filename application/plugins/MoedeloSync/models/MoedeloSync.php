@@ -88,7 +88,7 @@ class MoedeloSync extends Catalog {
             'MoedeloSyncInvoiceBuy/replicate/10 minutes/'
         ];
     
-    public function tick( $iterations_left ){
+    public function tick( $iterations_left, string $currentJob=null ){
         header("Content-type:text/plain");
         if( empty($this->settings->gateway_url) || empty($this->settings->gateway_md_apikey) ){
             throw new Exception('Gateway or API key is not set');
@@ -101,6 +101,11 @@ class MoedeloSync extends Catalog {
             return false;
         }
         
+        if( $currentJob ){
+            $jobParts=explode('/',$currentJob);
+            $this->jobExecute($currentJob,$jobParts,1);
+            return true;
+        }
         $currentJob=$this->joblist[0];        
         if( isset($this->plugin_data->lastDoneJob) ){
             $last_done_key=array_search($this->plugin_data->lastDoneJob,$this->joblist)??0;
@@ -127,7 +132,11 @@ class MoedeloSync extends Catalog {
         try{
             echo "starting $currentJob is_full=$is_full\n";
             $SyncModel=$this->Hub->load_model($jobParts[0]);
-            $finished=$SyncModel->{$jobParts[1]}($is_full);
+            if( $jobParts[1]=="replicate" ){
+                $finished=$SyncModel->{$jobParts[1]}();
+            } else {
+                $finished=$SyncModel->{$jobParts[1]}($is_full);
+            }
             if( $finished ){
                 if( $is_full ){
                     $this->plugin_data->{"$jobParts[0]_$jobParts[1]_LastFull"}=date("Y-m-d H:i:s");
