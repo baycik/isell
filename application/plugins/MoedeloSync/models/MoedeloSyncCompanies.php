@@ -189,7 +189,7 @@ class MoedeloSyncCompanies extends MoedeloSyncBase{
            ";
         $entity=$this->get_row($sql_local);
         if( empty($entity->Kpp) ){
-            unlink($entity->Kpp);
+            unset($entity->Kpp);
         }
         return $entity;
     }
