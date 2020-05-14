@@ -122,9 +122,8 @@ class ViewManager extends CI_Model{
 	exit;
     }
     
-    public $outRedirect=['string'];
-    public function outRedirect($out_type){
-	$app_folder=array_pop( explode('\\',FCPATH) );;
+    public function outRedirect( string $out_type){
+	$app_folder=array_pop( explode('\\',FCPATH) );
 	$full_uri=$_SERVER['REQUEST_URI'];
 	$pos=strpos($full_uri,$app_folder);
 	$url_base_folder=substr($full_uri,0,$pos).$app_folder;
