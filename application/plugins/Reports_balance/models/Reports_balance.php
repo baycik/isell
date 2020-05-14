@@ -17,18 +17,17 @@ class Reports_balance extends Catalog{
         $this->fdate=$this->request('fdate','\d\d\d\d.\d\d.\d\d');
         $this->accounts=[
             'active'=>[
-                '3'
+                '3__'
             ],
             'passive'=>[
-                '6'
+                '63_',
+                '60',
+                '66'
             ]
         ];
     }
-    private function getAssignedPathWhere(){
-        $assigned_path=$this->Hub->svar('user_assigned_path');
-        return $assigned_path?"AND (path LIKE '".str_replace(',',"%' OR path LIKE '",$assigned_path.'')."%')":"";    
-    }
-    private function getAccountLeftover($acc_code){
+    
+    private function getAccountLeftover($acc_code,$sign=1){
         $fdate_list=[$this->fdate];
 	$active_filter=$this->all_active?'':' AND active_company_id='.$this->Hub->acomp('company_id');
         $leftovers=[];
@@ -51,15 +50,15 @@ class Reports_balance extends Catalog{
                     WHERE
                         cstamp<'$fdate'
                         AND acc_credit_code LIKE CONCAT(acc_code,'%')
-                        $active_filter),'') leftover$i";
+                        $active_filter),'')*$sign leftover$i";
         }
         $leftover_queries= implode(',', $leftovers);
         $lvl3_sql="SELECT 
-                acc_code,label acc_name,$leftover_queries
+                acc_code,CONCAT(REPEAT('  ',LENGTH(acc_code)),label) acc_name,$leftover_queries
             FROM
                 acc_tree
             WHERE
-                acc_code LIKE '{$acc_code}__'
+                acc_code LIKE '{$acc_code}'
             HAVING leftover0
             ORDER BY acc_code
                 ";
@@ -67,80 +66,61 @@ class Reports_balance extends Catalog{
     }
     
     
-    private function getAccountTree($leftovers){
+    private function getAccountTree($table_rows){
+        $grandtotal=0;
         $subtotals=[];
-        foreach($leftovers as $leftover){
-            $acc_code=$leftover['acc_code'];
-            for($i=0;$i<count($acc_code);$i++){
+        foreach($table_rows as &$row){
+            $acc_code=$row->acc_code;
+            for($i=1;$i<strlen($acc_code);$i++){
                 $group_code=substr($acc_code,0,$i);
-                $subtotals[$group_code]=$subtotals[$group_code]??0+$leftover['leftover0'];
+                $subtotals[$group_code]=($subtotals[$group_code]??0)+$row->leftover0;
             }
+            $grandtotal+=$row->leftover0;
         }
+        foreach($subtotals as $group_code=>$subtotal){
+            $sql="
+                SELECT
+                    acc_code,CONCAT(REPEAT('  ',LENGTH(acc_code)),label) acc_name, '$subtotal' leftover0
+                FROM
+                    acc_tree
+                WHERE
+                    acc_code='$group_code'
+                ";
+            $table_rows[]=$this->get_row($sql);
+        }
+        $codes  = array_column($table_rows, 'acc_code');
+        array_multisort($codes, SORT_STRING, $table_rows);
         
-        
-        
-        
-        
-        
-        $codes  = array_column($group_rows, 'acc_code');
-        array_multisort($codes, SORT_STRING, $group_rows);
-        
-        
-        
-        
+        return (object)[
+            'total'=>$grandtotal,
+            'rows'=>$table_rows
+                ];
     }
-        
-        
-        
-        
-        
-        
-        
-
-        
-        
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
     
     private function iso2dmy( $iso ){
 	$chunks=  explode('-', $iso);
 	return "$chunks[2].$chunks[1].$chunks[0]";
     }
+    
     public function viewGet(){
         $this->Hub->set_level(4);
         
-        $v=[
-            'active'=>[],
-            'passive'=>[]
-        ];
+        $active=[];
+        $passive=[];
         foreach( $this->accounts['active'] as $acc_code ){
-            $v['active']= array_merge($v['active'],$this->getAccountLeftover($acc_code));
+            $active= array_merge($active,$this->getAccountLeftover($acc_code));
         }
         foreach( $this->accounts['passive'] as $acc_code ){
-            //$v['passive']= array_merge($v['passive'],$this->getAccountLeftover($acc_code, $fdate_list));
+            $passive= array_merge($passive,$this->getAccountLeftover($acc_code,-1));
         }
-        
-        foreach( $fdate_list as $i=>$fdate ){
-            //$v['active_total_'.$i]='';
-        }
-        
-        
-        
-        $v['input']=[
-            'all_active'=>$this->all_active,
-            'fdate0'=>$this->iso2dmy($this->fdate)
+        $view=[
+            'input'=>[
+                'all_active'=>$this->all_active,
+                'fdate0'=>$this->iso2dmy($this->fdate)
+            ],
+            'active'=>$this->getAccountTree($active),
+            'passive'=>$this->getAccountTree($passive)
         ];
-        
-        //header("Content-type:text/plain");print_r($v);
-        
-	return $v;
+	return $view;
     }
 }
