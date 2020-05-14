@@ -188,7 +188,9 @@ class MoedeloSyncCompanies extends MoedeloSyncBase{
             WHERE company_id='$local_id'
            ";
         $entity=$this->get_row($sql_local);
-        $entity->Kpp??unlink($entity->Kpp);
+        if( empty($entity->Kpp) ){
+            unlink($entity->Kpp);
+        }
         return $entity;
     }
 }
