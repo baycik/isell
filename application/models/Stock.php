@@ -347,6 +347,7 @@ class Stock extends Catalog {
         foreach($import_list as $product){
             $set=[];
             foreach($target as $i=>$field){
+                //$set[]="$field='".$this->stripWhite($product->{$source[$i]})."'";
                 if( $field=='parent_id' ){
                     $value=$source[$i];
                 } else {

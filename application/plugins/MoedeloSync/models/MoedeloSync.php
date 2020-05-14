@@ -220,4 +220,9 @@ class MoedeloSync extends Catalog {
             die($file_data->response);
         }
     }
+    
+    public function remotePush( string $handler, int $local_id ){
+        $Handler=$this->Hub->load_model($handler);
+        return $Handler->remotePush($local_id,true);
+    }
 }
