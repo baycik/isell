@@ -91,11 +91,11 @@ class MobiSell extends PluginManager {
 	    ";
         return $this->get_list($sql);
     }
-    public $compListFetch = ['mode' => 'string', 'q' => 'string'];
-    public function compListFetch($mode, $q) {
+
+    public function compListFetch( string $mode=NULL ) {
         return [
             'success' => true,
-            'results' => $this->Hub->load_model('Company')->listFetchAll($mode, $q)
+            'results' => $this->Hub->load_model('Company')->listFetchAll($mode)
         ];
     }
 

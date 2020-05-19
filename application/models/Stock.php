@@ -1045,7 +1045,7 @@ class Stock extends Catalog {
         $Events->Topic('beforeMatchesFilterBuild')->publish($this);
     }
     
-    public function matchesListFetch(string $q, int $limit=12, int $offset=0, string $sortby, string $sortdir, int $category_id=0, int $pcomp_id=0) {
+    public function matchesListFetch(string $q='', int $limit=12, int $offset=0, string $sortby, string $sortdir, int $category_id=0, int $pcomp_id=0) {
         $where=     $this->matchesListGetWhere( $q, $category_id );
         $order_by=  $this->matchesListGetOrderBy($sortby,$sortdir);
         
