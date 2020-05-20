@@ -478,7 +478,13 @@ class DocumentItems extends DocumentCore{
 	$target_list=  implode(',', $target);
 	$source_list=  implode(',', $source);
 	$set_list=  implode(',', $set);
-	$this->query("INSERT INTO $table ($target_list) SELECT $source_list FROM imported_data WHERE label='$label' AND $product_code_source IN (SELECT product_code FROM stock_entries) ON DUPLICATE KEY UPDATE product_quantity=product_quantity+$quantity_source_field");
+        $sql="INSERT INTO $table ($target_list) 
+            SELECT $source_list 
+                FROM imported_data 
+                WHERE label='$label' AND $product_code_source 
+                    IN (SELECT product_code FROM stock_entries) 
+                    ON DUPLICATE KEY UPDATE $set_list";
+	$this->query($sql);
 	return $this->db->affected_rows();
     }
     
