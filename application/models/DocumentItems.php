@@ -456,7 +456,8 @@ class DocumentItems extends DocumentCore{
 	$target=[];
 	$source=[];
 	$this->calcCorrections();
-        $quantity_source_field='';
+        $set_list="";
+        $set_list_delimiter="";
 	for( $i=0;$i<count($trg);$i++ ){
             if( strpos($filter,"/{$trg[$i]}/")===false || empty($src[$i]) ){
 		continue;
@@ -466,9 +467,16 @@ class DocumentItems extends DocumentCore{
 	    }
 	    if( $trg[$i]=='invoice_price' ){
 		$src[$i]=$src[$i].'/@curr_correction/@vat_correction';
+                $set_list.="$set_list_delimiter invoice_price={$src[$i]}";
+                $set_list_delimiter=",";
 	    }
 	    if( $trg[$i]=='product_quantity' ){
-		$quantity_source_field=$src[$i];
+		$set_list.="$set_list_delimiter product_qunatity=product_quantity+{$src[$i]}";
+                $set_list_delimiter=",";
+	    }
+	    if( $trg[$i]=='party_label' ){
+                $set_list.="$set_list_delimiter party_label={$src[$i]}";
+                $set_list_delimiter=",";
 	    }
             
 	    $target[]=$trg[$i];
@@ -483,7 +491,8 @@ class DocumentItems extends DocumentCore{
                 FROM imported_data 
                 WHERE label='$label' AND $product_code_source 
                     IN (SELECT product_code FROM stock_entries) 
-                    ON DUPLICATE KEY UPDATE $set_list";
+                    ON DUPLICATE KEY UPDATE 
+                    $set_list";
 	$this->query($sql);
 	return $this->db->affected_rows();
     }
