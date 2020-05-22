@@ -180,7 +180,7 @@ class OpencartSync extends OpencartSyncUtils{
 	}
 	if( !file_exists($cache) ){
 	    $size = explode('x', $size_x);
-	    $thumb=$this->image_resize($path, $size[0], $size[1]);
+	    $thumb=$this->Storage->image_resize($path, $size[0], $size[1]);
 	    imagejpeg($thumb,$cache,80);
 	}
         return file_get_contents($cache);
