@@ -173,12 +173,24 @@ class OpencartSync extends OpencartSyncUtils{
         return $this->productRemoveFromSyncList($products_to_remove);
     }
     
+    private function productImageOptimize( $path, $size_x="1200x1200" ){
+        $cache=$path . "_{$size_x}.jpg";
+	if (is_dir($path) || !file_exists($path)) {
+	    $path='img/notfound.jpg';
+	}
+	if( !file_exists($cache) ){
+	    $size = explode('x', $size_x);
+	    $thumb=$this->image_resize($path, $size[0], $size[1]);
+	    imagejpeg($thumb,$cache,80);
+	}
+        return file_get_contents($cache);
+    }
+    
     private function productImageUpload( $product ){
         $local_img_time=$this->Storage->file_time("dynImg/".$product->local_img_filename);
         $local_img_hash=$this->Storage->file_checksum("dynImg/".$product->local_img_filename); 
         if( $product->local_img_filename && $local_img_hash!==$product->remote_img_hash && $local_img_time>$product->remote_img_time ){
-            $ext = 'png';//pathinfo($product->local_img_filename, PATHINFO_EXTENSION);
-            $file_data=$this->Storage->image_get('1200x1200','dynImg/'.$product->local_img_filename);
+            $file_data=$this->productImageOptimize( 'dynImg/'.$product->local_img_filename );
             return [
                 'local_img_data'=>base64_encode($file_data),
                 'remote_img_filename'=>$this->filename_prepare("$product->model $product->name").".$ext"
