@@ -174,7 +174,7 @@ class OpencartSync extends OpencartSyncUtils{
     }
     
     private function productImageOptimize( $path, $size_x="1200x1200" ){
-        $cache=$path . "_{$size_x}.jpg";
+        $cache=BAY_STORAGE.'/'.$path . "_{$size_x}.jpg";
 	if (is_dir($path) || !file_exists($path)) {
 	    $path='img/notfound.jpg';
 	}
@@ -193,7 +193,7 @@ class OpencartSync extends OpencartSyncUtils{
             $file_data=$this->productImageOptimize( 'dynImg/'.$product->local_img_filename );
             return [
                 'local_img_data'=>base64_encode($file_data),
-                'remote_img_filename'=>$this->filename_prepare("$product->model $product->name").".$ext"
+                'remote_img_filename'=>$this->filename_prepare("$product->model $product->name").".jpg"
             ];
         }
         return false;
