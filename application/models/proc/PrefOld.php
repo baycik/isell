@@ -145,6 +145,68 @@ class PrefOld {
 	$this->Base->set_level(2);
         $this->Base->query("REPLACE pref_list SET active_company_id='$active_company_id', pref_value='$value', pref_name='$field'");
     }
+    
+    
+    
+    
+    
+    //////////////////////////////////////////////
+    //COUNTER SECTION
+    //////////////////////////////////////////////
+    public function counterNumGet(  string $counter_name, int $counter_acomp_id=null, bool $counter_increase=false ){
+        if( $counter_acomp_id===null ){
+            $counter_acomp_id=$this->Base->acomp('company_id');
+        }
+        $counter=$this->counterGet($counter_name,$counter_acomp_id);
+        if( !$counter ){
+            return null;
+        }
+        if( $counter_increase ){
+            $pref_int=$counter->pref_int+1;
+            $modified_year= substr($counter->data['modified_at'], 0, 4);
+            if( $modified_year!=date("Y") ){
+                $pref_int=1;
+            }
+            $this->counterUpdate($counter_name,$counter_acomp_id,(array) $counter->data,$pref_int);
+        }
+        return ($counter->data['counter_prefix']??'').$counter->pref_int;
+    }
+    
+    public function counterGet( string $counter_name, int $counter_acomp_id ){
+        $counter=$this->Base->get_row("SELECT * FROM pref_list WHERE pref_name='$counter_name' AND active_company_id='$counter_acomp_id'");
+        if( !$counter ){
+            return null;
+        }
+        $counter['data']= json_decode($counter['pref_value'],true);
+        return (object) $counter;
+    }
+    
+    
+    public function counterCreate(  string $counter_name, int $counter_acomp_id=null, string $counter_title ){
+        if( $counter_acomp_id===null ){
+            $counter_acomp_id=$this->Base->acomp('company_id');
+        }
+        $this->Base->query("INSERT pref_list SET active_company_id=$counter_acomp_id,pref_name='$counter_name',pref_int=1");
+        $counter_data=[
+            'counter_title'=>$counter_title
+        ];
+        return $this->counterUpdate($counter_name, $counter_acomp_id, $counter_data, 1);
+    }
+    
+    public function counterUpdate( string $counter_name, int $counter_acomp_id=0, array $counter_data=null, int $counter_int=0 ){
+        $set='';
+        $set_delimeter='';
+        $counter_data_combined=$this->counterGet( $counter_name, $counter_acomp_id )->data;
+        $counter_data_combined['modified_at']=date("Y-m-d H:i:s");
+        if( $counter_data!=null ){
+            $counter_data_combined=array_merge($counter_data_combined,$counter_data);
+            $set.="pref_value='". addslashes(json_encode($counter_data_combined))."'";
+            $set_delimeter=',';
+        }
+        if( $counter_int!=0 ){
+            $set.=$set_delimeter."pref_int='$counter_int'";
+        }
+        $this->Base->query("UPDATE pref_list SET $set WHERE active_company_id='$counter_acomp_id' AND pref_name='$counter_name'");
+        return true;
+    }
 }
-
-?>

@@ -44,7 +44,7 @@ class ControllerextensionmoduleiSellSync extends Controller {
     private function translateAndUpdate($p) {
         $productData = [
             'model' => $p->product_code,
-            'sku' => '',
+            'sku' =>  $p->sku,
             'upc' => '',
             'ean' => $p->product_barcode,
             'jan' => '',
@@ -104,13 +104,14 @@ class ControllerextensionmoduleiSellSync extends Controller {
                 " . DB_PREFIX . "product
             SET
                 ean='{$productData['ean']}',
+                sku='{$productData['sku']}',
                 quantity='{$productData['quantity']}',
                 price='{$productData['price']}',
                 weight='{$productData['weight']}',
                 length='{$productData['length']}',
                 width='{$productData['width']}',
                 height='{$productData['height']}',
-				manufacturer_id=IF(" . DB_PREFIX . "product.manufacturer_id," . DB_PREFIX . "product.manufacturer_id,(SELECT manufacturer_id FROM " . DB_PREFIX . "manufacturer m WHERE m.name='{$productData['_manufacturer_name']}'))
+		manufacturer_id=IF(" . DB_PREFIX . "product.manufacturer_id," . DB_PREFIX . "product.manufacturer_id,(SELECT manufacturer_id FROM " . DB_PREFIX . "manufacturer m WHERE m.name='{$productData['_manufacturer_name']}'))
             WHERE
                 product_id='$product_id'";
         $this->db->query($sql);

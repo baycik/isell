@@ -8,7 +8,7 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
     function __construct(){
         parent::__construct();
         $this->doc_config=(object) [
-            'remote_function'=>'sales/act',
+            'remote_function'=>'accounting/api/v1/sales/act',
             'local_view_type_id'=>137,//Act
             'sync_destination'=>'moedelo_doc_act_sell',
             'doc_type'=>3
@@ -18,39 +18,13 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
      * Finds changes that needs to be made on local and remote
      */
     public function checkout(){
-        $is_full=0;
-        $this->remoteCheckout($is_full);
-        $this->localCheckout($is_full);
+        return false;
     }
     /**
      * Executes needed sync operations
      */
-    public function replicate(){
-        $sql_action_list="
-            SELECT
-                entry_id,
-                local_id,
-                remote_id,
-                IF( local_id IS NULL, 'localInsert',
-                IF( remote_id IS NULL, 'remoteInsert',
-                IF( local_deleted=1, 'remoteDelete',
-                IF( remote_deleted=1, 'localDelete',
-                IF( COALESCE(local_hash,'')<>COALESCE(remote_hash,''),
-                IF( local_tstamp=remote_tstamp, 'remoteInspect',
-                IF( local_tstamp<remote_tstamp, 'localUpdate', 'remoteUpdate')),
-                'SKIP'))))) sync_action
-            FROM
-                plugin_sync_entries doc_pse
-            WHERE 
-                sync_destination='{$this->doc_config->sync_destination}'
-            ";
-        $action_list=$this->get_list($sql_action_list);
-        print_r($action_list);
-        foreach( $action_list as $action ){
-            if( method_exists( $this, $action->sync_action) ){
-                $this->{$action->sync_action}($action->local_id,$action->remote_id,$action->entry_id);
-            }
-        }
+    public function replicate( $filter_local_id=null ){
+        return parent::replicate( $filter_local_id );
     }
     ///////////////////////////////////////////////////////////////
     // REMOTE SECTION
@@ -61,7 +35,7 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
      * Checks for updates on remote
      */
     public function remoteCheckout( bool $is_full=false ){
-        parent::remoteCheckout( $is_full );
+        return parent::remoteCheckout( $is_full );
     }
     /**
      * Inserts new record on remote
@@ -126,7 +100,12 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
      * @param bool $is_full
      * Checks for updates on local
      */
-    public function localCheckout( bool $is_full=false ){
+    public function localCheckout( bool $is_full=false, $filter_local_id=null ){
+        if( $filter_local_id ){
+            $filter_local="AND dvl.doc_view_id='$filter_local_id'";
+        } else {
+            $filter_local='';
+        }
         $sql_local_docs="
             SELECT
                 '{$this->doc_config->sync_destination}',
@@ -159,6 +138,7 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
                 AND doc_type='{$this->doc_config->doc_type}'
                 AND view_type_id='{$this->doc_config->local_view_type_id}'
                 AND dvl.tstamp>'{$this->sync_since}'
+                $filter_local
             GROUP BY doc_view_id) inner_table";
         if( $is_full ){
             $afterDate='';
@@ -240,7 +220,7 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
     }
     
     private function localFindDocument( $passive_company_id, $doc_num, $doc_date, $doc_sum=0 ){
-        echo $sql_find_local="
+        $sql_find_local="
             SELECT
                 dl.doc_id,
                 SUM(ROUND(invoice_price*product_quantity*(1+dl.vat_rate/100),2)) doc_sum,
@@ -306,7 +286,6 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
         }
         return $product_code;
     }
-    
     /**
      * Updates existing record on local
      */
@@ -374,21 +353,12 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
         //$this->query("UPDATE plugin_sync_entries SET remote_hash='{$remoteDoc->Context->ModifyDate}' WHERE entry_id='$entry_id'");
     }
     
-    private function localDocumentUpdate( $doc_id, $document ){
-        
-    }
-    
-    private function localDocumentGet( $doc_id ){
-        
-    }
-    
     /**
      * Deletes existing record on local
      */
     public function localDelete( $local_id, $remote_id, $entry_id ){
         $this->query("DELETE FROM plugin_sync_entries WHERE entry_id='$entry_id'");
     }
-    
     
     public function localGet( $local_id ){
         $sql_dochead="
@@ -399,7 +369,8 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
                 dl.vat_rate,
                 
                 view_num Number,
-                dvl.tstamp DocDate,
+                CONCAT('ACT #',view_num) ErrorTitle,
+                REPLACE(dvl.tstamp,' ','T') DocDate,
                 '' PaymentNumber,
                 '' PaymentDate,
                 dl.cstamp ContextCreateDate,
@@ -408,7 +379,7 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
                 SUM(ROUND(invoice_price*product_quantity*(1+dl.vat_rate/100),2)) Sum,
                 2 NdsPositionType,                
                 Kontragent_pse.remote_id KontragentId,
-                Stock_pse.remote_id StockId
+                {$this->remote_stock_id} StockId
             FROM
                 document_list dl
                     JOIN
@@ -417,8 +388,6 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
                 document_view_list dvl USING(doc_id)
                     JOIN
 		user_list ON dl.modified_by=user_id
-                    JOIN
-                plugin_sync_entries Stock_pse ON 1=Stock_pse.local_id AND Stock_pse.sync_destination='moedelo_stocks'
                     JOIN
                 plugin_sync_entries Kontragent_pse ON passive_company_id=Kontragent_pse.local_id AND Kontragent_pse.sync_destination='moedelo_companies'
                     LEFT JOIN
@@ -433,7 +402,7 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
                     ru Name,
                     product_quantity Count,
                     product_unit Unit,
-                    IF(is_service=1,2,1) Type,
+                    IF({$this->doc_config->doc_type}=1 OR {$this->doc_config->doc_type}=2,1,2) Type,
                     ROUND(invoice_price*(1+{$document->vat_rate}/100),2) Price,
                     {$document->vat_rate} NdsType,
                     ROUND(invoice_price*product_quantity*(1+{$document->vat_rate}/100),2) SumWithNds

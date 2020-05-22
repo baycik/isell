@@ -410,10 +410,13 @@ class Catalog extends CI_Model {
             $method=$listener->event_target;
             $arguments[]=$listener->event_note;//custom registerer parameter
             $arguments[]=&$previuos_return;//previous events results
+            if( !method_exists($Model, $method) ){
+                continue;
+            }
             try{
                 $previuos_return=call_user_func_array([$Model, $method],$arguments);
             } catch (Exception $ex) {
-                $this->unsubscribe( $listener->event_place, $listener->event_target, $listener->event_liable_user_id );
+                //$this->unsubscribe( $listener->event_place, $listener->event_target, $listener->event_liable_user_id );
                 $this->log("Topic subscriber '{$listener->event_place}->{$listener->event_target}' has been removed due to error: ".$ex);
             }
         }

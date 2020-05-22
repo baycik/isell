@@ -720,7 +720,7 @@
                     <div id="stock_search" class="eleven wide field">
                             <div class="ui left icon right labeled input fluid" style="margin-bottom: 5px;">
                                 <i class="search icon"></i>
-                                <input id="stock_search_input" placeholder="Введите название или код..." type="text"
+                                <input id="stock_search_input" placeholder="Введите название или код..." type="text" style="background-color:#ffd"
                                        oninput="clearTimeout(App.stock.entries.clock);App.stock.entries.clock = setTimeout(function () {App.stock.entries.load()}, 600);">
                                 <div class="ui basic label" onclick="App.stock.head.clearSearchbar()"><i class="close icon"></i></div>
                             </div>

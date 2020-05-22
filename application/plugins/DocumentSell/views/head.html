@@ -15,8 +15,19 @@
             <span class="icon-24 icon-refresh" title="Обновить" data-action="reload"> </span> 
         </div>
     </div>
-    <div style="display: grid;grid-template-columns:350px 350px">
-        <input name="doc_type" title="Тип" >
+    <div style="display: grid;grid-template-columns:350px 350px;margin-top: 5px;">
+        
+        <div class="field">
+            <label>Тип документа</label>
+            <div class="ui selection dropdown x-doc_type" style="width:250px" title="Тип">
+                <div class="text"></div>
+                <i class="dropdown icon"></i>
+            </div>
+        </div>
+        
+        
+        
+        
         <input name="doc_status_id" title="Статус">
         <input type='date' name="doc_date" title="Дата">
         <input type='number' name="doc_num" title="Номер" min="1">

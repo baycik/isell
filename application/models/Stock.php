@@ -3,7 +3,83 @@
 require_once 'Catalog.php';
 
 class Stock extends Catalog {
+    /**
+     * Changes quantity on particular depot stock
+     * @param int $product_id
+     * @param float $delta_quantity
+     * @param int $stock_id
+     * @return boolean
+     */
+    public function productQuantityModify( string $product_code, float $product_delta_quantity, int $stock_id=1  ){
+        if( $product_delta_quantity==0 ){
+            return true;
+        }
+        $modify_qty_sql="
+            UPDATE
+                stock_entries
+            SET
+                product_quantity=product_quantity+$product_delta_quantity
+            WHERE
+                product_code='$product_code'
+                AND stock_id=$stock_id
+                AND product_quantity+$product_delta_quantity>=0";
+        $this->query($modify_qty_sql);
+        return $this->db->affected_rows();
+    }
 
+    public function productGet( string $product_code ) {
+        $sql = "SELECT
+		    st.label parent_label,
+		    pl.*,
+		    ROUND(product_volume,5) product_volume,
+		    ROUND(product_weight,5) product_weight,
+		    ROUND(pp.sell,5) sell,
+		    ROUND(pp.buy,5) buy,
+		    pp.curr_code,
+		    se.stock_entry_id,
+		    se.parent_id,
+		    se.party_label,
+		    se.product_quantity,
+		    se.product_wrn_quantity,
+		    se.product_img,
+		    se.self_price
+		FROM
+		    stock_entries se
+			JOIN
+		    prod_list pl ON pl.product_code=se.product_code
+			LEFT JOIN
+		    price_list pp ON pp.product_code=se.product_code AND pp.label=''
+			LEFT JOIN
+		    stock_tree st ON se.parent_id=branch_id
+		WHERE 
+		    se.product_code='{$product_code}'";
+        $product_data = $this->get_row($sql);
+        return $product_data;
+    }
+    
+
+    public function productUpdate( string $product_code, string $field, string $value ) {
+        $this->Hub->set_level(2);
+        $this->query("UPDATE stock_entries JOIN prod_list USING(product_code) JOIN price_list USING(product_code) SET $field='$value' WHERE product_code='$product_code'");
+        return $this->db->affected_rows();
+    }    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     public $branchFetch = ['id' => ['int', 0], 'depth' => ['string', 'top']];
 
     public function branchFetch($parent_id = 0, $depth) {
@@ -56,7 +132,7 @@ class Stock extends Catalog {
     private function columnsGet($mode) {
         $lvl1 = "product_id, parent_id,parent_label,t.product_code,ru,t.product_quantity,product_unit,product_reserved,product_awaiting";
         $lvl2 = ",product_id, product_wrn_quantity,SUM(IF(TO_DAYS(NOW()) - TO_DAYS(dl.cstamp) <= 30,de.product_quantity,0)) m1,ROUND( SUM(IF(TO_DAYS(NOW()) - TO_DAYS(dl.cstamp) <= 92,de.product_quantity,0))/3 ) m3";
-        $adv = ",product_id, t.self_price,sell,buy,curr_code,product_img,product_spack,product_bpack,product_weight,product_volume,analyse_origin,analyse_origin,product_barcode,analyse_type,analyse_brand,analyse_class,product_article";
+        $adv = ",product_id, t.self_price,sell,buy,curr_code,product_img,product_spack,product_bpack,product_weight,product_volume,t.party_label,analyse_origin,product_barcode,analyse_type,analyse_brand,analyse_class,product_article";
         if ($this->Hub->svar('user_level') < 2) {
             return $lvl1;
         }
@@ -123,37 +199,7 @@ class Stock extends Catalog {
         return $this->get_list("SELECT branch_id,label FROM stock_tree WHERE label LIKE '%$q%'");
     }
 
-    public $productGet = ['product_code' => 'string'];
 
-    public function productGet($product_code) {
-        $sql = "SELECT
-		    st.label parent_label,
-		    pl.*,
-		    ROUND(product_volume,5) product_volume,
-		    ROUND(product_weight,5) product_weight,
-		    ROUND(pp.sell,5) sell,
-		    ROUND(pp.buy,5) buy,
-		    pp.curr_code,
-		    se.stock_entry_id,
-		    se.parent_id,
-		    se.party_label,
-		    se.product_quantity,
-		    se.product_wrn_quantity,
-		    se.product_img,
-		    se.self_price
-		FROM
-		    stock_entries se
-			JOIN
-		    prod_list pl ON pl.product_code=se.product_code
-			LEFT JOIN
-		    price_list pp ON pp.product_code=se.product_code AND pp.label=''
-			LEFT JOIN
-		    stock_tree st ON se.parent_id=branch_id
-		WHERE 
-		    se.product_code='{$product_code}'";
-        $product_data = $this->get_row($sql);
-        return $product_data;
-    }
 
     public $productGetLabeledPrices = ['product_code' => 'string'];
 
@@ -183,13 +229,6 @@ class Stock extends Catalog {
         return $this->create("price_list", ['product_code' => $product_code, 'label' => $label]);
     }
 
-    public $productUpdate = ['product_code' => 'string', 'field' => 'string', 'value' => 'string'];
-
-    public function productUpdate($product_code, $field, $value) {
-        $this->Hub->set_level(2);
-        $this->query("UPDATE stock_entries JOIN prod_list USING(product_code) JOIN price_list USING(product_code) SET $field='$value' WHERE product_code='$product_code'");
-        return $this->db->affected_rows();
-    }
     private function stripWhite( $sentence ){
         return trim(preg_replace('/\s+/', ' ', $sentence));
     }
@@ -308,6 +347,7 @@ class Stock extends Catalog {
         foreach($import_list as $product){
             $set=[];
             foreach($target as $i=>$field){
+                //$set[]="$field='".$this->stripWhite($product->{$source[$i]})."'";
                 if( $field=='parent_id' ){
                     $value=$source[$i];
                 } else {
@@ -886,10 +926,11 @@ class Stock extends Catalog {
     }
     
     protected function matchesListCreateTemporary( $where ){
-        $result_window_size=1000;
+        $result_window_size=3000;
         $usd_ratio=$this->Hub->pref('usd_ratio');
         $pcomp_id=$this->Hub->pcomp('company_id');
         $price_label=$this->Hub->pcomp('price_label');
+        $this->query("SET @promo_limit:=4;");
         
         $query=[
             'inner'=>[
@@ -923,8 +964,8 @@ class Stock extends Catalog {
             se.fetch_stamp,
             CONCAT( 
                 product_quantity<>0,
-                prl_promo.product_code IS NOT NULL,
-                LPAD(fetch_count-DATEDIFF(NOW(),COALESCE(se.fetch_stamp,se.modified_at)),6,'0')
+                IF( prl_promo.product_code IS NOT NULL AND (@promo_limit:=@promo_limit-1)>=0,1,0),
+                LPAD(fetch_count,6,'0')
             ) popularity,
             se.parent_id,
             prl_basic.sell*IF(prl_basic.curr_code='USD',$usd_ratio,1) price_fixed,
@@ -947,14 +988,7 @@ class Stock extends Catalog {
             price_list prl_basic ON prl_basic.label='' AND se.product_code=prl_basic.product_code";
         $query['inner']['where']="
             WHERE 
-            (SELECT MIN(fetch_count)
-                FROM (SELECT
-                        fetch_count
-                    FROM
-                        stock_entries
-                    ORDER BY
-                        fetch_count DESC
-                    LIMIT $result_window_size) t) AND $where";
+             $where";
         $query['inner']['limit']="
             LIMIT $result_window_size";
         $query['outer']['select']="inner_tmp_matches_list.*,
@@ -990,6 +1024,17 @@ class Stock extends Catalog {
         return $this->query($sql);
     }
     
+    private function matchesListCalibrate(){
+        if( rand(1,100)!=1 ){
+            return;
+        }
+        $this->query("
+            UPDATE 
+                stock_entries 
+            SET 
+                fetch_count = GREATEST(COALESCE(fetch_count - DATEDIFF(NOW(), fetch_stamp),0),0)");
+    }
+    
     protected function matchesFilterBuild(){
         $this->filter_tree=[];
         $this->filter_selected_grouped=$this->request('filter_selected_grouped','json',[]);
@@ -1000,10 +1045,11 @@ class Stock extends Catalog {
         $Events->Topic('beforeMatchesFilterBuild')->publish($this);
     }
     
-    public function matchesListFetch(string $q, int $limit=12, int $offset=0, string $sortby, string $sortdir, int $category_id=0, int $pcomp_id=0) {
+    public function matchesListFetch(string $q='', int $limit=12, int $offset=0, string $sortby, string $sortdir, int $category_id=0, int $pcomp_id=0) {
         $where=     $this->matchesListGetWhere( $q, $category_id );
         $order_by=  $this->matchesListGetOrderBy($sortby,$sortdir);
         
+        $this->matchesListCalibrate();
         $this->matchesListCreateTemporary($where);
         $this->matchesFilterBuild();
         $matches=$this->matchesGet($order_by,$limit,$offset);

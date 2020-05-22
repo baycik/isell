@@ -18,8 +18,8 @@ class MoedeloSyncCompanies extends MoedeloSyncBase{
     /**
      * Executes needed sync operations
      */
-    public function replicate(){
-        return parent::replicate();
+    public function replicate( $filter_local_id=null ){
+        return parent::replicate( $filter_local_id );
     }
     
     
@@ -70,8 +70,11 @@ class MoedeloSyncCompanies extends MoedeloSyncBase{
      * Calculates remote entity hash
      */
     public function remoteHashCalculate( $entity ){
-        $check="{$entity->Inn};{$entity->Ogrn};{$entity->Okpo};{$entity->Name};{$entity->LegalAddress};{$entity->ActualAddress};";
-        //echo "remote check-$check";
+        $entity->Kpp=$entity->Kpp??'';
+        $check="{$entity->Inn};{$entity->Kpp};{$entity->Ogrn};{$entity->Okpo};{$entity->Name};{$entity->LegalAddress};{$entity->ActualAddress};";
+//        if( $entity->Inn=='920300111527' ){
+//            echo "remote check-$check ->".md5($check);
+//        }
         return md5($check);
     }
     /**
@@ -97,8 +100,8 @@ class MoedeloSyncCompanies extends MoedeloSyncBase{
      * @param bool $is_full
      * Checks for updates on local
      */
-    public function localCheckout( bool $is_full=false ){
-        return parent::localCheckout($is_full);
+    public function localCheckout( bool $is_full=false, $filter_local_id=null ){
+        return parent::localCheckout($is_full,$filter_local_id);
     }
     /**
      * 
@@ -110,7 +113,7 @@ class MoedeloSyncCompanies extends MoedeloSyncBase{
             SELECT
                 '{$this->doc_config->sync_destination}' sync_destination,
                 local_id,
-                MD5(CONCAT(Inn,';',Ogrn,';',Okpo,';',Name,';',LegalAddress,';',ActualAddress,';')) local_hash,
+                MD5(CONCAT(Inn,';',Kpp,';',Ogrn,';',Okpo,';',Name,';',LegalAddress,';',ActualAddress,';')) local_hash,
                 local_tstamp,
                 0 local_deleted
             FROM
@@ -119,6 +122,7 @@ class MoedeloSyncCompanies extends MoedeloSyncBase{
                 NOW() local_tstamp,
 
                 COALESCE(company_tax_id,'') Inn,
+                IF(LENGTH(company_tax_id2)=9,company_tax_id2,'') Kpp,
                 COALESCE(company_code_registration,'') Ogrn,
                 COALESCE(company_code,'') Okpo,
                 COALESCE(company_name,'') Name,
@@ -166,6 +170,7 @@ class MoedeloSyncCompanies extends MoedeloSyncBase{
         $sql_local="
             SELECT
                 COALESCE(company_tax_id,'') Inn,
+                IF(LENGTH(company_tax_id2)=9,company_tax_id2,'') Kpp,
                 COALESCE(company_code_registration,'') Ogrn,
                 COALESCE(company_code,'') Okpo,
                 COALESCE(company_name,'') Name,
@@ -182,6 +187,10 @@ class MoedeloSyncCompanies extends MoedeloSyncBase{
                 companies_list cl
             WHERE company_id='$local_id'
            ";
-        return $this->get_row($sql_local);
+        $entity=$this->get_row($sql_local);
+        if( empty($entity->Kpp) ){
+            unset($entity->Kpp);
+        }
+        return $entity;
     }
 }

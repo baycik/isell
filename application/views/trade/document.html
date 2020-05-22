@@ -714,7 +714,7 @@
     Doc.view={
 	loadTile:function(){
             if( Doc.isCreated ){
-                $.get('DocumentView/viewListFetch/'+Doc.head.props.doc_id, function (xhr) {
+                return $.get('DocumentView/viewListFetch/'+Doc.head.props.doc_id, function (xhr) {
                     Doc.view.views = Doc.view.compile(App.json(xhr));
                     App.renderTpl('Doc_view_tile',{views:Doc.view.views});
                 });
@@ -747,18 +747,31 @@
 	    var i=$(node).attr('data-view-i');
 	    var view=Doc.view.views[i];
 	    if( view.doc_view_id ){
-		App.loadWindow('page/trade/view_settings',view).progress(function(status){
-		    if( status==='deleted' || status==='changed' || status==='close' ){
-			Doc.view.loadTile();
-		    }
-		});
+		Doc.view.settings_show(view);
 	    }
 	},
+        settings_show:function(view){
+            App.loadWindow('page/trade/view_settings',view).progress(function(status){
+                if( status==='deleted' || status==='changed' || status==='close' ){
+                    Doc.view.loadTile();
+                }
+            });
+        },
 	create:function(view_type_id){
 	    App.post("DocumentView/viewCreate/",{view_type_id:view_type_id},function(doc_view_id){
 		if( doc_view_id*1 ){
-		    Doc.view.open(doc_view_id);
-		    Doc.view.loadTile();
+		    Doc.view.loadTile().then(function(){
+                        if( Doc.head.props.doc_type==1 ){
+                            Doc.view.open(doc_view_id);
+                        } else {
+                            for(var i in Doc.view.views){
+                                if(Doc.view.views[i].doc_view_id==doc_view_id){
+                                    Doc.view.settings_show(Doc.view.views[i]);
+                                    break;
+                                }
+                            }
+                        }
+                    });
 		}
 	    });
 	},

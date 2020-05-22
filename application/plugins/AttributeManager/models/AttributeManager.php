@@ -327,7 +327,7 @@ class AttributeManager extends Catalog{
                     JOIN
                 tmp_matches_list USING (product_id)
             GROUP BY attribute_id,attribute_value
-            ORDER BY attribute_id,attribute_value*1,attribute_value";
+            ORDER BY attribute_name,attribute_value*1,attribute_value";
         $attribute_list=$this->get_list($attribute_list_sql);
         
         $group_id=null;

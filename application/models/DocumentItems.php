@@ -43,6 +43,7 @@ class DocumentItems extends DocumentCore{
         if( $this->doc('doc_type')==3 || $this->doc('doc_type')==4 ){
             $where .= " AND is_service=1";
         }
+        $this->query("SET @promo_limit:=3;");
 	$sql="
             SELECT
                 *,
@@ -59,7 +60,7 @@ class DocumentItems extends DocumentCore{
                     product_unit,
                     CONCAT( 
                         product_quantity<>0,
-                        prl.product_code IS NOT NULL,
+                        IF( prl.product_code IS NOT NULL AND (@promo_limit:=@promo_limit-1)>=0,1,0),
                         LPAD(fetch_count-DATEDIFF(NOW(),COALESCE(se.fetch_stamp,se.modified_at)),6,'0')
                     ) popularity
                 FROM
@@ -76,7 +77,7 @@ class DocumentItems extends DocumentCore{
         $suggested=$this->get_list($sql);//for plugin modifications
         return $suggested;
     }
-
+    
     protected function footerGet(){
         $this->entriesTmpCreate();
 	$use_total_as_base=(bool) $this->Hub->pref('use_total_as_base');
@@ -101,7 +102,7 @@ class DocumentItems extends DocumentCore{
 	$doc_id=$this->doc('doc_id');
 	$this->calcCorrections( $skip_vat_correction, $skip_curr_correction );
         $curr_code=$this->Hub->acomp('curr_code');
-	$company_lang = $this->Hub->pcomp('language');
+	$company_lang = $this->Hub->pcomp('language')??'ru';
         $pcomp_price_label=$this->Hub->pcomp('price_label');
         $this->query("DROP TEMPORARY TABLE IF EXISTS tmp_doc_entries");
         $sql="CREATE TEMPORARY TABLE tmp_doc_entries ( INDEX(product_code) ) AS (
@@ -144,6 +145,7 @@ class DocumentItems extends DocumentCore{
                     doc_id='$doc_id'
                 ORDER BY pl.product_code) t
                 )";
+        //die($sql);
         $this->query($sql);
     }
     
@@ -454,7 +456,8 @@ class DocumentItems extends DocumentCore{
 	$target=[];
 	$source=[];
 	$this->calcCorrections();
-        $quantity_source_field='';
+        $set_list="";
+        $set_list_delimiter="";
 	for( $i=0;$i<count($trg);$i++ ){
             if( strpos($filter,"/{$trg[$i]}/")===false || empty($src[$i]) ){
 		continue;
@@ -464,9 +467,16 @@ class DocumentItems extends DocumentCore{
 	    }
 	    if( $trg[$i]=='invoice_price' ){
 		$src[$i]=$src[$i].'/@curr_correction/@vat_correction';
+                $set_list.="$set_list_delimiter invoice_price={$src[$i]}";
+                $set_list_delimiter=",";
 	    }
 	    if( $trg[$i]=='product_quantity' ){
-		$quantity_source_field=$src[$i];
+		$set_list.="$set_list_delimiter product_qunatity=product_quantity+{$src[$i]}";
+                $set_list_delimiter=",";
+	    }
+	    if( $trg[$i]=='party_label' ){
+                $set_list.="$set_list_delimiter party_label={$src[$i]}";
+                $set_list_delimiter=",";
 	    }
             
 	    $target[]=$trg[$i];
@@ -476,7 +486,14 @@ class DocumentItems extends DocumentCore{
 	$target_list=  implode(',', $target);
 	$source_list=  implode(',', $source);
 	$set_list=  implode(',', $set);
-	$this->query("INSERT INTO $table ($target_list) SELECT $source_list FROM imported_data WHERE label='$label' AND $product_code_source IN (SELECT product_code FROM stock_entries) ON DUPLICATE KEY UPDATE product_quantity=product_quantity+$quantity_source_field");
+        $sql="INSERT INTO $table ($target_list) 
+            SELECT $source_list 
+                FROM imported_data 
+                WHERE label='$label' AND $product_code_source 
+                    IN (SELECT product_code FROM stock_entries) 
+                    ON DUPLICATE KEY UPDATE 
+                    $set_list";
+	$this->query($sql);
 	return $this->db->affected_rows();
     }
     
@@ -484,7 +501,7 @@ class DocumentItems extends DocumentCore{
     public function documentOut($doc_id,$out_type){
         $dump=[
             'tpl_files'=>'DocumentOut.xlsx',
-	    'title'=>"Document#".$this->doc('doc_num'),
+	    'title'=>"Document-".$this->doc('doc_num'),
             'view'=>[
                 'head'=>$this->headGet($doc_id),
                 'rows'=>$this->entriesFetch(),

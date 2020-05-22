@@ -514,10 +514,10 @@ class AccountsCore extends Catalog{
 	'trans_type'=>'string',
 	'trans_date'=>'\d\d\d\d-\d\d-\d\d',
 	'trans_ref'=>['int',null],
-	'amount'=>'double',
-	'amount_alt'=>'double',
-	'description'=>'string',
-	'trans_article'=>'string'
+	'amount'=>['double',0],
+	'amount_alt'=>['double',0],
+	'description'=>['string',''],
+	'trans_article'=>['string','']
     ];
     public function transCreateUpdate($trans_id,$check_id,$passive_company_id,$trans_type,$trans_date,$trans_ref,$amount,$amount_alt,$description,$trans_article=''){
 	if( !$this->transLevelCheck($trans_type) ){

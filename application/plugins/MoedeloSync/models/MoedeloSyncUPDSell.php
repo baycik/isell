@@ -20,8 +20,8 @@ class MoedeloSyncUPDSell extends MoedeloSyncBase{
     /**
      * Executes needed sync operations
      */
-    public function replicate(){
-        return parent::replicate();
+    public function replicate( $filter_local_id=null ){
+        return parent::replicate( $filter_local_id );
     }
     
     
@@ -105,14 +105,14 @@ class MoedeloSyncUPDSell extends MoedeloSyncBase{
      * @param bool $is_full
      * Checks for updates on local
      */
-    public function localCheckout( bool $is_full=false ){
-        return parent::localCheckout($is_full);
-    }
+    public function localCheckout( bool $is_full=false, $filter_local_id=null ){
+        return parent::localCheckout($is_full,$filter_local_id);
+    }  
     /**
      * @param bool $is_full
      * Create local doc list to sync
      */    
-    protected function localCheckoutGetList( $is_full, $afterDate ){
+    protected function localCheckoutGetList( $is_full, $afterDate, $filter_local='' ){
         $local_sync_list_sql="
             SELECT
                 '{$this->doc_config->sync_destination}' sync_destination,
@@ -155,6 +155,7 @@ class MoedeloSyncUPDSell extends MoedeloSyncBase{
                 AND doc_type='{$this->doc_config->doc_type}'
                 AND view_type_id='{$this->doc_config->local_view_type_id}'
                 AND dvl.tstamp>'{$this->sync_since}'
+                $filter_local
             GROUP BY doc_view_id) inner_table";
         return $local_sync_list_sql;
     }
@@ -239,11 +240,13 @@ class MoedeloSyncUPDSell extends MoedeloSyncBase{
                     ru Name,
                     product_quantity Count,
                     product_unit Unit,
-                    IF(is_service=1,2,1) Type,
-                    IF({$document->vat_rate},1,0) NdsType,
+                    IF({$this->doc_config->doc_type}=1 OR {$this->doc_config->doc_type}=2,1,2) Type,
+                    IF({$document->vat_rate},5,1) NdsType,
                     ROUND(invoice_price*(1+{$document->vat_rate}/100),2) Price,
                     ROUND(invoice_price*product_quantity*(1+{$document->vat_rate}/100),2) SumWithNds,
-                    prod_pse.remote_id StockProductId
+                    prod_pse.remote_id StockProductId,
+                    party_label Declaration,
+                    analyse_origin Country
                 FROM
                     document_entries
                         JOIN
@@ -253,6 +256,12 @@ class MoedeloSyncUPDSell extends MoedeloSyncBase{
                 WHERE
                     doc_id={$document->doc_id}";
             $document->Items=$this->get_list($sql_entry);
+            for($i=0;$i<count($document->Items);$i++){
+                $declar_len=strlen($document->Items[$i]->Declaration);
+                if($declar_len<23 || $declar_len>27){
+                    unset($document->Items[$i]->Declaration);
+                }
+            }
         }
         
         
