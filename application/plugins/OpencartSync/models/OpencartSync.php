@@ -177,8 +177,8 @@ class OpencartSync extends OpencartSyncUtils{
         $local_img_time=$this->Storage->file_time("dynImg/".$product->local_img_filename);
         $local_img_hash=$this->Storage->file_checksum("dynImg/".$product->local_img_filename); 
         if( $product->local_img_filename && $local_img_hash!==$product->remote_img_hash && $local_img_time>$product->remote_img_time ){
-            $ext = pathinfo($product->local_img_filename, PATHINFO_EXTENSION);
-            $file_data=$this->Storage->file_restore('dynImg/'.$product->local_img_filename);
+            $ext = 'png';//pathinfo($product->local_img_filename, PATHINFO_EXTENSION);
+            $file_data=$this->Storage->image_get('1200x1200','dynImg/'.$product->local_img_filename);
             return [
                 'local_img_data'=>base64_encode($file_data),
                 'remote_img_filename'=>$this->filename_prepare("$product->model $product->name").".$ext"
