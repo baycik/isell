@@ -581,7 +581,7 @@ class CampaignManager extends Catalog{
         $this->Hub->set_level(2);
         $sql="SELECT * FROM plugin_campaign_list JOIN plugin_campaign_bonus USING(campaign_id) WHERE campaign_id=$campaign_id";
         $campaign_list=$this->get_list($sql);
-        $result_total=0;
+        $result_total=1*$this->get_value("SELECT campaign_fixed_payment FROM plugin_campaign_list WHERE campaign_id=$campaign_id");
         foreach( $campaign_list as $campaign ){
             if( $campaign->bonus_visibility>0 ){
                 $current_result=$this->bonusCalculateResult($campaign->campaign_bonus_id,true);

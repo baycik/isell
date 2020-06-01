@@ -1,19 +1,19 @@
 <script>
     App.CampaignManager_index = (function ($) {
         var campaign_id = 1;
-        var visibility_filter=1;
-        var campaign_list=[];
+        var visibility_filter = 1;
+        var campaign_list = [];
         function init() {
             Campaign.init();
         }
-        Mark.pipes.month=function(index){
-            return ['','Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'][index];
+        Mark.pipes.month = function (index) {
+            return ['', 'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'][index];
         };
-        Mark.pipes.quarter=function(index){
-            return ['','Iкв','IIкв','IIIкв','IVкв'][index];
+        Mark.pipes.quarter = function (index) {
+            return ['', 'Iкв', 'IIкв', 'IIIкв', 'IVкв'][index];
         };
-        Mark.pipes.numberClear=function(number){
-            return Number(number)?number:'';
+        Mark.pipes.numberClear = function (number) {
+            return Number(number) ? number : '';
         };
 
 
@@ -21,26 +21,26 @@
             init: function () {
                 $('#CampaignManager-tabs-holder').append('<div id="CampaignManager-tabs"></div>');
                 $('#CampaignManager-tabs').tabs({
-                    onSelect: function(title,index){
-                        if( campaign_list[index] ){
-                            campaign_id=campaign_list[index].campaign_id;
+                    onSelect: function (title, index) {
+                        if (campaign_list[index]) {
+                            campaign_id = campaign_list[index].campaign_id;
                             Campaign.get();
                         } else {
                             Campaign.add();
                         }
-                        title!=="+ Добавить кампанию" && App.store('campaign_active_tab',title);
+                        title !== "+ Добавить кампанию" && App.store('campaign_active_tab', title);
                     }
                 });
-                $("#CampaignManager").click(function(e){
-                    var thisCardId=$(e.target).data('button_period_id');
-                    if( thisCardId ){
-                        var campaign_bonus_id=$(e.target).data('campaign_bonus_id');
-                        var $next=$("#campaignBonusPeriodId_"+thisCardId).next();
-                        if( !$next ){
+                $("#CampaignManager").click(function (e) {
+                    var thisCardId = $(e.target).data('button_period_id');
+                    if (thisCardId) {
+                        var campaign_bonus_id = $(e.target).data('campaign_bonus_id');
+                        var $next = $("#campaignBonusPeriodId_" + thisCardId).next();
+                        if (!$next) {
                             return;
                         }
-                        var prevCardId=$next.prop('id').split('_')[1];
-                        $.post("CampaignManager/bonusPeriodDuplicate",{this_period_id:thisCardId,prev_period_id:prevCardId},function(resp){
+                        var prevCardId = $next.prop('id').split('_')[1];
+                        $.post("CampaignManager/bonusPeriodDuplicate", {this_period_id: thisCardId, prev_period_id: prevCardId}, function (resp) {
                             Bonuses.periodsLoad(campaign_bonus_id);
                         });
                     }
@@ -48,17 +48,17 @@
                 this.load();
             },
             data: {},
-            load:function(){
-                $.post("CampaignManager/campaignListFetch",function(resp){
+            load: function () {
+                $.post("CampaignManager/campaignListFetch", function (resp) {
                     campaign_list = App.json(resp);
-                    for(let i in campaign_list){
-                        $('#CampaignManager-tabs').tabs('add',{title: campaign_list[i].campaign_name,index: i});
+                    for (let i in campaign_list) {
+                        $('#CampaignManager-tabs').tabs('add', {title: campaign_list[i].campaign_name, index: i});
                     }
-                    $('#CampaignManager-tabs').tabs('add',{title: "+ Добавить кампанию",selected:false});
-                    $('#CampaignManager-tabs').tabs('select',App.store('campaign_active_tab')||0);
+                    $('#CampaignManager-tabs').tabs('add', {title: "+ Добавить кампанию", selected: false});
+                    $('#CampaignManager-tabs').tabs('select', App.store('campaign_active_tab') || 0);
                 });
             },
-            reload:function(){
+            reload: function () {
                 $('#CampaignManager-tabs').remove();
                 Campaign.init();
             },
@@ -66,49 +66,49 @@
                 Campaign.data = data;
                 for (let i in Campaign.data.bonuses) {
                     for (let k in Campaign.data.bonuses[i]) {
-                        if( k==='campaign_start_at' || k==='campaign_finish_at' ){
-                            Campaign.data.bonuses[i][k]=Campaign.data.bonuses[i][k].substr(0,10);
+                        if (k === 'campaign_start_at' || k === 'campaign_finish_at') {
+                            Campaign.data.bonuses[i][k] = Campaign.data.bonuses[i][k].substr(0, 10);
                         }
                         Campaign.data.settings[`${k}-${Campaign.data.bonuses[i].campaign_bonus_id}`] = Campaign.data.bonuses[i][k];
                     }
                 }
                 Mark.globals.stock_categories = data.stock_category_list;
                 App.renderTpl('CampaignManager', data);
-                $("#CampaignManager").css('visibility','visible');
-                if( data.settings.subject_manager_include ){
-                    data.settings.subject_manager_include=data.settings.subject_manager_include.split(',');
+                $("#CampaignManager").css('visibility', 'visible');
+                if (data.settings.subject_manager_include) {
+                    data.settings.subject_manager_include = data.settings.subject_manager_include.split(',');
                 }
-                if( data.settings.subject_manager_exclude ){
-                    data.settings.subject_manager_exclude=data.settings.subject_manager_exclude.split(',');
+                if (data.settings.subject_manager_exclude) {
+                    data.settings.subject_manager_exclude = data.settings.subject_manager_exclude.split(',');
                 }
                 App.setupForm('#camp_manager_form', data.settings, 'use_inp_values').change(function (node) {
                     if (this.name.indexOf('-') > -1) {
                         var campaign_bonus_id = this.name.split('-')[1];
                         var field = this.name.split('-')[0];
                         Bonuses.update(field, App.val(this), this.title, campaign_bonus_id);
-                    } else if( this.name==='visibility_filter' ){
-                        visibility_filter=this.value;
+                    } else if (this.name === 'visibility_filter') {
+                        visibility_filter = this.value;
                         Campaign.get();
                     } else {
                         Campaign.update(this.name, App.val(this), this.title);
                     }
                 });
-                $("#Campaign_delete_btn").click(function(){
+                $("#Campaign_delete_btn").click(function () {
                     Campaign.remove();
                 });
                 Clients.init();
                 Bonuses.init();
             },
             get: function () {
-                $.post("CampaignManager/campaignGet", {campaign_id: campaign_id,visibility_filter: visibility_filter}, function (resp) {
+                $.post("CampaignManager/campaignGet", {campaign_id: campaign_id, visibility_filter: visibility_filter}, function (resp) {
                     var campaign = App.json(resp);
                     Campaign.render(campaign);
                     Campaign.statistics.load();
                 });
             },
             update: function (field, value, title) {
-                if( field==='subject_manager_include' || field==='subject_manager_exclude' ){
-                    value=value.join(',');
+                if (field === 'subject_manager_include' || field === 'subject_manager_exclude') {
+                    value = value.join(',');
                 }
                 $.post("CampaignManager/campaignUpdate", {campaign_id: campaign_id, field: field, value: value}, function (ok) {
                     if (ok * 1) {
@@ -125,7 +125,7 @@
                         if (ok * 1) {
                             Campaign.reload();
                             App.flash("Кампания удалена");
-                            $("#CampaignManager").css('visibility','hidden');
+                            $("#CampaignManager").css('visibility', 'hidden');
                         } else {
                             App.flash("Ошибка удаления кампании");
                         }
@@ -133,7 +133,7 @@
                 }
             },
             add: function () {
-                $.post("CampaignManager/campaignAdd",{campaign_name:"Новая кампания"}, function (ok) {
+                $.post("CampaignManager/campaignAdd", {campaign_name: "Новая кампания"}, function (ok) {
                     if (ok * 1) {
                         Campaign.reload();
                         App.flash("Кампания добавлена");
@@ -142,30 +142,31 @@
                     }
                 });
             },
-            statistics:{
-                stat:{
-                    client_count:0,
-                    invoice_count:0,
-                    total_result:0
+            statistics: {
+                stat: {
+                    client_count: 0,
+                    invoice_count: 0,
+                    total_result: 0
                 },
-                load:function(){
+                load: function () {
                     $.post("CampaignManager/dashboardManagerStatistics/", function (resp) {
                         var stat = App.json(resp);
                         if (!stat) {
                             $("#CampaignManagerCharts").html("<h2>Нет кампаний</h2>");
                             return;
                         }
-                        Campaign.statistics.stat.client_count=stat.client_count;
-                        Campaign.statistics.stat.invoice_count=stat.invoice_count;
+                        Campaign.statistics.stat.client_count = stat.client_count;
+                        Campaign.statistics.stat.invoice_count = stat.invoice_count;
                         Campaign.statistics.render();
                     });
-                    $.post("CampaignManager/bonusCalculateCampaignTotal/",{campaign_id:campaign_id}, function (total) {
-                        Campaign.statistics.stat.total_result=total;
+                    $.post("CampaignManager/bonusCalculateCampaignTotal/", {campaign_id: campaign_id}, function (total) {
+                        Campaign.statistics.stat.total_result = total;
                         Campaign.statistics.render();
                     });
                 },
-                render:function(){
-                    App.renderTpl('CampaignManagerCharts',this.stat);
+                render: function () {
+                    var tpl=$("#CampaignManagerCharts_tpl").html();
+                    $("#CampaignManagerCharts").html(Mark.up(tpl,this.stat));
                 }
             }
         };
@@ -211,19 +212,19 @@
                     Bonuses.add();
                 });
                 $(".CampaignManager_bonuses_delete").click(function () {
-                    if( !confirm("Удалить расчет бонуса?") ){
+                    if (!confirm("Удалить расчет бонуса?")) {
                         return;
                     }
-                    var campaign_bonus_id=$(this).data('campaign_bonus_id');
+                    var campaign_bonus_id = $(this).data('campaign_bonus_id');
                     Bonuses.remove(campaign_bonus_id);
                 });
                 $(".CampaignManager_bonuses_reload").click(function () {
-                    var campaign_bonus_id=$(this).data('campaign_bonus_id');
+                    var campaign_bonus_id = $(this).data('campaign_bonus_id');
                     Bonuses.periodsLoad(campaign_bonus_id);
                 });
-                
+
                 for (let bonus of Campaign.data.bonuses) {
-                    Bonuses.periodsLoad(bonus.campaign_bonus_id).done(function(){
+                    Bonuses.periodsLoad(bonus.campaign_bonus_id).done(function () {
                         Bonuses.periodsCardsIntoView(bonus.campaign_bonus_id);
                     });
                 }
@@ -239,11 +240,11 @@
                 });
             },
             update: function (field, value, title, campaign_bonus_id) {
-                if( field==='campaign_start_at' || field==='campaign_finish_at' ){
-                    let now_year=new Date().getFullYear();
-                    let needed_year=value.substring(0,4);
-                    let diff=Math.abs(now_year-needed_year);
-                    if( diff>3 ){
+                if (field === 'campaign_start_at' || field === 'campaign_finish_at') {
+                    let now_year = new Date().getFullYear();
+                    let needed_year = value.substring(0, 4);
+                    let diff = Math.abs(now_year - needed_year);
+                    if (diff > 3) {
                         App.flash("Слишком большой период: " + title);
                         return;
                     }
@@ -251,7 +252,7 @@
                 $.post("CampaignManager/bonusUpdate", {campaign_bonus_id: campaign_bonus_id, field: field, value: value}, function (ok) {
                     if (ok * 1) {
                         App.flash("Сохранено: " + title);
-                        if( field.indexOf('bonus_type')>-1 || field.indexOf('campaign_queue')>-1 ){
+                        if (field.indexOf('bonus_type') > -1 || field.indexOf('campaign_queue') > -1) {
                             Campaign.get();
                         } else {
                             Bonuses.periodsLoad(campaign_bonus_id);
@@ -261,38 +262,38 @@
                     }
                 });
             },
-            periodsLoad:function(campaign_bonus_id){
+            periodsLoad: function (campaign_bonus_id) {
                 return $.post("CampaignManager/bonusCalculate", {campaign_bonus_id: campaign_bonus_id}, function (resp) {
-                    var periodsCardData=App.json(resp);
-                    Bonuses.periodsRender(campaign_bonus_id,periodsCardData);
+                    var periodsCardData = App.json(resp);
+                    Bonuses.periodsRender(campaign_bonus_id, periodsCardData);
                 });
             },
-            periodsRender:function(campaign_bonus_id,periodsCardData){
-                var period_cards_holder=`#CampaignManager_bonus_period_cards-${campaign_bonus_id}`;
-                var tpl=$("#CampaignManager_bonus_periods_tpl").html();
-                $(period_cards_holder).html(Mark.up(tpl,{period_cards:periodsCardData}));
-                $(period_cards_holder+" .is_current-1").css('borderColor','#Fe6');
+            periodsRender: function (campaign_bonus_id, periodsCardData) {
+                var period_cards_holder = `#CampaignManager_bonus_period_cards-${campaign_bonus_id}`;
+                var tpl = $("#CampaignManager_bonus_periods_tpl").html();
+                $(period_cards_holder).html(Mark.up(tpl, {period_cards: periodsCardData}));
+                $(period_cards_holder + " .is_current-1").css('borderColor', '#Fe6');
                 App.setupForm(period_cards_holder, {}, 'use_inp_values').change(function (node) {
                     var campaign_bonus_period_id = this.name.split('--')[1];
                     var field = this.name.split('--')[0];
-                    if( $(this).data('skip-update') ){
+                    if ($(this).data('skip-update')) {
                         return;
                     }
-                    Bonuses.periodsUpdate(field, App.val(this), this.title, campaign_bonus_period_id,campaign_bonus_id);
+                    Bonuses.periodsUpdate(field, App.val(this), this.title, campaign_bonus_period_id, campaign_bonus_id);
                 });
             },
-            periodsCardsIntoView:function( campaign_bonus_id ){
-                var period_cards_holder=`#CampaignManager_bonus_period_cards-${campaign_bonus_id}`;
-                let current_card=$(period_cards_holder+" .is_current-1");
-                if( !current_card.length ){
+            periodsCardsIntoView: function (campaign_bonus_id) {
+                var period_cards_holder = `#CampaignManager_bonus_period_cards-${campaign_bonus_id}`;
+                let current_card = $(period_cards_holder + " .is_current-1");
+                if (!current_card.length) {
                     return;
                 }
                 current_card.parent().scrollLeft(0);
-                let card_left=current_card.offset().left-20;
-                let holder_left=current_card.parent().offset().left-20;
-                current_card.parent().scrollLeft( card_left-holder_left );
+                let card_left = current_card.offset().left - 20;
+                let holder_left = current_card.parent().offset().left - 20;
+                current_card.parent().scrollLeft(card_left - holder_left);
             },
-            periodsUpdate:function(field, value, title, campaign_bonus_period_id,campaign_bonus_id) {
+            periodsUpdate: function (field, value, title, campaign_bonus_period_id, campaign_bonus_id) {
                 $.post("CampaignManager/bonusPeriodUpdate", {campaign_bonus_period_id: campaign_bonus_period_id, field: field, value: value}, function (ok) {
                     if (ok * 1) {
                         Bonuses.periodsLoad(campaign_bonus_id);
@@ -314,16 +315,16 @@
     <div style=""  class="is_current-{{is_current}}" id="campaignBonusPeriodId_{{campaign_bonus_period_id}}">
         <div style="height: 30px;font-size: 16px;padding: 4px;">
             {{if period_year|more>0}}
-                {{if period_month|more>0 }}
-                    {{period_month|month|blank>}}
-                    
-                {{else}}
-                    <b>{{period_quarter|quarter}}</b>
-                {{/if}}
-                {{period_year}}г 
-                
+            {{if period_month|more>0 }}
+            {{period_month|month|blank>}}
+
             {{else}}
-                {{campaign_start_at|chop>10}} &Gt; {{campaign_finish_at|chop>10}}
+            <b>{{period_quarter|quarter}}</b>
+            {{/if}}
+            {{period_year}}г 
+
+            {{else}}
+            {{campaign_start_at|chop>10}} &Gt; {{campaign_finish_at|chop>10}}
             {{/if}}
         </div>
         <div>
@@ -364,7 +365,7 @@
                 </div>
                 {{/if}}
             </div>
-            
+
             {{if bonus_type|equals>PAYMENT}}
             <form method="GET" action="./CampaignManager/campaignDetailedView" target="_new">
                 <select name="group_by" style="width:70px" data-skip-update="1">
@@ -403,26 +404,35 @@
     </div>
     {{/period_cards}}
     {{else}}
-        <div style="width:200px">
-            <div><h2>Пока еще кампания не настроена полностью</h2></div>
-            <div>Возможно форма расчета не заполнена полностью или не выбраны клиенты, по продажам которых расчитывается мотивация.</div>
-        </div>
+    <div style="width:200px">
+        <div><h2>Пока еще кампания не настроена полностью</h2></div>
+        <div>Возможно форма расчета не заполнена полностью или не выбраны клиенты, по продажам которых расчитывается мотивация.</div>
+    </div>
     {{/if}}
 </script>
+<script id="CampaignManagerCharts_tpl" type = "text/html">
+    <div  style="display:grid;width: 100%;grid-template-columns:150px 150px 150px 150px">
+        <div>Клиентов за месяц:</div>
+        <div> <b>{{client_count}}</b></div>
+        <div></div>
+        <div></div>
 
+
+        <div>Накладных за месяц:</div>
+        <div> <b>{{invoice_count}}</b></div>
+        <div></div>
+        <div></div>
+
+
+        <div>Общий результат:</div>
+        <div> <b>{{total_result|format}}</b></div>
+        <div></div>
+        <div></div>
+    </div>
+</script>
 <div style="padding: 10px;">
     <div id="CampaignManager-tabs-holder"></div>
-            <div id="CampaignManagerCharts">
-            <div style="margin: 3px">
-                Клиентов за месяц: <b>{{client_count}}</b>
-            </div>
-            <div style="margin: 3px">
-                Накладных за месяц: <b>{{invoice_count}}</b>
-            </div>
-            <div style="margin: 3px">
-                Общий результат: <b>{{total_result|format}}</b>
-            </div>
-        </div>
+
     <div id="CampaignManager" style="visibility:hidden">
 
         <div id="camp_manager_form">
@@ -434,24 +444,19 @@
                     <option value="{{user_id}}">{{full_name}}</option>
                     <!--{{/staff_list}}-->
                 </select>
+                <input type="text" title="Ставка" name="campaign_fixed_payment">
+                <hr>
+                <div id="CampaignManagerCharts"></div>
+                <hr>
+                <button id="Campaign_delete_btn"><img src="img/delete.png"> Удалить Кампанию</button>
+            </div>
+            <div class="easyui-panel" title="Расчет бонусов Кампании">
                 <select name="visibility_filter" title="Показывать кампании">
                     <option value="0">Только Архив</option>
                     <option value="1" selected="selected">Все Aктивные</option>
                     <option value="-2">Только для виджета</option>
                 </select>
                 <hr>
-                <button id="Campaign_delete_btn"><img src="img/delete.png"> Удалить Кампанию</button>
-
-                
-                
-                
-                
-                
-                
-                
-
-            </div>
-            <div class="easyui-panel" title="Расчет бонусов Кампании">
                 {{bonuses}}
                 <div class=" leftcol-grid">
                     <div style="padding: 5px">
