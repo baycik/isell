@@ -108,6 +108,9 @@ class Chat extends Catalog{
 		ORDER BY event_date
 	    ";
 	$dialog=$this->get_list($sql);
+        foreach($dialog as $msg){
+            $msg->event_descr= htmlentities($msg->event_descr);
+        }
 	$this->setAsRead();
         return ['dialog'=>$dialog,'has_new'=>$this->checkNew('skip_tasks')];
     }
