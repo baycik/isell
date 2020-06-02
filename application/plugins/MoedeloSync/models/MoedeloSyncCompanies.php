@@ -131,7 +131,7 @@ class MoedeloSyncCompanies extends MoedeloSyncBase{
             FROM
                 companies_list cl
             WHERE
-                (LENGTH(company_tax_id)=10 OR LENGTH(company_tax_id)=12)
+                (LENGTH(company_tax_id)=10 OR LENGTH(company_tax_id)=12 OR company_tax_id='-')
                 AND (COALESCE(company_code,'')='' OR LENGTH(company_code)=8)
                 AND (COALESCE(company_code_registration,'')='' OR LENGTH(company_code_registration)=13 OR LENGTH(company_code_registration)=15)
                 AND COALESCE(company_name,'')<>''
@@ -169,7 +169,7 @@ class MoedeloSyncCompanies extends MoedeloSyncBase{
     public function localGet( $local_id ){
         $sql_local="
             SELECT
-                COALESCE(company_tax_id,'') Inn,
+                IF(LENGTH(company_tax_id)=10 OR LENGTH(company_tax_id)=12,company_tax_id,'') Inn
                 IF(LENGTH(company_tax_id2)=9,company_tax_id2,'') Kpp,
                 COALESCE(company_code_registration,'') Ogrn,
                 COALESCE(company_code,'') Okpo,
