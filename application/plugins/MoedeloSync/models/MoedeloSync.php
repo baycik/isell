@@ -43,6 +43,16 @@ class MoedeloSync extends Catalog {
          
     }
 
+    public function index(){
+        echo "<div style='display:grid;grid-template-columns:300px auto'><div>";
+        foreach( $this->joblist as $job ){
+            $job_parts=explode('/',$job);
+            echo "<a target='screen' href='../tick/?currentJob=$job_parts[0]/$job_parts[1]'>$job_parts[0]/$job_parts[1]</a><br>";
+        }
+        echo "</div><div><iframe src='' name='screen' style='width:100%;height:800px'></iframe></div>";
+        echo "</div>";
+    }
+    
     //'MoedeloSyncStocks/replicate/1 years/','MoedeloSyncStocks/checkout/1 years/',
     private $joblist=[
             'MoedeloSyncProduct/localCheckout/9 minutes/60 minutes',
