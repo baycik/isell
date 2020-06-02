@@ -169,7 +169,7 @@ class MoedeloSyncCompanies extends MoedeloSyncBase{
     public function localGet( $local_id ){
         $sql_local="
             SELECT
-                IF(LENGTH(company_tax_id)=10 OR LENGTH(company_tax_id)=12,company_tax_id,'') Inn
+                IF(LENGTH(company_tax_id)=10 OR LENGTH(company_tax_id)=12,company_tax_id,'') Inn,
                 IF(LENGTH(company_tax_id2)=9,company_tax_id2,'') Kpp,
                 COALESCE(company_code_registration,'') Ogrn,
                 COALESCE(company_code,'') Okpo,
