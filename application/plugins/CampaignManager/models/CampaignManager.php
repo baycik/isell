@@ -566,7 +566,7 @@ class CampaignManager extends Catalog{
         $sql="SELECT * FROM plugin_campaign_list JOIN plugin_campaign_bonus USING(campaign_id) WHERE liable_user_id=$liable_user_id ORDER BY campaign_queue";
         $personal_bonuses=[];
         $campaign_list=$this->get_list($sql);
-        $result_total=0;
+        $result_total=$campaign_list[0]->campaign_fixed_payment;
         foreach( $campaign_list as $campaign ){
             if( $campaign->bonus_visibility==2 ){//visible in widget
                 $current_result=$this->bonusCalculateResult($campaign->campaign_bonus_id,true);
