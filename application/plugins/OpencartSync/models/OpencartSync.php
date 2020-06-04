@@ -90,8 +90,6 @@ class OpencartSync extends OpencartSyncUtils{
                             JOIN
                         prod_list USING(product_code)
                         ) t ON remote_model=model 
-                    WHERE
-                        sku = '/Кабель/ГОСТ/'
                     LIMIT $rowcount_limit";        
         $products=$this->get_list($sql);
         
@@ -154,7 +152,7 @@ class OpencartSync extends OpencartSyncUtils{
             $item['product_id']=$product->remote_product_id;
             $request[]=$item;
         }
-	return;
+	
         $postdata=[
             'products'=>json_encode($request)
         ];
@@ -200,6 +198,7 @@ class OpencartSync extends OpencartSyncUtils{
         }
         return false;
     }
+    
     private function productImageDownload( $product ){
         $local_img_time=$this->Storage->file_time("dynImg/".$product->local_img_filename);
         if( $product->remote_img_hash && $product->remote_img_time > $local_img_time ){
