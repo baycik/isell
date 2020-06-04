@@ -485,20 +485,20 @@ class DebtManager extends Catalog {
         ];
         
         $message = [
-            'reason'=>'Задолженность',
-            'note'=>$passive_company->company_name,
-            'subject'=>'Задолженность',
+            'message_reason'=>'Задолженность',
+            'message_note'=>$passive_company->company_label,
+            'message_subject'=>'Задолженность',
         ];
         $MailingManager = $this->Hub->load_model('MailingManager');
         if(!empty($passive_company->company_email)){
-            $message['recievers'] = $passive_company->company_email;
-            $message['body'] = $this->load->view('debt_mail_template', $data, true);
+            $message['message_recievers'] = $passive_company->company_email;
+            $message['message_body'] = $this->load->view('debt_mail_template', $data, true);
             $MailingManager->messageCreate('email',  $message);
             
         }
         if(!empty($passive_company->company_mobile)){
-            $message['recievers'] = $passive_company->company_mobile;
-            $message['body'] = $this->load->view('debt_sms_template', $data, true);
+            $message['message_recievers'] = $passive_company->company_mobile;
+            $message['message_body'] = $this->load->view('debt_sms_template', $data, true);
             $MailingManager->messageCreate('sms',  $message);
         }
         return true;
@@ -566,9 +566,11 @@ class DebtManager extends Catalog {
     private function passiveCompanyGet($pcomp_id){
         $sql = "
             SELECT 
-                *
+                cl.*, ct.label as company_label
             FROM 
-                companies_list 
+                companies_list cl
+                    JOIN 
+                companies_tree ct ON (cl.branch_id = ct.branch_id)
             WHERE 
                 company_id = '$pcomp_id'
             ";
