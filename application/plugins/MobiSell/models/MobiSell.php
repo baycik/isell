@@ -53,12 +53,26 @@ class MobiSell extends PluginManager {
         $dir->close();//
         return md5(implode('', $files));
     }
-    public $doclistGet = ['type' => 'string', 'date' => '([0-9\-]+)', 'offset' => ['int', 0], 'limit' => ['int', 10], 'compFilter' => 'string'];
-    public function doclistGet($type, $date, $offset, $limit, $compFilter) {
+    public $doclistGet = ['type' => 'string', 'date' => '([0-9\-]+)', 'offset' => ['int', 0], 'limit' => ['int', 10], 'filter' => 'string'];
+    public function doclistGet($type, $date, $offset, $limit, $filter) {
+        $filter= str_replace(' ', '%', $filter);
         $assigned_path = $this->Hub->svar('user_assigned_path');
         $level = $this->Hub->svar('user_level');
         $doc_type = ($type == 'sell' ? 1 : 2);
-        $sql = "SELECT
+        $sql_tmp="CREATE TEMPORARY TABLE tmp_alowed_companies
+                SELECT
+                    company_id,
+                    label,
+                    level
+                FROM
+                    companies_list
+                        JOIN 
+                    companies_tree USING (branch_id)
+                WHERE
+                    path LIKE '$assigned_path%';";
+        $this->query($sql_tmp);
+        $sql = "
+            SELECT
 		doc_id,
 		dl.doc_num,
 		DATE_FORMAT(cstamp,'%d.%m.%Y') doc_date,
@@ -70,24 +84,25 @@ class MobiSell extends PluginManager {
 				JOIN 
 			    document_trans dt USING(trans_id)
 			WHERE dt.doc_id=dl.doc_id 
-			ORDER BY trans_id LIMIT 1
+			AND dt.trans_role='total'
 		    ),2),
-		    '') amount,
-		label
+		    (SELECT SUM(ROUND(invoice_price*product_quantity,2)) FROM document_entries de WHERE de.doc_id=dl.doc_id),
+                    0
+                ) amount,
+		label,
+                (SELECT doc_type_name FROM document_types dt WHERE dt.doc_type=(dl.doc_type*IF(is_reclamation,-1,1))) doc_type_name
 	    FROM
+            (SELECT * FROM
 		document_list dl
 		    JOIN 
-		companies_list ON company_id=passive_company_id
-		    JOIN 
-		companies_tree USING(branch_id)
+		tmp_alowed_companies ON company_id=passive_company_id
 	    WHERE
 		cstamp LIKE '$date%'
 		AND doc_type='$doc_type'
-		AND label LIKE '%$compFilter%'
-		AND path LIKE '$assigned_path%'
+		AND CONCAT(label,'|',doc_num,'|',DATE_FORMAT(cstamp,'%d.%m.%Y')) LIKE '%$filter%'
 		AND level<=$level
 	    ORDER BY cstamp DESC, doc_type
-	    LIMIT $limit OFFSET $offset
+	    LIMIT $limit OFFSET $offset) dl
 	    ";
         return $this->get_list($sql);
     }

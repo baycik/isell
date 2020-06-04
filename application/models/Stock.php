@@ -632,8 +632,10 @@ class Stock extends Catalog {
         $DocumentItems->setStatusByCode($doc_id,'created');
         $new_status_id=$DocumentItems->documentStatusGet();
         if( $new_status_id!=2 ){//document is not reserved anymore
-            $this->Hub->load_model("Chat")->addMessage($user_id,$alert,true);
-            $this->Hub->load_model("Events")->eventDelete($event_id);
+            $ok=$this->Hub->load_model("Events")->eventDelete($event_id);
+            if( $ok ){
+                $this->Hub->load_model("Chat")->addMessage($user_id,$alert,true);
+            }
             return true;
         }
         return false;

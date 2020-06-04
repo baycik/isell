@@ -103,11 +103,14 @@ class Chat extends Catalog{
 		event_list
 	    WHERE
 		(event_liable_user_id='$my_id' AND created_by='$his_id') OR (event_liable_user_id='$his_id' AND created_by='$my_id')
-	    ORDER BY event_date DESC
+	    ORDER BY event_status='undone' DESC,event_date DESC
 	    LIMIT $limit) t
 		ORDER BY event_date
 	    ";
 	$dialog=$this->get_list($sql);
+        foreach($dialog as $msg){
+            $msg->event_descr= htmlentities($msg->event_descr);
+        }
 	$this->setAsRead();
         return ['dialog'=>$dialog,'has_new'=>$this->checkNew('skip_tasks')];
     }

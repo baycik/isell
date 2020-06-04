@@ -265,6 +265,7 @@ class DocumentCore extends DocumentUtils{
         if( $doc_id ){
             $this->selectDoc($doc_id);
             $this->loadDoc($doc_id);
+            return 0;
         }
         return $this->doc('doc_status_id');
     }
