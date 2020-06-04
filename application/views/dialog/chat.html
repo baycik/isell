@@ -27,7 +27,7 @@
 		$("#chat_form input").val('');
 		App.page_dialog_chat.sendRecieve(text);
 	    });
-	    App.page_dialog_chat.counterpart = App.cookie('last_chat_counterpart') || 'all';
+	    App.page_dialog_chat.counterpart = App.store('last_chat_counterpart') || 'all';
 	    //this.clock=setInterval(App.page_dialog_chat.sendRecieve,1000);
             App.page_dialog_chat.loadUserlist();
 	    this.sendRecieve();
@@ -53,7 +53,7 @@
 	    $("#chat_users div").removeClass('user_selected');
 	    $(user_div).addClass('user_selected');
 	    this.counterpart = $(user_div).data('user');
-	    App.cookie('last_chat_counterpart', this.counterpart);
+	    App.store('last_chat_counterpart', this.counterpart);
             
             App.page_dialog_chat.renderedMessages={};
             $("#chat_field").html('');

@@ -112,7 +112,9 @@ class StockOld extends Data {
 
     public function stockEntryPartyUpdate($product_code, $new_party_label) {
         $this->stockEntryLoad($product_code);
-        $this->stockEntry->party_label = $new_party_label;
+        if( $new_party_label && $new_party_label!='-' ){
+            $this->stockEntry->party_label = $new_party_label;
+        }
         return $this->stockEntrySave();
     }
 

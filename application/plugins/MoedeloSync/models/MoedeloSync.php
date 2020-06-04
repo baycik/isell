@@ -17,6 +17,7 @@ class MoedeloSync extends Catalog {
     
     function init() {
         $this->getSettings();
+        //$this->Hub->load_model('MoedeloSyncUPDBuy')->localGet(33383);
         //print_r($this->plugin_data);
     }
     
@@ -42,34 +43,62 @@ class MoedeloSync extends Catalog {
          
     }
 
+    public function index(){
+        echo "<div style='display:grid;grid-template-columns:300px auto'><div>";
+        foreach( $this->joblist as $job ){
+            $job_parts=explode('/',$job);
+            echo "<a target='screen' href='../tick/?currentJob=$job_parts[0]/$job_parts[1]'>$job_parts[0]/$job_parts[1]</a><br>";
+        }
+        echo "</div><div><iframe src='' name='screen' style='width:100%;height:800px'></iframe></div>";
+        echo "</div>";
+    }
+    
     //'MoedeloSyncStocks/replicate/1 years/','MoedeloSyncStocks/checkout/1 years/',
     private $joblist=[
-            'MoedeloSyncProduct/localCheckout/9 minutes/9 minutes',
-            'MoedeloSyncProduct/remoteCheckout/9 minutes/9 minutes',
+            'MoedeloSyncProduct/localCheckout/9 minutes/60 minutes',
+            'MoedeloSyncProduct/remoteCheckout/6 hours/1 days',
             'MoedeloSyncProduct/replicate/10 minutes/',
         
-            'MoedeloSyncCompanies/localCheckout/9 minutes/9 minutes',
-            'MoedeloSyncCompanies/remoteCheckout/1 minutes/1 minutes',
+            'MoedeloSyncCompanies/localCheckout/9 minutes/60 minutes',
+            'MoedeloSyncCompanies/remoteCheckout/6 hours/1 days',
             'MoedeloSyncCompanies/replicate/10 minutes/',
             
             'MoedeloSyncBillSell/localCheckout/9 minutes/60 minutes',
-            'MoedeloSyncBillSell/remoteCheckout/9 minutes/1 days',
+            'MoedeloSyncBillSell/remoteCheckout/6 hours/1 days',
             'MoedeloSyncBillSell/replicate/10 minutes/',
             
             'MoedeloSyncWayBillSell/localCheckout/9 minutes/60 minutes',
-            'MoedeloSyncWayBillSell/remoteCheckout/9 minutes/1 days',
+            'MoedeloSyncWayBillSell/remoteCheckout/6 hours/1 days',
             'MoedeloSyncWayBillSell/replicate/10 minutes/',
             
             'MoedeloSyncInvoiceSell/localCheckout/9 minutes/60 minutes',
-            'MoedeloSyncInvoiceSell/remoteCheckout/9 minutes/1 days',
+            'MoedeloSyncInvoiceSell/remoteCheckout/6 hours/1 days',
             'MoedeloSyncInvoiceSell/replicate/10 minutes/',
             
-            'MoedeloSyncUPDSell/localCheckout/9 seconds/60 minutes',
-            //'MoedeloSyncUPDSell/remoteCheckout/9 seconds/1 days',
-            'MoedeloSyncUPDSell/replicate/10 seconds/'
+            'MoedeloSyncUPDSell/localCheckout/9 minutes/60 minutes',
+            'MoedeloSyncUPDSell/replicate/10 minutes/',
+        
+            'MoedeloSyncUPDBuy/localCheckout/9 minutes/60 minutes',
+            'MoedeloSyncUPDBuy/replicate/10 minutes/',
+        
+            'MoedeloSyncActSell/localCheckout/9 minutes/60 minutes',
+            'MoedeloSyncActSell/remoteCheckout/6 hours/1 days',
+            'MoedeloSyncActSell/replicate/10 minutes/',
+        
+            'MoedeloSyncActBuy/localCheckout/9 minutes/60 minutes',
+            'MoedeloSyncActBuy/remoteCheckout/6 hours/1 days',
+            'MoedeloSyncActBuy/replicate/10 minutes/',
+        
+            'MoedeloSyncWayBillBuy/localCheckout/9 minutes/60 minutes',
+            'MoedeloSyncWayBillBuy/remoteCheckout/6 hours/1 days',
+            'MoedeloSyncWayBillBuy/replicate/10 minutes/',
+            
+            'MoedeloSyncInvoiceBuy/localCheckout/9 minutes/60 minutes',
+            'MoedeloSyncInvoiceBuy/remoteCheckout/6 hours/1 days',
+            'MoedeloSyncInvoiceBuy/replicate/10 minutes/'
         ];
     
-    public function tick( $iterations_left ){
+    public function tick( $iterations_left, string $currentJob=null ){
         header("Content-type:text/plain");
         if( empty($this->settings->gateway_url) || empty($this->settings->gateway_md_apikey) ){
             throw new Exception('Gateway or API key is not set');
@@ -82,6 +111,11 @@ class MoedeloSync extends Catalog {
             return false;
         }
         
+        if( $currentJob ){
+            $jobParts=explode('/',$currentJob);
+            $this->jobExecute($currentJob,$jobParts,1);
+            return true;
+        }
         $currentJob=$this->joblist[0];        
         if( isset($this->plugin_data->lastDoneJob) ){
             $last_done_key=array_search($this->plugin_data->lastDoneJob,$this->joblist)??0;
@@ -108,7 +142,11 @@ class MoedeloSync extends Catalog {
         try{
             echo "starting $currentJob is_full=$is_full\n";
             $SyncModel=$this->Hub->load_model($jobParts[0]);
-            $finished=$SyncModel->{$jobParts[1]}($is_full);
+            if( $jobParts[1]=="replicate" ){
+                $finished=$SyncModel->{$jobParts[1]}();
+            } else {
+                $finished=$SyncModel->{$jobParts[1]}($is_full);
+            }
             if( $finished ){
                 if( $is_full ){
                     $this->plugin_data->{"$jobParts[0]_$jobParts[1]_LastFull"}=date("Y-m-d H:i:s");
@@ -162,140 +200,39 @@ class MoedeloSync extends Catalog {
         $this->settings=json_decode($row->plugin_settings);
         $this->plugin_data=json_decode($row->plugin_json_data);
     }
-//    public function productSync(){
-//        $MoedeloSyncProduct=$this->Hub->load_model('MoedeloSyncProduct');
-//        $MoedeloSyncProduct->setGateway( $this->settings->gateway_url.'stock/api/v1/' );
-//        $MoedeloSyncProduct->setApiKey( $this->settings->gateway_md_apikey );
-//
-//        $MoedeloSyncProduct->checkout(1);
-//        $MoedeloSyncProduct->replicate();
-//    }
     
+    public function downloadFile( string $doc_type, int $doc_view_id, int $view_type_id, string $file_type, string $file_name ){
+        $key="{$doc_type}_{$view_type_id}";
+        $handlers=[
+            '1_136'=>'MoedeloSyncBillSell',
+            '1_133'=>'MoedeloSyncWayBillSell',
+            '1_140'=>'MoedeloSyncInvoiceSell',
+            '1_143'=>'MoedeloSyncUPDSell'
+        ];
+        $Handler=$this->Hub->load_model($handlers[$key]);
+        $remote_id=$Handler->remotePush($doc_view_id,true);
+        $file_path=$Handler->doc_config->remote_function."/$remote_id/$file_type";
+        $file_data=$Handler->apiExecute($file_path,"DOWNLOAD");
+        http_response_code($file_data->httpcode);
+        if($file_data->httpcode==200){
+            $file_types=[
+                'pdf'=>"Content-type:application/pdf",
+                'xls'=>"Content-Type:application/vnd.ms-excel; charset=utf-8",
+                'doc'=>"Content-Type:application/vnd.ms-word; charset=utf-8"
+            ];
+            $full_filename=rawurlencode("$file_name.$file_type");
+            header($file_types[$file_type]);
+            header("Content-Disposition:attachment;filename=$full_filename");
+            header("Content-Disposition:attachment;filename*=UTF-8''$full_filename");
+            echo $file_data->response;
+        } else {
+            echo $file_path;
+            die($file_data->response);
+        }
+    }
     
-    
-//    public function productCheckout( $is_full ){
-//        $MoedeloSyncProduct=$this->Hub->load_model('MoedeloSyncProduct');
-//        $MoedeloSyncProduct->setGateway( $this->settings->gateway_url.'stock/api/v1/' );
-//        $MoedeloSyncProduct->setApiKey( $this->settings->gateway_md_apikey );
-//        $finished=$MoedeloSyncProduct->checkout($is_full);
-//        return $finished;
-//    }
-//    
-//    public function productReplicate(){
-//        $MoedeloSyncProduct=$this->Hub->load_model('MoedeloSyncProduct');
-//        $MoedeloSyncProduct->setGateway( $this->settings->gateway_url.'' );
-//        $MoedeloSyncProduct->setApiKey( $this->settings->gateway_md_apikey );
-//        $finished=$MoedeloSyncProduct->replicate();
-//        return $finished;
-//    }
-    
-//    public function companyCheckout( $is_full ){
-//        $MoedeloSyncCompanies=$this->Hub->load_model('MoedeloSyncCompanies');
-//        $MoedeloSyncCompanies->setGateway( $this->settings->gateway_url.'' );
-//        $MoedeloSyncCompanies->setApiKey( $this->settings->gateway_md_apikey );
-//        $finished=$MoedeloSyncCompanies->checkout( $is_full );
-//        return $finished;
-//    }
-//    
-//    public function companyReplicate(){
-//        $MoedeloSyncCompanies=$this->Hub->load_model('MoedeloSyncCompanies');
-//        $MoedeloSyncCompanies->setGateway( $this->settings->gateway_url.'kontragents/api/v1/' );
-//        $MoedeloSyncCompanies->setApiKey( $this->settings->gateway_md_apikey );
-//        $finished=$MoedeloSyncCompanies->replicate();
-//        return $finished;
-//    }
-    
-    
-//    public function stocksCheckout(){
-//        $MoedeloSyncStocks=$this->Hub->load_model('MoedeloSyncStocks');
-//        $MoedeloSyncStocks->setGateway( $this->settings->gateway_url.'stock/api/v1/stock/' );
-//        $MoedeloSyncStocks->setApiKey( $this->settings->gateway_md_apikey );
-//        $finished=$MoedeloSyncStocks->checkout();
-//        return $finished;
-//    }
-//    
-//    public function stocksReplicate(){
-//        $MoedeloSyncStocks=$this->Hub->load_model('MoedeloSyncStocks');
-//        $MoedeloSyncStocks->setGateway( $this->settings->gateway_url.'stock/api/v1/stock/' );
-//        $MoedeloSyncStocks->setApiKey( $this->settings->gateway_md_apikey );
-//        $finished=$MoedeloSyncStocks->replicate();
-//        return $finished;
-//    }
-//    
-//    
-//    public function billCheckout(){
-//        $MoedeloSyncBill=$this->Hub->load_model('MoedeloSyncBill');
-//        $MoedeloSyncBill->setGateway( $this->settings->gateway_url.'accounting/api/v1/' );
-//        $MoedeloSyncBill->setApiKey( $this->settings->gateway_md_apikey );
-//        $finished=$MoedeloSyncBill->checkout();
-//        return $finished;
-//    }
-//    
-//    public function billReplicate(){
-//        $MoedeloSyncBill=$this->Hub->load_model('MoedeloSyncBill');
-//        $MoedeloSyncBill->setGateway( $this->settings->gateway_url.'accounting/api/v1/' );
-//        $MoedeloSyncBill->setApiKey( $this->settings->gateway_md_apikey );
-//        $finished=$MoedeloSyncBill->replicateBills();
-//        return $finished;
-//    }
-//    
-//    public function wayBillCheckout(){
-//        $MoedeloSyncWayBill=$this->Hub->load_model('MoedeloSyncWayBill');
-//        $MoedeloSyncWayBill->setGateway( $this->settings->gateway_url.'accounting/api/v1/' );
-//        $MoedeloSyncWayBill->setApiKey( $this->settings->gateway_md_apikey );
-//        $finished=$MoedeloSyncWayBill->checkout();
-//        return $finished;
-//    }
-//    
-//    public function wayBillReplicate(){
-//        $MoedeloSyncWayBill=$this->Hub->load_model('MoedeloSyncWayBill');
-//        $MoedeloSyncWayBill->setGateway( $this->settings->gateway_url.'accounting/api/v1/' );
-//        $MoedeloSyncWayBill->setApiKey( $this->settings->gateway_md_apikey );
-//        $finished=$MoedeloSyncWayBill->replicateBills();
-//        return $finished;
-//    }
-//    
-//    public function invoiceCheckout(){
-//        $MoedeloSyncInvoice=$this->Hub->load_model('MoedeloSyncInvoice');
-//        $MoedeloSyncInvoice->setGateway( $this->settings->gateway_url.'accounting/api/v1/' );
-//        $MoedeloSyncInvoice->setApiKey( $this->settings->gateway_md_apikey );
-//        $finished=$MoedeloSyncInvoice->checkout();
-//        return $finished;
-//    }
-//    
-//    public function invoiceReplicate(){
-//        $MoedeloSyncInvoice=$this->Hub->load_model('MoedeloSyncInvoice');
-//        $MoedeloSyncInvoice->setGateway( $this->settings->gateway_url.'accounting/api/v1/' );
-//        $MoedeloSyncInvoice->setApiKey( $this->settings->gateway_md_apikey );
-//        $finished=$MoedeloSyncInvoice->replicate();
-//        return $finished;
-//    }
-//    
-//    public function updCheckout(){
-//        return true;
-//    }
-//    
-//    public function updReplicate(){
-//        $MoedeloSyncUpd=$this->Hub->load_model('MoedeloSyncUpd');
-//        $MoedeloSyncUpd->setGateway( $this->settings->gateway_url.'docs/api/v1/' );
-//        $MoedeloSyncUpd->setApiKey( $this->settings->gateway_md_apikey );
-//        $finished=$MoedeloSyncUpd->replicate();
-//        return $finished;
-//    }
-//    
-//    
-//    
-//    
-//    
-//    protected $local_tzone='+03:00';
-//    protected $remote_tzone='+00:00';
-//    public function actSync(){
-//        $MoedeloSyncActSell=$this->Hub->load_model('MoedeloSyncActSell');
-//        $MoedeloSyncActSell->setGateway( $this->settings->gateway_url.'accounting/api/v1/' );
-//        $MoedeloSyncActSell->setApiKey( $this->settings->gateway_md_apikey );
-//
-//        $MoedeloSyncActSell->checkout();
-//        $MoedeloSyncActSell->replicate();
-//        //$MoedeloSyncActSell->localUpdate( 26493,0,0 );
-//    }
+    public function remotePush( string $handler, int $local_id ){
+        $Handler=$this->Hub->load_model($handler);
+        return $Handler->remotePush($local_id,true);
+    }
 }

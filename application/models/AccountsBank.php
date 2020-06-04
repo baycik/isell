@@ -27,8 +27,8 @@ class AccountsBank extends AccountsData{
     private function clientBankGetTotals( $rows ){
 	$totals=['tdebit'=>0,'tcredit'=>0];
         foreach ($rows as $row) {
-	    $totals['tdebit']+=$row->debit;
-	    $totals['tcredit']+=$row->credit;
+	    $totals['tdebit']+=(float) $row->debit;
+	    $totals['tcredit']+=(float) $row->credit;
         }
 	$totals['tdebit']=$totals['tdebit']?round($totals['tdebit'],2):'';
 	$totals['tcredit']=$totals['tcredit']?round($totals['tcredit'],2):'';

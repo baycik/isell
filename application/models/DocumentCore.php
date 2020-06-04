@@ -107,7 +107,7 @@ class DocumentCore extends DocumentUtils{
             $def_head['doc_type']=$prev_doc->doc_type;
             $def_head['signs_after_dot']=$prev_doc->signs_after_dot;
         }
-        $def_head['doc_num']=$this->getNextDocNum($def_head['doc_type']);
+        $def_head['doc_num']=$this->getNextDocNum($def_head['doc_type'],'not_increase_number');
         return $def_head;
     }
     
@@ -265,6 +265,7 @@ class DocumentCore extends DocumentUtils{
         if( $doc_id ){
             $this->selectDoc($doc_id);
             $this->loadDoc($doc_id);
+            return 0;
         }
         return $this->doc('doc_status_id');
     }

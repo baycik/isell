@@ -20,8 +20,8 @@ class MoedeloSyncWayBillSell extends MoedeloSyncBase{
     /**
      * Executes needed sync operations
      */
-    public function replicate(){
-        return parent::replicate();
+    public function replicate( $filter_local_id=null ){
+        return parent::replicate( $filter_local_id );
     }
     
     
@@ -102,14 +102,14 @@ class MoedeloSyncWayBillSell extends MoedeloSyncBase{
      * @param bool $is_full
      * Checks for updates on local
      */
-    public function localCheckout( bool $is_full=false ){
-        return parent::localCheckout($is_full);
+    public function localCheckout( bool $is_full=false, $filter_local_id=null ){
+        return parent::localCheckout($is_full,$filter_local_id);
     }
     /**
      * @param bool $is_full
      * Create local doc list to sync
      */    
-    protected function localCheckoutGetList( $is_full, $afterDate ){
+    protected function localCheckoutGetList( $is_full, $afterDate, $filter_local ){
         $local_sync_list_sql="
             SELECT
                 '{$this->doc_config->sync_destination}' sync_destination,
@@ -152,6 +152,7 @@ class MoedeloSyncWayBillSell extends MoedeloSyncBase{
                 AND doc_type='{$this->doc_config->doc_type}'
                 AND view_type_id='{$this->doc_config->local_view_type_id}'
                 AND dvl.tstamp>'{$this->sync_since}'
+                $filter_local
             GROUP BY doc_view_id) inner_table";
         return $local_sync_list_sql;
     }
@@ -239,7 +240,7 @@ class MoedeloSyncWayBillSell extends MoedeloSyncBase{
                     ru Name,
                     product_quantity Count,
                     product_unit Unit,
-                    IF(is_service=1,2,1) Type,
+                    IF({$this->doc_config->doc_type}=1 OR {$this->doc_config->doc_type}=2,1,2) Type,
                     {$document->vat_rate} NdsType,
                     ROUND(invoice_price*(1+{$document->vat_rate}/100),2) Price,
                     ROUND(invoice_price*product_quantity*(1+{$document->vat_rate}/100),2) SumWithNds,

@@ -40,7 +40,7 @@
             <div class="inp_group">
                 <input title="" name="pcomp_name" value="" readonly="readonly" required="required" style="width:100px" placeholder="Все"/>
                 <input name="pcomp_id" value="" type="hidden" style="width:100px"/>
-                <button type="button" class="tiny_button" onclick="debt_manager_settings.select_pcomp()"><img src="img/settings.png"> Выбрать</button>
+                <button type="button" class="tiny_button x-debt-manager-pcomp-select"><img src="img/settings.png"> Выбрать</button>
             </div>
         </div>
         <div>
@@ -228,6 +228,9 @@
             });
             $holder.find('.widget-reload').click(function(){
                 debt_manager_settings.reload();
+            });
+            $holder.find(".x-debt-manager-pcomp-select").click(function(){
+                debt_manager_settings.select_pcomp();
             });
         },
         load: function(offset){

@@ -39,7 +39,7 @@
 		entries: []
 	    }
 	},
-	compFilter: '',
+	filter: '',
 	currentType: '',
 	load: function (type, offset) {
 	    var date = $("#doc_list_datefilter").val();
@@ -47,7 +47,7 @@
 		offset = App.document_list.docTypeConfig[type].entries.length || 0;
 	    }
 	    App.flash('Список документов: загрузка...');
-	    $.post('doclistGet', {type: type, offset: offset, date: date, compFilter: App.document_list.compFilter}, function (resp) {
+	    $.post('doclistGet', {type: type, offset: offset, date: date, filter: App.document_list.filter}, function (resp) {
 		var doc_list = App.json(resp);
 		App.document_list.docTypeConfig[type].entries = App.document_list.docTypeConfig[type].entries.concat(doc_list);
 		App.document_list.render(type, App.document_list.docTypeConfig[type].entries);
@@ -71,13 +71,13 @@
 	compSearch: function (q) {
 	    clearTimeout(App.document_list.clock);
 	    App.document_list.clock = setTimeout(function () {
-		App.document_list.compFilter = q;
+		App.document_list.filter = q;
 		App.document_list.reload();
 	    }, 500);
 	},
-	clearComp:function(){
-	    $('input[name=\'company_filter\']').val('');
-	    App.document_list.compFilter ='';
+	clearFilter:function(){
+	    $('input[name=\'document_filter\']').val('');
+	    App.document_list.filter ='';
 	    App.document_list.reload();
 	}
     };
@@ -90,21 +90,21 @@
 </style>
 <form class="ui form">
     <div class="field">
-	<label>Клиент</label>
-	<div class="field">
-	    <div class="ui left icon right labeled input">
-		<i class="search icon"></i>
-		<input name="company_filter" placeholder="Название клиента" type="text" onkeyup="App.document_list.compSearch(this.value)">
-		<div class="ui basic label" onclick="App.document_list.clearComp()"><i class="close icon"></i></div>
-	    </div>
-	</div>
-    </div>
-    <div class="field">
 	<label>Дата</label>
 	<div class="field">
 	    <div class="ui left icon right labeled input">
 		<i class="calendar icon"></i>
                 <input name="date_filter" placeholder="Дата" type="date" id="doc_list_datefilter" onchange="App.document_list.reload();">
+	    </div>
+	</div>
+    </div>
+    <div class="field">
+	<label>Фильтр</label>
+	<div class="field">
+	    <div class="ui left icon right labeled input">
+		<i class="search icon"></i>
+		<input name="document_filter" placeholder="Название компании, номер, дата документа" type="text" onkeyup="App.document_list.compSearch(this.value)">
+		<div class="ui basic label" onclick="App.document_list.clearFilter()"><i class="close icon"></i></div>
 	    </div>
 	</div>
     </div>
@@ -130,7 +130,7 @@
 	<tbody>
 	    <!-- {{if doc_list}} {{doc_list}} -->
 	    <tr data-doc-id="{{doc_id}}" onclick="App.document_list.handleClick(this)">
-		<td><i class="green icon arrow left"></i>{{doc_date}} <i style="color:#999">№{{doc_num}}</i></td>
+		<td><i class="green icon arrow left"></i>{{doc_date}} <i style="color:#666">№{{doc_num}} {{doc_type_name}}</i></td>
 		<td>{{label}}</td>
 		<td style="text-align:right">{{amount}}</td>
 		<td style="text-align:right">{{if is_commited|more>0}}<i class="gray checkmark box icon"></i>{{else}}<i class="square outline icon"></i>{{/if}}</td>
@@ -157,7 +157,7 @@
 	<tbody>
 	    <!-- {{if doc_list}} {{doc_list}} -->
 	    <tr data-doc-id="{{doc_id}}" onclick="App.document_list.handleClick(this)">
-		<td><i class="purple icon arrow right"></i>{{doc_date}} <i style="color:#999">№{{doc_num}}</i></td>
+		<td><i class="purple icon arrow right"></i>{{doc_date}} <i style="color:#666">№{{doc_num}} {{doc_type_name}}</i></td>
 		<td>{{label}}</td>
 		<td style="text-align:right">{{amount}}</td>
 		<td style="text-align:right">{{if is_commited|more>0}}<i class="gray checkmark box icon"></i>{{else}}<i class="square outline icon"></i>{{/if}}</td>

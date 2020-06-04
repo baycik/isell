@@ -13,6 +13,13 @@
  * @author Baycik
  */
 class DocumentSell extends DocumentBase{
+    function init() {
+        header("Content-type:text/plain");
+        $this->Topic("documentChangeIsCommited")->subscribe('DocumentSell','documentChangeIsCommited');
+    }
+    
+    
+    
     public function index(){
 	echo 'hello';
     }
@@ -51,7 +58,7 @@ class DocumentSell extends DocumentBase{
 	return $document;
     }
     
-    public function documentCreate( $doc_type=null ){
+    public function documentCreate( int $doc_type=null, string $handler='' ){
 	$doc_type=1;
 	return parent::documentCreate( $doc_type, 'DocumentSell' );
     }
@@ -62,6 +69,20 @@ class DocumentSell extends DocumentBase{
     
     public function documentDelete( int $doc_id ){
         return parent::documentDelete($doc_id);
+    }
+    public function documentNameGet(){
+        return "Расходный документ ".($this->doc('is_reclamation')?" (Возврат)":"")." №".$this->doc('doc_num');
+    }
+    //////////////////////////////////////////
+    // DOCUMENT EVENTS SECTION
+    //////////////////////////////////////////
+    
+    public function documentChangeIsCommited( $field, $new_is_commited ){
+        
+        echo "COOOOOMMIT $field, $new_is_commited";
+        
+        $this->entryListChangeCommit( $new_is_commited );
+        return false;
     }
     //////////////////////////////////////////
     // HEAD SECTION
@@ -74,10 +95,11 @@ class DocumentSell extends DocumentBase{
     public function bodyGet( int $doc_id ){
         return $this->entryListGet( $doc_id );
     }
-    public function entryListGet( $doc_id, int $doc_entry_id=0 ){
-        return parent::entryListGet($doc_entry_id, $doc_entry_id);
-    }
     
+    // ENTRY LIST FUNCTIONS
+    public function entryListGet(int $doc_id, int $doc_entry_id = 0) {
+        return parent::entryListGet($doc_id, $doc_entry_id);
+    }
     /**
      * Function creates temporary table of entries
      * @param int $doc_id
@@ -129,26 +151,141 @@ class DocumentSell extends DocumentBase{
                     prod_list pl USING(product_code)
                 WHERE
                     doc_id='$doc_id'
-                    $entry_filter) entry_list";
+                    $entry_filter) entry_list)";
         $this->query($sql_create);
         $this->entryListCreated=true;
         return true;
     }
-    
+    /**
+     * Bulk update of document entries
+     * @param int $doc_id
+     * @param array $entry_list
+     * @return type
+     */
+    public function entryListUpdate(int $doc_id, array $entry_list) {
+        return parent::entryListUpdate($doc_id, $entry_list);
+    }
+    /**
+     * Bulk delete of entries
+     * @param int $doc_id
+     * @param array $entry_id_list
+     */
     public function entryListDelete(int $doc_id, array $entry_id_list) {
         parent::entryListDelete($doc_id, $entry_id_list);
     }
+    /**
+     * Bulk commit/uncommit entries
+     * @param bool $new_is_commited
+     * @return boolean
+     */
+    private function entryListChangeCommit( bool $new_is_commited ){
+        $doc_id=$this->doc('doc_id');
+        $current_is_commited=$this->doc('is_commited');
+        if( $new_is_commited==$current_is_commited ){
+            return true;
+        }
+        $entry_list=$this->entryListGet($doc_id);
+        $this->db_transaction_start();
+        $this->doc('is_commited',$new_is_commited);
+        foreach($entry_list as $entry){
+            if( $new_is_commited ){
+                $old_entry_data=(object)[
+                    'product_quantity'=>0
+                ];
+            } else {
+                $old_entry_data=(object)[
+                    'product_quantity'=>$entry->product_quantity*2
+                ];
+            }
+            $change_ok=$this->entryChange($entry->doc_entry_id, $entry, $old_entry_data);
+            if( !$change_ok ){
+                $this->db_transaction_rollback();
+                return false;
+            }
+        }
+        if( $this->isCommited() ){
+            $this->transUpdate();
+        }
+        $this->db_transaction_commit();
+        return false;
+    }
+    //ENTRY FUNCTIONS
     
+    /**
+     * Get entry record by id
+     * @param int $doc_entry_id
+     * @return type
+     */
+    public function entryGet( int $doc_entry_id ){
+	return parent::entryGet($doc_entry_id);
+    }
     
+    /**
+     * Creates entry record in document
+     * @param int $doc_id
+     * @param object $entry
+     * @return type
+     */
+    public function entryCreate(int $doc_id, object $entry){
+        return parent::entryCreate($doc_id, $entry);
+    }
     
+    /**
+     * Makes changes to entry depend on commitment status. 
+     * Must be called within transaction
+     * 
+     * @param int $doc_entry_id
+     * @param object $new_entry_data
+     * @param object $current_entry_data
+     */
+    protected function entrySave( int $doc_entry_id, object $new_entry_data, object $current_entry_data=null ){
+        if( $new_entry_data->product_quantity??false ){
+            if( $this->isCommited() ){
+                $product_delta_quantity=$new_entry_data->product_quantity-$current_entry_data->product_quantity;
+                $product_code=$new_entry_data->product_code??$current_entry_data->product_code;
+                
+                $Stock=$this->Hub->load_model("Stock");
+                $stock_ok=$Stock->productQuantityModify( $product_code, $product_delta_quantity, 1  );
+                if( !$stock_ok ){
+                    throw new Exception("product_stock_error",507);//Insufficient Storage
+                }
+            }
+        }
+        if( $new_entry_data->entry_price ){
+            $vat_correction=$this->doc('use_vatless_price')?$this->doc('vat_rate')/100+1:1;
+            $new_entry_data->entry_price_vatless=$new_entry_data->entry_price/$vat_correction;
+        }
+        if( $new_entry_data->entry_price_vatless ){
+            $doc_curr_correction=$this->documentCurrCorrectionGet();
+            $new_entry_data->invoice_price=$new_entry_data->entry_price_vatless/$doc_curr_correction;
+        }
+        $update_ok=$this->update('document_entries',$new_entry_data,['doc_entry_id'=>$doc_entry_id]);
+        $error = $this->db->error();
+        if($error['code']==1452){
+	    throw new Exception("product_code_unknown",424);//Failed Dependency
+	} else 
+	if($error['code']==1062){
+	    throw new Exception("already_exists",409);//Conflict
+	} else 
+	if($error['code']!=0){
+            throw new Exception($error['message'].' '.$this->db->last_query(),500);//Internal Server Error
+	}        
+        return $update_ok;
+    }
+    /**
+     * Updates entry data
+     * @param int $doc_entry_id
+     * @param object $new_entry_data
+     * @return boolean
+     * @throws Exception
+     */
+    public function entryUpdate( int $doc_entry_id, object $new_entry_data ){
+        return parent::entryUpdate($doc_entry_id, $new_entry_data);
+    }
     
-    
-    
-    
-    
-    
-    
-    
+    public function entryDelete( int $doc_entry_id ){
+        return parent::entryDelete($doc_entry_id);
+    }
     
     
     
@@ -200,41 +337,8 @@ class DocumentSell extends DocumentBase{
 	return round($price,2)/$doc_vat_ratio/$curr_correction;	
     }
 
-    public function entryAdd( int $doc_id, string $product_code, int $product_quantity){
-	$this->documentSelect($doc_id);
-	$pcomp_id=$this->doc('passive_company_id');
-        if(!isset($pcomp_id)){
-            $doc_id = $this->documentAdd();
-            $this->documentSelect($doc_id);
-            $pcomp_id=$this->doc('passive_company_id');
-        }
-        
-	$doc_ratio=$this->doc('doc_ratio');
-	$this->db_transaction_start();
-        $this->query("INSERT INTO document_entries SET doc_id=$doc_id,product_code='$product_code',invoice_price=COALESCE(GET_PRICE('$product_code',$pcomp_id,'$doc_ratio'),0)",false);
-	$error = $this->db->error();
-	if($error['code']==1452){
-	    $this->Hub->msg("product_code_unknown");
-	    return false;
-	} else 
-	if($error['code']==1062){
-	    $this->Hub->msg("already_exists");
-	    return false;
-	} else 
-	if($error['code']!=0){
-	    header("X-isell-type:error");
-	    show_error($error['message'].' '.$this->db->last_query(), 500);
-	}
-	$doc_entry_id=$this->db->insert_id();
-	$update_ok=$this->entryUpdate($doc_id,$doc_entry_id,'product_quantity',$product_quantity);
-	
-	if( !$update_ok ){
-	    return false;
-	}
-	$this->db_transaction_commit();
-    }
     
-    public function entryUpdate(int $doc_id, int $doc_entry_id, string $field, string $value){
+    public function entryUpdate222(int $doc_id, int $doc_entry_id, string $field, string $value){
 	$this->documentSelect($doc_id);
 	$entry_updated=[];
 	$this->db_transaction_start();	
@@ -280,7 +384,7 @@ class DocumentSell extends DocumentBase{
 	return true;
     }
 
-    public function entryDelete( int $doc_id, array $doc_entry_ids){
+    public function entryDelete2222( int $doc_id, array $doc_entry_ids){
 	return parent::entryDelete($doc_id, $doc_entry_ids);
     }    
     /*
@@ -294,10 +398,6 @@ class DocumentSell extends DocumentBase{
 	return $this->update('stock_entries',['product_quantity'=>$leftover,'self_price'=>$self_price,'party_label'=>$party_label],['product_code'=>$product_code]);
     }
     
-    private function entryGet($doc_entry_id){
-	$sql="SELECT * FROM document_entries WHERE doc_entry_id='$doc_entry_id'";
-	return $this->get_row($sql);
-    }
     
     protected function entryUncommit($doc_entry_id){
 	return $this->entryCommit($doc_entry_id, 0);

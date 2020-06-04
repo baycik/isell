@@ -98,7 +98,7 @@ class DocumentList extends Catalog{
     }
     
     public function documentTypeListFetch(){
-        $sql="SELECT * FROM document_types WHERE doc_type<10";
+        $sql="SELECT *,doc_type_name name,doc_type value FROM document_types WHERE doc_type<10";
         return $this->get_list($sql);
     }
     

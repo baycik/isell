@@ -51,7 +51,7 @@ class OpencartSync extends OpencartSyncUtils{
     private function productSend(){
         $rowcount_limit=300; 
         $requestsize_total=0;
-        $requestsize_limit=3*1024*1024;
+        $requestsize_limit=6*1024*1024;
         $requesttime_limit=time()+4;
         $request=[];
         $products_skipped=[];
@@ -62,19 +62,22 @@ class OpencartSync extends OpencartSyncUtils{
         $this->Hub->load_model('Stock');
 
         $sql = "SELECT
-                    model,ean,quantity,price,weight,name,manufacturer_name,
+                    model,ean,sku,quantity,price,weight,name,manufacturer_name,
+                    price_promo,
                     volume,
                     posl.*,
                     product_img local_img_filename,
-                    MD5(CONCAT(ean,quantity,ROUND(price,2),ROUND(weight,4),name,COALESCE(manufacturer_name,''))) local_field_hash
+                    MD5(CONCAT(ean,sku,quantity,ROUND(price,2),ROUND(weight,4),name,COALESCE(manufacturer_name,''))) local_field_hash
                 FROM
                     plugin_opencart_sync_list posl
                 LEFT JOIN
                     (SELECT
                         product_code model,
                         product_barcode ean,
+                        st.path sku,
                         product_quantity quantity,
-                        GET_SELL_PRICE(product_code,'$pcomp_id','$dratio') price,
+                        ROUND(GET_SELL_PRICE(product_code,'$pcomp_id','$dratio'),2) price_promo,
+                        ROUND(GET_PRICE(product_code,'{$pcomp_id}','{$dratio}'),2) price,
                         product_weight weight,
                         ru name,
                         product_volume volume,
@@ -83,7 +86,10 @@ class OpencartSync extends OpencartSyncUtils{
                     FROM
                         stock_entries se
                             JOIN
-                        prod_list USING(product_code) ) t ON remote_model=model 
+                        stock_tree st ON se.parent_id=st.branch_id
+                            JOIN
+                        prod_list USING(product_code)
+                        ) t ON remote_model=model 
                     LIMIT $rowcount_limit";
         $products=$this->get_list($sql);
         
@@ -93,8 +99,10 @@ class OpencartSync extends OpencartSyncUtils{
             $item['action']='skip';
             if( $this->settings->plugin_settings->fields_up && $product->local_field_hash!=$product->remote_field_hash){
                 $item['ean']=$product->ean;
+                $item['sku']=$product->sku;
                 $item['quantity']=$product->quantity;
                 $item['price']=$product->price;
+                $item['price_promo']=$product->price_promo;
                 $item['weight']=$product->weight;
                 $item['volume']=$product->volume;
                 $item['name']=$product->name;
@@ -134,7 +142,7 @@ class OpencartSync extends OpencartSyncUtils{
             $requestsize_total+=$item_size;
             if( $requestsize_total>$requestsize_limit ){
                 $products_skipped[]=$product->model;
-                $this->message.="Size of image of product {$product->model} is too big! ";
+                $this->message.="Size of image of product {$product->sku} {$product->model} is too big! ";
                 break;
             }
             if( time()>$requesttime_limit ){
@@ -165,15 +173,27 @@ class OpencartSync extends OpencartSyncUtils{
         return $this->productRemoveFromSyncList($products_to_remove);
     }
     
+    private function productImageOptimize( $path, $size_x="1200x1200" ){
+        $cache=BAY_STORAGE.'/'.$path . "_{$size_x}.jpg";
+	if (is_dir($path) || !file_exists($path)) {
+	    $path='img/notfound.jpg';
+	}
+	if( !file_exists($cache) ){
+	    $size = explode('x', $size_x);
+	    $thumb=$this->Storage->image_resize($path, $size[0], $size[1]);
+	    imagejpeg($thumb,$cache,80);
+	}
+        return file_get_contents($cache);
+    }
+    
     private function productImageUpload( $product ){
         $local_img_time=$this->Storage->file_time("dynImg/".$product->local_img_filename);
         $local_img_hash=$this->Storage->file_checksum("dynImg/".$product->local_img_filename); 
         if( $product->local_img_filename && $local_img_hash!==$product->remote_img_hash && $local_img_time>$product->remote_img_time ){
-            $ext = pathinfo($product->local_img_filename, PATHINFO_EXTENSION);
-            $file_data=$this->Storage->file_restore('dynImg/'.$product->local_img_filename);
+            $file_data=$this->productImageOptimize( 'dynImg/'.$product->local_img_filename );
             return [
                 'local_img_data'=>base64_encode($file_data),
-                'remote_img_filename'=>$this->filename_prepare("$product->model $product->name").".$ext"
+                'remote_img_filename'=>$this->filename_prepare("$product->model $product->name").".jpg"
             ];
         }
         return false;
@@ -248,6 +268,7 @@ class OpencartSync extends OpencartSyncUtils{
     
     public $sync=['step'=>['string','fetch_digest']];
     public function sync($current_step){
+        session_write_close();
         $this->message="";
         switch($current_step){
             case 'fetch_digest':
@@ -266,7 +287,7 @@ class OpencartSync extends OpencartSyncUtils{
                 } else {
                     $this->message.="Syncronisation finished! <a href='../log_show'>Logfile</a>";
                     $this->log($this->message);
-                    die();
+                    die($this->message);
                 }
                 break;
         }

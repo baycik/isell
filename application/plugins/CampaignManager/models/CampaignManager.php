@@ -138,7 +138,7 @@ class CampaignManager extends Catalog{
         return $ok;
     }
     
-    public function bonusUpdate( int $campaign_bonus_id, string $field, string $value){
+    public function bonusUpdate( int $campaign_bonus_id, string $field, string $value=''){
         $this->Hub->set_level(3);
         $period_fill_is_needed=false;
         function validate_period($date){
@@ -210,12 +210,13 @@ class CampaignManager extends Catalog{
         $this->delete('plugin_campaign_bonus_periods',['campaign_bonus_id'=>$campaign_bonus_id]);
     }
     
-    public function bonusPeriodUpdate( int $campaign_bonus_period_id, string $field, string $value){
+    public function bonusPeriodUpdate( int $campaign_bonus_period_id, string $field, string $value='' ){
         $this->Hub->set_level(3);
         return $this->update('plugin_campaign_bonus_periods',[$field=>$value],['campaign_bonus_period_id'=>$campaign_bonus_period_id]);
     }
     
     public function bonusPeriodDuplicate ( int $this_period_id, int $prev_period_id ){
+        $this->Hub->set_level(3);
         $sql="
             UPDATE
                 plugin_campaign_bonus_periods pcbp_this
@@ -346,7 +347,7 @@ class CampaignManager extends Catalog{
         return $this->bonusCalculateResult($campaign_bonus_id);
     }
     
-    private function bonusCalculateResult( int $campaign_bonus_id, bool $only_current_period=false ){
+    private function bonusCalculateResult( int $campaign_bonus_id, bool $only_current_period=false, int $bonus_limit=0 ){
         $campaign_bonus=$this->bonusGet($campaign_bonus_id);
         if( !$campaign_bonus ){
             return false;//notfound
@@ -387,6 +388,10 @@ class CampaignManager extends Catalog{
         if( $only_current_period ){
             $current_filter="AND $is_current_detection";
         }
+        $limit="";
+        if( $bonus_limit ){
+            $limit="LIMIT $bonus_limit";
+        }
         
         $sql="SELECT
             *,
@@ -424,7 +429,8 @@ class CampaignManager extends Catalog{
                 {$bonus_base['where']}
                 $current_filter
             GROUP BY period_year,period_quarter,period_month
-            ORDER BY period_year DESC,period_quarter DESC,period_month DESC) tt";
+            ORDER BY period_year DESC,period_quarter DESC,period_month DESC
+            $limit) tt";
             //die($sql);
         return $this->get_list($sql);
     }
@@ -560,7 +566,7 @@ class CampaignManager extends Catalog{
         $sql="SELECT * FROM plugin_campaign_list JOIN plugin_campaign_bonus USING(campaign_id) WHERE liable_user_id=$liable_user_id ORDER BY campaign_queue";
         $personal_bonuses=[];
         $campaign_list=$this->get_list($sql);
-        $result_total=0;
+        $result_total=$campaign_list[0]->campaign_fixed_payment;
         foreach( $campaign_list as $campaign ){
             if( $campaign->bonus_visibility==2 ){//visible in widget
                 $current_result=$this->bonusCalculateResult($campaign->campaign_bonus_id,true);
@@ -581,10 +587,13 @@ class CampaignManager extends Catalog{
         $this->Hub->set_level(2);
         $sql="SELECT * FROM plugin_campaign_list JOIN plugin_campaign_bonus USING(campaign_id) WHERE campaign_id=$campaign_id";
         $campaign_list=$this->get_list($sql);
-        $result_total=0;
+        if( !$campaign_list ){
+            return 0;
+        }
+        $result_total=$campaign_list[0]->campaign_fixed_payment;
         foreach( $campaign_list as $campaign ){
             if( $campaign->bonus_visibility>0 ){
-                $current_result=$this->bonusCalculateResult($campaign->campaign_bonus_id,true);
+                $current_result=$this->bonusCalculateResult($campaign->campaign_bonus_id,false,3);
                 $result_total+=$current_result[0]->bonus_result;
             }
         }

@@ -131,7 +131,7 @@ class Storage extends CI_Model {
         exit(file_get_contents($cache));
     }
 
-    private function image_resize($path, $width, $height) {
+    public function image_resize($path, $width, $height) {
 	$info = getimagesize($path);
 	switch ($info[2]) {
 	    case IMAGETYPE_PNG:

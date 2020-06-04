@@ -3,13 +3,14 @@
    App.company_card = {
        list:[],
        init:function(){
-           App.company_card.load();
+           App.company_card.focus();
        },
        focus:function(){
+           App.title("Карточка клиентов");
            App.company_card.load();
        },
        load:function(){
-           $.post('../Company/companyGet/'+App.state.company_id, function(resp){
+           $.post('../Company/companyGet/',{company_id:App.state.company_id}, function(resp){
                var response = App.json(resp);
                console.log(response);
                App.company_card.list = response;
