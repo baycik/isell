@@ -400,7 +400,7 @@ class Stock extends Catalog {
         $sql = "SELECT
 		doc_id,
                 DATE_FORMAT(dl.cstamp,'%d.%m.%Y') oper_date,
-                CONCAT(dt.doc_type_name,IF(dl.is_reclamation,' (Р’РѕР·РІСЂР°С‚)',''),' #',dl.doc_num) doc,
+                CONCAT(dt.doc_type_name,IF(dl.is_reclamation,' (Возврат)',''),' #',dl.doc_num) doc,
 		(SELECT label FROM companies_tree JOIN companies_list USING(branch_id) WHERE company_id=passive_company_id) plabel,
 		(SELECT label FROM companies_tree JOIN companies_list USING(branch_id) WHERE company_id=active_company_id) alabel,
                 product_code,
