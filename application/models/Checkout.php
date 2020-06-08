@@ -54,7 +54,10 @@ class Checkout extends Stock {
         return $ch_document;
     }
     
-    public function checkoutDocumentHeadGet( int $checkout_id ){
+    public function checkoutDocumentHeadGet( int $checkout_id=0 ){
+        if( !$checkout_id ){
+            return [];
+        }
         $assigned_path = $this->Hub->svar('user_assigned_path');
         $level = $this->Hub->svar('user_level');
         $sql = "        
@@ -202,7 +205,10 @@ class Checkout extends Stock {
         return true;
     }
     
-    public function checkoutLogFetch ( int $checkout_id, int $offset=0, int $limit=1000 ) {
+    public function checkoutLogFetch ( int $checkout_id=0, int $offset=0, int $limit=1000 ) {
+        if( !$checkout_id ){
+            return [];
+        }
         $this->Hub->set_level(1);
         $sql = " 
             SELECT
