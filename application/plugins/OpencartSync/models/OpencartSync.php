@@ -90,7 +90,7 @@ class OpencartSync extends OpencartSyncUtils{
                             JOIN
                         prod_list USING(product_code)
                         ) t ON remote_model=model 
-                    LIMIT $rowcount_limit";
+                    LIMIT $rowcount_limit";        
         $products=$this->get_list($sql);
         
         foreach($products as $product){
@@ -174,7 +174,7 @@ class OpencartSync extends OpencartSyncUtils{
     }
     
     private function productImageOptimize( $path, $size_x="1200x1200" ){
-        $cache=BAY_STORAGE.'/'.$path . "_{$size_x}.jpg";
+        $cache = $path . "_{$size_x}.jpg";
 	if (is_dir($path) || !file_exists($path)) {
 	    $path='img/notfound.jpg';
 	}
@@ -190,7 +190,7 @@ class OpencartSync extends OpencartSyncUtils{
         $local_img_time=$this->Storage->file_time("dynImg/".$product->local_img_filename);
         $local_img_hash=$this->Storage->file_checksum("dynImg/".$product->local_img_filename); 
         if( $product->local_img_filename && $local_img_hash!==$product->remote_img_hash && $local_img_time>$product->remote_img_time ){
-            $file_data=$this->productImageOptimize( 'dynImg/'.$product->local_img_filename );
+            $file_data=$this->productImageOptimize( BAY_STORAGE.'dynImg/'.$product->local_img_filename );
             return [
                 'local_img_data'=>base64_encode($file_data),
                 'remote_img_filename'=>$this->filename_prepare("$product->model $product->name").".jpg"

@@ -1,4 +1,5 @@
 <script>
+App.mailing_manager=
 (function(){
     Mark.pipes.date_simplify=function(date){
         let now=new Date();
@@ -14,8 +15,9 @@
     function init() {
         Layout.init();
         MailList.init();
+        MailEditor.init();
     }
-    
+
     var Layout={
         init:function(){
             Layout.adjustHolders();
@@ -83,6 +85,31 @@
                 },800);
             });
         },
+        initControls: function(){
+            Layout.Accordion('#PluginMailingManager_maillist .clickable-list').onselect=function( node ){
+                MailList.group.selected_index=$(node).data('index');
+                if(MailList.group.selected_index == '--'){
+                    return;
+                }
+                MailList.list.load(MailList.group.group_list[MailList.group.selected_index]);
+            };
+            $("#PluginMailingManager_maillist .new-list").on('click',function(){
+                MailEditor.action = 'new';
+                MailEditor.message = MailEditor.empty_message;
+                MailList.list.select(MailEditor.action);
+                return;
+            });
+            $("#PluginMailingManager_maillist .delete-mailgroup").on('click',function(){
+                var group_id = $(this).attr('data-mailgroup_id');
+                console.log(group_id);
+                return;
+            });
+            $("#PluginMailingManager_maillist .run-mailgroup").on('click',function(){
+                var group_id = $(this).attr('data-mailgroup_id');
+                console.log(group_id);
+                return;
+            });
+        },
         group:{
             group_list:[],
             selected_index:0,
@@ -94,11 +121,11 @@
             },
             render:function(){
                 App.renderTpl('PluginMailingManager_maillist',MailList.group.group_list);
-                Layout.Accordion('#PluginMailingManager_maillist').onselect=function( node ){
-                    MailList.group.selected_index=$(node).data('index');
-                    MailList.list.load(MailList.group.group_list[MailList.group.selected_index]);
-                };
+                MailList.initControls();
             }
+        },
+        createNewList: function (){
+            
         },
         list:{
             selected_id:0,
@@ -123,19 +150,177 @@
                 });
             },
             select:function(id){
-                MailList.list.selected_id=id;
-                $(`#PluginMailingManager_maillist .PluginMailingManager_list_row_selected`).removeClass('PluginMailingManager_list_row_selected');
-                if( !id ){
+                if( !id || id == MailList.list.selected_id ){
                     return;
                 }
+                MailList.list.selected_id=id;
+                $(`#PluginMailingManager_maillist .PluginMailingManager_list_row_selected`).removeClass('PluginMailingManager_list_row_selected');
                 var $selected_row=$(`#PluginMailingManager_maillist div[data-id=${MailList.list.selected_id}]`);
                 $selected_row.addClass("PluginMailingManager_list_row_selected");
-                console.log(MailList.list.selected_id);
+                MailEditor.load(MailList.list.selected_id);
             }
         }
     };
+    var MailEditor={
+        empty_message: {
+            message_handler: 'email',
+            message_subject: '',
+            message_recievers: '',
+            message_body: ''
+        },
+        data: {},
+        action: 'view',
+        current_template_index: '-1',
+        mail_error: '',
+        init:function(){
+            MailEditor.getSettings();
+            window.frames['editor_iframe'].html= '<div></div>';
+        },
+        initControls: function(){
+            $('.recievers-list-edit').click(function(){
+                var html = $(this).html();
+                App.loadWindow("MailingManager/reciever_list", {html:html}).progress(function(status,data){});
+            });
+            App.setupForm('#PluginMailingManager_mailnew', MailEditor.message, 'use_inp_values').change(function (node) {
+                MailEditor.message[this.name] = App.val(this);
+            });
+            $('.template_mark_down').click(function(){
+                var field_name = $(this).attr('data-field_name');
+                window.frames['editor_iframe'].tinymce.activeEditor.insertContent('{{' + field_name + '}}')
+            });
+            $('.save_template').click(function(){
+                MailEditor.addTemplate();
+            });
+            $('select[name="template_list"]').change(function(){
+                MailEditor.current_template_index = $(this).val();
+                var current_template = MailEditor.data.template_list[MailEditor.current_template_index];
+                if(current_template){
+                    window.frames['editor_iframe'].tinymce.activeEditor.setContent(current_template.html);
+                } else {
+                    window.frames['editor_iframe'].tinymce.activeEditor.setContent('<p></p>');
+                }
+            });
+            $('.add_new_mailing').click(function(e){
+                MailEditor.createMailing();
+            })
+        },
+        load:function(message_id){
+            if(MailEditor.action == 'view'){
+                $.post('MailingManager/messageGet', {message_id: message_id}, function (resp) {
+                    if (resp) {
+                        MailEditor.message = JSON.parse(resp);
+                        MailEditor.render();
+                        return;
+                    }
+                });
+            }
+            MailEditor.render();
+        },
+        render: function(){
+            $('#PluginMailingManager_mailnew, #PluginMailingManager_mailview').hide();
+            $('#PluginMailingManager_mail' + MailEditor.action).show();
+            var params = {
+                message: MailEditor.message, 
+                reciever_list: MailEditor.data.reciever_list,
+                template_list: MailEditor.data.template_list
+            };
+            App.renderTpl('PluginMailingManager_mail' + MailEditor.action, params);
+            MailEditor.renderMailBody();
+            MailEditor.initControls();
+            MailEditor.action = 'view';
+        },
+        renderMailBody: function(){
+            if(MailEditor.current_template_index !== '-1'){
+                window.frames['editor_iframe'].html = MailEditor.data.template_list[MailEditor.current_template_index].html;
+            } else {
+                window.frames['editor_iframe'].html = '<p></p>';
+            }
+        },
+        getSettings:function(){
+            $.post('MailingManager/settingsGet', function (resp) {
+                if (resp) {
+                    var response = JSON.parse(resp);
+                    MailEditor.data.reciever_list = response.settings.reciever_list;
+                    MailEditor.data.template_list = response.settings.template_list;
+                }
+            });
+        },
+        updateSettings: function () {
+            $.post("MailingManager/settingsUpdate", {settings: JSON.stringify(MailEditor.data)}, function (ok) {
+                if ( ok * 1 ) {
+                    MailEditor.render();
+                }
+            });
+        },
+        createMailing: function() {
+            var recievers = {
+                'email': $('#add_new_mailing.email-list').val(),
+                'sms': $('#PluginMailing_custom_mailing textarea.phone-list').val()
+            }
+            MailEditor.message.message_body = window.frames['editor_iframe'].tinymce.activeEditor.getContent();
+            MailEditor.customMessageValidate();
+            if(MailEditor.mail_error !== ''){
+                alert('Ошибка: '+MailEditor.mail_error);
+                return;
+            }
+            $.post("MailingManager/customMessageCreate", {message: JSON.stringify(MailEditor.message)}, function (ok) {
+                if ( ok * 1 ) {
+                    MailList.group.load();
+                }
+            });
+        },
+        customMessageValidate: function(){
+            MailEditor.mail_error = '';
+            if(!MailEditor.message.message_recievers && (!MailEditor.message.message_reciever_list || MailEditor.message.message_reciever_list === 'empty')){
+                MailEditor.mail_error += '\nАдресаты не указаны!';
+            }
+            if(MailEditor.message.message_subject === ''){
+                MailEditor.mail_error += '\nУкажите тему!';
+            }
+            if(MailEditor.message.message_body === ''){
+                MailEditor.mail_error += '\nПустое сообщение!';
+            }
+            return;
+        },
+        addTemplate: function(){
+            var content = window.frames['editor_iframe'].tinymce.activeEditor.getContent();
+            if(content == ""){
+                alert('Ошибка: Пустое сообщение');
+                return;
+            }
+            var default_template_name = 'Новый шаблон';
+            if(MailEditor.data.template_list[MailEditor.current_template_index]){
+                default_template_name = MailEditor.data.template_list[MailEditor.current_template_index].name;
+            }
+            var template_object = {
+                name: prompt('Название шаблона', default_template_name),
+                html: content
+            }
+            if(!template_object.name){
+                alert('Ошибка: Пустое название шаблона!');
+                return;
+            }
+            if(MailEditor.current_template_index == '-1'){
+                MailEditor.data.template_list.push(template_object);
+            } else {
+                MailEditor.data.template_list[MailEditor.current_template_index] = template_object;
+            }
+            MailEditor.action = 'new';
+            MailEditor.updateSettings();
+        }
+    };
     init();
+    
+    return {
+        reload_recievers: function(reciever_list){
+            MailEditor.message.reciever_list = reciever_list;
+            MailEditor.action = 'new';
+            MailEditor.render();
+        }
+    };
 })();
+
+
 </script>
 <script type="text/tpl" id="PluginMailingManager_list_tpl">
     <div class="PluginMailingManager_list">
@@ -143,23 +328,114 @@
             <div data-id="{{message_id}}" style="display: contents;" class="PluginMailingManager_list_row">
                 <div>{{message_recievers}}</div>
                 <div>{{message_note}}</div>
-                <div>{{message_subject}}</div>
+                {{if message_status|equals>2}}
+                <div>
+                    <img src="img/ok.png" title="Доставлено" style="margin:2px;">
+                </div>
+                {{else if message_status|equals>1}}
+                <div>
+                    <img src="img/time.png" title="Ожидает доставки" style="margin:2px;">
+                </div>
+                {{else}}
+                <div>
+                    <img src="img/red.png" title="Не доставлено" style="margin:2px;">
+                </div>
+                {{/if}}
             </div>
         {{/.}}
     </div>
 </script>
-<div id="PluginMailingManager" style="display: grid;grid-template-columns:400px auto">
+<div id="PluginMailingManager"  style="display: grid;grid-template-columns:600px auto">
     <div>
         <input type="search" id="PluginMailingManager_list_filter" style="width:100%;height: 35px;background-color: #fffd" placeholder="Фильтр">
         <div id="PluginMailingManager_maillist" class="iss_accordion">
-            <button class="iss_accordion" data-index="--">Новая рассылка</button>
-            {{.}}
-                <button class="iss_accordion" data-index="{{#}}">{{message_handler}} ({{message_count}}) / {{message_reason}} / {{created_at|date_simplify}}</button>
-                <div class="iss_accordion_panel" data-index="{{#}}"></div>
-            {{/.}}
+            <div class="clickable-list">
+            <button class="iss_accordion new-list" data-index="--">Новая рассылка</button> 
+            <div class="iss_accordion_panel" data-index="--"></div>
+                {{.}}
+                    <button class="iss_accordion" data-index="{{#}}">
+                        {{message_handler}} ({{message_count}}) / {{message_reason}} / {{created_at|date_simplify}}
+                        <b class="delete-mailgroup" data-mailgroup_id="{{#}}" style="cursor: pointer;">❌</b>
+                        <b class="run-mailgroup" data-mailgroup_id="{{#}}" style="cursor: pointer;">▶</b>
+                    </button>
+                    <div class="iss_accordion_panel" data-index="{{#}}"></div>
+                {{/.}}
+            </div>
         </div>
     </div>
-    <div id="PluginMailingManager_mailview"></div>
+    <div id="PluginMailingManager_mailview" class="right-block" style="display: none">
+        <div class="mail-panel-header">
+            <div class="inp_group info-row">
+                    <b>Тип сообщения:</b>
+                    <div class="info-column">{{ message.message_handler }}</div>
+            </div>
+            <div class="inp_group info-row">
+                    <b>Кому:</b>
+                    <div class="info-column">{{ message.message_recievers }}</div>
+            </div>
+            <div class="inp_group info-row">
+                    <b>Тема:</b>
+                    <div class="info-column">{{ message.message_subject }}</div>
+            </div>
+        </div>
+        <div class="mail-panel-body">    
+            <div class="inp_group message-body-row">
+                    <div class="message-body-column">{{ message.message_body }}</div>
+            </div>
+        </div>
+    </div>
+    <div id="PluginMailingManager_mailnew" class="right-block" style="display: none">
+        <div class="mail-panel-header">
+            <div class="type-row row">
+                <select  name="message_handler">
+                      <option value="email">Email</option>
+                      <option value="sms">Sms</option>
+                </select>
+            </div>
+            <div class="reciever-row row">
+                <input type="text" placeholder="Кому" name="message_recievers" value="">
+                <select class="recievers-list"  name="message_reciever_list">
+                   <option value="empty">--Выберите список--</option>
+                    <!--{{reciever_list}}-->
+                   <option value="{{#}}">{{ reciever_list_name }}</option>
+                     <!--{{/reciever_list}}-->
+                </select>
+                <button class="recievers-list-edit">Редактировать списки</button>
+            </div>
+            <div class="subject-row row">
+                <input type="text" placeholder="Тема" name="message_subject" value="">
+            </div>
+        </div>
+        <div class="mail-panel-body">  
+            <div class="iframe-block">
+                <iframe id="editor_iframe" name="editor_iframe" style="height:474px;width: 100%;border: none;" src="page/dialog/text_editor_iframe.html"></iframe>
+                <div class="iframe-buttons">
+                    <button class="template_mark_down" data-field_name="company_name">Название компании</button>
+                    <button class="template_mark_down" data-field_name="company_person">Контактное лицо</button>
+                    <button class="template_mark_down" data-field_name="company_director">Директор</button>
+                    <button class="template_mark_down" data-field_name="company_email">Эл. Почта</button>
+                    <button class="template_mark_down" data-field_name="company_web">Веб-сайт</button>
+                    <button class="template_mark_down" data-field_name="company_mobile">Номер телефона</button>
+                    <button class="template_mark_down" data-field_name="company_address">Физический адрес</button>
+                    <button class="template_mark_down" data-field_name="company_bank_name">Название банка</button>
+                </div>
+            </div>
+            <div class="templates-row">
+                <button class="save_template">Сохранить шаблон</button>
+                <select name="template_list" >
+                    <option value="-1">--Новый шаблон--</option>
+                    <!--{{template_list}}
+                    {{if name}}-->
+                    <option value="{{#}}">{{name}}</option>
+                    <!--{{/if}}
+                    {{/template_list}}-->
+                </select>
+            </div>
+            <div class="submit-row">
+                <button class="add_new_mailing">➕ Создать рассылку</button>
+            </div>
+        </div>
+    </div>
 </div>
 <style>
     button.iss_accordion {
@@ -174,19 +450,21 @@
         outline: none;
         font-size: 12px;
         transition: 0.8s;
-        background: #Fff; 
+        background: #Fff;
         height: 35px;
     }
     button.iss_accordion.active, button.iss_accordion:hover {
-        background-color: #Fe9; 
+        background-color: #Fe9;
     }
     .iss_accordion_panel {
         display: block;
         background-color: rgba(255,255,255,.3);
+        max-height: 300px;
+        overflow: auto;
     }
     .PluginMailingManager_list{
         display: grid;
-        grid-template-columns:auto auto 150px;
+        grid-template-columns: minmax(auto, 270px) minmax(auto, 250px) 50px;
         grid-row-gap:2px;
         margin-left:10px;
         padding-top: 2px;
@@ -204,6 +482,128 @@
         cursor: pointer;
     }
     .PluginMailingManager_list_row_selected div{
-        background-color: #fffd;    
+        background-color: #fffd;
+    }
+
+    .iss_accordion  button b{
+        float: right;
+        padding: 5px 0.5em;
+        font-size: 13px;
+        border-radius: 5px;
+        margin: -8px 0.1em;
+    }
+    
+    .iss_accordion  button b:hover{
+        color: #1b71bd;
+        background-color: aliceblue;
+    }
+    /*======================================*/
+    .right-block{
+        background-color: #ffffffc2;
+        border-left: 2px solid lightgray;
+    }
+    .right-block .mail-panel-header{
+        background-color: #ffffff8c;
+        padding: 0.5em;
+    }
+    
+    .right-block .mail-panel-body{
+        border-top: 1px solid lightgray;
+    }
+
+
+    
+    #PluginMailingManager_mailnew .inp_group{
+        
+    }
+    #PluginMailingManager_mailnew .reciever-row{
+        display: grid;
+        grid-template-columns: 60% 20% 20%;
+    }
+    
+    #PluginMailingManager_mailnew .row{
+        padding: 0.3em;
+        border-bottom: 1px solid lightgray;
+    }
+    #PluginMailingManager_mailnew .templates-row button,
+    #PluginMailingManager_mailnew .templates-row select,
+    #PluginMailingManager_mailnew .row button,
+    #PluginMailingManager_mailnew .row select{
+        height: 30px;
+    }    
+    #PluginMailingManager_mailnew .row input{
+        width: 100%;
+        border: none;
+        background-color: transparent;
+        height: 30px;
+    }
+    
+    #PluginMailingManager_mailnew  .inp_group label{
+        display: grid;
+        grid-template-columns: 10% 75% auto;
+    }
+    #PluginMailingManager_mailnew .right-block .inp_group b{
+        width: auto;
+    }
+
+    #PluginMailingManager_mailnew  textarea{
+        width: 100%;
+        height: 300px;
+    }
+    #PluginMailingManager_mailnew .iframe-block{
+        display: grid;
+        grid-template-columns: 85% 15%;
+    }
+    #PluginMailingManager_mailnew .iframe-buttons{
+        background-color: #ffffff82;
+        border: 1px solid lightgray;
+    }
+    #PluginMailingManager_mailnew .iframe-buttons button{
+        display: block;
+        width: 97%;
+        background-color: white;
+        border: 1px solid lightgray;
+        padding: 0.7em;
+        border-radius: 0;
+        margin: 5px 3px;
+        cursor: pointer;
+        transition: 0.2s ease;
+    }
+    #PluginMailingManager_mailnew .iframe-buttons button:hover{
+        background: #4884d5;
+        color: white;
+    }
+    #PluginMailingManager_mailnew .templates-row{
+        padding: 0.5em;
+        background-color: white;
+        border-bottom: 1px solid lightgray;
+    }
+    
+    #PluginMailingManager_mailnew .submit-row{
+        padding: 0.5em;
+        text-align: center;
+    }
+    #PluginMailingManager_mailview .inp_group{
+        padding: 0.5em;
+        margin: 0;
+    }
+    #PluginMailingManager_mailview .inp_group.info-row{
+        display: block ruby
+    }
+    #PluginMailingManager_mailnew .inp_group b,
+    #PluginMailingManager_mailview .inp_group b{
+        font-weight: bold;
+    }
+    #PluginMailingManager_mailview .info-column{
+        margin-left: 0.5em;
+        font-style: italic;
+    }
+    #PluginMailingManager_mailview .message-body,
+    #PluginMailingManager_mailview .message-table{
+        width: 100% !important; 
+    }
+    #PluginMailingManager_mailview .message-body-column{
+        margin: 2em auto;
+        padding: 1.5em;
     }
 </style>
