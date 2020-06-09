@@ -43,14 +43,14 @@ SELECT product_bpack,product_spack,product_weight,product_volume,product_unit IN
 
 IF _doc_type=1 AND NOT _is_reclamation THEN  
 	IF _doc_status_id IS NULL OR _doc_status_id<>2 THEN
-		IF _entry_count>_stock_count AND _is_commited=0 AND _entry_count<_stock_count+_awaiting THEN 
+		IF _entry_count>_stock_count AND _is_commited=0 AND _entry_count<=_stock_count+_awaiting THEN 
         
 			SELECT SUM(product_quantity) INTO _awaiting_filtered_qty FROM 
 				document_entries rde
 					JOIN 
 				document_list rdl USING(doc_id)
 			WHERE rde.product_code=_product_code AND doc_type=2 AND NOT is_reclamation AND NOT notcount AND rdl.doc_status_id=2 AND DATE_ADD(NOW(), INTERVAL 3 DAY)>rdl.cstamp;
-            IF _entry_count<_stock_count+_awaiting_filtered_qty THEN
+            IF _entry_count<=_stock_count+_awaiting_filtered_qty THEN
 				RETURN CONCAT(IF(_notcount,'wrn_awaiting','err_awaiting'),' В наличии:',_stock_count,' Ожидается:',_awaiting_filtered_qty);
 			END IF;
             
