@@ -1,8 +1,8 @@
-USE `isell_db`;
+
 DROP function IF EXISTS `CHK_ENTRY`;
 
 DELIMITER $$
-USE `isell_db`$$
+
 CREATE DEFINER=`root`@`localhost` FUNCTION `CHK_ENTRY`( _entry_id INT ) RETURNS varchar(100) CHARSET utf8
     READS SQL DATA
 BEGIN
@@ -27,7 +27,6 @@ DECLARE _weight DOUBLE;
 DECLARE _volume DOUBLE;
 DECLARE _unit VARCHAR(10) CHARSET utf8;
 DECLARE _awaiting_filtered_qty FLOAT;
-DECLARE _awaiting_suppliers VARCHAR(45) CHARSET utf8;
 
 
 SELECT doc_id,product_code,product_quantity,invoice_price,self_price,breakeven_price INTO _doc_id,_product_code,_entry_count,_invoice_price,_self_price,_breakeven_price FROM document_entries WHERE doc_entry_id=_entry_id;
@@ -46,17 +45,13 @@ IF _doc_type=1 AND NOT _is_reclamation THEN
 	IF _doc_status_id IS NULL OR _doc_status_id<>2 THEN
 		IF _entry_count>_stock_count AND _is_commited=0 AND _entry_count<_stock_count+_awaiting THEN 
         
-			SELECT SUM(product_quantity),GROUP_CONCAT(doc_num) INTO _awaiting_filtered_qty, _awaiting_suppliers FROM 
+			SELECT SUM(product_quantity) INTO _awaiting_filtered_qty FROM 
 				document_entries rde
 					JOIN 
 				document_list rdl USING(doc_id)
-					JOIN
-				companies_list ON company_id=passive_company_id
-					JOIN
-				companies_tree USING(branch_id)
 			WHERE rde.product_code=_product_code AND doc_type=2 AND NOT is_reclamation AND NOT notcount AND rdl.doc_status_id=2 AND DATE_ADD(NOW(), INTERVAL 3 DAY)>rdl.cstamp;
             IF _entry_count<_stock_count+_awaiting_filtered_qty THEN
-				RETURN CONCAT(IF(_notcount,'wrn_awaiting','err_awaiting'),' В наличии:',_stock_count,' Ожидается:',_awaiting_filtered_qty,' Документ№:',_awaiting_suppliers);
+				RETURN CONCAT(IF(_notcount,'wrn_awaiting','err_awaiting'),' В наличии:',_stock_count,' Ожидается:',_awaiting_filtered_qty);
 			END IF;
             
 		END IF;
