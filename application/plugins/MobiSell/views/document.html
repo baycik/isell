@@ -447,9 +447,9 @@
 			    App.document.doc.entries[i].status_color = "orange";
 			    App.document.doc.entries[i].status_message = message;
 			} else
-			if ( status == 'err' ) {
-			    App.document.doc.entries[i].status_icon = "warning circle";
-			    App.document.doc.entries[i].status_color = "red";
+			if ( status.indexOf('awaiting')>-1 ) {
+			    App.document.doc.entries[i].status_icon = "clock outline";
+			    App.document.doc.entries[i].status_color = "orange";
 			    App.document.doc.entries[i].status_message = message;
 			}
 			if ( status.indexOf('reserve')>-1 ) {
