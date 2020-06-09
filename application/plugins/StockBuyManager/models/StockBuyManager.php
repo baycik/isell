@@ -388,7 +388,7 @@ class StockBuyManager extends Catalog{
     
     
 
-    public function orderFetch( int $offset, int $limit, string $sortby, string $sortdir, array $filter=null, int $count_needed=0, int $count_reserve=0, int $count_notcommited=0, int $count_all=0 ){
+    public function orderFetch( int $offset=0, int $limit=30, string $sortby=null, string $sortdir='DESC', array $filter=null, int $count_needed=0, int $count_reserve=0, int $count_notcommited=0, int $count_all=0 ){
         $this->Hub->set_level(2);
 	if( empty($sortby) ){
 	    $sortby="product_code";
