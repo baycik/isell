@@ -46,9 +46,6 @@ class Checkout extends Stock {
         if( !$ch_document['head'] ){
             return null;
         }
-        if( $ch_document['head']->parent_doc_id ){
-            $this->checkoutDocumentRefresh($checkout_id, $ch_document['head']->parent_doc_id);
-        }
         $ch_document['entries']=$this->checkoutEntriesFetch($checkout_id);
         $ch_document['log']=$this->checkoutLogFetch($checkout_id);
         return $ch_document;
@@ -77,7 +74,11 @@ class Checkout extends Stock {
             WHERE 
                 checkout_id='$checkout_id'
                 AND IF(checkout_list.parent_doc_id,level<='$level' AND path LIKE '$assigned_path%','$level'>1)";
-        return $this->get_row($sql);
+        $head=$this->get_row($sql);
+        if( $head->parent_doc_id ){
+            $this->checkoutDocumentRefresh($checkout_id, $head->parent_doc_id);
+        }
+        return $head;
     }
     
     private function checkoutDocumentRefresh ($checkout_id,$parent_doc_id){
@@ -91,17 +92,24 @@ class Checkout extends Stock {
         ";
         $sql_update = "
             INSERT
-                checkout_entries (product_id, product_quantity, checkout_id, product_quantity_verified, verification_status)
-            SELECT
-                product_id, product_quantity, $checkout_id, 0, 0
-            FROM
-                document_entries de
-                    JOIN
-                prod_list pl USING(product_code)
-            WHERE 
-                doc_id = '$parent_doc_id'
+                checkout_entries (product_id, product_quantity, checkout_id, product_quantity_verified, verification_status, product_comment)
+            
+            SELECT * FROM
+                (SELECT 
+                    product_id, product_quantity, $checkout_id, 0 pqv, 0 vs,IF( POSITION('err' IN row_status) OR POSITION('wrn' IN row_status), SUBSTRING(row_status FROM POSITION(' ' IN row_status)),'') new_product_comment
+                FROM
+                (SELECT
+                    product_id, product_quantity, CHK_ENTRY(doc_entry_id) row_status
+                FROM
+                    document_entries de
+                        JOIN
+                    prod_list pl USING(product_code)
+                WHERE 
+                    doc_id = '$parent_doc_id'
+                        ) t) de
             ON DUPLICATE KEY UPDATE checkout_entries.product_quantity=de.product_quantity,
-            verification_status=IF(de.product_quantity=product_quantity_verified,1,2)
+            verification_status=IF(de.product_quantity=product_quantity_verified,1,2),
+            checkout_entries.product_comment=new_product_comment
             ";
         $this->query($sql_reset);
         $this->query($sql_update);
@@ -120,7 +128,7 @@ class Checkout extends Stock {
                 ce.*,
                 ce.product_quantity_verified-ce.product_quantity quantity_difference,
                 IF(ce.verification_status=1,'✔',IF(ce.verification_status=2,'±','')) verification_status_symbol,
-                ru,
+                IF(product_comment IS NOT NULL,CONCAT(ru,' [',product_comment,']'),ru) ru, 
                 product_spack, 
                 product_bpack, 
                 product_code, 
@@ -138,7 +146,7 @@ class Checkout extends Stock {
             HAVING {$having['inner']}
             ORDER BY '$sortby' '$sortdir'
             LIMIT $limit OFFSET $offset";
-        return $this->get_list($sql);
+        return $this->get_list($sql)??[];
     }
     
     public $checkoutProductGet = ['barcode' => 'string']; 
@@ -244,6 +252,15 @@ class Checkout extends Stock {
         return $checkout_id;
     }
     
+    private function checkoutDocumentEntryCommentParse( $row_status_text ){
+        $row_status=explode(' ',$row_status_text);
+        $row_status_code= array_shift($row_status);
+        if( strpos($row_status_code,'err')!==false || strpos($row_status_code,'wrn')!==false ){
+            return implode(' ', $row_status);
+        }
+        return '';
+    }
+    
     public $checkoutDocumentCreate = ['parent_doc_id' => 'int', 'checkout_name'=>'string'];
     public function checkoutDocumentCreate ($parent_doc_id, $checkout_name){
         $this->Hub->set_level(2);
@@ -253,9 +270,12 @@ class Checkout extends Stock {
         $checkout_id=$this->create('checkout_list', ['checkout_name'=>$checkout_name, 'parent_doc_id'=>$parent_doc_id, 'created_by'=>$user_id, 'modified_by'=>$user_id]);
         foreach ($document_entries_list['entries'] as $entry){
             $product_id = $this->get_value("SELECT product_id FROM prod_list WHERE product_code = '$entry->product_code'");
+            $product_comment=$this->checkoutDocumentEntryCommentParse( $entry->row_status );
+            
             $this->create('checkout_entries', ['checkout_id'=>$checkout_id, 
                                                 'product_id'=>$product_id, 
                                                 'product_quantity'=>$entry->product_quantity,
+                                                'product_comment'=>$product_comment,
                                                 'product_quantity_verified'=>0,
                                                 'verification_status'=>0]);
         }
