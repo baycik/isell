@@ -161,7 +161,7 @@ class Catalog extends CI_Model {
         $url = "http://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI] User:".$this->Hub->svar('user_login');
         $this->create('log_list', ['message' => $message, 'url' => $url, 'log_class' => $class]);
         if( rand(1,1000)==1 ){
-            $this->query("DELETE FROM log_list WHERE DATEDIFF(NOW(),cstamp)>3*30");
+            $this->query("DELETE FROM log_list WHERE DATEDIFF(NOW(),cstamp)>7");
         }
     }
 

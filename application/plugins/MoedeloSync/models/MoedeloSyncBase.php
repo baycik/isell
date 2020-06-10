@@ -169,7 +169,7 @@ class MoedeloSyncBase extends Catalog{
                 $filter_local
             ";
         $action_list=$this->get_list($sql_action_list);
-        //print_r($action_list);
+        print_r($action_list);//die;
         foreach( $action_list as $action ){
             if( $action->sync_action!='SKIP' && method_exists( $this, $action->sync_action) ){
                 $this->{$action->sync_action}($action->local_id,$action->remote_id,$action->entry_id);
@@ -339,7 +339,7 @@ class MoedeloSyncBase extends Catalog{
                     plugin_sync_entries
                 SET
                     remote_hash=MD5(''),
-                    remote_tstamp=NOW()
+                    local_tstamp=NOW()
                 WHERE
                     local_id='$local_id'
                     AND sync_destination='{$this->doc_config->sync_destination}'
