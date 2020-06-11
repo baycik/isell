@@ -128,7 +128,7 @@ class Checkout extends Stock {
                 ce.*,
                 ce.product_quantity_verified-ce.product_quantity quantity_difference,
                 IF(ce.verification_status=1,'✔',IF(ce.verification_status=2,'±','')) verification_status_symbol,
-                IF(product_comment,CONCAT(ru,' [',product_comment,']'),ru) ru, 
+                IF(product_comment<>'',CONCAT(ru,' [',product_comment,']'),ru) ru, 
                 product_spack, 
                 product_bpack, 
                 product_code, 
