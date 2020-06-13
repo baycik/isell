@@ -1,5 +1,5 @@
 <form class="head_input">
-    <div style="background: url('img/bg_header_stripes.png');padding: 10px;margin: -5px -5px 0px -5px">
+    <div style="background: url('img/bg_header_stripes.png');padding: 7px;margin: -5px -5px 0px -5px">
         <label class="switch">
             <input name="is_commited" type="checkbox" title="Проведен" value="1" data-skip="1">
             <span class="slider round"></span>
@@ -15,24 +15,31 @@
             <span class="icon-24 icon-refresh" title="Обновить" data-action="reload"> </span> 
         </div>
     </div>
-    <div style="display: grid;grid-template-columns:350px 350px;margin-top: 5px;">
-        
-        <div class="field">
-            <label>Тип документа</label>
-            <div class="ui selection dropdown x-doc_type" style="width:250px" title="Тип">
-                <div class="text"></div>
-                <i class="dropdown icon"></i>
-            </div>
+    
+    <div style="display: grid;grid-template-columns:100px 270px 100px 270px;margin: 15px;gap:5px">
+        <label>Тип документа</label>
+        <select name="doc_type" class="ui selection dropdown" data-skip="1"></select>
+
+        <label>Дата</label>
+        <div class="ui left icon input fluid">
+            <i class="calendar icon"></i>
+           <input type="date" name="doc_date" title="Дата" data-skip="1">
         </div>
         
+        <label>Статус</label>
+        <select name="doc_status_id" class="ui selection dropdown" data-skip="1"></select>
         
-        
-        
-        <input name="doc_status_id" title="Статус">
-        <input type='date' name="doc_date" title="Дата">
-        <input type='number' name="doc_num" title="Номер" min="1">
+        <label>Номер</label>
+        <div class="ui left icon input fluid">
+            <i class="hashtag icon"></i>
+            <input type="number" name="doc_num" title="Номер" data-skip="1">
+        </div>
     </div>
-    <div class="x-utils" style="display: none">
+        
+        
+        
+        
+    <div class="x-utils" style="display: none1">
 	<hr style="border-color: white">
         <div style="display: grid;grid-template-columns:350px 350px;">
             <input name="active_company_id" title="Наша фирма">
@@ -56,3 +63,12 @@
         </div>
     </div>
 </form>
+
+
+
+<style>
+    .head_input label{
+        text-align: right;
+        margin-top: 7px;
+    }
+</style>

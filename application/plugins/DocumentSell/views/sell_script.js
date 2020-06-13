@@ -42,77 +42,39 @@ Document.head=  {
             });
         },
         initEasyUiWidgets:function(){
-            $.fn.api.settings.successTest = function(response) {
-                return true;
-            };
-            
-            
-            
-            
-            $('#'+holderId+' .x-doc_type').dropdown({
-                    on:'hover',
-                    apiSettings   : {
-                    cache:false,
-                    onResponse: function(resp) {
-                        var response = {
-                            results : []
-                        };
-                        $.each(resp, function(index, item) {
-                            var label=`<img src="img/${item.icon_name}.png" class="ui avatar image"> ${item.doc_type_name}`;
-                            response.results.push({
-                                value:item.doc_type,
-                                name:label,
-                                selected: (item.doc_type==1)?1:0
-                            });
-                        });
-                        console.log(response);
-                        return response;
-                    }
-                }
-            }).api({on:'now',url: 'DocumentList/documentTypeListFetch',onResponse: function(resp) {
-                        var response = {
-                            results : []
-                        };
-                        $.each(resp, function(index, item) {
-                            var label=`<img src="img/${item.icon_name}.png" class="ui avatar image"> ${item.doc_type_name}`;
-                            response.results.push({
-                                value:item.doc_type,
-                                name:label,
-                                selected: (item.doc_type==1)?1:0
-                            });
-                        });
-                        console.log(response);
-                        return response;
-                    }});
-            
-            
-            setTimeout (function(){ 
-                
-                
-                $('.x-doc_type').dropdown('refresh').dropdown('set selected',1);
-            
-            
-            
-            }, 500);
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
-            
+            $.get('DocumentList/documentTypeListFetch',{},function(resp){
+                let list=App.json(resp);
+                for(let item of list) {
+                    item.name=`<img src="img/${item.icon_name}.png" class="ui image" style="margin:1px"> ${item.doc_type_name}`;
+                    item.value=item.doc_type;
+                };
+                $('#'+holderId+' select[name=doc_type]').dropdown({values: list});
+                setTimeout(function(){
+                    $('#'+holderId+' select[name=doc_type]').dropdown('set selected',Document.data.head.doc_type);
+                },0);
+            });
+            $.get('DocumentList/statusFetchList',{},function(resp){
+                let icons={
+                    created:'star outline',
+                    reserved:'clock outline',
+                    processed:'shipping fast'
+                };
+                let list=App.json(resp);
+                for(let item of list) {
+                    item.name=`<i class="ui icon ${icons[item.status_code]}"></i> ${item.status_description}`;
+                    item.value=item.doc_status_id;
+                };
+                $('#'+holderId+' select[name=doc_status_id]').dropdown({values: list}).dropdown('set selected',Document.data.head.doc_status_id);
+            });
             
             
             
             
             
             return;
+//            $.fn.api.settings.successTest = function(response) {
+//                return true;
+//            };
             //$.parser.parse("#"+holderId+" .x-head form");//for easy ui
             $("#"+holderId+" .x-head input[name=passive_company_id]").prop('id',holderId+'_pcomp');
             $("#"+holderId+"_pcomp").combobox({
