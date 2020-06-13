@@ -327,8 +327,8 @@ App.setupForm = function ( fquery, fvalue, mode ) {
 	    return true;
 	}
 	if ($(element).attr('title') && !$(element).attr('data-skip')) {
-	    $(element).wrap('<div class="inp_group"><label></label></div>');
-	    $(element).before("<b>" + element.title + ": </b>");
+	    $(element).wrap('<div class="inp_group"></div>');
+	    $(element).before("<label><b>" + element.title + ": </b></label>");
 	}
 	if ($(element).attr('type') === 'checkbox' && fvalue[element.name] * 1) {
 	    $(element).attr('checked', 'checked');

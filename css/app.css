@@ -702,10 +702,7 @@ h2{
     height: 40px;
     background-image: linear-gradient(#fff 0%, #e0eeff 100%);
 }
-.head_input input,.head_input select{
-    height: 29px;
-    margin-left: -1px;
-}
+
 .head_input .inp_group b{
     width:130px;
 }

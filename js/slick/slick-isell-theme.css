@@ -59,7 +59,7 @@ classes should alter those!
     white-space: normal;
     overflow: visible;
     height: auto !important;
-    min-height: 25px;
+    min-height: 28px;
     z-index: 100;
     border: 1px solid #39f;
     border-color: #39f;
@@ -131,7 +131,7 @@ classes should alter those!
     text-align: right;
 }
 .slick-header-column.ui-state-default{
-    height: 23px;
+    height: 27px;
 }
 
 
