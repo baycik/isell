@@ -1,7 +1,7 @@
 <form class="head_input">
     <div style="background: url('img/bg_header_stripes.png');padding: 7px;margin: -5px -5px 0px -5px">
         <label class="switch">
-            <input name="is_commited" type="checkbox" title="Проведен" value="1" data-skip="1">
+            <input name="is_commited" type="checkbox" title="Проведен" value="1">
             <span class="slider round"></span>
         </label>
         <div class="x-toolbar" style="text-align: right; float: right; ">
@@ -16,47 +16,48 @@
         </div>
     </div>
     
-    <div style="display: grid;grid-template-columns:100px 270px 100px 270px;margin: 15px;gap:5px">
+    <div class="head_widget_grid">
         <label>Тип документа</label>
-        <select name="doc_type" class="ui selection dropdown" data-skip="1"></select>
+        <select name="doc_type" class="ui selection dropdown"></select>
 
         <label>Дата</label>
         <div class="ui left icon input fluid">
             <i class="calendar icon"></i>
-           <input type="date" name="doc_date" title="Дата" data-skip="1">
+           <input type="date" name="doc_date" title="Дата">
         </div>
         
         <label>Статус</label>
-        <select name="doc_status_id" class="ui selection dropdown" data-skip="1"></select>
+        <select name="doc_status_id" class="ui selection dropdown"></select>
         
         <label>Номер</label>
         <div class="ui left icon input fluid">
             <i class="hashtag icon"></i>
-            <input type="number" name="doc_num" title="Номер" data-skip="1">
+            <input type="number" name="doc_num" title="Номер">
         </div>
     </div>
-        
-        
-        
-        
     <div class="x-utils" style="display: none1">
 	<hr style="border-color: white">
-        <div style="display: grid;grid-template-columns:350px 350px;">
-            <input name="active_company_id" title="Наша фирма">
-            <input name="passive_company_id" title="Клиент">
+        <div class="head_widget_grid">
+            <label>Наша фирма</label>
+            <select name="active_company_id" class="ui selection dropdown"></select>
+            
+            <label>Клиент</label>
+            <select name="passive_company_id" class="ui search dropdown"></select>
+            
+
             <input name="vat_rate" type="text" title="НДС %">
             <input name="doc_ratio" title="Курс">
             <div class="inp_group" style="width:320px;">
                 <b>Цена без НДС:</b>
                 <label class="switch">
-                    <input name="use_vatless_price" type="checkbox" title="Цена без НДС" value="1" data-skip="1">
+                    <input name="use_vatless_price" type="checkbox" title="Цена без НДС" value="1">
                     <span class="slider round"></span>
                 </label>
             </div>
             <div class="inp_group" style="width:320px;">
                 <b>Не учитывать:</b>
                 <label class="switch">
-                    <input name="notcount" type="checkbox" title="Не учитывать" value="1" data-skip="1">
+                    <input name="notcount" type="checkbox" title="Не учитывать" value="1">
                     <span class="slider round"></span>
                 </label>
             </div>
@@ -70,5 +71,11 @@
     .head_input label{
         text-align: right;
         margin-top: 7px;
+    }
+    .head_widget_grid{
+        display: grid;
+        grid-template-columns:100px 270px 100px 270px;
+        margin: 15px;
+        gap:5px
     }
 </style>

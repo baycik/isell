@@ -27,8 +27,8 @@ Document.head=  {
     controls:{
         suppress_update:true,
         init:function(){
-            App.setupForm("#"+holderId+" .x-head form");
-            Document.head.controls.initEasyUiWidgets();
+            //App.setupForm("#"+holderId+" .x-head form");
+            Document.head.controls.initWidgets();
             $("#"+holderId+" .x-head form,#"+holderId+" .document_comment").form({
                 onChange: function(node){
                     let name=$(node).attr('name') || $(node).attr('textboxname');
@@ -41,7 +41,7 @@ Document.head=  {
                 }
             });
         },
-        initEasyUiWidgets:function(){
+        initWidgets:function(){
             $.get('DocumentList/documentTypeListFetch',{},function(resp){
                 let list=App.json(resp);
                 for(let item of list) {
@@ -69,83 +69,37 @@ Document.head=  {
             
             
             
-            
-            
-            return;
-//            $.fn.api.settings.successTest = function(response) {
-//                return true;
-//            };
-            //$.parser.parse("#"+holderId+" .x-head form");//for easy ui
-            $("#"+holderId+" .x-head input[name=passive_company_id]").prop('id',holderId+'_pcomp');
-            $("#"+holderId+"_pcomp").combobox({
-                valueField: 'company_id',
-                textField: 'label',
-                mode: 'remote',
-                hasDownArrow:false,
-                selectOnNavigation:false,
-                loader:function(param, success, error){
-                    if( param.q===undefined ){
-                        success([{company_id:Document.data.head.passive_company_id,label:Document.data.head.label}]);
-                        return;
+            $('#'+holderId+' select[name=active_company_id]').dropdown({
+                apiSettings: {
+                    url: 'Company/listFetch/?mode=active_only&q={query}',
+                    onResponse: function( list ){
+                        let companies=[];
+                        for( let i in list ){
+                            companies.push({value:list[i].company_id,name:list[i].label});
+                        }
+                        return {
+                            success:true,
+                            results:companies
+                        };
                     }
-                    $.get('Company/listFetch/', param, function (xhr) {
-                        var resp = App.json(xhr);
-                        success(resp.length ? resp : []);
-                    });
-                },
-                formatter:Document.head.controls.companyFormatter,
-                icons: [
-                    {iconCls:'icon-settings16',handler: Document.head.controls.companyDetailsShow},
-                    {iconCls:'icon-change16',handler:Document.head.controls.companyTreeShow}
-                ]
-            });
-            $("#"+holderId+" .x-head input[name=active_company_id]").prop('id',holderId+'_acomp');
-            $("#"+holderId+"_acomp").combobox({
-                valueField: 'company_id',
-                textField: 'label',
-                mode: 'remote',
-                hasDownArrow:true,
-                selectOnNavigation:false,
-                loader:function(param, success, error){
-                    if( param.q===undefined ){
-                        success([{company_id:Document.data.head.active_company_id,label:Document.data.head.active_company_label}]);
-                        return;
-                    }
-                    $.get('Company/listFetch/active_only', param, function (xhr) {
-                        var resp = App.json(xhr);
-                        success(resp.length ? resp : []);
-                    });
                 }
             });
-            $("#"+holderId+" .x-head input[name=doc_status_id]").prop('id',holderId+'_doc_status_id');
-            $("#"+holderId+"_doc_status_id").combobox({
-                valueField: 'doc_status_id',
-                textField: 'status_description',
-                url:'DocumentList/statusFetchList',
-                mode: 'remote',
-                method:'get',
-                selectOnNavigation:false,
-                panelHeight:''
+            $('#'+holderId+' select[name=passive_company_id]').dropdown({
+                apiSettings: {
+                    url: 'Company/listFetch/?q={query}',
+                    onResponse: function( list ){
+                        let companies=[];
+                        for( let i in list ){
+                            companies.push({value:list[i].company_id,name:list[i].label});
+                        }
+                        return {
+                            success:true,
+                            results:companies
+                        };
+                    }
+                }
             });
             
-            /*
-            $("#"+holderId+" .x-head div[data-field=doc_type]").prop('id',holderId+'_doc_type');
-            $("#"+holderId+"_doc_type").combobox({
-                valueField: 'doc_type',
-                textField: 'doc_type_name',
-                url:'DocumentList/documentTypeListFetch',
-                mode: 'remote',
-                method:'get',
-                selectOnNavigation:false,
-                panelHeight:'',
-                showItemIcon:true,
-                loadFilter:function(data){
-                    data.forEach(function(element){
-                        element.iconCls="icon-"+element.icon_name;
-                    });
-                    return data;
-                }
-            });*/
         },
         handleChange:function( field, value, title ){
             if( Document.head.controls.suppress_update ){
@@ -156,6 +110,24 @@ Document.head=  {
         },
         render:function(head_data){
             Document.head.controls.suppress_update=true;
+            
+            
+            
+            
+
+            $('#'+holderId+' select[name=passive_company_id]')
+                    .dropdown('set text',Document.data.head.passive_company_label)
+                    .dropdown('set value',Document.data.head.passive_company_id);
+            
+            
+            
+            $('#'+holderId+' select[name=active_company_id]')
+                    .dropdown('set text',Document.data.head.active_company_label)
+                    .dropdown('set value',Document.data.head.active_company_id);
+            
+            return;
+            
+            
             
             
              //$('.dropdown').dropdown('set selected', '1'); 
