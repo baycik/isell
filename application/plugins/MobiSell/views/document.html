@@ -451,12 +451,17 @@
 			    App.document.doc.entries[i].status_icon = "warning circle";
 			    App.document.doc.entries[i].status_color = "red";
 			    App.document.doc.entries[i].status_message = message;
-			}
-			if ( status.indexOf('reserve')>-1 ) {
+			} else
+                        if ( status.indexOf('awaiting')>-1 ) {
+			    App.document.doc.entries[i].status_icon = "clock outline";
+			    App.document.doc.entries[i].status_color = "orange";
+			    App.document.doc.entries[i].status_message = message;
+			} else 
+                        if ( status.indexOf('reserve')>-1 ) {
 			    App.document.doc.entries[i].status_icon = "box";
 			    App.document.doc.entries[i].status_color = "red";
 			    App.document.doc.entries[i].status_message = message;
-			}
+			} else
 			if ( status.indexOf('breakeven')>-1 ) {
 			    App.document.doc.entries[i].status_icon = "arrow alternate circle down outline";
 			    App.document.doc.entries[i].status_color = "red";

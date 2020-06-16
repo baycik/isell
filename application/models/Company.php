@@ -188,14 +188,14 @@ class Company extends Catalog{
     }
     
     public $selectPassiveCompany=['int'];
-    public function selectPassiveCompany( $company_id ){
+    public function selectPassiveCompany( int $company_id ){
 	$company=$this->companyGet( $company_id );
 	$this->Hub->svar('pcomp',$company);
 	return $company;
     }
     
     public $selectActiveCompany=['int'];
-    public function selectActiveCompany( $company_id ){
+    public function selectActiveCompany( int $company_id ){
 	$company=$this->companyGet( $company_id );
 	if( $company && $company->is_active ){
 	    $this->Hub->svar('acomp',$company);
