@@ -246,7 +246,7 @@ class MoedeloSyncUPDSell extends MoedeloSyncBase{
                     ROUND(invoice_price*product_quantity*(1+{$document->vat_rate}/100),2) SumWithNds,
                     prod_pse.remote_id StockProductId,
                     party_label Declaration,
-                    analyse_origin Country
+                    CONCAT(UCASE(LEFT(analyse_origin, 1)), LCASE(SUBSTRING(analyse_origin, 2))) Country
                 FROM
                     document_entries
                         JOIN

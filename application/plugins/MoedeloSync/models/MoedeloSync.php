@@ -47,7 +47,7 @@ class MoedeloSync extends Catalog {
         echo "<div style='display:grid;grid-template-columns:300px auto'><div>";
         foreach( $this->joblist as $job ){
             $job_parts=explode('/',$job);
-            echo "<a target='screen' href='../tick/?currentJob=$job_parts[0]/$job_parts[1]'>$job_parts[0]/$job_parts[1]</a><br>";
+            echo "<a target='screen' href='./tick/?currentJob=$job_parts[0]/$job_parts[1]'>$job_parts[0]/$job_parts[1]</a><br>";
         }
         echo "</div><div><iframe src='' name='screen' style='width:100%;height:800px'></iframe></div>";
         echo "</div>";

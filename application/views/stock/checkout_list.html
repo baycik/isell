@@ -23,9 +23,9 @@
             init: function(){
                 var settings = {
 			columns:  [
-                            {id: "row_num", field: "",formatter:App.page_stock_checkout_list.table.frm.queue, name: "#", width: 25,cssClass: 'slick-align-right'},
+                            {id: "row_num", field: "",formatter:App.page_stock_checkout_list.table.frm.queue, name: "#", width: 35,cssClass: 'slick-align-right'},
                             {id: "cstamp", field: "cstamp_dmy", name: "Дата", width: 120,cssClass: 'slick-align-right'},
-                            {id: "checkout_name", field: "checkout_name", name: "Название", width: 140,cssClass: 'slick-align-left'},
+                            {id: "checkout_name", field: "checkout_name", name: "Название", width: 200,cssClass: 'slick-align-left'},
                             {id: "created_by", field: "creator_nick", name: "Начал", width: 100},
                             {id: "modified_by", field: "modifier_nick", name: "Проверил", width: 100},
                             {id: "chackout_status", field: "checkout_status", formatter:App.page_stock_checkout_list.table.frm.status, name: "", width: 30,cssClass: 'slick-align-middle'}
@@ -202,7 +202,7 @@
             list:[],
             tools:{
                 reload:function(){
-                    App.page_stock_checkout_list.log.load(App.state.checkout_id);
+                    App.page_stock_checkout_list.entries.load(App.state.checkout_id);
                 },
                 out: function (out_type) {
 		    var params = {
@@ -356,72 +356,77 @@
         }
     };
 </script>
-<div >
-    <table>
-        <tr>
-            <td class="transp60">
-                <div style="text-align: center; font-size: 13px;  color: darkblue">
-                    <img src="img/ProductCard.png" style="float:left; height:20px; width:auto">
-                    Список проверочных документов
-                </div>
-                <div class="x-stock-checkout-tools" style="text-align: right;padding-top:11px">
-                    <span class="icon-24 icon-refresh" title="Обновить" onclick="App.page_stock_checkout_list.table.grid.reload()"></span>
-                </div>
-                <div style="width: 540px; height: 580px; float:left" id="checkout_list_sg"></div>
-            </td>
-            
-            <td class="transp60">
+<div style="display: grid;grid-template-columns:600px auto;gap:5px">
+    <div>
+        <div style="float: left;margin-right: 20px;">
+            <img src="img/table16.png" style="width:16px;height: 16px;"> Список проверочных документов
+        </div>
+
+        <div class="x-stock-checkout-tools" style="text-align: right;">
+            <span class="icon-24 icon-refresh" title="Обновить" onclick="App.page_stock_checkout_list.table.grid.reload()"></span>
+        </div>
+        <div style="height: 655px;" id="checkout_list_sg"></div>
+    </div>
+    <div>
+        <div class="easyui-tabs " style="width:605px ">
+            <div title="Ход проверки"  style="min-height: 580px;">
                 <div style="padding:10px;">
-                    <div>
-                        
-                    </div>
                     <span id="checkout_document_head">
-                         {{if checkout_status|equals>is_checking}}
+                        {{if checkout_status|equals>is_checking}}
                             <button onclick="App.page_stock_checkout_list.finish.init();"><img src="img/ok.png"> Завершить проверку</button>
+                        {{else}}
+                            <img src="img/apply24.png"> Проверка завершена
                         {{/if}}
                     </span>
                     <div id="checkout_progress_bar" class="easyui-progressbar" data-options="value:0" style="width:400px;float: right"></div>
                 </div>
-                
-                <div class="easyui-tabs " style="width:605px ">
-                    <div title="Подробности"  style="min-height: 580px;">
-                        <div class="x-stock-checkout-tools" style="text-align: right;">
-                            <span data-action="reload" class="icon-24 icon-refresh" title="Обновить"> </span>
-                            <span data-action="out" class="icon-24 icon-download" title="Скачать таблицу"> </span>
-                            <span data-action="print" class="icon-24 icon-print" title="Печать"> </span>
-                        </div>
-                        <div style="width: 600px; height: 580px;" id="checkout_entries_sg">
-                            <h1><<Выберите документ</h1>
-                        </div> 
-                    </div>
-                    <div title="Операции" style="min-height: 500px;">
-                        <div class="x-stock-checkout-log-tools" style="text-align: right;">
-                            <span data-action="reload" class="icon-24 icon-refresh" title="Обновить"> </span>
-                            <span data-action="out" class="icon-24 icon-download" title="Скачать таблицу"> </span>
-                            <span data-action="print" class="icon-24 icon-print" title="Печать"> </span>
-                        </div>
-                        <div style="width: 600px; height: 580px;" id="checkout_log_sg"></div>
-                    </div> 
-                    <div id="checkout_photos"  title="Фотографии" style="min-height: 580px;">
-                        <div>
-                            {{if checkout_photos}} 
-                                {{checkout_photos}} 
-                                 <div style="display:inline-block; padding: 15px">
-                                    <a href="Storage/image_flush/?size=1000x1000&path=/checkout/{{filename}}" target="_blank">
-                                        <img src="Storage/image_flush/?size=250x250&path=/checkout/{{filename}}" style="max-height: 250px;max-width: 250px" ><br>
-                                        {{date}}
-                                    </a>
-                                 </div>
-                                {{/checkout_photos}}
-                            {{else}}
-                                <h3>Фотографий не загружено</h3>
-                            {{/if}}
-                        </div>
-                    </div>
+                <div class="x-stock-checkout-tools" style="text-align: right;clear: both">
+                    <span data-action="reload" class="icon-24 icon-refresh" title="Обновить"> </span>
+                    <span data-action="out" class="icon-24 icon-download" title="Скачать таблицу"> </span>
+                    <span data-action="print" class="icon-24 icon-print" title="Печать"> </span>
                 </div>
-            </td>
-        <tr>
-    </table>
+                <div style="width: 600px; height: 580px;" id="checkout_entries_sg">
+                    <h1><<Выберите документ</h1>
+                </div> 
+            </div>
+            <div title="Операции" style="min-height: 500px;">
+                <div class="x-stock-checkout-log-tools" style="text-align: right;">
+                    <span data-action="reload" class="icon-24 icon-refresh" title="Обновить"> </span>
+                    <span data-action="out" class="icon-24 icon-download" title="Скачать таблицу"> </span>
+                    <span data-action="print" class="icon-24 icon-print" title="Печать"> </span>
+                </div>
+                <div style="width: 600px; height: 620px;" id="checkout_log_sg"></div>
+            </div> 
+            <div id="checkout_photos"  title="Фотографии" style="min-height: 640px;">
+                <div>
+                    {{if checkout_photos}} 
+                        {{checkout_photos}} 
+                         <div style="display:inline-block; padding: 15px">
+                            <a href="Storage/image_flush/?size=1000x1000&path=/checkout/{{filename}}" target="_blank">
+                                <img src="Storage/image_flush/?size=250x250&path=/checkout/{{filename}}" style="max-height: 250px;max-width: 250px" ><br>
+                                {{date}}
+                            </a>
+                         </div>
+                        {{/checkout_photos}}
+                    {{else}}
+                        <h3>Фотографий не загружено</h3>
+                    {{/if}}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+
+
+
+
+
+<div >
     <div class="easyui-dialog" id="checkout_confirm_warning" style="width:600px;height:500px;top:40px"
 		data-options="title:'Результат проверки',
                 closed:true,

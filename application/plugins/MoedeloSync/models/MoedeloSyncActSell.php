@@ -94,30 +94,33 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
     ///////////////////////////////////////////////////////////////
     // LOCAL SECTION
     ///////////////////////////////////////////////////////////////
-    
     /**
      * 
      * @param bool $is_full
-     * Checks for updates on local
+     * @param type $filter_local_id
+     * @return type
      */
     public function localCheckout( bool $is_full=false, $filter_local_id=null ){
-        if( $filter_local_id ){
-            $filter_local="AND dvl.doc_view_id='$filter_local_id'";
-        } else {
-            $filter_local='';
-        }
-        $sql_local_docs="
+        return parent::localCheckout($is_full,$filter_local_id);
+    }  
+    
+    /**
+     * 
+     * @param type $is_full
+     * @param type $afterDate
+     * @param type $filter_local
+     */
+    protected function localCheckoutGetList( $is_full, $afterDate, $filter_local='' ){
+        $local_sync_list_sql="
             SELECT
-                '{$this->doc_config->sync_destination}',
+                '{$this->doc_config->sync_destination}' sync_destination,
                 local_id,
                 MD5(CONCAT(Number,';',DocDate,';',KontragentId,';',TRIM(Sum)*1,';')) local_hash,
                 local_tstamp,
-                0 local_deleted,
-                remote_id
+                0 local_deleted
             FROM 
             (SELECT
                 dvl.doc_view_id local_id,
-                doc_pse.remote_id,
                 view_num Number,
                 SUBSTRING(dvl.tstamp,1,10) DocDate,
                 SUM(ROUND(invoice_price*product_quantity*(1+dl.vat_rate/100),2)) Sum,
@@ -131,8 +134,6 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
                 document_view_list dvl USING(doc_id)
                     JOIN
                 plugin_sync_entries Kontragent_pse ON passive_company_id=Kontragent_pse.local_id AND Kontragent_pse.sync_destination='moedelo_companies'
-                    LEFT JOIN
-                plugin_sync_entries doc_pse ON dvl.doc_view_id=doc_pse.local_id AND doc_pse.sync_destination='{$this->doc_config->sync_destination}'
             WHERE
                 active_company_id='{$this->acomp_id}'
                 AND doc_type='{$this->doc_config->doc_type}'
@@ -140,23 +141,7 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
                 AND dvl.tstamp>'{$this->sync_since}'
                 $filter_local
             GROUP BY doc_view_id) inner_table";
-        if( $is_full ){
-            $afterDate='';
-            $this->query("UPDATE plugin_sync_entries SET local_deleted=1 WHERE sync_destination='{$this->doc_config->sync_destination}'");
-        } else {
-            $afterDate='';
-        }
-        $sql_update_local_docs="
-            INSERT INTO
-                plugin_sync_entries
-            (sync_destination,local_id,local_hash,local_tstamp,local_deleted,remote_id)
-            SELECT * FROM ($sql_local_docs) local_sync_list
-            ON DUPLICATE KEY UPDATE 
-                local_hash=local_sync_list.local_hash,local_tstamp=local_sync_list.local_tstamp,local_deleted=0
-            ";
-        $this->query("$sql_update_local_docs");
-        $this->query("DELETE FROM plugin_sync_entries WHERE local_deleted=1 AND sync_destination='{$this->doc_config->sync_destination}'");
-        return true;
+        return $local_sync_list_sql;        
     }
     /**
      * Inserts new record on local
@@ -169,8 +154,14 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
         $remoteDoc->DocDate=$this->toTimezone($remoteDoc->DocDate,'local');
         $passive_company_id=$this->localFind($remoteDoc->KontragentId, 'moedelo_companies');
         $localDoc=$this->localFindDocument( $passive_company_id, $remoteDoc->Number, $remoteDoc->DocDate, $remoteDoc->Sum );
-        print_r($remoteDoc);
+        //print_r($remoteDoc);die;
         if( !$localDoc ){
+            $Company=$this->Hub->load_model("Company");
+            $pcomp=$Company->selectPassiveCompany($passive_company_id);
+            if( !$pcomp ){
+                //Have no permission to this pcomp
+                return false;
+            }
             $DocumentItems=$this->Hub->load_model("DocumentItems");
             $new_doc_id=$DocumentItems->createDocument($this->doc_config->doc_type);
             $sql_doc_update="
@@ -192,31 +183,59 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
             ];
         }
         
-        $DocumentView=$this->Hub->load_model("DocumentView");
-        if( empty($localDoc->doc_view_id) ){
-            $new_doc_view_id=$DocumentView->viewCreate($this->doc_config->local_view_type_id);
-            $localDoc->doc_view_id=$new_doc_view_id;
+        //INSERT UPDATE OF ACT
+        $doc_view_id=$localDoc->doc_view_id??0;
+        $view_type_id=$this->doc_config->local_view_type_id;
+        $sync_destination=$this->doc_config->sync_destination;
+        $modified_at=$localDoc->modified_at;
+        $localDoc->doc_view_id=$this->localInsertUpdateView($remoteDoc,$doc_view_id,$view_type_id,$sync_destination,$modified_at);
+        
+        if( !empty($remoteDoc->Invoice) ){
+            $Invoice=$remoteDoc->Invoice;
+            $Invoice->Sum=$remoteDoc->Sum;
+            $Invoice->KontragentId=$remoteDoc->KontragentId;
+            //INSERT UPDATE OF FACTURA
+            $view_type_id=140;
+            $doc_view_id=$this->get_value("SELECT doc_view_id FROM document_view_list WHERE doc_id='{$localDoc->doc_id}' AND view_type_id='$view_type_id'");
+            $sync_destination=$this->doc_config->sync_destination=='moedelo_doc_act_sell'?'moedelo_doc_invoice_sell':'moedelo_doc_invoice_buy';
+            $modified_at=$localDoc->modified_at;
+            $this->localInsertUpdateView($Invoice,$doc_view_id,$view_type_id,$sync_destination,$modified_at);            
         }
-        $DocumentView->viewUpdate($localDoc->doc_view_id,false,'view_num',$remoteDoc->Number);
-        $DocumentView->viewUpdate($localDoc->doc_view_id,false,'view_date',$remoteDoc->DocDate);
+        return $localDoc->doc_view_id;
+    }
+    
+    
+    private function localInsertUpdateView($remoteDoc,$doc_view_id,$view_type_id,$sync_destination,$modified_at){
+        $DocumentView=$this->Hub->load_model("DocumentView");
+        if( empty($doc_view_id) ){
+            $new_doc_view_id=$DocumentView->viewCreate($view_type_id);
+            $doc_view_id=$new_doc_view_id;
+        }
+        $DocumentView->viewUpdate($doc_view_id,false,'view_num',$remoteDoc->Number);
+        $DocumentView->viewUpdate($doc_view_id,false,'view_date',$remoteDoc->DocDate);
         $remoteDoc->DocDate= substr($remoteDoc->DocDate, 0, 10);
         $local_hash=md5("{$remoteDoc->Number};{$remoteDoc->DocDate};{$remoteDoc->KontragentId};{$remoteDoc->Sum};");
         
-        $remote_tstamp=$this->toTimezone($remoteDoc->Context->ModifyDate, 'local');
+        $remote_tstamp=$this->toTimezone($remoteDoc->Context->ModifyDate??$this->sync_since, 'local');
         $sql_save_insert="
-            UPDATE 
+            INSERT INTO 
                 plugin_sync_entries
             SET
-                local_id='$localDoc->doc_view_id',
+                local_id='$doc_view_id',
                 local_hash='$local_hash',
-                local_tstamp='$localDoc->modified_at',
+                local_tstamp='$modified_at',
+                remote_tstamp='$remote_tstamp',
+ 
+                remote_id='{$remoteDoc->Id}',
+                sync_destination='{$sync_destination}'
+            ON DUPLICATE KEY UPDATE 
+                local_id='$doc_view_id',
+                local_hash='$local_hash',
+                local_tstamp='$modified_at',
                 remote_tstamp='$remote_tstamp'
-            WHERE
-                sync_destination='{$this->doc_config->sync_destination}'
-                AND remote_id='$remote_id'
             ";
         $this->query($sql_save_insert);
-        return $localDoc->doc_view_id;
+        return $doc_view_id;
     }
     
     private function localFindDocument( $passive_company_id, $doc_num, $doc_date, $doc_sum=0 ){
@@ -357,7 +376,17 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
      * Deletes existing record on local
      */
     public function localDelete( $local_id, $remote_id, $entry_id ){
+        $this->query("START TRANSACTION");
+        $doc_id=$this->get_value("SELECT doc_id FROM document_view_list WHERE doc_view_id='$local_id'");
+        $DocumentItems=$this->Hub->load_model('DocumentItems');
+        $uncommit_ok=$DocumentItems->entryDocumentUncommit( $doc_id );
+        if( !$uncommit_ok ){
+            $this->query("ROLLBACK");
+            return false;
+        }
+        $DocumentItems->entryDocumentUncommit( $doc_id );//for deleting document
         $this->query("DELETE FROM plugin_sync_entries WHERE entry_id='$entry_id'");
+        $this->query("COMMIT");
     }
     
     public function localGet( $local_id ){
@@ -421,8 +450,32 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
             'ModifyDate'=>$this->toTimezone($document->ContextModifyDate,'remote'),
             'ModifyUser'=>$document->ContextModifyUser
         ];
-        //print_r($document);
+        $document->Invoice=$this->localInvoiceGet($document->doc_id);
+        if($document->Invoice){
+            $document->Invoice->Sum=$document->Sum;
+        }
+        //print_r($document);die;
         return $document;
+    }
+    
+    private function localInvoiceGet($doc_id){
+        $sync_destination=$this->doc_config->sync_destination=='moedelo_doc_act_sell'?'moedelo_doc_invoice_sell':'moedelo_doc_invoice_buy';
+        $sql="
+            SELECT
+                doc_pse.remote_id Id,
+                view_num Number,
+                REPLACE(dvl.tstamp,' ','T') DocDate
+            FROM
+                document_list dl
+                    JOIN
+                document_view_list dvl USING(doc_id)
+                    LEFT JOIN
+                plugin_sync_entries doc_pse ON dvl.doc_view_id=doc_pse.local_id AND doc_pse.sync_destination='$sync_destination'
+            WHERE
+                doc_id=$doc_id
+                AND view_type_id=140
+            ";
+        return $this->get_row($sql);
     }
     
     protected function localHashCalculate( $entity ){
