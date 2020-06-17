@@ -33,8 +33,13 @@ class CSVExporter extends Catalog {
         !is_dir("../public") && mkdir("../public", 0777);
         $file_path = str_replace('\\', '/', realpath("../public")) . '/isell_export.csv';
         @unlink($file_path);
-        $this->putAttributesConfig($file_path);
+        $attribute_config = $this->putAttributesConfig($file_path);
         $sql = "
+            SELECT * FROM (
+            SELECT
+                '<!$attribute_config!>' as col1,'' as col2,'' as col3,'' as col4,'' as col5,'' as col6,'' as col7,'' as col8,'' as col9,'' as col10,
+                '' as col11,'' as col12,'' as col13,'' as col14,'' as col15,'' as col16,'' as col17,'' as col18,'' as col19,'' as col20,'' as col21,'' as col22
+            UNION ALL
             SELECT
                 SUBSTRING_INDEX(SUBSTRING_INDEX(path, '/', 2), '/', -1) col1,
                 SUBSTRING_INDEX(SUBSTRING_INDEX(path, SUBSTRING_INDEX(path, '/', 2), -1),label,1) col2,
@@ -49,7 +54,9 @@ class CSVExporter extends Catalog {
                 product_bpack col11,
                 product_spack col12,
                 product_weight col13,
-                product_volume col14,
+                ROUND(POWER(product_volume,0.33),2) col14,
+                ROUND(POWER(product_volume,0.33),2) col15,
+                ROUND(POWER(product_volume,0.33),2) col16,
                 product_unit col15,
                 CONCAT ('$img_url',product_img) col16,
                 GET_PRICE(product_code, " . $settings->pcomp_id . ", '$usd_ratio') col17,
@@ -69,9 +76,9 @@ class CSVExporter extends Catalog {
             WHERE
                 product_img AND
                 se.parent_id IN (" . implode(',', $all_categories) . ")
-            ORDER BY product_code
+            )t
             INTO OUTFILE '$file_path'
-            CHARACTER SET cp1251 
+            CHARACTER SET utf8 
             FIELDS TERMINATED BY ';'
             ENCLOSED BY '\"'
             LINES TERMINATED BY '\r\n'";
@@ -176,14 +183,18 @@ class CSVExporter extends Catalog {
             'Свойства товара' as `group_description`,
             @index:=@index+1 as `index`
             FROM attribute_list
-            ";
+        ";
         $attributes = $this->get_list($sql);
         $filtes_from_config = $this->getSettings()->csv->filters;
         $filters = [];
+        $attribute_result = '';
+        $filter_result = '';
         foreach($attributes as $attribute){
+            $attribute_result .= $attribute->name.'|'.$attribute->group_description.',';
             foreach($filtes_from_config as $filter){
                 $filter_object = [];
                 if($attribute->name == $filter->attribute_name){
+                    $filter_result .= $attribute->field.'|'.$attribute->name.',';
                     $filter_object['field'] = $attribute->field;
                     $filter_object['name'] = $attribute->name;
                     $filter_object['index'] = $attribute->index;
@@ -192,11 +203,14 @@ class CSVExporter extends Catalog {
                 }
             }
         }
+        return $attribute_result;
         $result_array = [
             'attributes' => $attributes,
             'filters'=> $filters
         ];
-        file_put_contents(str_replace('isell_export.csv', 'attribute_config.json', $file_path), json_encode($result_array ));
+        return json_encode($result_array, JSON_UNESCAPED_UNICODE );
+        
+        file_put_contents(str_replace('isell_export.csv', 'attribute_config.json', $file_path), json_encode($result_array, JSON_UNESCAPED_UNICODE ));
         return;
     }
     
