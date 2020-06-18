@@ -154,7 +154,7 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
         $remoteDoc->DocDate=$this->toTimezone($remoteDoc->DocDate,'local');
         $passive_company_id=$this->localFind($remoteDoc->KontragentId, 'moedelo_companies');
         $localDoc=$this->localFindDocument( $passive_company_id, $remoteDoc->Number, $remoteDoc->DocDate, $remoteDoc->Sum );
-        print_r($remoteDoc);die;
+        print_r($remoteDoc);//die;
         if( !$localDoc ){
             $Company=$this->Hub->load_model("Company");
             $pcomp=$Company->selectPassiveCompany($passive_company_id);
