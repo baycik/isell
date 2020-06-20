@@ -295,7 +295,7 @@ div .combobox-item-hover{
 }
 input,textarea,.textbox,select{
     border-radius: 2px;
-    font-size: 13px !important;
+    font-size: 1em !important;
 }
 
 
