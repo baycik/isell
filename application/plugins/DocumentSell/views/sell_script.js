@@ -26,142 +26,141 @@ Document.head=  {
     },
     controls:{
         suppress_update:true,
-        init:function(){
-            //App.setupForm("#"+holderId+" .x-head form");
-            Document.head.controls.initWidgets();
-            $("#"+holderId+" .x-head form,#"+holderId+" .document_comment").form({
-                onChange: function(node){
-                    let name=$(node).attr('name') || $(node).attr('textboxname');
-                    let value=$(node).val();
-                    if ( $(node).attr('type') === 'checkbox' ) {
-                        value=$(node).is(':checked') ? 1 : 0;
-                    }
-                    let title=$(node).attr('title');
-                    Document.head.controls.handleChange(name,value,title);
+        sformSetup:function( fquery, fvalue, mode ){
+            if (!fquery) {
+                return false;
+            }
+            fvalue=fvalue||{};
+            let $formElements=$(fquery + " input," + fquery + " textarea," + fquery + " select");
+            $formElements.each(function (i, element) {
+                let value=fvalue[element.name];
+                let $element=$(element);
+                $element.val(value);
+                if ($element.attr('type') === 'hidden') {
+                    return true;
                 }
+                if ($element.attr('type') === 'checkbox' && fvalue[element.name] * 1) {
+                    $element.attr('checked', 'checked');
+                }
+                if ( $element.attr('title') && !$element.attr('data-skip') ) {
+                    let $ele=$element;
+                    if( $element.parent().hasClass('input') ){
+                        $ele=$element.parent();
+                    }
+                    $ele.wrap('<div class="field"></div>');
+                    $ele.parent().before("<label>" + $element.attr('title') + "</label>");
+                }
+                $element.attr('data-skip', 1);
             });
+            return $formElements;
         },
-        initWidgets:function(){
-            $.get('DocumentList/documentTypeListFetch',{},function(resp){
-                let list=App.json(resp);
-                for(let item of list) {
-                    item.name=`<img src="img/${item.icon_name}.png" class="ui image" style="margin:1px"> ${item.doc_type_name}`;
-                    item.value=item.doc_type;
-                };
-                $('#'+holderId+' select[name=doc_type]').dropdown({values: list});
-                setTimeout(function(){
-                    $('#'+holderId+' select[name=doc_type]').dropdown('set selected',Document.data.head.doc_type);
-                },0);
+        init:function(){
+            Document.head.controls.sformSetup("#"+holderId+" .x-head form");//
+            $("#"+holderId+" .x-head form").change(function(e){
+                let node=e.target;
+                let name=$(node).attr('name');
+                let title=$(node).attr('title');
+                let value=$(`#${holderId} [name=${name}]`).val();
+                if ( $(node).attr('type') === 'checkbox' ) {
+                    value = $(node).is(':checked') ? 1 : 0;
+                }
+                console.log( name,value,title,`#${holderId} [name=${name}]` );
+                Document.head.update(name,value,title);
             });
-            $.get('DocumentList/statusFetchList',{},function(resp){
-                let icons={
-                    created:'star outline',
-                    reserved:'clock outline',
-                    processed:'shipping fast'
-                };
-                let list=App.json(resp);
-                for(let item of list) {
+            Document.head.controls.widgets.init();
+        },
+        widgets:{
+            init:function(){
+                $('#'+holderId+' select[name=doc_status_id]').dropdown({
+                    apiSettings: {
+                        url: 'DocumentList/statusFetchList',
+                        onResponse: function(list){
+                            for( let i in list ){
+                                list[i]=Document.head.controls.widgets.formatters.doc_status_id(list[i]);
+                            }
+                            return {
+                                success:true,
+                                results:list
+                            };
+                        }
+                    }
+                });
+                $('#'+holderId+' select[name=doc_type]').dropdown({
+                    apiSettings: {
+                        url: 'DocumentList/documentTypeListFetch',
+                        onResponse: function(list){
+                            for( let i in list ){
+                                list[i]=Document.head.controls.widgets.formatters.doc_type(list[i]);
+                            }
+                            return {
+                                success:true,
+                                results:list
+                            };
+                        }
+                    }
+                });
+                $('#'+holderId+' select[name=active_company_id]').dropdown({
+                    apiSettings: {
+                        url: 'Company/listFetch/?mode=active_only&q={query}',
+                        onResponse: function( list ){
+                            let companies=[];
+                            for( let i in list ){
+                                companies.push({value:list[i].company_id,name:list[i].label});
+                            }
+                            return {
+                                success:true,
+                                results:companies
+                            };
+                        }
+                    }
+                });
+                $('#'+holderId+' select[name=passive_company_id]').dropdown({
+                    apiSettings: {
+                        url: 'Company/listFetch/?q={query}',
+                        onResponse: function( list ){
+                            let companies=[];
+                            for( let i in list ){
+                                companies.push({value:list[i].company_id,name:list[i].label});
+                            }
+                            return {
+                                success:true,
+                                results:companies
+                            };
+                        }
+                    }
+                });
+            },
+            formatters:{
+                doc_status_id:function( item ){
+                    let icons={
+                        created:'star outline',
+                        reserved:'clock outline',
+                        processed:'shipping fast'
+                    };
                     item.name=`<i class="ui icon ${icons[item.status_code]}"></i> ${item.status_description}`;
                     item.value=item.doc_status_id;
-                };
-                $('#'+holderId+' select[name=doc_status_id]').dropdown({values: list}).dropdown('set selected',Document.data.head.doc_status_id);
-            });
-            
-            
-            
-            $('#'+holderId+' select[name=active_company_id]').dropdown({
-                apiSettings: {
-                    url: 'Company/listFetch/?mode=active_only&q={query}',
-                    onResponse: function( list ){
-                        let companies=[];
-                        for( let i in list ){
-                            companies.push({value:list[i].company_id,name:list[i].label});
-                        }
-                        return {
-                            success:true,
-                            results:companies
-                        };
-                    }
+                    return item;
+                },
+                doc_type:function( item ){
+                    item.name=`<img src="img/${item.icon_name}.png" class="ui image" style="margin:1px"> ${item.doc_type_name}`;
+                    item.value=item.doc_type;
+                    return item;
                 }
-            });
-            $('#'+holderId+' select[name=passive_company_id]').dropdown({
-                apiSettings: {
-                    url: 'Company/listFetch/?q={query}',
-                    onResponse: function( list ){
-                        let companies=[];
-                        for( let i in list ){
-                            companies.push({value:list[i].company_id,name:list[i].label});
-                        }
-                        return {
-                            success:true,
-                            results:companies
-                        };
-                    }
-                }
-            });
-            
-        },
-        handleChange:function( field, value, title ){
-            if( Document.head.controls.suppress_update ){
-                return;
             }
-            Document.head.update(field,value,title);
-            //console.log('SAVED',field,value,title);
         },
         render:function(head_data){
-            Document.head.controls.suppress_update=true;
-            
-            
-            
-            
-
+            head_data.doc_date=head_data.cstamp.substr(0,10);
             $('#'+holderId+' select[name=passive_company_id]')
-                    .dropdown('set text',Document.data.head.passive_company_label)
-                    .dropdown('set value',Document.data.head.passive_company_id);
-            
-            
-            
+                    .dropdown('set text',Document.data.head.passive_company_label);
             $('#'+holderId+' select[name=active_company_id]')
-                    .dropdown('set text',Document.data.head.active_company_label)
-                    .dropdown('set value',Document.data.head.active_company_id);
-            
-            return;
-            
-            
-            
-            
-             //$('.dropdown').dropdown('set selected', '1'); 
-            
-            $("#"+holderId+" .x-head form").form('load',head_data);
-            $("#"+holderId+" .x-toolbar .icon-commit").css("filter","grayscale("+(head_data.is_commited*1?100:0)+"%)");
-            $("#"+holderId+" .x-foot .document_comment").val(Document.data.head.doc_data);
-            $("#"+holderId+" .x-head :checkbox").each(function(){
-                $(this).prop("checked",head_data[$(this).attr('name')]*1);
-            });
-            $("#"+holderId+"_pcomp").combobox('reload');
-            $("#"+holderId+"_acomp").combobox('reload');
-            Document.head.controls.suppress_update=false;
-        },
-        companyTreeShow:function(){
-            App.loadWindow('page/company/tree',{}).progress(function(status,company){
-                if( status==='select' ){
-                    App.user.pcompSelect(company);
-                    $(Document.head.pcompNode).combobox('setValue', company.company_id);
-                    $(Document.head.pcompNode).combobox('setText', company.label);
-                    //Document.head.update( 'passive_company_id', company.company_id,'passive_company_id is changed');
-                }
-            });
-        },
-        companyDetailsShow:function(){
-            App.loadWindow('page/company/details',{company_id:Document.data.head.passive_company_id});
-        },
-        companyFormatter:function(row){
-            var label=row.label;
-            if( row.path ){
-                var path_chunks=row.path.replace(/^\/|\/$/g,'').split('>');
-                label=path_chunks.slice(path_chunks.length-2).reverse().join('/ ');
-            }
-            return label;
+                    .dropdown('set text',Document.data.head.active_company_label);
+            let selected_status_item=Document.head.controls.widgets.formatters.doc_status_id(head_data.status);
+            $('#'+holderId+' select[name=doc_status_id]')
+                    .dropdown('set text',selected_status_item.name);
+            let selected_type_item=Document.head.controls.widgets.formatters.doc_type(head_data.type);
+            $('#'+holderId+' select[name=doc_type]')
+                    .dropdown('set text',selected_type_item.name);
+            Document.head.controls.sformSetup("#"+holderId+" .x-head form",head_data);
         }
     },
     toolbar:{

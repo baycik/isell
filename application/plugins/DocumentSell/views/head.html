@@ -1,4 +1,4 @@
-<form class="head_input">
+<form class="ui form head_input">
     <div style="background: url('img/bg_header_stripes.png');padding: 7px;margin: -5px -5px 0px -5px">
         <label class="switch">
             <input name="is_commited" type="checkbox" title="Проведен" value="1">
@@ -15,58 +15,47 @@
             <span class="icon-24 icon-refresh" title="Обновить" data-action="reload"> </span> 
         </div>
     </div>
-    
-    <div class="head_widget_grid">
-        <label>Тип документа</label>
-        <select name="doc_type" class="ui selection dropdown"></select>
 
-        <label>Дата</label>
+    <div class="head_widget_grid">
+        <select name="doc_type" class="ui selection dropdown" title="Тип документа"></select>
         <div class="ui left icon input fluid">
             <i class="calendar icon"></i>
-           <input type="date" name="doc_date" title="Дата">
+            <input type="date" name="doc_date" title="Дата">
         </div>
-        
-        <label>Статус</label>
-        <select name="doc_status_id" class="ui selection dropdown"></select>
-        
-        <label>Номер</label>
+        <select name="doc_status_id" class="ui selection dropdown" title="Статус"></select>
         <div class="ui left icon input fluid">
             <i class="hashtag icon"></i>
             <input type="number" name="doc_num" title="Номер">
         </div>
     </div>
-    <div class="x-utils" style="display: none1">
-	<hr style="border-color: white">
-        <div class="head_widget_grid">
-            <label>Наша фирма</label>
-            <select name="active_company_id" class="ui selection dropdown"></select>
-            
-            <label>Клиент</label>
-            <select name="passive_company_id" class="ui search dropdown"></select>
-            
+    
+    <div class="x-utils head_widget_grid" style="display: none; padding-top: 20px;border-top: 1px solid #fff;">
+        <select name="active_company_id" class="ui selection dropdown" title="Продавец"></select>
+        <select name="passive_company_id" class="ui search dropdown" title="Клиент"></select>
 
-            <input name="vat_rate" type="text" title="НДС %">
-            <input name="doc_ratio" title="Курс">
-            <div class="inp_group" style="width:320px;">
-                <b>Цена без НДС:</b>
-                <label class="switch">
-                    <input name="use_vatless_price" type="checkbox" title="Цена без НДС" value="1">
-                    <span class="slider round"></span>
-                </label>
-            </div>
-            <div class="inp_group" style="width:320px;">
-                <b>Не учитывать:</b>
-                <label class="switch">
-                    <input name="notcount" type="checkbox" title="Не учитывать" value="1">
-                    <span class="slider round"></span>
-                </label>
-            </div>
+        <div class="ui left icon input fluid">
+            <i class="percent icon"></i>
+            <input name="vat_rate" title="НДС %" type="number">
+        </div>
+
+        <div class="ui left icon input fluid">
+            <i class="currency icon"></i>
+            <input name="doc_ratio" title="Курс" type="number">
+        </div>
+
+        <label></label>
+        <div class="ui slider checkbox" style="border:none;">
+            <input type="checkbox"  name="use_vatless_price" id="x-use_vatless_price" title="Цена без НДС" data-skip="1">
+            <label style="text-align: left" for="x-use_vatless_price">Цена без НДС</label>
+        </div>
+
+        <label></label>
+        <div class="ui slider checkbox" style="border:none;">
+            <input type="checkbox"  name="notcount" id="x-notcount" title="Не учитывать" data-skip="1">
+            <label style="text-align: left" for="x-notcount">Не учитывать</label>
         </div>
     </div>
 </form>
-
-
-
 <style>
     .head_input label{
         text-align: right;
@@ -75,7 +64,7 @@
     .head_widget_grid{
         display: grid;
         grid-template-columns:100px 270px 100px 270px;
-        margin: 15px;
+        margin: 5px;
         gap:5px
     }
 </style>

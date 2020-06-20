@@ -176,6 +176,8 @@ abstract class DocumentBase extends Catalog{
         $this->document_properties->created_by=$this->get_value("SELECT last_name FROM user_list WHERE user_id={$this->document_properties->created_by}");
         $this->document_properties->modified_by=$this->get_value("SELECT last_name FROM user_list WHERE user_id={$this->document_properties->modified_by}");
         $this->document_properties->child_documents=$this->get_list("SELECT doc_id,cstamp,doc_num FROM document_list WHERE parent_doc_id={$doc_id}");
+        $this->document_properties->status=$this->get_row("SELECT * FROM document_status_list WHERE doc_status_id={$this->document_properties->doc_status_id}");
+        $this->document_properties->type=$this->get_row("SELECT * FROM document_types WHERE doc_type={$this->document_properties->doc_type}");
 	$this->document_properties->extra_expenses=$this->headGetExtraExpenses();
         $checkout=$this->get_row("SELECT * FROM checkout_list WHERE parent_doc_id={$doc_id}");
         if( $checkout ){
