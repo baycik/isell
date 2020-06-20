@@ -167,6 +167,7 @@ class MoedeloSyncBase extends Catalog{
             WHERE 
                 sync_destination='{$this->doc_config->sync_destination}'
                 $filter_local
+            HAVING sync_action<>'SKIP'
             ";
         $action_list=$this->get_list($sql_action_list);
         //print_r($action_list);//die;
