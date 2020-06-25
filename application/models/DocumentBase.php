@@ -277,6 +277,12 @@ abstract class DocumentBase extends Catalog{
     }
     public function entryCreate( int $doc_id, object $entry ){
         $this->documentSelect($doc_id);
+//        
+//        print_r( $entry );
+//        print_r( $this->document_properties );
+//        
+//        
+//        
         $this->db_transaction_start();
         $doc_entry_id=$this->create('document_entries', ['doc_id'=>$doc_id]);
         $update_ok=$this->entryUpdate( $doc_entry_id, $entry );
@@ -329,7 +335,8 @@ abstract class DocumentBase extends Catalog{
      * @param int $doc_entry_id
      * @return boolean
      */
-    public function entryDelete( int $doc_entry_id ){
+    public function entryDelete( int $doc_id, int $doc_entry_id ){
+        $this->documentSelect($doc_id);
         if( !$this->doc_id ){//document must be selected
             return false;
         }
@@ -366,9 +373,9 @@ abstract class DocumentBase extends Catalog{
     public function entryListUpdate( int $doc_id, array $entry_list ){
         return null;
     }
-    public function entryListDelete( int $doc_id, array $entry_id_list ) {
+    public function entryListDelete( int $doc_id, array $doc_entry_ids ) {
         $this->documentSelect($doc_id);
-        foreach( $entry_id_list as $doc_entry_id ){
+        foreach( $doc_entry_ids as $doc_entry_id ){
             $this->entryDelete( $doc_id, $doc_entry_id );
         }
         return true;

@@ -77,7 +77,7 @@ class Hub extends CI_Controller{
 	try{
 	    $Model=$this->load_model($model_name);
 	    if( !method_exists($model_name, $method) ){
-		show_error("X-isell-error: No such method '$method' in $model_name", 500);
+		show_error("X-isell-error: No such method '$method' in $model_name", 404);
 	    }
 	    if( isset($Model->$method) ){
 		$Model->$method===false && show_error("X-isell-error: '$method' not accessible from outside. Access denied", 500);
@@ -90,7 +90,8 @@ class Hub extends CI_Controller{
 	    $method_args=$this->parseMethodArguments($method_args_config, $route_args);
 	    $this->previous_return=call_user_func_array([$Model, $method],$method_args);
 	} catch(Exception $e){
-	    show_error("X-isell-error: ".$e->getMessage(), 500);
+            http_response_code($e->getCode());
+	    die($e->getMessage());
 	}
     }
 

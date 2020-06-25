@@ -24,8 +24,8 @@ var App = {
 	}
 	return translated.join("\n");
     },
-    lang:function(word){
-	return App.vocab[word] || word;
+    lang:function(key){
+	return App.vocab[key] || key;
     },
     vocab:{},
     setTitle:function( title ){
@@ -505,7 +505,7 @@ $.ajaxSetup({
 $(document).ajaxComplete(function (event, xhr, settings) {
     $("#app_busy").hide();
     if( xhr.statusText==='error' ){
-
+        
     }
     else if( settings.crossDomain===false && settings.dataType!=='script' ){
 	switch(xhr.status){

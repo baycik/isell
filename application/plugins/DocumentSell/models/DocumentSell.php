@@ -58,7 +58,7 @@ class DocumentSell extends DocumentBase{
 	return $document;
     }
     
-    public function documentCreate( int $doc_type=null, string $handler='' ){
+    public function documentCreate( int $doc_type=null, string $handler=null ){
 	$doc_type=1;
 	return parent::documentCreate( $doc_type, 'DocumentSell' );
     }
@@ -170,8 +170,8 @@ class DocumentSell extends DocumentBase{
      * @param int $doc_id
      * @param array $entry_id_list
      */
-    public function entryListDelete(int $doc_id, array $entry_id_list) {
-        parent::entryListDelete($doc_id, $entry_id_list);
+    public function entryListDelete(int $doc_id, array $doc_entry_ids) {
+        parent::entryListDelete( $doc_id, $doc_entry_ids );
     }
     /**
      * Bulk commit/uncommit entries
@@ -227,6 +227,10 @@ class DocumentSell extends DocumentBase{
      * @return type
      */
     public function entryCreate(int $doc_id, object $entry){
+        $this->documentSelect($doc_id);
+        $pcomp_id=$this->doc('passive_company_id');
+        $usd_ratio=$this->doc('doc_ratio');
+        $entry->entry_price=$this->get_value("SELECT GET_SELL_PRICE({$entry->product_code},{$pcomp_id},{$usd_ratio})");
         return parent::entryCreate($doc_id, $entry);
     }
     
@@ -251,13 +255,15 @@ class DocumentSell extends DocumentBase{
                 }
             }
         }
-        if( $new_entry_data->entry_price ){
+        if( $new_entry_data->entry_price??0 ){
             $vat_correction=$this->doc('use_vatless_price')?$this->doc('vat_rate')/100+1:1;
             $new_entry_data->entry_price_vatless=$new_entry_data->entry_price/$vat_correction;
+            unset($new_entry_data->entry_price);
         }
-        if( $new_entry_data->entry_price_vatless ){
+        if( $new_entry_data->entry_price_vatless??0 ){
             $doc_curr_correction=$this->documentCurrCorrectionGet();
             $new_entry_data->invoice_price=$new_entry_data->entry_price_vatless/$doc_curr_correction;
+            unset($new_entry_data->entry_price_vatless);
         }
         $update_ok=$this->update('document_entries',$new_entry_data,['doc_entry_id'=>$doc_entry_id]);
         $error = $this->db->error();
@@ -282,12 +288,6 @@ class DocumentSell extends DocumentBase{
     public function entryUpdate( int $doc_entry_id, object $new_entry_data ){
         return parent::entryUpdate($doc_entry_id, $new_entry_data);
     }
-    
-    public function entryDelete( int $doc_entry_id ){
-        return parent::entryDelete($doc_entry_id);
-    }
-    
-    
     
     
     
