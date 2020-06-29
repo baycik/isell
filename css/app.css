@@ -325,19 +325,23 @@ input,textarea,.textbox,select{
 .icon-24 {
     display: inline-block;
     font-size: 1px;
-    height: 26px;
-    width: 26px;
-    background-size: 24px 24px !important;
-    line-height: 26px;
+    height: 30px;
+    width: 30px;
+    line-height: 34px;
     margin-top: 0px;
     vertical-align: bottom;
+    border-radius: 3px;
+    background-size: 28px 28px !important;
+    background:  no-repeat center center;
 }
 .icon-24:hover {
     cursor: pointer;
-    border: 1px solid #95b8e7;
-    border-radius: 3px;
-    margin: -0px;
+    -border: 1px solid #95b8e7;
     background-color: #bcd8f4;
+}
+.icon-24 img{
+    height: 32px;
+    width:32px;
 }
 .icon-eye{
     background:url('../img/eye.png') no-repeat center center;

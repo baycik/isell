@@ -483,7 +483,7 @@ class AccountsCore extends Catalog{
         }
     }
     private function checkTransLink($trans_id,$trans) {
-	if( $trans['check_id'] ){
+	if( $trans['check_id']??false ){
 	    $this->update('acc_check_list',['trans_id'=>$trans_id],['check_id'=>$trans['check_id']]);
 	}
     }
@@ -493,7 +493,7 @@ class AccountsCore extends Catalog{
 	}	
     }
     private function transCrossLink($trans_id,$trans){
-	if( $trans['trans_ref'] ){
+	if( $trans['trans_ref']??false ){
 	    $this->update('acc_trans', ['trans_ref'=>$trans['trans_ref'],'trans_status'=>5], ['trans_id'=>$trans_id]);
 	    $this->update('acc_trans', ['trans_ref'=>$trans_id,'trans_status'=>4], ['trans_id'=>$trans['trans_ref']]);
 	}
@@ -581,7 +581,7 @@ class AccountsCore extends Catalog{
                     $transaction_amount=$foot->$current_role;
                     $transaction_amount_alt=0;
                 }
-                $ok = $ok && $this->transUpdate($trans->trans_id, ['amount'=>$transaction_amount,'amount_alt'=>$transaction_amount_alt]);
+                $this->transUpdate($trans->trans_id, ['amount'=>$transaction_amount,'amount_alt'=>$transaction_amount_alt]);
 	    }
 	}
         return $ok;

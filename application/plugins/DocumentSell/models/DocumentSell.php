@@ -87,8 +87,9 @@ class DocumentSell extends DocumentBase{
     //////////////////////////////////////////
     // HEAD SECTION
     //////////////////////////////////////////
-    
-    
+    public function headFieldUpdate( int $doc_id, string $field, string $value=null ):string{
+        return parent::headFieldUpdate( $doc_id, $field, $value );
+    }
     //////////////////////////////////////////
     // BODY SECTION
     //////////////////////////////////////////
@@ -226,11 +227,11 @@ class DocumentSell extends DocumentBase{
      * @param object $entry
      * @return type
      */
-    public function entryCreate(int $doc_id, object $entry){
+    public function entryCreate( int $doc_id, object $entry ){
         $this->documentSelect($doc_id);
         $pcomp_id=$this->doc('passive_company_id');
         $usd_ratio=$this->doc('doc_ratio');
-        $entry->entry_price=$this->get_value("SELECT GET_SELL_PRICE({$entry->product_code},{$pcomp_id},{$usd_ratio})");
+        $entry->entry_price=$this->get_value("SELECT GET_SELL_PRICE({$entry->product_code},{$pcomp_id},{$usd_ratio})")??0;
         return parent::entryCreate($doc_id, $entry);
     }
     
@@ -243,24 +244,12 @@ class DocumentSell extends DocumentBase{
      * @param object $current_entry_data
      */
     protected function entrySave( int $doc_entry_id, object $new_entry_data, object $current_entry_data=null ){
-        if( $new_entry_data->product_quantity??false ){
-            if( $this->isCommited() ){
-                $product_delta_quantity=$new_entry_data->product_quantity-$current_entry_data->product_quantity;
-                $product_code=$new_entry_data->product_code??$current_entry_data->product_code;
-                
-                $Stock=$this->Hub->load_model("Stock");
-                $stock_ok=$Stock->productQuantityModify( $product_code, $product_delta_quantity, 1  );
-                if( !$stock_ok ){
-                    throw new Exception("product_stock_error",507);//Insufficient Storage
-                }
-            }
-        }
-        if( $new_entry_data->entry_price??0 ){
+        if( isset($new_entry_data->entry_price) ){
             $vat_correction=$this->doc('use_vatless_price')?$this->doc('vat_rate')/100+1:1;
             $new_entry_data->entry_price_vatless=$new_entry_data->entry_price/$vat_correction;
             unset($new_entry_data->entry_price);
         }
-        if( $new_entry_data->entry_price_vatless??0 ){
+        if( isset($new_entry_data->entry_price_vatless) ){
             $doc_curr_correction=$this->documentCurrCorrectionGet();
             $new_entry_data->invoice_price=$new_entry_data->entry_price_vatless/$doc_curr_correction;
             unset($new_entry_data->entry_price_vatless);
@@ -268,14 +257,28 @@ class DocumentSell extends DocumentBase{
         $update_ok=$this->update('document_entries',$new_entry_data,['doc_entry_id'=>$doc_entry_id]);
         $error = $this->db->error();
         if($error['code']==1452){
+            $this->db_transaction_rollback();
 	    throw new Exception("product_code_unknown",424);//Failed Dependency
 	} else 
 	if($error['code']==1062){
+            $this->db_transaction_rollback();
 	    throw new Exception("already_exists",409);//Conflict
 	} else 
 	if($error['code']!=0){
+            $this->db_transaction_rollback();
             throw new Exception($error['message'].' '.$this->db->last_query(),500);//Internal Server Error
 	}        
+        if( $new_entry_data->product_quantity??false && $this->isCommited() ){
+            $product_delta_quantity=$current_entry_data->product_quantity - $new_entry_data->product_quantity;
+            $product_code=$new_entry_data->product_code??$current_entry_data->product_code;
+            $stock_id=1;
+            $Stock=$this->Hub->load_model("Stock");
+            $stock_ok=$Stock->productQuantityModify( $product_code, $product_delta_quantity, $stock_id  );
+            if( !$stock_ok ){
+                $this->db_transaction_rollback();
+                throw new Exception("product_stock_error",507);//Insufficient Storage
+            }
+        }
         return $update_ok;
     }
     /**
@@ -288,6 +291,65 @@ class DocumentSell extends DocumentBase{
     public function entryUpdate( int $doc_entry_id, object $new_entry_data ){
         return parent::entryUpdate($doc_entry_id, $new_entry_data);
     }
+    
+    
+    public function entryAbsentSplit( int $old_doc_id, string $new_doc_comment ){
+	$this->Hub->set_level(2);
+	$this->documentSelect($old_doc_id);
+        if( $this->isCommited() ||  $this->doc('doc_type')!=1 ){
+            return false;
+        }
+        $new_doc_id=$this->documentCreate( 1 );
+        $this->entryAbsentSplitMove( $new_doc_id, $old_doc_id );
+        //$this->duplicateHead($new_doc_id, $old_doc_id);
+        $this->documentSelect($new_doc_id);
+        $this->doc('doc_data',$new_doc_comment);
+        return $new_doc_id;
+    }
+    
+    private function entryAbsentSplitMove( $new_doc_id, $old_doc_id ){
+        $sql="SELECT 
+            doc_entry_id,
+            de.product_code,
+            GREATEST(se.product_quantity - se.product_reserved,0) old_product_quantity,
+            GREATEST(de.product_quantity - se.product_quantity + se.product_reserved,0) new_product_quantity,
+            de.self_price,
+            de.party_label,
+            de.invoice_price
+        FROM 
+            document_entries de
+                JOIN 
+            stock_entries se USING(product_code)
+        WHERE 
+            doc_id='$old_doc_id'
+            AND de.product_quantity > (se.product_quantity-se.product_reserved)";
+	$old_entries=$this->get_list($sql);
+	foreach($old_entries as $entry){
+            $old_entry=[
+                'product_quantity'=>$entry->old_product_quantity
+            ];
+            if($entry->old_product_quantity>0){
+                $this->update("document_entries",$old_entry,['doc_entry_id'=>$entry->doc_entry_id]);
+            } else {
+                $this->delete("document_entries",['doc_entry_id'=>$entry->doc_entry_id]);
+            }
+            if($entry->new_product_quantity>0){
+                $new_entry=[
+                    'doc_id'=>$new_doc_id,
+                    'product_code'=>$entry->product_code,
+                    'product_quantity'=>$entry->new_product_quantity,
+                    'self_price'=>$entry->self_price,
+                    'party_label'=>$entry->party_label,
+                    'invoice_price'=>$entry->invoice_price
+                ];
+                $this->create("document_entries",$new_entry);
+            }
+	}
+    }
+    
+    
+    
+    
     
     
     

@@ -277,12 +277,6 @@ abstract class DocumentBase extends Catalog{
     }
     public function entryCreate( int $doc_id, object $entry ){
         $this->documentSelect($doc_id);
-//        
-//        print_r( $entry );
-//        print_r( $this->document_properties );
-//        
-//        
-//        
         $this->db_transaction_start();
         $doc_entry_id=$this->create('document_entries', ['doc_id'=>$doc_id]);
         $update_ok=$this->entryUpdate( $doc_entry_id, $entry );
@@ -341,7 +335,7 @@ abstract class DocumentBase extends Catalog{
             return false;
         }
         $this->db_transaction_start();
-        $update_ok=1;
+        $update_ok=true;
         if( $this->isCommited() ){
             $entry=(object)[
                 'product_quantity'=>0
@@ -384,7 +378,20 @@ abstract class DocumentBase extends Catalog{
     // FOOTER SECTION
     //////////////////////////////////////////
     public function footGet( $doc_id ){
-        
+        $this->entryListCreate($doc_id);
+	$curr_code=$this->Hub->pcomp('curr_code');
+	$curr_symbol=$this->get_value("SELECT curr_symbol FROM curr_list WHERE curr_code='$curr_code'");
+	$sql="SELECT
+	    ROUND(SUM(entry_weight_total),2) total_weight,
+	    ROUND(SUM(entry_volume_total),2) total_volume,
+	    SUM(entry_sum_vatless) vatless,
+	    SUM(entry_sum_total) total,
+	    SUM(entry_sum_total-entry_sum_vatless) vat,
+	    SUM(ROUND(product_quantity*self_price,2)) self,
+	    '$curr_symbol' curr_symbol
+	FROM 
+            tmp_entry_list";
+	return $this->get_row($sql);        
     }
     //////////////////////////////////////////
     // VIEWS SECTION

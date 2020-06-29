@@ -84,9 +84,10 @@
 		    }
 		});
 	    },
-	    reload:function(){
-		var parts=["head","body","foot","views"];
-                Document.load(Document.doc_id,parts);
+	    reload:function(parts_to_load){
+		var parts=parts_to_load || ["head","body","foot","views"];
+                App.Topic("documentReloaded").publish({doc_id:Document.doc_id});
+                //Document.load(Document.doc_id,parts);
 	    },
             delete:function(){
 		$.post(Document.doc_extension+'/documentDelete',{doc_id:Document.doc_id},function(ok){

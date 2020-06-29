@@ -1,5 +1,6 @@
 /*global Slick,holderId,Document,Document.doc_extension,App,Mark*/
 Document.head = {
+    commited_color:"rgba(0,255,100,0.2)",
     init: function () {
         Document.head.controls.init();
         Document.head.toolbar.init();
@@ -9,12 +10,13 @@ Document.head = {
         setTimeout(function () {
             Document.head.controls.render(head_data);
         }, 0);
+        $(`#${holderId}`).css('background-color', head_data.is_commited==1 ? Document.head.commited_color:'' );
     },
     destroy: function () {
         this.pcompNode && this.pcompNode.combobox && this.pcompNode.combobox('clear');
     },
     update: function (field, value, succes_msg) {
-        var url = Document.doc_extension + '/documentUpdate';
+        var url = Document.doc_extension + '/headFieldUpdate';
         return $.post(url, {doc_id: Document.doc_id, field: field, value: value}, function (ok) {
             if (ok * 1) {
                 App.flash(succes_msg);
@@ -64,7 +66,6 @@ Document.head = {
                 if ($(node).attr('type') === 'checkbox') {
                     value = $(node).is(':checked') ? 1 : 0;
                 }
-                console.log(name, value, title, `#${holderId} [name=${name}]`);
                 Document.head.update(name, value, title);
             });
             Document.head.controls.widgets.init();
@@ -149,7 +150,7 @@ Document.head = {
             }
         },
         render: function (head_data) {
-            head_data.doc_date = head_data.cstamp.substr(0, 10);
+            head_data.cstamp = head_data.cstamp.substr(0, 10);
             $('#' + holderId + ' select[name=passive_company_id]')
                     .dropdown('set text', Document.data.head.passive_company_label);
             $('#' + holderId + ' select[name=active_company_id]')
@@ -244,12 +245,29 @@ Document.head = {
                     App.loadWindow('page/events/event', fvalue);
                 });
             },
+            download:function(){
+                window.open("./DocumentItems/documentOut/?out_type=.xlsx&doc_id="+Document.data.head.doc_id);
+            },
+            absent_split:function(){
+                if( confirm("Вынести недостающие позиции в отдельную накладную?") ){
+                    var new_doc_comment=`Недостаюшие позиции по накладной #${Document.data.head.doc_num}`;
+                    var request={
+                        old_doc_id:Document.data.head.doc_id,
+                        new_doc_comment:new_doc_comment
+                    };
+                    App.post(Document.doc_extension + "/entryAbsentSplit/",request,function(doc_id){
+                        if( doc_id*1 ){
+                            App.flash("Документ с резервом на недостающие позиции создан");
+                        }
+                    });                
+                }
+            }
         }
     }
 };
 Document.body = {
     vocab: {
-        not_enough: "На складе не хватает:",
+        product_stock_error: "Недостаточное количество",
         already_exists: "Строка с таким кодом уже добавлена",
         product_code_unknown: "Неизвестный товар",
         quantity_wrong: "Колличество должно быть больше нуля",
@@ -338,7 +356,7 @@ Document.body = {
                 onSelect: pickerTreeSelect
             });
             function qty_color(row, cell, value, columnDef, dataContext) {
-                if (value == 0) {
+                if (value === 0) {
                     return "<span style='color:red'>0</span>";
                 }
                 return value;
@@ -360,7 +378,7 @@ Document.body = {
             var picklist = $("#" + holderId + " .x-body .x-stock").slickgrid(settings);
             picklist.onSelectedRowsChanged.subscribe(function (e, selection) {
                 var row = selection.grid.getDataItem(selection.rows[0]);
-                $("#" + holderId + " .x-body .x-suggest").combobox('setValue', row.product_code);
+                $("#" + holderId + " .x-body .x-suggest").search('set value', row.product_code);
                 $("#" + holderId + " .x-body .x-qty").val(row.product_spack).select();
             });
             Document.body.picker.inited = true;
@@ -368,7 +386,7 @@ Document.body = {
     },
     tools: {
         init: function () {
-            $("#" + holderId + " .x-body .x-body-tools").click(function (e) {
+            $(`#${holderId} .x-body .x-body-tools,#${holderId} .x-picker-button`).click(function (e) {
                 var action = $(e.target).data('action');
                 if (action) {
                     Document.body.tools[ action ] && Document.body.tools[action]();
@@ -382,10 +400,8 @@ Document.body = {
             }
             if (Document.body.pickerVisible) {
                 $("#" + holderId + " .x-picker").hide();
-                $("#" + holderId + " .x-picker-button").text("Открыть подбор");
             } else {
                 $("#" + holderId + " .x-picker").show();
-                $("#" + holderId + " .x-picker-button").text("Скрыть подбор");
             }
             Document.body.pickerVisible = !Document.body.pickerVisible;
         },
@@ -418,7 +434,7 @@ Document.body = {
         },
         entryDelete: function () {
             var selected_rows = Document.body.table_sg.getSelectedRows();
-            if (!selected_rows.length) {
+            if ( !selected_rows.length ) {
                 App.flash("Ни одна строка не выбрана!");
                 return;
             }
@@ -427,7 +443,8 @@ Document.body = {
             }
             var table_to_delete = [];
             for (var i in selected_rows) {
-                table_to_delete.push(Document.body.table_sg.getDataItem(selected_rows[i]).doc_entry_id);
+                var row=Document.body.table_sg.getDataItem(selected_rows[i]);
+                row && table_to_delete.push(row.doc_entry_id);
             }
             var url = Document.doc_extension + '/entryListDelete';
             $.post(url, {doc_id: Document.doc_id, doc_entry_ids: JSON.stringify(table_to_delete)}, function (ok) {
@@ -450,7 +467,6 @@ Document.body = {
     },
     table: {
         init: function () {
-
             var settings = {
                 columns: [
                     {id: "queue", name: "№", width: 30, formatter: Document.body.table.formatters.queue},
@@ -460,7 +476,7 @@ Document.body = {
                     {id: "product_unit", field: "product_unit", name: "Ед.", width: 30},
                     {id: "entry_price", field: "entry_price", name: "Цена", width: 70, cssClass: 'slick-align-right', asyncPostRender: Document.body.table.formatters.priceisloss, editor: Slick.Editors.Float},
                     {id: "entry_sum", field: "entry_sum", name: "Сумма", width: 80, cssClass: 'slick-align-right', editor: Slick.Editors.Float},
-                    {id: "row_status", field: "row_status", name: "!", width: 25, formatter: Document.body.table.formatters.tooltip},
+                    {id: "row_status", field: "row_status", name: "!", width: 20, formatter: Document.body.table.formatters.tooltip},
                             //{id:"party_label",field:"party_label",name:"Партия",width:120, editor: Slick.Editors.Text},
                             //{id:"analyse_origin",field:'analyse_origin',name:"Происхождение",width:70},
                             //{id:"self_price",field:'self_price',name:"maliyet",width:60,cssClass:'slick-align-right'}
@@ -533,20 +549,14 @@ Document.body = {
             var url = Document.doc_extension + '/entryCreate';
             var request={
                 doc_id: Document.doc_id,
-                entry:JSON.stringify({product_code: product_code, product_quantity: product_quantity})
+                new_entry_data:JSON.stringify({product_code: product_code, product_quantity: product_quantity})
             };
             $.post(url, request).done( function (ok, status, xhr) {
                 Document.reload(["body", "foot"]);
-            }).fail(function(response){
-                App.flash("Строка не добавлена");
-                
-                
-                
-                
-                
-                
-                App.flash( App.vocab[response] || response );
-                if (response.indexOf('product_code_unknown') > -1 && confirm("Добавить новый код " + product_code + " на склад?")) {
+            }).fail(function(xhr){
+                App.flash("Строка не изменена");
+                App.flash( xhr.responseText );
+                if (xhr.responseText.indexOf('product_code_unknown') > -1 && confirm("Добавить новый код " + product_code + " на склад?")) {
                     App.loadWindow('page/stock/product_card', {product_code: product_code});
                 }
                 Document.reload(["body", "foot"]);
@@ -554,10 +564,15 @@ Document.body = {
         },
         entryUpdate: function (doc_entry_id, field, value) {
             var url = Document.doc_extension + '/entryUpdate';
-            $.post(url, {doc_id: Document.doc_id, doc_entry_id: doc_entry_id, field: field, value: value}, function (ok) {
-                if (!(ok * 1)) {
-                    App.flash("Строка не изменена");
-                }
+            var request={
+                doc_entry_id: doc_entry_id,
+                new_entry_data:`{"${field}":"${value}"}`
+            };
+            $.post(url, request).done( function (ok, status, xhr) {
+                Document.reload(["body", "foot"]);
+            }).fail(function(xhr){
+                App.flash("Строка не добавлена");
+                App.flash( xhr.responseText );
                 Document.reload(["body", "foot"]);
             });
         }
@@ -583,7 +598,7 @@ Document.foot = {
         footer.checkout_id = Document.data.head.checkout_id;
         Document.foot.checkout.parse(footer);
         Document.data.foot = footer;
-        App.renderTpl("#" + holderId + " .x-foot div", Document.data.foot);
+        App.renderTpl(`#${holderId} .x-foot div`, Document.data.foot);
         Document.foot.checkout.setup();
     },
     parse_checkout_statuses: function (footer) {

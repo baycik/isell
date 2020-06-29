@@ -55,7 +55,10 @@
                     var parts = value.split(' ');
                     var cmd = parts.shift();
                     if (cmd) {
-                        var style = 'max-width:16px;height:auto';
+                        var style = 'max-width:16px;height:auto;';
+                        if(dataContext.is_commited==0){
+                            style+="filter: grayscale(100%)";
+                        }
                         return `<img src="img/${cmd}.png" data-command="${cmd}" style="${style}" title="${parts.join(' ')}">`;
                     } else {
                         return '';
@@ -99,7 +102,7 @@
                         multiSelect: false,
                         url: 'DocumentList/listFetch',
                         explicitInitialization: true,
-                        pagesize:25,
+                        pagesize:20,
                         params:{
                             mode:'add_empty_row'
                         }
@@ -140,8 +143,9 @@
                     DocList.grid.updateOptions({params: {mode: 'add_empty_row'}});
                     DocList.tools.reload();
                 });
-                App.Topic('documentUpdated').subscribe(function () {
-                    //DocList.tools.reload();
+                App.Topic('documentReloaded').subscribe(function () {
+                    var index = DocList.grid.getSelectedRows()[0];
+                    DocList.grid.rowReload(index);
                 });
                 DocList.table.render();
                 DocList.grid.init();
@@ -156,7 +160,7 @@
                 ];
                 var columns_adv=[
                     {id: "pcomp_label", field: "pcomp_label", name: "Контрагент", width: 120},
-                    {id: "is_commited", field: "is_commited", name: "Проведен", width: 25, formatter: DocList.table.frm.tooltip},
+                    {id: "commited", field: "commited", name: "Проведен", width: 25, formatter: DocList.table.frm.tooltip},
                     {id: "doc_type_name", field: "doc_type_name", name: "Тип документа", sortable: true, width: 150},
                     {id: "views", field: "views", name: "Напечатано", width: 70}
                 ];
@@ -191,7 +195,7 @@
         prepareDocumentBase:$.Deferred(),
         init:function(){
             DocHolder.node_id='DocumentInline'+Date.now();
-            $("#mtrade_doclistgrid .x-doclist-holder").append("<div id='"+DocHolder.node_id+"'></div>");
+            $("#mtrade_doclistgrid .x-doc-holder").append("<div id='"+DocHolder.node_id+"' class='x-document'></div>");
             $("#"+DocHolder.node_id).load("page/mtrade/document_base.html", function () {
                 DocumentInline=App[DocHolder.node_id];
                 DocHolder.prepareDocumentBase.resolve();
@@ -219,11 +223,14 @@
 	grid-template-columns: min-content min-content;
 	grid-gap:1px;
     }
+    .x-document{
+        padding: 5px;
+    }
 </style>
 <div id="mtrade_doclistgrid" class="-transp60">
-    <div style="vertical-align: top;width:800px;padding: 5px;background-color: #fff9;" class="x-doclist-holder "></div>
+    <div style="vertical-align: top;width:800px;background-color: #fff9;" class="x-doc-holder"></div>
     <div style="overflow-x: auto;background-color: #fff6;">
-        <div class="x-doclist-tools " style="display: grid;grid-template-columns: 1fr 1fr;padding:10px;margin-bottom: 5px; height: 38px;background-image: url('img/bg_header_stripes.png');">
+        <div class="x-doclist-tools " style="display: grid;grid-template-columns: 1fr 1fr;padding:2px;margin-bottom: 5px; height: 38px;background-image: url('img/bg_header_stripes.png');">
 	    <div style="font-weight: bold;">
 		<img src="img/table16.png" style="width:16px;height: 16px;" /> Документы
 	    </div>

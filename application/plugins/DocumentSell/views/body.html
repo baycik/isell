@@ -5,11 +5,11 @@
     </div>
     <div class="x-stock" style="height:200px;"></div>
 </div>
-<div style="display: grid;grid-template-columns: 300px 70px auto;margin-bottom: 5px;">
-    <div class="ui search x-suggest" title="Нажмите ↑ для вывода предыдущего кода товара">
+<div style="display: grid;grid-template-columns: 310px 70px auto;margin-bottom: 7px;">
+    <div class="ui search x-suggest">
         <div class="ui left action fluid input">
-            <button class="ui icon grey button x-picker-button">
-                <i class="folder open outline icon"></i>
+            <button class="ui icon grey button x-picker-button" data-tooltip="Открыть/закрыть подбор" data-action="pickerToggle">
+                <i class="folder open outline icon" data-action="pickerToggle"></i>
             </button>
             <input class="prompt" style="border-radius: 5px" type="text" placeholder="Введите код, название или штрихкод">
         </div>
@@ -23,10 +23,11 @@
     </div>
 
     <div class="x-body-tools" style="text-align: right">
-        <span class="icon-24" title="Открыть карту товара"><img src="img/product.png" style="width:24px;height: 24px" data-action="productCard"></span>
+        <span class="icon-24" title="Открыть карту товара" style="background-image: url(img/product.png)" data-action="productCard"> </span>
         <span class="icon-24 icon-delete" title="Удалить стоку" data-action="entryDelete"> </span>
         <span class="icon-24 icon-calc" title="Перерасчитать цены" data-action="recalculate"> </span>
         <span class="icon-24 icon-import" title="Импортировать" data-action="entryImport"> </span>
+        <span class="icon-24 icon-utils" title="Дополнительные свойства" onclick="$('.x-utils').toggle('slow')" ></span>
     </div>
 </div>
 <div class="x-suggest-row-template" style="display: none">
@@ -80,5 +81,8 @@
     }
     .x-suggest .results{
         width: 700px !important;
+    }
+    .x-entries .slick-viewport,.x-entries {
+        overflow: visible !important;
     }
 </style>
