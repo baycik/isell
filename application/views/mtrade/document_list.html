@@ -114,7 +114,7 @@
                     if( !DocList.table.current_row ){
                         return false;
                     }
-                    DocHolder.load(DocList.table.current_row.doc_id,DocList.table.current_row.doc_extension);
+                    DocHolder.load(DocList.table.current_row.doc_id,DocList.table.current_row.doc_extension||'DocumentSell');
                     App.store('document_list_last_doc_id',DocList.table.current_row.doc_id);
                 });
                 DocList.grid.onRenderFinished.subscribe(function(){
@@ -146,6 +146,9 @@
                 App.Topic('documentReloaded').subscribe(function () {
                     var index = DocList.grid.getSelectedRows()[0];
                     DocList.grid.rowReload(index);
+                });
+                App.Topic('documentListChanged').subscribe(function () {
+                    DocList.tools.reload();
                 });
                 DocList.table.render();
                 DocList.grid.init();

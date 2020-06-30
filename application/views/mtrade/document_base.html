@@ -97,6 +97,7 @@
 		    } else {
 			App.flash("Не могу удалить документ");
 		    }
+                    App.Topic('documentListChanged').publish();
 		});                
             },
             data:{

@@ -77,12 +77,16 @@ class DocumentSell extends DocumentBase{
     // DOCUMENT EVENTS SECTION
     //////////////////////////////////////////
     
-    public function documentChangeIsCommited( $field, $new_is_commited ){
-        
-        echo "COOOOOMMIT $field, $new_is_commited";
-        
-        $this->entryListChangeCommit( $new_is_commited );
-        return false;
+    public function documentChangeIsCommited( $field, bool $new_is_commited ){
+        if( !$new_is_commited && !$this->isCommited() ){
+            $doc_id=$this->doc('doc_id');
+            
+            
+            echo "!$new_is_commited && !".$this->isCommited()."==".(!$new_is_commited && !$this->isCommited());
+            
+            //return $this->documentDelete($doc_id);
+        }
+        return $this->entryListChangeCommit( $new_is_commited );
     }
     //////////////////////////////////////////
     // HEAD SECTION
@@ -181,7 +185,7 @@ class DocumentSell extends DocumentBase{
      */
     private function entryListChangeCommit( bool $new_is_commited ){
         $doc_id=$this->doc('doc_id');
-        $current_is_commited=$this->doc('is_commited');
+        $current_is_commited=$this->isCommited();
         if( $new_is_commited==$current_is_commited ){
             return true;
         }
@@ -208,7 +212,7 @@ class DocumentSell extends DocumentBase{
             $this->transUpdate();
         }
         $this->db_transaction_commit();
-        return false;
+        return true;
     }
     //ENTRY FUNCTIONS
     
@@ -268,7 +272,7 @@ class DocumentSell extends DocumentBase{
             $this->db_transaction_rollback();
             throw new Exception($error['message'].' '.$this->db->last_query(),500);//Internal Server Error
 	}        
-        if( $new_entry_data->product_quantity??false && $this->isCommited() ){
+        if( ($new_entry_data->product_quantity??false) && $this->isCommited() ){
             $product_delta_quantity=$current_entry_data->product_quantity - $new_entry_data->product_quantity;
             $product_code=$new_entry_data->product_code??$current_entry_data->product_code;
             $stock_id=1;

@@ -66,21 +66,22 @@ abstract class DocumentBase extends Catalog{
     }
     
     public function isCommited(){
-	return $this->doc('is_commited')=='1';
+	return (int) $this->doc('is_commited');
     }
     
     public function documentNumNext( $doc_type, $creation_mode=null ){
         $Pref=$this->Hub->load_model('Pref');
-        $pref_name='document_number_'.$doc_type;
-        $pref=$Pref->getPrefs($pref_name);
-        if( !isset($pref[$pref_name]) ){
-            $pref[$pref_name]=0;
+        
+        $counter_increase= $creation_mode=='not_increase_number'?0:1;
+        $counter_name="counterDocNum_".$doc_type;
+        $nextNum= $Pref->counterNumGet($counter_name,null,$counter_increase);
+        if( !$nextNum ){
+            $doc_type_row=$this->Base->get_row("SELECT * FROM document_types WHERE doc_type='$doc_type'");
+            $counter_title=$doc_type_row['doc_type_name']??'???';
+            $Pref->counterCreate($counter_name,null,$counter_title);
+            $nextNum=$Pref->counterNumGet($counter_name,null,$counter_increase);
         }
-        $pref[$pref_name]++;
-        if( $creation_mode!=='not_increase_number'){
-            $Pref->setPrefs($pref);
-        }
-        return $pref[$pref_name];
+        return $nextNum;
     }
     
     protected function documentCurrCorrectionGet(){
@@ -151,7 +152,9 @@ abstract class DocumentBase extends Catalog{
     
     public function documentDelete( int $doc_id ){
         $this->documentSelect($doc_id);
-        
+        if( $this->isCommited() ){
+            return false;
+        }
 	$this->db_transaction_start();
 	$this->delete('document_entries',['doc_id'=>$doc_id]);
 	$this->delete('document_view_list',['doc_id'=>$doc_id]);
@@ -658,44 +661,45 @@ abstract class DocumentBase extends Catalog{
     //////////////////////////////////////////
     // COMMIT SECTION
     //////////////////////////////////////////
-    protected function documentChangeCommit( $make_commited=false ){
-	if( $make_commited && $this->isCommited() || !$make_commited && !$this->isCommited() ){
-	    return true;
-	}
-        $trans_ok=$this->documentChangeCommitTransactions($make_commited);
-	$entries_ok=$this->documentChangeCommitEntries($make_commited);
-	if( !$trans_ok || !$entries_ok ){
-	    $this->db_transaction_rollback();
-	    return false;
-	}
-        return true;
-    }
-    protected function documentChangeCommitEntries($make_commited){
-	$doc_id=$this->doc('doc_id');
-	$document_entries=$this->get_list("SELECT doc_entry_id FROM document_entries WHERE doc_id='$doc_id'");
-	//$this->Hub->msg("make_commited $make_commited");
-	
-	foreach($document_entries as $entry){
-	    if( $make_commited && !$this->entryCommit($entry->doc_entry_id) ){
-		return true;//need to commit but it failed
-	    }
-	    if( !$make_commited && !$this->entryUncommit($entry->doc_entry_id) ){
-		return true;//need to uncommit but it failed
-	    }
-	}
-	return true;
-    }
-    protected function documentChangeCommitTransactions($make_commited){
-        if( $make_commited ){
-	    $footer=$this->footGet();
-	    $this->transUpdate($footer);
-            return true;
-        } else {
-            $this->transDisable();
-            return true;
-        }
-        return false;
-    }
+//    protected function documentChangeCommit( $make_commited=false ){
+//	if( $make_commited && $this->isCommited() || !$make_commited && !$this->isCommited() ){
+//	    return true;
+//	}
+//        $trans_ok=$this->documentChangeCommitTransactions($make_commited);
+//	$entries_ok=$this->documentChangeCommitEntries($make_commited);
+//	if( !$trans_ok || !$entries_ok ){
+//	    $this->db_transaction_rollback();
+//	    return false;
+//	}
+//        return true;
+//    }
+//    protected function documentChangeCommitEntries($make_commited){
+//	$doc_id=$this->doc('doc_id');
+//	$document_entries=$this->get_list("SELECT doc_entry_id FROM document_entries WHERE doc_id='$doc_id'");
+//	//$this->Hub->msg("make_commited $make_commited");
+//	
+//	foreach($document_entries as $entry){
+//	    if( $make_commited && !$this->entryCommit($entry->doc_entry_id) ){
+//		return true;//need to commit but it failed
+//	    }
+//	    if( !$make_commited && !$this->entryUncommit($entry->doc_entry_id) ){
+//		return true;//need to uncommit but it failed
+//	    }
+//	}
+//	return true;
+//    }
+//    protected function documentChangeCommitTransactions($make_commited){
+//        if( $make_commited ){
+//            $doc_id=$this->doc('doc_id');
+//	    $footer=$this->footGet($doc_id);
+//	    $this->transUpdate($footer);
+//            return true;
+//        } else {
+//            $this->transDisable();
+//            return true;
+//        }
+//        return false;
+//    }
     
     //////////////////////////////////////////
     // HEADER SECTION
@@ -983,14 +987,7 @@ abstract class DocumentBase extends Catalog{
     }
     protected function transClear(){
         $Trans=$this->Hub->load_model("AccountsCore");
-        $this->db_transaction_start();
-        $ok=$Trans->documentTransClear( $this->doc('doc_id') );
-        if( $ok ){
-            $this->db_transaction_commit();
-            return true;
-        }
-        $this->db_transaction_rollback();
-        return false;
+        return $Trans->documentTransClear( $this->doc('doc_id') );
     }
     protected function transUpdate(){
 	$foot=$this->footGet($this->doc_id);
