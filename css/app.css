@@ -55,7 +55,7 @@ input,select,textarea{
     border: 1px solid #95b8e7;
     padding: 2px 4px 2px 4px;
     -margin-left: -2px;
-    width:209px;
+    width:190px;
     vertical-align:top;
     font-size: 12px;
 }
@@ -76,7 +76,6 @@ fieldset .inp_group b{
 }
 select{
     padding:0px;
-    width: 209px;
 }
 option{
     padding: 1px;
