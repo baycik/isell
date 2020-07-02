@@ -27,9 +27,9 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
         $user_permissions=$this->Hub->svar('user_permission');
         $user_level=$this->Hub->svar('user_level');
         if( $user_level>=3 && strpos($user_permissions, 'nocommit')===false ){
-            $this->log('Moedelosync moedelo_doc_act_sell Unsufficient rights');
             return parent::replicate( $filter_local_id );
         }
+        $this->log('Moedelosync moedelo_doc_act_sell Unsufficient rights');
         return false;
     }
     ///////////////////////////////////////////////////////////////
