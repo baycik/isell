@@ -24,7 +24,13 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
      * Executes needed sync operations
      */
     public function replicate( $filter_local_id=null ){
-        return parent::replicate( $filter_local_id );
+        $user_permissions=$this->Hub->svar('user_permission');
+        $user_level=$this->Hub->svar('user_level');
+        if( $user_level>=3 && strpos($user_permissions, 'nocommit')===false ){
+            $this->log('Moedelosync moedelo_doc_act_sell Unsufficient rights');
+            return parent::replicate( $filter_local_id );
+        }
+        return false;
     }
     ///////////////////////////////////////////////////////////////
     // REMOTE SECTION
