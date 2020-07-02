@@ -38,7 +38,41 @@ class MoedeloSyncCompanies extends MoedeloSyncBase{
      * Inserts new record on remote
      */
     public function remoteInsert( $local_id, $remote_id, $entry_id ){
+        if( $this->remoteSearchForDuplicates( $local_id, $remote_id, $entry_id ) ){
+            return true;
+        }
         return parent::remoteInsert($local_id, $remote_id, $entry_id);
+    }
+    
+    
+    private function remoteSearchForDuplicates( $local_id, $remote_id, $entry_id ){
+        $local_company=$this->localGet($local_id);
+        $request=[
+            'inn'=>$local_company->Inn
+        ];
+        $response = $this->apiExecute($this->doc_config->remote_function, 'GET', $request);
+        $remote_duplicate=$response->response->ResourceList[0]??null;
+        if( $remote_duplicate ){
+            $remote_id=$remote_duplicate->Id;
+            $remote_hash=$this->remoteHashCalculate($remote_duplicate);
+            $sql_clear="DELETE 
+                FROM 
+                    plugin_sync_entries 
+                WHERE 
+                    remote_id='$remote_id'
+                    AND sync_destination='{$this->doc_config->sync_destination}'";
+            $sql_link="UPDATE 
+                    plugin_sync_entries 
+                SET 
+                    remote_hash='$remote_hash',
+                    remote_id='$remote_id'
+                WHERE 
+                    entry_id=$entry_id";
+            $this->query($sql_clear);
+            $this->query($sql_link);
+            return true;
+        }
+        return false;
     }
     /**
      * Updates existing record on remote
@@ -51,6 +85,11 @@ class MoedeloSyncCompanies extends MoedeloSyncBase{
      * Deletes existing record on remote
      */
     public function remoteDelete( $local_id, $remote_id, $entry_id ){
+        
+        
+        return true;
+        
+        
         return parent::remoteDelete($local_id, $remote_id, $entry_id);
     }
     

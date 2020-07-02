@@ -168,7 +168,7 @@ class Catalog extends CI_Model {
     private $db_transaction_nested_count = 0;
 
     protected function db_transaction_start() {
-        if ($this->db_transaction_nested_count = 0) {
+        if ($this->db_transaction_nested_count == 0) {
             $this->query("START TRANSACTION");
         }
         $this->db_transaction_nested_count += 1;
@@ -176,7 +176,7 @@ class Catalog extends CI_Model {
 
     protected function db_transaction_commit() {
         $this->db_transaction_nested_count -= 1;
-        if ($this->db_transaction_nested_count = 0) {
+        if ($this->db_transaction_nested_count == 0) {
             $this->query("COMMIT");
         }
     }

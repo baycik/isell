@@ -19,7 +19,9 @@
 	    if( this.data.product_code ){
 		var focus=this.data.focus;
 		App.get("Stock/productGet",{product_code:App.page_stock_product_card.data.product_code},function(resp){
-		    App.page_stock_product_card.data=App.json(resp);
+                    if( resp ){
+                        App.page_stock_product_card.data=App.json(resp);
+                    }
 		    App.page_stock_product_card.data.focus=focus;
 		    App.page_stock_product_card.initWidgets();
 		    App.page_stock_product_card.img.load();

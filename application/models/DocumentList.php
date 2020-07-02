@@ -60,14 +60,17 @@ class DocumentList extends Catalog{
 		CONCAT(icon_name,' ',doc_type_name) doc_type_icon,
 		doc_type_name,
 		GROUP_CONCAT(CONCAT(' ',LEFT(view_name,3),view_num)) views,
-		IF(is_commited,'ok Проведен','') as is_commited,
-		(SELECT amount 
+                is_commited,
+		IF(is_commited,'ok Проведен','') as commited,
+		COALESCE( (SELECT amount 
 		    FROM 
 			acc_trans 
 			    JOIN 
 			document_trans dtr USING(trans_id)
 		    WHERE dtr.doc_id=dl.doc_id AND dtr.trans_role='total'
-		    LIMIT 1) doc_total,
+		    LIMIT 1),
+                    (SELECT SUM(ROUND(invoice_price*product_quantity,2)) FROM document_entries de WHERE de.doc_id=dl.doc_id),
+                    0 )doc_total,
 		(SELECT CONCAT(code,' ',descr) FROM acc_trans_status JOIN acc_trans USING(trans_status) JOIN document_trans dt USING(trans_id) WHERE dt.doc_id=dl.doc_id ORDER BY trans_id LIMIT 1) trans_status
 	    FROM 
 		document_list dl
