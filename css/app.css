@@ -93,6 +93,12 @@ button, .gray_grad, .light_grad{
     transition-property: background-color;
     transition-duration: 1s;
 }
+button img{
+    width: 24px;
+}
+#Ledger_acc_props button img{
+    width: 16px;
+}
 button:hover, .gray_grad:hover, .light_grad:hover{ 
     background-color: #86bdf2;
     color: #000000;
