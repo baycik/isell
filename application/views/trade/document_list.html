@@ -45,17 +45,20 @@
 			return isNaN(value) ? '' : Number(value).toLocaleString("ru-RU", { style: 'currency', currency: 'RUB' });
 		    },
 		    tooltip: function (row, cell, value, columnDef, dataContext) {
-			if (!value) {
-			    return '';
-			}
-			var parts = value.split(' ');
-			var cmd = parts.shift();
-			if (cmd) {
-			    var style = 'max-width:16px;height:auto';
-			    return '<img src="img/' + cmd + '.png" data-action="'+cmd+'" style="' + style + '" title="' + parts.join(' ') + '">';
-			} else {
-			    return '';
-			}
+                        if (!value) {
+                            return '';
+                        }
+                        var parts = value.split(' ');
+                        var cmd = parts.shift();
+                        if (cmd) {
+                            var style = 'max-width:16px;height:auto;';
+                            if(dataContext.is_commited==0){
+                                style+="filter: grayscale(100%)";
+                            }
+                            return `<img src="img/${cmd}.png" data-command="${cmd}" style="${style}" title="${parts.join(' ')}">`;
+                        } else {
+                            return '';
+                        }
 		    },
                     currency:function(row, cell, value, columnDef, dataContext){
                         return value*1 ? Number.parseFloat(value).toLocaleString('ru-RU',{ style: 'currency', currency: 'RUB' }) : '';
