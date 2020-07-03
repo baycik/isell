@@ -66,21 +66,22 @@ abstract class DocumentBase extends Catalog{
     }
     
     public function isCommited(){
-	return $this->doc('is_commited')=='1';
+	return (int) $this->doc('is_commited');
     }
     
     public function documentNumNext( $doc_type, $creation_mode=null ){
         $Pref=$this->Hub->load_model('Pref');
-        $pref_name='document_number_'.$doc_type;
-        $pref=$Pref->getPrefs($pref_name);
-        if( !isset($pref[$pref_name]) ){
-            $pref[$pref_name]=0;
+        
+        $counter_increase= $creation_mode=='not_increase_number'?0:1;
+        $counter_name="counterDocNum_".$doc_type;
+        $nextNum= $Pref->counterNumGet($counter_name,null,$counter_increase);
+        if( !$nextNum ){
+            $doc_type_row=$this->Base->get_row("SELECT * FROM document_types WHERE doc_type='$doc_type'");
+            $counter_title=$doc_type_row['doc_type_name']??'???';
+            $Pref->counterCreate($counter_name,null,$counter_title);
+            $nextNum=$Pref->counterNumGet($counter_name,null,$counter_increase);
         }
-        $pref[$pref_name]++;
-        if( $creation_mode!=='not_increase_number'){
-            $Pref->setPrefs($pref);
-        }
-        return $pref[$pref_name];
+        return $nextNum;
     }
     
     protected function documentCurrCorrectionGet(){
@@ -151,7 +152,9 @@ abstract class DocumentBase extends Catalog{
     
     public function documentDelete( int $doc_id ){
         $this->documentSelect($doc_id);
-        
+        if( $this->isCommited() ){
+            return false;
+        }
 	$this->db_transaction_start();
 	$this->delete('document_entries',['doc_id'=>$doc_id]);
 	$this->delete('document_view_list',['doc_id'=>$doc_id]);
@@ -176,6 +179,8 @@ abstract class DocumentBase extends Catalog{
         $this->document_properties->created_by=$this->get_value("SELECT last_name FROM user_list WHERE user_id={$this->document_properties->created_by}");
         $this->document_properties->modified_by=$this->get_value("SELECT last_name FROM user_list WHERE user_id={$this->document_properties->modified_by}");
         $this->document_properties->child_documents=$this->get_list("SELECT doc_id,cstamp,doc_num FROM document_list WHERE parent_doc_id={$doc_id}");
+        $this->document_properties->status=$this->get_row("SELECT * FROM document_status_list WHERE doc_status_id={$this->document_properties->doc_status_id}");
+        $this->document_properties->type=$this->get_row("SELECT * FROM document_types WHERE doc_type={$this->document_properties->doc_type}");
 	$this->document_properties->extra_expenses=$this->headGetExtraExpenses();
         $checkout=$this->get_row("SELECT * FROM checkout_list WHERE parent_doc_id={$doc_id}");
         if( $checkout ){
@@ -327,12 +332,13 @@ abstract class DocumentBase extends Catalog{
      * @param int $doc_entry_id
      * @return boolean
      */
-    public function entryDelete( int $doc_entry_id ){
+    public function entryDelete( int $doc_id, int $doc_entry_id ){
+        $this->documentSelect($doc_id);
         if( !$this->doc_id ){//document must be selected
             return false;
         }
         $this->db_transaction_start();
-        $update_ok=1;
+        $update_ok=true;
         if( $this->isCommited() ){
             $entry=(object)[
                 'product_quantity'=>0
@@ -364,9 +370,9 @@ abstract class DocumentBase extends Catalog{
     public function entryListUpdate( int $doc_id, array $entry_list ){
         return null;
     }
-    public function entryListDelete( int $doc_id, array $entry_id_list ) {
+    public function entryListDelete( int $doc_id, array $doc_entry_ids ) {
         $this->documentSelect($doc_id);
-        foreach( $entry_id_list as $doc_entry_id ){
+        foreach( $doc_entry_ids as $doc_entry_id ){
             $this->entryDelete( $doc_id, $doc_entry_id );
         }
         return true;
@@ -375,7 +381,20 @@ abstract class DocumentBase extends Catalog{
     // FOOTER SECTION
     //////////////////////////////////////////
     public function footGet( $doc_id ){
-        
+        $this->entryListCreate($doc_id);
+	$curr_code=$this->Hub->pcomp('curr_code');
+	$curr_symbol=$this->get_value("SELECT curr_symbol FROM curr_list WHERE curr_code='$curr_code'");
+	$sql="SELECT
+	    ROUND(SUM(entry_weight_total),2) total_weight,
+	    ROUND(SUM(entry_volume_total),2) total_volume,
+	    SUM(entry_sum_vatless) vatless,
+	    SUM(entry_sum_total) total,
+	    SUM(entry_sum_total-entry_sum_vatless) vat,
+	    SUM(ROUND(product_quantity*self_price,2)) self,
+	    '$curr_symbol' curr_symbol
+	FROM 
+            tmp_entry_list";
+	return $this->get_row($sql);        
     }
     //////////////////////////////////////////
     // VIEWS SECTION
@@ -642,44 +661,45 @@ abstract class DocumentBase extends Catalog{
     //////////////////////////////////////////
     // COMMIT SECTION
     //////////////////////////////////////////
-    protected function documentChangeCommit( $make_commited=false ){
-	if( $make_commited && $this->isCommited() || !$make_commited && !$this->isCommited() ){
-	    return true;
-	}
-        $trans_ok=$this->documentChangeCommitTransactions($make_commited);
-	$entries_ok=$this->documentChangeCommitEntries($make_commited);
-	if( !$trans_ok || !$entries_ok ){
-	    $this->db_transaction_rollback();
-	    return false;
-	}
-        return true;
-    }
-    protected function documentChangeCommitEntries($make_commited){
-	$doc_id=$this->doc('doc_id');
-	$document_entries=$this->get_list("SELECT doc_entry_id FROM document_entries WHERE doc_id='$doc_id'");
-	//$this->Hub->msg("make_commited $make_commited");
-	
-	foreach($document_entries as $entry){
-	    if( $make_commited && !$this->entryCommit($entry->doc_entry_id) ){
-		return true;//need to commit but it failed
-	    }
-	    if( !$make_commited && !$this->entryUncommit($entry->doc_entry_id) ){
-		return true;//need to uncommit but it failed
-	    }
-	}
-	return true;
-    }
-    protected function documentChangeCommitTransactions($make_commited){
-        if( $make_commited ){
-	    $footer=$this->footGet();
-	    $this->transUpdate($footer);
-            return true;
-        } else {
-            $this->transDisable();
-            return true;
-        }
-        return false;
-    }
+//    protected function documentChangeCommit( $make_commited=false ){
+//	if( $make_commited && $this->isCommited() || !$make_commited && !$this->isCommited() ){
+//	    return true;
+//	}
+//        $trans_ok=$this->documentChangeCommitTransactions($make_commited);
+//	$entries_ok=$this->documentChangeCommitEntries($make_commited);
+//	if( !$trans_ok || !$entries_ok ){
+//	    $this->db_transaction_rollback();
+//	    return false;
+//	}
+//        return true;
+//    }
+//    protected function documentChangeCommitEntries($make_commited){
+//	$doc_id=$this->doc('doc_id');
+//	$document_entries=$this->get_list("SELECT doc_entry_id FROM document_entries WHERE doc_id='$doc_id'");
+//	//$this->Hub->msg("make_commited $make_commited");
+//	
+//	foreach($document_entries as $entry){
+//	    if( $make_commited && !$this->entryCommit($entry->doc_entry_id) ){
+//		return true;//need to commit but it failed
+//	    }
+//	    if( !$make_commited && !$this->entryUncommit($entry->doc_entry_id) ){
+//		return true;//need to uncommit but it failed
+//	    }
+//	}
+//	return true;
+//    }
+//    protected function documentChangeCommitTransactions($make_commited){
+//        if( $make_commited ){
+//            $doc_id=$this->doc('doc_id');
+//	    $footer=$this->footGet($doc_id);
+//	    $this->transUpdate($footer);
+//            return true;
+//        } else {
+//            $this->transDisable();
+//            return true;
+//        }
+//        return false;
+//    }
     
     //////////////////////////////////////////
     // HEADER SECTION
@@ -967,14 +987,7 @@ abstract class DocumentBase extends Catalog{
     }
     protected function transClear(){
         $Trans=$this->Hub->load_model("AccountsCore");
-        $this->db_transaction_start();
-        $ok=$Trans->documentTransClear( $this->doc('doc_id') );
-        if( $ok ){
-            $this->db_transaction_commit();
-            return true;
-        }
-        $this->db_transaction_rollback();
-        return false;
+        return $Trans->documentTransClear( $this->doc('doc_id') );
     }
     protected function transUpdate(){
 	$foot=$this->footGet($this->doc_id);

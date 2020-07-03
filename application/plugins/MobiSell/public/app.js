@@ -90,15 +90,16 @@ App = {
         var chunks = dmy.split('.');
         return chunks[2] + '-' + chunks[1] + '-' + chunks[0];
     },
-    renderTpl: function (id, data, mode) {
-        if( $('#' + id).length==0 ){
+    renderTpl: function (query, data, mode) {
+        $node=$('#' + query);
+        if( $node.length===0 ){
             return;
         }
-        if (!this.tplcache[id] || mode === 'nocache') {
-            this.tplcache[id] = $('#' + id).html().replace(/&gt;/g, '>').replace(/<!--/g, '').replace(/-->/g, '');
+        if (!this.tplcache[query] || mode === 'nocache') {
+            this.tplcache[query] = $node.html().replace(/&gt;/g, '>').replace(/<!--/g, '').replace(/-->/g, '');
         }
-        $('#' + id).html(Mark.up(App.tplcache[id], data));
-        $('#' + id).removeClass('covert');
+        $node.html(Mark.up(App.tplcache[query], data));
+        $node.removeClass('covert');
     },
     parseState: function (text) {
         var newstate = {};

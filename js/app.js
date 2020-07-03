@@ -24,8 +24,8 @@ var App = {
 	}
 	return translated.join("\n");
     },
-    lang:function(word){
-	return App.vocab[word] || word;
+    lang:function(key){
+	return App.vocab[key] || key;
     },
     vocab:{},
     setTitle:function( title ){
@@ -413,20 +413,34 @@ App.datagrid = {
 	}
     }
 };
-App.renderTpl=function( id, data, mode ){
-    var query='#'+id;
-    if( id.match(/\W/) ){
-        query=id;
+//App.renderTpl=function( id, data, mode ){
+//    var query='#'+id;
+//    if( id.match(/\W/) ){
+//        query=id;
+//    }
+//    if( !$(query).length ){
+//        console.log('not found: '+query);
+//        return;
+//    }
+//    if( !this.tplcache[query] || mode==='nocache' ){
+//        this.tplcache[query]=$(query).html().replace(/&gt;/,'>').replace(/<!--/g,'').replace(/-->/g,'');
+//    }
+//    $(query).html( Mark.up(App.tplcache[query], data) );
+//    $(query).removeClass('covert');
+//};
+App.renderTpl=function (query, data, mode) {
+    $node=$(query);
+    if( $node.length===0 ){
+        $node=$(`#${query}`);
     }
-    if( !$(query).length ){
-        console.log('not found: '+query);
+    if( $node.length===0 ){
         return;
     }
-    if( !this.tplcache[query] || mode==='nocache' ){
-        this.tplcache[query]=$(query).html().replace(/&gt;/,'>').replace(/<!--/g,'').replace(/-->/g,'');
+    if (!this.tplcache[query] || mode === 'nocache') {
+        this.tplcache[query] = $node.html().replace(/&gt;/g, '>').replace(/<!--/g, '').replace(/-->/g, '');
     }
-    $(query).html( Mark.up(App.tplcache[query], data) );
-    $(query).removeClass('covert');
+    $node.html(Mark.up(App.tplcache[query], data));
+    $node.removeClass('covert');
 };
 App.setHTML=function( query, html ){
     $(query).html(html);
@@ -505,7 +519,7 @@ $.ajaxSetup({
 $(document).ajaxComplete(function (event, xhr, settings) {
     $("#app_busy").hide();
     if( xhr.statusText==='error' ){
-
+        
     }
     else if( settings.crossDomain===false && settings.dataType!=='script' ){
 	switch(xhr.status){

@@ -24,7 +24,13 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
      * Executes needed sync operations
      */
     public function replicate( $filter_local_id=null ){
-        return parent::replicate( $filter_local_id );
+        $user_permissions=$this->Hub->svar('user_permission');
+        $user_level=$this->Hub->svar('user_level');
+        if( $user_level>=3 && strpos($user_permissions, 'nocommit')===false ){
+            return parent::replicate( $filter_local_id );
+        }
+        $this->log('Moedelosync moedelo_doc_act_sell Unsufficient rights');
+        return false;
     }
     ///////////////////////////////////////////////////////////////
     // REMOTE SECTION
@@ -154,7 +160,7 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
         $remoteDoc->DocDate=$this->toTimezone($remoteDoc->DocDate,'local');
         $passive_company_id=$this->localFind($remoteDoc->KontragentId, 'moedelo_companies');
         $localDoc=$this->localFindDocument( $passive_company_id, $remoteDoc->Number, $remoteDoc->DocDate, $remoteDoc->Sum );
-        //print_r($remoteDoc);die;
+        print_r($remoteDoc);//die;
         if( !$localDoc ){
             $Company=$this->Hub->load_model("Company");
             $pcomp=$Company->selectPassiveCompany($passive_company_id);
