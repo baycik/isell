@@ -58,8 +58,6 @@ class MoedeloSyncInvoiceSell extends MoedeloSyncBase{
         /*
          * TEMPORARY FIX NEED TO FIND WORKAROUND
          */
-        
-        
         return parent::remoteDelete($local_id, $remote_id, $entry_id);
     }
     
