@@ -52,6 +52,14 @@ class MoedeloSyncInvoiceSell extends MoedeloSyncBase{
      * Deletes existing record on remote
      */
     public function remoteDelete( $local_id, $remote_id, $entry_id ){
+        
+        
+        return true;
+        /*
+         * TEMPORARY FIX NEED TO FIND WORKAROUND
+         */
+        
+        
         return parent::remoteDelete($local_id, $remote_id, $entry_id);
     }
     
