@@ -207,7 +207,9 @@ class MoedeloSync extends Catalog {
             '1_136'=>'MoedeloSyncBillSell',
             '1_133'=>'MoedeloSyncWayBillSell',
             '1_140'=>'MoedeloSyncInvoiceSell',
-            '1_143'=>'MoedeloSyncUPDSell'
+            '1_143'=>'MoedeloSyncUPDSell',
+            '2_140'=>'MoedeloSyncInvoiceBuy',
+            '2_143'=>'MoedeloSyncUPDBuy'
         ];
         $Handler=$this->Hub->load_model($handlers[$key]);
         $remote_id=$Handler->remotePush($doc_view_id,true);

@@ -81,7 +81,7 @@ class MoedeloSyncInvoiceBuy extends MoedeloSyncInvoiceSell{
                 
                 CONCAT('СчетФактура ',view_num,dvl.tstamp) ErrorTitle,
 
-                Payer_pse.remote_id KontragentId,
+                Sender_pse.remote_id KontragentId,
                 Sender_pse.remote_id SenderId,
                 Supplier_pse.remote_id SupplierId,
                 Receiver_pse.remote_id ReceiverId,

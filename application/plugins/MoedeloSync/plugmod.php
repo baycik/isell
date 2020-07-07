@@ -11,7 +11,7 @@ $before[]=<<<EOT
 EOT;
 $after[]=<<<'EOT'
     <?php
-    $supported_types=['1_136','1_133','1_140','1_143'];
+    $supported_types=['1_136','1_133','1_140','1_143','2_140','2_143'];
     $current_key="{$view->head->doc_type}_{$view->doc_view->view_type_id}";
     if( isset($view->doc_view->view_type_id) && in_array($current_key,$supported_types) ):
     $file_name=urlencode("{$view->doc_view->view_name} №{$view->doc_view->view_num} от {$view->doc_view->loc_date}");
