@@ -10,6 +10,10 @@ class MoedeloSyncInvoiceBuy extends MoedeloSyncInvoiceSell{
             'doc_type'=>2
         ];
     }
+    
+    public function remoteDelete($local_id, $remote_id, $entry_id) {
+        return true;
+    }
     /**
      * @param bool $is_full
      * Create local doc list to sync
