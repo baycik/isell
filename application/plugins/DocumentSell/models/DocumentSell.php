@@ -82,7 +82,7 @@ class DocumentSell extends DocumentBase{
             $doc_id=$this->doc('doc_id');
             
             
-            echo "!$new_is_commited && !".$this->isCommited()."==".(!$new_is_commited && !$this->isCommited());
+            //echo "!$new_is_commited && !".$this->isCommited()."==".(!$new_is_commited && !$this->isCommited());
             
             //return $this->documentDelete($doc_id);
         }
@@ -202,7 +202,7 @@ class DocumentSell extends DocumentBase{
                     'product_quantity'=>$entry->product_quantity*2
                 ];
             }
-            $change_ok=$this->entryChange($entry->doc_entry_id, $entry, $old_entry_data);
+            $change_ok=$this->entrySave($entry->doc_entry_id, $entry, $old_entry_data);
             if( !$change_ok ){
                 $this->db_transaction_rollback();
                 return false;
@@ -258,7 +258,13 @@ class DocumentSell extends DocumentBase{
             $new_entry_data->invoice_price=$new_entry_data->entry_price_vatless/$doc_curr_correction;
             unset($new_entry_data->entry_price_vatless);
         }
-        $update_ok=$this->update('document_entries',$new_entry_data,['doc_entry_id'=>$doc_entry_id]);
+        
+        $filtered_entry_data=(object)[];
+        foreach( ['party_label','product_quantity','self_price','breakeven_price','invoice_price'] as $field ){
+            $filtered_entry_data->$field=$new_entry_data->$field;
+        }
+        
+        $update_ok=$this->update('document_entries',$filtered_entry_data,['doc_entry_id'=>$doc_entry_id]);
         $error = $this->db->error();
         if($error['code']==1452){
             $this->db_transaction_rollback();
@@ -271,17 +277,26 @@ class DocumentSell extends DocumentBase{
 	if($error['code']!=0){
             $this->db_transaction_rollback();
             throw new Exception($error['message'].' '.$this->db->last_query(),500);//Internal Server Error
-	}        
+	}
         if( ($new_entry_data->product_quantity??false) && $this->isCommited() ){
             $product_delta_quantity=$current_entry_data->product_quantity - $new_entry_data->product_quantity;
             $product_code=$new_entry_data->product_code??$current_entry_data->product_code;
             $stock_id=1;
             $Stock=$this->Hub->load_model("Stock");
             $stock_ok=$Stock->productQuantityModify( $product_code, $product_delta_quantity, $stock_id  );
+            
+            
+            echo ("stock_ok $stock_ok");
+            
+            
             if( !$stock_ok ){
                 $this->db_transaction_rollback();
+                
+                echo "Insufficient Storage";
+                
                 throw new Exception("product_stock_error",507);//Insufficient Storage
             }
+            $update_ok=true;
         }
         return $update_ok;
     }
