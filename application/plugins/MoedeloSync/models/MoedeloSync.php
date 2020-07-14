@@ -95,7 +95,11 @@ class MoedeloSync extends Catalog {
             
             'MoedeloSyncInvoiceBuy/localCheckout/9 minutes/60 minutes',
             'MoedeloSyncInvoiceBuy/remoteCheckout/9 minutes/60 minutes',
-            'MoedeloSyncInvoiceBuy/replicate/10 minutes/'
+            'MoedeloSyncInvoiceBuy/replicate/10 minutes/',
+            
+            'MoedeloSyncInvoiceBuyService/localCheckout/9 minutes/60 minutes',
+            'MoedeloSyncInvoiceBuyService/remoteCheckout/9 minutes/60 minutes',
+            'MoedeloSyncInvoiceBuyService/replicate/10 minutes/'
         ];
     
     public function tick( $iterations_left, string $currentJob=null ){
