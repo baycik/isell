@@ -80,6 +80,7 @@ class MoedeloSyncUPDBuy extends MoedeloSyncUPDSell{
                 
                 CONCAT('УПД ',view_num,dvl.tstamp) ErrorTitle,
                 
+                SUM(ROUND(invoice_price*product_quantity*(1+dl.vat_rate/100),2)-ROUND(invoice_price*product_quantity,2)) NdsTotal,
                 SUM(ROUND(invoice_price*product_quantity*(1+dl.vat_rate/100),2)) Sum,
                 {$this->remote_stock_id} StockId,
                 Sender_pse.remote_id KontragentId,
@@ -135,6 +136,9 @@ class MoedeloSyncUPDBuy extends MoedeloSyncUPDSell{
                     doc_id={$document->doc_id}";
             $document->Items=$this->get_list($sql_entry);
         }
+        $document->NdsDeductions=[
+            ["Date"=>$document->Date,"Sum"=>$document->NdsTotal]
+        ];
         return $document;
     }    
     

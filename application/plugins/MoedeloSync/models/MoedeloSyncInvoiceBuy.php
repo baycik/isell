@@ -79,6 +79,7 @@ class MoedeloSyncInvoiceBuy extends MoedeloSyncInvoiceSell{
                 dl.cstamp ContextCreateDate,
                 GREATEST(dl.modified_at,MAX(de.modified_at),dvl.modified_at) ContextModifyDate,
                 user_sign ContextModifyUser,
+                SUM(ROUND(invoice_price*product_quantity*(1+dl.vat_rate/100),2)-ROUND(invoice_price*product_quantity,2)) NdsTotal,
                 SUM(ROUND(invoice_price*product_quantity*(1+dl.vat_rate/100),2)) Sum,
                 1 Type,
                 2 NdsPositionType,
@@ -138,6 +139,9 @@ class MoedeloSyncInvoiceBuy extends MoedeloSyncInvoiceSell{
             'CreateDate'=>$this->toTimezone($document->ContextCreateDate,'remote'),
             'ModifyDate'=>$this->toTimezone($document->ContextModifyDate,'remote'),
             'ModifyUser'=>$document->ContextModifyUser
+        ];
+        $document->NdsDeductions=[
+            ["Date"=>$document->Date,"Sum"=>$document->NdsTotal]
         ];
         
         
