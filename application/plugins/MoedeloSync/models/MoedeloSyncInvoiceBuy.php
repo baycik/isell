@@ -141,7 +141,7 @@ class MoedeloSyncInvoiceBuy extends MoedeloSyncInvoiceSell{
             'ModifyUser'=>$document->ContextModifyUser
         ];
         $document->NdsDeductions=[
-            ["Date"=>$document->Date,"Sum"=>$document->NdsTotal]
+            ["Date"=>$document->DocDate,"Sum"=>$document->NdsTotal]
         ];
         
         
