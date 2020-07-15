@@ -7,7 +7,7 @@ class MoedeloSyncInvoiceBuy extends MoedeloSyncInvoiceSell{
             'remote_function'=>'accounting/api/v1/purchases/invoice/common',
             'local_view_type_id'=>140,//invoice
             'sync_destination'=>'moedelo_doc_invoice_buy',
-            'doc_type'=>2
+            'doc_type'=>'2,4'
         ];
     }
     
@@ -72,7 +72,7 @@ class MoedeloSyncInvoiceBuy extends MoedeloSyncInvoiceSell{
                 plugin_sync_entries Receiver_pse ON JSON_UNQUOTE(JSON_EXTRACT(view_efield_values,'$.reciever_company_id'))=Receiver_pse.local_id AND Receiver_pse.sync_destination='moedelo_companies'
             WHERE 
                 active_company_id='{$this->acomp_id}'
-                AND doc_type='{$this->doc_config->doc_type}'
+                AND doc_type IN ('{$this->doc_config->doc_type}')
                 AND view_type_id='{$this->doc_config->local_view_type_id}'
                 AND dvl.tstamp>'{$this->sync_since}'
                 AND NOT is_reclamation
@@ -135,7 +135,7 @@ class MoedeloSyncInvoiceBuy extends MoedeloSyncInvoiceSell{
                     ru Name,
                     product_quantity Count,
                     product_unit Unit,
-                    IF({$this->doc_config->doc_type}=1 OR {$this->doc_config->doc_type}=2,1,2) Type,
+                    IF(2 IN({$this->doc_config->doc_type}),1,2) Type,
                     {$document->vat_rate} NdsType,
                     ROUND(invoice_price*(1+{$document->vat_rate}/100),2) Price,
                     ROUND(invoice_price*product_quantity*(1+{$document->vat_rate}/100),2) SumWithNds,
@@ -181,6 +181,15 @@ class MoedeloSyncInvoiceBuy extends MoedeloSyncInvoiceSell{
         }
         $remoteDoc->DocDate=$this->toTimezone($remoteDoc->DocDate,'local');
         $passive_company_id=$this->localFind($remoteDoc->KontragentId, 'moedelo_companies');
+        
+        if( $remoteDoc->Items[0]->Type == 2 ){
+            //this is the servicein document
+            $this->doc_config->doc_type = 4;
+        } else {
+            //this is the buyproduct document
+            $this->doc_config->doc_type = 2;
+        }
+        
         $localDoc=$this->localFindDocument( $passive_company_id, $remoteDoc->Number, $remoteDoc->DocDate, $remoteDoc->Sum );
         //print_r($remoteDoc);//die;
         if( !$localDoc ){
@@ -217,8 +226,6 @@ class MoedeloSyncInvoiceBuy extends MoedeloSyncInvoiceSell{
         $sync_destination=$this->doc_config->sync_destination;
         $modified_at=$localDoc->modified_at;
         $localDoc->doc_view_id=$this->localInsertUpdateView($remoteDoc,$doc_view_id,$view_type_id,$sync_destination,$modified_at);
-        
-        die;
         return $localDoc->doc_view_id;
     }
     
@@ -277,7 +284,7 @@ class MoedeloSyncInvoiceBuy extends MoedeloSyncInvoiceSell{
                 active_company_id='{$this->acomp_id}'
                 AND passive_company_id='$passive_company_id'
                 AND is_commited
-                AND doc_type='{$this->doc_config->doc_type}'
+                AND doc_type IN ({$this->doc_config->doc_type})
                 AND DATEDIFF(cstamp,'$doc_date')=0
             GROUP BY dl.doc_id
             HAVING doc_sum=$doc_sum*1
@@ -341,6 +348,14 @@ class MoedeloSyncInvoiceBuy extends MoedeloSyncInvoiceSell{
         $remoteDoc->DocDate=$this->toTimezone($remoteDoc->DocDate,'local');
         $localDoc=$this->localGet($local_id);
         //print_r($remoteDoc);print_r($localDoc);
+        
+        if( $remoteDoc->Items[0]->Type == 2 ){
+            //this is the servicein document
+            $this->doc_config->doc_type = 4;
+        } else {
+            //this is the buyproduct document
+            $this->doc_config->doc_type = 2;
+        }
         
         if( $remoteDoc->Number!=$localDoc->Number || $remoteDoc->DocDate!=$localDoc->DocDate ){
             $sql_dochead_update="
