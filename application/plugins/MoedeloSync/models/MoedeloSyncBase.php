@@ -170,7 +170,7 @@ class MoedeloSyncBase extends Catalog{
             HAVING sync_action<>'SKIP'
             ";
         $action_list=$this->get_list($sql_action_list);
-        print_r($action_list);die;
+        //print_r($action_list);die;
         foreach( $action_list as $action ){
             if( $action->sync_action!='SKIP' && method_exists( $this, $action->sync_action) ){
                 $this->{$action->sync_action}($action->local_id,$action->remote_id,$action->entry_id);
