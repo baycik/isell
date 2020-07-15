@@ -217,6 +217,8 @@ class MoedeloSyncInvoiceBuy extends MoedeloSyncInvoiceSell{
         $sync_destination=$this->doc_config->sync_destination;
         $modified_at=$localDoc->modified_at;
         $localDoc->doc_view_id=$this->localInsertUpdateView($remoteDoc,$doc_view_id,$view_type_id,$sync_destination,$modified_at);
+        
+        die;
         return $localDoc->doc_view_id;
     }
     
@@ -303,13 +305,12 @@ class MoedeloSyncInvoiceBuy extends MoedeloSyncInvoiceSell{
                 prod_list
             WHERE 
                 is_service=$is_service
-                AND product_unit='$Item->Unit'
                 AND ru='$Item->Name'
                 ";
         $product_code=$this->get_value($sql_get_product_code);
         if( !$product_code ){
             $product_code= mb_substr($Item->Name, 0, 5).rand(100,999);
-            $sql_insert_service="
+            $sql_insert_toprodlist="
                 INSERT INTO
                     prod_list
                 SET
@@ -318,7 +319,14 @@ class MoedeloSyncInvoiceBuy extends MoedeloSyncInvoiceSell{
                     ru='$Item->Name',
                     product_code='$product_code'
                 ";
-            $this->query($sql_insert_service);
+            $this->query($sql_insert_toprodlist);
+            $sql_insert_tostock="
+                INSERT INTO
+                    stock_entries
+                SET
+                    product_code='$product_code'
+                ";
+            $this->query($sql_insert_tostock);
         }
         return $product_code;
     }
