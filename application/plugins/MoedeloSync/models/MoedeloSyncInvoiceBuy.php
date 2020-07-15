@@ -12,7 +12,7 @@ class MoedeloSyncInvoiceBuy extends MoedeloSyncInvoiceSell{
     }
     
     public function remoteDelete($local_id, $remote_id, $entry_id) {
-        return true;
+        return parent::remoteDelete($local_id, $remote_id, $entry_id);
     }
     /**
      * @param bool $is_full
