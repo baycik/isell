@@ -11,6 +11,20 @@ class MoedeloSyncInvoiceBuy extends MoedeloSyncInvoiceSell{
         ];
     }
     
+    /**
+     * Executes needed sync operations
+     */
+    public function replicate( $filter_local_id=null ){
+        $user_permissions=$this->Hub->svar('user_permission');
+        $user_level=$this->Hub->svar('user_level');
+        if( $user_level>=3 && strpos($user_permissions, 'nocommit')===false ){
+            return parent::replicate( $filter_local_id );
+        }
+        $this->log('Moedelosync moedelo_doc_act_sell Unsufficient rights');
+        return false;
+    }
+
+
     public function remoteDelete($local_id, $remote_id, $entry_id) {
         return parent::remoteDelete($local_id, $remote_id, $entry_id);
     }
@@ -157,4 +171,238 @@ class MoedeloSyncInvoiceBuy extends MoedeloSyncInvoiceSell{
         return $document;
     }    
     
+    /**
+     * Inserts new record on local
+     */
+    public function localInsert( $local_id, $remote_id, $entry_id ){
+        $remoteDoc=$this->remoteGet($remote_id);
+        if( !$remoteDoc || $this->Hub->svar( 'user_level' )<2 ){
+            return false;
+        }
+        $remoteDoc->DocDate=$this->toTimezone($remoteDoc->DocDate,'local');
+        $passive_company_id=$this->localFind($remoteDoc->KontragentId, 'moedelo_companies');
+        $localDoc=$this->localFindDocument( $passive_company_id, $remoteDoc->Number, $remoteDoc->DocDate, $remoteDoc->Sum );
+        //print_r($remoteDoc);//die;
+        if( !$localDoc ){
+            $Company=$this->Hub->load_model("Company");
+            $pcomp=$Company->selectPassiveCompany($passive_company_id);
+            if( !$pcomp ){
+                //Have no permission to this pcomp
+                return false;
+            }
+            $DocumentItems=$this->Hub->load_model("DocumentItems");
+            $new_doc_id=$DocumentItems->createDocument($this->doc_config->doc_type);
+            $sql_doc_update="
+                    UPDATE 
+                        document_list 
+                    SET 
+                        cstamp='$remoteDoc->DocDate',
+                        doc_num='$remoteDoc->Number'
+                    WHERE doc_id='$new_doc_id'";
+            $this->query($sql_doc_update);
+            foreach( $remoteDoc->Items as $Item ){
+                $product_code=$this->localFindProduct( $Item );
+                $DocumentItems->entryAdd( $new_doc_id, $product_code, $Item->Count, $Item->SumWithoutNds/$Item->Count );
+            }
+            $DocumentItems->entryDocumentCommit($new_doc_id);
+            $localDoc=(object)[
+                'doc_id'=>$new_doc_id,
+                'modified_at'=>date("Y-m-d H:i:s")
+            ];
+        }
+        
+        //INSERT UPDATE OF ACT
+        $doc_view_id=$localDoc->doc_view_id??0;
+        $view_type_id=$this->doc_config->local_view_type_id;
+        $sync_destination=$this->doc_config->sync_destination;
+        $modified_at=$localDoc->modified_at;
+        $localDoc->doc_view_id=$this->localInsertUpdateView($remoteDoc,$doc_view_id,$view_type_id,$sync_destination,$modified_at);
+        return $localDoc->doc_view_id;
+    }
+    
+    
+    private function localInsertUpdateView($remoteDoc,$doc_view_id,$view_type_id,$sync_destination,$modified_at){
+        $DocumentView=$this->Hub->load_model("DocumentView");
+        if( empty($doc_view_id) ){
+            $new_doc_view_id=$DocumentView->viewCreate($view_type_id);
+            $doc_view_id=$new_doc_view_id;
+        }
+        $DocumentView->viewUpdate($doc_view_id,false,'view_num',$remoteDoc->Number);
+        $DocumentView->viewUpdate($doc_view_id,false,'view_date',$remoteDoc->DocDate);
+        $remoteDoc->DocDate= substr($remoteDoc->DocDate, 0, 10);
+        $local_hash=md5("{$remoteDoc->Number};{$remoteDoc->DocDate};{$remoteDoc->KontragentId};{$remoteDoc->Sum};");
+        
+        $remote_tstamp=$this->toTimezone($remoteDoc->Context->ModifyDate??$this->sync_since, 'local');
+        $sql_save_insert="
+            INSERT INTO 
+                plugin_sync_entries
+            SET
+                local_id='$doc_view_id',
+                local_hash='$local_hash',
+                local_tstamp='$modified_at',
+                remote_tstamp='$remote_tstamp',
+ 
+                remote_id='{$remoteDoc->Id}',
+                sync_destination='{$sync_destination}'
+            ON DUPLICATE KEY UPDATE 
+                local_id='$doc_view_id',
+                local_hash='$local_hash',
+                local_tstamp='$modified_at',
+                remote_tstamp='$remote_tstamp'
+            ";
+        $this->query($sql_save_insert);
+        return $doc_view_id;
+    }
+    
+    private function localFindDocument( $passive_company_id, $doc_num, $doc_date, $doc_sum=0 ){
+        $sql_find_local="
+            SELECT
+                dl.doc_id,
+                SUM(ROUND(invoice_price*product_quantity*(1+dl.vat_rate/100),2)) doc_sum,
+                GREATEST(dl.modified_at,MAX(de.modified_at),dvl.modified_at) modified_at,
+                dvl.doc_view_id,
+                doc_num='$doc_num' doc_num_equals,
+                view_num='$doc_num' view_num_equals
+            FROM
+                document_list dl
+                    JOIN
+                document_entries de USING(doc_id)
+                    LEFT JOIN
+                document_view_list dvl ON dl.doc_id=dvl.doc_id AND view_type_id='{$this->doc_config->local_view_type_id}'
+                    LEFT JOIN
+                plugin_sync_entries doc_pse ON dvl.doc_view_id=doc_pse.local_id AND doc_pse.sync_destination='{$this->doc_config->sync_destination}'
+            WHERE
+                active_company_id='{$this->acomp_id}'
+                AND passive_company_id='$passive_company_id'
+                AND is_commited
+                AND doc_type='{$this->doc_config->doc_type}'
+                AND DATEDIFF(cstamp,'$doc_date')=0
+            GROUP BY dl.doc_id
+            HAVING doc_sum=$doc_sum*1
+            ORDER BY doc_num_equals DESC,view_num_equals DESC
+            LIMIT 1";
+        return $this->get_row($sql_find_local);
+    }
+    private function localFind( $remote_id, $sync_destination ){
+        $sql="SELECT
+                local_id
+            FROM
+                plugin_sync_entries
+            WHERE 
+                sync_destination='$sync_destination'
+                AND remote_id='$remote_id'";
+        return $this->get_value($sql);
+    }
+    
+    private function localFindProduct( $Item ){
+        $is_service= ($this->doc_config->doc_type==3 || $this->doc_config->doc_type==4 )?1:0;
+        $sql_get_product_code="
+            SELECT 
+                product_code 
+            FROM 
+                prod_list
+            WHERE 
+                is_service=$is_service
+                AND product_unit='$Item->Unit'
+                AND ru='$Item->Name'
+                ";
+        $product_code=$this->get_value($sql_get_product_code);
+        if( !$product_code ){
+            $product_code= mb_substr($Item->Name, 0, 5).rand(100,999);
+            $sql_insert_service="
+                INSERT INTO
+                    prod_list
+                SET
+                    is_service=$is_service,
+                    product_unit='$Item->Unit',
+                    ru='$Item->Name',
+                    product_code='$product_code'
+                ";
+            $this->query($sql_insert_service);
+        }
+        return $product_code;
+    }
+    /**
+     * Updates existing record on local
+     */
+    public function localUpdate( $local_id, $remote_id, $entry_id ){
+        $remoteDoc=$this->remoteGet($remote_id);
+        if( !$remoteDoc || $this->Hub->svar( 'user_level' )<2 ){
+            return false;
+        }
+        $remoteDoc->DocDate=$this->toTimezone($remoteDoc->DocDate,'local');
+        $localDoc=$this->localGet($local_id);
+        //print_r($remoteDoc);print_r($localDoc);
+        
+        if( $remoteDoc->Number!=$localDoc->Number || $remoteDoc->DocDate!=$localDoc->DocDate ){
+            $sql_dochead_update="
+                UPDATE
+                    document_list
+                SET
+                    cstamp='{$remoteDoc->DocDate}',
+                    doc_num='{$remoteDoc->Number}',
+                    use_vatless_price=0
+                WHERE
+                    doc_id='{$localDoc->doc_id}'";
+            $this->query($sql_dochead_update);
+            $sql_view_update="
+                UPDATE
+                    document_view_list
+                SET
+                    tstamp='{$remoteDoc->DocDate}',
+                    view_num='{$remoteDoc->Number}'
+                WHERE
+                    doc_view_id='{$local_id}'";
+            $this->query($sql_view_update);
+        }
+        
+        $DocumentItems=$this->Hub->load_model('DocumentItems');
+        $localEntryDictionary=[];
+        foreach ($localDoc->Items as $localEntry){
+            $localEntryDictionary[$localEntry->Name]=$localEntry;
+        }
+        foreach ($remoteDoc->Items as $remoteEntry){
+            $product_code=$this->localFindProduct($remoteEntry);
+            $remoteEntry->Price=$remoteEntry->SumWithNds/$remoteEntry->Count;
+            
+            if( empty($localEntryDictionary[$remoteEntry->Name]) ){
+                //Need to insert entry in local document
+                $DocumentItems->entryAdd($localDoc->doc_id,$product_code,$remoteEntry->Count,$remoteEntry->Price);
+                continue;
+            }
+            $localEntry=$localEntryDictionary[$remoteEntry->Name];
+            if( $localEntry->Count !== $remoteEntry->Count || $localEntry->Price !== $remoteEntry->Price ){
+                //Update local entry
+                $DocumentItems->entryUpdate($localDoc->doc_id,$localEntry->doc_entry_id,'product_quantity',$remoteEntry->Count);
+                $DocumentItems->entryUpdate($localDoc->doc_id,$localEntry->doc_entry_id,'product_price',$remoteEntry->Price);
+            }
+            unset($localEntryDictionary[$remoteEntry->Id]);
+        }
+        $delete_entry_ids=[];
+        foreach( $localEntryDictionary as $localEntry ){
+            //Delete local entry
+            $delete_entry_ids[]=$localEntry->doc_entry_id;
+            
+        }
+        $DocumentItems->entryDeleteArray($localDoc->doc_id,$delete_entry_ids);
+        
+        //$this->query("UPDATE plugin_sync_entries SET remote_hash='{$remoteDoc->Context->ModifyDate}' WHERE entry_id='$entry_id'");
+    }
+    
+    /**
+     * Deletes existing record on local
+     */
+    public function localDelete( $local_id, $remote_id, $entry_id ){
+        $this->query("START TRANSACTION");
+        $doc_id=$this->get_value("SELECT doc_id FROM document_view_list WHERE doc_view_id='$local_id'");
+        $DocumentItems=$this->Hub->load_model('DocumentItems');
+        $uncommit_ok=$DocumentItems->entryDocumentUncommit( $doc_id );
+        if( !$uncommit_ok ){
+            $this->query("ROLLBACK");
+            return false;
+        }
+        $DocumentItems->entryDocumentUncommit( $doc_id );//for deleting document
+        $this->query("DELETE FROM plugin_sync_entries WHERE entry_id='$entry_id'");
+        $this->query("COMMIT");
+    }
 }
