@@ -158,10 +158,10 @@ class MoedeloSync extends Catalog {
                 $this->plugin_data->{"$jobParts[0]_$jobParts[1]_Last"}=date("Y-m-d H:i:s");
                 $this->plugin_data->lastDoneJob=$currentJob;
                 $this->updateSettings();
-                echo "done $currentJob\n";
+                echo "DONE $currentJob\n";
                 return true;
             } else {
-                echo "undone. continue on next tick: $currentJob\n";
+                echo "UNDONE. continue on next tick: $currentJob\n";
             }
         } catch (Exception $ex) {
             $this->log($ex);
