@@ -134,6 +134,7 @@ class MoedeloSyncInvoiceSell extends MoedeloSyncBase{
                 AND doc_type='{$this->doc_config->doc_type}'
                 AND view_type_id='{$this->doc_config->local_view_type_id}'
                 AND dvl.tstamp>'{$this->sync_since}'
+                AND NOT is_reclamation
                 $filter_local
             GROUP BY doc_view_id) inner_table";
         return $local_sync_list_sql;
@@ -237,6 +238,11 @@ class MoedeloSyncInvoiceSell extends MoedeloSyncBase{
                 WHERE
                     doc_id={$document->doc_id}";
             $document->Items=$this->get_list($sql_entry);
+            foreach($document->Items as &$Item){
+                if( $Item->Type==2 ){
+                    unset($Item->StockProductId);
+                }
+            }
         }
         $document->Context=(object)[
             'CreateDate'=>$this->toTimezone($document->ContextCreateDate,'remote'),
