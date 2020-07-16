@@ -72,7 +72,7 @@ class MoedeloSyncInvoiceBuy extends MoedeloSyncInvoiceSell{
                 plugin_sync_entries Receiver_pse ON JSON_UNQUOTE(JSON_EXTRACT(view_efield_values,'$.reciever_company_id'))=Receiver_pse.local_id AND Receiver_pse.sync_destination='moedelo_companies'
             WHERE 
                 active_company_id='{$this->acomp_id}'
-                AND doc_type IN ('{$this->doc_config->doc_type}')
+                AND doc_type IN ({$this->doc_config->doc_type})
                 AND view_type_id='{$this->doc_config->local_view_type_id}'
                 AND dvl.tstamp>'{$this->sync_since}'
                 AND NOT is_reclamation
@@ -87,6 +87,7 @@ class MoedeloSyncInvoiceBuy extends MoedeloSyncInvoiceSell{
                 dl.doc_id,
                 dvl.doc_view_id local_id,
                 dl.vat_rate,
+                dl.doc_type,
                 view_num Number,
                 REPLACE(dvl.tstamp,' ','T') DocDate,
                 '' PaymentNumber,
@@ -135,7 +136,7 @@ class MoedeloSyncInvoiceBuy extends MoedeloSyncInvoiceSell{
                     ru Name,
                     product_quantity Count,
                     product_unit Unit,
-                    IF(2 IN({$this->doc_config->doc_type}),1,2) Type,
+                    IF({$document->doc_type}=2,1,2) Type,
                     {$document->vat_rate} NdsType,
                     ROUND(invoice_price*(1+{$document->vat_rate}/100),2) Price,
                     ROUND(invoice_price*product_quantity*(1+{$document->vat_rate}/100),2) SumWithNds,
