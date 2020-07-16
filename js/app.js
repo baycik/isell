@@ -310,7 +310,7 @@ App.formatNum = function (num, mode) {
     if ( !num && num !== 0 || mode === 'clear' && num * 1 === 0) {
 	return '';
     }
-    return Number.parseFloat(num.replace(/\s/,'')).toLocaleString('en-US',{ style: 'decimal',minimumFractionDigits:2 }).replace(/,/g,' ');
+    return Number.parseFloat(num).toLocaleString('en-US',{ style: 'decimal',minimumFractionDigits:2 }).replace(/,/g,' ');
 };
 App.formElements=function( fquery ){
     return $(fquery + " input," + fquery + " textarea," + fquery + " select");
