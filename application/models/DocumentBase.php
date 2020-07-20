@@ -27,6 +27,7 @@ abstract class DocumentBase extends Catalog{
 //            }
             $this->document_properties->$field=$value;
             $flush && $this->documentFlush();
+            echo " docFLUSH  $field, string $value";
 	}
 	return $this->document_properties->$field??null;
     }

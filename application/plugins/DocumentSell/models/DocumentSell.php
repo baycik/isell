@@ -247,7 +247,14 @@ class DocumentSell extends DocumentBase{
      * @param object $new_entry_data
      * @param object $current_entry_data
      */
-    protected function entrySave( int $doc_entry_id, object $new_entry_data, object $current_entry_data=null ){
+    protected function entrySave1( int $doc_entry_id, object $new_entry_data, object $current_entry_data=null ){
+        
+        
+        
+        return false;
+        throw new Exception("already_exists",409);//Conflict
+        
+        
         if( isset($new_entry_data->entry_price) ){
             $vat_correction=$this->doc('use_vatless_price')?$this->doc('vat_rate')/100+1:1;
             $new_entry_data->entry_price_vatless=$new_entry_data->entry_price/$vat_correction;
@@ -261,9 +268,11 @@ class DocumentSell extends DocumentBase{
         
         $filtered_entry_data=(object)[];
         foreach( ['party_label','product_quantity','self_price','breakeven_price','invoice_price'] as $field ){
+            if( !isset($new_entry_data->$field) ){
+                continue;
+            }
             $filtered_entry_data->$field=$new_entry_data->$field;
         }
-        
         $update_ok=$this->update('document_entries',$filtered_entry_data,['doc_entry_id'=>$doc_entry_id]);
         $error = $this->db->error();
         if($error['code']==1452){
@@ -285,16 +294,15 @@ class DocumentSell extends DocumentBase{
             $Stock=$this->Hub->load_model("Stock");
             $stock_ok=$Stock->productQuantityModify( $product_code, $product_delta_quantity, $stock_id  );
             
+
             
             echo ("stock_ok $stock_ok");
-            
-            
+            die;
             if( !$stock_ok ){
                 $this->db_transaction_rollback();
-                
                 echo "Insufficient Storage";
-                
                 throw new Exception("product_stock_error",507);//Insufficient Storage
+                
             }
             $update_ok=true;
         }
@@ -312,6 +320,13 @@ class DocumentSell extends DocumentBase{
     }
     
     
+    
+    /**
+     * Util function
+     * @param int $old_doc_id
+     * @param string $new_doc_comment
+     * @return boolean
+     */
     public function entryAbsentSplit( int $old_doc_id, string $new_doc_comment ){
 	$this->Hub->set_level(2);
 	$this->documentSelect($old_doc_id);
