@@ -167,7 +167,7 @@ $before[]=<<<EOT
                 let leftovers=item.supply_leftovers.split(',');
                 let deliveries=item.supplier_deliveries.split(',');
                 for(let i in leftovers){
-                    delivery_list=`\${leftovers[i]}(\${deliveries[i]}дн)<br>`;
+                    delivery_list=`\${delivery_list} \${leftovers[i]}(\${deliveries[i]}дн)<br>`;
                 }
             }
             item.delivery_list=`<span style="color:blue">\${delivery_list}</span>`;;
