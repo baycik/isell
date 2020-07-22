@@ -54,9 +54,9 @@ class AccountsRegistry extends AccountsCore{
 		DATE_FORMAT(dvl.tstamp,'%d.%m.%Y') tax_bill_date,
 		IF(company_tax_id,company_name,CONCAT(company_name,' (НЕПЛАТЕЛЬЩИК НАЛОГА)')) company_name,
 		company_tax_id company_tax_id,
-		(SELECT ROUND(amount,2) FROM acc_trans JOIN document_trans dt USING(trans_id) WHERE dt.doc_id=dl.doc_id AND trans_role='total') total,
-		(SELECT ROUND(amount,2) FROM acc_trans JOIN document_trans dt USING(trans_id) WHERE dt.doc_id=dl.doc_id AND trans_role='vat') vat,
-		(SELECT ROUND(amount,2) FROM acc_trans JOIN document_trans dt USING(trans_id) WHERE dt.doc_id=dl.doc_id AND trans_role='vatless') vatless
+		(SELECT ROUND(amount,2) FROM acc_trans JOIN document_trans dt USING(trans_id) WHERE dt.doc_id=dl.doc_id AND dt.trans_role='total') total,
+		(SELECT ROUND(amount,2) FROM acc_trans JOIN document_trans dt USING(trans_id) WHERE dt.doc_id=dl.doc_id AND dt.trans_role='vat') vat,
+		(SELECT ROUND(amount,2) FROM acc_trans JOIN document_trans dt USING(trans_id) WHERE dt.doc_id=dl.doc_id AND dt.trans_role='vatless') vatless
 	    FROM
 		document_list dl
 		    JOIN

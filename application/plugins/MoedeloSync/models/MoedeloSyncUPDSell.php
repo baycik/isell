@@ -155,6 +155,7 @@ class MoedeloSyncUPDSell extends MoedeloSyncBase{
                 AND doc_type='{$this->doc_config->doc_type}'
                 AND view_type_id='{$this->doc_config->local_view_type_id}'
                 AND dvl.tstamp>'{$this->sync_since}'
+                AND NOT is_reclamation
                 $filter_local
             GROUP BY doc_view_id) inner_table";
         return $local_sync_list_sql;
@@ -242,7 +243,7 @@ class MoedeloSyncUPDSell extends MoedeloSyncBase{
                     product_unit Unit,
                     IF({$this->doc_config->doc_type}=1 OR {$this->doc_config->doc_type}=2,1,2) Type,
                     IF({$document->vat_rate},5,1) NdsType,
-                    ROUND(invoice_price*(1+{$document->vat_rate}/100),2) Price,
+                    ROUND(invoice_price,2) Price,
                     ROUND(invoice_price*product_quantity*(1+{$document->vat_rate}/100),2) SumWithNds,
                     prod_pse.remote_id StockProductId,
                     party_label Declaration,

@@ -58,6 +58,7 @@ class MoedeloSyncUPDBuy extends MoedeloSyncUPDSell{
                 AND doc_type='{$this->doc_config->doc_type}'
                 AND view_type_id='{$this->doc_config->local_view_type_id}'
                 AND dvl.tstamp>'{$this->sync_since}'
+                AND NOT is_reclamation
                 $filter_local
             GROUP BY doc_view_id) inner_table";
         return $local_sync_list_sql;
@@ -80,6 +81,7 @@ class MoedeloSyncUPDBuy extends MoedeloSyncUPDSell{
                 
                 CONCAT('УПД ',view_num,dvl.tstamp) ErrorTitle,
                 
+                SUM(ROUND(invoice_price*product_quantity*(1+dl.vat_rate/100),2)-ROUND(invoice_price*product_quantity,2)) NdsTotal,
                 SUM(ROUND(invoice_price*product_quantity*(1+dl.vat_rate/100),2)) Sum,
                 {$this->remote_stock_id} StockId,
                 Sender_pse.remote_id KontragentId,
@@ -117,11 +119,14 @@ class MoedeloSyncUPDBuy extends MoedeloSyncUPDSell{
                     product_quantity Count,
                     product_unit Unit,
                     IF({$this->doc_config->doc_type}=1 OR {$this->doc_config->doc_type}=2,1,2) Type,
-                    IF({$document->vat_rate},5,0) NdsType,
-                    ROUND(invoice_price*(1+{$document->vat_rate}/100),2) Price,
+                    IF({$document->vat_rate},5,1) NdsType,
+                    ROUND(invoice_price,2) Price,
                     ROUND(invoice_price*product_quantity,2) SumWithoutNds,
                     ROUND(invoice_price*product_quantity*(1+{$document->vat_rate}/100),2) SumWithNds,
-                    prod_pse.remote_id StockProductId
+                    ROUND(invoice_price*product_quantity*(1+{$document->vat_rate}/100),2)-ROUND(invoice_price*product_quantity,2) NdsSum,
+                    prod_pse.remote_id StockProductId,
+                    party_label Declaration,
+                    CONCAT(UCASE(LEFT(analyse_origin, 1)), LCASE(SUBSTRING(analyse_origin, 2))) Country
                 FROM
                     document_entries
                         JOIN
@@ -132,6 +137,9 @@ class MoedeloSyncUPDBuy extends MoedeloSyncUPDSell{
                     doc_id={$document->doc_id}";
             $document->Items=$this->get_list($sql_entry);
         }
+        $document->NdsDeductions=[
+            ["Date"=>$document->Date,"Sum"=>$document->NdsTotal]
+        ];
         return $document;
     }    
     

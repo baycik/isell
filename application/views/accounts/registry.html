@@ -40,12 +40,12 @@
 	},
 	renderSubtotals:function( mode, sub_totals ){
 	    this.sub_totals[mode]=sub_totals;
-	    this.sub_totals.sell.sum_vatless=App.formatNum(this.sub_totals.sell.sum_vatless||0);
-	    this.sub_totals.sell.sum_vat=App.formatNum(this.sub_totals.sell.sum_vat||0);
-	    this.sub_totals.sell.sum_total=App.formatNum(this.sub_totals.sell.sum_total||0);
-	    this.sub_totals.buy.sum_vatless=App.formatNum(this.sub_totals.buy.sum_vatless||0);
-	    this.sub_totals.buy.sum_vat=App.formatNum(this.sub_totals.buy.sum_vat||0);
-	    this.sub_totals.buy.sum_total=App.formatNum(this.sub_totals.buy.sum_total||0);
+	    this.sub_totals.sell.sum_vatless=App.formatNum(this.sub_totals.sell.sum_vatless.replace(/\s/,'')||0);
+	    this.sub_totals.sell.sum_vat=App.formatNum(this.sub_totals.sell.sum_vat.replace(/\s/,'')||0);
+	    this.sub_totals.sell.sum_total=App.formatNum(this.sub_totals.sell.sum_total.replace(/\s/,'')||0);
+	    this.sub_totals.buy.sum_vatless=App.formatNum(this.sub_totals.buy.sum_vatless.replace(/\s/,'')||0);
+	    this.sub_totals.buy.sum_vat=App.formatNum(this.sub_totals.buy.sum_vat.replace(/\s/,'')||0);
+	    this.sub_totals.buy.sum_total=App.formatNum(this.sub_totals.buy.sum_total.replace(/\s/,'')||0);
 	    
 	    this.sub_totals.pay_vat=App.formatNum( (this.sub_totals.sell.sum_vat.replace(/\s/g,'')-this.sub_totals.buy.sum_vat.replace(/\s/g,'')).toFixed(2) );
 	    App.renderTpl('acc_tax_bill_reg_footer',this.sub_totals);
@@ -150,12 +150,12 @@
 		    <input name="group_by_comp" type="checkbox" title="Группировать по контрагентам">
 		</fieldset>
 	    </form>
-	    <fieldset style="width:270px;text-align: right">
+	    <fieldset style="width:290px;text-align: right">
 		<legend>Итоги реестра</legend>
 		<div id="acc_tax_bill_reg_footer" class="covert">
 		    <table style="width:100%">
 			<tr>
-			    <th style="width:100px"></th>
+			    <th style="width:50px"></th>
 			    <th>Покупка</th>
 			    <th>Продажа</th>
 			</tr>

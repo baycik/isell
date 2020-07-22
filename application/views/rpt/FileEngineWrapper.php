@@ -169,7 +169,7 @@ if ( isset($word_header) ) {
 		?>
 	    <div style="display:inline-block;width:30px;">&nbsp;</div>
 	    <div class="gray_grad" style="display:inline-block;padding:3px;">
-		<a href="javascript:window.print()"style="color:black;font-size:12px;">Напечатать <img src="../../img/print.png" border="0" align="absmiddle" /></a>
+                <a href="javascript:window.print()"style="color:black;font-size:12px;">Напечатать <img style="width:24px;height: 24px" src="../../img/print.png" border="0" align="absmiddle" /></a>
 	    </div>
 	</div>
 	<?php } echo "<div align='center' class='WordSection1 landscape'>$html</div>" ?>

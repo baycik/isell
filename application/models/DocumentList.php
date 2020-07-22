@@ -69,7 +69,7 @@ class DocumentList extends Catalog{
 			document_trans dtr USING(trans_id)
 		    WHERE dtr.doc_id=dl.doc_id AND dtr.trans_role='total'
 		    LIMIT 1),
-                    (SELECT SUM(ROUND(invoice_price*product_quantity,2)) FROM document_entries de WHERE de.doc_id=dl.doc_id),
+                    (SELECT SUM(ROUND(invoice_price*product_quantity*(1+dl.vat_rate/100),2)) FROM document_entries de WHERE de.doc_id=dl.doc_id),
                     0 )doc_total,
 		(SELECT CONCAT(code,' ',descr) FROM acc_trans_status JOIN acc_trans USING(trans_status) JOIN document_trans dt USING(trans_id) WHERE dt.doc_id=dl.doc_id ORDER BY trans_id LIMIT 1) trans_status
 	    FROM 

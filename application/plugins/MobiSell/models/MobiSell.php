@@ -86,7 +86,7 @@ class MobiSell extends PluginManager {
 			WHERE dt.doc_id=dl.doc_id 
 			AND dt.trans_role='total'
 		    ),2),
-		    (SELECT SUM(ROUND(invoice_price*product_quantity,2)) FROM document_entries de WHERE de.doc_id=dl.doc_id),
+		    (SELECT SUM(ROUND(invoice_price*product_quantity*(1+dl.vat_rate/100),2)) FROM document_entries de WHERE de.doc_id=dl.doc_id),
                     0
                 ) amount,
 		label,

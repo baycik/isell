@@ -160,7 +160,7 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
         $remoteDoc->DocDate=$this->toTimezone($remoteDoc->DocDate,'local');
         $passive_company_id=$this->localFind($remoteDoc->KontragentId, 'moedelo_companies');
         $localDoc=$this->localFindDocument( $passive_company_id, $remoteDoc->Number, $remoteDoc->DocDate, $remoteDoc->Sum );
-        print_r($remoteDoc);//die;
+        //print_r($remoteDoc);//die;
         if( !$localDoc ){
             $Company=$this->Hub->load_model("Company");
             $pcomp=$Company->selectPassiveCompany($passive_company_id);
@@ -203,7 +203,7 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
             //INSERT UPDATE OF FACTURA
             $view_type_id=140;
             $doc_view_id=$this->get_value("SELECT doc_view_id FROM document_view_list WHERE doc_id='{$localDoc->doc_id}' AND view_type_id='$view_type_id'");
-            $sync_destination=$this->doc_config->sync_destination=='moedelo_doc_act_sell'?'moedelo_doc_invoice_sell':'moedelo_doc_invoice_buy';
+            $sync_destination=$this->doc_config->sync_destination=='moedelo_doc_act_sell'?'moedelo_doc_invoice_sell_service':'moedelo_doc_invoice_buy_service';
             $modified_at=$localDoc->modified_at;
             $this->localInsertUpdateView($Invoice,$doc_view_id,$view_type_id,$sync_destination,$modified_at);            
         }
@@ -465,7 +465,7 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
     }
     
     private function localInvoiceGet($doc_id){
-        $sync_destination=$this->doc_config->sync_destination=='moedelo_doc_act_sell'?'moedelo_doc_invoice_sell':'moedelo_doc_invoice_buy';
+        $sync_destination=$this->doc_config->sync_destination=='moedelo_doc_act_sell'?'moedelo_doc_invoice_sell_service':'moedelo_doc_invoice_buy_service';
         $sql="
             SELECT
                 doc_pse.remote_id Id,

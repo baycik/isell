@@ -22,11 +22,12 @@ abstract class DocumentBase extends Catalog{
 	}
 	if( isset($value) ){
             $this->Hub->set_level(2);
-            if( $this->document_properties->$field==$value ){
-                return false;//should it be $value?
-            }
+//            if( $this->document_properties->$field==$value ){
+//                return false;//should it be $value?
+//            }
             $this->document_properties->$field=$value;
             $flush && $this->documentFlush();
+            echo " docFLUSH  $field, string $value";
 	}
 	return $this->document_properties->$field??null;
     }
@@ -66,7 +67,7 @@ abstract class DocumentBase extends Catalog{
     }
     
     public function isCommited(){
-	return (int) $this->doc('is_commited');
+	return $this->doc('is_commited')==1?true:false;
     }
     
     public function documentNumNext( $doc_type, $creation_mode=null ){
@@ -230,12 +231,8 @@ abstract class DocumentBase extends Catalog{
         $fieldCamelCase=str_replace(' ', '', ucwords(str_replace('_', ' ', $field)));
         $this->db_transaction_start();
         $this->documentSelect($doc_id);
-        $saved_value=$this->doc( $field, $value );
-        if( $value==$saved_value ){
-            $ok=$this->Topic('documentChange'.$fieldCamelCase)->publish( $field, $value, $this->document_properties );
-        } else {
-            $ok=true;//$value not changed
-        }
+        $ok=$this->Topic('documentChange'.$fieldCamelCase)->publish( $field, $value, $this->document_properties );
+        $this->doc( $field, $value );
         if( $ok===false ){
             $this->db_transaction_rollback();
             return false;
