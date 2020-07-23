@@ -40,15 +40,33 @@
 	},
 	renderSubtotals:function( mode, sub_totals ){
 	    this.sub_totals[mode]=sub_totals;
-	    this.sub_totals.sell.sum_vatless=App.formatNum(this.sub_totals.sell.sum_vatless.replace(/\s/,'')||0);
-	    this.sub_totals.sell.sum_vat=App.formatNum(this.sub_totals.sell.sum_vat.replace(/\s/,'')||0);
-	    this.sub_totals.sell.sum_total=App.formatNum(this.sub_totals.sell.sum_total.replace(/\s/,'')||0);
-	    this.sub_totals.buy.sum_vatless=App.formatNum(this.sub_totals.buy.sum_vatless.replace(/\s/,'')||0);
-	    this.sub_totals.buy.sum_vat=App.formatNum(this.sub_totals.buy.sum_vat.replace(/\s/,'')||0);
-	    this.sub_totals.buy.sum_total=App.formatNum(this.sub_totals.buy.sum_total.replace(/\s/,'')||0);
-	    
+            if(!this.sub_totals.sell.sum_vat){
+                this.sub_totals.sell.sum_vat = '0';
+            }
+            if(!this.sub_totals.buy.sum_vat){
+                this.sub_totals.buy.sum_vat = '0';
+            }
+            if(mode == 'sell'){
+                this.sub_totals.sell.sum_vatless=App.formatNum(this.sub_totals.sell.sum_vatless.replace(/\s/,'')||0);
+                this.sub_totals.sell.sum_vat=App.formatNum(this.sub_totals.sell.sum_vat.replace(/\s/,'')||0);
+                this.sub_totals.sell.sum_total=App.formatNum(this.sub_totals.sell.sum_total.replace(/\s/,'')||0);
+            }
+            if(mode == 'buy'){
+                this.sub_totals.buy.sum_vatless=App.formatNum(this.sub_totals.buy.sum_vatless.replace(/\s/,'')||0);
+                this.sub_totals.buy.sum_vat=App.formatNum(this.sub_totals.buy.sum_vat.replace(/\s/,'')||0);
+                this.sub_totals.buy.sum_total=App.formatNum(this.sub_totals.buy.sum_total.replace(/\s/,'')||0);
+            }
 	    this.sub_totals.pay_vat=App.formatNum( (this.sub_totals.sell.sum_vat.replace(/\s/g,'')-this.sub_totals.buy.sum_vat.replace(/\s/g,'')).toFixed(2) );
 	    App.renderTpl('acc_tax_bill_reg_footer',this.sub_totals);
+	},
+	isInvalid:function(value, row){
+            if(!value){
+                value = '';
+            }
+            if(row.invalid*1){
+                return `<span style="color: red;">${value}</span>`;
+            }
+	    return value;
 	},
 	docTooltip:function(value, row){
 	    if( row.doc_id ){
@@ -112,6 +130,12 @@
 	out:function(out_type){
 	    var fvalue=App.collectForm('#acc_tax_bill_reg_frm');
 	    window.open("./AccountsRegistry/registryViewGet/?out_type="+out_type+'&period='+(fvalue.year+'-'+fvalue.month)+'&mode='+(fvalue.group_by_comp?'group_by_comp':'expanded'), '_new');   
+	},
+        
+	exportXML:function(type){
+            var fvalue=App.collectForm('#acc_tax_bill_reg_frm');
+            var fields= JSON.stringify(App.collectForm('#xml_fields'));
+	    window.open("./AccountsRegistry/registryXmlGet/?type=" + type + "&period="+(fvalue.year+'-'+fvalue.month)+'&fields='+fields);
 	}
     };
 </script>
@@ -148,8 +172,26 @@
 		    </select>
 		    <input name="year" title="Год" style="width:100px">
 		    <input name="group_by_comp" type="checkbox" title="Группировать по контрагентам">
+                    <div>
+                    </div>
 		</fieldset>
 	    </form>
+            <fieldset style="width:290px;">
+		<legend>Выгрузка файла синхронизации</legend>
+		<div id="acc_tax_bill_reg_xsd">
+                    <div id='xml_fields'>
+                        <label>ОКВЭД</label>
+                        <input name="OKVED" title="ОКВЭД" style="width:100%" value='00130984'>
+                        <label>ОКТМО</label>
+                        <input name="OKTMO" title="ОКТМО" style="width:100%" value='35701000'>
+                        <label>КБК</label>
+                        <input name="KBK" title="КБК" style="width:100%" value='18210301000011000110'>
+                    </div>
+                    <div><a href="javascript:App.page_accounts_registry.exportXML('buy')">Список покупок</a></div>
+                    <div><a href="javascript:App.page_accounts_registry.exportXML('sell')">Список продаж</a></div>
+                    <div><a href="javascript:App.page_accounts_registry.exportXML('difference')">Разница реестров</a></div>
+		</div>
+	    </fieldset>
 	    <fieldset style="width:290px;text-align: right">
 		<legend>Итоги реестра</legend>
 		<div id="acc_tax_bill_reg_footer" class="covert">
@@ -216,10 +258,10 @@
 	       remoteFilter:true">
 	    <thead>
 		<th data-options="width:25,field:'doc_type',formatter:App.datagrid.tooltip"></th>
-		<th data-options="width:50,align:'right',field:'tax_bill_num'">Номер</th>
-		<th data-options="width:70,field:'tax_bill_date'">Дата</th>
+		<th data-options="width:50,align:'right',field:'tax_bill_num',formatter:App.page_accounts_registry.isInvalid">Номер</th>
+		<th data-options="width:70,field:'tax_bill_date',formatter:App.page_accounts_registry.isInvalid">Дата</th>
 		<th data-options="width:70,field:'cdate'">Проведен</th>
-		<th data-options="width:220,field:'company_name'">Предприятие</th>
+		<th data-options="width:220,field:'company_name',formatter:App.page_accounts_registry.isInvalid">Предприятие</th>
 		<th data-options="width:100,field:'company_tax_id'">ИНН</th>
 		<th data-options="width:80,field:'total',align:'right'">Сумма</th>
 		<th data-options="width:80,field:'vatless',align:'right'">Без НДС</th>
@@ -255,10 +297,10 @@
 	       remoteFilter:true">
 	    <thead>
 		<th data-options="width:25,field:'doc_type',formatter:App.datagrid.tooltip"></th>
-		<th data-options="width:50,align:'right',field:'tax_bill_num'">Номер</th>
-		<th data-options="width:70,field:'tax_bill_date'">Дата</th>
+		<th data-options="width:50,align:'right',field:'tax_bill_num',formatter:App.page_accounts_registry.isInvalid">Номер</th>
+		<th data-options="width:70,field:'tax_bill_date',formatter:App.page_accounts_registry.isInvalid">Дата</th>
 		<th data-options="width:70,field:'cdate'">Проведен</th>
-		<th data-options="width:220,field:'company_name'">Предприятие</th>
+		<th data-options="width:220,field:'company_name',formatter:App.page_accounts_registry.isInvalid">Предприятие</th>
 		<th data-options="width:100,field:'company_tax_id'">ИНН</th>
 		<th data-options="width:80,field:'total',align:'right'">Сумма</th>
 		<th data-options="width:80,field:'vatless',align:'right'">Без НДС</th>
