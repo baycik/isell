@@ -1,4 +1,5 @@
 <?php
+    $this->setPageOrientation('landscape');
     function getAll( $comp ) {
         $all ="$comp->company_name";
         $all.=$comp->company_tax_id?", ИНН/КПП:{$comp->company_tax_id}/{$comp->company_tax_id2}":'';
@@ -46,35 +47,28 @@
 
 
 
-$okei = [
-    'шт' => '796',
-    'руб'=>'383',
-    '1000 руб'=>'384',
-    'компл'=>'839',
-    'л'=>'112',
-    'усл. ед'=>'876',
-    'кг'=>'166',
-    'т'=>'168',
-    'ч'=>'356',
-    'м' => '006',
-    'м2'=>'055',
-    'пог. м'=>'018',
-    'упак'=>'778'
-];
+include 'BlankDatatables.php';
+
 if( $this->out_ext=='.doc' ){
     $this->landscape_orientation=true;
     $this->view->tables = [$this->view->rows];
     $this->view->tables_count = 1;
 } else {
     $this->view->tables = [array_splice($this->view->rows, 0, 5)];
+    if( count($this->view->rows)>1 ){
+        $last_row=array_pop($this->view->rows);
+    }
     $this->view->tables = array_merge($this->view->tables, array_chunk($this->view->rows, 19));
+    
+    if($last_row){
+        $this->view->tables = array_merge($this->view->tables, [[$last_row]]);
+    }
     $this->view->tables_count = count($this->view->tables);
 }
 
 $this->view->footer->total_qty=0;
 $this->view->footer->vatless=0;
 $this->view->footer->vat=0;
-$vat_percent=0.18;
 $i = 0;
 foreach ($this->view->tables as &$table) {
     $subcount = 0;
@@ -85,7 +79,10 @@ foreach ($this->view->tables as &$table) {
 	$row->i = ++$i;
 	$row->product_sum_vat = $row->product_sum_total-$row->product_sum_vatless;
 	
-	$row->product_unit_code = $okei[$row->product_unit];
+        $unit=unit_code($row->product_unit);
+        $row->product_unit=$unit['name'];
+        $row->product_unit_code=$unit['code'];
+        
 	$subcount+=$row->product_quantity;
 	$subvatless+=$row->product_sum_vatless;
 	$subvat+=$row->product_sum_vat;
