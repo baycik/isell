@@ -4,7 +4,7 @@ class AccountsRegistry extends AccountsCore{
     public $min_level=3;
     public $xml_filter = false;
     
-    public $registryFetch=[
+    public $registryFetch = [
 	'period'=>'string',
 	'mode'=>'string',
 	'direction'=>'string',
@@ -25,20 +25,25 @@ class AccountsRegistry extends AccountsCore{
         
         $period_parts= explode('-', $period);
         if( is_numeric($period_parts[1]) ){
-            $period_filter = "dl.cstamp LIKE '{$period}%'";
+            $period_filter  = "(dvl.tstamp LIKE '{$period}%')";
+            $period_filter .= "(dl.cstamp LIKE '{$period}%')";
         } else {
             switch( $period_parts[1] ){
                 case 'I':
-                    $period_filter = "dl.cstamp LIKE '{$period_parts[0]}-01%' OR dl.cstamp LIKE '{$period_parts[0]}-02%' OR dl.cstamp LIKE '{$period_parts[0]}-03%'";
+                    $period_filter  = "(dvl.tstamp LIKE '{$period_parts[0]}-01%' OR dvl.tstamp LIKE '{$period_parts[0]}-02%' OR dvl.tstamp LIKE '{$period_parts[0]}-03%')";
+                    $period_filter .= " OR (dl.cstamp LIKE '{$period_parts[0]}-01%' OR dl.cstamp LIKE '{$period_parts[0]}-02%' OR dl.cstamp LIKE '{$period_parts[0]}-03%')";
                     break;
                 case 'II':
-                    $period_filter = "dl.cstamp LIKE '{$period_parts[0]}-04%' OR dl.cstamp LIKE '{$period_parts[0]}-05%' OR dl.cstamp LIKE '{$period_parts[0]}-06%'";
+                    $period_filter  = "(dvl.tstamp LIKE '{$period_parts[0]}-04%' OR dvl.tstamp LIKE '{$period_parts[0]}-05%' OR dvl.tstamp LIKE '{$period_parts[0]}-06%')";
+                    $period_filter .= " OR (dl.cstamp LIKE '{$period_parts[0]}-04%' OR dl.cstamp LIKE '{$period_parts[0]}-05%' OR dl.cstamp LIKE '{$period_parts[0]}-06%')";
                     break;
                 case 'III':
-                    $period_filter = "dl.cstamp LIKE '{$period_parts[0]}-07%' OR dl.cstamp LIKE '{$period_parts[0]}-08%' OR dl.cstamp LIKE '{$period_parts[0]}-09%'";
+                    $period_filter  = "(dvl.tstamp LIKE '{$period_parts[0]}-07%' OR dvl.tstamp LIKE '{$period_parts[0]}-08%' OR dvl.tstamp LIKE '{$period_parts[0]}-09%')";
+                    $period_filter .= " OR (dl.cstamp LIKE '{$period_parts[0]}-07%' OR dl.cstamp LIKE '{$period_parts[0]}-08%' OR dl.cstamp LIKE '{$period_parts[0]}-09%')";
                     break;
                 case 'IV':
-                    $period_filter = "dl.cstamp LIKE '{$period_parts[0]}-10%' OR dl.cstamp LIKE '{$period_parts[0]}-11%' OR dl.cstamp LIKE '{$period_parts[0]}-12%'";
+                    $period_filter  = "(dvl.tstamp LIKE '{$period_parts[0]}-10%' OR dvl.tstamp LIKE '{$period_parts[0]}-11%' OR dvl.tstamp LIKE '{$period_parts[0]}-12%')";
+                    $period_filter .= " OR (dl.cstamp LIKE '{$period_parts[0]}-10%' OR dl.cstamp LIKE '{$period_parts[0]}-11%' OR dl.cstamp LIKE '{$period_parts[0]}-12%')";
                     break;
             }
         }
@@ -83,7 +88,7 @@ class AccountsRegistry extends AccountsCore{
 		    JOIN
 		companies_list ON company_id=passive_company_id
 		    LEFT JOIN
-		document_view_list dvl ON dl.doc_id=dvl.doc_id AND view_role='tax_bill'
+                (SELECT IF(DATE(REPLACE(JSON_EXTRACT(view_efield_values, '$.tax_date'),'\"','')),DATE(REPLACE(JSON_EXTRACT(view_efield_values, '$.tax_date'),'\"','')), tstamp) as tstamp, view_num, doc_view_id, doc_id, view_role FROM document_view_list )dvl ON dl.doc_id=dvl.doc_id AND view_role='tax_bill'
 	    WHERE
 		active_company_id='$active_company_id'
                 AND ($period_filter)
@@ -207,7 +212,6 @@ class AccountsRegistry extends AccountsCore{
         ];
         return implode('_', $document_name_array);
     }
-    
     
     private function handleQuarter($period){
         $result = [];
