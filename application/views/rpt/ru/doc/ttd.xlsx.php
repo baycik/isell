@@ -22,10 +22,6 @@
         $this->view->supplier=$this->view->seller;
     }
     
-    
-    
-    
-    
     $this->view->seller->all=getAll($this->view->seller);
     $this->view->buyer->all=getAll($this->view->buyer);
     $this->view->supplier->all=getAll($this->view->supplier);
@@ -34,9 +30,13 @@
     if( isset($this->view->doc_view->extra->reason_date) ){
         $this->view->doc_view->extra->reason_date=todmy( $this->view->doc_view->extra->reason_date );
     }
-    if( isset($this->view->doc_view->extra->transport_bill_date) ){
-        $this->view->doc_view->extra->transport_bill_date=todmy( $this->view->doc_view->extra->transport_bill_date );
+    if( isset($this->view->doc_view->extra->product_transport_bill_date) ){
+        $this->view->doc_view->extra->product_transport_bill_date=todmy( $this->view->doc_view->extra->product_transport_bill_date );
     }
+    if( isset($this->view->doc_view->extra->delivery_date) ){
+        $this->view->doc_view->extra->delivery_date=todmy( $this->view->doc_view->extra->delivery_date );
+    }
+    
     function todmy( $iso ){
        $ymd= explode('-', $iso);
        return "$ymd[2].$ymd[1].$ymd[0]";
@@ -62,6 +62,7 @@ $okei = [
     'пог. м'=>'018',
     'упак'=>'778'
 ];
+$this->view->common_rows = [];
 if( $this->out_ext=='.doc' ){
     $this->landscape_orientation=true;
     $this->view->tables = [$this->view->rows];
@@ -83,14 +84,14 @@ foreach ($this->view->tables as &$table) {
     $subvat = 0;
     $subtotal = 0;
     foreach ($table as &$row) {
-	$row->i = ++$i;
-	$row->product_sum_vat = $row->product_sum_total-$row->product_sum_vatless;
-	
-	$row->product_unit_code = $okei[$row->product_unit];
-	$subcount+=$row->product_quantity;
-	$subvatless+=$row->product_sum_vatless;
-	$subvat+=$row->product_sum_vat;
-	$subtotal+=$row->product_sum_total;
+        $row->i = ++$i;
+        $row->product_sum_vat = $row->product_sum_total-$row->product_sum_vatless;
+        $row->product_unit_code = $okei[$row->product_unit];
+        $subcount+=$row->product_quantity;
+        $subvatless+=$row->product_sum_vatless;
+        $subvat+=$row->product_sum_vat;
+        $subtotal+=$row->product_sum_total;
+        $this->view->common_rows[] = $row;
     }
     $table['subcount'] = $subcount;
     $table['subvatless'] = format($subvatless);
@@ -104,6 +105,7 @@ foreach ($this->view->tables as &$table) {
 $this->view->total_pages = num2str($this->view->tables_count + 1, true);
 $this->view->total_rows = num2str($i, true);
 $this->view->doc_view->total_spell = num2str($this->view->footer->total);
+$this->view->doc_view->total_coins = explode('.', $this->view->footer->total)[1];
 $this->view->doc_view->date_spell = daterus($this->view->doc_view->date_dot);
 
 
@@ -117,7 +119,7 @@ if( $this->view->doc_view->extra->goods_reciever ){
 }
 
 
-
+$this->view->doc_view->tstamp = dateexplode($this->view->doc_view->tstamp);
 
 
 
@@ -139,7 +141,16 @@ function format($num){
 function daterus($dmy) {
     $dmy = explode('.', $dmy);
     $months = array('ноября', 'января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря');
-    return ' &lt;' . $dmy[0] . '&gt; ' . $months[$dmy[1] * 1] . ' ' . $dmy[2] . ' года';
+    return ' <' . $dmy[0] . '> ' . $months[$dmy[1] * 1] . ' ' . $dmy[2] . ' года';
+}
+
+function dateexplode($dmy){
+    $date_exploded = explode('-', explode(' ', $dmy)[0]);
+    $result = new stdClass();
+    $result->day = $date_exploded[2];
+    $result->month = $date_exploded[1];
+    $result->year = $date_exploded[0];
+    return $result;
 }
 
 /**
@@ -190,7 +201,6 @@ function num2str($num, $only_number = false) {
 	return join(' ', $out);
     }
     $out[] = morph(intval($rub), $unit[1][0], $unit[1][1], $unit[1][2]); // rub
-    $out[] = $kop . ' ' . morph($kop, $unit[0][0], $unit[0][1], $unit[0][2]); // kop
     return trim(preg_replace('/ {2,}/', ' ', join(' ', $out)));
 }
 
