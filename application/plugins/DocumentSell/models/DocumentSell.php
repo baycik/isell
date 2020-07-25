@@ -15,7 +15,7 @@
 class DocumentSell extends DocumentBase{
     function init() {
         header("Content-type:text/plain");
-        $this->Topic("documentChangeIsCommited")->subscribe('DocumentSell','documentChangeIsCommited');
+        $this->Topic("documentBeforeChangeIsCommited")->subscribe('DocumentSell','documentBeforeChangeIsCommited');
     }
     
     
@@ -26,11 +26,11 @@ class DocumentSell extends DocumentBase{
     
     public function extensionGet(){
 	return [
-	    'script'=>$this->load->view('sell_script.js',[],true),
-	    'head'=>$this->load->view('head.html',[],true),
-	    'body'=>$this->load->view('body.html',[],true),
-	    'foot'=>$this->load->view('foot.html',[],true),
-	    'views'=>$this->load->view('views.html',[],true)
+	    'script'=>  $this->load->view('sell_script.js',[],true),
+	    'head'=>    $this->load->view('head.html',[],true),
+	    'body'=>    $this->load->view('body.html',[],true),
+	    'foot'=>    $this->load->view('foot.html',[],true),
+	    'views'=>   $this->load->view('views.html',[],true)
 	];
     }
     //////////////////////////////////////////
@@ -77,14 +77,16 @@ class DocumentSell extends DocumentBase{
     // DOCUMENT EVENTS SECTION
     //////////////////////////////////////////
     
-    public function documentChangeIsCommited( $field, bool $new_is_commited ){
+    public function documentBeforeChangeIsCommited( $field, bool $new_is_commited ){
         if( !$new_is_commited && !$this->isCommited() ){
             $doc_id=$this->doc('doc_id');
-            
-            
-            //echo "!$new_is_commited && !".$this->isCommited()."==".(!$new_is_commited && !$this->isCommited());
-            
+            /*
+             * Already uncommited than need to delete document
+             */
             //return $this->documentDelete($doc_id);
+        }
+        if( $new_is_commited == $this->isCommited() ){
+            return true;
         }
         return $this->entryListChangeCommit( $new_is_commited );
     }
@@ -185,13 +187,9 @@ class DocumentSell extends DocumentBase{
      */
     private function entryListChangeCommit( bool $new_is_commited ){
         $doc_id=$this->doc('doc_id');
-        $current_is_commited=$this->isCommited();
-        if( $new_is_commited==$current_is_commited ){
-            return true;
-        }
+        
         $entry_list=$this->entryListGet($doc_id);
         $this->db_transaction_start();
-        $this->doc('is_commited',$new_is_commited);
         foreach($entry_list as $entry){
             if( $new_is_commited ){
                 $old_entry_data=(object)[
@@ -208,7 +206,7 @@ class DocumentSell extends DocumentBase{
                 return false;
             }
         }
-        if( $this->isCommited() ){
+        if( $new_is_commited ){
             $this->transUpdate();
         }
         $this->db_transaction_commit();
@@ -247,14 +245,7 @@ class DocumentSell extends DocumentBase{
      * @param object $new_entry_data
      * @param object $current_entry_data
      */
-    protected function entrySave1( int $doc_entry_id, object $new_entry_data, object $current_entry_data=null ){
-        
-        
-        
-        return false;
-        throw new Exception("already_exists",409);//Conflict
-        
-        
+    protected function entrySave( int $doc_entry_id, object $new_entry_data, object $current_entry_data=null ){
         if( isset($new_entry_data->entry_price) ){
             $vat_correction=$this->doc('use_vatless_price')?$this->doc('vat_rate')/100+1:1;
             $new_entry_data->entry_price_vatless=$new_entry_data->entry_price/$vat_correction;
@@ -293,11 +284,6 @@ class DocumentSell extends DocumentBase{
             $stock_id=1;
             $Stock=$this->Hub->load_model("Stock");
             $stock_ok=$Stock->productQuantityModify( $product_code, $product_delta_quantity, $stock_id  );
-            
-
-            
-            echo ("stock_ok $stock_ok");
-            die;
             if( !$stock_ok ){
                 $this->db_transaction_rollback();
                 echo "Insufficient Storage";

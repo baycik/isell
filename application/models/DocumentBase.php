@@ -27,7 +27,7 @@ abstract class DocumentBase extends Catalog{
 //            }
             $this->document_properties->$field=$value;
             $flush && $this->documentFlush();
-            echo " docFLUSH  $field, string $value";
+            echo " docFLUSH  $field=$value";
 	}
 	return $this->document_properties->$field??null;
     }
@@ -231,8 +231,8 @@ abstract class DocumentBase extends Catalog{
         $fieldCamelCase=str_replace(' ', '', ucwords(str_replace('_', ' ', $field)));
         $this->db_transaction_start();
         $this->documentSelect($doc_id);
-        $ok=$this->Topic('documentChange'.$fieldCamelCase)->publish( $field, $value, $this->document_properties );
         $this->doc( $field, $value );
+        $ok=$this->Topic('documentBeforeChange'.$fieldCamelCase)->publish( $field, $value, $this->document_properties );
         if( $ok===false ){
             $this->db_transaction_rollback();
             return false;

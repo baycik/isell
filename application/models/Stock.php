@@ -14,7 +14,7 @@ class Stock extends Catalog {
         if( $product_delta_quantity==0 ){
             return true;
         }
-        $modify_qty_sql="
+        echo $modify_qty_sql="
             UPDATE
                 stock_entries
             SET

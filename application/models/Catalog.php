@@ -416,12 +416,12 @@ class Catalog extends CI_Model {
             if( !method_exists($Model, $method) ){
                 continue;
             }
-            try{
+            //try{
                 $previuos_return=call_user_func_array([$Model, $method],$arguments);
-            } catch (Exception $ex) {
+            //} catch (Exception $ex) {
                 //$this->unsubscribe( $listener->event_place, $listener->event_target, $listener->event_liable_user_id );
-                $this->log("Topic subscriber '{$listener->event_place}->{$listener->event_target}' has been removed due to error: ".$ex);
-            }
+                //$this->log("Topic subscriber '{$listener->event_place}->{$listener->event_target}' has been removed due to error: ".$ex);
+            //}
         }
         return $previuos_return;
     }
