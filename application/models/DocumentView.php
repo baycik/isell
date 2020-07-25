@@ -31,7 +31,7 @@ class DocumentView extends DocumentItems{
 		    GROUP BY 
 			view_type_id
 		    ORDER BY
-			pref_int-DATEDIFF(NOW(),pref_value) DESC,ISNULL(doc_view_id),view_hidden
+			ISNULL(doc_view_id),pref_int-DATEDIFF(NOW(),pref_value) DESC,view_hidden
 		    ";
 	    return $this->get_list($sql);	    
 	} else {
