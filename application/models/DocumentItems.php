@@ -485,7 +485,7 @@ class DocumentItems extends DocumentCore{
 	}
 	$target_list=  implode(',', $target);
 	$source_list=  implode(',', $source);
-	$set_list=  implode(',', $set);
+	//$set_list=  implode(',', $set);
         $sql="INSERT INTO $table ($target_list) 
             SELECT $source_list 
                 FROM imported_data 
