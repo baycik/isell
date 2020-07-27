@@ -471,7 +471,7 @@ class DocumentItems extends DocumentCore{
                 $set_list_delimiter=",";
 	    }
 	    if( $trg[$i]=='product_quantity' ){
-		$set_list.="$set_list_delimiter product_qunatity=product_quantity+{$src[$i]}";
+		$set_list.="$set_list_delimiter product_quantity=product_quantity+{$src[$i]}";
                 $set_list_delimiter=",";
 	    }
 	    if( $trg[$i]=='party_label' ){
