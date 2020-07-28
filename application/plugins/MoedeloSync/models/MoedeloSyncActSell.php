@@ -438,7 +438,7 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
                     product_quantity Count,
                     product_unit Unit,
                     IF({$this->doc_config->doc_type}=1 OR {$this->doc_config->doc_type}=2,1,2) Type,
-                    ROUND(invoice_price*(1+{$document->vat_rate}/100),2) Price,
+                    ROUND(invoice_price,2) Price,
                     {$document->vat_rate} NdsType,
                     ROUND(invoice_price*product_quantity*(1+{$document->vat_rate}/100),2) SumWithNds
                 FROM

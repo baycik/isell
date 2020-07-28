@@ -243,7 +243,7 @@ class MoedeloSyncWayBillSell extends MoedeloSyncBase{
                     product_unit Unit,
                     IF({$this->doc_config->doc_type}=1 OR {$this->doc_config->doc_type}=2,1,2) Type,
                     {$document->vat_rate} NdsType,
-                    ROUND(invoice_price*(1+{$document->vat_rate}/100),2) Price,
+                    ROUND(invoice_price,2) Price,
                     ROUND(invoice_price*product_quantity*(1+{$document->vat_rate}/100),2) SumWithNds,
                     prod_pse.remote_id StockProductId
                 FROM
