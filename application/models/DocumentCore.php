@@ -157,6 +157,7 @@ class DocumentCore extends DocumentUtils{
 	else{
 	    $doc_id = $this->doc('doc_id');
 	    $next_doc_num = $this->getNextDocNum($doc_type,true);
+            $this->entryBreakevenPriceUpdate(null,$doc_id);
 	    $this->query("DELETE FROM document_view_list WHERE doc_id='$doc_id'");
 	    $quantity_sign = $doc_type<0 ? -1 : 1;
 	    $this->query("UPDATE document_entries SET product_quantity=ABS(product_quantity)*$quantity_sign WHERE doc_id=$doc_id");

@@ -177,14 +177,14 @@ class DocumentItems extends DocumentCore{
         $Events->Topic('documentEntryChanged')->publish($doc_entry_id,$this->_doc);
         return $doc_entry_id;
     }
-    private function entryBreakevenPriceUpdate( $doc_entry_id=null, $doc_id=null ){
+    public function entryBreakevenPriceUpdate( $doc_entry_id=null, $doc_id=null ){
         if( !$doc_entry_id&&!$doc_id ){
             return;
         }
         $pcomp_id=$this->doc('passive_company_id');
         $usd_ratio=$this->doc('doc_ratio');
         $doc_type=$this->doc('doc_type');
-        if( $doc_type!=1 ){
+        if( $doc_type!=1 && $doc_type!=-1 ){
             return;
         }
         if( $doc_entry_id ){
