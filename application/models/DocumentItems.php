@@ -185,16 +185,16 @@ class DocumentItems extends DocumentCore{
         $usd_ratio=$this->doc('doc_ratio');
         $doc_type=$this->doc('doc_type');
         
-        $is_sell_document=true;
-        if( $doc_type!=1 && $doc_type!=-1 ){
-            $is_sell_document=false;
+        $skip_breakeven_check=$this->Hub->pcomp('skip_breakeven_check');
+        if( abs($doc_type)!=1 ){
+            $skip_breakeven_check=true;
         }
         if( $doc_entry_id ){
             $where="doc_entry_id=$doc_entry_id";
         } else {
             $where="doc_id=$doc_id";
         }
-        if( $this->Hub->pcomp('skip_breakeven_check') || !$is_sell_document ){
+        if( $skip_breakeven_check ){
             $sql="UPDATE 
                     document_entries 
                 SET 
@@ -209,6 +209,7 @@ class DocumentItems extends DocumentCore{
                 WHERE 
                     $where";
         }
+        echo $sql;
         $this->query($sql);
     }
 /*    public $entryPostAdd=[];
