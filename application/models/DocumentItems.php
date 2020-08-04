@@ -184,15 +184,17 @@ class DocumentItems extends DocumentCore{
         $pcomp_id=$this->doc('passive_company_id');
         $usd_ratio=$this->doc('doc_ratio');
         $doc_type=$this->doc('doc_type');
+        
+        $is_sell_document=true;
         if( $doc_type!=1 && $doc_type!=-1 ){
-            return;
+            $is_sell_document=false;
         }
         if( $doc_entry_id ){
             $where="doc_entry_id=$doc_entry_id";
         } else {
             $where="doc_id=$doc_id";
         }
-        if( $this->Hub->pcomp('skip_breakeven_check') ){
+        if( $this->Hub->pcomp('skip_breakeven_check') || !$is_sell_document ){
             $sql="UPDATE 
                     document_entries 
                 SET 
