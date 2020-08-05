@@ -209,7 +209,6 @@ class DocumentItems extends DocumentCore{
                 WHERE 
                     $where";
         }
-        echo $sql;
         $this->query($sql);
     }
 /*    public $entryPostAdd=[];
