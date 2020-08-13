@@ -238,11 +238,16 @@ class MoedeloSyncInvoiceSell extends MoedeloSyncBase{
                 WHERE
                     doc_id={$document->doc_id}";
             $document->Items=$this->get_list($sql_entry);
-            foreach($document->Items as &$Item){
-                if( $Item->Type==2 ){
-                    unset($Item->StockProductId);
+            for($i=0;$i<count($document->Items);$i++){
+                $declar_len=strlen($document->Items[$i]->Declaration);
+                if($declar_len<23 || $declar_len>27){
+                    unset($document->Items[$i]->Declaration);
+                }
+                if( $document->Items[$i]->Type==2 ){
+                    unset($document->Items[$i]->StockProductId);
                 }
             }
+
         }
         $document->Context=(object)[
             'CreateDate'=>$this->toTimezone($document->ContextCreateDate,'remote'),
