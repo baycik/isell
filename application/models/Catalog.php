@@ -169,7 +169,7 @@ class Catalog extends CI_Model {
 
     protected function db_transaction_start() {
         if ($this->db_transaction_nested_count == 0) {
-            echo " START TRANSACTION ".$this->db_transaction_nested_count;
+            //echo " START TRANSACTION ".$this->db_transaction_nested_count;
             $this->query("START TRANSACTION");
         }
         $this->db_transaction_nested_count += 1;
@@ -178,14 +178,14 @@ class Catalog extends CI_Model {
     protected function db_transaction_commit() {
         $this->db_transaction_nested_count -= 1;
         if ($this->db_transaction_nested_count == 0) {
-            echo " COMMIT ".$this->db_transaction_nested_count;
+            //echo " COMMIT ".$this->db_transaction_nested_count;
             $this->query("COMMIT");
         }
     }
 
     protected function db_transaction_rollback() {
         $this->db_transaction_nested_count = 0;
-        echo " ROLLBACK ".$this->db_transaction_nested_count;
+        //echo " ROLLBACK ".$this->db_transaction_nested_count;
         $this->query("ROLLBACK");
     }
 

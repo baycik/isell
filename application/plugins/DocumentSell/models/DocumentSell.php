@@ -187,7 +187,6 @@ class DocumentSell extends DocumentBase{
      */
     private function entryListChangeCommit( bool $new_is_commited ){
         $doc_id=$this->doc('doc_id');
-        
         $entry_list=$this->entryListGet($doc_id);
         $this->db_transaction_start();
         foreach($entry_list as $entry){
@@ -200,7 +199,7 @@ class DocumentSell extends DocumentBase{
                     'product_quantity'=>$entry->product_quantity*2
                 ];
             }
-            $change_ok=$this->entrySave($entry->doc_entry_id, $entry, $old_entry_data);
+            $change_ok=$this->entrySave($entry->doc_entry_id, $entry, $old_entry_data, true);
             if( !$change_ok ){
                 $this->db_transaction_rollback();
                 return false;
@@ -245,9 +244,9 @@ class DocumentSell extends DocumentBase{
      * @param object $new_entry_data
      * @param object $current_entry_data
      */
-    protected function entrySave( int $doc_entry_id, object $new_entry_data, object $current_entry_data=null ){
+    protected function entrySave( int $doc_entry_id, object $new_entry_data, object $current_entry_data=null, bool $modify_stock=false ){
         if( isset($new_entry_data->entry_price) ){
-            $vat_correction=$this->doc('use_vatless_price')?$this->doc('vat_rate')/100+1:1;
+            $vat_correction=$this->doc('use_vatless_price')?1:$this->doc('vat_rate')/100+1;
             $new_entry_data->entry_price_vatless=$new_entry_data->entry_price/$vat_correction;
             unset($new_entry_data->entry_price);
         }
@@ -264,6 +263,10 @@ class DocumentSell extends DocumentBase{
             }
             $filtered_entry_data->$field=$new_entry_data->$field;
         }
+        
+        print_r($filtered_entry_data);
+        
+        
         $update_ok=$this->update('document_entries',$filtered_entry_data,['doc_entry_id'=>$doc_entry_id]);
         $error = $this->db->error();
         if($error['code']==1452){
@@ -278,7 +281,7 @@ class DocumentSell extends DocumentBase{
             $this->db_transaction_rollback();
             throw new Exception($error['message'].' '.$this->db->last_query(),500);//Internal Server Error
 	}
-        if( ($new_entry_data->product_quantity??false) && $this->isCommited() ){
+        if( $modify_stock && ($new_entry_data->product_quantity??false) ){
             $product_delta_quantity=$current_entry_data->product_quantity - $new_entry_data->product_quantity;
             $product_code=$new_entry_data->product_code??$current_entry_data->product_code;
             $stock_id=1;
@@ -466,9 +469,9 @@ class DocumentSell extends DocumentBase{
 	return true;
     }
 
-    public function entryDelete2222( int $doc_id, array $doc_entry_ids){
-	return parent::entryDelete($doc_id, $doc_entry_ids);
-    }    
+//    public function entryDelete2222( int $doc_id, array $doc_entry_ids){
+//	return parent::entryDelete($doc_id, $doc_entry_ids);
+//    }    
     /*
      * COMMIT SECTION
      */
