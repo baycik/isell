@@ -91,7 +91,33 @@ class MoedeloSyncProduct extends MoedeloSyncBase{
      * Deletes existing record on remote
      */
     public function remoteDelete( $local_id, $remote_id, $entry_id ){
-        return parent::remoteDelete($local_id, $remote_id, $entry_id);
+        $delete_ok=parent::remoteDelete($local_id, $remote_id, $entry_id);
+        if( !$delete_ok ){
+            /*
+             * Need to update all documents that contain this product
+             */
+            $product=$this->remoteGet( $remote_id );
+            $resendDocumentsList="
+                UPDATE
+                    document_view_list dvl
+                        JOIN
+                    document_list dl USING(doc_id)
+                        JOIN
+                    document_entries de USING(doc_id)
+                        JOIN
+                    plugin_sync_entries pse ON doc_view_id=local_id
+                SET
+                    remote_hash=MD5(''),
+                    local_tstamp=NOW()
+                WHERE
+                    de.product_code='{$product->Article}'
+                    AND dvl.tstamp>'{$this->sync_since}'
+                    AND dl.active_company_id={$this->acomp_id}
+                    AND sync_destination IN ('moedelo_doc_invoicesell','moedelo_doc_invoice_buy','moedelo_doc_billsell','moedelo_doc_upd_buy','moedelo_doc_updsell','moedelo_doc_waybill_buy','moedelo_doc_waybillsell')
+                ";
+            $this->query($resendDocumentsList);
+        }
+        return true;
     }
     
     /**
