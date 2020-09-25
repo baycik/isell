@@ -314,8 +314,8 @@ class MoedeloSyncBase extends Catalog{
         } else {
             $error=$this->getValidationErrors($response);
             $this->log("{$this->doc_config->sync_destination} DELETE is unsuccessfull (HTTP CODE:$response->httpcode '$error')");
-            $entity=$this->remoteGet( $remote_id );
-            print_r($entity);
+//            $entity=$this->remoteGet( $remote_id );
+//            print_r($entity);
             return false;
         }
         return true;

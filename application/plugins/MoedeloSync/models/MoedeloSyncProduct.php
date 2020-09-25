@@ -57,7 +57,7 @@ class MoedeloSyncProduct extends MoedeloSyncBase{
             'name'=>$local_product->Name
         ];
         $response = $this->apiExecute($this->doc_config->remote_function, 'GET', $request);
-        $remote_duplicate=$response->response->ResourceList[0];
+        $remote_duplicate=$response->response->ResourceList[0]??null;
         if( $remote_duplicate ){
             $remote_id=$remote_duplicate->Id;
             $remote_hash=$this->remoteHashCalculate($remote_duplicate);
