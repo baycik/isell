@@ -13,10 +13,6 @@
 
 class MailingManager extends Catalog {
     public $settings = [];
-    private $default_settings = [
-        'reciever_blacklist' => [],
-        'reciever_list' => []
-    ];
     
     public function index(){
         $this->Hub->set_level(3);
@@ -48,7 +44,9 @@ class MailingManager extends Catalog {
     public function init(){
         $this->pluginSettingsLoad();
         if(!$this->settings){
-            $this->settings = $this->default_settings;
+            $this->settings = [
+                'reciever_list' => new stdClass()
+            ];
             $this->pluginSettingsFlush();
         }
     }
@@ -88,27 +86,46 @@ class MailingManager extends Catalog {
     }
     
     
+    public function settingsGet(){
+        $sql="
+            SELECT 
+                plugin_settings
+            FROM
+                plugin_list
+            WHERE
+                plugin_system_name = 'MailingManager'
+            ";
+        return [
+            'settings' => json_decode($this->get_row($sql)->plugin_settings, true),
+            'staff_list' => $this->Hub->load_model("Pref")->getStaffList(),
+            'editor_markup' => $this->default_markup_values
+        ];        
+    }
+
     public function settingsUpdate(array $settings){
         $this->settings = $settings;
         $this->pluginSettingsFlush();
         return true;
+    }    
+    /*
+     * Message CRUD functions
+     */
+    public function messageCreate( array $message ){
+        $user_id=$this->Hub->svar('user_id');
+        $message_record=[
+            'message_handler'=>$message['message_handler'],
+            'message_status'=>'created',
+            'message_reason'=>$message['message_reason'],
+            'message_note'=>$message['message_note'],
+            'message_recievers'=>$message['message_recievers'],
+            'message_subject'=>$message['message_subject'],
+            'message_body'=>$message['message_body'],
+            'created_by'=>$user_id,
+            'modified_by'=>$user_id
+        ];
+        return $this->create('plugin_message_list',$message_record);
     }
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-
-    public function messageCreate( string $handler, array $message ){
+    public function messageUpdate( int $message_id, array $message ){
         $user_id=$this->Hub->svar('user_id');
         $message_record=[
             'message_handler'=>$handler,
@@ -121,31 +138,95 @@ class MailingManager extends Catalog {
             'created_by'=>$user_id,
             'modified_by'=>$user_id
         ];
-        return $this->create('plugin_message_list',$message_record);
+        return $this->update('plugin_message_list',$message_record,['message_id'=>$message_id]);        
+    }
+    
+    public function messageDelete( $message_id ){
+        return $this->delete('plugin_message_list',['message_id'=>$message_id]);  
+    }
+    
+    private function messageRenderTpl( string $message_template, $context ){
+        foreach ($context as $key=>$val){
+            $message_template = str_replace('{{'.$key.'}}', $val, $message_template);
+        }
+        return $message_template;
     }
     
     
-    public function customMessageCreate(array $message){
-        $user_id=$this->Hub->svar('user_id');
-        $reciever_list = $this->customMessageComposeRecievers($message);
-        $message_template = $message['message_body'];
-        foreach($reciever_list as $reciever){
-            if(empty( $reciever->{$message['message_handler']} )){
+    private $default_markup_values = [
+        'company_name' => 'Ваша компания',
+        'company_person' => 'Клиент нашей компании',
+        'company_director' => 'Клиент нашей компании',
+        'company_email' => 'Ваш электронный адрес',
+        'company_web' => 'Адрес вашего сайта',
+        'company_mobile' => 'Ваш номер телефона',
+        'company_address' => 'Ваш физический адрес'
+    ];
+    
+    /*
+     * Message batches CRUD functions
+     */
+    public function messageBatchCreate( array $message_batch ){
+        $batch_context = $this->messageBatchContextGet( $message_batch['reciever_list_id'] );
+        $message=[];
+        foreach($batch_context as $context){
+            if( empty($context->company_email) && empty($context->company_mobile) ){
                 continue;
             }
-            $message['message_recievers'] = $reciever->{$message['message_handler']};
-            $message['message_reason'] = $message['message_subject'];
+            $message['message_recievers'] = "{$context->company_email} | {$context->company_mobile}";
+            $message['message_handler'] = $message_batch['handler'];
+            $message['message_reason'] = $message_batch['subject'];
+            $message['message_subject'] = $this->messageRenderTpl($message_batch['subject'],$context);
             $message['message_note'] = '';
-            $message['message_body'] = $this->customMessageBodyMarkUp($message['message_recievers'],$message_template);
-            $this->messageCreate($message['message_handler'], $message);
+            $message['message_body'] = $this->messageRenderTpl($message_batch['body'],$context);
+            $this->messageCreate($message);
         }
         return true;
     }
+    private function messageBatchContextGet( string $reciever_list_id ){
+        $where = $this->recieverListFilterGet($reciever_list_id);
+        $sql="
+            SELECT 
+                label,
+                path,
+                company_name,
+                company_person,
+                company_director,
+                company_address,
+                company_email,
+                company_mobile
+            FROM
+                companies_list
+                    JOIN
+                companies_tree USING(branch_id)
+            WHERE $where
+            ORDER BY label ASC";
+        return $this->get_list($sql);       
+    }
+
     
-    private function customMessageComposeRecievers( $message ){
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    public function messageBatchDelete( string $message_batch_label ){
+        return $this->delete("plugin_message_list",['message_batch_label'=>$message_batch_label]);
+    }
+    
+    private function messageBatchRecieversGet( $message ){
         $reciever_list = [];
         if((int) $message['message_reciever_list']){
-            $reciever_list += array_merge($reciever_list,$this->recieverGet($message['message_reciever_list']));
+            $reciever_list += array_merge($reciever_list,$this->messageBatchRecieverListGet($message['message_reciever_list']));
         }
         if(!empty($message['message_recievers'])){
             $custom_recievers = explode(',', $message['message_recievers']);
@@ -158,61 +239,7 @@ class MailingManager extends Catalog {
         return $reciever_list;
     }
     
-    private $default_markup_values = [
-        'company_name' => 'Ваша компания',
-        'company_person' => 'Клиент нашей компании',
-        'company_director' => 'Клиент нашей компании',
-        'company_email' => 'Ваш электронный адрес',
-        'company_web' => 'Адрес вашего сайта',
-        'company_mobile' => 'Ваш номер телефона',
-        'company_address' => 'Ваш физический адрес',
-        'company_bank_name' => 'Ваш банк'
-    ];
-    
-    private function customMessageBodyMarkUp($message_recievers, $message_template){
-        $passive_company = $this->passiveCompanyGet($message_recievers);
-        foreach($this->default_markup_values as $key=>$property){
-            $search = '{{'.$key.'}}';
-            if(strpos($message_template, $search) > -1){
-                if(!empty($passive_company->{$key})){
-                    $replace = $passive_company->{$key};
-                } else {
-                    $replace = $property;
-                }
-                $message_template = str_replace($search, $replace, $message_template);
-            } 
-        }
-        return $message_template;
-    }
-    
-    private function messageListFilterGet( $filter ){
-        if( empty($filter) ){
-            return '1';
-        }
-        $signature="CONCAT(message_handler,' ',message_reason,' ',message_note,' ',message_recievers,' ',message_subject)";
-        $parts=explode(" ",trim($filter));
-        $having=" $signature LIKE '%".implode("%' OR $signature LIKE '%",$parts)."%'";
-        return $having;
-    }
-    
-    public function messageListGet( string $filter='', string $filter_handler='', string $filter_reason='', string $filter_date='' ){
-        $where = $this->messageListFilterGet( $filter );
-        $msg_list_msg="
-            SELECT
-                *,
-                CONCAT(message_handler,' ',message_reason,' ',message_note,' ',message_recievers,' ',message_subject) signature
-            FROM
-                plugin_message_list
-            WHERE
-                message_handler LIKE '%$filter_handler%'
-                AND message_reason LIKE '%$filter_reason%'
-                AND created_at LIKE '%$filter_date%'
-                AND $where
-            ";
-        return $this->get_list($msg_list_msg);
-    }
-    
-    public function messageGroupListGet( string $filter ){
+    public function messageBatchListGet( string $filter=null ){
         $where = $this->messageListFilterGet( $filter );
         $msg_list_msg="
             SELECT
@@ -247,59 +274,56 @@ class MailingManager extends Catalog {
             ";
         return $this->get_row($sql);        
     }
-    
-    public function settingsGet(){
-        $sql="
-            SELECT 
-                plugin_settings
-            FROM
-                plugin_list
-            WHERE
-                plugin_system_name = 'MailingManager'
-            ";
-        return [
-            'settings' => json_decode($this->get_row($sql)->plugin_settings, true),
-            'staff_list' => $this->Hub->load_model("Pref")->getStaffList(),
-            'editor_markup' => $this->default_markup_values
-        ];        
-    }
+        
     
     
-    public function recieverGet( int $reciever_list_id ){
-        if($reciever_list_id == '-1'){
-            return [];
+    
+    
+    
+    
+    
+    
+    
+
+    
+    private function messageListFilterGet( $filter ){
+        if( empty($filter) ){
+            return '1';
         }
-        $where = $this->recieverGetComposeWhere($reciever_list_id);
-        $sql="
-            SELECT 
-                label,
-                path,
-                company_email as email,
-                company_mobile as sms
-            FROM
-                companies_list
-                    JOIN
-                companies_tree USING(branch_id)
-            WHERE $where
-            ORDER BY label ASC";
-        return $this->get_list($sql);       
+        $signature="CONCAT(message_handler,' ',message_reason,' ',message_note,' ',message_recievers,' ',message_subject)";
+        $parts=explode(" ",trim($filter));
+        $having=" $signature LIKE '%".implode("%' OR $signature LIKE '%",$parts)."%'";
+        return $having;
     }
     
-    public function recieverGetComposeWhere( int $reciever_list_id ){
+    public function messageListGet( string $filter='', string $filter_handler='', string $filter_reason='', string $filter_date='' ){
+        $where = $this->messageListFilterGet( $filter );
+        $msg_list_msg="
+            SELECT
+                *,
+                CONCAT(message_handler,' ',message_reason,' ',message_note,' ',message_recievers,' ',message_subject) signature
+            FROM
+                plugin_message_list
+            WHERE
+                message_handler LIKE '%$filter_handler%'
+                AND message_reason LIKE '%$filter_reason%'
+                AND created_at LIKE '%$filter_date%'
+                AND $where
+            ";
+        return $this->get_list($msg_list_msg);
+    }
+    
+    private function recieverListFilterGet( string $reciever_list_id ){
         $this->Hub->set_level(2);
-        $settings = $this->settingsGet()['settings'];
-        if(empty($settings)){
+        $settings = $this->settingsGet();
+        if( empty($settings['settings']['reciever_list'][$reciever_list_id]) ){
             return 0;
         }
-        $reciever_list_settings = $settings['reciever_list'][$reciever_list_id];
-        if(!empty($settings['reciever_blacklist'])){
-            $reciever_blacklist = $settings['reciever_blacklist'];
-        }
+        $reciever_list_settings=$settings['settings']['reciever_list'][$reciever_list_id];
         $assigned_path=  $this->Hub->svar('user_assigned_path');
         $user_level=     $this->Hub->svar('user_level');
         $or_case=[];
         $and_case=[];
-        //$and_case[]=" level<= $user_level";
         if( $assigned_path ){
             $and_case[]=" path LIKE '%".str_replace(",", "%' OR path LIKE '%", $assigned_path)."%'";
         }
@@ -308,14 +332,6 @@ class MailingManager extends Catalog {
         }
         if( !empty($reciever_list_settings['subject_path_exclude']) ){
             $and_case[]=" path NOT LIKE '%".str_replace(",", "%' AND path NOT LIKE '%", $reciever_list_settings['subject_path_exclude'])."%'";
-        }
-        if( !empty($reciever_blacklist) ){
-            $blacklist = [];
-            $exploded_blacklist = explode(',',$reciever_blacklist);
-            foreach ($exploded_blacklist as $item){
-                $blacklist[] = "path NOT LIKE '%".trim($item)."%'";
-            }
-            $and_case[]=" path NOT IN ( ".implode(',',$blacklist)." )";
         }
         if( $reciever_list_settings['subject_manager_include']){
             $or_case[]=" manager_id IN (".implode(',',$reciever_list_settings['subject_manager_include']).")";
@@ -337,22 +353,38 @@ class MailingManager extends Catalog {
     }
     
     
-    public function recieverSaveList( string $settings ){
-        $this->settings = $settings;
-        return $this->pluginSettingsFlush();    
-    }
-    
-    private function passiveCompanyGet($reciever){
-        $sql = "
+    public function recieverListFetch(string $reciever_list_id, int $offset=0,int $limit=30,string $sortby='label',string $sortdir='ASC',array $filter){
+        $this->Hub->set_level(3);
+        $having=$this->makeFilter($filter);
+        $where=$this->recieverListFilterGet($reciever_list_id);
+        $sql="
             SELECT 
-                cl.*, ct.label as company_label
-            FROM 
-                companies_list cl
-                    JOIN 
-                companies_tree ct ON (cl.branch_id = ct.branch_id)
-            WHERE 
-                company_email = '$reciever' OR company_mobile = '$reciever'
-            ";
-        return $this->get_row($sql);
+                label,
+                company_name,
+                path
+            FROM
+                companies_list
+                    JOIN
+                companies_tree USING(branch_id)
+            WHERE $where
+            HAVING $having
+            ORDER BY $sortby $sortdir
+	    LIMIT $limit OFFSET $offset";
+        return $this->get_list($sql);
     }
+
+    
+//    private function passiveCompanyGet($reciever){
+//        $sql = "
+//            SELECT 
+//                cl.*, ct.label as company_label
+//            FROM 
+//                companies_list cl
+//                    JOIN 
+//                companies_tree ct ON (cl.branch_id = ct.branch_id)
+//            WHERE 
+//                company_email = '$reciever' OR company_mobile = '$reciever'
+//            ";
+//        return $this->get_row($sql);
+//    }
 }
