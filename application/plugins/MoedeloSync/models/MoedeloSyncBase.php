@@ -296,7 +296,7 @@ class MoedeloSyncBase extends Catalog{
                         remote_tstamp=local_tstamp
                     WHERE
                         entry_id='$entry_id'");
-            echo "UPDATED $entry_id: ";print_r($entity);die;
+            //echo "UPDATED $entry_id: ";//print_r($entity);die;
         } else {
             print_r($entity);
             $error=$this->getValidationErrors($response);
