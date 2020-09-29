@@ -116,6 +116,9 @@ class MoedeloSyncProduct extends MoedeloSyncBase{
                     AND sync_destination IN ('moedelo_doc_invoicesell','moedelo_doc_invoice_buy','moedelo_doc_billsell','moedelo_doc_upd_buy','moedelo_doc_updsell','moedelo_doc_waybill_buy','moedelo_doc_waybillsell')
                 ";
             $this->query($resendDocumentsList);
+            
+            $sql_postpone_delete="UPDATE plugin_sync_entries SET local_deleted=0 WHERE entry_id='$entry_id'";
+            $this->query($sql_postpone_delete);
         }
         return true;
     }
