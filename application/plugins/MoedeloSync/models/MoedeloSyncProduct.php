@@ -117,7 +117,7 @@ class MoedeloSyncProduct extends MoedeloSyncBase{
                 ";
             $this->query($resendDocumentsList);
             
-            $sql_postpone_delete="UPDATE plugin_sync_entries SET local_deleted=0 WHERE entry_id='$entry_id'";
+            $sql_postpone_delete="DELETE FROM plugin_sync_entries WHERE entry_id='$entry_id'";
             $this->query($sql_postpone_delete);
         }
         return true;
@@ -241,6 +241,7 @@ class MoedeloSyncProduct extends MoedeloSyncBase{
      * Create local doc list to sync
      */    
     protected function localCheckoutGetList( $is_full ){
+        $this->doc_config->usd_rate=$this->Hub->pref('usd_ratio');
         $local_sync_list_sql="
             SELECT
                 '{$this->doc_config->sync_destination}' sync_destination,
@@ -320,6 +321,10 @@ class MoedeloSyncProduct extends MoedeloSyncBase{
                 {$this->doc_config->product_type} Type,
                 {$this->doc_config->vat_position} NdsPositionType,
                 analyse_brand Producer,
+                
+
+                MD5(CONCAT(se.product_code,';',ru,';',product_unit,';',ROUND(ROUND(IF(pre.curr_code='USD',{$this->doc_config->usd_rate},1)*sell, 2),5),';')) local_hash,
+                CONCAT(se.product_code,';',ru,';',product_unit,';',ROUND(ROUND(IF(pre.curr_code='USD',{$this->doc_config->usd_rate},1)*sell, 2),5),';') checkk,
                 
                 ru ErrorTitle,
                 pl.product_id local_id,
