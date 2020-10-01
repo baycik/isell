@@ -88,7 +88,7 @@ App.mailing_manager=
         initControls: function(){
             Layout.Accordion('#PluginMailingManager_maillist .clickable-list').onselect=function( node ){
                 MessageList.group.selected_index=$(node).data('index');
-                if(MessageList.group.selected_index == '--'){
+                if(MessageList.group.selected_index === '--'){
                     return;
                 }
                 MessageList.list.load(MessageList.group.group_list[MessageList.group.selected_index]);
@@ -97,7 +97,6 @@ App.mailing_manager=
                 MessageEditor.action = 'new';
                 MessageEditor.message = MessageEditor.empty_message;
                 MessageList.list.select(MessageEditor.action);
-                return;
             });
             $("#PluginMailingManager_maillist .delete-mailgroup").on('click',function(){
                 var group_id = $(this).attr('data-mailgroup_id');
@@ -385,6 +384,12 @@ App.mailing_manager=
             </div>
         </div>
     </div>
+    
+    
+    
+    
+    
+    
     <div id="PluginMailingManager_mailview" class="right-block" style="display: none">
         <div class="mail-panel-header">
             <div class="inp_group info-row">

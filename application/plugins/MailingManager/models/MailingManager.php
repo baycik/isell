@@ -114,6 +114,7 @@ class MailingManager extends Catalog {
         $user_id=$this->Hub->svar('user_id');
         $message_record=[
             'message_handler'=>$message['message_handler'],
+            'message_batch_label'=>$message['message_batch_label'],
             'message_status'=>'created',
             'message_reason'=>$message['message_reason'],
             'message_note'=>$message['message_note'],
@@ -128,7 +129,8 @@ class MailingManager extends Catalog {
     public function messageUpdate( int $message_id, array $message ){
         $user_id=$this->Hub->svar('user_id');
         $message_record=[
-            'message_handler'=>$handler,
+            'message_handler'=>$message['message_handler'],
+            'message_batch_label'=>$message['message_batch_label'],
             'message_status'=>'created',
             'message_reason'=>$message['message_reason'],
             'message_note'=>$message['message_note'],
@@ -243,6 +245,7 @@ class MailingManager extends Catalog {
         $where = $this->messageListFilterGet( $filter );
         $msg_list_msg="
             SELECT
+                message_batch_label,
                 message_handler,
                 message_reason,
                 SUBSTRING(created_at, 1, 13) group_created_at,

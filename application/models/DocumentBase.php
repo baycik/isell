@@ -306,6 +306,9 @@ abstract class DocumentBase extends Catalog{
      * @return boolean
      */
     public function entryUpdate( int $doc_entry_id, object $new_entry_data ){
+        if( !$doc_entry_id ){
+            return false;
+        }
         $current_entry_data=$this->entryGet($doc_entry_id);
         if( !$this->doc_id ){//document must be selected
             return false;
@@ -349,6 +352,14 @@ abstract class DocumentBase extends Catalog{
         }
         $this->db_transaction_rollback();
         return false;
+    }
+    
+    protected function entryErrorGet( $doc_entry_id ){
+        $check_entry=$this->get_value("SELECT CHK_ENTRY($doc_entry_id)");
+        $error_text=substr($check_entry,strpos($check_entry," "));
+        $entry=$this->get_row("SELECT product_code,ru product_name FROM document_entries JOIN prod_list USING(product_code) WHERE doc_entry_id=$doc_entry_id");
+        $entry->error=$error_text;
+        return "$error_text ($entry->product_name)";
     }
 
     /**

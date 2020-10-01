@@ -159,6 +159,11 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
         }
         $remoteDoc->DocDate=$this->toTimezone($remoteDoc->DocDate,'local');
         $passive_company_id=$this->localFind($remoteDoc->KontragentId, 'moedelo_companies');
+        if( !$passive_company_id ){
+            $this->log("Act insertion failed. Pcomp not found. ");
+            print_r($remoteDoc);
+            return true;
+        }
         $localDoc=$this->localFindDocument( $passive_company_id, $remoteDoc->Number, $remoteDoc->DocDate, $remoteDoc->Sum );
         //print_r($remoteDoc);//die;
         if( !$localDoc ){
@@ -194,6 +199,7 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
         $view_type_id=$this->doc_config->local_view_type_id;
         $sync_destination=$this->doc_config->sync_destination;
         $modified_at=$localDoc->modified_at;
+        $this->Hub->load_model("DocumentItems")->selectDoc($localDoc->doc_id);
         $localDoc->doc_view_id=$this->localInsertUpdateView($remoteDoc,$doc_view_id,$view_type_id,$sync_destination,$modified_at);
         
         if( !empty($remoteDoc->Invoice) ){
@@ -271,6 +277,7 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
             HAVING doc_sum=$doc_sum*1
             ORDER BY doc_num_equals DESC,view_num_equals DESC
             LIMIT 1";
+                
         return $this->get_row($sql_find_local);
     }
     private function localFind( $remote_id, $sync_destination ){

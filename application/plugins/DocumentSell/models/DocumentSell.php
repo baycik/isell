@@ -228,12 +228,12 @@ class DocumentSell extends DocumentBase{
      * @param object $entry
      * @return type
      */
-    public function entryCreate( int $doc_id, object $entry ){
+    public function entryCreate( int $doc_id, object $new_entry_data ){
         $this->documentSelect($doc_id);
         $pcomp_id=$this->doc('passive_company_id');
         $usd_ratio=$this->doc('doc_ratio');
-        $entry->entry_price=$this->get_value("SELECT GET_SELL_PRICE({$entry->product_code},{$pcomp_id},{$usd_ratio})")??0;
-        return parent::entryCreate($doc_id, $entry);
+        $new_entry_data->entry_price=$this->get_value("SELECT GET_SELL_PRICE({$new_entry_data->product_code},{$pcomp_id},{$usd_ratio})")??0;
+        return parent::entryCreate($doc_id, $new_entry_data);
     }
     
     /**
@@ -255,20 +255,15 @@ class DocumentSell extends DocumentBase{
             $new_entry_data->invoice_price=$new_entry_data->entry_price_vatless/$doc_curr_correction;
             unset($new_entry_data->entry_price_vatless);
         }
-        
         $filtered_entry_data=(object)[];
-        foreach( ['party_label','product_quantity','self_price','breakeven_price','invoice_price'] as $field ){
+        foreach( ['product_code','party_label','product_quantity','self_price','breakeven_price','invoice_price'] as $field ){
             if( !isset($new_entry_data->$field) ){
                 continue;
             }
             $filtered_entry_data->$field=$new_entry_data->$field;
         }
-        
-        print_r($filtered_entry_data);
-        
-        
         $update_ok=$this->update('document_entries',$filtered_entry_data,['doc_entry_id'=>$doc_entry_id]);
-        $error = $this->db->error();
+        $error = $this->db->error(); 
         if($error['code']==1452){
             $this->db_transaction_rollback();
 	    throw new Exception("product_code_unknown",424);//Failed Dependency
@@ -288,15 +283,16 @@ class DocumentSell extends DocumentBase{
             $Stock=$this->Hub->load_model("Stock");
             $stock_ok=$Stock->productQuantityModify( $product_code, $product_delta_quantity, $stock_id  );
             if( !$stock_ok ){
+                $error=$this->entryErrorGet( $doc_entry_id );
                 $this->db_transaction_rollback();
-                echo "Insufficient Storage";
-                throw new Exception("product_stock_error",507);//Insufficient Storage
-                
+                throw new Exception("product_stock_error\n$error",507);//Insufficient Storage
             }
             $update_ok=true;
         }
         return $update_ok;
     }
+    
+    
     /**
      * Updates entry data
      * @param int $doc_entry_id
