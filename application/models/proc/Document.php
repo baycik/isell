@@ -970,7 +970,7 @@ class Document extends Data {
 	$doc_id=$this->doc('doc_id');
 	$this->calcCorrections( $skip_vat_correction, $skip_curr_correction );
         $curr_code=$this->Base->acomp('curr_code');
-	$company_lang = $this->Base->pcomp('language');
+	$company_lang = $this->Base->pcomp('language')??'ru';
         $pcomp_price_label=$this->Base->pcomp('price_label');
         $this->Base->query("DROP TEMPORARY TABLE IF EXISTS tmp_doc_entries");
         $sql="CREATE TEMPORARY TABLE tmp_doc_entries ( INDEX(product_code) ) AS (

@@ -6,6 +6,12 @@ class DocumentUtils extends Catalog{
 	if( $doc_id!=$this->Hub->svar('doc_id') ){
             $this->Hub->svar('doc_id',$doc_id);
             unset( $this->_doc );
+            /*
+             * Compability for isell2 calls
+             */
+            if( isset($this->bridge) ){
+                $this->bridge->LoadClass('Document')->selectDoc($doc_id);
+            }
         }
     }
     private function checkPassiveLoad(){
