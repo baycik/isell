@@ -165,8 +165,11 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
             return true;
         }
         $localDoc=$this->localFindDocument( $passive_company_id, $remoteDoc->Number, $remoteDoc->DocDate, $remoteDoc->Sum );
-        //print_r($remoteDoc);//die;
-        if( !$localDoc ){
+        //echo 'remoteDoc';print_r($remoteDoc);//die;
+        //echo 'localDoc';print_r($localDoc);//die;
+        if( $localDoc ){
+            $this->Hub->load_model("DocumentItems")->selectDoc($localDoc->doc_id);
+        } else {
             $Company=$this->Hub->load_model("Company");
             $pcomp=$Company->selectPassiveCompany($passive_company_id);
             if( !$pcomp ){
@@ -191,7 +194,7 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
             $localDoc=(object)[
                 'doc_id'=>$new_doc_id,
                 'modified_at'=>date("Y-m-d H:i:s")
-            ];
+            ];            
         }
         
         //INSERT UPDATE OF ACT
@@ -199,7 +202,7 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
         $view_type_id=$this->doc_config->local_view_type_id;
         $sync_destination=$this->doc_config->sync_destination;
         $modified_at=$localDoc->modified_at;
-        $this->Hub->load_model("DocumentItems")->selectDoc($localDoc->doc_id);
+        
         $localDoc->doc_view_id=$this->localInsertUpdateView($remoteDoc,$doc_view_id,$view_type_id,$sync_destination,$modified_at);
         
         if( !empty($remoteDoc->Invoice) ){
