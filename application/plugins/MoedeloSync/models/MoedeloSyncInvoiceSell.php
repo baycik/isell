@@ -226,8 +226,9 @@ class MoedeloSyncInvoiceSell extends MoedeloSyncBase{
                     {$document->vat_rate} NdsType,
                     ROUND(invoice_price,2) Price,
                     ROUND(invoice_price*product_quantity*(1+{$document->vat_rate}/100),2) SumWithNds,
-                    prod_pse.remote_id StockProductId
-					#,party_label Declaration,analyse_origin Country
+                    prod_pse.remote_id StockProductId,
+                    party_label Declaration,
+                    analyse_origin Country
                 FROM
                     document_entries
                         JOIN
@@ -238,10 +239,12 @@ class MoedeloSyncInvoiceSell extends MoedeloSyncBase{
                     doc_id={$document->doc_id}";
             $document->Items=$this->get_list($sql_entry);
             for($i=0;$i<count($document->Items);$i++){
-                /*$declar_len=strlen($document->Items[$i]->Declaration);
+                $document->Items[$i]->Country=mb_convert_case($document->Items[$i]->Country, MB_CASE_TITLE);
+                $declar_len=strlen($document->Items[$i]->Declaration);
                 if($declar_len<23 || $declar_len>27){
                     unset($document->Items[$i]->Declaration);
-                }*/
+                    unset($document->Items[$i]->Country);
+                }
                 if( $document->Items[$i]->Type==2 ){
                     unset($document->Items[$i]->StockProductId);
                 }
