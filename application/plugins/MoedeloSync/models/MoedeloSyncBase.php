@@ -297,7 +297,15 @@ class MoedeloSyncBase extends Catalog{
                     WHERE
                         entry_id='$entry_id'");
             //echo "UPDATED $entry_id: ";//print_r($entity);die;
-        } else {
+        }
+        if( $response->httpcode==404  ){
+            $this->query("DELETE 
+                    FROM
+                        plugin_sync_entries
+                    WHERE
+                        entry_id='$entry_id'");
+        }
+        else {
             print_r($entity);
             $error=$this->getValidationErrors($response);
             $this->log("{$this->doc_config->sync_destination} UPDATE is unsuccessfull (HTTP CODE:$response->httpcode '$error') {$entity->ErrorTitle}");
