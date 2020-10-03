@@ -8,7 +8,7 @@ class Document extends Data {
     public $use_vatless_price = 0;
 
     public function selectDoc($doc_id) {
-	$this->Base->svar('doc_id', $doc_id);
+        $this->Base->svar('doc_id', $doc_id);
 	if ($doc_id == 0) {
 	    $this->_doc['doc_id'] = 0;
 	} else {
@@ -710,8 +710,13 @@ class Document extends Data {
         return $nextNum;
     }
 
-    public function insertView($view_type_id) {
-	$doc_id = $this->doc('doc_id');
+    public function insertView( $view_type_id, $doc_id=null ) {
+        if( $doc_id ){
+            $this->selectDoc($doc_id);
+        } else {
+            $doc_id = $this->doc('doc_id');
+        }
+        
         $doc_type = $this->doc('doc_type');
 	$view_type_props = $this->Base->get_row("SELECT * FROM document_view_types WHERE view_type_id='$view_type_id'");
         $efields = addslashes($this->getLastEfields($view_type_id));
