@@ -297,7 +297,7 @@ class MoedeloSyncBase extends Catalog{
                     WHERE
                         entry_id='$entry_id'");
             //echo "UPDATED $entry_id: ";//print_r($entity);die;
-        }
+        } else 
         if( $response->httpcode==404  ){
             $this->query("DELETE 
                     FROM
