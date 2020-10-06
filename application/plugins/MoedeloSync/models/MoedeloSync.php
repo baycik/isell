@@ -201,7 +201,7 @@ class MoedeloSync extends Catalog {
         $this->plugin_data=json_decode($row->plugin_json_data);
     }
     
-    public function downloadFile( string $doc_type, int $doc_view_id, int $view_type_id, string $file_type, string $file_name ){
+    public function downloadFile( string $doc_type, int $doc_view_id, int $view_type_id, string $file_type=null, string $file_name=null ){
         $key="{$doc_type}_{$view_type_id}";
         $handlers=[
             '1_136'=>'MoedeloSyncBillSell',
@@ -213,6 +213,9 @@ class MoedeloSync extends Catalog {
         ];
         $Handler=$this->Hub->load_model($handlers[$key]);
         $remote_id=$Handler->remotePush($doc_view_id,true);
+        if(!$file_type){
+            return true;//only push needed
+        }
         $file_path=$Handler->doc_config->remote_function."/$remote_id/$file_type";
         $file_data=$Handler->apiExecute($file_path,"DOWNLOAD");
         http_response_code($file_data->httpcode);

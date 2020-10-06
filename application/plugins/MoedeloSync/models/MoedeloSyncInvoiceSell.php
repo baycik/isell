@@ -258,7 +258,7 @@ class MoedeloSyncInvoiceSell extends MoedeloSyncBase{
         ];
         
         
-        //print_r($document);//die;
+        //print_r($document);die;
         
         
         return $document;
