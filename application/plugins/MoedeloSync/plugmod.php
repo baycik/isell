@@ -18,7 +18,7 @@ $after[]=<<<'EOT'
     ?>
     <div class="gray_grad" style="display:inline-block;padding:3px;font-size:12px;">
         <img src="../../MoedeloSync/moedelologo.png" style="width:24px;height:auto;">
-        <?php if($current_key!='1_143'): ?>
+        <?php if($current_key=='2_143'): ?>
             <a style="color:#333;" target="_blank" href="../../MoedeloSync/downloadFile/?doc_type=<?php echo $view->head->doc_type?>&doc_view_id=<?php echo $view->doc_view->doc_view_id?>">Форсировать</a>            
         <?php else: ?>
             <a style="color:#333;" target="_blank" href="../../MoedeloSync/downloadFile/?doc_type=<?php echo $view->head->doc_type?>&doc_view_id=<?php echo $view->doc_view->doc_view_id?>&view_type_id=<?php echo $view->doc_view->view_type_id?>&file_name=<?php echo $file_name?>&file_type=pdf">Pdf</a>
