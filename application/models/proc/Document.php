@@ -449,7 +449,6 @@ class Document extends Data {
 	if( $invoice_price===NULL ){
 	    $invoice_price = $this->getProductInvoicePrice( stripslashes($product_code) );
 	}
-	
 	if (!$this->alterEntry('update', $doc_entry_id, $product_quantity, $invoice_price)) {//update not ok
 	    $this->Base->query("DELETE FROM document_entries WHERE doc_entry_id=$doc_entry_id");
        	    return false;
@@ -1385,7 +1384,7 @@ class Document extends Data {
         $doc_ratio=$this->doc('doc_ratio');
         if( $this->doc('doc_type') == 1 || $this->doc('doc_type') == 3 ){
             $pcomp_id=$this->Base->pcomp("company_id");
-            return $this->Base->get_row("SELECT ROUND(GET_SELL_PRICE('$product_code','$pcomp_id',$doc_ratio)/{$this->vat_rate},2) sell",0);
+            return $this->Base->get_row("SELECT ROUND(GET_SELL_PRICE('$product_code','$pcomp_id',$doc_ratio),2)/{$this->vat_rate} sell",0);
         } else {
             $def_curr_code = $this->Base->acomp('curr_code');
             $pcomp_price_label=$this->Base->pcomp('price_label');
