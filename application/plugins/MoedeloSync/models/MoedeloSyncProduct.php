@@ -45,7 +45,40 @@ class MoedeloSyncProduct extends MoedeloSyncBase{
      * Inserts new record on remote
      */
     public function remoteInsert( $local_id, $remote_id, $entry_id ){
+        if( $this->remoteSearchForDuplicates( $local_id, $remote_id, $entry_id ) ){
+            return true;
+        }
         return parent::remoteInsert($local_id, $remote_id, $entry_id);
+    }
+    
+    private function remoteSearchForDuplicates( $local_id, $remote_id, $entry_id ){
+        $local_product=$this->localGet($local_id);
+        $request=[
+            'name'=>$local_product->Name
+        ];
+        $response = $this->apiExecute($this->doc_config->remote_function, 'GET', $request);
+        $remote_duplicate=$response->response->ResourceList[0]??null;
+        if( $remote_duplicate ){
+            $remote_id=$remote_duplicate->Id;
+            $remote_hash=$this->remoteHashCalculate($remote_duplicate);
+            $sql_clear="DELETE 
+                FROM 
+                    plugin_sync_entries 
+                WHERE 
+                    remote_id='$remote_id'
+                    AND sync_destination='{$this->doc_config->sync_destination}'";
+            $sql_link="UPDATE 
+                    plugin_sync_entries 
+                SET 
+                    remote_hash='$remote_hash',
+                    remote_id='$remote_id'
+                WHERE 
+                    entry_id=$entry_id";
+            $this->query($sql_clear);
+            $this->query($sql_link);
+            return true;
+        }
+        return false;
     }
     /**
      * Updates existing record on remote
@@ -58,7 +91,36 @@ class MoedeloSyncProduct extends MoedeloSyncBase{
      * Deletes existing record on remote
      */
     public function remoteDelete( $local_id, $remote_id, $entry_id ){
-        return parent::remoteDelete($local_id, $remote_id, $entry_id);
+        $delete_ok=parent::remoteDelete($local_id, $remote_id, $entry_id);
+        if( !$delete_ok ){
+            /*
+             * Need to update all documents that contain this product
+             */
+            $product=$this->remoteGet( $remote_id );
+            $resendDocumentsList="
+                UPDATE
+                    document_view_list dvl
+                        JOIN
+                    document_list dl USING(doc_id)
+                        JOIN
+                    document_entries de USING(doc_id)
+                        JOIN
+                    plugin_sync_entries pse ON doc_view_id=local_id
+                SET
+                    remote_hash=MD5(''),
+                    local_tstamp=NOW()
+                WHERE
+                    de.product_code='{$product->Article}'
+                    AND dvl.tstamp>'{$this->sync_since}'
+                    AND dl.active_company_id={$this->acomp_id}
+                    AND sync_destination IN ('moedelo_doc_invoicesell','moedelo_doc_invoice_buy','moedelo_doc_billsell','moedelo_doc_upd_buy','moedelo_doc_updsell','moedelo_doc_waybill_buy','moedelo_doc_waybillsell')
+                ";
+            $this->query($resendDocumentsList);
+            
+            $sql_postpone_delete="DELETE FROM plugin_sync_entries WHERE entry_id='$entry_id'";
+            $this->query($sql_postpone_delete);
+        }
+        return true;
     }
     
     /**
@@ -179,6 +241,7 @@ class MoedeloSyncProduct extends MoedeloSyncBase{
      * Create local doc list to sync
      */    
     protected function localCheckoutGetList( $is_full ){
+        $this->doc_config->usd_rate=$this->Hub->pref('usd_ratio');
         $local_sync_list_sql="
             SELECT
                 '{$this->doc_config->sync_destination}' sync_destination,
@@ -258,6 +321,10 @@ class MoedeloSyncProduct extends MoedeloSyncBase{
                 {$this->doc_config->product_type} Type,
                 {$this->doc_config->vat_position} NdsPositionType,
                 analyse_brand Producer,
+                
+
+                MD5(CONCAT(se.product_code,';',ru,';',product_unit,';',ROUND(ROUND(IF(pre.curr_code='USD',{$this->doc_config->usd_rate},1)*sell, 2),5),';')) local_hash,
+                CONCAT(se.product_code,';',ru,';',product_unit,';',ROUND(ROUND(IF(pre.curr_code='USD',{$this->doc_config->usd_rate},1)*sell, 2),5),';') checkk,
                 
                 ru ErrorTitle,
                 pl.product_id local_id,

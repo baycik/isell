@@ -159,17 +159,29 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
         }
         $remoteDoc->DocDate=$this->toTimezone($remoteDoc->DocDate,'local');
         $passive_company_id=$this->localFind($remoteDoc->KontragentId, 'moedelo_companies');
+        if( !$passive_company_id ){
+            $this->log("Act insertion failed. Pcomp not found. ");
+            return true;
+        }
+        $Company=$this->Hub->load_model("Company");
+        $current_active_company_id=$this->Hub->acomp('company_id');
+        $current_passive_company_id=$this->Hub->pcomp('company_id');
         $localDoc=$this->localFindDocument( $passive_company_id, $remoteDoc->Number, $remoteDoc->DocDate, $remoteDoc->Sum );
-        //print_r($remoteDoc);//die;
-        if( !$localDoc ){
-            $Company=$this->Hub->load_model("Company");
+        //echo 'remoteDoc';print_r($remoteDoc);//die;
+        //echo "\nlocalDoc";print_r($localDoc);//die;
+        
+        $DocumentItems=$this->Hub->load_model("DocumentItems");
+        if( $localDoc ){
+            $DocumentItems->selectDoc($localDoc->doc_id);
+        } else {
+            $Company->selectActiveCompany($this->acomp_id);
             $pcomp=$Company->selectPassiveCompany($passive_company_id);
             if( !$pcomp ){
                 //Have no permission to this pcomp
                 return false;
             }
-            $DocumentItems=$this->Hub->load_model("DocumentItems");
             $new_doc_id=$DocumentItems->createDocument($this->doc_config->doc_type);
+            $DocumentItems->selectDoc($new_doc_id);
             $sql_doc_update="
                     UPDATE 
                         document_list 
@@ -186,15 +198,14 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
             $localDoc=(object)[
                 'doc_id'=>$new_doc_id,
                 'modified_at'=>date("Y-m-d H:i:s")
-            ];
+            ];            
         }
-        
         //INSERT UPDATE OF ACT
         $doc_view_id=$localDoc->doc_view_id??0;
         $view_type_id=$this->doc_config->local_view_type_id;
         $sync_destination=$this->doc_config->sync_destination;
         $modified_at=$localDoc->modified_at;
-        $localDoc->doc_view_id=$this->localInsertUpdateView($remoteDoc,$doc_view_id,$view_type_id,$sync_destination,$modified_at);
+        $localDoc->doc_view_id=$this->localInsertUpdateView($remoteDoc,$localDoc->doc_id,$doc_view_id,$view_type_id,$sync_destination,$modified_at);
         
         if( !empty($remoteDoc->Invoice) ){
             $Invoice=$remoteDoc->Invoice;
@@ -205,16 +216,18 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
             $doc_view_id=$this->get_value("SELECT doc_view_id FROM document_view_list WHERE doc_id='{$localDoc->doc_id}' AND view_type_id='$view_type_id'");
             $sync_destination=$this->doc_config->sync_destination=='moedelo_doc_act_sell'?'moedelo_doc_invoice_sell_service':'moedelo_doc_invoice_buy_service';
             $modified_at=$localDoc->modified_at;
-            $this->localInsertUpdateView($Invoice,$doc_view_id,$view_type_id,$sync_destination,$modified_at);            
+            $this->localInsertUpdateView($Invoice,$localDoc->doc_id,$doc_view_id,$view_type_id,$sync_destination,$modified_at);            
         }
+        $Company->selectActiveCompany($current_active_company_id);
+        $Company->selectPassiveCompany($current_passive_company_id);
         return $localDoc->doc_view_id;
     }
     
     
-    private function localInsertUpdateView($remoteDoc,$doc_view_id,$view_type_id,$sync_destination,$modified_at){
+    private function localInsertUpdateView($remoteDoc,$doc_id,$doc_view_id,$view_type_id,$sync_destination,$modified_at){
         $DocumentView=$this->Hub->load_model("DocumentView");
         if( empty($doc_view_id) ){
-            $new_doc_view_id=$DocumentView->viewCreate($view_type_id);
+            $new_doc_view_id=$DocumentView->viewCreate($view_type_id,$doc_id);
             $doc_view_id=$new_doc_view_id;
         }
         $DocumentView->viewUpdate($doc_view_id,false,'view_num',$remoteDoc->Number);
@@ -271,6 +284,7 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
             HAVING doc_sum=$doc_sum*1
             ORDER BY doc_num_equals DESC,view_num_equals DESC
             LIMIT 1";
+                
         return $this->get_row($sql_find_local);
     }
     private function localFind( $remote_id, $sync_destination ){
@@ -438,7 +452,7 @@ class MoedeloSyncActSell extends MoedeloSyncBase{
                     product_quantity Count,
                     product_unit Unit,
                     IF({$this->doc_config->doc_type}=1 OR {$this->doc_config->doc_type}=2,1,2) Type,
-                    ROUND(invoice_price*(1+{$document->vat_rate}/100),2) Price,
+                    ROUND(invoice_price,2) Price,
                     {$document->vat_rate} NdsType,
                     ROUND(invoice_price*product_quantity*(1+{$document->vat_rate}/100),2) SumWithNds
                 FROM

@@ -356,6 +356,7 @@ class Stock extends Catalog {
                 if( $field=='product_code' && !$value ){
                     continue 2;
                 }
+                $value= addslashes($value);
                 $set[]="$field='$value'";
             }
             $set_list = implode(',', $set);

@@ -574,7 +574,7 @@ class CampaignManager extends Catalog{
                     'campaign_name'=>$campaign->campaign_name,
                     'current_result'=>$current_result
                 ];
-                $result_total+=$current_result[0]->bonus_result;
+                $result_total+=$current_result[0]->bonus_result??0;
             }
         }
         return [

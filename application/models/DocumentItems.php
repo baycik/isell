@@ -177,22 +177,24 @@ class DocumentItems extends DocumentCore{
         $Events->Topic('documentEntryChanged')->publish($doc_entry_id,$this->_doc);
         return $doc_entry_id;
     }
-    private function entryBreakevenPriceUpdate( $doc_entry_id=null, $doc_id=null ){
+    public function entryBreakevenPriceUpdate( $doc_entry_id=null, $doc_id=null ){
         if( !$doc_entry_id&&!$doc_id ){
             return;
         }
         $pcomp_id=$this->doc('passive_company_id');
         $usd_ratio=$this->doc('doc_ratio');
         $doc_type=$this->doc('doc_type');
-        if( $doc_type!=1 ){
-            return;
+        
+        $skip_breakeven_check=$this->Hub->pcomp('skip_breakeven_check');
+        if( abs($doc_type)!=1 ){
+            $skip_breakeven_check=true;
         }
         if( $doc_entry_id ){
             $where="doc_entry_id=$doc_entry_id";
         } else {
             $where="doc_id=$doc_id";
         }
-        if( $this->Hub->pcomp('skip_breakeven_check') ){
+        if( $skip_breakeven_check ){
             $sql="UPDATE 
                     document_entries 
                 SET 
@@ -471,7 +473,7 @@ class DocumentItems extends DocumentCore{
                 $set_list_delimiter=",";
 	    }
 	    if( $trg[$i]=='product_quantity' ){
-		$set_list.="$set_list_delimiter product_qunatity=product_quantity+{$src[$i]}";
+		$set_list.="$set_list_delimiter product_quantity=product_quantity+{$src[$i]}";
                 $set_list_delimiter=",";
 	    }
 	    if( $trg[$i]=='party_label' ){
@@ -485,7 +487,6 @@ class DocumentItems extends DocumentCore{
 	}
 	$target_list=  implode(',', $target);
 	$source_list=  implode(',', $source);
-	$set_list=  implode(',', $set);
         $sql="INSERT INTO $table ($target_list) 
             SELECT $source_list 
                 FROM imported_data 

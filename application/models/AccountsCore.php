@@ -436,7 +436,7 @@ class AccountsCore extends Catalog{
                         )
                     WHERE
                         active_company_id=$active_company_id
-                        AND passive_company_id = $pcomp_id
+                        AND passive_company_id = '$pcomp_id'
                         AND trans_status <> 4
                         AND trans_status <> 5
                         AND (acc_debit_code = $acc_code

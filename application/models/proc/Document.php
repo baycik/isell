@@ -8,7 +8,7 @@ class Document extends Data {
     public $use_vatless_price = 0;
 
     public function selectDoc($doc_id) {
-	$this->Base->svar('doc_id', $doc_id);
+        $this->Base->svar('doc_id', $doc_id);
 	if ($doc_id == 0) {
 	    $this->_doc['doc_id'] = 0;
 	} else {
@@ -449,7 +449,6 @@ class Document extends Data {
 	if( $invoice_price===NULL ){
 	    $invoice_price = $this->getProductInvoicePrice( stripslashes($product_code) );
 	}
-	
 	if (!$this->alterEntry('update', $doc_entry_id, $product_quantity, $invoice_price)) {//update not ok
 	    $this->Base->query("DELETE FROM document_entries WHERE doc_entry_id=$doc_entry_id");
        	    return false;
@@ -710,8 +709,13 @@ class Document extends Data {
         return $nextNum;
     }
 
-    public function insertView($view_type_id) {
-	$doc_id = $this->doc('doc_id');
+    public function insertView( $view_type_id, $doc_id=null ) {
+        if( $doc_id ){
+            $this->selectDoc($doc_id);
+        } else {
+            $doc_id = $this->doc('doc_id');
+        }
+        
         $doc_type = $this->doc('doc_type');
 	$view_type_props = $this->Base->get_row("SELECT * FROM document_view_types WHERE view_type_id='$view_type_id'");
         $efields = addslashes($this->getLastEfields($view_type_id));
@@ -970,7 +974,7 @@ class Document extends Data {
 	$doc_id=$this->doc('doc_id');
 	$this->calcCorrections( $skip_vat_correction, $skip_curr_correction );
         $curr_code=$this->Base->acomp('curr_code');
-	$company_lang = $this->Base->pcomp('language');
+	$company_lang = $this->Base->pcomp('language')??'ru';
         $pcomp_price_label=$this->Base->pcomp('price_label');
         $this->Base->query("DROP TEMPORARY TABLE IF EXISTS tmp_doc_entries");
         $sql="CREATE TEMPORARY TABLE tmp_doc_entries ( INDEX(product_code) ) AS (
@@ -1380,7 +1384,7 @@ class Document extends Data {
         $doc_ratio=$this->doc('doc_ratio');
         if( $this->doc('doc_type') == 1 || $this->doc('doc_type') == 3 ){
             $pcomp_id=$this->Base->pcomp("company_id");
-            return $this->Base->get_row("SELECT ROUND(GET_SELL_PRICE('$product_code','$pcomp_id',$doc_ratio)/{$this->vat_rate},2) sell",0);
+            return $this->Base->get_row("SELECT ROUND(GET_SELL_PRICE('$product_code','$pcomp_id',$doc_ratio),2)/{$this->vat_rate} sell",0);
         } else {
             $def_curr_code = $this->Base->acomp('curr_code');
             $pcomp_price_label=$this->Base->pcomp('price_label');

@@ -2,10 +2,16 @@
 require_once 'Catalog.php';
 class DocumentUtils extends Catalog{
     public $min_level=1;
-    protected function selectDoc( $doc_id ){
+    public function selectDoc( $doc_id ){
 	if( $doc_id!=$this->Hub->svar('doc_id') ){
             $this->Hub->svar('doc_id',$doc_id);
             unset( $this->_doc );
+            /*
+             * Compability for isell2 calls
+             */
+            if( isset($this->bridge) ){
+                $this->bridge->LoadClass('Document')->selectDoc($doc_id);
+            }
         }
     }
     private function checkPassiveLoad(){

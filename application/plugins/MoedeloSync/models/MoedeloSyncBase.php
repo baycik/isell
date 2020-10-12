@@ -276,6 +276,7 @@ class MoedeloSyncBase extends Catalog{
                         remote_tstamp=local_tstamp
                     WHERE
                         entry_id='$entry_id'");
+            //echo "CREATED: ";print_r($entity);
         } else {
             $error=$this->getValidationErrors($response);
             $this->log("{$this->doc_config->sync_destination} INSERT is unsuccessfull (HTTP CODE:$response->httpcode '$error') {$entity->ErrorTitle}");
@@ -295,7 +296,16 @@ class MoedeloSyncBase extends Catalog{
                         remote_tstamp=local_tstamp
                     WHERE
                         entry_id='$entry_id'");
-        } else {
+            //echo "UPDATED $entry_id: ";//print_r($entity);die;
+        } else 
+        if( $response->httpcode==404  ){
+            $this->query("DELETE 
+                    FROM
+                        plugin_sync_entries
+                    WHERE
+                        entry_id='$entry_id'");
+        }
+        else {
             print_r($entity);
             $error=$this->getValidationErrors($response);
             $this->log("{$this->doc_config->sync_destination} UPDATE is unsuccessfull (HTTP CODE:$response->httpcode '$error') {$entity->ErrorTitle}");
@@ -311,11 +321,12 @@ class MoedeloSyncBase extends Catalog{
                         plugin_sync_entries
                     WHERE
                         entry_id='$entry_id'");
+            //echo "DELETED: local_id $local_id";
         } else {
             $error=$this->getValidationErrors($response);
-            $this->log("{$this->doc_config->sync_destination} DELETE is unsuccessfull (HTTP CODE:$response->httpcode '$error')");
-            $entity=$this->remoteGet( $remote_id );
-            print_r($entity);
+            $this->log("{$this->doc_config->sync_destination} DELETE is unsuccessfull (HTTP CODE:$response->httpcode '$error') [entry_id=$entry_id]");
+//            $entity=$this->remoteGet( $remote_id );
+//            print_r($entity);
             return false;
         }
         return true;

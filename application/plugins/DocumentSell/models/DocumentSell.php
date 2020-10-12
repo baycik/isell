@@ -15,7 +15,7 @@
 class DocumentSell extends DocumentBase{
     function init() {
         header("Content-type:text/plain");
-        $this->Topic("documentChangeIsCommited")->subscribe('DocumentSell','documentChangeIsCommited');
+        $this->Topic("documentBeforeChangeIsCommited")->subscribe('DocumentSell','documentBeforeChangeIsCommited');
     }
     
     
@@ -26,11 +26,11 @@ class DocumentSell extends DocumentBase{
     
     public function extensionGet(){
 	return [
-	    'script'=>$this->load->view('sell_script.js',[],true),
-	    'head'=>$this->load->view('head.html',[],true),
-	    'body'=>$this->load->view('body.html',[],true),
-	    'foot'=>$this->load->view('foot.html',[],true),
-	    'views'=>$this->load->view('views.html',[],true)
+	    'script'=>  $this->load->view('sell_script.js',[],true),
+	    'head'=>    $this->load->view('head.html',[],true),
+	    'body'=>    $this->load->view('body.html',[],true),
+	    'foot'=>    $this->load->view('foot.html',[],true),
+	    'views'=>   $this->load->view('views.html',[],true)
 	];
     }
     //////////////////////////////////////////
@@ -77,14 +77,16 @@ class DocumentSell extends DocumentBase{
     // DOCUMENT EVENTS SECTION
     //////////////////////////////////////////
     
-    public function documentChangeIsCommited( $field, bool $new_is_commited ){
+    public function documentBeforeChangeIsCommited( $field, bool $new_is_commited ){
         if( !$new_is_commited && !$this->isCommited() ){
             $doc_id=$this->doc('doc_id');
-            
-            
-            //echo "!$new_is_commited && !".$this->isCommited()."==".(!$new_is_commited && !$this->isCommited());
-            
+            /*
+             * Already uncommited than need to delete document
+             */
             //return $this->documentDelete($doc_id);
+        }
+        if( $new_is_commited == $this->isCommited() ){
+            return true;
         }
         return $this->entryListChangeCommit( $new_is_commited );
     }
@@ -185,13 +187,8 @@ class DocumentSell extends DocumentBase{
      */
     private function entryListChangeCommit( bool $new_is_commited ){
         $doc_id=$this->doc('doc_id');
-        $current_is_commited=$this->isCommited();
-        if( $new_is_commited==$current_is_commited ){
-            return true;
-        }
         $entry_list=$this->entryListGet($doc_id);
         $this->db_transaction_start();
-        $this->doc('is_commited',$new_is_commited);
         foreach($entry_list as $entry){
             if( $new_is_commited ){
                 $old_entry_data=(object)[
@@ -202,13 +199,13 @@ class DocumentSell extends DocumentBase{
                     'product_quantity'=>$entry->product_quantity*2
                 ];
             }
-            $change_ok=$this->entrySave($entry->doc_entry_id, $entry, $old_entry_data);
+            $change_ok=$this->entrySave($entry->doc_entry_id, $entry, $old_entry_data, true);
             if( !$change_ok ){
                 $this->db_transaction_rollback();
                 return false;
             }
         }
-        if( $this->isCommited() ){
+        if( $new_is_commited ){
             $this->transUpdate();
         }
         $this->db_transaction_commit();
@@ -231,12 +228,12 @@ class DocumentSell extends DocumentBase{
      * @param object $entry
      * @return type
      */
-    public function entryCreate( int $doc_id, object $entry ){
+    public function entryCreate( int $doc_id, object $new_entry_data ){
         $this->documentSelect($doc_id);
         $pcomp_id=$this->doc('passive_company_id');
         $usd_ratio=$this->doc('doc_ratio');
-        $entry->entry_price=$this->get_value("SELECT GET_SELL_PRICE({$entry->product_code},{$pcomp_id},{$usd_ratio})")??0;
-        return parent::entryCreate($doc_id, $entry);
+        $new_entry_data->entry_price=$this->get_value("SELECT GET_SELL_PRICE({$new_entry_data->product_code},{$pcomp_id},{$usd_ratio})")??0;
+        return parent::entryCreate($doc_id, $new_entry_data);
     }
     
     /**
@@ -247,16 +244,9 @@ class DocumentSell extends DocumentBase{
      * @param object $new_entry_data
      * @param object $current_entry_data
      */
-    protected function entrySave1( int $doc_entry_id, object $new_entry_data, object $current_entry_data=null ){
-        
-        
-        
-        return false;
-        throw new Exception("already_exists",409);//Conflict
-        
-        
+    protected function entrySave( int $doc_entry_id, object $new_entry_data, object $current_entry_data=null, bool $modify_stock=false ){
         if( isset($new_entry_data->entry_price) ){
-            $vat_correction=$this->doc('use_vatless_price')?$this->doc('vat_rate')/100+1:1;
+            $vat_correction=$this->doc('use_vatless_price')?1:$this->doc('vat_rate')/100+1;
             $new_entry_data->entry_price_vatless=$new_entry_data->entry_price/$vat_correction;
             unset($new_entry_data->entry_price);
         }
@@ -265,16 +255,15 @@ class DocumentSell extends DocumentBase{
             $new_entry_data->invoice_price=$new_entry_data->entry_price_vatless/$doc_curr_correction;
             unset($new_entry_data->entry_price_vatless);
         }
-        
         $filtered_entry_data=(object)[];
-        foreach( ['party_label','product_quantity','self_price','breakeven_price','invoice_price'] as $field ){
+        foreach( ['product_code','party_label','product_quantity','self_price','breakeven_price','invoice_price'] as $field ){
             if( !isset($new_entry_data->$field) ){
                 continue;
             }
             $filtered_entry_data->$field=$new_entry_data->$field;
         }
         $update_ok=$this->update('document_entries',$filtered_entry_data,['doc_entry_id'=>$doc_entry_id]);
-        $error = $this->db->error();
+        $error = $this->db->error(); 
         if($error['code']==1452){
             $this->db_transaction_rollback();
 	    throw new Exception("product_code_unknown",424);//Failed Dependency
@@ -287,27 +276,23 @@ class DocumentSell extends DocumentBase{
             $this->db_transaction_rollback();
             throw new Exception($error['message'].' '.$this->db->last_query(),500);//Internal Server Error
 	}
-        if( ($new_entry_data->product_quantity??false) && $this->isCommited() ){
+        if( $modify_stock && ($new_entry_data->product_quantity??false) ){
             $product_delta_quantity=$current_entry_data->product_quantity - $new_entry_data->product_quantity;
             $product_code=$new_entry_data->product_code??$current_entry_data->product_code;
             $stock_id=1;
             $Stock=$this->Hub->load_model("Stock");
             $stock_ok=$Stock->productQuantityModify( $product_code, $product_delta_quantity, $stock_id  );
-            
-
-            
-            echo ("stock_ok $stock_ok");
-            die;
             if( !$stock_ok ){
+                $error=$this->entryErrorGet( $doc_entry_id );
                 $this->db_transaction_rollback();
-                echo "Insufficient Storage";
-                throw new Exception("product_stock_error",507);//Insufficient Storage
-                
+                throw new Exception("product_stock_error\n$error",507);//Insufficient Storage
             }
             $update_ok=true;
         }
         return $update_ok;
     }
+    
+    
     /**
      * Updates entry data
      * @param int $doc_entry_id
@@ -480,9 +465,9 @@ class DocumentSell extends DocumentBase{
 	return true;
     }
 
-    public function entryDelete2222( int $doc_id, array $doc_entry_ids){
-	return parent::entryDelete($doc_id, $doc_entry_ids);
-    }    
+//    public function entryDelete2222( int $doc_id, array $doc_entry_ids){
+//	return parent::entryDelete($doc_id, $doc_entry_ids);
+//    }    
     /*
      * COMMIT SECTION
      */

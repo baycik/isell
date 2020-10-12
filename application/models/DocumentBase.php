@@ -27,7 +27,6 @@ abstract class DocumentBase extends Catalog{
 //            }
             $this->document_properties->$field=$value;
             $flush && $this->documentFlush();
-            echo " docFLUSH  $field, string $value";
 	}
 	return $this->document_properties->$field??null;
     }
@@ -231,12 +230,12 @@ abstract class DocumentBase extends Catalog{
         $fieldCamelCase=str_replace(' ', '', ucwords(str_replace('_', ' ', $field)));
         $this->db_transaction_start();
         $this->documentSelect($doc_id);
-        $ok=$this->Topic('documentChange'.$fieldCamelCase)->publish( $field, $value, $this->document_properties );
-        $this->doc( $field, $value );
+        $ok=$this->Topic('documentBeforeChange'.$fieldCamelCase)->publish( $field, $value, $this->document_properties );
         if( $ok===false ){
             $this->db_transaction_rollback();
             return false;
         }
+        $this->doc( $field, $value );
         $this->db_transaction_commit();
         return true;
     }
@@ -307,12 +306,16 @@ abstract class DocumentBase extends Catalog{
      * @return boolean
      */
     public function entryUpdate( int $doc_entry_id, object $new_entry_data ){
+        if( !$doc_entry_id ){
+            return false;
+        }
         $current_entry_data=$this->entryGet($doc_entry_id);
         if( !$this->doc_id ){//document must be selected
             return false;
         }
         $this->db_transaction_start();
-        $update_ok=$this->entrySave($doc_entry_id, $new_entry_data, $current_entry_data);
+        $modify_stock=$this->isCommited()?true:false;
+        $update_ok=$this->entrySave($doc_entry_id, $new_entry_data, $current_entry_data, $modify_stock);
         if( !$update_ok ){
             $this->db_transaction_rollback();
             return false;
@@ -349,6 +352,14 @@ abstract class DocumentBase extends Catalog{
         }
         $this->db_transaction_rollback();
         return false;
+    }
+    
+    protected function entryErrorGet( $doc_entry_id ){
+        $check_entry=$this->get_value("SELECT CHK_ENTRY($doc_entry_id)");
+        $error_text=substr($check_entry,strpos($check_entry," "));
+        $entry=$this->get_row("SELECT product_code,ru product_name FROM document_entries JOIN prod_list USING(product_code) WHERE doc_entry_id=$doc_entry_id");
+        $entry->error=$error_text;
+        return "$error_text ($entry->product_name)";
     }
 
     /**

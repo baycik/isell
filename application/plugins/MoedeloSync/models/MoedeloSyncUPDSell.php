@@ -261,8 +261,15 @@ class MoedeloSyncUPDSell extends MoedeloSyncBase{
                 $declar_len=strlen($document->Items[$i]->Declaration);
                 if($declar_len<23 || $declar_len>27){
                     unset($document->Items[$i]->Declaration);
+                    unset($document->Items[$i]->Country);
                 }
             }
+        }
+        if( !$document->SupplierId ){
+            $document->SupplierId=$document->SenderId;
+        }
+        if( !$document->ReceiverId ){
+            $document->ReceiverId=$document->PayerId;
         }
         
         

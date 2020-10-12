@@ -17,12 +17,16 @@ Document.head = {
     },
     update: function (field, value, succes_msg) {
         var url = Document.doc_extension + '/headFieldUpdate';
-        return $.post(url, {doc_id: Document.doc_id, field: field, value: value}, function (ok) {
+        return $.post(url, {doc_id: Document.doc_id, field: field, value: value}).done(function (ok) {
             if (ok * 1) {
                 App.flash(succes_msg);
             } else {
                 App.flash("Изменения не сохранены");
             }
+            Document.reload();
+        }).fail(function(xhr){
+            App.flash("Изменения не сохранены");
+            App.flash( xhr.responseText );
             Document.reload();
         });
     },

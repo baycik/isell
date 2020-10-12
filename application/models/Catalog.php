@@ -161,7 +161,7 @@ class Catalog extends CI_Model {
         $url = "http://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI] User:".$this->Hub->svar('user_login');
         $this->create('log_list', ['message' => $message, 'url' => $url, 'log_class' => $class]);
         if( rand(1,1000)==1 ){
-            $this->query("DELETE FROM log_list WHERE DATEDIFF(NOW(),cstamp)>7");
+            $this->query("DELETE FROM log_list WHERE DATEDIFF(NOW(),cstamp)>30");
         }
     }
 
@@ -169,7 +169,7 @@ class Catalog extends CI_Model {
 
     protected function db_transaction_start() {
         if ($this->db_transaction_nested_count == 0) {
-            echo " START TRANSACTION ".$this->db_transaction_nested_count;
+            //echo " START TRANSACTION ".$this->db_transaction_nested_count;
             $this->query("START TRANSACTION");
         }
         $this->db_transaction_nested_count += 1;
@@ -178,14 +178,14 @@ class Catalog extends CI_Model {
     protected function db_transaction_commit() {
         $this->db_transaction_nested_count -= 1;
         if ($this->db_transaction_nested_count == 0) {
-            echo " COMMIT ".$this->db_transaction_nested_count;
+            //echo " COMMIT ".$this->db_transaction_nested_count;
             $this->query("COMMIT");
         }
     }
 
     protected function db_transaction_rollback() {
         $this->db_transaction_nested_count = 0;
-        echo " ROLLBACK ".$this->db_transaction_nested_count;
+        //echo " ROLLBACK ".$this->db_transaction_nested_count;
         $this->query("ROLLBACK");
     }
 
@@ -416,12 +416,12 @@ class Catalog extends CI_Model {
             if( !method_exists($Model, $method) ){
                 continue;
             }
-            try{
+            //try{
                 $previuos_return=call_user_func_array([$Model, $method],$arguments);
-            } catch (Exception $ex) {
+            //} catch (Exception $ex) {
                 //$this->unsubscribe( $listener->event_place, $listener->event_target, $listener->event_liable_user_id );
-                $this->log("Topic subscriber '{$listener->event_place}->{$listener->event_target}' has been removed due to error: ".$ex);
-            }
+                //$this->log("Topic subscriber '{$listener->event_place}->{$listener->event_target}' has been removed due to error: ".$ex);
+            //}
         }
         return $previuos_return;
     }

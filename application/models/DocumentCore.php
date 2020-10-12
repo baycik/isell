@@ -157,6 +157,7 @@ class DocumentCore extends DocumentUtils{
 	else{
 	    $doc_id = $this->doc('doc_id');
 	    $next_doc_num = $this->getNextDocNum($doc_type,true);
+            
 	    $this->query("DELETE FROM document_view_list WHERE doc_id='$doc_id'");
 	    $quantity_sign = $doc_type<0 ? -1 : 1;
 	    $this->query("UPDATE document_entries SET product_quantity=ABS(product_quantity)*$quantity_sign WHERE doc_id=$doc_id");
@@ -165,6 +166,7 @@ class DocumentCore extends DocumentUtils{
 		'doc_num'=>$next_doc_num,
 		'is_reclamation'=>($doc_type<0)
 	    ));
+            $this->entryBreakevenPriceUpdate(null,$doc_id);
 	}
 	return true;
     }

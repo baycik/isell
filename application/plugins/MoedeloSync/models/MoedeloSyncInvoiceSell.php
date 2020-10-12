@@ -224,7 +224,7 @@ class MoedeloSyncInvoiceSell extends MoedeloSyncBase{
                     product_unit Unit,
                     IF({$this->doc_config->doc_type}=1 OR {$this->doc_config->doc_type}=2,1,2) Type,
                     {$document->vat_rate} NdsType,
-                    ROUND(invoice_price*(1+{$document->vat_rate}/100),2) Price,
+                    ROUND(invoice_price,2) Price,
                     ROUND(invoice_price*product_quantity*(1+{$document->vat_rate}/100),2) SumWithNds,
                     prod_pse.remote_id StockProductId,
                     party_label Declaration,
@@ -238,11 +238,18 @@ class MoedeloSyncInvoiceSell extends MoedeloSyncBase{
                 WHERE
                     doc_id={$document->doc_id}";
             $document->Items=$this->get_list($sql_entry);
-            foreach($document->Items as &$Item){
-                if( $Item->Type==2 ){
-                    unset($Item->StockProductId);
+            for($i=0;$i<count($document->Items);$i++){
+                $document->Items[$i]->Country=mb_convert_case($document->Items[$i]->Country, MB_CASE_TITLE);
+                $declar_len=strlen($document->Items[$i]->Declaration);
+                if($declar_len<23 || $declar_len>27){
+                    unset($document->Items[$i]->Declaration);
+                    unset($document->Items[$i]->Country);
+                }
+                if( $document->Items[$i]->Type==2 ){
+                    unset($document->Items[$i]->StockProductId);
                 }
             }
+
         }
         $document->Context=(object)[
             'CreateDate'=>$this->toTimezone($document->ContextCreateDate,'remote'),
@@ -251,7 +258,7 @@ class MoedeloSyncInvoiceSell extends MoedeloSyncBase{
         ];
         
         
-        //print_r($document);//die;
+        //print_r($document);die;
         
         
         return $document;

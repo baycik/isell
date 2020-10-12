@@ -1,13 +1,6 @@
 <script>
     App.MailingManager_reciever_list={
         data: {},
-        empty_reciever_list: {
-            reciever_list_name: 'Новый список',
-            subject_path_include: '',
-            subject_path_exclude: '',
-            subject_manager_include: [],
-            subject_manager_exclude: []
-        },
         current_reciever_list_index: 0,
         filter:{
             manager_include: '',
@@ -16,7 +9,7 @@
         },
         properties:{
 	    title: 'Списки адресатов',
-	    width: 1020,
+	    width: 950,
 	    height: 'auto',
 	    shadow:false,
 	    onClose: function(){
@@ -41,36 +34,37 @@
             App.MailingManager_reciever_list.load();
 	},
         initControls: function (){
-            $('.reciever-list').click(function(e){
+            $('.reciever-list-item').click(function(e){
                 if(e.target.className == 'delete-reciver-list'){
                     return;
                 };
                 var reciever_list_id = $(this).attr('data-reciever_list_id');
                 App.MailingManager_reciever_list.current_reciever_list_index = reciever_list_id;
-                if(reciever_list_id == '-1'){
-                    reciever_list_id = App.MailingManager_reciever_list.data.settings.reciever_list.push(App.MailingManager_reciever_list.empty_reciever_list)-1;
-                    App.MailingManager_reciever_list.current_reciever_list_index = reciever_list_id;
-                    App.MailingManager_reciever_list.update();
+                if( reciever_list_id === '-1' ){
+                    App.MailingManager_reciever_list.create();
                     return;
                 }
                 App.MailingManager_reciever_list.markSelectedList();
                 App.MailingManager_reciever_list.client_list_settings.init();
                 App.MailingManager_reciever_list.client_list_grid.init();
-            })
+            });
             $('.delete-reciver-list').click(function(e){
                 var reciever_list_id = $(this).attr('data-reciever_list_id');
                 App.MailingManager_reciever_list.delete(reciever_list_id);
                 App.MailingManager_reciever_list.update();
-            })
+            });
             $('#PluginMailing_recievers_blacklist input').change(function(e){
                 App.MailingManager_reciever_list.data.settings.reciever_blacklist = this.value;
                 App.MailingManager_reciever_list.update();
-            })
+            });
         },
         load: function () {
             $.post('MailingManager/settingsGet', function (resp) {
                 if (resp) {
                     var response = JSON.parse(resp);
+                    if( !response.settings.reciever_list || Array.isArray(response.settings.reciever_list) ){
+                        response.settings.reciever_list={};
+                    }
                     App.MailingManager_reciever_list.data = response;
                     App.MailingManager_reciever_list.render();
                     App.MailingManager_reciever_list.initControls();
@@ -80,31 +74,44 @@
             });
         },
         render: function () {
-            App.renderTpl('PluginMailing_recievers_blacklist',{reciever_blacklist: App.MailingManager_reciever_list.data.settings.reciever_blacklist });
-            App.renderTpl('PluginMailing_recievers_list',{reciever_list: App.MailingManager_reciever_list.data.settings.reciever_list });
+            var reciever_list_array=[];
+            for(let reciever_list_id in App.MailingManager_reciever_list.data.settings.reciever_list){
+                let filter=App.MailingManager_reciever_list.data.settings.reciever_list[reciever_list_id];
+                filter.reciever_list_id=reciever_list_id;
+                reciever_list_array.push(filter);
+            }
+            App.MailingManager_reciever_list.reciever_list_length=reciever_list_array.length;
+            App.renderTpl('PluginMailing_recievers_list',{reciever_list: reciever_list_array});
             App.MailingManager_reciever_list.markSelectedList();
+        },
+        create: function(){
+            var reciever_list_id = Date.now();
+            App.MailingManager_reciever_list.data.settings.reciever_list[reciever_list_id]=
+                {
+                    reciever_list_name: 'Новый список '+(App.MailingManager_reciever_list.reciever_list_length+1),
+                    subject_path_include: '',
+                    subject_path_exclude: '',
+                    subject_manager_include: [],
+                    subject_manager_exclude: []
+                };
+            App.MailingManager_reciever_list.current_reciever_list_index = reciever_list_id;
+            App.MailingManager_reciever_list.update();
         },
         update: function () {
             $.post("MailingManager/settingsUpdate", {settings: JSON.stringify(App.MailingManager_reciever_list.data.settings)}, function (ok) {
-                if ( ok * 1 ) {
+                if ( ok * 1 ){
                     App.MailingManager_reciever_list.load();
                     App.mailing_manager.reload_recievers(App.MailingManager_reciever_list.data.settings.reciever_list);
                 }
             });
         },
-        delete: function (index) {
-            var result = [];
-            for(var i = 0; i < App.MailingManager_reciever_list.data.settings.reciever_list.length; i++){
-                if ( i != index ) {
-                    result.push(App.MailingManager_reciever_list.data.settings.reciever_list[i]);
-                }
-            }
+        delete: function (reciever_list_id) {
+            delete App.MailingManager_reciever_list.data.settings.reciever_list[reciever_list_id];
             App.MailingManager_reciever_list.current_reciever_list_index = '0';
-            App.MailingManager_reciever_list.data.settings.reciever_list = result;
         },
         markSelectedList: function(){
-            $('.reciever-list').css('background', 'linear-gradient(#eef5ff, #eaf2ff)');
-            $('.reciever-list[data-reciever_list_id="'+App.MailingManager_reciever_list.current_reciever_list_index+'"]').css('background', 'linear-gradient(#fffcee, #fffdea)');
+            $('.reciever-list-item').removeClass('reciever-list-item-active');
+            $('.reciever-list-item[data-reciever_list_id="'+App.MailingManager_reciever_list.current_reciever_list_index+'"]').addClass('reciever-list-item-active');
         },
         client_list_settings: {
             init: function () {
@@ -135,14 +142,15 @@
             init: function () {
                 var settings = {
                     columns: [
-                        {id: 'label1', field: 'label', name: 'Название', width: 350},
-                        {id: 'path1', field: 'path', name: 'Путь', width: 350}
+                        {id: 'label1', field: 'label', name: 'Имя', width: 103},
+                        {id: 'company_name', field: 'company_name', name: 'Название', width: 325},
+                        {id: 'path1', field: 'path', name: 'Путь', width: 236}
                     ],
                     options: {
                         enableCellNavigation: true,
                         enableColumnReorder: false,
                         enableFilter: true,
-                        url: 'MailingManager/recieverGet',
+                        url: 'MailingManager/recieverListFetch',
                         params: {
                             reciever_list_id: App.MailingManager_reciever_list.current_reciever_list_index
                         }
@@ -163,18 +171,18 @@
     };
 </script>
 <div id="PluginMailing_recievers" style="display: grid;grid-template-columns:1fr 3fr;grid-gap:5px;padding: 5px;">
-    <div id="PluginMailing_recievers_list"  class="" title="Название списка">
-        <div class="reciever-list" data-reciever_list_id="-1">Новый список</div>
+    <div id="PluginMailing_recievers_list"  style="" title="Название списка">
+        <div class="reciever-list-item" data-reciever_list_id="-1">Добавить новый список</div>
         <!--{{reciever_list}}-->
-        <div class="reciever-list" data-reciever_list_id="{{#}}">{{ reciever_list_name }} <b class="delete-reciver-list" data-reciever_list_id="{{#}}" style="cursor: pointer;">❌</b></div>
+        <div class="reciever-list-item" data-reciever_list_id="{{reciever_list_id}}">{{ reciever_list_name }} <b class="delete-reciver-list" data-reciever_list_id="{{reciever_list_id}}" style="cursor: pointer;">❌</b></div>
         <!--{{/reciever_list}}-->
     </div>
     <div id="PluginMailing_recievers_details" class="" title="Подробности" >
-        <input type="text" title="Название" name="reciever_list_name">
+        <input type="text" title="Название" name="reciever_list_name" style="width:562px">
         <div style="display: grid;grid-template-columns:  auto">
             <div class="x-client_filter" style="display: grid;grid-template-columns:  auto auto">
                     <div>
-                        <input type="text" title="Включить" name="subject_path_include">
+                        <textarea title="Включить" name="subject_path_include" placeholder="Список через запятую"></textarea>
                         <select name="subject_manager_include" title="Включить" multiple size="6">
                             <!--{{staff_list}}
                             {{if full_name}}-->
@@ -184,7 +192,7 @@
                         </select>
                     </div>
                     <div>
-                        <input type="text" title="Исключить" name="subject_path_exclude">
+                        <textarea title="Исключить" name="subject_path_exclude" placeholder="Список через запятую"></textarea>
                         <select name="subject_manager_exclude"  title="Исключить" multiple size="6">
                             <!--{{staff_list}}
                             {{if full_name}}-->
@@ -205,10 +213,13 @@
     </label>
 </div>
 <style>
-    .reciever-list{
+    .reciever-list-item{
+        margin: 1px;
         padding: 5px;
-        background: linear-gradient(#eef5ff, #eaf2ff);
-        border: 1px solid lightgray;
+        background: #fff;
+    }
+    .reciever-list-item:hover,.reciever-list-item-active{
+        background-color: #fe9;
     }
 
 </style>
