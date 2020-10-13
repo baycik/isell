@@ -13,12 +13,12 @@
 class StockSectorManager extends Catalog{
     
     public function install(){
-	$install_file=__DIR__."/install.sql";
+	$install_file=__DIR__."./install/install.sql";
 	$this->load->model('Maintain');
 	return $this->Maintain->backupImportExecute($install_file);
     }
     public function uninstall(){
-	$uninstall_file=__DIR__."/uninstall.sql";
+	$uninstall_file=__DIR__."./install/uninstall.sql";
 	$this->load->model('Maintain');
 	return $this->Maintain->backupImportExecute($uninstall_file);
     }
