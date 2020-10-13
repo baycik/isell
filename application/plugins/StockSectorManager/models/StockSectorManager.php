@@ -17,6 +17,7 @@ class StockSectorManager extends Catalog{
 	$this->load->model('Maintain');
 	return $this->Maintain->backupImportExecute($install_file);
     }
+    
     public function uninstall(){
 	$uninstall_file=__DIR__."./install/uninstall.sql";
 	$this->load->model('Maintain');
