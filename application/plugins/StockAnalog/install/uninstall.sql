@@ -1,1 +1,3 @@
 DROP TABLE plugin_analog_list;
+
+DROP FUNCTION PLUGIN_CHK_ANALOG;
