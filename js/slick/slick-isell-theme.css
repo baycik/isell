@@ -130,6 +130,9 @@ classes should alter those!
 .slick-align-right{
     text-align: right;
 }
+.slick-align-center{
+    text-align: center;
+}
 .slick-header-column.ui-state-default{
     height: 27px;
 }

@@ -42,7 +42,6 @@ class AttributeManager extends Catalog{
 	    $sortby = "attribute_name";
 	    $sortdir = "ASC";
 	}
-        $null = null;
         $having = '';
         if($filter){
            $having = "HAVING ".$this->makeFilter($filter); 
