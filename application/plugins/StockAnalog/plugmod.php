@@ -161,7 +161,7 @@ $before[]=<<<EOT
                     <tr onclick="App.document.row.swap( this )" data-product_id="{{product_id}}">
                         <td>
                             {{if product_img}}
-                                <img src="Storage/image_flush/?size=50x50&path=/dynImg/{{product_img}}">
+                                <img src="../../Storage/image_flush/?size=50x50&path=/dynImg/{{product_img}}">
                             {{/if}}
                         </td>
                         <td>{{product_code}} {{product_name}}</td>

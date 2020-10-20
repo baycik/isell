@@ -37,40 +37,34 @@
         }
     };
 </script>
-<h2>Выберите аналог для замены</h2>
 <div id="StockAnalog_select_analog_options" class="covert">
-    {{.}}
-        <div></div>
-        <div>Код</div>
-        <div>Название</div>
-        <div>Остаток</div>
-        <div>Цена</div>
-    <div class="StockAnalog_select_analog_options_row" style="display:contents" onclick="App.StockAnalog_select_analog.swap( this )" data-product_id="{{product_id}}">
-        <div >
-            {{if product_img}}
-            <img src="Storage/image_flush/?size=50x50&path=/dynImg/{{product_img}}">
-            {{/if}}
+    <div class="ui header">Выберите аналог для замены</div>
+    <div class="content" style="height: 300px;overflow: auto;">
+        <div id="document_entry_analog_dialog_list">
+            <table class="ui selectable celled table">
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th>Код/Название</th>
+                        <th>Остаток</th>
+                        <th>Цена</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!--{{.}}-->
+                    <tr  onclick="App.StockAnalog_select_analog.swap( this )" data-product_id="{{product_id}}">
+                        <td>
+                            {{if product_img}}
+                                <img src="Storage/image_flush/?size=50x50&path=/dynImg/{{product_img}}">
+                            {{/if}}
+                        </td>
+                        <td>{{product_code}} {{product_name}}</td>
+                        <td>{{product_quantity}}</td>
+                        <td>{{product_price}}</td>
+                    </tr>
+                    <!--{{/.}}-->
+                </tbody>
+            </table>
         </div>
-        <div>{{product_code}}</div>
-        <div>{{product_name}}</div>
-        <div>{{product_quantity}}</div>
-        <div>{{product_price}}</div>
     </div>
-    {{/.}}
 </div>
-<style>
-    #StockAnalog_select_analog_options{
-        display:grid;
-        grid-template-columns:50px 70px 400px 50px 50px;
-        gap:2px 0px;
-        margin: 10px;
-    }
-    .StockAnalog_select_analog_options_row div{
-        background-color: #fff6;
-        height: 50px;
-        cursor: pointer;
-    }
-    .StockAnalog_select_analog_options_row:hover  div{
-        background-color: #fe9;
-    }
-</style>
