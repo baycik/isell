@@ -442,7 +442,7 @@
 			    App.document.doc.entries[i].status_color = "green";
 			    App.document.doc.entries[i].status_message = "";
 			} else
-			if ( status == 'wrn' ) {
+                        if ( status == 'wrn' ) {
 			    App.document.doc.entries[i].status_icon = "warning sign";
 			    App.document.doc.entries[i].status_color = "orange";
 			    App.document.doc.entries[i].status_message = message;
@@ -513,16 +513,6 @@
 		App.document.suggestion.search('');
 	    },
 	    render: function () {
-                /*if( App.user.props.user_level<2 ){
-                    for(var i in App.document.suggestion.entries){
-                        var lo=App.document.suggestion.entries[i].leftover;
-                        App.document.suggesfortion.entries[i].stared_leftover=(
-                                lo<10?'★☆☆☆☆':
-                                lo<50?'★★☆☆☆':
-                                lo<100?'★★★☆☆':
-                                lo<500?'★★★★☆':'★★★★★');
-                    }
-                }*/
 		App.renderTpl('doc_suggestion_entries', {entries: App.document.suggestion.entries});
 	    },
 	    handleClick: function (row_node) {
@@ -630,7 +620,7 @@
 	    <tbody>
 		<!-- {{if entries}} {{entries}} -->
 		<tr data-row-index="{{#}}" onclick="App.document.row.handleClick(this)">
-		    <td><span style="color:{{status_color}}"><i class="icon {{status_icon}} {{status_color}}"></i> {{status_message}}</span> {{##}}) {{product_name}}
+                    <td><span style="color:{{status_color}}"><i class="icon {{status_icon}} {{status_color}}"></i> {{status_message}}</span> {{##}}) {{product_name}}
 		    </td>
 		    <td>
 			<div class="ui grid">

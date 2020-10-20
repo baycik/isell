@@ -1,7 +1,4 @@
 <?php
-
-require_once 'Catalog.php';
-
 class Stock extends Catalog {
     /**
      * Changes quantity on particular depot stock

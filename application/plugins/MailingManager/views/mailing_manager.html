@@ -88,31 +88,29 @@ App.mailing_manager=
         initControls: function(){
             Layout.Accordion('#PluginMailingManager_maillist .clickable-list').onselect=function( node ){
                 MessageList.group.selected_index=$(node).data('index');
-                if(MessageList.group.selected_index === '--'){
+                if( MessageList.group.selected_index === '--' ){
                     return;
                 }
                 MessageList.list.load(MessageList.group.group_list[MessageList.group.selected_index]);
             };
-            $("#PluginMailingManager_maillist .new-list").on('click',function(){
-                MessageEditor.action = 'new';
-                MessageEditor.message = MessageEditor.empty_message;
-                MessageList.list.select(MessageEditor.action);
-            });
-            $("#PluginMailingManager_maillist .delete-mailgroup").on('click',function(){
-                var group_id = $(this).attr('data-mailgroup_id');
-                
-                console.log(group_id);
-                return;
-            });
-            $("#PluginMailingManager_maillist .run-mailgroup").on('click',function(){
-                var group_id = $(this).attr('data-mailgroup_id');
-                console.log(group_id);
-                return;
+            $("#PluginMailingManager_maillist").click(function(e){
+                var action=$(e.target).data('action');
+                var id=$(e.target).data('id');
+                if( !action || !id ){
+                    return;
+                }
+                var message_batch_label=id.split("_")[0];
+                var message_id=id.split("_")[1];
+                if( confirm("Удалить сообщения?") ){
+                    $.post("MailingManager/messageDelete",{message_id:message_id,message_batch_label:message_batch_label},function(ok){
+                        MessageList.group.load();
+                    });
+                }
             });
         },
         group:{
             group_list:[],
-            selected_index:0,
+            selected_index:'---',
             load:function(){
                 $.get("MailingManager/messageBatchListGet",{filter:MessageList.current_filter},function(resp){
                     MessageList.group.group_list=App.json(resp);
@@ -122,6 +120,12 @@ App.mailing_manager=
             render:function(){
                 App.renderTpl('PluginMailingManager_maillist',MessageList.group.group_list);
                 MessageList.initControls();
+                
+                console.log(MessageList.group.selected_index);
+                
+                if( MessageList.group.selected_index>=0 && MessageList.group.group_list[MessageList.group.selected_index] ){
+                    MessageList.list.load(MessageList.group.group_list[MessageList.group.selected_index]);
+                }
             }
         },
         createNewList: function (){
@@ -347,21 +351,19 @@ App.mailing_manager=
     <div class="PluginMailingManager_list">
         {{.}}
             <div data-id="{{message_id}}" style="display: contents;" class="PluginMailingManager_list_row">
-                <div>{{reciever_field}}</div>
-                <div>{{message_note}}</div>
-                {{if message_status|equals>2}}
                 <div>
-                    <img src="img/ok.png" title="Доставлено" style="margin:2px;">
+                    {{if message_status|equals>2}}
+                        <img src="img/ok.png" title="Доставлено" style="margin:2px;">
+                    {{else if message_status|equals>1}}
+                        <img src="img/time.png" title="Ожидает доставки" style="margin:2px;">
+                    {{else}}
+                        <img src="img/red.png" title="Не доставлено" style="margin:2px;">
+                    {{/if}}
                 </div>
-                {{else if message_status|equals>1}}
-                <div>
-                    <img src="img/time.png" title="Ожидает доставки" style="margin:2px;">
-                </div>
-                {{else}}
-                <div>
-                    <img src="img/red.png" title="Не доставлено" style="margin:2px;">
-                </div>
-                {{/if}}
+                <div>{{message_recievers}}</div>
+                <div>{{message_subject}}</div>
+                <div data-action="send" data-id="{{message_batch_label}}_{{message_id}}">▶</div>
+                <div data-action="delete" data-id="{{message_batch_label}}_{{message_id}}">❌</div>
             </div>
         {{/.}}
     </div>
@@ -376,8 +378,8 @@ App.mailing_manager=
                 {{.}}
                     <button class="iss_accordion" data-index="{{#}}">
                         {{message_handler}} ({{message_count}}) / {{message_reason}} / {{created_at|date_simplify}}
-                        <b class="delete-mailgroup" data-mailgroup_id="{{#}}" style="cursor: pointer;">❌</b>
-                        <b class="run-mailgroup" data-mailgroup_id="{{#}}" style="cursor: pointer;">▶</b>
+                        <b data-mailgroup_id="{{#}}" data-action="delete" data-id="{{message_batch_label}}_*" style="cursor: pointer;">❌</b>
+                        <b data-mailgroup_id="{{#}}" data-action="send" data-id="{{message_batch_label}}_*" style="cursor: pointer;">▶</b>
                     </button>
                     <div class="iss_accordion_panel" data-index="{{#}}"></div>
                 {{/.}}
@@ -398,7 +400,7 @@ App.mailing_manager=
             </div>
             <div class="inp_group info-row">
                     <b>Кому:</b>
-                    <div class="info-column">{{ message.reciever_field }}</div>
+                    <div class="info-column">{{ message.message_recievers }}</div>
             </div>
             <div class="inp_group info-row">
                     <b>Тема:</b>
@@ -407,7 +409,7 @@ App.mailing_manager=
         </div>
         <div class="mail-panel-body">    
             <div class="inp_group message-body-row">
-                    <div class="message-body-column">{{ message.body }}</div>
+                    <div class="message-body-column">{{ message.message_body }}</div>
             </div>
         </div>
     </div>
@@ -491,19 +493,30 @@ App.mailing_manager=
     }
     .PluginMailingManager_list{
         display: grid;
-        grid-template-columns: minmax(auto, 270px) minmax(auto, 250px) 50px;
-        grid-row-gap:2px;
+        grid-template-columns: 25px minmax(auto, 270px) minmax(auto, 250px) 25px 25px;
+        grid-row-gap:1px;
         margin-left:10px;
         padding-top: 2px;
         padding-bottom: 2px;
     }
     .PluginMailingManager_list div{
         background-color: #fff6;
-        height: 25px;
+        height: 30px;
         padding: 2px;
         padding-top: 3px;
         text-overflow:elipsis;
     }
+    .PluginMailingManager_list [data-action]{
+        padding: 5px;
+        text-align: center;
+    }
+    .PluginMailingManager_list [data-action]:hover{
+        background-color: #fe9;
+        padding: 4px;
+        border: 1px solid white;
+    }
+    
+    
     .PluginMailingManager_list_row:hover div{
         background-color: #fffd;
         cursor: pointer;
@@ -630,7 +643,6 @@ App.mailing_manager=
         width: 100% !important; 
     }
     #PluginMailingManager_mailview .message-body-column{
-        margin: 2em auto;
         padding: 1.5em;
     }
 </style>

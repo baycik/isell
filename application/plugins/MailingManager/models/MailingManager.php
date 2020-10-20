@@ -143,8 +143,12 @@ class MailingManager extends Catalog {
         return $this->update('plugin_message_list',$message_record,['message_id'=>$message_id]);        
     }
     
-    public function messageDelete( $message_id ){
-        return $this->delete('plugin_message_list',['message_id'=>$message_id]);  
+    public function messageDelete( string $message_batch_label=null, int $message_id=null ){
+        $where=['message_id'=>$message_id];
+        if( !$message_id ){
+            $where=['message_batch_label'=>$message_batch_label];
+        }
+        return $this->delete('plugin_message_list',$where);  
     }
     
     private function messageRenderTpl( string $message_template, $context ){

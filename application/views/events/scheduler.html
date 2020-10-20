@@ -74,8 +74,11 @@ App.page_events_scheduler={
         render:function(groupped_events){
             App.renderTpl('events_tile',{events:groupped_events});
         },
-	click:function( node ){
-	    $(".selected").removeClass("selected");
+	click:function( node,event ){
+            if( !event.ctrlKey && !event.shiftKey ){
+                $(".selected").removeClass("selected");
+            }
+	    
 	    $(node).addClass("selected");
 	},
 	statusClick:function( node ){
@@ -110,9 +113,12 @@ App.page_events_scheduler={
 	    App.page_events_scheduler.show_dialog(App.page_events_scheduler.tile.event_list[index]);
 	},
 	delete:function(node){
-	    var index=node?$(node).data('event-index'):$(".selected").data('event-index');
-            if (confirm('Удалить запись?') && App.page_events_scheduler.tile.event_list[index].event_id) {
-                App.post('Events/eventDelete/'+App.page_events_scheduler.tile.event_list[index].event_id,function(ok){
+            var event_ids=[];
+            $(".selected").each(function(i,node){
+                event_ids.push( $(node).data('event_id') );
+            });
+            if (confirm('Удалить записи?') && event_ids) {
+                App.post('Events/eventListDelete/',{event_ids:JSON.stringify(event_ids)},function(ok){
 		    if( ok*1 ){
 			App.flash("Запись удалена");
 			App.page_events_scheduler.tile.load();
@@ -124,17 +130,19 @@ App.page_events_scheduler={
 	},
 	move:function(node){
 	    var label=$(node).parent().data('header');
-	    var index=$(".selected").data('event-index');
-	    var event_id=index?App.page_events_scheduler.tile.event_list[index].event_id:0;
+            var event_ids=[];
+            $(".selected").each(function(i,node){
+                event_ids.push( $(node).data('event_id') );
+            });
 	    App.loadWindow("page/events/move").progress(function(status,newdate,mode){
 		if( status==='move' ){
-		    App.post("Events/eventMove/"+App.uri(event_id,newdate,mode,App.page_events_scheduler.selectedDay,label),function(ok){
+		    App.post("Events/eventListMove/",{event_ids:JSON.stringify(event_ids),newdate:newdate,mode:mode,olddate:App.page_events_scheduler.selectedDay,label:label},function(ok){
 			if( ok*1 ){
-			    App.flash("Запись перенесена");
+			    App.flash("Записи перенесены");
 			    App.page_events_scheduler.activeDatesGet();
 			    $("#event_calendar").calendar('moveTo',new Date(newdate));
 			} else {
-			    App.flash("Запись не перенесена");
+			    App.flash("Записи не перенесены");
 			}
 		    });
 		}
@@ -273,7 +281,7 @@ App.page_events_scheduler={
                     <div>Комментарий</div>
                 </div>
                 {{rows}}
-                <div data-event-index="{{index}}" onclick="App.page_events_scheduler.tile.click(this);" ondblclick="App.page_events_scheduler.tile.edit(this);">
+                <div data-event-index="{{index}}" data-event_id="{{event_id}}" onclick="App.page_events_scheduler.tile.click(this,event);" ondblclick="App.page_events_scheduler.tile.edit(this);">
                     <div class="es_{{event_status}}" onclick="App.page_events_scheduler.tile.statusClick(this);"></div>
                     <div onclick="App.page_events_scheduler.tile.docClick(this);" style="padding: 6px;">{{if doc_id}}<img src="img/document.png">{{/if}}</div>
                     <div> <div style="width: 20px;height: 20px;"  class="ep_{{event_priority}}"></div> </div>
