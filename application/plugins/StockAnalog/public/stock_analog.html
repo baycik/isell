@@ -1,0 +1,105 @@
+<script type="text/javascript">
+    /* global App */
+    App.StockAnalog_stock_analog={
+	init:function(){
+            App.require(["js/slick/lib/jquery.event.drag-2.3.0.js"], function () {
+                App.require([
+                    "js/slick/slick.core.js",
+                    "js/slick/plugins/slick.rowselectionmodel.js",
+                    "js/slick/slick.editors.js",
+                    "js/slick/slickinfinite.js",
+                    "js/slick/slick.grid.js"
+                ], function(){
+                    App.StockAnalog_stock_analog.table.init();
+                });
+            });
+        },
+        link:function( product_id ){
+            var product_code=prompt("Введите код аналога");
+            if( product_code ){
+                $.post("StockAnalog/link",{product_id:product_id,product_code:product_code},function( ok ){
+                    if( ok==1 ){
+                        App.flash("Товар добавлен в группу аналогов");
+                    }
+                    if( ok=='product_not_found' ){
+                        App.flash("Товар с кодом '"+product_code+"'не найден!");
+                    }
+                    if( ok=='product_duplicate' ){
+                        App.flash("Укажите код аналога для связи товаров!");
+                    }
+                    App.StockAnalog_stock_analog.table.grid.reload();
+                });
+            }
+        },
+        unlink:function( product_id ){
+            $.post("StockAnalog/unlink",{product_id:product_id},function( ok ){
+                if( ok==1 ){
+                    App.flash("Товар удален из группы аналогов");
+                }
+                App.StockAnalog_stock_analog.table.grid.reload();
+            });
+        },
+        showgroup:function(analog_group_tag){
+            var filter={analog_group_tag:analog_group_tag};
+            App.StockAnalog_stock_analog.table.grid.setFilter(filter);
+        },
+        table:{
+            current_id: '',
+            list:[],
+            init: function(){
+                var settings = {
+			columns:  [
+                            {id: "analog_group_tag", field: "analog_group_tag",sortable: true, name: "Группа",  width: 70,formatter:App.StockAnalog_stock_analog.table.frm.color},
+                            {id: "product_code", field: "product_code",sortable: true, name: "Код",  width: 150},
+                            {id: "product_name", field: "product_name",sortable: true, name: "Название",  width: 600},
+                            {id: "action_link", field: "action_link",sortable: true, name: "Привязать", cssClass: 'slick-align-center',  width: 70,formatter:App.StockAnalog_stock_analog.table.frm.link},
+                            {id: "action_unlink", field: "action_unlink", name: "Отвязать", cssClass: 'slick-align-center',  width: 70,formatter:App.StockAnalog_stock_analog.table.frm.unlink}
+                        ],
+			options: {
+			    editable: false,
+			    enableCellNavigation: true,
+			    enableColumnReorder: false,
+			    enableFilter: true,
+			    url: 'StockAnalog/listFetch/'
+			}
+		    };
+                    
+		    App.StockAnalog_stock_analog.table.grid = new SlickInfinite("#analog_list_sg", settings);
+                    App.StockAnalog_stock_analog.table.grid.onClick.subscribe(function (e, data) {
+                        var row_data=App.StockAnalog_stock_analog.table.grid.getDataItem(data.row);
+                        var stockanalog_id=0;
+                        if(row_data){
+                            stockanalog_id=row_data.stockanalog_id;
+                        }
+		    });
+                    
+                    $(".x-stockanalog-tools").click(function (e) {
+                        var action = $(e.target).data('action');
+                        if (action) {
+                            App.StockAnalog_stock_analog.table.tools[action] && App.StockAnalog_stock_analog.table.tools[action]();
+                        }
+                    });
+            },
+            frm: {
+                link:function(row, cell, value, columnDef, dataContext){
+                    return '<a href="javascript:App.StockAnalog_stock_analog.link('+dataContext.product_id+')">➕</a>';
+                },
+                unlink:function(row, cell, value, columnDef, dataContext){
+                    return '<a href="javascript:App.StockAnalog_stock_analog.unlink('+dataContext.product_id+')">➖</a>';
+                },
+                color:function(row, cell, value, columnDef, dataContext){
+                    return `<div style="background-color:#${value};height:23px;cursor:pointer" onclick="App.StockAnalog_stock_analog.showgroup('${value}')"></div>`;
+                }
+            }
+        }
+    };
+</script>
+<div style="width:1000px;margin: auto;">
+    <div class="x-stockanalog-tools" style="text-align: right;">
+        <span data-action="entryEdit" class="icon-24 icon-change" title="Изменить"> </span>
+        <span data-action="entryCreate" class="icon-24 icon-create" title="Добавить"> </span>
+        <span data-action="entryDelete" class="icon-24 icon-delete" title="Удалить"> </span>
+        <span class="icon-24 icon-refresh" title="Обновить" onclick="App.StockAnalog_stock_analog.table.grid.reload()"></span>
+    </div>
+    <div style="height: 600px;" id="analog_list_sg"></div>
+</div>

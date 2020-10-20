@@ -1,0 +1,70 @@
+<script type="text/javascript">
+    /* global App */
+    App.StockAnalog_select_analog = {
+	init: function () {
+	    this.node.window({
+		title: 'Выбор аналогов',
+		width: 650,
+		height: 'auto',
+		shadow:false,
+		onClose: function () {
+		    App.StockAnalog_select_analog.handler.notify('close');
+		    delete App.StockAnalog_select_analog;
+		}
+	    });
+	    this.node.window('hcenter');
+	    this.node.window('window').css('position','fixed');
+	    this.node.window('window').css('top','40px');
+	},
+	initAfter:function(){
+	    $.post("StockAnalog/analogListGet",{doc_entry_id:this.data.doc_entry_id},function(resp){
+                var analog_list=App.json(resp);
+                if( analog_list ){
+                    App.renderTpl('#StockAnalog_select_analog_options', analog_list);
+                }
+            });
+	},
+        swap:function( node ){
+            var product_id=$(node).data('product_id');
+            $.post("StockAnalog/analogEntrySwap",{doc_entry_id:this.data.doc_entry_id,product_id:product_id},function(ok){
+                if(ok*1){
+                    App.flash("Товар изменен на аналог");
+                    App.StockAnalog_select_analog.node.window('close');
+                } else {
+                    App.flash("Не удалось заменить на аналог");
+                }
+            });
+        }
+    };
+</script>
+<div id="StockAnalog_select_analog_options" class="covert">
+    <div class="ui header">Выберите аналог для замены</div>
+    <div class="content" style="height: 300px;overflow: auto;">
+        <div id="document_entry_analog_dialog_list">
+            <table class="ui selectable celled table">
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th>Код/Название</th>
+                        <th>Остаток</th>
+                        <th>Цена</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!--{{.}}-->
+                    <tr  onclick="App.StockAnalog_select_analog.swap( this )" data-product_id="{{product_id}}">
+                        <td>
+                            {{if product_img}}
+                                <img src="Storage/image_flush/?size=50x50&path=/dynImg/{{product_img}}">
+                            {{/if}}
+                        </td>
+                        <td>{{product_code}} {{product_name}}</td>
+                        <td>{{product_quantity}}</td>
+                        <td>{{product_price}}</td>
+                    </tr>
+                    <!--{{/.}}-->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

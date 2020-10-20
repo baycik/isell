@@ -183,6 +183,28 @@ class Events extends Catalog{
 	$ViewManager->store($dump);
 	$ViewManager->outRedirect($out_type);
     }
+    public function eventListDelete( array $event_ids ){
+        $ok=1;
+        foreach($event_ids as $event_id){
+            $ok*=$this->eventDelete($event_id);
+        }
+        return $ok;
+    }
+    
+    public function eventListMove( array $event_ids, string $newdate, string $mode=null, string $olddate=null, string $label=null ){
+        $ok=1;
+        foreach($event_ids as $event_id){
+            $ok*=$this->eventMove($event_id, $newdate, $mode, $olddate, $label);
+        }
+        return $ok;
+    }
+    
+    
+    
+    
+    
+    
+    
     /*
      * HANDLING OF PERMANENT EVENTS
      */

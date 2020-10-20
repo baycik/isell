@@ -7,6 +7,10 @@
         $all.=$comp->company_tax_id?", ИНН/КПП:{$comp->company_tax_id}/{$comp->company_tax_id2}":'';
         $all.=$comp->company_jaddress?", $comp->company_jaddress":'';
         $all.=$comp->company_phone?", тел.:{$comp->company_phone}":'';
+        $all.=$comp->company_bank_account?", р/с:{$comp->company_bank_account}":'';
+        $all.=$comp->company_bank_corr_account?", к/с:{$comp->company_bank_corr_account}":'';
+        $all.=$comp->company_bank_name?" в {$comp->company_bank_name}":'';
+        $all.=$comp->company_bank_id?", БИК:{$comp->company_bank_id}":'';
         return $all;
     }
     
