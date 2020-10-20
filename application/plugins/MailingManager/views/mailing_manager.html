@@ -75,60 +75,136 @@ App.mailing_manager=
         current_filter:'',
         search_clock:0,
         init:function(){
-            MessageList.group.load();
+            MessageList.batch.load();
             MessageList.list.tpl=$("#PluginMailingManager_list_tpl").html();
             $("#PluginMailingManager_list_filter").on('input',function(){
                 MessageList.current_filter=$(this).val();
                 clearTimeout(MessageList.search_clock);
                 MessageList.search_clock=setTimeout(function(){
-                    MessageList.group.load();
+                    MessageList.batch.load();
                 },800);
             });
         },
         initControls: function(){
             Layout.Accordion('#PluginMailingManager_maillist .clickable-list').onselect=function( node ){
-                MessageList.group.selected_index=$(node).data('index');
-                if(MessageList.group.selected_index === '--'){
+                if($(node).data('index') !== '--'){
+                    MessageList.batch.selected_index=$(node).data('index');
+                } else {
                     return;
                 }
-                MessageList.list.load(MessageList.group.group_list[MessageList.group.selected_index]);
+                MessageList.list.load(MessageList.batch.batch_list[MessageList.batch.selected_index]);
             };
             $("#PluginMailingManager_maillist .new-list").on('click',function(){
                 MessageEditor.action = 'new';
                 MessageEditor.message = MessageEditor.empty_message;
                 MessageList.list.select(MessageEditor.action);
             });
-            $("#PluginMailingManager_maillist .delete-mailgroup").on('click',function(){
-                var group_id = $(this).attr('data-mailgroup_id');
-                
-                console.log(group_id);
+            $("#PluginMailingManager_maillist *[data-action='delete']").on('click',function(){
+                var message_batch_label = $(this).attr('data-id').split('_')[0];
+                MessageList.batch.delete(message_batch_label);
+                MessageEditor.renew();
                 return;
             });
-            $("#PluginMailingManager_maillist .run-mailgroup").on('click',function(){
-                var group_id = $(this).attr('data-mailgroup_id');
-                console.log(group_id);
+            $("#PluginMailingManager_maillist *[data-action='send']").on('click',function(){
+                var message_batch_label = $(this).attr('data-id').split('_')[0];
+                MessageList.batch.send(message_batch_label);
+                return;
+            });
+            $("#PluginMailingManager_maillist *[data-action='cancel']").on('click',function(){
+                var message_batch_label = $(this).attr('data-id').split('_')[0];
+                MessageList.batch.cancel(message_batch_label);
                 return;
             });
         },
-        group:{
-            group_list:[],
-            selected_index:0,
+        batch:{
+            batch_list:[],
+            selected_index:'--',
             load:function(){
                 $.get("MailingManager/messageBatchListGet",{filter:MessageList.current_filter},function(resp){
-                    MessageList.group.group_list=App.json(resp);
-                    MessageList.group.render();
+                    MessageList.batch.batch_list=App.json(resp);
+                    MessageList.batch.render();
+                });
+            },
+            delete:function(message_batch_label){
+                MessageList.list.selected_id = 0;
+                $.get("MailingManager/messageBatchDelete",{message_batch_label: message_batch_label},function(resp){
+                    MessageList.batch.load();
+                });
+            },
+            send:function(message_batch_label){
+                MessageList.list.selected_id = 0;
+                $.get("MailingManager/messageBatchSend",{message_batch_label: message_batch_label},function(resp){
+                    MessageList.batch.load();
+                });
+            },
+            cancel:function(message_batch_label){
+                MessageList.list.selected_id = 0;
+                $.get("MailingManager/messageBatchCancelSending",{message_batch_label: message_batch_label},function(resp){
+                    MessageList.batch.load();
                 });
             },
             render:function(){
-                App.renderTpl('PluginMailingManager_maillist',MessageList.group.group_list);
+                App.renderTpl('PluginMailingManager_maillist',MessageList.batch.batch_list);
                 MessageList.initControls();
+                setTimeout(function(){
+                    $("#PluginMailingManager_maillist .iss_accordion[data-index='"+MessageList.batch.selected_index+"']").click();
+                },10);
+                
+            },
+            create: function(){
+                var batch = {
+                    handler:$('select[name=message_handler]').val(),
+                    manual_reciever_list: MessageEditor.data.manual_reciever_list ,
+                    reciever_list_id:$('select[name=reciever_list_id]').val(),
+                    body:window.frames['editor_iframe'].tinymce.activeEditor.getContent(),
+                    subject:$('input[name=message_subject]').val()
+                };
+                MessageList.batch.validate(batch);
+                if( MessageEditor.mail_error !== ''){
+                    alert('Ошибка: ' + MessageEditor.mail_error);
+                    return;
+                }
+                $.post("MailingManager/messageBatchCreate", {message_batch: JSON.stringify(batch)}, function (ok) {
+                    if ( ok * 1 ) {
+                        App.flash("Batch created");
+                    }
+                    MessageList.batch.load();
+                });
+            },
+            validate: function(batch){
+                MessageEditor.mail_error = '';
+                if(( !batch.reciever_list_id || batch.reciever_list_id === 'empty' ) && batch.manual_reciever_list.length == 0){
+                    MessageEditor.mail_error += '\nАдресаты не указаны!';
+                }
+                if(batch.subject === ''){
+                    MessageEditor.mail_error += '\nУкажите тему!';
+                }
+                if(batch.body === ''){
+                    MessageEditor.mail_error += '\nПустое сообщение!';
+                }
+                return;
             }
-        },
-        createNewList: function (){
-            
         },
         list:{
             selected_id:0,
+            initControls: function(){
+                $(`#PluginMailingManager_maillist div[data-index=${MessageList.batch.selected_index}] *[data-action='delete']`).on('click',function(){
+                    var message_id = $(this).attr('data-id').split('_')[1];
+                    MessageList.list.delete(message_id);
+                    MessageEditor.renew();
+                    return;
+                });
+                $(`#PluginMailingManager_maillist div[data-index=${MessageList.batch.selected_index}] *[data-action='send']`).on('click',function(){
+                    var message_id = $(this).attr('data-id').split('_')[1];
+                    MessageList.list.send(message_id);
+                    return;
+                });
+                $(`#PluginMailingManager_maillist div[data-index=${MessageList.batch.selected_index}] *[data-action='cancel']`).on('click',function(){
+                    var message_id = $(this).attr('data-id').split('_')[1];
+                    MessageList.list.cancel(message_id);
+                    return;
+                });
+            },
             load:function( group_entry ){
                 var filter={
                     filter:MessageList.current_filter,
@@ -141,19 +217,37 @@ App.mailing_manager=
                     MessageList.list.render(maillist);
                 });
             },
+            delete:function(message_id){
+                MessageList.list.selected_id = 0;
+                $.get("MailingManager/messageDelete",{message_id: message_id},function(resp){
+                    MessageList.batch.load();
+                });
+            },
+            send:function(message_id){
+                MessageList.list.selected_id = 0;
+                $.get("MailingManager/messageSend",{message_id: message_id},function(resp){
+                    MessageList.batch.load();
+                });
+            },
+            cancel:function(message_id){
+                MessageList.list.selected_id = 0;
+                $.get("MailingManager/messageCancelSending",{message_id: message_id},function(resp){
+                    MessageList.batch.load();
+                });
+            },
             render:function(maillist){
-                var $list=$(`#PluginMailingManager_maillist div[data-index=${MessageList.group.selected_index}]`);
-                var html=Mark.up(MessageList.list.tpl,maillist);
-                $list.html(html).click(function(e){
-                    var id=$(e.target.parentNode).data('id');
+                var html = Mark.up(MessageList.list.tpl,maillist);
+                $("#PluginMailingManager_maillist div[data-index='" + MessageList.batch.selected_index + "']").html(html).click(function(e){
+                    var id = $(e.target.parentNode).data('id');
                     MessageList.list.select(id);
                 });
+                MessageList.list.initControls();
             },
             select:function(id){
                 if( !id || id == MessageList.list.selected_id ){
                     return;
                 }
-                MessageList.list.selected_id=id;
+                MessageList.list.selected_id = id;
                 $(`#PluginMailingManager_maillist .PluginMailingManager_list_row_selected`).removeClass('PluginMailingManager_list_row_selected');
                 var $selected_row=$(`#PluginMailingManager_maillist div[data-id=${MessageList.list.selected_id}]`);
                 $selected_row.addClass("PluginMailingManager_list_row_selected");
@@ -166,12 +260,14 @@ App.mailing_manager=
             message_handler: 'email',
             message_subject: '',
             reciever_field: '',
-            message_body: ''
+            message_body: '<p></p>'
         },
         data: {},
         action: 'view',
         current_template_index: '-1',
+        current_message_body: '<p></p>',
         mail_error: '',
+        subject_focus: false,
         init:function(){
             MessageEditor.getSettings();
             window.frames['editor_iframe'].html= '<div></div>';
@@ -184,9 +280,28 @@ App.mailing_manager=
             App.setupForm('#PluginMailingManager_mailnew', MessageEditor.message, 'use_inp_values').change(function (node) {
                 MessageEditor.message[this.name] = App.val(this);
             });
+            $('input[name="message_subject"]').focus(function(){
+                MessageEditor.subject_focus = true;
+            });
+            $('input[name="message_subject"]').blur(function(){
+                setTimeout(function(){ 
+                    MessageEditor.subject_focus = false; 
+                }, 1000 );
+            });
+            $('input[name="message_subject"]').on('change',function(){
+                $('input[name="message_subject"]').focus();
+                MessageEditor.subject_focus = true; 
+            });
             $('.template_mark_down').click(function(){
                 var field_name = $(this).attr('data-field_name');
-                window.frames['editor_iframe'].tinymce.activeEditor.insertContent('{{' + field_name + '}}')
+                if(MessageEditor.subject_focus){
+                    var input_value = $('input[name="message_subject"]').val();
+                    $('input[name="message_subject"]').val(input_value + '{{' + field_name + '}}');
+                    $('input[name="message_subject"]').change();
+                } else {
+                    window.frames['editor_iframe'].tinymce.activeEditor.insertContent('{{' + field_name + '}}');
+                }
+                
             });
             $('.save_template').click(function(){
                 MessageEditor.addTemplate();
@@ -200,8 +315,22 @@ App.mailing_manager=
                     window.frames['editor_iframe'].tinymce.activeEditor.setContent('<p></p>');
                 }
             });
+            $("#PluginMailingManager_mailnew .delete-manual_reciever").on('click',function(){
+                var reciever_index = $(this).attr('data-reciever_index');
+                var result = [];
+                for(var i in MessageEditor.data.manual_reciever_list){
+                    if(i !== reciever_index){
+                        result.push(MessageEditor.data.manual_reciever_list[i]);
+                    }
+                }
+                MessageEditor.data.manual_reciever_list = result;
+                MessageEditor.renew();
+            });
+            $('input[name="reciever_field"]').on('change',function(){
+                MessageEditor.checkRecieverCorrectness(this.value);
+            });
             $('.add_new_mailing').click(function(e){
-                MessageEditor.messageBatchCreate();
+                MessageList.batch.create();
             });
         },
         load:function(message_id){
@@ -219,9 +348,6 @@ App.mailing_manager=
         render: function(){
             $('#PluginMailingManager_mailnew, #PluginMailingManager_mailview').hide();
             $('#PluginMailingManager_mail' + MessageEditor.action).show();
-            
-            
-            
             function object2array( obj ){
                 var reciever_list_array=[];
                 for(let reciever_list_id in obj){
@@ -232,11 +358,15 @@ App.mailing_manager=
                 return reciever_list_array;
             }
             var reciever_list_array=object2array(MessageEditor.data.reciever_list);
-            
+            var manual_reciever_list = [];
+            if(MessageEditor.data.manual_reciever_list){
+                manual_reciever_list = MessageEditor.data.manual_reciever_list;
+            }
             
             var params = {
                 message: MessageEditor.message, 
                 reciever_list: reciever_list_array,
+                manual_reciever_list: manual_reciever_list,
                 template_list: MessageEditor.data.template_list
             };
             App.renderTpl('PluginMailingManager_mail' + MessageEditor.action, params);
@@ -244,11 +374,18 @@ App.mailing_manager=
             MessageEditor.initControls();
             MessageEditor.action = 'view';
         },
+        renew: function (){
+            if(window.frames['editor_iframe'].tinymce && window.frames['editor_iframe'].tinymce.activeEditor){
+                MessageEditor.current_message_body = window.frames['editor_iframe'].tinymce.activeEditor.getContent();
+            }
+            MessageEditor.action = 'new';
+            MessageEditor.render();
+        },
         renderMessageBody: function(){
             if(MessageEditor.current_template_index !== '-1'){
                 window.frames['editor_iframe'].html = MessageEditor.data.template_list[MessageEditor.current_template_index].html;
             } else {
-                window.frames['editor_iframe'].html = '<p></p>';
+                window.frames['editor_iframe'].html = MessageEditor.current_message_body;
             }
         },
         getSettings:function(){
@@ -257,6 +394,7 @@ App.mailing_manager=
                     var response = JSON.parse(resp);
                     MessageEditor.data.reciever_list = response.settings.reciever_list;
                     MessageEditor.data.template_list = response.settings.template_list;
+                    MessageEditor.data.manual_reciever_list = [];
                 }
             });
         },
@@ -266,42 +404,6 @@ App.mailing_manager=
                     MessageEditor.render();
                 }
             });
-        },
-        messageBatchCreate: function() {
-            var messageBatch={
-                handler:$('select[name=message_handler]').val(),
-                reciever_field:$('input[name=reciever_field]').val(),
-                reciever_list_id:$('select[name=reciever_list_id]').val(),
-                body:window.frames['editor_iframe'].tinymce.activeEditor.getContent(),
-                subject:$('input[name=message_subject]').val()
-            };
-            var validation_error=MessageEditor.messageBatchValidate(messageBatch);
-            if( validation_error ){
-                alert('Ошибка: '+validation_error);
-                return;
-            }
-            console.log(messageBatch);
-            
-            $.post("MailingManager/messageBatchCreate", {message_batch: JSON.stringify(messageBatch)}, function (ok) {
-                if ( ok * 1 ) {
-                    App.flash("Batch created");
-                }
-                MessageList.group.load();
-            });
-        },
-        messageBatchValidate: function(){
-            return null;
-            MessageEditor.mail_error = '';
-            if(!MessageEditor.message.recievers && (!MessageEditor.message.message_reciever_list || MessageEditor.message.message_reciever_list === 'empty')){
-                MessageEditor.mail_error += '\nАдресаты не указаны!';
-            }
-            if(MessageEditor.message.message_subject === ''){
-                MessageEditor.mail_error += '\nУкажите тему!';
-            }
-            if(MessageEditor.message.body === ''){
-                MessageEditor.mail_error += '\nПустое сообщение!';
-            }
-            return;
         },
         addTemplate: function(){
             var content = window.frames['editor_iframe'].tinymce.activeEditor.getContent();
@@ -328,15 +430,48 @@ App.mailing_manager=
             }
             MessageEditor.action = 'new';
             MessageEditor.updateSettings();
+        },
+        checkRecieverCorrectness: function(input){
+            var separators = [' ',';',',','\r\n', '\r','\n','\t'];
+            var reciever_list = input.split(/[ ,\/;\r\n\t]/);
+            reciever_list = reciever_list.filter(function(value, index, self){
+                return self.indexOf(value) === index;
+            });
+            for (var i in reciever_list) {
+                var reciever_contact = reciever_list[i];
+                var contact = MessageEditor.validateContact(reciever_contact);
+                if(!contact){
+                    //alert("You have entered an invalid email address: "+reciever_contact);
+                    continue;
+                } 
+                MessageEditor.data.manual_reciever_list.push(contact);
+            }
+            MessageEditor.renew();
+            $('input[name="reciever_field"]').val("");
+        },
+        validateContact: function (contact) {
+            if(contact === '' || contact === " "){
+                return false;
+            }
+            if (/^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/.test(contact)){
+               return contact;
+            }
+            if (/^\+?[78][-\(]?\d{3}\)?-?\d{3}-?\d{2}-?\d{2}$/.test(contact)){
+                if(contact.substring(0, 1) == 7){
+                    contact = '+'+contact;
+                }
+                return contact;
+            }
+            return false;
         }
+
     };
     init();
     
     return {
         reload_recievers: function(reciever_list){
-            MessageEditor.message.reciever_list = reciever_list;
-            MessageEditor.action = 'new';
-            MessageEditor.render();
+            MessageEditor.data.reciever_list = reciever_list;
+            MessageEditor.renew();
         }
     };
 })();
@@ -347,21 +482,27 @@ App.mailing_manager=
     <div class="PluginMailingManager_list">
         {{.}}
             <div data-id="{{message_id}}" style="display: contents;" class="PluginMailingManager_list_row">
-                <div>{{reciever_field}}</div>
-                <div>{{message_note}}</div>
-                {{if message_status|equals>2}}
                 <div>
-                    <img src="img/ok.png" title="Доставлено" style="margin:2px;">
+                    {{if message_status|equals>done}}
+                        <img src="img/ok.png" title="Доставлено" style="margin:2px;">
+                    {{/if}}
+                    {{if message_status|equals>processing}}
+                        <img src="img/time.png" title="Ожидает доставки" style="margin:2px;">
+                    {{/if}}
+                    {{if message_status|equals>created}}
+                        <img src="img/red.png" title="Не доставлено" style="margin:2px;">
+                    {{/if}}
                 </div>
-                {{else if message_status|equals>1}}
-                <div>
-                    <img src="img/time.png" title="Ожидает доставки" style="margin:2px;">
-                </div>
+                <div>{{message_recievers}}</div>
+                <div>{{message_subject}}</div>
+                
+                {{if message_status|equals>processing}}
+                <div data-action="cancel" data-id="{{message_batch_label}}_{{message_id}}">⏸</div>
                 {{else}}
-                <div>
-                    <img src="img/red.png" title="Не доставлено" style="margin:2px;">
-                </div>
+                <div data-action="send" data-id="{{message_batch_label}}_{{message_id}}">▶</div>
                 {{/if}}
+                        
+                <div data-action="delete" data-id="{{message_batch_label}}_{{message_id}}">❌</div>
             </div>
         {{/.}}
     </div>
@@ -376,8 +517,12 @@ App.mailing_manager=
                 {{.}}
                     <button class="iss_accordion" data-index="{{#}}">
                         {{message_handler}} ({{message_count}}) / {{message_reason}} / {{created_at|date_simplify}}
-                        <b class="delete-mailgroup" data-mailgroup_id="{{#}}" style="cursor: pointer;">❌</b>
-                        <b class="run-mailgroup" data-mailgroup_id="{{#}}" style="cursor: pointer;">▶</b>
+                        <b data-mailgroup_id="{{#}}" data-action="delete" data-id="{{message_batch_label}}_*" style="cursor: pointer;">❌</b>
+                        {{if message_batch_statuses|like>processing.*}}
+                        <b data-mailgroup_id="{{#}}" data-action="cancel" data-id="{{message_batch_label}}_*" style="cursor: pointer;">⏸</b>
+                        {{else}}
+                        <b data-mailgroup_id="{{#}}" data-action="send" data-id="{{message_batch_label}}_*" style="cursor: pointer;">▶</b>
+                        {{/if}}
                     </button>
                     <div class="iss_accordion_panel" data-index="{{#}}"></div>
                 {{/.}}
@@ -398,7 +543,7 @@ App.mailing_manager=
             </div>
             <div class="inp_group info-row">
                     <b>Кому:</b>
-                    <div class="info-column">{{ message.reciever_field }}</div>
+                    <div class="info-column">{{ message.message_recievers }}</div>
             </div>
             <div class="inp_group info-row">
                     <b>Тема:</b>
@@ -407,30 +552,46 @@ App.mailing_manager=
         </div>
         <div class="mail-panel-body">    
             <div class="inp_group message-body-row">
-                    <div class="message-body-column">{{ message.body }}</div>
+                    <div class="message-body-column">{{ message.message_body }}</div>
             </div>
         </div>
     </div>
     <div id="PluginMailingManager_mailnew" class="right-block" style="display: none">
         <div class="mail-panel-header">
             <div class="type-row row">
+                <label>Тип адреса:</label>
                 <select  name="message_handler">
+                      <!--<option value="auto">Авто</option>-->
                       <option value="email">Email</option>
                       <option value="sms">Sms</option>
                 </select>
             </div>
             <div class="reciever-row row">
-                <input type="text" placeholder="Кому" name="reciever_field" value="">
-                <select class="recievers-list"  name="reciever_list_id">
-                   <option value="empty">--Выберите список--</option>
-                    <!--{{reciever_list}}-->
-                   <option value="{{ reciever_list_id }}">{{ reciever_list_name }}</option>
-                     <!--{{/reciever_list}}-->
-                </select>
-                <button class="recievers-list-edit">Редактировать списки</button>
+                <label>Кому:</label>
+                <div class="reciever-row-container">
+                    <div class="recievers-manual-container">
+                        <div class="reciever-list-tags">
+                            <!--{{manual_reciever_list}}-->
+                            <span class="reciever-tag" data-reciever_index="{{ # }}">
+                                {{ . }}
+                                    <b class="delete-manual_reciever" data-reciever_index="{{ # }}" style="cursor: pointer;">×</b>
+                            </span>
+                             <!--{{/manual_reciever_list}}-->
+                        </div>
+                        <input type="text" placeholder="Введите данные получателя..." name="reciever_field" value="">
+                    </div>
+                    <select class="recievers-list"  name="reciever_list_id">
+                       <option value="empty">--Выберите список--</option>
+                        <!--{{reciever_list}}-->
+                       <option value="{{ reciever_list_id }}">{{ reciever_list_name }}</option>
+                         <!--{{/reciever_list}}-->
+                    </select>
+                    <button class="recievers-list-edit">Редактировать списки</button>
+                </div>
             </div>
             <div class="subject-row row">
-                <input type="text" placeholder="Тема" name="message_subject" value="">
+                <label>Тема:</label>
+                <input type="text" placeholder="Введите тему сообщения..." name="message_subject" value="">
             </div>
         </div>
         <div class="mail-panel-body">  
@@ -452,7 +613,7 @@ App.mailing_manager=
                 <select name="template_list" >
                     <option value="-1">--Новый шаблон--</option>
                     <!--{{template_list}}
-                    {{if name}}-->
+                    {{if name}}
                     <option value="{{#}}">{{name}}</option>
                     <!--{{/if}}
                     {{/template_list}}-->
@@ -491,19 +652,29 @@ App.mailing_manager=
     }
     .PluginMailingManager_list{
         display: grid;
-        grid-template-columns: minmax(auto, 270px) minmax(auto, 250px) 50px;
-        grid-row-gap:2px;
+        grid-template-columns: 25px minmax(auto, 270px) minmax(auto, 250px) 25px 25px;
+        grid-row-gap:1px;
         margin-left:10px;
         padding-top: 2px;
         padding-bottom: 2px;
     }
     .PluginMailingManager_list div{
         background-color: #fff6;
-        height: 25px;
         padding: 2px;
         padding-top: 3px;
         text-overflow:elipsis;
     }
+    .PluginMailingManager_list [data-action]{
+        padding: 5px;
+        text-align: center;
+    }
+    .PluginMailingManager_list [data-action]:hover{
+        background-color: #fe9;
+        padding: 4px;
+        border: 1px solid white;
+    }
+    
+    
     .PluginMailingManager_list_row:hover div{
         background-color: #fffd;
         cursor: pointer;
@@ -543,7 +714,14 @@ App.mailing_manager=
     #PluginMailingManager_mailnew .inp_group{
         
     }
-    #PluginMailingManager_mailnew .reciever-row{
+    #PluginMailingManager_mailnew select{
+        border: 1px solid lightgray;
+    }
+    #PluginMailingManager_mailnew  select[name="message_handler"]{
+        display: block;   
+        margin-top: 5px;
+    }
+    #PluginMailingManager_mailnew .reciever-row-container{
         display: grid;
         grid-template-columns: 60% 20% 20%;
     }
@@ -592,9 +770,9 @@ App.mailing_manager=
         border: 1px solid lightgray;
         padding: 0.7em;
         border-radius: 0;
-        margin: 5px 3px;
         cursor: pointer;
         transition: 0.2s ease;
+        margin-bottom: -1px;
     }
     #PluginMailingManager_mailnew .iframe-buttons button:hover{
         background: #4884d5;
@@ -630,7 +808,33 @@ App.mailing_manager=
         width: 100% !important; 
     }
     #PluginMailingManager_mailview .message-body-column{
-        margin: 2em auto;
         padding: 1.5em;
     }
+    #PluginMailingManager_mailnew .reciever-tag{
+        color: #0e2d7c;
+        background: linear-gradient(to bottom,#EFF5FF 0,#E0ECFF 100%);
+        padding: 5px 0px 5px 10px;
+        border: 1px solid #95B8E7;
+        margin: 5px 5px 0;
+        border-radius: 5px;
+        box-sizing: border-box;
+        display: inline-block;
+        line-height: 1em;
+        overflow: hidden;
+    }
+    #PluginMailingManager_mailnew .reciever-tag b{
+        color: #202020;
+        margin-left: 5px;
+        padding: 5px;
+        background: linear-gradient(to bottom,#C9D7F0 0,#BFCBDF 100%);
+        box-sizing: border-box;
+    }
+    #PluginMailingManager_mailnew .reciever-tag b:hover{
+        background: #4884d5;
+        color: white;
+    }
+    .PluginMailingManager_list_row img{
+        max-width: 16px;
+    }
+    
 </style>

@@ -260,6 +260,7 @@ class Utils extends Catalog {
             'protocol' => 'smtp',
             'charset' => 'utf8',
             'smtp_timeout' => 10,
+            'mailtype' => 'html',
             'smtp_host' => $this->Hub->pref('SMTP_SERVER'),
             'smtp_user' => $this->Hub->pref('SMTP_USER'),
             'smtp_pass' => $this->Hub->pref('SMTP_PASS'),
