@@ -113,6 +113,7 @@ class StockAnalog extends Catalog{
                 pl.product_code,
                 ru product_name,
                 se.product_quantity,
+                pl.product_unit,
                 GET_SELL_PRICE(product_code,passive_company_id,doc_ratio) product_price
             FROM
                 plugin_analog_list pal1
