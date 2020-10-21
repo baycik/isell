@@ -542,6 +542,7 @@ class MailingManager extends Catalog {
             'commands' => [[
                 "model" => "MailingManager",
                 "method" => "mailingBegin",
+                "arguments" => "1",
                 "async" => 1,
                 "disabled" => 0
             ]]
