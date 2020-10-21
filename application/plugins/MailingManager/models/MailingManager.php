@@ -531,7 +531,6 @@ class MailingManager extends Catalog {
 
 
     public function mailingCreate(){
-        
         $Events=$this->Hub->load_model('Events');
         if(!empty($Events->eventGet($this->settings['settings']['event_id']))){
             return $Events->eventGet($this->settings['settings']['event_id'])->event_id;
@@ -596,22 +595,17 @@ class MailingManager extends Catalog {
                 $this->messageChangeStatus($message->message_id, 'done', 'processing');
             }
         }
-        return true;
+        return $this->mailingFinish();;
     }
 
 
     public function mailingFinish(){
-        $settings = $this->getAllSettings();
-        foreach($settings as $user_id=>$user_settings){
-            if(isset($settings[$user_id]['event_id'])){
-                $event_id = $user_settings['event_id'];
-                $Events=$this->Hub->load_model('Events');
-                $Events->eventDelete($event_id);
-                $user_settings['event_id'] = '0';
-                $user_settings['event_disable'] = '1';
-                $this->updateSettings($user_settings, $user_id);
-            }
-        }
+        $this->settings = $this->settingsGet();
+        $Events=$this->Hub->load_model('Events');
+        $Events->eventDelete($this->settings['settings']['event_id']);
+        $this->settings['settings']['event_id'] = false;
+        $this->settingsUpdate($this->settings['settings']);
+        return true;
     }
     
     private function mailingGetProcessingMessages(){
