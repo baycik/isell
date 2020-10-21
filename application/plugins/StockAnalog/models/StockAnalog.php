@@ -62,6 +62,10 @@ class StockAnalog extends Catalog{
             WHERE 
                 product_code='$product_code'";
         $product_id2=$this->get_value($product_to_link_sql);
+        return $this->link_by_id( $product_id, $product_id2 );
+    }
+    
+    private function link_by_id( int $product_id,int $product_id2 ){
         if( !$product_id2 ){
             return 'product_not_found';
         }
@@ -150,5 +154,57 @@ class StockAnalog extends Catalog{
         $DocumentItems->entryAdd($CurrentEntry->doc_id, $product_code, $CurrentEntry->product_quantity);
         $DocumentItems->entryDelete( $CurrentEntry->doc_id, $CurrentEntry->doc_entry_id );
         return true;
+    }
+    
+    public function import( string $label, string $product_code1, string $product_code2 ){
+        $sql_list="SELECT 
+                    row_id,
+                    pd1.product_id pid1,
+                    pd2.product_id pid2
+                FROM 
+                    imported_data 
+                        JOIN
+                    prod_list pd1 ON `$product_code1`=pd1.product_code
+                        JOIN
+                    prod_list pd2 ON `$product_code2`=pd2.product_code
+                WHERE 
+                    label LIKE '%$label%'";
+        $imported_count=0;
+        $import_list=$this->get_list($sql_list);
+        foreach($import_list as $linked){
+            $group_id=$this->link_by_id( $linked->pid1, $linked->pid2 );
+            if( $group_id ){
+                $this->query("DELETE FROM imported_data WHERE row_id='$linked->row_id'");
+                $imported_count++;
+            }
+        }
+        return $imported_count;
+    }
+    
+    public function export(){
+        $sql_list="
+            INSERT INTO
+                imported_data (A,B,label)
+            SELECT
+                pl1.product_code,
+                pl2.product_code,
+                'analog'
+            FROM 
+                (SELECT
+                    analog_group_id,
+                    product_id
+                FROM
+                    plugin_analog_list
+                GROUP BY 
+                    analog_group_id) 
+                AS tmp_groups
+                    JOIN
+                plugin_analog_list pal ON tmp_groups.analog_group_id=pal.analog_group_id AND tmp_groups.product_id<>pal.product_id
+                    JOIN
+                prod_list pl1 ON tmp_groups.product_id=pl1.product_id
+                    JOIN
+                prod_list pl2 ON pal.product_id=pl2.product_id";
+        $this->query($sql_list);
+        return $this->db->affected_rows();
     }
 }

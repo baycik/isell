@@ -80,6 +80,43 @@
                         }
                     });
             },
+            tools:{
+                doimport:function(){
+		    var config = [
+			{field: "product_code1", name: "Код товара", required: true},
+			{field: "product_code2", name: "Код аналога", required: true}
+		    ];
+		    App.loadWindow('page/dialog/importer', {label: 'analog', fields_to_import: config}).progress(function (status, fvalue, Importer) {
+			if (status === 'submit') {
+                            App.post("StockAnalog/import/", fvalue, function (ok) {
+                                App.flash("Импортировано " + ok);
+                                Importer.reload();
+                                App.StockAnalog_stock_analog.table.grid.reload();
+                            });
+			}
+		    });
+                },
+                doexport:function(){
+                    $.post("StockAnalog/export/",function(ok){
+                        if(ok){
+                            App.flash("Экспортировано "+ok);
+                            var config = [
+                                {field: "product_code1", name: "Код товара", required: true},
+                                {field: "product_code2", name: "Код аналога", required: true}
+                            ];
+                            App.loadWindow('page/dialog/importer', {label: 'analog', fields_to_import: config}).progress(function (status, fvalue, Importer) {
+                                if (status === 'submit') {
+                                    App.post("StockAnalog/import/", fvalue, function (ok) {
+                                        App.flash("Импортировано " + ok);
+                                        Importer.reload();
+                                        App.StockAnalog_stock_analog.table.grid.reload();
+                                    });
+                                }
+                            });
+                        }
+                    });
+                }
+            },
             frm: {
                 link:function(row, cell, value, columnDef, dataContext){
                     return '<a href="javascript:App.StockAnalog_stock_analog.link('+dataContext.product_id+')">➕</a>';
@@ -94,11 +131,10 @@
         }
     };
 </script>
-<div style="width:1000px;margin: auto;">
+<div style="width:970px;margin: auto;">
     <div class="x-stockanalog-tools" style="text-align: right;">
-        <span data-action="entryEdit" class="icon-24 icon-change" title="Изменить"> </span>
-        <span data-action="entryCreate" class="icon-24 icon-create" title="Добавить"> </span>
-        <span data-action="entryDelete" class="icon-24 icon-delete" title="Удалить"> </span>
+        <span data-action="doexport" class="icon-24 icon-export" title="Экспортировать"> </span>
+        <span data-action="doimport" class="icon-24 icon-import" title="Импортировать"> </span>
         <span class="icon-24 icon-refresh" title="Обновить" onclick="App.StockAnalog_stock_analog.table.grid.reload()"></span>
     </div>
     <div style="height: 600px;" id="analog_list_sg"></div>
