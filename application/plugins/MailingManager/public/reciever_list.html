@@ -134,6 +134,9 @@
                 });
             },
             updateList: function (field, value, title) {
+                if(!App.MailingManager_reciever_list.data.settings.reciever_list[App.MailingManager_reciever_list.current_reciever_list_index]){
+                    App.MailingManager_reciever_list.create();
+                }
                 App.MailingManager_reciever_list.data.settings.reciever_list[App.MailingManager_reciever_list.current_reciever_list_index][field] = value;
                 return;
             }
@@ -177,7 +180,7 @@
         <div class="reciever-list-item" data-reciever_list_id="{{reciever_list_id}}">{{ reciever_list_name }} <b class="delete-reciver-list" data-reciever_list_id="{{reciever_list_id}}" style="cursor: pointer;">❌</b></div>
         <!--{{/reciever_list}}-->
     </div>
-    <div id="PluginMailing_recievers_details" class="" title="Подробности" >
+    <div id="PluginMailing_recievers_details" class="" title="Подробности">
         <input type="text" title="Название" name="reciever_list_name" style="width:562px">
         <div style="display: grid;grid-template-columns:  auto">
             <div class="x-client_filter" style="display: grid;grid-template-columns:  auto auto">
@@ -205,12 +208,6 @@
             <div id="PluginMailing_recievers_sg" style="height: 300px;"></div>
         </div>
     </div>
-</div>
-<div id="PluginMailing_recievers_blacklist" >
-    <label>
-        <b>Черный список</b>
-        <input type="text" title="Исключить" name="reciever_blacklist" value="{{reciever_blacklist}}">
-    </label>
 </div>
 <style>
     .reciever-list-item{
