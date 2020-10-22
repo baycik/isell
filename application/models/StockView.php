@@ -1,11 +1,10 @@
 <?php
 require_once 'Stock.php';
 class StockView extends Stock{
-    public $stockViewGet=['parent_id'=>'int','sortby'=>'string','sortdir'=>'(ASC|DESC)','filter'=>'json','mode'=>'string','out_type'=>'string'];
-    public function stockViewGet($parent_id,$sortby,$sortdir,$filter=null,$mode="simple",$out_type){
+    public function stockViewGet( int $parent_id, string $sortby=null, string $sortdir=null, array $filter=null, string $mode="simple", string $out_type){
 	$this->Hub->set_level(2);
         $blank_set=$this->Hub->pref('blank_set');
-	$table=$this->listFetch($parent_id,0,10000,$sortby,$sortdir,$filter=null,$mode);
+	$table=$this->listFetch($parent_id,0,10000,$sortby,$sortdir,$filter,$mode);
 	foreach ($table as $row) {
             $row->product_quantity==0?$row->product_quantity='':'';
         }

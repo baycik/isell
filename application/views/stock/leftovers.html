@@ -286,6 +286,7 @@
 		out: function (out_type) {
 		    var params = Leftovers.table.currentParamsGet();
 		    params.out_type=(out_type || '.xlsx');
+                    params.filter=JSON.stringify(params.filter);
 		    var url = 'StockView/stockViewGet/?' + $.param(params);
 		    if (out_type === '.print') {
 			window.open(url, 'print_tab');
