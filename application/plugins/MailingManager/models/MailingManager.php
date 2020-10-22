@@ -353,7 +353,6 @@ class MailingManager extends Catalog {
             WHERE
                 $where
             GROUP BY message_batch_label
-            ORDER BY group_created_at DESC
             ";
         return $this->get_list($msg_list_msg);
     }
