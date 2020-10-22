@@ -136,9 +136,8 @@ class Stock extends Catalog {
         return $lvl1 . ($mode == "advanced" ? $lvl2 . $adv : $lvl2);
     }
 
-    public $listFetch = ['parent_id' => 'int', 'offset' => ['int', 0], 'limit' => ['int', 0], 'sortby' => 'string', 'sortdir' => '(ASC|DESC)', 'filter' => 'json', 'mode' => 'string'];
 
-    public function listFetch($parent_id, $offset, $limit, $sortby, $sortdir, $filter = null, $mode = "simple") {
+    public function listFetch( int $parent_id=0, int $offset=0, int $limit=0, string $sortby=null, string $sortdir=null, array $filter = null, string $mode = "simple") {
         if (empty($sortby)) {
             $sortby = "se.parent_id,se.product_code";
             $sortdir = "ASC";

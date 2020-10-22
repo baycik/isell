@@ -142,9 +142,11 @@ class Hub extends CI_Controller{
                 break;
 	    case 'json':
 	    case 'array':
+                $var= stripslashes(trim($var, "\""));
                 $var= json_decode( $var,true );
                 break;
             case 'object':
+                $var= stripslashes(trim($var, "\""));
                 $var= json_decode( $var,false );
                 break;
 	    default:
