@@ -344,7 +344,7 @@ class MailingManager extends Catalog {
                 message_batch_label,
                 message_handler,
                 message_reason,
-                SUBSTRING(created_at, 1, 13) group_created_at,
+                created_at group_created_at,
                 created_at,
                 COUNT(*) message_count,
                 GROUP_CONCAT(DISTINCT message_status) AS message_batch_statuses
@@ -352,8 +352,8 @@ class MailingManager extends Catalog {
                 plugin_message_list
             WHERE
                 $where
-            GROUP BY
-                CONCAT(message_handler,message_batch_label,SUBSTRING(created_at, 1, 13))
+            GROUP BY message_batch_label
+            ORDER BY group_created_at DESC
             ";
         return $this->get_list($msg_list_msg);
     }
