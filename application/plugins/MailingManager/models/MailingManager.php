@@ -354,6 +354,7 @@ class MailingManager extends Catalog {
                 $where
             GROUP BY
                 CONCAT(message_handler,message_batch_label,SUBSTRING(created_at, 1, 13))
+            ORDER BY created_at,message_handler
             ";
         return $this->get_list($msg_list_msg);
     }
