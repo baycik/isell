@@ -128,6 +128,19 @@ $after[]=<<<EOT
                 }
 EOT;
 
+$filename[]=<<<EOT
+plugins/MobiSell/views/document.html
+EOT;
+$search[]=<<<EOT
+{{##}}) {{product_name}}
+EOT;
+$replace[]=<<<EOT
+<span>{{##}}) {{product_name}}</span>
+EOT;
+$before[]=<<<EOT
+EOT;
+$after[]=<<<EOT
+EOT;
 
 
 
