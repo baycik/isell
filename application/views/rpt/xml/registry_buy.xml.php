@@ -16,7 +16,7 @@
                                 <?php if($item->party_labels){ ?>
                                     <?php foreach(explode(',', $item->party_labels) as $party_label){ ?>
                                         <?php if(!empty($party_label)){ ?>
-                                    <РегНомТД><?php echo $party_label; ?></РегНомТД>
+                                    <РегНомТД><?php echo trim(preg_replace('/[\t|\s{2,}]/', '', $party_label)); ?></РегНомТД>
                                     <?php }} ?>  
                                 <?php } ?>   
 			</КнПокСтр>
