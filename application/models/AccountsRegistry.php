@@ -176,6 +176,7 @@ class AccountsRegistry extends AccountsCore{
         } else {
             $data = $this->registryFetch($period, '',$type);
         }
+        $data['correction_num'] = $fields->correction_num;
 	$blank = "./application/views/rpt/xml/registry_$type.xml.php";
         $handled_period = $this->handleQuarter($period);
         $acomp_info = $this->Hub->svar('acomp');
