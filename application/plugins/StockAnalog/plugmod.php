@@ -164,9 +164,9 @@ $before[]=<<<EOT
                 <thead>
                     <tr>
                         <th></th>
-                        <th>Код/Название</th>
                         <th>Остаток</th>
                         <th>Цена</th>
+                        <th>Код/Название</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -177,9 +177,9 @@ $before[]=<<<EOT
                                 <img src="../Storage/image_flush/?size=50x50&path=/dynImg/{{product_img}}">
                             {{/if}}
                         </td>
-                        <td>{{product_code}} {{product_name}}</td>
                         <td>{{product_quantity}}{{product_unit}}</td>
                         <td>{{product_price}}</td>
+                        <td>{{product_code}} {{product_name}}</td>
                     </tr>
                     <!--{{/.}}-->
                 </tbody>
