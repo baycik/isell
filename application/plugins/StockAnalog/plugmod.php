@@ -158,32 +158,45 @@ $before[]=<<<EOT
 
 <div class="ui modal" id="document_entry_analog_dialog">
     <div class="header">Замена на аналог</div>
-    <div class="content" style="height: 300px;overflow: auto;">
+    <div class="content" style="height: 500px;overflow: auto;">
         <div id="document_entry_analog_dialog_list">
-            <table class="ui selectable celled table">
+            <table class="ui selectable  table  stackable orange">
                 <thead>
                     <tr>
-                        <th></th>
-                        <th>Остаток</th>
-                        <th>Цена</th>
-                        <th>Код/Название</th>
+                        <th>
+                            Код/Название
+                        </th>
+                        <th>
+                            <div class="ui grid">
+                                <div class="five wide column">Остаток</div>
+                                <div class="five wide column">Цена</div>
+                                <div class="six wide column"></div>
+                            </div>
+                        </th>
                     </tr>
                 </thead>
                 <tbody>
                     <!--{{.}}-->
                     <tr onclick="App.document.row.swap( this )" data-product_id="{{product_id}}">
                         <td>
-                            {{if product_img}}
-                                <img src="../Storage/image_flush/?size=50x50&path=/dynImg/{{product_img}}">
-                            {{/if}}
+                            <b>{{product_code}}</b> {{product_name}}
                         </td>
-                        <td>{{product_quantity}}{{product_unit}}</td>
-                        <td>{{product_price}}</td>
-                        <td>{{product_code}} {{product_name}}</td>
+                        <td>
+                            <div class="ui grid">
+                                <div class="five wide column">{{product_quantity}}{{product_unit}}</div>
+                                <div class="five wide column">{{product_price}}</div>
+                                <div class="six wide column">
+                                    {{if product_img}}
+                                        <img src="../Storage/image_flush/?size=50x50&path=/dynImg/{{product_img}}">
+                                    {{/if}}
+                                </div>
+                            </div>
+                        </td>
                     </tr>
-                    <!--{{/.}}-->
+                    <!-- {{/.}}-->
                 </tbody>
             </table>
+            <div class="ui grey close fluid button" onclick="$('#document_entry_analog_dialog').modal('hide');"><i class="icon close"></i> Отмена</div>
         </div>
     </div>
 </div>
