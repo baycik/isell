@@ -50,10 +50,13 @@
                 var settings = {
 			columns:  [
                             {id: "analog_group_tag", field: "analog_group_tag",sortable: true, name: "Группа",  width: 70,formatter:App.StockAnalog_stock_analog.table.frm.color},
-                            {id: "product_code", field: "product_code",sortable: true, name: "Код",  width: 150},
+                            {id: "label", field: "label",sortable: true, name: "Категория",  width: 100},
+                            {id: "product_code", field: "product_code",sortable: true, name: "Код",  width: 120},
                             {id: "product_name", field: "product_name",sortable: true, name: "Название",  width: 600},
+                            {id: "product_price", field: "product_price",sortable: true, name: "Цена", cssClass: 'slick-align-right',  width: 50,formatter:App.StockAnalog_stock_analog.table.frm.diff},
+                            {id: "diff", field: "diff",sortable: true, name: "Разница", cssClass: 'slick-align-right',  width: 30},
                             {id: "action_link", field: "action_link",sortable: true, name: "Привязать", cssClass: 'slick-align-center',  width: 70,formatter:App.StockAnalog_stock_analog.table.frm.link},
-                            {id: "action_unlink", field: "action_unlink", name: "Отвязать", cssClass: 'slick-align-center',  width: 70,formatter:App.StockAnalog_stock_analog.table.frm.unlink}
+                            {id: "action_unlink", field: "action_unlink", name: "Отвязать", cssClass: 'slick-align-center',  width: 50,formatter:App.StockAnalog_stock_analog.table.frm.unlink}
                         ],
 			options: {
 			    editable: false,
@@ -72,7 +75,15 @@
                             stockanalog_id=row_data.stockanalog_id;
                         }
 		    });
-                    
+                    App.StockAnalog_stock_analog.table.grid.onDblClick.subscribe(function (e, data) {
+			var focus='';
+			try{
+			    focus=App.StockAnalog_stock_analog.table.grid.getColumns()[data.cell].field;
+			} catch(e){
+			    
+			}
+			App.StockAnalog_stock_analog.table.tools.entryEdit(focus);
+		    });
                     $(".x-stockanalog-tools").click(function (e) {
                         var action = $(e.target).data('action');
                         if (action) {
@@ -115,8 +126,48 @@
                             });
                         }
                     });
+                },
+                entryEdit: function (focus) {
+                    var selected_rows = App.StockAnalog_stock_analog.table.grid.getSelectedRows();
+                    if (!selected_rows.length) {
+                        App.flash("Ни одна строка не выбрана!");
+                        return;
+                    }
+                    var row_data=App.StockAnalog_stock_analog.table.grid.getDataItem(selected_rows[0]);
+                    if( row_data ){
+                        row_data.focus=focus;
+                        App.StockAnalog_stock_analog.table.showProductCard(row_data);
+                    }
                 }
             },
+            showProductCard: function (fvalue) {
+		if (App.user.props.user_level < 2) {
+		    alert("Доступ ограничен");
+		    return;
+		}
+		fvalue.enablePrevnext = true;
+		App.loadWindow('page/stock/product_card', fvalue).progress(function (status, fvalue) {
+		    if (status === 'save') {
+			App.StockAnalog_stock_analog.table.grid.reload();
+		    }
+		    if (status === 'prev') {
+			App.StockAnalog_stock_analog.table.prev();
+		    }
+		    if (status === 'next') {
+			App.StockAnalog_stock_analog.table.next();
+		    }
+		});
+	    },
+            prev:function(){
+		if( App.StockAnalog_stock_analog.table.grid.navigateUp() ){
+		    App.StockAnalog_stock_analog.table.tools.entryEdit();
+		}
+	    },
+	    next:function(){
+		if( App.StockAnalog_stock_analog.table.grid.navigateDown() ){
+		    App.StockAnalog_stock_analog.table.tools.entryEdit();
+		}
+	    },
             frm: {
                 link:function(row, cell, value, columnDef, dataContext){
                     return '<a href="javascript:App.StockAnalog_stock_analog.link('+dataContext.product_id+')">➕</a>';
@@ -126,12 +177,19 @@
                 },
                 color:function(row, cell, value, columnDef, dataContext){
                     return `<div style="background-color:#${value};height:23px;cursor:pointer" onclick="App.StockAnalog_stock_analog.showgroup('${value}')"></div>`;
+                },
+                diff:function(row, cell, value, columnDef, dataContext){
+                    var color='';
+                    if( dataContext.diff>0 ){
+                        color="#ff06";
+                    }
+                    return `<div style="background-color:${color};border-radius:5px">${value}</div>`;
                 }
             }
         }
     };
 </script>
-<div style="width:970px;margin: auto;">
+<div style="width:1100px;margin: auto;">
     <div class="x-stockanalog-tools" style="text-align: right;">
         <span data-action="doexport" class="icon-24 icon-export" title="Экспортировать"> </span>
         <span data-action="doimport" class="icon-24 icon-import" title="Импортировать"> </span>

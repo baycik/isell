@@ -26,29 +26,39 @@ class StockAnalog extends Catalog{
     
     public function listFetch( int $offset, int $limit, string $sortby=null, string $sortdir=null, array $filter = null){
         $this->Hub->set_level(3);
-        if ( empty($sortby) ) {
-	    $sortby = "product_code";
-	    $sortdir = "ASC";
-	}
         $having = '';
         if( $filter ){
            $having = "HAVING ".$this->makeFilter($filter); 
-        };
+        }
+        $this->query("SET @minprice:=0, @currentid:=0, @difflimit:=1.15");
 	$sql ="
-            SELECT 
-                SUBSTRING(MD5(analog_group_id),1,6) analog_group_tag,
-                pl.product_id,
-                pl.product_code,
-                ru product_name
-            FROM 
-                stock_entries se
+            SELECT
+                *,
+                IF(@currentid<>analog_group_id,(@currentid:=analog_group_id)*0+(@minprice:=product_price)*0,product_price/@minprice>@difflimit) diff
+            FROM
+                (SELECT 
+                    st.label,
+                    analog_group_id,
+                    SUBSTRING(MD5(analog_group_id),1,6) analog_group_tag,
+                    pl.product_id,
+                    pl.product_code,
+                    ru product_name,
+                    sell,
+                    ROUND(sell) product_price
+                FROM 
+                    stock_entries se
                         JOIN
-                prod_list pl USING(product_code)
+                    stock_tree st ON se.parent_id=st.branch_id
+                        JOIN
+                    prod_list pl USING(product_code)
                         LEFT JOIN
-                plugin_analog_list USING(product_id)
-            $having
-            ORDER BY analog_group_id DESC,$sortby $sortdir
-            LIMIT $limit OFFSET $offset
+                    price_list pp ON pp.product_code=se.product_code AND LENGTH(pp.label)<1
+                        LEFT JOIN
+                    plugin_analog_list USING(product_id)
+                ORDER BY analog_group_id DESC,sell
+                LIMIT $limit OFFSET $offset
+                ) t
+                $having
             ";
 	return $this->get_list($sql);
     }
