@@ -44,7 +44,8 @@ class StockAnalog extends Catalog{
                     pl.product_code,
                     ru product_name,
                     sell,
-                    ROUND(sell) product_price
+                    ROUND(sell) product_price,
+                    se.product_quantity
                 FROM 
                     stock_entries se
                         JOIN
