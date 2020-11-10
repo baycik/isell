@@ -380,10 +380,11 @@ abstract class DocumentBase extends Catalog{
     }
     public function entryListDelete( int $doc_id, array $doc_entry_ids ) {
         $this->documentSelect($doc_id);
+        $ok=true;
         foreach( $doc_entry_ids as $doc_entry_id ){
-            $this->entryDelete( $doc_id, $doc_entry_id );
+            $ok=$ok&&$this->entryDelete( $doc_id, $doc_entry_id );
         }
-        return true;
+        return $ok;
     }
     //////////////////////////////////////////
     // FOOTER SECTION

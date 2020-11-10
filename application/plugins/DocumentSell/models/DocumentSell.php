@@ -178,7 +178,7 @@ class DocumentSell extends DocumentBase{
      * @param array $entry_id_list
      */
     public function entryListDelete(int $doc_id, array $doc_entry_ids) {
-        parent::entryListDelete( $doc_id, $doc_entry_ids );
+        return parent::entryListDelete( $doc_id, $doc_entry_ids );
     }
     /**
      * Bulk commit/uncommit entries
@@ -232,7 +232,7 @@ class DocumentSell extends DocumentBase{
         $this->documentSelect($doc_id);
         $pcomp_id=$this->doc('passive_company_id');
         $usd_ratio=$this->doc('doc_ratio');
-        $new_entry_data->entry_price=$this->get_value("SELECT GET_SELL_PRICE({$new_entry_data->product_code},{$pcomp_id},{$usd_ratio})")??0;
+        $new_entry_data->entry_price=$this->get_value("SELECT GET_SELL_PRICE('{$new_entry_data->product_code}',{$pcomp_id},{$usd_ratio})")??0;
         return parent::entryCreate($doc_id, $new_entry_data);
     }
     
@@ -367,8 +367,53 @@ class DocumentSell extends DocumentBase{
     }
     
     
+    ////////////////////////////////////////////////////////
+    //TRANS 
+    ////////////////////////////////////////////////////////
     
     
+    
+    private function transCreate(){
+        $doc_id=$this->doc('doc_id');
+        $foot=$this->footGet($this->doc_id);
+        $Trans=$this->Hub->load_model("AccountsCore");
+        foreach( $this->document_transaction_scheme as $trans_tpl ){
+            if( $foot->{$trans_tpl['role']} ){
+                
+            }
+        }
+    }
+    
+    
+    
+    
+    protected $document_transaction_scheme=[
+        [
+            'role'=>'total',
+            'comment'=>'',
+            'debit'=>'',
+            'credit'=>''
+        ],
+        [
+            'role'=>'vatless',
+            'comment'=>'',
+            'debit'=>'',
+            'credit'=>''
+        ],
+        [
+            'role'=>'vat',
+            'comment'=>'',
+            'debit'=>'',
+            'credit'=>''
+        ],
+        [
+            'role'=>'profit',
+            'comment'=>'',
+            'debit'=>'',
+            'credit'=>''
+        ],
+        
+    ];
     
     
     
