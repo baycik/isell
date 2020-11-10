@@ -1,6 +1,6 @@
 <?php
 class DocumentItems extends DocumentCore{
-    public function suggestFetch( string $q, int $offset=0,int $limit=10, int $doc_id=0, int $category_id=0 ){
+    public function suggestFetch( string $q='', int $offset=0,int $limit=10, int $doc_id=0, int $category_id=0 ){
         session_write_close();
         $matches=$this->suggestResultFetch($q, $offset, $limit, $doc_id, $category_id);
         if( !$matches ){
@@ -53,6 +53,7 @@ class DocumentItems extends DocumentCore{
                 SELECT
                     product_id,
                     pl.product_code,
+                    pl.analyse_class,
                     ru product_name,
                     product_spack,
                     product_quantity leftover,
