@@ -42,7 +42,6 @@ class StockAnalog extends Catalog{
                     SUBSTRING(MD5(analog_group_id),1,6) analog_group_tag,
                     pl.product_id,
                     pl.product_code,
-                    pl.analyse_class,
                     ru product_name,
                     sell,
                     ROUND(sell) product_price,
@@ -130,6 +129,7 @@ class StockAnalog extends Catalog{
                 ru product_name,
                 se.product_quantity,
                 pl.product_unit,
+                pl.analyse_class,
                 GET_SELL_PRICE(product_code,passive_company_id,doc_ratio) product_price
             FROM
                 plugin_analog_list pal1
