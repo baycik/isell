@@ -58,7 +58,10 @@
                                 <img src="Storage/image_flush/?size=50x50&path=/dynImg/{{product_img}}">
                             {{/if}}
                         </td>
-                        <td>{{product_code}} {{product_name}}</td>
+                        <td>{{product_code}} {{product_name}}                                        
+                            {{if analyse_class|equals>C}}
+                            <i class="icon star"></i>
+                            {{/if}}</td>
                         <td>{{product_quantity}}</td>
                         <td>{{product_price}}</td>
                     </tr>

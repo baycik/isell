@@ -179,7 +179,10 @@ $before[]=<<<EOT
                     <!--{{.}}-->
                     <tr onclick="App.document.row.swap( this )" data-product_id="{{product_id}}">
                         <td>
-                            <b>{{product_code}}</b> {{product_name}}
+                            <b>{{product_code}}</b> {{product_name}} 
+                            {{if analyse_class|equals>C}}
+                            <i class="icon star"></i>
+                            {{/if}}
                         </td>
                         <td>
                             <div class="ui grid">
