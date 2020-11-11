@@ -1,6 +1,5 @@
 <?php
 
-
 $filename[]=<<<EOT
 plugins/MobiSell/views/document.html
 EOT;
@@ -21,7 +20,6 @@ $after[]=<<<'EOT'
         }
     });
 EOT;
-
 
 $filename[]=<<<EOT
 plugins/MobiSell/views/document.html
