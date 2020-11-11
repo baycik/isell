@@ -142,7 +142,7 @@ class StockAnalog extends Catalog{
                 stock_entries se USING(product_code)
                     JOIN
                 (SELECT 
-                    product_id,doc_ratio,passive_company_id,product_quantity
+                    product_id,doc_ratio,passive_company_id,product_quantity,doc_type
                 FROM
                     document_entries
                         JOIN
@@ -153,7 +153,7 @@ class StockAnalog extends Catalog{
                     doc_entry_id='$doc_entry_id') de ON de.product_id=pal1.product_id
             WHERE
                 pal1.product_id<>pl.product_id
-                AND se.product_quantity>=de.product_quantity
+                AND IF(doc_type=1,se.product_quantity>=de.product_quantity,1)
             ";
         return $this->get_list($sql);
     }
