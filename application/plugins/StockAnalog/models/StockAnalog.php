@@ -56,10 +56,11 @@ class StockAnalog extends Catalog{
                     price_list pp ON pp.product_code=se.product_code AND LENGTH(pp.label)<1
                         LEFT JOIN
                     plugin_analog_list USING(product_id)
+                $having
                 ORDER BY analog_group_id DESC,sell
                 LIMIT $limit OFFSET $offset
                 ) t
-                $having
+                
             ";
 	return $this->get_list($sql);
     }
