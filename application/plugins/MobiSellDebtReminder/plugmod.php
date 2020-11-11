@@ -34,6 +34,7 @@ EOT;
 $before[]=<<<EOT
     <div id="debt_stats" class="covert">
         <div class="ui warning message">
+        {{label}}<br>
         {{if expired_debt|more>0}}
         Просроченный долг: <b style="color:red">{{expired_debt}}</b> (Просрочено на {{m}}мес {{d}}дн) <br>
         {{/if}}
