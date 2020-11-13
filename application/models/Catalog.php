@@ -343,7 +343,16 @@ class Catalog extends CI_Model {
         }
         $having = [];
         foreach ($filter as $rule) {
-            $having[] = "$rule->field LIKE '%$rule->value%'";
+            $or_case=[];
+            $words=explode(' ',$rule->value);
+            foreach($words as $word){
+                if($word[0]=='!'){
+                    $having[] = "$rule->field NOT LIKE '%".substr($word,1)."%'";
+                } else {
+                    $or_case[]="$rule->field LIKE '%$word%'";
+                }
+            }
+            $having[] = '('.implode(" OR ",$or_case).')';
         }
         return implode(' AND ', $having);
     }
@@ -353,11 +362,25 @@ class Catalog extends CI_Model {
             return 1;
         }
         $having = [];
+//        foreach ($filter as $field => $value) {
+//            if (strpos($value, '|') === false) {
+//                $having[] = "$field LIKE '%$value%'";
+//            } else {
+//                $having[] = "($field = '" . str_replace('|', "' OR $field = '", $value) . "')";
+//            }
+//        }
         foreach ($filter as $field => $value) {
-            if (strpos($value, '|') === false) {
-                $having[] = "$field LIKE '%$value%'";
-            } else {
-                $having[] = "($field = '" . str_replace('|', "' OR $field = '", $value) . "')";
+            $or_case=[];
+            $words=explode(' ',$value);
+            foreach($words as $word){
+                if($word[0]=='!'){
+                    $having[] = "$field NOT LIKE '%".substr($word,1)."%'";
+                } else {
+                    $or_case[]="$field LIKE '%$word%'";
+                }
+            }
+            if( $or_case ){
+                $having[] = '('.implode(" OR ",$or_case).')';
             }
         }
         return implode(' AND ', $having);
