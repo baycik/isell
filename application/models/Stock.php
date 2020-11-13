@@ -961,6 +961,8 @@ class Stock extends Catalog {
             se.product_img,
             se.fetch_count,
             se.fetch_stamp,
+            se.product_awaiting,
+            se.product_reserved,
             CONCAT( 
                 product_quantity<>0,
                 IF( prl_promo.product_code IS NOT NULL AND (@promo_limit:=@promo_limit-1)>=0,1,0),
@@ -1024,7 +1026,7 @@ class Stock extends Catalog {
     }
     
     private function matchesListCalibrate(){
-        if( rand(1,100)!=1 ){
+        if( rand(1,1000)!=1 ){
             return;
         }
         $this->query("
