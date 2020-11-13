@@ -370,17 +370,17 @@ class Catalog extends CI_Model {
 //            }
 //        }
         foreach ($filter as $field => $value) {
-            $or_case=[];
             $words=explode(' ',$value);
             foreach($words as $word){
                 if($word[0]=='!'){
                     $having[] = "$field NOT LIKE '%".substr($word,1)."%'";
                 } else {
-                    $having[]="$field LIKE '%$word%'";
+                    if (strpos($word, '|') === false) {
+                        $having[] = "$field LIKE '%$word%'";
+                    } else {
+                        $having[] = "($field LIKE '%" . str_replace('|', "%' OR $field LIKE '%", $word) . "%')";
+                    }
                 }
-            }
-            if( $or_case ){
-                $having[] = '('.implode(" AND ",$or_case).')';
             }
         }
         return implode(' AND ', $having);
