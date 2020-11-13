@@ -170,7 +170,7 @@ $before[]=<<<EOT
                     delivery_list=`\${delivery_list} \${leftovers[i]}(\${deliveries[i]}дн)<br>`;
                 }
             }
-            item.delivery_list=`<span style="color:blue">\${delivery_list}</span>`;;
+            item.delivery_list=`<span style="color:#999">\${delivery_list}</span>`;;
         }
     }
 EOT;
