@@ -376,11 +376,11 @@ class Catalog extends CI_Model {
                 if($word[0]=='!'){
                     $having[] = "$field NOT LIKE '%".substr($word,1)."%'";
                 } else {
-                    $or_case[]="$field LIKE '%$word%'";
+                    $having[]="$field LIKE '%$word%'";
                 }
             }
             if( $or_case ){
-                $having[] = '('.implode(" OR ",$or_case).')';
+                $having[] = '('.implode(" AND ",$or_case).')';
             }
         }
         return implode(' AND ', $having);
