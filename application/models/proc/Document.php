@@ -174,11 +174,11 @@ class Document extends Data {
 	$off_limit = $footer['total'] + $debt_account['balance'] - $debt_limit;
 	if( $debt_limit>0 && $off_limit > 0 ){
 	    $this->Base->msg("Лимит долга в $debt_limit превышен на " . round($off_limit, 2) . "{$footer['curr_symbol']}!\n");
-	    return true;
+	    return false;
 	}
         if( $deferment>0 && $debt_account['expired_balance']>0 ){
 	    $this->Base->msg("Имеется просроченная задолженность " . round($debt_account['expired_balance'], 2) . "{$footer['curr_symbol']}!\n");
-	    return true;
+	    return false;
         }
 	return false;
     }
