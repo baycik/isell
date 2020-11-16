@@ -57,6 +57,11 @@ EOT;
 $replace[]=<<<EOT
 EOT;
 $before[]=<<<EOT
+                        if ( status.indexOf('err_analog')>-1 ) {
+			    App.document.doc.entries[i].status_icon = "undo";
+			    App.document.doc.entries[i].status_color = "red";
+			    App.document.doc.entries[i].status_message = 'Есть аналог; '+(message.split(';')[1]||'');
+			} else 
                         if ( status.indexOf('ok_analog')>-1 ) {
 			    App.document.doc.entries[i].status_icon = "undo";
 			    App.document.doc.entries[i].status_color = "green";
