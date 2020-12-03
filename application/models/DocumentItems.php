@@ -315,11 +315,11 @@ class DocumentItems extends DocumentCore{
 	$discounts_json=json_encode($discount_obj, JSON_NUMERIC_CHECK);
 	$this->documentSettingSet( '$.discounts', $discounts_json );
     }
-    private function documentSettingSet( $key, $value ){
+    protected function documentSettingSet( $key, $value ){
 	$doc_id=$this->doc('doc_id');
 	$this->query("UPDATE document_list SET doc_settings=JSON_SET(COALESCE(doc_settings,JSON_OBJECT()),'$key',CAST('$value' AS JSON)) WHERE doc_id='$doc_id'");	
     }
-    private function documentSettingGet($key){
+    protected function documentSettingGet($key){
 	$doc_id=$this->doc('doc_id');
 	return $this->get_value("SELECT JSON_EXTRACT(doc_settings,'$key') FROM document_list WHERE doc_id='$doc_id'");	
     }

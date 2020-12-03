@@ -459,10 +459,43 @@ class Utils extends Catalog {
         }
         $this->selfPriceCreateTable($active_filter);
         $this->selfPriceCorrectEntries();
+        $this->selfPriceCalculateExtraExpenses($idate, $fdate, $active_filter);
         $this->selfPriceStockAssign();
         $this->selfPriceOldApiRecalculate($idate, $fdate, $active_filter);
     }
-
+    
+    private function selfPriceCalculateExtraExpenses($idate, $fdate, $active_filter){
+        echo $sql="SELECT 
+                doc_id,
+                JSON_EXTRACT(doc_settings,'$.extra_expenses') extra_expenses,
+                SUM(self_price*product_quantity) self_sum
+            FROM 
+                document_list 
+                    JOIN
+                document_entries USING(doc_id)
+            WHERE 
+                JSON_CONTAINS_PATH(doc_settings,'one','$.extra_expenses')
+                AND '$idate'<=cstamp 
+                AND cstamp<='$fdate' 
+                $active_filter
+            GROUP BY doc_id
+            HAVING extra_expenses>0 AND self_sum>0
+                ";
+        $document_list=$this->get_list($sql);
+        foreach($document_list as $doc){
+            $expense_ratio= $doc->extra_expenses / $doc->self_sum + 1;
+            echo $sql_update="
+                UPDATE
+                    document_entries
+                SET
+                    self_price=self_price*$expense_ratio
+                WHERE
+                    doc_id='$doc->doc_id'";
+            $this->query($sql_update);
+        }
+    }
+    
+    
     private function selfPriceStockAssign() {
         $sql_vars = "SET @current_product_code:='';";
         $sql_tbl_drop = "DROP TEMPORARY TABLE IF  EXISTS tmp_stock_self;";
