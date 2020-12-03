@@ -12,7 +12,12 @@ class AccountsCore extends Catalog{
     //////////////////////////////////////////////
     // TRANS UTILS SECTION
     //////////////////////////////////////////////
-    private function transLevelCheck( $trans_type ){
+    private function transLevelCheck( $trans_type=null, $acc_debit_code=null, $acc_credit_code=null ){
+        if( $acc_debit_code==null || $acc_credit_code==null ){
+            $acc_codes=  explode('_',$trans_type);
+            $acc_debit_code=$acc_codes[0];
+            $acc_credit_code=$acc_codes[1];
+        }
 	$user_level=$this->Hub->svar('user_level');
 	if( $user_level>=3 ){
 	    return true;
@@ -22,7 +27,8 @@ class AccountsCore extends Catalog{
             FROM 
                 acc_trans_names 
             WHERE 
-                CONCAT(acc_debit_code,'_',acc_credit_code)='$trans_type' 
+                acc_debit_code='$acc_debit_code'
+                AND acc_credit_code=$acc_credit_code;
                 AND user_level<='$user_level'";
 	return $this->get_value($sql);
     }
@@ -37,75 +43,64 @@ class AccountsCore extends Catalog{
     }
     
     public function transCreate( array $trans_data ){
-        
-        
-        
-        
-        
-        
-	if( !$this->transLevelCheck($trans_type) ){
-	    $this->Hub->msg('access denied');
-	    return false;
+        $this->Hub->set_level(2);
+        if( !$this->transLevelCheck(null,$trans_data['acc_debit_code'],$trans_data['acc_credit_code']) ){
+	    throw new Exception("Access denied for creation of this transaction: {$trans_data['acc_debit_code']}_{$trans_data['acc_credit_code']}",403);
 	}
-	$user_id=$this->Hub->svar('user_id');
-	$acc_codes=  explode('_',$trans_type);
-	$trans_data=[
-	    'trans_ref'=>$trans_ref,
-	    'check_id'=>$check_id,
-	    'passive_company_id'=>$passive_company_id,
-	    'acc_debit_code'=>$acc_codes[0],
-	    'acc_credit_code'=>$acc_codes[1],
-            'trans_article'=>$trans_article,
-	    'cstamp'=>$trans_date.date(" H:i:s"),
-	    'amount'=>$amount,
-	    'amount_alt'=>$amount_alt,
-	    'description'=>$description
-	];
-        $update_trans_data=true;
-        if( !$trans_id ){
-            $this->Hub->set_level(2);
-	    $trans_data['editable']=1;
-	    $trans_data['active_company_id']=$this->Hub->acomp('company_id');
-	    $trans_data['created_by']=$user_id;
-	    if( $trans_data['trans_ref'] && $this->transAlreadyLinked($trans_data['trans_ref']) ){//Check whether referenced trans is already linked
-		return false;
-	    }
-	    $this->create('acc_trans', $trans_data);
-	    $trans_id= $this->db->insert_id();
-            $update_trans_data=false;
-        }
-        $this->transUpdate($trans_id, $trans_data, $update_trans_data);
+        $trans_data['active_company_id']=$this->Hub->acomp('company_id');
+        $trans_data['created_by']=$this->Hub->svar('user_id');
+        $this->transValidate( $trans_data );
+        $trans_id= $this->create('acc_trans', $trans_data);
+        $this->transResolveConnections($trans_id,$trans_data);
 	return $trans_id;        
     }
     
-    public function transUpdate( int $trans_id, array $trans_data, bool $update_trans_data=true ){
+    public function transUpdate( int $trans_id, array $trans_data ){
 	$this->Hub->set_level(2);
-        $ok=true;
         $user_id=$this->Hub->svar('user_id');
         $trans_data['modified_by']=$user_id;
-        if( $update_trans_data ){
-            $ok= $this->update('acc_trans', $trans_data, ['trans_id'=>$trans_id]);
-        }
-        $this->checkTransLink($trans_id,$trans_data);
-	$this->transCrossLink($trans_id,$trans_data);
-	$this->transCalculate($trans_data);
+        $ok= $this->update('acc_trans', $trans_data, ['trans_id'=>$trans_id]);
+        $this->transResolveConnections($trans_id,$trans_data);
         return $ok;
     }
-    
+
     public function transDelete( int $trans_id ){
 	$this->Hub->set_level(2);
 	$trans=$this->transGet($trans_id);
-	if( $trans && $this->transLevelCheck($trans->acc_debit_code.'_'.$trans->acc_credit_code) ){
-	    $this->delete('acc_trans',['trans_id'=>$trans_id,'editable'=>1]);
-            $ok=$this->db->affected_rows()>0?true:false;
-	    $this->checkTransBreakLink($trans->check_id);
-	    $this->transBreakLink($trans->trans_ref);
-            $this->transPaymentCalculateIfNeeded( $trans->passive_company_id, $trans->acc_debit_code );
-            $this->transPaymentCalculateIfNeeded( $trans->passive_company_id, $trans->acc_credit_code );
-	    return $ok;
+	if( $trans && $this->transLevelCheck(null,$trans->acc_debit_code,$trans->acc_credit_code) ){
+	    $ok=$this->delete('acc_trans',['trans_id'=>$trans_id,'editable'=>1]);
+            if( $ok ){
+                $trans_data=(array)$trans;
+                $this->checkTransBreakLink($trans_data['check_id']);
+                $this->transBreakLink($trans_data['trans_ref']);
+                $this->transCalculate($trans_data);
+                return true;
+            }
+	    return false;
 	}
-	$this->Hub->msg('access denied');
-	return false;        
+        throw new Exception("Access denied for deletion of this transaction: {$trans_data['acc_debit_code']}_{$trans_data['acc_credit_code']}",403);
+    }
+    
+    private function transResolveConnections($trans_id,$trans_data){
+        $this->checkTransLink($trans_id,$trans_data);
+	$this->transCrossLink($trans_id,$trans_data);
+	$this->transCalculate($trans_data);
+    }
+    
+    private function transValidate( $trans_data ){
+        $trans_data_valid=
+                   $trans_data['active_company_id']??false
+                && $trans_data['passive_company_id']??false
+                && $trans_data['acc_debit_code']??false
+                && $trans_data['acc_credit_code']??false
+                && $trans_data['cstamp']??false
+                && $trans_data['amount']??false
+                && $trans_data['description']??false;
+        if( !$trans_data_valid ){
+            print_r($trans_data);
+	    throw new Exception("Transaction validation failed",500);
+        }
+        return true;
     }
     
     
@@ -201,7 +196,7 @@ class AccountsCore extends Catalog{
 	$sql="SELECT * FROM tmp_ledger 
 		WHERE '$idate'<cstamp AND cstamp<='$fdate'
 		HAVING $having
-		ORDER BY cstamp DESC 
+		ORDER BY cstamp,trans_id DESC 
 		LIMIT $rows OFFSET $offset";
 	$result_rows=$this->get_list($sql);
 	$total_estimate=$offset+(count($result_rows)==$rows?$rows+1:count($result_rows));
@@ -533,7 +528,7 @@ class AccountsCore extends Catalog{
 	    'acc_debit_code'=>$acc_codes[0],
 	    'acc_credit_code'=>$acc_codes[1],
             'trans_article'=>$trans_article,
-	    'cstamp'=>$trans_date.date(" H:i:s"),
+	    'cstamp'=>$trans_date,
 	    'amount'=>$amount,
 	    'amount_alt'=>$amount_alt,
 	    'description'=>$description
@@ -557,40 +552,50 @@ class AccountsCore extends Catalog{
     }
     
     
-    //////////////////////////////////////////
-    // DOCUMENT TRANS SECTION
-    //////////////////////////////////////////
-    public function documentTransDisable($doc_id){
-        return $this->update('acc_trans JOIN document_trans USING(trans_id)',['is_disabled'=>1], ['doc_id'=>$doc_id]);
-    }
-    public function documentTransClear($doc_id){
-        $this->query("DELETE acc_trans.*, document_trans.* FROM acc_trans JOIN document_trans USING(trans_id) WHERE doc_id='$doc_id'");
-        return $this->db->affected_rows();
-    }
-    public function documentTransUpdate($doc_id,$foot,$doc_ratio=0){
-        $ok=true;
-	$document_transactions=$this->get_list("SELECT * FROM document_trans WHERE doc_id='$doc_id'");
-	foreach($document_transactions as $trans){
-	    $transaction_amount=0;
-            $current_role = $trans->trans_role;
-	    if( isset($foot->$current_role) ){
-                if( $doc_ratio>0 ){
-                    $transaction_amount=$foot->$current_role*$doc_ratio;
-                    $transaction_amount_alt=$foot->$current_role;
-                } else {
-                    $transaction_amount=$foot->$current_role;
-                    $transaction_amount_alt=0;
-                }
-                $this->transUpdate($trans->trans_id, ['amount'=>$transaction_amount,'amount_alt'=>$transaction_amount_alt]);
-	    }
-	}
-        return $ok;
-    }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     
     
 
-    public $documentPay=['doc_id'=>'int','acc_debit_code'=>'string','amount'=>'double','description'=>'string'];
-    public function documentPay( $doc_id, $acc_debit_code, $amount, $description ){
+    
+    public function documentPay( int $doc_id, string $acc_debit_code, float $amount, string $description ){
 	$sql="SELECT 
 		trans_id,
 		type
