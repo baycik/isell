@@ -196,7 +196,7 @@ class AccountsCore extends Catalog{
 	$sql="SELECT * FROM tmp_ledger 
 		WHERE '$idate'<cstamp AND cstamp<='$fdate'
 		HAVING $having
-		ORDER BY cstamp,trans_id DESC 
+		ORDER BY cstamp DESC,trans_id 
 		LIMIT $rows OFFSET $offset";
 	$result_rows=$this->get_list($sql);
 	$total_estimate=$offset+(count($result_rows)==$rows?$rows+1:count($result_rows));
