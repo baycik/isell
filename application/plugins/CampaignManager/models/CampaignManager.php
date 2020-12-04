@@ -442,7 +442,7 @@ class CampaignManager extends Catalog{
             $stock_category_ids=$this->treeGetSub('stock_tree', $campaign_bonus->product_category_id);
             $table.=" JOIN stock_entries se ON de.product_code=se.product_code AND se.parent_id IN (". implode(',', $stock_category_ids).")";
         }
-        if( $campaign_bonus->product_brand_filter || $campaign_bonus->product_type_filter || $campaign_bonus->product_class_filter ){
+        if( $campaign_bonus->product_brand_filter??0 || $campaign_bonus->product_type_filter??0 || $campaign_bonus->product_class_filter??0 ){
             $table.=" JOIN prod_list pl ON de.product_code=pl.product_code";
             if( $campaign_bonus->product_brand_filter ){
                 $brand_filter =" analyse_brand LIKE '%". str_replace(',', "%' OR  analyse_brand LIKE '%", $campaign_bonus->product_brand_filter)."%'";
@@ -452,7 +452,7 @@ class CampaignManager extends Catalog{
                 $type_filter =" analyse_type  LIKE '%". str_replace(',', "%' OR  analyse_type  LIKE '%", $campaign_bonus->product_type_filter)."%'";
                 $table.=" AND ($type_filter)";
             }
-            if( $campaign_bonus->product_class_filter ){
+            if( $campaign_bonus->product_class_filter??0 ){
                 $class_filter =" analyse_class  = '". str_replace(',', "' OR  analyse_class  = '", $campaign_bonus->product_class_filter)."'";
                 $table.=" AND ($class_filter)";
             }
@@ -509,14 +509,14 @@ class CampaignManager extends Catalog{
             pl.product_code,
             ru product_name,
             SUM(product_quantity) product_quantity,
-            ROUND(AVG(self_price),2) self_price,
-            ROUND(AVG(breakeven_price),2) breakeven_price,
-            ROUND(AVG(invoice_price * (dl.vat_rate/100+1)),2) sell_price,
-            ROUND(SUM(invoice_price*product_quantity* (dl.vat_rate/100+1))) total_sum,
-            ROUND(COALESCE(AVG((invoice_price * (dl.vat_rate/100+1)-GREATEST(breakeven_price,self_price))),0),2) diff_price,
+            ROUND(SUM(self_price*product_quantity)/SUM(product_quantity) * (dl.vat_rate/100+1),2) self_price,
+            ROUND(SUM(breakeven_price*product_quantity)/SUM(product_quantity),2) breakeven_price,
+            ROUND(SUM(invoice_price*product_quantity)/SUM(product_quantity) * (dl.vat_rate/100+1),2) sell_price,
+            ROUND(SUM(invoice_price*product_quantity) * (dl.vat_rate/100+1)) total_sum,
+            ROUND(SUM( (invoice_price * (dl.vat_rate/100+1)-GREATEST(breakeven_price,self_price * (dl.vat_rate/100+1),0)) * product_quantity )/SUM(product_quantity),2) diff_price,
             ";
         $select="
-                COALESCE(GREATEST(invoice_price * (dl.vat_rate/100+1)-GREATEST(breakeven_price,self_price),0) * product_quantity,0)";
+                COALESCE(GREATEST(invoice_price * (dl.vat_rate/100+1)-GREATEST(breakeven_price,self_price * (dl.vat_rate/100+1)),0) * product_quantity,0)";
         $table="
                     LEFT JOIN
                 document_list dl ON $period_on 
@@ -780,17 +780,16 @@ class CampaignManager extends Catalog{
             ]);
         } else {
             $struct= array_merge($struct,[
-            ['Field'=>'bonus_base','Comment'=>'База Бонуса','Width'=>20,'Align'=>'right'],
             ['Field'=>'product_quantity','Comment'=>'Кол-во','Width'=>10,'Align'=>'right'],
-            ['Field'=>'self_price','Comment'=>'Себ','Width'=>10,'Align'=>'right'],
-            ['Field'=>'breakeven_price','Comment'=>'Порог','Width'=>10,'Align'=>'right'],
-            ['Field'=>'sell_price','Comment'=>'Продажа','Width'=>10,'Align'=>'right'],
-            ['Field'=>'diff_price','Comment'=>'Разница','Width'=>10,'Align'=>'right'],
-            ['Field'=>'total_sum','Comment'=>'Сумма','Width'=>10,'Align'=>'right']
+            ['Field'=>'self_price','Comment'=>'Себ с НДС','Width'=>10,'Align'=>'right'],
+            ['Field'=>'breakeven_price','Comment'=>'Порог с НДС','Width'=>10,'Align'=>'right'],
+            ['Field'=>'sell_price','Comment'=>'Продажа с НДС','Width'=>10,'Align'=>'right'],
+            ['Field'=>'diff_price','Comment'=>'Разница с НДС','Width'=>10,'Align'=>'right'],
+            ['Field'=>'total_sum','Comment'=>'Сумма с НДС','Width'=>10,'Align'=>'right'],
+            ['Field'=>'bonus_base','Comment'=>'База Бонуса','Width'=>20,'Align'=>'right']
             ]);
         }
         $additional_cols=[
-            
             ['Field'=>'bonus_ratios','Comment'=>'%','Width'=>15,'Align'=>'center'],
             ['Field'=>'result1','Comment'=>'Рез1','Width'=>10,'Align'=>'right']
             ];
