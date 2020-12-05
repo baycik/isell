@@ -9,6 +9,9 @@ var App = {
 	App.onReady && App.onReady();
     },
     flash:function (msg, type) {
+        if( !msg ){
+            return;
+        }
 	clearTimeout(App.flashClock);
 	App.flashClock = setTimeout(function () {
 	    $.messager.show({ msg: App.msg, showType: 'slide',width:300,height:150});

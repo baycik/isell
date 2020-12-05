@@ -10,7 +10,6 @@ Document.head = {
         setTimeout(function () {
             Document.head.controls.render(head_data);
         }, 0);
-        $(`#${holderId}`).css('background-color', head_data.is_commited==1 ? Document.head.commited_color:'' );
     },
     destroy: function () {
         this.pcompNode && this.pcompNode.combobox && this.pcompNode.combobox('clear');
@@ -154,6 +153,14 @@ Document.head = {
             }
         },
         render: function (head_data) {
+            if( head_data.is_commited==1 ){
+                $(`#${holderId}`).css('background-color', Document.head.commited_color );
+                $(`#${holderId} .x-toolbar .icon-commit`).css('filter', 'grayscale(100%)' );
+            } else {
+                $(`#${holderId}`).css('background-color', '' );
+                $(`#${holderId} .x-toolbar .icon-commit`).css('filter', 'none' );
+            }
+            
             head_data.cstamp = head_data.cstamp.substr(0, 10);
             $('#' + holderId + ' select[name=passive_company_id]')
                     .dropdown('set text', Document.data.head.passive_company_label);
@@ -195,13 +202,14 @@ Document.head = {
             },
             commit: function () {
                 if (Document.data.head.is_commited * 1) {
+                    App.flash("Документ уже проведен");
                     return;
                 }
                 Document.head.update('is_commited', 1, 'Документ проведен');
             },
             uncommit: function () {
                 if (Document.data.head.is_commited * 1) {
-                    Document.head.update('is_commited', 0, 'Документ не проведен');
+                    Document.head.update('is_commited', 0);
                 } else {
                     if (confirm("Удалить документ полностью?")) {
                         Document.delete();
@@ -519,14 +527,7 @@ Document.body = {
                 location.hash = "#Stock#stock_main_tabs=Резерв&product_code=" + row_data.product_code;
             },
             err_breakeven: function (row_data) {
-                var url = Document.doc_extension + '/entryUpdate';
-                $.post(url, {doc_id: Document.doc_id, doc_entry_id: row_data.doc_entry_id, field: 'product_price', value: row_data.breakeven_price}, function (ok) {
-                    if (!(ok * 1)) {
-                        App.flash("Строка не изменена");
-                    }
-                    Document.reload(["body", "foot"]);
-                });
-                App.flash("Цена изменена на " + row_data.breakeven_price);
+                Document.body.table.entryUpdate(row_data.doc_entry_id,'entry_price',row_data.breakeven_price);
             }
         },
         formatters: {

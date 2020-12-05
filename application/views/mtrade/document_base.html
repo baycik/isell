@@ -72,6 +72,10 @@
 		    console.log('document_model is null');
 		    return false;
 		}
+                if( id==0 ){
+                    console.log('id====0');
+                    return false;
+                }
 		parts_to_load= parts_to_load || ["head","body","foot","views"];
 		Document.doc_id=id;
 		var url=Document.doc_extension+'/documentGet';
