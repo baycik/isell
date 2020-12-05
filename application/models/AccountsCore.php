@@ -38,7 +38,7 @@ class AccountsCore extends Catalog{
     // TRANS SECTION
     //////////////////////////////////////////////
     public function transGet( int $trans_id ){
-	$sql="SELECT * FROM acc_trans trans WHERE trans_id='$trans_id'";
+	$sql="SELECT * FROM acc_trans WHERE trans_id='$trans_id'";
 	return $this->get_row($sql);
     }
     
@@ -67,8 +67,8 @@ class AccountsCore extends Catalog{
     public function transDelete( int $trans_id ){
 	$this->Hub->set_level(2);
 	$trans=$this->transGet($trans_id);
-	if( $trans && $this->transLevelCheck(null,$trans->acc_debit_code,$trans->acc_credit_code) ){
-	    $ok=$this->delete('acc_trans',['trans_id'=>$trans_id,'editable'=>1]);
+	if( $trans /*&& $this->transLevelCheck(null,$trans->acc_debit_code,$trans->acc_credit_code)*/ ){
+	    $ok=$this->delete('acc_trans',['trans_id'=>$trans_id]);
             if( $ok ){
                 $trans_data=(array)$trans;
                 $this->checkTransBreakLink($trans_data['check_id']);
@@ -415,9 +415,10 @@ class AccountsCore extends Catalog{
         }
         $active_company_id=$this->Hub->acomp('company_id');
         $sensitivity=5.00;
+        //$this->profile("before  transPaymentCalculate");
         $this->query("SET @sum:=0.0;");
         if( $side=='debit' ){
-            $this->query("
+            $calculate_sql="
                     UPDATE
                         acc_trans
                     SET trans_status=IF(acc_debit_code = $acc_code,
@@ -436,9 +437,9 @@ class AccountsCore extends Catalog{
                         AND trans_status <> 5
                         AND (acc_debit_code = $acc_code
                         OR acc_credit_code = $acc_code)
-                    ORDER BY acc_debit_code = $acc_code, amount>0, cstamp;");
+                    ORDER BY acc_debit_code = $acc_code, amount>0, cstamp;";
         } else {
-            $this->query("
+            $calculate_sql="
                     UPDATE
                         acc_trans
                     SET trans_status=IF(acc_credit_code = $acc_code,
@@ -457,8 +458,10 @@ class AccountsCore extends Catalog{
                         AND trans_status <> 10
                         AND (acc_debit_code = $acc_code
                         OR acc_credit_code = $acc_code)
-                    ORDER BY acc_credit_code = $acc_code, amount>0, cstamp;");
+                    ORDER BY acc_credit_code = $acc_code, amount>0, cstamp;";
         }
+        $this->query($calculate_sql);
+        //$this->profile("after  transPaymentCalculate");
     }
     private function transPaymentCalculateIfNeeded( $pcomp_id, $account ){
         $debit_payment_accounts=[361];

@@ -88,6 +88,8 @@ class DocumentSell extends DocumentBase{
     public function documentBeforeChangeIsCommited( $field='is_commited', bool $new_is_commited ){
         //echo 'entries';print_r($this->document_properties);die;
         
+        $this->profile("Start documentBeforeChangeIsCommited");
+        
         if( !$new_is_commited && !$this->isCommited() ){
             $doc_id=$this->doc('doc_id');
             /*
@@ -104,6 +106,8 @@ class DocumentSell extends DocumentBase{
         if( $new_is_commited==1 ){
             $this->doc('doc_status_id',3);//set to processed because its commited
         }
+        $this->profile("Finish documentBeforeChangeIsCommited");
+
         return $this->entryListChangeCommit( $new_is_commited );
     }
     //////////////////////////////////////////

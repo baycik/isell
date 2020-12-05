@@ -3,7 +3,15 @@
 class Catalog extends CI_Model {
 
     public $min_level = 1;
-
+    public function __construct() {
+        parent::__construct();
+        $this->starts_time= microtime(1);
+    }
+    
+    public function profile($text){
+        echo "\n$text: ".round(microtime(1)*1000-$this->starts_time*1000)."\n";
+    }
+    
     protected function check(&$var, $type = null) {
         switch ($type) {
             case 'raw':

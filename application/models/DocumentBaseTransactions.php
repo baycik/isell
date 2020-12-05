@@ -10,9 +10,9 @@ trait DocumentBaseTransactions {
         ]
     ];
 
-    protected function transCommitedChangeRefresh($field, $new_is_commited, $document_properties) {
+    protected function transCommitedChangeRefresh($field, bool $new_is_commited, $document_properties) {
         //$this->document_properties=$document_properties;
-        if ($new_is_commited) {
+        if ( $new_is_commited ){
             $this->transSchemeCreate();
         } else {
             $this->transSchemeDelete();
@@ -32,16 +32,19 @@ trait DocumentBaseTransactions {
     protected function transSchemeUpdate() {
         $document_transaction_scheme=$this->document_transaction_scheme;
         $doc_id=$this->doc('doc_id');
+        $this->profile('before transSchemeCalculate');
         $trans_list=$this->transSchemeCalculate($document_transaction_scheme);
+        $this->profile('after transSchemeCalculate');
         $AccountsCore = $this->Hub->load_model("AccountsCore");
         foreach($trans_list as $trans){
             //print_r($trans);
             $sql_find_trans_id="
                 SELECT COALESCE( 
-                (SELECT trans_id FROM acc_trans WHERE doc_id='$doc_id' AND trans_role='{$trans['trans_role']}'),
+                (SELECT trans_id FROM acc_trans WHERE doc_id='$doc_id' AND trans_role='{$trans['trans_role']}' LIMIT 1),
                 (SELECT trans_id FROM document_trans WHERE doc_id='$doc_id' AND trans_role='{$trans['trans_role']}'),
                 0 ) trans_id";
             $trans_id=$this->get_value($sql_find_trans_id);
+            $this->profile('before transUpdate');
             $AccountsCore->transUpdate($trans_id,$trans);
         }
     }
@@ -67,10 +70,14 @@ trait DocumentBaseTransactions {
                 ";
             $delete_list=$this->get_list($sql);
         }
+        $ok=1;
         $AccountsCore = $this->Hub->load_model("AccountsCore");
         foreach($delete_list as $trans){
-            $AccountsCore->transDelete($trans->trans_id);
+            $ok=$ok && $AccountsCore->transDelete($trans->trans_id);
         }
+        /* COMPABILITY PATCH */
+        $this->delete('document_trans',['doc_id'=>$doc_id]);
+        return $ok;
     }
     
     private function transSchemeCalculate($document_transaction_scheme){
