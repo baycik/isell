@@ -28,7 +28,7 @@ class AccountsCore extends Catalog{
                 acc_trans_names 
             WHERE 
                 acc_debit_code='$acc_debit_code'
-                AND acc_credit_code=$acc_credit_code;
+                AND acc_credit_code=$acc_credit_code
                 AND user_level<='$user_level'";
 	return $this->get_value($sql);
     }
