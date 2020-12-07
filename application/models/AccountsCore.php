@@ -607,7 +607,7 @@ class AccountsCore extends Catalog{
 		    JOIN 
 		acc_trans at USING(trans_id) 
 	    WHERE 
-		doc_id='$doc_id' 
+		dtr.doc_id='$doc_id' 
 		AND dtr.trans_role='total' 
 		AND amount='$amount'";
 	$trans=$this->get_row($sql);
