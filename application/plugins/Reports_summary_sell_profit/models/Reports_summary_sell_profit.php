@@ -41,6 +41,9 @@ class Reports_summary_sell_profit extends Catalog{
 	return "$chunks[2].$chunks[1].$chunks[0]";
     }
     private function and_like($field,$value){
+        if(!$value){
+            return '';
+        }
 	$cases=explode(",",$value);
 	$filter="";
 	foreach($cases as $case){
@@ -51,6 +54,9 @@ class Reports_summary_sell_profit extends Catalog{
 	return $filter;
     }
     private function or_like($field,$value){
+        if(!$value){
+            return '';
+        }
 	$cases=explode(",",$value);
 	$filter=" AND (0";
 	foreach($cases as $case){
