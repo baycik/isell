@@ -442,20 +442,20 @@ class CampaignManager extends Catalog{
             $stock_category_ids=$this->treeGetSub('stock_tree', $campaign_bonus->product_category_id);
             $table.=" JOIN stock_entries se ON de.product_code=se.product_code AND se.parent_id IN (". implode(',', $stock_category_ids).")";
         }
-        if( $campaign_bonus->product_brand_filter??0 || $campaign_bonus->product_type_filter??0 || $campaign_bonus->product_class_filter??0 ){
+        if( $campaign_bonus->product_brand_filter || $campaign_bonus->product_type_filter || $campaign_bonus->product_class_filter ){
             $table.=" JOIN prod_list pl ON de.product_code=pl.product_code";
-            if( $campaign_bonus->product_brand_filter ){
-                $brand_filter =" analyse_brand LIKE '%". str_replace(',', "%' OR  analyse_brand LIKE '%", $campaign_bonus->product_brand_filter)."%'";
-                $table.=" AND ($brand_filter)";
-            }
-            if( $campaign_bonus->product_type_filter ){
-                $type_filter =" analyse_type  LIKE '%". str_replace(',', "%' OR  analyse_type  LIKE '%", $campaign_bonus->product_type_filter)."%'";
-                $table.=" AND ($type_filter)";
-            }
-            if( $campaign_bonus->product_class_filter??0 ){
-                $class_filter =" analyse_class  = '". str_replace(',', "' OR  analyse_class  = '", $campaign_bonus->product_class_filter)."'";
-                $table.=" AND ($class_filter)";
-            }
+        }
+        if( $campaign_bonus->product_brand_filter ){
+            $brand_filter =" analyse_brand LIKE '%". str_replace(',', "%' OR  analyse_brand LIKE '%", $campaign_bonus->product_brand_filter)."%'";
+            $table.=" AND ($brand_filter)";
+        }
+        if( $campaign_bonus->product_type_filter ){
+            $type_filter =" analyse_type  LIKE '%". str_replace(',', "%' OR  analyse_type  LIKE '%", $campaign_bonus->product_type_filter)."%'";
+            $table.=" AND ($type_filter)";
+        }        
+        if( $campaign_bonus->product_class_filter ){
+            $class_filter =" analyse_class  = '". str_replace(',', "' OR  analyse_class  = '", $campaign_bonus->product_class_filter)."'";
+            $table.=" AND ($class_filter)";
         }
         return [
             'table'=>"(SELECT doc_id,doc_entry_id,de.product_code,invoice_price,de.product_quantity,de.breakeven_price,de.self_price FROM $table)",
