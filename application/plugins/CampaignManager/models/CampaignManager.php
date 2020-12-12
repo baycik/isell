@@ -572,10 +572,14 @@ class CampaignManager extends Catalog{
     }
     public function bonusCalculatePersonal(){
         $this->Hub->set_level(2);
-            $liable_user_id=$this->Hub->svar('user_id');
+        $liable_user_id=$this->Hub->svar('user_id');
         $sql="SELECT * FROM plugin_campaign_list JOIN plugin_campaign_bonus USING(campaign_id) WHERE liable_user_id=$liable_user_id ORDER BY campaign_queue";
         $personal_bonuses=[];
         $campaign_list=$this->get_list($sql);
+        if( !$campaign_list ){
+            return ['total'=>0,'bonuses'=>0];
+        }
+        
         $result_total=$campaign_list[0]->campaign_fixed_payment;
         foreach( $campaign_list as $campaign ){
             if( $campaign->bonus_visibility==2 ){//visible in widget
