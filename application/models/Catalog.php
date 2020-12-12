@@ -354,6 +354,9 @@ class Catalog extends CI_Model {
             $or_case=[];
             $words=explode(' ',$rule->value);
             foreach($words as $word){
+                if(!$word){
+                    continue;
+                }
                 if($word[0]=='!'){
                     $having[] = "$rule->field NOT LIKE '%".substr($word,1)."%'";
                 } else {
