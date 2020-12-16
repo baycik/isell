@@ -494,6 +494,7 @@ App.chatCheck=function(){
         var mode='';
         if( location.href.match(/(localhost)|(127.0.0.1)/) && !localStorage.getItem('executeTasks') ){
             mode='skip_tasks';//do not execute tasks on developing
+            return false;
         }
 	$.get('Chat/checkNew',{mode:mode},function(resp){
 	    var count=resp*1;
