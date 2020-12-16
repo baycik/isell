@@ -212,7 +212,7 @@ App.mailing_manager=
                     filter_reason:group_entry.message_reason,
                     filter_date:group_entry.group_created_at
                 };
-                $.get("MailingManager/messageListGet",filter,function(resp){
+                $.post("MailingManager/messageListGet",filter,function(resp){
                     var maillist=App.json(resp);
                     MessageList.list.render(maillist);
                 });
@@ -244,6 +244,9 @@ App.mailing_manager=
                 MessageList.list.initControls();
             },
             select:function(id){
+                
+                console.log(id);
+                
                 if( !id || id == MessageList.list.selected_id ){
                     return;
                 }
@@ -294,17 +297,16 @@ App.mailing_manager=
             });
             $('.template_mark_down').click(function(){
                 var field_name = $(this).attr('data-field_name');
+                var field_label=$(this).html();
+                var token=`{{${field_name}(${field_label})}}`;
+                
                 if(MessageEditor.subject_focus){
                     var input_value = $('input[name="message_subject"]').val();
-                    $('input[name="message_subject"]').val(input_value + '{{' + field_name + '}}');
+                    $('input[name="message_subject"]').val(input_value + token);
                     $('input[name="message_subject"]').change();
                 } else {
-                    window.frames['editor_iframe'].tinymce.activeEditor.insertContent('{{' + field_name + '}}');
+                    window.frames['editor_iframe'].tinymce.activeEditor.insertContent(token);
                 }
-                
-            });
-            $('.save_template').click(function(){
-                MessageEditor.addTemplate();
             });
             $('select[name="template_list"]').change(function(){
                 MessageEditor.current_template_index = $(this).val();
@@ -314,6 +316,19 @@ App.mailing_manager=
                 } else {
                     window.frames['editor_iframe'].tinymce.activeEditor.setContent('<p></p>');
                 }
+                $('#mailing_manager_tpl_edit,#mailing_manager_tpl_delete').attr('disabled',!current_template);
+            });
+            $('#mailing_manager_tpl_add').click(function(){
+                MessageEditor.templateAdd();
+            });
+            $('#mailing_manager_tpl_edit').click(function(){
+                MessageEditor.templateEdit();
+            });
+            $('#mailing_manager_tpl_delete').click(function(){
+                MessageEditor.templateDelete();
+            });
+            $('#mailing_manager_batch_create').click(function(e){
+                MessageList.batch.create();
             });
             $("#PluginMailingManager_mailnew .delete-manual_reciever").on('click',function(){
                 var reciever_index = $(this).attr('data-reciever_index');
@@ -328,9 +343,6 @@ App.mailing_manager=
             });
             $('input[name="reciever_field"]').on('change',function(){
                 MessageEditor.checkRecieverCorrectness(this.value);
-            });
-            $('.add_new_mailing').click(function(e){
-                MessageList.batch.create();
             });
         },
         load:function(message_id){
@@ -387,13 +399,14 @@ App.mailing_manager=
             } else {
                 window.frames['editor_iframe'].html = MessageEditor.current_message_body;
             }
+            $('#mailing_manager_tpl_edit,#mailing_manager_tpl_delete').attr('disabled',MessageEditor.current_template_index == '-1');
         },
         getSettings:function(){
             $.post('MailingManager/settingsGet', function (resp) {
                 if (resp) {
                     var response = JSON.parse(resp);
-                    MessageEditor.data.reciever_list = response.settings.reciever_list;
-                    MessageEditor.data.template_list = response.settings.template_list;
+                    MessageEditor.data.reciever_list = response.settings.reciever_list||[];
+                    MessageEditor.data.template_list = response.settings.template_list||[];
                     MessageEditor.data.manual_reciever_list = [];
                 }
             });
@@ -405,7 +418,7 @@ App.mailing_manager=
                 }
             });
         },
-        addTemplate: function(){
+        templateAdd: function(){
             var content = window.frames['editor_iframe'].tinymce.activeEditor.getContent();
             if(content == ""){
                 alert('Ошибка: Пустое сообщение');
@@ -418,7 +431,7 @@ App.mailing_manager=
             var template_object = {
                 name: prompt('Название шаблона', default_template_name),
                 html: content
-            }
+            };
             if(!template_object.name){
                 alert('Ошибка: Пустое название шаблона!');
                 return;
@@ -428,6 +441,23 @@ App.mailing_manager=
             } else {
                 MessageEditor.data.template_list[MessageEditor.current_template_index] = template_object;
             }
+            MessageEditor.action = 'new';
+            MessageEditor.updateSettings();
+        },
+        templateDelete: function(){
+            if(confirm("Удалить данный шаблон?")){
+                delete MessageEditor.data.template_list[MessageEditor.current_template_index];
+                MessageEditor.current_template_index='-1';
+                MessageEditor.action = 'new';
+                MessageEditor.updateSettings();
+            }
+        },
+        templateEdit:function(){
+            var new_name=prompt('Изменить название шаблона', MessageEditor.data.template_list[MessageEditor.current_template_index].name);
+            if( new_name===null ){
+                return;
+            }
+            MessageEditor.data.template_list[MessageEditor.current_template_index].name=new_name;
             MessageEditor.action = 'new';
             MessageEditor.updateSettings();
         },
@@ -472,7 +502,8 @@ App.mailing_manager=
         reload_recievers: function(reciever_list){
             MessageEditor.data.reciever_list = reciever_list;
             MessageEditor.renew();
-        }
+        },
+        reload_list:MessageList.batch.load
     };
 })();
 
@@ -509,7 +540,8 @@ App.mailing_manager=
 </script>
 <div id="PluginMailingManager"  style="display: grid;grid-template-columns:600px auto">
     <div>
-        <input type="search" id="PluginMailingManager_list_filter" style="width:100%;height: 35px;background-color: #fffd" placeholder="Фильтр">
+        <input type="search" id="PluginMailingManager_list_filter" style="width:calc( 100% - 32px );height: 35px;background-color: #fffd" placeholder="Фильтр">
+        <img src="img/reload.png" style="height: 32px;width: auto;float:right;cursor: pointer" onclick="App.mailing_manager.reload_list()"/>
         <div id="PluginMailingManager_maillist" class="iss_accordion" style="max-height: 100vh; overflow-y: auto;">
             <div class="clickable-list">
             <button class="iss_accordion new-list" data-index="--">Новая рассылка</button> 
@@ -598,18 +630,19 @@ App.mailing_manager=
             <div class="iframe-block">
                 <iframe id="editor_iframe" name="editor_iframe" style="height:474px;width: 100%;border: none;" src="page/dialog/text_editor_iframe.html"></iframe>
                 <div class="iframe-buttons">
-                    <button class="template_mark_down" data-field_name="company_name">Название компании</button>
-                    <button class="template_mark_down" data-field_name="company_person">Контактное лицо</button>
-                    <button class="template_mark_down" data-field_name="company_director">Директор</button>
-                    <button class="template_mark_down" data-field_name="company_email">Эл. Почта</button>
-                    <button class="template_mark_down" data-field_name="company_web">Веб-сайт</button>
-                    <button class="template_mark_down" data-field_name="company_mobile">Номер телефона</button>
-                    <button class="template_mark_down" data-field_name="company_address">Физический адрес</button>
-                    <button class="template_mark_down" data-field_name="company_bank_name">Название банка</button>
+                    <button class="template_mark_down" data-field_name="company_name">Контрагент Название</button>
+                    <button class="template_mark_down" data-field_name="company_person">Контрагент контактное лицо</button>
+                    <button class="template_mark_down" data-field_name="company_director">Контрагент директор</button>
+                    
+                    <button class="template_mark_down" data-field_name="manager_sign">Менеджер ФИО</button>
+                    <button class="template_mark_down" data-field_name="manager_phone">Менеджер телефон</button>
+                    <button class="template_mark_down" data-field_name="manager_position">Менеджер должность</button>
+                    
+                    <button class="template_mark_down" data-field_name="DebtManager.PaymentCalendar">Календарь платежей</button>
                 </div>
             </div>
             <div class="templates-row">
-                <button class="save_template">Сохранить шаблон</button>
+                <button type="button" id="mailing_manager_tpl_add"><img src="img/save-24.png"> Сохранить шаблон</button>
                 <select name="template_list" >
                     <option value="-1">--Новый шаблон--</option>
                     <!--{{template_list}}
@@ -618,9 +651,11 @@ App.mailing_manager=
                     <!--{{/if}}
                     {{/template_list}}-->
                 </select>
+                <button type="button" id="mailing_manager_tpl_delete" disabled><img src="img/delete.png"></button>
+                <button type="button" id="mailing_manager_tpl_edit" disabled><img src="img/edit-24.png"></button>
             </div>
             <div class="submit-row">
-                <button class="add_new_mailing">➕ Создать рассылку</button>
+                <button type="button" id="mailing_manager_batch_create"><img src="img/add.png"> Создать рассылку</button>
             </div>
         </div>
     </div>

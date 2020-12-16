@@ -118,7 +118,7 @@ class MailingManager extends Catalog {
         }
         $message_record=[
             'message_handler'=>$message['message_handler'],
-            'message_batch_label'=>$message['message_batch_label'],
+            'message_batch_label'=>$message['message_batch_label']??($message['message_handler'].$message['message_reason']),
             'message_status'=>'created',
             'message_reason'=>$message['message_reason'],
             'message_note'=>$message['message_note'],
@@ -179,9 +179,33 @@ class MailingManager extends Catalog {
     }
     
     private function messageRenderTpl( string $message_template, $context ){
-        foreach ($context as $key=>$val){
-            $message_template = str_replace('{{'.$key.'}}', $val, $message_template);
-        }
+        $_self=$this;
+        $message_template=preg_replace_callback('/{{(\w+)\.?(\w+)?(\([^\)]+\))?}}/',function($matches) use ($_self,$context){
+            if($matches[2]??false){
+                try{
+                    $Model=$this->Hub->load_model($matches[1]);
+                    if(method_exists($Model, $matches[2])){
+                        /*
+                         * Try to execute widget function if fail abort message
+                         */
+                        $result=$Model->{$matches[2]}($context);
+                        if( $result===false ){
+                            $this->message_composing_aborted=true;
+                        }
+                        return $result;
+                    }
+                    return '???';
+                } catch(Exception $e){
+                    return '???';
+                }
+                return '???';
+            }
+            if($matches[1]??false){
+                return $context->{$matches[1]}??'?'.$matches[1];
+            }
+            return '???';
+        },$message_template);
+        echo $message_template;
         return $message_template;
     }
 
@@ -245,7 +269,7 @@ class MailingManager extends Catalog {
      * Message batches CRUD functions
      */
     public function messageBatchCreate( array $message_batch ){
-        $context = new stdClass();
+        $context = (object)[];
         $batch_label = md5($message_batch['handler'].$message_batch['subject'].date('Y-m-d H:i:s'));
         foreach($message_batch['manual_reciever_list'] as $contact){
             $contact_type = $this->messageDefineContactType($contact);
@@ -265,11 +289,31 @@ class MailingManager extends Catalog {
             if( empty($context->company_email) && empty($context->company_mobile) ){
                 continue;
             }
+            $this->message_composing_aborted=false;
             $message = $this->messageBatchComposeMessage($batch_label, $message_batch, $context);
+            if($this->message_composing_aborted){
+                continue;
+            }
             $this->messageCreate($message);
         }
         return true;
     }
+    
+    
+    
+    public function test(){
+        $message_batch=[
+            'reciever_list_id'=>1608023133866,
+            'handler'=>'email',
+            'subject'=>'Hello',
+            'body'=>'Уважаемый {{DebtManager.DebtCalendar(Календарь платежей)}} {{company_name}}',
+            'manual_reciever_list'=>[]
+        ];
+        $this->messageBatchCreate( $message_batch );
+    }
+    
+    
+    
     public function messageBatchComposeMessage(string $batch_label, array $message_batch, stdClass $context ){
         $message = [];
         $validated_contact = $this->messageContactValidate($message_batch['handler'], $context);
@@ -286,21 +330,30 @@ class MailingManager extends Catalog {
         return $message;
     }
     private function messageBatchContextGet( string $reciever_list_id ){
+        $active_company_id=$this->Hub->acomp('company_id');
         $where = $this->recieverListFilterGet($reciever_list_id);
         $sql="
             SELECT
+                $active_company_id active_company_id,
+                cl.company_id,
                 label,
                 path,
+                deferment,
                 company_name,
                 company_person,
                 company_director,
                 company_address,
                 company_email,
-                company_mobile
+                company_mobile,
+                user_sign manager_sign,
+                user_phone manager_phone,
+                user_position manager_position
             FROM
-                companies_list
+                companies_list cl
                     JOIN
-                companies_tree USING(branch_id)
+                companies_tree ct USING(branch_id)
+                    LEFT JOIN
+                user_list ON manager_id=user_id AND user_is_staff=1
             WHERE $where
             ORDER BY label ASC";
         return $this->get_list($sql);
@@ -354,6 +407,7 @@ class MailingManager extends Catalog {
                 $where
             GROUP BY message_batch_label
             ORDER BY created_at DESC,message_handler
+            LIMIT 20
             ";
         return $this->get_list($msg_list_msg);
     }
