@@ -96,7 +96,7 @@ App.mailing_manager=
             };
             $("#PluginMailingManager_maillist .new-list").on('click',function(){
                 MessageEditor.action = 'new';
-                MessageEditor.message = MessageEditor.empty_message;
+                MessageEditor.message = $.extend(true,{},MessageEditor.empty_message);
                 MessageList.list.select(MessageEditor.action);
             });
             $("#PluginMailingManager_maillist *[data-action='delete']").on('click',function(){
@@ -128,6 +128,7 @@ App.mailing_manager=
             delete:function(message_batch_label){
                 MessageList.list.selected_id = 0;
                 $.get("MailingManager/messageBatchDelete",{message_batch_label: message_batch_label},function(resp){
+                    MessageList.batch.selected_index='--';
                     MessageList.batch.load();
                 });
             },
@@ -244,9 +245,6 @@ App.mailing_manager=
                 MessageList.list.initControls();
             },
             select:function(id){
-                
-                console.log(id);
-                
                 if( !id || id == MessageList.list.selected_id ){
                     return;
                 }
@@ -313,13 +311,15 @@ App.mailing_manager=
                 var current_template = MessageEditor.data.template_list[MessageEditor.current_template_index];
                 if(current_template){
                     window.frames['editor_iframe'].tinymce.activeEditor.setContent(current_template.html);
+                    $('input[name="message_subject"]').val(current_template.subject);
                 } else {
                     window.frames['editor_iframe'].tinymce.activeEditor.setContent('<p></p>');
+                    $('input[name="message_subject"]').val('');
                 }
                 $('#mailing_manager_tpl_edit,#mailing_manager_tpl_delete').attr('disabled',!current_template);
             });
             $('#mailing_manager_tpl_add').click(function(){
-                MessageEditor.templateAdd();
+                MessageEditor.templateSave();
             });
             $('#mailing_manager_tpl_edit').click(function(){
                 MessageEditor.templateEdit();
@@ -346,15 +346,26 @@ App.mailing_manager=
             });
         },
         load:function(message_id){
+            MessageEditor.reset();
             if(MessageEditor.action == 'view'){
                 $.post('MailingManager/messageGet', {message_id: message_id}, function (resp) {
                     if (resp) {
                         MessageEditor.message = JSON.parse(resp);
+                        console.log(MessageEditor.message);
                         MessageEditor.render();
-                        return;
                     }
                 });
             }
+        },
+        reset:function(){
+            $('#PluginMailingManager_mailview').hide();
+            $('#PluginMailingManager_mailnew').show();
+            $("select [name=template_list]").val('-1');
+            $('input[name="message_subject"]').val('');
+            $("select [name=reciever_list_id]").val('empty');
+            $('input[name="reciever_field"]').val('');
+            MessageEditor.current_message_body='';
+            MessageEditor.current_template_index = '-1';
             MessageEditor.render();
         },
         render: function(){
@@ -394,10 +405,10 @@ App.mailing_manager=
             MessageEditor.render();
         },
         renderMessageBody: function(){
-            if(MessageEditor.current_template_index !== '-1'){
-                window.frames['editor_iframe'].html = MessageEditor.data.template_list[MessageEditor.current_template_index].html;
-            } else {
+            if(MessageEditor.current_template_index == '-1'){
                 window.frames['editor_iframe'].html = MessageEditor.current_message_body;
+            } else {
+                window.frames['editor_iframe'].html = MessageEditor.data.template_list[MessageEditor.current_template_index].html;
             }
             $('#mailing_manager_tpl_edit,#mailing_manager_tpl_delete').attr('disabled',MessageEditor.current_template_index == '-1');
         },
@@ -418,18 +429,21 @@ App.mailing_manager=
                 }
             });
         },
-        templateAdd: function(){
+        templateSave: function(){
             var content = window.frames['editor_iframe'].tinymce.activeEditor.getContent();
             if(content == ""){
                 alert('Ошибка: Пустое сообщение');
                 return;
             }
-            var default_template_name = 'Новый шаблон';
+            var template_name = '';
             if(MessageEditor.data.template_list[MessageEditor.current_template_index]){
-                default_template_name = MessageEditor.data.template_list[MessageEditor.current_template_index].name;
+                template_name = MessageEditor.data.template_list[MessageEditor.current_template_index].name;
+            } else {
+                template_name=prompt('Название шаблона', 'Новый шаблон');
             }
             var template_object = {
-                name: prompt('Название шаблона', default_template_name),
+                name: template_name,
+                subject:$('input[name="message_subject"]').val(),
                 html: content
             };
             if(!template_object.name){
