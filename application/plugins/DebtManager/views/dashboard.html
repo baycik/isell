@@ -57,10 +57,10 @@
                 <input type="checkbox" class="checkbox"  name="sell_trans" checked>
             </div>
             <div class="debt-settings-checkbox" title="Учитывать/не учитывать выбранную Вами активную компанию.">
-                <label for="acomp">
-                    Учитывать активную компанию
+                <label for="acomp_only">
+                    Только активная компания
                 </label>
-                <input type="checkbox" class="checkbox"  name="acomp" checked>
+                <input type="checkbox" class="checkbox"  name="acomp_only" checked>
             </div>
             <div class="debt-settings-checkbox" title="Отправлять уведомления о ближайших задолженностях в чат.">
                 <label for="notificate">
@@ -107,9 +107,9 @@
                 {{if block|notempty}}
                     {{block}}
                     <div class="debt-row {{ trans_type }}" data-pcomp_id="{{passive_company_id}}">
-                        <div class="debt-date" >{{pay_date|pay_date|blank>}}</div>
+                        <div class="debt-date" >{{due_date_dmy|blank>}}</div>
                         <div class="debt-company-name" >
-                            <div>{{company_label}}</div>
+                            <div><a href="javascript:void(0)" onclick="App.debt_manager_settings.company_create_notification(this)" data-pcomp_id="{{passive_company_id}}">{{company_label}}</a></div>
                             <div class="debt-company-info" style="display:none ">
                                 <div>{{company_name}}</div>
                                 <div>{{company_person}}</div>
@@ -122,7 +122,6 @@
                                 </div>
                             </div>
                         </div>
-                        
                             <div class="debt-amount sell">{{if amount_sell|falsy}}
                                     {{else}}{{amount_sell}}{{/if}}</div>
                         
@@ -179,7 +178,7 @@
 <script class="x-debt-manager-script">
 (function(){
     var $holder=$('.x-debt-manager-script').last().parent();
-    var debt_manager_settings = {
+    App.debt_manager_settings = {
         data:{},
         filter: {},
         block:'',
@@ -189,7 +188,7 @@
         current_id: 0,
         is_loading: false,
         init: function () {
-            debt_manager_settings.ajax_cancelling();
+            App.debt_manager_settings.ajax_cancelling();
             Mark.pipes.month=function(index){
                 return ['','Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'][index];
             };
@@ -201,84 +200,88 @@
             Mark.pipes.quarter=function(index){
                 return ['','Iкв','IIкв','IIIкв','IVкв'][index];
             };
-            debt_manager_settings.getSettings();
-            debt_manager_settings.block_template = $holder.find('.block_template').html();
-            debt_manager_settings.empty_block_template = $holder.find('.empty_block_template').html();
-            debt_manager_settings.load(-1);
-            $holder.find('.debt-container').scroll(function(){
-                $holder.find('.load-more').each(function(){
-                    $(this).css('transition', 'opacity 1s ease-in-out');
-                    if(debt_manager_settings.is_loading == false){
-                        if(debt_manager_settings.isScrolledIntoView($(this)) && debt_manager_settings.isScrolledIntoView($(this)) != 'expired'){
-                            debt_manager_settings.load(debt_manager_settings.block_list.length-1);
-                        }
-                    } 
-                });
-            });
+            App.debt_manager_settings.getSettings();
+            App.debt_manager_settings.block_template = $holder.find('.block_template').html();
+            App.debt_manager_settings.empty_block_template = $holder.find('.empty_block_template').html();
+            App.debt_manager_settings.load(-1);
             App.Topic('activeCompanySelected').subscribe(function(){
-                debt_manager_settings.reload();
+                App.debt_manager_settings.reload();
             });
             
             
             if($holder.find('.debt-container').scrollTop() == 0){
-               debt_manager_settings.load(debt_manager_settings.block_list.length-1);
+               App.debt_manager_settings.load(App.debt_manager_settings.block_list.length-1);
             }
-            $holder.find('.plugin_settings input').change(function(){
-                debt_manager_settings.updateSettings();
+            $holder.find('.plugin_settings').change(function(){
+                App.debt_manager_settings.updateSettings();
             });
             $holder.find('.widget-reload').click(function(){
-                debt_manager_settings.reload();
+                App.debt_manager_settings.reload();
             });
             $holder.find(".x-debt-manager-pcomp-select").click(function(){
-                debt_manager_settings.select_pcomp();
+                App.debt_manager_settings.select_pcomp();
+            });
+            $holder.find('.debt-container').scroll(function(){
+                App.debt_manager_settings.load_if_needed();
+            });
+        },
+        load_if_needed:function(){
+            $holder.find('.load-more').each(function(){
+                $(this).css('transition', 'opacity 1s ease-in-out');
+                if(App.debt_manager_settings.is_loading == false){
+                    if(App.debt_manager_settings.isScrolledIntoView($(this)) && App.debt_manager_settings.isScrolledIntoView($(this)) != 'expired'){
+                        App.debt_manager_settings.load(App.debt_manager_settings.block_list.length-1);
+                    }
+                } 
             });
         },
         load: function(offset){
-            debt_manager_settings.filter.group_by_date = debt_manager_settings.data.group_by_date;
-            debt_manager_settings.filter.block_number = offset;
+            App.debt_manager_settings.filter.group_by_date = App.debt_manager_settings.data.group_by_date;
+            App.debt_manager_settings.filter.block_number = offset;
             var html = '';
-            while (debt_manager_settings.filter.block_number <= offset + 0) {
-                debt_manager_settings.current_id = debt_manager_settings.filter.block_number;
-                $holder.find('.empty_container div').attr("class","block_"+debt_manager_settings.filter.block_number);
+            while (App.debt_manager_settings.filter.block_number <= offset + 0) {
+                App.debt_manager_settings.current_id = App.debt_manager_settings.filter.block_number;
+                $holder.find('.empty_container div').attr("class","block_"+App.debt_manager_settings.filter.block_number);
                 html += $holder.find('.empty_container').html();
-                debt_manager_settings.block_list.push(''); 
-                debt_manager_settings.load_block(debt_manager_settings.filter.block_number);
-                debt_manager_settings.filter.block_number++;
+                App.debt_manager_settings.block_list.push(''); 
+                App.debt_manager_settings.load_block(App.debt_manager_settings.filter.block_number);
+                App.debt_manager_settings.filter.block_number++;
             }
             $holder.find( ".debtList" ).append( html);
             return;
         },
         reload: function(){
             $holder.find( ".debtList" ).html('');
-            debt_manager_settings.block_list = [];
-            debt_manager_settings.filter.block_number = -1;
-            debt_manager_settings.load(-1);
+            App.debt_manager_settings.block_list = [];
+            App.debt_manager_settings.filter.block_number = -1;
+            App.debt_manager_settings.load(-1);
         },
         load_block: function(block_number){
-            debt_manager_settings.is_loading = true;
-            $.post('DebtManager/getBlock', {filter:JSON.stringify(debt_manager_settings.filter)}, function (resp) {
+            App.debt_manager_settings.is_loading = true;
+            $.post('DebtManager/getBlock', {filter:JSON.stringify(App.debt_manager_settings.filter)}, function (resp) {
                 if (resp) {
                     var response = App.json(resp);
-                    debt_manager_settings.block = response;
+                    App.debt_manager_settings.block = response;
                     if(response.list){
-                        debt_manager_settings.render(debt_manager_settings.block, block_number);
+                        App.debt_manager_settings.render(App.debt_manager_settings.block, block_number);
                     } else {
-                        debt_manager_settings.render('empty', block_number);
+                        App.debt_manager_settings.render('empty', block_number);
                     }
+                    App.debt_manager_settings.load_if_needed();
                 }
             });
         },
         render:function(block, block_number){
-            debt_manager_settings.block_template = $holder.find('.block_template').html();
+            App.debt_manager_settings.block_template = $holder.find('.block_template').html();
             if(block === 'empty'){
-                debt_manager_settings.empty_block_template = $holder.find('.empty_block_template').html();
-                debt_manager_settings.empty_block_template = Mark.up(debt_manager_settings.empty_block_template,{date:block.date});
-                $holder.find('.block_'+block_number).html(debt_manager_settings.empty_block_template);
+                App.debt_manager_settings.empty_block_template = $holder.find('.empty_block_template').html();
+                App.debt_manager_settings.empty_block_template = Mark.up(App.debt_manager_settings.empty_block_template,{date:block.date});
+                $holder.find('.block_'+block_number).html(App.debt_manager_settings.empty_block_template);
                 return;
             }
-            debt_manager_settings.block_template = Mark.up(debt_manager_settings.block_template,{block:block.list, date:block.date, total:block.total});
-            $holder.find('.block_'+block_number).html(debt_manager_settings.block_template);
-            debt_manager_settings.is_loading = false;
+            App.debt_manager_settings.block_template = Mark.up(App.debt_manager_settings.block_template,{block:block.list, date:block.date, total:block.total});
+            $holder.find('.block_'+block_number).html(App.debt_manager_settings.block_template);
+            App.debt_manager_settings.is_loading = false;
         },
         
         getSettings: function(){
@@ -286,15 +289,15 @@
             $.post('DebtManager/getUserSettings', function (resp) {
                 if (resp) {
                     var response = App.json(resp);
-                    debt_manager_settings.data = response;
-                    $holder.find("select[name='group_by_date']").val(debt_manager_settings.data.group_by_date);
-                    $holder.find("select[name='group_by_pcomp']").val(debt_manager_settings.data.group_by_pcomp);
-                    $holder.find("input[name='pcomp_name']").val(debt_manager_settings.data.pcomp_name);
-                    $holder.find("input[name='pcomp_id']").val(debt_manager_settings.data.pcomp_id);
-                    $holder.find("input[name='buy_trans']").prop('checked', debt_manager_settings.data.buy_trans);
-                    $holder.find("input[name='sell_trans']").prop('checked', debt_manager_settings.data.sell_trans);
-                    $holder.find("input[name='acomp']").prop('checked', debt_manager_settings.data.acomp);
-                    $holder.find("input[name='notificate']").prop('checked', debt_manager_settings.data.notificate);
+                    App.debt_manager_settings.data = response;
+                    $holder.find("select[name='group_by_date']").val(App.debt_manager_settings.data.group_by_date);
+                    $holder.find("select[name='group_by_pcomp']").val(App.debt_manager_settings.data.group_by_pcomp);
+                    $holder.find("input[name='pcomp_name']").val(App.debt_manager_settings.data.pcomp_name);
+                    $holder.find("input[name='pcomp_id']").val(App.debt_manager_settings.data.pcomp_id);
+                    $holder.find("input[name='buy_trans']").prop('checked', App.debt_manager_settings.data.buy_trans);
+                    $holder.find("input[name='sell_trans']").prop('checked', App.debt_manager_settings.data.sell_trans);
+                    $holder.find("input[name='acomp_only']").prop('checked', App.debt_manager_settings.data.acomp_only);
+                    $holder.find("input[name='notificate']").prop('checked', App.debt_manager_settings.data.notificate);
                     return;
                 } 
             });
@@ -307,27 +310,27 @@
                 $holder.find("input[name='buy_trans']").prop('checked', true);
                 $holder.find("input[name='sell_trans']").prop('checked', true); 
             }
-            debt_manager_settings.data.group_by_date = $holder.find("select[name='group_by_date']").val();
-            debt_manager_settings.data.group_by_pcomp = $holder.find("select[name='group_by_pcomp']").val();
-            debt_manager_settings.data.pcomp_name = $holder.find("input[name='pcomp_name']").val();
-            debt_manager_settings.data.pcomp_id = $holder.find("input[name='pcomp_id']").val();
-            debt_manager_settings.data.buy_trans = $holder.find("input[name='buy_trans']").is(":checked");
-            debt_manager_settings.data.sell_trans = $holder.find("input[name='sell_trans']").is(":checked");
-            debt_manager_settings.data.acomp = $holder.find("input[name='acomp']").is(":checked");
-            debt_manager_settings.data.notificate = $holder.find("input[name='notificate']").is(":checked");
-            $.post('DebtManager/updateSettings', {user_settings: JSON.stringify(debt_manager_settings.data)}, function (resp) {
+            App.debt_manager_settings.data.group_by_date = $holder.find("select[name='group_by_date']").val();
+            App.debt_manager_settings.data.group_by_pcomp = $holder.find("select[name='group_by_pcomp']").val();
+            App.debt_manager_settings.data.pcomp_name = $holder.find("input[name='pcomp_name']").val();
+            App.debt_manager_settings.data.pcomp_id = $holder.find("input[name='pcomp_id']").val();
+            App.debt_manager_settings.data.buy_trans = $holder.find("input[name='buy_trans']").is(":checked");
+            App.debt_manager_settings.data.sell_trans = $holder.find("input[name='sell_trans']").is(":checked");
+            App.debt_manager_settings.data.acomp_only = $holder.find("input[name='acomp_only']").is(":checked");
+            App.debt_manager_settings.data.notificate = $holder.find("input[name='notificate']").is(":checked");
+            $.post('DebtManager/updateSettings', {user_settings: JSON.stringify(App.debt_manager_settings.data)}, function (resp) {
                 if (resp) {
                     var response = App.json(resp);
-                    debt_manager_settings.data = response;
-                    $holder.find("input[name=pcomp_id]").val(debt_manager_settings.data.pcomp_id);
-                    $holder.find("input[name=pcomp_name]").val(debt_manager_settings.data.pcomp_name);
-                    $holder.find("select[name=group_by_date]").val(debt_manager_settings.data.group_by_date);
-                    $holder.find("select[name=group_by_pcomp]").val(debt_manager_settings.data.group_by_pcomp);
-                    $holder.find("input[name='buy_trans']").prop('checked', debt_manager_settings.data.buy_trans);
-                    $holder.find("input[name='sell_trans']").prop('checked', debt_manager_settings.data.sell_trans);
-                    $holder.find("input[name='acomp']").prop('checked', debt_manager_settings.data.acomp);
-                    $holder.find("input[name='notificate']").prop('checked', debt_manager_settings.data.notificate);
-                    debt_manager_settings.reload();
+                    App.debt_manager_settings.data = response;
+                    $holder.find("input[name=pcomp_id]").val(App.debt_manager_settings.data.pcomp_id);
+                    $holder.find("input[name=pcomp_name]").val(App.debt_manager_settings.data.pcomp_name);
+                    $holder.find("select[name=group_by_date]").val(App.debt_manager_settings.data.group_by_date);
+                    $holder.find("select[name=group_by_pcomp]").val(App.debt_manager_settings.data.group_by_pcomp);
+                    $holder.find("input[name='buy_trans']").prop('checked', App.debt_manager_settings.data.buy_trans);
+                    $holder.find("input[name='sell_trans']").prop('checked', App.debt_manager_settings.data.sell_trans);
+                    $holder.find("input[name='acomp_only']").prop('checked', App.debt_manager_settings.data.acomp_only);
+                    $holder.find("input[name='notificate']").prop('checked', App.debt_manager_settings.data.notificate);
+                    App.debt_manager_settings.reload();
                 }
             });
         },
@@ -336,11 +339,11 @@
                 if (status === 'select' ) {
                     $holder.find("input[name=pcomp_name]").val(pcomp.label);
                     $holder.find("input[name=pcomp_id]").val(pcomp.company_id);
-                    debt_manager_settings.updateSettings();
+                    App.debt_manager_settings.updateSettings();
                 } else if(status === 'reset') {
                     $holder.find("input[name=pcomp_name]").val("");
                     $holder.find("input[name=pcomp_id]").val("");
-                    debt_manager_settings.updateSettings();
+                    App.debt_manager_settings.updateSettings();
                 }
             });
         },
@@ -370,9 +373,21 @@
                     }
                 }
             });
+        },
+        company_create_notification:function( node ){
+            var pcomp_id=$(node).data('pcomp_id');
+            
+            console.log($(node));
+            
+            
+            $.post("DebtManager/companyMailingNotificationCreate",{pcomp_id:pcomp_id},function(ok){
+                if(ok*1){
+                    App.flash("Напоминание для клиента создано");
+                }
+            });
         }
     };
-    $(debt_manager_settings.init);
+    $(App.debt_manager_settings.init);
 })();
     
 </script>
