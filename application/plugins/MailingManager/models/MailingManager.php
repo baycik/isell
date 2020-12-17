@@ -315,7 +315,7 @@ class MailingManager extends Catalog {
         $message['message_batch_label'] = $batch_label;
         $message['message_recievers'] = implode('|',$validated_contact);
         $message['message_handler'] = $message_batch['handler'];
-        $message['message_reason'] = $message_batch['subject'];
+        $message['message_reason'] = preg_replace('/{{[^}]+}}/', '', $message_batch['subject']);
         $message['message_subject'] = $this->messageRenderTpl($message_batch['subject'],$context);;
         $message['message_note'] = '';
         $message['message_body'] = $this->messageRenderTpl($message_batch['body'],$context);
