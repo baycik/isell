@@ -57,8 +57,8 @@ class MailingManager extends Catalog {
         $plugin_data=$this->plugin_data;
         $this->pluginSettingsLoad();
         $plugin_data=(object) array_merge((array) $this->plugin_data, (array) $plugin_data);
-        $encoded_settings = json_encode($settings, JSON_UNESCAPED_UNICODE|JSON_HEX_APOS|JSON_HEX_QUOT );
-        $encoded_data =     json_encode($plugin_data, JSON_UNESCAPED_UNICODE|JSON_HEX_APOS|JSON_HEX_QUOT );
+        $encoded_settings = addslashes(json_encode($settings, JSON_UNESCAPED_UNICODE ));
+        $encoded_data = json_encode($plugin_data, JSON_UNESCAPED_UNICODE );
         $this->settings=    $settings;
         $this->plugin_data= $plugin_data;
         $sql = "
