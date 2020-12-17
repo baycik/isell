@@ -182,7 +182,7 @@ class MailingManager extends Catalog {
                         $result=$Model->{$matches[2]}($context);
                         if( $result===false ){
                             $this->message_composing_aborted=true;
-                            echo "Notice aborted {$matches[2]} for company {$context->label}\n";
+                            $this->Hub->msg("Пропущен {$matches[2]} для {$context->label}<br>\n");
                         }
                         return $result;
                     }
@@ -346,7 +346,7 @@ class MailingManager extends Catalog {
                 user_sign manager_sign,
                 user_phone manager_phone,
                 user_position manager_position,
-                DATE_FORMAT(NOW(),'d%.m%.Y%') date_today
+                DATE_FORMAT(NOW(),'%d.%m.%Y') date_today
             FROM
                 companies_list cl
                     JOIN

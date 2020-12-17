@@ -115,6 +115,7 @@ class DebtManager extends Catalog {
         if( $user_assigned_path ){
             $filter_path = "AND ct.path LIKE '$user_assigned_path%'";
         }
+        $this->query("DROP TEMPORARY TABLE IF EXISTS tmp_trans_table");
         $trans_table="
             CREATE TEMPORARY TABLE tmp_trans_table AS
             SELECT
@@ -186,7 +187,7 @@ class DebtManager extends Catalog {
             $group_by = "passive_company_id";
         }
         
-        $this->query("DROP TABLE IF EXISTS debt_block_tmp");
+        $this->query("DROP TEMPORARY TABLE IF EXISTS debt_block_tmp");
         $sql = "
                 CREATE TEMPORARY TABLE debt_block_tmp  
                 SELECT 
@@ -594,8 +595,15 @@ class DebtManager extends Catalog {
         return $block_list;
     }
 
+    
+    
+    private $lastWidgetPcompId=0;
     public function PaymentCalendar( object $context ){
         if( $context->company_id??false ){
+            if($this->lastWidgetPcompId!=$context->company_id){
+                $this->blockTransTableCreated=false;
+                $this->lastWidgetPcompId=$context->company_id;
+            }
             $filter=[
                 'pcomp_id'=>$context->company_id,
                 'deferment'=>$context->deferment,
@@ -613,6 +621,10 @@ class DebtManager extends Catalog {
     
     public function DebtTotal( object $context ) {
         if( $context->company_id??false ){
+            if($this->lastWidgetPcompId!=$context->company_id){
+                $this->blockTransTableCreated=false;
+                $this->lastWidgetPcompId=$context->company_id;
+            }
             $params=(object)[
                 'pcomp_id'=>$context->company_id,
                 'sell_trans'=>true,
@@ -630,13 +642,21 @@ class DebtManager extends Catalog {
                         ,2) AS amount_sell
                 FROM 
                     tmp_trans_table";
-            return $this->get_value($sql);
+            $debt=$this->get_value($sql);
+            if( !$debt ){
+                return false;
+            }
+            return $debt;
         }
         return false;        
     }
     
     public function DebtExpired( object $context ) {
         if( $context->company_id??false ){
+            if($this->lastWidgetPcompId!=$context->company_id){
+                $this->blockTransTableCreated=false;
+                $this->lastWidgetPcompId=$context->company_id;
+            }
             $params=(object)[
                 'pcomp_id'=>$context->company_id,
                 'sell_trans'=>true,
@@ -656,7 +676,11 @@ class DebtManager extends Catalog {
                     tmp_trans_table
                 WHERE
                     due_date>NOW()";
-            return $this->get_value($sql);
+            $debt=$this->get_value($sql);
+            if( !$debt ){
+                return false;
+            }
+            return $debt;
         }
         return false;        
     }
