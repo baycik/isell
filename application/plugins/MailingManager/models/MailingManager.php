@@ -182,6 +182,7 @@ class MailingManager extends Catalog {
                         $result=$Model->{$matches[2]}($context);
                         if( $result===false ){
                             $this->message_composing_aborted=true;
+                            echo "Notice aborted {$matches[2]} for company {$context->label}\n";
                         }
                         return $result;
                     }
@@ -249,22 +250,28 @@ class MailingManager extends Catalog {
      * Message batches CRUD functions
      */
     public function messageBatchCreate( array $message_batch ){
-        $mesages_created=false;
-        $context = (object)[];
+        $mesages_created=0;
         $batch_label = md5($message_batch['handler'].$message_batch['subject'].date('Y-m-d H:i:s'));
         foreach($message_batch['manual_reciever_list'] as $contact){
             $contact_type = $this->messageDefineContactType($contact);
             if($contact_type == ''){
                 continue;
             }
-            $context = $this->recieverGetByContact($contact, $contact_type);
-            if(empty($context->{"company_".$contact_type})){
-                $context->{"company_".$contact_type} = $contact;
-            } 
-            $message = $this->messageBatchComposeMessage($batch_label, $message_batch, $context);
-            $context->company_name = $contact;
-            $this->messageCreate($message);
-            $mesages_created=true;
+            if( $contact_type=='email' ){
+                $contexts = $this->messageBatchContextGet( null, null, $contact );
+            }
+            if( $contact_type=='phone' ){
+                $contexts = $this->messageBatchContextGet( null, $contact, null );
+            }
+            $this->message_composing_aborted=false;
+            $message = $this->messageBatchComposeMessage($batch_label, $message_batch, $contexts[0]);
+            if($this->message_composing_aborted){
+                continue;
+            }
+            $ok=$this->messageCreate($message);
+            if( $ok ){
+                $mesages_created++;
+            }
         }
         $batch_context = $this->messageBatchContextGet( $message_batch['reciever_list_id'] );
         foreach($batch_context as $context){
@@ -276,8 +283,10 @@ class MailingManager extends Catalog {
             if($this->message_composing_aborted){
                 continue;
             }
-            $this->messageCreate($message);
-            $mesages_created=true;
+            $ok=$this->messageCreate($message);
+            if( $ok ){
+                $mesages_created++;
+            }
         }
         return $mesages_created;
     }
@@ -312,9 +321,15 @@ class MailingManager extends Catalog {
         $message['message_body'] = $this->messageRenderTpl($message_batch['body'],$context);
         return $message;
     }
-    private function messageBatchContextGet( string $reciever_list_id ){
+    private function messageBatchContextGet( string $reciever_list_id=null, string $phone=null, string $email=null ){
         $active_company_id=$this->Hub->acomp('company_id');
-        $where = $this->recieverListFilterGet($reciever_list_id);
+        if( $phone ){
+            $where="company_mobile LIKE '%$phone%' OR company_phone LIKE '%$phone%' ";
+        }if( $email ){
+            $where="company_email LIKE '%$email%'";
+        } else {
+            $where = $this->recieverListFilterGet($reciever_list_id);
+        }
         $sql="
             SELECT
                 $active_company_id active_company_id,

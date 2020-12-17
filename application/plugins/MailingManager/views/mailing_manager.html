@@ -167,7 +167,7 @@ App.mailing_manager=
                 }
                 $.post("MailingManager/messageBatchCreate", {message_batch: JSON.stringify(batch)}, function (ok) {
                     if ( ok * 1 ) {
-                        App.flash("Сообщения созданы");
+                        App.flash("Создано сообщений "+ok);
                     } else {
                         App.flash("Ни одного сообщения не создано!");
                     }
