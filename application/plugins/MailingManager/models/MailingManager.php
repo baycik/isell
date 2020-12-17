@@ -366,7 +366,7 @@ class MailingManager extends Catalog {
         if(!empty($message['message_recievers'])){
             $custom_recievers = explode(',', $message['message_recievers']);
             foreach($custom_recievers as $custom_reciever){
-                $custom_reciever_object = new StdClass();
+                $custom_reciever_object = (object)[];
                 $custom_reciever_object->{$message['message_handler']} = $custom_reciever;
                 $reciever_list[] = $custom_reciever_object;
             }
@@ -468,11 +468,10 @@ class MailingManager extends Catalog {
 
     private function recieverListFilterGet( string $reciever_list_id ){
         $this->Hub->set_level(2);
-        $settings = $this->settingsGet();
-        if( empty($this->settings->reciever_list[$reciever_list_id]) ){
+        if( empty($this->settings->reciever_list->{$reciever_list_id}) ){
             return 0;
         }
-        $reciever_list_settings=$this->settings->reciever_list[$reciever_list_id];
+        $reciever_list_settings=$this->settings->reciever_list->{$reciever_list_id};
         $assigned_path=  $this->Hub->svar('user_assigned_path');
         $user_level=     $this->Hub->svar('user_level');
         $or_case=[];
@@ -480,17 +479,17 @@ class MailingManager extends Catalog {
         if( $assigned_path ){
             $and_case[]=" path LIKE '%".str_replace(",", "%' OR path LIKE '%", $assigned_path)."%'";
         }
-        if( !empty($reciever_list_settings['subject_path_include']) ){
-            $or_case[]=" path LIKE '%".str_replace(",", "%' OR path LIKE '%", $reciever_list_settings['subject_path_include'])."%'";
+        if( !empty($reciever_list_settings->subject_path_include) ){
+            $or_case[]=" path LIKE '%".str_replace(",", "%' OR path LIKE '%", $reciever_list_settings->subject_path_include)."%'";
         }
-        if( !empty($reciever_list_settings['subject_path_exclude']) ){
-            $and_case[]=" path NOT LIKE '%".str_replace(",", "%' AND path NOT LIKE '%", $reciever_list_settings['subject_path_exclude'])."%'";
+        if( !empty($reciever_list_settings->subject_path_exclude) ){
+            $and_case[]=" path NOT LIKE '%".str_replace(",", "%' AND path NOT LIKE '%", $reciever_list_settings->subject_path_exclude)."%'";
         }
-        if( $reciever_list_settings['subject_manager_include']){
-            $or_case[]=" manager_id IN (".implode(',',$reciever_list_settings['subject_manager_include']).")";
+        if( $reciever_list_settings->subject_manager_include){
+            $or_case[]=" manager_id IN (".implode(',',$reciever_list_settings->subject_manager_include).")";
         }
-        if( $reciever_list_settings['subject_manager_exclude']){
-            $and_case[]=" manager_id NOT IN (".implode(',', $reciever_list_settings['subject_manager_exclude']).")";
+        if( $reciever_list_settings->subject_manager_exclude){
+            $and_case[]=" manager_id NOT IN (".implode(',', $reciever_list_settings->subject_manager_exclude).")";
         }
         $where="";
         if( count($or_case) ){
