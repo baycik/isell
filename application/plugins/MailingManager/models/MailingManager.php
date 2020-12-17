@@ -330,7 +330,8 @@ class MailingManager extends Catalog {
                 company_mobile,
                 user_sign manager_sign,
                 user_phone manager_phone,
-                user_position manager_position
+                user_position manager_position,
+                DATE_FORMAT(NOW(),'d%.m%.Y%') date_today
             FROM
                 companies_list cl
                     JOIN
