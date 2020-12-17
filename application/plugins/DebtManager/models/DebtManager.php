@@ -608,5 +608,56 @@ class DebtManager extends Catalog {
             $table_html=$this->load->view('debt_table_template', ['block_list' => $block_list], true);
             return $table_html;
         }
+        return false;
+    }
+    
+    public function DebtTotal( object $context ) {
+        if( $context->company_id??false ){
+            $params=(object)[
+                'pcomp_id'=>$context->company_id,
+                'sell_trans'=>true,
+                'buy_trans'=>false
+            ];
+            $this->blocksTransTableCreate( $params );
+            $sql = "
+                SELECT 
+                    ROUND(
+                            SUM(
+                                IF(acc_debit_code = 361,
+                                    IF(trans_status = 2, GET_PARTLY_PAYED(active_company_id , passive_company_id ,361),amount),
+                                NULL)
+                            )
+                        ,2) AS amount_sell
+                FROM 
+                    tmp_trans_table";
+            return $this->get_value($sql);
+        }
+        return false;        
+    }
+    
+    public function DebtExpired( object $context ) {
+        if( $context->company_id??false ){
+            $params=(object)[
+                'pcomp_id'=>$context->company_id,
+                'sell_trans'=>true,
+                'buy_trans'=>false
+            ];
+            $this->blocksTransTableCreate( $params );
+            $sql = "
+                SELECT 
+                    ROUND(
+                            SUM(
+                                IF(acc_debit_code = 361,
+                                    IF(trans_status = 2, GET_PARTLY_PAYED(active_company_id , passive_company_id ,361),amount),
+                                NULL)
+                            )
+                        ,2) AS amount_sell
+                FROM 
+                    tmp_trans_table
+                WHERE
+                    due_date>NOW()";
+            return $this->get_value($sql);
+        }
+        return false;        
     }
 }

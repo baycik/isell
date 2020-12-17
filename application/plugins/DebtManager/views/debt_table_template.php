@@ -1,26 +1,24 @@
 <?php 
-    function todmy( $iso ){
-        $parts=explode('-',$iso);
-        return "$parts[2].$parts[1].$parts[0]";
-    }
-    function expired( $due_date_dmy ){
-        $due = new DateTime($due_date_dmy);
-        $now = new DateTime();
-        $interval = $due->diff($now);
-        if($due>$now){
-            return '';
+    if( !function_exists('expired') ){
+        function expired( $due_date_dmy ){
+            $due = new DateTime($due_date_dmy);
+            $now = new DateTime();
+            $interval = $due->diff($now);
+            if($due>$now){
+                return '';
+            }
+            $text='';
+            if( $interval->y ){
+                $text.="{$interval->y}г ";
+            }
+            if( $interval->m ){
+                $text.="{$interval->m}м ";
+            }
+            if( $interval->d ){
+                $text.="{$interval->d}д";
+            }
+            return $text;
         }
-        $text='';
-        if( $interval->y ){
-            $text.="{$interval->y}г ";
-        }
-        if( $interval->m ){
-            $text.="{$interval->m}м ";
-        }
-        if( $interval->d ){
-            $text.="{$interval->d}д";
-        }
-        return $text;
     }
 ?>
 <table class="debt-table-body" >
