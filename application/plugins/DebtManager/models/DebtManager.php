@@ -610,7 +610,7 @@ class DebtManager extends Catalog {
                 'group_by_date'=>'WEEK'
             ];
             $block_list=$this->blockListGet($filter);
-            if( $block_list===null ){
+            if( $block_list===null || $block_list['grand_total_sell']==0 ){
                 return false;
             }
             $table_html=$this->load->view('debt_table_template', ['block_list' => $block_list], true);
@@ -627,6 +627,7 @@ class DebtManager extends Catalog {
             }
             $params=(object)[
                 'pcomp_id'=>$context->company_id,
+                'acomp_only'=>1,
                 'sell_trans'=>true,
                 'buy_trans'=>false
             ];
@@ -659,6 +660,7 @@ class DebtManager extends Catalog {
             }
             $params=(object)[
                 'pcomp_id'=>$context->company_id,
+                'acomp_only'=>1,
                 'sell_trans'=>true,
                 'buy_trans'=>false
             ];
@@ -675,7 +677,7 @@ class DebtManager extends Catalog {
                 FROM 
                     tmp_trans_table
                 WHERE
-                    due_date>NOW()";
+                    due_date<NOW()";
             $debt=$this->get_value($sql);
             if( !$debt ){
                 return false;
