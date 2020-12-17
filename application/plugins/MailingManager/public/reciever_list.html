@@ -98,8 +98,11 @@
             App.MailingManager_reciever_list.update();
         },
         update: function () {
+            App.MailingManager_reciever_list.render();
+            App.MailingManager_reciever_list.initControls();
             $.post("MailingManager/settingsUpdate", {settings: JSON.stringify(App.MailingManager_reciever_list.data.settings)}, function (ok) {
                 if ( ok * 1 ){
+                    //App.MailingManager_reciever_list.load();
                     App.mailing_manager.reload_recievers(App.MailingManager_reciever_list.data.settings.reciever_list);
                 }
             });
