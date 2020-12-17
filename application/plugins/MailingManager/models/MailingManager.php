@@ -82,24 +82,15 @@ class MailingManager extends Catalog {
             WHERE plugin_system_name = 'MailingManager'
             ";
         $row = $this->get_row($sql);
-        $this->settings=json_decode($row->plugin_settings);
-        $this->plugin_data=json_decode($row->plugin_json_data);
+        $this->settings=json_decode( str_replace("\n", '\n', $row->plugin_settings) );
+        $this->plugin_data=json_decode( str_replace("\n", '\n', $row->plugin_json_data) );
     }
 
 
     public function settingsGet(){
-        $sql="
-            SELECT
-                plugin_settings
-            FROM
-                plugin_list
-            WHERE
-                plugin_system_name = 'MailingManager'
-            ";
         return [
-            'settings' => json_decode($this->get_row($sql)->plugin_settings, true),
-            'staff_list' => $this->Hub->load_model("Pref")->getStaffList(),
-            'editor_markup' => $this->default_markup_values
+            'settings' => $this->settings,
+            'staff_list' => $this->Hub->load_model("Pref")->getStaffList()
         ];
     }
 
@@ -170,8 +161,8 @@ class MailingManager extends Catalog {
     public function messageSend( $message_id ){
         $this->settings = $this->settingsGet();
         $this->messageChangeStatus($message_id, 'processing');
-        $this->settings['settings']['event_id'] = $this->mailingCreate();
-        $this->settingsUpdate($this->settings['settings']);
+        $this->settings['event_id'] = $this->mailingCreate();
+        $this->pluginSettingsFlush();
     }
     
     public function messageCancelSending( $message_id ){
@@ -205,7 +196,6 @@ class MailingManager extends Catalog {
             }
             return '???';
         },$message_template);
-        echo $message_template;
         return $message_template;
     }
 
@@ -255,20 +245,11 @@ class MailingManager extends Catalog {
         return $this->get_list($msg_list_msg);
     }
 
-    private $default_markup_values = [
-        'company_name' => 'Ваша компания',
-        'company_person' => 'Клиент нашей компании',
-        'company_director' => 'Клиент нашей компании',
-        'company_email' => 'Ваш электронный адрес',
-        'company_web' => 'Адрес вашего сайта',
-        'company_mobile' => 'Ваш номер телефона',
-        'company_address' => 'Ваш физический адрес'
-    ];
-
     /*
      * Message batches CRUD functions
      */
     public function messageBatchCreate( array $message_batch ){
+        $mesages_created=false;
         $context = (object)[];
         $batch_label = md5($message_batch['handler'].$message_batch['subject'].date('Y-m-d H:i:s'));
         foreach($message_batch['manual_reciever_list'] as $contact){
@@ -283,6 +264,7 @@ class MailingManager extends Catalog {
             $message = $this->messageBatchComposeMessage($batch_label, $message_batch, $context);
             $context->company_name = $contact;
             $this->messageCreate($message);
+            $mesages_created=true;
         }
         $batch_context = $this->messageBatchContextGet( $message_batch['reciever_list_id'] );
         foreach($batch_context as $context){
@@ -295,8 +277,9 @@ class MailingManager extends Catalog {
                 continue;
             }
             $this->messageCreate($message);
+            $mesages_created=true;
         }
-        return true;
+        return $mesages_created;
     }
     
     
@@ -366,8 +349,8 @@ class MailingManager extends Catalog {
     public function messageBatchSend( string $message_batch_label ){
         $this->settings = $this->settingsGet();
         $this->messageBatchChangeStatus($message_batch_label, 'processing');
-        $this->settings['settings']['event_id'] = $this->mailingCreate();
-        $this->settingsUpdate($this->settings['settings']);
+        $this->settings['event_id'] = $this->mailingCreate();
+        $this->pluginSettingsFlush();
     }
 
     public function messageBatchCancelSending( string $message_batch_label ){
@@ -485,10 +468,10 @@ class MailingManager extends Catalog {
     private function recieverListFilterGet( string $reciever_list_id ){
         $this->Hub->set_level(2);
         $settings = $this->settingsGet();
-        if( empty($settings['settings']['reciever_list'][$reciever_list_id]) ){
+        if( empty($this->settings->reciever_list[$reciever_list_id]) ){
             return 0;
         }
-        $reciever_list_settings=$settings['settings']['reciever_list'][$reciever_list_id];
+        $reciever_list_settings=$this->settings->reciever_list[$reciever_list_id];
         $assigned_path=  $this->Hub->svar('user_assigned_path');
         $user_level=     $this->Hub->svar('user_level');
         $or_case=[];
@@ -586,10 +569,10 @@ class MailingManager extends Catalog {
 
     public function mailingCreate(){
         $Events=$this->Hub->load_model('Events');
-        if(!empty($Events->eventGet($this->settings['settings']['event_id']))){
-            return $Events->eventGet($this->settings['settings']['event_id'])->event_id;
+        if(!empty($Events->eventGet($this->settings['event_id']))){
+            return $Events->eventGet($this->settings['event_id'])->event_id;
         } else {
-            $this->settings['settings']['event_id'] = false;
+            $this->settings['event_id'] = false;
         }
         $program = [
             'commands' => [[
@@ -614,7 +597,7 @@ class MailingManager extends Catalog {
         $event_status='pending';
         $event_liable_user_id='';
         $event_is_private = '1';
-        $event_id = $Events->eventSave($this->settings['settings']['event_id'],
+        $event_id = $Events->eventSave($this->settings['event_id'],
                 $doc_id,
                 $event_date,
                 $event_priority,
@@ -656,9 +639,9 @@ class MailingManager extends Catalog {
     public function mailingFinish(){
         $this->settings = $this->settingsGet();
         $Events=$this->Hub->load_model('Events');
-        $Events->eventDelete($this->settings['settings']['event_id']);
-        $this->settings['settings']['event_id'] = false;
-        $this->settingsUpdate($this->settings['settings']);
+        $Events->eventDelete($this->settings['event_id']);
+        $this->settings['event_id'] = false;
+        $this->pluginSettingsFlush();
         return true;
     }
     

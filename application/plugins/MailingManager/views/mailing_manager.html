@@ -167,7 +167,9 @@ App.mailing_manager=
                 }
                 $.post("MailingManager/messageBatchCreate", {message_batch: JSON.stringify(batch)}, function (ok) {
                     if ( ok * 1 ) {
-                        App.flash("Batch created");
+                        App.flash("Сообщения созданы");
+                    } else {
+                        App.flash("Ни одного сообщения не создано!");
                     }
                     MessageList.batch.load();
                 });
@@ -351,7 +353,6 @@ App.mailing_manager=
                 $.post('MailingManager/messageGet', {message_id: message_id}, function (resp) {
                     if (resp) {
                         MessageEditor.message = JSON.parse(resp);
-                        console.log(MessageEditor.message);
                         MessageEditor.render();
                     }
                 });
@@ -407,8 +408,10 @@ App.mailing_manager=
         renderMessageBody: function(){
             if(MessageEditor.current_template_index == '-1'){
                 window.frames['editor_iframe'].html = MessageEditor.current_message_body;
+                $('input[name="message_subject"]').val('');
             } else {
                 window.frames['editor_iframe'].html = MessageEditor.data.template_list[MessageEditor.current_template_index].html;
+                $('input[name="message_subject"]').val(MessageEditor.data.template_list[MessageEditor.current_template_index].subject);
             }
             $('#mailing_manager_tpl_edit,#mailing_manager_tpl_delete').attr('disabled',MessageEditor.current_template_index == '-1');
         },
@@ -552,7 +555,7 @@ App.mailing_manager=
         {{/.}}
     </div>
 </script>
-<div id="PluginMailingManager"  style="display: grid;grid-template-columns:600px auto">
+<div id="PluginMailingManager"  style="display: grid;grid-template-columns:500px auto">
     <div>
         <input type="search" id="PluginMailingManager_list_filter" style="width:calc( 100% - 32px );height: 35px;background-color: #fffd" placeholder="Фильтр">
         <img src="img/reload.png" style="height: 32px;width: auto;float:right;cursor: pointer" onclick="App.mailing_manager.reload_list()"/>
@@ -605,7 +608,7 @@ App.mailing_manager=
     <div id="PluginMailingManager_mailnew" class="right-block" style="display: none">
         <div class="mail-panel-header">
             <div class="type-row row">
-                <label>Тип адреса:</label>
+                <label>Тип рассылки:</label>
                 <select  name="message_handler">
                       <!--<option value="auto">Авто</option>-->
                       <option value="email">Email</option>
@@ -624,15 +627,19 @@ App.mailing_manager=
                             </span>
                              <!--{{/manual_reciever_list}}-->
                         </div>
-                        <input type="text" placeholder="Введите данные получателя..." name="reciever_field" value="">
+                        <input type="text" placeholder="Введите епочту или телефоны получателей..." name="reciever_field" value="">
                     </div>
-                    <select class="recievers-list"  name="reciever_list_id">
-                       <option value="empty">--Выберите список--</option>
-                        <!--{{reciever_list}}-->
-                       <option value="{{ reciever_list_id }}">{{ reciever_list_name }}</option>
-                         <!--{{/reciever_list}}-->
-                    </select>
-                    <button class="recievers-list-edit">Редактировать списки</button>
+                    <div>
+                        <select class="recievers-list"  name="reciever_list_id">
+                           <option value="empty">- Получатели не выбраны -</option>
+                            <!--{{reciever_list}}-->
+                           <option value="{{ reciever_list_id }}">{{ reciever_list_name }}</option>
+                             <!--{{/reciever_list}}-->
+                        </select>
+                    </div>
+                    <div>
+                        <button class="recievers-list-edit"><img src="img/edit-24.png"> Получатели</button>
+                    </div>
                 </div>
             </div>
             <div class="subject-row row">
@@ -642,7 +649,7 @@ App.mailing_manager=
         </div>
         <div class="mail-panel-body">  
             <div class="iframe-block">
-                <iframe id="editor_iframe" name="editor_iframe" style="height:474px;width: 100%;border: none;" src="page/dialog/text_editor_iframe.html"></iframe>
+                <iframe id="editor_iframe" name="editor_iframe" style="height:505px;width: 100%;border: none;" src="page/dialog/text_editor_iframe.html"></iframe>
                 <div class="iframe-buttons">
                     <button class="template_mark_down" data-field_name="company_name">Контрагент Название</button>
                     <button class="template_mark_down" data-field_name="company_person">Контрагент контактное лицо</button>
@@ -653,12 +660,15 @@ App.mailing_manager=
                     <button class="template_mark_down" data-field_name="manager_position">Менеджер должность</button>
                     
                     <button class="template_mark_down" data-field_name="DebtManager.PaymentCalendar">Календарь платежей</button>
+                    <button class="template_mark_down" data-field_name="DebtManager.DebtTotal">Задолженность общая</button>
+                    <button class="template_mark_down" data-field_name="DebtManager.DebtExpired">Задолженность просроченная</button>
                 </div>
             </div>
             <div class="templates-row">
+                <button type="button" id="mailing_manager_batch_create"><img src="img/add.png"> Создать рассылку</button> |
                 <button type="button" id="mailing_manager_tpl_add"><img src="img/save-24.png"> Сохранить шаблон</button>
                 <select name="template_list" >
-                    <option value="-1">--Новый шаблон--</option>
+                    <option value="-1">- Шаблон не выбран -</option>
                     <!--{{template_list}}
                     {{if name}}
                     <option value="{{#}}">{{name}}</option>
@@ -667,9 +677,6 @@ App.mailing_manager=
                 </select>
                 <button type="button" id="mailing_manager_tpl_delete" disabled><img src="img/delete.png"></button>
                 <button type="button" id="mailing_manager_tpl_edit" disabled><img src="img/edit-24.png"></button>
-            </div>
-            <div class="submit-row">
-                <button type="button" id="mailing_manager_batch_create"><img src="img/add.png"> Создать рассылку</button>
             </div>
         </div>
     </div>
@@ -772,18 +779,15 @@ App.mailing_manager=
     }
     #PluginMailingManager_mailnew .reciever-row-container{
         display: grid;
-        grid-template-columns: 60% 20% 20%;
+        grid-template-columns: auto min-content 110px;
     }
     
     #PluginMailingManager_mailnew .row{
         padding: 0.3em;
         border-bottom: 1px solid lightgray;
     }
-    #PluginMailingManager_mailnew .templates-row button,
-    #PluginMailingManager_mailnew .templates-row select,
-    #PluginMailingManager_mailnew .row button,
-    #PluginMailingManager_mailnew .row select{
-        height: 30px;
+    #PluginMailingManager_mailnew select{
+        height: 32px;
     }    
     #PluginMailingManager_mailnew .row input{
         width: 100%;
@@ -809,23 +813,22 @@ App.mailing_manager=
         grid-template-columns: 85% 15%;
     }
     #PluginMailingManager_mailnew .iframe-buttons{
-        background-color: #ffffff82;
-        border: 1px solid lightgray;
+        background-color: #ffffff;
+        border-bottom: 1px solid lightgray;
     }
     #PluginMailingManager_mailnew .iframe-buttons button{
         display: block;
-        width: 97%;
+        width: 100%;
         background-color: white;
-        border: 1px solid lightgray;
+        border:none;
+        border-bottom: 1px solid #ccc;
         padding: 0.7em;
         border-radius: 0;
         cursor: pointer;
         transition: 0.2s ease;
-        margin-bottom: -1px;
     }
     #PluginMailingManager_mailnew .iframe-buttons button:hover{
-        background: #4884d5;
-        color: white;
+        background: #Fe9;
     }
     #PluginMailingManager_mailnew .templates-row{
         padding: 0.5em;
@@ -842,7 +845,7 @@ App.mailing_manager=
         margin: 0;
     }
     #PluginMailingManager_mailview .inp_group.info-row{
-        display: block ruby
+        display: block ruby;
     }
     #PluginMailingManager_mailnew .inp_group b,
     #PluginMailingManager_mailview .inp_group b{
