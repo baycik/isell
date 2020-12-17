@@ -64,7 +64,7 @@ class MailingManager extends Catalog {
         $sql = "
             UPDATE
                 plugin_list
-            SET
+            SET 
                 plugin_settings = '$encoded_settings',
                 plugin_json_data = '$encoded_data'
             WHERE plugin_system_name = 'MailingManager'
