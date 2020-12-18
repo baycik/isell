@@ -128,8 +128,8 @@ class DebtManager extends Catalog {
                     JOIN 
                 companies_tree ct USING(branch_id)
             WHERE
-                trans_status IN (1,2,6,7) 
-                AND ($filter_trans)
+                trans_status IN (1,2,6,7) AND 
+                ($filter_trans)
                 $filter_acomp
                 $filter_pcomp
                 $filter_level
@@ -556,7 +556,7 @@ class DebtManager extends Catalog {
             'buy_trans'=>false
         ];
         $this->blocksTransTableCreate( $params );
-        $sql = "SELECT {$filter['deferment']} - DATEDIFF(NOW(),MAX(cstamp)) FROM tmp_trans_table";
+        $sql = "SELECT GREATEST({$filter['deferment']} - DATEDIFF(NOW(),MAX(cstamp)),0) FROM tmp_trans_table";
         $ahead_days=$this->get_value($sql);
         switch($filter['group_by_date']){
             case 'YEAR':
@@ -579,9 +579,9 @@ class DebtManager extends Catalog {
             'grand_total_buy'=>0
         ];
         $block_count = $this->blockListCountGet($filter);
-        if($block_count==0){
-            return null;
-        }
+//        if($block_count==0){
+//            return null;
+//        }
         for($i = -1; $i < $block_count; $i++){
             $filter['block_number'] = $i;
             $block = $this->getBlock($filter);
@@ -619,7 +619,7 @@ class DebtManager extends Catalog {
         return false;
     }
     
-    public function DebtTotal( object $context ) {
+        public function DebtTotal( object $context ) {
         if( $context->company_id??false ){
             if($this->lastWidgetPcompId!=$context->company_id){
                 $this->blockTransTableCreated=false;
