@@ -494,7 +494,9 @@ class AccountsCore extends Catalog{
 	if( $trans['trans_ref']??false ){
 	    $this->update('acc_trans', ['trans_ref'=>$trans['trans_ref'],'trans_status'=>5], ['trans_id'=>$trans_id]);
 	    $this->update('acc_trans', ['trans_ref'=>$trans_id,'trans_status'=>4], ['trans_id'=>$trans['trans_ref']]);
-	}
+	} else {
+            $this->update('acc_trans', ['trans_status'=>0], ['trans_id'=>$trans_id]);
+        }
     }
     private function transAlreadyLinked( $trans_id ){
 	return $this->get_value("SELECT trans_ref FROM acc_trans WHERE trans_id='$trans_id'");
