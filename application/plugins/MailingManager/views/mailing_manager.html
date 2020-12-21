@@ -280,7 +280,7 @@ App.mailing_manager=
                         MessageEditor.updateSettings();
                     }
                     if( status === 'close' ){
-                        MessageEditor.render();
+                        MessageEditor.renderNew();
                     }
                 });
             });
@@ -400,7 +400,7 @@ App.mailing_manager=
             window.frames['editor_iframe'].onload=function(){
                 MessageEditor.current_message_body = window.frames['editor_iframe'].getContent();
                 MessageEditor.action = 'new';
-                MessageEditor.render();
+                MessageEditor.renderNew();
             };
         },
         renderMessageBody: function(){
@@ -432,7 +432,7 @@ App.mailing_manager=
                         MessageEditor.data.reciever_list = response.settings.reciever_list;
                         MessageEditor.data.template_list = response.settings.template_list;
                     }
-                    //MessageEditor.render();
+                    //MessageEditor.renderNew();
                 }
             });
         },
@@ -469,7 +469,7 @@ App.mailing_manager=
             }
             MessageEditor.action = 'new';
             MessageEditor.updateSettings();
-            MessageEditor.render();
+            MessageEditor.renderNew();
         },
         templateDelete: function(){
             if(confirm("Удалить данный шаблон?")){
@@ -477,7 +477,7 @@ App.mailing_manager=
                 MessageEditor.current_template_index='-1';
                 MessageEditor.action = 'new';
                 MessageEditor.updateSettings();
-                MessageEditor.render();
+                MessageEditor.renderNew();
             }
         },
         templateEdit:function(){
@@ -488,7 +488,7 @@ App.mailing_manager=
             MessageEditor.data.template_list[MessageEditor.current_template_index].name=new_name;
             MessageEditor.action = 'new';
             MessageEditor.updateSettings();
-            MessageEditor.render();
+            MessageEditor.renderNew();
         },
         checkRecieverCorrectness: function(input){
             var separators = [' ',';',',','\r\n', '\r','\n','\t'];
