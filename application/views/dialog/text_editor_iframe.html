@@ -3,6 +3,7 @@
 <head>
 <script src="../../js/tinymce/tinymce.min.js"></script>
 <script type="text/javascript">
+html='';
 function init() {
     document.getElementById('myeditablediv').innerHTML = html;
     tinymce.init({
@@ -22,11 +23,14 @@ function init() {
             'textcolor colorpicker',
             'bdesk_photo'
         ],
-        toolbar: 'styleselect | forecolor backcolor | bdesk_photo | bold italic fontselect fontsizeselect | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent',
+        toolbar: 'styleselect | forecolor backcolor | bdesk_photo | bold italic fontselect fontsizeselect | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent'
     });
-}
-function getContent(){
-    return tinymce.activeEditor.getContent();
+    window.getContent=function(){
+        return tinymce.activeEditor.getContent();
+    };
+    window.setContent=function(html){
+        tinymce.activeEditor.setContent(html);
+    };
 }
 </script>
 <style>
@@ -37,6 +41,6 @@ function getContent(){
 </style>
 </head>
 <body onload="init()">
-    <textarea id="myeditablediv">Click here to edit!</textarea>
+    <textarea id="myeditablediv"></textarea>
 </body>
 </html>
