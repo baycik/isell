@@ -154,7 +154,7 @@ class MailingManager extends Catalog {
 
     public function messageSend( $message_id ){
         $this->messageChangeStatus($message_id, 'processing');
-        $this->plugin_data['event_id'] = $this->mailingCreate();
+        $this->plugin_data->event_id = $this->mailingCreate();
         $this->pluginSettingsFlush();
     }
     
@@ -349,7 +349,7 @@ class MailingManager extends Catalog {
     
     public function messageBatchSend( string $message_batch_label ){
         $this->messageBatchChangeStatus($message_batch_label, 'processing');
-        $this->plugin_data['event_id'] = $this->mailingCreate();
+        $this->plugin_data->event_id = $this->mailingCreate();
         $this->pluginSettingsFlush();
     }
 
@@ -568,10 +568,10 @@ class MailingManager extends Catalog {
 
     public function mailingCreate(){
         $Events=$this->Hub->load_model('Events');
-        if(!empty($Events->eventGet($this->plugin_data['event_id']))){
-            return $Events->eventGet($this->plugin_data['event_id'])->event_id;
+        if(!empty($Events->eventGet($this->plugin_data->event_id))){
+            return $Events->eventGet($this->plugin_data->event_id)->event_id;
         } else {
-            $this->plugin_data['event_id'] = false;
+            $this->plugin_data->event_id = false;
         }
         $program = [
             'commands' => [[
@@ -596,7 +596,7 @@ class MailingManager extends Catalog {
         $event_status='pending';
         $event_liable_user_id='';
         $event_is_private = '1';
-        $event_id = $Events->eventSave($this->plugin_data['event_id'],
+        $event_id = $Events->eventSave($this->plugin_data->event_id,
                 $doc_id,
                 $event_date,
                 $event_priority,
