@@ -305,6 +305,7 @@ class MailingManager extends Catalog {
         $message['message_body'] = $this->messageRenderTpl($message_batch['body'],$context);
         return $message;
     }
+    
     private function messageBatchContextGet( string $reciever_list_id=null, string $phone=null, string $email=null ){
         $active_company_id=$this->Hub->acomp('company_id');
         if( $phone ){
@@ -636,8 +637,8 @@ class MailingManager extends Catalog {
 
     public function mailingFinish(){
         $Events=$this->Hub->load_model('Events');
-        $Events->eventDelete($this->plugin_data['event_id']);
-        $this->plugin_data['event_id'] = false;
+        $Events->eventDelete($this->plugin_data->event_id);
+        $this->plugin_data->event_id = false;
         $this->pluginSettingsFlush();
         return true;
     }

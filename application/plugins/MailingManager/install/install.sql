@@ -6,7 +6,7 @@ CREATE TABLE `plugin_message_list` (
   `message_note` varchar(45) NOT NULL,
   `message_status` varchar(45) NOT NULL,
   `message_recievers` varchar(255) NOT NULL,
-  `message_subject` varchar(45) NOT NULL,
+  `message_subject` varchar(200) NOT NULL,
   `message_body` varchar(10000) NOT NULL,
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   `modified_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

@@ -441,7 +441,11 @@ App.mailing_manager=
             });
         },
         updateSettings: function () {
-            $.post("MailingManager/dataUpdate", {settings: JSON.stringify(MessageEditor.data)});
+            $.post("MailingManager/dataUpdate", {settings: JSON.stringify(MessageEditor.data)},function(ok){
+                if( ok*1 ){
+                    App.flash("Настройки сохранены!");
+                }
+            });
         },
         templateSave: function(){
             var content = window.frames['editor_iframe'].getContent();
