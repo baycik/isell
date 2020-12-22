@@ -251,7 +251,7 @@ App.mailing_manager=
                 }
                 MessageList.list.selected_id = id;
                 $(`#PluginMailingManager_maillist .PluginMailingManager_list_row_selected`).removeClass('PluginMailingManager_list_row_selected');
-                var $selected_row=$(`#PluginMailingManager_maillist div[data-id=${MessageList.list.selected_id}]`);
+                var $selected_row=$(`#PluginMailingManager_maillist div[data-id=_${MessageList.list.selected_id}]`);
                 $selected_row.addClass("PluginMailingManager_list_row_selected");
                 MessageEditor.load(MessageList.list.selected_id);
             }

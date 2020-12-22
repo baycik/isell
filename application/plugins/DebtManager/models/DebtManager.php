@@ -644,7 +644,7 @@ class DebtManager extends Catalog {
                 FROM 
                     tmp_trans_table";
             $debt=$this->get_value($sql);
-            if( !$debt ){
+            if( !$debt || $debt<=0 ){
                 return false;
             }
             return $debt;
@@ -679,7 +679,7 @@ class DebtManager extends Catalog {
                 WHERE
                     due_date<NOW()";
             $debt=$this->get_value($sql);
-            if( !$debt ){
+            if( !$debt || $debt<=0 ){
                 return false;
             }
             return $debt;

@@ -90,23 +90,9 @@ class MailingManager extends Catalog {
 
     public function dataGet(){
         return [
-            'settings' => $this->plugin_data,
-            //'staff_list' => $this->Hub->load_model("Pref")->getStaffList()
+            'settings' => $this->plugin_data
         ];
     }
-    
-//    public function settingsGet(){
-//        return [
-//            'settings' => $this->plugin_data,
-//            'staff_list' => $this->Hub->load_model("Pref")->getStaffList()
-//        ];
-//    }
-//    
-//    public function settingsUpdate(array $param){
-//        $this->plugin_data = $param->settings;
-//        $this->pluginSettingsFlush();
-//        return true;
-//    }
     /*
      * Message CRUD functions
      */
@@ -167,7 +153,6 @@ class MailingManager extends Catalog {
     }
 
     public function messageSend( $message_id ){
-        $this->plugin_data = $this->dataGet();
         $this->messageChangeStatus($message_id, 'processing');
         $this->plugin_data['event_id'] = $this->mailingCreate();
         $this->pluginSettingsFlush();
@@ -362,7 +347,6 @@ class MailingManager extends Catalog {
     }
     
     public function messageBatchSend( string $message_batch_label ){
-        $this->plugin_data = $this->dataGet();
         $this->messageBatchChangeStatus($message_batch_label, 'processing');
         $this->plugin_data['event_id'] = $this->mailingCreate();
         $this->pluginSettingsFlush();
@@ -651,7 +635,6 @@ class MailingManager extends Catalog {
 
 
     public function mailingFinish(){
-        $this->plugin_data = $this->dataGet();
         $Events=$this->Hub->load_model('Events');
         $Events->eventDelete($this->plugin_data['event_id']);
         $this->plugin_data['event_id'] = false;
