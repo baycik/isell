@@ -177,9 +177,12 @@ class MailingManager extends Catalog {
         $this->messageChangeStatus($message_id, 'created', 'processing');
     }
     
+    private $error_log=[];
     private function messageRenderTpl( string $message_template, $context ){
-        $_self=$this;
-        $message_template=preg_replace_callback('/{{(\w+)\.?(\w+)?(\([^\)]+\))?}}/',function($matches) use ($_self,$context){
+        $message_template=preg_replace_callback('/{{(\w+)\.?(\w+)?(\([^\)]+\))?}}/',function($matches) use ($context){
+            if($this->message_composing_aborted){
+                return false;
+            }
             if($matches[2]??false){
                 try{
                     $Model=$this->Hub->load_model($matches[1]);
@@ -190,7 +193,7 @@ class MailingManager extends Catalog {
                         $result=$Model->{$matches[2]}($context);
                         if( $result===false ){
                             $this->message_composing_aborted=true;
-                            $this->Hub->msg("Пропущен {$matches[2]} для {$context->label}<br>\n");
+                            $this->error_log[]="Пропущен {$matches[2]} для {$context->label}";
                         }
                         return $result;
                     }
@@ -237,8 +240,11 @@ class MailingManager extends Catalog {
         return $having;
     }
 
-    public function messageListGet( string $filter='', string $filter_handler='', string $filter_reason='', string $filter_date='' ){
+    public function messageListGet( string $filter='', string $message_batch_label ){
         $where = $this->messageListFilterGet( $filter );
+        if($message_batch_label){
+            $where.=" AND message_batch_label='$message_batch_label'";
+        }
         $msg_list_msg="
             SELECT
                 *,
@@ -246,10 +252,7 @@ class MailingManager extends Catalog {
             FROM
                 plugin_message_list
             WHERE
-                message_handler LIKE '%$filter_handler%'
-                AND message_reason LIKE '%$filter_reason%'
-                AND created_at LIKE '%$filter_date%'
-                AND $where
+                $where
             ";
         return $this->get_list($msg_list_msg);
     }
@@ -296,23 +299,11 @@ class MailingManager extends Catalog {
                 $mesages_created++;
             }
         }
-        return $mesages_created;
+        return [
+            'messages_created'=>$mesages_created,
+            'error_log'=>$this->error_log
+            ];
     }
-    
-    
-    
-    public function test(){
-        $message_batch=[
-            'reciever_list_id'=>1608023133866,
-            'handler'=>'email',
-            'subject'=>'Hello',
-            'body'=>'Уважаемый {{DebtManager.DebtCalendar(Календарь платежей)}} {{company_name}}',
-            'manual_reciever_list'=>[]
-        ];
-        $this->messageBatchCreate( $message_batch );
-    }
-    
-    
     
     public function messageBatchComposeMessage(string $batch_label, array $message_batch, stdClass $context ){
         $message = [];

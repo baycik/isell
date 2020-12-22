@@ -164,11 +164,17 @@ App.mailing_manager=
                     alert('Ошибка: ' + MessageEditor.mail_error);
                     return;
                 }
-                $.post("MailingManager/messageBatchCreate", {message_batch: JSON.stringify(batch)}, function (ok) {
-                    if ( ok * 1 ) {
-                        App.flash("Создано сообщений "+ok);
+                App.flash("Рассылка формируется!");
+                $.post("MailingManager/messageBatchCreate", {message_batch: JSON.stringify(batch)}, function (resp) {
+                    var response=App.json(resp);
+                    if ( response && response.messages_created ) {
+                        App.flash("Создано сообщений "+response.messages_created);
                     } else {
                         App.flash("Ни одного сообщения не создано!");
+                    }
+                    if( response && response.error_log ){
+                        var log=response.error_log.join("\n");
+                        alert(log);
                     }
                     MessageList.batch.load();
                 });
@@ -206,9 +212,7 @@ App.mailing_manager=
             load:function( group_entry ){
                 var filter={
                     filter:MessageList.current_filter,
-                    filter_handler:group_entry.message_handler,
-                    filter_reason:group_entry.message_reason,
-                    filter_date:group_entry.group_created_at
+                    message_batch_label:group_entry.message_batch_label
                 };
                 $.post("MailingManager/messageListGet",filter,function(resp){
                     var maillist=App.json(resp);
