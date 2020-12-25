@@ -164,7 +164,7 @@ class User extends Catalog {
     public function userFetch(){
 	$user_id = $this->Hub->svar('user_id');
         $sql="SELECT
-		user_id,user_login,user_level,user_sign,user_position,user_phone,user_email,
+		user_id,user_login,user_level,user_sign,user_position,user_phone,user_email,user_is_staff,user_tax_id,
 		first_name,middle_name,last_name,nick,
 		id_type,id_serial,id_number,id_given_by,id_date,
 		user_assigned_path,company_id,
@@ -178,7 +178,7 @@ class User extends Catalog {
 	$user_id = $this->Hub->svar('user_id');
         $where = ($this->Hub->svar('user_level') < 4) ? "WHERE user_id='$user_id'" : "";
         $sql="SELECT
-		user_id,user_login,user_level,user_sign,user_position,user_phone,user_email,user_is_staff,
+		user_id,user_login,user_level,user_sign,user_position,user_phone,user_email,user_is_staff,user_tax_id,
 		first_name,middle_name,last_name,nick,
 		id_type,id_serial,id_number,id_given_by,id_date,
 		user_assigned_path,user_permissions,
@@ -204,6 +204,7 @@ class User extends Catalog {
 	    $fields['user_is_staff']=$this->request('user_is_staff');	    
 	    $fields['user_sign']=$this->request('user_sign');
 	    $fields['user_position']=$this->request('user_position');	    
+	    $fields['user_tax_id']=$this->request('user_tax_id');	    
 	    $fields['first_name']=$this->request('first_name');
 	    $fields['middle_name']=$this->request('middle_name');	    
 	    $fields['last_name']=$this->request('last_name');
