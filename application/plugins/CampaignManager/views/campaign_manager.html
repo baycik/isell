@@ -247,7 +247,7 @@
                     if( start && finish ){
                         let diff = Math.abs(start.substring(0, 4) - finish.substring(0, 4));
                         if (diff > 3) {
-                            App.flash("Слишком большой период: " + title);
+                            App.flash("Период больше 3 лет: " + title);
                             return;
                         }
                     }
