@@ -60,7 +60,7 @@ class CampaignManager extends Catalog{
         return $this->delete('plugin_campaign_list',['campaign_id'=>$campaign_id]);
     }
     
-    public function campaignUpdate(int $campaign_id,string $field,string $value){
+    public function campaignUpdate(int $campaign_id,string $field,string $value=null){
         $this->Hub->set_level(3);
         return $this->update('plugin_campaign_list',[$field=>$value],['campaign_id'=>$campaign_id]);
     }
