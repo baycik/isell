@@ -194,9 +194,9 @@ class AccountsCore extends Catalog{
 	$having=$this->decodeFilterRules();
 	$offset=$page>0?($page-1)*$rows:0;
 	$sql="SELECT * FROM tmp_ledger 
-		WHERE '$idate'<cstamp AND cstamp<='$fdate'
+		WHERE '$idate'<=cstamp AND cstamp<='$fdate'
 		HAVING $having
-		ORDER BY cstamp DESC,trans_id 
+		ORDER BY SUBSTRING(cstamp,1,10) DESC,trans_id DESC
 		LIMIT $rows OFFSET $offset";
 	$result_rows=$this->get_list($sql);
 	$total_estimate=$offset+(count($result_rows)==$rows?$rows+1:count($result_rows));
@@ -257,15 +257,15 @@ class AccountsCore extends Catalog{
 		(@acc_code = acc_debit_code OR @acc_code = acc_credit_code)
 		AND active_company_id='$active_company_id'
 		    $passive_filter
-            ORDER BY cstamp) t)";
+            ORDER BY SUBSTRING(cstamp,1,10),trans_id) t)";
         
 	$this->query($sql);
     }
     private function ledgerGetSubtotals( $idate, $fdate, $having ){
 	$sql="SELECT 
 		    SUM(IF('$idate'>cstamp,debit-credit,0)) ibal,
-		    SUM(IF('$idate'<cstamp AND cstamp<='$fdate',debit,0)) pdebit,
-		    SUM(IF('$idate'<cstamp AND cstamp<='$fdate',credit,0)) pcredit,
+		    SUM(IF('$idate'<=cstamp AND cstamp<='$fdate',debit,0)) pdebit,
+		    SUM(IF('$idate'<=cstamp AND cstamp<='$fdate',credit,0)) pcredit,
 		    SUM(IF(cstamp<='$fdate',debit-credit,0)) fbal
 		FROM tmp_ledger
                 WHERE $having";
@@ -533,7 +533,7 @@ class AccountsCore extends Catalog{
 	    'acc_debit_code'=>$acc_codes[0],
 	    'acc_credit_code'=>$acc_codes[1],
             'trans_article'=>$trans_article,
-	    'cstamp'=>$trans_date,
+	    'cstamp'=>$trans_date.date(" H:i:s"),
 	    'amount'=>$amount,
 	    'amount_alt'=>$amount_alt,
 	    'description'=>$description
