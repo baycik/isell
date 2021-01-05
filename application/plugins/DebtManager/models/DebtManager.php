@@ -675,13 +675,13 @@ class DebtManager extends Catalog {
                                 NULL)
                             )
                         ,2) AS amount_sell,
-                    MAX(IF(DATEDIFF(due_date,NOW())>$tolerance_days,1,0)) tolerance_excessed
+                    MIN(IF(DATEDIFF(NOW(),due_date)>$tolerance_days,0,1)) toleranced
                 FROM 
                     tmp_trans_table
                 WHERE
                     due_date<NOW()";
             $debt=$this->get_row($sql);
-            if( !$debt->amount_sell || $debt->amount_sell<=100 || !$debt->tolerance_excessed ){
+            if( !$debt->amount_sell || $debt->amount_sell<=100 || $debt->toleranced ){
                 return false;
             }
             return $debt->amount_sell;
