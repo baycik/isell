@@ -654,6 +654,7 @@ class DebtManager extends Catalog {
     
     public function DebtExpired( object $context ) {
         if( $context->company_id??false ){
+            $tolerance_days=4;
             if($this->lastWidgetPcompId!=$context->company_id){
                 $this->blockTransTableCreated=false;
                 $this->lastWidgetPcompId=$context->company_id;
@@ -673,16 +674,17 @@ class DebtManager extends Catalog {
                                     IF(trans_status = 2, GET_PARTLY_PAYED(active_company_id , passive_company_id ,361),amount),
                                 NULL)
                             )
-                        ,2) AS amount_sell
+                        ,2) AS amount_sell,
+                    MAX(IF(DATEDIFF(due_date,NOW())>$tolerance_days,1,0)) tolerance_excessed
                 FROM 
                     tmp_trans_table
                 WHERE
                     due_date<NOW()";
-            $debt=$this->get_value($sql);
-            if( !$debt || $debt<=100 ){
+            $debt=$this->get_row($sql);
+            if( !$debt->amount_sell || $debt->amount_sell<=100 || !$debt->tolerance_excessed ){
                 return false;
             }
-            return $debt;
+            return $debt->amount_sell;
         }
         return false;        
     }
