@@ -654,7 +654,7 @@ class DebtManager extends Catalog {
     
     public function DebtExpired( object $context ) {
         if( $context->company_id??false ){
-            $tolerance_days=4;
+            $tolerance_days=7;
             if($this->lastWidgetPcompId!=$context->company_id){
                 $this->blockTransTableCreated=false;
                 $this->lastWidgetPcompId=$context->company_id;
