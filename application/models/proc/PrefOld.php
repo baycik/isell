@@ -197,7 +197,7 @@ class PrefOld {
         $set='';
         $set_delimeter='';
         $counter_data_combined=$this->counterGet( $counter_name, $counter_acomp_id )->data;
-        $counter_data_combined['modified_at']=date("Y-m-d H:i:s");
+        $counter_data['modified_at']=date("Y-m-d H:i:s");
         if( $counter_data!=null ){
             $counter_data_combined=array_merge($counter_data_combined,$counter_data);
             $set.="pref_value='". addslashes(json_encode($counter_data_combined))."'";
@@ -206,6 +206,7 @@ class PrefOld {
         if( $counter_int!=0 ){
             $set.=$set_delimeter."pref_int='$counter_int'";
         }
+        echo "UPDATE pref_list SET $set WHERE active_company_id='$counter_acomp_id' AND pref_name='$counter_name'";
         $this->Base->query("UPDATE pref_list SET $set WHERE active_company_id='$counter_acomp_id' AND pref_name='$counter_name'");
         return true;
     }
