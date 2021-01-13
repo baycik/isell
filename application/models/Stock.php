@@ -49,7 +49,7 @@ class Stock extends Catalog {
 			LEFT JOIN
 		    stock_tree st ON se.parent_id=branch_id
 		WHERE 
-		    se.product_code='{$product_code}'";
+		    pl.product_code='{$product_code}'";
         $product_data = $this->get_row($sql);
         return $product_data;
     }
