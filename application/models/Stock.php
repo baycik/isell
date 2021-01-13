@@ -54,7 +54,7 @@ class Stock extends Catalog {
         return $product_data;
     }
     
-    public function productCheck( string $product_code ){
+    public function productCheck( string $product_code=null ){
         return $this->get_value("SELECT 1 FROM prod_list WHERE product_code='$product_code'");
     }
     
