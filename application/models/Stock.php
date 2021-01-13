@@ -41,9 +41,9 @@ class Stock extends Catalog {
 		    se.product_img,
 		    se.self_price
 		FROM
-		    stock_entries se
-			JOIN
-		    prod_list pl ON pl.product_code=se.product_code
+		    prod_list pl
+                    	LEFT JOIN
+		    stock_entries se ON pl.product_code=se.product_code
 			LEFT JOIN
 		    price_list pp ON pp.product_code=se.product_code AND pp.label=''
 			LEFT JOIN
@@ -52,6 +52,10 @@ class Stock extends Catalog {
 		    se.product_code='{$product_code}'";
         $product_data = $this->get_row($sql);
         return $product_data;
+    }
+    
+    public function productCheck( string $product_code ){
+        return $this->get_value("SELECT 1 FROM prod_list WHERE product_code='$product_code'");
     }
     
 

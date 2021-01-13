@@ -11,22 +11,14 @@
 		height: 'auto',
 		shadow:false,
 		onClose:function(){
-		    //delete App.page_stock_product_card;
+                    App.page_stock_product_card.node.remove();
+		    delete App.page_stock_product_card;
 		}
 	    });
 	    this.node.window('window').css('position','fixed');
 	    
 	    if( this.data.product_code ){
-		var focus=this.data.focus;
-		App.get("Stock/productGet",{product_code:App.page_stock_product_card.data.product_code},function(resp){
-                    if( resp ){
-                        App.page_stock_product_card.data=App.json(resp);
-                    }
-		    App.page_stock_product_card.data.focus=focus;
-		    App.page_stock_product_card.initWidgets();
-		    App.page_stock_product_card.img.load();
-		    App.page_stock_product_card.price.load();
-		});
+                App.page_stock_product_card.productGet(this.data.product_code);
 	    }
 	    else if( !this.data ){//new product
 		App.page_stock_product_card.data={
@@ -45,6 +37,16 @@
             if( this.data.enablePrevnext ){
                 $("#stock_prod_card_prevnext").css('visibility','visible');   
             }
+            $("input[name=product_code_new]").change(function(){
+                var product_code=$(this).val();
+                $.post("Stock/productCheck",{product_code:product_code},function(resp){
+                    var product_exists=App.json(resp);
+                    if( product_exists && confirm(`Найден товар с кодом ${product_code}. Загрузить?`) ){
+                        App.page_stock_product_card.data.product_code=product_code;
+                        App.page_stock_product_card.productGet();
+                    }
+                });
+            });
 	},
 	price:{
 	    load:function(){
@@ -94,7 +96,18 @@
 		}
 	    }
 	},
-
+        productGet:function(){
+            var focus=this.data.focus;
+            App.get("Stock/productGet",{product_code:App.page_stock_product_card.data.product_code},function(resp){
+                if( resp ){
+                    App.page_stock_product_card.data=App.json(resp);
+                }
+                App.page_stock_product_card.data.focus=focus;
+                App.page_stock_product_card.initWidgets();
+                App.page_stock_product_card.img.load();
+                App.page_stock_product_card.price.load();
+            });
+        },
 	initWidgets:function(){
 	    App.page_stock_product_card.data.product_code_new=App.page_stock_product_card.data.product_code;
 	    App.setupForm("#page_stock_product_card_frm", App.page_stock_product_card.data);
