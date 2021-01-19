@@ -302,7 +302,9 @@ class MailingManager extends Catalog {
         $message['message_reason'] = preg_replace('/{{[^}]+}}/', '', $message_batch['subject']);
         $message['message_subject'] = $this->messageRenderTpl($message_batch['subject'],$context);;
         $message['message_note'] = '';
-        $message['message_body'] = $this->messageRenderTpl($message_batch['body'],$context);
+        $message['message_body'] = '<html><head><meta http-equiv="Content-Type" content="text/html charset=UTF-8" /></head><body>';
+        $message['message_body'].= $this->messageRenderTpl($message_batch['body'],$context);
+        $message['message_body'].= '</body></html>';
         return $message;
     }
     
@@ -625,10 +627,13 @@ class MailingManager extends Catalog {
             $handler_name = ucfirst($message->message_handler).'Handler';
             require_once APPPATH.'/plugins/MailingManager/handlers/'.$handler_name.'.php';
             ${$handler_name} = new $handler_name;
-            $message->message_recievers = str_replace('|', ',', $message->message_recievers);
-            $ok = ${$handler_name}->send($message->message_recievers, $message);
-            if($ok){
-                $this->messageChangeStatus($message->message_id, 'done', 'processing');
+            $reciever_list= explode('|', $message->message_recievers);
+            
+            foreach ($reciever_list as $reciever){
+                $ok = ${$handler_name}->send($message->message_recievers, $message);
+                if($ok){
+                    $this->messageChangeStatus($message->message_id, 'done', 'processing');
+                }
             }
         }
         return $this->mailingFinish();;
