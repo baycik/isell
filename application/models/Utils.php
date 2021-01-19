@@ -206,9 +206,6 @@ class Utils extends Catalog {
     public $sendSms = ['to' => 'string', 'body' => 'string'];
 
     public function sendSms($number = null, $body = null) {
-        error_reporting (0);
-        
-        
         if (!$this->Hub->pref('SMS_SENDER') || !$this->Hub->pref('SMS_USER') || !$this->Hub->pref('SMS_PASS')) {
             $this->Hub->msg("Настройки для отправки смс не установленны");
             return false;
@@ -275,6 +272,12 @@ class Utils extends Catalog {
         }
         $this->email->subject($subject);
         $this->email->message($body);
+        
+        
+        
+        
+        $body_text = strip_tags(preg_replace('/<style>[A-Za-z0-9-:\s.\/_;#\(\)\{\}%]{1,}<\/style>/', '',$body) );
+        $this->email->set_alt_message($body_text);
         if ($file) {
             $this->email->attach($file['data'], 'attachment', $file['name'], $file['mime']);
         }
