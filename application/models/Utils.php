@@ -208,7 +208,8 @@ class Utils extends Catalog {
     public function sendSms($number = null, $body = null) {
         error_reporting (0);
         
-        
+        print_r($this->Hub->svar('smsSessionId'));
+        die;
         if (!$this->Hub->pref('SMS_SENDER') || !$this->Hub->pref('SMS_USER') || !$this->Hub->pref('SMS_PASS')) {
             $this->Hub->msg("Настройки для отправки смс не установленны");
             return false;
