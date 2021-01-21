@@ -1,0 +1,434 @@
+<script>
+    App.KKMIntegrator_checkprint = {
+        parsed: true,
+        init() {
+            $("#kkmintegrator_dialog").modal({
+                onDeny: App.KKMIntegrator_checkprint.close,
+                onVisible: function () {},
+                onApprove: function () {
+                    App.KKMIntegrator_checkprint.kkm.print_check();
+                    return false;
+                },
+                onHidden: function () {
+                    App.KKMIntegrator_checkprint.close();
+                },
+                inverted: true
+            }).modal('show');
+            App.KKMIntegrator_checkprint.view.init();
+        },
+        close() {
+            $("#kkmintegrator_dialog").modal('hide');
+            $("#kkmintegrator_dialog").remove();
+            delete App.KKMIntegrator_checkprint;
+        },
+        open_advanced(){
+            App.loadWindow('KKMIntegrator/advanced');
+            App.KKMIntegrator_checkprint.close();
+        },
+        status: {},
+        block_submit: false,
+        view: {
+            init() {
+                $("input[name=pay_cash],input[name=pay_card]").on('input', function () {
+                    App.KKMIntegrator_checkprint.view.calculate();
+                }).on('keypress', function (event) {
+                    if (event.keyCode === 13) {
+                        App.KKMIntegrator_checkprint.kkm.print_check();
+                        return false;
+                    }
+                }).on('change',function(){
+                    $(this).val( Math.abs(Number(App.calc($(this).val()))).toFixed(2) );
+                });
+                $("input[name=pay_cash]").focus();
+                this.statusShow();
+                $("#kkmintegrator_dialog").click(function (e) {
+                    var node=$(e.target);
+                    if( node.hasClass('x-expand') ){
+                        node.toggleClass('collapsed');
+                        $('#kkmintegrator_dialog').modal('refresh');
+                    }
+                });
+            },
+            statusShow() {
+                var data = App.KKMIntegrator_checkprint.data;
+                App.KKMIntegrator_checkprint.kkm.apiExecute('getStatus', data).done(function (resp) {
+                    App.KKMIntegrator_checkprint.status = resp;
+                    App.renderTpl('kkmintegrator_utils', App.KKMIntegrator_checkprint.status);
+                    App.KKMIntegrator_checkprint.view.previousCheckParse();
+                });
+            },
+            previousCheckParse(){
+                var prev_check=App.KKMIntegrator_checkprint.status.previous_check;
+                if(prev_check.status==='not_found'){
+                    $("#kmmintegrator_print_btn").html("Напечатать чек");
+                    $("button[type=submit]").addClass('primary').removeClass('orange');
+                    App.KKMIntegrator_checkprint.view.calculate();
+                    return;
+                }
+                
+                if( prev_check.check_object && prev_check.check_object.registration ){
+                    var Cash=prev_check.check_object.registration.Cash;
+                    var ElectronicPayment=prev_check.check_object.registration.ElectronicPayment;
+                    var AdvancePayment=prev_check.check_object.registration.AdvancePayment;
+                    var CashProvision=prev_check.check_object.registration.CashProvision;
+                    var Credit=prev_check.check_object.registration.Credit;
+                    
+                    var previously_payed_total=Cash+ElectronicPayment+AdvancePayment+CashProvision+Credit;
+                    App.KKMIntegrator_checkprint.data.total-=previously_payed_total;
+                }
+                App.KKMIntegrator_checkprint.view.calculate();
+                
+                if (prev_check.status==='check_not_changed') {
+                    var message = `Для этого документа уже был напечатан Чек.`;
+                    App.KKMIntegrator_checkprint.view.info(message);
+                    $("#kmmintegrator_print_btn").html("Напечатать копию");
+                    $("button[type=submit]").addClass('primary').removeClass('orange');
+                } else
+                if (prev_check.status==='check_needs_correction') {
+                    var message = `Для этого документа уже был напечатан Чек. Состав документа был изменен. Необходимо распечатать корректирующий чек!`;
+                    App.KKMIntegrator_checkprint.view.error(message);
+                    $("#kmmintegrator_print_btn").html("Корректировать чек");
+                    $("button[type=submit]").addClass('orange').removeClass('primary');
+                }
+            },
+            calculate: function () {
+                this.total = Number(App.KKMIntegrator_checkprint.data.total).toFixed(2);
+                this.cash = parseFloat($("input[name=pay_cash]").val()) || 0;
+                this.card = parseFloat($("input[name=pay_card]").val()) || 0;
+                this.change = Number(-this.total + this.card + this.cash).toFixed(2);
+                
+                var change_color="#000";
+                if (this.change < 0) {
+                    $("#kkmintegrator_change_label").html('Доплатить');
+                    change_color="#600";
+                } else {
+                    $("#kkmintegrator_change_label").html('Сдача');
+                    change_color="#060";
+                }
+                if (!this.total) {
+                    return;
+                }
+                $("#kkmintegrator_total").html(this.total+'₽');
+                $("#kkmintegrator_change").html(this.change+'₽').css('color',change_color);
+                if (this.card > this.total && this.total > 0) {
+                    App.KKMIntegrator_checkprint.view.error("Сумма снятия с карты больше суммы чека");
+                } else {
+                    App.KKMIntegrator_checkprint.view.error("");
+                }
+            },
+            error(message) {
+                if (!message || message == "") {
+                    App.KKMIntegrator_checkprint.block_submit = false;
+                    $("#kkmintegrator_error").hide();
+                } else {
+                    if(message.indexOf('Connection refused')>-1){
+                        message="Нет связи с сервером касс! "+message;
+                    }
+                    App.KKMIntegrator_checkprint.block_submit = true;
+                    $("#kkmintegrator_error").show();
+                    $("#kkmintegrator_info").hide();
+                }
+                $("#kkmintegrator_error").html(message);
+                App.KKMIntegrator_checkprint.view.info("");
+            },
+            info(message) {
+                if (!message || message == "") {
+                    $("#kkmintegrator_info").hide();
+                } else {
+                    $("#kkmintegrator_info").show();
+                    $("#kkmintegrator_error").hide();
+                }
+                $("#kkmintegrator_info").html(message);
+            }
+        },
+        kkm: {
+            apiExecute(command, Data) {
+                var def = $.Deferred()
+                App.KKMIntegrator_checkprint.view.info("");
+                $.post('KKMIntegrator/' + command, Data || {}).done(function (resp) {
+                    try {
+                        var response = JSON.parse(resp);
+                        if (response.Error && response.Error != "") {
+                            App.KKMIntegrator_checkprint.view.error(response.Error);
+                            def.reject();
+                        } else {
+                            def.resolve(response);
+                        }
+                    } catch (e) {
+                        App.KKMIntegrator_checkprint.view.error(e+resp);
+                        def.reject();
+                    }
+                }).fail(function (resp) {
+                    App.KKMIntegrator_checkprint.view.error(resp.responseText);
+                }); 
+                return def;
+            },
+            print_check() {
+                this.validate();
+                if (App.KKMIntegrator_checkprint.block_submit) {
+                    return false;
+                }
+                var data = {
+                    doc_id: App.KKMIntegrator_checkprint.data.doc_id,
+                    Cash: App.KKMIntegrator_checkprint.view.cash-App.KKMIntegrator_checkprint.view.change,
+                    ElectronicPayment: App.KKMIntegrator_checkprint.view.card
+                };
+                App.KKMIntegrator_checkprint.kkm.apiExecute('printCheck', data).done(function () {
+                    App.KKMIntegrator_checkprint.close();
+                }).fail();
+                App.KKMIntegrator_checkprint.view.info("Чек печатается...");
+            },
+           /* print_check_copy(check_number) {
+                App.KKMIntegrator_checkprint.kkm.apiExecute('printCheckDuplicate',{FiscalNumber:check_number}).done(function(){
+                    App.KKMIntegrator_checkprint.view.statusShow();
+                });
+                App.KKMIntegrator_checkprint.view.info("Чек печатается...");
+            },*/
+            validate() {
+                App.KKMIntegrator_checkprint.view.error("");
+                App.KKMIntegrator_checkprint.view.calculate();
+                if (App.KKMIntegrator_checkprint.view.total - App.KKMIntegrator_checkprint.view.card - App.KKMIntegrator_checkprint.view.cash > 0) {
+                    App.KKMIntegrator_checkprint.view.error("Внесена недостаточная сумма");
+                }
+                if (App.KKMIntegrator_checkprint.total <= 0) {
+                    App.KKMIntegrator_checkprint.view.error("Сумма документа должна быть больше нуля.");
+                }
+                if (App.KKMIntegrator_checkprint.status.Info.SessionState == 1) {
+                    App.KKMIntegrator_checkprint.view.error("Смена закрыта. Необходимо открыть смену");
+                }
+                if (App.KKMIntegrator_checkprint.status.Info.SessionState == 3) {
+                    App.KKMIntegrator_checkprint.view.error("Смена закончилась. Нужно открыть заново");
+                }
+            },
+            open_shift() {
+                App.KKMIntegrator_checkprint.kkm.apiExecute('openShift').done(function (resp) {
+                    App.KKMIntegrator_checkprint.view.statusShow();
+                    App.KKMIntegrator_checkprint.view.info("Смена открыта. Кассир: " + resp.CashierName);
+                });
+            },
+            close_shift() {
+                App.KKMIntegrator_checkprint.kkm.apiExecute('closeShift').done(function () {
+                    App.KKMIntegrator_checkprint.view.info("Смена закрыта.");
+                    App.KKMIntegrator_checkprint.view.statusShow();
+                });
+            }
+        }
+    };
+</script>
+
+
+<style>
+    #kkmintegrator_total,#kkmintegrator_change{
+        font-size: 2em;
+        text-align: right;
+        color: #333;
+    }
+    .x-expand{
+        cursor: pointer;
+    }
+    .x-expand::before{
+        content: "▼ ";
+    }
+    .x-expand.collapsed::before{
+        content:"▶ ";
+    }
+    .x-expand.collapsed~form,.x-expand.collapsed~table{
+        display: none
+    }
+</style>
+
+<div class="ui modal" id="kkmintegrator_dialog">
+    <div class="header">Печать чека</div>
+
+    <div class="content">
+        <div class="ui stackable grid">
+            <div class="eight wide column">
+                <form class="ui form" onsubmit="return App.KKMIntegrator_checkprint.kkm.print_check(event)">
+                    <div class="ui segments">
+                        <div class="ui segment">
+                            <div class="ui ribbon label">Сумма к оплате</div>
+                            <div id="kkmintegrator_total"></div>
+                        </div>
+                        <div class="ui horizontal segments">
+                            <div class="ui segment">
+                                <div class="ui top left attached basic label">Оплата наличными</div>
+                                <div class="ui icon input">
+                                    <i class="calculator icon"></i>
+                                    <input type="number" step="0.01" name="pay_cash" placeholder="Наличными">
+                                </div>
+                            </div>
+                            <div class="ui segment">
+                                <div class="ui top right attached basic label">Оплата электронно</div>
+                                <div class="ui icon input">
+                                    <i class="calculator icon"></i>
+                                    <input type="number" step="0.01" name="pay_card" placeholder="Электронно">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="ui segment">
+                            <div class="ui ribbon label" id="kkmintegrator_change_label">Сдача</div>
+                            <div id="kkmintegrator_change"></div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="eight wide column">
+                <div class="ui segment covert" id="kkmintegrator_utils">
+                    <div class="ui header">Статус кассы</div>
+                    <table class="ui very basic celled table">
+                        <tbody>
+                            <tr>
+                                <td>
+                                    Наличные
+                                </td>
+                                <td>
+                                    {{Info.BalanceCash|format}}₽
+                                    <div style="float:right;width: 170px" class="mini ui button" onclick="App.KKMIntegrator_checkprint.kkm.apiExecute('XReport');">
+                                        <i class="ui icon print"></i> Распечатать Х Отчет
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    Смена № {{SessionNumber}}
+                                </td>
+                                <td>
+                                    {{if Info.SessionState|equals>1}}
+                                    <i class="ui red circle icon"></i> Закрыта
+                                    {{/if}}
+                                    {{if Info.SessionState|equals>2}}
+                                    <i class="ui green circle icon"></i> Открыта
+                                    {{/if}}
+                                    {{if Info.SessionState|equals>3}}
+                                    <i class="ui yellow circle icon"></i> Закончилась
+                                    {{/if}}
+
+                                    {{if Info.SessionState|equals>1}}
+                                    <div style="float:right;width: 170px" class="ui mini primary button" onclick="App.KKMIntegrator_checkprint.kkm.open_shift()"><i class="ui sign in icon"></i> Открыть смену</div>
+                                    {{else}}
+                                    <div style="float:right;width: 170px" class="ui mini button" onclick="App.KKMIntegrator_checkprint.kkm.close_shift()"><i class="ui sign in icon"></i> Закрыть смену</div>
+                                    {{/if}}
+                                </td>
+                            </tr>                        
+                            <tr>
+                                <td>
+                                    Статус
+                                </td>
+                                <td>
+                                    {{if Info.OnOff}}
+                                    <i class="ui green circle icon"></i>Включена 
+                                    {{else}}
+                                    <i class="ui red circle icon"></i>Выключена 
+                                    {{/if}}
+
+                                    {{if Info.Active}}
+                                    <i class="ui green circle icon"></i>Активна 
+                                    {{else}}
+                                    <i class="ui red circle icon"></i>Неактивна 
+                                    {{/if}}
+                                    {{if Info.OfflineMode}}
+                                    <i class="ui red circle icon"></i>Оффлайн 
+                                    {{else}}
+                                    <i class="ui green circle icon"></i>Онлайн 
+                                    {{/if}}
+                                    <br>
+                                    {{if Info.PaperOver}}
+                                    <i class="ui red circle icon"></i>Бумаги нет 
+                                    {{else}}
+                                    <i class="ui green circle icon"></i>Бумага есть 
+                                    {{/if}}
+                                    
+                                    {{if Info.FN_MemOverflowl}}
+                                    <i class="ui red circle icon"></i>ФН Переполнен
+                                    {{else}}
+                                    <i class="ui green circle icon"></i>ФН Непереполнен
+                                    {{/if}}
+                                </td>
+                            </tr>
+
+
+                        </tbody>
+                    </table>
+                    
+                    <h5 class="ui header x-expand collapsed"> Дополнительные данные</h5>
+                    <table class="ui very basic celled table">
+                        <tbody>
+                            <tr>
+                            <tr>
+                                <td>
+                                    Реквизиты
+                                </td>
+                                <td>
+                                    {{Info.NameOrganization}}<br>
+                                    Место установки:{{Info.PlaceSettle}}<br>
+                                    Мэйл:{{Info.SenderEmail}}<br>
+                                    №Регистрации:{{Info.RegNumber}}<br>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    Касса
+                                </td>
+                                <td>
+                                    №ККТ:{{Info.KktNumber}}<br>
+                                    Прошивка:{{Info.Firmware_Version}}<br>
+                                    Прошивка статус:{{Info.Firmware_Status}}<br>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    ОФД
+                                </td>
+                                <td>
+                                    {{Info.NameOFD}}<br>
+                                    {{if Info.OFD_Error}}
+                                    <div class="ui negative message">
+                                        Ошибка:{{Info.OFD_Error}}<br>
+                                        Номер док:{{Info.OFD_NumErrorDoc}}<br>
+                                        Дата док:{{Info.OFD_DateErrorDoc}}<br>
+                                    </div>
+                                    {{/if}}
+                                    
+                                    <div style="float:right;width: 170px" class="mini ui button" onclick="App.KKMIntegrator_checkprint.kkm.apiExecute('OfdReport');">
+                                        <i class="ui icon print"></i> Отчет связи с ОФД
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    ФН
+                                </td>
+                                <td>
+                                    №:{{Info.FnNumber}}<br>
+                                    Начат:{{Info.FN_DateEnd}}<br>
+                                    Истекает:{{Info.FN_DateEnd}}
+                                    {{if Info.FN_MemOverflowl}}
+                                    <br><i class="ui red circle icon"></i>ФН Переполнен
+                                    {{else}}
+                                    <br><i class="ui green circle icon"></i>ФН Непереполнен
+                                    {{/if}}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="ui negative message" id="kkmintegrator_error" style="display:none"></div>
+        <div class="ui info message" id="kkmintegrator_info" style="display:none"></div>
+
+
+        <div class="ui stackable grid actions">
+            <div class="eight wide column">
+                <button type="submit" class="ui approve fluid icon button submit"><i class="ui icon print"></i> <span id="kmmintegrator_print_btn">Печатать</span></button>
+            </div>
+            <div class="eight wide column">
+                <div class="ui cancel button"><i class="ui icon close icon"></i> Закрыть</div>
+            </div>
+        </div>
+
+
+    </div>
+</div>

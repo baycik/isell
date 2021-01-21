@@ -1,0 +1,109 @@
+<script type="text/javascript" src="../js/jquery-3.5.0.min.js"></script>
+<script>
+    App={};
+    App.KKMIntegrator={
+        init(){
+            
+        },
+        apiExecute( command, Data ){
+            $.post('./'+command,Data||{},function(resp){
+                var output="";
+                try{
+                    var response=JSON.parse(resp);
+                    if( response.Error!="" ){
+                        alert(response.Error);
+                    }
+                    if( response.Slip!="" ){
+                        output+=response.Slip;
+                    }
+                } catch(e){};
+                output+=resp;
+                $("#KKMIntegrator_result").val(output);
+            });
+        },
+        printCheck( doc_id ){
+            var data={
+                doc_id:doc_id,
+                Cash:$("#KKMIntegrator_cash").val(),
+                ElectronicPayment:$("#KKMIntegrator_electronic").val()
+            };
+            App.KKMIntegrator.apiExecute('printCheck',data);
+        },
+        correctCheck(){
+            var data={};
+            $(".KKMIntegrator_correctionform input, .KKMIntegrator_correctionform select").each(function(i,node){
+                data[node.name]=node.value;
+                
+            });
+            App.KKMIntegrator.apiExecute('RegisterCorrectionCheck',{Data:JSON.stringify(data)});            
+        },
+        depositingCash(){
+            var data={
+                Amount:$("#KKMIntegrator_DepositingCashAmount").val()
+            };
+            App.KKMIntegrator.apiExecute('depositingCash',data);
+        },
+        getDataCheck(){
+            var data={
+                FiscalNumber:$("#KKMIntegrator_FiscalNumber").val()
+            };
+            App.KKMIntegrator.apiExecute('GetDataCheck',data);
+        }
+    };
+</script>
+<div style="display:grid;grid-template-columns:200px auto" id="KKMIntegrator_grid">
+    <div>
+        
+        <input type="number" step="0.01" id="KKMIntegrator_cash" value="3012.99">
+        <input type="number" step="0.01" id="KKMIntegrator_electronic" value="2000">
+        <button onclick="App.KKMIntegrator.printCheck('55249')">Печать чек</button>
+        <hr>
+        Коррекция чека
+        <div class="KKMIntegrator_correctionform">
+        <select name="TypeCheck">
+            <option value="2">Коррктировка приход</option>
+            <option value="12">Коррктировка расход</option>
+        </select>
+        <select name="CorrectionType">
+            <option value="0">самостоятельно</option>
+            <option value="1">по предписанию</option>
+        </select>
+        <input name="CorrectionBaseName" placeholder="Основание для коррекции">
+        <input name="CorrectionBaseDate" title="Дата основания для коррекции" type="date">
+        <input name="CorrectionBaseNumber" placeholder="Номер основания для коррекции">
+        
+        <input name="ClientAddress" placeholder="Телефон или емаил клиента">
+        <input name="ClientInfo" placeholder="ФИО, серия и номер паспорта">
+        <input name="ClientINN" placeholder="ИНН клиента">
+        
+        <input name="Amount" placeholder="Сумма расчета">
+        <input name="Cash" placeholder="Сумма коррекции Наличной оплаты">
+        <input name="ElectronicPayment" placeholder="Сумма коррекции электронной оплаты">
+        </div>
+        <button onclick="App.KKMIntegrator.correctCheck()">Корректировка чека</button>
+        
+        
+        <hr>
+        <button onclick="App.KKMIntegrator.apiExecute('openShift')">Открыть смену</button>
+        <button onclick="App.KKMIntegrator.apiExecute('closeShift')">Закрыть смену</button>
+        <button onclick="App.KKMIntegrator.apiExecute('XReport')">Х Отчет</button>
+        <button onclick="App.KKMIntegrator.apiExecute('openCashDrawer')">Открыть денежный ящик</button>
+        <button onclick="App.KKMIntegrator.apiExecute('getStatus')">Статус ККТ</button>
+        <button onclick="App.KKMIntegrator.apiExecute('getLineLength')">Ширина строки чека</button>
+        <hr>
+        <input type="number" step="0.01" id="KKMIntegrator_DepositingCashAmount" value="0">
+        <button onclick="App.KKMIntegrator.depositingCash()">Внести наличные</button>
+        <hr>
+        <input type="number" id="KKMIntegrator_FiscalNumber" value="0">
+        <button onclick="App.KKMIntegrator.getDataCheck()">Получить данные чека</button>
+    </div>  
+    <div>
+        <textarea id="KKMIntegrator_result" style="width: 100%;height: 500px;"></textarea>
+    </div>
+</div>
+<style>
+    #KKMIntegrator_grid button{
+        width:100%;
+    }
+</style>
+

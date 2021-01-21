@@ -1,0 +1,514 @@
+<script>
+    App.KKMIntegrator_advanced = {
+        parsed: true,
+        init() {
+            $("#kkmintegrator_advanced_dialog").modal({
+                onDeny: App.KKMIntegrator_advanced.close,
+                onVisible: function () {
+                    $('#kkmintegrator_advanced_dialog').modal('refresh');
+                },
+                onApprove: function () {
+                    return false;
+                },
+                onHidden: function () {
+                    App.KKMIntegrator_advanced.close();
+                },
+                inverted: true
+            }).modal('show');
+            App.KKMIntegrator_advanced.view.init();
+        },
+        close() {
+            $("#kkmintegrator_advanced_dialog").modal('hide');
+            $("#kkmintegrator_advanced_dialog").remove();
+            delete App.KKMIntegrator_advanced;
+        },
+        status: {},
+        block_submit: false,
+        view: {
+            init() {
+                $("input[name=pay_cash],input[name=pay_card]").on('input', function () {
+                    App.KKMIntegrator_advanced.view.calculate();
+                }).on('keypress', function (event) {
+                    if (event.keyCode === 13) {
+                        App.KKMIntegrator_advanced.kkm.print_check();
+                        return false;
+                    }
+                }).on('change', function () {
+                    $(this).val(Math.abs(Number(App.calc($(this).val()))).toFixed(2));
+                });
+                $("input[name=pay_cash]").focus();
+                this.statusShow();
+                this.calculate();
+                $("#kkmintegrator_advanced_dialog").click(function (e) {
+                    var node=$(e.target);
+                    if( node.hasClass('x-expand') ){
+                        node.toggleClass('collapsed');
+                        $('#kkmintegrator_advanced_dialog').modal('refresh');
+                    }
+                });
+            },
+            statusShow() {
+                var data = {
+                    IdCommand: App.KKMIntegrator_advanced.data.doc_id
+                };
+                App.KKMIntegrator_advanced.kkm.apiExecute('getStatus', data).done(function (resp) {
+                    App.KKMIntegrator_advanced.status = resp;
+                    App.renderTpl('kkmintegrator_advanced_utils', App.KKMIntegrator_advanced.status);
+                });
+            },
+            calculate: function () {
+                this.total = Number(App.KKMIntegrator_advanced.data.total).toFixed(2);
+                this.cash = parseFloat($("input[name=pay_cash]").val()) || 0;
+                this.card = parseFloat($("input[name=pay_card]").val()) || 0;
+                this.change = Number(-this.total + this.card + this.cash).toFixed(2);
+                if (this.change < 0) {
+                    this.change = 0;
+                }
+                if (!this.total) {
+                    return;
+                }
+                $("#kkmintegrator_total").html(this.total + '₽');
+                $("#kkmintegrator_change").html(this.change + '₽');
+                if (this.card > this.total) {
+                    App.KKMIntegrator_advanced.view.error("Сумма снятия с карты больше суммы чека");
+                } else {
+                    App.KKMIntegrator_advanced.view.error("");
+                }
+            },
+            error(message) {
+                if (!message || message == "") {
+                    App.KKMIntegrator_advanced.block_submit = false;
+                    $("#kkmintegrator_advanced_error").hide();
+                } else {
+                    if (message.indexOf('Connection refused') > -1) {
+                        message = "Нет связи с сервером касс! " + message;
+                    }
+                    App.KKMIntegrator_advanced.block_submit = true;
+                    $("#kkmintegrator_advanced_error").show();
+                    $("#kkmintegrator_advanced_info").hide();
+                }
+                $("#kkmintegrator_advanced_error").html(message);
+                App.KKMIntegrator_advanced.view.info("");
+            },
+            info(message) {
+                if (!message || message == "") {
+                    $("#kkmintegrator_advanced_info").hide();
+                } else {
+                    $("#kkmintegrator_advanced_info").show();
+                    $("#kkmintegrator_advanced_error").hide();
+                }
+                $("#kkmintegrator_advanced_info").html(message);
+            }
+        },
+        kkm: {
+            apiExecute(command, Data) {
+                var def = $.Deferred()
+                $.post('KKMIntegrator/' + command, Data || {}).done(function (resp) {
+                    try {
+                        var response = JSON.parse(resp);
+                        if (response.Error && response.Error != "") {
+                            App.KKMIntegrator_advanced.view.error(response.Error);
+                            def.reject();
+                        } else {
+                            def.resolve(response);
+                        }
+                    } catch (e) {
+                        App.KKMIntegrator_advanced.view.error(resp);
+                        def.reject();
+                    }
+                }).fail(function (resp) {
+                    App.KKMIntegrator_advanced.view.error(resp.responseText);
+                });
+                return def;
+            },
+            correct_check() {
+                this.validate();
+                if (App.KKMIntegrator_advanced.block_submit) {
+                    return false;
+                }
+                var data = App.collectForm('#kkmintegrator_advanced_correction');
+                App.KKMIntegrator_advanced.view.info("Чек печатается...");
+                App.KKMIntegrator_advanced.kkm.apiExecute('RegisterCorrectionCheck', {Data: JSON.stringify(data)}).done(function () {
+                    App.KKMIntegrator_advanced.close();
+                }).fail();
+                return false;
+            },
+            depositCash(e) {
+                e.preventDefault();
+                var amount = parseFloat($(e.currentTarget).find('input').val());
+                App.KKMIntegrator_advanced.view.info(`Изимается сумма ${amount.toFixed(2)}`);
+                App.KKMIntegrator_advanced.kkm.apiExecute('depositCash', {Amount: amount}).done(function () {
+                    App.KKMIntegrator_advanced.view.statusShow();
+                    App.KKMIntegrator_advanced.view.info(`Сумма ${amount.toFixed(2)} изъята!`);
+                });
+            },
+            withdrawCash(e) {
+                e.preventDefault();
+                var amount = parseFloat($(e.currentTarget).find('input').val());
+                App.KKMIntegrator_advanced.view.info(`Вносится сумма ${amount.toFixed(2)}`);
+                App.KKMIntegrator_advanced.kkm.apiExecute('withdrawCash', {Amount: amount}).done(function () {
+                    App.KKMIntegrator_advanced.view.statusShow();
+                    App.KKMIntegrator_advanced.view.info(`Сумма ${amount.toFixed(2)} внесена!`);
+                });
+            },
+            validate() {
+                App.KKMIntegrator_advanced.view.error("");
+                if (App.KKMIntegrator_advanced.status.Info.SessionState == 1) {
+                    App.KKMIntegrator_advanced.view.error("Смена закрыта. Необходимо открыть смену");
+                }
+                if (App.KKMIntegrator_advanced.status.Info.SessionState == 3) {
+                    App.KKMIntegrator_advanced.view.error("Смена закончилась. Нужно открыть заново");
+                }
+            },
+            open_shift() {
+                App.KKMIntegrator_advanced.kkm.apiExecute('openShift').done(function (resp) {
+                    App.KKMIntegrator_advanced.view.statusShow();
+                    App.KKMIntegrator_advanced.view.info("Смена открыта. Кассир: " + resp.CashierName);
+                });
+            },
+            close_shift() {
+                App.KKMIntegrator_advanced.kkm.apiExecute('closeShift').done(function () {
+                    App.KKMIntegrator_advanced.view.info("Смена закрыта.");
+                    App.KKMIntegrator_advanced.view.statusShow();
+                });
+            }
+        }
+    };
+</script>
+
+
+<style>
+    #kkmintegrator_advanced_total,#kkmintegrator_advanced_change{
+        font-size: 2em;
+        text-align: right;
+        color: #333;
+    }
+
+    .x-expand{
+        cursor: pointer;
+    }
+    .x-expand::before{
+        content: "▼ ";
+    }
+    .x-expand.collapsed::before{
+        content:"▶ ";
+    }
+    .x-expand.collapsed~form,.x-expand.collapsed~table{
+        display: none
+    }
+</style>
+
+<div class="ui modal" id="kkmintegrator_advanced_dialog">
+    <div class="header">Панель управления кассой</div>
+
+    <div class="content">
+        <div class="ui stackable grid">
+            <div class="eight wide column">
+                <div class="ui blue segment">
+                    <div class="ui header x-expand">Операции с наличными</div>
+                    <form class="ui form" onsubmit="return App.KKMIntegrator_advanced.kkm.depositCash(event)">
+                        <div class="two fields">
+                            <div class="field">
+                                <label>Сумма внесения</label>
+                                <input name="Amount" placeholder="Сумма внесения" required>
+                            </div>
+                            <div class="field">
+                                <label>&nbsp;</label>
+                                <button type="submit" class="ui button positive">Внести наличные</button>
+                            </div>
+                        </div>
+                    </form>
+                    <form class="ui form" onsubmit="return App.KKMIntegrator_advanced.kkm.withdrawCash(event)">
+                        <div class="two fields">
+                            <div class="field">
+                                <label>Сумма выемки</label>
+                                <input name="Amount" placeholder="Сумма выемки" required>
+                            </div>
+                            <div class="field">
+                                <label>&nbsp;</label>
+                                <button type="submit" class="ui button negative">Изъять наличные</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+
+
+
+                <div class="ui red segment">
+                    <div class="ui header x-expand collapsed">Корректировочный чек</div>
+                    <form class="ui form" id="kkmintegrator_advanced_correction" onsubmit="return App.KKMIntegrator_advanced.kkm.correct_check(event)">
+                        <div class="two fields">
+                            <div class="field">
+                                <label>Тип чека</label>
+                                <select class="ui fluid dropdown" name="TypeCheck">
+                                    <option value="2">Корректировка приход</option>
+                                    <option value="12">Корректировка расход</option>
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label>Исправлено</label>
+                                <select name="CorrectionType">
+                                    <option value="0">Самостоятельно</option>
+                                    <option value="1">По предписанию</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <h4 class="ui header">Основание для коррекции</h4>
+                        <div class="required field">
+                            <label>Документ</label>
+                            <input name="CorrectionBaseName" placeholder="Документ" required>
+                        </div>
+                        <div class="two fields">
+                            <div class="required field">
+                                <label>Номер</label>
+                                <input name="CorrectionBaseNumber" placeholder="Номер" required>
+                            </div>
+                            <div class="required field">
+                                <label>Дата</label>
+                                <input name="CorrectionBaseDate" title="Дата" type="date" required>
+                            </div>
+                        </div>
+                        <h4 class="ui header">Данные клиента</h4>
+                        <div class="field">
+                            <label>ФИО, серия и номер паспорта</label>
+                            <input name="ClientInfo" placeholder="ФИО, серия и номер паспорта">
+                        </div>
+                        <div class="two fields">
+                            <div class="field">
+                                <label>Телефон или емаил</label>
+                                <input name="ClientAddress" placeholder="Телефон или емаил">
+                            </div>
+                            <div class="field">
+                                <label>ИНН клиента</label>
+                                <input name="ClientINN" placeholder="ИНН клиента">
+                            </div>
+                        </div>
+
+
+                        <h4 class="ui header">Сумма коррекции оплаты</h4>
+                        <div class="two fields">
+                            <div class="field">
+                                <label>Наличная оплата</label>
+                                <input name="Cash" placeholder="Наличная">
+                            </div>
+                            <div class="field">
+                                <label>Электронная оплата</label>
+                                <input name="ElectronicPayment" placeholder="Электронная">
+                            </div>
+                        </div>
+                        <div class="two fields">
+                            <div class=" field">
+                                <label>Кредит</label>
+                                <input name="Credit" placeholder="Кредит">
+                            </div>
+                            <div class=" field">
+                                <label>Предоплата</label>
+                                <input name="AdvancePayment" placeholder="Предоплата">
+                            </div>
+                        </div>
+                        <div class="two fields">
+                            <div class=" field">
+                                <label>Встречное предоставление</label>
+                                <input name="CashProvision" placeholder="Встречное предоставление">
+                            </div>
+                        </div>
+                        <h4 class="ui header">Коррекция НДС</h4>
+                        <div class="two fields">
+                            <div class="field">
+                                <label>НДС ставка 20%</label>
+                                <input name="SumTax20" placeholder="НДС ставка 20%">
+                            </div>
+                            <div class="field">
+                                <label>НДС ставка 20/120%</label>
+                                <input name="SumTax120" placeholder="НДС ставка 20/120%">
+                            </div>
+                        </div>
+                        <div class="two fields">
+                            <div class="field">
+                                <label>НДС ставка 10%</label>
+                                <input name="SumTax10" placeholder="НДС ставка 10%">
+                            </div>
+                            <div class="field">
+                                <label>НДС ставка 10/110%</label>
+                                <input name="SumTax110" placeholder="НДС ставка 10/110%">
+                            </div>
+                        </div>
+                        <h4 class="ui header">Сумма коррекции необлагаемой НДС</h4>
+                        <div class="two fields">
+                            <div class="field">
+                                <label>Сумма по ставке НДС 0%</label>
+                                <input name="SumTax0" placeholder="Сумма по ставке НДС 0%">
+                            </div>
+                            <div class="field">
+                                <label>Сумма без НДС</label>
+                                <input name="SumTaxNone" placeholder="Сумма без НДС">
+                            </div>
+                        </div>
+                        <button type="submit" class="ui fluid button primary">Корректировать</button>
+                    </form>
+                </div>
+
+            </div>
+            <div class="eight wide column">
+                <div class="ui segment covert" id="kkmintegrator_advanced_utils">
+                    <div class="ui header">Статус кассы</div>
+                    <table class="ui very basic celled table">
+                        <tbody>
+                            <tr>
+                                <td>
+                                    Наличные
+                                </td>
+                                <td>
+                                    {{Info.BalanceCash|format}}₽
+                                    <div style="float:right;width: 170px" class="mini ui button" onclick="App.KKMIntegrator_advanced.kkm.apiExecute('XReport');">
+                                        <i class="ui icon print"></i> Распечатать Х Отчет
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    Смена № {{SessionNumber}}
+                                </td>
+                                <td>
+                                    {{if Info.SessionState|equals>1}}
+                                    <i class="ui red circle icon"></i> Закрыта
+                                    {{/if}}
+                                    {{if Info.SessionState|equals>2}}
+                                    <i class="ui green circle icon"></i> Открыта
+                                    {{/if}}
+                                    {{if Info.SessionState|equals>3}}
+                                    <i class="ui yellow circle icon"></i> Закончилась
+                                    {{/if}}
+
+                                    {{if Info.SessionState|equals>1}}
+                                    <div style="float:right;width: 170px" class="ui mini primary button" onclick="App.KKMIntegrator_advanced.kkm.open_shift()"><i class="ui sign in icon"></i> Открыть смену</div>
+                                    {{else}}
+                                    <div style="float:right;width: 170px" class="ui mini button" onclick="App.KKMIntegrator_advanced.kkm.close_shift()"><i class="ui sign in icon"></i> Закрыть смену</div>
+                                    {{/if}}
+                                </td>
+                            </tr>                        
+                            <tr>
+                                <td>
+                                    Статус
+                                </td>
+                                <td>
+                                    {{if Info.OnOff}}
+                                    <i class="ui green circle icon"></i>Включена 
+                                    {{else}}
+                                    <i class="ui red circle icon"></i>Выключена 
+                                    {{/if}}
+
+                                    {{if Info.Active}}
+                                    <i class="ui green circle icon"></i>Активна 
+                                    {{else}}
+                                    <i class="ui red circle icon"></i>Неактивна 
+                                    {{/if}}
+
+                                    {{if Info.PaperOver}}
+                                    <i class="ui red circle icon"></i>Бумаги нет 
+                                    {{else}}
+                                    <i class="ui green circle icon"></i>Бумага есть 
+                                    {{/if}}
+                                    <br>
+                                    {{if Info.OfflineMode}}
+                                    <i class="ui red circle icon"></i>Оффлайн 
+                                    {{else}}
+                                    <i class="ui green circle icon"></i>Онлайн 
+                                    {{/if}}
+                                    
+                                    {{if Info.FN_MemOverflowl}}
+                                    <i class="ui red circle icon"></i>ФН Переполнен
+                                    {{else}}
+                                    <i class="ui green circle icon"></i>ФН Непереполнен
+                                    {{/if}}
+                                </td>
+                            </tr>
+
+
+                        </tbody>
+                    </table>
+                    
+                    <h5 class="ui header x-expand collapsed"> Дополнительные данные</h5>
+                    <table class="ui very basic celled table">
+                        <tbody>
+                            <tr>
+                            <tr>
+                                <td>
+                                    Реквизиты
+                                </td>
+                                <td>
+                                    {{Info.NameOrganization}}<br>
+                                    Место установки:{{Info.PlaceSettle}}<br>
+                                    Мэйл:{{Info.SenderEmail}}<br>
+                                    №Регистрации:{{Info.RegNumber}}<br>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    Касса
+                                </td>
+                                <td>
+                                    №ККТ:{{Info.KktNumber}}<br>
+                                    Прошивка:{{Info.Firmware_Version}}<br>
+                                    Прошивка статус:{{Info.Firmware_Status}}<br>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    ОФД
+                                </td>
+                                <td>
+                                    {{Info.NameOFD}}<br>
+                                    {{if Info.OFD_Error}}
+                                    <div class="ui negative message">
+                                        Ошибка:{{Info.OFD_Error}}<br>
+                                        Номер док:{{Info.OFD_NumErrorDoc}}<br>
+                                        Дата док:{{Info.OFD_DateErrorDoc}}<br>
+                                    </div>
+                                    {{/if}}
+                                    
+                                    <div style="float:right;width: 170px" class="mini ui button" onclick="App.KKMIntegrator_advanced.kkm.apiExecute('OfdReport');">
+                                        <i class="ui icon print"></i> Отчет связи с ОФД
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    ФН
+                                </td>
+                                <td>
+                                    №:{{Info.FnNumber}}<br>
+                                    Начат:{{Info.FN_DateEnd}}<br>
+                                    Истекает:{{Info.FN_DateEnd}}
+                                    {{if Info.FN_MemOverflowl}}
+                                    <br><i class="ui red circle icon"></i>ФН Переполнен
+                                    {{else}}
+                                    <br><i class="ui green circle icon"></i>ФН Непереполнен
+                                    {{/if}}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="ui negative message" id="kkmintegrator_advanced_error" style="display:none"></div>
+        <div class="ui info message" id="kkmintegrator_advanced_info" style="display:none"></div>
+
+
+        <div class="ui stackable grid actions">
+            <div class="eight wide column">
+
+            </div>
+            <div class="eight wide column">
+                <div class="ui cancel button"><i class="ui icon close icon"></i> Закрыть</div>
+            </div>
+        </div>
+
+
+    </div>
+</div>

@@ -1,0 +1,61 @@
+{
+  "_from": "semantic-ui-offline",
+  "_id": "semantic-ui-offline@2.4.1-1",
+  "_inBundle": false,
+  "_integrity": "sha512-ONx52etmkMax15ur+n2Hi8spC6VfhwlHmeownyq2I3vQTzoJzU9+rTq/fMzjohFpf3YmLdymaXloXH6+/1ycYA==",
+  "_location": "/semantic-ui-offline",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "tag",
+    "registry": true,
+    "raw": "semantic-ui-offline",
+    "name": "semantic-ui-offline",
+    "escapedName": "semantic-ui-offline",
+    "rawSpec": "",
+    "saveSpec": null,
+    "fetchSpec": "latest"
+  },
+  "_requiredBy": [
+    "#USER",
+    "/"
+  ],
+  "_resolved": "https://registry.npmjs.org/semantic-ui-offline/-/semantic-ui-offline-2.4.1-1.tgz",
+  "_shasum": "c0333bed3bf84280998e2d967b9984c04150b388",
+  "_spec": "semantic-ui-offline",
+  "_where": "C:\\Users\\bayci",
+  "author": {
+    "name": "Arthur Lacoste",
+    "email": "arthak@gmail.com"
+  },
+  "bugs": {
+    "url": "https://github.com/arthurlacoste/semantic-ui-offline/issues"
+  },
+  "bundleDependencies": false,
+  "dependencies": {
+    "fs-extra": "^4.0.2",
+    "jquery": "x.*"
+  },
+  "deprecated": false,
+  "description": "CSS Only distribution of Semantic UI, with fonts.",
+  "devDependencies": {
+    "semantic-ui-css": "^2.4.1"
+  },
+  "homepage": "https://arthurlacoste.com",
+  "keywords": [
+    "static",
+    "semantic-ui",
+    "font"
+  ],
+  "license": "MIT",
+  "main": "semantic.js",
+  "name": "semantic-ui-offline",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/arthurlacoste/semantic-ui-offline.git"
+  },
+  "scripts": {
+    "start": "rm -rf node_modules/semantic-ui-css && npm install semantic-ui-css && node bin/recreate.js"
+  },
+  "title": "Semantic UI",
+  "version": "2.4.1-1"
+}
