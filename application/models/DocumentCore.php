@@ -212,23 +212,68 @@ class DocumentCore extends DocumentUtils{
 	$head_update_ok=$Document2->updateHead($new_val,$field);
         return $head_update_ok;
     }
-    private function setExtraExpenses($expense){//not beautifull function at all
+    private function setExtraExpenses($exp){//not beautifull function at all
 	$doc_type=$this->doc('doc_type');
 	$doc_id=$this->doc('doc_id');
-	if($doc_id && $doc_type==2){//only for buy documents
-	    $footer=$this->footerGet();
-	    $expense_ratio=$expense/$footer->vatless+1;
-	    return $this->query("UPDATE document_entries SET self_price=invoice_price*$expense_ratio WHERE doc_id=$doc_id");
+        $expense=(float)$exp;
+	if($doc_id){
+            if( $doc_type==1 ){
+                $doc_cstamp=$this->doc('cstamp');
+                $sql_SET="SET @total_self:=0.00";
+                $sql_TMP="
+                    CREATE TEMPORARY TABLE tmp_expense_calc AS(SELECT
+                        *,
+                        @total_self:=@total_self+(self*product_quantity)
+                    FROM
+                        (SELECT
+                            doc_entry_id,
+                            LEFTOVER_CALC(de.product_code,'$doc_cstamp',de.product_quantity,'selfprice') self,
+                            product_quantity
+                        FROM
+                            document_entries de
+                        WHERE
+                            doc_id='$doc_id') t)
+                    ";
+                $sql_DO="
+                    UPDATE 
+                        document_entries de
+                            JOIN
+                        tmp_expense_calc tec
+                    SET 
+                        de.self_price=tec.self*($expense/@total_self+1)
+                    WHERE doc_id=$doc_id
+                        
+                    ";
+                $this->query($sql_SET);
+                $this->query($sql_TMP);
+                $this->query($sql_DO);
+                $this->documentSettingSet( '$.extra_expenses', $expense );
+                return 1;
+            } else 
+            if( $doc_type==2 ){
+                $footer=$this->footerGet();
+                $expense_ratio=$expense/$footer->vatless+1;
+                $this->documentSettingSet( '$.extra_expenses', $expense );
+                return $this->query("UPDATE document_entries SET self_price=invoice_price*$expense_ratio WHERE doc_id=$doc_id");
+            }
+            
 	}
     }
     private function getExtraExpenses(){
 	$doc_type=$this->doc('doc_type');
 	$doc_id=$this->doc('doc_id');
-	if($doc_id && $doc_type==2){//only for buy documents
-	    $footer=$this->footerGet();
-	    $expense_ratio=$this->get_value("SELECT self_price/invoice_price FROM document_entries WHERE doc_id=$doc_id LIMIT 1");
-	    $expense=$footer->vatless*($expense_ratio-1);
-	    return $expense;
+	if($doc_id){//only for buy documents
+            $saved_expense=$this->documentSettingGet( '$.extra_expenses' );
+            if( $saved_expense ){
+                return $saved_expense;
+            }
+            if( $doc_type==2 ){
+                $footer=$this->footerGet();
+                $expense_ratio=$this->get_value("SELECT self_price/invoice_price FROM document_entries WHERE doc_id=$doc_id LIMIT 1");
+                $expense=$footer->self*($expense_ratio-1);
+                $this->documentSettingSet( '$.extra_expenses', $expense );
+                return $expense;
+            }
 	}
 	return 0;
     }

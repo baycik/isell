@@ -662,7 +662,7 @@
 		}
 	    });
 	    cmb.select();
-            Doc.suggest.row_template = $('#suggest-template').html();
+            Doc.suggest.row_template = $('#suggest-template').html().replace('&gt;','>');
 	},
 	isBarcode:function( code ){
 	    return String(code).length===13 && $.isNumeric(code);
@@ -1088,7 +1088,7 @@
                     <div class="img grid-item">
                         <img src="Storage/image_flush/?size=30x30&path=/dynImg/{{ product_img }}">
                     </div> 
-                    <div class="grid-item" style="color:{{if leftover|more>0}}black {{else}} red {{/if}}; padding: 0px 10px"><b>{{ product_code }}</b> {{ product_name }}</div> 
+                    <div class="grid-item" style="color:{{if leftover|more>0}}black {{else}} red {{/if}}; padding: 0px 10px"><b>{{ product_code }}</b> {{ product_name }} {{if analyse_class|equals>C}}<i class="icon star"></i>{{/if}}</div>
                     <div class="grid-item">{{ product_price_total }}</div>
                     <div class="grid-item" style="color:green">[x{{ product_spack}}] {{ leftover }}{{ product_unit }}</div></div> 
             </div>    

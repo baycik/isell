@@ -18,7 +18,7 @@
             <b>
             {{campaign_name}} / 
             {{current_result}}
-                {{product_category_label|blank>*}} {{product_brand_filter|blank>*}} {{product_type_filter|blank>*}}
+                {{product_category_label|blank>*}} {{product_brand_filter|blank>*}} {{product_type_filter|blank>*}} {{product_class_filter|blank>*}}
             {{/current_result}}
             </b>
             <canvas id="campaign-chart{{current_result.0.campaign_bonus_id}}" style="width: 100%"></canvas>
@@ -61,6 +61,9 @@
                             {{/if}}
                             {{if product_type_filter}}
                                 Тип: {{product_type_filter}}
+                            {{/if}}
+                            {{if product_class_filter}}
+                                Класс: {{product_class_filter}}
                             {{/if}}
                         </td>
                     </tr>

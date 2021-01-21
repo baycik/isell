@@ -9,6 +9,9 @@ var App = {
 	App.onReady && App.onReady();
     },
     flash:function (msg, type) {
+        if( !msg ){
+            return;
+        }
 	clearTimeout(App.flashClock);
 	App.flashClock = setTimeout(function () {
 	    $.messager.show({ msg: App.msg, showType: 'slide',width:300,height:150});
@@ -491,6 +494,7 @@ App.chatCheck=function(){
         var mode='';
         if( location.href.match(/(localhost)|(127.0.0.1)/) && !localStorage.getItem('executeTasks') ){
             mode='skip_tasks';//do not execute tasks on developing
+            return false;
         }
 	$.get('Chat/checkNew',{mode:mode},function(resp){
 	    var count=resp*1;

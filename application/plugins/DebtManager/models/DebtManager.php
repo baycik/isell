@@ -41,27 +41,34 @@ class DebtManager extends Catalog {
 	$this->tasksDelete();
     }
     
-    public $getBlock = ['filter' => 'json'];
+    //public $getBlock = ['filter' => 'json'];
     private $system_user = false;
     private $current_group_by_date = '';
-    public function getBlock($filter){
+    public function getBlock( array $filter ){
         session_write_close();
         $this->Hub->set_level(1);
         $user_id = $this->Hub->svar('user_id');
-        $this->createTmp($filter,$user_id);
+        
+        $params = $this->getUserSettings($user_id);
+        if( $filter ){
+            foreach( $filter as $key=>$value ){
+                $params->{$key}=$value;
+            }
+        }
+        $this->blockTableCreate($params);
         $list = $this->getEntries();
-        if(isset($list[0])){
+        if( count($list) ){
             $total = $this->getTotal();
         } else {
             $total = '';
         }
         if($filter['block_number'] > -1){
-            $view_date = $this->composeDate($this->current_group_by_date, $filter['block_number']);
+            $view_date = $this->composeDate($params);
         } else {
             $view_date = false;
         }
-        $buy_total = '';
-        $sell_total = '';
+        $buy_total = 0;
+        $sell_total = 0;
 
         if( !empty($total) ){
             $buy_total = $total->amount_buy; 
@@ -70,148 +77,183 @@ class DebtManager extends Catalog {
         return ['date' => $view_date, 'list' => $list, 'total' => ['buy'=> $buy_total, 'sell'=> $sell_total] ];
     }
     
-    private function createTmp($filter,$user_id) {
-        $user_level = $this->Hub->svar('user_level');
-        $block_number = $filter['block_number'];
-        $settings = $this->getUserSettings($user_id);
+    private $blockTransTableCreated=false;
+    private function blocksTransTableCreate( $params ){
+        if( $this->blockTransTableCreated==true ){
+            return true;
+        }
+        $filter_acomp = "";
+        if( !empty($params->acomp_only) ){
+            $filter_acomp = "AND active_company_id = {$this->Hub->svar('acomp')->company_id} ";
+        }
+        $filter_pcomp="";
+        if( $params->pcomp_id ){
+            $filter_pcomp = "AND passive_company_id = '".( (int) $params->pcomp_id )."'";
+        }
+        
         $sell_code = "361";
         $buy_code = "631";
-        $acomp = "";
-        if(!isset($settings->acomp)){
-            $settings->acomp = 0;
+        $filter_trans="";
+        if( $params->sell_trans == true ){
+            $filter_trans.="acc_debit_code=$sell_code"; 
         }
-         if($settings->acomp){
-            $acomp = "AND active_company_id = {$this->Hub->svar('acomp')->company_id} ";
-        }
-           
-        $trans_type_filter="";
-        if($settings->sell_trans == true){
-            $trans_type_filter.="acc_debit_code=$sell_code";
-        }
-        if($settings->buy_trans == true){
-            if($trans_type_filter!=""){
-                $trans_type_filter.=" OR ";
+        if( $params->buy_trans == true ){
+            if( $filter_trans!="" ){
+                $filter_trans.=" OR ";
             }
-            $trans_type_filter.="acc_credit_code=$buy_code";
+            $filter_trans.="acc_credit_code=$buy_code";
         }
-        if( !$trans_type_filter ){
+        if( !$filter_trans ){
             return false;
         }
-        $amount_sell="ROUND(
-                    SUM(
-                        IF(acc_debit_code = $sell_code,
-                            IF(trans_status = 2, GET_PARTLY_PAYED(active_company_id , passive_company_id ,$sell_code),amount),
-                        NULL)
-                    )
-                ,2) AS amount_sell,";
-        $amount_buy="ROUND(
-                    SUM(
-                        IF(acc_credit_code = $buy_code,
-                            -1*IF(trans_status = 2, GET_PARTLY_PAYED(active_company_id , passive_company_id ,$buy_code),amount),
-                        NULL)
-                    )
-                ,2) AS amount_buy,";
-        if(!isset($settings->group_by_date)){
-            $settings->group_by_date = 'DAY';
-        } 
-        $ofyear = 'OFYEAR';
-        if($settings->group_by_date != 'DAY' && $settings->group_by_date != 'WEEK' ){
-            $ofyear = '';
-        }
-        $this->current_group_by_date = $settings->group_by_date;
-        $pcomp_filter="";
-        if(!empty($filter['pcomp_id'])){
-            $settings->pcomp_id = $filter['pcomp_id'];
-        }
-        if($settings->pcomp_id != 0){
-            $pcomp_filter = " AND passive_company_id = '$settings->pcomp_id'";
-        }
-        if($block_number == -1){
-            $where = "AND DATE_ADD(cstamp, INTERVAL deferment DAY) < DATE_ADD(CURDATE(), INTERVAL 0 {$settings->group_by_date})";
-            
-        } else {
-            $where  = " AND {$settings->group_by_date}$ofyear(DATE_ADD(cstamp, INTERVAL deferment DAY)) = {$settings->group_by_date}$ofyear(DATE_ADD(CURDATE(), INTERVAL $block_number {$settings->group_by_date}))";
-            $where .= " AND DATE_ADD(cstamp, INTERVAL deferment DAY) > DATE_ADD(CURDATE(), INTERVAL 0 {$settings->group_by_date})";
-            $where .= " AND DATE_ADD(cstamp, INTERVAL deferment DAY) > DATE_ADD(CURDATE(), INTERVAL '".($block_number-1)."' {$settings->group_by_date})";
-            $where .= " AND DATE_ADD(cstamp, INTERVAL deferment DAY) < DATE_ADD(CURDATE(), INTERVAL '".($block_number+1)."' {$settings->group_by_date})";
-        }
         
+        $user_level = $this->Hub->svar('user_level');
+        $filter_level="AND ct.level <= $user_level";
+        
+        $filter_path = "";
         $user_assigned_path=$this->Hub->svar('user_assigned_path');
-        $path = '';
         if( $user_assigned_path ){
-            $path = "AND ct.path LIKE '$user_assigned_path%'";
+            $filter_path = "AND ct.path LIKE '$user_assigned_path%'";
+        }
+        $this->query("DROP TEMPORARY TABLE IF EXISTS tmp_trans_table");
+        $trans_table="
+            CREATE TEMPORARY TABLE tmp_trans_table AS
+            SELECT
+                *,
+                DATE_ADD(cstamp, INTERVAL deferment DAY) due_date
+            FROM
+                isell_db.acc_trans acctr
+                    JOIN 
+                companies_list cl ON (acctr.passive_company_id = cl.company_id)
+                    JOIN 
+                companies_tree ct USING(branch_id)
+            WHERE
+                trans_status IN (1,2,6,7) AND 
+                ($filter_trans)
+                $filter_acomp
+                $filter_pcomp
+                $filter_level
+                $filter_path
+            ";
+        $this->query($trans_table);
+        $this->blockTransTableCreated=true;
+        return true;
+    }
+    
+    private function blockTableCreate( $params ) {
+        $table_created=$this->blocksTransTableCreate( $params );
+        if( !$table_created ){
+            return false;
+        }
+        $block_number = $params->block_number;
+        $filter_interval = "due_date < NOW()";
+        if($block_number > -1){
+            switch($params->group_by_date){
+                case "WEEK":
+                    $start=(new DateTime())->modify("Monday this week");
+                    $period="week";
+                    $interval=1;
+                    break;
+                case "MONTH":
+                    $start=(new DateTime())->modify("first day of this month");
+                    $period="month";
+                    $interval=1;
+                    break;
+                case "QUARTER":
+                    $offset = (date('n')-1)%3; // modulo ftw
+                    $start = new DateTime("first day of -$offset month midnight");
+                    $period="month";
+                    $interval=3;
+                    break;
+                case "YEAR":
+                    $start = new DateTime('first day of january this year');
+                    $period="year";
+                    $interval=1;
+                    break;
+                default :
+                    $start = new DateTime();
+                    $period="day";
+                    $interval=1;
+            }
+            $now=(new DateTime())->format('Y-m-d 0:00:00');
+            $idate=$start->modify("+".($interval*$block_number)." {$period}s")->format('Y-m-d 0:00:00');
+            $idate=max([$now,$idate]);
+            $fdate=$start->modify("+".($interval)." {$period}s")->format('Y-m-d 0:00:00');
+            $filter_interval = "due_date > '$idate' AND due_date < '$fdate'";
         }
         
-        $where .= $path;
+        $group_by = "trans_id";
+        if($params->group_by_pcomp == true){
+            $group_by = "passive_company_id";
+        }
         
-        $group_by = "trans_id ";
-        if($settings->group_by_pcomp == true){
-            $group_by = "passive_company_id ";
-        } 
-        $this->query("DROP TABLE IF EXISTS tmp");
+        $this->query("DROP TEMPORARY TABLE IF EXISTS debt_block_tmp");
         $sql = "
-                CREATE TEMPORARY TABLE tmp  
+                CREATE TEMPORARY TABLE debt_block_tmp  
                 SELECT 
-                    DATE_FORMAT(DATE(TIMESTAMPADD(DAY, cl.deferment, acctr.cstamp)),'%Y%-%m%-%d') AS pay_date,
-                    $amount_sell $amount_buy
+                    ROUND(
+                        SUM(
+                            IF(acc_debit_code = 361,
+                                IF(trans_status = 2, GET_PARTLY_PAYED(active_company_id , passive_company_id ,361),amount),
+                            NULL)
+                        )
+                    ,2) AS amount_sell,
+                    ROUND(
+                        SUM(
+                            IF(acc_credit_code = 631,
+                                -1*IF(trans_status = 2, GET_PARTLY_PAYED(active_company_id , passive_company_id ,631),amount),
+                            NULL)
+                        )
+                    ,2) AS amount_buy,
                     ROUND(SUM(amount), 2) as total_amount,
-                    GROUP_CONCAT(acctr.description SEPARATOR ', ')  as description,
-                    acctr.passive_company_id,
-                    ct.label as company_label,
-                    cl.company_name,
-                    cl.company_person,
-                    cl.company_email,
-                    cl.company_mobile,
-                    cl.company_address,
-                    IF(acctr.acc_credit_code = '631', 'buy', 'sell') as trans_type,
-                    DATE_FORMAT(acctr.cstamp,'%Y%-%m%-%d') doc_date,
+                    GROUP_CONCAT(description SEPARATOR ', ')  as description,
+                    passive_company_id,
+                    label as company_label,
+                    company_name,
+                    company_person,
+                    company_email,
+                    company_mobile,
+                    company_address,
+                    IF(acc_credit_code = '631', 'buy', 'sell') as trans_type,
+                    DATE_FORMAT(cstamp,'%d.%m.%Y') doc_date_dmy,
+                    DATE_FORMAT(due_date,'%d.%m.%Y') due_date_dmy,
                     acc_credit_code,
                     trans_id
                 FROM
-                    isell_db.acc_trans acctr
-                        JOIN 
-                    companies_list cl ON (acctr.passive_company_id = cl.company_id)
-                        JOIN 
-                    companies_tree ct ON (cl.branch_id = ct.branch_id)
-                WHERE
-                    trans_status IN (1,2,6,7) 
-                    $acomp
-                    AND ($trans_type_filter)
-                    AND ct.level <= $user_level
-                    $pcomp_filter
-                    $where
-                GROUP BY acctr.$group_by
-                HAVING amount_sell > 100 OR amount_buy < 100
-                ORDER BY pay_date ASC
-        ";
+                    tmp_trans_table
+                    WHERE
+                        $filter_interval
+                GROUP BY $group_by
+                HAVING amount_sell > 10 OR amount_buy < 10
+                ORDER BY due_date ASC";
         $this->query($sql);
     }
     
     private function getEntries(){
-        return $this->get_list("SELECT * FROM tmp");
+        return $this->get_list("SELECT * FROM debt_block_tmp");
     }
     private function getTotal(){
-        return $this->get_row("SELECT ROUND(SUM(amount_buy), 2) as amount_buy, ROUND(SUM(amount_sell), 2) as amount_sell FROM tmp");
+        return $this->get_row("SELECT ROUND(SUM(amount_buy), 2) as amount_buy, ROUND(SUM(amount_sell), 2) as amount_sell FROM debt_block_tmp");
     }
     
-    private function composeDate($group_by, $block_number ){
-        if($group_by === 'WEEK' ){ 
-            $curr_date = "CONCAT(STR_TO_DATE(CONCAT(YEARWEEK(DATE_ADD(curdate(), INTERVAL $block_number WEEK)),' Monday'), '%X%V %W'),'|',DATE_ADD(DATE(CURDATE() + INTERVAL (8 - DAYOFWEEK(CURDATE())) DAY), INTERVAL $block_number WEEK))";
-        } else if ($group_by === 'QUARTER'){
-            $curr_date = "CONCAT ($group_by(DATE_ADD(CURDATE(), INTERVAL $block_number $group_by)),'|',DATE_ADD(CURDATE(), INTERVAL $block_number $group_by))";
+    private function composeDate( $params ){
+        if($params->group_by_date === 'WEEK' ){ 
+            $curr_date = "CONCAT(STR_TO_DATE(CONCAT(YEARWEEK(DATE_ADD(curdate(), INTERVAL {$params->block_number} WEEK)),' Monday'), '%X%V %W'),'|',DATE_ADD(DATE(CURDATE() + INTERVAL (8 - DAYOFWEEK(CURDATE())) DAY), INTERVAL {$params->block_number} WEEK))";
+        } else if ($params->group_by_date === 'QUARTER'){
+            $curr_date = "CONCAT ({$params->group_by_date}(DATE_ADD(CURDATE(), INTERVAL {$params->block_number} {$params->group_by_date})),'|',DATE_ADD(CURDATE(), INTERVAL {$params->block_number} {$params->group_by_date}))";
         } else {
-            $curr_date = "DATE_ADD(CURDATE(), INTERVAL $block_number $group_by)";
+            $curr_date = "DATE_ADD(CURDATE(), INTERVAL {$params->block_number} {$params->group_by_date})";
         } 
         $date = $this->get_row("SELECT $curr_date as curr_date FROM isell_db.acc_trans acctr LIMIT 1")->curr_date;
-        $quarter = 'Квартал';
-        $year = 'Год';
+        //$quarter = 'Квартал';
+        //$year = 'Год';
         $date_arr = [
             'day' => '',
             'month' => 0,
             'quarter' => 0,
             'year' => '0'
         ];
-        switch($group_by){
+        switch($params->group_by_date){
             case 'DAY':
                 $date_arr['day'] = (int)explode('-', $date)[2];
                 $date_arr['month'] = (int)explode('-', $date)[1];
@@ -338,7 +380,7 @@ class DebtManager extends Catalog {
         $filter = [];
         $msg = 'Уважаемый '.$this->Hub->svar('user')->first_name.',</br>';
         $filter['block_number'] = -1;
-        $this->createTmp($filter,$user_id);
+        $this->blockTableCreate($filter,$user_id);
         $total = $this->getTotal();
         if(empty($total)){
             return false;
@@ -444,7 +486,7 @@ class DebtManager extends Catalog {
                 'pcomp_id'=> '',
                 'buy_trans'=> 'true',
                 'sell_trans'=> 'true',
-                'acomp'=> '0',
+                'acomp_only'=> '0',
                 'notificate'=> '0',
                 'event_id'=> '0',
                 'event_disable'=> '0',
@@ -470,112 +512,180 @@ class DebtManager extends Catalog {
     
     
     
+//    
+//    public function companyMailingNotificationCreate( int $pcomp_id ){
+//        //header("Content-type:text/plain");
+//        $settings = $this->getUserSettings($this->Hub->svar('user_id'));
+//        $passive_company = $this->passiveCompanyGet($pcomp_id);
+//        $filter= [
+//            'pcomp_id' => $pcomp_id,
+//            'group_by_date' => $settings->group_by_date
+//        ];
+//        $data = [
+//            'passive_company' => $passive_company->company_name,
+//            'table' => $this->blockListRender($filter)
+//        ];
+//                    print_r($data);
+//
+//        $message = [
+//            'message_reason'=>'Задолженность',
+//            'message_note'=>$passive_company->company_label,
+//            'message_subject'=>'Задолженность',
+//        ];
+//        $MailingManager = $this->Hub->load_model('MailingManager');
+//        if(!empty($passive_company->company_email)){
+//            $message['message_handler']='email';
+//            $message['message_recievers'] = $passive_company->company_email;
+//            $message['message_body'] = $this->load->view('debt_mail_template', $data, true);
+//            die($message['message_body']);
+//            $MailingManager->messageCreate($message);
+//        }
+//        if(!empty($passive_company->company_mobile)){
+//            $message['message_handler']='sms';
+//            $message['message_recievers'] = $passive_company->company_mobile;
+//            $message['message_body'] = $this->load->view('debt_sms_template', $data, true);
+//            $MailingManager->messageCreate($message);
+//        }
+//        return true;
+//    }
     
-    public $messageRender = ['pcomp_id' => 'int'];
-    public function messageRender($pcomp_id){
-        $settings = $this->getUserSettings($this->Hub->svar('user_id'));
-        $passive_company = $this->passiveCompanyGet($pcomp_id);
-        $filter= [
-            'pcomp_id' => $pcomp_id,
-            'group_by_date' => $settings->group_by_date
+    private function blockListCountGet( $filter ){
+        $params=(object)[
+            'pcomp_id'=>$filter['pcomp_id'],
+            'sell_trans'=>true,
+            'buy_trans'=>false
         ];
-        $data = [
-            'passive_company' => $passive_company->company_name,
-            'table' => $this->blockListRender($filter)
-        ];
-        
-        $message = [
-            'message_reason'=>'Задолженность',
-            'message_note'=>$passive_company->company_label,
-            'message_subject'=>'Задолженность',
-        ];
-        $MailingManager = $this->Hub->load_model('MailingManager');
-        if(!empty($passive_company->company_email)){
-            $message['message_recievers'] = $passive_company->company_email;
-            $message['message_body'] = $this->load->view('debt_mail_template', $data, true);
-            $MailingManager->messageCreate('email',  $message);
-            
+        $this->blocksTransTableCreate( $params );
+        $sql = "SELECT GREATEST({$filter['deferment']} - DATEDIFF(NOW(),MAX(cstamp)),0) FROM tmp_trans_table";
+        $ahead_days=$this->get_value($sql);
+        switch($filter['group_by_date']){
+            case 'YEAR':
+                return ceil($ahead_days/365);
+            case 'QUARTER':
+                return ceil($ahead_days/90);
+            case 'MONTH':
+                return ceil($ahead_days/30);
+            case 'WEEK':
+                return ceil($ahead_days/7);
+            default :
+                return $ahead_days;
         }
-        if(!empty($passive_company->company_mobile)){
-            $message['message_recievers'] = $passive_company->company_mobile;
-            $message['message_body'] = $this->load->view('debt_sms_template', $data, true);
-            $MailingManager->messageCreate('sms',  $message);
-        }
-        return true;
     }
     
-    public $blockListRender = ['filter' => 'json'];
-    public function blockListRender($filter){
-        $list = $this->blockListGet($filter);
-        return $this->load->view('debt_table_template', ['list' => $list], true);;
-    }
-    
-    private $blockListGet = ['filter' => 'json'];
     private function blockListGet($filter){
-        $block_list = [];
-        $last_transaction = $this->lastTransactionGet($filter);
-        $last_block = $this->datediffInWeeks(date('Y-m-d'), $last_transaction, $filter['group_by_date']);
-        for($i = 0; $i <= $last_block; $i++){
-            $filter['block_number'] = $i-1;
+        $block_list = [
+            'list'=>[],
+            'grand_total_sell'=>0,
+            'grand_total_buy'=>0
+        ];
+        $block_count = $this->blockListCountGet($filter);
+//        if($block_count==0){
+//            return null;
+//        }
+        for($i = -1; $i < $block_count; $i++){
+            $filter['block_number'] = $i;
             $block = $this->getBlock($filter);
-            if(!empty($block['list'])){
-                $block_list[] = $block;
+            if($filter['block_number']==-1){
+                $block['date']="expired";
             }
+            $block_list['list'][] = $block;
+            $block_list['grand_total_sell']+=$block['total']['sell'];
+            $block_list['grand_total_buy']+=$block['total']['buy'];
         }
         return $block_list;
     }
-    
-    
-    private $lastTransactionGet = ['filter' => 'json'];
-    private function lastTransactionGet($filter){
-        $pcomp_id = $filter['pcomp_id'];
-        $sql = "
-            SELECT 
-                MAX(DATE_FORMAT(DATE(TIMESTAMPADD(DAY, cl.deferment, acctr.cstamp)),'%Y%-%m%-%d')) pay_date
-            FROM 
-                isell_db.acc_trans acctr
-                    JOIN 
-                companies_list cl ON (acctr.passive_company_id = cl.company_id)
-            WHERE 
-                passive_company_id = '$pcomp_id'
-            AND acc_debit_code = 361
-            AND active_company_id = 1
-            ";
-        return $this->get_row($sql)->pay_date;
-    }
 
-    private $datediffInWeeks = ['date_from' => 'string', 'date_to' => 'string'];
-    private function datediffInWeeks($date_from, $date_to, $date_group_by){
-        if($date_from > $date_to) return false;
-        $measure = 1;
-        if($date_group_by == 'WEEK'){
-            $measure = 7;
-        } else if($date_group_by == 'MONTH'){
-            $measure = 30;
-        } else if($date_group_by == 'QUARTER'){
-            $measure = 90;
-        } else {
-            $measure = 365;
-}
-        $first = DateTime::createFromFormat('Y-m-d', $date_from);
-        $second = DateTime::createFromFormat('Y-m-d', $date_to);
-        return floor($first->diff($second)->days/$measure);
+    
+    
+    private $lastWidgetPcompId=0;
+    public function PaymentCalendar( object $context ){
+        if( $context->company_id??false ){
+            if($this->lastWidgetPcompId!=$context->company_id){
+                $this->blockTransTableCreated=false;
+                $this->lastWidgetPcompId=$context->company_id;
+            }
+            $filter=[
+                'pcomp_id'=>$context->company_id,
+                'deferment'=>$context->deferment,
+                'group_by_date'=>'WEEK'
+            ];
+            $block_list=$this->blockListGet($filter);
+            if( $block_list===null || $block_list['grand_total_sell']==0 ){
+                return false;
+            }
+            $table_html=$this->load->view('debt_table_template', ['block_list' => $block_list], true);
+            return $table_html;
+        }
+        return false;
     }
     
-    private $passiveCompanyGet = ['pcomp_id' => 'int'];
-    private function passiveCompanyGet($pcomp_id){
-        $sql = "
-            SELECT 
-                cl.*, ct.label as company_label
-            FROM 
-                companies_list cl
-                    JOIN 
-                companies_tree ct ON (cl.branch_id = ct.branch_id)
-            WHERE 
-                company_id = '$pcomp_id'
-            ";
-        return $this->get_row($sql);
+        public function DebtTotal( object $context ) {
+        if( $context->company_id??false ){
+            if($this->lastWidgetPcompId!=$context->company_id){
+                $this->blockTransTableCreated=false;
+                $this->lastWidgetPcompId=$context->company_id;
+            }
+            $params=(object)[
+                'pcomp_id'=>$context->company_id,
+                'acomp_only'=>1,
+                'sell_trans'=>true,
+                'buy_trans'=>false
+            ];
+            $this->blocksTransTableCreate( $params );
+            $sql = "
+                SELECT 
+                    ROUND(
+                            SUM(
+                                IF(acc_debit_code = 361,
+                                    IF(trans_status = 2, GET_PARTLY_PAYED(active_company_id , passive_company_id ,361),amount),
+                                NULL)
+                            )
+                        ,2) AS amount_sell
+                FROM 
+                    tmp_trans_table";
+            $debt=$this->get_value($sql);
+            if( !$debt || $debt<=100 ){
+                return false;
+            }
+            return $debt;
+        }
+        return false;        
     }
     
-
+    public function DebtExpired( object $context ) {
+        if( $context->company_id??false ){
+            $tolerance_days=7;
+            if($this->lastWidgetPcompId!=$context->company_id){
+                $this->blockTransTableCreated=false;
+                $this->lastWidgetPcompId=$context->company_id;
+            }
+            $params=(object)[
+                'pcomp_id'=>$context->company_id,
+                'acomp_only'=>1,
+                'sell_trans'=>true,
+                'buy_trans'=>false
+            ];
+            $this->blocksTransTableCreate( $params );
+            $sql = "
+                SELECT 
+                    ROUND(
+                            SUM(
+                                IF(acc_debit_code = 361,
+                                    IF(trans_status = 2, GET_PARTLY_PAYED(active_company_id , passive_company_id ,361),amount),
+                                NULL)
+                            )
+                        ,2) AS amount_sell,
+                    MIN(IF(DATEDIFF(NOW(),due_date)>$tolerance_days,0,1)) toleranced
+                FROM 
+                    tmp_trans_table
+                WHERE
+                    due_date<NOW()";
+            $debt=$this->get_row($sql);
+            if( !$debt->amount_sell || $debt->amount_sell<=100 || $debt->toleranced ){
+                return false;
+            }
+            return $debt->amount_sell;
+        }
+        return false;        
+    }
 }

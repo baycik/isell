@@ -42,29 +42,25 @@ class MailingManager extends Catalog {
 
     public function init(){
         $this->pluginSettingsLoad();
-        if(!$this->settings){
-            $this->settings = [
-                'event_id' => false,
-                'reciever_list' => new stdClass(),
-                'manual_reciever_list' => new stdClass()
+        if( !$this->plugin_data ){
+            $this->plugin_data=[
+                'template_list'=>(object)[],
+                'reciever_list'=>(object)[]
             ];
             $this->pluginSettingsFlush();
         }
     }
 
     private function pluginSettingsFlush() {
-        $settings=$this->settings;
         $plugin_data=$this->plugin_data;
         $this->pluginSettingsLoad();
-        $plugin_data=(object) array_merge((array) $this->plugin_data, (array) $plugin_data);
-        $encoded_settings = json_encode($settings, JSON_UNESCAPED_UNICODE );
-        $encoded_data =     json_encode($plugin_data, JSON_UNESCAPED_UNICODE );
-        $this->settings=    $settings;
-        $this->plugin_data= $plugin_data;
+        $this->plugin_data=(object) array_merge((array) $this->plugin_data, (array) $plugin_data);
+        $encoded_settings = addslashes(json_encode($this->settings, JSON_UNESCAPED_UNICODE ));
+        $encoded_data =     addslashes(json_encode($this->plugin_data));
         $sql = "
             UPDATE
                 plugin_list
-            SET
+            SET 
                 plugin_settings = '$encoded_settings',
                 plugin_json_data = '$encoded_data'
             WHERE plugin_system_name = 'MailingManager'
@@ -82,31 +78,20 @@ class MailingManager extends Catalog {
             WHERE plugin_system_name = 'MailingManager'
             ";
         $row = $this->get_row($sql);
-        $this->settings=json_decode($row->plugin_settings);
-        $this->plugin_data=json_decode($row->plugin_json_data);
+        $this->settings=json_decode( str_replace("\n", '\n', $row->plugin_settings) );
+        $this->plugin_data=json_decode( str_replace("\n", '\n', $row->plugin_json_data) );
     }
 
-
-    public function settingsGet(){
-        $sql="
-            SELECT
-                plugin_settings
-            FROM
-                plugin_list
-            WHERE
-                plugin_system_name = 'MailingManager'
-            ";
-        return [
-            'settings' => json_decode($this->get_row($sql)->plugin_settings, true),
-            'staff_list' => $this->Hub->load_model("Pref")->getStaffList(),
-            'editor_markup' => $this->default_markup_values
-        ];
-    }
-
-    public function settingsUpdate(array $settings){
-        $this->settings = $settings;
+    public function dataUpdate(array $settings){
+        $this->plugin_data = $settings;
         $this->pluginSettingsFlush();
         return true;
+    }
+
+    public function dataGet(){
+        return [
+            'settings' => $this->plugin_data
+        ];
     }
     /*
      * Message CRUD functions
@@ -118,7 +103,7 @@ class MailingManager extends Catalog {
         }
         $message_record=[
             'message_handler'=>$message['message_handler'],
-            'message_batch_label'=>$message['message_batch_label'],
+            'message_batch_label'=>$message['message_batch_label']??($message['message_handler'].$message['message_reason']),
             'message_status'=>'created',
             'message_reason'=>$message['message_reason'],
             'message_note'=>$message['message_note'],
@@ -168,20 +153,46 @@ class MailingManager extends Catalog {
     }
 
     public function messageSend( $message_id ){
-        $this->settings = $this->settingsGet();
         $this->messageChangeStatus($message_id, 'processing');
-        $this->settings['settings']['event_id'] = $this->mailingCreate();
-        $this->settingsUpdate($this->settings['settings']);
+        $this->plugin_data->event_id = $this->mailingCreate();
+        $this->pluginSettingsFlush();
     }
     
     public function messageCancelSending( $message_id ){
         $this->messageChangeStatus($message_id, 'created', 'processing');
     }
     
+    private $error_log=[];
     private function messageRenderTpl( string $message_template, $context ){
-        foreach ($context as $key=>$val){
-            $message_template = str_replace('{{'.$key.'}}', $val, $message_template);
-        }
+        $message_template=preg_replace_callback('/{{(\w+)\.?(\w+)?(\([^\)]+\))?}}/',function($matches) use ($context){
+            if($this->message_composing_aborted){
+                return false;
+            }
+            if($matches[2]??false){
+                try{
+                    $Model=$this->Hub->load_model($matches[1]);
+                    if(method_exists($Model, $matches[2])){
+                        /*
+                         * Try to execute widget function if fail abort message
+                         */
+                        $result=$Model->{$matches[2]}($context);
+                        if( $result===false ){
+                            $this->message_composing_aborted=true;
+                            $this->error_log[]="Пропущен {$matches[2]} для {$context->label}";
+                        }
+                        return $result;
+                    }
+                    return '???';
+                } catch(Exception $e){
+                    return '???';
+                }
+                return '???';
+            }
+            if($matches[1]??false){
+                return $context->{$matches[1]}??'?'.$matches[1];
+            }
+            return '???';
+        },$message_template);
         return $message_template;
     }
 
@@ -214,8 +225,11 @@ class MailingManager extends Catalog {
         return $having;
     }
 
-    public function messageListGet( string $filter='', string $filter_handler='', string $filter_reason='', string $filter_date='' ){
+    public function messageListGet( string $filter='', string $message_batch_label ){
         $where = $this->messageListFilterGet( $filter );
+        if($message_batch_label){
+            $where.=" AND message_batch_label='$message_batch_label'";
+        }
         $msg_list_msg="
             SELECT
                 *,
@@ -223,53 +237,59 @@ class MailingManager extends Catalog {
             FROM
                 plugin_message_list
             WHERE
-                message_handler LIKE '%$filter_handler%'
-                AND message_reason LIKE '%$filter_reason%'
-                AND created_at LIKE '%$filter_date%'
-                AND $where
+                $where
             ";
         return $this->get_list($msg_list_msg);
     }
-
-    private $default_markup_values = [
-        'company_name' => 'Ваша компания',
-        'company_person' => 'Клиент нашей компании',
-        'company_director' => 'Клиент нашей компании',
-        'company_email' => 'Ваш электронный адрес',
-        'company_web' => 'Адрес вашего сайта',
-        'company_mobile' => 'Ваш номер телефона',
-        'company_address' => 'Ваш физический адрес'
-    ];
 
     /*
      * Message batches CRUD functions
      */
     public function messageBatchCreate( array $message_batch ){
-        $context = new stdClass();
+        $mesages_created=0;
         $batch_label = md5($message_batch['handler'].$message_batch['subject'].date('Y-m-d H:i:s'));
         foreach($message_batch['manual_reciever_list'] as $contact){
             $contact_type = $this->messageDefineContactType($contact);
             if($contact_type == ''){
                 continue;
             }
-            $context = $this->recieverGetByContact($contact, $contact_type);
-            if(empty($context->{"company_".$contact_type})){
-                $context->{"company_".$contact_type} = $contact;
-            } 
-            $message = $this->messageBatchComposeMessage($batch_label, $message_batch, $context);
-            $context->company_name = $contact;
-            $this->messageCreate($message);
+            if( $contact_type=='email' ){
+                $contexts = $this->messageBatchContextGet( null, null, $contact );
+            }
+            if( $contact_type=='phone' ){
+                $contexts = $this->messageBatchContextGet( null, $contact, null );
+            }
+            $this->message_composing_aborted=false;
+            $message = $this->messageBatchComposeMessage($batch_label, $message_batch, $contexts[0]);
+            if($this->message_composing_aborted){
+                continue;
+            }
+            $ok=$this->messageCreate($message);
+            if( $ok ){
+                $mesages_created++;
+            }
         }
         $batch_context = $this->messageBatchContextGet( $message_batch['reciever_list_id'] );
         foreach($batch_context as $context){
             if( empty($context->company_email) && empty($context->company_mobile) ){
                 continue;
             }
+            $this->message_composing_aborted=false;
             $message = $this->messageBatchComposeMessage($batch_label, $message_batch, $context);
-            $this->messageCreate($message);
+            if($this->message_composing_aborted){
+                continue;
+            }
+            $ok=$this->messageCreate($message);
+            if( $ok ){
+                $mesages_created++;
+            }
         }
-        return true;
+        return [
+            'messages_created'=>$mesages_created,
+            'error_log'=>$this->error_log
+            ];
     }
+    
     public function messageBatchComposeMessage(string $batch_label, array $message_batch, stdClass $context ){
         $message = [];
         $validated_contact = $this->messageContactValidate($message_batch['handler'], $context);
@@ -279,28 +299,45 @@ class MailingManager extends Catalog {
         $message['message_batch_label'] = $batch_label;
         $message['message_recievers'] = implode('|',$validated_contact);
         $message['message_handler'] = $message_batch['handler'];
-        $message['message_reason'] = $message_batch['subject'];
+        $message['message_reason'] = preg_replace('/{{[^}]+}}/', '', $message_batch['subject']);
         $message['message_subject'] = $this->messageRenderTpl($message_batch['subject'],$context);;
         $message['message_note'] = '';
         $message['message_body'] = $this->messageRenderTpl($message_batch['body'],$context);
         return $message;
     }
-    private function messageBatchContextGet( string $reciever_list_id ){
-        $where = $this->recieverListFilterGet($reciever_list_id);
+    
+    private function messageBatchContextGet( string $reciever_list_id=null, string $phone=null, string $email=null ){
+        $active_company_id=$this->Hub->acomp('company_id');
+        if( $phone ){
+            $where="company_mobile LIKE '%$phone%' OR company_phone LIKE '%$phone%' ";
+        }if( $email ){
+            $where="company_email LIKE '%$email%'";
+        } else {
+            $where = $this->recieverListFilterGet($reciever_list_id);
+        }
         $sql="
             SELECT
+                $active_company_id active_company_id,
+                cl.company_id,
                 label,
                 path,
+                deferment,
                 company_name,
                 company_person,
                 company_director,
                 company_address,
                 company_email,
-                company_mobile
+                company_mobile,
+                user_sign manager_sign,
+                user_phone manager_phone,
+                user_position manager_position,
+                DATE_FORMAT(NOW(),'%d.%m.%Y') date_today
             FROM
-                companies_list
+                companies_list cl
                     JOIN
-                companies_tree USING(branch_id)
+                companies_tree ct USING(branch_id)
+                    LEFT JOIN
+                user_list ON manager_id=user_id AND user_is_staff=1
             WHERE $where
             ORDER BY label ASC";
         return $this->get_list($sql);
@@ -311,10 +348,9 @@ class MailingManager extends Catalog {
     }
     
     public function messageBatchSend( string $message_batch_label ){
-        $this->settings = $this->settingsGet();
         $this->messageBatchChangeStatus($message_batch_label, 'processing');
-        $this->settings['settings']['event_id'] = $this->mailingCreate();
-        $this->settingsUpdate($this->settings['settings']);
+        $this->plugin_data->event_id = $this->mailingCreate();
+        $this->pluginSettingsFlush();
     }
 
     public function messageBatchCancelSending( string $message_batch_label ){
@@ -329,7 +365,7 @@ class MailingManager extends Catalog {
         if(!empty($message['message_recievers'])){
             $custom_recievers = explode(',', $message['message_recievers']);
             foreach($custom_recievers as $custom_reciever){
-                $custom_reciever_object = new StdClass();
+                $custom_reciever_object = (object)[];
                 $custom_reciever_object->{$message['message_handler']} = $custom_reciever;
                 $reciever_list[] = $custom_reciever_object;
             }
@@ -354,6 +390,7 @@ class MailingManager extends Catalog {
                 $where
             GROUP BY message_batch_label
             ORDER BY created_at DESC,message_handler
+            LIMIT 20
             ";
         return $this->get_list($msg_list_msg);
     }
@@ -430,11 +467,10 @@ class MailingManager extends Catalog {
 
     private function recieverListFilterGet( string $reciever_list_id ){
         $this->Hub->set_level(2);
-        $settings = $this->settingsGet();
-        if( empty($settings['settings']['reciever_list'][$reciever_list_id]) ){
+        if( empty($this->plugin_data->reciever_list->{$reciever_list_id}) ){
             return 0;
         }
-        $reciever_list_settings=$settings['settings']['reciever_list'][$reciever_list_id];
+        $reciever_list_settings=$this->plugin_data->reciever_list->{$reciever_list_id};
         $assigned_path=  $this->Hub->svar('user_assigned_path');
         $user_level=     $this->Hub->svar('user_level');
         $or_case=[];
@@ -442,17 +478,17 @@ class MailingManager extends Catalog {
         if( $assigned_path ){
             $and_case[]=" path LIKE '%".str_replace(",", "%' OR path LIKE '%", $assigned_path)."%'";
         }
-        if( !empty($reciever_list_settings['subject_path_include']) ){
-            $or_case[]=" path LIKE '%".str_replace(",", "%' OR path LIKE '%", $reciever_list_settings['subject_path_include'])."%'";
+        if( !empty($reciever_list_settings->subject_path_include) ){
+            $or_case[]=" path LIKE '%".str_replace(",", "%' OR path LIKE '%", $reciever_list_settings->subject_path_include)."%'";
         }
-        if( !empty($reciever_list_settings['subject_path_exclude']) ){
-            $and_case[]=" path NOT LIKE '%".str_replace(",", "%' AND path NOT LIKE '%", $reciever_list_settings['subject_path_exclude'])."%'";
+        if( !empty($reciever_list_settings->subject_path_exclude) ){
+            $and_case[]=" path NOT LIKE '%".str_replace(",", "%' AND path NOT LIKE '%", $reciever_list_settings->subject_path_exclude)."%'";
         }
-        if( $reciever_list_settings['subject_manager_include']){
-            $or_case[]=" manager_id IN (".implode(',',$reciever_list_settings['subject_manager_include']).")";
+        if( $reciever_list_settings->subject_manager_include){
+            $or_case[]=" manager_id IN (".implode(',',$reciever_list_settings->subject_manager_include).")";
         }
-        if( $reciever_list_settings['subject_manager_exclude']){
-            $and_case[]=" manager_id NOT IN (".implode(',', $reciever_list_settings['subject_manager_exclude']).")";
+        if( $reciever_list_settings->subject_manager_exclude){
+            $and_case[]=" manager_id NOT IN (".implode(',', $reciever_list_settings->subject_manager_exclude).")";
         }
         $where="";
         if( count($or_case) ){
@@ -532,10 +568,10 @@ class MailingManager extends Catalog {
 
     public function mailingCreate(){
         $Events=$this->Hub->load_model('Events');
-        if(!empty($Events->eventGet($this->settings['settings']['event_id']))){
-            return $Events->eventGet($this->settings['settings']['event_id'])->event_id;
+        if(!empty($Events->eventGet($this->plugin_data->event_id))){
+            return $Events->eventGet($this->plugin_data->event_id)->event_id;
         } else {
-            $this->settings['settings']['event_id'] = false;
+            $this->plugin_data->event_id = false;
         }
         $program = [
             'commands' => [[
@@ -560,7 +596,7 @@ class MailingManager extends Catalog {
         $event_status='pending';
         $event_liable_user_id='';
         $event_is_private = '1';
-        $event_id = $Events->eventSave($this->settings['settings']['event_id'],
+        $event_id = $Events->eventSave($this->plugin_data->event_id,
                 $doc_id,
                 $event_date,
                 $event_priority,
@@ -600,11 +636,10 @@ class MailingManager extends Catalog {
 
 
     public function mailingFinish(){
-        $this->settings = $this->settingsGet();
         $Events=$this->Hub->load_model('Events');
-        $Events->eventDelete($this->settings['settings']['event_id']);
-        $this->settings['settings']['event_id'] = false;
-        $this->settingsUpdate($this->settings['settings']);
+        $Events->eventDelete($this->plugin_data->event_id);
+        $this->plugin_data->event_id = false;
+        $this->pluginSettingsFlush();
         return true;
     }
     

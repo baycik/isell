@@ -1,0 +1,83 @@
+<form class="ui form head_input">
+    <div style="background: url('img/bg_header_stripes.png');height: 38px;margin: -5px -5px 0px -5px;padding: 2px">
+
+        <label></label>
+        <div class="ui toggle checkbox" style="border:none;">
+            <input type="checkbox"  name="is_commited" id="x-is_commited" title="Проведен" data-skip="1">
+            <label style="text-align: left" for="x-is_commited">Проведен</label>
+        </div>
+        
+        <div class="x-toolbar" style="text-align: right; float: right; padding: 3px">
+            <span class="icon-24 icon-commit" title="Провести документ" data-action="commit"> </span>
+            <span class="icon-24 icon-uncommit" title="Отменить документ" data-action="uncommit"> </span>
+            <span class="icon-24 icon-wallet" title="Внести оплату" data-action="pay"> </span>
+            <span class="icon-24 icon-lorry" title="Добавить в распорядок" data-action="addevent"> </span>
+            <span class="icon-24 icon-sms" title="Отправить СМС" data-action="sendsms"> </span>
+            <span class="icon-24 icon-duplicate" title="Копировать" data-action="duplicate"> </span>
+            <span class="icon-24 icon-refresh" title="Обновить" data-action="reload"> </span> 
+        </div>
+    </div>
+
+    <div class="head_widget_grid">
+        <select name="doc_type" class="ui selection dropdown" title="Тип документа"></select>
+        <div class="ui left icon input fluid">
+            <i class="calendar icon"></i>
+            <input type="date" name="cstamp" title="Дата">
+        </div>
+        <select name="doc_status_id" class="ui selection dropdown" title="Статус"></select>
+        <div class="ui left icon input fluid">
+            <i class="hashtag icon"></i>
+            <input type="number" name="doc_num" title="Номер">
+        </div>
+    </div>
+    
+    <div class="x-utils" style="display: none; padding-top: 20px;margin-bottom: 20px;border-top: 1px solid #fff;">
+        <div class="head_widget_grid">
+            <select name="active_company_id" class="ui selection dropdown" title="Продавец"></select>
+            <select name="passive_company_id" class="ui search dropdown" title="Клиент"></select>
+
+            <div class="ui left icon input fluid">
+                <i class="percent icon"></i>
+                <input name="vat_rate" title="НДС %" type="number">
+            </div>
+
+            <div class="ui left icon input fluid">
+                <i class="currency icon"></i>
+                <input name="doc_ratio" title="Курс" type="number">
+            </div>
+
+            <label></label>
+            <div class="ui slider checkbox" style="border:none;">
+                <input type="checkbox"  name="use_vatless_price" id="x-use_vatless_price" title="Цена без НДС" data-skip="1">
+                <label style="text-align: left" for="x-use_vatless_price">Цена без НДС</label>
+            </div>
+
+            <label></label>
+            <div class="ui slider checkbox" style="border:none;">
+                <input type="checkbox"  name="notcount" id="x-notcount" title="Не учитывать" data-skip="1">
+                <label style="text-align: left" for="x-notcount">Не учитывать</label>
+            </div>
+        </div>
+        
+        <div style="background-color: #fff9;border-radius: 5px;padding: 5px;margin-top: 10px;">
+            <div class="x-toolbar" style="text-align: right">
+                <span class="icon-24 icon-duplicate" title="Копировать документ" data-action="duplicate"> </span>
+                <span class="icon-24 icon-download" title="Скачать таблицу" data-action="download"> </span>
+                <span class="icon-24 icon-split" title="Вынести недостающие позиции в новую накладную"  data-action="absent_split"> </span>
+                <!--PLUGINS-->
+            </div>
+        </div>
+    </div>
+</form>
+<style>
+    .head_input label{
+        text-align: right;
+        margin-top: 7px;
+    }
+    .head_widget_grid{
+        display: grid;
+        grid-template-columns:100px 270px 100px 270px;
+        margin: 5px;
+        gap:5px
+    }
+</style>

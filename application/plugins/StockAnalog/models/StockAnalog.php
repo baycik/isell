@@ -26,29 +26,41 @@ class StockAnalog extends Catalog{
     
     public function listFetch( int $offset, int $limit, string $sortby=null, string $sortdir=null, array $filter = null){
         $this->Hub->set_level(3);
-        if ( empty($sortby) ) {
-	    $sortby = "product_code";
-	    $sortdir = "ASC";
-	}
         $having = '';
         if( $filter ){
            $having = "HAVING ".$this->makeFilter($filter); 
-        };
+        }
+        $this->query("SET @minprice:=0, @currentid:=0, @difflimit:=1.15");
 	$sql ="
-            SELECT 
-                SUBSTRING(MD5(analog_group_id),1,6) analog_group_tag,
-                pl.product_id,
-                pl.product_code,
-                ru product_name
-            FROM 
-                stock_entries se
+            SELECT
+                *,
+                IF(@currentid<>analog_group_id,(@currentid:=analog_group_id)*0+(@minprice:=product_price)*0,product_price/@minprice>@difflimit) diff
+            FROM
+                (SELECT 
+                    st.label,
+                    analog_group_id,
+                    SUBSTRING(MD5(analog_group_id),1,6) analog_group_tag,
+                    pl.product_id,
+                    pl.product_code,
+                    ru product_name,
+                    sell,
+                    ROUND(sell) product_price,
+                    se.product_quantity
+                FROM 
+                    stock_entries se
                         JOIN
-                prod_list pl USING(product_code)
+                    stock_tree st ON se.parent_id=st.branch_id
+                        JOIN
+                    prod_list pl USING(product_code)
                         LEFT JOIN
-                plugin_analog_list USING(product_id)
-            $having
-            ORDER BY analog_group_id DESC,$sortby $sortdir
-            LIMIT $limit OFFSET $offset
+                    price_list pp ON pp.product_code=se.product_code AND LENGTH(pp.label)<1
+                        LEFT JOIN
+                    plugin_analog_list USING(product_id)
+                $having
+                ORDER BY analog_group_id DESC,sell
+                LIMIT $limit OFFSET $offset
+                ) t
+                
             ";
 	return $this->get_list($sql);
     }
@@ -118,6 +130,7 @@ class StockAnalog extends Catalog{
                 ru product_name,
                 se.product_quantity,
                 pl.product_unit,
+                pl.analyse_class,
                 GET_SELL_PRICE(product_code,passive_company_id,doc_ratio) product_price
             FROM
                 plugin_analog_list pal1
@@ -129,7 +142,7 @@ class StockAnalog extends Catalog{
                 stock_entries se USING(product_code)
                     JOIN
                 (SELECT 
-                    product_id,doc_ratio,passive_company_id,product_quantity
+                    product_id,doc_ratio,passive_company_id,product_quantity,doc_type
                 FROM
                     document_entries
                         JOIN
@@ -140,7 +153,7 @@ class StockAnalog extends Catalog{
                     doc_entry_id='$doc_entry_id') de ON de.product_id=pal1.product_id
             WHERE
                 pal1.product_id<>pl.product_id
-                AND se.product_quantity>=de.product_quantity
+                AND IF(doc_type=1,se.product_quantity>=de.product_quantity,1)
             ";
         return $this->get_list($sql);
     }

@@ -3,7 +3,15 @@
 class Catalog extends CI_Model {
 
     public $min_level = 1;
-
+    public function __construct() {
+        parent::__construct();
+        $this->starts_time= microtime(1);
+    }
+    
+    public function profile($text){
+        echo "\n$text: ".round(microtime(1)*1000-$this->starts_time*1000)."\n";
+    }
+    
     protected function check(&$var, $type = null) {
         switch ($type) {
             case 'raw':
@@ -343,7 +351,19 @@ class Catalog extends CI_Model {
         }
         $having = [];
         foreach ($filter as $rule) {
-            $having[] = "$rule->field LIKE '%$rule->value%'";
+            $or_case=[];
+            $words=explode(' ',$rule->value);
+            foreach($words as $word){
+                if(!$word){
+                    continue;
+                }
+                if($word[0]=='!'){
+                    $having[] = "$rule->field NOT LIKE '%".substr($word,1)."%'";
+                } else {
+                    $or_case[]="$rule->field LIKE '%$word%'";
+                }
+            }
+            $having[] = '('.implode(" OR ",$or_case).')';
         }
         return implode(' AND ', $having);
     }
@@ -353,11 +373,25 @@ class Catalog extends CI_Model {
             return 1;
         }
         $having = [];
+//        foreach ($filter as $field => $value) {
+//            if (strpos($value, '|') === false) {
+//                $having[] = "$field LIKE '%$value%'";
+//            } else {
+//                $having[] = "($field = '" . str_replace('|', "' OR $field = '", $value) . "')";
+//            }
+//        }
         foreach ($filter as $field => $value) {
-            if (strpos($value, '|') === false) {
-                $having[] = "$field LIKE '%$value%'";
-            } else {
-                $having[] = "($field = '" . str_replace('|', "' OR $field = '", $value) . "')";
+            $words=explode(' ',$value);
+            foreach($words as $word){
+                if(isset($word[0]) && $word[0]=='!'){
+                    $having[] = "$field NOT LIKE '%".substr($word,1)."%'";
+                } else {
+                    if (strpos($word, '|') === false) {
+                        $having[] = "$field LIKE '%$word%'";
+                    } else {
+                        $having[] = "($field LIKE '%" . str_replace('|', "%' OR $field LIKE '%", $word) . "%')";
+                    }
+                }
             }
         }
         return implode(' AND ', $having);
@@ -409,19 +443,18 @@ class Catalog extends CI_Model {
         $listener_list= array_merge($permanent_listener_list,$this->topic_listener_list[$this->topic]??[]);
         $previuos_return=null;
         foreach($listener_list as $listener){
-            $Model=$this->Hub->load_model($listener->event_place);
+            if($this instanceof $listener->event_place){
+                $Model=$this;
+            } else {
+                $Model=$this->Hub->load_model($listener->event_place);
+            }
             $method=$listener->event_target;
             $arguments[]=$listener->event_note;//custom registerer parameter
             $arguments[]=&$previuos_return;//previous events results
             if( !method_exists($Model, $method) ){
                 continue;
             }
-            //try{
-                $previuos_return=call_user_func_array([$Model, $method],$arguments);
-            //} catch (Exception $ex) {
-                //$this->unsubscribe( $listener->event_place, $listener->event_target, $listener->event_liable_user_id );
-                //$this->log("Topic subscriber '{$listener->event_place}->{$listener->event_target}' has been removed due to error: ".$ex);
-            //}
+            $previuos_return=call_user_func_array([$Model, $method],$arguments);
         }
         return $previuos_return;
     }

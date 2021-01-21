@@ -144,8 +144,9 @@
                     DocList.tools.reload();
                 });
                 App.Topic('documentReloaded').subscribe(function () {
-                    var index = DocList.grid.getSelectedRows()[0];
-                    DocList.grid.rowReload(index);
+                    //var index = DocList.grid.getSelectedRows()[0];
+                    //DocList.grid.rowReload(index);
+                    DocList.tools.reload();
                 });
                 App.Topic('documentListChanged').subscribe(function () {
                     DocList.tools.reload();

@@ -41,17 +41,21 @@ class Stock extends Catalog {
 		    se.product_img,
 		    se.self_price
 		FROM
-		    stock_entries se
-			JOIN
-		    prod_list pl ON pl.product_code=se.product_code
+		    prod_list pl
+                    	LEFT JOIN
+		    stock_entries se ON pl.product_code=se.product_code
 			LEFT JOIN
 		    price_list pp ON pp.product_code=se.product_code AND pp.label=''
 			LEFT JOIN
 		    stock_tree st ON se.parent_id=branch_id
 		WHERE 
-		    se.product_code='{$product_code}'";
+		    pl.product_code='{$product_code}'";
         $product_data = $this->get_row($sql);
         return $product_data;
+    }
+    
+    public function productCheck( string $product_code ){
+        return $this->get_value("SELECT 1 FROM prod_list WHERE product_code='$product_code'");
     }
     
 
@@ -929,7 +933,7 @@ class Stock extends Catalog {
         $usd_ratio=$this->Hub->pref('usd_ratio');
         $pcomp_id=$this->Hub->pcomp('company_id');
         $price_label=$this->Hub->pcomp('price_label');
-        $this->query("SET @promo_limit:=4;");
+        $this->query("SET @promo_limit:=1;");
         
         $query=[
             'inner'=>[
@@ -961,6 +965,8 @@ class Stock extends Catalog {
             se.product_img,
             se.fetch_count,
             se.fetch_stamp,
+            se.product_awaiting,
+            se.product_reserved,
             CONCAT( 
                 product_quantity<>0,
                 IF( prl_promo.product_code IS NOT NULL AND (@promo_limit:=@promo_limit-1)>=0,1,0),
@@ -1024,7 +1030,7 @@ class Stock extends Catalog {
     }
     
     private function matchesListCalibrate(){
-        if( rand(1,100)!=1 ){
+        if( rand(1,1000)!=1 ){
             return;
         }
         $this->query("

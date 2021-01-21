@@ -818,7 +818,10 @@
                         </div>
                         <div class="product-name-column">
                             <a href="#product.html#product_id={{product_id}}">
-                                 {{product_name}}
+                                {{product_name}}
+                                {{if analyse_class|equals>C}}
+                                <i class="icon star"></i>
+                                {{/if}}
                             </a>
                         </div>
                         <div class="product-info-column">
@@ -838,6 +841,14 @@
                                     {{/if}}
                                     {{leftover}}{{product_unit}}
                                     </span>
+                                    <div>
+                                        {{if product_reserved|more>0}}
+                                        <span style="color:red">-{{product_reserved}}</span>
+                                        {{/if}}
+                                        {{if product_awaiting|more>0}}
+                                        <span style="color:green">+{{product_awaiting}}</span>
+                                        {{/if}}
+                                    </div>
                                 </div>
                             </div>
                         </div>

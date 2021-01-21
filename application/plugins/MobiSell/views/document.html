@@ -763,7 +763,11 @@
 				</td>
 				<td data-row-index="{{#}}" onclick="App.document.suggestion.handleClick(this)">
 				    <div class="ui grid stackable" style="{{if leftover|less>1}} color:red !important {{/if}}">
-					<div class="eight wide column" style="padding: .5rem !important">{{product_name}}</div>
+					<div class="eight wide column" style="padding: .5rem !important">{{product_name}} 
+                                        {{if analyse_class|equals>C}}
+                                        <i class="icon star"></i>
+                                        {{/if}}
+                                        </div>
 					<div class="eight wide column" style="padding: .5rem !important">
 					    <div class="ui grid" style="opacity:0.7">
 						<div class="six wide column">{{product_code}}</div>

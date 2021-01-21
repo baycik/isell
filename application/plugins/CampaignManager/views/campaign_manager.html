@@ -241,12 +241,15 @@
             },
             update: function (field, value, title, campaign_bonus_id) {
                 if (field === 'campaign_start_at' || field === 'campaign_finish_at') {
-                    let now_year = new Date().getFullYear();
-                    let needed_year = value.substring(0, 4);
-                    let diff = Math.abs(now_year - needed_year);
-                    if (diff > 3) {
-                        App.flash("Слишком большой период: " + title);
-                        return;
+                    let start=$(`input[name=campaign_start_at-${campaign_bonus_id}`).val();
+                    let finish=$(`input[name=campaign_finish_at-${campaign_bonus_id}`).val();
+                    
+                    if( start && finish ){
+                        let diff = Math.abs(start.substring(0, 4) - finish.substring(0, 4));
+                        if (diff > 3) {
+                            App.flash("Период больше 3 лет: " + title);
+                            return;
+                        }
                     }
                 }
                 $.post("CampaignManager/bonusUpdate", {campaign_bonus_id: campaign_bonus_id, field: field, value: value}, function (ok) {
@@ -495,6 +498,7 @@
                             </select>
                             <input name="product_brand_filter-{{campaign_bonus_id}}" title="Бренд товара">
                             <input name="product_type_filter-{{campaign_bonus_id}}" title="Тип товара">
+                            <input name="product_class_filter-{{campaign_bonus_id}}" title="Класс товара">
                         </fieldset>
                         {{/if}}
                         <fieldset>

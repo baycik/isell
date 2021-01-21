@@ -119,7 +119,7 @@ class Pref extends Catalog {
     public function counterUpdate( string $counter_name, int $counter_acomp_id=0, array $counter_data=null, int $counter_int=0 ){
         $pref_updated=[];
         $counter_data_combined=$this->counterGet( $counter_name, $counter_acomp_id )->data;
-        $counter_data_combined['modified_at']=date("Y-m-d H:i:s");
+        $counter_data['modified_at']=date("Y-m-d H:i:s");
         if( $counter_data!=null ){
             $counter_data_combined=array_merge($counter_data_combined,$counter_data);
             $pref_updated['pref_value']= json_encode($counter_data_combined);

@@ -34,10 +34,12 @@ CREATE TABLE `plugin_campaign_bonus` (
   `campaign_start_at` datetime DEFAULT NULL,
   `campaign_finish_at` datetime DEFAULT NULL,
   `campaign_grouping_interval` varchar(45) DEFAULT NULL,
+  `campaign_queue` tinyint(4) DEFAULT '1',
   `product_category_id` int(11) DEFAULT NULL,
   `product_category_path` varchar(255) DEFAULT NULL,
   `product_brand_filter` varchar(255) DEFAULT NULL,
   `product_type_filter` varchar(255) DEFAULT NULL,
+  `product_class_filter` varchar(2) DEFAULT NULL,
   `bonus_type` varchar(45) DEFAULT NULL,
   `bonus_visibility` tinyint(4) DEFAULT NULL,
   PRIMARY KEY (`campaign_bonus_id`)

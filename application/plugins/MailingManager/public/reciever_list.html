@@ -8,7 +8,7 @@
             whitelist: ''
         },
         properties:{
-	    title: 'Списки адресатов',
+	    title: 'Управление списками получетелей',
 	    width: 950,
 	    height: 'auto',
 	    shadow:false,
@@ -16,77 +16,64 @@
 		App.MailingManager_reciever_list.handler.notify('close',App.MailingManager_reciever_list.data);
 		App.MailingManager_reciever_list.node.window('destroy');
 		App.MailingManager_reciever_list.node.remove();
-                App.mailing_manager.reload_recievers(App.MailingManager_reciever_list.data.settings.reciever_list);
 		delete App.MailingManager_reciever_list;
 	    }
 	},
 	init:function () {
 	    var props=App.MailingManager_reciever_list.properties;
-            if(App.MailingManager_reciever_list.data.inline){
-                props.title='';
-                App.MailingManager_reciever_list.node.panel(props);
-            } else {
-                App.MailingManager_reciever_list.node.window(props);
-        	this.node.window('hcenter');
-                this.node.window('window').css('position','fixed');
-                this.node.window('window').css('top','40px');
-            }
-            App.MailingManager_reciever_list.load();
+            App.MailingManager_reciever_list.node.window(props);
+            this.node.window('hcenter');
+            this.node.window('window').css('position','fixed');
+            this.node.window('window').css('top','40px');
+            
+            App.MailingManager_reciever_list.initControls();
+            App.MailingManager_reciever_list.render();
+            App.MailingManager_reciever_list.reciever_filter.init();
+            App.MailingManager_reciever_list.reciever_grid.init();
 	},
         initControls: function (){
-            $('.reciever-list-item').click(function(e){
-                if(e.target.className == 'delete-reciver-list'){
-                    return;
-                };
-                var reciever_list_id = $(this).attr('data-reciever_list_id');
-                App.MailingManager_reciever_list.current_reciever_list_index = reciever_list_id;
-                if( reciever_list_id === '-1' ){
-                    App.MailingManager_reciever_list.create();
+            $('#PluginMailing_recievers_list').click(function(e){
+                var reciever_list_id = $(e.target).attr('data-reciever_list_id');
+                if( !reciever_list_id ){
                     return;
                 }
-                App.MailingManager_reciever_list.markSelectedList();
-                App.MailingManager_reciever_list.client_list_settings.init();
-                App.MailingManager_reciever_list.client_list_grid.init();
-            });
-            $('.delete-reciver-list').click(function(e){
-                var reciever_list_id = $(this).attr('data-reciever_list_id');
-                App.MailingManager_reciever_list.delete(reciever_list_id);
-                App.MailingManager_reciever_list.update();
+                if(e.target.className === 'delete-reciver-list'){
+                    App.MailingManager_reciever_list.delete(reciever_list_id);
+                } else {
+                    App.MailingManager_reciever_list.current_reciever_list_index = reciever_list_id;
+                    if( reciever_list_id === '-1' ){
+                        App.MailingManager_reciever_list.create();
+                    }
+                    App.MailingManager_reciever_list.markSelectedList();
+                    App.MailingManager_reciever_list.reciever_filter.init();
+                    App.MailingManager_reciever_list.reciever_grid.init();
+                }
             });
             $('#PluginMailing_recievers_blacklist input').change(function(e){
-                App.MailingManager_reciever_list.data.settings.reciever_blacklist = this.value;
+                App.MailingManager_reciever_list.data.reciever_blacklist = this.value;
                 App.MailingManager_reciever_list.update();
             });
         },
         load: function () {
-            $.post('MailingManager/settingsGet', function (resp) {
-                if (resp) {
-                    var response = JSON.parse(resp);
-                    if( !response.settings.reciever_list || Array.isArray(response.settings.reciever_list) ){
-                        response.settings.reciever_list={};
-                    }
-                    App.MailingManager_reciever_list.data = response;
-                    App.MailingManager_reciever_list.render();
-                    App.MailingManager_reciever_list.initControls();
-                    App.MailingManager_reciever_list.client_list_settings.init();
-                    App.MailingManager_reciever_list.client_list_grid.init();
-                }
-            });
         },
         render: function () {
-            var reciever_list_array=[];
-            for(let reciever_list_id in App.MailingManager_reciever_list.data.settings.reciever_list){
-                let filter=App.MailingManager_reciever_list.data.settings.reciever_list[reciever_list_id];
-                filter.reciever_list_id=reciever_list_id;
-                reciever_list_array.push(filter);
+            function object2array( obj ){
+                var _array=[];
+                for(let _id in obj){
+                    let item=obj[_id];
+                    item.id=_id;
+                    _array.push(item);
+                }
+                return _array;
             }
+            var reciever_list_array=object2array(App.MailingManager_reciever_list.data.reciever_list);
             App.MailingManager_reciever_list.reciever_list_length=reciever_list_array.length;
             App.renderTpl('PluginMailing_recievers_list',{reciever_list: reciever_list_array});
             App.MailingManager_reciever_list.markSelectedList();
         },
         create: function(){
             var reciever_list_id = Date.now();
-            App.MailingManager_reciever_list.data.settings.reciever_list[reciever_list_id]=
+            App.MailingManager_reciever_list.data.reciever_list[reciever_list_id]=
                 {
                     reciever_list_name: 'Новый список '+(App.MailingManager_reciever_list.reciever_list_length+1),
                     subject_path_include: '',
@@ -98,56 +85,58 @@
             App.MailingManager_reciever_list.update();
         },
         update: function () {
-            $.post("MailingManager/settingsUpdate", {settings: JSON.stringify(App.MailingManager_reciever_list.data.settings)}, function (ok) {
-                if ( ok * 1 ){
-                    App.MailingManager_reciever_list.load();
-                    App.mailing_manager.reload_recievers(App.MailingManager_reciever_list.data.settings.reciever_list);
-                }
-            });
+            App.MailingManager_reciever_list.render();
+            App.MailingManager_reciever_list.handler.notify('reciever_list_updated',App.MailingManager_reciever_list.data.reciever_list);
         },
         delete: function (reciever_list_id) {
-            delete App.MailingManager_reciever_list.data.settings.reciever_list[reciever_list_id];
+            delete App.MailingManager_reciever_list.data.reciever_list[reciever_list_id];
             App.MailingManager_reciever_list.current_reciever_list_index = '0';
+            App.MailingManager_reciever_list.update();
         },
         markSelectedList: function(){
             $('.reciever-list-item').removeClass('reciever-list-item-active');
             $('.reciever-list-item[data-reciever_list_id="'+App.MailingManager_reciever_list.current_reciever_list_index+'"]').addClass('reciever-list-item-active');
         },
-        client_list_settings: {
+        reciever_filter: {
+            staff_list:[],
             init: function () {
-                var current_reciever_list = App.MailingManager_reciever_list.data.settings.reciever_list[App.MailingManager_reciever_list.current_reciever_list_index];
-                App.MailingManager_reciever_list.client_list_settings.load();
-                App.setupForm('#PluginMailing_recievers_details', current_reciever_list, 'use_inp_values').change(function (node) {
-                    App.MailingManager_reciever_list.client_list_settings.updateList(this.name, App.val(this), this.title);
+                App.MailingManager_reciever_list.reciever_filter.load();
+                $('#PluginMailing_recievers_details').change(function (e) {
+                    var name=e.target.name;
+                    var val=App.val(e.target);
+                    App.MailingManager_reciever_list.reciever_filter.updateList(name, val, '');
                     App.MailingManager_reciever_list.update();
-                    App.MailingManager_reciever_list.client_list_grid.tools.reload();
-                    return;
+                    App.MailingManager_reciever_list.reciever_grid.tools.reload();
                 });
             },
             load: function () {
-                App.MailingManager_reciever_list.client_list_settings.render();
-            },
-            render: function () {
-                App.renderTpl('PluginMailing_recievers_details',{
-                    blacklist: App.MailingManager_reciever_list.data.settings.blacklist,
-                    staff_list: App.MailingManager_reciever_list.data.staff_list
+                $.post("Pref/getStaffList",function(resp){
+                    App.MailingManager_reciever_list.reciever_filter.staff_list=App.json(resp);
+                    App.MailingManager_reciever_list.reciever_filter.render();
                 });
             },
+            render: function () {
+                var current_reciever_list = App.MailingManager_reciever_list.data.reciever_list[App.MailingManager_reciever_list.current_reciever_list_index];
+                App.renderTpl('.x-client_filter',{
+                    staff_list: App.MailingManager_reciever_list.reciever_filter.staff_list,
+                    current_reciever_list:current_reciever_list
+                });
+                App.setupForm('#PluginMailing_recievers_details', current_reciever_list, 'use_inp_values');
+            },
             updateList: function (field, value, title) {
-                if(!App.MailingManager_reciever_list.data.settings.reciever_list[App.MailingManager_reciever_list.current_reciever_list_index]){
+                if(!App.MailingManager_reciever_list.data.reciever_list[App.MailingManager_reciever_list.current_reciever_list_index]){
                     App.MailingManager_reciever_list.create();
                 }
-                App.MailingManager_reciever_list.data.settings.reciever_list[App.MailingManager_reciever_list.current_reciever_list_index][field] = value;
-                return;
+                App.MailingManager_reciever_list.data.reciever_list[App.MailingManager_reciever_list.current_reciever_list_index][field] = value;
             }
         },
-        client_list_grid: {
+        reciever_grid: {
             init: function () {
                 var settings = {
                     columns: [
-                        {id: 'label1', field: 'label', name: 'Имя', width: 103},
-                        {id: 'company_name', field: 'company_name', name: 'Название', width: 325},
-                        {id: 'path1', field: 'path', name: 'Путь', width: 236}
+                        {id: 'label1', field: 'label', name: 'Имя', width: 95},
+                        {id: 'company_name', field: 'company_name', name: 'Название', width: 250},
+                        {id: 'path1', field: 'path', name: 'Путь', width: 355}
                     ],
                     options: {
                         enableCellNavigation: true,
@@ -159,14 +148,13 @@
                         }
                     }
                 };
-                App.MailingManager_reciever_list.client_list_grid.grid = new SlickInfinite("#PluginMailing_recievers_sg", settings);
+                App.MailingManager_reciever_list.reciever_grid.grid = new SlickInfinite("#PluginMailing_recievers_sg", settings);
             },
             load: function () {
-                App.MailingManager_reciever_list.client_list_grid.grid;
             },
             tools: {
                 reload: function () {
-                    App.MailingManager_reciever_list.client_list_grid.grid.reload();
+                    App.MailingManager_reciever_list.reciever_grid.grid.reload();
 
                 }
             }
@@ -174,39 +162,40 @@
     };
 </script>
 <div id="PluginMailing_recievers" style="display: grid;grid-template-columns:1fr 3fr;grid-gap:5px;padding: 5px;">
-    <div id="PluginMailing_recievers_list"  style="" title="Название списка">
+    <div id="PluginMailing_recievers_list" title="Название списка">
         <div class="reciever-list-item" data-reciever_list_id="-1">Добавить новый список</div>
         <!--{{reciever_list}}-->
-        <div class="reciever-list-item" data-reciever_list_id="{{reciever_list_id}}">{{ reciever_list_name }} <b class="delete-reciver-list" data-reciever_list_id="{{reciever_list_id}}" style="cursor: pointer;">❌</b></div>
+        <div class="reciever-list-item" data-reciever_list_id="{{id}}">{{ reciever_list_name }} <b class="delete-reciver-list" data-reciever_list_id="{{id}}" style="cursor: pointer;">❌</b></div>
         <!--{{/reciever_list}}-->
     </div>
-    <div id="PluginMailing_recievers_details" class="" title="Подробности">
-        <input type="text" title="Название" name="reciever_list_name" style="width:562px">
-        <div style="display: grid;grid-template-columns:  auto">
-            <div class="x-client_filter" style="display: grid;grid-template-columns:  auto auto">
-                    <div>
-                        <textarea title="Включить" name="subject_path_include" placeholder="Список через запятую"></textarea>
-                        <select name="subject_manager_include" title="Включить" multiple size="6">
-                            <!--{{staff_list}}
-                            {{if full_name}}-->
-                            <option value="{{user_id}}">{{full_name}}</option>
-                            <!--{{/if}}
-                            {{/staff_list}}-->
-                        </select>
-                    </div>
-                    <div>
-                        <textarea title="Исключить" name="subject_path_exclude" placeholder="Список через запятую"></textarea>
-                        <select name="subject_manager_exclude"  title="Исключить" multiple size="6">
-                            <!--{{staff_list}}
-                            {{if full_name}}-->
-                            <option value="{{user_id}}">{{full_name}}</option>
-                            <!--{{/if}}
-                            {{/staff_list}}-->
-                        </select>
-                    </div>
+    <div id="PluginMailing_recievers_details">
+        <input type="text" name="reciever_list_name" placeholder="Название списка" style="width:100%;height: 30px;">
+        <div class="x-client_filter" style="display: grid;grid-template-columns:  auto auto">
+            <div>
+                Включить клиентов
+                <textarea name="subject_path_include" placeholder="Список через запятую" data-skip="1" style="width:100%;color:green"></textarea>
+                <select name="subject_manager_include" multiple size="6" data-skip="1" style="width:100%;color:green">
+                    <!--{{staff_list}}
+                    {{if full_name}}-->
+                    <option value="{{user_id}}">{{full_name}}</option>
+                    <!--{{/if}}
+                    {{/staff_list}}-->
+                </select>
             </div>
-            <div id="PluginMailing_recievers_sg" style="height: 300px;"></div>
+            <div>
+                Исключить клиентов
+                <textarea name="subject_path_exclude" placeholder="Список через запятую" data-skip="1" style="width:100%;color:darkred"></textarea>
+                <select name="subject_manager_exclude" multiple size="6" data-skip="1" style="width:100%;color:darkred">
+                    <!--{{staff_list}}
+                    {{if full_name}}-->
+                    <option value="{{user_id}}">{{full_name}}</option>
+                    <!--{{/if}}
+                    {{/staff_list}}-->
+                </select>
+            </div>
         </div>
+        
+        <div id="PluginMailing_recievers_sg" style="height: 200px;width:700px;"></div>
     </div>
 </div>
 <style>
@@ -218,5 +207,4 @@
     .reciever-list-item:hover,.reciever-list-item-active{
         background-color: #fe9;
     }
-
 </style>

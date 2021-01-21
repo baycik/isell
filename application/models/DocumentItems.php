@@ -1,6 +1,6 @@
 <?php
 class DocumentItems extends DocumentCore{
-    public function suggestFetch( string $q, int $offset=0,int $limit=10, int $doc_id=0, int $category_id=0 ){
+    public function suggestFetch( string $q='', int $offset=0,int $limit=10, int $doc_id=0, int $category_id=0 ){
         session_write_close();
         $matches=$this->suggestResultFetch($q, $offset, $limit, $doc_id, $category_id);
         if( !$matches ){
@@ -53,6 +53,7 @@ class DocumentItems extends DocumentCore{
                 SELECT
                     product_id,
                     pl.product_code,
+                    pl.analyse_class,
                     ru product_name,
                     product_spack,
                     product_quantity leftover,
@@ -314,11 +315,11 @@ class DocumentItems extends DocumentCore{
 	$discounts_json=json_encode($discount_obj, JSON_NUMERIC_CHECK);
 	$this->documentSettingSet( '$.discounts', $discounts_json );
     }
-    private function documentSettingSet( $key, $value ){
+    protected function documentSettingSet( $key, $value ){
 	$doc_id=$this->doc('doc_id');
 	$this->query("UPDATE document_list SET doc_settings=JSON_SET(COALESCE(doc_settings,JSON_OBJECT()),'$key',CAST('$value' AS JSON)) WHERE doc_id='$doc_id'");	
     }
-    private function documentSettingGet($key){
+    protected function documentSettingGet($key){
 	$doc_id=$this->doc('doc_id');
 	return $this->get_value("SELECT JSON_EXTRACT(doc_settings,'$key') FROM document_list WHERE doc_id='$doc_id'");	
     }

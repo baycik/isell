@@ -348,11 +348,11 @@ class MobiSell extends PluginManager {
                         (SELECT 
                            av.attribute_value_hash,  parent_id, COUNT(product_id) as product_total
                         FROM
-                                product_list_temp pl
-                                        JOIN 
-                        attribute_values av USING (product_id)
-                                        JOIN 
-                        attribute_list al USING (attribute_id)
+                            product_list_temp pl
+                                JOIN 
+                            attribute_values av USING (product_id)
+                                JOIN 
+                            attribute_list al USING (attribute_id)
                         WHERE  $attributes_where  
                         GROUP BY av.attribute_value_hash) ptotal ON  ptotal.attribute_value_hash = av.attribute_value_hash
                     GROUP BY av.attribute_value_hash) t

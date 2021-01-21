@@ -45,7 +45,7 @@ $before[]=<<<EOT
 EOT;
 $after[]=<<<'EOT'
     <div style="padding:5px;">
-    <button onclick="$.get('MoedeloSync/remotePush',{handler:'MoedeloSyncCompanies',local_id:App.page_company_details.data.company_id}).done(function(){App.flash('Реквизиты сохранены!')}).fail(function(){App.flash('Возникла ошибка!')});"><img src="img/big_rightarrow.png" style="width:24px;height:auto;"><img src="MoedeloSync/moedelologo.png" style="width:24px;height:auto;"> Форсировать сохранение</button>
+    <button type="button" onclick="$.get('MoedeloSync/remotePush',{handler:'MoedeloSyncCompanies',local_id:App.page_company_details.data.company_id}).done(function(){App.flash('Реквизиты сохранены!')}).fail(function(){App.flash('Возникла ошибка!')});"><img src="img/big_rightarrow.png" style="width:24px;height:auto;"><img src="MoedeloSync/moedelologo.png" style="width:24px;height:auto;"> Форсировать сохранение</button>
     </div>
 EOT;
 
@@ -63,6 +63,6 @@ $before[]=<<<EOT
 EOT;
 $after[]=<<<'EOT'
     <div class="easyui-panel" title="Моёдело" data-options="collapsible:true,collapsed:true">
-    <button onclick="var moedelo_local_id=App.page_stock_product_card.data.product_id;App.page_stock_product_card.submit(event).then(function(){$.get('MoedeloSync/remotePush',{handler:'MoedeloSyncProduct',local_id:moedelo_local_id}).done(function(){App.flash('Товар сохранен в Моёдело!')}).fail(function(){App.flash('Возникла ошибка!')}) });"><img src="img/big_rightarrow.png" style="width:24px;height:auto;"><img src="MoedeloSync/moedelologo.png" style="width:24px;height:auto;"> Форсировать сохранение</button>
+    <button type="button" onclick="var moedelo_local_id=App.page_stock_product_card.data.product_id;App.page_stock_product_card.submit(event).then(function(){$.get('MoedeloSync/remotePush',{handler:'MoedeloSyncProduct',local_id:moedelo_local_id}).done(function(){App.flash('Товар сохранен в Моёдело!')}).fail(function(){App.flash('Возникла ошибка!')}) });"><img src="img/big_rightarrow.png" style="width:24px;height:auto;"><img src="MoedeloSync/moedelologo.png" style="width:24px;height:auto;"> Форсировать сохранение</button>
     </div>
 EOT;
