@@ -32,7 +32,7 @@
 
 	},
 	updateField: function (field, value, title) {
-	    App.post('Pref/setPrefs/' + App.uri(field, value), function (ok) {
+	    App.post('Pref/setPrefs/',{field:field,value: value}, function (ok) {
 		if (ok * 1) {
 		    App.page_pref_preferences.prefData[field] = value;
 		    App.flash("Сохранено: " + title);
@@ -156,6 +156,10 @@
 		    <input name="SMTP_SENDER_MAIL" title="Емаил отправителя">
 		    <input name="SMTP_SENDER_NAME" title="Имя отправителя">
 		    <input type="checkbox" title="Дублировать на Емаил отправителя" name="SMTP_SEND_COPY">
+		</div>
+		<div class="easyui-panel" title="Настройки Traccar" data-options="collapsible:true,collapsed:true" style="width:340px;float:left">
+		    <input name="TRACCAR_GATEWAY" title="Gateway">
+		    <input name="TRACCAR_AUTORIZATION" title="API Key">
 		</div>
 		<div class="easyui-panel" title="Настройки ДевиноСМС" data-options="collapsible:true,collapsed:true" style="width:340px;float:left">
 		    <input name="SMS_SENDER" title="Отправитель">

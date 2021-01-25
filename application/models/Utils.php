@@ -203,9 +203,50 @@ class Utils extends Catalog {
     /////////////////////////////
     //SMS FUNCTIONS
     /////////////////////////////
+    private function sendTraccar( $number, $message ){
+        function apiExecute(string $url, array $data, array $headers) {
+            $curl = curl_init();
+            curl_setopt($curl, CURLOPT_POST, 1);
+            curl_setopt($curl, CURLOPT_POSTFIELDS, json_encode($data));
+            curl_setopt($curl, CURLOPT_URL, $url);
+            curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
+            curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
+            curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
+
+            echo $result = curl_exec($curl);
+            $httpcode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+            if (curl_error($curl)) {
+                die(curl_error($curl));
+            }
+            curl_close($curl);
+            if( $httpcode==200 ){
+                return true;
+            }
+            return false;
+        }
+        
+        
+        $url = $this->Hub->pref('TRACCAR_GATEWAY');
+        $data = [
+            'to' => $number,
+            'message' => $message
+        ];
+        $headers=[
+            "Authorization: ".$this->Hub->pref('TRACCAR_AUTORIZATION')
+        ];
+        return apiExecute($url,$data,$headers);
+    }
+    
+    
+    
+    
+    
     public $sendSms = ['to' => 'string', 'body' => 'string'];
 
     public function sendSms($number = null, $body = null) {
+        if( $this->sendTraccar($number, $body) ){
+            return true;
+        }
         if (!$this->Hub->pref('SMS_SENDER') || !$this->Hub->pref('SMS_USER') || !$this->Hub->pref('SMS_PASS')) {
             $this->Hub->msg("Настройки для отправки смс не установленны");
             return false;

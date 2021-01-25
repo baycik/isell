@@ -50,8 +50,8 @@ class Pref extends Catalog {
         $prefs = $this->get_row("SELECT GROUP_CONCAT(pref_value SEPARATOR '~|~') pvals,GROUP_CONCAT(pref_name SEPARATOR '~|~') pnames FROM pref_list  $where");
         return (object) array_combine(explode('~|~', $prefs->pnames), explode('~|~', $prefs->pvals));
     }
-    public $setPrefs=['[a-zA-Z0-9_\-]+','[^|]+'];
-    public function setPrefs($field,$value='') {
+    //public $setPrefs=['[a-zA-Z0-9_\-]+','[^|]+'];
+    public function setPrefs( string $field, string $value='' ) {
 	$active_company_id=$this->Hub->acomp('company_id');
 	$this->Hub->set_level(2);
 	if( !$field ){
