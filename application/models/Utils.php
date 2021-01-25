@@ -214,10 +214,10 @@ class Utils extends Catalog {
             curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
             curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, 2); 
 
-            echo $result = curl_exec($curl);
+            $result = curl_exec($curl);
             $httpcode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
             if (curl_error($curl)) {
-                die(curl_error($curl));
+                $this->log(curl_error($curl));
             }
             curl_close($curl);
             if( $httpcode==200 ){
