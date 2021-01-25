@@ -1,0 +1,62 @@
+{
+    "Command": "RegisterCheck",
+    "NumDevice": 0,
+    "InnKkm": "",
+    "KktNumber": "",
+    "Timeout": 30,
+    "IdCommand": "4734-72da-d1f4-6855-5878",
+    "IsFiscalCheck": true,
+    "TypeCheck": 0,
+    "NotPrint": false,
+    "NumberCopies": 0,
+    "CashierName": "\u0411\u0430\u0439\u0447\u0438\u043a\u043e\u0432 \u0420.\u042d.",
+    "CashierVATIN": null,
+    "ClientAddress": "+79787288233",
+    "ClientInfo": "\u041e\u043f\u0442\u043e\u0432\u044b\u0439 \u043a\u043b\u0438\u0435\u043d\u0442",
+    "PlaceMarket": "",
+    "TaxVariant": "",
+    "PayByProcessing": false,
+    "NumDeviceByProcessing": null,
+    "ReceiptNumber": "TEST-01",
+    "PrintSlipAfterCheck": false,
+    "PrintSlipForCashier": true,
+    "RRNCode": "",
+    "AuthorizationCode": "",
+    "AdditionalAttribute": "\u041a\u043e\u0440\u0440\u0435\u043a\u0442\u0438\u0440\u0443\u0435\u043c\u044b\u0439 \u0447\u0435\u043a \u043d\u043e\u043c\u0435\u0440 \u211626",
+    "Cash": 0,
+    "ElectronicPayment": 0,
+    "AdvancePayment": 0,
+    "Credit": 0,
+    "CashProvision": 2546.4,
+    "CheckStrings": [{
+            "PrintText": {
+                "Text": "\u041d\u043e\u043c\u0435\u0440 \u043d\u0430\u043a\u043b\u0430\u0434\u043d\u043e\u0439 2572",
+                "Font": 4,
+                "Intencity": 15
+            }
+        }, {
+            "Register": {
+                "Name": "Touran \u0412\u044b\u043a\u043b\u044e\u0447\u0430\u0442\u0435\u043b\u044c",
+                "Quantity": "13",
+                "Price": "98.80",
+                "Amount": "1284.40",
+                "Department": 0,
+                "Tax": "20",
+                "SignMethodCalculation": 4,
+                "SignCalculationObject": 1,
+                "MeasurementUnit": "\u0448\u0442"
+            }
+        }, {
+            "Register": {
+                "Name": "Touran \u0420\u043e\u0437\u0435\u0442\u043a\u0430 \u0441 \u0437\u0430\u0437\u0435\u043c\u043b\u0435\u043d\u0438\u0435\u043c",
+                "Quantity": "12",
+                "Price": "113.40",
+                "Amount": "1360.80",
+                "Department": 0,
+                "Tax": "20",
+                "SignMethodCalculation": 4,
+                "SignCalculationObject": 1,
+                "MeasurementUnit": "\u0448\u0442"
+            }
+        }]
+}
