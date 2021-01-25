@@ -204,27 +204,6 @@ class Utils extends Catalog {
     //SMS FUNCTIONS
     /////////////////////////////
     private function sendTraccar( $number, $message ){
-        function apiExecute(string $url, array $data, array $headers) {
-            $curl = curl_init();
-            curl_setopt($curl, CURLOPT_POST, 1);
-            curl_setopt($curl, CURLOPT_POSTFIELDS, json_encode($data));
-            curl_setopt($curl, CURLOPT_URL, $url);
-            curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
-            curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
-            curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
-            curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, 2); 
-
-            $result = curl_exec($curl);
-            $httpcode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
-            if (curl_error($curl)) {
-                $this->log(curl_error($curl));
-            }
-            curl_close($curl);
-            if( $httpcode==200 ){
-                return true;
-            }
-            return false;
-        }
         $url = $this->Hub->pref('TRACCAR_GATEWAY');
         $data = [
             'to' => $number,
@@ -233,7 +212,26 @@ class Utils extends Catalog {
         $headers=[
             "Authorization: ".$this->Hub->pref('TRACCAR_AUTORIZATION')
         ];
-        return apiExecute($url,$data,$headers);
+        $curl = curl_init();
+        curl_setopt($curl, CURLOPT_POST, 1);
+        curl_setopt($curl, CURLOPT_POSTFIELDS, json_encode($data));
+        curl_setopt($curl, CURLOPT_URL, $url);
+        curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, 2); 
+
+        $result = curl_exec($curl);
+        $httpcode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+        if (curl_error($curl)) {
+            $this->log(curl_error($curl));
+        }
+        curl_close($curl);
+        if( $httpcode==200 ){
+            return true;
+        }
+        return false;
+
     }
     
     
