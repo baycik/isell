@@ -224,8 +224,6 @@ class Utils extends Catalog {
             }
             return false;
         }
-        
-        
         $url = $this->Hub->pref('TRACCAR_GATEWAY');
         $data = [
             'to' => $number,
