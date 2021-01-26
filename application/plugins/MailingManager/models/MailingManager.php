@@ -630,7 +630,7 @@ class MailingManager extends Catalog {
             $reciever_list= explode('|', $message->message_recievers);
             
             foreach ($reciever_list as $reciever){
-                $ok = ${$handler_name}->send($message->message_recievers, $message);
+                $ok = ${$handler_name}->send($reciever, $message);
                 if($ok){
                     $this->messageChangeStatus($message->message_id, 'done', 'processing');
                 }
