@@ -274,8 +274,12 @@ class Utils extends Catalog {
                 'content' => http_build_query($post_vars)
             ]
         );
-        $response = file_get_contents('https://integrationapi.net/rest/Sms/SendBulk/', false, stream_context_create($opts));
-        $msg_ids = json_decode($response);
+        try{
+            $response = file_get_contents('https://integrationapi.net/rest/Sms/SendBulk/', false, stream_context_create($opts));
+            $msg_ids = json_decode($response);			
+        } catch( Exception $e ){
+            $this->log($e);
+        }
         if (!$msg_ids[0]) {
             $this->Hub->msg('Sending SMS is failed');
             $this->Hub->svar('smsSessionTime', 0);
