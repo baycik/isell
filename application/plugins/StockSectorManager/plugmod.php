@@ -188,10 +188,12 @@ $search[]=<<<'EOT'
 return a.product_code>b.product_code?1:-1;
 EOT;
 $replace[]=<<<EOT
-if( a.product_sector==b.product_sector ){
+let asector=a.product_sector||"";
+let bsector=b.product_sector||"";
+if( (!asector && !bsector) || asector==bsector ){
     return a.product_code>b.product_code?1:-1;
 }
-return a.product_sector>b.product_sector?1:-1;
+return asector>bsector?1:-1;
 EOT;
 $before[]=<<<EOT
 EOT;
