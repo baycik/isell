@@ -287,7 +287,9 @@ App = {
             App.speech.synth.speak(utterThis);
         },
         hush:function(){
-            App.speech.synth.cancel();
+            if( App.speech.synth.speaking ){
+                App.speech.synth.cancel();
+            }
         }
     },
     utils:{

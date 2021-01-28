@@ -134,3 +134,67 @@ $after[]=<<<EOT
 product_sector/
 EOT;
 
+$filename[]=<<<EOT
+models/Checkout.php
+EOT;
+$search[]=<<<'EOT'
+ORDER BY '$sortby' '$sortdir'
+EOT;
+$replace[]=<<<EOT
+ORDER BY product_sector ASC
+EOT;
+$before[]=<<<EOT
+EOT;
+$after[]=<<<EOT
+EOT;
+
+
+
+$filename[]=<<<EOT
+models/Checkout.php
+EOT;
+$search[]=<<<'EOT'
+IF(product_comment<>'',CONCAT(ru,' [',product_comment,']'),ru) ru,
+EOT;
+$replace[]=<<<EOT
+EOT;
+$before[]=<<<EOT
+EOT;
+$after[]=<<<EOT
+product_sector,
+product_sector spell,
+EOT;
+
+
+$filename[]=<<<EOT
+plugins/MobiSell/views/checkout_document.html
+EOT;
+$search[]=<<<'EOT'
+<td class="product_name">
+EOT;
+$replace[]=<<<EOT
+EOT;
+$before[]=<<<EOT
+EOT;
+$after[]=<<<EOT
+<div class="ui grey label">{{product_sector|blank>}}</div>
+EOT;
+
+
+$filename[]=<<<EOT
+plugins/MobiSell/views/checkout_document.html
+EOT;
+$search[]=<<<'EOT'
+return a.product_code>b.product_code?1:-1;
+EOT;
+$replace[]=<<<EOT
+if( a.product_sector==b.product_sector ){
+    return a.product_code>b.product_code?1:-1;
+}
+return a.product_sector>b.product_sector?1:-1;
+EOT;
+$before[]=<<<EOT
+EOT;
+$after[]=<<<EOT
+EOT;
+

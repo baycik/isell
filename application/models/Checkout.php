@@ -1,6 +1,4 @@
 <?php
-require_once 'Catalog.php';
-
 class Checkout extends Stock {
     public $checkoutListFetch = ['date' => 'string' ,'offset' => ['int', 0], 'limit' => ['int', 5], 'sortby' => 'string', 'sortdir' => '(ASC|DESC)', 'filter' => 'json'];
     public function checkoutListFetch( $date, $offset, $limit, $sortby, $sortdir, $filter = null ){
@@ -127,8 +125,9 @@ class Checkout extends Stock {
             SELECT 
                 ce.*,
                 ce.product_quantity_verified-ce.product_quantity quantity_difference,
+                ru spell,
                 IF(ce.verification_status=1,'✔',IF(ce.verification_status=2,'±','')) verification_status_symbol,
-                IF(product_comment<>'',CONCAT(ru,' [',product_comment,']'),ru) ru, 
+                IF(product_comment<>'',CONCAT(ru,' [',product_comment,']'),ru) ru,
                 product_spack, 
                 product_bpack, 
                 product_code, 
@@ -149,21 +148,36 @@ class Checkout extends Stock {
         return $this->get_list($sql)??[];
     }
     
-    public $checkoutProductGet = ['barcode' => 'string']; 
-    public function checkoutProductGet($barcode) {
+    public function checkoutProductGet( string $barcode='', int $checkout_id=-1 ) {
         $this->Hub->set_level(2);
 	$sql = "SELECT
-		    product_id, product_code,ru, product_barcode,
-                    product_bpack, product_spack, product_unit
+		    product_id, product_code, ru, product_barcode,
+                    product_bpack, product_spack, product_unit, se.*
 		FROM
 		    prod_list 
+                        JOIN
+                    stock_entries se USING(product_code)
 		WHERE 
 		    product_barcode= '$barcode'
                         OR
                     product_code = '$barcode'    
                 ";
 	$product_data = $this->get_row($sql);
+        if( $checkout_id>0 ){
+            $is_stock_checkout=$this->get_value("SELECT 1 FROM checkout_list WHERE checkout_id='$checkout_id' AND parent_doc_id IS NULL");
+            if($is_stock_checkout){
+                $this->checkoutEntryCreate($checkout_id,$product_data);
+            }
+        }
 	return $product_data;
+    }
+    
+    private function checkoutEntryCreate( int $checkout_id, $entry ){
+        $this->create('checkout_entries', ['checkout_id'=>$checkout_id, 
+                                                    'product_id'=>$entry->product_id, 
+                                                    'product_quantity'=>$entry->product_quantity,
+                                                    'product_quantity_verified'=>0,
+                                                    'verification_status'=>0]);
     }
     
     public $checkoutLogCommit = ['checkout_id'=>'int', 'entries'=>'json'];
@@ -184,7 +198,7 @@ class Checkout extends Stock {
                     product_quantity_verified = product_quantity_verified + {$entry['operation_quantity']}
                 ";
             $this->query($sql);
-            $sql = "
+            $sql2 = "
                 INSERT
                     checkout_log
                 SET
@@ -192,7 +206,7 @@ class Checkout extends Stock {
                     checkout_id = '$checkout_id',
                     cstamp = '{$entry['cstamp']}',
                     product_id = {$entry['product_id']}";
-            $this->query($sql);
+            $this->query($sql2);
         }
         $this->checkoutUpdateDocStatus($checkout_id, 'is_checking');
         $this->query("COMMIT");
@@ -236,18 +250,15 @@ class Checkout extends Stock {
         return $this->get_list($sql);        
     }
     
-    public $checkoutStockCreate = ['parent_id' => 'int', 'checkout_name'=>'string'];
-    public function checkoutStockCreate ($parent_id, $checkout_name){
+    public function checkoutStockCreate ( int $parent_id=0, string $checkout_name='new'){
         $this->Hub->set_level(2);
-        $stock_entries_list = $this->listFetch($parent_id, 0, 10000, 'product_code', 'ASC', null, 'advanced');
         $user_id = $this->Hub->svar('user_id');
         $checkout_id=$this->create('checkout_list', ['checkout_name'=>$checkout_name, 'parent_doc_id'=>null, 'created_by'=>$user_id, 'modified_by'=>$user_id]);
-        foreach ($stock_entries_list as $entry){
-            $this->create('checkout_entries', ['checkout_id'=>$checkout_id, 
-                                                'product_id'=>$entry->product_id, 
-                                                'product_quantity'=>$entry->product_quantity,
-                                                'product_quantity_verified'=>0,
-                                                'verification_status'=>0]);
+        if( $parent_id>0 ){
+            $stock_entries_list = $this->listFetch($parent_id, 0, 10000, 'product_code', 'ASC', null, 'advanced');
+            foreach ($stock_entries_list as $entry){
+                $this->checkoutEntryCreate($checkout_id,$entry);
+            }
         }
         return $checkout_id;
     }

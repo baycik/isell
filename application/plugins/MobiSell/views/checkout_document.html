@@ -103,6 +103,7 @@
             var fvalue = $('#checkout_document_popup_quan_form').form('get values');
             $("#checkout_document_log_search_input").val(fvalue.product_code);
             App.checkout_document.log.render();
+            $('.checkout_document_tabs .item').tab('change tab', 'Log');
         },
         progress_update: function(){
             var verified = 0;
@@ -227,7 +228,7 @@
                 let index=-1;
                 for( let i in App.checkout_document.entries.list ){
                     let entry=App.checkout_document.entries.list[i];
-                    if( entry.product_code === code_or_barcode || entry.product_barcode === code_or_barcode ){
+                    if( entry.product_code == code_or_barcode || entry.product_barcode == code_or_barcode ){
                         index=i;
                     }
                 }
@@ -301,11 +302,13 @@
             },
             load_by_barcode: function (barcode) {
                 App.flash('Поиск товара по штрихкоду');
-                $.post('../Checkout/checkoutProductGet', {barcode: barcode}, function (resp) {
+                $.post('../Checkout/checkoutProductGet', {barcode: barcode,checkout_id:App.state.checkout_id}, function (resp) {
 		    var new_entry = App.json(resp);
                     if ( new_entry ){
+                        if( App.checkout_document.checkout_doc_head.parent_doc_id ){
+                            new_entry.product_quantity = '0';
+                        }
                         new_entry.checkout_id = App.state.checkout_id;
-                        new_entry.product_quantity = '0';
                         new_entry.product_quantity_verified = '0';
                         new_entry.verification_status = '0';
                         App.checkout_document.entries.add(new_entry);
@@ -401,13 +404,10 @@
                 App.renderTpl("quan_popup_content", {products:popup_product_data});
                 $("#popup_quantity_message").hide();
                 $('#checkout_document_quantity_popup').modal({
-		    duration:0,
-                    onHidden:function(){
-                        App.speech.hush();
-                    }
+		    duration:0
 		}).modal('show');
-                var product_name=popup_product_data.ru.split(" ").splice(0,6).join(" ");//limiting name to 6 words
-                App.speech.say(product_name);
+                var spell=(popup_product_data.spell || popup_product_data.ru).split(" ").splice(0,6).join(" ");//limiting name to 6 words
+                App.speech.say(spell);
             },
             popup_quantity_backspace_emulate:function(){
                 var str=$("#checkout_document_popup_quan_form input[name=operation_quantity]").val();
@@ -520,17 +520,18 @@
                 }
                 return product_log.reverse();
             },
+            renderClock:null,
             render: function () {
-                
                 if( App.checkout_document.currentType!=="Log" ){
                     return;
                 }
-                setTimeout(function(){
-                    var product_log = App.checkout_document.log.filter();
-                    $('.checkout_document_tabs .item').tab('change tab', 'Log');
+                var product_log = App.checkout_document.log.filter();
+                $('.checkout_document_tabs .item').tab('change tab', 'Log');
+                clearTimeout(App.checkout_document.log.renderClock);
+                App.checkout_document.log.renderClock=setTimeout(function(){
                     App.checkout_document.render_head();
                     App.renderTpl("log_list", {log_list: product_log});
-                },0);
+                },100);
             },
             handleClick: function (row_node) {
                 var product_code = $(row_node).data('product_code');
@@ -637,7 +638,7 @@
 		var index = $(row_node).data('row-index');
 		var suggest_entry = App.checkout_document.suggestion.entries[index];
 		App.checkout_document.entries.search_barcode(suggest_entry.product_code);
-                $('#checkout_suggestion').accordion('close', 0);
+                //$('#checkout_suggestion').accordion('close', 0);
 	    },
 	    popImage: function (row_node) {
 		var index = $(row_node).data('row-index');
@@ -715,30 +716,21 @@
     </div>
 </div>
 
-<div id="doc_head" class="ui message covert">
-    <div id="chdocument_header" class="ui attached segment ">
-	<div class="header">
-	    <i class="clipboard list icon"></i> Список проверки
+<div id="doc_head" class="ui segment covert">
+    <div class="ui segments">
+    <div id="chdocument_header" class="ui segment ">
+	<div class="ui header">
+            <i class="large clipboard list icon"></i> Список проверки
 	</div>
-	"{{checkout_name}}" <b>от</b> {{cstamp_dmy}}
+	 "{{checkout_name}}" от {{cstamp_dmy}}
         {{if parent_doc_id|more>0}}
             <a href="#document.html#doc_id={{parent_doc_id}}">
                 <br><i class="file alternate outline icon"></i> открыть накладную
             </a>
         {{/if}}
-	<div class="ui equal width grid" style="margin-top: 5px;">
-	    <div class="column">
-		<i class="plus circle icon"></i>
-		<i>{{creator_nick}}</i>
-	    </div>
-	    <div class="column">
-		<i class="pencil alternate icon"></i>
-		<i>{{modifier_nick}}</i>
-	    </div>
-	</div>
     </div>
     <div class="ui  segment">
-	<b>Статус:</b> {{if checkout_status|equals>not_checked}}
+	{{if checkout_status|equals>not_checked}}
 	<i class="close red large icon"></i>
 	    Не выполнено
 	{{else}}
@@ -763,18 +755,32 @@
 		{{/if}}
 	    {{/if}}
 	{{/if}}
+        <div class="ui bottom right attached label">
+            <i class=" plus circle icon"></i>
+            <i>{{creator_nick}}</i>
+        </div>
+        <div class="ui top right attached  label">
+            <i class=" pencil alternate icon"></i>
+            <i>{{modifier_nick}}</i>
+        </div>
     </div>
-    {{if checkout_status|equals>is_checking}}
-    <button class="ui fluid  primary button compact" onclick="App.checkout_document.finish.init();" type="button"><i class="check icon"></i> Завершить проверку</button>
-    {{/if}}
-    <button class="ui icon button fluid" style="margin-top: 10px;" onclick="App.checkout_document.photos.checkout_upload()">
-        <i class="ui photo icon"></i> 
-        Прикрепить фото
-    </button>
+    </div>
+    <div class="ui fluid buttons">
+        {{if checkout_status|equals>is_checking}}
+        <button class="ui primary button" onclick="App.checkout_document.finish.init();" type="button">
+            <i class="check icon"></i> Завершить проверку
+        </button>
+        {{/if}}
+        <button class="ui button" onclick="App.checkout_document.photos.checkout_upload()">
+            <i class="ui photo icon"></i> 
+            Прикрепить фото
+        </button>
+    </div>
 </div>
 
 
 <input id="checkout_attach" style="display:none"  type="file" onchange="App.checkout_document.photos.up(this.files)"/>
+
 <div id="checkout_document_head"  class="ui top attached tabular menu checkout_document_tabs ">
     <a id="document_tab_header" class="active item" data-tab="Document">Документ</a>
     <a id="log_tab_header" class="item" data-tab="Log">Операции</a>
@@ -785,9 +791,9 @@
     <i class="close icon"></i> В списке нет нужного товара
 </button> 
 
-<div class="ui bottom attached tab" data-tab="Document">
+<div class="ui  attached tab segment" data-tab="Document">
     <div class="ui field">
-        <label><b>Фильтр</b></label>
+        <label><b>Фильтр по списку</b></label>
         <div class="ui left icon right labeled input fluid" style="margin-bottom: 5px;">
             <i class="search icon"></i>
             <input id="checkout_document_entries_search_input" placeholder="Введите название или код..." type="text" 
@@ -796,17 +802,15 @@
         </div>
     </div>
     <div id="checkout_entries"  class="covert">
-    <table id="checkout_document_table" class="ui celled unstackable selectable table">
+        {{if products}}
+    <table id="checkout_document_table" class="ui unstackable selectable celled table">
         <thead> 
             <tr>
                 <th>
-                    <div class="ui two column grid">
-                        <div class="six wide column">Код</div>         
-                        <div class="four wide column">Название</div>
-                    </div>
+                    Код/Название
                 </th>  
-                <th colspan="2" class="right-aligned"> 
-                    <div class="five wide column">Проверено</div>
+                <th class="right-aligned"> 
+                    Проверено
                 </th>  
             </tr>
         </thead>
@@ -817,34 +821,27 @@
                     <b>{{product_code}}</b> {{ru}}
                 </td>
                 <td>
-                    <div class="ui grid">
-                        <div class="nine wide column" style="font-size:16px; font-weight: bold; text-align: right">{{product_quantity_verified}}/{{product_quantity}}</div>
-                        <div id="verification_indicator_{{#}}" class="seven wide column">
-                            {{if verification_status|equals>0}}
-                            <div>
-                                <i class="exclamation circle red icon"></i>
-                            </div>
-                            {{else}}
-                                {{if verification_status|equals>2}}
-                                <div>
-                                    <i class="exclamation circle yellow icon"></i>
-                                </div>
-                                {{else}}
-                                {{if verification_status|equals>1}}
-                                <div>
-                                    <i class="check circle green icon"></i>
-                                </div>
-                                {{/if}}
-                            {{/if}}
-                        {{/if}}   
-                        </div>
+                    <div style="font-size:16px; font-weight: bold; text-align: right">
+                        {{if verification_status|equals>0}}
+                        <span style="color:red">
+                        {{else}}
+                        {{if verification_status|equals>2}}
+                        <span style="color:orange">
+                        {{else}}
+                        {{if verification_status|equals>1}}
+                        <span style="color:green">
+                        {{/if}}
+                        {{/if}}
+                        {{product_quantity_verified}} /{{product_quantity}}</span>
                     </div>
                 </td>
-
             </tr>
             <!--{{/products}}-->
         </tbody>
     </table>
+        {{else}}
+        <div class="ui warning message">Список пока пуст</div>
+        {{/if}}
     </div>
     
  <div class="ui inverted segment blue" id="checkout_suggestion_mother">
@@ -892,7 +889,7 @@
 </div>
 
 
-<div id="checkout_log_tab" class="ui bottom attached  tab" data-tab="Log">
+<div id="checkout_log_tab" class="ui bottom attached segment tab" data-tab="Log">
     <div id="checkout_document_log_search" class="ui field">
         <div class="ui field">
             <label><b>Фильтр по операциям</b></label>
@@ -908,17 +905,14 @@
         <p>По вашему запросу не найдено ни одной проверки</p>
     </div>
     <div id="log_list"  class='covert'>
+        {{if log_list}}
         <table class="ui unstackable compact table" >
             <thead>
                 <tr>
                     <th>
-                        <div class="ui two column grid">
-                            <div class="six wide column">Код</div>         
-                            <div class="ten wide column">Название</div>
-                        </div>
+                        Код/Название
                     </th>  
-                    <th> 
-                        <div></div>
+                    <th>
                     </th>  
                 </tr>
             </thead>
@@ -936,7 +930,6 @@
                 </tr>
                 <tr>
                     <td class="checkout_document_log_time_td">
-                        <div class="sixteen wide fluid column" style ="font-size:14px">
                             <button class="ui blue icon button" 
                                 data-product_id = "{{product_id}}"
                                 data-product_code = "{{product_code}}" 
@@ -948,7 +941,6 @@
                                 <i class="plus icon"></i>
                             </button>
                             <i>{{time_to_display}}</i>
-                        </div>
                     </td>
                     <td class="checkout_document_log_time_button_td">
                         <button class="ui red icon button" 
@@ -966,11 +958,17 @@
                 <!--{{/log_list}}-->
             </tbody>
         </table>
+        
+        
+        {{else}}
+        <div class="ui warning message">Список пока пуст</div>
+        {{/if}}
     </div>
 </div>
 
 <div id="checkout_photos_tab" class="ui bottom attached tab covert" data-tab="Photos">
     <div class="ui segment">
+    {{if checkout_photos}}
         <div class="ui stackable cards">
         <!--{{checkout_photos}}--> 
             <div class="ui card">
@@ -985,6 +983,9 @@
             </div>
         <!--{{/checkout_photos}}-->  
         </div>
+    {{else}}
+    <div class="ui warning message">Фотографии не добавлены</div>
+    {{/if}}
     </div>
 </div>
 

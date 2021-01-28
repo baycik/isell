@@ -47,8 +47,8 @@ class DocumentItems extends DocumentCore{
 	$sql="
             SELECT
                 *,
-		ROUND(GET_SELL_PRICE(product_code,{$pcomp_id},{$usd_ratio}),2) product_price_total,
-                ROUND(GET_PRICE(product_code,{$pcomp_id},{$usd_ratio}),2) product_price_total_raw
+		ROUND(GET_SELL_PRICE(product_code,'$pcomp_id','$usd_ratio'),2) product_price_total,
+                ROUND(GET_PRICE(product_code,'$pcomp_id','$usd_ratio'),2) product_price_total_raw
             FROM (
                 SELECT
                     product_id,
