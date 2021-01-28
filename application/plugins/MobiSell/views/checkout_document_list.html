@@ -89,31 +89,23 @@
             </div>
         </div>
     </form>
-
+</div>
 
     <div id="doc_list" class="covert">
         <div class="ui button" onclick="App.checkout_document_list.create_document()"><i class="ui plus icon"></i> Создать список проверки склада</div>
-        <table class="ui celled unstackable selectable table">
+        <table class="ui unstackable table">
             <thead> 
                 <tr>
-                    <th>
-                        <div class="ui two column grid">       
-                            <div class="nine column">Название</div>
-                            <div class="seven wide right-aligned column">Дата</div>
-                        </div>
-                    </th>
-                    <th></th>
+                    <th>Название</th>
+                    <th style="width:200px">Дата</th>
+                    <th style="width:50px">Статус</th>
                 </tr>
             </thead>
             <tbody>
                 <!--{{doc_list}}-->
                 <tr class="doc_row" data-checkout_id="{{checkout_id}}" onclick="App.checkout_document_list.open_document(this)">
-                    <td class="doc_name">
-                        <div class="ui two column fluid unstackable grid">
-                            <div class="nine wide column"><b>{{checkout_name}}</b></div>
-                            <div class="seven wide column"><i>{{cstamp_dmy}}</i></div>
-                        </div> 
-                    </td>
+                    <td class="doc_name">{{checkout_name}}</td>
+                    <td>{{cstamp_dmy}}</td>
                     <td class="doc_status">
                         {{if checkout_status|equals>not_checked}}
                         <i class="close red large icon"></i>
@@ -142,5 +134,5 @@
             </tbody>
         </table>
     </div>
-</div>
+
 <button id="checkout_button_load_more"  class="ui fluid button" onclick="App.checkout_document_list.load()">Показать еще...</button>
