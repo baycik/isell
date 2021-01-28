@@ -765,16 +765,21 @@
         </div>
     </div>
     </div>
-    <div class="ui fluid buttons">
-        {{if checkout_status|equals>is_checking}}
-        <button class="ui primary button" onclick="App.checkout_document.finish.init();" type="button">
-            <i class="check icon"></i> Завершить проверку
-        </button>
-        {{/if}}
-        <button class="ui button" onclick="App.checkout_document.photos.checkout_upload()">
-            <i class="ui photo icon"></i> 
-            Прикрепить фото
-        </button>
+    <div class="ui center aligned grid">
+        <div class="ui equal width row">
+            <div class="column">
+                {{if checkout_status|equals>is_checking}}
+                <button class="ui fluid primary button" onclick="App.checkout_document.finish.init();" type="button">
+                    <i class="ui check icon"></i> Завершить проверку
+                </button>
+                {{/if}}
+            </div>
+            <div class="column">
+                <button class="ui fluid button" onclick="App.checkout_document.photos.checkout_upload()">
+                    <i class="ui photo icon"></i> Прикрепить фото
+                </button>
+            </div>
+        </div>    
     </div>
 </div>
 
@@ -791,9 +796,9 @@
     <i class="close icon"></i> В списке нет нужного товара
 </button> 
 
-<div class="ui  attached tab segment" data-tab="Document">
+<div class="ui attached tab" style="background-color:#fff" data-tab="Document">
     <div class="ui field">
-        <label><b>Фильтр по списку</b></label>
+        <h4 class="ui header">Фильтр по списку</h4>
         <div class="ui left icon right labeled input fluid" style="margin-bottom: 5px;">
             <i class="search icon"></i>
             <input id="checkout_document_entries_search_input" placeholder="Введите название или код..." type="text" 
@@ -803,7 +808,7 @@
     </div>
     <div id="checkout_entries"  class="covert">
         {{if products}}
-    <table id="checkout_document_table" class="ui unstackable selectable celled table">
+    <table id="checkout_document_table" class="ui unstackable table">
         <thead> 
             <tr>
                 <th>
@@ -889,10 +894,10 @@
 </div>
 
 
-<div id="checkout_log_tab" class="ui bottom attached segment tab" data-tab="Log">
+<div id="checkout_log_tab" class="ui attached tab" style="background-color:#fff" data-tab="Log">
     <div id="checkout_document_log_search" class="ui field">
         <div class="ui field">
-            <label><b>Фильтр по операциям</b></label>
+            <h4 class="ui header">Фильтр по операциям</h4>
             <div class="ui left icon right labeled input fluid" style="margin-bottom: 5px;">
                 <i class="search icon"></i>
                 <input id="checkout_document_log_search_input" placeholder="Введите название или код..." type="text" 
@@ -1135,12 +1140,12 @@
                     <div class="ui center aligned grid">
                         <div class="ui equal width row">
                             <div class="column">
-                                <button type="submit" class="ui green submit icon button" onclick="App.checkout_document.finish.commit(); return false">
+                                <button type="submit" class="ui green submit icon fluid button" onclick="App.checkout_document.finish.commit(); return false">
                                     Ок
                                 </button>
                             </div>
                             <div class="column">
-                                <button class="ui cancel icon button" onclick="App.checkout_document.entries.render();
+                                <button class="ui cancel icon fluid button" onclick="App.checkout_document.entries.render();
                                         return false">
                                     Отмена
                                 </button>
