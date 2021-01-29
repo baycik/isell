@@ -135,18 +135,20 @@
                 App.checkout_document.blur();
                 for( let item of App.checkout_document.entries.list){
                     var difference = item.product_quantity_verified - item.product_quantity;
-                    if(difference!==0){
+                    if(difference!=0){
                         item.difference=difference;
                         item.color="red";
                         if( difference>0 ){
                             item.difference="+"+difference;
                             item.color="green";
                         }
+                        
                         App.checkout_document.finish.modal.warning_entries.push(item);
                     }
                 }
                 if( App.checkout_document.finish.modal.warning_entries.length>0){
-                     App.checkout_document.finish.modal.open();
+                    App.renderTpl('checkout_confirm_warning_list', {products: App.checkout_document.finish.modal.warning_entries});
+                    App.checkout_document.finish.modal.open();
                 } else {
                     App.checkout_document.finish.commit();
                 }
@@ -192,7 +194,6 @@
             modal:{
                 warning_entries:[],
                 open: function(){
-                    App.renderTpl('checkout_confirm_warning', {products: App.checkout_document.finish.warning_entries});
                     $('#checkout_confirm_warning').modal('show').modal('can fit');
                 },
                 close:function(){
@@ -1112,50 +1113,40 @@
 </div>
 
 <div class="ui special modal" id="checkout_confirm_warning">
-    <div class="container">
-    <table class="ui unstackable table">
-        <tbody>
-        <tr>
-            <td>
-                <div class="ui header">Некоторые позиции не сходятся по количеству:</div>
-
-            </td>
-
-        </tr>
-
-        <tr>
-         <!--{{products}}-->
-            <td class="left-aligned"> 
-                <div class="ui unstackable two column grid">
-                    <div class="thirteen wide column"><b>{{product_code}}</b> {{ru}}</div> 
-                    <div class="three wide column" style="color:{{color}}"><b>{{difference}}</b></div>
+    <div class="header">Следующие позиции не сходятся по количеству. Продолжить?</div>
+    <div id="checkout_confirm_warning_list">
+        <table class="ui celled unstackable table">
+            <thead>
+                <tr>
+                    <th>Позиция</th>
+                    <th>Коррек.</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!--{{products}}-->
+                <tr>
+                    <td><b>{{product_code}}</b> {{ru}}</td>
+                    <td><b style="color:{{color}}">{{difference}}</b></td>
+                </tr>
+                <!--{{/products}}-->
+            </tbody>
+        </table>
+    </div>
+    <div class="actions">
+        <div class="ui center aligned grid">
+            <div class="ui equal width row">
+                <div class="column">
+                    <button type="submit" class="ui green submit icon fluid button" onclick="App.checkout_document.finish.commit(); return false">
+                        Корректировать
+                    </button>
                 </div>
-            </td>
-        </tr>
-        <!--{{/products}}-->
-        <tr>
-            <td>
-                <div class="ui header">Вы уверены, что хотите продолжить?</div>
-               <div class="actions">
-                    <div class="ui center aligned grid">
-                        <div class="ui equal width row">
-                            <div class="column">
-                                <button type="submit" class="ui green submit icon fluid button" onclick="App.checkout_document.finish.commit(); return false">
-                                    Ок
-                                </button>
-                            </div>
-                            <div class="column">
-                                <button class="ui cancel icon fluid button" onclick="App.checkout_document.entries.render();
-                                        return false">
-                                    Отмена
-                                </button>
-                            </div>
-                        </div>    
-                    </div>
+                <div class="column">
+                    <button class="ui cancel icon fluid button" onclick="App.checkout_document.entries.render();
+                            return false">
+                        Отмена
+                    </button>
                 </div>
-            </td>
-        </tr>
-        </tbody>
-    </table>
-    </div>    
+            </div>    
+        </div>
+    </div>
 </div>
