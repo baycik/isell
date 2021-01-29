@@ -112,19 +112,20 @@ App = {
         }
         App.state = newstate;
     },
-    current_status:'',
+    current_status:[],
     flash: function (msg) {
         if (!msg) {
             return;
         }
-        if( App.current_status ){
-            App.current_status+='<br>';
+        App.current_status.push(msg);
+        let excess=App.current_status.length-3;
+        if(excess>0){
+            App.current_status.splice(0,excess);
         }
-        App.current_status+=msg;
-        $("#status").html(App.current_status).show();
+        $("#status").html( App.current_status.join('<br>') ).show();
         clearTimeout(App.flashClock);
         App.flashClock = setTimeout(function () {
-            App.current_status='';
+            App.current_status=[];
             $("#status").hide();
         }, 1500);
     },

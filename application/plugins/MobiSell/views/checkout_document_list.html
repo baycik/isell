@@ -29,10 +29,12 @@
             var date=$("#checkout_list_datefilter").val();
             var filter=JSON.stringify({cstamp:date,checkout_name:name});
             App.flash('Список проверок: загрузка...');
-            $.post('../Checkout/checkoutListFetch', {offset:offset, limit: 10,filter:filter}, function (resp) {
+            $.post('../Checkout/checkoutListFetch', {offset:offset, limit: 15,filter:filter}, function (resp) {
                 var response = App.json(resp);
-                if (response.length<5){
+                if (response.length<15){
                     $("#checkout_button_load_more").hide();
+                } else {
+                    $("#checkout_button_load_more").show();
                 }
                 App.checkout_document_list.doc_list = App.checkout_document_list.doc_list.concat(response);
                 App.checkout_document_list.render();
@@ -66,7 +68,7 @@
 </style>
 
 <div class="ui blue segment">
-    <form class="ui form">
+    <form class="ui form" onsubmit="return false;">
         <h4 class="ui header">Фильтр</h4>
         <div class="two fields">
             <div class="field">
@@ -74,7 +76,7 @@
                 <div class="field">
                     <div class="ui left icon input">
                         <i class="file icon"></i>
-                        <input name="name_filter" placeholder="Название" type="text" id="checkout_list_namefilter" onchange="App.checkout_document_list.doc_list=[];App.checkout_document_list.load(0);">
+                        <input name="name_filter" placeholder="Название" type="text" id="checkout_list_namefilter" oninput="App.checkout_document_list.doc_list=[];App.checkout_document_list.load(0);">
                     </div>
                 </div>
             </div>
@@ -91,48 +93,48 @@
     </form>
 </div>
 
-    <div id="doc_list" class="covert">
-        <div class="ui button" onclick="App.checkout_document_list.create_document()"><i class="ui plus icon"></i> Создать список проверки склада</div>
-        <table class="ui unstackable selectable table">
-            <thead> 
-                <tr>
-                    <th>Название</th>
-                    <th style="width:200px">Дата</th>
-                    <th style="width:50px">Статус</th>
-                </tr>
-            </thead>
-            <tbody>
-                <!--{{doc_list}}-->
-                <tr class="doc_row" data-checkout_id="{{checkout_id}}" onclick="App.checkout_document_list.open_document(this)">
-                    <td class="doc_name">{{checkout_name}}</td>
-                    <td>{{cstamp_dmy}}</td>
-                    <td class="doc_status">
-                        {{if checkout_status|equals>not_checked}}
-                        <i class="close red large icon"></i>
+<div id="doc_list" class="covert">
+    <div class="ui button" onclick="App.checkout_document_list.create_document()"><i class="ui plus icon"></i> Создать список проверки склада</div>
+    <table class="ui unstackable selectable table">
+        <thead> 
+            <tr>
+                <th>Название</th>
+                <th style="width:50px">Дата</th>
+                <th style="width:50px">Статус</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!--{{doc_list}}-->
+            <tr class="doc_row" data-checkout_id="{{checkout_id}}" onclick="App.checkout_document_list.open_document(this)">
+                <td class="doc_name">{{checkout_name}}</td>
+                <td>{{cstamp_dmy}}</td>
+                <td class="doc_status">
+                    {{if checkout_status|equals>not_checked}}
+                    <i class="close red large icon"></i>
+                    {{else}}
+                        {{if checkout_status|equals>checked}}
+                        <i class="check green large icon"></i>
                         {{else}}
-                            {{if checkout_status|equals>checked}}
-                            <i class="check green large icon"></i>
+                            {{if checkout_status|equals>checked_with_divergence}}
+                            <div>
+                                <i class="large icons">
+                                    <i class="check green icon"></i>
+                                    <i class="bottom left corner plus green icon"></i>
+                                    <i class="bottom right corner minus red icon"></i>
+                                </i>
+                            </div>
                             {{else}}
-                                {{if checkout_status|equals>checked_with_divergence}}
-                                <div>
-                                    <i class="large icons">
-                                        <i class="check green icon"></i>
-                                        <i class="bottom left corner plus green icon"></i>
-                                        <i class="bottom right corner minus red icon"></i>
-                                    </i>
-                                </div>
-                                {{else}}
-                                    {{if checkout_status|equals>is_checking}}
-                                        <i class="spinner blue loading large icon"></i>
-                                    {{/if}}
+                                {{if checkout_status|equals>is_checking}}
+                                    <i class="spinner blue loading large icon"></i>
                                 {{/if}}
                             {{/if}}
                         {{/if}}
-                    </td>
-                </tr>
-                <!--{{/doc_list}}-->
-            </tbody>
-        </table>
-    </div>
+                    {{/if}}
+                </td>
+            </tr>
+            <!--{{/doc_list}}-->
+        </tbody>
+    </table>
+</div>
 
 <button id="checkout_button_load_more"  class="ui fluid button" onclick="App.checkout_document_list.load()">Показать еще...</button>
