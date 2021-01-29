@@ -169,7 +169,7 @@ $filename[]=<<<EOT
 models/Checkout.php
 EOT;
 $search[]=<<<'EOT'
-$product_get_sql = "SELECT 
+$product_get_sql = "SELECT
 EOT;
 $replace[]=<<<EOT
 EOT;

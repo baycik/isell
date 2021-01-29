@@ -152,7 +152,7 @@ class Checkout extends Stock {
         $this->Hub->set_level(2);
 	$product_get_sql = "SELECT
 		    product_id, product_code, ru, product_barcode,
-                    product_bpack, product_spack, product_unit, product_quantity
+                    product_bpack, product_spack, product_unit, product_img, product_quantity
 		FROM
 		    prod_list 
                         JOIN
