@@ -58,6 +58,7 @@
             App.checkout_document.entries.selection_mode_toggle('off');
             App.checkout_document.currentType = 'Document';
             App.checkout_document.initTab();
+            App.checkout_document.entries.list=[];
             App.checkout_document.load(App.state.checkout_id);
 	    this.device_has_numeric_keypad=localStorage.getItem('device_has_numeric_keypad')=='true'?1:0;
             //App.checkout_document.log.put_on_server();
@@ -108,14 +109,17 @@
         progress_update: function(){
             var verified = 0;
             var total = 0;
+            App.checkout_document.checkout_doc_head.progress=0;
             App.checkout_document.entries.list.forEach(function(item){
                   verified += Math.min(item.product_quantity_verified, item.product_quantity);
                   total += item.product_quantity*1;
             });
-            if (verified > 0){
-                
+            if ( total>0 ){
+                App.checkout_document.checkout_doc_head.progress=Math.round(verified/total*100);
             };
-            $('#checkout_progress_bar').progress("set percent", verified/total*100 );
+            if( App.checkout_document.checkout_doc_head.progress >0 ){
+                $('#checkout_progress_bar').progress("set percent", App.checkout_document.checkout_doc_head.progress );
+            }
         },
         clear_searchbar: function () {
             $("#checkout_document_log_search_input").val('');
@@ -131,18 +135,17 @@
         },
         finish:{
             init:function(){
-                App.checkout_document.finish.warning_entries = [];
+                App.checkout_document.finish.modal.warning_entries = [];
                 App.checkout_document.blur();
                 for( let item of App.checkout_document.entries.list){
-                    var difference = item.product_quantity_verified - item.product_quantity;
-                    if(difference!=0){
+                    let difference = item.product_quantity_verified - item.product_quantity;
+                    if( difference!=0 ){
                         item.difference=difference;
                         item.color="red";
                         if( difference>0 ){
                             item.difference="+"+difference;
                             item.color="green";
                         }
-                        
                         App.checkout_document.finish.modal.warning_entries.push(item);
                     }
                 }
@@ -160,14 +163,19 @@
                         var result=App.json(resp);
                         if( result ){
                             App.checkout_document.finish.show_result(result);
-                            App.holder.load("checkout_document_list.html");
+                            location.hash="#checkout_document_list.html";
                         }
                     });
                 } else {
                     App.user.pcompSelect({company_id:App.user.acomp.company_id}).done(function(){
                         $.post('../Checkout/checkoutDocumentOutput', {checkout_id: App.state.checkout_id}, function (resp) {
-                            App.alert("Созданы корректировочные накладные в <b>"+App.user.pcomp.label);
-                            App.holder.load("checkout_document_list.html");
+                            var result=App.json(resp);
+                            if( result && (result.more>0 || result.less>0) ){
+                                App.alert("Созданы корректировочные накладные в <b>"+App.user.pcomp.label);
+                            } else {
+                                App.flash("Корректировки отсутствуют");
+                            }
+                            location.hash="#checkout_document_list.html";
                         });
                     });
                 }
@@ -751,7 +759,7 @@
 		{{else}}
 		    {{if checkout_status|equals>is_checking}}
 			<i class="spinner blue loading large icon"></i>
-			    Выполняется
+                        Выполняется {{progress}}%
 		    {{/if}}
 		{{/if}}
 	    {{/if}}
@@ -838,7 +846,7 @@
                         <span style="color:green">
                         {{/if}}
                         {{/if}}
-                        {{product_quantity_verified}} /{{product_quantity}}</span>
+                        {{product_quantity_verified}} </span>/{{product_quantity}}
                     </div>
                 </td>
             </tr>

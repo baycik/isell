@@ -150,9 +150,9 @@ class Checkout extends Stock {
     
     public function checkoutProductGet( string $barcode='', int $checkout_id=-1 ) {
         $this->Hub->set_level(2);
-	$sql = "SELECT
+	$product_get_sql = "SELECT
 		    product_id, product_code, ru, product_barcode,
-                    product_bpack, product_spack, product_unit, se.*
+                    product_bpack, product_spack, product_unit, product_quantity
 		FROM
 		    prod_list 
                         JOIN
@@ -162,7 +162,7 @@ class Checkout extends Stock {
                         OR
                     product_code = '$barcode'    
                 ";
-	$product_data = $this->get_row($sql);
+	$product_data = $this->get_row($product_get_sql);
         if( $checkout_id>0 ){
             $is_stock_checkout=$this->get_value("SELECT 1 FROM checkout_list WHERE checkout_id='$checkout_id' AND parent_doc_id IS NULL");
             if($is_stock_checkout){
@@ -371,15 +371,6 @@ class Checkout extends Stock {
         $entries_list_more = $this->get_list($sql_more);
         $DocumentItems=$this->Hub->load_model('DocumentItems');
         $more_doc_id=0;
-        if (count($entries_list_more)>0){
-            $this->checkoutUpdateDocStatus($checkout_id, 'checked_with_divergence');
-            $more_doc_id = $DocumentItems->createDocument(2);
-            foreach($entries_list_more as $item){
-                $DocumentItems->entryAdd(null,$item->product_code, $item->difference);
-            }
-            $DocumentItems->headUpdate('doc_data',$document_comment);
-            //$DocumentItems->entryDocumentCommit($more_doc_id);
-        }
         $sql_less = "
             SELECT
                 product_code,
@@ -395,6 +386,16 @@ class Checkout extends Stock {
         $entries_list_less = $this->get_list($sql_less);
         $DocumentItems=$this->Hub->load_model('DocumentItems');
         $less_doc_id=0;
+        
+        if (count($entries_list_more)>0){
+            $this->checkoutUpdateDocStatus($checkout_id, 'checked_with_divergence');
+            $more_doc_id = $DocumentItems->createDocument(2);
+            foreach($entries_list_more as $item){
+                $DocumentItems->entryAdd(null,$item->product_code, $item->difference);
+            }
+            $DocumentItems->headUpdate('doc_data',$document_comment);
+            //$DocumentItems->entryDocumentCommit($more_doc_id);
+        }
         if (count($entries_list_less)>0){
             $this->checkoutUpdateDocStatus($checkout_id, 'checked_with_divergence');
             $less_doc_id = $DocumentItems->createDocument(1);
@@ -403,6 +404,9 @@ class Checkout extends Stock {
             }
             $DocumentItems->headUpdate('doc_data',$document_comment);
             //$DocumentItems->entryDocumentCommit($less_doc_id);
+        }
+        if( count($entries_list_more)==0 && count($entries_list_less)==0 ){
+            $this->checkoutUpdateDocStatus($checkout_id, 'checked');
         }
         return [
 	    'less'=>count($entries_list_less),

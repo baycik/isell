@@ -165,6 +165,19 @@ product_sector,
 product_sector spell,
 EOT;
 
+$filename[]=<<<EOT
+models/Checkout.php
+EOT;
+$search[]=<<<'EOT'
+$product_get_sql = "SELECT
+EOT;
+$replace[]=<<<EOT
+EOT;
+$before[]=<<<EOT
+EOT;
+$after[]=<<<EOT
+product_sector, 
+EOT;
 
 $filename[]=<<<EOT
 plugins/MobiSell/views/checkout_document.html
