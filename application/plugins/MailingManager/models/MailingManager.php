@@ -10,7 +10,7 @@
  */
 
 
-class MailingManager extends Catalog {
+class MailingManager extends PluginBase {
     public $settings = [];
 
     public function index(){
@@ -49,37 +49,6 @@ class MailingManager extends Catalog {
             ];
             $this->pluginSettingsFlush();
         }
-    }
-
-    private function pluginSettingsFlush() {
-        $plugin_data=$this->plugin_data;
-        $this->pluginSettingsLoad();
-        $this->plugin_data=(object) array_merge((array) $this->plugin_data, (array) $plugin_data);
-        $encoded_settings = addslashes(json_encode($this->settings, JSON_UNESCAPED_UNICODE ));
-        $encoded_data =     addslashes(json_encode($this->plugin_data));
-        $sql = "
-            UPDATE
-                plugin_list
-            SET 
-                plugin_settings = '$encoded_settings',
-                plugin_json_data = '$encoded_data'
-            WHERE plugin_system_name = 'MailingManager'
-            ";
-        $this->query($sql);
-    }
-
-    private function pluginSettingsLoad() {
-        $sql = "
-            SELECT
-                plugin_settings,
-                plugin_json_data
-            FROM
-                plugin_list
-            WHERE plugin_system_name = 'MailingManager'
-            ";
-        $row = $this->get_row($sql);
-        $this->settings=json_decode( str_replace("\n", '\n', $row->plugin_settings) );
-        $this->plugin_data=json_decode( str_replace("\n", '\n', $row->plugin_json_data) );
     }
 
     public function dataUpdate(array $settings){
@@ -182,16 +151,16 @@ class MailingManager extends Catalog {
                         }
                         return $result;
                     }
-                    return '???';
+                    return '_';
                 } catch(Exception $e){
-                    return '???';
+                    return '_';
                 }
-                return '???';
+                return '_';
             }
             if($matches[1]??false){
-                return $context->{$matches[1]}??'?'.$matches[1];
+                return $context->{$matches[1]}??'_';
             }
-            return '???';
+            return '_';
         },$message_template);
         return $message_template;
     }
