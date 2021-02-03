@@ -203,15 +203,25 @@ class Utils extends Catalog {
     /////////////////////////////
     //SMS FUNCTIONS
     /////////////////////////////
-    private function sendTraccar( $number, $message ){
+    
+    private function phoneValidator($number){
+        $num=preg_replace('/[^0-9]/','',$number);
+        $num2=substr($num,-10);
+        return "+7{$num2}";
+    }
+    public function sendTraccar( $number, $message ){
         $url = $this->Hub->pref('TRACCAR_GATEWAY');
         $data = [
-            'to' => $number,
+            'to' => $this->phoneValidator($number),
             'message' => $message
         ];
         $headers=[
             "Authorization: ".$this->Hub->pref('TRACCAR_AUTORIZATION')
         ];
+        
+        
+        print_r($data);
+        
         $curl = curl_init();
         curl_setopt($curl, CURLOPT_POST, 1);
         curl_setopt($curl, CURLOPT_POSTFIELDS, json_encode($data));
@@ -221,8 +231,8 @@ class Utils extends Catalog {
         curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
         curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, 2); 
 
-        $result = curl_exec($curl);
-        $httpcode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+        echo $result = curl_exec($curl);
+        echo $httpcode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
         if (curl_error($curl)) {
             $this->log(curl_error($curl));
         }
@@ -231,7 +241,6 @@ class Utils extends Catalog {
             return true;
         }
         return false;
-
     }
     
     
