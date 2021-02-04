@@ -211,6 +211,20 @@ class Utils extends Catalog {
     }
     public function sendTraccar( $number, $message ){
         $url = $this->Hub->pref('TRACCAR_GATEWAY');
+        
+        $chunk=70;
+        $length=mb_strlen($message);
+        if($length>$chunk){
+            $count=ceil(mb_strlen($message)/$chunk);
+            for($i=0;$i<$count;$i++){
+                $cropped=mb_substr($message,$i*$chunk,$chunk,"UTF-8");
+                $ok=$this->sendTraccar( $number, $cropped );
+                if( !$ok ){
+                    return false;
+                }
+            }
+            return true;
+        }
         $data = [
             'to' => $this->phoneValidator($number),
             'message' => $message
@@ -218,10 +232,6 @@ class Utils extends Catalog {
         $headers=[
             "Authorization: ".$this->Hub->pref('TRACCAR_AUTORIZATION')
         ];
-        
-        
-        print_r($data);
-        
         $curl = curl_init();
         curl_setopt($curl, CURLOPT_POST, 1);
         curl_setopt($curl, CURLOPT_POSTFIELDS, json_encode($data));
@@ -231,8 +241,8 @@ class Utils extends Catalog {
         curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
         curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, 2); 
 
-        echo $result = curl_exec($curl);
-        echo $httpcode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+        $result = curl_exec($curl);
+        $httpcode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
         if (curl_error($curl)) {
             $this->log(curl_error($curl));
         }
