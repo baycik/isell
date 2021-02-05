@@ -1365,6 +1365,7 @@ class Document extends Data {
 	$res = $this->Base->query("SELECT trans_id FROM document_trans WHERE doc_id=$doc_id");
 	$this->Base->query("START TRANSACTION");
 	$this->Base->query("DELETE FROM document_trans WHERE doc_id=$doc_id");
+	$this->Base->query("DELETE FROM acc_trans WHERE doc_id=$doc_id");
 	while ($row = mysqli_fetch_assoc($res)) {
 	    if (!$this->Base->Accounts->cancelTransaction($row['trans_id'])) {
 		$this->Base->query("ROLLBACK");

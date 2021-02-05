@@ -49,6 +49,7 @@ class AccountsCore extends Catalog{
 	}
         $trans_data['active_company_id']=$this->Hub->acomp('company_id');
         $trans_data['created_by']=$this->Hub->svar('user_id');
+        $trans_data['modified_by']=$this->Hub->svar('user_id');
         $this->transValidate( $trans_data );
         $trans_id= $this->create('acc_trans', $trans_data);
         $this->transResolveConnections($trans_id,$trans_data);
@@ -390,8 +391,15 @@ class AccountsCore extends Catalog{
     
     public $transGetDocId=['int'];
     public function transGetDocId( int $trans_id ){
-	$sql="SELECT doc_id FROM document_trans WHERE trans_id='$trans_id'";
-	return $this->get_value($sql);	
+	$sql="SELECT 
+                COALESCE(atr.doc_id, dt.doc_id)
+            FROM
+                acc_trans atr
+                    LEFT JOIN
+                document_trans dt USING (trans_id)
+            WHERE
+                atr.trans_id = '$trans_id'";
+	return $this->get_value($sql);
     }
     
 
@@ -545,7 +553,8 @@ class AccountsCore extends Catalog{
 	    $trans_data['active_company_id']=$this->Hub->acomp('company_id');
 	    $trans_data['created_by']=$user_id;
             $trans_data['modified_by']=$user_id;
-	    if( $trans_data['trans_ref'] && $this->transAlreadyLinked($trans_data['trans_ref']) ){//Check whether referenced trans is already linked
+	    if( $trans_data['trans_ref'] && $this->transAlreadyLinked($trans_data['trans_ref']) ){
+                //Check whether referenced trans is already linked
 		return false;
 	    }
 	    $this->create('acc_trans', $trans_data);

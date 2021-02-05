@@ -205,17 +205,17 @@
                         App.KKMIntegrator_checkprint.view.error(`Нехватает наличности в кассе! ${Cash} из ${balance_cash}`);
                         return;
                     }
-                    
-                    if(confirm(`Произвести возврат средств:Наличными Электронными Ава`)){
-                        
+                    var alert=`1) Необходимо произвести возврат средств:\nНаличными ${Cash}\nЭлектронными  ${ElectronicPayment}\n2) Заполнить анкету на возврат`;
+                    if( !confirm(alert) ){
+                        return false;
                     }
-                    
-                    
-                    var message = `Для этого документа уже был напечатан Чек.`;
-                    App.KKMIntegrator_checkprint.view.info(message);
-                    $("#kmmintegrator_print_btn").html("Напечатать копию");
-                    $("button[type=submit]").addClass('primary').removeClass('orange');
-                    $("#kkmintegrator_refund_btn").show();
+                    var data={
+                        doc_id:App.KKMIntegrator_checkprint.data.doc_id
+                    };
+                    App.KKMIntegrator_checkprint.kkm.apiExecute('refundCheck', data).done(function () {
+                        App.KKMIntegrator_checkprint.close();
+                    }).fail();
+                    App.KKMIntegrator_checkprint.view.info("Производится отмена чека...");
                 } else {
                     App.KKMIntegrator_checkprint.view.error("Отмена не возможна");
                 }
@@ -504,7 +504,7 @@
                 <button type="submit" class="ui approve fluid icon button submit"><i class="ui icon print"></i> <span id="kmmintegrator_print_btn">Печатать</span></button>
             </div>
             <div class="eight wide column">
-                 <div class="ui button covert"  id="kkmintegrator_refund_btn"><i class="ui icon undo alternate"></i>Провести возврат чека</div>
+                <div class="ui button"  id="kkmintegrator_refund_btn" style="display:none"><i class="ui icon undo alternate"></i>Провести возврат чека</div>
                 <div class="ui cancel right floated button"><i class="ui icon close icon"></i> Закрыть</div>
             </div>
         </div>
