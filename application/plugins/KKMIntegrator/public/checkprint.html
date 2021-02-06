@@ -80,7 +80,7 @@
 
                     var previously_payed_total = Cash + ElectronicPayment + AdvancePayment + CashProvision + Credit;
                     $("input[name=pay_provision]").val(previously_payed_total.toFixed(2));
-                    $("#kkmintegrator_additional_paytypes").click();
+                    //$("#kkmintegrator_additional_paytypes").click();
                 }
                 App.KKMIntegrator_checkprint.view.calculate();
 
@@ -93,7 +93,7 @@
                 } else
                 if (prev_check.status === 'check_needs_correction') {
                     var message = `Для этого документа уже был напечатан Чек. Состав документа был изменен. Необходимо распечатать корректирующий чек!`;
-                    App.KKMIntegrator_checkprint.view.error(message);
+                    App.KKMIntegrator_checkprint.view.info(message);
                     $("#kmmintegrator_print_btn").html("Корректировать чек");
                     $("button[type=submit]").addClass('orange').removeClass('primary');
                 }
@@ -200,6 +200,8 @@
                     var AdvancePayment = prev_check.check_object.registration.AdvancePayment;
                     var CashProvision = prev_check.check_object.registration.CashProvision;
                     var Credit = prev_check.check_object.registration.Credit;
+                    
+                    Cash+=CashProvision;
                     
                     if(balance_cash<Cash){
                         App.KKMIntegrator_checkprint.view.error(`Нехватает наличности в кассе! ${Cash} из ${balance_cash}`);
@@ -429,10 +431,9 @@
                         </tbody>
                     </table>
 
-                    <h5 class="ui header x-expand collapsed"> Дополнительные данные</h5>
+                    <h5 class="ui header x-expand collapsed"> Дополнительно</h5>
                     <table class="ui very basic celled table">
                         <tbody>
-                            <tr>
                             <tr>
                                 <td>
                                     Реквизиты
@@ -488,9 +489,16 @@
                                     {{/if}}
                                 </td>
                             </tr>
+                            <tr>
+                                <td colspan="2">
+                                    <div class="ui fluid button" onclick="App.KKMIntegrator_checkprint.open_advanced()"><i class="ui setting icon"></i> Дополнительные операции по кассе</div>
+                                </td>
+                            </tr>
                         </tbody>
                     </table>
+                    
                 </div>
+                
             </div>
         </div>
 

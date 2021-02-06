@@ -24,3 +24,18 @@ EOT;
 $after[]=<<<EOT
 EOT;
 
+ 
+$filename[]=<<<EOT
+views/trade/document.html
+EOT;
+$search[]=<<<EOT
+		<span class="icon-24 icon-wallet" title="Внести оплату" onclick="Doc.trans.pay();"> </span>
+EOT;
+$replace[]=<<<EOT
+        <!-- ERASED BY KKMINTEGRATOR -->
+EOT;
+$before[]=<<<EOT
+EOT;
+$after[]=<<<EOT
+EOT;
+

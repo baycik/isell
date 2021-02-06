@@ -136,19 +136,19 @@
             depositCash(e) {
                 e.preventDefault();
                 var amount = parseFloat($(e.currentTarget).find('input').val());
-                App.KKMIntegrator_advanced.view.info(`Изимается сумма ${amount.toFixed(2)}`);
+                App.KKMIntegrator_advanced.view.info(`Вносится сумма ${amount.toFixed(2)}`);
                 App.KKMIntegrator_advanced.kkm.apiExecute('depositCash', {Amount: amount}).done(function () {
                     App.KKMIntegrator_advanced.view.statusShow();
-                    App.KKMIntegrator_advanced.view.info(`Сумма ${amount.toFixed(2)} изъята!`);
+                    App.KKMIntegrator_advanced.view.info(`Сумма ${amount.toFixed(2)} внесена!`);
                 });
             },
             withdrawCash(e) {
                 e.preventDefault();
                 var amount = parseFloat($(e.currentTarget).find('input').val());
-                App.KKMIntegrator_advanced.view.info(`Вносится сумма ${amount.toFixed(2)}`);
+                App.KKMIntegrator_advanced.view.info(`Изимается сумма ${amount.toFixed(2)}`);
                 App.KKMIntegrator_advanced.kkm.apiExecute('withdrawCash', {Amount: amount}).done(function () {
                     App.KKMIntegrator_advanced.view.statusShow();
-                    App.KKMIntegrator_advanced.view.info(`Сумма ${amount.toFixed(2)} внесена!`);
+                    App.KKMIntegrator_advanced.view.info(`Сумма ${amount.toFixed(2)} изъята!`);
                 });
             },
             validate() {
