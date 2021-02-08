@@ -1,6 +1,4 @@
 <?php
-
-require_once 'Catalog.php';
 class Data extends Catalog {
     private $current_table_orderby=null;
     function __construct(){

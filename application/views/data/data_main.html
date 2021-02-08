@@ -17,7 +17,12 @@ DataJs={
     },
     processStruct:function(struct){
 	this.tableWidth=10;
+        DataJs.currentStruct=[];
     	for(var i in struct){
+            if( struct[i].Comment.indexOf('HIDDEN')>-1 ){
+                delete struct[i];
+                continue;
+            }
 	    struct[i].title=struct[i].name=struct[i].field=struct[i].Field;
 	    if( struct[i].Comment ){
 		struct[i].title=struct[i].name=struct[i].Comment;
@@ -27,7 +32,7 @@ DataJs={
 		if( chars<50 ){
 		    struct[i].width=100;
 		} else {
-		    struct[i].width=200;
+		    struct[i].width=250;
 		}
 	    }
 	    if( struct[i].Type.indexOf('double')>-1 || struct[i].Type.indexOf('decimal')>-1 || struct[i].Type.indexOf('int')>-1 ){
@@ -40,15 +45,15 @@ DataJs={
 	    if( struct[i].Key==="PRI" ){
 		DataJs.tableKey.push(struct[i].Field);
 	    }
+            DataJs.currentStruct.push(struct[i]);
 	}
-	DataJs.currentStruct=struct;	
     },
     initTable:function(table_name){
 	var grid_id='data_grid_'+table_name;
 	$('#data_grid').html('<div id="'+grid_id+'"></div>');
 	DataJs.currentGrid=$('#'+grid_id);
 	DataJs.currentGrid.datagrid({
-	    width:this.tableWidth<900?this.tableWidth:900,
+	    width:this.tableWidth<900?this.tableWidth:1100,
 	    remoteFilter:true,
 	    pagination:true,
 	    pageSize:30,
