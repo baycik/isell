@@ -236,19 +236,20 @@ class DocumentItems extends DocumentCore{
 //                    $this->reservedCountUpdate();
 //                }
                 $Document2->updateTrans();
+                $this->Topic('documentEntryChanged')->publish($doc_entry_id,$this->_doc, func_get_args());
 		return $ok;
 	    case 'product_price':
                 $this->Hub->set_level(2);
 		$ok=$Document2->updateEntry($doc_entry_id, NULL, $value);
                 $Document2->updateTrans();
+                $this->Topic('documentEntryChanged')->publish($doc_entry_id,$this->_doc);
                 return $ok;
 	    case 'party_label':
                 $this->Hub->set_level(2);
                 $this->query("UPDATE document_entries SET party_label='$value' WHERE doc_entry_id='$doc_entry_id'");
+                $this->Topic('documentEntryChanged')->publish($doc_entry_id,$this->_doc);
 		return true;
 	}
-        $Events=$this->Hub->load_model("Events");
-        $Events->Topic('documentEntryChanged')->publish($doc_entry_id,$this->_doc);
     }
     public $entryDelete=['int','string'];
     public function entryDelete( $doc_id, $ids ){

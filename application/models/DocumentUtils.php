@@ -2,6 +2,7 @@
 require_once 'Catalog.php';
 class DocumentUtils extends Catalog{
     public $min_level=1;
+    protected $_doc;
     public function selectDoc( $doc_id ){
 	if( $doc_id!=$this->Hub->svar('doc_id') ){
             $this->Hub->svar('doc_id',$doc_id);
