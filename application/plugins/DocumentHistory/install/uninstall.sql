@@ -1,0 +1,1 @@
+DROP TABLE `plugin_doc_history_list`
