@@ -82,7 +82,7 @@ class DocumentHistory extends PluginBase{
                 IF(doc_type=1,'Расход','Приход') entry_type,
                 dl.doc_id entry_doc_id,
                 dl.doc_num entry_doc_num,
-                de.product_quantity-SUM(pdhl.entry_change_qty) entry_change_qty,
+                de.product_quantity-SUM(COALESCE(pdhl.entry_change_qty,0)) entry_change_qty,
                 CONCAT(pl.product_code,' ',pl.ru) entry_change_name
             FROM
                 document_entries de
