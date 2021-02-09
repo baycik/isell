@@ -72,6 +72,7 @@ class DocumentHistory extends PluginBase{
     }
     
     public function onEntryChanged( $doc_entry_id, $doc, $arguments ){
+        $this->clearList();
         $user_label=$this->Hub->svar('user_sign');
         $history_sql="
             INSERT INTO plugin_doc_history_list (active_company_label,passive_company_label,user_label,entry_type,entry_doc_id,entry_doc_num,entry_change_qty,entry_change_name)
@@ -101,6 +102,14 @@ class DocumentHistory extends PluginBase{
             GROUP BY dl.doc_id
             ";
         $this->query($history_sql);
+    }
+    
+    private function clearList() {
+        if( rand(1,500)==1 ){
+            $days=$this->plugin_settings->history_days??30;
+            $this->query("DELETE FROM plugin_doc_history_list WHERE DATEDIFF(NOW(),entry_stamp)>$days");
+        }
+        
     }
 
 }
