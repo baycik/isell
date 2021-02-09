@@ -531,7 +531,7 @@ class Stock extends Catalog {
     }
 
     public function reserveEntryChange( $doc_entry_id,$doc ){
-        if( $doc->doc_status_id==2 ){
+        if( $doc && $doc->doc_status_id==2 ){
             $this->reserveCountUpdate();
         }
     }
