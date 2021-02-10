@@ -625,6 +625,7 @@ class MailingManager extends PluginBase {
                 plugin_message_list
             WHERE
                 message_status = 'processing'
+            LIMIT 10
             ";
         return $this->get_list($sql);
     }
