@@ -207,6 +207,7 @@ class MailingManager extends PluginBase {
                 plugin_message_list
             WHERE
                 $where
+            LIMIT 100
             ";
         return $this->get_list($msg_list_msg);
     }
