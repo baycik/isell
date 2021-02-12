@@ -222,7 +222,9 @@ class Document extends Data {
 
 	$company_lang = $this->Base->pcomp('language');
 	$sql = $this->getEntriesSqlParts($doc_id);
-	$err = $this->Base->get_row("SELECT row_status,ru,ua FROM (SELECT CHK_ENTRY(de.doc_entry_id) AS row_status,ru,ua FROM $sql[table] WHERE $sql[where]) AS t WHERE row_status LIKE 'err%' LIMIT 1");
+        
+        $skip_breakeven_check=$this->Base->pcomp('skip_breakeven_check');
+        $err = $this->Base->get_row("SELECT row_status,ru,ua FROM (SELECT CHK_ENTRY(de.doc_entry_id) AS row_status,ru,ua FROM $sql[table] WHERE $sql[where]) AS t WHERE row_status LIKE 'err%' ".($skip_breakeven_check?"AND row_status NOT LIKE 'err_breakeven%'":'')." LIMIT 1");
 	if ($err) {
 	    $status_msg = substr($err['row_status'], strpos($err['row_status'], ' '));
 	    $this->Base->msg("- $status_msg \"$err[$company_lang]\"\n");
