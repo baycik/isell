@@ -42,7 +42,8 @@ class DocumentList extends Catalog{
         if( strpos($mode,'add_empty_row')!==FALSE ){
             if( $offset==0 ){
                 $limit--;//because of empty row that added at beginning
-                $empty_row=['doc_id'=>0,'doc_type_icon'=>"new "];
+                $default_doc_extension=$this->documentExtensionDefaultGet();
+                $empty_row=['doc_id'=>0,'doc_type_icon'=>"new ",'doc_extension'=>$default_doc_extension];
             } else {
                 $offset--;
             }
@@ -94,7 +95,6 @@ class DocumentList extends Catalog{
 	return $empty_row?array_merge([$empty_row],$rows):$rows;
     }
     
-    public $statusFetchList=[];
     public function statusFetchList(){
         $sql="SELECT * FROM document_status_list";
         return $this->get_list($sql);
@@ -105,4 +105,19 @@ class DocumentList extends Catalog{
         return $this->get_list($sql);
     }
     
+    
+    public function documentExtensionDefaultGet(){
+        $pcomp_id=$this->Hub->pcomp('company_id');
+        $sql="
+            SELECT
+                doc_handler
+            FROM
+                document_list
+            WHERE
+                passive_company_id='$pcomp_id'
+            ORDER BY cstamp DESC
+            LIMIT 1
+            ";
+        return $this->get_value($sql)??"DocumentSell";
+    }
 }

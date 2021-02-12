@@ -134,14 +134,17 @@
                 App.Topic('activeCompanySelected').subscribe(function (company) {
                     DocList.grid.updateOptions({params: {mode: 'show_only_pcomp_docs,add_empty_row'}});
                     DocList.tools.reload();
+                    DocHolder.reset();
                 });
                 App.Topic('passiveCompanySelected').subscribe(function (company) {
                     DocList.grid.updateOptions({params: {mode: 'show_only_pcomp_docs,add_empty_row'}});
                     DocList.tools.reload();
+                    DocHolder.reset();
                 });
                 App.Topic('passiveCompanyReset').subscribe(function (company) {
                     DocList.grid.updateOptions({params: {mode: 'add_empty_row'}});
                     DocList.tools.reload();
+                    DocHolder.reset();
                 });
                 App.Topic('documentReloaded').subscribe(function () {
                     //var index = DocList.grid.getSelectedRows()[0];
@@ -205,16 +208,19 @@
                 DocHolder.prepareDocumentBase.resolve();
             });
         },
-        load:function(doc_id,doc_extention){
-            doc_extention=doc_extention||1;
-            if( !doc_extention ){/* TODO determine current doc_extension automatically*/
-                console.log('provide doc_extention please!!!');
+        load:function(doc_id,doc_extension){
+            doc_extension=doc_extension||1;
+            if( !doc_extension ){/* TODO determine current doc_extension automatically*/
+                console.log('provide doc_extension please!!!');
                 return;
             }
             DocHolder.prepareDocumentBase.then(function(){
-                DocumentInline.extention.set(doc_extention);
+                DocumentInline.extension.set(doc_extension);
                 DocumentInline.load(doc_id);
             });
+        },
+        reset:function(){
+            DocHolder.load(0);
         }
     };
     DocHolder.init();

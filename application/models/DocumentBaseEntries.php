@@ -48,6 +48,7 @@ trait DocumentBaseEntries{
             return false;
         }
         $this->db_transaction_start();
+        $this->Topic('documentEntryChanged')->publish($doc_entry_id);
         $modify_stock = $this->isCommited() ? true : false;
         $update_ok = $this->entrySave($doc_entry_id, $new_entry_data, $current_entry_data, $modify_stock);
         if (!$update_ok) {
@@ -111,6 +112,9 @@ trait DocumentBaseEntries{
      * @return type
      */
     public function entryListGet(int $doc_id, int $doc_entry_id = 0) {
+        if( $doc_id==0 ){
+            return [];
+        }
         $this->entryListCreate($doc_id, $doc_entry_id);
         return $this->get_list("SELECT * FROM tmp_entry_list ORDER BY product_code");
     }

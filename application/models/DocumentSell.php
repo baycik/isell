@@ -51,13 +51,13 @@ class DocumentSell extends DocumentBase{
 	    $document["head"]=$this->headGet($doc_id);
 	}
 	if( in_array("body",$parts_to_load) ){
-	    $document["body"]=$this->bodyGet($doc_id);
+	    $document["body"]=$doc_id?$this->bodyGet($doc_id):[];
 	}
 	if( in_array("foot",$parts_to_load) ){
-	    $document["foot"]=$this->footGet($doc_id);
+	    $document["foot"]=$doc_id?$this->footGet($doc_id):[];
 	}
 	if( in_array("views",$parts_to_load) ){
-	    $document["views"]=$this->viewsGet($doc_id);
+	    $document["views"]=$doc_id?$this->viewsGet($doc_id):[];
 	}
 	return $document;
     }
@@ -88,8 +88,7 @@ class DocumentSell extends DocumentBase{
     public function documentBeforeChangeIsCommited( $field='is_commited', bool $new_is_commited ){
         //echo 'entries';print_r($this->document_properties);die;
         
-        $this->profile("Start documentBeforeChangeIsCommited");
-        
+
         if( !$new_is_commited && !$this->isCommited() ){
             $doc_id=$this->doc('doc_id');
             /*
@@ -106,7 +105,6 @@ class DocumentSell extends DocumentBase{
         if( $new_is_commited==1 ){
             $this->doc('doc_status_id',3);//set to processed because its commited
         }
-        $this->profile("Finish documentBeforeChangeIsCommited");
 
         return $this->entryListChangeCommit( $new_is_commited );
     }

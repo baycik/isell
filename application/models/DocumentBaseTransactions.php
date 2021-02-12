@@ -32,9 +32,7 @@ trait DocumentBaseTransactions {
     protected function transSchemeUpdate() {
         $document_transaction_scheme=$this->document_transaction_scheme;
         $doc_id=$this->doc('doc_id');
-        $this->profile('before transSchemeCalculate');
         $trans_list=$this->transSchemeCalculate($document_transaction_scheme);
-        $this->profile('after transSchemeCalculate');
         $AccountsCore = $this->Hub->load_model("AccountsCore");
         foreach($trans_list as $trans){
             //print_r($trans);
@@ -44,7 +42,6 @@ trait DocumentBaseTransactions {
                 (SELECT trans_id FROM document_trans WHERE doc_id='$doc_id' AND trans_role='{$trans['trans_role']}'),
                 0 ) trans_id";
             $trans_id=$this->get_value($sql_find_trans_id);
-            $this->profile('before transUpdate');
             $AccountsCore->transUpdate($trans_id,$trans);
         }
     }

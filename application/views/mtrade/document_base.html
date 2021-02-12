@@ -4,15 +4,15 @@
 	let Document={
             doc_id:0,
             doc_extension:'',
-            extention:{
+            extension:{
                 alreadyLoaded:$.Deferred(),
                 set:function( new_doc_extension ){
                     if( !new_doc_extension || Document.doc_extension===new_doc_extension ){
-                        !new_doc_extension && console.log("Wrong extention"+new_doc_extension)
+                        !new_doc_extension && console.log("Wrong extension"+new_doc_extension)
                         return ;
                     }
                     Document.doc_extension=new_doc_extension;
-                    Document.extention.init();
+                    Document.extension.init();
                 },
                 init:function(){
                     Document.destroy();
@@ -39,7 +39,7 @@
                             eval(extension.script);
                         }
                         Document.init();
-                        Document.extention.alreadyLoaded.resolve();
+                        Document.extension.alreadyLoaded.resolve();
                     }).fail(function(){
                         App.flash("Не удалось загрузить плагин документа");
                     });
@@ -52,7 +52,7 @@
 		Document.views.init();
 	    },
 	    render:function( render_data ){
-                Document.extention.alreadyLoaded.then(function(){
+                Document.extension.alreadyLoaded.then(function(){
                     render_data.head  && Document.head.render(render_data.head);
                     render_data.body  && Document.body.render(render_data.body);
                     render_data.foot  && Document.foot.render(render_data.foot);
@@ -73,8 +73,8 @@
 		    return false;
 		}
                 if( id==0 ){
-                    console.log('id====0');
-                    return false;
+                    console.log('loaded doc_id====0');
+                    //return false;
                 }
 		parts_to_load= parts_to_load || ["head","body","foot","views"];
 		Document.doc_id=id;
