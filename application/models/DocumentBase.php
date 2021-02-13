@@ -81,16 +81,16 @@ class DocumentBase extends Catalog {
     }
 
     public function documentNumNext($doc_type, $creation_mode = null) {
-        $Pref = $this->Hub->load_model('Pref');
-
-        $counter_increase = $creation_mode == 'not_increase_number' ? 0 : 1;
-        $counter_name = "counterDocNum_" . $doc_type;
-        $nextNum = $Pref->counterNumGet($counter_name, null, $counter_increase);
-        if (!$nextNum) {
-            $doc_type_row = $this->Base->get_row("SELECT * FROM document_types WHERE doc_type='$doc_type'");
-            $counter_title = $doc_type_row['doc_type_name'] ?? '???';
-            $Pref->counterCreate($counter_name, null, $counter_title);
-            $nextNum = $Pref->counterNumGet($counter_name, null, $counter_increase);
+        $Pref=$this->Hub->load_model('Pref');
+        
+        $counter_increase=$creation_mode=='not_increase_number'?0:1;
+        $counter_name="counterDocNum_".$doc_type;
+        $nextNum=$Pref->counterNumGet($counter_name,null,$counter_increase);
+        if( !$nextNum ){
+            $doc_type_row=$this->get_row("SELECT * FROM document_types WHERE doc_type='$doc_type'");
+            $counter_title=$doc_type_row->doc_type_name??'???';
+            $Pref->counterCreate($counter_name,null,$counter_title);
+            $nextNum=$Pref->counterNumGet($counter_name,null,$counter_increase);
         }
         return $nextNum;
     }
@@ -145,10 +145,7 @@ class DocumentBase extends Catalog {
             $new_document['use_vatless_price'] = $prev_document->use_vatless_price;
             $new_document['vat_rate'] = $prev_document->vat_rate;
         }
-
         $new_doc_id = $this->create('document_list', $new_document);
-        $this->documentChangeCommitTransactions(1);
-        $this->Hub->msg('Document created!');
         return $new_doc_id;
     }
 
@@ -168,7 +165,7 @@ class DocumentBase extends Catalog {
         $this->db_transaction_start();
         $this->delete('document_entries', ['doc_id' => $doc_id]);
         $this->delete('document_view_list', ['doc_id' => $doc_id]);
-        $this->transClear();
+        $this->transSchemeDelete();
         $ok = $this->delete('document_list', ['doc_id' => $doc_id, 'is_commited' => 0]);
         $this->db_transaction_commit();
         return $ok;
@@ -233,11 +230,14 @@ class DocumentBase extends Catalog {
 	    ORDER BY cstamp DESC LIMIT 1");
         $defHead = (object) [];
         $defHead->doc_id = 0;
-        $defHead->doc_date = date("Y-m-d");
-        $defHead->doc_type = $prevHead->doc_type ?? 1;
+        $defHead->is_commited = 0;
+        $defHead->notcount = 0;
+        $defHead->cstamp = date("Y-m-d H:i:s");
+        //$defHead->doc_date = date("Y-m-d");
         $defHead->doc_data = '';
-        $defHead->doc_status_id = 1;
-        $defHead->doc_num = $this->documentNumNext($defHead->doc_type, 'not_increase_number');
+        $defHead->type = $this->get_row("SELECT * FROM document_types WHERE doc_type=".($prevHead->doc_type ?? 1));
+        $defHead->status=$this->get_row("SELECT * FROM document_status_list WHERE doc_status_id=1");;
+        $defHead->doc_num = $this->documentNumNext($defHead->type->doc_type, 'not_increase_number');
         $defHead->doc_ratio = $this->Hub->pref('usd_ratio');
         $defHead->curr_code = $this->Hub->pcomp('curr_code');
         $defHead->vat_rate = $this->Hub->pcomp('vat_rate');
@@ -260,6 +260,9 @@ class DocumentBase extends Catalog {
             return false;
         }
         $this->doc($field, $value);
+        if ($this->isCommited()) {
+            $this->transSchemeUpdate();
+        }
         $this->db_transaction_commit();
         return true;
     }

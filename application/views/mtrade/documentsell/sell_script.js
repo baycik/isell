@@ -15,6 +15,12 @@ Document.head = {
         this.pcompNode && this.pcompNode.combobox && this.pcompNode.combobox('clear');
     },
     update: function (field, value, succes_msg) {
+        if(Document.doc_id==0){
+            Document.create().then(function(){
+                Document.head.update(field, value, succes_msg);
+            });
+            return true;
+        }
         var url = Document.doc_extension + '/headFieldUpdate';
         return $.post(url, {doc_id: Document.doc_id, field: field, value: value}).done(function (ok) {
             if (ok * 1) {
@@ -40,12 +46,15 @@ Document.head = {
             $formElements.each(function (i, element) {
                 let value = fvalue[element.name];
                 let $element = $(element);
+                if ( $element.attr('type') === 'date' && value) {
+                    value=value.split(" ")[0];
+                }
                 $element.val(value);
                 if ($element.attr('type') === 'hidden') {
                     return true;
                 }
-                if ($element.attr('type') === 'checkbox' && fvalue[element.name] * 1) {
-                    $element.attr('checked', 'checked');
+                if ($element.attr('type') === 'checkbox') {
+                    $element.prop('checked', value * 1);
                 }
                 if ($element.attr('title') && !$element.attr('data-skip')) {
                     let $ele = $element;
@@ -161,7 +170,7 @@ Document.head = {
                 $(`#${holderId} .x-toolbar .icon-commit`).css('filter', 'none' );
             }
             
-            head_data.cstamp = head_data.cstamp.substr(0, 10);
+            //head_data.cstamp = head_data.cstamp.substr(0, 10);
             $('#' + holderId + ' select[name=passive_company_id]')
                     .dropdown('set text', Document.data.head.passive_company_label);
             $('#' + holderId + ' select[name=active_company_id]')
@@ -305,7 +314,7 @@ Document.body = {
         init: function () {
             $('.x-suggest').search({
                 apiSettings: {
-                    url: `${Document.doc_extension}/entrySuggestFetch/?doc_id=${Document.doc_id}&q={query}`,
+                    url: `${Document.doc_extension}/suggestFetch/?doc_id=${Document.doc_id}&q={query}`,
                     onResponse: function (list) {
                         for (let i in list) {
                             let item=list[i];
@@ -551,6 +560,12 @@ Document.body = {
             }
         },
         entryCreate: function (product_code, product_quantity) {
+            if(Document.doc_id==0){
+                Document.create().then(function(){
+                    Document.entries.entryCreate(product_code, product_quantity);
+                });
+                return true;
+            }
             var url = Document.doc_extension + '/entryCreate';
             var request={
                 doc_id: Document.doc_id,

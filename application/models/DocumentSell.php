@@ -42,10 +42,10 @@ class DocumentSell extends DocumentBase{
     //////////////////////////////////////////
     public function documentGet(int $doc_id, array $parts_to_load){
 	$this->documentSelect($doc_id);
-	$doc_type=$this->doc('doc_type');
-	if( $doc_type!='1' && $doc_type!=1 ){
-            return parent::headGet($doc_id);
-	}
+//	$doc_type=$this->doc('doc_type');
+//	if( $doc_type!='1' && $doc_type!=1 ){
+//            return parent::headGet($doc_id);
+//	}
 	$document=[];
 	if( in_array("head",$parts_to_load) ){
 	    $document["head"]=$this->headGet($doc_id);
@@ -207,6 +207,9 @@ class DocumentSell extends DocumentBase{
     private function entryListChangeCommit( bool $new_is_commited ){
         $doc_id=$this->doc('doc_id');
         $entry_list=$this->entryListGet($doc_id);
+        if( !$entry_list ){
+            throw new Exception("No entries",204);
+        }
         $this->db_transaction_start();
         foreach($entry_list as $entry){
             if( $new_is_commited ){
@@ -264,6 +267,14 @@ class DocumentSell extends DocumentBase{
      * @param object $current_entry_data
      */
     protected function entrySave( int $doc_entry_id, object $new_entry_data, object $current_entry_data=null, bool $modify_stock=false ){
+        if( isset($new_entry_data->entry_sum) ){
+            $entry=$this->entryGet($doc_entry_id);
+            if( $entry->product_quantity==0 ){
+                return false;
+            }
+            $new_entry_data->entry_price=$new_entry_data->entry_sum/$entry->product_quantity;
+            unset($new_entry_data->entry_sum);
+        }
         if( isset($new_entry_data->entry_price) ){
             $vat_correction=$this->doc('use_vatless_price')?1:$this->doc('vat_rate')/100+1;
             $new_entry_data->entry_price_vatless=$new_entry_data->entry_price/$vat_correction;

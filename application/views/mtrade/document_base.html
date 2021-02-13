@@ -73,13 +73,12 @@
 		    return false;
 		}
                 if( id==0 ){
-                    console.log('loaded doc_id====0');
                     //return false;
                 }
 		parts_to_load= parts_to_load || ["head","body","foot","views"];
 		Document.doc_id=id;
 		var url=Document.doc_extension+'/documentGet';
-		$.post(url,{doc_id:Document.doc_id,parts_to_load:JSON.stringify(parts_to_load)},function(resp){
+		return $.post(url,{doc_id:Document.doc_id,parts_to_load:JSON.stringify(parts_to_load)},function(resp){
 		    var render_data=App.json(resp);
 		    if(render_data){
 			Document.render( render_data );
@@ -93,6 +92,21 @@
                 App.Topic("documentReloaded").publish({doc_id:Document.doc_id});
                 //Document.load(Document.doc_id,parts);
 	    },
+            create: function(){
+                var url = Document.doc_extension + '/documentCreate';
+                var creation_deff=$.Deferred();
+                $.post(url,{doc_type:Document.data.head.doc_type,doc_handler:Document.doc_extension},function(doc_id){
+                    if( !doc_id ){
+                        App.flash("Ошибка создания документа");
+                        return false;
+                    }
+                    Document.load(doc_id).then(function(){
+                        creation_deff.resolve();
+                    });
+                    App.Topic('documentListChanged').publish();
+                });
+                return creation_deff;
+            },
             delete:function(){
 		$.post(Document.doc_extension+'/documentDelete',{doc_id:Document.doc_id},function(ok){
 		    if(ok*1){

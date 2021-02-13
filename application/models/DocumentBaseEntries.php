@@ -56,7 +56,7 @@ trait DocumentBaseEntries{
             return false;
         }
         if ($this->isCommited()) {
-            $this->transUpdate();
+            $this->transSchemeUpdate();
         }
         $this->db_transaction_commit();
         return true;

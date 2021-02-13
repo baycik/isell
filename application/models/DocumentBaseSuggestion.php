@@ -1,44 +1,86 @@
 <?php
 trait DocumentBaseSuggestion{
-    public $suggestFetch = ['q' => 'string'];
-
-    public function suggestFetch($q) {
-        if ($q == '') {
-            return [];
+    
+    public function suggestFetch( string $q='', int $offset=0,int $limit=10, int $doc_id=0, int $category_id=0 ){
+        session_write_close();
+        $matches=$this->suggestResultFetch($q, $offset, $limit, $doc_id, $category_id);
+        if( !$matches ){
+            $matches=$this->suggestResultFetch($this->transliterate($q,'fromlatin'), $offset, $limit, $doc_id, $category_id);
         }
-        $company_lang = $this->Hub->pcomp('language');
-        if (!$company_lang) {
-            $company_lang = 'ru';
+        if( !$matches ){
+            $matches=$this->suggestResultFetch($this->transliterate($q,'fromcyrilic'), $offset, $limit, $doc_id, $category_id);
         }
-        $where = ['is_service=0'];
-        $clues = explode(' ', $q);
-        foreach ($clues as $clue) {
-            if ($clue == '') {
-                continue;
-            }
-            $where[] = "(product_code LIKE '%$clue%' OR $company_lang LIKE '%$clue%')";
+        return $matches;
+    }
+    
+    private function suggestResultFetch( string $q, int $offset=0,int $limit=10, int $doc_id=0, int $category_id=0 ){
+        $pcomp_id=$this->Hub->pcomp('company_id');
+        $usd_ratio=$this->Hub->pref('usd_ratio');
+	if( $doc_id ){
+	    $this->documentSelect($doc_id);
+	    $pcomp_id=$this->doc('passive_company_id');
+	    $usd_ratio=$this->doc('doc_ratio');
+	}
+	$where="1";
+	if( strlen($q)==13 && is_numeric($q) ){
+	    $where="product_barcode=$q";
+	} else if( $q ){
+	    $cases=[];
+	    $clues=  explode(' ', $q);
+	    foreach ($clues as $clue) {
+		if ($clue == ''){
+		    continue;
+		}
+		$cases[]="(pl.product_code LIKE '%$clue%' OR ru LIKE '%$clue%')";
+	    }
+	    if( count($cases)>0 ){
+		$where=implode(' AND ',$cases);
+	    }
+	}
+        if( $category_id ){
+            $branch_ids = $this->treeGetSub('stock_tree', $category_id);
+            $where .= " AND parent_id IN (" . implode(',', $branch_ids) . ")";
         }
-        $sql = "
-	    SELECT
-		product_code,
-		$company_lang label,
-		product_spack,
-		product_quantity
-	    FROM
-		prod_list
-		    JOIN
-		stock_entries USING(product_code)
-	    WHERE
-		" . ( implode(' AND ', $where) ) . "
-		    ORDER BY fetch_count-DATEDIFF(NOW(),fetch_stamp) DESC, product_code
-	    LIMIT 15
-	    ";
-        return $this->get_list($sql);
+//        if( $this->doc('doc_type')==3 || $this->doc('doc_type')==4 ){
+//            $where .= " AND is_service=1";
+//        }
+        $this->query("SET @promo_limit:=3;");
+	$sql="
+            SELECT
+                *,
+		ROUND(GET_SELL_PRICE(product_code,'$pcomp_id','$usd_ratio'),2) product_price_total,
+                ROUND(GET_PRICE(product_code,'$pcomp_id','$usd_ratio'),2) product_price_total_raw
+            FROM (
+                SELECT
+                    product_id,
+                    pl.product_code,
+                    pl.analyse_class,
+                    ru product_name,
+                    product_spack,
+                    product_quantity leftover,
+                    product_img,
+                    product_unit,
+                    CONCAT( 
+                        product_quantity<>0,
+                        IF( prl.product_code IS NOT NULL AND (@promo_limit:=@promo_limit-1)>=0,1,0),
+                        LPAD(fetch_count-DATEDIFF(NOW(),COALESCE(se.fetch_stamp,se.modified_at)),6,'0')
+                    ) popularity
+                FROM
+                    stock_entries se
+                        JOIN
+                    prod_list pl USING(product_code)
+                        LEFT JOIN
+                    price_list prl ON se.product_code=prl.product_code AND label='PROMO'
+                WHERE $where
+                ORDER BY 
+                    popularity DESC,
+                    pl.product_code
+                LIMIT $limit OFFSET $offset) inner_table";
+        $suggested=$this->get_list($sql);//for plugin modifications
+        return $suggested;
     }
 
-    public $pickerListFetch = ['parent_id' => 'int', 'offset' => ['int', 0], 'limit' => ['int', 10], 'sortby' => 'string', 'sortdir' => '(ASC|DESC)', 'filter' => 'json'];
-
-    public function pickerListFetch($parent_id, $offset, $limit, $sortby, $sortdir, $filter) {
+    public function pickerListFetch( int $parent_id, int $offset=0, int $limit=10, string $sortby, string $sortdir, array $filter) {
         $pcomp_id = $this->Hub->pcomp('company_id');
         $doc_ratio = $this->Hub->pref('usd_ratio');
 
