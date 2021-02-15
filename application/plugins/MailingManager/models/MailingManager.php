@@ -207,6 +207,7 @@ class MailingManager extends PluginBase {
                 plugin_message_list
             WHERE
                 $where
+            ORDER BY message_status='processing' DESC
             LIMIT 100
             ";
         return $this->get_list($msg_list_msg);
@@ -589,11 +590,13 @@ class MailingManager extends PluginBase {
 
 
     public function mailingBegin(){
+        set_time_limit(600);
         $message_list = $this->mailingGetProcessingMessages();
+        if( !$message_list ){
+            $this->mailingFinish();
+            return true;
+        }
         foreach($message_list as $index=> $message){
-            if($index > 4){
-                return false;
-            }
             $handler_name = ucfirst($message->message_handler).'Handler';
             require_once APPPATH.'/plugins/MailingManager/handlers/'.$handler_name.'.php';
             ${$handler_name} = new $handler_name;
@@ -606,7 +609,7 @@ class MailingManager extends PluginBase {
                 }
             }
         }
-        return $this->mailingFinish();;
+        return false;
     }
 
 
