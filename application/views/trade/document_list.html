@@ -95,7 +95,7 @@
 		    DocList.grid.onSelectedRowsChanged.subscribe(function (e, selection) {
 			var doclistRow = selection.grid.getDataItem(selection.rows[0]);
 			//Document.init(doclistRow.doc_type);
-			Document.load(doclistRow.doc_id);
+			doclistRow && Document.load(doclistRow.doc_id);
 		    });
                     DocList.grid.onRenderFinished.subscribe(function(){
                         if( DocList.selected_doc_id ){
