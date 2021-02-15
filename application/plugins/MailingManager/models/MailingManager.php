@@ -70,6 +70,7 @@ class MailingManager extends PluginBase {
         if(empty($message)){
             return;
         }
+        $this->messageOldClear();
         $message_record=[
             'message_handler'=>$message['message_handler'],
             'message_batch_label'=>$message['message_batch_label']??($message['message_handler'].$message['message_reason']),
@@ -120,7 +121,10 @@ class MailingManager extends PluginBase {
     public function messageDelete( $message_id ){
         return $this->delete('plugin_message_list',['message_id'=>$message_id]);
     }
-
+    private function messageOldClear(){
+        return $this->query('DELETE FROM isell_db.plugin_message_list where DATEDIFF(NOW(),modified_at)>30');
+    }
+    
     public function messageSend( $message_id ){
         $this->messageChangeStatus($message_id, 'processing');
         $this->plugin_data->event_id = $this->mailingCreate();
