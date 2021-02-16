@@ -507,6 +507,7 @@
 	    }
 	},
 	linkBarcodeToProduct:function(barcode,qty){
+            barcode=App.barcode2ean(barcode).ean13;
 	    App.loadWindow('page/stock/barcode_link',{barcode:barcode}).done(function(data){
 		Doc.entries.add(barcode,qty);
 	    }).fail(function(){
@@ -634,7 +635,7 @@
 	init:function(){
 	    var qty = $('#Doc_sugg_qty').textbox('textbox');
 	    var cmb=$('#Doc_suggest_cmb').combobox('textbox');
-	    cmb.bind( 'keydown', function(e){
+	    cmb.bind( 'keyup', function(e){
 		var query=$('#Doc_suggest_cmb').combobox('getValue');
 		if( e.keyCode===38 && query==='' ){
 		    $('#Doc_suggest_cmb').combobox('setValue',Doc.suggest.prevCode);
@@ -642,17 +643,56 @@
 		else if( e.keyCode===13 ){
 		    qty.select();
 		}
+                else if( Doc.suggest.isBarcode(cmb.val()) ){
+                    var code=cmb.val();
+                    var barcode=App.barcode.toEAN13(code);
+                    $('#Doc_suggest_cmb').combobox('setValue',barcode.ean13);
+                    cmb.val(barcode.ean13);
+                    if(barcode.boxlevel>0 ){
+                        $.post("Stock/productGet",{product_barcode:barcode.ean13},function(resp){
+                            var product=App.json(resp);
+                            if(product){
+                                if(barcode.boxlevel==1){
+                                    $(qty).val(product.product_bpack);
+                                }
+                                if(barcode.boxlevel==2){
+                                    qty.val(product.product_bpack);
+                                }
+                                qty.select();
+                            }
+                        });
+                        return true;
+                    } else {
+                        qty.select();
+                    }
+                } 
 	    });
 	    qty.bind('keydown', function(e){
 		if ( e.keyCode===13 ){	// when press ENTER key, accept the inputed value.
 		    Doc.suggest.qtySubmit();
 		} else if( Doc.suggest.isBarcode(qty.val()) ){
-		    var barcode=qty.val();
-		    qty.val(1);
-		    Doc.suggest.qtySubmit();
-		    //$($('#Doc_suggest_cmb').combobox('textbox')).val(barcode);
-		    $('#Doc_suggest_cmb').combobox('setValue',barcode);
+		    var code=qty.val();
+                    var barcode=App.barcode.toEAN13(code);
+                    $('#Doc_suggest_cmb').combobox('setValue',barcode.ean13);
+                    cmb.val(barcode.ean13);
+                    if(barcode.boxlevel>0 ){
+                        $.post("Stock/productGet",{product_barcode:barcode.ean13},function(resp){
+                            var product=App.json(resp);
+                            if(product){
+                                if(barcode.boxlevel==1){
+                                    qty.val(product.product_bpack);
+                                }
+                                if(barcode.boxlevel==2){
+                                    qty.val(product.product_bpack);
+                                }
+                                Doc.suggest.qtySubmit();
+                            }
+                        });
+                        return false;
+                    }
+                    qty.val(1);
 		    $('#Doc_suggest_cmb').combobox('reload');
+                    Doc.suggest.qtySubmit();
 		}
 	    });
 	    qty.bind('focus',function(){
@@ -665,7 +705,7 @@
             Doc.suggest.row_template = $('#suggest-template').html().replace('&gt;','>');
 	},
 	isBarcode:function( code ){
-	    return String(code).length===13 && $.isNumeric(code);
+	    return App.barcode.toEAN13(code)!==null;
 	},
 	qtySubmit:function(){
 	    var qty = $('#Doc_sugg_qty').textbox('textbox');

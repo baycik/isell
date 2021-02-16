@@ -24,7 +24,13 @@ class Stock extends Catalog {
         return $this->db->affected_rows();
     }
 
-    public function productGet( string $product_code ) {
+    public function productGet( string $product_code=null, string $product_barcode=null ) {
+        if( $product_code!=null ){
+            $where="pl.product_code='{$product_code}'";
+        }
+        if( $product_barcode!=null ){
+            $where="pl.product_barcode='{$product_barcode}'";
+        }
         $sql = "SELECT
 		    st.label parent_label,
 		    pl.*,
@@ -49,7 +55,7 @@ class Stock extends Catalog {
 			LEFT JOIN
 		    stock_tree st ON se.parent_id=branch_id
 		WHERE 
-		    pl.product_code='{$product_code}'";
+		    $where";
         $product_data = $this->get_row($sql);
         return $product_data;
     }

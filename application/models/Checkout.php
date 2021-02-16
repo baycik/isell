@@ -173,6 +173,7 @@ class Checkout extends Stock {
     }
     
     private function checkoutEntryCreate( int $checkout_id, $entry ){
+        if( $entry->product_id??false )
         $this->create('checkout_entries', ['checkout_id'=>$checkout_id, 
                                                     'product_id'=>$entry->product_id, 
                                                     'product_quantity'=>$entry->product_quantity,

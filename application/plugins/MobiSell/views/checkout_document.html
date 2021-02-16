@@ -12,10 +12,14 @@
                 var char=event.key;
                 if(char*1==char){
                     App.checkout_document.input_barcode += event.key;
-                    if (App.checkout_document.input_barcode.length == 13){
-                        App.checkout_document.entries.search_barcode(App.checkout_document.input_barcode);
+                    var barcode=App.barcode.toEAN13(App.checkout_document.input_barcode);
+                    if(barcode!=null){
+                        App.checkout_document.entries.search_barcode(barcode.ean13,barcode.boxlevel);
                         App.checkout_document.input_barcode='';
-                    }    
+                    }
+                    if (App.checkout_document.input_barcode.length == 14){
+                        App.checkout_document.input_barcode='';
+                    }
                 } else {
                     App.checkout_document.input_barcode='';
                 }  
@@ -292,24 +296,28 @@
                 App.checkout_document.log.write_to_log(operation_quantity, currentEntry);
                 App.speech.say(operation_quantity+currentEntry.product_unit);
             },
-            search_barcode:function ( code_or_barcode ){
+            search_barcode:function ( code_or_barcode, boxlevel ){
                 let found_entry_index=App.checkout_document.entries.select( code_or_barcode );
                 if ( found_entry_index>-1 ){
                     /*if( $('#checkout_document_quantity_popup').css('display')==='none' ){
                     }*/
                     if( App.checkout_document.entries.popup_mode === 'on'){
-                        App.checkout_document.entries.update(1);
-                        App.checkout_document.entries.show_popup();
+                        let operation_quantity=$('#checkout_document_quantity_popup input[name=operation_quantity]').val()||1;
+                        
+                        console.log( $('#checkout_document_quantity_popup input[name=operation_quantity]').val() );
+                        
+                        App.checkout_document.entries.update(operation_quantity);
+                        App.checkout_document.entries.show_popup(boxlevel);
                         return;
                     }
-                    App.checkout_document.entries.show_popup();
+                    App.checkout_document.entries.show_popup(boxlevel);
                 } else {
                     $('#checkout_document_quantity_popup').modal('hide');
                     App.checkout_document.entries.render();
-                    App.checkout_document.entries.load_by_barcode( code_or_barcode );
+                    App.checkout_document.entries.load_by_barcode( code_or_barcode,boxlevel );
                 }
             },
-            load_by_barcode: function (barcode) {
+            load_by_barcode: function (barcode,boxlevel) {
                 App.flash('Поиск товара по штрихкоду');
                 $.post('../Checkout/checkoutProductGet', {barcode: barcode,checkout_id:App.state.checkout_id}, function (resp) {
 		    var new_entry = App.json(resp);
@@ -322,7 +330,7 @@
                         new_entry.verification_status = '0';
                         App.checkout_document.entries.add(new_entry);
                         App.checkout_document.entries.select( new_entry.product_code );
-                        App.checkout_document.entries.show_popup();
+                        App.checkout_document.entries.show_popup(boxlevel);
                         App.checkout_document.entries.selection_mode_toggle('off');
                         App.checkout_document.input_barcode='';
                         App.flash('Товар найден и добавлен');
@@ -403,9 +411,15 @@
                 }
                 this.show_popup();
             },
-            show_popup: function () {
+            show_popup: function (boxlevel) {
                 App.checkout_document.entries.popup_mode='on';
                 var popup_product_data=App.checkout_document.entries.list[App.checkout_document.current_entry_index];
+                popup_product_data.operation_quantity='';
+                if( boxlevel==1 ){
+                    popup_product_data.operation_quantity=popup_product_data.product_bpack;
+                } else if( boxlevel==2 ){
+                    popup_product_data.operation_quantity=popup_product_data.product_bpack;
+                }
                 popup_product_data.product_quantity_left=popup_product_data.product_quantity-popup_product_data.product_quantity_verified;
                 if( popup_product_data.product_spack!==popup_product_data.product_bpack && popup_product_data.product_bpack>1){
                     popup_product_data.product_bpack_isunique=1;
@@ -1076,7 +1090,7 @@
                 <div class="ui left icon right labeled input">
                     <i class="search icon"></i>
                     <input type="number" name="operation_quantity" placeholder="Количество"
-                           value="">
+                           value="{{operation_quantity}}">
                     <div class="ui basic label" onclick="App.checkout_document.entries.popup_quantity_backspace_emulate()"><img src="../img/backspace-arrow.png"></div>
                 </div>
             </div>
