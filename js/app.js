@@ -257,6 +257,36 @@ var App = {
     },
     getHolderId:function(){
         return document.scripts[document.scripts.length - 1].parentNode.id;
+    },
+    barcode:{
+        eanCheckDigit: function(s){
+            let result = 0;
+            let i = 1;
+            for (let counter = s.length-1; counter >=0; counter--){
+                result = result + parseInt(s.charAt(counter)) * (1+(2*(i % 2)));
+                i++;
+            }
+            return (10 - (result % 10)) % 10;
+        },
+        toEAN13:function(code){
+            if( ( String(code).length===13 || String(code).length===14 ) && $.isNumeric(code) ){
+                let barcode=String(code);
+                let boxlevel=0;
+                if( barcode.length===13 ){
+                    let pcode=barcode.substring(0,12);
+                    if( barcode !== (pcode+App.barcode.eanCheckDigit(pcode)) ){
+                        return null;
+                    }
+                }
+                if( barcode.length===14 ){
+                    let pcode=barcode.substring(1,13);
+                    boxlevel=barcode.substring(0,1);
+                    barcode=pcode+App.barcode.eanCheckDigit(pcode);
+                }
+                return {ean13:barcode,boxlevel:boxlevel};
+            }
+            return null;
+        }
     }
 };
 
