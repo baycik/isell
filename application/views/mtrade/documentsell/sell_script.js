@@ -314,7 +314,7 @@ Document.body = {
         init: function () {
             $('.x-suggest').search({
                 apiSettings: {
-                    url: `${Document.doc_extension}/suggestFetch/?doc_id=${Document.doc_id}&q={query}`,
+                    url: `${Document.doc_extension}/suggestFetch/?q={query}`,
                     onResponse: function (list) {
                         for (let i in list) {
                             let item=list[i];
@@ -323,6 +323,10 @@ Document.body = {
                             item.description=suggFormatter(item);
                         }
                         return {success: true,results: list};
+                    },
+                    beforeSend:function(settings){
+                        settings.data.doc_id=Document.doc_id;
+                        return settings;
                     }
                 },
                 onSelect:function(row){

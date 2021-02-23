@@ -53,6 +53,9 @@ class DocumentBase extends Catalog {
         }
         unset($this->document_properties);
         $document_properties = $this->get_row("SELECT * FROM document_list WHERE doc_id='$doc_id'");
+        if(!$document_properties){
+            throw new Exception("Document #$doc_id not found", 404);
+        }
         $Company = $this->Hub->load_model("Company");
         $document_properties->pcomp = $Company->companyGet($document_properties->passive_company_id);
         $is_access_granted = $document_properties->pcomp ? 1 : 0;
@@ -151,10 +154,18 @@ class DocumentBase extends Catalog {
 
     public function documentUpdate(int $doc_id, object $document) {
         $this->documentSelect($doc_id);
-        $this->headUpdate($doc_id, $document->head ?? null );
-        $this->entryListUpdate($doc_id, $document->entries ?? null );
-        $this->viewListUpdate($doc_id, $document->views ?? null );
-        $this->transListUpdate($doc_id, $document->trans ?? null );
+        if($document->head ?? null){
+            $this->headUpdate($doc_id, $document->head );
+        }
+        if($document->entries ?? null){
+            $this->entryListUpdate($doc_id, $document->entries);
+        }
+        if($document->views ?? null){
+            $this->viewListUpdate($doc_id, $document->views );
+        }
+        if($document->trans ?? null){
+            $this->transListUpdate($doc_id, $document->trans );
+        }
     }
 
     public function documentDelete(int $doc_id) {
@@ -251,6 +262,9 @@ class DocumentBase extends Catalog {
     }
 
     public function headFieldUpdate(int $doc_id, string $field, string $value = null) {
+        if($field=='doc_type'){
+            return false;
+        }
         $fieldCamelCase = str_replace(' ', '', ucwords(str_replace('_', ' ', $field)));
         $this->db_transaction_start();
         $this->documentSelect($doc_id);

@@ -90,18 +90,7 @@ class Hub extends CI_Controller{
 	    $method_args=$this->parseMethodArguments($method_args_config, $route_args);
 	    $this->previous_return=call_user_func_array([$Model, $method],$method_args);
 	} catch(Exception $e){
-            
-            
-            //TERMINATE TRANSACTION!!!!
-            
-            
-            
-            
-            
-            
-            
-            
-            
+            $this->db->query("ROLLBACK");
             http_response_code($e->getCode());
 	    die($e->getMessage());
 	}

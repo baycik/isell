@@ -131,6 +131,11 @@ class DocumentSell extends DocumentBase{
      * @param int $doc_id
      * @return bool
      */
+    
+    protected function entryListClearCache(){
+        $this->entryListCreated=false;
+        $this->query("DROP TEMPORARY TABLE tmp_entry_list");
+    }
     protected $entryListCreated=false;
     protected function entryListCreate( int $doc_id, int $doc_entry_id=0 ){
         if( $this->entryListCreated ){
@@ -254,6 +259,19 @@ class DocumentSell extends DocumentBase{
         $this->documentSelect($doc_id);
         $pcomp_id=$this->doc('passive_company_id');
         $usd_ratio=$this->doc('doc_ratio');
+        
+        
+        
+        /**
+         * WHAT ABOUT BREAKEVEN PRICE???
+         */
+        
+        
+        
+        
+        
+        
+        
         $new_entry_data->entry_price=$this->get_value("SELECT GET_SELL_PRICE('{$new_entry_data->product_code}',{$pcomp_id},{$usd_ratio})")??0;
         return parent::entryCreate($doc_id, $new_entry_data);
     }

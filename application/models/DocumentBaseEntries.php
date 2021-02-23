@@ -4,6 +4,9 @@ trait DocumentBaseEntries{
     
     public function entryGet(int $doc_entry_id) {
         $entry_light = $this->get_row("SELECT * FROM document_entries JOIN prod_list USING(product_code) WHERE doc_entry_id=$doc_entry_id");
+        if( !$entry_light ){
+            throw new Exception("Document entry #$doc_entry_id not found"."SELECT * FROM document_entries JOIN prod_list USING(product_code) WHERE doc_entry_id=$doc_entry_id",404);
+        }
         $this->documentSelect($entry_light->doc_id);
         return $entry_light;
     }
@@ -119,6 +122,10 @@ trait DocumentBaseEntries{
         return $this->get_list("SELECT * FROM tmp_entry_list ORDER BY product_code");
     }
 
+    protected function entryListClearCache(){
+        return null;
+    }
+    
     protected function entryListCreate(int $doc_id, int $doc_entry_id = 0) {
         return null;
     }
@@ -135,11 +142,80 @@ trait DocumentBaseEntries{
         }
         return $ok;
     }
+    
+    public function entryListRecalculate( int $doc_id, float $ratio, string $mode="refresh"){
+        $this->documentSelect($doc_id);
+        $this->entryListBreakevenPriceUpdate(null,$doc_id);
+        $pcomp_id=$this->doc('passive_company_id');
+        $usd_ratio=$this->doc('doc_ratio');
+        $entry_recalc_sql="
+            UPDATE
+                document_entries de
+            SET
+                invoice_price=GET_SELL_PRICE(de.product_code,'{$pcomp_id}','{$usd_ratio}')
+            WHERE
+                
+            ";
+        
+        
+        
+        
+        
+        
+        
+        $doc_type=$this->doc('doc_type');
+        
+        
+        $new_entry_data->entry_price=$this->get_value("SELECT GET_SELL_PRICE('{$new_entry_data->product_code}',{$pcomp_id},{$usd_ratio})")??0;
+
+        
+        
+        
+    }
+    
+    private function entryListBreakevenPriceUpdate( int $doc_entry_id=null, int $doc_id=null ){
+        if( !$doc_entry_id && !$doc_id ){
+            return false;
+        }
+        $pcomp_id=$this->doc('passive_company_id');
+        $usd_ratio=$this->doc('doc_ratio');
+        $doc_type=$this->doc('doc_type');
+        
+        $skip_breakeven_check=$this->Hub->pcomp('skip_breakeven_check');
+        if( abs($doc_type)!=1 ){
+            $skip_breakeven_check=true;
+        }
+        if( $doc_entry_id ){
+            $where="doc_entry_id=$doc_entry_id";
+        } else {
+            $where="doc_id=$doc_id";
+        }
+        if( $skip_breakeven_check ){
+            $sql="UPDATE 
+                    document_entries 
+                SET 
+                    breakeven_price = 0
+                WHERE 
+                    $where";
+        } else {
+            $sql="UPDATE 
+                    document_entries 
+                SET 
+                    breakeven_price = ROUND(GET_BREAKEVEN_PRICE(product_code,'$pcomp_id','$usd_ratio',self_price),2)
+                WHERE 
+                    $where";
+        }
+        $this->query($sql);
+        return true;
+    }
 
     public function entryImport(int $doc_id, string $label) {
         $this->documentSelect($doc_id);
         $doc_was_commited = $this->doc('is_commited');
-        $this->documentUpdate($doc_id, 'is_commited', false);
+        $this->db_transaction_start();
+        if ($doc_was_commited) {
+            $this->documentUpdate($doc_id, (object) ['head'=>(object) ['is_commited'=>false]]);
+        }
 
         $this->entryImportTruncate();
         $source = array_map('addslashes', $this->request('source', 'raw'));
@@ -149,9 +225,10 @@ trait DocumentBaseEntries{
         $this->entryImportFromTable('document_entries', $source, $target, '/product_code/product_quantity/invoice_price/party_label/doc_id/', $label);
         $this->query("DELETE FROM imported_data WHERE {$source[0]} IN (SELECT product_code FROM document_entries WHERE doc_id={$doc_id})");
         $imported_count = $this->db->affected_rows();
-        if ($doc_was_commited) {
-            $this->documentUpdate($doc_id, 'is_commited', true);
+         if ($doc_was_commited) {
+            $this->documentUpdate($doc_id, (object) ['head'=>(object) ['is_commited'=>true]]);
         }
+        $this->db_transaction_commit();
         return $imported_count;
     }
 
@@ -159,6 +236,7 @@ trait DocumentBaseEntries{
         if ($this->doc('is_commited')) {
             return false;
         }
+        $this->entryListClearCache();
         $doc_id = $this->doc('doc_id');
         return $this->delete('document_entries', ['doc_id' => $doc_id]);
     }
@@ -190,4 +268,9 @@ trait DocumentBaseEntries{
         $this->query("INSERT INTO $table ($target_list) SELECT $source_list FROM imported_data WHERE label='$label' AND $product_code_source IN (SELECT product_code FROM stock_entries) ON DUPLICATE KEY UPDATE product_quantity=product_quantity+$quantity_source_field");
         return $this->db->affected_rows();
     }
+    
+    
+    
+    
+    
 }
