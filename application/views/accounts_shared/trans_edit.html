@@ -5,7 +5,7 @@
 	init: function () {
 	    this.node.window({
 		title: 'Редактирование проводки',
-		width: 450,
+		width: 470,
 		height: 'auto',
 		onClose: function(){
 		    App.page_accounts_shared_trans_edit.handler.notify('close',App.page_accounts_shared_trans_edit.data);
@@ -16,11 +16,12 @@
 	    });
 	    this.data.transIsNew=!this.data.trans_id;
 	    if( this.data.transIsNew ){
+                Tedit.data.trans_date=App.toIso(Tedit.data.trans_date);
 		Tedit.initWidgets();
 	    } else {
 		App.post("AccountsCore/transFullGet/",{trans_id:Tedit.data.trans_id},function(xhr){
 		    Tedit.data = App.json(xhr);
-		    Tedit.data.trans_date=App.toDmy(Tedit.data.cstamp.substr(0,10));
+		    Tedit.data.trans_date=Tedit.data.cstamp.substr(0,10);
 		    Tedit.initWidgets();
 		});
 	    }
@@ -75,8 +76,8 @@
 	},
 	initRefHighlight:function(){
 	    if( Tedit.data.trans_ref*1 || Tedit.data.check_id*1 ){
-		$("#Tedit_amount,#Tedit_ratio,#Tedit_amount_alt").textbox('readonly',true);
-		$("#Tedit_amount").textbox('textbox').css('backgroundColor','#ddd');
+		$("#Tedit_amount,#Tedit_ratio,#Tedit_amount_alt").attr('readonly',true);
+		$("#Tedit_amount").css('backgroundColor','#ddd');
 	    }
 	},
 	altCurrencyToggle:function(){
@@ -212,16 +213,8 @@
 		}
 	    });
 	},
-	parser:function( node, text ){
-            try{
-                var result=eval(text.toString().replace(',','.').match( /[\(\d\.\)\*\/\+-]*/ ).toString())*1 || 0;
-            } catch(e){
-                var result=0;
-            }
-	    if( $(node).textbox('options').precision ){
-		result=Tedit.round(result,$(node).textbox('options').precision);
-	    };
-	    $(node).textbox('setValue',result);
+	parser:function( node,presi ){
+	    $(node).val(App.calc($(node).val()).toFixed(presi));
 	},
 	round:function(num,precision){
 	    return num.toFixed(precision) || '';
@@ -231,30 +224,30 @@
 		return;
 	    }
 	    this.suppressUpdate=true;
-	    var amount=$("#Tedit_amount").textbox('getValue');
-	    var ratio=$("#Tedit_ratio").textbox('getValue');
-	    var amount_alt=$("#Tedit_amount_alt").textbox('getValue');
+	    var amount=$("#Tedit_amount").val();
+	    var ratio=$("#Tedit_ratio").val();
+	    var amount_alt=$("#Tedit_amount_alt").val();
 	    switch(field){
 		case 'ratio':
 		    if( amount*1 ){
-			$("#Tedit_amount_alt").textbox('setValue',this.round(amount/ratio,2));
+			$("#Tedit_amount_alt").val(this.round(amount/ratio,2));
 		    } else {
-			$("#Tedit_amount").textbox('setValue',this.round(amount_alt*ratio,2));
+			$("#Tedit_amount").val(this.round(amount_alt*ratio,2));
 		    }
 		    break;
 		case 'amount_alt':
 		    if( ratio*1 ){
-			$("#Tedit_amount").textbox('setValue',this.round(amount_alt*ratio,2));
+			$("#Tedit_amount").val(this.round(amount_alt*ratio,2));
 		    } else {
-			$("#Tedit_ratio").textbox('setValue',this.round(amount/amount_alt,5));
+			$("#Tedit_ratio").val(this.round(amount/amount_alt,5));
 		    }
 		    break;
 		case 'amount':
 		default:
 		    if( ratio*1 ){
-			$("#Tedit_amount_alt").textbox('setValue',this.round(amount/ratio,2));
+			$("#Tedit_amount_alt").val(this.round(amount/ratio,2));
 		    } else {
-			$("#Tedit_ratio").textbox('setValue',this.round(amount/amount_alt,5));
+			$("#Tedit_ratio").val(this.round(amount/amount_alt,5));
 		    }
 	    }
 	    this.suppressUpdate=false;
@@ -265,23 +258,16 @@
     <input type="hidden" name="trans_id">
     <input type="hidden" name="trans_ref">
     <input type="hidden" name="check_id">
-    <div style="display: inline-block;width: 205px;float:left;">
-	<input style="width:110px" class="easyui-datebox" name="trans_date" title="Дата" data-options="required:true">
-	<input style="width:110px" class="easyui-textbox" name="amount" id="Tedit_amount" title="Сумма" data-options="
-	       onChange:function(text){Tedit.parser(this,text);Tedit.calc('amount');},
-	       required:true,
-	       precision:2">
+    <div style="display: inline-block;width: 215px;float:left;">
+        <input style="width:105px;height: 30px" type="date" name="trans_date" title="Дата" required="required">
+        <input style="width:105px;height: 30px" type="number" step="0.01" required="required" name="amount" id="Tedit_amount" title="Сумма" onchange="Tedit.parser(this,2);Tedit.calc('amount');">
     </div>
-    <div id="Tedit_alt_currency" style="display: none;width: 200px;float:left;">
-	<input style="width:95px" class="easyui-textbox" name="ratio" id="Tedit_ratio" title="Курс" data-options="
-	       onChange:function(text){Tedit.parser(this,text);Tedit.calc('ratio');},
-	       precision:5">
-	<input style="width:95px" class="easyui-textbox" name="amount_alt" id="Tedit_amount_alt" title="Сумма вал" data-options="
-	       onChange:function(text){Tedit.parser(this,text);Tedit.calc('amount_alt');},
-	       precision:2">
+    <div id="Tedit_alt_currency" style="display: none;width: 215px;float:left;">
+	<input style="width:105px;height: 30px" type="number" step="0.00001" name="ratio" id="Tedit_ratio" title="Курс" onchange="Tedit.parser(this,5);Tedit.calc('ratio');" >
+	<input style="width:105px;height: 30px" type="number" step="0.01" name="amount_alt" id="Tedit_amount_alt" title="Сумма вал" onchange="Tedit.parser(this,2);Tedit.calc('amount_alt');">
     </div>
     <div style="float:left;" onclick="$('#Tedit_alt_currency').toggle();" title="Эквивалент суммы в валюте"><button type="button">$</button></div>
-    <input style="width:300px" class="easyui-combobox" name="passive_company_id" id="tedit_comp_cmb" title="Контрагент" data-options="
+    <input style="width:320px" class="easyui-combobox" name="passive_company_id" id="tedit_comp_cmb" title="Контрагент" data-options="
 	   valueField: 'company_id',
 	   textField: 'label',
 	   loader:Tedit.pcompLoader,
@@ -296,7 +282,7 @@
 		    }
 		}]
 	   ">
-    <input style="width:300px" class="easyui-combobox" name="trans_type" id="tedit_trans_type_cmb" title="Проводка" data-options="
+    <input style="width:320px" class="easyui-combobox" name="trans_type" id="tedit_trans_type_cmb" title="Проводка" data-options="
 	   valueField: 'trans_type',
 	   textField: 'trans_name',
 	   url:'AccountsCore/transNameListFetch',
@@ -314,7 +300,7 @@
 		}]
 	   ">
     <div>
-	<input style="width:97px" class="easyui-textbox" title="Дебет" name="debit" id="tedit_debit" data-options="
+	<input style="width:105px" class="easyui-textbox" title="Дебет" name="debit" id="tedit_debit" data-options="
 	       onChange: Tedit.transnameSet,
 	       icons: [{
 		    iconCls:'icon-settings16',
@@ -323,7 +309,7 @@
 		    }
 		}]
 	       ">
-	<input style="width:97px" class="easyui-textbox" title="Кредит" name="credit" id="tedit_credit" data-options="
+	<input style="width:105px" class="easyui-textbox" title="Кредит" name="credit" id="tedit_credit" data-options="
 	       onChange: Tedit.transnameSet,
 	       icons: [{
 		    iconCls:'icon-settings16',
@@ -333,13 +319,13 @@
 		}]
 	       ">
     </div>
-    <input style="width:300px" class="easyui-textbox" name="description" id="tedit_description_txt" title="Комментарий" data-options="
+    <input style="width:320px" class="easyui-textbox" name="description" id="tedit_description_txt" title="Комментарий" data-options="
 	   multiline:true,
 	   height:66,
 	   required:true
 	   ">
     <div id="tedit_article_holder" style="display: block">
-    <input style="width:300px" class="easyui-combobox" name="trans_article" title="Статья" data-options="
+    <input style="width:320px" class="easyui-combobox" name="trans_article" title="Статья" data-options="
 	   valueField: 'article_name',
 	   textField: 'article_name',
 	   url:'AccountsData/articleListFetch',
