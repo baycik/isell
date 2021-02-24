@@ -92,7 +92,6 @@
 		return;
 	    }
 	    Tedit.waitingForResponse=true;
-	    Tedit.data.trans_date=App.toIso(Tedit.data.trans_date);
 	    App.post("AccountsCore/transCreateUpdate/",Tedit.data,function(trans_id){
 		Tedit.waitingForResponse=false;
 		if( trans_id*1 ){
@@ -213,10 +212,14 @@
 		}
 	    });
 	},
-	parser:function( node,presi ){
-	    $(node).val(App.calc($(node).val()).toFixed(presi));
-	},
+//	parser:function( node,presi ){
+//	    $(node).val(App.calc($(node).val()).toFixed(presi));
+//            console.log( $(node).val(), App.calc($(node).val()) );
+//	},
 	round:function(num,precision){
+            if( isNaN(num) || !num || num===Infinity ){
+                return '';
+            }
 	    return num.toFixed(precision) || '';
 	},
 	calc:function( field ){
@@ -224,32 +227,35 @@
 		return;
 	    }
 	    this.suppressUpdate=true;
-	    var amount=$("#Tedit_amount").val();
-	    var ratio=$("#Tedit_ratio").val();
-	    var amount_alt=$("#Tedit_amount_alt").val();
+	    var amount= App.calc($("#Tedit_amount").val());
+	    var ratio=  App.calc($("#Tedit_ratio").val());
+	    var amount_alt=App.calc($("#Tedit_amount_alt").val());
 	    switch(field){
 		case 'ratio':
 		    if( amount*1 ){
-			$("#Tedit_amount_alt").val(this.round(amount/ratio,2));
+			amount_alt=amount/ratio;
 		    } else {
-			$("#Tedit_amount").val(this.round(amount_alt*ratio,2));
+			amount=amount_alt*ratio;
 		    }
 		    break;
 		case 'amount_alt':
 		    if( ratio*1 ){
-			$("#Tedit_amount").val(this.round(amount_alt*ratio,2));
+			amount=amount_alt*ratio;
 		    } else {
-			$("#Tedit_ratio").val(this.round(amount/amount_alt,5));
+			ratio=amount/amount_alt;
 		    }
 		    break;
 		case 'amount':
 		default:
 		    if( ratio*1 ){
-			$("#Tedit_amount_alt").val(this.round(amount/ratio,2));
+			amount_alt=amount/ratio;
 		    } else {
-			$("#Tedit_ratio").val(this.round(amount/amount_alt,5));
+			ratio=amount/amount_alt;
 		    }
 	    }
+            $("#Tedit_amount").val( this.round(amount,2) );
+            $("#Tedit_ratio").val( this.round(ratio,5) );
+            $("#Tedit_amount_alt").val( this.round(amount_alt,2) );
 	    this.suppressUpdate=false;
 	}
     };
@@ -260,11 +266,11 @@
     <input type="hidden" name="check_id">
     <div style="display: inline-block;width: 215px;float:left;">
         <input style="width:105px;height: 30px" type="date" name="trans_date" title="Дата" required="required">
-        <input style="width:105px;height: 30px" type="number" step="0.01" required="required" name="amount" id="Tedit_amount" title="Сумма" onchange="Tedit.parser(this,2);Tedit.calc('amount');">
+        <input style="width:105px;height: 30px" type="text" required="required" name="amount" id="Tedit_amount" title="Сумма" onchange="Tedit.calc('amount');">
     </div>
     <div id="Tedit_alt_currency" style="display: none;width: 215px;float:left;">
-	<input style="width:105px;height: 30px" type="number" step="0.00001" name="ratio" id="Tedit_ratio" title="Курс" onchange="Tedit.parser(this,5);Tedit.calc('ratio');" >
-	<input style="width:105px;height: 30px" type="number" step="0.01" name="amount_alt" id="Tedit_amount_alt" title="Сумма вал" onchange="Tedit.parser(this,2);Tedit.calc('amount_alt');">
+	<input style="width:105px;height: 30px" type="text" name="ratio" id="Tedit_ratio" title="Курс" onchange="Tedit.calc('ratio');" >
+	<input style="width:105px;height: 30px" type="text" name="amount_alt" id="Tedit_amount_alt" title="Сумма вал" onchange="Tedit.calc('amount_alt');">
     </div>
     <div style="float:left;" onclick="$('#Tedit_alt_currency').toggle();" title="Эквивалент суммы в валюте"><button type="button">$</button></div>
     <input style="width:320px" class="easyui-combobox" name="passive_company_id" id="tedit_comp_cmb" title="Контрагент" data-options="

@@ -337,7 +337,11 @@ App.today = function () {
     return App.toDmy(new Date());
 };
 App.calc=function( expression ){
-    return eval(expression.toString().replace(/,/g,'.').match( /[\(\d\.\)\*\/\+-]*/ ).toString()) || 0;
+    try{
+        return eval(expression.toString().replace(/,/g,'.').match( /[\(\d\.\)\*\/\+-]*/ ).toString()) || 0;
+    } catch(e){
+        return 0;
+    }
 };
 App.formatNum = function (num, mode) {
     if ( !num && num !== 0 || mode === 'clear' && num * 1 === 0) {

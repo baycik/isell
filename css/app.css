@@ -50,6 +50,12 @@ a:hover{
     padding-top: 3px;
     font-weight: normal;
 }
+input{
+    min-height: 30px;
+}
+select{
+    height: 30px;
+}
 input,select,textarea{
     color: #056;
     border: 1px solid #95b8e7;
@@ -59,6 +65,11 @@ input,select,textarea{
     vertical-align:top;
     font-size: 12px;
 }
+input,textarea,.textbox,select{
+    border-radius: 2px;
+    font-size: 1em !important;
+}
+
 input[type=checkbox]{
     width: 20px;
 }
@@ -297,10 +308,6 @@ div .combobox-item-hover{
 .tree-title,
 .panel-body,body{
   font-size: 13px !important;
-}
-input,textarea,.textbox,select{
-    border-radius: 2px;
-    font-size: 1em !important;
 }
 
 
