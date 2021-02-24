@@ -480,7 +480,7 @@ Document.body = {
             });
         },
         recalculate: function () {
-            App.loadWindow('page/trade/document_recalculate').progress(function (state, data) {
+            App.loadWindow('page/mtrade/document_recalculate').progress(function (state, data) {
                 if (state === 'submit') {
                     App.post(Document.doc_extension + "/entryRecalc/" + Document.doc_id + '/' + (data.recalc_proc * 1 || 0), function (xhr) {
                         Document.reload(["body", "foot"]);

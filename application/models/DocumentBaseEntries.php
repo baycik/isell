@@ -145,68 +145,19 @@ trait DocumentBaseEntries{
     
     public function entryListRecalculate( int $doc_id, float $ratio, string $mode="refresh"){
         $this->documentSelect($doc_id);
-        $this->entryListBreakevenPriceUpdate(null,$doc_id);
         $pcomp_id=$this->doc('passive_company_id');
+        $pcomp=$this->Hub->load_model('Company')->getCompany($pcomp_id);
         $usd_ratio=$this->doc('doc_ratio');
+        $skip_breakeven_check=$pcomp->skip_breakeven_check;
         $entry_recalc_sql="
             UPDATE
                 document_entries de
             SET
-                invoice_price=GET_SELL_PRICE(de.product_code,'{$pcomp_id}','{$usd_ratio}')
+                invoice_price=      IF( '$mode'='refresh',ROUND(GET_SELL_PRICE(de.product_code,'{$pcomp_id}','{$usd_ratio}'),2),invoice_price)*$ratio,
+                breakeven_price =   IF( '$skip_breakeven_check',0,ROUND(GET_BREAKEVEN_PRICE(product_code,'{$pcomp_id}','{$usd_ratio}',self_price),2))
             WHERE
-                
-            ";
-        
-        
-        
-        
-        
-        
-        
-        $doc_type=$this->doc('doc_type');
-        
-        
-        $new_entry_data->entry_price=$this->get_value("SELECT GET_SELL_PRICE('{$new_entry_data->product_code}',{$pcomp_id},{$usd_ratio})")??0;
-
-        
-        
-        
-    }
-    
-    private function entryListBreakevenPriceUpdate( int $doc_entry_id=null, int $doc_id=null ){
-        if( !$doc_entry_id && !$doc_id ){
-            return false;
-        }
-        $pcomp_id=$this->doc('passive_company_id');
-        $usd_ratio=$this->doc('doc_ratio');
-        $doc_type=$this->doc('doc_type');
-        
-        $skip_breakeven_check=$this->Hub->pcomp('skip_breakeven_check');
-        if( abs($doc_type)!=1 ){
-            $skip_breakeven_check=true;
-        }
-        if( $doc_entry_id ){
-            $where="doc_entry_id=$doc_entry_id";
-        } else {
-            $where="doc_id=$doc_id";
-        }
-        if( $skip_breakeven_check ){
-            $sql="UPDATE 
-                    document_entries 
-                SET 
-                    breakeven_price = 0
-                WHERE 
-                    $where";
-        } else {
-            $sql="UPDATE 
-                    document_entries 
-                SET 
-                    breakeven_price = ROUND(GET_BREAKEVEN_PRICE(product_code,'$pcomp_id','$usd_ratio',self_price),2)
-                WHERE 
-                    $where";
-        }
-        $this->query($sql);
-        return true;
+                doc_id=$doc_id";
+        return $this->query($entry_recalc_sql);
     }
 
     public function entryImport(int $doc_id, string $label) {

@@ -1,0 +1,73 @@
+<script type="text/javascript">
+    /* global App */
+    App.page_mtrade_document_recalculate = {
+        init: function () {
+            
+            
+            /*
+            this.node.window({
+                title: 'Перерасчет документа',
+                width: 400,
+                height: 'auto',
+                shadow: false,
+                onClose: function () {
+                    App.page_mtrade_document_recalculate.handler.notify('close');
+                    delete App.page_mtrade_document_recalculate;
+                }
+            });
+            this.node.window('center');
+            this.node.window('hcenter');
+            this.node.window('window').css('position', 'fixed');
+            this.node.window('window').css('top', '40px');
+*/
+
+
+            
+            
+
+
+            this.data = {
+                discount_type: '-1',
+                mode: 'refresh',
+                discount: '0',
+                distribute: 'bysum',
+                sumadd: '0'
+            };
+            App.setupForm("#document_recalc_frm", this.data);
+            $("#document_recalc_frm input[name=discount]").select();
+            $("#document_recalc_frm").submit(function (event) {
+                event.preventDefault();
+                App.page_mtrade_document_recalculate.handler.notify('submit', App.collectForm("#document_recalc_frm"));
+            });
+        }
+    };
+</script>
+<div style="padding: 15px">
+    <form id="document_recalc_frm">
+        <fieldset>
+            <legend>Источник цен</legend>
+            <select name="mode" title="Брать цены">
+                <option value="refresh">Из справочника</option>
+                <option value="use_current">Из накладной</option>
+            </select>
+        </fieldset>
+        <fieldset>
+            <legend>Изменить цены на процент</legend>
+            <select name="discount_type" data-skip="1" style="width: 95px">
+                <option value="-1">Скидка %</option>
+                <option value="1">Наценка %</option>
+            </select>
+            <input name="discount" data-skip="1" type="number" step="0.01"/>
+        </fieldset>
+
+        <fieldset>
+            <legend>Распределить по накладной</legend>
+            <input name="sumadd" title="Сумма"/>
+        </fieldset>
+
+        <div style="text-align: center">
+            <button type="submit"><img src="img/recalc.png" style="vertical-align: middle"> Пересчитать</button>
+            <button type="button" onclick="App.page_mtrade_document_recalculate.node.window('close')"><img src="img/close24.png" style="vertical-align: middle"> Закрыть</button>
+        </div>
+    </form>
+</div>
