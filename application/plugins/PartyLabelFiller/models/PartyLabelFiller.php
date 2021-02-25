@@ -44,10 +44,10 @@ class PartyLabelFiller extends Catalog{
         $fill_sql="
             UPDATE
                 document_entries de
-                    JOIN
+                    LEFT JOIN
                 tmp_party_list tpl USING(doc_entry_id)
             SET
-                de.party_label=tpl.party
+                de.party_label=SUBSTRING(TRIM('   ' FROM TRIM(   COALESCE(de.party_label,tpl.party)   )),1,23)
             WHERE
                 doc_id = $doc_id;";
         $this->query($find_sql);
