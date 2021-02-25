@@ -52,7 +52,7 @@ if( $this->out_ext=='.doc' ){
     if( count($this->view->rows)>1 ){
         $last_row=array_pop($this->view->rows);
     }
-    $this->view->tables = array_merge($this->view->tables, array_chunk($this->view->rows, 19));
+    $this->view->tables = array_merge($this->view->tables, array_chunk($this->view->rows, 17));
     
     if($last_row){
         $this->view->tables = array_merge($this->view->tables, [[$last_row]]);
