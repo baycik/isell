@@ -194,7 +194,7 @@ class FileEngine{
                     $html = $this->rain->draw($this->tpl_file, true);
                 }
                 $word_header = true;
-                include 'FileEngineWrapper.php';
+                include APPPATH.'views/rpt/FileEngineWrapper.php';
             } else if ($out_extension == '.xml') {
                 $this->header('Content-type: text/xml; charset=windows-1251;');
                 $xml = $this->rain->draw($this->tpl_file, true);

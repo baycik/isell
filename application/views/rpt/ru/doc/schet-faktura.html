@@ -1,0 +1,472 @@
+<style>
+    <!--
+    /* Style Definitions */
+    p{
+        margin:0in;
+        margin-bottom:.0001pt;
+        text-autospace:none;
+        font-size:10.0pt;
+        font-family:"Arial","serif";
+    }
+    .page{
+        height:20cm;
+        min-height:20cm;
+        width:29.7cm;
+        background: none;
+        background-color:#FFFFFF;
+        page-break-after:always;
+        page-break-inside:avoid;
+    }
+    @page {
+        size: A4 landscape;
+    }
+    -->
+</style>
+
+
+
+<div class="page">
+    <table cellspacing="0" border="0">
+        <colgroup width="126"></colgroup>
+        <colgroup span="3" width="45"></colgroup>
+        <colgroup width="22"></colgroup>
+        <colgroup width="28"></colgroup>
+        <colgroup width="29"></colgroup>
+        <colgroup width="16"></colgroup>
+        <colgroup width="27"></colgroup>
+        <colgroup width="18"></colgroup>
+        <colgroup width="10"></colgroup>
+        <colgroup width="20"></colgroup>
+        <colgroup width="25"></colgroup>
+        <colgroup span="2" width="45"></colgroup>
+        <colgroup width="28"></colgroup>
+        <colgroup width="33"></colgroup>
+        <colgroup span="2" width="10"></colgroup>
+        <colgroup width="45"></colgroup>
+        <colgroup width="23"></colgroup>
+        <colgroup width="13"></colgroup>
+        <colgroup span="2" width="45"></colgroup>
+        <colgroup width="29"></colgroup>
+        <colgroup width="10"></colgroup>
+        <colgroup width="14"></colgroup>
+        <colgroup width="40"></colgroup>
+        <colgroup width="45"></colgroup>
+        <colgroup width="16"></colgroup>
+        <colgroup width="32"></colgroup>
+        <colgroup width="11"></colgroup>
+        <colgroup width="38"></colgroup>
+        <colgroup width="45"></colgroup>
+        <colgroup width="32"></colgroup>
+        <colgroup width="10"></colgroup>
+        <colgroup width="164"></colgroup>
+        <tr>
+            <td height="21" valign=top></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td colspan=10 rowspan=2 valign=top>Приложение №1<br>к постановлению Правительства Российской<br>Федерации от 26.12.2011 №1137<br>(в ред. Постановления Правительства РФ от 19.08.2017 № 981)</td>
+        </tr>
+        <tr>
+            <td height="21" valign=top></td>
+            <td colspan=6 rowspan=2 align="right" valign=bottom><font size=3>СЧЕТ-ФАКТУРА №</td>
+            <td style="border-bottom: 1px solid #000000" colspan=4 rowspan=2 align="center" valign=bottom><font size=3>{$v->doc_view->view_num}</td>
+            <td rowspan=2 align="center" valign=bottom><font size=3>от</td>
+            <td style="border-bottom: 1px solid #000000" colspan=10 rowspan=2 align="center" valign=bottom><font size=3>{$v->doc_view->date_spell}</td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td height="21" valign=top></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td valign=top></td>
+            <td colspan=6 align="right"><font size=3>ИСПРАВЛЕНИЕ №</font></td>
+            <td style="border-bottom: 1px solid #000000" colspan=4 align="center"><font size=3>&mdash;</font></td>
+            <td align="center" valign=bottom><font size=3>от</font></td>
+            <td style="border-bottom: 1px solid #000000" colspan=10 align="center"><font size=3>&mdash;</font></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td colspan=37>&nbsp;</td>
+        </tr>
+        <tr>
+            <td colspan=6 valign=bottom>Продавец</td>
+            <td style="border-bottom: 1px solid #000000" colspan=28 valign=bottom>{$v->seller->company_name}</td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td colspan=6 valign=bottom>Адрес</td>
+            <td style="border-bottom: 1px solid #000000" colspan=28 valign=bottom>{$v->seller->company_jaddress}</td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td colspan=6 valign=bottom>ИНН/КПП продавца</td>
+            <td style="border-bottom: 1px solid #000000" colspan=28 valign=bottom>{$v->seller->company_tax_id} / {$v->seller->company_tax_id}</td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td colspan=6 valign=bottom>Грузоотправитель и его адрес</td>
+            <td style="border-bottom: 1px solid #000000" colspan=28 valign=bottom>{$v->supplier->all}</td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td colspan=6 valign=bottom>Грузополучатель и его адрес</td>
+            <td style="border-bottom: 1px solid #000000" colspan=28 valign=bottom>{$v->reciever->all}</td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td colspan=8 height="29" valign=bottom>К платежно-расчетному документу </td>
+            <td style="border-bottom: 1px solid #000000" colspan=26 valign=bottom>№ &mdash; от &mdash;</td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td colspan=6 valign=bottom>Покупатель</td>
+            <td style="border-bottom: 1px solid #000000" colspan=28 valign=bottom>{$v->buyer->company_name}</td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td colspan=6 valign=bottom>Адрес</td>
+            <td style="border-bottom: 1px solid #000000" colspan=28 valign=bottom>{$v->buyer->company_jaddress}</td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td colspan=6 valign=bottom>ИНН/КПП покупателя</td>
+            <td style="border-bottom: 1px solid #000000" colspan=28 valign=bottom>{$v->reciever->company_tax_id} / {$v->reciever->company_tax_id2}</td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td colspan=6 height="26" valign=bottom>Валюта: наименование, код</td>
+            <td style="border-bottom: 1px solid #000000" colspan=28 valign=bottom>Российский рубль, 643</td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td colspan=20 height="45" valign=bottom>Идентификатор государственного контракта, договора (соглашения) (при наличии)</td>
+            <td style="border-bottom: 1px solid #000000" colspan=17 valign=bottom></td>
+        </tr>
+        <tr>
+            <td colspan=37 height="14" valign=bottom></td>
+        </tr>
+    </table>
+    {loop name="v->tables"}
+    {if="$counter>0"}
+    <table style="min-width:100%">
+        <tr>
+            <td>Счет фактура № {$v->doc_view->view_num} от {$v->doc_view->date_dot}</td>
+            <td style="text-align: right">стр.{$counter+1}</td>
+        </tr>
+    </table>
+
+    {/if}
+    <table style="border-collapse: collapse;width:100%">
+        <!--HEADER-->
+        
+        {if="$counter==0"}
+        <thead>
+            <tr>
+                <td style="border: 1px solid #000000; border-bottom: 1px solid #000000; border-right: 1px solid #000000" colspan=4 rowspan=3 height="98" align="center">Наименование товара (описание выполненных работ, оказанных услуг), имущественного права<br> </td>
+                <td style="border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-right: 1px solid #000000" colspan=3 rowspan=3 align="center">Код<br> вида <br>това-<br>ра</td>
+                <td style="border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-right: 1px solid #000000" colspan=6 align="center">Единица измерения</td>
+                <td style="border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-right: 1px solid #000000" rowspan=3 align="center">Коли-<br>чество<br>(объем)</td>
+                <td style="border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-right: 1px solid #000000" colspan=5 rowspan=3 align="center"><br>Цена (тариф)<br>за единицу измерения</td>
+                <td style="border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-right: 1px solid #000000" colspan=2 rowspan=3 align="center">Стоимость товаров <br>(работ, услуг), имуществен-ных прав без налога - всего</td>
+                <td style="border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-right: 1px solid #000000" colspan=2 rowspan=3 align="center">В том<br>числе<br>сумма<br>акциза</td>
+                <td style="border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-right: 1px solid #000000" rowspan=3 align="center">Налого-вая став-ка</td>
+                <td style="border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-right: 1px solid #000000" colspan=4 rowspan=3 align="center">Сумма<br>налога<br>предъявляемая<br>покупателю</td>
+                <td style="border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-right: 1px solid #000000" colspan=3 rowspan=3 align="center">Стоимость товаров<br>(работ, услуг),<br>имуществен-<br>ных прав с налогом - всего</td>
+                <td style="border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-right: 1px solid #000000" colspan=5 rowspan=2 align="center">Страна <br>происхождения товара</td>
+                <td style="border-top: 1px solid #000000; border-bottom: 1px solid #000000; border-right: 1px solid #000000" rowspan=3 align="center">Регистра-ционный номер<br>таможен-ной<br>декларации</td>
+            </tr>
+            <tr>
+                <td style="border-bottom: 1px solid #000000; border-right: 1px solid #000000" colspan=2 rowspan=2 align="center">к<br>о<br>д</td>
+                <td style="border-bottom: 1px solid #000000; border-right: 1px solid #000000" colspan=4 rowspan=2 align="center">Условное обозначение<br>(национальное)</td>
+            </tr>
+            <tr>
+                <td style="border-bottom: 1px solid #000000; border-right: 1px solid #000000" colspan=2 align="center">цифро-вой<br>код</td>
+                <td style="border-bottom: 1px solid #000000; border-right: 1px solid #000000" colspan=3 align="center">Краткое<br>наимено-<br>вание</td>
+            </tr>
+        </thead>
+        {/if}
+
+            <tr>
+                <td style="min-width:200px;width:200px; border: 1px solid #000000;  border-right: 1px solid #000000" colspan=4 height="22" align="center" valign=top>1</td>
+                <td style="min-width:30px;width:30px; border: 1px solid #000000; border-right: 1px solid #000000" colspan=3 align="center" valign=top>1а</td>
+                <td style="min-width:20px;width:20px; border: 1px solid #000000; border-right: 1px solid #000000" colspan=2 align="center" valign=top>2</td>
+                <td style="min-width:100px;width:100px; border: 1px solid #000000; border-right: 1px solid #000000" colspan=4 align="center" valign=top>2а</td>
+                <td style="min-width:50px;width:50px; border: 1px solid #000000; border-right: 1px solid #000000" align="center" valign=top>3</td>
+                <td style="min-width:80px;width:80px; border: 1px solid #000000; border-right: 1px solid #000000" colspan=5 align="center" valign=top>4</td>
+                <td style="min-width:120px;width:120px; border: 1px solid #000000; border-right: 1px solid #000000" colspan=2 align="center" valign=top>5</td>
+                <td style="min-width:40px;width:40px; border: 1px solid #000000; border-right: 1px solid #000000" colspan=2 align="center" valign=top>6</td>
+                <td style="min-width:60px;width:60px; border: 1px solid #000000; border-right: 1px solid #000000" align="center" valign=top>7</td>
+                <td style="min-width:80px;width:80px; border: 1px solid #000000; border-right: 1px solid #000000" colspan=4 align="center" valign=top>8</td>
+                <td style="min-width:80px;width:80px; border: 1px solid #000000; border-right: 1px solid #000000" colspan=3 align="center" valign=top>9</td>
+                <td style="min-width:50px;width:50px; border: 1px solid #000000; border-right: 1px solid #000000" colspan=2 align="center" valign=top>10</td>
+                <td style="min-width:60px;width:60px; border: 1px solid #000000; border-right: 1px solid #000000" colspan=3 align="center" valign=top>10а</td>
+                <td style="min-width:90px;width:90px; border: 1px solid #000000; border-right: 1px solid #000000" align="center" valign=top>11</td>
+            </tr>
+
+        <!--END OF HEADER-->
+        {loop name="value"}
+        {if="$value->i"}
+        <tr>
+            <td style="border: 1px solid #000000;  border-right: 1px solid #000000" colspan=4 height="42">{$value->product_name}</td>
+            <td style="border-bottom: 1px solid #000000; border-right: 1px solid #000000" colspan=3 align="center">-</td>
+            <td style="border-bottom: 1px solid #000000; border-right: 1px solid #000000" colspan=2 align="center">{$value->product_unit_code}</td>
+            <td style="border-bottom: 1px solid #000000; border-right: 1px solid #000000" colspan=4 align="center">{$value->product_unit}</td>
+            <td style="border-bottom: 1px solid #000000; border-right: 1px solid #000000" align="center">{$value->product_quantity}</td>
+            <td style="border-bottom: 1px solid #000000; border-right: 1px solid #000000" colspan=5 align="center">{$value->product_price_vatless}</td>
+            <td style="border-bottom: 1px solid #000000; border-right: 1px solid #000000" colspan=2 align="center">{$value->product_sum_vatless}</td>
+            <td style="border-bottom: 1px solid #000000; border-right: 1px solid #000000" colspan=2 align="center">{$value->product_excise}</td>
+            <td style="border-bottom: 1px solid #000000; border-right: 1px solid #000000" align="center"><font size=1>{$value->product_vat_rate}</td>
+            <td style="border-bottom: 1px solid #000000; border-right: 1px solid #000000" colspan=4 align="center">{$value->product_sum_vat}</td>
+            <td style="border-bottom: 1px solid #000000; border-right: 1px solid #000000" colspan=3 align="center">{$value->product_sum_total}</td>
+            <td style="border-bottom: 1px solid #000000; border-right: 1px solid #000000" colspan=2 align="center">{$value->origin_code}</td>
+            <td style="border-bottom: 1px solid #000000; border-right: 1px solid #000000" colspan=3 align="center">{$value->origin_name}</td>
+            <td style="border-bottom: 1px solid #000000; border-right: 1px solid #000000" align="center">{$value->party_label}</td>
+        </tr>
+        {/if}
+        {/loop}
+
+        {if="$counter+1!=$v->tables_count"}
+        </table></div><div class="page"><table>
+        {/if}
+        {/loop}
+
+
+        <!--PAGE ENDS-->
+        <!--FOOTER-->
+
+        <tr>
+            <td style="border: 1px solid #000000;  border-right: 1px solid #000000" colspan=19 height="27">Всего к оплате</td>
+            <td style="border-bottom: 1px solid #000000; border-right: 1px solid #000000" colspan=2 align="center">{$v->footer->vatless}</td>
+            <td style="border-bottom: 1px solid #000000; border-right: 1px solid #000000" colspan=3 align="center">Х</td>
+            <td style="border-bottom: 1px solid #000000; border-right: 1px solid #000000" colspan=4 align="center">{$v->footer->vat}</td>
+            <td style="border-bottom: 1px solid #000000; border-right: 1px solid #000000" colspan=3 align="center">{$v->footer->total}</td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td style="border-left:none !important" colspan=4 rowspan=2 height="59">Руководитель организации<br>или иное уполномоченное лицо</td>
+            <td></td>
+            <td align="center"></td>
+            <td align="center"></td>
+            <td align="center"></td>
+            <td align="center"></td>
+            <td align="center"></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td colspan=8 rowspan=2 valign=bottom>Главный бухгалтер<br>или иное уполномоченное лицо</td>
+            <td></td>
+            <td align="center"></td>
+            <td align="center"></td>
+            <td align="center"></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td></td>
+            <td align="center"></td>
+            <td align="center"></td>
+            <td align="center"></td>
+            <td align="center"></td>
+            <td align="center"></td>
+            <td></td>
+            <td style="border-bottom: 1px solid #000000" colspan=5 align="center" valign=bottom>{$v->seller->company_director}</td>
+            <td></td>
+            <td></td>
+            <td align="center"></td>
+            <td align="center"></td>
+            <td align="center"></td>
+            <td></td>
+            <td style="border-bottom: 1px solid #000000" colspan=6 align="center">{$v->seller->company_accountant}</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td height="22" valign=top></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td style="border-top: 1px solid #000000" colspan=5 align="center" valign=top>(подпись)</td>
+            <td></td>
+            <td colspan=5 rowspan=2 align="center" valign=top>(ф.и.о.)</td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td style="border-top: 1px solid #000000" colspan=3 rowspan=2 align="center" valign=top>(подпись)</td>
+            <td></td>
+            <td colspan=6 align="center">(ф.и.о.)</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td height="22" valign=top></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td align="center" valign=top></td>
+            <td align="center" valign=top></td>
+            <td align="center" valign=top></td>
+            <td align="center" valign=top></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td colspan=3 rowspan=2 height="45" valign=bottom>Индивидуальный предприниматель<br>или иное уполномоченное лицо</td>
+            <td></td>
+            <td></td>
+            <td align="center"></td>
+            <td align="center"></td>
+            <td align="center"></td>
+            <td align="center"></td>
+            <td align="center"></td>
+            <td></td>
+            <td style="border-bottom: 1px solid #000000" colspan=6 rowspan=2 align="center"></td>
+            <td></td>
+            <td style="border-bottom: 1px solid #000000" colspan=17 rowspan=2 align="center" valign=bottom></td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td></td>
+            <td></td>
+            <td align="center"></td>
+            <td align="center"></td>
+            <td align="center"></td>
+            <td align="center"></td>
+            <td align="center"></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td height="22" valign=top></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td style="border-top: 1px solid #000000" colspan=5 align="center">(подпись)</td>
+            <td></td>
+            <td colspan=6 align="center">(ф.и.о.)</td>
+            <td></td>
+            <td colspan=17 rowspan=3 align="center" valign=top>(реквизиты свидетельства о государственной регистрации <br>индивидуального предпринимателя)</td>
+            <td></td>
+            <td></td>
+        </tr>
+    </table>
+</div>
