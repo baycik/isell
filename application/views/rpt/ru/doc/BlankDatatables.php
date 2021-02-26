@@ -256,7 +256,7 @@
         $upper_origin=mb_strtoupper($country_name);
         return [
             'code'=>$countries[$upper_origin]??'-',
-            'name'=>$upper_origin??'-'
+            'name'=>$upper_origin?$upper_origin:'-'
         ];
     }
     

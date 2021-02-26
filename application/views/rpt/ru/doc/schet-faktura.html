@@ -222,7 +222,7 @@
         </tr>
     </table>
     {loop name="v->tables"}
-    {if="$counter>0"}
+    {if="$counter>0 && count($value)>0"}
     <table style="min-width:100%">
         <tr>
             <td>Счет фактура № {$v->doc_view->view_num} от {$v->doc_view->date_dot}</td>
@@ -391,37 +391,6 @@
             <td style="border-top: 1px solid #000000" colspan=3 rowspan=2 align="center" valign=top>(подпись)</td>
             <td></td>
             <td colspan=6 align="center">(ф.и.о.)</td>
-            <td></td>
-        </tr>
-        <tr>
-            <td height="22" valign=top></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td></td>
-            <td align="center" valign=top></td>
-            <td align="center" valign=top></td>
-            <td align="center" valign=top></td>
-            <td align="center" valign=top></td>
-            <td></td>
-            <td></td>
             <td></td>
         </tr>
         <tr>
