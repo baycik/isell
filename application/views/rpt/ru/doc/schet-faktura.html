@@ -223,7 +223,7 @@
     </table>
     {loop name="v->tables"}
     {if="$counter>0 && count($value)>0"}
-    <table style="min-width:100%">
+    <table style="min-width:100%;width:100%">
         <tr>
             <td>Счет фактура № {$v->doc_view->view_num} от {$v->doc_view->date_dot}</td>
             <td style="text-align: right">стр.{$counter+1}</td>
