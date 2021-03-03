@@ -350,20 +350,21 @@ class Catalog extends CI_Model {
             return 1;
         }
         $having = [];
-        foreach ($filter as $rule) {
-            $or_case=[];
-            $words=explode(' ',$rule->value);
+        foreach ($filter as $rule ) {
+            $field=$rule->field;
+            $value=$rule->value;
+            $words=explode(' ',$value);
             foreach($words as $word){
-                if(!$word){
-                    continue;
-                }
-                if($word[0]=='!'){
-                    $having[] = "$rule->field NOT LIKE '%".substr($word,1)."%'";
+                if(isset($word[0]) && $word[0]=='!'){
+                    $having[] = "$field NOT LIKE '%".substr($word,1)."%'";
                 } else {
-                    $or_case[]="$rule->field LIKE '%$word%'";
+                    if (strpos($word, '|') === false) {
+                        $having[] = "$field LIKE '%$word%'";
+                    } else {
+                        $having[] = "($field LIKE '%" . str_replace('|', "%' OR $field LIKE '%", $word) . "%')";
+                    }
                 }
             }
-            $having[] = '('.implode(" OR ",$or_case).')';
         }
         return implode(' AND ', $having);
     }
