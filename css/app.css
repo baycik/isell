@@ -51,10 +51,10 @@ a:hover{
     font-weight: normal;
 }
 input{
-    min-height: 30px;
+    min-height: 27px;
 }
 select{
-    height: 30px;
+    height: 27px;
 }
 input,select,textarea{
     color: #056;
