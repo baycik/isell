@@ -50,12 +50,6 @@ a:hover{
     padding-top: 3px;
     font-weight: normal;
 }
-input{
-    min-height: 27px;
-}
-select{
-    height: 27px;
-}
 input,select,textarea{
     color: #056;
     border: 1px solid #95b8e7;
