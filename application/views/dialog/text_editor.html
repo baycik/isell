@@ -16,16 +16,18 @@
 		}
 	    });
 	    this.node.window('window').css('position','fixed');
-            window.frames['editor_iframe'].html=App.page_dialog_text_editor.data.html;
+            window.frames['price_editor_iframe'].addEventListener('load',function(){
+                window.frames['price_editor_iframe'].html=App.page_dialog_text_editor.data.html;
+            });
 	},
 	save:function(){
-	    this.data.html=window.frames['editor_iframe'].getContent();
+	    this.data.html=window.frames['price_editor_iframe'].getContent();
 	    App.page_dialog_text_editor.handler.notify('save',this.data);
 	    App.page_dialog_text_editor.node.window('close');
 	}
     };
 </script>
-<iframe name="editor_iframe" style="height:520px;width: 100%;border: none;" src="page/dialog/text_editor_iframe.html"></iframe>
+<iframe name="price_editor_iframe" style="height:520px;width: 100%;border: none;" src="page/dialog/text_editor_iframe.html"></iframe>
 <div style="text-align: center">
     <button onclick="App.page_dialog_text_editor.save();"><img src="img/save-24.png"> Сохранить</button>
 </div>
