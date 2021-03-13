@@ -14,8 +14,10 @@ $before[]=<<<EOT
             App.Topic('activeCompanySelected').subscribe(function(acomp){
                 if( acomp.company_id==1 ){//TODO add id control from intagrator settings
                     $('.kkmintegratoricon').hide();
+                    $('.icon-wallet').show();
                 } else {
                     $('.kkmintegratoricon').show();
+                    $('.icon-wallet').hide();
                 }
             });
         //App.loadWindow('KKMIntegrator/advanced');
@@ -23,19 +25,3 @@ $before[]=<<<EOT
 EOT;
 $after[]=<<<EOT
 EOT;
-
- 
-$filename[]=<<<EOT
-views/trade/document.html
-EOT;
-$search[]=<<<EOT
-		<span class="icon-24 icon-wallet" title="Внести оплату" onclick="Doc.trans.pay();"> </span>
-EOT;
-$replace[]=<<<EOT
-        <!-- ERASED BY KKMINTEGRATOR -->
-EOT;
-$before[]=<<<EOT
-EOT;
-$after[]=<<<EOT
-EOT;
-
