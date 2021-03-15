@@ -25,3 +25,4 @@ $before[]=<<<EOT
 EOT;
 $after[]=<<<EOT
 EOT;
+?>
