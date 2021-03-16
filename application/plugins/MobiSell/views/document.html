@@ -772,7 +772,16 @@
 					    <div class="ui grid" style="opacity:0.7">
 						<div class="six wide column">{{product_code}}</div>
 						<div class="five wide column right aligned">{{product_price_total}}р</div>
-						<div class="five wide column right aligned">{{if stared_leftover}} {{stared_leftover}} {{else}} {{leftover}}{{product_unit}} {{/if}}</div></div>
+						<div class="five wide column right aligned">{{leftover}}{{product_unit}}
+                                                    <div>
+                                                        {{if product_reserved|more>0}}
+                                                        <span style="color:red">-{{product_reserved}}</span>
+                                                        {{/if}}
+                                                        {{if product_awaiting|more>0}}
+                                                        <span style="color:green">+{{product_awaiting}}</span>
+                                                        {{/if}}
+                                                    </div>
+                                                </div></div>
                                         </div>
 				    </div>
 				</td>

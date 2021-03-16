@@ -59,6 +59,8 @@ class DocumentItems extends DocumentCore{
                     product_quantity leftover,
                     product_img,
                     product_unit,
+                    product_reserved,
+                    product_awaiting,
                     CONCAT( 
                         product_quantity<>0,
                         IF( prl.product_code IS NOT NULL AND (@promo_limit:=@promo_limit-1)>=0,1,0),
