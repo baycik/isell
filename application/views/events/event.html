@@ -30,6 +30,7 @@
 		App.page_events_event.saveEvent(fvalue);
 	    });
 	    this.loadStaffList();
+            this.loadSuggestions();
 	},
 	prepareData:function(){
 	    this.data.event_date = this.data.event_date_dmy || App.toDmy(new Date());
@@ -54,6 +55,12 @@
 		$("select[name=event_liable_user_id]").val(App.page_events_event.data.event_liable_user_id);
 	    });
 	},
+        loadSuggestions:function(){
+            $.get("Events/eventLabelSuggest",function(resp){
+                var sugg=App.json(resp);
+                App.renderTpl('page_events_event_suggest',sugg);
+            });
+        },
 	saveEvent: function (fvalue) {
 	    fvalue=this.task.programCompile(fvalue);
 	    var card_event_id = fvalue.event_id;
@@ -183,10 +190,12 @@
 	</div>
     </div>
     <div style="display: inline-block;width: 320px;vertical-align: top">
-        <div class="inp_group task_unspecific" style="text-align: right;">
-            <a href="javascript:App.page_events_event.setLabel('Доставка')">Доставка</a> | 
-            <a href="javascript:App.page_events_event.setLabel('Напоминание клиенту')">Напоминание клиенту</a> | 
-            <a href="javascript:App.page_events_event.setLabel('Задания на складе')">Задания на складе</a> 
+        <div class="inp_group task_unspecific">
+            <div id="page_events_event_suggest">
+                {{.}}
+                <a href="javascript:App.page_events_event.setLabel('{{event_label}}')">{{event_label}}</a> |
+                {{/.}}
+            </div>
 	    <input type="text" name="event_label" placeholder="Группа" title="Группа задания" style="background-color:#FFFFCC" />
         </div>
         

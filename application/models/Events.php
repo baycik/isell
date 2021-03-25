@@ -199,6 +199,24 @@ class Events extends Catalog{
         return $ok;
     }
     
+    public function eventLabelSuggest(){
+        $sql="
+            SELECT 
+                event_label
+            FROM
+                isell_db.event_list
+            WHERE
+                event_label <> '-TASK-' 
+                AND event_label <> 'Chat'
+                    AND event_date > DATE_SUB(NOW(), INTERVAL 2 WEEK)
+            GROUP BY
+                    event_label
+            ORDER BY COUNT(event_label) DESC
+            LIMIT 5
+            ";
+        return $this->get_list($sql);
+    }
+    
     
     
     
