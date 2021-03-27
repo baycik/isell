@@ -143,17 +143,57 @@ trait DocumentBaseEntries{
         return $ok;
     }
     
-    public function entryListRecalculate( int $doc_id, float $ratio, string $mode="refresh"){
+    private function entryListRecalculateNetTotal(int $doc_id,$pcomp_id,$usd_ratio){
+        $vat_rate=$this->doc('vat_rate');
+        $nettotal_sql="
+                    SELECT
+                        SUM(
+                            ROUND(GET_SELL_PRICE(product_code,'{$pcomp_id}','{$usd_ratio}')*(1+$vat_rate/100),2)*product_quantity
+                        ) nettotal
+                    FROM
+                        document_entries
+                    WHERE
+                        doc_id='$doc_id'
+                    ";
+        return $this->get_value($nettotal_sql);
+    }
+    
+    public function entryListRecalculate( int $doc_id, float $amount, string $action='discount', string $source='pricelist'){
         $this->documentSelect($doc_id);
         $pcomp_id=$this->doc('passive_company_id');
-        $pcomp=$this->Hub->load_model('Company')->getCompany($pcomp_id);
+        $pcomp=$this->Hub->load_model('Company')->companyGet($pcomp_id);
         $usd_ratio=$this->doc('doc_ratio');
         $skip_breakeven_check=$pcomp->skip_breakeven_check;
+        if($action=='discount'){
+            $ratio=1-abs($amount)/100;
+        } else 
+        if($action=='increase'){
+            $ratio=1+abs($amount)/100;
+        } else 
+        if($action=='add'){
+            if( $source=='pricelist' ){
+                $total=$this->entryListRecalculateNetTotal($doc_id,$pcomp_id,$usd_ratio);
+            } else {
+                $total=$this->footGet($doc_id)->total;
+            }
+            $ratio=1+abs($amount)/$total;
+        } else 
+        if($action=='substract'){
+            if( $source=='pricelist' ){
+                $total=$this->entryListRecalculateNetTotal($doc_id,$pcomp_id,$usd_ratio);
+            } else {
+                $total=$this->footGet($doc_id)->total;
+            }
+            $ratio=1-abs($amount)/$total;
+            if($ratio<0){
+                return false;
+            }
+        }
         $entry_recalc_sql="
             UPDATE
                 document_entries de
             SET
-                invoice_price=      IF( '$mode'='refresh',ROUND(GET_SELL_PRICE(de.product_code,'{$pcomp_id}','{$usd_ratio}'),2),invoice_price)*$ratio,
+                invoice_price=      IF( '$source'='pricelist',ROUND(GET_SELL_PRICE(de.product_code,'{$pcomp_id}','{$usd_ratio}'),2),invoice_price)*$ratio,
                 breakeven_price =   IF( '$skip_breakeven_check',0,ROUND(GET_BREAKEVEN_PRICE(product_code,'{$pcomp_id}','{$usd_ratio}',self_price),2))
             WHERE
                 doc_id=$doc_id";

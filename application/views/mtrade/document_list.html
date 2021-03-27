@@ -163,7 +163,7 @@
                     {id: "doc_num", field: "doc_num", name: "Номер", width: 50, sortable: true, cssClass: 'slick-align-right'},
                     {id: "cstamp", field: "cstamp", name: "Дата", width: 80, sortable: true, formatter: DocList.table.frm.dateFormatter},
                     {id: "doc_total", field: "doc_total", name: "Сумма", width: 100, sortable: true, cssClass: 'slick-align-right', formatter: DocList.table.frm.currency},
-                    {id: "trans_status", field: "trans_status", name: "Оплачен", width: 25, sortable: true, formatter: DocList.table.frm.tooltip},
+                    {id: "trans_status", field: "trans_status", name: "Оплачен", width: 25, sortable: true, formatter: DocList.table.frm.tooltip}
                 ];
                 var columns_adv=[
                     {id: "pcomp_label", field: "pcomp_label", name: "Контрагент", width: 120},
@@ -187,12 +187,14 @@
                 DocList.grid.setColumnsAndFilters(cols);
             },
             setDimensions:function(query, dw){
-                var div = $(query+' .slick-viewport')[0];
-                var hasVerticalScrollbar = div.scrollHeight > div.clientHeight;
+                let div = $(query+' .slick-viewport')[0];
+                let hasVerticalScrollbar = div.scrollHeight > div.clientHeight;
+                let intViewportWidth = window.innerWidth;
+                let maxWidth=intViewportWidth-$(query).offset().left-40;
                 if(hasVerticalScrollbar){
                     dw+=20;
                 }
-                var width =(dw || 0);
+                let width =(Math.min(dw,maxWidth) || 0);
                 $(query).css('width', width + 'px');
             }
         }

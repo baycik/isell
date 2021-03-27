@@ -2,72 +2,81 @@
     /* global App */
     App.page_mtrade_document_recalculate = {
         init: function () {
-            
-            
-            /*
-            this.node.window({
-                title: 'Перерасчет документа',
-                width: 400,
-                height: 'auto',
-                shadow: false,
-                onClose: function () {
+            $('#document_recalculate .ui.dropdown').dropdown();
+            $("#document_recalculate").modal({
+                onHidden:function(){
                     App.page_mtrade_document_recalculate.handler.notify('close');
-                    delete App.page_mtrade_document_recalculate;
+                    //App.page_mtrade_document_recalculate.destroy();
+                },
+                onApprove:function(){
+                    App.page_mtrade_document_recalculate.submit();
                 }
-            });
-            this.node.window('center');
-            this.node.window('hcenter');
-            this.node.window('window').css('position', 'fixed');
-            this.node.window('window').css('top', '40px');
-*/
-
-
-            
-            
-
-
+            }).modal('show');
             this.data = {
-                discount_type: '-1',
-                mode: 'refresh',
-                discount: '0',
-                distribute: 'bysum',
-                sumadd: '0'
+                action:'discount',
+                source:'pricelist'
             };
-            App.setupForm("#document_recalc_frm", this.data);
-            $("#document_recalc_frm input[name=discount]").select();
-            $("#document_recalc_frm").submit(function (event) {
-                event.preventDefault();
-                App.page_mtrade_document_recalculate.handler.notify('submit', App.collectForm("#document_recalc_frm"));
-            });
+        },
+        destroy:function(){
+            $("#document_recalculate").modal('hide');
+            App.page_mtrade_document_recalculate.node.remove();
+            delete App.page_mtrade_document_recalculate;
+        },
+        submit:function(){
+            let fvalue={
+                amount:$("#document_recalculate input[name=amount]").val(),
+                action:$("#document_recalculate select[name=action]").val(),
+                source:$("#document_recalculate input[name=source]:checked").val()
+            };
+            console.log(fvalue);
+            App.page_mtrade_document_recalculate.handler.notify('submit', fvalue);
         }
     };
 </script>
-<div style="padding: 15px">
-    <form id="document_recalc_frm">
-        <fieldset>
-            <legend>Источник цен</legend>
-            <select name="mode" title="Брать цены">
-                <option value="refresh">Из справочника</option>
-                <option value="use_current">Из накладной</option>
-            </select>
-        </fieldset>
-        <fieldset>
-            <legend>Изменить цены на процент</legend>
-            <select name="discount_type" data-skip="1" style="width: 95px">
-                <option value="-1">Скидка %</option>
-                <option value="1">Наценка %</option>
-            </select>
-            <input name="discount" data-skip="1" type="number" step="0.01"/>
-        </fieldset>
-
-        <fieldset>
-            <legend>Распределить по накладной</legend>
-            <input name="sumadd" title="Сумма"/>
-        </fieldset>
-
-        <div style="text-align: center">
-            <button type="submit"><img src="img/recalc.png" style="vertical-align: middle"> Пересчитать</button>
-            <button type="button" onclick="App.page_mtrade_document_recalculate.node.window('close')"><img src="img/close24.png" style="vertical-align: middle"> Закрыть</button>
-        </div>
-    </form>
+<div class="ui modal" id="document_recalculate">
+    <div class="header"><i class="ui icon calculator"></i> Перерасчет цен</div>
+    <div class="content">
+        <form class="ui form" onsubmit="App.page_mtrade_document_recalculate.submit();return false;">
+            <div class="two fields">
+                <div class="field">
+                    <label>Сумма</label>
+                    <div class="ui right labeled input">
+                        <input type="text" name="amount" placeholder="Сумма">
+                        <select class="ui dropdown label" name="action">
+                            <option value="discount">Скидка %</option>
+                            <option value="increase">Наценка %</option>
+                            <option value="add">Добавить сумму</option>
+                            <option value="substract">Вычесть сумму</option>
+                        </select>
+                    </div>
+                </div>
+                <div class=" field">
+                    <label>Источник цен</label>
+                    <div class="inline fields">
+                        <div class="field">
+                            <div class="ui radio checkbox">
+                                <input type="radio" name="source" value="pricelist" checked="checked">
+                                <label>Прайс-лист</label>
+                            </div>
+                        </div>
+                        <div class="field">
+                            <div class="ui radio checkbox">
+                                <input type="radio" name="source" value="document">
+                                <label>Документ</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="actions">
+        <div class="ui approve primary button"><i class="ui icon calculator"></i> Перерассчитать</div>
+        <div class="ui cancel button">Закрыть</div>
+    </div>
 </div>
+<style>
+    .ui.radio.checkbox{
+        border:none;
+    }
+</style>

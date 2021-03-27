@@ -26,7 +26,7 @@
         <span class="icon-24" title="Открыть карту товара" style="background-image: url(img/product.png)" data-action="productCard"> </span>
         <span class="icon-24 icon-delete" title="Удалить стоку" data-action="entryDelete"> </span>
         <span class="icon-24 icon-calc" title="Перерасчитать цены" data-action="recalculate"> </span>
-        <span class="icon-24 icon-import" title="Импортировать" data-action="entryImport"> </span>
+        <span class="icon-24 icon-expand" data-action="expand_collapse" title="Полный/Сокращенный режим"> </span> 
         <span class="icon-24 icon-utils" title="Дополнительные свойства" onclick="$('.x-utils').toggle('slow')" ></span>
     </div>
 </div>
@@ -83,6 +83,6 @@
         width: 700px !important;
     }
     .x-entries .slick-viewport,.x-entries {
-        overflow: visible !important;
+        overflow: visible;
     }
 </style>

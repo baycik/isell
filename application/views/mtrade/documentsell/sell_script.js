@@ -269,6 +269,24 @@ Document.head = {
             download:function(){
                 window.open("./DocumentItems/documentOut/?out_type=.xlsx&doc_id="+Document.data.head.doc_id);
             },
+            entryImport: function () {
+                var config = [
+                    {name: 'Код товара', field: 'product_code', required: true},
+                    {name: 'Кол-во', field: 'product_quantity'},
+                    {name: 'Цена', field: 'invoice_price'},
+                    {name: 'Партия', field: 'party_label'}
+                ];
+                App.loadWindow('page/dialog/importer', {label: 'документ', fields_to_import: config}).progress(function (status, fvalue, Importer) {
+                    if (status === 'submit') {
+                        fvalue.doc_id = Document.doc_id;
+                        App.post(Document.doc_extension + "/entryImport/", fvalue, function (ok) {
+                            App.flash("Импортировано " + ok);
+                            Importer.reload();
+                            Document.reload(["body", "foot"]);
+                        });
+                    }
+                });
+            },
             absent_split:function(){
                 if( confirm("Вынести недостающие позиции в отдельную накладную?") ){
                     var new_doc_comment=`Недостаюшие позиции по накладной #${Document.data.head.doc_num}`;
@@ -282,7 +300,7 @@ Document.head = {
                         }
                     });                
                 }
-            }
+            },
         }
     }
 };
@@ -439,24 +457,6 @@ Document.body = {
             var row = Document.body.table_sg.getDataItem(selected_rows[0]);
             App.loadWindow('page/stock/product_card', {product_code: row.product_code, loadProductByCode: true});
         },
-        entryImport: function () {
-            var config = [
-                {name: 'Код товара', field: 'product_code', required: true},
-                {name: 'Кол-во', field: 'product_quantity'},
-                {name: 'Цена', field: 'invoice_price'},
-                {name: 'Партия', field: 'party_label'}
-            ];
-            App.loadWindow('page/dialog/importer', {label: 'документ', fields_to_import: config}).progress(function (status, fvalue, Importer) {
-                if (status === 'submit') {
-                    fvalue.doc_id = Document.doc_id;
-                    App.post(Document.doc_extension + "/entryImport/", fvalue, function (ok) {
-                        App.flash("Импортировано " + ok);
-                        Importer.reload();
-                        Document.reload(["body", "foot"]);
-                    });
-                }
-            });
-        },
         entryDelete: function () {
             var selected_rows = Document.body.table_sg.getSelectedRows();
             if ( !selected_rows.length ) {
@@ -482,30 +482,44 @@ Document.body = {
         recalculate: function () {
             App.loadWindow('page/mtrade/document_recalculate').progress(function (state, data) {
                 if (state === 'submit') {
-                    App.post(Document.doc_extension + "/entryRecalc/" + Document.doc_id + '/' + (data.recalc_proc * 1 || 0), function (xhr) {
-                        Document.reload(["body", "foot"]);
-                        App.flash("Перерасчет выполнен");
+                    data.doc_id=Document.doc_id;
+                    $.post(Document.doc_extension + "/entryListRecalculate/",data, function (ok) {
+                        if( ok*1 ){
+                            Document.reload(["body", "foot"]);
+                            App.flash("Перерасчет выполнен");
+                        } else {
+                            App.flash("Неверные параметры");
+                        }
+                        
                     });
                 }
             });
+        },
+        expand_collapse:function(){
+            if (Document.body.table.columnMode === 'advanced') {
+                Document.body.table.columnMode = 'simple';
+                $(".x-entries .slick-viewport,.x-entries").css('overflow','visible');
+            } else {
+                Document.body.table.columnMode = 'advanced';
+                $(".x-entries .slick-viewport,.x-entries").css('overflow','auto');
+            }
+            Document.body.table.render();
+            //Document.body.tools.reload();
+            Document.body.tools.swap_expand_collapse();
+        },
+        swap_expand_collapse:function(){
+            if(Document.body.table.columnMode === 'advanced'){
+                $(".x-body-tools .icon-expand").removeClass("icon-expand").addClass("icon-collapse");
+            } else {
+                $(".x-body-tools .icon-collapse").removeClass("icon-collapse").addClass("icon-expand");
+            }
         }
     },
     table: {
+        columnMode:'simple',
         init: function () {
             var settings = {
-                columns: [
-                    {id: "queue", name: "№", width: 30, formatter: Document.body.table.formatters.queue},
-                    {id: "product_code", field: "product_code", name: "Код", width: 80},
-                    {id: "product_name", field: "product_name", name: "Название", width: 388},
-                    {id: "product_quantity", field: "product_quantity", name: "Кол-во", width: 70, cssClass: 'slick-align-right', editor: Slick.Editors.Integer},
-                    {id: "product_unit", field: "product_unit", name: "Ед.", width: 30},
-                    {id: "entry_price", field: "entry_price", name: "Цена", width: 70, cssClass: 'slick-align-right', asyncPostRender: Document.body.table.formatters.priceisloss, editor: Slick.Editors.Float},
-                    {id: "entry_sum", field: "entry_sum", name: "Сумма", width: 80, cssClass: 'slick-align-right', editor: Slick.Editors.Float},
-                    {id: "row_status", field: "row_status", name: "!", width: 20, formatter: Document.body.table.formatters.tooltip},
-                            //{id:"party_label",field:"party_label",name:"Партия",width:120, editor: Slick.Editors.Text},
-                            //{id:"analyse_origin",field:'analyse_origin',name:"Происхождение",width:70},
-                            //{id:"self_price",field:'self_price',name:"maliyet",width:60,cssClass:'slick-align-right'}
-                ],
+                columns: Document.body.table.columnsGet(),
                 options: {
                     editable: true,
                     autoEdit: true,
@@ -515,16 +529,22 @@ Document.body = {
                     enableColumnReorder: false,
                     enableFilter: false,
                     multiSelect: true,
-                    enableAsyncPostRender: true
+                    enableAsyncPostRender: true,
+                    explicitInitialization: true,
                 }
             };
-            Document.body.table_sg = new Slick.Grid("#" + holderId + " .x-body .x-entries", [], settings.columns, settings.options);
-            Document.body.table_sg.setSelectionModel(new Slick.RowSelectionModel());
+            Document.body.table_sg = new SlickInfinite("#" + holderId + " .x-body .x-entries", settings);
+            Document.body.table_sg.init();
+            //Document.body.table_sg = new Slick.Grid("#" + holderId + " .x-body .x-entries", [], settings.columns, settings.options);
+            //Document.body.table_sg.setSelectionModel(new Slick.RowSelectionModel());
             Document.body.table_sg.onCellChange.subscribe(function (e, data) {
                 var updatedEntry = data.item;
                 var field = settings.columns[data.cell].field;
                 var value = updatedEntry[field];
                 Document.body.table.entryUpdate(updatedEntry.doc_entry_id, field, value);
+            });
+            Document.body.table_sg.onRenderFinished.subscribe(function(){
+                Document.body.table.setDimensions("#" + holderId + " .x-body .x-entries",DocList.table.columnSummaryWidth);
             });
             $("#" + holderId + " .x-body .x-entries").click(function (e) {
                 var row = Document.body.table_sg.getSelectedRows()[0];
@@ -534,6 +554,49 @@ Document.body = {
                     Document.body.table.actions[ action ] && Document.body.table.actions[action](row_data);
                 }
             });
+            $(".x-entries .slick-viewport,.x-entries").css('overflow','visible');
+        },
+        columnsGet:function(){
+            var columns_lev1=[
+                {id: "queue", name: "№", width: 30, formatter: Document.body.table.formatters.queue},
+                {id: "product_code", field: "product_code", name: "Код", width: 80},
+                {id: "product_name", field: "product_name", name: "Название", width: 388},
+                {id: "product_quantity", field: "product_quantity", name: "Кол-во", width: 70, cssClass: 'slick-align-right', editor: Slick.Editors.Integer},
+                {id: "product_unit", field: "product_unit", name: "Ед.", width: 30},
+                {id: "entry_price", field: "entry_price", name: "Цена", width: 70, cssClass: 'slick-align-right', asyncPostRender: Document.body.table.formatters.priceisloss, editor: Slick.Editors.Float},
+                {id: "entry_sum", field: "entry_sum", name: "Сумма", width: 80, cssClass: 'slick-align-right', editor: Slick.Editors.Float},
+                {id: "row_status", field: "row_status", name: "!", width: 20, formatter: Document.body.table.formatters.tooltip},
+
+            ];
+            var columns_adv=[
+                {id:"party_label",field:"party_label",name:"Партия",width:200, editor: Slick.Editors.Text},
+                {id:"analyse_origin",field:'analyse_origin',name:"Происхождение",width:110}
+            ];
+            var columns=columns_lev1;
+            if( Document.body.table.columnMode==='advanced' ){
+                columns=columns.concat(columns_adv);
+            }
+            return columns;
+        },
+        render:function(){
+            Document.body.table_sg.updateOptions({params:{colmode:Document.body.table.columnMode}});
+            var cols=Document.body.table.columnsGet();
+            Document.body.table.columnSummaryWidth=0;
+            for( var i in cols ){
+                Document.body.table.columnSummaryWidth+=cols[i].width+2;
+            }
+            Document.body.table_sg.setColumnsAndFilters(cols);
+        },
+        setDimensions:function(query, dw){
+            let div = $(query+' .slick-viewport')[0];
+            let hasVerticalScrollbar = div.scrollHeight > div.clientHeight;
+            let intViewportWidth = window.innerWidth;
+            let maxWidth=intViewportWidth-$(query).offset().left-40;
+            if(hasVerticalScrollbar){
+                dw+=20;
+            }
+            let width =(Math.min(dw,maxWidth) || 0);
+            $(query).css('width', width + 'px');
         },
         actions: {
             err_reserve: function (row_data) {
@@ -599,7 +662,8 @@ Document.body = {
                 App.flash( xhr.responseText );
                 Document.reload(["body", "foot"]);
             });
-        }
+        },
+        
 
     }
     /*
