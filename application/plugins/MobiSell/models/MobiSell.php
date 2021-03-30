@@ -153,6 +153,10 @@ class MobiSell extends PluginManager {
         return $this->get_value($sql);
     }
     private function documentShipmentEventAdd($doc_id) {
+        $event_exists=$this->get_value("SELECT event_id FROM event_list WHERE doc_id='$doc_id'");
+        if( $event_exists ){
+            return $event_exists;
+        }
         $DocumentItems = $this->Hub->load_model("DocumentItems");
         $head = $DocumentItems->headGet($doc_id);
         $event = [
