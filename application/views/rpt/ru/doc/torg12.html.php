@@ -83,7 +83,7 @@ foreach ($this->view->tables as &$table) {
     $subtotal = 0;
     foreach ($table as &$row) {
 	$row->i = ++$i;
-	$row->product_sum_vat = $row->product_sum_total-$row->product_sum_vatless;
+	$row->product_sum_vat = format($row->product_sum_total-$row->product_sum_vatless);
 	
         $unit=unit_code($row->product_unit);
         $row->product_unit=$unit['name'];
@@ -103,6 +103,8 @@ foreach ($this->view->tables as &$table) {
     $this->view->footer->vat+=$subvat;
 }
 
+$this->view->footer->vatless=format($this->view->footer->vatless);
+$this->view->footer->vat=format($this->view->footer->vat);
 $this->view->total_pages = num2str($this->view->tables_count + 1, true);
 $this->view->total_rows = num2str($i, true);
 $this->view->doc_view->total_spell = num2str($this->view->footer->total);
