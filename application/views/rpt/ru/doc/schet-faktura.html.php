@@ -100,6 +100,8 @@ foreach ($this->view->tables as &$table) {
     foreach ($table as &$row) {
 	$row->i = ++$i;
 	$row->product_sum_vat = $row->product_sum_total-$row->product_sum_vatless;
+        $row->product_vat_rate=$this->view->head->vat_rate.'%';
+        $row->product_excise='без акциза';
 	
         $unit=unit_code($row->product_unit);
         $row->product_unit=$unit['name'];
@@ -109,8 +111,10 @@ foreach ($this->view->tables as &$table) {
         $row->origin_name=$country['name'];
         $row->origin_code=$country['code'];
         
-        if( !$row->party_label ){
+        if( !$row->party_label || strlen($row->party_label)<23 ){
             $row->party_label='-';
+            $row->origin_name='-';
+            $row->origin_code='-';
         }
         
 	$subcount+=$row->product_quantity;
