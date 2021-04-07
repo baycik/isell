@@ -251,8 +251,8 @@ class DocumentCore extends DocumentUtils{
                 return 1;
             } else 
             if( $doc_type==2 ){
-                $footer=$this->footerGet();
-                $expense_ratio=$expense/$footer->vatless+1;
+                $total_vatless_main_currency=$this->get_value("SELECT SUM(invoice_price*product_quantity) FROM document_entries WHERE doc_id='$doc_id'");
+                $expense_ratio=$expense/$total_vatless_main_currency+1;
                 $this->documentSettingSet( '$.extra_expenses', $expense );
                 return $this->query("UPDATE document_entries SET self_price=invoice_price*$expense_ratio WHERE doc_id=$doc_id");
             }
