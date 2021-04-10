@@ -144,17 +144,27 @@ class Hub extends CI_Controller{
 	    case 'json':
 	    case 'array':
                 $var= trim($var, "\"");
-                $var= json_decode( $var,true );
+                $result= json_decode( $var,true );
+                if( json_last_error()!=JSON_ERROR_NONE ){
+                    $var=stripslashes($var);
+                    $result= json_decode( $var,true );
+                }
                 if( json_last_error()!=JSON_ERROR_NONE ){
                     throw new Exception('JSON error: '.json_last_error_msg(),500);
                 }
+                $var=$result;
                 break;
             case 'object':
                 $var= trim($var, "\"");
-                $var= json_decode( $var,false );
+                $result= json_decode( $var,false );
+                if( json_last_error()!=JSON_ERROR_NONE ){
+                    $var=stripslashes($var);
+                    $result= json_decode( $var,false );
+                }
                 if( json_last_error()!=JSON_ERROR_NONE ){
                     throw new Exception('JSON error: '.json_last_error_msg(),500);
                 }
+                $var=$result;
                 break;
 	    default:
 		if( $type ){
