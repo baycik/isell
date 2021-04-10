@@ -146,14 +146,14 @@ class Hub extends CI_Controller{
                 $var= trim($var, "\"");
                 $var= json_decode( $var,true );
                 if( json_last_error()!=JSON_ERROR_NONE ){
-                    throw Exception(json_last_error_msg (),500);
+                    throw new Exception('JSON error: '.json_last_error_msg(),500);
                 }
                 break;
             case 'object':
                 $var= trim($var, "\"");
                 $var= json_decode( $var,false );
                 if( json_last_error()!=JSON_ERROR_NONE ){
-                    throw Exception(json_last_error_msg (),500);
+                    throw new Exception('JSON error: '.json_last_error_msg(),500);
                 }
                 break;
 	    default:
