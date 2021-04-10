@@ -188,6 +188,10 @@ class DocumentBase extends Catalog {
 
     //DOCUMENT EVENT LISTENERS SECTION
     protected function documentBeforeChangeDocStatusId($field, $new_status_id, $document_properties) {
+        
+        echo die;
+        
+        
         if (!isset($new_status_id)) {
             return false;
         }

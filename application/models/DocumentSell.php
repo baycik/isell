@@ -86,7 +86,7 @@ class DocumentSell extends DocumentBase{
     }
     
     public function documentBeforeChangeIsCommited( $field='is_commited', bool $new_is_commited ){
-        //echo 'entries';print_r($this->document_properties);die;
+        echo 'entries';print_r($this->document_properties);die;
         
 
         if( !$new_is_commited && !$this->isCommited() ){

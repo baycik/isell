@@ -515,11 +515,11 @@ class Stock extends Catalog {
     public function reserveSystemStatusChange( bool $active ){
         $Events=$this->Hub->load_model("Events");
         if( $active ){
-            $Events->Topic('documentChangeDocStatusId')->subscribe('Stock','reserveStatusChange');
+            $Events->Topic('documentBeforeChangeDocStatusId')->subscribe('Stock','reserveStatusChange');
             $Events->Topic('documentEntryChanged')->subscribe('Stock','reserveEntryChange');
             $this->reserveCountUpdate();
         } else {
-            $Events->Topic('documentChangeDocStatusId')->unsubscribe('Stock','reserveStatusChange');
+            $Events->Topic('documentBeforeChangeDocStatusId')->unsubscribe('Stock','reserveStatusChange');
             $Events->Topic('documentEntryChanged')->unsubscribe('Stock','reserveEntryChange');
             $this->query("UPDATE stock_entries SET product_reserved = 0, product_awaiting = 0");
         }

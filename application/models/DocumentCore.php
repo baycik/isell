@@ -303,7 +303,7 @@ class DocumentCore extends DocumentUtils{
         
         $this->loadDoc($this->doc('doc_id'));
         $Events=$this->Hub->load_model("Events");
-        $Events->Topic('documentChangeDocStatusId')->publish($old_status_id,$new_status_id,$this->_doc);
+        $Events->Topic('documentBeforeChangeDocStatusId')->publish($old_status_id,$new_status_id,$this->_doc);
         
         return $status_change_ok;
     }
