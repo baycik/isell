@@ -278,7 +278,7 @@ class Company extends Catalog{
     
     public $companyPrefsUpdate=['type'=>'string','field'=>'[0-9a-z_]+','value'=>'string'];
     public function companyPrefsUpdate( $type, $field, $value='' ){
-	$this->Hub->set_level(2);
+	$this->Hub->set_level(3);
 	switch( $type ){
 	    case 'discount':
 		return $this->discountUpdate($field,$value);
