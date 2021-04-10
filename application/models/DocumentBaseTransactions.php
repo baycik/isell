@@ -10,7 +10,7 @@ trait DocumentBaseTransactions {
         ]
     ];
 
-    protected function transCommitedChangeRefresh($field, bool $new_is_commited, $document_properties) {
+    protected function transCommitedChangeRefresh($old_is_commited, bool $new_is_commited, $document_properties) {
         //$this->document_properties=$document_properties;
         if ( $new_is_commited ){
             $this->transSchemeCreate();

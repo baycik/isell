@@ -14,7 +14,7 @@ class DocumentBase extends Catalog {
     use DocumentBaseSuggestion;
 
     public function init() {
-        $this->Topic("documentBeforeChangeDocStatusId")->subscribe('DocumentBase', 'documentBeforeChangeDocStatusId');
+        $this->Topic("documentAfterChangeDocStatusId")->subscribe('DocumentBase', 'documentAfterChangeDocStatusId');
         $this->Topic("documentBeforeChangeIsCommited")->subscribe('DocumentBase', 'transCommitedChangeRefresh');
     }
 
@@ -187,11 +187,7 @@ class DocumentBase extends Catalog {
     }
 
     //DOCUMENT EVENT LISTENERS SECTION
-    protected function documentBeforeChangeDocStatusId($field, $new_status_id, $document_properties) {
-        
-        echo die;
-        
-        
+    protected function documentAfterChangeDocStatusId($old_status_id, $new_status_id, $document_properties) {
         if (!isset($new_status_id)) {
             return false;
         }
@@ -270,14 +266,16 @@ class DocumentBase extends Catalog {
             return false;
         }
         $fieldCamelCase = str_replace(' ', '', ucwords(str_replace('_', ' ', $field)));
-        $this->db_transaction_start();
         $this->documentSelect($doc_id);
-        $ok = $this->Topic('documentBeforeChange' . $fieldCamelCase)->publish($field, $value, $this->document_properties);
+        $this->db_transaction_start();
+        $old_value=$this->document_properties->{$field};
+        $ok = $this->Topic('documentBeforeChange' . $fieldCamelCase)->publish($old_value, $value, $this->document_properties);
         if ($ok === false) {
             $this->db_transaction_rollback();
             return false;
         }
         $this->doc($field, $value);
+        $this->Topic('documentAfterChange' . $fieldCamelCase)->publish($old_value, $value, $this->document_properties);
         if ($this->isCommited()) {
             $this->transSchemeUpdate();
         }

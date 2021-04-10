@@ -515,11 +515,11 @@ class Stock extends Catalog {
     public function reserveSystemStatusChange( bool $active ){
         $Events=$this->Hub->load_model("Events");
         if( $active ){
-            $Events->Topic('documentBeforeChangeDocStatusId')->subscribe('Stock','reserveStatusChange');
+            $Events->Topic('documentAfterChangeDocStatusId')->subscribe('Stock','reserveStatusChange');
             $Events->Topic('documentEntryChanged')->subscribe('Stock','reserveEntryChange');
             $this->reserveCountUpdate();
         } else {
-            $Events->Topic('documentBeforeChangeDocStatusId')->unsubscribe('Stock','reserveStatusChange');
+            $Events->Topic('documentAfterChangeDocStatusId')->unsubscribe('Stock','reserveStatusChange');
             $Events->Topic('documentEntryChanged')->unsubscribe('Stock','reserveEntryChange');
             $this->query("UPDATE stock_entries SET product_reserved = 0, product_awaiting = 0");
         }
@@ -534,12 +534,14 @@ class Stock extends Catalog {
             $this->reserveTaskRemove($doc);
             $this->reserveCountUpdate();
         }
+        return true;
     }
 
     public function reserveEntryChange( $doc_entry_id,$doc ){
         if( isset($doc->doc_status_id) && $doc->doc_status_id==2 ){
             $this->reserveCountUpdate();
         }
+        return true;
     }
 
     public function reserveListFetch(int $offset=0, int $limit=0, string $sortby='cstamp', string $sortdir='DESC', array $filter = null) {
