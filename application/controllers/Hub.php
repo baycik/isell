@@ -156,7 +156,7 @@ class Hub extends CI_Controller{
                 break;
             case 'object':
                 $var= trim($var, "\"");
-                $result= json_decode( $var,false );
+                $result= json_decode( $var,false ); 
                 if( json_last_error()!=JSON_ERROR_NONE ){
                     $var=stripslashes($var);
                     $result= json_decode( $var,false );
