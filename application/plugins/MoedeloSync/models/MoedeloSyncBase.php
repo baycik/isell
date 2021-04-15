@@ -74,6 +74,9 @@ class MoedeloSyncBase extends Catalog{
             die(curl_error($curl));
         }
         curl_close($curl);
+        if( $httpcode==500 ){
+            echo $result;
+        }
         return (object)[
             'httpcode'=>$httpcode,
             'response'=>$result
