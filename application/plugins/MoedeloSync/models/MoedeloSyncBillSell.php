@@ -40,7 +40,46 @@ class MoedeloSyncBillSell extends MoedeloSyncBase{
      * Inserts new record on remote
      */
     public function remoteInsert( $local_id, $remote_id, $entry_id ){
+        if( $this->remoteSearchForDuplicates( $local_id, $remote_id, $entry_id ) ){
+            return true;
+        }
         return parent::remoteInsert($local_id, $remote_id, $entry_id);
+    }
+        
+    private function remoteSearchForDuplicates( $local_id, $remote_id, $entry_id ){
+        $local_doc=$this->localGet($local_id);
+        $request=[
+            'number'=>$local->Number,
+            'kontragentId'=>$local->KontragentId,
+        ];
+        $response = $this->apiExecute($this->doc_config->remote_function, 'GET', $request);
+        $remote_duplicate=null;
+        foreach( $response->response->ResourceList as $remote_doc ){
+            if( $local_doc->Sum == $remote_doc->Sum){
+                $remote_duplicate=$remote_doc;
+            }
+        }
+        if( $remote_duplicate ){
+            $remote_id=$remote_duplicate->Id;
+            $remote_hash=$this->remoteHashCalculate($remote_duplicate);
+            $sql_clear="DELETE 
+                FROM 
+                    plugin_sync_entries 
+                WHERE 
+                    remote_id='$remote_id'
+                    AND sync_destination='{$this->doc_config->sync_destination}'";
+            $sql_link="UPDATE 
+                    plugin_sync_entries 
+                SET 
+                    remote_hash='$remote_hash',
+                    remote_id='$remote_id'
+                WHERE 
+                    entry_id=$entry_id";
+            $this->query($sql_clear);
+            $this->query($sql_link);
+            return true;
+        }
+        return false;
     }
     /**
      * Updates existing record on remote
@@ -77,7 +116,7 @@ class MoedeloSyncBillSell extends MoedeloSyncBase{
         $check="{$entity->Number};{$DocDate};{$entity->KontragentId};{$entity->Sum};";
         //echo "remote check-$check";
         return md5($check);
-    }
+    }    
     /**
      * 
      * @param type $local_id
@@ -180,7 +219,7 @@ class MoedeloSyncBillSell extends MoedeloSyncBase{
      * Deletes existing record on local
      */
     public function localDelete( $local_id, $remote_id, $entry_id ){
-        $this->remoteInsert( $local_id, $remote_id, $entry_id );
+        //$this->remoteInsert( $local_id, $remote_id, $entry_id );
     }
 
 //    protected function localHashCalculate( $entity ){
