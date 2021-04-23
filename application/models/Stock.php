@@ -331,31 +331,24 @@ class Stock extends Catalog {
     }
 
     private function importInTable($table, $src, $trg, $filter, $label) {
-        $set = [];
         $target = [];
         $source = [];
         for ($i = 0; $i < count($trg); $i++) {
             if (strpos($filter, "/{$trg[$i]}/") !== false && !empty($src[$i])) {
                 $target[] = $trg[$i];
                 $source[] = $src[$i];
-                if ($trg[$i] != 'parent_id') {/* set parent_id only for new added rows */
-                    $set[] = "{$trg[$i]}=$src[$i]";
-                }
             }
         }
-        $target_list = implode(',', $target);
         $source_list = implode(',', $source);
-        
-        
-        
-        
         $import_list=$this->get_list("SELECT $source_list FROM imported_data WHERE label LIKE '%$label%'");
         foreach($import_list as $product){
+            $set_parent_id="";
             $set=[];
             foreach($target as $i=>$field){
-                //$set[]="$field='".$this->stripWhite($product->{$source[$i]})."'";
                 if( $field=='parent_id' ){
                     $value=$source[$i];
+                    $set_parent_id=",parent_id='$value'";
+                    continue;
                 } else {
                     $value=$this->stripWhite($product->{$source[$i]});
                 }
@@ -366,12 +359,8 @@ class Stock extends Catalog {
                 $set[]="$field='$value'";
             }
             $set_list = implode(',', $set);
-            $this->query("INSERT INTO $table SET $set_list ON DUPLICATE KEY UPDATE $set_list");
+            $this->query("INSERT INTO $table SET $set_list $set_parent_id ON DUPLICATE KEY UPDATE $set_list");
         }
-        
-        //$set_list = implode(',', $set);
-        //$this->query("INSERT INTO $table ($target_list) SELECT $source_list FROM imported_data WHERE label LIKE '%$label%' ON DUPLICATE KEY UPDATE $set_list");
-        //print("INSERT INTO $table ($target_list) SELECT $source_list FROM imported_data WHERE label='$label' ON DUPLICATE KEY UPDATE $set_list");
         return $this->db->affected_rows();
     }
 
