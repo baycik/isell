@@ -130,8 +130,8 @@ class Stock_price_list extends Catalog{
                 CEIL(CHAR_LENGTH(ru)/50) rows_occupied, 
 		product_quantity<>0 in_stock,
 		product_img,
-                REPLACE(FORMAT(GET_PRICE(se.product_code,'$pcomp_id',$dollar_ratio), 2), ',', '') product_price,
-                REPLACE(FORMAT(GET_SELL_PRICE(se.product_code,'$pcomp_id',$dollar_ratio), 2), ',', '') promo_product_price
+                REPLACE(FORMAT(GET_PRICE(se.product_code,'$pcomp_id','$dollar_ratio'), 2), ',', '') product_price,
+                REPLACE(FORMAT(GET_SELL_PRICE(se.product_code,'$pcomp_id','$dollar_ratio'), 2), ',', '') promo_product_price
 	    FROM
 		stock_entries se
 		    JOIN
