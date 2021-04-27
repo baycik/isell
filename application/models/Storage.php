@@ -143,6 +143,9 @@ class Storage extends CI_Model {
 	    case IMAGETYPE_GIF:
 		$src = imagecreatefromgif($path);
 		break;
+	    case IMAGETYPE_WEBP:
+		$src = imagecreatefromwebp($path);
+		break;
 	    default :
 		die("unknown image type");
 		break;
