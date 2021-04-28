@@ -163,7 +163,7 @@ class PrefOld {
         }
         if( $counter_increase ){
             $pref_int=$counter->pref_int+1;
-            $modified_year= substr($counter->data['modified_at'], 0, 4);
+            $modified_year= substr($counter->data['modified_at']??'', 0, 4);
             if( $modified_year!=date("Y") ){
                 $pref_int=1;
             }
@@ -175,9 +175,9 @@ class PrefOld {
     public function counterGet( string $counter_name, int $counter_acomp_id ){
         $counter=$this->Base->get_row("SELECT * FROM pref_list WHERE pref_name='$counter_name' AND active_company_id='$counter_acomp_id'");
         if( !$counter ){
-            return null;
+            return (object)['data'=>[]];
         }
-        $counter['data']= json_decode($counter['pref_value'],true);
+        $counter['data']= json_decode($counter['pref_value'],true)??[];
         return (object) $counter;
     }
     

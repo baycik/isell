@@ -83,8 +83,8 @@ class DocumentItems extends DocumentCore{
     
     protected function footerGet(){
         $this->entriesTmpCreate();
-	$use_total_as_base=(bool) $this->Hub->pref('use_total_as_base');
-	if($use_total_as_base){
+	//$use_total_as_base=(bool) $this->Hub->pref('use_total_as_base');
+	//if($use_total_as_base){
 	    $sql="SELECT
 		    ROUND(SUM(weight),2) total_weight,
 		    ROUND(SUM(volume),2) total_volume,
@@ -94,9 +94,9 @@ class DocumentItems extends DocumentCore{
 		    SUM(ROUND(product_quantity*self_price,2)) self,
 		    @curr_symbol curr_symbol
 		FROM tmp_doc_entries";
-	} else {
+	//} else {
 	    
-	}
+	//}
 
 	return $this->get_row($sql);
     }
