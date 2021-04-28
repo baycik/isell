@@ -175,7 +175,7 @@ class PrefOld {
     public function counterGet( string $counter_name, int $counter_acomp_id ){
         $counter=$this->Base->get_row("SELECT * FROM pref_list WHERE pref_name='$counter_name' AND active_company_id='$counter_acomp_id'");
         if( !$counter ){
-            return (object)['data'=>[]];
+            return (object)['data'=>[],'pref_int'=>0];
         }
         $counter['data']= json_decode($counter['pref_value'],true)??[];
         return (object) $counter;
@@ -190,6 +190,8 @@ class PrefOld {
         $counter_data=[
             'counter_title'=>$counter_title
         ];
+        
+        print_r($counter_data);
         return $this->counterUpdate($counter_name, $counter_acomp_id, $counter_data, 1);
     }
     

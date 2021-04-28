@@ -98,9 +98,9 @@ class Pref extends Catalog {
     public function counterGet( string $counter_name, int $counter_acomp_id ){
         $counter=$this->get_row("SELECT * FROM pref_list WHERE pref_name='$counter_name' AND active_company_id='$counter_acomp_id'");
         if( !$counter ){
-            return (object)['data'=>[]];
+            return (object)['data'=>[],'pref_int'=>0];
         }
-        $counter->data= json_decode($counter->pref_value??'{}',true);
+        $counter->data= json_decode($counter->pref_value,true)??[];
         return $counter;
     }
     
