@@ -265,7 +265,9 @@ class DocumentItems extends DocumentCore{
 	$Document2=$this->Hub->bridgeLoad('Document');
 	$delete_ok=$Document2->deleteEntry($ids_arr);
         $Events=$this->Hub->load_model("Events");
-        $Events->Topic('documentEntryChanged')->publish($ids_arr,$this->_doc);
+        foreach($ids_arr[0] as $entry_id){
+            $Events->Topic('documentEntryChanged')->publish($entry_id,$this->_doc);
+        }
         return $delete_ok;
     }
     
