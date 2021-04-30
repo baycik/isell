@@ -109,7 +109,5 @@ class DocumentHistory extends PluginBase{
             $days=$this->plugin_settings->history_days??30;
             $this->query("DELETE FROM plugin_doc_history_list WHERE DATEDIFF(NOW(),entry_stamp)>$days");
         }
-        
     }
-
 }
