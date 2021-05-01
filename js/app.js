@@ -528,6 +528,7 @@ App.chatCheck=function(){
         var mode='';
         if( location.href.match(/(localhost)|(127.0.0.1)/) && !localStorage.getItem('executeTasks') ){
             mode='skip_tasks';//do not execute tasks on developing
+            App.renderTpl('chat_panel',{count:0});
             return false;
         }
 	$.get('Chat/checkNew',{mode:mode},function(resp){
