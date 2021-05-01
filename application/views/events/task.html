@@ -55,7 +55,7 @@
 			autoedit: true,
 			enableCellNavigation: true,
 			enableFilter: true,
-			multiSelect: false,
+			multiSelect: true,
 			url: 'Task/taskListFetch/'
 		    }
 		};
@@ -86,17 +86,18 @@
 		    if (!confirm("Удалить выделенные задания?")) {
 			return;
 		    }
-		    var row_data=Task.grid.getDataItem(selected_rows[0]);
-		    var event_id = row_data.event_id;
-
-		    $.post('Events/eventDelete/'+event_id, function (ok) {
-			if (ok * 1) {
-			    App.flash("Задание удалено");
-			    Task.grid.reload();
-			} else {
-			    App.flash("Задание не удалено");
-			}
-		    });
+                    for (var i in selected_rows) {
+			var row_data=Task.grid.getDataItem(selected_rows[i]);
+			var event_id = row_data.event_id;
+                        $.post('Events/eventDelete/'+event_id, function (ok) {
+                            if (ok * 1) {
+                                App.flash("Задание удалено");
+                                Task.grid.reload();
+                            } else {
+                                App.flash("Ошибка удаления задания");
+                            }
+                        });
+		    }
 		},
 		entryCreate: function () {
 		    var fvalue = {event_label:'-TASK-'};
