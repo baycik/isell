@@ -390,22 +390,15 @@ class Stock extends Catalog {
     
     private function downloadTaskAdd($product_code,$image_url,$filename){
         $this->Hub->load_model('Events');
-        $this->Hub->Events->eventDeleteDocumentTasks($doc->doc_id);
         $user_id=$this->Hub->svar('user_id');
-        if( $doc->doc_type==1 ){
-            $day_limit=$this->Hub->pref('reserved_limit');
-        } else {
-            $day_limit=$this->Hub->pref('awaiting_limit');
-        }
-        $stamp=time();
-
+        
         $name="Скачивание изображения";
         $description="Скачивание изображения для $product_code";
         $event=[
             'event_name'=>$name,
             'event_status'=>'undone',
             'event_label'=>'-TASK-',
-            'event_date'=>date("Y-m-d H:i:s",$stamp),
+            'event_date'=>date("Y-m-d H:i:s",time()),
             'event_descr'=>$description
         ];
         $event_id=$this->Hub->Events->eventCreate($event);
