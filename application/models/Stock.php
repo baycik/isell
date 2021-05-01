@@ -364,7 +364,6 @@ class Stock extends Catalog {
                 if( $field=='product_img' ){
                     $image_url=$value;
                     $filename=(microtime(1)*1000).'.'.(pathinfo($value)['extension']??'');
-                    $this->downloadTaskAdd($product_code,$image_url,$filename);
                     $value=$filename;
                 }
                 $set[]="$field='$value'";
@@ -381,6 +380,9 @@ class Stock extends Catalog {
             }
             if( $this->db->affected_rows()>0 ){
                 $affected_rows++;
+                if( $image_url ){
+                    $this->downloadTaskAdd($product_code,$image_url,$filename);
+                }
             }
         }
         return $affected_rows;
