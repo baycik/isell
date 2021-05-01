@@ -314,23 +314,23 @@ class Stock extends Catalog {
         return implode(',', $set);
     }
 
-    public $import = ['label' => 'string', 'source' => 'raw', 'target' => 'raw', 'parent_id' => 'int'];
+    public $import = ['label' => 'string', 'source' => 'raw', 'target' => 'raw', 'parent_id' => 'int', 'only_update'=>'bool', 'move_to_category'=>'bool'];
 
-    public function import($label, $source, $target, $parent_id) {
+    public function import( $label, $source, $target, $parent_id, $only_update, $move_to_category) {
         $source = array_map('addslashes', $source);
         $target = array_map('addslashes', $target);
         if ($parent_id) {
             $source[] = $parent_id;
             $target[] = 'parent_id';
         }
-        $this->importInTable('prod_list', $source, $target, '/product_code/ru/ua/en/product_spack/product_bpack/product_weight/product_volume/product_unit/analyse_origin/product_barcode/analyse_type/analyse_brand/analyse_class/product_article/', $label);
-        $this->importInTable('price_list', $source, $target, '/product_code/sell/buy/curr_code/label/', $label);
-        $this->importInTable('stock_entries', $source, $target, '/product_code/party_label/parent_id/', $label);
+        $this->importInTable('prod_list', $source, $target, $only_update, $move_to_category, '/product_code/ru/ua/en/product_spack/product_bpack/product_weight/product_volume/product_unit/analyse_origin/product_barcode/analyse_type/analyse_brand/analyse_class/product_article/', $label);
+        $this->importInTable('price_list', $source, $target, $only_update, $move_to_category, '/product_code/sell/buy/curr_code/label/', $label);
+        $this->importInTable('stock_entries', $source, $target, $only_update, $move_to_category, '/product_code/party_label/parent_id/product_img/', $label);
         $this->query("DELETE FROM imported_data WHERE label LIKE '%$label%' AND {$source[0]} IN (SELECT product_code FROM stock_entries)");
         return $this->db->affected_rows();
     }
 
-    private function importInTable($table, $src, $trg, $filter, $label) {
+    private function importInTable($table, $src, $trg, $only_update, $move_to_category, $filter, $label) {
         $target = [];
         $source = [];
         for ($i = 0; $i < count($trg); $i++) {
@@ -343,6 +343,7 @@ class Stock extends Catalog {
         $import_list=$this->get_list("SELECT $source_list FROM imported_data WHERE label LIKE '%$label%'");
         foreach($import_list as $product){
             $set_parent_id="";
+            $image_url="";
             $set=[];
             foreach($target as $i=>$field){
                 if( $field=='parent_id' ){
@@ -356,10 +357,27 @@ class Stock extends Catalog {
                     continue 2;
                 }
                 $value= addslashes($value);
+                if( $field=='product_code' ){
+                    $product_code="$value";
+                }
+                if( $field=='product_img' ){
+                    $filename=microtime(1);
+                    $Storage=$this->Hub->load_model('Storage');
+                    $Storage->download('dynImg',$value,$filename);
+                    $value=$filename;
+                }
                 $set[]="$field='$value'";
             }
             $set_list = implode(',', $set);
-            $this->query("INSERT INTO $table SET $set_list $set_parent_id ON DUPLICATE KEY UPDATE $set_list");
+            if( $move_to_category ){
+                $set_list.=$set_parent_id;
+                $set_parent_id="";
+            }
+            if( $only_update ){
+                $this->query("UPDATE $table SET $set_list WHERE product_code='$product_code'");
+            } else {
+                $this->query("INSERT INTO $table SET $set_list $set_parent_id ON DUPLICATE KEY UPDATE $set_list");
+            }
         }
         return $this->db->affected_rows();
     }

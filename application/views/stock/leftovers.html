@@ -270,9 +270,13 @@
 			{name: 'Продажа', field: 'sell'},
 			{name: 'Покупка', field: 'buy'},
 			{name: 'Валюта', field: 'curr_code'},
-			{name: 'Категория цен', field: 'label'}
+			{name: 'Категория цен', field: 'label'},
+			{name: 'URL изображения', field: 'product_img'}
 		    ];
-		    App.loadWindow('page/dialog/importer', {label: 'склад', fields_to_import: config}).progress(function (status, fvalue, Importer) {
+                    var frm_tpl='Переносить в выбранную категорию: <input type="checkbox" name="move_to_category" data-skip="1" title="Переносить в категорию">&nbsp;&nbsp;&nbsp;';
+                    frm_tpl   +='Только обновлять: <input type="checkbox" name="only_update" data-skip="1" title="Только обновлять">';
+
+		    App.loadWindow('page/dialog/importer', {label: 'склад', fields_to_import: config,extra_html:frm_tpl}).progress(function (status, fvalue, Importer) {
 			if (status === 'submit') {
 			    fvalue.parent_id = Leftovers.parent_id;
 			    App.post("Stock/import/", fvalue, function (ok) {

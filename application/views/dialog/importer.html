@@ -241,9 +241,6 @@
         <button style="float:left;" type="submit">
             <img src="img/database.png" style="height: 90px;width: auto;" class="x-button-img"><div class="x-button-label">Импортировать</div>
         </button>
-        {{if extra_html}}
-            {{extra_html}}<hr>
-        {{/if}}
         {{fields_to_import}}
 	<select name="{{field}}" title="{{name}}" style="width:50px;">
 	    <option></option>
@@ -266,6 +263,10 @@
 	    <option>Q</option>
 	</select>
         {{/fields_to_import}}
+        {{if extra_html}}
+        <div style="clear: both;border-bottom: 1px solid #999;margin-top: 4px;margin-bottom: 4px"></div>
+            {{extra_html}}
+        {{/if}}
     </form>
 </div>
 <div style="clear: both;border-bottom: 1px solid #999;margin-top: 4px;"></div>

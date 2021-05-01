@@ -76,6 +76,18 @@ class Storage extends CI_Model {
 	return 'error' . $_FILES['upload_file']['error'];
     }
     
+    public function download($dir = '', $source, $filename){
+	if (!file_exists($this->storageFolder . "/" . $dir)) {
+	    mkdir($this->storageFolder . "/" . $dir,0777,true);
+	}
+        try{
+            set_time_limit(120);
+            return copy($source,$this->storageFolder . "/" . $dir . "/" . ($filename));
+        } catch (Exception $ex) {
+            return $ex->getMessage();
+        }
+    }
+    
     public function file_checksum($filename){
         $path=$this->storageFolder . "/" .$filename;
         return file_exists($path)&&!is_dir($path)?md5_file($path):0;
