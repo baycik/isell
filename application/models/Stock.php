@@ -331,6 +331,7 @@ class Stock extends Catalog {
     }
 
     private function importInTable($table, $src, $trg, $only_update, $move_to_category, $filter, $label) {
+        $affected_rows=0;
         $target = [];
         $source = [];
         for ($i = 0; $i < count($trg); $i++) {
@@ -361,9 +362,9 @@ class Stock extends Catalog {
                     $product_code="$value";
                 }
                 if( $field=='product_img' ){
-                    $filename=microtime(1);
-                    $Storage=$this->Hub->load_model('Storage');
-                    $Storage->download('dynImg',$value,$filename);
+                    $image_url=$value;
+                    $filename=(microtime(1)*1000).'.'.(pathinfo($value)['extension']??'');
+                    $this->downloadTaskAdd($product_code,$image_url,$filename);
                     $value=$filename;
                 }
                 $set[]="$field='$value'";
@@ -378,9 +379,96 @@ class Stock extends Catalog {
             } else {
                 $this->query("INSERT INTO $table SET $set_list $set_parent_id ON DUPLICATE KEY UPDATE $set_list");
             }
+            if( $this->db->affected_rows()>0 ){
+                $affected_rows++;
+            }
         }
-        return $this->db->affected_rows();
+        return $affected_rows;
     }
+    
+    private function downloadTaskAdd($product_code,$image_url,$filename){
+        $this->Hub->load_model('Events');
+        $this->Hub->Events->eventDeleteDocumentTasks($doc->doc_id);
+        $user_id=$this->Hub->svar('user_id');
+        if( $doc->doc_type==1 ){
+            $day_limit=$this->Hub->pref('reserved_limit');
+        } else {
+            $day_limit=$this->Hub->pref('awaiting_limit');
+        }
+        $stamp=time();
+
+        $name="Скачивание изображения";
+        $description="Скачивание изображения для $product_code";
+        $event=[
+            'event_name'=>$name,
+            'event_status'=>'undone',
+            'event_label'=>'-TASK-',
+            'event_date'=>date("Y-m-d H:i:s",$stamp),
+            'event_descr'=>$description
+        ];
+        $event_id=$this->Hub->Events->eventCreate($event);
+        $event_update=[
+            'event_program'=>json_encode([
+                'commands'=>[
+                    [
+                        'model'=>'Stock',
+                        'method'=>'downloadTaskExecute',
+                        'arguments'=>[$event_id,$user_id,$product_code,$image_url,$filename]
+                    ]
+                ]
+            ])
+        ];
+        if( $event_id ){
+            $this->Hub->Events->eventChange($event_id, $event_update);
+        }
+        return $event_id;
+    }
+    
+    public function downloadTaskExecute($event_id,$user_id,$product_code,$image_url,$filename){
+        $Storage=$this->Hub->load_model('Storage');
+        if( $Storage->download('dynImg',$image_url,$filename) ){
+            $this->Hub->load_model("Chat")->addMessage($user_id,"Изображение для $product_code скачано",true);
+        } else {
+            $this->Hub->load_model("Chat")->addMessage($user_id,"Ошибка скачивания изображения для $product_code",true);
+        }
+        $this->Hub->load_model("Events")->eventDelete($event_id);
+        return true;
+    }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
 
     public $productDelete = ['product_code' => 'string'];
 

@@ -84,8 +84,9 @@ class Storage extends CI_Model {
             set_time_limit(120);
             return copy($source,$this->storageFolder . "/" . $dir . "/" . ($filename));
         } catch (Exception $ex) {
-            return $ex->getMessage();
+            echo $ex->getMessage();
         }
+        return false;
     }
     
     public function file_checksum($filename){
