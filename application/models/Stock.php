@@ -409,6 +409,11 @@ class Stock extends Catalog {
                         'model'=>'Stock',
                         'method'=>'downloadTaskExecute',
                         'arguments'=>[$event_id,$user_id,$product_code,$image_url,$filename]
+                    ],
+                    [
+                        'model'=>'Events',
+                        'method'=>'eventDelete',
+                        'arguments'=>[$event_id]
                     ]
                 ]
             ])
@@ -426,7 +431,6 @@ class Stock extends Catalog {
         } else {
             $this->Hub->load_model("Chat")->addMessage($user_id,"Ошибка скачивания изображения для $product_code",true);
         }
-        $this->Hub->load_model("Events")->eventDelete($event_id);
         return true;
     }
     
