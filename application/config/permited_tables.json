@@ -1,7 +1,6 @@
 [
     {"table_name":"prod_list","table_title":"Справочник товаров","level":2,"editable":1},
     {"table_name":"price_list","table_title":"Справочник цен","level":2,"editable":1},
-    {"table_name":"stat_sell_analyse","table_title":"Стат. анализ продаж","level":4},
     {"table_name":"client_list","table_title":"Клиентская база","level":3},
     {"table_name":"discount_list","table_title":"Список скидок","level":3,"orderby":"label"},
     {"table_name":"log_list","table_title":"Лог","level":3,"orderby":"entry_id DESC"},
