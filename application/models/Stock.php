@@ -1031,7 +1031,7 @@ class Stock extends Catalog {
     }
     
     protected function matchesListCreateTemporary( $where ){
-        $result_window_size=3000;
+        $result_window_size=5000;
         $usd_ratio=$this->Hub->pref('usd_ratio');
         $pcomp_id=$this->Hub->pcomp('company_id');
         $price_label=$this->Hub->pcomp('price_label');
