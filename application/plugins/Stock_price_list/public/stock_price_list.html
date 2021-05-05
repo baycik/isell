@@ -143,7 +143,7 @@
                         }
                     }
                 }
-                if(App.price_list.deployment_data){
+                if(App.price_list.deployment_data.deployment){
                     msg += "\nВыбранная категория цен: " + (App.price_list.deployment_data.deployment.price_label || '"без категории"');
                     msg += "\nКурс доллара: " + (App.price_list.deployment_data.deployment.usd_ratio || '"базовый"');
                 }
