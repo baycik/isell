@@ -122,7 +122,6 @@ class Stock_price_list extends Catalog{
 	    return $block;
 	}
 	$pcomp_id=$this->Hub->pcomp('company_id');
-	$dollar_ratio=$this->Hub->pref('usd_ratio');
 	$main_curr_code=$this->Hub->acomp('curr_code');
         $sql="SELECT
 		se.product_code,
@@ -130,8 +129,8 @@ class Stock_price_list extends Catalog{
                 CEIL(CHAR_LENGTH(ru)/50) rows_occupied, 
 		product_quantity<>0 in_stock,
 		product_img,
-                REPLACE(FORMAT(GET_PRICE(se.product_code,'$pcomp_id','$dollar_ratio'), 2), ',', '') product_price,
-                REPLACE(FORMAT(GET_SELL_PRICE(se.product_code,'$pcomp_id','$dollar_ratio'), 2), ',', '') promo_product_price
+                REPLACE(FORMAT(GET_PRICE(se.product_code,'$pcomp_id','$this->usd_ratio'), 2), ',', '') product_price,
+                REPLACE(FORMAT(GET_SELL_PRICE(se.product_code,'$pcomp_id','$this->usd_ratio'), 2), ',', '') promo_product_price
 	    FROM
 		stock_entries se
 		    JOIN
@@ -198,6 +197,11 @@ class Stock_price_list extends Catalog{
 	    $this->price_label=$deployment['deployment']->price_label;
 	} else {
 	    $this->price_label='';
+	}
+	if( !empty($deployment['deployment']->usd_ratio) ){
+	    $this->usd_ratio=$deployment['deployment']->usd_ratio;
+	} else {
+	    $this->usd_ratio=$this->Hub->pref('usd_ratio');
 	}
 	
 	$this->Hub->load_model('Storage');
