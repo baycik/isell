@@ -225,7 +225,7 @@ class Stock_price_list extends Catalog{
 		'price_blocks'=>$price_blocks,
                 'price_table'=>$price_table,
 		'pcomp_label'=>$this->Hub->pcomp('label'),
-		'dollar_ratio'=>$this->Hub->pref('usd_ratio'),
+		'dollar_ratio'=>$this->usd_ratio,
 		'date'=>date('d.m.Y'),
                 'acomp_all_details'=>$this->acompGetAll()
 	    ]
