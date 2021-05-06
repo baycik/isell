@@ -1,5 +1,5 @@
 <?php
-/* Group Name: Результаты деятельности
+/* Group Name: Склад
  * User Level: 2
  * Plugin Name: Рассчет продажной цены
  * Plugin URI: 
