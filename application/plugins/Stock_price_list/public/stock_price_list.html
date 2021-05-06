@@ -284,21 +284,20 @@
                 <!--{{items}}-->
                 <!--{{if type|equals>category}}-->
                 <li data-id="{{id}}" data-type="category" title="{{path}}">
-                    <div style="float:right">Каталог:
+                    <div style="float:right">
+                    Каталог:
                         {{if catalog_view|bool}}
                         <input name="catalog_view" type="checkbox" checked="checked">
                         {{else}}
                         <input name="catalog_view" type="checkbox">
                         {{/if}}
-                    </div>
-                    <div style="float:right">Скрыть:
+                    Скрыть:
                         {{if hidden|bool}}
                         <input name="hidden" type="checkbox" checked="checked">
                         {{else}}
                         <input name="hidden" type="checkbox">
                         {{/if}}
-                    </div>
-                    <div style="float:right">Все картинки:
+                    Все картинки:
                         {{if allimg|bool}}
                         <input name="allimg" type="checkbox" checked="checked">
                         {{else}}
@@ -311,14 +310,18 @@
                 <!--{{else}}-->
                 <li data-type="{{type}}" class="{{type}}">
                     <img src="img/edit-16.png" class="edit_pencil" onclick="App.price_list.itemEdit(this)"> 
-                    <div style="float:right">Скрыть:
+                    <div style="float:right;font-size: 12px;height: 30px">Скрыть:
                         {{if hidden|bool}}
                         <input name="hidden" type="checkbox" checked="checked">
                         {{else}}
                         <input name="hidden" type="checkbox">
                         {{/if}}
                     </div>
+                    <!--{{if type|equals>page}}-->
+                    <div style="clear: both;text-align: center">{{text}}</div>
+                    <!--{{else}}-->
                     <span>{{text}}</span>
+                    <!--{{/if}}-->
                 </li>
                 <!--{{/if}}-->
                 <!--{{/items}}-->
