@@ -317,11 +317,10 @@
                         <input name="hidden" type="checkbox">
                         {{/if}}
                     </div>
-                    <!--{{if type|equals>page}}-->
-                    <div style="clear: both;text-align: center">{{text}}</div>
-                    <!--{{else}}-->
+                    {{if type|equals>page}}
+                    <div style="clear: both;"></div>
+                    {{/if}}
                     <span>{{text}}</span>
-                    <!--{{/if}}-->
                 </li>
                 <!--{{/if}}-->
                 <!--{{/items}}-->
