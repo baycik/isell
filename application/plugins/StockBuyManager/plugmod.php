@@ -11,7 +11,7 @@ EOT;
 $before[]=<<<EOT
 EOT;
 $after[]=<<<EOT
-\n  <div title="Satın alma idarecisi" href="StockBuyManager/views/stock_buy_manager_main.html" ></div>
+\n  <div title="Менеджер заказов" href="StockBuyManager/views/stock_buy_manager_main.html" ></div>
 EOT;
     
 $filename[]=<<<EOT
@@ -30,9 +30,9 @@ $after[]=<<<EOT
 		var params = Leftovers.table.currentParamsGet();
 		$.post("StockBuyManager/orderFromStock/", params, function (ok) {
 		    if (ok * 1) {
-			App.flash("Sımarış satın alma idarecisine yüklendi");
+			App.flash("Загружено в менеджер заказов");
 		    } else {
-			App.flash("Sımarış yaratılmadı");
+			App.flash("Заказ не создан");
 		    }
 		});
 	    }
