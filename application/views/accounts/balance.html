@@ -1,4 +1,4 @@
-<script type="text/javascript" src="js/jquery-easyui-1.5.1/treegrid-dnd.js"></script>
+<script type="text/javascript" src="js/jquery-easyui-1.9.4/treegrid-dnd.js"></script>
 <script type="text/javascript">
     /* global App */
     App.page_accounts_balance = {
@@ -74,11 +74,14 @@
     //CRUD
     App.page_accounts_balance.CRUD = {
 	create: function (parent_id, label) {
-	    $.post('AccountsCore/accountBalanceTreeCreate/',{parent_id:parent_id,label:label},function (xhr) {
-		if (xhr.responseText && xhr.responseText.split(',') && xhr.responseText.split(',')[0] * 1) {
+	    $.post('AccountsCore/accountBalanceTreeCreate/',{parent_id:parent_id,label:label},function (resp) {
+                let codes=resp.split(',');
+                let branch_id=codes[0];
+                let acc_code=codes[1];
+		if ( branch_id ) {
 		    var data = [{
-			    branch_id: xhr.responseText.split(',')[0],
-			    acc_code: xhr.responseText.split(',')[1],
+			    branch_id: branch_id,
+			    acc_code: acc_code,
 			    label: label,
 			    state: '',
 			    is_leaf: 1

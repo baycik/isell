@@ -5,7 +5,7 @@
 	fdate: null,
 	acc_props: {},
 	initAfter: function () {
-	    this.date.initRange();
+	    this.date.init();
             this.fav.init();
 	    App.handler.progress(function(status){
 		if( status==="activeCompanySelected" ){
@@ -116,7 +116,16 @@
 		}
 	    });
 	},
-	date:{
+        date:{
+            init:function(){
+                var now=new Date();
+		Ledger.idate=App.toIso(new Date(now.getFullYear(), now.getMonth()-12-1, 1));
+		Ledger.fdate=App.toIso(new Date(now.getFullYear(), now.getMonth()-12+1, 0));
+                $("#account_ledger_idate").val(Ledger.idate);
+                $("#account_ledger_fdate").val(Ledger.fdate);
+            }
+        },
+/*	date:{
 	    calendarChanged:function(newVal,which){
 		if( Ledger[which]!==newVal && /\d\d.\d\d.\d\d\d\d/.test(newVal) && !Ledger.date.suppress ){
 		    Ledger[which]=newVal;
@@ -168,24 +177,25 @@
 		    },500);
 		}
 	    }
-	},
+	},*/
 	onListLoaded: function () {
-	    $("#account_ledger_ibal").html(App.formatNum(Ledger.sub_totals.ibal||'-') + ' ' + Ledger.acc_props.curr_symbol);
-	    $("#account_ledger_fbal").html(App.formatNum(Ledger.sub_totals.fbal||'-') + ' ' + Ledger.acc_props.curr_symbol);
+	    $("#account_ledger_ibal").html(App.formatNum(Ledger.sub_totals.ibal)||'-' + ' ' + Ledger.acc_props.curr_symbol);
+	    $("#account_ledger_fbal").html(App.formatNum(Ledger.sub_totals.fbal)||'-' + ' ' + Ledger.acc_props.curr_symbol);
 	    App.renderTpl('Ledger_acc_props',Ledger.acc_props);
             Ledger.fav.updateSelected(Ledger.sub_totals.fbal);
 	},
 	list: {
 	    loader: function (param, success, error) {
+                Ledger.idate=$("#account_ledger_idate").val();
+                Ledger.fdate=$("#account_ledger_fdate").val();
+                
 		if( Ledger.current_acc_code && Ledger.idate && Ledger.fdate ){
 		    Ledger.current_page=param.page;
 		    Ledger.current_rows=param.rows;
-		    
-		    
 		    var params={
 			acc_code:Ledger.current_acc_code,
-			idate:App.toIso(Ledger.idate),
-			fdate:App.toIso(Ledger.fdate),
+			idate:Ledger.idate,
+			fdate:Ledger.fdate,
 			page:Ledger.current_page,
 			rows:Ledger.current_rows,
 			filterRules:param.filterRules
@@ -366,10 +376,8 @@
 </script>
 <style>
     #Ledger_acc_props{
-	width:200px;
 	min-height:60px;
 	float:left;
-	border-right: 1px #999 solid;
     }
     #ledger_tnames a{
 	-display: none;
@@ -378,90 +386,94 @@
 	-display: inline;
     }
 </style>
-<div style="width:180px;display: inline-block;vertical-align: top;border-right:1px solid #999;" class="transp60">
-    <div id="ledger_favorites" class="covert">
-	<img src="img/heart2.png" style="width:16px;height:16px;margin-bottom: 2px;"> Избранные счета
-	{{favs}}
-        <div class="left_label" onclick="Ledger.fav.select(this)" data-code="{{acc_code}}" style="min-height: 40px"><div class="tag">{{acc_code}}</div> {{label}} <br><span style="color:#058">{{balance|blank|format}}</span></div>
-	{{/favs}}
-    </div>
-    <div id="ledger_tnames" class="covert">
-	<img src="img/edit_add.png" style="width:16px;height:16px;margin-bottom: 2px;"> Операции по счету
-	{{tnames}}
-        <button style="text-align: left;margin-bottom: 3px;width: 177px" onclick="Ledger.addTransaction(this)" data-trans-type="{{trans_type}}" data-trans-name="{{trans_name|undollar}}"><span class="tag" style="font-weight: normal">{{trans_type}}</span><br>{{trans_name}}</button>
-	{{/tnames}}
-	<div><a href="javascript:Ledger.tnames.show()"><img src="img/edit-16.png"> Изменить список</a></div>
-    </div>
-</div>
 
-<div style="display: inline-block;margin-left:-4px;padding-left:3px">
+<div style="display:grid;grid-template-columns:200px 800px;gap:5px">
+    <div>
+        <div id="ledger_favorites" class="covert transp60" style="padding-bottom: 1px;margin-bottom: 5px;">
+            <div style="padding: 5px;background-color: white;margin-bottom: 5px;">
+                <img src="img/heart2.png" style="width:16px;height:16px;"> Избранные счета
+            </div>
+            {{favs}}
+            <div class="left_label" onclick="Ledger.fav.select(this)" data-code="{{acc_code}}" style="min-height: 40px;">
+                <div class="tag">{{acc_code}}</div> {{label}} <br><span style="color:#058">{{balance|blank|format}}</span>
+            </div>
+            {{/favs}}
+        </div>
+        <div id="ledger_tnames" class="covert transp60">
+            <div style="padding: 5px;background-color: white;margin-bottom: 5px;">
+                <img src="img/bolt.png" style="width:16px;height:16px;"> Операции по счету
+                <div style="float: right"><a href="javascript:Ledger.tnames.show()" title="Изменить список"><img src="img/Edit-24.png" style="width:16px"></a></div>
+            </div>
+            {{tnames}}
+            <button style="text-align: left;margin-bottom: 5px;width: 197px" onclick="Ledger.addTransaction(this)" data-trans-type="{{trans_type}}" data-trans-name="{{trans_name|undollar}}">
+                <span class="tag" style="font-weight: normal">{{trans_type}}</span><br>{{trans_name}}
+            </button>
+            {{/tnames}}
+            
+        </div>
+    </div>
+    <div>
+        
     <div id="Ledger_acc_props" class="covert">
-	<div class="tag" style="font-size: 2.2em;float: left;margin-right: 2px;cursor: pointer" onclick="Ledger.showTree()" title="Выбрать другой счет">{{acc_code}}</div><span style="font-size: 1.2em;">{{label}}</span>
-	<div style="clear: both;padding-top: 2px;">
-	    <button onclick="Ledger.fav.toggle()" title="{{if is_favorite|equals>1}}Счет избранный{{else}}Добавить в избранное{{/if}}" class="{{if is_favorite|notequals>1}}transparent{{/if}}"><img src="img/heart2.png" style="width:16px;height:16px"></button>
-	    <button onclick="Ledger.showAccForm()" title="Свойства счета"><img src="img/edit-16.png"></button>
-	    <button onclick="Ledger.showTree()" title="Выбрать другой счет"><img src="img/settings.png"></button>
-	</div>
+	<div class="tag" style="font-size: 2.2em;margin-right: 2px;cursor: pointer;padding: 5px" onclick="Ledger.showTree()" title="Выбрать другой счет">{{acc_code}}</div>
+            <span style="font-size: 2.2em;">{{label}}</span>
+            <div style="clear: both;padding-top: 2px;">
+                <button onclick="Ledger.fav.toggle()" title="{{if is_favorite|equals>1}}Счет избранный{{else}}Добавить в избранное{{/if}}" class="{{if is_favorite|notequals>1}}transparent{{/if}}"><img src="img/heart2.png" style="width:16px;height:16px"> избранный</button>
+                <button onclick="Ledger.showAccForm()" title="Свойства счета"><img src="img/Edit-24.png" style="width:16px"> изменить</button>
+                <button onclick="Ledger.showTree()" title="Выбрать другой счет"><img src="img/settings.png"> выбрать</button>
+            </div>
+        </div>
+        <div style="text-align: right;padding-bottom: 3px;color: white;font-weight: bold;">
+            <div style="display: inline-block;padding: 7px;border-radius: 5px;" class="grn_grad" title="Начало периода">
+                <input id="account_ledger_idate" type="date" style="width:110px" onchange="$('#account_ledger_dg').datagrid('reload')" />
+                <div id="account_ledger_ibal"></div>
+            </div>
+            <div style="display: inline-block;padding: 7px;border-radius: 5px;" class="blue_grad" title="Конец периода">
+                <input id="account_ledger_fdate" type="date" style="width:110px" onchange="$('#account_ledger_dg').datagrid('reload')"  />
+                <div id="account_ledger_fbal"></div>
+            </div>
+        </div>
+        <div style="clear:both">
+            <div style="float: left;font-weight: bold;padding-top: 8px;">
+                <img src="img/table16.png" style="width:16px;height: 16px;"> Движения по счету
+            </div>
+            <div style="float: right">
+                <span class="icon-24 icon-create" title="Добавить" onclick="Ledger.list.rowCreate();"> </span>
+                <span class="icon-24 icon-change" title="Изменить" onclick="Ledger.list.rowUpdate();"> </span>
+                <span class="icon-24 icon-delete" title="Удалить" onclick="Ledger.list.rowDelete();"> </span>
+                <span class="icon-24 icon-tablefilter" title="Фильтр таблицы" onclick="Ledger.list.toggleFilter()"> </span>
+                <span class="icon-24 icon-refresh" title="Обновить" onclick="$('#account_ledger_dg').datagrid('reload')"> </span>
+                <span class="icon-24" style="background-image: url(img/file_download.png);background-repeat: no-repeat" title="Скачать таблицу" onclick="Ledger.list.out('.xlsx');"> </span>
+                <span class="icon-24 icon-print" title="Напечатать" onclick="Ledger.list.out('.print');"> </span>
+            </div>
+        </div>
+        <table id="account_ledger_dg" class="easyui-datagrid" style="width:810px;"
+               data-options="
+               idField:'trans_id',
+               loader:Ledger.list.loader,
+               rowStyler:Ledger.list.rowStyler,
+               pagination:true,
+               pageSize:25,
+               pageList:[25,50,100,500,1000],
+               singleSelect:true,
+               remoteFilter:true,
+               onSelect:Ledger.list.onSelect,
+               onDblClickRow:Ledger.list.rowUpdate,
+               onLoadSuccess:function(){$('#account_ledger_dg').datagrid('resize');}">
+            <thead>
+                <tr>
+                    <th data-options="width:25,field:'editable',align:'center',formatter:Ledger.list.rowTooltip"></th>
+                    <th data-options="width:25,field:'trans_status',align:'center',formatter:Ledger.list.rowPayTooltip"></th>
+                    <th data-options="width:65,field:'trans_date'">Дата</th>
+                    <th data-options="width:160,field:'company_name'">Компания</th>
+                    <th data-options="width:220,field:'description'">Пояснение</th>
+                    <th data-options="width:85,field:'debit',align:'right',formatter:Ledger.list.calculate">Дебит</th>
+                    <th data-options="width:85,field:'credit',align:'right',formatter:Ledger.list.calculate">Кредит</th>
+                    <th data-options="width:85,field:'row_total',align:'right'">Остаток</th>
+                    <th data-options="width:27,field:'trans_type'"></th>
+                    <th data-options="width:30,field:'nick'"></th>
+                </tr>
+            </thead>
+        </table>
     </div>
-    <div style="text-align: right;padding-bottom: 3px;color: white;font-weight: bold;">
-	<div style="display: inline-block;margin: 10px;font-family: monospace">
-	    <input id="account_ledger_range" />
-	</div>
-	<div style="display: inline-block;padding: 5px;border-radius: 5px;" class="grn_grad" title="Начало периода">
-	    <input id="account_ledger_idate" class="easyui-datebox" style="width:110px" data-options="
-		   onChange:function(newVal){
-			Ledger.date.calendarChanged(newVal,'idate');
-		   }" />
-	    <div id="account_ledger_ibal"></div>
-	</div>
-	<div style="display: inline-block;padding: 5px;border-radius: 5px;" class="blue_grad" title="Конец периода">
-	    <input id="account_ledger_fdate" class="easyui-datebox" style="width:110px" data-options="
-		   onChange:function(newVal){
-			Ledger.date.calendarChanged(newVal,'fdate');
-		   }" />
-	    <div id="account_ledger_fbal"></div>
-	</div>
-    </div>
-    <div style="clear:both">
-	<div style="float: left;font-weight: bold;padding-top: 8px;">
-	    <img src="img/table16.png" style="width:16px;height: 16px;"> Движения по счету
-	</div>
-	<div style="float: right">
-	    <span class="icon-24 icon-create" title="Добавить" onclick="Ledger.list.rowCreate();"> </span>
-	    <span class="icon-24 icon-change" title="Изменить" onclick="Ledger.list.rowUpdate();"> </span>
-	    <span class="icon-24 icon-delete" title="Удалить" onclick="Ledger.list.rowDelete();"> </span>
-	    <span class="icon-24 icon-tablefilter" title="Фильтр таблицы" onclick="Ledger.list.toggleFilter()"> </span>
-	    <span class="icon-24 icon-refresh" title="Обновить" onclick="$('#account_ledger_dg').datagrid('reload')"> </span>
-	    <span class="icon-24" style="background-image: url(img/file_download.png);background-repeat: no-repeat" title="Скачать таблицу" onclick="Ledger.list.out('.xlsx');"> </span>
-	    <span class="icon-24 icon-print" title="Напечатать" onclick="Ledger.list.out('.print');"> </span>
-	</div>
-    </div>
-    <table id="account_ledger_dg" class="easyui-datagrid" style="width:810px;"
-	   data-options="
-	   idField:'trans_id',
-	   loader:Ledger.list.loader,
-	   rowStyler:Ledger.list.rowStyler,
-	   pagination:true,
-	   pageSize:25,
-	   pageList:[25,50,100,500,1000],
-	   singleSelect:true,
-	   remoteFilter:true,
-	   onSelect:Ledger.list.onSelect,
-	   onDblClickRow:Ledger.list.rowUpdate,
-	   onLoadSuccess:function(){$('#account_ledger_dg').datagrid('resize');}">
-	<thead>
-	    <tr>
-		<th data-options="width:25,field:'editable',align:'center',formatter:Ledger.list.rowTooltip"></th>
-		<th data-options="width:25,field:'trans_status',align:'center',formatter:Ledger.list.rowPayTooltip"></th>
-		<th data-options="width:65,field:'trans_date'">Дата</th>
-		<th data-options="width:160,field:'company_name'">Компания</th>
-		<th data-options="width:220,field:'description'">Пояснение</th>
-		<th data-options="width:85,field:'debit',align:'right',formatter:Ledger.list.calculate">Дебит</th>
-		<th data-options="width:85,field:'credit',align:'right',formatter:Ledger.list.calculate">Кредит</th>
-		<th data-options="width:85,field:'row_total',align:'right'">Остаток</th>
-		<th data-options="width:27,field:'trans_type'"></th>
-		<th data-options="width:30,field:'nick'"></th>
-	    </tr>
-	</thead>
-    </table>
 </div>
