@@ -149,7 +149,7 @@
 			{id: "product_quantity", field: "product_quantity", name: "Заказ", width: 80, sortable: true, formatter:Order.frm.selectedRow, editor: Slick.Editors.Integer, cssClass: 'slick-align-right'},
 			{id: "supply_need", field: "supply_need", name: "Потребность", width: 80, sortable: true, cssClass: 'slick-align-right'},
 			{id: "supply_reserve", field: "supply_reserve", name: "Резервы", width: 90, sortable: true, cssClass: 'slick-align-right'},
-			{id: "supply_allbills", field: "supply_allbills", name: "Все", width: 90, sortable: true, cssClass: 'slick-align-right'},
+			{id: "supply_notcommited", field: "supply_notcommited", name: "Не проведенные", width: 90, sortable: true, cssClass: 'slick-align-right'},
 			{id: "suggestion", field: "suggestion", name: "Варианты цен поставщиков", width: 900, sortable: true, formatter: Order.selector.make},
 			{id: "product_comment", field: "product_comment", name: "Пояснение", width: 120, sortable: true, editor: Slick.Editors.Text}
 		    ],
@@ -227,7 +227,7 @@
 		swap:function( row_index, supply_id ){
 		    var row=Order.grid.getDataItem(row_index);
 		    if( row.supply_id!==supply_id ){
-			Order.entryUpdate(row.entry_id, 'supply_id', supply_id).done(function () {
+			Order.entryUpdate(row.entry_id, 'supply_id', supply_id, row.product_code, supply_id).done(function () {
 			    Order.grid.reload();
 			});
 		    }
@@ -416,8 +416,8 @@
 	    <img src="img/table16.png" style="width:16px;height: 16px;"> Заказ
 	</div>
 	<div style="float: right;" class="x-stock-buy-manager-summary-tools">
-	    <span class="icon-24 icon-delete" title="Satırnı sil" data-action="entryDelete"> </span>
-	    <span class="icon-24 icon-refresh" title="Yanıla" data-action="reload"> </span> 
+	    <span class="icon-24 icon-delete" title="Удалить строку" data-action="entryDelete"> </span>
+	    <span class="icon-24 icon-refresh" title="Обновить" data-action="reload"> </span> 
 	</div>
 	<div id="supply_order_summary_ac" style="overflow-y: auto;clear: both;" class="covert">
 	    {{summary}}
@@ -425,12 +425,12 @@
 		<div class="accordion_panel" data-index="{{#}}">
 		    {{if supplier_company_id}}
 		    <div style="background: rgba(255,255,255,.6);padding: 3px;">Сумма заказа</div>
-		    <label>Toplam: <input name="summary_sum" value="{{summary_sum|blank>}}"></label>
+		    <label>Всего: <input name="summary_sum" value="{{summary_sum|blank>}}"></label>
 		    <div style="background: rgba(255,255,255,.6);padding: 3px;">Параметры заказа</div>
-		    <label>Acım м3: <span style="font-size:14px">{{if volume_more|more>0}}>{{/if}}</span><input name="summary_volume" value="{{summary_volume|blank>}}"></label>
-		    <label>Ağılıq м3: <span style="font-size:14px">{{if weight_more|more>0}}>{{/if}}</span><input name="summary_weight" value="{{summary_weight|blank>}}"></label>
+		    <label>Объем м3: <span style="font-size:14px">{{if volume_more|more>0}}>{{/if}}</span><input name="summary_volume" value="{{summary_volume|blank>}}"></label>
+		    <label>Вес м3: <span style="font-size:14px">{{if weight_more|more>0}}>{{/if}}</span><input name="summary_weight" value="{{summary_weight|blank>}}"></label>
 		    <div style="background: rgba(255,255,255,.6);padding: 3px;"> 
-		    <button style="width:180px;margin: 5px;text-align: left" data-supplier-company-id="{{supplier_company_id}}"><img src="img/docnew.png" style="width:24px;height: 24px;"> Sımarışnı yarat</button>
+		    <button style="width:180px;margin: 5px;text-align: left" data-supplier-company-id="{{supplier_company_id}}"><img src="img/docnew.png" style="width:24px;height: 24px;"> Сформировать заказ</button>
 		    </div>
 		    {{/if}}
 		</div>
@@ -450,7 +450,7 @@
                 <input type="checkbox" name="count_reserve">
             </label>
             <label>
-                <b>Все счета</b>
+                <b>Не проведенные</b>
                 <input type="checkbox" name="count_notcommited">
             </label>
         </div>

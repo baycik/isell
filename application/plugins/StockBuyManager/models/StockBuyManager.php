@@ -365,7 +365,7 @@ class StockBuyManager extends Catalog{
                         supply_leftover,
                         se.product_wrn_quantity-se.product_quantity supply_need,
                         SUM(IF(dl.doc_status_id=2,de.product_quantity,0)) supply_reserve,
-                        SUM(IF(dl.is_commited=0,de.product_quantity,0)) supply_allbills
+                        SUM(IF(dl.is_commited=0,de.product_quantity,0)) supply_notcommited
                     FROM 
                         supplier_list spl
                             JOIN
@@ -380,7 +380,7 @@ class StockBuyManager extends Catalog{
                         supply_leftover > 0
                         AND se.product_code IS NOT NULL 
                     GROUP BY supplier_id,product_code
-                    HAVING $count_all OR supply_need*$count_needed>0 OR supply_reserve*$count_reserve OR supply_allbills*$count_notcommited
+                    HAVING $count_all OR supply_need*$count_needed>0 OR supply_reserve*$count_reserve OR supply_notcommited*$count_notcommited
                     );";
         $this->query($sql_clear);
         $this->query($sql_prepare);
@@ -405,7 +405,7 @@ class StockBuyManager extends Catalog{
                 analyse_class,
                 supply_need,
                 supply_reserve,
-                supply_allbills,
+                supply_notcommited,
                 so.supply_id,
                 soc.supply_id suggested_supply_id,
                     CONCAT(
