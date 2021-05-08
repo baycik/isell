@@ -119,8 +119,8 @@
         date:{
             init:function(){
                 var now=new Date();
-		Ledger.idate=App.toIso(new Date(now.getFullYear(), now.getMonth()-12-1, 1));
-		Ledger.fdate=App.toIso(new Date(now.getFullYear(), now.getMonth()-12+1, 0));
+		Ledger.idate=App.toIso(new Date(now.getFullYear(), now.getMonth()-1, 1));
+		Ledger.fdate=App.toIso(new Date(now.getFullYear(), now.getMonth()+1, 0));
                 $("#account_ledger_idate").val(Ledger.idate);
                 $("#account_ledger_fdate").val(Ledger.fdate);
             }
