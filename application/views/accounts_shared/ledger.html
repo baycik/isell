@@ -262,8 +262,8 @@
 	    out:function( out_type ){
 		var params={
 		    acc_code:Ledger.current_acc_code,
-		    idate:App.toIso(Ledger.idate),
-		    fdate:App.toIso(Ledger.fdate),
+		    idate:Ledger.idate,
+		    fdate:Ledger.fdate,
 		    page:Ledger.current_page,
 		    rows:Ledger.current_rows,
 		    use_passive_filter:Ledger.data.passive_filter,
