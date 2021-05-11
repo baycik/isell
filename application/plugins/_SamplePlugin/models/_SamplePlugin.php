@@ -1,7 +1,7 @@
 <?php
 /* Group Name: Test
  * User Level: 1
- * Plugin Name: Test plugin
+ * Plugin Name: Sample plugin
  * Plugin URI: http://isellsoft.net
  * Version: 1.0
  * Description: Just template for cool plugin

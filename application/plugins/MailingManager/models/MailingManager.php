@@ -287,7 +287,8 @@ class MailingManager extends PluginBase {
         $active_company_id=$this->Hub->acomp('company_id');
         if( $phone ){
             $where="company_mobile LIKE '%$phone%' OR company_phone LIKE '%$phone%' ";
-        }if( $email ){
+        } else
+        if( $email ){
             $where="company_email LIKE '%$email%'";
         } else {
             $where = $this->recieverListFilterGet($reciever_list_id);
@@ -395,7 +396,7 @@ class MailingManager extends PluginBase {
             $contact_type = 'email';
         }
         if (preg_match("/^((8|\+7)[\- ]?)?(\(?\d{3}\)?[\- ]?)?[\d\- ]{7,10}$/", $contact)) {
-            $contact_type = 'mobile';
+            $contact_type = 'phone';
         }
         return $contact_type;
     }

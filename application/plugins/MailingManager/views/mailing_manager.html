@@ -174,7 +174,7 @@ App.mailing_manager=
                     }
                     if( response && response.error_log ){
                         var log=response.error_log.join("\n");
-                        alert(log);
+                        log && alert(log);
                     }
                     MessageList.batch.load();
                 });
@@ -343,17 +343,6 @@ App.mailing_manager=
             $('#mailing_manager_batch_create').click(function(e){
                 MessageList.batch.create();
             });
-            $("#PluginMailingManager_mailnew .delete-manual_reciever").on('click',function(){
-                var reciever_index = $(this).attr('data-reciever_index');
-                var result = [];
-                for(var i in MessageEditor.data.manual_reciever_list){
-                    if(i !== reciever_index){
-                        result.push(MessageEditor.data.manual_reciever_list[i]);
-                    }
-                }
-                MessageEditor.data.manual_reciever_list = result;
-                MessageEditor.renew();
-            });
             $('input[name="reciever_field"]').on('change',function(){
                 MessageEditor.checkRecieverCorrectness(this.value);
             });
@@ -391,9 +380,18 @@ App.mailing_manager=
             App.renderTpl('select[name=template_list]', params);
             App.renderTpl('select[name=reciever_list_id]', params);
             App.renderTpl('.reciever-list-tags', params);
-            MessageEditor.renderMessageBody();
             $("select[name=reciever_list_id]").val(MessageEditor.current_reciever_index);
-            
+            $("#PluginMailingManager_mailnew .delete-manual_reciever").on('click',function(){
+                var reciever_index = $(this).attr('data-reciever_index');
+                var result = [];
+                for(var i in MessageEditor.data.manual_reciever_list){
+                    if(i !== reciever_index){
+                        result.push(MessageEditor.data.manual_reciever_list[i]);
+                    }
+                }
+                MessageEditor.data.manual_reciever_list = result;
+                MessageEditor.renew();
+            });
         },
         renderView:function(){
             App.renderTpl("#PluginMailingManager_mailview",MessageEditor.message);
@@ -401,10 +399,11 @@ App.mailing_manager=
             $("#PluginMailingManager_mailview").show();
         },
         renew: function (){
+            MessageEditor.action = 'new';
+            MessageEditor.renderNew();
             window.frames['editor_iframe'].onload=function(){
                 MessageEditor.current_message_body = window.frames['editor_iframe'].getContent();
-                MessageEditor.action = 'new';
-                MessageEditor.renderNew();
+                MessageEditor.renderMessageBody();
             };
         },
         renderMessageBody: function(){
