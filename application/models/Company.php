@@ -240,17 +240,64 @@ class Company extends Catalog{
 	}
 	$Pref=$this->Hub->load_model("Pref");
 	$Stock=$this->Hub->load_model("Stock");
-	$sql_disct="SELECT
+	$sql_discount_cat="
+            (SELECT
+                cd.discount_id,
+                cd.analyse_brand,
+                cd.round_to,
+                cd.discount,
+                IF(cd.discount>1,ROUND(cd.discount*100-100,1),'') plus,
+                IF(cd.discount<1,ROUND(100-cd.discount*100,1),'') minus,
+		0 branch_id,
+		'*' label,
+                '/' path
+	    FROM
+		companies_discounts cd
+	    WHERE 
+                company_id=$passive_company_id
+                AND analyse_brand IS NULL
+		AND branch_id IS NULL)
+            
+            UNION
+            
+            (SELECT
+                cd.discount_id,
+                cd.analyse_brand,
+                cd.round_to,
+                cd.discount,
+                IF(cd.discount>1,ROUND(cd.discount*100-100,1),'') plus,
+                IF(cd.discount<1,ROUND(100-cd.discount*100,1),'') minus,
 		st.branch_id,
 		label,
-		ROUND(discount,3) discount
+                path
 	    FROM
 		stock_tree st
 	    LEFT JOIN
-		companies_discounts cd ON st.branch_id=cd.branch_id AND company_id=$passive_company_id
+		companies_discounts cd ON st.branch_id=cd.branch_id AND cd.company_id=$passive_company_id
 	    WHERE 
-		parent_id=0
-	    ORDER BY label";
+		cd.discount_id IS NULL AND parent_id=0
+                    OR
+                cd.discount_id IS NOT NULL)
+            ORDER BY path
+                ";
+	$sql_discount_brand="
+            SELECT
+                cd.discount_id,
+                cd.analyse_brand,
+                cd.round_to,
+                cd.discount,
+                IF(discount>1,ROUND(discount*100-100,1),'') plus,
+                IF(discount<1 AND discount>0,ROUND(100-discount*100,1),'') minus,
+		NULL AS branch_id,
+		cd.analyse_brand AS label,
+                cd.analyse_brand AS path
+	    FROM
+		companies_discounts cd
+	    WHERE 
+		company_id=$passive_company_id
+                AND analyse_brand IS NOT NULL
+                ";
+        
 	$sql_other="SELECT
 		deferment,
                 debt_limit,
@@ -269,7 +316,8 @@ class Company extends Catalog{
 		company_id='$passive_company_id'
 	    ";
 	return [
-		'discounts'=>$this->get_list($sql_disct),
+		'discount_cat'=>$this->get_list($sql_discount_cat),
+		'discount_brand'=>$this->get_list($sql_discount_brand),
 		'other'=>$this->get_row($sql_other),
 		'staff_list'=>$Pref->getStaffList(),
 		'price_label_list'=>$Stock->getPriceLabels()
@@ -279,31 +327,38 @@ class Company extends Catalog{
     public $companyPrefsUpdate=['type'=>'string','field'=>'[0-9a-z_]+','value'=>'string'];
     public function companyPrefsUpdate( $type, $field, $value='' ){
 	$this->Hub->set_level(3);
-	switch( $type ){
-	    case 'discount':
-		return $this->discountUpdate($field,$value);
-	    case 'other':
-                if( in_array($field, array('deferment','debt_limit','skip_breakeven_check')) ){
-                    $this->Hub->set_level(4);
-                }
-		if( in_array($field, array('deferment','debt_limit','curr_code','price_label','expense_label','manager_id','is_supplier','skip_breakeven_check','company_acc_list','language')) ){
-		    $passive_company_id = $this->Hub->pcomp('company_id');
-		    $this->query("UPDATE companies_list SET $field='$value' WHERE company_id=$passive_company_id");
-		    $ok=$this->db->affected_rows();
-		    $this->selectPassiveCompany( $passive_company_id );
-                    return $ok;
-		}
-		return false;
-	}
+        if( in_array($field, array('deferment','debt_limit','skip_breakeven_check')) ){
+            $this->Hub->set_level(4);
+        }
+        if( in_array($field, array('deferment','debt_limit','curr_code','price_label','expense_label','manager_id','is_supplier','skip_breakeven_check','company_acc_list','language')) ){
+            $passive_company_id = $this->Hub->pcomp('company_id');
+            $this->query("UPDATE companies_list SET $field='$value' WHERE company_id=$passive_company_id");
+            $ok=$this->db->affected_rows();
+            $this->selectPassiveCompany( $passive_company_id );
+            return $ok;
+        }
+        return false;
     }
     
-    private function discountUpdate( $branch_id, $discount ){
+    
+    public function discountCreate( int $branch_id=null, string $analyse_brand=null){
+        $this->Hub->set_level(3);
 	$passive_company_id = $this->Hub->pcomp('company_id');
-	if( $discount==1 ){/*Discount is zero so lets delete it*/
-	    $this->db->query("DELETE FROM companies_discounts WHERE branch_id=$branch_id AND company_id=$passive_company_id");
-	} else {
-	    $this->db->query("REPLACE INTO companies_discounts SET company_id=$passive_company_id, branch_id=$branch_id, discount=$discount");
+        return $this->create('companies_discounts',['company_id'=>$passive_company_id,'branch_id'=>$branch_id,'analyse_brand'=>$analyse_brand]);
+    }
+    
+    public function discountUpdate( int $discount_id, string $field, string $value ){
+        $this->Hub->set_level(3);
+	if( $field=='discount' && $value==1 ){/*Discount is zero so lets delete it*/
+            if( !$this->get_value("SELECT round_to FROM companies_discounts WHERE discount_id='$discount_id'") ){
+                return $this->discountDelete($discount_id);
+            }
 	}
-	return true;
+        return $this->update('companies_discounts',[$field=>$value],['discount_id'=>$discount_id]);
+    }
+    
+    public function discountDelete(int $discount_id){
+        $this->Hub->set_level(3);
+        return $this->delete('companies_discounts',['discount_id'=>$discount_id]);
     }
 }

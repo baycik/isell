@@ -399,7 +399,7 @@ class Utils extends Catalog {
         $res->free_result();
     }
 
-    private function treePathRecalculate($table, $parent_id = 0, $parent_path = '/') {
+    private function treePathRecalculate($table, $parent_id = 0, $parent_path = '/', $parent_path_id = '/') {
         $where = "";
         if ($parent_id !== null) {
             $where = "parent_id=$parent_id";
@@ -407,8 +407,9 @@ class Utils extends Catalog {
         $res = $this->db->query("SELECT * FROM $table WHERE $where");
         foreach ($res->result() as $row) {
             $current_path = $parent_path . "{$row->label}/";
-            $this->update($table, ['path' => $current_path], ['branch_id' => $row->branch_id]);
-            $this->treePathRecalculate($table, $row->branch_id, $current_path);
+            $current_path_id = $parent_path_id . "{$row->branch_id}/";
+            $this->update($table, ['path' => $current_path,'path_id' => $current_path_id], ['branch_id' => $row->branch_id]);
+            $this->treePathRecalculate($table, $row->branch_id, $current_path, $current_path_id);
         }
         $res->free_result();
     }

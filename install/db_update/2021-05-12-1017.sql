@@ -1,0 +1,11 @@
+ALTER TABLE `acc_tree` 
+ADD COLUMN `path_id` VARCHAR(200) NULL AFTER `path`,
+CHANGE COLUMN `path` `path` VARCHAR(1000) NOT NULL ;
+
+ALTER TABLE `companies_tree` 
+ADD COLUMN `path_id` VARCHAR(200) NULL AFTER `path`,
+CHANGE COLUMN `path` `path` VARCHAR(1000) NOT NULL ;
+
+ALTER TABLE `stock_tree` 
+ADD COLUMN `path_id` VARCHAR(200) NULL AFTER `path`,
+CHANGE COLUMN `path` `path` VARCHAR(1000) NOT NULL ;

@@ -8,7 +8,7 @@
 <tools>
 <button onclick="App.loadWindow('page/dialog/backup');"><img src="img/database.png" style="width:24px;height:24px"> Запустить менеджер резевного копирования</button><br>
 <button onclick="$.post('Maintain/updateInstall').done( (ok) =>{alert(ok?'База данных обновлена':'Ошибка обновления')} )"><img src="img/database.png" style="width:24px;height:24px">  Установить обновления базы данных</button><br>
-<button onclick="treesRecalculate()"><img src="img/utils.png" style="width:24px;height:24px"> Исправить ошибки в дереве склада,компаний,бух.счетов</button><br>
+<button onclick="treesRecalculate()"><img src="img/utils.png" style="width:24px;height:24px"> Пересчитать пути в дереве склада,компаний,бух.счетов</button><br>
 <button onclick="$.post('PluginManager/mod_scan').done( (ok) =>{alert(ok?'Модификации обновлены':'Ошибка обновления')} )"><img src="img/plugin.png" style="width:24px;height:24px">  Обновить модификации плагинов</button><br>
 </tools>
 <style scoped>

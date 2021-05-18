@@ -277,15 +277,16 @@ class Catalog extends CI_Model {
 //	}
 //	$res->free_result();        
 //    }
-    private function treeRecalculate($table, $parent_id = 0, $parent_path = '/', $top_id = 0) {
+    private function treeRecalculate($table, $parent_id = 0, $parent_path = '/', $parent_path_id='/', $top_id = 0) {
         $res = $this->db->query("SELECT * FROM $table WHERE parent_id='$parent_id'");
         foreach ($res->result() as $row) {
             $current_path = $parent_path . "{$row->label}/";
+            $current_path_id = $parent_path_id . "{$row->branch_id}/";
             if ($parent_id == 0) {
                 $top_id = $row->branch_id;
             }
-            $this->update($table, ['path' => $current_path, 'top_id' => $top_id], ['branch_id' => $row->branch_id]);
-            $this->treeRecalculate($table, $row->branch_id, $current_path, $top_id);
+            $this->update($table, ['path' => $current_path, 'path_id'=>$current_path_id, 'top_id' => $top_id], ['branch_id' => $row->branch_id]);
+            $this->treeRecalculate($table, $row->branch_id, $current_path, $current_path_id, $top_id);
         }
         $res->free_result();
     }
