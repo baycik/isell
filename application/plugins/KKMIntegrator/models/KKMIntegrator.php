@@ -155,12 +155,12 @@ class KKMIntegrator extends PluginBase{
                 break;
             case 'ElectronicPayment':
                 if( $amount>0 ){
-                    $acc_debit_code=$this->plugin_settings->electronic_acc_code??null;
-                    $acc_credit_code=$this->plugin_settings->customer_acc_code??null;
+                    $acc_debit_code  =$this->plugin_settings->electronic_acc_code??null;
+                    $acc_credit_code =$this->plugin_settings->customer_acc_code??null;
                     $description="Оплата электронно документ №{$doc_head->doc_num} от {$doc_head->date_dmy}";
                 } else {
-                    $acc_debit_code=$this->plugin_settings->electronic_acc_code??null;
-                    $acc_credit_code=$this->plugin_settings->cash_acc_code??null;
+                    $acc_credit_code =$this->plugin_settings->electronic_acc_code??null;
+                    $acc_debit_code  =$this->plugin_settings->cash_acc_code??null;
                     $description="Возврат оплаты электронно документ №{$doc_head->doc_num} от {$doc_head->date_dmy}";
                 }
                 break;
@@ -171,7 +171,7 @@ class KKMIntegrator extends PluginBase{
         $trans=[
             'doc_id'=>$doc_id,
             'trans_ref'=>$doc_head->total_trans_id,
-            'editable'=>0,
+            'editable'=>1,
             'active_company_id'=>$doc_head->active_company_id,
             'passive_company_id'=>$doc_head->passive_company_id,
             'acc_debit_code'=>$acc_debit_code,
