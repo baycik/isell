@@ -25,7 +25,9 @@ JOIN
 JOIN  
 	stock_entries se ON se.parent_id=st.branch_id 
 WHERE 
-	 se.product_code=_product_code AND company_id=pcomp_id;
+	 se.product_code=_product_code AND company_id=pcomp_id
+ORDER BY st.path_id DESC
+LIMIT 1;
         
 IF (_discount=0 OR _discount IS NULL) THEN
 	SELECT 
