@@ -40,17 +40,15 @@
     };
     
 </script>
-
-<button type="button" onclick="App.StockPriceLabel_dialog.print()"><img src="img/import.png"> Открыть импортер</button>
-<div>
-    <div>
-        <div style="display: inline-block; width:200px">Основная цена:</div>
-        <input title="Для клиента" name="pcomp_name" value="не выбран" readonly="readonly" />
-        <button type="button" class="tiny_button" onclick="App.user.pcompSelectionDialog();" ><img src="img/settings.png"> Выбрать</button>
-    </div>
-    <div>
-        <div style="display: inline-block; width:200px">Дополнительная цена:</div>
-        <input title="Для клиента" name="pcomp_name2" value="не выбран" readonly="readonly" />
-        <button type="button" class="tiny_button" onclick="App.StockPriceLabel_dialog.selectAdditionalPcomp();"><img src="img/settings.png"> Выбрать</button>
+<div style="padding:10px">
+    <div style="display: grid;grid-template-columns:1fr 1fr">
+        <div>
+            <button type="button" onclick="App.StockPriceLabel_dialog.print()"><img src="img/import.png" style="width:48px"><img src="img/print.png" style="width:48px"> Напечатать ценники из таблицы</button>
+        </div>
+        <div>
+            <h3>Клиент цены которого будут использованы в ценниках</h3>
+            <input title="Для клиента" name="pcomp_name" value="не выбран" readonly="readonly" />
+            <button type="button" class="tiny_button" onclick="App.user.pcompSelectionDialog();" ><img src="img/settings.png"> Выбрать</button>
+        </div>
     </div>
 </div>

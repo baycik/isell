@@ -13,11 +13,12 @@ class StockPriceLabel extends Catalog{
     public function out($label,$field,$quantity_field, $pcomp2_id, $out_type){
         $pcomp_id=$this->Hub->pcomp('company_id');
         $ratio=$this->Hub->pref("usd_ratio");
-        echo $sql="SELECT
+        $sql="SELECT
                 product_code,
+                product_barcode,
                 ru product_name,
                 GET_SELL_PRICE(product_code,'$pcomp_id','$ratio') product_price,
-                ROUND(GET_SELL_PRICE(product_code,'$pcomp2_id','$ratio'),2) product_price2,
+                #ROUND(GET_SELL_PRICE(product_code,'$pcomp2_id','$ratio'),2) product_price2,
                 $quantity_field quantity,
                 product_img
             FROM

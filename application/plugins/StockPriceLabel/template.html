@@ -1,12 +1,10 @@
 <style>
     .price_label{
-        float: left;
-        width:30%;
         border: 1px solid #ccc;
         height: 4cm;
         font-size: 18px;
         text-align: left;
-        padding: 5px;
+        padding: 10px;
         page-break-inside: avoid;
     }
     .price_label i{
@@ -23,32 +21,45 @@
         float: left;
     }
 </style>
-<div class="page" style="width: 18.5cm;">
-{loop name="$v->products"}
-<div class="price_label">
-    <div style="height: 3cm;overflow: hidden">
-        {if="$value->product_img"}
-        <img src="../../Storage/image_flush/?size=70x70&path=dynImg/{$value->product_img}#"
-            onerror="this.onerror=null;this.src='../dynImg/{$value->product_img}_100x100.png';" />
-        {/if}
-        <i>{$value->product_code}</i>
-        {$value->product_name}
 
-    </div>
 
-    
-    <div style="text-align: right; border-top:solid 1px black;padding-top:3px">
-        {if="$value->product_price2!=$value->product_price"}
-        <div  style="float: left">
-            <strong>{$value->product_price2}р</strong>
+<div class="page">
+    <div style="width: 18.5cm;display:grid;grid-template-columns:1fr 1fr;">
+    {loop name="$v->products"}
+    <div class="price_label">
+        <div style="height: 3cm;overflow: hidden">
+            {if="$value->product_img"}
+            <img src="../../Storage/image_flush/?size=100x100&path=dynImg/{$value->product_img}#"
+                onerror="this.onerror=null;this.src='../dynImg/{$value->product_img}_150x150.png';" />
+            {/if}
+            <i>{$value->product_code}</i>
+            {$value->product_name}
         </div>
-        {/if}
-        
-        <div>
-        <b>{$value->product_price}р</b>
+
+        <div style="border-top:solid 1px black;padding-top: 3px;display:grid;grid-template-columns:1fr 1fr;">
+            <div>
+                <svg class="barcode"
+                jsbarcode-format="ean13"
+                jsbarcode-value="{$value->product_barcode}"
+                jsbarcode-textmargin="0"
+                jsbarcode-fontsize="10"
+                jsbarcode-margin="0"
+                jsbarcode-height="20"
+                jsbarcode-width="1px"
+                ></svg>
+            </div>
+            <div style="text-align: right">
+                <b>{$value->product_price}р</b>
+            </div>
         </div>
+        {$date}
     </div>
-    
-    {$date}
-</div>
-{/loop}</div>  
+    {/loop}
+    </div>
+</div>  
+<script src="../../js/JsBarcode.all.min.js#"></script>
+<script>
+    window.onload=function(){
+        JsBarcode(".barcode").init();
+    };
+</script>
