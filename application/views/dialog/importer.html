@@ -220,6 +220,11 @@
 	    App.page_dialog_importer.reload();
 	},
 	reload:function(){
+            App.page_dialog_importer.grid_sg.updateOptions({
+                params:{
+                    label:App.page_dialog_importer.label
+                }
+            });
 	    App.page_dialog_importer.grid_sg.reload();
 	}
     };
