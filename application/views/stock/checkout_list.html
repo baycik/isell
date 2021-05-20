@@ -107,6 +107,14 @@
 			location.href = url;
 		    }
 		},
+                export: function(){
+                    var options=App.page_stock_checkout_list.entries.grid.getOptions();
+                    $.post('Checkout/checkoutEntriesExport',options.params,function(ok){
+                        if (ok * 1) {
+			    App.flash("В таблицу Импортера добавлено строк: " + ok);
+			}
+                    });
+                },
 		print: function () {
 		    this.out('.print');
 		}
@@ -382,6 +390,7 @@
                 </div>
                 <div class="x-stock-checkout-tools" style="text-align: right;clear: both">
                     <span data-action="reload" class="icon-24 icon-refresh" title="Обновить"> </span>
+                    <span data-action="export" class="icon-24 icon-export" title="Экспорт"> </span> 
                     <span data-action="out" class="icon-24 icon-download" title="Скачать таблицу"> </span>
                     <span data-action="print" class="icon-24 icon-print" title="Печать"> </span>
                 </div>

@@ -148,6 +148,40 @@ class Checkout extends Stock {
         return $this->get_list($sql)??[];
     }
     
+    public function checkoutEntriesExport ( int $checkout_id, int $offset=0, int $limit=1000, string $sortby=null, string $sortdir=null, array $filter = null  ){
+        $this->Hub->set_level(2);
+        if (empty($sortby)) {
+	    $sortby = "cstamp";
+	    $sortdir = "DESC";
+	}
+	$having = $this->makeStockFilter($filter);
+        $sql = "
+            INSERT INTO imported_data (label,A,B,C,D,E,F,G)
+            SELECT 
+                'склад',
+                checkout_name,
+                product_code,
+                IF(product_comment<>'',CONCAT(ru,' [',product_comment,']'),ru) ru,
+                ce.product_quantity_verified,
+                ce.product_quantity,
+                product_unit,
+                IF(ce.verification_status=1,'✔',IF(ce.verification_status=2,'±','')) verification_status_symbol
+            FROM 
+                checkout_list cl
+                    JOIN
+                checkout_entries ce USING(checkout_id)
+                    JOIN
+                prod_list USING(product_id)
+                    JOIN
+                stock_entries USING(product_code)    
+            WHERE
+                checkout_id = '$checkout_id'
+            HAVING {$having['inner']}
+            ORDER BY '$sortby' '$sortdir'";
+        $this->query($sql);
+        return $this->db->affected_rows();
+    }
+    
     public function checkoutProductGet( string $barcode='', int $checkout_id=-1 ) {
         $this->Hub->set_level(2);
 	$product_get_sql = "SELECT
