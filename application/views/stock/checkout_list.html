@@ -108,7 +108,7 @@
 		    }
 		},
                 export: function(){
-                    var options=App.page_stock_checkout_list.entries.grid.getOptions();
+                    var options=App.page_stock_checkout_list.entries.grid.getCurrentOptions();
                     $.post('Checkout/checkoutEntriesExport',options.params,function(ok){
                         if (ok * 1) {
 			    App.flash("В таблицу Импортера добавлено строк: " + ok);
