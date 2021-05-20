@@ -17,7 +17,7 @@ class StockPriceLabel extends Catalog{
                 product_code,
                 product_barcode,
                 ru product_name,
-                GET_SELL_PRICE(product_code,'$pcomp_id','$ratio') product_price,
+                REPLACE(GET_SELL_PRICE(product_code,'$pcomp_id','$ratio'),'.00','') product_price,
                 #ROUND(GET_SELL_PRICE(product_code,'$pcomp2_id','$ratio'),2) product_price2,
                 $quantity_field quantity,
                 product_img

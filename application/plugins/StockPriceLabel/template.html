@@ -2,20 +2,22 @@
     .price_label{
         border: 1px solid #ccc;
         height: 4cm;
-        font-size: 18px;
+        width:31%;
+        font-size: 16px;
         text-align: left;
-        padding: 10px;
+        padding: 5px;
         page-break-inside: avoid;
+        display: inline-block; position: relative;page-break-before: auto;page-break-after:auto;page-break-inside: avoid;
     }
     .price_label i{
-        font-size: 14px;
+        font-weight: bold;
     }
     .price_label b{
         background-color: black;
         -border-radius: 5px;
         color: white;
         padding: 3px;
-        font-size: 30px;
+        font-size: 24px;
     }
     .price_label img{
         float: left;
@@ -24,13 +26,13 @@
 
 
 <div class="page">
-    <div style="width: 18.5cm;display:grid;grid-template-columns:1fr 1fr;">
+    <div style="width: 18.5cm;">
     {loop name="$v->products"}
     <div class="price_label">
         <div style="height: 3cm;overflow: hidden">
             {if="$value->product_img"}
-            <img src="../../Storage/image_flush/?size=100x100&path=dynImg/{$value->product_img}#"
-                onerror="this.onerror=null;this.src='../dynImg/{$value->product_img}_150x150.png';" />
+            <img src="../../Storage/image_flush/?size=70x100&path=dynImg/{$value->product_img}#"
+                onerror="this.onerror=null;this.src='../dynImg/{$value->product_img}_50x100.png';" />
             {/if}
             <i>{$value->product_code}</i>
             {$value->product_name}
