@@ -29,6 +29,9 @@
 	    options=$.extend(true, options, new_options);
 	    remoteModel.updateOptions(options.url,options.params,options.loader);
 	};
+        grid.getOptions=function(){
+            return remoteModel.getOptions();
+        }
 	initLoader();
 	if (options.enableFilter) {
 	    initFilter();
@@ -157,6 +160,13 @@ $.fn.slickgrid = function (settings) {
 	    def_params=newdef_params||def_params;
 	    loader=newloader||loader;
 	}
+        
+        function getOptions(){
+            return {
+                'url':url,
+                'params':def_params
+            };
+        }
         
         function setPagesize( pagesize ){
             PAGESIZE=pagesize;
@@ -317,6 +327,7 @@ $.fn.slickgrid = function (settings) {
 	    "setSort": setSort,
 	    "setFilter": setFilter,
 	    "updateOptions":updateOptions,
+            "getOptions":getOptions,
             "loadNext":loadNext,
             "setPagesize":setPagesize,
 	    // events
