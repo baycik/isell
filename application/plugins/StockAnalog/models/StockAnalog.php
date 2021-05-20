@@ -77,6 +77,14 @@ class StockAnalog extends Catalog{
         return $this->link_by_id( $product_id, $product_id2 );
     }
     
+    public function link_bulk_by_id( int $product_id, array $product_ids2 ){
+        $analog_group_id=0;
+        foreach($product_ids2 as $product_id2){
+            $analog_group_id=$this->link_by_id( $product_id, $product_id2 );
+        }
+        return $analog_group_id;
+    }
+    
     private function link_by_id( int $product_id,int $product_id2 ){
         if( !$product_id2 ){
             return 'product_not_found';

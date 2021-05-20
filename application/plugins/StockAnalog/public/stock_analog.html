@@ -2,33 +2,52 @@
     /* global App */
     App.StockAnalog_stock_analog={
 	init:function(){
-            App.require(["js/slick/lib/jquery.event.drag-2.3.0.js"], function () {
-                App.require([
-                    "js/slick/slick.core.js",
-                    "js/slick/plugins/slick.rowselectionmodel.js",
-                    "js/slick/slick.editors.js",
-                    "js/slick/slickinfinite.js",
-                    "js/slick/slick.grid.js"
-                ], function(){
-                    App.StockAnalog_stock_analog.table.init();
-                });
-            });
+
+            App.StockAnalog_stock_analog.table.init();
         },
         link:function( product_id ){
-            var product_code=prompt("Введите код аналога");
-            if( product_code ){
-                $.post("StockAnalog/link",{product_id:product_id,product_code:product_code},function( ok ){
-                    if( ok==1 ){
-                        App.flash("Товар добавлен в группу аналогов");
+            var selected_rows = App.StockAnalog_stock_analog.table.grid.getSelectedRows();
+            if (selected_rows.length>0) {
+                let product_ids=[];
+                for(let row_num of selected_rows){
+                    let row=App.StockAnalog_stock_analog.table.grid.getDataItem(row_num);
+                    if( row.product_id==product_id ){
+                        continue;
                     }
-                    if( ok=='product_not_found' ){
-                        App.flash("Товар с кодом '"+product_code+"'не найден!");
-                    }
-                    if( ok=='product_duplicate' ){
-                        App.flash("Укажите код аналога для связи товаров!");
-                    }
-                    App.StockAnalog_stock_analog.table.grid.reload();
-                });
+                    product_ids.push(row.product_id);
+                    console.log(row);
+                }
+                if(!product_ids.length){
+                    return;
+                }
+                $.post("StockAnalog/link_bulk_by_id",{product_id:product_id,product_ids2:JSON.stringify(product_ids)},function( ok ){
+                        if( ok==1 ){
+                            App.flash("Товар добавлен в группу аналогов");
+                        }
+                        if( ok=='product_not_found' ){
+                            App.flash("Товар с кодом '"+product_code+"'не найден!");
+                        }
+                        if( ok=='product_duplicate' ){
+                            App.flash("Укажите код аналога для связи товаров!");
+                        }
+                        App.StockAnalog_stock_analog.table.grid.reload();
+                    });
+            } else {
+                var product_code=prompt("Введите код аналога");
+                if( product_code ){
+                    $.post("StockAnalog/link",{product_id:product_id,product_code:product_code},function( ok ){
+                        if( ok==1 ){
+                            App.flash("Товар добавлен в группу аналогов");
+                        }
+                        if( ok=='product_not_found' ){
+                            App.flash("Товар с кодом '"+product_code+"'не найден!");
+                        }
+                        if( ok=='product_duplicate' ){
+                            App.flash("Укажите код аналога для связи товаров!");
+                        }
+                        App.StockAnalog_stock_analog.table.grid.reload();
+                    });
+                }
             }
         },
         unlink:function( product_id ){
@@ -59,10 +78,11 @@
                             {id: "action_unlink", field: "action_unlink", name: "Отвязать", cssClass: 'slick-align-center',  width: 40,formatter:App.StockAnalog_stock_analog.table.frm.unlink}
                         ],
 			options: {
-			    editable: false,
-			    enableCellNavigation: true,
-			    enableColumnReorder: false,
-			    enableFilter: true,
+			    editable: true,
+                            enableCellNavigation: true,
+                            enableColumnReorder: false,
+                            enableFilter: true,
+                            multiSelect: true,
 			    url: 'StockAnalog/listFetch/'
 			}
 		    };
@@ -170,7 +190,8 @@
 	    },
             frm: {
                 link:function(row, cell, value, columnDef, dataContext){
-                    return '<a href="javascript:App.StockAnalog_stock_analog.link('+dataContext.product_id+')">➕</a>';
+                    return '<div  onclick="event.stopPropagation()"><a href="javascript:App.StockAnalog_stock_analog.link('+dataContext.product_id+')">➕</a></div>';
+                    
                 },
                 unlink:function(row, cell, value, columnDef, dataContext){
                     return '<a href="javascript:App.StockAnalog_stock_analog.unlink('+dataContext.product_id+')">➖</a>';
