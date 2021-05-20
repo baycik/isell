@@ -21,14 +21,7 @@
 	    this.label=this.data.label||'';
 	    $("#page_dialog_importer_label").val(this.label);
 	    this.initSelector();
-	    App.require([
-		"js/slick/lib/jquery.event.drag-2.3.0.js",
-		"js/slick/slick.core.js",
-		"js/slick/slick.grid.js",
-		"js/slick/plugins/slick.rowselectionmodel.js",
-		"js/slick/slick.editors.js",
-		"js/slick/slickinfinite.js"
-	    ], this.gridSetup);
+	    this.gridSetup();
 	    
 	    if( this.data.button_label ){
 		$(".x-button-label").html(this.data.button_label);
