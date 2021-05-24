@@ -265,7 +265,7 @@ class MailingManager extends PluginBase {
             ];
     }
     
-    public function messageBatchComposeMessage(string $batch_label, array $message_batch, stdClass $context ){
+    public function messageBatchComposeMessage(string $batch_label, array $message_batch, stdClass $context=null ){
         $message = [];
         $validated_contact = $this->messageContactValidate($message_batch['handler'], $context);
         if(!$validated_contact){
