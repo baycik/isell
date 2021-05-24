@@ -318,7 +318,11 @@ class MailingManager extends PluginBase {
                 user_list ON manager_id=user_id AND user_is_staff=1
             WHERE $where
             ORDER BY label ASC";
-        return $this->get_list($sql);
+        $found_companies=$this->get_list($sql);
+        if( $found_companies ){
+            return $found_companies;
+        }
+        return [(object)['company_mobile'=>$phone,'company_email'=>$email]];
     }
 
     public function messageBatchDelete( string $message_batch_label ){
