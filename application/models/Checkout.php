@@ -156,7 +156,7 @@ class Checkout extends Stock {
 	}
 	$having = $this->makeStockFilter($filter);
         $sql = "
-            INSERT INTO imported_data (label,A,B,C,D,E,F,G,H)
+            INSERT INTO imported_data (label,A,B,C,D,E,F,G,H,I)
             SELECT 
                 'склад',
                 checkout_name,
