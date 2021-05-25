@@ -13,6 +13,10 @@ class StockPriceLabel extends Catalog{
     public function out($label,$field,$quantity_field, $pcomp2_id, $out_type){
         $pcomp_id=$this->Hub->pcomp('company_id');
         $ratio=$this->Hub->pref("usd_ratio");
+        $where="";
+        if(empty($label)){
+            $where="WHERE label='$label'";
+        }
         $sql="SELECT
                 product_code,
                 product_barcode,
@@ -27,9 +31,8 @@ class StockPriceLabel extends Catalog{
                 imported_data ON product_code=$field
                     JOIN
                 stock_entries USING(product_code)
-            WHERE label='$label'";
+            $where";
         $products=$this->get_list($sql);
-        
         
         $price_tags=[];
         foreach($products as $row){
