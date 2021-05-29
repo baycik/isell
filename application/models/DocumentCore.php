@@ -192,13 +192,7 @@ class DocumentCore extends DocumentUtils{
 		return true;
 		break;
 	    case 'active_company_id':
-		if( $this->isCommited() ){
-		    return false;
-		}
-		$doc_id=$this->doc('doc_id');
-		$active_company_id=$new_val;
-		$this->db->query("UPDATE document_list SET active_company_id=$active_company_id WHERE doc_id=$doc_id");
-		return true;
+		return $this->documentUpdateActiveComp($new_val);
 		break;
 	    case 'doc_type':
 		return $this->setType($new_val);
@@ -212,6 +206,42 @@ class DocumentCore extends DocumentUtils{
 	$head_update_ok=$Document2->updateHead($new_val,$field);
         return $head_update_ok;
     }
+    
+    private function documentUpdateActiveComp($active_company_id){
+        if( $this->isCommited() ){
+            return false;
+        }
+        
+        
+        
+        $old_acomp_label=$this->Hub->acomp('label');
+        $this->Hub->load_model('Company')->selectActiveCompany($active_company_id);
+        $new_acomp_label=$this->Hub->acomp('label');
+        $next_doc_num = $this->getNextDocNum($this->doc('doc_type'),true);
+        $doc_id=$this->doc('doc_id');
+        
+        $new_doc_data=$this->doc('doc_data')."\n $old_acomp_label => $new_acomp_label";
+        $new_vat_rate=$this->Hub->acomp('company_vat_rate');
+        $old_vat_rate=$this->doc('vat_rate');
+        if( $new_vat_rate!=$old_vat_rate ){
+            $transition_ratio=(100+$new_vat_rate)/(100+$old_vat_rate);
+            $this->query("UPDATE document_entries SET invoice_price=invoice_price / $transition_ratio WHERE doc_id='$doc_id'");
+        }
+        $this->delete('document_view_list',['doc_id'=>$doc_id]);
+        $update_ok=$this->update(
+                'document_list',
+                [
+                    'active_company_id'=>$active_company_id,
+                    'vat_rate'=>$new_vat_rate,
+                    'doc_num'=>$next_doc_num,
+                    'doc_data'=>$new_doc_data
+                ],
+                [
+                    'doc_id'=>$doc_id
+                ]);
+        return $update_ok;
+    }
+    
     private function setExtraExpenses($exp){//not beautifull function at all
 	$doc_type=$this->doc('doc_type');
 	$doc_id=$this->doc('doc_id');

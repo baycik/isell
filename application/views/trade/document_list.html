@@ -221,6 +221,9 @@
 			case 'created':
 			    DocList.tools.reload();
 			    break;
+			case 'acomp_changed':
+			    App.user.acompSelect({company_id:param});
+			    break;
 			case 'pcomp_changed':
 			    App.user.pcompSelect({company_id:param});
 			    if( CtreeInline ){

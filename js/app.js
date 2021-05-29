@@ -724,6 +724,15 @@ App.user = {
             App.Topic('passiveCompanySelected').unsubscribe();
         }
     },
+    acompSelect: function ( company ) {
+        var company_id=company.company_id||0;
+        if( App.acomp && App.acomp.company_id===company_id ){
+            return $.Deferred().resolve();
+        }
+        return App.post('Company/selectActiveCompany/' + company_id, function (xhr) {
+            App.user.setActiveCompany(App.json(xhr));
+        });
+    },
     setActiveCompany:function( company, mode ){
         var old_acomp_id=App.acomp?App.acomp.company_id:0;
         App.acomp=company;

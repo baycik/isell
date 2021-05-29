@@ -165,7 +165,7 @@
 	},
 	hightlightCommited:function(){
 	    //$('#Doc_commit_btn').css('display',(Doc.head.props.is_commited*1?"none":""));
-	    $('#Doc_type_cmb,#Doc_notcount_cmb,#Doc_pci').combobox(Doc.head.props.is_commited*1?'disable':'enable');//
+	    $('#Doc_type_cmb,#Doc_notcount_cmb,#Doc_aci,#Doc_pci').combobox(Doc.head.props.is_commited*1?'disable':'enable');//
 	    var color='';
 	    if( Doc.head.props.is_commited*1 ){
 		var doc_type=Math.abs(Doc.head.props.doc_type);
@@ -197,10 +197,14 @@
 	update:function( field, value, oldval ){
 	    if( Doc.head.allowUpdate && value!==oldval ){
 		if( Doc.isCreated ){
-                    App.post('DocumentItems/headUpdate/',{field:field,new_val:value},function(ok){
+                    $.post('DocumentItems/headUpdate/',{field:field,new_val:value},function(ok){
 			Doc.head.afterUpdate( ok, field, value, oldval );
 		    });
 		} else {
+		    if( field==='active_company_id' ){
+			Doc.handler.notify('acomp_changed',value);
+			return;
+		    }
 		    if( field==='passive_company_id' ){
 			Doc.handler.notify('pcomp_changed',value);
 			return;
@@ -225,6 +229,15 @@
 		case 'use_vatless_price':
 		case 'signs_after_dot':
 		    Doc.entries.reload();
+		    break;
+		case 'active_company_id':
+		    if( ok ){
+			Doc.handler.notify('acomp_changed',value);
+		    } else {
+			App.flash("Сменить предприятие можно только у не проведенного документа.",'alert');	
+		    }
+                    Doc.head.reload();
+                    Doc.entries.reload();
 		    break;
 		case 'passive_company_id':
 		    if( ok ){
@@ -1020,15 +1033,6 @@
                 <button type="button" onclick="Doc.head.openCompanyDetails();" style="margin-top:2px;margin-right: 3px;padding: 3px;" class="tiny_button" title="Реквизиты выбранной компании">
                     <img src="img/edit-16.png">
                 </button>
-	    <input type="text" name="doc_date" class="easyui-datebox" title="Дата" data-options="
-		   required:'required',
-		   onChange:function(val,old){Doc.head.update('doc_date',val,old)}
-		   ">
-	    <input type="text" name="doc_num" class="easyui-textbox" title="Номер" data-options="
-		   min:1,
-		   required:'required',
-		   onChange:function(val,old){Doc.head.update('doc_num',val,old)}
-		   ">
             <input class="easyui-combobox" name="doc_status_id" id="Doc_status_id" title="Статус" data-options="
                 showItemIcon:true,
                 valueField: 'doc_status_id',
@@ -1039,6 +1043,26 @@
                 onSelect: function(status,old){Doc.head.update('doc_status_id',status.doc_status_id,old)},
                 panelHeight:''
                 ">
+            <input class="easyui-combobox" name="active_company_id" id="Doc_aci" title="Предприятие" data-options="
+                showItemIcon:true,
+                valueField: 'company_id',
+                textField: 'label',
+                url:'Company/listFetch/?mode=active_only',
+                mode: 'remote',
+                selectOnNavigation:false,
+                onChange:function(val,old){
+                Doc.head.update('active_company_id',val,old)},
+                panelHeight:''
+                ">
+	    <input type="text" name="doc_date" class="easyui-datebox" title="Дата" data-options="
+		   required:'required',
+		   onChange:function(val,old){Doc.head.update('doc_date',val,old)}
+		   ">
+	    <input type="text" name="doc_num" class="easyui-textbox" title="Номер" data-options="
+		   min:1,
+		   required:'required',
+		   onChange:function(val,old){Doc.head.update('doc_num',val,old)}
+		   ">
 	</div>
 	<div id="Doc_utils" style="display: none">
 	    <div class="inp_rule"></div>
