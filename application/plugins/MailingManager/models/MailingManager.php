@@ -422,12 +422,15 @@ class MailingManager extends PluginBase {
     }
 
     private function messageContactValidateEmail($contacts_string){
+        $email_list=[];
         if(!empty($contacts_string)){
-            preg_match_all("/[a-zA-Z0-9\.-_]+@[a-zA-Z0-9-_]+\.+[a-zA-Z0-9]*/", $contacts_string, $matches);
-            if(!empty($matches[0])){
-                $email_list = $matches[0];
-                return $email_list;
+            $emails=explode(',', str_replace(';', ',', $contacts_string));
+            foreach($emails as $email){
+                if(filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                    $email_list[]=$email;
+                }
             }
+            return $email_list;
         }
         return false;
     }
