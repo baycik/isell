@@ -59,7 +59,7 @@ class Reports_client_expired_debts extends Catalog{
 	$active_filter=$this->all_active?'':' AND active_company_id='.$this->Hub->acomp('company_id');
         $date_filter='';
         if( $this->fdate ){
-            $date_filter="AND cstamp<'$this->fdate 23:59:59' ";
+            $date_filter="AND acc_trans.cstamp<'$this->fdate 23:59:59' ";
         }
         $user_level=$this->Hub->svar('user_level');
         $path_filter=$this->getAssignedPathWhere();
@@ -87,14 +87,16 @@ class Reports_client_expired_debts extends Catalog{
 		    ROUND(SUM(IF(acc_debit_code=631,-amount,IF(acc_credit_code=631,amount,0))),2) buy,
 		    ROUND(SUM(
 		    IF(
-		    DATEDIFF(NOW(),acc_trans.cstamp)<=deferment AND (trans_status=1 OR trans_status=2),IF(acc_debit_code=361,amount,0),0)
+		    DATEDIFF(NOW(),acc_trans.cstamp)<=IF(doc_deferment,doc_deferment,deferment) AND (trans_status=1 OR trans_status=2),IF(acc_debit_code=361,amount,0),0)
 		    ),2) allow,
-		    MAX(IF(DATEDIFF(NOW(),acc_trans.cstamp)>deferment AND (trans_status=1 OR trans_status=2),DATEDIFF(NOW(),acc_trans.cstamp),0)) AS expday,
+		    MAX(IF(DATEDIFF(NOW(),acc_trans.cstamp)>IF(doc_deferment,doc_deferment,deferment) AND (trans_status=1 OR trans_status=2),DATEDIFF(NOW(),acc_trans.cstamp),0)) AS expday,
 		    CONCAT(company_mobile,' ',company_phone) phone
                 FROM
 		    companies_list
 			LEFT JOIN 
 		    acc_trans ON company_id=passive_company_id
+                        LEFT JOIN
+                    document_list USING(doc_id)
 			LEFT JOIN
 		    companies_tree USING(branch_id)
 		WHERE 
