@@ -84,11 +84,11 @@ class DebtManager extends Catalog {
         }
         $filter_acomp = "";
         if( !empty($params->acomp_only) ){
-            $filter_acomp = "AND active_company_id = {$this->Hub->svar('acomp')->company_id} ";
+            $filter_acomp = "AND acctr.active_company_id = {$this->Hub->svar('acomp')->company_id} ";
         }
         $filter_pcomp="";
         if( $params->pcomp_id ){
-            $filter_pcomp = "AND passive_company_id = '".( (int) $params->pcomp_id )."'";
+            $filter_pcomp = "AND acctr.passive_company_id = '".( (int) $params->pcomp_id )."'";
         }
         
         $sell_code = "361";
@@ -119,14 +119,18 @@ class DebtManager extends Catalog {
         $trans_table="
             CREATE TEMPORARY TABLE tmp_trans_table AS
             SELECT
-                *,
-                DATE_ADD(cstamp, INTERVAL deferment DAY) due_date
+                acctr.*,
+                cl.*,
+                ct.label,
+                IF(doc_deferment,DATE_ADD(acctr.cstamp, INTERVAL doc_deferment DAY),DATE_ADD(acctr.cstamp, INTERVAL deferment DAY)) due_date
             FROM
                 isell_db.acc_trans acctr
                     JOIN 
                 companies_list cl ON (acctr.passive_company_id = cl.company_id)
                     JOIN 
                 companies_tree ct USING(branch_id)
+                    LEFT JOIN
+                document_list USING(doc_id)
             WHERE
                 trans_status IN (1,2,6,7) AND 
                 ($filter_trans)

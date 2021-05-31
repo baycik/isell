@@ -1097,6 +1097,11 @@
 		   precision:0,
 		   onChange:function(val,old){Doc.head.update('extra_expenses',val,old)}
 		   ">
+	    <input name="doc_deferment" class="easyui-numberbox" title="Спец. отсрочка" data-options="
+		   min:0,
+		   precision:0,
+		   onChange:function(val,old){Doc.head.update('doc_deferment',val,old)}
+		   ">
 	    <div style="padding:1px;text-align: right;" class="transp60">
 		Дополнительные инструменты: 
 		<span class="icon-24 icon-sms" title="Отправить СМС" onclick="Doc.head.sendSms();"> </span>

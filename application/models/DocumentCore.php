@@ -136,6 +136,7 @@ class DocumentCore extends DocumentUtils{
                 doc_status_id,
 		DATE_FORMAT(document_list.cstamp,'%d.%m.%Y') doc_date,
 		doc_data,
+                doc_deferment,
 		(SELECT last_name FROM user_list WHERE user_id=document_list.created_by) created_by,
 		(SELECT last_name FROM user_list WHERE user_id=document_list.modified_by) modified_by,
                 (SELECT last_name FROM user_list WHERE user_id=checkout_list.modified_by) checkout_modifier,
@@ -200,6 +201,10 @@ class DocumentCore extends DocumentUtils{
 		return $this->documentStatusChange($new_val);//setStatus(null,$new_val);
 	    case 'extra_expenses':
 		return $this->setExtraExpenses($new_val);
+            case 'doc_deferment':
+                $this->Hub->set_level(3);
+                $doc_id=$this->doc('doc_id');
+                return $this->update('document_list',['doc_deferment'=>$new_val],['doc_id'=>$doc_id]);
 	}
 	//$new_val=  rawurldecode($new_val);
 	$Document2=$this->Hub->bridgeLoad('Document');
@@ -211,9 +216,6 @@ class DocumentCore extends DocumentUtils{
         if( $this->isCommited() ){
             return false;
         }
-        
-        
-        
         $old_acomp_label=$this->Hub->acomp('label');
         $this->Hub->load_model('Company')->selectActiveCompany($active_company_id);
         $new_acomp_label=$this->Hub->acomp('label');
