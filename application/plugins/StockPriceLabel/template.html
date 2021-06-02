@@ -40,6 +40,7 @@
 
         <div style="border-top:solid 1px black;padding-top: 3px;display:grid;grid-template-columns:1fr 1fr;">
             <div>
+                {if="$value->product_barcode"}
                 <svg class="barcode"
                 jsbarcode-format="ean13"
                 jsbarcode-value="{$value->product_barcode}"
@@ -49,6 +50,7 @@
                 jsbarcode-height="20"
                 jsbarcode-width="1px"
                 ></svg>
+                {/if}
             </div>
             <div style="text-align: right">
                 <b>{$value->product_price}р</b>
