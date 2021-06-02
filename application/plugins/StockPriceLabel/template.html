@@ -40,8 +40,8 @@
 
         <div style="border-top:solid 1px black;padding-top: 3px;display:grid;grid-template-columns:1fr 1fr;">
             <div>
-                {if="$value->product_barcode"}
-                <svg class="barcode"
+                {if="$value->product_barcode>1"}
+                <svg style="width:20px;height: 20px" class="barcode"
                 jsbarcode-format="ean13"
                 jsbarcode-value="{$value->product_barcode}"
                 jsbarcode-textmargin="0"
