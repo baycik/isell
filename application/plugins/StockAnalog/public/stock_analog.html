@@ -6,9 +6,9 @@
             App.StockAnalog_stock_analog.table.init();
         },
         link:function( product_id ){
-            var selected_rows = App.StockAnalog_stock_analog.table.grid.getSelectedRows();
+            let selected_rows = App.StockAnalog_stock_analog.table.grid.getSelectedRows();
+            let product_ids=[];
             if (selected_rows.length>0) {
-                let product_ids=[];
                 for(let row_num of selected_rows){
                     let row=App.StockAnalog_stock_analog.table.grid.getDataItem(row_num);
                     if( row.product_id==product_id ){
@@ -16,9 +16,8 @@
                     }
                     product_ids.push(row.product_id);
                 }
-                if(!product_ids.length){
-                    return;
-                }
+            }
+            if( product_ids.length ){
                 $.post("StockAnalog/link_bulk_by_id",{product_id:product_id,product_ids2:JSON.stringify(product_ids)},function( ok ){
                         if( ok==1 ){
                             App.flash("Товар добавлен в группу аналогов");
