@@ -572,7 +572,10 @@ class StockBuyManager extends Catalog{
         die;
 	
     }
-    public function matchesAddCommingLeftovers( $query ){
+    public function matchesAddCommingLeftovers( $query, $registerer_param=null, $previuos_return=null ){
+        if( $previuos_return ){
+            $query=$previuos_return;
+        }
         $this->Hub->set_level(1);
         $query['table'].="
             LEFT JOIN
