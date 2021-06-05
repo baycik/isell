@@ -4,5 +4,6 @@
     {"table_name":"client_list","table_title":"Клиентская база","level":3},
     {"table_name":"discount_list","table_title":"Список скидок","level":3,"orderby":"label"},
     {"table_name":"log_list","table_title":"Лог","level":3,"orderby":"entry_id DESC"},
-    {"table_name":"acc_article_list","table_title":"Статьи проводок","level":3,"editable":1}
+    {"table_name":"acc_article_list","table_title":"Статьи проводок","level":3,"editable":1},
+    {"table_name":"product_popularity_list","table_title":"Популярность товаров","level":3,"editable":0}
 ]
