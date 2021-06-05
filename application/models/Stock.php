@@ -996,8 +996,7 @@ class Stock extends Catalog {
 	    }
 	}
         if( $category_id ){//maybe its good idea to switch to tree path filtering?
-            $branch_ids = $this->treeGetSub('stock_tree', $category_id);
-            $cases[]= "se.parent_id IN (" . implode(',', $branch_ids) . ")";
+            $cases[]= "st.path_id LIKE '%$category_id%'";
         }
         //plugins where_cases goes here
         return $cases?implode(' AND ',$cases):'1';
@@ -1031,7 +1030,7 @@ class Stock extends Catalog {
     }
     
     protected function matchesListCreateTemporary( $where ){
-        $result_window_size=5000;
+        $result_window_size=3000;
         $usd_ratio=$this->Hub->pref('usd_ratio');
         $pcomp_id=$this->Hub->pcomp('company_id');
         $price_label=$this->Hub->pcomp('price_label');
@@ -1111,7 +1110,7 @@ class Stock extends Catalog {
             $query=$modified_query;
         }
         
-        //$this->query("DROP  TABLE IF EXISTS tmp_matches_list");#TEMPORARY
+        $this->query("DROP TEMPORARY TABLE IF EXISTS tmp_matches_list");#TEMPORARY
         $sql="CREATE TEMPORARY TABLE tmp_matches_list (PRIMARY KEY(product_id)) AS 
             SELECT 
                 {$query['outer']['select']}

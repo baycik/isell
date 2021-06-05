@@ -23,6 +23,17 @@ class StockAnalog extends Catalog{
 	return $this->Maintain->backupImportExecute($uninstall_file);
     }
     
+    public function activate(){
+        $Events=$this->Hub->load_model("Events");
+        $Events->Topic('beforeMatchesGet')->subscribe('StockAnalog','matchesAddAnalogs');
+        $Events->Topic('beforeMatchesTmpCreated')->subscribe('StockAnalog','matchesTmpAddAnalogs');
+    }
+    
+    public function deactivate(){
+        $Events=$this->Hub->load_model("Events");
+        $Events->Topic('beforeMatchesGet')->unsubscribe('StockAnalog','matchesAddAnalogs');
+        $Events->Topic('beforeMatchesTmpCreated')->unsubscribe('StockAnalog','matchesTmpAddAnalogs');
+    }
     
     public function listFetch( int $offset, int $limit, string $sortby=null, string $sortdir=null, array $filter = null){
         $this->Hub->set_level(3);
@@ -227,5 +238,45 @@ class StockAnalog extends Catalog{
                 prod_list pl2 ON pal.product_id=pl2.product_id";
         $this->query($sql_list);
         return $this->db->affected_rows();
+    }
+    
+    
+    
+    
+    public function matchesAddAnalogs($query, $registerer_param=null, $previuos_return=null ){
+//        if( $previuos_return ){
+//            $query=$previuos_return;
+//        }
+//        $this->Hub->set_level(1);
+//        $query['table'].="
+//            LEFT JOIN
+//                plugin_analog_list pal USING(product_id)";
+//        $query['select'].=",IF(pal.analog_group_id,(SELECT GREATEST(COUNT(*)-1,0) FROM plugin_analog_list WHERE analog_group_id=pal.analog_group_id),0) analog_count";
+        return $query;
+    }
+    
+    public function matchesTmpAddAnalogs($query, $registerer_param=null, $previuos_return=null ){
+        if( $previuos_return ){
+            $query=$previuos_return;
+        }
+        $this->Hub->set_level(1);
+        if( !preg_match('/%[\S]{3,}%/',$query['inner']['where']) ){
+            return $query;
+        }
+        //expanding query only if clue is longer than 3 symbols
+        $expand_sql="
+            SELECT
+                GROUP_CONCAT(DISTINCT IF(pal2.product_id,pal2.product_id,pl.product_id)) product_id_list
+            FROM
+                prod_list pl
+            LEFT JOIN
+                plugin_analog_list pal1 ON pl.product_id=pal1.product_id
+            LEFT JOIN
+                plugin_analog_list pal2 ON pal1.analog_group_id=pal2.analog_group_id
+            {$query['inner']['where']}
+            ";
+        $product_id_list=$this->get_value($expand_sql);
+        $query['inner']['where']="WHERE pl.product_id IN ($product_id_list)";
+        return $query;
     }
 }
