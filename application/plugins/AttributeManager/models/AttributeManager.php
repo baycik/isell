@@ -302,7 +302,7 @@ class AttributeManager extends Catalog{
         ];
     }
     
-    public function filterSetupMatchesTable( $query, $previuos_return ){
+    public function filterSetupMatchesTable( $query, $registerer_param=null, $previuos_return=null  ){
         if( $previuos_return ){
             $query=$previuos_return;
         }
