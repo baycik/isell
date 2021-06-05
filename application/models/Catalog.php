@@ -451,12 +451,17 @@ class Catalog extends CI_Model {
                 $Model=$this->Hub->load_model($listener->event_place);
             }
             $method=$listener->event_target;
-            $arguments[]=$listener->event_note;//custom registerer parameter
-            $arguments[]=&$previuos_return;//previous events results
+            $event_arguments=array_merge(
+                    $arguments,//original caller arguments
+                    [
+                        $listener->event_note,//custom registerer parameter
+                        $previuos_return//previous events results
+                    ]
+                    );
             if( !method_exists($Model, $method) ){
                 continue;
             }
-            $previuos_return=call_user_func_array([$Model, $method],$arguments);
+            $previuos_return=call_user_func_array([$Model, $method],$event_arguments);
         }
         return $previuos_return;
     }
