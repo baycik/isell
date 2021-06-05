@@ -214,19 +214,19 @@ EOT;
 
 
 
-//$filename[]=<<<EOT
-//plugins/MobiSell/views/stock.html
-//EOT;
-//$search[]=<<<EOT
-//<div class="product-name-column">
-//EOT;
-//$replace[]=<<<EOT
-//EOT;
-//$before[]=<<<EOT
-//EOT;
-//$after[]=<<<'EOT'
-//        {{if analog_count|more>0}}
-//        <a href="javascript:;" onclick="$('#stock_search_input').val('@{{product_code}}');App.stock.entries.load();"><b><i class="icon undo"></i>аналоги</b></a>
-//        {{/if}}
-//EOT;
+$filename[]=<<<EOT
+plugins/MobiSell/views/stock.html
+EOT;
+$search[]=<<<EOT
+<div class="product-name-column">
+EOT;
+$replace[]=<<<EOT
+EOT;
+$before[]=<<<EOT
+EOT;
+$after[]=<<<'EOT'
+        {{if analog_count|more>0}}
+        <a href="javascript:;" onclick="$('#stock_search_input').val('{{product_code}}');App.stock.entries.load();"><b><i class="icon undo"></i>аналоги</b></a>
+        {{/if}}
+EOT;
 

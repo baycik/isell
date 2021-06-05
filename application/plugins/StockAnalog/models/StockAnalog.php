@@ -244,14 +244,14 @@ class StockAnalog extends Catalog{
     
     
     public function matchesAddAnalogs($query, $registerer_param=null, $previuos_return=null ){
-//        if( $previuos_return ){
-//            $query=$previuos_return;
-//        }
-//        $this->Hub->set_level(1);
-//        $query['table'].="
-//            LEFT JOIN
-//                plugin_analog_list pal USING(product_id)";
-//        $query['select'].=",IF(pal.analog_group_id,(SELECT GREATEST(COUNT(*)-1,0) FROM plugin_analog_list WHERE analog_group_id=pal.analog_group_id),0) analog_count";
+        if( $previuos_return ){
+            $query=$previuos_return;
+        }
+        $this->Hub->set_level(1);
+        $query['table'].="
+            LEFT JOIN
+                plugin_analog_list pal USING(product_id)";
+        $query['select'].=",IF(pal.analog_group_id,(SELECT GREATEST(COUNT(*)-1,0) FROM plugin_analog_list WHERE analog_group_id=pal.analog_group_id),0) analog_count";
         return $query;
     }
     
