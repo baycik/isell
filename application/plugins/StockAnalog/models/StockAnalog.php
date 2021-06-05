@@ -276,7 +276,12 @@ class StockAnalog extends Catalog{
             {$query['inner']['where']}
             ";
         $product_id_list=$this->get_value($expand_sql);
-        $query['inner']['where']="WHERE pl.product_id IN ($product_id_list)";
+        if($product_id_list){
+            $query['inner']['where']="WHERE pl.product_id IN ($product_id_list)";
+        } else {
+            $query['inner']['where']="WHERE 0";
+        }
+        
         return $query;
     }
 }
