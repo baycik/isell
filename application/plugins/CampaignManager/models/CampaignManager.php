@@ -421,7 +421,7 @@ class CampaignManager extends Catalog{
                 period_reward1,
                 period_reward2,
                 period_reward3,
-                ROUND(SUM( {$bonus_base['select']} )) bonus_base
+                COALESCE(ROUND(SUM( {$bonus_base['select']} )),0) bonus_base
             FROM
                 plugin_campaign_bonus pcb 
                     JOIN
