@@ -440,7 +440,7 @@ class CampaignManager extends Catalog{
     
     private function bonusCalculateProductRange($campaign_bonus){
         $table="document_entries de";
-        $product_range_filter="";
+        $product_range_filter="1";
         $where="";
         if( $campaign_bonus->product_category_id ){
             $product_range_filter="st.path_id LIKE CONCAT('%',se.parent_id,'%')";
