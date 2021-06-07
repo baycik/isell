@@ -374,6 +374,9 @@ class CampaignManager extends Catalog{
             case 'VOLUME':
                 $bonus_base= $this->bonusCalculateVolume($campaign_bonus,$period_on,$client_filter);
                 break;
+            case 'FRACTION':
+                $bonus_base= $this->bonusCalculateFraction($campaign_bonus,$period_on,$client_filter);
+                break;
             case 'PROFIT':
                 $bonus_base= $this->bonusCalculateProfit($campaign_bonus,$period_on,$client_filter);
                 break;
@@ -431,34 +434,46 @@ class CampaignManager extends Catalog{
             GROUP BY period_year,period_quarter,period_month
             ORDER BY period_year DESC,period_quarter DESC,period_month DESC
             $limit) tt";
-            //die($sql);
+//            die($sql);
         return $this->get_list($sql);
     }
     
     private function bonusCalculateProductRange($campaign_bonus){
         $table="document_entries de";
+        $product_range_filter="";
         $where="";
         if( $campaign_bonus->product_category_id ){
-            $stock_category_ids=$this->treeGetSub('stock_tree', $campaign_bonus->product_category_id);
-            $table.=" JOIN stock_entries se ON de.product_code=se.product_code AND se.parent_id IN (". implode(',', $stock_category_ids).")";
+            $product_range_filter="st.path_id LIKE CONCAT('%',se.parent_id,'%')";
+            $table.=" 
+                JOIN stock_entries se ON de.product_code=se.product_code 
+                JOIN stock_tree st ON se.parent_id=st.branch_id";
         }
         if( $campaign_bonus->product_brand_filter || $campaign_bonus->product_type_filter || $campaign_bonus->product_class_filter ){
             $table.=" JOIN prod_list pl ON de.product_code=pl.product_code";
         }
         if( $campaign_bonus->product_brand_filter ){
-            $brand_filter =" analyse_brand LIKE '%". str_replace(',', "%' OR  analyse_brand LIKE '%", $campaign_bonus->product_brand_filter)."%'";
-            $table.=" AND ($brand_filter)";
+            $product_range_filter =" analyse_brand LIKE '%". str_replace(',', "%' OR  analyse_brand LIKE '%", $campaign_bonus->product_brand_filter)."%'";
         }
         if( $campaign_bonus->product_type_filter ){
-            $type_filter =" analyse_type  LIKE '%". str_replace(',', "%' OR  analyse_type  LIKE '%", $campaign_bonus->product_type_filter)."%'";
-            $table.=" AND ($type_filter)";
+            $product_range_filter =" analyse_type  LIKE '%". str_replace(',', "%' OR  analyse_type  LIKE '%", $campaign_bonus->product_type_filter)."%'";
         }        
         if( $campaign_bonus->product_class_filter ){
-            $class_filter =" analyse_class  = '". str_replace(',', "' OR  analyse_class  = '", $campaign_bonus->product_class_filter)."'";
-            $table.=" AND ($class_filter)";
+            $product_range_filter =" analyse_class  = '". str_replace(',', "' OR  analyse_class  = '", $campaign_bonus->product_class_filter)."'";
         }
         return [
-            'table'=>"(SELECT doc_id,doc_entry_id,de.product_code,invoice_price,de.product_quantity,de.breakeven_price,de.self_price FROM $table)",
+            'table'=>"(
+                SELECT 
+                doc_id,
+                doc_entry_id,
+                de.product_code,
+                invoice_price,
+                de.product_quantity,
+                de.breakeven_price,
+                de.self_price,
+                IF($product_range_filter,de.product_quantity*invoice_price,0) filtered_product_vatless_sum,
+                de.product_quantity*invoice_price unfiltered_product_vatless_sum
+                FROM 
+            $table)",
             'where'=>$where
         ];
     }
@@ -475,11 +490,51 @@ class CampaignManager extends Catalog{
             ROUND(AVG(self_price),2) self_price,
             ROUND(AVG(breakeven_price),2) breakeven_price,
             ROUND(AVG(invoice_price * (dl.vat_rate/100+1)),2) sell_price,
-            ROUND(SUM(invoice_price*product_quantity* (dl.vat_rate/100+1))) total_sum,
+            ROUND(SUM(filtered_product_vatless_sum* (dl.vat_rate/100+1))) total_sum,
             ROUND(COALESCE(AVG((invoice_price * (dl.vat_rate/100+1)-GREATEST(breakeven_price,self_price))),0),2) diff_price,
             ";
         $select="
-                COALESCE(invoice_price * product_quantity * (dl.vat_rate/100+1),0)";
+                COALESCE(filtered_product_vatless_sum * (dl.vat_rate/100+1),0)";
+        $table="
+                    LEFT JOIN
+                document_list dl ON $period_on 
+                                    AND doc_type = 1 
+                                    AND is_commited 
+                                    AND NOT notcount 
+                                    AND passive_company_id IN (SELECT company_id FROM companies_list JOIN companies_tree USING(branch_id) WHERE $client_filter)
+                                    AND dl.cstamp>'{$campaign_bonus->campaign_start_at}' AND dl.cstamp<'{$campaign_bonus->campaign_finish_at}'
+                    LEFT JOIN
+                {$product_range['table']} product_range USING (doc_id)
+                    LEFT JOIN
+                prod_list pl USING(product_code)
+                ";
+        $where="";
+        return [
+            'select'=>$select,
+            'detailed_select'=>$detailed_select,
+            'table'=>$table,
+            'where'=>$where
+        ];
+    }
+    private function bonusCalculateFraction($campaign_bonus,$period_on,$client_filter){
+        $product_range= $this->bonusCalculateProductRange($campaign_bonus);
+        $detailed_select="
+            analyse_brand,
+            analyse_type,
+            pl.product_code,
+            ru product_name,
+            SUM(product_quantity) product_quantity,
+            ROUND(AVG(self_price),2) self_price,
+            ROUND(AVG(breakeven_price),2) breakeven_price,
+            ROUND(AVG(invoice_price * (dl.vat_rate/100+1)),2) sell_price,
+            ROUND(SUM(filtered_product_vatless_sum* (dl.vat_rate/100+1))) total_sum,
+            ROUND(COALESCE(AVG((invoice_price * (dl.vat_rate/100+1)-GREATEST(breakeven_price,self_price))),0),2) diff_price,
+            ";
+        $select="
+                100*
+                filtered_product_vatless_sum * (dl.vat_rate/100+1) )
+                /
+                SUM(unfiltered_product_vatless_sum * (dl.vat_rate/100+1)";
         $table="
                     LEFT JOIN
                 document_list dl ON $period_on 
@@ -511,8 +566,8 @@ class CampaignManager extends Catalog{
             SUM(product_quantity) product_quantity,
             ROUND(SUM(self_price*product_quantity)/SUM(product_quantity) * (dl.vat_rate/100+1),2) self_price,
             ROUND(SUM(breakeven_price*product_quantity)/SUM(product_quantity),2) breakeven_price,
-            ROUND(SUM(invoice_price*product_quantity)/SUM(product_quantity) * (dl.vat_rate/100+1),2) sell_price,
-            ROUND(SUM(invoice_price*product_quantity) * (dl.vat_rate/100+1)) total_sum,
+            ROUND(SUM(filtered_product_vatless_sum)/SUM(product_quantity) * (dl.vat_rate/100+1),2) sell_price,
+            ROUND(SUM(filtered_product_vatless_sum) * (dl.vat_rate/100+1)) total_sum,
             ROUND(SUM( (invoice_price * (dl.vat_rate/100+1)-GREATEST(breakeven_price,self_price * (dl.vat_rate/100+1),0)) * product_quantity )/SUM(product_quantity),2) diff_price,
             ";
         $select="
@@ -681,6 +736,9 @@ class CampaignManager extends Catalog{
         switch( $campaign_bonus->bonus_type ){
             case 'VOLUME':
                 $bonus_base= $this->bonusCalculateVolume($campaign_bonus,$period_on,$client_filter);
+                break;
+            case 'FRACTION':
+                $bonus_base= $this->bonusCalculateFraction($campaign_bonus,$period_on,$client_filter);
                 break;
             case 'PROFIT':
                 $bonus_base= $this->bonusCalculateProfit($campaign_bonus,$period_on,$client_filter);
