@@ -46,6 +46,7 @@
                         <td>База начисления:</td>
                         <td>
                             {{if bonus_type|equals>VOLUME}}Оборот{{/if}}
+                            {{if bonus_type|equals>FRACTION}}Доля в обороте{{/if}}
                             {{if bonus_type|equals>PROFIT}}Наценка{{/if}}
                             {{if bonus_type|equals>PAYMENT}}Оплата{{/if}}
                         </td>
@@ -68,13 +69,27 @@
                         </td>
                     </tr>
                     <tr>
-                        <td>Сумма:</td>
                         <td>
-                            <!--{{if bonus_type|equals>PROFIT}}-->
-                            {{bonus_base|percent}} баллов
-                            <!--{{else}}-->
-                            {{bonus_base|format}}
-                            <!--{{/if}}-->
+                        {{if bonus_type|equals>FRACTION}}
+                            Доля в обороте
+                        {{else}}
+                            Сумма
+                        {{/if}}:
+                        </td>
+                        <td>
+                            {{if bonus_type|equals>VOLUME}}
+                                {{bonus_base|format}}
+                            {{/if}}
+                            {{if bonus_type|equals>FRACTION}}
+                                {{bonus_base|format}}%
+                            {{/if}}
+                            {{if bonus_type|equals>PROFIT}}
+                                {{bonus_base|percent}} баллов
+                            {{/if}}
+                            {{if bonus_type|equals>PAYMENT}}
+                                {{bonus_base|format}}
+                            {{/if}}
+                            
                         </td>
                     </tr>
 
