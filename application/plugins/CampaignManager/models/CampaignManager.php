@@ -443,7 +443,7 @@ class CampaignManager extends Catalog{
         $product_range_filter="1";
         $where="";
         if( $campaign_bonus->product_category_id ){
-            $product_range_filter="st.path_id LIKE CONCAT('%',se.parent_id,'%')";
+            $product_range_filter="st.path_id LIKE CONCAT('%/','$campaign_bonus->product_category_id','/%')";
             $table.=" 
                 JOIN stock_entries se ON de.product_code=se.product_code 
                 JOIN stock_tree st ON se.parent_id=st.branch_id";
