@@ -995,8 +995,8 @@ class Stock extends Catalog {
 		$cases[]="(pl.product_code LIKE '%$clue%' OR pl.$lang LIKE '%$clue%')";
 	    }
 	}
-        if( $category_id ){//maybe its good idea to switch to tree path filtering?
-            $cases[]= "st.path_id LIKE '%$category_id%'";
+        if( $category_id ){
+            $cases[]= "st.path_id LIKE '%/$category_id/%'";
         }
         //plugins where_cases goes here
         return $cases?implode(' AND ',$cases):'1';

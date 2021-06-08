@@ -270,14 +270,14 @@ class StockAnalog extends Catalog{
                 GROUP_CONCAT(DISTINCT IF(pal2.product_id,pal2.product_id,pl.product_id)) product_id_list
             FROM
                 prod_list pl
+            JOIN
+                stock_entries se ON se.product_code=pl.product_code
+            JOIN
+                stock_tree st ON se.parent_id=st.branch_id
             LEFT JOIN
                 plugin_analog_list pal1 ON pl.product_id=pal1.product_id
             LEFT JOIN
                 plugin_analog_list pal2 ON pal1.analog_group_id=pal2.analog_group_id
-            JOIN
-                prod_list pl2 ON pl2.product_id=pal2.product_id
-            JOIN
-                stock_entries se ON se.product_code=pl2.product_code AND se.product_quantity>0
             {$query['inner']['where']}
             ";
         $product_id_list=$this->get_value($expand_sql);
