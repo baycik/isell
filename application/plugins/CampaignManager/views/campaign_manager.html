@@ -252,18 +252,21 @@
                         }
                     }
                 }
-                $.post("CampaignManager/bonusUpdate", {campaign_bonus_id: campaign_bonus_id, field: field, value: value}, function (ok) {
-                    if (ok * 1) {
-                        App.flash("Сохранено: " + title);
-                        if (field.indexOf('bonus_type') > -1 || field.indexOf('campaign_queue') > -1) {
-                            Campaign.get();
+                clearTimeout(this.updateClock);
+                this.updateClock=setTimeout(function(){
+                    $.post("CampaignManager/bonusUpdate", {campaign_bonus_id: campaign_bonus_id, field: field, value: value}, function (ok) {
+                        if (ok * 1) {
+                            App.flash("Сохранено: " + title);
+                            if (field.indexOf('bonus_type') > -1 || field.indexOf('campaign_queue') > -1) {
+                                Campaign.get();
+                            } else {
+                                Bonuses.periodsLoad(campaign_bonus_id);
+                            }
                         } else {
-                            Bonuses.periodsLoad(campaign_bonus_id);
+                            App.flash("Ошибка сохранения: " + title);
                         }
-                    } else {
-                        App.flash("Ошибка сохранения: " + title);
-                    }
-                });
+                    });
+                },500);
             },
             periodsLoad: function (campaign_bonus_id) {
                 return $.post("CampaignManager/bonusCalculate", {campaign_bonus_id: campaign_bonus_id}, function (resp) {
