@@ -28,8 +28,8 @@
                 action:$("#document_recalculate select[name=action]").val(),
                 source:$("#document_recalculate input[name=source]:checked").val()
             };
-            console.log(fvalue);
             App.page_mtrade_document_recalculate.handler.notify('submit', fvalue);
+            $("#document_recalculate").modal('hide');
         }
     };
 </script>

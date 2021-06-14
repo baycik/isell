@@ -80,7 +80,7 @@ trait DocumentBaseSuggestion{
         return $suggested;
     }
 
-    public function pickerListFetch( int $parent_id, int $offset=0, int $limit=10, string $sortby, string $sortdir, array $filter) {
+    public function pickerListFetch( int $parent_id=0, int $offset=0, int $limit=10, string $sortby=null, string $sortdir=null, array $filter) {
         $pcomp_id = $this->Hub->pcomp('company_id');
         $doc_ratio = $this->Hub->pref('usd_ratio');
 

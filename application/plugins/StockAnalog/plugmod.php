@@ -28,6 +28,20 @@ EOT;
 $after[]=<<<EOT
 EOT;
 
+$filename[]=<<<EOT
+models/DocumentSell.php
+EOT;
+$search[]=<<<EOT
+CHK_ENTRY(doc_entry_id) AS row_status
+EOT;
+$replace[]=<<<EOT
+PLUGIN_CHK_ANALOG(CHK_ENTRY(doc_entry_id),doc_type,product_id,product_quantity,analyse_class) AS row_status
+EOT;
+$before[]=<<<EOT
+EOT;
+$after[]=<<<EOT
+EOT;
+
 
 
 $filename[]=<<<EOT

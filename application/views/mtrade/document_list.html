@@ -154,6 +154,19 @@
                 App.Topic('documentListChanged').subscribe(function () {
                     DocList.tools.reload();
                 });
+                App.Topic('documentHeadChanged').subscribe(function (change) {
+                    let doc_id=change.doc_id;
+                    let field=change.field;
+                    let value=change.value;
+                    switch(field){
+                        case 'active_company_id':
+                            App.user.acompSelect({company_id:value});
+                            break;
+                        case 'passive_company_id':
+                            App.user.pcompSelect({company_id:value});
+                            break;
+                    }
+                });
                 DocList.table.render();
                 DocList.grid.init();
             },
@@ -219,6 +232,10 @@
             DocHolder.prepareDocumentBase.then(function(){
                 DocumentInline.extension.set(doc_extension);
                 DocumentInline.load(doc_id);
+                
+                
+                
+                console.log('DocumentInline.load(doc_id)',doc_id);
             });
         },
         reset:function(){

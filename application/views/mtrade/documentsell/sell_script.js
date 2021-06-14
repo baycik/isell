@@ -25,6 +25,7 @@ Document.head = {
         return $.post(url, {doc_id: Document.doc_id, field: field, value: value}).done(function (ok) {
             if (ok * 1) {
                 App.flash(succes_msg);
+                App.Topic('documentHeadChanged').publish({doc_id: Document.doc_id, field: field, value: value});
             } else {
                 App.flash("Изменения не сохранены");
             }
@@ -145,6 +146,12 @@ Document.head = {
             },
             formatters: {
                 doc_status_id: function (item) {
+                    if( !item ){
+                        return {
+                            name:'',
+                            value:''
+                        };
+                    }
                     let icons = {
                         created: 'star outline',
                         reserved: 'clock outline',
@@ -490,7 +497,6 @@ Document.body = {
                         } else {
                             App.flash("Неверные параметры");
                         }
-                        
                     });
                 }
             });

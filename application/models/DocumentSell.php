@@ -131,7 +131,7 @@ class DocumentSell extends DocumentBase{
     
     protected function entryListClearCache(){
         $this->entryListCreated=false;
-        $this->query("DROP TEMPORARY TABLE tmp_entry_list");
+        $this->query("DROP TEMPORARY TABLE IF EXISTS tmp_entry_list");
     }
     protected $entryListCreated=false;
     protected function entryListCreate( int $doc_id, int $doc_entry_id=0 ){

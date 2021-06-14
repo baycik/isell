@@ -158,7 +158,7 @@ trait DocumentBaseEntries{
         return $this->get_value($nettotal_sql);
     }
     
-    public function entryListRecalculate( int $doc_id, float $amount, string $action='discount', string $source='pricelist'){
+    public function entryListRecalculate( int $doc_id, float $amount=0, string $action='discount', string $source='pricelist'){
         $this->documentSelect($doc_id);
         $pcomp_id=$this->doc('passive_company_id');
         $pcomp=$this->Hub->load_model('Company')->companyGet($pcomp_id);

@@ -14,8 +14,9 @@ class DocumentBase extends Catalog {
     use DocumentBaseSuggestion;
 
     public function init() {
-        $this->Topic("documentAfterChangeDocStatusId")->subscribe('DocumentBase', 'documentAfterChangeDocStatusId');
+        $this->Topic("documentAfterChangeDocStatusId")->subscribe('DocumentBase', 'onChangeDocStatusId');
         $this->Topic("documentBeforeChangeIsCommited")->subscribe('DocumentBase', 'transCommitedChangeRefresh');
+        $this->Topic("documentBeforeChangeActiveCompanyId")->subscribe('DocumentBase', 'onChangeActiveCompanyId');
     }
 
     /**
@@ -187,7 +188,7 @@ class DocumentBase extends Catalog {
     }
 
     //DOCUMENT EVENT LISTENERS SECTION
-    protected function documentAfterChangeDocStatusId($old_status_id, $new_status_id, $document_properties) {
+    protected function onChangeDocStatusId($old_status_id, $new_status_id, $document_properties) {
         if (!isset($new_status_id)) {
             return false;
         }
@@ -196,6 +197,32 @@ class DocumentBase extends Catalog {
             return false;
         }
         return true;
+    }
+    protected function onChangeActiveCompanyId($old_acomp_id, $new_acomp_id, $document_properties){
+        if( $this->isCommited() ){
+            return false;
+        }
+        $old_acomp_label=$this->Hub->acomp('label');
+        $this->Hub->load_model('Company')->selectActiveCompany($new_acomp_id);
+        $new_acomp_label=$this->Hub->acomp('label');
+        $next_doc_num = $this->documentNumNext($this->doc('doc_type'),true);
+        $doc_id=$this->doc('doc_id');
+        
+        $new_doc_data=$this->doc('doc_data')."\n $old_acomp_label => $new_acomp_label";
+        $new_vat_rate=$this->Hub->acomp('company_vat_rate');
+        $old_vat_rate=$this->doc('vat_rate');
+        if( $new_vat_rate!=$old_vat_rate ){
+            $transition_ratio=(100+$new_vat_rate)/(100+$old_vat_rate);
+            $this->query("UPDATE document_entries SET invoice_price=invoice_price / $transition_ratio WHERE doc_id='$doc_id'");
+        }
+        $this->delete('document_view_list',['doc_id'=>$doc_id]);
+        $this->doc('vat_rate',$new_vat_rate);
+        $this->doc('doc_num',$next_doc_num);
+        $this->doc('doc_data',$new_doc_data);
+        return true;
+    }
+    protected function onChangeExtraExpenses(){
+        
     }
 
     //////////////////////////////////////////
@@ -211,7 +238,7 @@ class DocumentBase extends Catalog {
         $this->document_properties->created_by = $this->get_value("SELECT last_name FROM user_list WHERE user_id={$this->document_properties->created_by}");
         $this->document_properties->modified_by = $this->get_value("SELECT last_name FROM user_list WHERE user_id={$this->document_properties->modified_by}");
         $this->document_properties->child_documents = $this->get_list("SELECT doc_id,cstamp,doc_num FROM document_list WHERE parent_doc_id={$doc_id}");
-        $this->document_properties->status = $this->get_row("SELECT * FROM document_status_list WHERE doc_status_id={$this->document_properties->doc_status_id}");
+        $this->document_properties->status = $this->get_row("SELECT * FROM document_status_list WHERE doc_status_id='{$this->document_properties->doc_status_id}'");
         $this->document_properties->type = $this->get_row("SELECT * FROM document_types WHERE doc_type={$this->document_properties->doc_type}");
         $this->document_properties->extra_expenses = $this->headGetExtraExpenses();
         $checkout = $this->get_row("SELECT * FROM checkout_list WHERE parent_doc_id={$doc_id}");
@@ -275,7 +302,11 @@ class DocumentBase extends Catalog {
             return false;
         }
         $this->doc($field, $value);
-        $this->Topic('documentAfterChange' . $fieldCamelCase)->publish($old_value, $value, $this->document_properties);
+        $ok = $this->Topic('documentAfterChange' . $fieldCamelCase)->publish($old_value, $value, $this->document_properties);
+        if ($ok === false) {
+            $this->db_transaction_rollback();
+            return false;
+        }
         if ($this->isCommited()) {
             $this->transSchemeUpdate();
         }
