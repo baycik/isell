@@ -4,13 +4,14 @@ require_once 'Data.php';
 
 class Accounts extends Data {
 
-    public function commitTransaction($acc_debit_code, $acc_credit_code, $amount = 0, $description, $editable = 0, $cstamp = NULL, $amount_alt = 0, $active_company_id, $passive_company_id ) {
+    public function commitTransaction($acc_debit_code, $acc_credit_code, $amount = 0, $description, $editable = 0, $cstamp = NULL, $amount_alt = 0, $active_company_id, $passive_company_id,$doc_id=0 ) {
 	/*MUST REVISE THIS FUNCTION*/
         $this->checkUserAccessLevel(0, $acc_debit_code, $acc_credit_code);
         if (!$cstamp)
             $cstamp = date('Y-m-d H:i:s');
         $user_id = $this->Base->svar("user_id");
         $sql = "INSERT INTO acc_trans SET 
+                doc_id='$doc_id',
                 cstamp='$cstamp',
                 active_company_id='$active_company_id', 
                 passive_company_id='$passive_company_id', 
