@@ -91,7 +91,8 @@ class Company extends Catalog{
         $sql="SELECT 
                 company_id,
                 label,
-                path
+                path,
+                company_name
             FROM
                 companies_tree
             JOIN 

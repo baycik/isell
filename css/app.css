@@ -535,8 +535,27 @@ img{
     margin-top:-50px;
 }
 #ApplicationBar {
-    background-color: #fff;
-    -vertical-align: middle;
+    background-color: rgba(255,255,255,.6);
+    transition: 3s;
+    display:grid;
+    grid-template-columns:500px auto 200px;
+}
+#ApplicationBar:hover{
+    background-color: rgba(255,255,255,1);
+    transition: 3s;
+}
+
+.ApplicationStatusbar{
+    color:#009;
+    display: inline-block;
+    font-size: 18px;
+    white-space: nowrap;
+}
+.ApplicationSearchbar{
+    
+}
+.ApplicationTaskbar{
+    
 }
 .ModuleButton{
     -display:inline-block;

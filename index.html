@@ -1,26 +1,26 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
     <head>
-	<title>iSell 5.0</title>
-	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-	<script type="text/javascript" src="js/markup.js"></script>
-	<script type="text/javascript" src="js/jquery-3.5.0.min.js"></script>
-        
+        <title>iSell 5.0</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <script type="text/javascript" src="js/markup.js"></script>
+        <script type="text/javascript" src="js/jquery-3.5.0.min.js"></script>
+
         <link rel="stylesheet" href="js/Semantic-UI/semantic.min.css" />
         <script type="text/javascript" src="js/Semantic-UI/semantic.min.js"></script>
-        
-	<script type="text/javascript" src="js/jquery-easyui-1.9.4/jquery.easyui.min.js"></script>
-	<script type="text/javascript" src="js/jquery-easyui-1.9.4/jquery.easyui.mobile.js"></script>
-	<script type="text/javascript" src="js/jquery-easyui-1.9.4/locale/easyui-lang-ru.js"></script>
-	<script type="text/javascript" src="js/jquery-easyui-1.9.4/datagridfilter/datagrid-filter.js"></script>
-	<link rel="icon" type="image/png" href="/favicon.png" />
-	<link rel="stylesheet" type="text/css" href="js/jquery-easyui-1.9.4/themes/default/easyui.css"/>
-	<link rel="stylesheet" type="text/css" href="js/jquery-easyui-1.9.4/themes/icon.css"/>
-	<link rel="stylesheet" type="text/css" href="js/jquery-easyui-1.9.4/themes/color.css"/>
-	<link rel="stylesheet" type="text/css" href="js/slick/slick.grid.css"/>
-	<link rel="stylesheet" type="text/css" href="js/slick/slick-isell-theme.css"/>
-	<link rel="stylesheet" type="text/css" href="css/app.css" />
-        
+
+        <script type="text/javascript" src="js/jquery-easyui-1.9.4/jquery.easyui.min.js"></script>
+        <script type="text/javascript" src="js/jquery-easyui-1.9.4/jquery.easyui.mobile.js"></script>
+        <script type="text/javascript" src="js/jquery-easyui-1.9.4/locale/easyui-lang-ru.js"></script>
+        <script type="text/javascript" src="js/jquery-easyui-1.9.4/datagridfilter/datagrid-filter.js"></script>
+        <link rel="icon" type="image/png" href="/favicon.png" />
+        <link rel="stylesheet" type="text/css" href="js/jquery-easyui-1.9.4/themes/default/easyui.css"/>
+        <link rel="stylesheet" type="text/css" href="js/jquery-easyui-1.9.4/themes/icon.css"/>
+        <link rel="stylesheet" type="text/css" href="js/jquery-easyui-1.9.4/themes/color.css"/>
+        <link rel="stylesheet" type="text/css" href="js/slick/slick.grid.css"/>
+        <link rel="stylesheet" type="text/css" href="js/slick/slick-isell-theme.css"/>
+        <link rel="stylesheet" type="text/css" href="css/app.css" />
+
         <script type="text/javascript" src="js/slick/lib/jquery.event.drag-2.3.0.js"></script>
         <script type="text/javascript" src="js/jquery-ui.min.js"></script>
         <script type="text/javascript" src="js/slick/slick.core.js"></script>
@@ -28,89 +28,116 @@
         <script type="text/javascript" src="js/slick/slick.editors.js"></script>
         <script type="text/javascript" src="js/slick/slickinfinite.js"></script>
         <script type="text/javascript" src="js/slick/slick.grid.js"></script>
-        
-	<script type="text/javascript" src="js/app.js"></script>
+
+        <script type="text/javascript" src="js/app.js"></script>
     </head>
     <body>
-	<div id="ApplicationBar" class="transparent">
-	    <img src="img/logo.png" style="vertical-align:top;height: 40px;width:auto;margin: 1px;" />
-	    <div style="color:#009;margin-top:10px;display: inline-block;font-size: 18px;white-space: nowrap;" class="covert" id="module_title">
+        <div id="ApplicationBar">
+
+            <div class="ApplicationStatusbar transparent covert" id="module_title">
+                <img src="img/logo.png" />
                 {{module_name}}: 
                 <img src="img/home.png" style="margin-top: -4px;" /> <span class="link_button" onclick="App.user.acompSwitch()" title="Сменить активную компанию">{{acomp_name}}</span>
                 {{if pcomp_name}}
                 / <img src="img/gray.png" />  <span class="link_button" onclick="App.user.pcompSelectionDialog();" title="Сменить клиента">{{pcomp_name}}</span>
                 {{/if}}
             </div>
-	    <div id="holder_user_panel">
-		<img src="img/user-32.png" style="margin: 4px;"/>
-		<div id="div_user_panel">
-		    <div style="color:red">{{user_level_name}}</div>
-		    <div style="font-weight:bold;color:#000">{{user_login}}</div> 
-		    <button onclick="App.user.edit()"><img src="img/Edit-24.png"/> Редактировать</button>
-                    <button onclick="App.user.signOut()"><img src="img/logout.png"/> Выход</button>
-		</div>
-	    </div>
-	    <span id="chat_panel" class="covert" style="margin: 4px;cursor: pointer;float:right" onclick="App.loadWindow('page/dialog/chat')">
-		{{if count|more>0}}
-		<img src="img/chat_no.png" style="vertical-align: middle" class="blink" title="Есть новые сообщения" />{{count}}
-		{{else}}
-		<img src="img/chat_no.png" style="vertical-align: middle" title="Новых сообщений нет" />
-		{{/if}}	    
-	    </span>
-	    <span id="sync_panel" class="covert" style="margin: 4px;cursor: pointer;float:right">
-		{{if updates}}
-		{{if is_release}}
-		<img src="img/update_yes.png" style="vertical-align: middle" class="blink" title="Есть обновления" />
-		{{else}}
-		<img src="img/update_yes.png" style="vertical-align: middle" title="Есть обновления" />
-		{{/if}}
-		    {{updates|length}}
-		{{else}}
-		<img src="img/update_yes.png" style="vertical-align: middle" title="Обновлений нет" />
-		{{/if}}
-	    </span>
-            <span id="app_busy" style="margin: 10px;float:right;display: none"><img src="img/loading_16.gif"></span>
-	</div>
-	<div id="main_grid">
-	    <div id="div_module_list" class="covert transparent">
-		{{module_list}}
-		    <div class="ModuleButton" id="{{name}}Button" title="{{label}}">
-			<a href="#{{name}}">
-			    <!--<img src="img/Mods/{{icon}}" width="45" height="45" />-->
-			</a>
-		    </div>
-		{{/module_list}}
-		<img src="img/personalize-icon.png" style="width:48px;height:48px;cursor: pointer;" onclick="App.setBg()" title="Установить обои" />
-	    </div>
-	    <div id="ModuleContainer" style="vertical-align: top;"></div>
-	</div>
-	<div id="appWindowContainer"></div>
-	<div id="appStatus"></div>
-	<div id="loginScreen" class="rounded">
-	    <div style="color:#fff" id="SeqDialogMsg"></div>
-	    <div class="rounded" style="margin-left:auto;margin-right:auto;background: #def;">
-		<form action="User/SignIn" method="post" onsubmit="App.user.signIn();event.preventDefault();">
-		    <table width="200" border="0" align="center" cellspacing="1">
-			<tr>
-			    <td colspan="2" align="center">
-				<big>Авторизация</big>
-			    </td>
-			</tr>
-			<tr>
-			    <td><input type="text" id="user_login" name="user_login" style="width:100%;"  autofocus="autofocus" placeholder="Логин" /></td>
-			</tr>
-			<tr>
-			    <td><input type="password" id="user_pass" name="user_pass" style="width:100%;" placeholder="Пароль" /></td>
-			</tr>
-			<tr>
-			    <td colspan="2" align="center">
-				<button type="submit" value="Submit" id="submit_button"><img src="img/apply24.png" style="vertical-align: middle"/> Вход</button>
-			    </td>
-			</tr>
-		    </table>
-		</form>
-	    </div>
-	</div>    
-	<div id="loginOverlay"></div>
+            <div class="ApplicationSearchbar">
+                <div class="ui search">
+                    <div class="ui icon input" style="padding: 2px;width: 500px">
+                        <input class="prompt" type="text" placeholder="Расширеный поиск..."/>
+                        <i class="search icon"></i>
+                    </div>
+                    <div class="results"></div>
+                </div>
+                <script>
+                    $('.ui.search').search({
+                      apiSettings: {
+                        url: 'Search/comboSearch/?q={query}'
+                      },
+                      onSelect:function(){
+                          
+                          setTimeout(function(){
+                              $('.ui.search').search('set value');
+                          },100);
+                      },
+                      type: 'category'
+                    });
+                </script>
+            </div>
+            <div class="ApplicationTaskbar transparent">
+                <div id="holder_user_panel">
+                    <img src="img/user-32.png" style="margin: 4px;"/>
+                    <div id="div_user_panel">
+                        <div style="color:red">{{user_level_name}}</div>
+                        <div style="font-weight:bold;color:#000">{{user_login}}</div> 
+                        <button onclick="App.user.edit()"><img src="img/Edit-24.png"/> Редактировать</button>
+                        <button onclick="App.user.signOut()"><img src="img/logout.png"/> Выход</button>
+                    </div>
+                </div>
+                <span id="chat_panel" class="covert" style="margin: 4px;cursor: pointer;float:right" onclick="App.loadWindow('page/dialog/chat')">
+                    {{if count|more>0}}
+                    <img src="img/chat_no.png" style="vertical-align: middle" class="blink" title="Есть новые сообщения" />{{count}}
+                    {{else}}
+                    <img src="img/chat_no.png" style="vertical-align: middle" title="Новых сообщений нет" />
+                    {{/if}}	    
+                </span>
+                <span id="sync_panel" class="covert" style="margin: 4px;cursor: pointer;float:right">
+                    {{if updates}}
+                    {{if is_release}}
+                    <img src="img/update_yes.png" style="vertical-align: middle" class="blink" title="Есть обновления" />
+                    {{else}}
+                    <img src="img/update_yes.png" style="vertical-align: middle" title="Есть обновления" />
+                    {{/if}}
+                    {{updates|length}}
+                    {{else}}
+                    <img src="img/update_yes.png" style="vertical-align: middle" title="Обновлений нет" />
+                    {{/if}}
+                </span>
+                <span id="app_busy" style="margin: 10px;float:right;display: none"><img src="img/loading_16.gif"></span>
+            </div>
+
+        </div>
+        <div id="main_grid">
+            <div id="div_module_list" class="covert transparent">
+                {{module_list}}
+                <div class="ModuleButton" id="{{name}}Button" title="{{label}}">
+                    <a href="#{{name}}">
+                        <!--<img src="img/Mods/{{icon}}" width="45" height="45" />-->
+                    </a>
+                </div>
+                {{/module_list}}
+                <img src="img/personalize-icon.png" style="width:48px;height:48px;cursor: pointer;" onclick="App.setBg()" title="Установить обои" />
+            </div>
+            <div id="ModuleContainer" style="vertical-align: top;"></div>
+        </div>
+        <div id="appWindowContainer"></div>
+        <div id="appStatus"></div>
+        <div id="loginScreen" class="rounded">
+            <div style="color:#fff" id="SeqDialogMsg"></div>
+            <div class="rounded" style="margin-left:auto;margin-right:auto;background: #def;">
+                <form action="User/SignIn" method="post" onsubmit="App.user.signIn();event.preventDefault();">
+                    <table width="200" border="0" align="center" cellspacing="1">
+                        <tr>
+                            <td colspan="2" align="center">
+                                <big>Авторизация</big>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><input type="text" id="user_login" name="user_login" style="width:100%;"  autofocus="autofocus" placeholder="Логин" /></td>
+                        </tr>
+                        <tr>
+                            <td><input type="password" id="user_pass" name="user_pass" style="width:100%;" placeholder="Пароль" /></td>
+                        </tr>
+                        <tr>
+                            <td colspan="2" align="center">
+                                <button type="submit" value="Submit" id="submit_button"><img src="img/apply24.png" style="vertical-align: middle"/> Вход</button>
+                            </td>
+                        </tr>
+                    </table>
+                </form>
+            </div>
+        </div>    
+        <div id="loginOverlay"></div>
     </body>
 </html>
