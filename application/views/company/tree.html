@@ -3,7 +3,7 @@
     Ctree = App.page_company_tree = {
 	properties: {
 	    title: 'Дерево компаний',
-	    width: 300,
+	    width: 350,
 	    height: 440,
 	    modal: true,
 	    shadow:false,
@@ -115,6 +115,7 @@
 	    var newlabel=(new_branch_type === 'leaf')?prompt("Введите Короткое название новой компании",'Новая компания'):prompt("Введите название новой группы",'Новая группа');
 	    if( newlabel && newlabel.indexOf(',')===-1 ){
 		App.post('Company/companyTreeCreate/',{parent_id:parent_id,label:newlabel,branch_type:new_branch_type},function(company_id){
+                    App.page_company_tree.selectCombo({company_id:company_id});
 		    if(new_branch_type === 'leaf' && confirm("Компания '"+newlabel+"' создана.\nВвести реквизиты сейчас?\n\n")){
 			Ctree.updateDetails(company_id,parent_target);
 		    }
@@ -235,7 +236,7 @@
     };
 </script>
 <div style="height: calc(100% - 70px);overflow: auto;padding: 1px;padding-left: 2px;">
-    <input class="easyui-combobox" id="Ctree_combo" style="width:195px" data-options="
+    <input class="easyui-combobox" id="Ctree_combo" style="width:95%" data-options="
        valueField: 'company_id',
        textField: 'label',
        prompt:'Поиск по названию...',
