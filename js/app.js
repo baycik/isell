@@ -127,6 +127,8 @@ var App = {
                     holder=$(query+` .isell-tabs-holders div[data-index='${index}']`);
                     $.get(tabdata[index].url).done(function(html){
                         holder.html(html);
+                        var id = tabdata[index].url.replace(/\//g, '_').replace(/.html/g, '');
+                        App[id] && App[id].init && App[id].init();
                     });
                 }
                 holder.css('left',0);

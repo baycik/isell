@@ -76,7 +76,10 @@
                     return '<span title="' + value.split(' ')[1] + '">' + date + '</span>';
                 }
             },
-            restoreLastSelectedDocument:function(){
+            lastSelectedDocumentSet:function( doc_id ){
+                App.store('document_list_last_doc_id',doc_id);
+            },
+            lastSelectedDocumentRestore:function(){
                 let last_doc_id=App.store('document_list_last_doc_id') || 0;
                 let doc_list=DocList.grid.getData();
                 let row_number=0;
@@ -115,10 +118,10 @@
                         return false;
                     }
                     DocHolder.load(DocList.table.current_row.doc_id,DocList.table.current_row.doc_extension||'DocumentSell');
-                    App.store('document_list_last_doc_id',DocList.table.current_row.doc_id);
+                    DocList.table.lastSelectedDocumentSet(DocList.table.current_row.doc_id);
                 });
                 DocList.grid.onRenderFinished.subscribe(function(){
-                    DocList.table.restoreLastSelectedDocument();
+                    DocList.table.lastSelectedDocumentRestore();
                     DocList.table.setDimensions("#mtrade_doclist_sg",DocList.table.columnSummaryWidth);
                 });
                 $("#mtrade_doclist_sg").click(function(e){
@@ -231,11 +234,8 @@
             }
             DocHolder.prepareDocumentBase.then(function(){
                 DocumentInline.extension.set(doc_extension);
+                DocumentInline.parentDocumentList=DocList;
                 DocumentInline.load(doc_id);
-                
-                
-                
-                console.log('DocumentInline.load(doc_id)',doc_id);
             });
         },
         reset:function(){

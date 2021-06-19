@@ -1,171 +1,172 @@
 <script type="text/javascript">
     /* global App */
-    
-    App.page_company_prefs={
-	init:function(){
-	    App.setupForm("#App.page_company_prefs_other");
-	    App.handler.progress(function(status){
-		if( status==="passiveCompanyInited" || status==="passiveCompanySelected" ){
-		    App.page_company_prefs.load();
-		}
-	    });
-	    this.loadOnce();
+
+    App.page_company_prefs = {
+        init: function () {
+            App.setupForm("#App.page_company_prefs_other");
+            App.handler.progress(function (status) {
+                if (status === "passiveCompanyInited" || status === "passiveCompanySelected") {
+                    App.page_company_prefs.load();
+                }
+            });
+            this.loadOnce();
             this.discount.init();
-	},
-	loadOnce:function(){
-	    if(!this.loadedonce){
-		this.load();
-	    }
-	},
-	focus:function(){
-	    this.load();
-	},
-	load:function(){
-	    this.loadedonce=true;
-	    $.get('Company/companyPrefsGet',function(resp){
-		if( resp ){
-		    App.page_company_prefs.prefData=App.json(resp);
-		    App.page_company_prefs.discount.render(App.page_company_prefs.prefData);
-		    App.page_company_prefs.processOthers(App.page_company_prefs.prefData);
-		}
-	    });
-	},
-	update:function(type, id, value, title){
-	    App.post( 'Company/companyPrefsUpdate',{field:id,value:value}, function(ok){
-		if( ok*1 ){
-		    App.flash("Сохранено: "+title);
-		} else {
-		    App.page_company_prefs.load();
-		}
-	    });
-	},
-        discount:{
-            init:function(){
-                $("#page_company_prefs_markup").change(function(e){
-                    var $input=$(e.target);
-                    var discount_id=$input.parent().parent().data('discount_id');
-                    var title=$input.attr('title');
-                    var field=$input.attr('name');
-                    var raw_value=$input.val();
-                    var value=raw_value;
-                    
-                    if( field!=='analyse_brand' ){
-                        var value=parseFloat(raw_value);
+        },
+        loadOnce: function () {
+            if (!this.loadedonce) {
+                this.load();
+            }
+        },
+        focus: function () {
+            this.load();
+        },
+        load: function () {
+            this.loadedonce = true;
+            $.get('Company/companyPrefsGet', function (resp) {
+                if (resp) {
+                    App.page_company_prefs.prefData = App.json(resp);
+                    App.page_company_prefs.discount.render(App.page_company_prefs.prefData);
+                    App.page_company_prefs.processOthers(App.page_company_prefs.prefData);
+                }
+            });
+        },
+        update: function (type, id, value, title) {
+            App.post('Company/companyPrefsUpdate', {field: id, value: value}, function (ok) {
+                if (ok * 1) {
+                    App.flash("Сохранено: " + title);
+                } else {
+                    App.page_company_prefs.load();
+                }
+            });
+        },
+        discount: {
+            init: function () {
+                $("#page_company_prefs_markup").change(function (e) {
+                    var $input = $(e.target);
+                    var discount_id = $input.parent().parent().data('discount_id');
+                    var title = $input.attr('title');
+                    var field = $input.attr('name');
+                    var raw_value = $input.val();
+                    var value = raw_value;
+
+                    if (field !== 'analyse_brand') {
+                        var value = parseFloat(raw_value);
                     }
-                    if( field==='minus' ){
-                        field='discount';
-                        value=1-value/100;
-                        $("div[data-discount_id="+discount_id+"]").find("input[name=plus]").val('');
+                    if (field === 'minus') {
+                        field = 'discount';
+                        value = 1 - value / 100;
+                        $("div[data-discount_id=" + discount_id + "]").find("input[name=plus]").val('');
                     }
-                    if( field==='plus' ){
-                        field='discount';
-                        value=1+value/100;
-                        $("div[data-discount_id="+discount_id+"]").find("input[name=minus]").val('');
+                    if (field === 'plus') {
+                        field = 'discount';
+                        value = 1 + value / 100;
+                        $("div[data-discount_id=" + discount_id + "]").find("input[name=minus]").val('');
                     }
-                    
-                    function doupdate(){
-                        App.page_company_prefs.discount.update(discount_id,field,value,title).then(function(){
-                            if(raw_value!==value){
+
+                    function doupdate() {
+                        App.page_company_prefs.discount.update(discount_id, field, value, title).then(function () {
+                            if (raw_value !== value) {
                                 App.page_company_prefs.load();
                             }
                         });
                     }
-                    if(discount_id){
+                    if (discount_id) {
                         doupdate();
                     } else {
-                        var branch_id=$input.parent().parent().data('branch_id');
-                        var analyse_brand=$input.parent().parent().find('input[name=analyse_brand]').val();
-                        var row_title=$input.parent().parent().attr('title');
-                        App.page_company_prefs.discount.create(branch_id,analyse_brand,row_title).then(function(resp){
-                            discount_id=resp;
+                        var branch_id = $input.parent().parent().data('branch_id');
+                        var analyse_brand = $input.parent().parent().find('input[name=analyse_brand]').val();
+                        var row_title = $input.parent().parent().attr('title');
+                        App.page_company_prefs.discount.create(branch_id, analyse_brand, row_title).then(function (resp) {
+                            discount_id = resp;
                             doupdate();
                         });
                     }
                 });
-                $("#page_company_prefs_markup").click(function(e){
-                    var $button=$(e.target);
-                    var action=$button.data('action');
-                    if( action === 'delete' ){
-                        var discount_id=$button.parent().parent().data('discount_id');
+                $("#page_company_prefs_markup").click(function (e) {
+                    var $button = $(e.target);
+                    var action = $button.data('action');
+                    if (action === 'delete') {
+                        var discount_id = $button.parent().parent().data('discount_id');
                         App.page_company_prefs.discount.delete(discount_id);
                     }
-                    if( action==='create_cat' ){
-                        App.loadWindow('page/stock/tree').progress(function(status,branch){
-                            if(status==='select'){
-                                App.page_company_prefs.discount.create(branch.branch_id,null,branch.label).then(App.page_company_prefs.load);
+                    if (action === 'create_cat') {
+                        App.loadWindow('page/stock/tree').progress(function (status, branch) {
+                            if (status === 'select') {
+                                App.page_company_prefs.discount.create(branch.branch_id, null, branch.label).then(App.page_company_prefs.load);
                             }
                         });
                     }
-                    if( action==='create_brand' ){
-                        var brand=prompt("Введите название бренда товаров со скидкой");
-                        if(brand===null){
+                    if (action === 'create_brand') {
+                        var brand = prompt("Введите название бренда товаров со скидкой");
+                        if (brand === null) {
                             return;
                         }
-                        App.page_company_prefs.discount.create(null,brand,brand).then(App.page_company_prefs.load);
+                        App.page_company_prefs.discount.create(null, brand, brand).then(App.page_company_prefs.load);
                     }
                 });
             },
-            create:function(branch_id,analyse_brand,title){
-                if( branch_id===0 ){
-                    branch_id=null; 
+            create: function (branch_id, analyse_brand, title) {
+                if (branch_id === 0) {
+                    branch_id = null;
                 }
-                return $.post('Company/discountCreate',{branch_id:branch_id,analyse_brand:analyse_brand},function(ok){
-                    if( ok*1 ){
-                        App.flash("Создано новое правило на: "+title);
+                return $.post('Company/discountCreate', {branch_id: branch_id, analyse_brand: analyse_brand}, function (ok) {
+                    if (ok * 1) {
+                        App.flash("Создано новое правило на: " + title);
                     }
                 });
             },
-            update:function(discount_id,field,value,title){
-                return $.post( 'Company/discountUpdate',{discount_id:discount_id,field:field,value:value}, function(ok){
-                    if( ok*1 ){
-                        App.flash("Сохранено: "+title);
+            update: function (discount_id, field, value, title) {
+                return $.post('Company/discountUpdate', {discount_id: discount_id, field: field, value: value}, function (ok) {
+                    if (ok * 1) {
+                        App.flash("Сохранено: " + title);
                     } else {
                         App.page_company_prefs.load();
                     }
                 });
             },
-            delete:function(discount_id){
-                if(!discount_id){
+            delete: function (discount_id) {
+                if (!discount_id) {
                     return true;
                 }
-                return $.post('Company/discountDelete',{discount_id:discount_id},function(ok){
-                    if(ok*1){
+                return $.post('Company/discountDelete', {discount_id: discount_id}, function (ok) {
+                    if (ok * 1) {
                         App.flash('Правило удалено');
                     }
                     App.page_company_prefs.load();
                 });
             },
-            render:function(data){
-                for(let discount of data.discount_cat){
-                    discount.path=discount.path.replace(/^[\/]|[\/]$/g,'');
+            render: function (data) {
+                for (let discount of data.discount_cat) {
+                    discount.path = discount.path.replace(/^[\/]|[\/]$/g, '');
                 }
-                if(data.discount_cat[0] && data.discount_cat[0].branch_id!=0){
+                if (data.discount_cat[0] && data.discount_cat[0].branch_id != 0) {
                     data.discount_cat.unshift({
-                        discount_id:0,
-                        branch_id:0,
-                        analyse_brand:'',
-                        round_to:'',
-                        plus:'',
-                        minus:'',
-                        path:''
+                        discount_id: 0,
+                        branch_id: 0,
+                        analyse_brand: '',
+                        round_to: '',
+                        plus: '',
+                        minus: '',
+                        path: ''
                     });
                 }
-                App.renderTpl("page_company_prefs_markup",data);
+                App.renderTpl("page_company_prefs_markup", data);
             }
         },
-	processOthers:function(data){
-	    App.renderTpl('page_company_prefs_other',data);
-            App.setupForm("#page_company_prefs_other",data.other).change(function(node){
-		App.page_company_prefs.update('other',this.name,App.val(this),this.title);
-	    });;
-	}
+        processOthers: function (data) {
+            App.renderTpl('page_company_prefs_other', data);
+            App.setupForm("#page_company_prefs_other", data.other).change(function (node) {
+                App.page_company_prefs.update('other', this.name, App.val(this), this.title);
+            });
+            ;
+        }
     };
     //App.page_company_prefs.init();
 </script>
 <style type="text/css">
     .panel_block{
-	display:inline-block;
-	vertical-align: top;
+        -display:inline-block;
+        -vertical-align: top;
     }
     .discount_row div{
         border-bottom: 1px solid #ccf;
@@ -181,118 +182,120 @@
         display: inherit;
     }
     .discount_row input{
-	text-align:right;
-	width:50px;
+        text-align:right;
+        width:50px;
         border: none;
         background: none;
     }
 </style>
-<div class="panel_block" style="padding: 3px">
-    <div class="easyui-panel" title="Правила скидок, надбавок и округлений" style="width:360px;padding: 3px;">
-	<div id="page_company_prefs_markup" class="covert">
-            <div style="display:grid;grid-template-columns:120px 70px 60px 60px 24px;gap:2px;">
-                <div><b>Категория</b></div>
-                <div><b>Округлять</b></div>
-                <div><b>Скидка</b></div>
-                <div><b>Наценка</b></div>
-                <div> </div>
-                {{discount_cat}}
-                <div class="discount_row" data-discount_id="{{discount_id}}" data-branch_id="{{branch_id}}" style="display:contents;" title="{{path}}">
-                    <div>
-                        {{if branch_id|more>0}}
+<div style="display: grid; grid-template-columns:400px 400px;">
+    <div class="transp60" style="padding: 3px">
+        <div class="easyui-panel" title="Правила скидок, надбавок и округлений" style="width:360px;padding: 3px;">
+            <div id="page_company_prefs_markup" class="covert">
+                <div style="display:grid;grid-template-columns:120px 70px 60px 60px 24px;gap:2px;">
+                    <div><b>Категория</b></div>
+                    <div><b>Округлять</b></div>
+                    <div><b>Скидка</b></div>
+                    <div><b>Наценка</b></div>
+                    <div> </div>
+                    {{discount_cat}}
+                    <div class="discount_row" data-discount_id="{{discount_id}}" data-branch_id="{{branch_id}}" style="display:contents;" title="{{path}}">
+                        <div>
+                            {{if branch_id|more>0}}
                             {{path}}:
-                        {{else}}
-                        <u title="Действует, когда товар не попадает ни под одно другое правило">Все категории</u>:
-                        {{/if}}
-                    </div> 
-                    <div>
-                        <input type="text" title="Округлять цену до значения, кратного этому числу" value="{{round_to|blank>}}" name="round_to">
+                            {{else}}
+                            <u title="Действует, когда товар не попадает ни под одно другое правило">Все категории</u>:
+                            {{/if}}
+                        </div> 
+                        <div>
+                            <input type="text" title="Округлять цену до значения, кратного этому числу" value="{{round_to|blank>}}" name="round_to">
+                        </div>
+                        <div>
+                            <input type="text" title="Скидка % {{path}}" value="{{minus}}" name="minus">
+                        </div>
+                        <div>
+                            <input type="text" title="Наценка % {{path}}" value="{{plus}}" name="plus">
+                        </div>
+                        <div>
+                            <img src="img/delete.png" title="Удалить {{path}}" data-action="delete" style="width:16px;cursor: pointer">
+                        </div>
                     </div>
-                    <div>
-                        <input type="text" title="Скидка % {{path}}" value="{{minus}}" name="minus">
+                    {{/discount_cat}}
+                    {{if discount_brand}}
+                    <div><b>Бренд</b></div>
+                    <div><b>Округлять</b></div>
+                    <div><b>Скидка</b></div>
+                    <div><b>Наценка</b></div>
+                    <div> </div>
+                    {{/if}}
+                    {{discount_brand}}
+                    <div class="discount_row" data-discount_id="{{discount_id}}"  style="display:contents;" title="{{path}}">
+                        <div>
+                            <input type="text" title="Бренд" value="{{label}}" name="analyse_brand">:
+                        </div> 
+                        <div>
+                            <input type="text" title="Округлять цену до значения, кратного этому числу" value="{{round_to|blank>}}" name="round_to">
+                        </div>
+                        <div>
+                            <input type="text" title="Скидка % {{path}}" value="{{minus}}" name="minus">
+                        </div>
+                        <div>
+                            <input type="text" title="Наценка % {{path}}" value="{{plus}}" name="plus">
+                        </div>
+                        <div>
+                            <img src="img/delete.png" title="Удалить {{path}}" data-action="delete" style="width:16px;cursor: pointer">
+                        </div>
                     </div>
-                    <div>
-                        <input type="text" title="Наценка % {{path}}" value="{{plus}}" name="plus">
-                    </div>
-                    <div>
-                        <img src="img/delete.png" title="Удалить {{path}}" data-action="delete" style="width:16px;cursor: pointer">
-                    </div>
+                    {{/discount_brand}}
                 </div>
-                {{/discount_cat}}
-                {{if discount_brand}}
-                <div><b>Бренд</b></div>
-                <div><b>Округлять</b></div>
-                <div><b>Скидка</b></div>
-                <div><b>Наценка</b></div>
-                <div> </div>
-                {{/if}}
-                {{discount_brand}}
-                <div class="discount_row" data-discount_id="{{discount_id}}"  style="display:contents;" title="{{path}}">
-                    <div>
-                        <input type="text" title="Бренд" value="{{label}}" name="analyse_brand">:
-                    </div> 
-                    <div>
-                        <input type="text" title="Округлять цену до значения, кратного этому числу" value="{{round_to|blank>}}" name="round_to">
-                    </div>
-                    <div>
-                        <input type="text" title="Скидка % {{path}}" value="{{minus}}" name="minus">
-                    </div>
-                    <div>
-                        <input type="text" title="Наценка % {{path}}" value="{{plus}}" name="plus">
-                    </div>
-                    <div>
-                        <img src="img/delete.png" title="Удалить {{path}}" data-action="delete" style="width:16px;cursor: pointer">
-                    </div>
+                <div>
+                    <button type="button" data-action="create_cat">
+                        <img src="img/add.png" style="width:16px"> по категории
+                    </button>
+                    <button type="button" data-action="create_brand">
+                        <img src="img/add.png" style="width:16px"> по бренду
+                    </button>
                 </div>
-                {{/discount_brand}}
             </div>
-            <div>
-                <button type="button" data-action="create_cat">
-                    <img src="img/add.png" style="width:16px"> по категории
-                </button>
-                <button type="button" data-action="create_brand">
-                    <img src="img/add.png" style="width:16px"> по бренду
-                </button>
-            </div>
-	</div>
+        </div>
     </div>
-</div>
-<div class="panel_block" style="padding: 3px">
-    <div id="page_company_prefs_other" class="easyui-panel" title="Другие настройки" style="width:360px;padding: 3px;">
-	<div class="inp_rule">Ценовая политика</div>
-        <select name="price_label" title="Категория цен">
-	    <!--{{price_label_list}}-->
-	    <option value="{{label}}">{{label}}</option>
-	    <!--{{/price_label_list}}-->
-	</select>
-	<select name="curr_code" title="Осн. Валюта">
-	    <option value="UAH">Гривна</option>
-	    <option value="USD">Доллар</option>
-	    <option value="RUB">Рубль</option>
-	</select>
-	<div class="inp_rule">Контроль</div>
-	<input name="deferment" title="Отсрочка">
-	<input name="debt_limit" title="Лимит долга">
-        <select name="manager_id" title="Закреплен за">
-	    <!--{{staff_list}}-->
-	    <option value="{{user_id}}">{{full_name}}</option>
-	    <!--{{/staff_list}}-->
-	</select>
-	<div class="inp_rule">Предпочтения</div>
-	<select name="language" title="Язык">
-	    <option value="en">English</option>
-	    <option value="ua">Українська</option>
-	    <option value="ru">Русский</option>
-	</select>
-        <div class="inp_rule">Другое</div>
-	    <textarea name="path" title="Путь" readonly="readonly"></textarea>
+    <div class="transp60" style="padding: 3px">
+        <div id="page_company_prefs_other" class="easyui-panel" title="Другие настройки" style="width:360px;padding: 3px;">
+            <div class="inp_rule">Ценовая политика</div>
+            <select name="price_label" title="Категория цен">
+                <!--{{price_label_list}}-->
+                <option value="{{label}}">{{label}}</option>
+                <!--{{/price_label_list}}-->
+            </select>
+            <select name="curr_code" title="Осн. Валюта">
+                <option value="UAH">Гривна</option>
+                <option value="USD">Доллар</option>
+                <option value="RUB">Рубль</option>
+            </select>
+            <div class="inp_rule">Контроль</div>
+            <input name="deferment" title="Отсрочка">
+            <input name="debt_limit" title="Лимит долга">
+            <select name="manager_id" title="Закреплен за">
+                <!--{{staff_list}}-->
+                <option value="{{user_id}}">{{full_name}}</option>
+                <!--{{/staff_list}}-->
+            </select>
+            <div class="inp_rule">Предпочтения</div>
+            <select name="language" title="Язык">
+                <option value="en">English</option>
+                <option value="ua">Українська</option>
+                <option value="ru">Русский</option>
+            </select>
+            <div class="inp_rule">Другое</div>
+            <textarea name="path" title="Путь" readonly="readonly"></textarea>
             <input title="Статья расходов" name="expense_label"/>
-        <div class="inp_rule"></div>
+            <div class="inp_rule"></div>
             <div>
                 <input type="checkbox" name="is_supplier" title="Обновлять закупочные цены" data-skip="1">Обновлять закупочные цены
             </div>
             <div>
                 <input type="checkbox" name="skip_breakeven_check" title="Не проверять порог рентабельности" data-skip="1"> Не проверять порог рентабельности
             </div>
+        </div>
     </div>
 </div>

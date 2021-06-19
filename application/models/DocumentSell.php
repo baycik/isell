@@ -364,14 +364,20 @@ class DocumentSell extends DocumentBase{
             return false;
         }
         $new_doc_id=$this->documentCreate( 1 );
-        $this->entryAbsentSplitMove( $new_doc_id, $old_doc_id );
+        $split_ok=$this->entryAbsentSplitMove( $new_doc_id, $old_doc_id );
+        if( !$split_ok ){
+            $this->documentDelete($new_doc_id);
+            return false;
+        }
         //$this->duplicateHead($new_doc_id, $old_doc_id);
         $this->documentSelect($new_doc_id);
         $this->doc('doc_data',$new_doc_comment);
+        $this->doc('doc_status_id',2);//Put to reserve
         return $new_doc_id;
     }
     
     private function entryAbsentSplitMove( $new_doc_id, $old_doc_id ){
+        $splited_rows_count=0;
         $sql="SELECT 
             doc_entry_id,
             de.product_code,
@@ -407,8 +413,10 @@ class DocumentSell extends DocumentBase{
                     'invoice_price'=>$entry->invoice_price
                 ];
                 $this->create("document_entries",$new_entry);
+                $splited_rows_count++;
             }
 	}
+        return $splited_rows_count>0;
     }
     
     

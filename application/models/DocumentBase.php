@@ -411,14 +411,14 @@ class DocumentBase extends Catalog {
         $old_head = $this->get_row("SELECT cstamp,doc_data,doc_ratio,notcount,use_vatless_price FROM document_list WHERE doc_id='$old_doc_id'");
         $this->update("document_list", $old_head, ['doc_id' => $new_doc_id]);
     }
-    public function documentDuplicate($old_doc_id) {
-        $this->check($old_doc_id, 'int');
+    
+    public function documentDuplicate( int $doc_id ) {
         $this->Hub->set_level(2);
-        $this->documentSelect($old_doc_id);
+        $this->documentSelect($doc_id);
         $old_doc_type = $this->doc('doc_type');
         $new_doc_id = $this->documentCreate($old_doc_type);
-        $this->duplicateEntries($new_doc_id, $old_doc_id);
-        $this->duplicateHead($new_doc_id, $old_doc_id);
+        $this->duplicateEntries($new_doc_id, $doc_id);
+        $this->duplicateHead($new_doc_id, $doc_id);
         return $new_doc_id;
     }
 

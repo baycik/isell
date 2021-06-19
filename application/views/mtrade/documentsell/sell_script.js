@@ -234,7 +234,7 @@ Document.head = {
             },
             duplicate: function () {
                 if (confirm("Создать копию этого документа?")) {
-                    App.post(Document.doc_extension + "/documentDuplicate/" + Document.doc_id, function (doc_id) {
+                    $.post(Document.doc_extension + "/documentDuplicate/",{doc_id:Document.doc_id}, function (doc_id) {
                         if (doc_id * 1) {
                             Document.doc_id = doc_id;
                             Document.reload();
@@ -245,8 +245,13 @@ Document.head = {
                 }
             },
             pay: function () {
+                if(Document.data.head.is_commited!=1){
+                    App.flash("Документ не проведен");
+                    return false;
+                }
                 App.loadWindow("page/accounts/document_pay", {doc_id: Document.doc_id, total: Document.data.foot.total}).done(function (fvalue) {
-                    App.flash("head_changed!");
+                    Document.load(Document.doc_id,["head"]);
+                    App.Topic("documentListChanged").publish();
                 });
             },
             sendsms: function () {
@@ -257,7 +262,7 @@ Document.head = {
                 });
             },
             addevent: function () {
-                $.get("Company/companyGet/" + Document.data.head.passive_company_id, function (xhr) {
+                $.get("Company/companyGet/",{company_id:Document.data.head.passive_company_id}, function (xhr) {
                     var passive_data = App.json(xhr);
                     var fvalue = {
                         doc_id: Document.data.head.doc_id,
@@ -304,6 +309,9 @@ Document.head = {
                     App.post(Document.doc_extension + "/entryAbsentSplit/",request,function(doc_id){
                         if( doc_id*1 ){
                             App.flash("Документ с резервом на недостающие позиции создан");
+                            App.Topic('documentListChanged').publish();
+                        } else {
+                            App.flash("Недостающие позиции не найдены");
                         }
                     });                
                 }
@@ -633,9 +641,9 @@ Document.body = {
             }
         },
         entryCreate: function (product_code, product_quantity) {
-            if(Document.doc_id==0){
+            if(!Document.doc_id){
                 Document.create().then(function(){
-                    Document.entries.entryCreate(product_code, product_quantity);
+                    Document.body.table.entryCreate(product_code, product_quantity);
                 });
                 return true;
             }
