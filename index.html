@@ -50,20 +50,6 @@
                     </div>
                     <div class="results"></div>
                 </div>
-                <script>
-                    $('.ui.search').search({
-                      apiSettings: {
-                        url: 'Search/comboSearch/?q={query}'
-                      },
-                      onSelect:function(){
-                          
-                          setTimeout(function(){
-                              $('.ui.search').search('set value');
-                          },100);
-                      },
-                      type: 'category'
-                    });
-                </script>
             </div>
             <div class="ApplicationTaskbar transparent">
                 <div id="holder_user_panel">

@@ -242,10 +242,19 @@
 		    this.init();
 		}
 	    }
-	}
+	};
 	function init() {
 	    DocList.init();
-            Document.load(0);
+            App.Topic('hashChange').subscribe(function(){
+                DocList.selected_doc_id=App.state.doc_id;
+                DocList.tools.reload();
+            });
+            /*let initial_doc_id=0;
+            if( App.state.doc_id ){
+                initial_doc_id=App.state.doc_id;
+                DocList.selected_doc_id=App.state.doc_id;
+            }
+            Document.load(initial_doc_id);*/
 	}
 	return {
 	    init: init

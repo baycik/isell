@@ -7,6 +7,7 @@ var App = {
 	App.updaterInit();
         App.chatInit();
 	App.onReady && App.onReady();
+        App.search.init();
     },
     flash:function (msg, type) {
         if( !msg ){
@@ -288,6 +289,45 @@ var App = {
                 return {ean13:barcode,boxlevel:boxlevel};
             }
             return null;
+        }
+    },
+    search:{
+        init:function(){
+            $('.ui.search').search({
+                apiSettings: {
+                  url: 'Search/comboSearch/?q={query}'
+                },
+                onSelect:function(){
+                    setTimeout(function(){
+                        $('.ui.search').search('set value');
+                    },100);
+                },
+                type: 'category'
+            });
+            $('body').keypress(function(e){
+                let is_printable_char=String(e.key).match(/^\S/);
+                let is_body_node=(e.target.nodeName==='BODY');
+                if( is_printable_char && is_body_node ){
+                    let current_value=$('.ui.search').search('get value');
+                    $('.ui.search').search('set value',current_value+e.key);
+                    $('.ui.search input').focus();
+                }
+            });
+        },
+        findPcomp:function(pcomp_id){
+            App.user.pcompSelect({company_id:pcomp_id});
+        },
+        findDoc:function(doc_id,active_company_id,passive_company_id){
+            //App.loadWindow('page/trade/document',{doc_id:doc_id});
+            
+            App.user.acompSelect({company_id:active_company_id}).then(function(){
+                App.user.pcompSelect({company_id:passive_company_id}).then(function(){
+                    location.hash="#Trade#trade_main_tabs=Документы&doc_id="+doc_id;
+                });
+            });
+        },
+        findProd:function(product_id,product_code){
+            App.loadWindow('page/stock/product_card', {product_code:product_code});
         }
     }
 };
@@ -698,10 +738,10 @@ App.user = {
     },
     pcompSelect: function ( company ) {
         var company_id=company.company_id||0;
-        if( App.pcomp && App.pcomp.company_id===company_id ){
+        if( App.pcomp && App.pcomp.company_id==company_id ){
             return $.Deferred().resolve();
         }
-        return App.post('Company/selectPassiveCompany/' + company_id, function (xhr) {
+        return $.post('Company/selectPassiveCompany/' + company_id, function (xhr) {
             App.user.setPassiveCompany(App.json(xhr));
         });
     },
@@ -728,10 +768,10 @@ App.user = {
     },
     acompSelect: function ( company ) {
         var company_id=company.company_id||0;
-        if( App.acomp && App.acomp.company_id===company_id ){
+        if( App.acomp && App.acomp.company_id==company_id ){
             return $.Deferred().resolve();
         }
-        return App.post('Company/selectActiveCompany/' + company_id, function (xhr) {
+        return $.post('Company/selectActiveCompany/' + company_id, function (xhr) {
             App.user.setActiveCompany(App.json(xhr));
         });
     },
