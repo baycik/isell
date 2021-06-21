@@ -71,7 +71,7 @@ class Search extends Catalog{
     
     private function findProducts($q){
         $doc_id=$this->Hub->svar('doc_id');
-        $products=$this->Hub->load_model('DocumentItems')->suggestFetch($q,0,3,$doc_id);
+        $products=$this->Hub->load_model('DocumentItems')->suggestFetch($q,0,3,$doc_id??0);
         foreach($products as $prod){
             $prod->title="$prod->product_name";
             $prod->description="
