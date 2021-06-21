@@ -327,7 +327,7 @@ var App = {
             });
         },
         findProd:function(product_id,product_code){
-            App.loadWindow('page/stock/product_card', {product_code:product_code});
+            //App.loadWindow('page/stock/product_card', {product_code:product_code});
         }
     }
 };
