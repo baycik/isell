@@ -33,16 +33,8 @@
     </head>
     <body>
         <div id="ApplicationBar">
-
-            <div class="ApplicationStatusbar transparent covert" id="module_title">
-                <img src="img/logo.png" />
-                {{module_name}}: 
-                <img src="img/home.png" style="margin-top: -4px;" /> <span class="link_button" onclick="App.user.acompSwitch()" title="Сменить активную компанию">{{acomp_name}}</span>
-                {{if pcomp_name}}
-                / <img src="img/gray.png" />  <span class="link_button" onclick="App.user.pcompSelectionDialog();" title="Сменить клиента">{{pcomp_name}}</span>
-                {{/if}}
-            </div>
             <div class="ApplicationSearchbar">
+                <img src="img/logo.png" style="float: left"/>
                 <div class="ui search">
                     <div class="ui icon input" style="padding: 2px;width: 500px">
                         <input class="prompt" type="text" placeholder="Расширеный поиск..."/>
@@ -50,6 +42,13 @@
                     </div>
                     <div class="results"></div>
                 </div>
+            </div>
+            <div class="ApplicationStatusbar transparent covert" id="module_title">
+                {{module_name}}: 
+                <img src="img/home.png" /> <span class="link_button" onclick="App.user.acompSwitch()" title="Сменить активную компанию">{{acomp_name}}</span>
+                {{if pcomp_name}}
+                / <img src="img/gray.png" />  <span class="link_button" onclick="App.user.pcompSelectionDialog();" title="Сменить клиента">{{pcomp_name}}</span>
+                {{/if}}
             </div>
             <div class="ApplicationTaskbar transparent">
                 <div id="holder_user_panel">

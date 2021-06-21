@@ -5,10 +5,6 @@ class Search extends Catalog{
         session_write_close();
         return [
             'results'=>[
-                'prods'=>[
-                    'name'=>"Товары",
-                    'results'=>$this->findProducts($q)
-                ],
                 'pcomps'=>[
                     'name'=>"Контрагенты",
                     "results"=>$this->findPassiveCompanies($q)
@@ -16,7 +12,11 @@ class Search extends Catalog{
                 'docs'=>[
                     'name'=>"Документы",
                     'results'=>$this->findDocuments($q)
-                ]
+                ],
+                'prods'=>[
+                    'name'=>"Товары",
+                    'results'=>$this->findProducts($q)
+                ],
             ]
         ];
     }

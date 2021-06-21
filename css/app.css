@@ -538,7 +538,7 @@ img{
     background-color: rgba(255,255,255,.6);
     transition: 3s;
     display:grid;
-    grid-template-columns:500px auto 200px;
+    grid-template-columns:630px auto 200px;
 }
 #ApplicationBar:hover{
     background-color: rgba(255,255,255,1);
@@ -547,9 +547,9 @@ img{
 
 .ApplicationStatusbar{
     color:#009;
-    display: inline-block;
     font-size: 18px;
     white-space: nowrap;
+    padding: 9px;
 }
 .ApplicationSearchbar{
     
