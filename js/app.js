@@ -293,13 +293,13 @@ var App = {
     },
     search:{
         init:function(){
-            $('.ui.search').search({
+            $('.ApplicationSearchbar .ui.search').search({
                 apiSettings: {
                   url: 'Search/comboSearch/?q={query}'
                 },
                 onSelect:function(){
                     setTimeout(function(){
-                        $('.ui.search').search('set value');
+                        $('.ApplicationSearchbar .ui.search').search('set value');
                     },100);
                 },
                 type: 'category'
@@ -310,8 +310,8 @@ var App = {
                 if( is_printable_char && is_body_node ){
                     let current_value=$('.ui.search').search('get value');
                     setTimeout(function(){
-                        $('.ui.search').search('set value',current_value+e.key);
-                        $('.ui.search input').focus();
+                        $('.ApplicationSearchbar .ui.search').search('set value',current_value+e.key);
+                        $('.ApplicationSearchbar .ui.search input').focus();
                     },0);
                 }
             });
