@@ -309,8 +309,10 @@ var App = {
                 let is_body_node=(e.target.nodeName==='BODY');
                 if( is_printable_char && is_body_node ){
                     let current_value=$('.ui.search').search('get value');
-                    $('.ui.search').search('set value',current_value+e.key);
-                    $('.ui.search input').focus();
+                    setTimeout(function(){
+                        $('.ui.search').search('set value',current_value+e.key);
+                        $('.ui.search input').focus();
+                    },0);
                 }
             });
         },
