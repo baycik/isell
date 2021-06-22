@@ -33,22 +33,22 @@
     </head>
     <body>
         <div id="ApplicationBar">
-            <div class="ApplicationSearchbar">
-                <img src="img/logo.png"/>
-                <div class="ui search" style="display: inline-block">
-                    <div class="ui icon input" style="padding: 2px;width: 500px">
-                        <input class="prompt" type="text" placeholder="Расширеный поиск..."/>
-                        <i class="search icon"></i>
-                    </div>
-                    <div class="results"></div>
-                </div>
-            </div>
             <div class="ApplicationStatusbar transparent covert" id="module_title">
+                <img src="img/logo.png"/>
                 {{module_name}}: 
                 <img src="img/home.png" /> <span class="link_button" onclick="App.user.acompSwitch()" title="Сменить активную компанию">{{acomp_name}}</span>
                 {{if pcomp_name}}
                 / <img src="img/gray.png" />  <span class="link_button" onclick="App.user.pcompSelectionDialog();" title="Сменить клиента">{{pcomp_name}}</span>
                 {{/if}}
+            </div>
+            <div class="ApplicationSearchbar">
+                <div class="ui search fluid">
+                    <div class="ui icon input fluid" style="padding: 2px;">
+                        <input class="prompt" type="text" placeholder="Расширеный поиск..."/>
+                        <i class="search icon"></i>
+                    </div>
+                    <div class="results"></div>
+                </div>
             </div>
             <div class="ApplicationTaskbar transparent">
                 <div id="holder_user_panel">
