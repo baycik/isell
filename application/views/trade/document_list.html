@@ -98,13 +98,18 @@
 			doclistRow && Document.load(doclistRow.doc_id);
 		    });
                     DocList.grid.onRenderFinished.subscribe(function(){
+                        let doc_is_found=false;
                         if( DocList.selected_doc_id ){
                             var rows=DocList.grid.getData();
                             for(var num in rows){
                                 if(rows[num].doc_id==DocList.selected_doc_id){
                                     DocList.grid.setSelectedRows([num]);
+                                    doc_is_found=true;
                                     break;
                                 }
+                            }
+                            if( doc_is_found===false ){
+                                DocList.grid.loadNext();
                             }
                         } else {
                             DocList.grid.setSelectedRows([0]);
@@ -247,7 +252,8 @@
 	    DocList.init();
             App.Topic('hashChange').subscribe(function(){
                 DocList.selected_doc_id=App.state.doc_id;
-                DocList.tools.reload();
+                DocList.grid.setFilter({});
+                //DocList.tools.reload();
             });
             /*let initial_doc_id=0;
             if( App.state.doc_id ){
