@@ -177,6 +177,7 @@ class DocumentBase extends Catalog {
         $this->db_transaction_start();
         $this->delete('document_entries', ['doc_id' => $doc_id]);
         $this->delete('document_view_list', ['doc_id' => $doc_id]);
+        $this->delete('event_list', ['doc_id' => $doc_id]);
         $this->transSchemeDelete();
         $ok = $this->delete('document_list', ['doc_id' => $doc_id, 'is_commited' => 0]);
         $this->db_transaction_commit();
