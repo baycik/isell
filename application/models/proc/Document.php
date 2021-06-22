@@ -839,6 +839,7 @@ class Document extends Data {
 	$this->Base->query("DELETE FROM document_entries WHERE doc_id=$doc_id");
 	$this->Base->query("DELETE FROM document_view_list WHERE doc_id=$doc_id");
 	$this->Base->query("DELETE FROM document_list WHERE doc_id=$doc_id");
+	$this->Base->query("DELETE FROM event_list WHERE doc_id=$doc_id");
 	return true;
     }
 
