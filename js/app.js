@@ -318,8 +318,6 @@ var App = {
             App.user.pcompSelect({company_id:pcomp_id});
         },
         findDoc:function(doc_id,active_company_id,passive_company_id){
-            //App.loadWindow('page/trade/document',{doc_id:doc_id});
-            
             App.user.acompSelect({company_id:active_company_id}).then(function(){
                 App.user.pcompSelect({company_id:passive_company_id}).then(function(){
                     location.hash="#Trade#trade_main_tabs=Документы&doc_id="+doc_id;
@@ -327,7 +325,7 @@ var App = {
             });
         },
         findProd:function(product_id,product_code){
-            //App.loadWindow('page/stock/product_card', {product_code:product_code});
+            location.hash="#Stock#stock_main_tabs=Остатки товара&product_code="+product_code;
         }
     }
 };

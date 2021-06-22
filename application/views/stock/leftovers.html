@@ -97,6 +97,19 @@
 			Leftovers.tools[action] && Leftovers.tools[action]();
 		    }
 		});
+                App.Topic('hashChange').subscribe(function(){
+                    let columns=Leftovers.table.columnsGet();
+                    let filter={};
+                    for(let col of columns){
+                        let parameter=App.state[col.field];
+                        if(parameter){
+                            filter[col.field]=parameter;
+                        }
+                    }
+                    setTimeout(function(){
+                        Leftovers.grid.setFilter(filter);
+                    },100);
+                });
 	    },
 	    initTree: function () {
 		App.loadModule('page/stock/tree', {inline: true, clickselect: true}, 'StreeInline', /(Stree|page_stock_tree)([^\w]|_)/g, "StreeInline$2").progress(function (status, branch) {
