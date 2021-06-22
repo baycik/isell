@@ -57,7 +57,9 @@ class StockSectorManager extends Catalog{
                 product_sector,product_code,doc_num
             ";
         $view['rows']=$this->get_list($sql_entries_get);
-        
+        if(!$view['rows']){
+            $view['rows']=[[]];
+        }
         
         $sql_bills_get="
             SELECT
@@ -81,6 +83,9 @@ class StockSectorManager extends Catalog{
                 doc_num
             ";
         $view['bills']=$this->get_list($sql_bills_get);
+        if(!$view['bills']){
+            $view['bills']=[[]];
+        }
         
         $abbr=[];
         foreach($view['bills'] as $bill){
