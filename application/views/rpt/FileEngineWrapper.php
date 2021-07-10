@@ -1,75 +1,46 @@
-<?php
-if ( isset($word_header) ) {
-?>
-<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
-    <head>
-    <title><?php echo $user_data['title'] ?></title>
-    <!--[if gte mso 9]>
-    <xml>
-    <w:WordDocument>
-    <w:View>Print</w:View>
-    <w:Zoom>100</w:Zoom>
-    <w:DoNotOptimizeForBrowser/>
-    </w:WordDocument>
-    </xml>
-    <![endif]-->
-    <style><!-- 
-	@page{
-	    size:<?php echo ($this->landscape_orientation?'29.7cm 21cm':'21cm 29.7cm ')?>;  /* A4 */
-	    margin:0.5cm 0.5cm 0.5cm 0.5cm; /* Margins: 2.5 cm on each side */
-	    mso-page-orientation: <?php echo ($this->landscape_orientation?'landscape':'portrait')?>;  
-	}
-	@page WordSection1 { }
-	div.WordSection1 { page:WordSection1; }
-	--></style>
-<?php } else { ?>
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml">
     <head>
 	<link rel="icon" type="image/png" href="../../img/Printer.png">
-<?php } ?>
-	    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-	    <style type="text/css">
-		body, html, td{
-		    font-family:Arial;
-                    font-size:9pt;
-		    margin: 0px !important;
-		}
-		.table_border{
-		    border-collapse: collapse;
-		}
-		.table_border td{
-		    border:#000 1px solid;
-		    padding:1px;
-		    margin-top:1px;
-		}
-		.noborder{
-		    border:none;
-		}
-		.cell{
-		    width:16px;
-		    height:21px;
-		    text-align:center;
-		    font-size:14px;
-		    font-family:"Courier New", Courier, monospace;
-		    line-height:14px;
-		}
-		.page-break{
-		    height:100px;
-		    page-break-after: always;
-		}
-		.gridlines td{
-		    padding:3px;
-		}
-	    </style>
-
-	    <title>Печать <?php echo $user_data['title'] ?></title>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<link rel="stylesheet" type="text/css" href="../../css/app.css" />
+        <?php if( $page_orientation =='landscape' ): ?>
+        <style type="text/css">
+            @media screen{
+                .page,table.sheet0{
+                    width:297mm;
+                    min-height:210mm;
+                }
+            }
+            @media print { 
+                @page{
+                    size: A4 landscape;
+                    margin: 5mm;
+                }
+            }
+        </style>
+        <?php else: ?>
+        <style type="text/css">
+            @media screen{
+                .page,table.sheet0{
+                    width:210mm;
+                    min-height:297mm;
+                }
+            }
+            @media print { 
+                @page{
+                    size: A4 portrait;
+                    margin: 5mm;
+                }
+            }
+        </style>
+        <?php endif;?>
+        <title><?php echo $user_data['title'] ?></title>
     </head>
 
     <body>
-	<?php if (isset($show_controls) && $show_controls && !isset($word_header) ) { ?>
-	<link rel="stylesheet" type="text/css" href="../../css/app.css" />
-	<style type="text/css">
+        <?php if (isset($show_controls) && $show_controls ) { ?>
+        <style type="text/css">
 	    @media all{
 		.appbar{
 		    background: url(../../img/topbar.png)  repeat-x;
@@ -77,20 +48,23 @@ if ( isset($word_header) ) {
 		    box-shadow:1px 1px 3px 3px #aaf;
 		    padding:3px;
 		}
+                td{
+		    padding: 2px !important;
+		}
 		body{
 		    background-color:#ddd;
 		    background-image:none;
+                    font-size: 9px;
 		}
 		.page-break{
 		    height:10px;
 		}
-		.page{
+		.page,table.sheet0{
 		    box-shadow:1px 1px 3px 3px #aaa;
 		    padding:30px;
 		    margin:10px;
 		    background-color:#FFFFFF;
 		    display:inline-block;
-		    min-height:1110px;
 		    background: url(../../img/2xLine.jpg);
 		}
 		.page table.sheet0 td{
@@ -101,35 +75,32 @@ if ( isset($word_header) ) {
 		.page-break{
 		    page-break-after: always;
 		}
-		.page{
-		    box-shadow:         none;
+                .page{
+                    display:block;
+                }
+		.page,table.sheet0{
+		    box-shadow:none;
 		    padding:0px;
 		    margin:0px;
                     background: none;
 		    background-color:#FFFFFF;
-		    display:block;
-		    height:auto;
+                    page-break-inside:avoid;
 		}
 		.subpage{
 		    page-break-inside:avoid;
 		}
 		body{
 		    background-color:#fff;
+                    -webkit-print-color-adjust: exact;  /* Chrome/Safari/Edge/Opera */
+                    color-adjust: exact;  /* Firefox */
 		}
 		.no_print{
 		    display:none;
 		}
 	    }
 	</style>
-        <?php if( $this->page_orientation =='landscape' ): ?>
-        <style type="text/css">
-        @media print { 
-            @page{
-                size: landscape;
-            }
-        }
-        </style>
-        <?php endif;?>
+        
+        
         
 	<script type="text/javascript">
 	    function sendemail(fext) {
@@ -139,7 +110,7 @@ if ( isset($word_header) ) {
 		    to:'<?php echo addslashes($user_data['email']) ?>',
 		    fgenerator:'<?php echo $user_data['fgenerator']; ?>',
                     out_type:fext,
-		    dump_id:'<?php echo isset($user_data['dump_id'])?$user_data['dump_id'] : isset($_GET['dump_id'])?$_GET['dump_id']:0; ?>',
+		    dump_id:'<?php echo isset($user_data['dump_id'])?$user_data['dump_id'] : (isset($_GET['dump_id'])?$_GET['dump_id']:0); ?>',
 		    send_file:1
 		};
 		var main=opener||parent;
@@ -153,7 +124,7 @@ if ( isset($word_header) ) {
                 }
 	    }
 	</script>
-	<div class="no_print appbar" align="center">
+        <div class="no_print appbar" style="text-align: center;">
 		<?php
 		if ($export_types):
 		    foreach ($export_types as $ext => $name):?>
@@ -173,6 +144,9 @@ if ( isset($word_header) ) {
                 <a href="javascript:window.print()"style="color:black;font-size:12px;">Напечатать <img style="width:24px;height: 24px" src="../../img/print.png" border="0" align="absmiddle" /></a>
 	    </div>
 	</div>
-	<?php } echo "<div align='center' class='WordSection1 landscape'>$html</div>" ?>
+        <?php } ?>
+        <div style="text-align: center;page-break-before: unset">
+            <?php echo "$html" ?>
+        </div>
     </body>
 </html>

@@ -41,74 +41,6 @@
        $ymd= explode('-', $iso);
        return "$ymd[2].$ymd[1].$ymd[0]";
    }
-
-
-
-
-
-
-$okei = [
-    'шт' => '796',
-    'руб'=>'383',
-    '1000 руб'=>'384',
-    'компл'=>'839',
-    'л'=>'112',
-    'усл. ед'=>'876',
-    'кг'=>'166',
-    'т'=>'168',
-    'ч'=>'356',
-    'м' => '006',
-    'м2'=>'055',
-    'пог. м'=>'018',
-    'упак'=>'778'
-];
-$this->view->common_rows = [];
-if( $this->out_ext=='.doc' ){
-    $this->landscape_orientation=true;
-    $this->view->tables = [$this->view->rows];
-    $this->view->tables_count = 1;
-} else {
-    $this->view->tables = [array_splice($this->view->rows, 0, 5)];
-    $this->view->tables = array_merge($this->view->tables, array_chunk($this->view->rows, 19));
-    $this->view->tables_count = count($this->view->tables);
-}
-
-$this->view->footer->total_qty=0;
-$this->view->footer->vatless=0;
-$this->view->footer->vat=0;
-$vat_percent=0.18;
-$i = 0;
-foreach ($this->view->tables as &$table) {
-    $subcount = 0;
-    $subvatless = 0;
-    $subvat = 0;
-    $subtotal = 0;
-    foreach ($table as &$row) {
-        $row->i = ++$i;
-        $row->product_sum_vat = $row->product_sum_total-$row->product_sum_vatless;
-        $row->product_unit_code = $okei[$row->product_unit];
-        $subcount+=$row->product_quantity;
-        $subvatless+=$row->product_sum_vatless;
-        $subvat+=$row->product_sum_vat;
-        $subtotal+=$row->product_sum_total;
-        $this->view->common_rows[] = $row;
-    }
-    $table['subcount'] = $subcount;
-    $table['subvatless'] = format($subvatless);
-    $table['subvat'] = format($subvat);
-    $table['subtotal'] = format($subtotal);
-    $this->view->footer->total_qty+=$subcount;
-    $this->view->footer->vatless+=$subvatless;
-    $this->view->footer->vat+=$subvat;
-}
-
-$this->view->total_pages = num2str($this->view->tables_count + 1, true);
-$this->view->total_rows = num2str($i, true);
-$this->view->doc_view->total_spell = num2str($this->view->footer->total);
-$this->view->doc_view->total_coins = explode('.', $this->view->footer->total)[1];
-$this->view->doc_view->date_spell = daterus($this->view->doc_view->date_dot);
-
-
 $this->setPageOrientation( "landscape" );
 
 if( $this->view->doc_view->extra->goods_reciever_okpo ){
@@ -120,6 +52,47 @@ if( $this->view->doc_view->extra->goods_reciever ){
 
 
 $this->view->doc_view->tstamp = dateexplode($this->view->doc_view->tstamp);
+/////////////////////////////////////////////////
+//PAGE SPLITTING SECTION
+/////////////////////////////////////////////////
+$head_page_rows=7;
+$body_page_rows=20;
+$foot_page_rows=2;
+
+$current_row_count=count($this->view->rows);
+if($current_row_count>$foot_page_rows && ($head_page_rows+$foot_page_rows>$current_row_count) ){
+    $head_page_rows=$current_row_count-$foot_page_rows;
+}
+if($current_row_count<$foot_page_rows){
+    $head_page_rows=1;
+}
+$head_page= array_splice($this->view->rows, 0, $head_page_rows);
+$current_row_count=count($this->view->rows);
+if($current_row_count==0){
+    $foot_page_rows=0;
+}
+if($current_row_count%$body_page_rows>$foot_page_rows){
+    $foot_page_rows=1;
+}
+if($current_row_count>=$foot_page_rows){
+    $foot_page= array_splice($this->view->rows, $current_row_count-$foot_page_rows, $foot_page_rows);
+} else {
+    $foot_page= $this->view->rows;
+    $this->view->rows=[];
+}
+$body_pages=array_chunk($this->view->rows, $body_page_rows);
+
+$this->view->tables = [];
+$this->view->tables[]=(object)['rows'=>$head_page];
+if( $body_pages ){
+    foreach($body_pages as $body_page){
+        $this->view->tables[]=(object)['rows'=>$body_page];
+    }
+}
+if( $foot_page ){
+    $this->view->tables[]=(object)['rows'=>$foot_page];
+}
+$this->view->tables_count = count($this->view->tables);
 
 
 
@@ -127,12 +100,68 @@ $this->view->doc_view->tstamp = dateexplode($this->view->doc_view->tstamp);
 
 
 
+/////////////////////////////////////////////////
+//ROW CALCULATION
+/////////////////////////////////////////////////
+include 'BlankDatatables.php';
+$this->view->footer->total_qty=0;
+$this->view->footer->vatless=0;
+$this->view->footer->vat=0;
+$i = 0;
+foreach ($this->view->tables as &$table) {
+    $subcount = 0;
+    $subvatless = 0;
+    $subvat = 0;
+    $subtotal = 0;
+    foreach ($table->rows as &$row) {
+	$row->num = ++$i;
+	$row->product_sum_vat = $row->product_sum_total-$row->product_sum_vatless;
+        $row->product_vat_rate=$this->view->head->vat_rate.'%';
+        $row->product_excise='без акциза';
+	
+        $unit=unit_code($row->product_unit);
+        $row->product_unit=$unit['name'];
+        $row->product_unit_code=$unit['code'];
+        
+        $country= country_code($row->analyse_origin);
+        $row->origin_name=$country['name'];
+        $row->origin_code=$country['code'];
+        
+        if( !$row->party_label || strlen($row->party_label)<23 ){
+            $row->party_label='-';
+            $row->origin_name='-';
+            $row->origin_code='-';
+        }
+        
+	$subcount+=$row->product_quantity;
+	$subvatless+=$row->product_sum_vatless;
+	$subvat+=$row->product_sum_vat;
+	$subtotal+=$row->product_sum_total;
+    }
+    $table->subcount = $subcount;
+    $table->subvatless = format($subvatless);
+    $table->subvat = format($subvat);
+    $table->subtotal = format($subtotal);
+    $this->view->footer->total_qty+=$subcount;
+    $this->view->footer->vatless+=$subvatless;
+    $this->view->footer->vat+=$subvat;
+}
+$this->view->total_pages = num2str($this->view->tables_count*2, true);
+$this->view->total_rows = num2str($i, true);
+$this->view->doc_view->total_spell = num2str($this->view->footer->total);
+$this->view->doc_view->date_spell = daterus($this->view->doc_view->date_dot);
+///////////////////////////////////////////////
+//TEMPLATE MULTIPAGE
+///////////////////////////////////////////////
+$table_template_source_range="A56:EE58";
+$this->splitToPages($table_template_source_range,$this->view->tables);
 
+$table_template_source_range="A12:EE14";
+$this->splitToPages($table_template_source_range,$this->view->tables);
 
-
-
-
-
+/////////////////////////////////////////////////
+//UTIL FUNCTIONS
+/////////////////////////////////////////////////
 function format($num){
     return number_format($num, 2,'.','');
 }
