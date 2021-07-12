@@ -3,7 +3,7 @@ $filename[]=<<<EOT
 views/rpt/FileEngineWrapper.php
 EOT;
 $search[]=<<<EOT
-<div class="no_print appbar" align="center">
+<div class="no_print appbar" style="text-align: center;">
 EOT;
 $replace[]=<<<EOT
 EOT;
