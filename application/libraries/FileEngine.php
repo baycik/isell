@@ -6,7 +6,7 @@ class FileEngine {
     private $conversion_table = [
         '.html' => ['.html' => 'Веб Страница', '.pdf' => 'PDF'],
         '.xlsx' => ['.xlsx' => 'Excel', '.html' => 'Веб Страница', '.pdf' => 'PDF'],
-        '.xml' => ['.xml' => 'XML Экспорт Данных']
+        '.xml'  => ['.xml' => 'XML Экспорт Данных']
     ];
     private $view;
     private $tpl_files;
@@ -42,7 +42,6 @@ class FileEngine {
     private function loadFileTpl($file_name) {
         if ($this->tpl_ext == '.xlsx') {
             $this->compilator = 'PhpSpreadsheet';
-            //include "application/libraries/report/PHPExcel.php";
             try {
                 $this->Spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($file_name);
             } catch (Exception $e) {
@@ -66,10 +65,10 @@ class FileEngine {
     }
 
     private function compile($tpl_file) {
-        $this->loadFileTpl($this->tpl_files_folder . $tpl_file);
-        if (file_exists($this->tpl_files_folder . $tpl_file . '.php')) {
+        $this->loadFileTpl($tpl_file);
+        if (file_exists($tpl_file . '.php')) {
             /* Script for custom processing of templates */
-            include $this->tpl_files_folder . $tpl_file . '.php';
+            include $tpl_file . '.php';
         }
         if ($this->compilator == 'PhpSpreadsheet') {
             if (isset($this->tplModifier)) {
@@ -81,13 +80,9 @@ class FileEngine {
         }
     }
 
-    private function setup_compilator($out_ext) {
-        if ($this->compiled_html) {
-            
-        }
-        /*
-         * Finding suitable template to output needed file type
-         */
+    private function setup_compilator($out_ext) {//Finding suitable template to output needed file type
+        $tpl_file_byformat=null;
+        $tpl_file_byexpiration=null;
         foreach ($this->tpl_files as $tpl_file) {
             $tpl_ext = substr($tpl_file, strrpos($tpl_file, '.'));
             if ($this->conversion_table[$tpl_ext]) {
@@ -95,9 +90,27 @@ class FileEngine {
             }
             if (!$this->tpl_ext && in_array($out_ext, array_keys($this->conversion_table[$tpl_ext]))) {
                 $this->tpl_ext = $tpl_ext;
-                $this->compile($tpl_file);
+                $tpl_file_byformat=$tpl_file;
             }
         }
+        $tpl_file_basename=str_replace($this->tpl_ext,'',$tpl_file_byformat);
+        $tpl_file_search_pattern="{$this->tpl_files_folder}{$tpl_file_basename}*{$this->tpl_ext}";
+        $tpl_file_list=glob($tpl_file_search_pattern);
+        arsort($tpl_file_list);
+        if( isset($this->view->doc_view->tstamp) ){
+            $view_date=explode(' ',$this->view->doc_view->tstamp);
+            foreach($tpl_file_list as $filename){
+                preg_match('/(\d\d\d\d-\d\d-\d\d)/', $filename, $out);
+                if( isset($out[0]) && $view_date[0]>=$out[0] ){
+                    $tpl_file_byexpiration=$filename;
+                    break;
+                }
+            }
+        }
+        if(!$tpl_file_byexpiration){
+            $tpl_file_byexpiration= array_shift($tpl_file_list);
+        }
+        $this->compile($tpl_file_byexpiration);
     }
 
     public function send($file_name, $is_printpage = false) {
@@ -144,6 +157,10 @@ class FileEngine {
             if ($out_extension == '.html' || $is_printpage) {
                 $this->header('Content-Type: text/html; charset="utf-8"');
                 $this->Writer = new \PhpOffice\PhpSpreadsheet\Writer\Html($this->Spreadsheet);
+//                $this->Writer->setIncludeCharts(true);
+                
+//                $this->prepareChart();
+                
                 $style = $this->Writer->generateStyles(true);
                 $page='' . $this->Writer->generateSheetData() . '';
                 if ($this->post_processor) {
@@ -162,26 +179,16 @@ class FileEngine {
                     'view' => $this->view
                 ];
                 $this->Hub->load->view('rpt/FileEngineWrapper', $context);
-            } else if ($out_extension == '.doc') {
-                $this->Writer = new \PhpOffice\PhpSpreadsheet\Writer\Html($this->Spreadsheet);
-                $style = $this->Writer->generateStyles(true);
-                $page='' . $this->Writer->generateSheetData() . '';
-                $full_html = $html = $style . $page;
-
-                $phpWord = new \PhpOffice\PhpWord\PhpWord();
-
-                $section = $phpWord->addSection();
-
-                PhpOffice\PhpWord\Shared\Html::addHtml($section, $full_html, true);
-                $xmlWriter = \PhpOffice\PhpWord\IOFactory::createWriter($phpWord, 'Word2007');
-                $xmlWriter->save("php://output");
-            } else if ($out_extension == '.xls') {
-                $this->header('Content-Type: application/vnd.ms-excel');
-                $this->Writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($this->Spreadsheet, "Xls");
-                $this->Writer->save('php://output');
             } else if ($out_extension == '.xlsx') {
                 $this->header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
                 $this->Writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($this->Spreadsheet, "Xlsx");
+                
+                
+                
+//                $this->Writer->setIncludeCharts(true);
+                
+                
+                
                 $this->Writer->save('php://output');
             }
         } else
@@ -403,4 +410,108 @@ class FileEngine {
             $this->Worksheet->setBreak($page_break_current, \PhpOffice\PhpSpreadsheet\Worksheet\Worksheet::BREAK_ROW);
         }
     }
+    
+//    
+//    
+//    
+//    
+//    public function prepareChart(){
+//        
+//        
+//        PhpOffice\PhpSpreadsheet\Settings::setChartRenderer(\PhpOffice\PhpSpreadsheet\Chart\Renderer\JpGraph::class);
+//        
+//        
+//        
+//        foreach ($this->Worksheet->getChartCollection() as &$chart) {
+//            if ($chart instanceof \PhpOffice\PhpSpreadsheet\Chart\Chart) {
+//                $plotArea = $chart->getPlotArea(); //get the plot area of the chart (one thing)
+//                $dataSeries = $plotArea->getPlotGroup(); //array of all the data series
+//                $dataManipulated = false;
+//                foreach ($dataSeries as &$dataSer) { //by reference to change the values deep down!!
+//                    $val = $dataSer->getPlotValues();
+//                    foreach ( $val as &$dataSeriesValues) {
+//                        
+//                        
+//                        
+//                        $dataSource = $dataSeriesValues->getDataSource();
+//                        $dataSeriesValues->setDataSource('Report!$J$20');
+//                        
+//                        
+//                        //$dataValues = $dataSeriesValues->getDataValues();
+//                        
+//                        
+//                        $dataValues = [
+//                            523,
+//                            562,
+//                            42
+//                        ];
+//                        
+//                        
+//                        
+//                        $dataSeriesValues->setDataValues( $dataValues );
+//                        
+//                        
+//                        
+//                        
+////                        $dataValuesLength = count($dataValues);
+////                        for ($y=$pointCount; $y < $dataValuesLength; $y++) {
+////                            unset($dataValues[$y]);
+////                        }                        
+////                        if ( strpos($dataSource, 'DRange_Dates_' . $tf ) !== false ) {
+////                            $dataSeriesValues->setDataSource( $sheetName . '!D2:' . $xC . '2' );                            
+////                        } elseif ( strpos($dataSource, 'DRange_AvgVarInt_modified_' . $tf ) !== false ) {
+////                            $dataSeriesValues->setDataSource( 'midlayer!B10:' . $xCML . '10' ); 
+////                        } elseif ( strpos($dataSource, 'DRange_AvgVarRate_' . $tf ) !== false ) {
+////                            $dataSeriesValues->setDataSource( 'midlayer!B7:' . $xCML . '7' ); 
+////                        }
+//                        
+//                    }
+//                    
+//                    
+//                    
+//                    
+//                    
+//                    //$cat = $dataSer->getPlotCategories();
+////                    foreach ( $cat as &$categoryValues) {
+////                        $dataSource = $categoryValues->getDataSource();
+////                        $dataValues = $categoryValues->getDataValues();
+////                        
+////                        
+////                        
+////                        
+////                        
+////                        print_r($dataValues);die;
+////                        
+////                        
+////                        
+////                        
+////                        
+////                        
+////                        $dataValuesLength = count($dataValues);
+////                        for ($y=$pointCount; $y < $dataValuesLength; $y++) {
+////                            unset($dataValues[$y]);
+////                        }                        
+////                        if ( strpos($dataSource, 'DRange_Dates_' . $tf ) !== false ) {
+////                            $categoryValues->setDataSource( $sheetName . '!D2:' . $xC . '2' );                            
+////                        } elseif ( strpos($dataSource, 'DRange_AvgVarInt_modified_' . $tf ) !== false ) {
+////                            $categoryValues->setDataSource( 'midlayer!B10:' . $xCML . '10' ); 
+////                        } elseif ( strpos($dataSource, 'DRange_AvgVarRate_' . $tf ) !== false ) {
+////                            $categoryValues->setDataSource( 'midlayer!B7:' . $xCML . '7' ); 
+////                        }
+////                        $categoryValues->setDataValues( $dataValues );
+////                    }
+//                }
+//                $plotArea->setPlotSeries($dataSeries); 
+//                unset($dataSeriesValues); // break the reference with the last element
+//                unset($categoryValues); // break the reference with the last element
+//                unset($dataSer); // break the reference with the last element  
+//            }
+//        }
+//    }
+//    
+//    
+    
+    
+    
+    
 }
