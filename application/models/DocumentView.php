@@ -12,6 +12,7 @@ class DocumentView extends DocumentItems{
 			doc_view_id,
 			view_num,
 			view_name,
+                        dvt.view_role,
 			DATE_FORMAT(tstamp, '%Y-%m-%d') AS view_date,
                         tstamp,
 			dvt.view_type_id,

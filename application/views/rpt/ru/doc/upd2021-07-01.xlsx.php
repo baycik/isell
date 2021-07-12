@@ -42,6 +42,9 @@ if( isset($this->view->doc_view->extra->goods_reciever) ){
     $this->view->goods_reciever=$this->view->doc_view->extra->goods_reciever;
 }
 
+
+$this->view->sell_bill_reference="1-".count($this->view->rows)." №{$this->view->doc_view->view_num} от ".todmy($this->view->doc_view->view_date);
+
 /////////////////////////////////////////////////
 //PAGE SPLITTING SECTION
 /////////////////////////////////////////////////

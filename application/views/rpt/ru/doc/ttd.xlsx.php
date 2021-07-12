@@ -55,9 +55,9 @@ $this->view->doc_view->tstamp = dateexplode($this->view->doc_view->tstamp);
 /////////////////////////////////////////////////
 //PAGE SPLITTING SECTION
 /////////////////////////////////////////////////
-$head_page_rows=7;
-$body_page_rows=20;
-$foot_page_rows=2;
+$head_page_rows=9;
+$body_page_rows=22;
+$foot_page_rows=6;
 
 $current_row_count=count($this->view->rows);
 if($current_row_count>$foot_page_rows && ($head_page_rows+$foot_page_rows>$current_row_count) ){

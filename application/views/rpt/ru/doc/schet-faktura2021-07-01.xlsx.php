@@ -24,6 +24,16 @@ if( isset($this->view->doc_view->extra->supplier_company_id) ){
     $this->view->supplier=$this->view->seller;
 }
 
+$torg12_view=null;
+$view_list=$this->Hub->load_model("DocumentView")->viewListFetch( $this->view->doc_view->doc_id );
+foreach($view_list as $view){
+    if($view->view_role=='sell_bill'){
+        $torg12_view=$view;
+        break;
+    }
+}
+$this->view->sell_bill_reference="1-".count($this->view->rows)." №{$torg12_view->view_num} от ".todmy($torg12_view->view_date);
+
 $this->view->seller->all=getAll($this->view->seller);
 $this->view->buyer->all=getAll($this->view->buyer);
 $this->view->supplier->all=getAll($this->view->supplier);
@@ -47,7 +57,7 @@ if( isset($this->view->doc_view->extra->goods_reciever) ){
 /////////////////////////////////////////////////
 $head_page_rows=4;
 $body_page_rows=16;
-$foot_page_rows=9;
+$foot_page_rows=10;
 
 $current_row_count=count($this->view->rows);
 if($current_row_count>$foot_page_rows && ($head_page_rows+$foot_page_rows>$current_row_count) ){
