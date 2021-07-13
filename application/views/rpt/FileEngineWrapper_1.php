@@ -35,7 +35,7 @@
             }
         </style>
         <?php endif;?>
-        <title>Печать <?php echo $user_data['title'] ?></title>
+        <title><?php echo $user_data['title'] ?></title>
     </head>
 
     <body>

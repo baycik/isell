@@ -137,16 +137,12 @@ class FileEngine {
             echo file_get_contents($tmppdf);
             unlink($tmphtml);
             unlink($tmppdf);
+            die;
         } else {
             $this->header('Content-Disposition: attachment;filename="' . $file_name . '"');
             $this->header('Cache-Control: max-age=0');
             $this->show_controls = false;
         }
-        
-        
-        
-        
-
         if (!$this->compiled_html) {
             /*
              * Find suitable  template to output needed file type
