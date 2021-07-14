@@ -118,7 +118,14 @@ class FileEngine {
         if ($out_extension == '.print') {
             $out_extension = '.html';
             $is_printpage = true;
-        } else if ($out_extension == '.pdf') {
+            $this->show_controls = true;
+        } else {
+            $this->header('Content-Disposition: attachment;filename="' . $file_name . '"');
+            $this->header('Cache-Control: max-age=0');
+            $this->show_controls = false;
+        }
+        
+        if ($out_extension == '.pdf') {
             $this->header_mode = 'noheaders';
             $full_html = $this->fetch(".html");
             $this->header_mode = 'send_headers';
@@ -137,26 +144,13 @@ class FileEngine {
             echo file_get_contents($tmppdf);
             unlink($tmphtml);
             unlink($tmppdf);
-            die;
-        } else {
-            $this->header('Content-Disposition: attachment;filename="' . $file_name . '"');
-            $this->header('Cache-Control: max-age=0');
-            $this->show_controls = false;
         }
-        if (!$this->compiled_html) {
-            /*
-             * Find suitable  template to output needed file type
-             */
-            $this->setup_compilator($out_extension);
-        }
+        
+        $this->setup_compilator($out_extension);
         if ($this->compilator == 'PhpSpreadsheet') {
             if ($out_extension == '.html' || $is_printpage) {
                 $this->header('Content-Type: text/html; charset="utf-8"');
                 $this->Writer = new \PhpOffice\PhpSpreadsheet\Writer\Html($this->Spreadsheet);
-//                $this->Writer->setIncludeCharts(true);
-                
-//                $this->prepareChart();
-                
                 $style = $this->Writer->generateStyles(true);
                 $page='' . $this->Writer->generateSheetData() . '';
                 if ($this->post_processor) {
@@ -178,13 +172,6 @@ class FileEngine {
             } else if ($out_extension == '.xlsx') {
                 $this->header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
                 $this->Writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($this->Spreadsheet, "Xlsx");
-                
-                
-                
-//                $this->Writer->setIncludeCharts(true);
-                
-                
-                
                 $this->Writer->save('php://output');
             }
         } else

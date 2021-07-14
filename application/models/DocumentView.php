@@ -135,7 +135,7 @@ class DocumentView extends DocumentItems{
 	if( $doc_view->html ){
 	    return [
 		    'html'=>$doc_view->html,
-		    'title'=>$doc_view->view_name,
+		    'title'=>"$doc_view->view_name №$doc_view->view_num от $doc_view->view_date_dot",
 		    'user_data'=>[
 			'email'=>$pcomp->company_email,
 			'text'=>'Доброго дня'
@@ -184,9 +184,17 @@ class DocumentView extends DocumentItems{
 	    $doc_view->extra=json_decode("{}");
 	}
         
+        $view_title=$doc_view->view_name;
+        if($doc_view->view_num){
+            $view_title.=" №$doc_view->view_num";
+        }
+        if($doc_view->date_dot){
+            $view_title.=" от $doc_view->date_dot";
+        }
+        
         $dump=[
 	    'tpl_files'=>$doc_view->view_tpl,
-	    'title'=>$doc_view->view_name,
+	    'title'=>$view_title,
 	    'user_data'=>[
 		'email'=>$reciever_email,
 		'text'=>'Доброго дня'
