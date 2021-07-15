@@ -55,7 +55,7 @@ if( isset($this->view->doc_view->extra->goods_reciever) ){
 /////////////////////////////////////////////////
 //PAGE SPLITTING SECTION
 /////////////////////////////////////////////////
-$head_page_rows=4;
+$head_page_rows=2;
 $body_page_rows=16;
 $foot_page_rows=10;
 
