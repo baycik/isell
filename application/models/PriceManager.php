@@ -32,7 +32,7 @@ class PriceManager extends Catalog{
         return $this->get_list($sql);
     }
     
-    public function breakevenCreate( int $branch_id, int $company_id ){
+    public function breakevenCreate( int $branch_id, int $company_id=0 ){
         $this->create('price_breakeven', ['branch_id'=>$branch_id,'company_id'=>0]);
         return $this->create('price_breakeven', ['branch_id'=>$branch_id,'company_id'=>$company_id]);
     }
