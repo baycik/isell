@@ -73,7 +73,7 @@ class ViewManager extends CI_Model{
     }
     private function setupCols(){
 	return function($FileEngine, $Worksheet){
-            $headerX = 0;
+            $headerX = 1;
             $headerY = 1;
             $contentY = $headerY + 1;
             $headerTpl = $Worksheet->getCellByColumnAndRow($headerX, $headerY)->getValue();
@@ -91,22 +91,8 @@ class ViewManager extends CI_Model{
                 $Worksheet->getColumnDimension(chr(65 + $headerX + $i))->setWidth($column->Width);
                 $Worksheet->getCellByColumnAndRow($headerX + $i, $headerY)->setValue(str_replace('_title_', $column->Comment?$column->Comment:$column->Field, $headerTpl));
                 $Worksheet->getCellByColumnAndRow($headerX + $i, $contentY)->setValue(str_replace('_field_', $column->Field, $cellTpl));
-//                if( isset($column->Align) ){
-//                    $style=['alignment'=>['horizontal'=>PHPExcel_Style_Alignment::HORIZONTAL_RIGHT]];
-//                    if( $column->Align=='right' ){
-//                        $style=['alignment'=>['horizontal'=>PHPExcel_Style_Alignment::HORIZONTAL_RIGHT]];
-//                    }
-//                    if( $column->Align=='center' ){
-//                        $style=['alignment'=>['horizontal'=>PHPExcel_Style_Alignment::HORIZONTAL_CENTER]];
-//                    }
-//                    $alphaHeader=chr(65 + $headerX + $i);
-//                    echo "$alphaHeader$contentY";
-//                    print_r($style);
-//                    
-//                    $Worksheet->getStyle("$alphaHeader$contentY")->applyFromArray($style);
-//                }
             }
-            $alfaHeaderStart = chr(65 + $headerX);
+            $alfaHeaderStart = chr(65 + $headerX-1);
             $alfaHeaderStop = chr(65 + $headerX + $i);
             $Worksheet->duplicateStyle($Worksheet->getStyle("$alfaHeaderStart$headerY"), "$alfaHeaderStart$headerY:$alfaHeaderStop$headerY");
             $Worksheet->duplicateStyle($Worksheet->getStyle("$alfaHeaderStart$contentY"), "$alfaHeaderStart$contentY:$alfaHeaderStop$contentY");
