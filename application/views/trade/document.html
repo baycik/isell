@@ -648,7 +648,7 @@
 	init:function(){
 	    var qty = $('#Doc_sugg_qty').textbox('textbox');
 	    var cmb=$('#Doc_suggest_cmb').combobox('textbox');
-	    cmb.bind( 'keyup', function(e){
+	    cmb.bind( 'keydown', function(e){
 		var query=$('#Doc_suggest_cmb').combobox('getValue');
 		if( e.keyCode===38 && query==='' ){
 		    $('#Doc_suggest_cmb').combobox('setValue',Doc.suggest.prevCode);
@@ -729,7 +729,7 @@
 		Doc.entries.add(code,quantity);
 		$(qty).val('');
 		$(cmb).val('');
-		cmb.select();	    
+		cmb.select();
 	    }
 	},
 	loader:function(param, success, error){
