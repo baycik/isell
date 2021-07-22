@@ -130,6 +130,7 @@ class DocumentItems extends DocumentCore{
                     product_unit,
                     party_label,
                     product_article,
+                    product_barcode,
                     analyse_origin,
                     analyse_class,
                     self_price,
