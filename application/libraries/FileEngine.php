@@ -141,9 +141,11 @@ class FileEngine {
             }
             $this->header("Content-type: application/pdf");
             $this->header('Content-Disposition: attachment;filename="' . $file_name . '"');
+            header('Content-Length: ' . filesize($tmppdf));
             echo file_get_contents($tmppdf);
             unlink($tmphtml);
             unlink($tmppdf);
+            return true;
         }
         
         $this->setup_compilator($out_extension);
