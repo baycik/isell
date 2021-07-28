@@ -149,7 +149,7 @@ class MobiSell extends PluginManager {
         return $document;
     }
     private function documentShipmentEventId($doc_id) {
-        $sql = "SELECT event_id FROM event_list WHERE doc_id='$doc_id' AND event_label LIKE '%Доставка%'";
+        $sql = "SELECT event_id FROM event_list WHERE doc_id='$doc_id' AND event_label NOT LIKE '-%'";
         return $this->get_value($sql);
     }
     private function documentShipmentEventAdd($doc_id) {
@@ -178,8 +178,8 @@ class MobiSell extends PluginManager {
     private function documentShipmentEventDelete($doc_id) {
         $this->query("DELETE FROM event_list WHERE doc_id='$doc_id'  AND event_label LIKE '%Доставка%'");
     }
-    public $documentHeadUpdate = ["doc_id" => "int", "field" => "string", "value" => "string"];
-    public function documentHeadUpdate($doc_id, $field, $value) {
+
+    public function documentHeadUpdate(int $doc_id, string $field, string $value='') {
         $DocumentItems = $this->Hub->load_model("DocumentItems");
         switch ($field) {
             case 'is_commited':
