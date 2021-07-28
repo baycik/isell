@@ -176,7 +176,7 @@ class MobiSell extends PluginManager {
         return $this->create('event_list', $event);
     }
     private function documentShipmentEventDelete($doc_id) {
-        $this->query("DELETE FROM event_list WHERE doc_id='$doc_id'  AND event_label LIKE '-%'");
+        $this->query("DELETE FROM event_list WHERE doc_id='$doc_id'  AND event_label NOT LIKE '-%'");
     }
 
     public function documentHeadUpdate(int $doc_id, string $field, string $value='') {
