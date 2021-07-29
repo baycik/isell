@@ -71,7 +71,7 @@
  		    App.page_company_details.DaDataSet('company_code_registration',s.data.ogrn);
  		    App.page_company_details.DaDataSet('company_code',s.data.okpo);
                 }
-            }).css('width','210px');
+            }).css('width','190px');
 	    $("input[name=company_name]").suggestions({
                 token: token,
                 type: "PARTY",
@@ -92,7 +92,7 @@
  		    App.page_company_details.DaDataSet('company_code_registration',s.data.ogrn);
  		    App.page_company_details.DaDataSet('company_code',s.data.okpo);
                 }
-            }).css('width','410px');
+            }).css('width','380px');
 	    $("input[name=company_bank_name]").suggestions({
                 token: token,
                 type: "BANK",
@@ -221,10 +221,10 @@
     <table>
         <tr>
             <td style="vertical-align: top">
-                <input type="text" name="label" title="Короткое название" style="width:410px;font-weight: bold"/>
-                <input type="text" name="company_name" title="Полное название"/>
-                <input type="text" name="company_jaddress" title="Юр. Адрес" style="width:410px;"/>
-                <input type="text" name="company_address" title="Фактический Адрес" style="width:410px;"/>
+                <input type="text" name="label" title="Короткое название" style="width:380px;font-weight: bold"/>
+                <input type="text" name="company_name" title="Полное название" style="width:380px;"/>
+                <input type="text" name="company_jaddress" title="Юр. Адрес" style="width:380px;"/>
+                <input type="text" name="company_address" title="Фактический Адрес" style="width:380px;"/>
             </td>
             <td style="vertical-align: top;width: 350px">
                 <div onclick="App.page_company_details.sectionToggle(this)" style="cursor: pointer;color:blue;height: 20px;">Регистрационные номера ▼</div>
