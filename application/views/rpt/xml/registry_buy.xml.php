@@ -5,7 +5,7 @@
                     <?php foreach($data['rows'] as $index => $item){ ?>
 			<КнПокСтр НомерПор="<?php echo $index+1; ?>" НомСчФПрод="<?php echo $item->tax_bill_num; ?>" ДатаСчФПрод="<?php echo $item->cdate; ?>" СтоимПокупВ="<?php echo abs($item->total); ?>" СумНДСВыч="<?php echo abs($item->vat); ?>">
 				<КодВидОпер>01</КодВидОпер>
-				<ДатаУчТов><?php echo $item->cdate; ?></ДатаУчТов>
+				<ДатаУчТов><?php echo $item->tax_bill_date; ?></ДатаУчТов>
 				<СвПрод>
                                         <?php if(strlen($item->company_tax_id) == 12){ ?>
 					<СведИП ИННФЛ="<?php echo $item->company_tax_id; ?>"/>
