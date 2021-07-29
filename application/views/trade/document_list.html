@@ -11,8 +11,13 @@
 		});
 		//DocList.tools.swap_expand_collapse();
 	    },
+            setSelectedDoc:function(selected_doc_id){
+                DocList.searchAttemptCount=0;
+                DocList.selected_doc_id=selected_doc_id;
+            },
 	    tools:{
 		reload:function(){
+                    
 		    DocList.grid.reload();
 		},
                 add:function(){
@@ -97,9 +102,10 @@
 			//Document.init(doclistRow.doc_type);
 			doclistRow && Document.load(doclistRow.doc_id);
 		    });
+                    DocList.searchAttemptCount=0;
                     DocList.grid.onRenderFinished.subscribe(function(){
                         let doc_is_found=false;
-                        if( DocList.selected_doc_id ){
+                        if( DocList.selected_doc_id>0 && DocList.searchAttemptCount<2 ){
                             var rows=DocList.grid.getData();
                             for(var num in rows){
                                 if(rows[num].doc_id==DocList.selected_doc_id){
@@ -110,6 +116,7 @@
                             }
                             if( doc_is_found===false ){
                                 DocList.grid.loadNext();
+                                DocList.searchAttemptCount++;
                             }
                         } else {
                             DocList.grid.setSelectedRows([0]);
@@ -205,14 +212,14 @@
 	    init:function(){
 		App.loadModule('page/trade/document',{doc_id:this.doc_id,open_in:'panel'},'DocInline',/(Doc|page_trade_document)([^\w]|_)/g,"DocInline$2").progress(function(status,param){
                     if( DocInline.head && DocInline.head.props && DocInline.head.props.doc_id ){
-                        DocList.selected_doc_id=DocInline.head.props.doc_id;
+                        DocList.setSelectedDoc(DocInline.head.props.doc_id);
                     }
                     switch( status ){
 			case 'close':
 			    $('#document_list_dg').datagrid('unselectAll');
 			    break;
 			case 'deleted':
-                            DocList.selected_doc_id=0;
+                            DocList.setSelectedDoc(0);
                             DocList.tools.reload();
                             break;
 			case 'uncommit':
@@ -251,14 +258,14 @@
 	function init() {
 	    DocList.init();
             App.Topic('hashChange').subscribe(function(){
-                DocList.selected_doc_id=App.state.doc_id;
+                DocList.setSelectedDoc(App.state.doc_id);
                 DocList.grid.setFilter({});
                 //DocList.tools.reload();
             });
             /*let initial_doc_id=0;
             if( App.state.doc_id ){
                 initial_doc_id=App.state.doc_id;
-                DocList.selected_doc_id=App.state.doc_id;
+                DocList.setSelectedDoc(App.state.doc_id);
             }
             Document.load(initial_doc_id);*/
 	}
