@@ -140,6 +140,7 @@ class Reports_manager_annual_sells extends Catalog{
                     analyse_brand,
                     analyse_class,
                     product_article,
+                    doc_data,
                     st.label AS category_name,
                     dl.cstamp,
                     active_company_id,
