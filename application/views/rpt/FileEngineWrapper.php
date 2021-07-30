@@ -23,7 +23,8 @@
         <style type="text/css">
             @media screen{
                 .page,table.sheet0{
-                    width:210mm;
+                    width:min-content;
+                    min-width:210mm;
                     min-height:297mm;
                 }
             }
