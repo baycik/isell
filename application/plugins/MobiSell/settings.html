@@ -1,4 +1,8 @@
 <form>
+    <h2>Адрес доступа к Mobisell</h2>
+    <div style="margin:5px;padding: 5px;border-radius: 5px;display: inline-block" class="transp60">
+        <a target="mobiselltab" id="mobisell_address"></a>
+    </div>
     <div>
 	<h2>Настройки Анонса</h2>
 	<input name="email" title="Емаилы через,">
@@ -7,7 +11,8 @@
     <div style="text-align: center">
 	<button type="submit"><img src="img/Save-24.png" style="width:24px;height: auto"> Сохранить</button>
     </div>
-    <div style="text-align: center;padding: 5px;">
-        <button type="button" onclick="window.open('./MobiSell/');alert('Добавьте адрес MobiSell в закладки обозревателя и пользуйтесь')"><img src="img/Mods/favicon.png" style="width:24px;height: auto"> Открыть MobiSell</button>
-    </div>
 </form>
+<script>
+    var uri = window.location.href.split("#")[0]+'MobiSell/';
+    $('#mobisell_address').html(uri).attr('href',uri);
+</script>
