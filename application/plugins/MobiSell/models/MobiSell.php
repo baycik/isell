@@ -3,9 +3,9 @@
  * Group Name: Мобильное
  * Plugin Name: MobiSell
  * Version: 2017-03-26
- * Description: Мобильное приложение
+ * Description: Мобильное приложение. Пользовательский интерфейс адаптированый для мобильных устройств. Позволяет совершать основные действия. Подходит для удаленной работы торговых представителей и клиентов. Имеет модуль учета склада.
  * Author: baycik 2017
- * Author URI: isellsoft.com
+ * Author URI: isellsoft.net
  * Trigger before: MobiSell
  */
 class MobiSell extends PluginManager {
