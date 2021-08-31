@@ -508,7 +508,9 @@ class Stock extends Catalog {
                 ru,
                 IF(doc_type=1,product_quantity,'') sell,
                 IF(doc_type=2,product_quantity,'') buy,
-		ROUND(self_price,2) self
+		ROUND(self_price,2) self,
+                notcount notcounted,
+                NOT notcount counted
             FROM
                 document_entries de
                     JOIN
@@ -518,7 +520,7 @@ class Stock extends Catalog {
                     JOIN
                 prod_list USING(product_code)
             WHERE
-                is_commited AND NOT notcount
+                is_commited
             HAVING $having
             ORDER BY dl.cstamp DESC
             LIMIT $rows OFFSET $offset";

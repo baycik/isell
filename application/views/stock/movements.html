@@ -10,6 +10,7 @@
 		    App.page_stock_movements.reload();
 		}
 	    });
+            $("#stock_movements_count,#stock_movements_notcount").change(App.page_stock_movements.reload);
 	},
 	toggleFilter:function () {
 	    if (this.filterEnabled) {
@@ -22,10 +23,20 @@
 	    }
 	},
 	loader:function( param, success, error ){
+            var counted=$("#stock_movements_count").prop('checked');
+            var notcounted=$("#stock_movements_notcount").prop('checked');
+            if( !param.filterRules ){
+                param.filterRules=[];
+            } else {
+                param.filterRules=JSON.parse(param.filterRules);
+            }
+            param.filterRules.push({field:'counted',value:counted});
+            param.filterRules.push({field:'notcounted',value:notcounted});
 	    App.page_stock_movements.currPage=param.page;
 	    App.page_stock_movements.currRows=param.rows;
 	    App.page_stock_movements.filterRules=param.filterRules;
-	    App.get("Stock/movementsFetch/"+App.uri(param.page,param.rows), {filterRules: param.filterRules},function( xhr ){
+            
+	    App.get("Stock/movementsFetch/"+App.uri(param.page,param.rows), {filterRules: JSON.stringify(param.filterRules)},function( xhr ){
 		var resp=App.json(xhr);
 		success(resp);
 	    });	    
@@ -63,7 +74,11 @@
     };
 </script>
 <div style="width: 970px;">
-    <div style="text-align: right;padding-right: 5px;">
+    <div style="float: left;padding: 5px;">
+        <input type="checkbox" id="stock_movements_count" checked="checked"> Учтенные |
+        <input type="checkbox" id="stock_movements_notcount"> Неучтенные
+    </div>
+    <div style="float: right;padding-right: 5px;">
         <span class="icon-24 icon-tablefilter" title="Фильтр таблицы" onclick="App.page_stock_movements.toggleFilter()"> </span>
         <span class="icon-24 icon-refresh" title="Обновить" onclick="App.page_stock_movements.reload()"> </span>
         <span class="icon-24" style="background-image: url(img/file_download.png);background-repeat: no-repeat" title="Скачать таблицу" onclick="App.page_stock_movements.out('.xlsx');"> </span>
