@@ -94,12 +94,12 @@ class StockOld extends Data {
                             ,0)
                     WHERE
                         product_code='$product_code'
-                        AND product_quantity-$amount>0
+                        AND product_quantity-$amount>=0
                     ";
                 break;
         }
         $this->Base->query($sql);
-        return mysqli_affected_rows($this->Base->db_link)>0;
+        return true;
     }
     
     
