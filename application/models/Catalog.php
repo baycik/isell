@@ -385,10 +385,10 @@ class Catalog extends CI_Model {
         foreach ($filter as $field => $value) {
             $words=explode(' ',$value);
             foreach($words as $word){
-                if( empty($word[0]) ){
+                if(strlen($word)>0 ){
                     continue;
                 }
-                if($word[0]=='!'){
+                 if($word[0]=='!'){
                     $having[] = "$field NOT LIKE '%".substr($word,1)."%'";
                 } else {
                     if (strpos($word, '|') === false) {

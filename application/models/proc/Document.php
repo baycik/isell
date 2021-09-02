@@ -33,7 +33,8 @@ class Document extends Data {
     }
 
     protected function isCommited() {
-	return $this->doc('is_commited');
+        $doc_id = $this->doc('doc_id');
+	return $this->Base->get_row("SELECT is_commited FROM document_list WHERE doc_id='$doc_id'",0);
     }
 
     protected function loadDoc($doc_id) {
@@ -211,14 +212,17 @@ class Document extends Data {
 
     public function commit() {
 	$this->Base->set_level(2);
+	$doc_id = $this->doc('doc_id');
+	$this->Base->query("START TRANSACTION");
 	if ( $this->isCommited() ) {
 	    $this->Base->msg("Документ уже проведен!\n");
+            $this->Base->query("ROLLBACK");
 	    return false;
 	}
 	if ( $this->isDebtLimitExceeded() ) {
+            $this->Base->query("ROLLBACK");
 	    return false;
 	}
-	$doc_id = $this->doc('doc_id');
 
 	$company_lang = $this->Base->pcomp('language');
 	$sql = $this->getEntriesSqlParts($doc_id);
@@ -228,9 +232,9 @@ class Document extends Data {
 	if ($err) {
 	    $status_msg = substr($err['row_status'], strpos($err['row_status'], ' '));
 	    $this->Base->msg("- $status_msg \"$err[$company_lang]\"\n");
+            $this->Base->query("ROLLBACK");
 	    return false;
 	}
-	$this->Base->query("START TRANSACTION");
 	$res = $this->Base->query("SELECT doc_entry_id FROM document_entries WHERE doc_id=$doc_id");
 	while ($entry = mysqli_fetch_assoc($res)) {
 	    if (!$this->alterEntry('commit', $entry['doc_entry_id'], NULL, NULL)) {
@@ -273,14 +277,16 @@ class Document extends Data {
     }
 
     public function uncommit() {
-	if ($this->isCommited())
+	$this->Base->query("START TRANSACTION");
+	if ($this->isCommited()){
 	    $this->Base->set_level(2);
-	if (!$this->isCommited())
+        }else{
+            $this->Base->query("ROLLBACK");
 	    return $this->delete();
+        }
 	$doc_id = $this->doc('doc_id');
 	$company_lang = $this->Base->pcomp('language');
 
-	$this->Base->query("START TRANSACTION");
 	$res = $this->Base->query("SELECT * FROM document_entries WHERE doc_id='$doc_id'");
 	while ($entry = mysqli_fetch_assoc($res)) {
 	    if (!$this->alterEntry('uncommit', $entry['doc_entry_id'], NULL, NULL)) {

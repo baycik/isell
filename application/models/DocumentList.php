@@ -56,6 +56,7 @@ class DocumentList extends Catalog{
 		doc_type,
                 IF(doc_type=1,'DocumentSell','') doc_extension,
 		dl.cstamp,
+		DATE_FORMAT(dl.cstamp,'%d.%m.%Y') doc_date_dot,
 		doc_num,
 		label pcomp_label,
 		CONCAT(icon_name,' ',doc_type_name) doc_type_icon,

@@ -10,7 +10,7 @@ class StockOld extends Data {
         $this->productCode = addslashes($product_code);//bugfix if special characters are used like \ 
         $sql = "SELECT 
                 product_wrn_quantity,
-		(SELECT product_quantity FROM " . BAY_DB_MAIN . ".stock_entries WHERE product_code='{$this->productCode}') product_quantity,
+		product_quantity,
  		vat_quantity,
 		self_price,
 		parent_id,
@@ -22,64 +22,121 @@ class StockOld extends Data {
         $this->stockEntry = (object) $this->Base->get_row($sql);
     }
 
-    private function stockEntryMainSave() {
-        if ($this->Base->Document && $this->Base->Document->doc('notcount')) {
-            return true;
-        }
-        if ($this->stockEntry->product_quantity < 0) {
-            $this->Base->msg("Нехватает в колличестве " . (-$this->stockEntry->product_quantity) . "!");
-            return false;
-        }
-        $sql = "UPDATE
-		" . BAY_DB_MAIN . ".stock_entries
-	    SET
-		product_quantity={$this->stockEntry->product_quantity}
-	    WHERE
-		product_code='{$this->productCode}'";
-        $this->Base->query($sql);
-        return true;
-    }
+//    private function stockEntryMainSave() {
+//        if ($this->Base->Document && $this->Base->Document->doc('notcount')) {
+//            return true;
+//        }
+//        if ($this->stockEntry->product_quantity < 0) {
+//            $this->Base->msg("Нехватает в колличестве " . (-$this->stockEntry->product_quantity) . "!");
+//            return false;
+//        }
+//        $sql = "UPDATE
+//		stock_entries
+//	    SET
+//		product_quantity={$this->stockEntry->product_quantity}
+//	    WHERE
+//		product_code='{$this->productCode}'";
+//        $this->Base->query($sql);
+//        return true;
+//    }
 
-    private function stockEntrySave() {
-        $this->Base->set_level(2);
-        if( $this->stockEntryMainSave() ){
-            $sql = "UPDATE
-                    stock_entries
-                SET
-                    product_wrn_quantity='{$this->stockEntry->product_wrn_quantity}',
-                    vat_quantity='{$this->stockEntry->vat_quantity}',
-                    self_price='{$this->stockEntry->self_price}',
-                    parent_id='{$this->stockEntry->parent_id}',
-                    party_label='{$this->stockEntry->party_label}'
-                WHERE
-                    product_code='{$this->productCode}'";
-            $this->Base->query($sql);
-            if ( !mysqli_errno($this->Base->db_link) ) {
-                return true;
-            }
-        }
-        $this->Base->msg('Немогу изменить строку на складе!');
-        return false;
-    }
-
+//    private function stockEntrySave() {
+//        $this->Base->set_level(2);
+//        if( $this->stockEntryMainSave() ){
+//            $sql = "UPDATE
+//                    stock_entries
+//                SET
+//                    product_wrn_quantity='{$this->stockEntry->product_wrn_quantity}',
+//                    vat_quantity='{$this->stockEntry->vat_quantity}',
+//                    self_price='{$this->stockEntry->self_price}',
+//                    parent_id='{$this->stockEntry->parent_id}',
+//                    party_label='{$this->stockEntry->party_label}'
+//                WHERE
+//                    product_code='{$this->productCode}'";
+//            $this->Base->query($sql);
+//            if ( !mysqli_errno($this->Base->db_link) ) {
+//                return true;
+//            }
+//        }
+//        $this->Base->msg('Немогу изменить строку на складе!');
+//        return false;
+//    }
+    
     private function stockEntryQtyAlter($action = 'increase', $product_code, $amount, $description = NULL, $self_price = NULL) {
-        $this->stockEntryLoad($product_code);
-        $party_total=$self_price*$amount;
-        $stock_total=$this->stockEntry->self_price*$this->stockEntry->product_quantity;
+        if( !$self_price ){
+            $self_price=0;
+        }
         switch ($action) {
             case 'increase':
-                $this->stockEntry->product_quantity += $amount;
-                $this->stockEntry->vat_quantity += $amount;
-                $this->stockEntry->self_price =($stock_total+$party_total)/$this->stockEntry->product_quantity;
+                $sql="
+                    UPDATE
+                        stock_entries
+                    SET
+                        product_quantity=product_quantity+$amount,
+                        self_price=(self_price*product_quantity+$self_price*$amount)
+                                /
+                            (product_quantity+$amount)
+                    ";
                 break;
             case 'decrease':
-                $this->stockEntry->product_quantity -= $amount;
-                $this->stockEntry->vat_quantity -= $amount;
-                $this->stockEntry->self_price =$this->stockEntry->product_quantity>0?($stock_total-$party_total)/$this->stockEntry->product_quantity:0;
+                $sql="
+                    UPDATE
+                        stock_entries
+                    SET
+                        product_quantity=product_quantity-$amount,
+                        self_price=
+                            IF(product_quantity-$amount>0,
+                            (self_price*product_quantity-$self_price*$amount)
+                                /
+                            (product_quantity-$amount)
+                            ,0)
+                    WHERE
+                        product_quantity-$amount>0
+                    ";
                 break;
         }
-        return $this->stockEntrySave();
+        $this->Base->query($sql);
+        return mysqli_affected_rows($this->Base->db_link)>0;
     }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+//    private function stockEntryQtyAlter1($action = 'increase', $product_code, $amount, $description = NULL, $self_price = NULL) {
+//        $this->stockEntryLoad($product_code);
+//        
+//        
+//        echo $action."=".print_r($this->stockEntry);
+//        
+//        $party_total=$self_price*$amount;
+//        $stock_total=$this->stockEntry->self_price*$this->stockEntry->product_quantity;
+//        switch ($action) {
+//            case 'increase':
+//                $this->stockEntry->product_quantity += $amount;
+//                $this->stockEntry->vat_quantity += $amount;
+//                $this->stockEntry->self_price =($stock_total+$party_total)/$this->stockEntry->product_quantity;
+//                break;
+//            case 'decrease':
+//                $this->stockEntry->product_quantity -= $amount;
+//                $this->stockEntry->vat_quantity -= $amount;
+//                $this->stockEntry->self_price =$this->stockEntry->product_quantity>0?($stock_total-$party_total)/$this->stockEntry->product_quantity:0;
+//                break;
+//        }
+//        return $this->stockEntrySave();
+//    }
 
     ///////////////////////////////////////////////////////////
     //PUBLIC FUNCTIONS |
@@ -93,17 +150,29 @@ class StockOld extends Data {
     }
 
     public function stockEntryWrnUpdate($product_code, $new_wrn) {
-        $this->stockEntryLoad($product_code);
-        $this->stockEntry->product_wrn_quantity = $new_wrn;
-        return $this->stockEntrySave();
+        $this->Base->set_level(2);
+        $sql = "UPDATE 
+            " . BAY_DB_MAIN . ".stock_entries
+        SET 
+            product_wrn_quantity='$new_wrn'
+        WHERE 
+            product_code='$product_code'";
+        $this->Base->query($sql);
+        return mysqli_affected_rows($this->Base->db_link)>0;
     }
 
     public function stockEntryParentUpdate($product_code, $new_parent_label) {
+        $this->Base->set_level(2);
         $new_parent_id=$this->Base->get_row("SELECT branch_id FROM stock_tree WHERE label='$new_parent_label' LIMIT 1",0);
         if( $new_parent_id ){
-            $this->stockEntryLoad($product_code);
-            $this->stockEntry->parent_id = $new_parent_id;
-            return $this->stockEntrySave();
+            $sql = "UPDATE 
+                " . BAY_DB_MAIN . ".stock_entries
+            SET 
+                parent_id='$new_parent_id'
+            WHERE 
+                product_code='$product_code'";
+            $this->Base->query($sql);
+            return mysqli_affected_rows($this->Base->db_link)>0;
         }
         else{
             $this->Base->response_wrn("Категория с названием '$new_parent_label' отсутствует!");
@@ -111,14 +180,19 @@ class StockOld extends Data {
     }
 
     public function stockEntryPartyUpdate($product_code, $new_party_label) {
-        $this->stockEntryLoad($product_code);
-        if( $new_party_label && $new_party_label!='-' ){
-            $this->stockEntry->party_label = $new_party_label;
-        }
-        return $this->stockEntrySave();
+        $this->Base->set_level(2);
+        $sql = "UPDATE 
+	    " . BAY_DB_MAIN . ".stock_entries
+	SET 
+	    party_label='$new_party_label'
+	WHERE 
+	    product_code='$product_code'";
+        $this->Base->query($sql);
+        return mysqli_affected_rows($this->Base->db_link)>0;
     }
 
     public function stockEntryInsert($product_code, $parent_id) {
+        $this->Base->set_level(2);
         $this->Base->query("INSERT INTO " . BAY_DB_MAIN . ".stock_entries SET product_code='$product_code',party_label=NULL, parent_id='$parent_id'",false);
         if (mysqli_errno($this->Base->db_link) == 1062){
             $this->Base->response_wrn("Строка с артикулом '$product_code' уже есть");
@@ -157,9 +231,15 @@ class StockOld extends Data {
     }
 
     public function setEntrySelfPrice($product_code, $price_self) {
-        $this->stockEntryLoad($product_code);
-        $this->stockEntry->self_price = $price_self;
-        return $this->stockEntrySave();
+        $this->Base->set_level(2);
+        $sql = "UPDATE 
+	    " . BAY_DB_MAIN . ".stock_entries
+	SET 
+	    self_price='$price_self'
+	WHERE 
+	    product_code='$product_code'";
+        $this->Base->query($sql);
+        return mysqli_affected_rows($this->Base->db_link)>0;
     }
     
     public function getEntryPartyLabel($product_code){

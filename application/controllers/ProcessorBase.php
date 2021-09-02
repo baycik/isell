@@ -128,7 +128,7 @@ class DataBase extends InputOutput {
 	}
 	$res = mysqli_query($this->db_link,$sql);
 	if ($throw_error && mysqli_errno($this->db_link)) {
-	    if ($this->svar('user_level') > 2 || BAY_SQL_SHOW_ERRORS)
+	    if ($this->svar('user_level') > 2 || 1)
 		$this->response_error('SQL ERROR: ' . "\n$sql\n\n" . mysqli_error($this->db_link));
 	    else
 		$this->response_wrn('Упс! Ошибочка вышла!');
