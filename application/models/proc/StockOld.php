@@ -76,6 +76,8 @@ class StockOld extends Data {
                         self_price=(self_price*product_quantity+$self_price*$amount)
                                 /
                             (product_quantity+$amount)
+                    WHERE
+                        product_code='$product_code'
                     ";
                 break;
             case 'decrease':
@@ -91,7 +93,8 @@ class StockOld extends Data {
                             (product_quantity-$amount)
                             ,0)
                     WHERE
-                        product_quantity-$amount>0
+                        product_code='$product_code'
+                        AND product_quantity-$amount>0
                     ";
                 break;
         }
