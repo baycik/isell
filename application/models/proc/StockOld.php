@@ -99,7 +99,7 @@ class StockOld extends Data {
                 break;
         }
         $this->Base->query($sql);
-        return true;
+        return mysqli_affected_rows($this->Base->db_link)>0;
     }
     
     
