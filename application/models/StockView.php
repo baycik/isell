@@ -80,7 +80,7 @@ class StockView extends Stock{
 	    'view'=>[
 		'date'=>date('d.m.Y H:i'),
 		'user_sign'=>$this->Hub->svar('user_sign'),
-		'table'=>$this->movementsFetch($page,$rows,$having)
+		'table'=>$this->movementsFetch($page,10000,$having)
 	    ]
 	];
 	$ViewManager=$this->Hub->load_model('ViewManager');

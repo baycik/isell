@@ -48,7 +48,7 @@
 	    var params={
 		page:App.page_stock_movements.currPage,
 		rows:App.page_stock_movements.currRows,
-		filterRules:App.page_stock_movements.filterRules,
+		filterRules:JSON.stringify(App.page_stock_movements.filterRules),
 		out_type:out_type
 	    };
 	    var url='StockView/stockMoveViewGet/?'+$.param( params );
