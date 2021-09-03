@@ -505,7 +505,7 @@ class Utils extends Catalog {
 		    WHERE
 			notcount = 0 AND is_commited = 1 AND (doc_type=2 OR doc_type=1) $active_filter
 		    ORDER BY product_code ,  cstamp) t ) tt
-	    ORDER BY i);";
+	    ORDER BY product_code,i);";
         $this->db->query($sql_vars);
         $this->db->query($sql_tbl_drop);
         $this->db->query($sql_tbl_create);
@@ -515,6 +515,7 @@ class Utils extends Catalog {
 
     public function selfPriceInvoiceRecalculate($idatedmy, $fdatedmy, $active_mode = '') {
         set_time_limit(300);
+        session_write_close();
         $idate = $this->dmy2iso($idatedmy) . ' 00:00:00';
         $fdate = $this->dmy2iso($fdatedmy) . ' 23:59:59';
         if ($active_mode == 'all_active') {
@@ -530,7 +531,7 @@ class Utils extends Catalog {
     }
     
     private function selfPriceCalculateExtraExpenses($idate, $fdate, $active_filter){
-        echo $sql="SELECT 
+        $sql="SELECT 
                 doc_id,
                 JSON_EXTRACT(doc_settings,'$.extra_expenses') extra_expenses,
                 SUM(self_price*product_quantity) self_sum
