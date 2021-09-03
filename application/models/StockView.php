@@ -68,6 +68,9 @@ class StockView extends Stock{
     
     public $stockMoveViewGet=['page'=>'int','rows'=>'int','out_type'=>'string'];
     public function stockMoveViewGet($page,$rows,$out_type){
+        if($out_type!='.print'){
+            $rows=10000;
+        }
 	$having=$this->decodeFilterRules();
 	$blank_set=$this->Hub->pref('blank_set');
 	$dump=[
@@ -80,7 +83,7 @@ class StockView extends Stock{
 	    'view'=>[
 		'date'=>date('d.m.Y H:i'),
 		'user_sign'=>$this->Hub->svar('user_sign'),
-		'table'=>$this->movementsFetch($page,10000,$having)
+		'table'=>$this->movementsFetch($page,$rows,$having)
 	    ]
 	];
 	$ViewManager=$this->Hub->load_model('ViewManager');
