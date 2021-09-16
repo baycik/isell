@@ -63,6 +63,9 @@ class StockOld extends Data {
 //    }
     
     private function stockEntryQtyAlter($action = 'increase', $product_code, $amount, $description = NULL, $self_price = NULL) {
+        if ($this->Base->Document && $this->Base->Document->doc('notcount')) {
+            return true;
+        }
         if( !$self_price ){
             $self_price=0;
         }
