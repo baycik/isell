@@ -447,7 +447,7 @@
                 <span class="icon-24 icon-print" title="Напечатать" onclick="Ledger.list.out('.print');"> </span>
             </div>
         </div>
-        <table id="account_ledger_dg" class="easyui-datagrid" style="width:810px;"
+        <table id="account_ledger_dg" class="easyui-datagrid" style="width:850px;"
                data-options="
                idField:'trans_id',
                loader:Ledger.list.loader,
@@ -464,14 +464,14 @@
                 <tr>
                     <th data-options="width:25,field:'editable',align:'center',formatter:Ledger.list.rowTooltip"></th>
                     <th data-options="width:25,field:'trans_status',align:'center',formatter:Ledger.list.rowPayTooltip"></th>
-                    <th data-options="width:65,field:'trans_date'">Дата</th>
+                    <th data-options="width:75,field:'trans_date'">Дата</th>
                     <th data-options="width:160,field:'company_name'">Компания</th>
                     <th data-options="width:220,field:'description'">Пояснение</th>
-                    <th data-options="width:85,field:'debit',align:'right',formatter:Ledger.list.calculate">Дебит</th>
-                    <th data-options="width:85,field:'credit',align:'right',formatter:Ledger.list.calculate">Кредит</th>
-                    <th data-options="width:85,field:'row_total',align:'right'">Остаток</th>
-                    <th data-options="width:27,field:'trans_type'"></th>
-                    <th data-options="width:30,field:'nick'"></th>
+                    <th data-options="width:90,field:'debit',align:'right',formatter:Ledger.list.calculate">Дебит</th>
+                    <th data-options="width:90,field:'credit',align:'right',formatter:Ledger.list.calculate">Кредит</th>
+                    <th data-options="width:90,field:'row_total',align:'right'">Остаток</th>
+                    <th data-options="width:40,field:'trans_type'"></th>
+                    <th data-options="width:35,field:'nick'"></th>
                 </tr>
             </thead>
         </table>
