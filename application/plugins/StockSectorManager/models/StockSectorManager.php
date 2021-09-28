@@ -24,12 +24,13 @@ class StockSectorManager extends Catalog{
 	return $this->Maintain->backupImportExecute($uninstall_file);
     }
     
-    public function viewCreate( string $doc_ids ){
+    public function viewCreate( string $doc_ids, string $title='' ){
         $view=[
             'head'=>(object)[
                 'issuer'=>$this->Hub->svar('user_sign'),
                 'number'=>1,
-                'date'=>date('H:i d.m.Y')
+                'date'=>date('H:i d.m.Y'),
+                'title'=>$title
             ],
             'bills'=>[],
             'rows'=>[]
@@ -101,9 +102,9 @@ class StockSectorManager extends Catalog{
     }
     
     
-    public function viewOut( string $doc_ids, string $out_type='.print' ){
+    public function viewOut( string $doc_ids, string $out_type='.print', string $title ){
         $this->Hub->set_level(2);
-        $view=$this->viewCreate( $doc_ids );
+        $view=$this->viewCreate( $doc_ids, $title );
 	$dump=[
 	    'tpl_files'=>'../../plugins/StockSectorManager/views/stockBill.xlsx',
 	    'title'=>"Сводная складская накладная",

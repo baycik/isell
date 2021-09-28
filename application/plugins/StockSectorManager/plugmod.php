@@ -39,16 +39,16 @@ EOT;
 $before[]=<<<EOT
 EOT;
 $after[]=<<<EOT
-                    <span class="icon-24" style="background-image:url(img/checklist.png)" title="Печать складскую накладную" onclick="App.page_events_scheduler.tile.stock_bill_print();"> </span>
+                    <span class="icon-24" style="background-image:url(img/checklist.png)" title="Печать складскую накладную" onclick="App.page_events_scheduler.tile.stock_bill_print('{{label}}');"> </span>
                     <script type="text/javascript">
-                        App.page_events_scheduler.tile.stock_bill_print=function(){
+                        App.page_events_scheduler.tile.stock_bill_print=function( title ){
                             var doc_ids=[];
                             $(".selected").each(function(i,node){
                                 var index=\$(node).data('event-index');
                                 doc_ids.push( App.page_events_scheduler.tile.event_list[index].doc_id );
                             });
                             if( doc_ids.length ){
-                                window.open("StockSectorManager/viewOut?doc_ids="+doc_ids.join(','));
+                                window.open("StockSectorManager/viewOut?doc_ids="+doc_ids.join(',')+"&title="+title);
                             } else {
                                 App.flash("Выберите строчки");
                             }
