@@ -154,6 +154,8 @@ $this->view->total_pages = num2str($this->view->tables_count*2, true);
 $this->view->total_rows = num2str($i, true);
 $this->view->doc_view->total_spell = num2str($this->view->footer->total);
 $this->view->doc_view->date_spell = daterus($this->view->doc_view->date_dot);
+list($rub, $kop)=explode('.',$this->view->footer->total);
+$this->view->doc_view->total_coins=$kop;
 ///////////////////////////////////////////////
 //TEMPLATE MULTIPAGE
 ///////////////////////////////////////////////
