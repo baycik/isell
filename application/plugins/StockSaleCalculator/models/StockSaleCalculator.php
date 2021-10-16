@@ -54,5 +54,6 @@ class StockSaleCalculator extends PluginManager {
                 new_promo_price>0;
             ";
         $this->query($create_new_promo_sql);
+        return $this->db->affected_rows();
     }
 }
