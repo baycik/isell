@@ -11,7 +11,7 @@ EOT;
 $before[]=<<<EOT
 EOT;
 $after[]=<<<EOT
-\n  <button data-action="sale_set"><img src="img/calc.png" style="width:24px;height: 24px;"> Установка распродажи для категории</button><br>
+\n  <button data-action="sale_set"><img src="img/calc.png" style="width:24px;height: 24px;"> Распродажа</button><br>
 EOT;
 
 
