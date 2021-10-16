@@ -1,0 +1,77 @@
+<script>
+    App.StockSaleCalculator_dialog = {
+        init: function () {
+            this.node.window({
+                title: 'Расчет Распродажи',
+                width: 570,
+                top: 50,
+                height: 'auto',
+                shadow: false,
+                onClose: function () {
+                    delete App.StockSaleCalculator_dialog;
+                    //pickmeup('.three-calendars').destroy();
+                }
+            });
+            this.node.window('hcenter');
+            this.node.window('window').css('position', 'fixed');
+	    App.handler.progress(function(status,pcomp){
+                if( status==='passiveCompanySelected' ){
+		    $("#sale_calculate_frm_pcomp").val(pcomp.label);
+                }
+            });
+            if( App.pcomp ){
+                this.data.pcomp_name=App.pcomp.label||"Не выбран";
+            }
+            this.data.period=91;
+            App.setupForm("#sale_calculate_frm",this.data);
+        },
+        submit:function(e){
+            e.preventDefault();
+	    if( !App.pcomp ){
+		alert("Выберите клиента порог рентабельности которого будет рассчитан как уцена расспродажи");
+		App.loadWindow('page/company/tree',{}).progress(function(status,comp){
+		    if( status==='select' ){
+			App.user.setPassiveCompany(comp);
+		    }
+		});
+		return false;
+	    }
+            var day_passed=$("#sale_calculate_frm select").val();
+            var branch_id=App.StockSaleCalculator_dialog.data.branch_id;
+            if( !branch_id ){
+                alert('Надо выбрать категорию склада для рассчета распродажи!')
+                return;
+            }
+            var request={
+                day_passed:day_passed,
+                branch_id:branch_id
+            };
+            $.post("StockSaleCalculator/promoSet/",request).done(function(ok){
+                App.flash("Saved: "+(ok*1?'OK':'ERROR'));
+            });
+        },
+    };
+</script>
+<style>
+    #sale_calculate_frm input{
+        width:100px;
+    }
+</style>
+<form id="sale_calculate_frm" onsubmit="App.StockSaleCalculator_dialog.submit(event)">
+    <div style="padding: 10px;">
+    <p>За основу цены расспродажи будет взята цена порога рентабельности для Клиента.</p>
+    <p>Цена распродажи будет рассчитана с отклонениями в 5%.</p>
+    <p>Для расспродажи будут взяты товарные позиции по которым не было движений больше чем Период</p>
+    </div>
+    <input id="sale_calculate_frm_pcomp" name="pcomp_name" title="Клиент" value="не выбран" readonly="readonly" />
+    <button type="button" class="tiny_button" onclick="App.user.pcompSelectionDialog();"><img src="img/settings.png"> Изменить</button>
+    <select name="period" title="Период">
+	<option value="30">месяц</option>
+	<option value="91" selected="selected">3 месяца</option>
+	<option value="365">год</option>
+    </select>
+    <div style="text-align: center;margin-top: 15px;">
+	<button type="submit"><img src="img/calc.png" style="width:24px;height: 24px;" /> Рассчитать</button>
+	<button type="button" onclick="App.StockSaleCalculator_dialog.node.window('close')"><img src="img/close24.png" /> Закрыть</button>
+    </div>
+</form>

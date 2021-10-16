@@ -37,7 +37,6 @@
 		App.loadWindow('page/company/tree',{}).progress(function(status,comp){
 		    if( status==='select' ){
 			App.user.setPassiveCompany(comp);
-			//App.page_stock_calc_buy_order.handler.notify('submit',App.page_stock_calc_buy_order.data);
 		    }
 		});
 		return false;
