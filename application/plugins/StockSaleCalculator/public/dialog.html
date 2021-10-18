@@ -23,6 +23,7 @@
                 this.data.pcomp_name=App.pcomp.label||"Не выбран";
             }
             this.data.period=91;
+            this.data.deviation=5;
             App.setupForm("#sale_calculate_frm",this.data);
         },
         submit:function(e){
@@ -60,16 +61,17 @@
 <form id="sale_calculate_frm" onsubmit="App.StockSaleCalculator_dialog.submit(event)">
     <div style="padding: 10px;">
     <p>За основу цены расспродажи будет взята цена порога рентабельности для Клиента.</p>
-    <p>Цена распродажи будет рассчитана с отклонениями в 5%.</p>
+    <p>Цена распродажи будет рассчитана с установленным разбросом.</p>
     <p>Для расспродажи будут взяты товарные позиции по которым не было движений больше чем Период</p>
     </div>
-    <input id="sale_calculate_frm_pcomp" name="pcomp_name" title="Клиент" value="не выбран" readonly="readonly" />
-    <button type="button" class="tiny_button" onclick="App.user.pcompSelectionDialog();"><img src="img/settings.png"> Изменить</button>
+    <hr style="color:#ccc">
     <select name="period" title="Период">
 	<option value="30">месяц</option>
 	<option value="91" selected="selected">3 месяца</option>
+	<option value="183">полгода</option>
 	<option value="365">год</option>
     </select>
+    <input type="number" title="Разброс ±%" value="5" name="deviation">
     <div style="text-align: center;margin-top: 15px;">
 	<button type="submit"><img src="img/calc.png" style="width:24px;height: 24px;" /> Рассчитать</button>
 	<button type="button" onclick="App.StockSaleCalculator_dialog.node.window('close')"><img src="img/close24.png" /> Закрыть</button>

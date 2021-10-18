@@ -10,12 +10,9 @@
  */
 class StockSaleCalculator extends PluginManager {
     
-    public function promoSet( int $branch_id, int $day_passed=90 ){
+    public function promoSet( int $branch_id, int $day_passed=90, float $deviation=5 ){
         $pcomp_id=$this->Hub->pcomp('company_id');        
         $usd_ratio=$this->Hub->pref('usd_ratio');
-        $deviation=5;//%
-        
-        
         $clear_old_promo_sql="
             DELETE FROM
                 price_list
@@ -36,7 +33,7 @@ class StockSaleCalculator extends PluginManager {
             SELECT 
                 se.product_code,
                 'PROMO',
-                ROUND(GET_BREAKEVEN_PRICE(se.product_code, '$pcomp_id', '$usd_ratio',IF(self_price>0,self_price,buy)) * (1 + RAND() / 100 * $deviation),2) new_promo_price
+                ROUND(IF(self_price>0,self_price,IF(prl.curr_code='USD',$usd_ratio,1)*buy) * (1 + RAND() / 100 * $deviation),2) new_promo_price
             FROM
                 stock_entries se
                     JOIN
@@ -50,6 +47,7 @@ class StockSaleCalculator extends PluginManager {
                 AND fetch_stamp IS NOT NULL
                 AND DATEDIFF(NOW(), fetch_stamp) > $day_passed
                 AND product_quantity>0
+                AND (self_price>0 OR buy>0)
             HAVING
                 new_promo_price>0;
             ";
