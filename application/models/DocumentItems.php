@@ -167,7 +167,7 @@ class DocumentItems extends DocumentCore{
     
     
 
-    public function entryAdd( int $doc_id, string $code, float $quantity, float $price=NULL , string $mode){
+    public function entryAdd( int $doc_id, string $code, float $quantity, float $price=NULL , string $mode=NULL){
         if($doc_id){
             $this->selectDoc($doc_id);
         }
