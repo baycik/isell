@@ -358,7 +358,8 @@
                         {id: "product_barcode", field: "product_barcode", name: "Штрихкод", sortable: true, width: 100, editor: Slick.Editors.Text, cssClass: 'slick-align-right'},
                         {id: "analyse_type", field: "analyse_type", name: "Тип", sortable: true, width: 100, editor: Slick.Editors.Text},
                         {id: "analyse_brand", field: "analyse_brand", name: "Бренд", sortable: true, width: 100, editor: Slick.Editors.Text},
-                        {id: "analyse_origin", field: "analyse_origin", name: "Таможенный код", sortable: true, width: 100, editor: Slick.Editors.Text, cssClass: 'slick-align-right'}                   
+                        {id: "analyse_origin", field: "analyse_origin", name: "Таможенный код", sortable: true, width: 100, editor: Slick.Editors.Text, cssClass: 'slick-align-right'},
+                        {id: "is_service", field: "is_service", name: "Услуга", sortable: true, width: 50, editor: Slick.Editors.Integer},
                     ];
                     var columns=columns_lev1;
                     if( App.user.props.user_level>1 ){
