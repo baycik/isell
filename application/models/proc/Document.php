@@ -376,7 +376,7 @@ class Document extends Data {
 	if (!$amount) {
 	    return false;
 	}
-        if( $this->doc('notcount')==0 && $this->checkUserPermission( 'nocommit' ) ){
+        if( $this->doc('notcount')==0 && ($this->doc('doc_type')==1 || $this->doc('doc_type')==2) && $this->checkUserPermission( 'nocommit' ) ){
             $this->Base->msg("Нет прав для операий по складу");
             return false;
         }
