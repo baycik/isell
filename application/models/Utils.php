@@ -652,7 +652,7 @@ class Utils extends Catalog {
         $DocumentItems = $this->Hub->load_model("DocumentItems");
         $doc_id = $DocumentItems->createDocument(2); //create buy document
         foreach ($buy_order as $row) {
-            $DocumentItems->entryAdd(null,$row->product_code, $row->qty);
+            $DocumentItems->entryAdd($doc_id,$row->product_code, $row->qty);
         }
         return $doc_id;
     }
