@@ -306,12 +306,12 @@ class Document extends Data {
 	return true;
     }
 
-    protected function alterEntry($action, $doc_entry_id, $new_quantity = NULL, $new_invoice = NULL, $new_party_label = NULL) {//Must be called within db transaction
+    protected function alterEntry($action = 'update', $doc_entry_id, $new_quantity = NULL, $new_invoice = NULL, $new_party_label = NULL) {//Must be called within db transaction
 	if ($this->isCommited()) {
 	    $this->Base->set_level(2);
 	}        
 	$entry = $this->Base->get_row("SELECT * FROM document_entries WHERE doc_entry_id=$doc_entry_id");
-	if (  $this->doc('doc_id') != ($entry['doc_id']??0) ) {
+	if ($this->doc('doc_id') != $entry['doc_id']) {
 	    $this->Base->msg("Trying to update entry of unselected Doc!!!");
 	    return false;
 	}
@@ -376,7 +376,7 @@ class Document extends Data {
 	if (!$amount) {
 	    return false;
 	}
-        if( $this->doc('notcount')==0 && $this->checkUserPermission( 'nocommit' ) ){
+        if( $this->doc('notcount')==0 && ($this->doc('doc_type')==1 || $this->doc('doc_type')==2) && $this->checkUserPermission( 'nocommit' ) ){
             $this->Base->msg("Нет прав для операий по складу");
             return false;
         }
@@ -827,11 +827,7 @@ class Document extends Data {
             doc_status_id=1,
             created_by=$user_id,
             modified_by=$user_id,
-            vat_rate=$vat_rate,
-            is_commited=0,
-            is_reclamation=0,
-            doc_data=''
-                "
+            vat_rate=$vat_rate"
 	);
 	$doc_id = mysqli_insert_id($this->Base->db_link);
 	$this->selectDoc($doc_id);
