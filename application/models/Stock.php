@@ -89,7 +89,7 @@ class Stock extends Catalog {
     
     public $branchFetch = ['id' => ['int', 0], 'depth' => ['string', 'top']];
 
-    public function branchFetch($parent_id = 0, $depth) {
+    public function branchFetch($parent_id = 0, $depth='top') {
         return $this->treeFetch("stock_tree", $parent_id, $depth);
     }
 
@@ -186,14 +186,14 @@ class Stock extends Catalog {
 			    LEFT JOIN
 			stock_tree st ON se.parent_id=branch_id
 			$where
-			HAVING {$having['inner']}
-			ORDER BY $sortby $sortdir
-			LIMIT $limit OFFSET $offset) t		
+                    HAVING {$having['inner']}
+                    ORDER BY $sortby $sortdir
+                    LIMIT $limit OFFSET $offset) t		
  		    LEFT JOIN
 		document_entries de ON de.product_code=t.product_code
 		    LEFT JOIN
 		document_list dl ON de.doc_id=dl.doc_id AND dl.is_commited=1 AND dl.doc_type=1 AND notcount=0
-	    GROUP BY t.product_code
+	    GROUP BY t.product_code,parent_id,product_quantity,product_reserved,product_awaiting,product_wrn_quantity
 	    HAVING {$having['outer']}
 	    ";
         return $this->get_list($sql);
@@ -640,7 +640,7 @@ class Stock extends Catalog {
         return true;
     }
 
-    public function reserveListFetch(int $offset=0, int $limit=0, string $sortby='cstamp', string $sortdir='DESC', array $filter = null) {
+    public function reserveListFetch(int $offset=0, int $limit=0, string $sortby=null, string $sortdir=null, array $filter = null) {
         $this->Hub->set_level(2);
         if (empty($sortby)) {
             $sortby = "cstamp";
@@ -1153,7 +1153,7 @@ class Stock extends Catalog {
         $Events->Topic('beforeMatchesFilterBuild')->publish($this);
     }
     
-    public function matchesListFetch(string $q='', int $limit=12, int $offset=0, string $sortby, string $sortdir, int $category_id=0, int $pcomp_id=0) {
+    public function matchesListFetch(string $q='', int $limit=12, int $offset=0, string $sortby='product_code', string $sortdir='ASC', int $category_id=0, int $pcomp_id=0) {
         $where=     $this->matchesListGetWhere( $q, $category_id );
         $order_by=  $this->matchesListGetOrderBy($sortby,$sortdir);
         

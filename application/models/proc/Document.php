@@ -306,12 +306,12 @@ class Document extends Data {
 	return true;
     }
 
-    protected function alterEntry($action = 'update', $doc_entry_id, $new_quantity = NULL, $new_invoice = NULL, $new_party_label = NULL) {//Must be called within db transaction
+    protected function alterEntry($action, $doc_entry_id, $new_quantity = NULL, $new_invoice = NULL, $new_party_label = NULL) {//Must be called within db transaction
 	if ($this->isCommited()) {
 	    $this->Base->set_level(2);
 	}        
 	$entry = $this->Base->get_row("SELECT * FROM document_entries WHERE doc_entry_id=$doc_entry_id");
-	if ($this->doc('doc_id') != $entry['doc_id']) {
+	if (  $this->doc('doc_id') != ($entry['doc_id']??0) ) {
 	    $this->Base->msg("Trying to update entry of unselected Doc!!!");
 	    return false;
 	}
@@ -827,7 +827,11 @@ class Document extends Data {
             doc_status_id=1,
             created_by=$user_id,
             modified_by=$user_id,
-            vat_rate=$vat_rate"
+            vat_rate=$vat_rate,
+            is_commited=0,
+            is_reclamation=0,
+            doc_data=''
+                "
 	);
 	$doc_id = mysqli_insert_id($this->Base->db_link);
 	$this->selectDoc($doc_id);
