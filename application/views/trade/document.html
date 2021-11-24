@@ -492,10 +492,10 @@
                 Doc.entries.renderFooter( {} );
 	    }
 	},
-	add:function( code, qty ){
+	add:function( code, qty, mode ){
 	    if( code && qty ){
 		if( Doc.isCreated ){
-		    App.post("DocumentItems/entryAdd/",{doc_id:Doc.head.props.doc_id,code:code,quantity:qty},function(response_code){
+		    App.post("DocumentItems/entryAdd/",{doc_id:Doc.head.props.doc_id,code:code,quantity:qty,mode},function(response_code){
 			switch( response_code ){
 			    case false:
 				App.flash("Строка не добавлена!");
@@ -656,7 +656,7 @@
 		else if( e.keyCode===13 ){
 		    qty.select();
 		}
-                else if( Doc.suggest.isBarcode(cmb.val()) ){
+                else if( Number.isInteger(e.key) && Doc.suggest.isBarcode(cmb.val()) ){
                     var code=cmb.val();
                     var barcode=App.barcode.toEAN13(code);
                     $('#Doc_suggest_cmb').combobox('setValue',barcode.ean13);
@@ -698,14 +698,16 @@
                                 if(barcode.boxlevel==2){
                                     qty.val(product.product_bpack);
                                 }
-                                Doc.suggest.qtySubmit();
+                                Doc.suggest.qtySubmit('add_duplicate_rows');
                             }
                         });
                         return false;
                     }
                     qty.val(1);
 		    $('#Doc_suggest_cmb').combobox('reload');
-                    Doc.suggest.qtySubmit();
+                    Doc.suggest.qtySubmit('add_duplicate_rows');
+                    $('#Doc_suggest_cmb').combobox('setValue','');
+                    cmb.val('');
 		}
 	    });
 	    qty.bind('focus',function(){
@@ -720,13 +722,13 @@
 	isBarcode:function( code ){
 	    return App.barcode.toEAN13(code)!==null;
 	},
-	qtySubmit:function(){
+	qtySubmit:function(mode){
 	    var qty = $('#Doc_sugg_qty').textbox('textbox');
 	    var cmb=$('#Doc_suggest_cmb').combobox('textbox');
-	    var code=$('#Doc_suggest_cmb').combobox('getValue');
+	    var code=$('#Doc_suggest_cmb').combobox('getValue')||$(cmb).val();
 	    var quantity=$(qty).val();
 	    if( quantity*1>0 ){
-		Doc.entries.add(code,quantity);
+		Doc.entries.add(code,quantity,mode);
 		$(qty).val('');
 		$(cmb).val('');
 		cmb.select();
@@ -1157,9 +1159,16 @@
                     <div class="img grid-item">
                         <img src="Storage/image_flush/?size=30x30&path=/dynImg/{{ product_img }}">
                     </div> 
+                    <!--{{if is_service|more>0}}-->
+                    <div class="grid-item" style="color:blue; padding: 0px 10px"><b>{{ product_code }}</b> {{ product_name }}</div>
+                    <div class="grid-item">{{ product_price_total }}</div>
+                    <div class="grid-item" style="color:green"></div>
+                    <!--{{else}}-->
                     <div class="grid-item" style="color:{{if leftover|more>0}}black {{else}} red {{/if}}; padding: 0px 10px"><b>{{ product_code }}</b> {{ product_name }} {{if analyse_class|equals>C}}<i class="icon star"></i>{{/if}}</div>
                     <div class="grid-item">{{ product_price_total }}</div>
-                    <div class="grid-item" style="color:green">[x{{ product_spack}}] {{ leftover }}{{ product_unit }}</div></div> 
+                    <div class="grid-item" style="color:green">[x{{ product_spack}}] {{ leftover }}{{ product_unit }}</div>
+                    <!--{{/if}}-->
+                </div>
             </div>    
         </div>
         

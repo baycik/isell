@@ -61,6 +61,7 @@ class DocumentItems extends DocumentCore{
                     product_unit,
                     product_reserved,
                     product_awaiting,
+                    is_service,
                     CONCAT( 
                         product_quantity<>0,
                         IF( prl.product_code IS NOT NULL AND (@promo_limit:=@promo_limit-1)>=0,1,0),
@@ -166,15 +167,18 @@ class DocumentItems extends DocumentCore{
     }
     
     
-    public $entryAdd=['doc_id'=>'int','code'=>'string','quantity'=>'int'];
-    public function entryAdd( $doc_id, $product_code, $quantity, $price=NULL ){
+
+    public function entryAdd( int $doc_id, string $code, float $quantity, float $price=NULL , string $mode=NULL){
         if($doc_id){
             $this->selectDoc($doc_id);
         }
 	$Document2=$this->Hub->bridgeLoad('Document');
 	$add_duplicate_rows=(bool) $this->Hub->pref('add_duplicate_rows');
-	$doc_entry_id=$Document2->addEntry( $product_code, $quantity, $price, $add_duplicate_rows );
-        if( $doc_entry_id*1 ){
+        if( $mode==='add_duplicate_rows' ){
+            $add_duplicate_rows=1;
+        }
+	$doc_entry_id=$Document2->addEntry( $code, $quantity, $price, $add_duplicate_rows );
+        if( is_numeric($doc_entry_id) ){
             $this->entryBreakevenPriceUpdate($doc_entry_id);
         }
         $Events=$this->Hub->load_model("Events");
