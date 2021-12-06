@@ -76,7 +76,7 @@ class Storage extends CI_Model {
 	return 'error' . $_FILES['upload_file']['error'];
     }
     
-    public function download($dir = '', $source, $filename){
+    public function download($dir, $source, $filename){
 	if (!file_exists($this->storageFolder . "/" . $dir)) {
 	    mkdir($this->storageFolder . "/" . $dir,0777,true);
 	}
