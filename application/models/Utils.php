@@ -533,6 +533,7 @@ class Utils extends Catalog {
     private function selfPriceCalculateExtraExpenses($idate, $fdate, $active_filter){
         $sql="SELECT 
                 doc_id,
+                doc_type,
                 JSON_EXTRACT(doc_settings,'$.extra_expenses') extra_expenses,
                 SUM(self_price*product_quantity) self_sum
             FROM 
@@ -550,11 +551,11 @@ class Utils extends Catalog {
         $document_list=$this->get_list($sql);
         foreach($document_list as $doc){
             $expense_ratio= $doc->extra_expenses / $doc->self_sum + 1;
-            echo $sql_update="
+            $sql_update="
                 UPDATE
                     document_entries
                 SET
-                    self_price=self_price*$expense_ratio
+                    self_price=IF($doc->doc_type=1 OR $doc->doc_type=3,self_price,invoice_price)*$expense_ratio
                 WHERE
                     doc_id='$doc->doc_id'";
             $this->query($sql_update);
