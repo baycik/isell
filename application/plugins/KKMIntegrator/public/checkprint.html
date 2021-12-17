@@ -64,7 +64,7 @@
             },
             previousCheckParse() {
                 var prev_check = App.KKMIntegrator_checkprint.status.previous_check;
-                if (prev_check.status === 'not_found') {
+                if (!prev_check || prev_check.status === 'not_found') {
                     $("#kmmintegrator_print_btn").html("Напечатать чек");
                     $("button[type=submit]").addClass('primary').removeClass('orange');
                     App.KKMIntegrator_checkprint.view.calculate();
