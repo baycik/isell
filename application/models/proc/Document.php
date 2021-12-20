@@ -396,7 +396,7 @@ class Document extends Data {
 	    } else {
 		return $this->Base->StockOld->decreaseStock($product_code, $amount, $self_price, "Приходный документ $doc_num");
 	    }
-	} else if ($this->doc('doc_type') == 3 || $this->doc('doc_type') == 4) {
+	} else if ($this->doc('doc_type') == 3 || $this->doc('doc_type') == 4 || $this->doc('doc_type') == 5) {
 	    return true; //OK For doc_type 3 4
 	}
     }
@@ -1329,6 +1329,11 @@ class Document extends Data {
 	    $this->makeTransaction(84, 631, $sum['total'], $desc, 'total');
 	    $this->makeTransaction(85, 84, $sum['vatless'], $desc, 'vatless');
 	    $this->makeTransaction(641, 84, $sum['vat'], $desc, 'vat');
+	    return true;
+	}
+	if ($this->doc('doc_type') == 5) {//AGENTSELL DOCUMENT
+	    $desc = "Агентская продажа №$doc_num";
+	    //$this->makeTransaction(84, 631, $sum['total'], $desc, 'total');
 	    return true;
 	}
     }

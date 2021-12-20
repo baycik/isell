@@ -285,10 +285,10 @@
 	    }
 	},
 	typeComboFormatter: function (data) {
-	    return "<img src='img/" + (["", "sell", "buy", "serviceout", "servicein"][Math.abs(data.value)]) + ".png'> " + data.text;
+	    return "<img src='img/" + (["", "sell", "buy", "serviceout", "servicein", "agentsell"][Math.abs(data.value)]) + ".png'> " + data.text;
 	},
 	typeComboFormatterIcon:function(newVal){
-	    var icon_class='icon-'+(["", "sell", "buy", "serviceout", "servicein"][Math.abs(newVal)]);
+	    var icon_class='icon-'+(["", "sell", "buy", "serviceout", "servicein", "agentsell"][Math.abs(newVal)]);
 	    $('#Doc_type_cmb').next().find(".l-btn-icon").attr('class',"l-btn-icon "+icon_class);
 	},
 	companyListFrm:function(row){
@@ -1014,6 +1014,7 @@
 		<option value="-2">Возврат поставщику</option>
 		<option value="3">Оказание услуги</option>
 		<option value="4">Получение услуги</option>
+		<option value="5">Агентская продажа</option>
 	    </select>
 	    <input class="easyui-combobox" name="passive_company_id" id="Doc_pci" title="Контрагент" data-options="
 		    valueField: 'company_id',

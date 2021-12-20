@@ -165,7 +165,7 @@
                             def.resolve(response);
                         }
                     } catch (e) {
-                        App.KKMIntegrator_checkprint.view.error(e + resp);
+                        App.KKMIntegrator_checkprint.view.error(e + "\n\n" + resp);
                         def.reject();
                     }
                 }).fail(function (resp) {

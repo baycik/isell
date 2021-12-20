@@ -125,7 +125,7 @@ class DocumentItems extends DocumentCore{
                     product_quantity*product_volume volume,
                     pl.product_code,
                     pl.product_id,
-                    $company_lang product_name,
+                    COALESCE($company_lang,doc_entry_text) product_name,
                     (product_quantity+0) product_quantity,
                     CHK_ENTRY(doc_entry_id) AS row_status,
                     product_unit,
@@ -142,7 +142,7 @@ class DocumentItems extends DocumentCore{
                     document_list
                         JOIN
                     document_entries de USING(doc_id)
-                        JOIN 
+                        LEFT JOIN 
                     prod_list pl USING(product_code)
                         LEFT JOIN
                     price_list ppl ON de.product_code=ppl.product_code AND label='$pcomp_price_label'
@@ -256,6 +256,11 @@ class DocumentItems extends DocumentCore{
                 $this->query("UPDATE document_entries SET party_label='$value' WHERE doc_entry_id='$doc_entry_id'");
                 $this->Topic('documentEntryChanged')->publish($doc_entry_id,$this->_doc);
 		return true;
+            case 'product_name':
+                $this->Hub->set_level(2);
+                $this->query("UPDATE document_entries SET doc_entry_text='$value' WHERE doc_entry_id='$doc_entry_id'");
+                $this->Topic('documentEntryChanged')->publish($doc_entry_id,$this->_doc);
+		return true;
 	}
     }
     public $entryDelete=['int','string'];
@@ -278,9 +283,6 @@ class DocumentItems extends DocumentCore{
     
     public $entryStatsGet=['int','string'];
     public function entryStatsGet( $doc_id, $product_code ){
-	$this->check($doc_id,'int');
-	$this->selectDoc($doc_id);
-	$curr=$this->get_row("SELECT curr_symbol FROM curr_list WHERE curr_code='".$this->Hub->pcomp('curr_code')."'");
 	$sql="SELECT 
 	    product_quantity,
 	    product_spack
@@ -291,6 +293,12 @@ class DocumentItems extends DocumentCore{
 	WHERE
 	    product_code='$product_code'";
 	$stats=$this->get_row($sql);
+        if(!$stats){
+            return [];
+        }
+	$this->check($doc_id,'int');
+	$this->selectDoc($doc_id);
+	$curr=$this->get_row("SELECT curr_symbol FROM curr_list WHERE curr_code='".$this->Hub->pcomp('curr_code')."'");
 	$stats->curr_symbol=$curr->curr_symbol;
 	$stats->price=$this->entryPriceGet($product_code);
 	return $stats;
