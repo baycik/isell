@@ -437,7 +437,12 @@ class Document extends Data {
 	$this->Base->query("START TRANSACTION");
 	$party_label = $this->Base->StockOld->getEntryPartyLabel($product_code);
 	//$this->Base->msg($party_label);
-	$this->Base->query("INSERT INTO document_entries SET doc_id='$doc_id', product_code='$product_code',party_label='$party_label'", false);
+        if( in_array($this->doc('doc_type'),[1,-1,2,-2,3,4]) ){
+            $this->Base->query("INSERT INTO document_entries SET doc_id='$doc_id', product_code='$product_code',party_label='$party_label'", false);
+        } else
+        if( in_array($this->doc('doc_type'),[5]) ){
+            $this->Base->query("INSERT INTO document_entries SET doc_id='$doc_id', doc_entry_text='$product_code'", false);
+        }
 	if (mysqli_errno($this->Base->db_link) == 1062) {//Duplicate entry
 	    $this->Base->query("ROLLBACK");
 	    if( $add_duplicated_rows ){

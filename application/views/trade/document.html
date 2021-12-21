@@ -758,9 +758,14 @@
 	},
 	select:function(row){
 	    var code=Doc.suggest.prevCode=$('#Doc_suggest_cmb').combobox('getValue');
+            var sugg_input_value=row.product_code || row.product_name;
+            setTimeout(function(){
+              $('#Doc_suggest_cmb').combobox('setValue',sugg_input_value);
+            },0);
 	    var spack=row.product_spack;
 	    $('#Doc_sugg_qty').textbox('setValue',spack);
 	    $('#Doc_sugg_qty').textbox('textbox').select();
+            return false;
 	}
     };
     /////////////////////////////////////////////
@@ -1157,14 +1162,14 @@
         <div id="suggest-template" style='display: none; border-bottom: 1px solid #a7e3ff;'>
             <div class="template-container">
                 <div class="grid-container1" style="background-color:{{bgcolor}}">
+                    <!--{{if is_service|more>0}}-->
+                    <div class="grid-item" style="color:blue; padding: 0px 10px;grid-column: 1 / 2 span"><b>{{ product_code|blank> }}</b> {{ product_name }}</div>
+                    <div class="grid-item">{{ product_price_total|blank> }}</div>
+                    <div class="grid-item" style="color:green"></div>
+                    <!--{{else}}-->
                     <div class="img grid-item">
                         <img src="Storage/image_flush/?size=30x30&path=/dynImg/{{ product_img }}">
                     </div> 
-                    <!--{{if is_service|more>0}}-->
-                    <div class="grid-item" style="color:blue; padding: 0px 10px"><b>{{ product_code }}</b> {{ product_name }}</div>
-                    <div class="grid-item">{{ product_price_total }}</div>
-                    <div class="grid-item" style="color:green"></div>
-                    <!--{{else}}-->
                     <div class="grid-item" style="color:{{if leftover|more>0}}black {{else}} red {{/if}}; padding: 0px 10px"><b>{{ product_code }}</b> {{ product_name }} {{if analyse_class|equals>C}}<i class="icon star"></i>{{/if}}</div>
                     <div class="grid-item">{{ product_price_total }}</div>
                     <div class="grid-item" style="color:green">[x{{ product_spack}}] {{ leftover }}{{ product_unit }}</div>

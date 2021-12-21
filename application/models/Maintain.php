@@ -104,6 +104,7 @@ class Maintain extends CI_Model {
 
     public function backupImport($file) {
 	$this->Hub->set_level(4);
+        set_time_limit(300);
 	if (file_exists($this->dirDbBackup . $file)) {
 	    return $this->backupImportExecute($this->dirDbBackup . $file);
 	}

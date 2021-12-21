@@ -20,6 +20,42 @@ class DocumentItems extends DocumentCore{
 	    $pcomp_id=$this->doc('passive_company_id');
 	    $usd_ratio=$this->doc('doc_ratio');
 	}
+        $doc_type=$this->doc('doc_type');
+        if( $doc_type==5 ){//agent document
+            $cases=[];
+	    $clues=  explode(' ', $q);
+            foreach ($clues as $clue) {
+		if ($clue == ''){
+		    continue;
+		}
+		$cases[]="(de.doc_entry_text LIKE '%$clue%')";
+	    }
+            if( count($cases)>0 ){
+		$where=implode(' AND ',$cases);
+	    }
+            $sql="
+                (SELECT
+                    1 is_service,
+                    '' product_code,
+                    '' product_price_total,
+                    '$q' product_name)
+                UNION
+                (SELECT
+                    DISTINCT
+                    1 is_service,
+                    '' product_code,
+                    '' product_price_total,
+                    doc_entry_text product_name
+                FROM
+                    document_entries de
+                WHERE
+                    $where
+                ORDER BY created_at DESC
+                LIMIT 10)
+                ";
+            $suggested=$this->get_list($sql);//for plugin modifications
+            return $suggested;
+        }
 	$where="1";
 	if( strlen($q)==13 && is_numeric($q) ){
 	    $where="product_barcode=$q";
