@@ -53,8 +53,7 @@ class DocumentItems extends DocumentCore{
                 ORDER BY created_at DESC
                 LIMIT 10)
                 ";
-            $suggested=$this->get_list($sql);//for plugin modifications
-            return $suggested;
+            return $this->get_list($sql);//for plugin modifications
         }
 	$where="1";
 	if( strlen($q)==13 && is_numeric($q) ){
