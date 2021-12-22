@@ -451,6 +451,7 @@ class KKMIntegrator extends PluginBase{
             'CashProvision'=>round($CashProvision,2),
         ];
         
+        $Check['CheckStrings']=[];
         if($Context['document']['head']->doc_type==5){//Agent document
             $Check['ClientInfo']='';
             $Check['AgentSign']=6;
@@ -467,11 +468,30 @@ class KKMIntegrator extends PluginBase{
                 'PurveyorName'=>$Context['passive_company']->company_name,
                 'PurveyorVATIN'=>$Context['passive_company']->company_tax_id
             ];
-            
+            $Check['CheckStrings'][]=[
+                'PrintText'=>[
+                    'Text'=>$Context['passive_company']->company_name,
+                    'Font'=>4,
+                    'Intencity'=>15
+                ]
+            ];
+            $Check['CheckStrings'][]=[
+                'PrintText'=>[
+                    'Text'=>"ИНН поставщика ".$Context['passive_company']->company_tax_id,
+                    'Font'=>4,
+                    'Intencity'=>15
+                ]
+            ];
+            $Check['CheckStrings'][]=[
+                'PrintText'=>[
+                    'Text'=>"Телефон поставщика ".$Context['passive_company']->company_phone,
+                    'Font'=>4,
+                    'Intencity'=>15
+                ]
+            ];
             //print_r($Check);die;
         }
         
-        $Check['CheckStrings']=[];
         
         $Check['CheckStrings'][]=[
             'PrintText'=>[
