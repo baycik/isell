@@ -468,23 +468,15 @@ class KKMIntegrator extends PluginBase{
                 'PurveyorName'=>$Context['passive_company']->company_name,
                 'PurveyorVATIN'=>$Context['passive_company']->company_tax_id
             ];
+            $purveyorDetails="
+                {$Context['passive_company']->company_name}\n 
+                ИНН поставщика:{$Context['passive_company']->company_tax_id}\n 
+                Телефон поставщика:{$Context['passive_company']->company_phone}\n ";
+            
+            
             $Check['CheckStrings'][]=[
                 'PrintText'=>[
-                    'Text'=>$Context['passive_company']->company_name,
-                    'Font'=>4,
-                    'Intencity'=>15
-                ]
-            ];
-            $Check['CheckStrings'][]=[
-                'PrintText'=>[
-                    'Text'=>"ИНН поставщика ".$Context['passive_company']->company_tax_id,
-                    'Font'=>4,
-                    'Intencity'=>15
-                ]
-            ];
-            $Check['CheckStrings'][]=[
-                'PrintText'=>[
-                    'Text'=>"Телефон поставщика ".$Context['passive_company']->company_phone,
+                    'Text'=>$purveyorDetails,
                     'Font'=>4,
                     'Intencity'=>15
                 ]
