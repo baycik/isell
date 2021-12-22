@@ -33,23 +33,25 @@ class DocumentItems extends DocumentCore{
             if( count($cases)>0 ){
 		$where=implode(' AND ',$cases);
 	    }
+            $this->query("SET @i:=0;");
             $sql="
                 (SELECT
                     1 is_service,
-                    '' product_code,
+                    CONCAT(@i:=@i+1,')') product_code,
                     '' product_price_total,
                     '$q' product_name)
                 UNION
                 (SELECT
                     DISTINCT
                     1 is_service,
-                    '' product_code,
+                    CONCAT(@i:=@i+1,')') product_code,
                     '' product_price_total,
                     doc_entry_text product_name
                 FROM
                     document_entries de
                 WHERE
                     $where
+                GROUP BY product_name
                 ORDER BY created_at DESC
                 LIMIT 10)
                 ";

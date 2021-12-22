@@ -757,11 +757,13 @@
 	    return row_html;
 	},
 	select:function(row){
-	    var code=Doc.suggest.prevCode=$('#Doc_suggest_cmb').combobox('getValue');
-            var sugg_input_value=row.product_code || row.product_name;
-            setTimeout(function(){
-              $('#Doc_suggest_cmb').combobox('setValue',sugg_input_value);
-            },0);
+	    Doc.suggest.prevCode=$('#Doc_suggest_cmb').combobox('getValue');
+            if( Doc.head.props.doc_type==5 ){
+                setTimeout(function(){//easyui combobox needs time to cooldown
+                    $('#Doc_suggest_cmb').textbox('setValue',row.product_name);
+                },0);
+            }
+            
 	    var spack=row.product_spack;
 	    $('#Doc_sugg_qty').textbox('setValue',spack);
 	    $('#Doc_sugg_qty').textbox('textbox').select();
@@ -1163,7 +1165,7 @@
             <div class="template-container">
                 <div class="grid-container1" style="background-color:{{bgcolor}}">
                     <!--{{if is_service|more>0}}-->
-                    <div class="grid-item" style="color:blue; padding: 0px 10px;grid-column: 1 / 2 span"><b>{{ product_code|blank> }}</b> {{ product_name }}</div>
+                    <div class="grid-item" style="color:blue; padding: 0px 10px;grid-column: 1 / 2 span"> {{ product_name }}</div>
                     <div class="grid-item">{{ product_price_total|blank> }}</div>
                     <div class="grid-item" style="color:green"></div>
                     <!--{{else}}-->
