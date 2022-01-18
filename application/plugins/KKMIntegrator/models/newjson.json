@@ -1,62 +1,85 @@
 {
-    "Command": "RegisterCheck",
-    "NumDevice": 0,
-    "InnKkm": "",
-    "KktNumber": "",
-    "Timeout": 30,
-    "IdCommand": "4734-72da-d1f4-6855-5878",
-    "IsFiscalCheck": true,
-    "TypeCheck": 0,
-    "NotPrint": false,
-    "NumberCopies": 0,
-    "CashierName": "\u0411\u0430\u0439\u0447\u0438\u043a\u043e\u0432 \u0420.\u042d.",
-    "CashierVATIN": null,
-    "ClientAddress": "+79787288233",
-    "ClientInfo": "\u041e\u043f\u0442\u043e\u0432\u044b\u0439 \u043a\u043b\u0438\u0435\u043d\u0442",
-    "PlaceMarket": "",
-    "TaxVariant": "",
-    "PayByProcessing": false,
-    "NumDeviceByProcessing": null,
-    "ReceiptNumber": "TEST-01",
-    "PrintSlipAfterCheck": false,
-    "PrintSlipForCashier": true,
-    "RRNCode": "",
-    "AuthorizationCode": "",
-    "AdditionalAttribute": "\u041a\u043e\u0440\u0440\u0435\u043a\u0442\u0438\u0440\u0443\u0435\u043c\u044b\u0439 \u0447\u0435\u043a \u043d\u043e\u043c\u0435\u0440 \u211626",
-    "Cash": 0,
-    "ElectronicPayment": 0,
-    "AdvancePayment": 0,
-    "Credit": 0,
-    "CashProvision": 2546.4,
-    "CheckStrings": [{
-            "PrintText": {
-                "Text": "\u041d\u043e\u043c\u0435\u0440 \u043d\u0430\u043a\u043b\u0430\u0434\u043d\u043e\u0439 2572",
-                "Font": 4,
-                "Intencity": 15
-            }
-        }, {
-            "Register": {
-                "Name": "Touran \u0412\u044b\u043a\u043b\u044e\u0447\u0430\u0442\u0435\u043b\u044c",
-                "Quantity": "13",
-                "Price": "98.80",
-                "Amount": "1284.40",
-                "Department": 0,
-                "Tax": "20",
-                "SignMethodCalculation": 4,
-                "SignCalculationObject": 1,
-                "MeasurementUnit": "\u0448\u0442"
-            }
-        }, {
-            "Register": {
-                "Name": "Touran \u0420\u043e\u0437\u0435\u0442\u043a\u0430 \u0441 \u0437\u0430\u0437\u0435\u043c\u043b\u0435\u043d\u0438\u0435\u043c",
-                "Quantity": "12",
-                "Price": "113.40",
-                "Amount": "1360.80",
-                "Department": 0,
-                "Tax": "20",
-                "SignMethodCalculation": 4,
-                "SignCalculationObject": 1,
-                "MeasurementUnit": "\u0448\u0442"
-            }
-        }]
+    "discounts": [],
+    "check_dump": {
+        "data": {
+            "Cash": 500,
+            "Credit": 0,
+            "InnKkm": "",
+            "Command": "RegisterCheck",
+            "RRNCode": "",
+            "Timeout": 30,
+            "NotPrint": false,
+            "AgentSign": 6,
+            "IdCommand": "f340-248e-a3c6-892c-b2ee",
+            "KktNumber": "",
+            "NumDevice": 0,
+            "TypeCheck": 1,
+            "ClientInfo": "",
+            "TaxVariant": "",
+            "CashierName": "Байчиков Р.Э.",
+            "PlaceMarket": "",
+            "CashierVATIN": "",
+            "CheckStrings": [{
+                    "PrintText": {
+                        "Font": 4,
+                        "Text": "Номер накладной 1",
+                        "Intencity": 15
+                    },
+                    "PrintImage": {
+                        "Image": "Qk2uDQAAAAAAAD4AAAAoAAAALAEAAFYAAAABAAEAAAAAAHANAAAgLgAAIC4AAAAAAAAAAAAAAAAAAP///wD///////4D////////////////////////////////////////8AAA////D//4AP////////////////////////////////////////AAAP///gf/4AA////////////////////////////////////////wAAD///4H/8AAH///////////////////////////////////////8AAA///+B/+AAA////////////////////////////////////////AAAP///gf/gAAP///////////////////////////////////////wAAD///8D/wAAB///////////////////////////////////////8AAA//////8AAAP///////////////////////////////////////AAAP/////+AAAD///////////////////////////////////////wAAD//////gAAAf//////////////////////////////////////8AAA//////wAAAAA//////////////////////////////////////AAAP/////gAAAAAD/////////////////////////////////////wAAD/////gAAAAAAP////B////AAP////x///////////////////8AAA/////wAAAAAAB///8AD//8AAAf///gP///AP////gD/gP///4AAAAP////4AAAAAAAP//+AA//8AAAB///wB///gD////wB/wD///4AAAAD////8AAAAAAAD//+AAH/+AAAAP//4Af//4A////4Af4A///8AAAAA/////AAAAAAAAf//gAB/+AAAAD//+AD//+AH///8AH8AP//+AAAAAP////gAAA/AAAH//wAAf/AAAAAf//AAf//gB////AB/AD///AAAAAD////wAAA/8AAB//4AAH/gAAAAH//gAH//4Af///wAfwA///gAAAAA////8AAA//gAAf/+AAB/4AAAAB//4AA//+AH///8AP8AP//wAAAAAP////AAAf/8AAH//gAAf8AAAAAf/8AAP//gA///+AD/AD//8AAAAAD/+H/wAAH//AAB//wAH//AAAAAH//AAB//4AP///gA/wA//+AAAAAA/+A/8AAD//4AAf/8AD//gAH//h//gAAf/+AD///4AP8AP//gAAAAAP/gP+AAA//+AAH//AB//4AD///f/4AAD//gA///+AD/AD//wAAAAAD/4DvgAAf//gAB//wAf/+AD/////8AAA//8AP///gA/wA//4AAAAAA/+An8AAH//4AA//8AH//AA//////AAAH//AD///4Af8AP/+AAAAAAP/gD/AAB//+AAP//AB//wAf/////gAAB//wAAAAAAH/AD//AAAAAAD/8D/wAAf//gAH//wAf/8AH/////4AIAP/8AAAAAAB/wA//wAAAAAA////8AAP//4AD//8AH//AB/////8ACAD//gAAAAAA/8AP/4AAAAAAP////AAD//+AB///AB//wAf/////ABgA//4AAAAAAP/AD/+AAAAAAD////AAA///gAf//wAf/4AH/////gAcAH/+AAAAAAD/wA//AAAAAAA////gAAP//4AH//8AH/+AB/////4AHAB//gAAAAAA/8AP/wAgAAAAP///wAAD//8AA///AB//gAf////8AD4AP/8AAAAAAf/AD/4AIAAAAD///4AAA///AAP//wAf/4AH/////AA+AD//AAAAAAH/wA/+AGAAAAA///8AAAf//gAB//8AH/+AB/////gAfwAf/wAAAAAB/8AP/ABgAAAAP///AAAH//wAAP//AB//gAf////4AH8AH/+AH//wAf/AD/wAYAAAAD///gAAB//8AAD//wAf/4AH////+AB/AB//gA//8AP/wA/4AOAAAAA///4AAA//+AAA//8AH/+AB/////AA/4AP/4AP/+AD/8AP+AHgAAAAOP/+AAAP//AAAH//AB//gAf////wAP+AD//AD//gA//AD/AB4AAAACA//gAAD//gAAB//wAf/4AH////8AH/gAf/wA//4Af/wA/wAeAAAAAgH/4AAB//wAAAf/8AH/+AB////+AB/8AH/8AH/8AH/8AP4APgAAAAAB/+AAAf/4AAAP//AB//gAf////gAf/AB//gB//AB//AD8AH4AAAAAAd/gAAP/8AAAD//wAf/4AH////wAP/4AP/4Af/wA//wA/AB+AAAAAAA/4AAH/+AAAA//8AH/+AB////8AD/+AD/+AD/4AP/8APwAfgAAAAIAf8AAB//AAAAP//AB//gAf////AA//gA//wA/+AD//AD4AP4AAAADAf/AAA//AAAAH//wAf/4AH////gAf/8AH/8AP/gB//wA8AH+AAAAA4f/wAAf/gAAAD//8AH/+AB////4AH//AB//gB/wAf/8APAB/gAAAAP//4AAH/gAAAB///AB//gAf///+AD//wAP/4Af8AH//ADgAf4AAAAD//+AAD/gAAAB///wA//4AH////AA//8AD/+AD+AD//wA4AP+AAAAA///gAB/gAAAD///8AP/+AB////wAP//gA//wA/gA//8AMAD/gAAAAP//wAA/gAAAH////AD//gAf///8AD//4AH/8AP4AP//ADAB/4AAAAD//4AAfgAAAD////wA//4AH////AA//+AB//gB8AH//wAgA/+AAAAAn/4AAOAAAAA////8Af/+AB////gAf//wAf/4AfAB//8AAAP/gAAAAIf8AAAAAAAAP////Af//gAf///4AH//8AH//ADgA///AAAD/4AAAACAAAAAAAAAAD////////4AH///+AB///AA//wA4AP//wAAB/+AAAAAwAAAAAAAAAA//////H/+AB////gAf//wAP/8AEAH//8AAA//gAAAAMAAAAAAAAAAf+3//+H//gAf///wAP//+AD//gBAB///AAAP/4AAAADAAAAAAAAAAH/gf//D//4AH///8AD///gAf/4AAAf//wAAD/+AAAAA4AAAAAAAAAB/4D//B//+AB////AA///4AH//AAAP//8AAB//gAAAAOAAAAAAAAAA/+A//gH//gAf///wAP//+AB//wAAD///AAA//4AAAADwAAAAAAAAAf/wP/4A//4AH///4AD///wAf/+AAB///wAAP/+AAAAA8AAAAAAAAAH/8D/8AP/+AD///+AB///8AH//wAAf//8AAH//gAAAAPgAAAAAAAAD//h/+AB//gA////gAf///AB//8AAP///AAD//4AAAAD8AAAAAAAAD/////gAf/4AP///4AH///wAf//gAH///wAB//+AEAAA/gAAAAAAAB/////4AH/+AH///+AD///8AH//4AD///8AA///gDAAAP+AAAwAAfH/////+AB//gD////gB////AD///AB////AA///4AwAAD/wAA+AAP///////gAf/4B////wB////wB///4B////wB///+A8AAA//gB/wAH///////8AH////////////////////////////////AAAP////8AB////////AD////////////////////////////////wAAD/////wB////////4B////////////////////////////////8AAA//////B/////////h/////////////////////////////////AAAP///////+/////////////////////////////////////////wAAD////////v////////////////////////////////////////8AAA////7///z/////////////////////////////////////////AAAP///5///8D////////////////////////////////////////wAAD///8////Af///////////////////////////////////////8AAA///+H///wD////////////////////////////////////////AAAP///Af//8A////////////////////////////////////////wAAD///wD///AP///////////////////////////////////////8AAA///4A///wH////////////////////////////////////////AAAP//+AP//+D////////////////////////////////////////wAAD///gD///7////////////////////////////////////////8AAA///4A/////////////////////////////////////////////AAAP//+AP////////////////////////////////////////////wAAD///wH////////////////////////////////////////////8AAA////D/////////////////////////////////////////////AAAA=="
+                    }
+                }, {
+                    "Register": {
+                        "Tax": "20",
+                        "Name": "выдача заказа",
+                        "Price": "500.00",
+                        "Amount": "500.00",
+                        "Quantity": "1",
+                        "Department": 0,
+                        "MeasurementUnit": null,
+                        "SignCalculationObject": 1,
+                        "SignMethodCalculation": 4
+                    }
+                }],
+            "NumberCopies": 0,
+            "PurveyorData": {
+                "PurveyorName": "ООО \"ТДСЗ\"",
+                "PurveyorPhone": "",
+                "PurveyorVATIN": "7825444144"
+            },
+            "CashProvision": 0,
+            "ClientAddress": "",
+            "IsFiscalCheck": true,
+            "ReceiptNumber": "TEST-01",
+            "AdvancePayment": 0,
+            "PayByProcessing": false,
+            "AuthorizationCode": "",
+            "ElectronicPayment": 0,
+            "AdditionalAttribute": "Возврат прихода по чеку номер №477 от 2021-12-22 15:10:24",
+            "PrintSlipAfterCheck": false,
+            "PrintSlipForCashier": true,
+            "NumDeviceByProcessing": null
+        },
+        "tstamp": "2021-12-22 15:10:39",
+        "registration": {
+            "URL": "https://ofd.sbis.ru/rec/0005161043010639/221221/0797125664",
+            "Cash": 500,
+            "Error": "",
+            "Credit": 0,
+            "QRCode": "t=20211222T151000&s=500.00&fn=9280440301302689&i=557&fp=0797125664&n=2",
+            "Status": 0,
+            "Command": "RegisterCheck",
+            "Message": "",
+            "Warning": "",
+            "IdCommand": "f340-248e-a3c6-892c-b2ee",
+            "NumDevice": 1,
+            "CheckNumber": 478,
+            "CashProvision": 0,
+            "SessionNumber": 125,
+            "AdvancePayment": 0,
+            "ElectronicPayment": 0,
+            "SessionCheckNumber": 2
+        }
+    },
+    "extra_expenses": 0
 }

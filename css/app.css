@@ -444,6 +444,10 @@ div .combobox-item-hover{
 .icon-serviceout{
     background:url('../img/serviceout.png') no-repeat center center;
 }
+.icon-agentsell{
+    background:url('../img/agentsell.png') no-repeat center center;
+    background-size: 16px 16px;
+}
 .icon-tablefilter {
     background:url('../img/Search.png') no-repeat center center;
 }

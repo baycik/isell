@@ -20,6 +20,43 @@ class DocumentItems extends DocumentCore{
 	    $pcomp_id=$this->doc('passive_company_id');
 	    $usd_ratio=$this->doc('doc_ratio');
 	}
+        $doc_type=$this->doc('doc_type');
+        if( $doc_type==5 ){//agent document
+            $cases=[];
+	    $clues=  explode(' ', $q);
+            foreach ($clues as $clue) {
+		if ($clue == ''){
+		    continue;
+		}
+		$cases[]="(de.doc_entry_text LIKE '%$clue%')";
+	    }
+            if( count($cases)>0 ){
+		$where=implode(' AND ',$cases);
+	    }
+            $this->query("SET @i:=0;");
+            $sql="
+                (SELECT
+                    1 is_service,
+                    CONCAT(@i:=@i+1,')') product_code,
+                    '' product_price_total,
+                    '$q' product_name)
+                UNION
+                (SELECT
+                    DISTINCT
+                    1 is_service,
+                    CONCAT(@i:=@i+1,')') product_code,
+                    '' product_price_total,
+                    doc_entry_text product_name
+                FROM
+                    document_entries de
+                WHERE
+                    $where
+                GROUP BY product_name
+                ORDER BY created_at DESC
+                LIMIT 10)
+                ";
+            return $this->get_list($sql);//for plugin modifications
+        }
 	$where="1";
 	if( strlen($q)==13 && is_numeric($q) ){
 	    $where="product_barcode=$q";
@@ -125,7 +162,7 @@ class DocumentItems extends DocumentCore{
                     product_quantity*product_volume volume,
                     pl.product_code,
                     pl.product_id,
-                    $company_lang product_name,
+                    COALESCE($company_lang,doc_entry_text) product_name,
                     (product_quantity+0) product_quantity,
                     CHK_ENTRY(doc_entry_id) AS row_status,
                     product_unit,
@@ -142,7 +179,7 @@ class DocumentItems extends DocumentCore{
                     document_list
                         JOIN
                     document_entries de USING(doc_id)
-                        JOIN 
+                        LEFT JOIN 
                     prod_list pl USING(product_code)
                         LEFT JOIN
                     price_list ppl ON de.product_code=ppl.product_code AND label='$pcomp_price_label'
@@ -256,6 +293,11 @@ class DocumentItems extends DocumentCore{
                 $this->query("UPDATE document_entries SET party_label='$value' WHERE doc_entry_id='$doc_entry_id'");
                 $this->Topic('documentEntryChanged')->publish($doc_entry_id,$this->_doc);
 		return true;
+            case 'product_name':
+                $this->Hub->set_level(2);
+                $this->query("UPDATE document_entries SET doc_entry_text='$value' WHERE doc_entry_id='$doc_entry_id'");
+                $this->Topic('documentEntryChanged')->publish($doc_entry_id,$this->_doc);
+		return true;
 	}
     }
     public $entryDelete=['int','string'];
@@ -278,9 +320,6 @@ class DocumentItems extends DocumentCore{
     
     public $entryStatsGet=['int','string'];
     public function entryStatsGet( $doc_id, $product_code ){
-	$this->check($doc_id,'int');
-	$this->selectDoc($doc_id);
-	$curr=$this->get_row("SELECT curr_symbol FROM curr_list WHERE curr_code='".$this->Hub->pcomp('curr_code')."'");
 	$sql="SELECT 
 	    product_quantity,
 	    product_spack
@@ -291,6 +330,12 @@ class DocumentItems extends DocumentCore{
 	WHERE
 	    product_code='$product_code'";
 	$stats=$this->get_row($sql);
+        if(!$stats){
+            return [];
+        }
+	$this->check($doc_id,'int');
+	$this->selectDoc($doc_id);
+	$curr=$this->get_row("SELECT curr_symbol FROM curr_list WHERE curr_code='".$this->Hub->pcomp('curr_code')."'");
 	$stats->curr_symbol=$curr->curr_symbol;
 	$stats->price=$this->entryPriceGet($product_code);
 	return $stats;

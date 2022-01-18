@@ -58,8 +58,8 @@ EOT;
 $filename[]=<<<EOT
 views/trade/document.html
 EOT;
-$search[]=<<<EOT
-<div class="grid-item" style="color:green">[x{{ product_spack}}] {{ leftover }}{{ product_unit }}</div></div>
+$search[]=<<<'EOT'
+<div class="grid-item" style="color:green">[x{{ product_spack}}] {{ leftover }}{{ product_unit }}</div>
 EOT;
 $replace[]=<<<EOT
 EOT;
@@ -67,7 +67,7 @@ $before[]=<<<EOT
 EOT;
 $after[]=<<<EOT
     {{if delivery_group|notempty}}
-        <div class="product-delivery-available">
+        <div class="product-delivery-available" style="grid-column: 3 / 2 span;">
                 <div class="delivery-days">
                     {{delivery_group}}
                     <div>{{.}}дн</div>
