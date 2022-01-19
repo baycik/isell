@@ -146,6 +146,7 @@ class Hub extends CI_Controller{
                 $var=  addslashes( $var );
                 break;
 	    case 'array':
+	    case '?array':
                 $var= trim($var, "\"");
                 $result= json_decode( $var,true );
                 if( json_last_error()!=JSON_ERROR_NONE ){
@@ -158,6 +159,7 @@ class Hub extends CI_Controller{
                 $var=$result;
                 break;
             case 'object':
+            case '?object':
                 $var= trim($var, "\"");
                 $result= json_decode( $var,false ); 
                 if( json_last_error()!=JSON_ERROR_NONE ){
@@ -170,13 +172,14 @@ class Hub extends CI_Controller{
                 $var=$result;
                 break;
 	    default:
-		if( $type ){
-		    $matches=[];
-		    preg_match('/'.$type.'/u', $var, $matches);
-		    $var=  isset($matches[0])?$matches[0]:null;
-		} else {
-		    $var=  addslashes( $var );
-		}
+                $var=  addslashes( $var );
+//		if( $type ){
+//		    $matches=[];
+//		    preg_match('/'.$type.'/u', $var, $matches);
+//		    $var=  isset($matches[0])?$matches[0]:null;
+//		} else {
+//		    $var=  addslashes( $var );
+//		}
 	}
         return $var;
     }

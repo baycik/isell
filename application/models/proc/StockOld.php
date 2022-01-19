@@ -61,7 +61,7 @@ class StockOld extends Data {
 //        return false;
 //    }
     
-    private function stockEntryQtyAlter($action = 'increase', $product_code, $amount, $description = NULL, $self_price = NULL) {
+    private function stockEntryQtyAlter($action, $product_code, $amount, $description = NULL, $self_price = NULL) {
         if ($this->Base->Document && $this->Base->Document->doc('notcount')) {
             return true;
         }
@@ -146,11 +146,11 @@ class StockOld extends Data {
     ///////////////////////////////////////////////////////////
     //PUBLIC FUNCTIONS |
     ///////////////////////////////////////////////////////////
-    public function increaseStock($product_code, $amount, $self_price = NULL, $description) {
+    public function increaseStock($product_code, $amount, $self_price = NULL, $description='') {
         return $this->stockEntryQtyAlter('increase', $product_code, $amount, $description, $self_price = NULL);
     }
 
-    public function decreaseStock($product_code, $amount, $self_price = NULL, $description) {
+    public function decreaseStock($product_code, $amount, $self_price = NULL, $description='') {
         return $this->stockEntryQtyAlter('decrease', $product_code, $amount, $description, $self_price = NULL);
     }
 
