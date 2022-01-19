@@ -174,14 +174,13 @@ class Hub extends CI_Controller{
                 $var=$result;
                 break;
 	    default:
-                $var=  addslashes( $var );
-//		if( $type ){
-//		    $matches=[];
-//		    preg_match('/'.$type.'/u', $var, $matches);
-//		    $var=  isset($matches[0])?$matches[0]:null;
-//		} else {
-//		    $var=  addslashes( $var );
-//		}
+		if( $type ){
+		    $matches=[];
+		    preg_match('/'.$type.'/u', $var, $matches);
+		    $var=  isset($matches[0])?$matches[0]:null;
+		} else {
+		    $var=  addslashes( $var );
+		}
 	}
     }
     public function request( $name, $type=null, $default=null ){
