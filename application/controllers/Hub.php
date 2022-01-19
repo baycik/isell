@@ -127,6 +127,7 @@ class Hub extends CI_Controller{
 	}
     }
     public function check( &$var, $type=null ){
+        $type= str_replace('?', '', $type);
 	switch( $type ){
 	    case 'raw':
 		break;
@@ -138,15 +139,12 @@ class Hub extends CI_Controller{
 		$var=(float) $var;
 		break;
 	    case 'bool':
-		$var=(bool) $var;
+		$var=$var?1:0;
 		break;
 	    case 'escape':
-		$var=$this->db->escape_identifiers($var);
-		break;
 	    case 'string':
                 $var=  addslashes( $var );
                 break;
-	    case 'json':
 	    case 'array':
                 $var= trim($var, "\"");
                 $result= json_decode( $var,true );
@@ -180,50 +178,14 @@ class Hub extends CI_Controller{
 		    $var=  addslashes( $var );
 		}
 	}
+        return $var;
     }
     public function request( $name, $type=null, $default=null ){
 	$value=$this->input->get_post($name);
 	if( !is_array($value) && strlen($value)==0 ){
 	    return $default;
 	}
-        $this->check($value,$type);
-	return $value;
-    }
-    
-    private function cast( $var, $type ){
-	switch( $type ){
-	    case 'raw':
-		break;
-	    case 'int':
-		$var=(int) $var;
-		break;
-	    case 'float':
-	    case 'double':
-		$var=(float) $var;
-		break;
-	    case 'bool':
-		$var=(bool) $var;
-		break;
-	    case 'escape':
-		$var=$this->db->escape_identifiers($var);
-		break;
-	    case 'string':
-                $var=  addslashes( $var );
-                break;
-	    case 'json':
-	    case 'array':
-                $var= json_decode( str_replace("\n", '\n', $var) ,true);
-                break;
-	    default:
-		if( $type ){
-		    $matches=[];
-		    preg_match('/'.$type.'/u', $var, $matches);
-		    $var=  isset($matches[0])?$matches[0]:null;
-		} else {
-		    $var=  addslashes( $var );
-		}
-	}
-        return $var;
+        return $this->check($value,$type);
     }
     
     private function pluginTriggerBefore($model_name,$method,$route_args){

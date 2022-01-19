@@ -417,7 +417,7 @@ class AccountsCore extends Catalog{
       10 closingsq
     *******************/
 
-    private function transPaymentCalculate($pcomp_id = NULL,$acc_code,$side) {
+    private function transPaymentCalculate($pcomp_id = NULL,$acc_code=null,$side=null) {
         if ( !isset($pcomp_id) ){
             $pcomp_id = $this->Hub->pcomp('company_id');
         }

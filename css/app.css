@@ -769,6 +769,10 @@ h2{
 .isell-tabs .isell-tabs-holders>div{
     position: absolute;
 }
+.isell-tabs .isell-tabs-holders>div>div{
+    min-height: calc( 100vh - 40px );
+    position: relative;
+}
 .isell-tabs .isell-tabs-buttons div{
     padding: 10px;
     background-color: #ffffffaa;

@@ -25,6 +25,7 @@ class Stock extends Catalog {
     }
 
     public function productGet( string $product_code=null, string $product_barcode=null ) {
+        $where='';
         if( $product_code!=null ){
             $where="pl.product_code='{$product_code}'";
         }
@@ -86,30 +87,22 @@ class Stock extends Catalog {
     
     
     
-    
-    public $branchFetch = ['id' => ['int', 0], 'depth' => ['string', 'top']];
 
-    public function branchFetch($parent_id = 0, $depth) {
+    public function branchFetch( int $parent_id = 0, string $depth='top') {
         return $this->treeFetch("stock_tree", $parent_id, $depth);
     }
 
-    public $stockTreeCreate = ['parent_id' => 'int', 'label' => 'string'];
-
-    public function stockTreeCreate($parent_id, $label) {
+    public function stockTreeCreate( int $parent_id, string $label) {
         $this->Hub->set_level(2);
         return $this->treeCreate('stock_tree', 'folder', $parent_id, $label, 'calc_top_id');
     }
 
-    public $stockTreeUpdate = ['branch_id' => 'int', 'field' => 'string', 'value' => 'string'];
-
-    public function stockTreeUpdate($branch_id, $field, $value) {
+    public function stockTreeUpdate( int $branch_id, string $field, string $value) {
         $this->Hub->set_level(2);
         return $this->treeUpdate('stock_tree', $branch_id, $field, $value, 'calc_top_id');
     }
 
-    public $stockTreeDelete = ['int'];
-
-    public function stockTreeDelete($branch_id) {
+    public function stockTreeDelete(int $branch_id) {
         $this->Hub->set_level(4);
         $sub_ids = $this->treeGetSub('stock_tree', $branch_id);
         $in = implode(',', $sub_ids);
@@ -118,9 +111,7 @@ class Stock extends Catalog {
         return $deleted;
     }
 
-    public $makeStockFilter = ['filter' => 'json'];
-
-    public function makeStockFilter($filter) {
+    public function makeStockFilter(array $filter=null) {
         if (!$filter) {
             return ['inner' => 1, 'outer' => 1];
         }
@@ -193,23 +184,17 @@ class Stock extends Catalog {
 		document_entries de ON de.product_code=t.product_code
 		    LEFT JOIN
 		document_list dl ON de.doc_id=dl.doc_id AND dl.is_commited=1 AND dl.doc_type=1 AND notcount=0
-	    GROUP BY t.product_code
+	    GROUP BY t.product_code,t.parent_id,t.product_quantity,t.product_reserved,t.product_awaiting,t.product_wrn_quantity
 	    HAVING {$having['outer']}
 	    ";
         return $this->get_list($sql);
     }
 
-    public $labelFetch = ['q' => 'string'];
-
-    public function labelFetch($q = 0) {
+    public function labelFetch( string $q = '-----' ) {
         return $this->get_list("SELECT branch_id,label FROM stock_tree WHERE label LIKE '%$q%'");
     }
 
-
-
-    public $productGetLabeledPrices = ['product_code' => 'string'];
-
-    public function productGetLabeledPrices($product_code) {
+    public function productGetLabeledPrices(string $product_code) {
         $sql_price = "
 	    SELECT 
 		ROUND(sell,2) sell,
@@ -223,15 +208,11 @@ class Stock extends Catalog {
         return $this->get_list($sql_price);
     }
 
-    public $productLabeledPriceRemove = ['product_code' => 'string', 'label' => 'string'];
-
-    public function productLabeledPriceRemove($product_code, $label) {
+    public function productLabeledPriceRemove(string $product_code, string $label) {
         return $this->delete("price_list", ['product_code' => $product_code, 'label' => $label]);
     }
 
-    public $productLabeledPriceAdd = ['product_code' => 'string', 'label' => 'string'];
-
-    public function productLabeledPriceAdd($product_code, $label) {
+    public function productLabeledPriceAdd( string $product_code, string $label) {
         return $this->create("price_list", ['product_code' => $product_code, 'label' => $label]);
     }
 
@@ -291,6 +272,7 @@ class Stock extends Catalog {
             'buy' => $this->request('buy', 'double'),
             'sell' => $this->request('sell', 'double'),
             'curr_code' => $this->request('curr_code'),
+            'label' =>''
         ];
         $price_list_set = $this->makeSet($price_list);
         $this->query("INSERT INTO price_list SET $price_list_set ON DUPLICATE KEY UPDATE $price_list_set");
@@ -469,27 +451,22 @@ class Stock extends Catalog {
     
     
 
-    public $productDelete = ['product_code' => 'string'];
 
-    public function productDelete($product_codes) {
+    public function productDelete( string $product_codes) {
         $this->Hub->set_level(2);
         $product_codes = str_replace(",", "','", $product_codes);
         $this->query("DELETE FROM stock_entries WHERE product_quantity=0 AND product_code IN ('$product_codes')");
         return $this->db->affected_rows();
     }
 
-    public $productMove = ['parent_id' => 'int', 'product_code' => 'string'];
-
-    public function productMove($parent_id, $product_codes) {
+    public function productMove( int $parent_id, string $product_codes) {
         $this->Hub->set_level(2);
         $product_codes = str_replace(",", "','", $product_codes);
         $this->query("UPDATE stock_entries SET parent_id='$parent_id' WHERE product_code IN ('$product_codes')");
         return $this->db->affected_rows();
     }
 
-    public $movementsFetch = ['int', 'int', 'string'];
-
-    public function movementsFetch($page = 1, $rows = 30, $having = null) {
+    public function movementsFetch( int $page = 1, int $rows = 30, string $having = null) {
         $this->Hub->set_level(2);
         $offset = ($page - 1) * $rows;
         if ($offset < 0) {
@@ -552,9 +529,7 @@ class Stock extends Catalog {
         return $this->get_list($sql);
     }
 
-    public $calcABC = ['parent_id' => ['int', 0], 'period' => 'int', 'all_active' => 'bool', 'fdate' => 'string'];
-
-    public function calcABC($parent_id, $period, $all_active, $fdate) {
+    public function calcABC( int $parent_id=0, int $period=0, bool $all_active=true, string $fdate=null) {
         $where = "";
         if ($parent_id) {
             $branch_ids = $this->treeGetSub('stock_tree', $parent_id);
@@ -633,7 +608,7 @@ class Stock extends Catalog {
         return true;
     }
 
-    public function reserveEntryChange( $doc_entry_id,$doc ){
+    public function reserveEntryChange( $doc_entry_id, $doc ){
         if( isset($doc->doc_status_id) && $doc->doc_status_id==2 ){
             $this->reserveCountUpdate();
         }
@@ -1153,7 +1128,7 @@ class Stock extends Catalog {
         $Events->Topic('beforeMatchesFilterBuild')->publish($this);
     }
     
-    public function matchesListFetch(string $q='', int $limit=12, int $offset=0, string $sortby, string $sortdir, int $category_id=0, int $pcomp_id=0) {
+    public function matchesListFetch(string $q='', int $limit=12, int $offset=0, string $sortby=null, string $sortdir=null, int $category_id=0, int $pcomp_id=0) {
         $where=     $this->matchesListGetWhere( $q, $category_id );
         $order_by=  $this->matchesListGetOrderBy($sortby,$sortdir);
         

@@ -365,12 +365,99 @@ class DocumentBase extends Catalog {
     //////////////////////////////////////////
     // VIEWS SECTION
     //////////////////////////////////////////
+    protected function viewNumNext($view_role, $creation_mode = null) {
+        $Pref=$this->Hub->load_model('Pref');
+        
+        $counter_increase=$creation_mode=='not_increase_number'?0:1;
+        $counter_name="counterViewNum_".$view_role;
+        $nextNum=$Pref->counterNumGet($counter_name,null,$counter_increase);
+        if( !$nextNum ){
+            $view_name=$this->get_value("SELECT view_name FROM document_view_types WHERE view_role='$view_role'");
+            $counter_title=$view_name??'???';
+            $Pref->counterCreate($counter_name,null,$counter_title);
+            $nextNum=$Pref->counterNumGet($counter_name,null,$counter_increase);
+        }
+        return $nextNum;
+    }
+    
     public function viewGet(int $doc_view_id) {
         return null;
     }
+    
+    
+    protected function viewCreateLastFields( $view_type_id ){
+        $acomp_id=$this->doc('active_company_id');
+        $pcomp_id=$this->doc('passive_company_id');
+        $sql="SELECT
+                @last_efields:=view_efield_values
+            FROM 
+                document_view_list dvl 
+                    JOIN 
+                document_list USING(doc_id)
+            WHERE 
+                view_type_id='$view_type_id' 
+                AND active_company_id='$acomp_id' 
+                AND passive_company_id='$pcomp_id' 
+            ORDER BY dvl.tstamp DESC
+            LIMIT 1";
+        $this->query("SET @last_efields:=NULL");
+        return $this->get_row($sql);
+    }
 
-    public function viewCreate(int $doc_id, object $view) {
-        return null;
+    public function viewCreate(int $doc_id, int $view_type_id) {
+        $this->documentSelect($doc_id);
+        $doc_type = $this->doc('doc_type');
+        $view_role=$this->get_value("SELECT view_role FROM document_view_types WHERE view_type_id=''");
+        $view_num = $this->doc('doc_num');
+        $view_stamp = $this->doc('cstamp');
+        
+        if( $view_role!='bill' ){
+            $this->Hub->set_level(2);
+        } else
+        if( $view_role!='sell_bill' ){
+            if( !$this->isCommited() ){
+                $this->Hub->msg('Сначала сохраните документ!');
+                return false;
+            }
+        } else 
+        if( $view_role!='tax_bill' ){
+            if( !$this->isCommited() ){
+                $this->Hub->msg('Сначала сохраните документ!');
+                return false;
+            }
+            $sql="SELECT 
+                    doc_view_id 
+                FROM 
+                    document_view_list dvl
+                WHERE 
+                    doc_id=$doc_id 
+                    AND view_role='tax_bill'";
+            $tax_bill_exists=$this->get_value($sql);
+            if( $tax_bill_exists ){
+                $this->Hub->msg('Бланк такого типа уже сформирован!');
+                return false;
+            }
+            if( $doc_type==1 || $doc_type==3 ){
+                $view_num = $this->viewNumNext($view_role);
+            } else {
+                $view_num='';
+            }
+        }
+        $this->viewCreateLastFields( $view_type_id );
+        $sql="
+            INSERT INTO
+                document_view_list
+            SET 
+                doc_id='$doc_id',
+                view_type_id='$view_type_id',
+                view_efield_values=@last_efields,
+                view_num='$view_num',
+                view_role='$view_role',
+                tstamp='$view_stamp',
+                html=''
+            ";
+        $this->query($sql);
+        return $this->db->insert_id();
     }
 
     public function viewUpdate(int $doc_view_id, object $view) {

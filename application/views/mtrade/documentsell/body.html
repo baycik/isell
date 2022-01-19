@@ -33,8 +33,8 @@
 <div class="x-suggest-row-template" style="display: none">
     {{if leftover|less>1}}
     <div class="sugg_outofstock">
-        {{/if}}
-        <div class="sugg_name">{{product_name}} [x {{product_spack}}{{product_unit}}]</div>
+    {{/if}}
+    <div class="sugg_name">{{product_name}} {{if analyse_class|equals>C}}<i class="icon star"></i>{{/if}} [x {{product_spack}}{{product_unit}}]</div>
         <div class="sugg_price">
             {{if product_price_total|equals>product_price_total_raw}}
             {{product_price_total|format}}
@@ -44,7 +44,7 @@
             {{/if}}
         </div>
         <div class="sugg_leftover">{{leftover}}{{product_unit}}</div>
-        {{if leftover|less>1}}
+    {{if leftover|less>1}}
     </div>
     {{/if}}
 </div>

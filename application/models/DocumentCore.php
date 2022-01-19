@@ -148,7 +148,9 @@ class DocumentCore extends DocumentUtils{
 	    WHERE doc_id=$doc_id"
 	;
 	$head=$this->get_row($sql);
-	$head->extra_expenses=$this->getExtraExpenses();
+        if( $head ){
+            $head->extra_expenses=$this->getExtraExpenses();
+        }
 	return $head;
     }
     private function setType( $doc_type ){

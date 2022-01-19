@@ -85,7 +85,7 @@ class DocumentSell extends DocumentBase{
         $this->Topic("documentBeforeChangeIsCommited")->subscribe('DocumentSell','documentBeforeChangeIsCommited');        
     }
     
-    public function documentBeforeChangeIsCommited( $field='is_commited', bool $new_is_commited ){
+    public function documentBeforeChangeIsCommited( $field, bool $new_is_commited ){
         if( !$new_is_commited && !$this->isCommited() ){
             $doc_id=$this->doc('doc_id');
             /*

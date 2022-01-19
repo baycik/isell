@@ -1,0 +1,15 @@
+ALTER TABLE `prod_list` 
+CHANGE COLUMN `ru` `ru` VARCHAR(255) NULL COMMENT 'Название Рус.' ,
+CHANGE COLUMN `ua` `ua` VARCHAR(255) NULL COMMENT 'Назва Укр.' ,
+CHANGE COLUMN `en` `en` VARCHAR(255) NULL COMMENT 'Name En.' ,
+CHANGE COLUMN `product_barcode` `product_barcode` VARCHAR(13) NULL COMMENT 'Штрихкод' ,
+CHANGE COLUMN `product_bpack` `product_bpack` INT UNSIGNED NULL COMMENT 'Бол. упак.' ,
+CHANGE COLUMN `product_spack` `product_spack` INT UNSIGNED NULL COMMENT 'Мал. упак.' ,
+CHANGE COLUMN `product_weight` `product_weight` DOUBLE NULL COMMENT 'Вес ед.' ,
+CHANGE COLUMN `product_volume` `product_volume` DOUBLE NULL COMMENT 'Объем ед.' ,
+CHANGE COLUMN `product_unit` `product_unit` VARCHAR(5) NULL COMMENT 'Единица' ,
+CHANGE COLUMN `analyse_type` `analyse_type` VARCHAR(45) NULL COMMENT 'Тип' ,
+CHANGE COLUMN `analyse_brand` `analyse_brand` VARCHAR(45) NULL COMMENT 'Бренд' ,
+CHANGE COLUMN `analyse_class` `analyse_class` VARCHAR(45) NULL COMMENT 'Класс' ,
+CHANGE COLUMN `is_service` `analyse_class` INT NULL COMMENT 'сервис' ,
+CHANGE COLUMN `analyse_origin` `analyse_origin` VARCHAR(45) NULL COMMENT 'Таможенный код' ;

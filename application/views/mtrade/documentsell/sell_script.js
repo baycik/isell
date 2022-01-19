@@ -809,7 +809,9 @@ Document.views = {
         if (!view_type_id) {
             return;
         }
-        $.post("DocumentView/viewCreate/", {view_type_id: view_type_id}, function (doc_view_id) {
+        var url = Document.doc_extension + '/viewCreate';
+        var doc_id=Document.doc_id;
+        $.post(url, {doc_id, view_type_id}, function (doc_view_id) {
             if (doc_view_id * 1) {
                 Document.views.open(doc_view_id);
                 Document.views.load_only_views();
@@ -817,7 +819,8 @@ Document.views = {
         });
     },
     open: function (doc_view_id) {
-        window.open("./DocumentView/documentViewGet/?out_type=.print&doc_view_id=" + doc_view_id, '_new');
+        var url = Document.doc_extension + '/viewGet';
+        window.open(url+"?out_type=.print&doc_view_id=" + doc_view_id, '_new');
     },
     click: function (node) {
         var doc_view_id = $(node).attr('data-view-id');

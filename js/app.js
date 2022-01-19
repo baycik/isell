@@ -121,7 +121,7 @@ var App = {
                 $(query).html(rendered).addClass('isell-tabs');
             },
             loadContent( index ){
-                $(query+" .isell-tabs-holders>div").css('left','-10000px');
+                $(query+" .isell-tabs-holders>div").css('left','-10000px').css('top','-10000px');
                 let holder=$(query+` .isell-tabs-holders div[data-index='${index}']`);
                 if( holder.length<1 ){
                     $(query+" .isell-tabs-holders").append(`<div data-index="${index}">Загрузка ...</div>`);
@@ -132,7 +132,7 @@ var App = {
                         App[id] && App[id].init && App[id].init();
                     });
                 }
-                holder.css('left',0);
+                holder.css('left',0).css('top',0);
             }
         };
         isellTabs.init();

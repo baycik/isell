@@ -25,6 +25,7 @@
 	    }
 	},
 	fieldChanged:function( field, value, is_extra, title ){
+            alert('todo');
             App.post( 'DocumentView/viewUpdate',{doc_view_id:this.data.doc_view_id,is_extra:is_extra,field:field,value:value}, function(ok){
 		App.page_mtrade_view_settings.handler.notify('changed');
                 if( ok*1 ){
@@ -35,6 +36,7 @@
 	    });
 	},
 	deleteView:function(){
+            alert('todo');
 	    App.post( 'DocumentView/viewDelete',{doc_view_id:this.data.doc_view_id}, function(ok){
 		App.page_mtrade_view_settings.handler.notify('deleted');
 		App.page_mtrade_view_settings.node.window('close');

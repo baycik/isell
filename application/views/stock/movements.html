@@ -36,7 +36,7 @@
 	    App.page_stock_movements.currRows=param.rows;
 	    App.page_stock_movements.filterRules=param.filterRules;
             
-	    App.get("Stock/movementsFetch/"+App.uri(param.page,param.rows), {filterRules: JSON.stringify(param.filterRules)},function( xhr ){
+	    App.get("Stock/movementsFetch/", {page:param.page,rows:param.rows,filterRules: JSON.stringify(param.filterRules)},function( xhr ){
 		var resp=App.json(xhr);
 		success(resp);
 	    });	    

@@ -4,7 +4,7 @@
 	<link rel="icon" type="image/png" href="../../img/Printer.png">
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 	<link rel="stylesheet" type="text/css" href="../../css/app.css" />
-        <?php if( $page_orientation =='landscape' ): ?>
+        <?php if( ($page_orientation??'') =='landscape' ): ?>
         <style type="text/css">
             @media screen{
                 .page,table.sheet0{

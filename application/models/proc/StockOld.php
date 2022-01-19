@@ -11,7 +11,6 @@ class StockOld extends Data {
         $sql = "SELECT 
                 product_wrn_quantity,
 		product_quantity,
- 		vat_quantity,
 		self_price,
 		parent_id,
                 party_label

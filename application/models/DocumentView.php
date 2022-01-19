@@ -30,7 +30,7 @@ class DocumentView extends DocumentItems{
 		    WHERE
 			doc_types LIKE '%/$doc_type/%' AND blank_set='$blank_set'
 		    GROUP BY 
-			view_type_id
+			view_type_id,pref_list.pref_int,pref_value
 		    ORDER BY
 			ISNULL(doc_view_id),pref_int-DATEDIFF(NOW(),pref_value) DESC,view_hidden
 		    ";

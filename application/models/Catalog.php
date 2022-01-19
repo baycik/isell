@@ -13,45 +13,11 @@ class Catalog extends CI_Model {
     }
     
     protected function check(&$var, $type = null) {
-        switch ($type) {
-            case 'raw':
-                break;
-            case 'int':
-                $var = (int) $var;
-                break;
-            case 'double':
-                $var = (float) $var;
-                break;
-            case 'bool':
-                $var = (bool) $var;
-                break;
-            case 'escape':
-                $var = $this->db->escape_identifiers($var);
-                break;
-            case 'string':
-                $var = addslashes($var);
-                break;
-            case 'json':
-                $var = json_decode($var, true);
-                break;
-            default:
-                if ($type) {
-                    $matches = [];
-                    preg_match('/' . $type . '/u', $var, $matches);
-                    $var = isset($matches[0]) ? $matches[0] : null;
-                } else {
-                    $var = addslashes($var);
-                }
-        }
+        return $this->Hub->check($var,$type);
     }
 
     public function request($name, $type = null, $default = null) {
-        $value = $this->input->get_post($name);
-        if ($value !== null) {
-            $this->check($value, $type);
-            return $value;
-        }
-        return $default;
+        return $this->Hub->request($name,$type,$default);
     }
 
     protected function transliterate($input, $direction = 'fromlatin') {
