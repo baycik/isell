@@ -767,13 +767,6 @@ Document.views = {
             }
         });
     },
-    load_only_views: function () {
-        var url = Document.doc_extension + '/documentGet';
-        $.post(url, {doc_id: Document.doc_id, parts_to_load: '["views"]'}, function (resp) {
-            var doc = App.json(resp);
-            Document.views.render(doc.views);
-        });
-    },
     render: function (views) {
         Document.views.view_list = Document.views.compile(views);
         App.renderTpl('.document_views_tile', {views: Document.views.view_list});
@@ -788,7 +781,16 @@ Document.views = {
             var efield_labs = App.json(view.view_efield_labels);
             view_list[i].efields = [];
             for (var k in efield_labs) {
-                view_list[i].efields.push({field: k, label: efield_labs[k], value: efield_vals ? efield_vals[k] || '' : ''});
+                var extra_field={
+                        field:k,
+                        label:efield_labs[k],
+                        value:efield_vals && efield_vals[k]?efield_vals[k]||'':''
+                    };
+                if( efield_labs[k].label ){
+                    extra_field.label=efield_labs[k].label;
+                    extra_field.type=efield_labs[k].type;
+                }
+                view_list[i].efields.push(extra_field);
             }
             view_list[i].view_dmy_date = App.toDmy(view_list[i].view_date);
         }
@@ -798,9 +800,19 @@ Document.views = {
         var i = $(node).attr('data-view-i');
         var view = Document.views.view_list[i];
         if (view.doc_view_id) {
-            App.loadWindow('page/mtrade/view_settings', view).progress(function (status) {
+            App.loadWindow('page/mtrade/view_settings', view).progress(function (status,data) {
                 if (status === 'close') {// || status==='changed' status==='deleted' || 
-                    Document.views.load_only_views();
+                    Document.load(Document.doc_id,["views"]);
+                }
+                if (status === 'update'){
+                    var url = Document.doc_extension + '/viewUpdate';
+                    $.post( url,data).done(function(ok){
+                        if( ok*1 ){
+                            App.flash("Сохранено: "+title);
+                        } else {
+                            App.flash("Ошибка сохранения "+title);
+                        }
+                    });
                 }
             });
         }
@@ -811,10 +823,17 @@ Document.views = {
         }
         var url = Document.doc_extension + '/viewCreate';
         var doc_id=Document.doc_id;
-        $.post(url, {doc_id, view_type_id}, function (doc_view_id) {
+        $.post(url, {doc_id, view_type_id}).done(function (doc_view_id) {
             if (doc_view_id * 1) {
                 Document.views.open(doc_view_id);
-                Document.views.load_only_views();
+                Document.load(Document.doc_id,["views"]);
+            }
+        }).fail(function(resp){
+            if(resp.responseText==='view_type_duplicate'){
+                App.flash("Бланк такого типа уже сформирован!");
+            }
+            if(resp.responseText==='document_uncommited'){
+                App.flash('Сначала проведите документ!');
             }
         });
     },

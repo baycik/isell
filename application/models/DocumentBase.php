@@ -55,7 +55,7 @@ class DocumentBase extends Catalog {
         unset($this->document_properties);
         $document_properties = $this->get_row("SELECT * FROM document_list WHERE doc_id='$doc_id'");
         if(!$document_properties){
-            throw new Exception("Document #$doc_id not found", 404);
+            throw new Exception("document_not_found", 404);
         }
         $Company = $this->Hub->load_model("Company");
         $document_properties->pcomp = $Company->companyGet($document_properties->passive_company_id);
@@ -65,7 +65,7 @@ class DocumentBase extends Catalog {
             $this->document_properties = $document_properties;
             return true;
         }
-        throw new Exception("Access denied for selection of this document", 403);
+        throw new Exception("document_selection_forbidden", 403);
     }
 
     /**
@@ -255,7 +255,7 @@ class DocumentBase extends Catalog {
         $active_company_id = $this->Hub->acomp('company_id');
         $passive_company_id = $this->Hub->pcomp('company_id');
         if (!$active_company_id || !$passive_company_id) {
-            throw new Exception("Passive or active company is not selected");
+            throw new Exception("no_pcomp_acomp",400);
         }
         $prevHead = $this->get_row("SELECT 
 		doc_type
@@ -489,7 +489,6 @@ class DocumentBase extends Catalog {
 	$ViewManager->outRedirect($out_type);
     }
     
-    
     protected function viewCreateLastFields( $view_type_id ){
         $acomp_id=$this->doc('active_company_id');
         $pcomp_id=$this->doc('passive_company_id');
@@ -512,23 +511,21 @@ class DocumentBase extends Catalog {
     public function viewCreate(int $doc_id, int $view_type_id) {
         $this->documentSelect($doc_id);
         $doc_type = $this->doc('doc_type');
-        $view_role=$this->get_value("SELECT view_role FROM document_view_types WHERE view_type_id=''");
+        $view_role=$this->get_value("SELECT view_role FROM document_view_types WHERE view_type_id='$view_type_id'");
         $view_num = $this->doc('doc_num');
         $view_stamp = $this->doc('cstamp');
         
         if( $view_role!='bill' ){
             $this->Hub->set_level(2);
-        } else
-        if( $view_role!='sell_bill' ){
+        }
+        if( $view_role=='sell_bill' ){
             if( !$this->isCommited() ){
-                $this->Hub->msg('Сначала сохраните документ!');
-                return false;
+                throw new Exception('document_uncommited',400);
             }
         } else 
-        if( $view_role!='tax_bill' ){
+        if( $view_role=='tax_bill' ){
             if( !$this->isCommited() ){
-                $this->Hub->msg('Сначала сохраните документ!');
-                return false;
+                throw new Exception('document_uncommited',400);
             }
             $sql="SELECT 
                     doc_view_id 
@@ -539,8 +536,7 @@ class DocumentBase extends Catalog {
                     AND view_role='tax_bill'";
             $tax_bill_exists=$this->get_value($sql);
             if( $tax_bill_exists ){
-                $this->Hub->msg('Бланк такого типа уже сформирован!');
-                return false;
+                throw new Exception('view_type_duplicate',400);
             }
             if( $doc_type==1 || $doc_type==3 ){
                 $view_num = $this->viewNumNext($view_role);
@@ -574,7 +570,41 @@ class DocumentBase extends Catalog {
     }
 
     public function viewListGet(int $doc_id) {
-        return null;
+	if( $doc_id ){
+	    $this->documentSelect($doc_id);
+            $acomp_id=$this->doc('active_company_id');
+	    $doc_type=$this->doc('doc_type');
+            $blank_set=$this->Hub->pref('blank_set');
+	    $sql="SELECT 
+			doc_view_id,
+			view_num,
+			view_name,
+                        dvt.view_role,
+			DATE_FORMAT(tstamp, '%Y-%m-%d') AS view_date,
+                        tstamp,
+			dvt.view_type_id,
+			view_efield_values,
+			view_efield_labels,
+			view_file,
+			freezed,
+			IF(view_hidden AND doc_view_id IS NULL,1,0) view_hidden
+		    FROM
+			document_view_types dvt
+			    LEFT JOIN 
+			document_view_list dvl ON dvl.view_type_id=dvt.view_type_id AND doc_id = '$doc_id'
+			    LEFT JOIN
+			pref_list ON active_company_id='$acomp_id' AND pref_name=CONCAT('view_fetch_count_',dvt.view_type_id)
+		    WHERE
+			doc_types LIKE '%/$doc_type/%' AND blank_set='$blank_set'
+		    GROUP BY 
+			view_type_id,pref_int,pref_value
+		    ORDER BY
+			ISNULL(doc_view_id),pref_int-DATEDIFF(NOW(),pref_value) DESC,view_hidden
+		    ";
+	    return $this->get_list($sql);	    
+	} else {
+	    return [];
+	}
     }
 
     public function viewListCreate(int $doc_id, array $view_list) {

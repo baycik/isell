@@ -25,6 +25,10 @@
 	    }
 	},
 	fieldChanged:function( field, value, is_extra, title ){
+            var data={
+                doc_view_id:this.data.doc_view_id,is_extra,field,value
+            };
+            App.page_mtrade_view_settings.handler.notify('update',data);
             alert('todo');
             App.post( 'DocumentView/viewUpdate',{doc_view_id:this.data.doc_view_id,is_extra:is_extra,field:field,value:value}, function(ok){
 		App.page_mtrade_view_settings.handler.notify('changed');

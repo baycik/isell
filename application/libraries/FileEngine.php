@@ -221,7 +221,7 @@ class FileEngine {
 ////////////////////////////////////////////////////////
     private function renderWorkbook() {
         //return;
-        error_reporting(E_ALL ^ E_NOTICE);
+        error_reporting(E_ALL ^ E_NOTICE ^ E_WARNING);
         $highestRow = $this->Worksheet->getHighestRow(); // e.g. 10
         $highestColumn = $this->Worksheet->getHighestColumn(); // e.g 'F'
         $highestColumnIndex = PhpOffice\PhpSpreadsheet\Cell\Coordinate::columnIndexFromString($highestColumn);

@@ -57,7 +57,7 @@ class DocumentSell extends DocumentBase{
 	    $document["foot"]=$doc_id?$this->footGet($doc_id):[];
 	}
 	if( in_array("views",$parts_to_load) ){
-	    $document["views"]=$doc_id?$this->viewsGet($doc_id):[];
+	    $document["views"]=$doc_id?$this->viewListGet($doc_id):[];
 	}
 	return $document;
     }
@@ -458,64 +458,19 @@ class DocumentSell extends DocumentBase{
     ];
     
     
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    private function viewsGet($doc_id){
-        $DocumentView = $this->Hub->load_model("DocumentView");
-        return $DocumentView->viewListFetch($doc_id);
-    }
+//    private function viewsGet($doc_id){
+//        $DocumentView = $this->Hub->load_model("DocumentView");
+//        return $DocumentView->viewListFetch($doc_id);
+//    }
     /*
      * Entries section 
      */
 
-    private function entryPriceNormalize( $price ){
-	$doc_vat_ratio=1+$this->doc('vat_rate')/100;
-	$curr_correction=$this->documentCurrencyCorrectionGet();
-	return round($price,2)/$doc_vat_ratio/$curr_correction;	
-    }
+//    private function entryPriceNormalize( $price ){
+//	$doc_vat_ratio=1+$this->doc('vat_rate')/100;
+//	$curr_correction=$this->documentCurrencyCorrectionGet();
+//	return round($price,2)/$doc_vat_ratio/$curr_correction;	
+//    }
 
     
     public function entryBreakevenPriceUpdate( int $doc_entry_id=null, int $doc_id=null ){
@@ -591,25 +546,25 @@ class DocumentSell extends DocumentBase{
      * Finds party_label from buy document origin entries and calculated avg self price.
      * Before orders entries from oldest to newest
      */
-    private function entryOriginsCalc($product_quantity,$sort_order='ASC'){
-	$this->query("SET @sold_quantity:=$product_quantity,@total_sold:=0,@first_party_label:='';");
-	$sql="SELECT 
-		@first_party_label party_label, ROUND(SUM(self_sum) / @sold_quantity,2) self_price
-	    FROM
-		(SELECT 
-		    LEAST(@sold_quantity - @total_sold, party_quantity) * self_price self_sum,
-			@total_sold:=@total_sold + party_quantity ts,
-			@first_party_label:=IF(@first_party_label<>'', @first_party_label, party_label) first_party_label
-		FROM
-		    (SELECT 
-		    *
-		FROM
-		    tmp_original_entries
-		ORDER BY cstamp $sort_order) t
-		WHERE
-		    @sold_quantity > @total_sold) t2;";
-	return $this->get_row($sql);
-    }
+//    private function entryOriginsCalc($product_quantity,$sort_order='ASC'){
+//	$this->query("SET @sold_quantity:=$product_quantity,@total_sold:=0,@first_party_label:='';");
+//	$sql="SELECT 
+//		@first_party_label party_label, ROUND(SUM(self_sum) / @sold_quantity,2) self_price
+//	    FROM
+//		(SELECT 
+//		    LEAST(@sold_quantity - @total_sold, party_quantity) * self_price self_sum,
+//			@total_sold:=@total_sold + party_quantity ts,
+//			@first_party_label:=IF(@first_party_label<>'', @first_party_label, party_label) first_party_label
+//		FROM
+//		    (SELECT 
+//		    *
+//		FROM
+//		    tmp_original_entries
+//		ORDER BY cstamp $sort_order) t
+//		WHERE
+//		    @sold_quantity > @total_sold) t2;";
+//	return $this->get_row($sql);
+//    }
     
     protected function getProductSellSelfPrice( $product_code, $invoice_qty, $fdate ) {
         return $this->Hub->get_row("SELECT LEFTOVER_CALC('$product_code','$fdate','$invoice_qty','all')",0);
