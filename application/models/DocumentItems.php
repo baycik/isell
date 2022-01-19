@@ -43,7 +43,7 @@ class DocumentItems extends DocumentCore{
         if( $this->doc('doc_type')==3 || $this->doc('doc_type')==4 ){
             $where .= " AND is_service=1";
         }
-        $this->query("SET @promo_limit:=3;");
+        $this->query("SET @promo_limit:=1;");
 	$sql="
             SELECT
                 *,

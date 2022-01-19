@@ -8,7 +8,7 @@
 	    closable:true,
 	    collapsible:true,
 	    shadow:false,
-	    width: 700,
+	    width: 745,
 	    height: 'auto',
 	    top: 50,
 	    onClose: function () {
@@ -285,10 +285,10 @@
 	    }
 	},
 	typeComboFormatter: function (data) {
-	    return "<img src='img/" + (["", "sell", "buy", "serviceout", "servicein"][Math.abs(data.value)]) + ".png'> " + data.text;
+	    return "<img src='img/" + (["", "sell", "buy", "serviceout", "servicein", "agentsell"][Math.abs(data.value)]) + ".png'> " + data.text;
 	},
 	typeComboFormatterIcon:function(newVal){
-	    var icon_class='icon-'+(["", "sell", "buy", "serviceout", "servicein"][Math.abs(newVal)]);
+	    var icon_class='icon-'+(["", "sell", "buy", "serviceout", "servicein", "agentsell"][Math.abs(newVal)]);
 	    $('#Doc_type_cmb').next().find(".l-btn-icon").attr('class',"l-btn-icon "+icon_class);
 	},
 	companyListFrm:function(row){
@@ -753,14 +753,25 @@
                 row_data.bgcolor="#00ff0033";
                 row_data.product_price_total="<s>"+row_data.product_price_total_raw+"</s><br>"+row_data.product_price_total;
             }
+            row_data.icon="";
+            if( row_data.analyse_class==='C' ){
+                row_data.icon='<i class="icon star"></i>';
+            }
             var row_html=Mark.up(Doc.suggest.row_template,row_data);
 	    return row_html;
 	},
 	select:function(row){
-	    var code=Doc.suggest.prevCode=$('#Doc_suggest_cmb').combobox('getValue');
+	    Doc.suggest.prevCode=$('#Doc_suggest_cmb').combobox('getValue');
+            if( Doc.head.props.doc_type==5 ){
+                setTimeout(function(){//easyui combobox needs time to cooldown
+                    $('#Doc_suggest_cmb').textbox('setValue',row.product_name);
+                },0);
+            }
+            
 	    var spack=row.product_spack;
 	    $('#Doc_sugg_qty').textbox('setValue',spack);
 	    $('#Doc_sugg_qty').textbox('textbox').select();
+            return false;
 	}
     };
     /////////////////////////////////////////////
@@ -882,8 +893,8 @@
     }
 
     .document_comment{
-	width: 670px;
-	height:30px;
+	width: 730px;
+	height:40px;
 	margin-left:0px;
 	margin-top: 3px;
 	background-color: #dfe
@@ -915,7 +926,7 @@
 	border: 1px #bbb solid;
 	color: #333;
 	border-radius: 3px;
-	width:150px;
+	width:165px;
 	min-height: 32px;
 	margin: 0px 0px 6px 0px;
 	text-align: center;
@@ -990,12 +1001,15 @@
     .template-container:hover .product-delivery-available{
         background-color: #eaf2ff;
     }
-    
+    #Doc_head_frm input,#Doc_head_frm select{
+        border-radius: 3px;
+        width:220px;
+    }
     
 </style>
 <form id="Doc_head_frm" onsubmit="return false;" style="-moz-user-select:none;">
     <!-- DOCUMENT HEADER -->
-    <div style="width: 668px;margin: auto;padding-top: 10px;">
+    <div style="width: 740px;margin: auto;padding:5px;padding-top: 10px;">
 	<div>
 	    <select class="easyui-combobox" id="Doc_type_cmb" name="doc_type" title="Вид" data-options="
 		    editable:false,
@@ -1014,6 +1028,7 @@
 		<option value="-2">Возврат поставщику</option>
 		<option value="3">Оказание услуги</option>
 		<option value="4">Получение услуги</option>
+		<option value="5">Агентская продажа</option>
 	    </select>
 	    <input class="easyui-combobox" name="passive_company_id" id="Doc_pci" title="Контрагент" data-options="
 		    valueField: 'company_id',
@@ -1024,7 +1039,7 @@
 		    selectOnNavigation:false,
 		    formatter:Doc.head.companyListFrm,
 		    onSelect: function(company){Doc.head.update('passive_company_id',company.company_id)},
-                    width:179,
+                    width:199,
 		    icons: [{
 			     iconCls:'icon-settings16',
 			     handler: function(e){
@@ -1116,7 +1131,7 @@
 	<div>
 	    <div id="Doc_tool_bar" class="" style="height: 35px;padding-top: 5px;text-align: right;border-top:1px #ccc solid;position: relative">
 		<div style="display: inline-block;left:1px;top:0px;position: absolute;" title="↑ для вывода предыдущего кода">
-		    <input class="easyui-combobox" id="Doc_suggest_cmb" style="width:190px;" data-options="
+		    <input class="easyui-combobox" id="Doc_suggest_cmb" style="width:250px;" data-options="
 			   valueField: 'product_code',
 			   textField: 'product_code',
 			   formatter:Doc.suggest.formatter,
@@ -1156,18 +1171,18 @@
         <div id="suggest-template" style='display: none; border-bottom: 1px solid #a7e3ff;'>
             <div class="template-container">
                 <div class="grid-container1" style="background-color:{{bgcolor}}">
+                    {{if is_service|more>0}}
+                    <div class="grid-item" style="color:blue; padding: 0px 10px;grid-column: 1 / 2 span"> {{ product_name }}</div>
+                    <div class="grid-item">{{ product_price_total|blank> }}</div>
+                    <div class="grid-item" style="color:green"></div>
+                    {{else}}
                     <div class="img grid-item">
                         <img src="Storage/image_flush/?size=30x30&path=/dynImg/{{ product_img }}">
                     </div> 
-                    <!--{{if is_service|more>0}}-->
-                    <div class="grid-item" style="color:blue; padding: 0px 10px"><b>{{ product_code }}</b> {{ product_name }}</div>
-                    <div class="grid-item">{{ product_price_total }}</div>
-                    <div class="grid-item" style="color:green"></div>
-                    <!--{{else}}-->
-                    <div class="grid-item" style="color:{{if leftover|more>0}}black {{else}} red {{/if}}; padding: 0px 10px"><b>{{ product_code }}</b> {{ product_name }} {{if analyse_class|equals>C}}<i class="icon star"></i>{{/if}}</div>
+                    <div class="grid-item" style="color:{{if leftover|less>1}}red{{/if}}; padding: 0px 10px"><b>{{ product_code }}</b> {{ product_name }} {{icon|blank>}}</div>
                     <div class="grid-item">{{ product_price_total }}</div>
                     <div class="grid-item" style="color:green">[x{{ product_spack}}] {{ leftover }}{{ product_unit }}</div>
-                    <!--{{/if}}-->
+                    {{/if}}
                 </div>
             </div>    
         </div>
@@ -1177,7 +1192,7 @@
 	DOCUMENT ENTRIES 
 	----------------------------
 	-->
-	<table class="easyui-datagrid" id="Doc_entry_dg" style="width:670px;max-height:800px;"
+	<table class="easyui-datagrid" id="Doc_entry_dg" style="width:730px;max-height:800px;"
 	       data-options="
 	       noheader:true,
 	       autoRowHeight:true,
@@ -1190,12 +1205,12 @@
 	    <thead>
 		<tr>
                     <th data-options="field:'row_num',width:30">№</th>  
-                    <th data-options="field:'product_code',width:75">Код</th>  
-		    <th data-options="field:'product_name',width:300">Название</th>
+                    <th data-options="field:'product_code',width:100">Код</th>  
+		    <th data-options="field:'product_name',width:330">Название</th>
 		    <th data-options="field:'product_quantity',width:50,align:'right',styler:Doc.entries.abcCalculate">Кол-во</th>
 		    <th data-options="field:'product_unit',width:40,align:'center'">Ед.</th>
 		    <th data-options="field:'product_price',width:60,align:'right',formatter:Doc.entries.calculate">Цена</th>
-		    <th data-options="field:'product_sum',width:70,align:'right'">Сумма</th>
+		    <th data-options="field:'product_sum',width:80,align:'right'">Сумма</th>
 		    <th data-options="field:'row_status',width:24,align:'center',formatter:Doc.entries.tooltip">!</th>
 		</tr>
 	    </thead>
@@ -1212,7 +1227,7 @@
 	    <div data-options="iconCls:'icon-refresh16'" onclick="Doc.entries.reload();">Обновить</div>
 	</div>
         <!-- DOCUMENT FOOTER -->
-	<div id="Doc_footer">
+        <div id="Doc_footer" style="width: 728px;">
 	    <table style="float:left" class="footer_table">
 		<tr>
 		    <td>Вес:</td><td style="font-weight: bold;">{{total_weight}} кг</td>
