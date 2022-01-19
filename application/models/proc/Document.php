@@ -396,7 +396,7 @@ class Document extends Data {
 	    } else {
 		return $this->Base->StockOld->decreaseStock($product_code, $amount, $self_price, "Приходный документ $doc_num");
 	    }
-	} else if ($this->doc('doc_type') == 3 || $this->doc('doc_type') == 4) {
+	} else if ($this->doc('doc_type') == 3 || $this->doc('doc_type') == 4 || $this->doc('doc_type') == 5) {
 	    return true; //OK For doc_type 3 4
 	}
     }
@@ -437,7 +437,12 @@ class Document extends Data {
 	$this->Base->query("START TRANSACTION");
 	$party_label = $this->Base->StockOld->getEntryPartyLabel($product_code);
 	//$this->Base->msg($party_label);
-	$this->Base->query("INSERT INTO document_entries SET doc_id='$doc_id', product_code='$product_code',party_label='$party_label'", false);
+        if( in_array($this->doc('doc_type'),[1,-1,2,-2,3,4]) ){
+            $this->Base->query("INSERT INTO document_entries SET doc_id='$doc_id', product_code='$product_code',party_label='$party_label'", false);
+        } else
+        if( in_array($this->doc('doc_type'),[5]) ){
+            $this->Base->query("INSERT INTO document_entries SET doc_id='$doc_id', doc_entry_text='$product_code'", false);
+        }
 	if (mysqli_errno($this->Base->db_link) == 1062) {//Duplicate entry
 	    $this->Base->query("ROLLBACK");
 	    if( $add_duplicated_rows ){
@@ -1329,6 +1334,11 @@ class Document extends Data {
 	    $this->makeTransaction(84, 631, $sum['total'], $desc, 'total');
 	    $this->makeTransaction(85, 84, $sum['vatless'], $desc, 'vatless');
 	    $this->makeTransaction(641, 84, $sum['vat'], $desc, 'vat');
+	    return true;
+	}
+	if ($this->doc('doc_type') == 5) {//AGENTSELL DOCUMENT
+	    $desc = "Агентская продажа №$doc_num";
+	    //$this->makeTransaction(84, 631, $sum['total'], $desc, 'total');
 	    return true;
 	}
     }

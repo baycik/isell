@@ -141,14 +141,29 @@ class KKMIntegrator extends PluginBase{
         $acc_debit_code=0;
         $acc_credit_code=0;
         $description="";
+        
+        /*
+         * bill_acc_code
+         * account code where recieved money should accumulate
+         */
+        $bill_acc_code=null;
+        if( $doc_head->doc_type==1 ){
+            $bill_acc_code=$this->plugin_settings->customer_acc_code??null;
+        } else 
+        if( $doc_head->doc_type==5 ){
+            $bill_acc_code=$this->plugin_settings->agent_acc_code??null;
+        }
+        if( !$bill_acc_code ){
+            die("Bill acc code is not set");
+        }
         switch( $type ){
             case 'Cash':
                 if( $amount>0 ){
                     $acc_debit_code=$this->plugin_settings->cash_acc_code??null;
-                    $acc_credit_code=$this->plugin_settings->customer_acc_code??null;
+                    $acc_credit_code=$bill_acc_code;
                     $description="Оплата наличными документ №{$doc_head->doc_num} от {$doc_head->date_dmy}";
                 } else {
-                    $acc_debit_code=$this->plugin_settings->customer_acc_code??null;
+                    $acc_debit_code=$bill_acc_code;
                     $acc_credit_code=$this->plugin_settings->cash_acc_code??null;
                     $description="Возврат оплаты наличными документ №{$doc_head->doc_num} от {$doc_head->date_dmy}";
                 }
@@ -156,11 +171,11 @@ class KKMIntegrator extends PluginBase{
             case 'ElectronicPayment':
                 if( $amount>0 ){
                     $acc_debit_code  =$this->plugin_settings->electronic_acc_code??null;
-                    $acc_credit_code =$this->plugin_settings->customer_acc_code??null;
+                    $acc_credit_code =$bill_acc_code;
                     $description="Оплата электронно документ №{$doc_head->doc_num} от {$doc_head->date_dmy}";
                 } else {
+                    $acc_debit_code  =$bill_acc_code;
                     $acc_credit_code =$this->plugin_settings->electronic_acc_code??null;
-                    $acc_debit_code  =$this->plugin_settings->cash_acc_code??null;
                     $description="Возврат оплаты электронно документ №{$doc_head->doc_num} от {$doc_head->date_dmy}";
                 }
                 break;
@@ -288,7 +303,7 @@ class KKMIntegrator extends PluginBase{
                 'Error'=>"Документ не проведен"
             ];
         }
-        if( $Context['document']['head']->is_reclamation || $Context['document']['head']->doc_type!=1 ){
+        if( $Context['document']['head']->is_reclamation || !in_array($Context['document']['head']->doc_type,[1,5]) ){
             return [
                 'Error'=>"Неверный тип документа"
             ];
@@ -435,6 +450,27 @@ class KKMIntegrator extends PluginBase{
             'Credit'=>round($Credit,2),
             'CashProvision'=>round($CashProvision,2),
         ];
+        
+        if($Context['document']['head']->doc_type==5){//Agent document
+            $Check['ClientInfo']='';
+            $Check['AgentSign']=6;
+           /* $Check['AgentData']=[
+                //'PayingAgentPhone'=>'123456789',
+                //'ReceivePaymentsOperatorPhone'=>$Context['active_company']->company_phone,
+                'MoneyTransferOperatorPhone'=>$Context['active_company']->company_phone,
+                'MoneyTransferOperatorName'=> $Context['active_company']->company_name,
+                'MoneyTransferOperatorAddress'=>$Context['active_company']->company_jaddress,
+                'MoneyTransferOperatorVATIN'=>$Context['active_company']->company_tax_id
+            ];*/
+            $Check['PurveyorData']=[
+                'PurveyorPhone'=>$Context['passive_company']->company_phone,
+                'PurveyorName'=>$Context['passive_company']->company_name,
+                'PurveyorVATIN'=>$Context['passive_company']->company_tax_id
+            ];
+            
+            //print_r($Check);die;
+        }
+        
         $Check['CheckStrings']=[];
         
         $Check['CheckStrings'][]=[
@@ -491,7 +527,16 @@ class KKMIntegrator extends PluginBase{
     }
 
     
+//    private function stripImage($Check){
+//        foreach($Check['CheckStrings'] as $String){
+//            if( isset() ){
+//                
+//            }
+//        }
+//    }
+    
     private function saveCheckDump( $doc_id, $Check, $registration ){
+        //$Check=$this->stripImage($Check);
         $check_dump=[
             'registration'=>$registration,
             'data'=>$Check,
@@ -503,12 +548,12 @@ class KKMIntegrator extends PluginBase{
         if( $doc_settings_json && $doc_settings_json!='null' ){
             $doc_settings=json_decode($doc_settings_json,true);
         }
-        $new_settings=json_encode(array_merge( $doc_settings, ['check_dump'=>$check_dump]),JSON_UNESCAPED_UNICODE);
+        $new_settings=json_encode(array_merge( $doc_settings, ['check_dump'=>$check_dump]),JSON_UNESCAPED_UNICODE);//
         $sql="
             UPDATE 
                 document_list 
             SET 
-                doc_settings='$new_settings',
+                doc_settings='".addslashes($new_settings)."',
                 doc_data=CONCAT(doc_data,'\nНапечатан чек №{$check_dump['registration']->CheckNumber} ',DATE_FORMAT(NOW(),'%d.%m.%Y %H:%i:%s'),'{$check_dump['data']['CashierName']}')
             WHERE
                 doc_id=$doc_id";
