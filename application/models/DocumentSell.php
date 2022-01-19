@@ -147,15 +147,15 @@ class DocumentSell extends DocumentBase{
         $sql_create="CREATE TEMPORARY TABLE tmp_entry_list AS (
             SELECT
                 *,
-                IF(use_vatless_price,entry_price_vatless,entry_price_total) entry_price,
-                IF(use_vatless_price,entry_sum_vatless,entry_sum_total) entry_sum
+                IF(use_vatless_price,product_price_vatless,product_price_total) product_price,
+                IF(use_vatless_price,product_sum_vatless,product_sum_total) product_sum
             FROM
                 (SELECT
                     doc_entry_id,
-                    ROUND(invoice_price * $doc_curr_correction, 2) AS entry_price_vatless,
-                    ROUND(invoice_price * $doc_curr_correction * product_quantity,2) entry_sum_vatless,
-                    ROUND(invoice_price * $doc_curr_correction * $doc_vat_ratio, 2) AS entry_price_total,
-                    ROUND(invoice_price * $doc_curr_correction * $doc_vat_ratio * product_quantity,2) entry_sum_total,
+                    ROUND(invoice_price * $doc_curr_correction, 2) AS product_price_vatless,
+                    ROUND(invoice_price * $doc_curr_correction * product_quantity,2) product_sum_vatless,
+                    ROUND(invoice_price * $doc_curr_correction * $doc_vat_ratio, 2) AS product_price_total,
+                    ROUND(invoice_price * $doc_curr_correction * $doc_vat_ratio * product_quantity,2) product_sum_total,
                     ROUND(self_price,2) self_price,
                     ROUND(breakeven_price,2) breakeven_price,
                     product_quantity*product_weight entry_weight_total,
@@ -164,6 +164,7 @@ class DocumentSell extends DocumentBase{
                     party_label,
                     pl.product_id,
                     pl.product_code,
+                    pl.product_barcode,
                     pl.$doc_lang product_name,
                     pl.product_unit,
                     pl.product_article,

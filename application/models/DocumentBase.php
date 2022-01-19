@@ -352,9 +352,9 @@ class DocumentBase extends Catalog {
         $sql = "SELECT
 	    ROUND(SUM(entry_weight_total),2) total_weight,
 	    ROUND(SUM(entry_volume_total),2) total_volume,
-	    SUM(entry_sum_vatless) vatless,
-	    SUM(entry_sum_total) total,
-	    SUM(entry_sum_total-entry_sum_vatless) vat,
+	    SUM(product_sum_vatless) vatless,
+	    SUM(product_sum_total) total,
+	    SUM(product_sum_total-product_sum_vatless) vat,
 	    SUM(ROUND(product_quantity*self_price,2)) self,
 	    '$curr_symbol' curr_symbol
 	FROM 
@@ -380,8 +380,113 @@ class DocumentBase extends Catalog {
         return $nextNum;
     }
     
-    public function viewGet(int $doc_view_id) {
-        return null;
+    private function viewGet( $doc_view_id ){
+	$sql="SELECT
+		*,
+                (SELECT doc_data FROM document_list dl WHERE dl.doc_id=dvl.doc_id) doc_data
+	    FROM 
+		document_view_list dvl
+		    JOIN
+		document_view_types USING (view_type_id)
+	    WHERE 
+		doc_view_id='$doc_view_id'";
+	return $this->get_row($sql);
+    }
+
+    private function viewGetDump($doc_view_id){
+	$doc_view=$this->viewGet($doc_view_id);
+	if( !$doc_view ){
+	    return null;
+	}
+	if( $doc_view->html ){
+	    return [
+		    'html'=>$doc_view->html,
+		    'title'=>"$doc_view->view_name №$doc_view->view_num от $doc_view->view_date_dot",
+		    'user_data'=>[
+			'email'=>$pcomp->company_email,
+			'text'=>'Доброго дня'
+		    ],
+		];
+	}
+        $Utils=$this->Hub->load_model('Utils');
+	$Company=$this->Hub->load_model('Company');
+        
+
+	$head=$this->headGet($doc_view->doc_id);
+	$rows=$this->entryListGet($doc_view->doc_id);
+	$footer=$this->footGet($doc_view->doc_id);
+        
+        $acomp=$Company->companyGet( $this->doc('active_company_id') );
+        $pcomp=$Company->companyGet( $this->doc('passive_company_id') );
+        
+        
+	if( $head->doc_type==1 || $head->doc_type==3 ){
+	    /*if sell document use straight seller=acomp else buyer=pcomp*/
+	    $seller=$acomp;
+	    $buyer=$pcomp;
+            
+            $AccountsData=$this->Hub->load_model('AccountsData');
+            $doc_view->debt=$AccountsData->clientDebtGet();
+            
+	    $reciever_email=$pcomp->company_email;
+	} else {
+	    $seller=$pcomp;
+	    $buyer=$acomp;
+	    $reciever_email=$acomp->company_email;
+	}
+        
+	
+        $doc_view->total_spell=$Utils->spellAmount($footer->total);
+        $doc_view->loc_date=$Utils->getLocalDate($doc_view->tstamp);
+	$doc_view->user_sign=$this->Hub->svar('user_sign');
+	$doc_view->user_position=$this->Hub->svar('user_position');
+	$doc_view->date=date('dmY', strtotime($doc_view->tstamp));
+	$doc_view->date_dot=date('d.m.Y', strtotime($doc_view->tstamp));
+	$doc_view->entries_num=count($rows);
+	if( $doc_view->view_efield_values ){
+	    $doc_view->extra=json_decode($doc_view->view_efield_values);
+	} else {
+	    $doc_view->extra=json_decode("{}");
+	}
+        
+        $view_title=$doc_view->view_name;
+        if($doc_view->view_num){
+            $view_title.=" №$doc_view->view_num";
+        }
+        if($doc_view->date_dot){
+            $view_title.=" от $doc_view->date_dot";
+        }
+        
+        $dump=[
+	    'tpl_files'=>$doc_view->view_tpl,
+	    'title'=>$view_title,
+	    'user_data'=>[
+		'email'=>$reciever_email,
+		'text'=>'Доброго дня'
+	    ],
+            'view'=>[
+		'doc_view'=>$doc_view,
+		'a'=>$acomp,
+		'p'=>$pcomp,
+                'seller'=>$seller,
+                'buyer'=>$buyer,
+                'head'=>$head,
+                'rows'=>$rows,
+                'footer'=>$footer,
+                'director_name'=>$this->Hub->pref('director_name'),
+                'director_tin'=>$this->Hub->pref('director_tin'),
+                'accountant_name'=>$this->Hub->pref('accountant_name'),
+                'accountant_tin'=>$this->Hub->pref('accountant_tin'),
+            ]
+        ];
+        return $dump;
+    }
+        
+    public function viewExport(int $doc_view_id,string $out_type) {
+        $dump=$this->viewGetDump($doc_view_id);
+	$ViewManager=$this->Hub->load_model('ViewManager');
+	$ViewManager->store($dump);
+	$ViewManager->outRedirect($out_type);
     }
     
     

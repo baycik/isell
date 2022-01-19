@@ -577,8 +577,8 @@ Document.body = {
                 {id: "product_name", field: "product_name", name: "Название", width: 388},
                 {id: "product_quantity", field: "product_quantity", name: "Кол-во", width: 70, cssClass: 'slick-align-right', editor: Slick.Editors.Integer},
                 {id: "product_unit", field: "product_unit", name: "Ед.", width: 30},
-                {id: "entry_price", field: "entry_price", name: "Цена", width: 70, cssClass: 'slick-align-right', asyncPostRender: Document.body.table.formatters.priceisloss, editor: Slick.Editors.Float},
-                {id: "entry_sum", field: "entry_sum", name: "Сумма", width: 80, cssClass: 'slick-align-right', editor: Slick.Editors.Float},
+                {id: "product_price", field: "entry_price", name: "Цена", width: 70, cssClass: 'slick-align-right', asyncPostRender: Document.body.table.formatters.priceisloss, editor: Slick.Editors.Float},
+                {id: "product_sum", field: "entry_sum", name: "Сумма", width: 80, cssClass: 'slick-align-right', editor: Slick.Editors.Float},
                 {id: "row_status", field: "row_status", name: "!", width: 20, formatter: Document.body.table.formatters.tooltip},
 
             ];
@@ -819,7 +819,7 @@ Document.views = {
         });
     },
     open: function (doc_view_id) {
-        var url = Document.doc_extension + '/viewGet';
+        var url = Document.doc_extension + '/viewExport';
         window.open(url+"?out_type=.print&doc_view_id=" + doc_view_id, '_new');
     },
     click: function (node) {

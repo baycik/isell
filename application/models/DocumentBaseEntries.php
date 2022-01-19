@@ -259,9 +259,4 @@ trait DocumentBaseEntries{
         $this->query("INSERT INTO $table ($target_list) SELECT $source_list FROM imported_data WHERE label='$label' AND $product_code_source IN (SELECT product_code FROM stock_entries) ON DUPLICATE KEY UPDATE product_quantity=product_quantity+$quantity_source_field");
         return $this->db->affected_rows();
     }
-    
-    
-    
-    
-    
 }
