@@ -39,19 +39,21 @@ class DocumentItems extends DocumentCore{
                     1 is_service,
                     CONCAT(@i:=@i+1,')') product_code,
                     '' product_price_total,
-                    '$q' product_name)
+                    '$q' product_name,
+                    '' created_at)
                 UNION
                 (SELECT
                     DISTINCT
                     1 is_service,
                     CONCAT(@i:=@i+1,')') product_code,
                     '' product_price_total,
-                    doc_entry_text product_name
+                    doc_entry_text product_name,
+                    created_at
                 FROM
                     document_entries de
                 WHERE
                     $where
-                GROUP BY product_name
+                GROUP BY product_name,created_at
                 ORDER BY created_at DESC
                 LIMIT 10)
                 ";

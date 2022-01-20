@@ -113,11 +113,11 @@ class DocumentBase extends Catalog {
 
     protected function documentCreate(int $doc_type, string $doc_handler = null) {
         $this->Hub->set_level(1);
-        $user_id = $this->Hub->svar('user_id');
+        $user_id  = $this->Hub->svar('user_id');
         $acomp_id = $this->Hub->acomp('company_id');
         $pcomp_id = $this->Hub->pcomp('company_id');
         $vat_rate = $this->Hub->acomp('company_vat_rate');
-        $usd_ratio = $this->Hub->pref('usd_ratio');
+        $usd_ratio= $this->Hub->pref('usd_ratio');
 
 
         $Company = $this->Hub->load_model("Company");
@@ -140,7 +140,10 @@ class DocumentBase extends Catalog {
             'use_vatless_price' => 0,
             'notcount' => 0,
             'doc_num' => $this->documentNumNext($doc_type),
-            'doc_status_id' => 1
+            'doc_status_id' => 1,
+            'is_commited'=>0,
+            'is_reclamation'=>0,
+            'doc_data'=>''
         ];
         $prev_document = $this->headPreviousGet($acomp_id, $pcomp_id);
         if ($prev_document) {

@@ -255,7 +255,7 @@ Document.head = {
                 });
             },
             sendsms: function () {
-                $.get("Company/companyGet/" + Document.data.head.passive_company_id, function (xhr) {
+                $.get("Company/companyGet/",{company_id:Document.data.head.passive_company_id}, function (xhr) {
                     var passive_data = App.json(xhr);
                     var data = {to: passive_data.company_mobile, body: Document.data.head.doc_data};
                     App.loadWindow('page/dialog/send_sms', data);
@@ -786,6 +786,9 @@ Document.views = {
                         label:efield_labs[k],
                         value:efield_vals && efield_vals[k]?efield_vals[k]||'':''
                     };
+//                if( efield_labs[k].type==='date' && extra_field.value ){
+//                    extra_field.value=extra_field.value.split('-').reverse().join('.');
+//                }
                 if( efield_labs[k].label ){
                     extra_field.label=efield_labs[k].label;
                     extra_field.type=efield_labs[k].type;

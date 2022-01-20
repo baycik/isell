@@ -56,12 +56,16 @@
 </script>
 <form id="view_settings_frm">
     <input name="view_date" type="date" title="Дата" required="required" data-notextra="1">
-    <input name="view_num" type="number" title="Дата" required="required" data-notextra="1">
+    <input name="view_num" type="text" title="Номер" required="required" data-notextra="1">
     <div class="inp_rule"></div>
     <div id="view_settings_efields">
     {{if efields}}
 	{{efields}}
-	<input type="text" name="{{field}}" title="{{label}}" value="{{value}}">
+        <!--{{if type|equals>company_id}}-->
+        <input type="text" name="{{field}}" title="{{label}}" value="{{value}}" class="company_picker" onclick="App.page_mtrade_view_settings.handle.company(this)">
+        <!--{{else}}-->
+        <input type="{{type|blank>text}}" name="{{field}}" title="{{label}}" value="{{value}}">
+        <!--{{/if}}-->
 	{{/efields}}
     {{/if}}
     </div>
@@ -71,3 +75,11 @@
     <button onclick="App.page_mtrade_view_settings.deleteView();"><img src="img/delete.png" style="vertical-align: middle"> Удалить</button>
 </div>
 <br>
+<style>
+    #view_settings_efields .company_picker{
+        background: url('img/settings.png');
+        background-position:right;
+        background-repeat:no-repeat;
+        background-color: white;
+    }
+</style>

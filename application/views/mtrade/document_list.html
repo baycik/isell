@@ -117,7 +117,7 @@
                     if( !DocList.table.current_row ){
                         return false;
                     }
-                    DocHolder.load(DocList.table.current_row.doc_id,DocList.table.current_row.doc_extension||'DocumentSell');
+                    DocHolder.load(DocList.table.current_row.doc_id,DocList.table.current_row.doc_extension);
                     DocList.table.lastSelectedDocumentSet(DocList.table.current_row.doc_id);
                 });
                 DocList.grid.onRenderFinished.subscribe(function(){

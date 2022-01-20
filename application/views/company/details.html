@@ -5,7 +5,7 @@
     App.page_company_details = {
         properties: {
             title: 'Реквизиты компании',
-            width: 920,
+            width: '100%',
             height: 'auto',
             shadow: false,
             onClose: function () {
@@ -25,6 +25,7 @@
                 this.node.window('hcenter');
                 this.node.window('window').css('position', 'fixed');
                 this.node.window('window').css('top', '40px');
+                this.node.window('window').css('width', '950px');
             }
             App.page_company_details.autoselect_label = App.page_company_details.data.autoselect_label;
 

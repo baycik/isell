@@ -28,15 +28,6 @@ class DocumentList extends Catalog{
 	    $andwhere.=" AND path LIKE '$assigned_path%'";
 	}
 	$active_company_id=$this->Hub->acomp('company_id');
-	
-	$advanced_cols="";
-	$advanced_tables="";
-	
-	if($colmode=='advanced'){
-	    
-	} else {
-	    
-	}
         
 	$empty_row=null;
         if( strpos($mode,'add_empty_row')!==FALSE ){
@@ -54,7 +45,13 @@ class DocumentList extends Catalog{
 	    SELECT 
 		doc_id,
 		doc_type,
-                IF(doc_type=1,'DocumentSell','') doc_extension,
+                IF(doc_type=1,'DocumentSell',
+                IF(doc_type=2,'DocumentBuy',
+                IF(doc_type=3,'DocumentServiceSell',
+                IF(doc_type=4,'DocumentServiceBuy',
+                IF(doc_type=5,'DocumentAgentSell',
+                'UnknownDocType'
+                ))))) doc_extension,
 		dl.cstamp,
 		DATE_FORMAT(dl.cstamp,'%d.%m.%Y') doc_date_dot,
 		doc_num,

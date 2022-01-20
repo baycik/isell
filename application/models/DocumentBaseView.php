@@ -207,7 +207,7 @@ trait DocumentBaseView {
             throw new Exception('view_is_freezed',403);
 	}
 	if ( $is_extra==='extra' ) {
-	    $extra_fields_str = $this->get_value("SELECT view_efield_values FROM document_view_list WHERE doc_view_id='$doc_view_id'");
+	    $extra_fields_str = $this->get_value("SELECT COALESCE(view_efield_values,'{}') FROM document_view_list WHERE doc_view_id='$doc_view_id'");
             $extra_fields = json_decode($extra_fields_str);
 	    $extra_fields->$field = $value;
 	    $field = 'view_efield_values';
@@ -226,7 +226,10 @@ trait DocumentBaseView {
     }
 
     public function viewDelete(int $doc_view_id) {
-        return null;
+        $doc_id=$this->get_value("SELECT doc_id FROM document_view_list WHERE doc_view_id='$doc_view_id'");
+        $this->documentSelect($doc_id);
+        $this->query("DELETE FROM document_view_list WHERE doc_view_id='$doc_view_id'");
+	return true;
     }
 
     public function viewListGet(int $doc_id) {
