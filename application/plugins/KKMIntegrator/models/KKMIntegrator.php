@@ -453,7 +453,7 @@ class KKMIntegrator extends PluginBase{
         
         if($Context['document']['head']->doc_type==55){//Agent document
             $Check['ClientInfo']='';
-            $Check['AgentSign']=6;
+            $Check['AgentSign']=2;
            /* $Check['AgentData']=[
                 //'PayingAgentPhone'=>'123456789',
                 //'ReceivePaymentsOperatorPhone'=>$Context['active_company']->company_phone,
@@ -491,22 +491,31 @@ class KKMIntegrator extends PluginBase{
 //            if($entry->analyse_origin){
 //                $CountryOfOrigin=country_code($entry->analyse_origin)['code'];
 //            }
+            $Register=[
+                'Name'=>$entry->product_name,
+                'Quantity'=>$entry->product_quantity,
+                'Price'=>$entry->product_price,
+                'Amount'=>$entry->product_sum,
+                'Department'=>0,
+                'Tax'=>$Context['active_company']->company_vat_rate,
+                //'EAN13'=>$entry->product_barcode,
+                'SignMethodCalculation'=>4,
+                'SignCalculationObject'=>1,
+                'MeasurementUnit'=>$entry->product_unit,
+                //'CountryOfOrigin'=>$CountryOfOrigin,
+                //'CustomsDeclaration'=>$entry->party_label,
+                //'ExciseAmount'=>0,
+                ];
+            if($Context['document']['head']->doc_type==5){//Agent document
+                $Register['AgentSign']=2;
+                $Register['PurveyorData']=[
+                    'PurveyorPhone'=>$Context['passive_company']->company_phone,
+                    'PurveyorName'=>$Context['passive_company']->company_name,
+                    'PurveyorVATIN'=>$Context['passive_company']->company_tax_id
+                ];
+            }
             $Check['CheckStrings'][]=[
-                'Register'=>[
-                    'Name'=>$entry->product_name,
-                    'Quantity'=>$entry->product_quantity,
-                    'Price'=>$entry->product_price,
-                    'Amount'=>$entry->product_sum,
-                    'Department'=>0,
-                    'Tax'=>$Context['active_company']->company_vat_rate,
-                    //'EAN13'=>$entry->product_barcode,
-                    'SignMethodCalculation'=>4,
-                    'SignCalculationObject'=>1,
-                    'MeasurementUnit'=>$entry->product_unit,
-                    //'CountryOfOrigin'=>$CountryOfOrigin,
-                    //'CustomsDeclaration'=>$entry->party_label,
-                    //'ExciseAmount'=>0,
-                ],
+                'Register'=>$Register
             ];
         }
         
