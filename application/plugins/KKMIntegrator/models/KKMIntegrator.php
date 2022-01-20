@@ -314,7 +314,7 @@ class KKMIntegrator extends PluginBase{
             $current_total=$Context['document']['footer']->total;
             $PreviousCheck=$prev_check->check_object->data;
             if( !empty($prev_check->check_object->registration->CheckNumber) ){
-                $corrected_check_ref="Корректируемый чек номер №{$prev_check->check_object->registration->CheckNumber}";
+                $corrected_check_ref="№{$prev_check->check_object->registration->CheckNumber}";
                 $PreviousCheck->AdditionalAttribute=$Context['AdditionalAttribute']=$corrected_check_ref;
             }
             $PreviousCheck->AdditionalAttribute=$Context['AdditionalAttribute'];
@@ -370,7 +370,7 @@ class KKMIntegrator extends PluginBase{
         $prev_check=$this->previousCheckFind($doc_id);
         $PreviousCheck=$prev_check->check_object->data;
         if( !empty($prev_check->check_object->registration->CheckNumber) ){
-            $corrected_check_ref="Возврат прихода по чеку номер №{$prev_check->check_object->registration->CheckNumber} от {$prev_check->check_object->tstamp}";
+            $corrected_check_ref="Возвр.по чеку №{$prev_check->check_object->registration->CheckNumber}";
             $PreviousCheck->AdditionalAttribute=$Context['AdditionalAttribute']=$corrected_check_ref;
         }
         $PreviousCheck->AdditionalAttribute=$Context['AdditionalAttribute'];
@@ -431,7 +431,7 @@ class KKMIntegrator extends PluginBase{
             'ClientAddress'=>$Context['passive_company']->company_mobile,
             // Покупатель (клиент) - наименование организации или фамилия, имя, отчество (при наличии), серия и номер паспорта покупателя(клиента). Тег 1227
             // Только с использованием наличных / электронных денежных средств и при выплате выигрыша, получении страховой премии или при страховой выплате.
-            'ClientInfo'=>$Context['passive_company']->company_name,
+            //'ClientInfo'=>$Context['passive_company']->company_name,//1227
             //'SenderEmail'=>$Context['active_company']->company_email,
             'PlaceMarket'=>"",
             'TaxVariant'=>"",
@@ -451,9 +451,9 @@ class KKMIntegrator extends PluginBase{
             'CashProvision'=>round($CashProvision,2),
         ];
         
-        if($Context['document']['head']->doc_type==55){//Agent document
+        if($Context['document']['head']->doc_type==5){//Agent document
             $Check['ClientInfo']='';
-            $Check['AgentSign']=2;
+            //$Check['AgentSign']=6;// Признак агента. Тег ОФД 1057. Поле не обязательное. Можно вообще не указывать.
            /* $Check['AgentData']=[
                 //'PayingAgentPhone'=>'123456789',
                 //'ReceivePaymentsOperatorPhone'=>$Context['active_company']->company_phone,
@@ -463,7 +463,7 @@ class KKMIntegrator extends PluginBase{
                 'MoneyTransferOperatorVATIN'=>$Context['active_company']->company_tax_id
             ];*/
             $Check['PurveyorData']=[
-                'PurveyorPhone'=>$Context['passive_company']->company_phone,
+                //'PurveyorPhone'=>$Context['passive_company']->company_phone,// Телефон поставщика тег ОД 1171
                 'PurveyorName'=>$Context['passive_company']->company_name,
                 'PurveyorVATIN'=>$Context['passive_company']->company_tax_id
             ];
@@ -507,7 +507,7 @@ class KKMIntegrator extends PluginBase{
                 //'ExciseAmount'=>0,
                 ];
             if($Context['document']['head']->doc_type==5){//Agent document
-                $Register['AgentSign']=2;
+                $Register['AgentSign']=6;
                 $Register['PurveyorData']=[
                     'PurveyorPhone'=>$Context['passive_company']->company_phone,
                     'PurveyorName'=>$Context['passive_company']->company_name,
