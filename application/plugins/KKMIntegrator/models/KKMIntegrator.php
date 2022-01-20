@@ -451,7 +451,7 @@ class KKMIntegrator extends PluginBase{
             'CashProvision'=>round($CashProvision,2),
         ];
         
-        if($Context['document']['head']->doc_type==5){//Agent document
+        if($Context['document']['head']->doc_type==55){//Agent document
             $Check['ClientInfo']='';
             $Check['AgentSign']=6;
            /* $Check['AgentData']=[
