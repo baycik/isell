@@ -799,20 +799,12 @@ Document.views = {
     settings: function (node) {
         var i = $(node).attr('data-view-i');
         var view = Document.views.view_list[i];
+        view.doc_extension=Document.doc_extension;
+        view.doc_id=Document.doc_id;
         if (view.doc_view_id) {
             App.loadWindow('page/mtrade/view_settings', view).progress(function (status,data) {
-                if (status === 'close') {// || status==='changed' status==='deleted' || 
-                    Document.load(Document.doc_id,["views"]);
-                }
-                if (status === 'update'){
-                    var url = Document.doc_extension + '/viewUpdate';
-                    $.post( url,data).done(function(ok){
-                        if( ok*1 ){
-                            App.flash("Сохранено: "+title);
-                        } else {
-                            App.flash("Ошибка сохранения "+title);
-                        }
-                    });
+                if (status === 'close'|| status==='update' || status==='delete') {// || status==='changed' status==='deleted' || 
+                    Document.reload(["views"]);
                 }
             });
         }

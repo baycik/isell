@@ -26,25 +26,31 @@
 	},
 	fieldChanged:function( field, value, is_extra, title ){
             var data={
-                doc_view_id:this.data.doc_view_id,is_extra,field,value
+                doc_view_id:this.data.doc_view_id,
+                doc_id:this.data.doc_id,
+                is_extra,
+                field,
+                value,
+                title
             };
             App.page_mtrade_view_settings.handler.notify('update',data);
-            alert('todo');
-            App.post( 'DocumentView/viewUpdate',{doc_view_id:this.data.doc_view_id,is_extra:is_extra,field:field,value:value}, function(ok){
-		App.page_mtrade_view_settings.handler.notify('changed');
-                if( ok*1 ){
-                    App.flash("Сохранено: "+title);
-                } else {
-                    App.flash("Ошибка сохранения "+title);
-                }
-	    });
+            var url = this.data.doc_extension + '/viewUpdate';
+            $.post( url, data ).done(function(){
+                App.flash("Сохранено: "+data.title);
+            }).fail(function(){
+                App.flash("Ошибка сохранения "+data.title);
+            });
 	},
 	deleteView:function(){
-            alert('todo');
-	    App.post( 'DocumentView/viewDelete',{doc_view_id:this.data.doc_view_id}, function(ok){
-		App.page_mtrade_view_settings.handler.notify('deleted');
-		App.page_mtrade_view_settings.node.window('close');
-	    });	    
+            var data={doc_view_id:this.data.doc_view_id};
+            App.page_mtrade_view_settings.handler.notify('delete',data);
+            var url = this.data.doc_extension + '/viewDelete';
+            $.post( url, data ).done(function(){
+                App.flash("Бланк удален");
+                App.page_mtrade_view_settings.node.window('close');
+            }).fail(function(){
+                App.flash("Ошибка удаления");
+            });
 	}
     };
 </script>
