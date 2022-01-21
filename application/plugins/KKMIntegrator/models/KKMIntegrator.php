@@ -77,33 +77,6 @@ class KKMIntegrator extends PluginBase{
         return $this->S4()."-".$this->S4()."-".$this->S4()."-".$this->S4()."-".$this->S4();
     }
     
-//    public function list( object $filter=null ){
-//        $request=[
-//            'Command'=> "List",
-//            // Отбор по номеру устройства. Число. Если 0 или не указано то с любым номером
-//            'NumDevice'=> 0,
-//            // Отбор по ИНН. Строка. Если "" или не указано то первое не блокированное на сервере
-//            'InnKkm'=> "",
-//            // Отбор активных. Булево. Если null или не указано то активные и не активные
-//            //'Active'=> true,
-//            // Отбор выключенных-включенных
-//            //'OnOff'=> true,
-//            // Отбор наличию ошибок ОФВ. Булево. Если null или не указано то с ошибками и без
-//            //'OFD_Error'=> false,
-//            // Все у которых дата не переданного док. в ОФД меньше указанной. Дата-время. Если null или не указано то любое
-//            //'OFD_DateErrorDoc'=> '2100-01-01T00:00:00',
-//            // Все у которых дата окончания работы ФН меньше указанной. Дата-время. Если null или не указано то любое
-//            //'FN_DateEnd'=> '2100-01-01T00:00:00',
-//            // Все у которых заканчивается память ФН; Булево. Если null или не указано то все
-//            //'FN_MemOverflowl'=> false,
-//            // Фискализованные или нет ФН; Булево. Если null или не указано то все
-//            //'FN_IsFiscal'=> true
-//        ];
-//        return $this->apiExecute( $request );
-//    }
-    
-        
-    
     private function moneyProcess( $doc_id, $Cash=0, $ElectronicPayment=0, $AdvancePayment=0, $Credit=0, $CashProvision=0 ){
         $ok=true;
         $this->db_transaction_start();
@@ -453,15 +426,6 @@ class KKMIntegrator extends PluginBase{
         
         if($Context['document']['head']->doc_type==5){//Agent document
             $Check['ClientInfo']='';
-            //$Check['AgentSign']=6;// Признак агента. Тег ОФД 1057. Поле не обязательное. Можно вообще не указывать.
-           /* $Check['AgentData']=[
-                //'PayingAgentPhone'=>'123456789',
-                //'ReceivePaymentsOperatorPhone'=>$Context['active_company']->company_phone,
-                'MoneyTransferOperatorPhone'=>$Context['active_company']->company_phone,
-                'MoneyTransferOperatorName'=> $Context['active_company']->company_name,
-                'MoneyTransferOperatorAddress'=>$Context['active_company']->company_jaddress,
-                'MoneyTransferOperatorVATIN'=>$Context['active_company']->company_tax_id
-            ];*/
             $Check['PurveyorData']=[
                 //'PurveyorPhone'=>$Context['passive_company']->company_phone,// Телефон поставщика тег ОД 1171
                 'PurveyorName'=>$Context['passive_company']->company_name,
@@ -487,10 +451,6 @@ class KKMIntegrator extends PluginBase{
         //include APPPATH.'views/rpt/ru/doc/BlankDatatables.php';
         
         foreach($Context['document']['entries'] as $entry){
-//            $CountryOfOrigin='';
-//            if($entry->analyse_origin){
-//                $CountryOfOrigin=country_code($entry->analyse_origin)['code'];
-//            }
             $Register=[
                 'Name'=>$entry->product_name,
                 'Quantity'=>$entry->product_quantity,
@@ -498,13 +458,9 @@ class KKMIntegrator extends PluginBase{
                 'Amount'=>$entry->product_sum,
                 'Department'=>0,
                 'Tax'=>$Context['active_company']->company_vat_rate,
-                //'EAN13'=>$entry->product_barcode,
                 'SignMethodCalculation'=>4,
                 'SignCalculationObject'=>1,
                 'MeasurementUnit'=>$entry->product_unit,
-                //'CountryOfOrigin'=>$CountryOfOrigin,
-                //'CustomsDeclaration'=>$entry->party_label,
-                //'ExciseAmount'=>0,
                 ];
             if($Context['document']['head']->doc_type==5){//Agent document
                 $Register['AgentSign']=6;
@@ -520,12 +476,7 @@ class KKMIntegrator extends PluginBase{
         }
         
         //print_r($Check);die;
-        
-        
         $registration=$this->apiExecute( $Check );
-        
-        
-        
         //die("$Cash, $ElectronicPayment, $AdvancePayment, $Credit, $CashProvision");
         if( !$registration->Error ){
             $this->saveCheckDump( $Context['document']['head']->doc_id, $Check, $registration );
