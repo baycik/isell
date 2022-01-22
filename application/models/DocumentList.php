@@ -45,11 +45,11 @@ class DocumentList extends Catalog{
 	    SELECT 
 		doc_id,
 		doc_type,
-                IF(doc_type=1,'DocumentSell',
-                IF(doc_type=2,'DocumentBuy',
-                IF(doc_type=3,'DocumentServiceSell',
-                IF(doc_type=4,'DocumentServiceBuy',
-                IF(doc_type=5,'DocumentAgentSell',
+                IF(doc_type=1,'DocSell',
+                IF(doc_type=2,'DocBuy',
+                IF(doc_type=3,'DocServiceSell',
+                IF(doc_type=4,'DocServiceBuy',
+                IF(doc_type=5,'DocAgentSell',
                 'UnknownDocType'
                 ))))) doc_extension,
 		dl.cstamp,

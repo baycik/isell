@@ -4,7 +4,7 @@ require_once 'Data.php';
 
 class Accounts extends Data {
 
-    public function commitTransaction($acc_debit_code, $acc_credit_code, $amount = 0, $description, $editable = 0, $cstamp = NULL, $amount_alt = 0, $active_company_id, $passive_company_id,$doc_id=0 ) {
+    public function commitTransaction($acc_debit_code, $acc_credit_code, $amount = 0, $description='', $editable = 0, $cstamp = NULL, $amount_alt = 0, $active_company_id=0, $passive_company_id=0,$doc_id=0 ) {
 	/*MUST REVISE THIS FUNCTION*/
         $this->checkUserAccessLevel(0, $acc_debit_code, $acc_credit_code);
         if (!$cstamp)
@@ -20,7 +20,7 @@ class Accounts extends Data {
                 amount='$amount', 
                 amount_alt='$amount_alt', 
                 description='$description', 
-                editable='$editable',
+                editable=IF('$editable',1,0),
                 created_by='$user_id',
                 modified_by='$user_id'";
         $this->Base->query($sql);
@@ -596,7 +596,7 @@ class Accounts extends Data {
         return $balance;
     }
 
-    public function getCheckListData($main_acc_code = 0, $grid_query) {
+    public function getCheckListData($main_acc_code, $grid_query) {
 	$active_company_id=$this->Base->acomp('company_id');
         $select = "
 		    *,

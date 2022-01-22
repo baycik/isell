@@ -381,13 +381,13 @@ class DocumentItems extends DocumentCore{
 	return $this->get_value("SELECT JSON_EXTRACT(doc_settings,'$key') FROM document_list WHERE doc_id='$doc_id'");	
     }
     
-    public $entryDocumentCommit=['int'];
+
     public function entryDocumentCommit( $doc_id ){
 	$this->selectDoc($doc_id);
         $passive_company_id=$this->doc('passive_company_id');
         $Company=$this->Hub->load_model("Company");
         $Company->selectPassiveCompany($passive_company_id);
-	$this->documentDiscountsSave();
+	//$this->documentDiscountsSave();
 	$Document2=$this->Hub->bridgeLoad('Document');
         $commit_ok=$Document2->commit();
         if( $commit_ok ){
@@ -397,7 +397,6 @@ class DocumentItems extends DocumentCore{
 	return $commit_ok;
     }
     
-    public $entryDocumentUncommit=['int'];
     public function entryDocumentUncommit( $doc_id ){
 	$this->selectDoc($doc_id);
         $is_commited=$this->isCommited();
@@ -428,7 +427,7 @@ class DocumentItems extends DocumentCore{
 	$old_head=$this->get_row("SELECT cstamp,doc_data,doc_ratio,notcount,use_vatless_price FROM document_list WHERE doc_id='$old_doc_id'");
 	$this->update("document_list", $old_head, ['doc_id'=>$new_doc_id]);
     }
-    public $duplicate=['int'];
+
     public function duplicate( $old_doc_id ){
 	$this->check($old_doc_id,'int');
 	$this->Hub->set_level(2);

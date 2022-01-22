@@ -155,7 +155,7 @@ class DataBase extends InputOutput {
 	} else {
 	    $row = mysqli_fetch_array($tmpres);
 	    mysqli_free_result($tmpres);
-	    return $row[$index];
+	    return $row[$index]??NULL;
 	}
     }
     public function get_field_list($table_name, $hide_tstamp = true) {

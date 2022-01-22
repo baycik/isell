@@ -1,6 +1,6 @@
 /*global Slick,holderId,Document,Document.doc_extension,App,Mark*/
 Document.head = {
-    commited_color:"rgba(0,255,100,0.2)",
+    commited_color:"rgba(0,0,0,0.2)",
     init: function () {
         Document.head.controls.init();
         Document.head.toolbar.init();
@@ -852,4 +852,3 @@ Document.views = {
         $('.document_view_is_hidden').css('display', (this.showhidden ? 'inline-block' : 'none'));
     }
 };
-

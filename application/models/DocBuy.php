@@ -1,6 +1,6 @@
 <?php
 
-class ExtensionDocumentBuy extends DocumentBase{
+class DocBuy extends DocumentBase{
     
     protected $doc_type_name="Приходный документ";
     
@@ -10,19 +10,16 @@ class ExtensionDocumentBuy extends DocumentBase{
     }
     
     public function index(){
-	echo 'hello';
         
-        
-        echo $this->transSchemeRenderTpl('Hello {$doc->doc_id}');
     }
     
     public function extensionGet(){
 	return [
-	    'script'=>  $this->load->view('mtrade/documentsell/sell_script.js',[],true),
-	    'head'=>    $this->load->view('mtrade/documentsell/head.html',[],true),
-	    'body'=>    $this->load->view('mtrade/documentsell/body.html',[],true),
-	    'foot'=>    $this->load->view('mtrade/documentsell/foot.html',[],true),
-	    'views'=>   $this->load->view('mtrade/documentsell/views.html',[],true)
+	    'script'=>  $this->load->view('mtrade/document_base_script.js',[],true).$this->load->view('mtrade/docbuy/buy_script.js',[],true),
+	    'head'=>    $this->load->view('mtrade/docsell/head.html',[],true),
+	    'body'=>    $this->load->view('mtrade/docsell/body.html',[],true),
+	    'foot'=>    $this->load->view('mtrade/docsell/foot.html',[],true),
+	    'views'=>   $this->load->view('mtrade/docsell/views.html',[],true)
 	];
     }
     //////////////////////////////////////////
@@ -30,10 +27,6 @@ class ExtensionDocumentBuy extends DocumentBase{
     //////////////////////////////////////////
     public function documentGet(int $doc_id, array $parts_to_load){
 	$this->documentSelect($doc_id);
-//	$doc_type=$this->doc('doc_type');
-//	if( $doc_type!='1' && $doc_type!=1 ){
-//            return parent::headGet($doc_id);
-//	}
 	$document=[];
 	if( in_array("head",$parts_to_load) ){
 	    $document["head"]=$this->headGet($doc_id);
@@ -51,8 +44,8 @@ class ExtensionDocumentBuy extends DocumentBase{
     }
     
     public function documentCreate( int $doc_type=null, string $handler=null ){
-	$doc_type=1;
-	return parent::documentCreate( $doc_type, 'DocumentSell' );
+	$doc_type=2;
+	return parent::documentCreate( $doc_type, 'DocBuy' );
     }
     
     public function documentUpdate( int $doc_id, object $document ){
@@ -64,13 +57,13 @@ class ExtensionDocumentBuy extends DocumentBase{
     }
     
     public function documentNameGet(){
-        return "Расходный документ ".($this->doc('is_reclamation')?" (Возврат)":"")." №".$this->doc('doc_num');
+        return "Приходный документ ".($this->doc('is_reclamation')?" (Возврат)":"")." №".$this->doc('doc_num');
     }
     //////////////////////////////////////////
     // DOCUMENT EVENTS SECTION
     //////////////////////////////////////////
     protected function documentEventsInit(){
-        $this->Topic("documentBeforeChangeIsCommited")->subscribe('DocumentSell','documentBeforeChangeIsCommited');        
+        $this->Topic("documentBeforeChangeIsCommited")->subscribe('DocBuy','documentBeforeChangeIsCommited');        
     }
     
     public function documentBeforeChangeIsCommited( $field, bool $new_is_commited ){
@@ -96,9 +89,7 @@ class ExtensionDocumentBuy extends DocumentBase{
     //////////////////////////////////////////
     // HEAD SECTION
     //////////////////////////////////////////
-    public function headFieldUpdate( int $doc_id, string $field, string $value=null ){
-        return parent::headFieldUpdate( $doc_id, $field, $value );
-    }
+    //
     //////////////////////////////////////////
     // BODY SECTION
     //////////////////////////////////////////

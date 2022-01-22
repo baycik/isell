@@ -1,0 +1,1 @@
+Document.head.commited_color="rgba(55,255,0,0.30)";

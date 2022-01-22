@@ -30,7 +30,7 @@ class DocumentBase extends Catalog {
      */
     public function doc(string $field = null, string $value = null, bool $flush = true) {
         if (!isset($this->document_properties)) {
-            throw new Exception("Can't use properties because Document is not selected");
+            throw new Exception("Can't use properties because Document is not selected",400);
         }
         if (isset($value)) {
             $this->Hub->set_level(2);
@@ -320,7 +320,7 @@ class DocumentBase extends Catalog {
     }
 
     public function headDelete() {
-        throw new Exception("Function Not exists");
+        throw new Exception("Function Not exists",404);
     }
 
     //HEAD UTILS

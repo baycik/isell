@@ -6,13 +6,13 @@
  * Description: Документ продажи товара
  * Author: baycik 2017
  * Author URI: isellsoft.com
- * Trigger before: DocumentSell
+ * Trigger before: DocSell
  * 
- * Description of DocumentSell
+ * Description of DocSell
  * This class handles all of sell documents
  * @author Baycik
  */
-class DocumentSell extends DocumentBase{
+class DocSell extends DocumentBase{
     
     protected $doc_type_name="Расходный документ";
     
@@ -22,19 +22,16 @@ class DocumentSell extends DocumentBase{
     }
     
     public function index(){
-	echo 'hello';
         
-        
-        echo $this->transSchemeRenderTpl('Hello {$doc->doc_id}');
     }
     
     public function extensionGet(){
 	return [
-	    'script'=>  $this->load->view('mtrade/documentsell/sell_script.js',[],true),
-	    'head'=>    $this->load->view('mtrade/documentsell/head.html',[],true),
-	    'body'=>    $this->load->view('mtrade/documentsell/body.html',[],true),
-	    'foot'=>    $this->load->view('mtrade/documentsell/foot.html',[],true),
-	    'views'=>   $this->load->view('mtrade/documentsell/views.html',[],true)
+	    'script'=>  $this->load->view('mtrade/document_base_script.js',[],true).$this->load->view('mtrade/docsell/sell_script.js',[],true),
+	    'head'=>    $this->load->view('mtrade/docsell/head.html',[],true),
+	    'body'=>    $this->load->view('mtrade/docsell/body.html',[],true),
+	    'foot'=>    $this->load->view('mtrade/docsell/foot.html',[],true),
+	    'views'=>   $this->load->view('mtrade/docsell/views.html',[],true)
 	];
     }
     //////////////////////////////////////////
@@ -64,7 +61,7 @@ class DocumentSell extends DocumentBase{
     
     public function documentCreate( int $doc_type=null, string $handler=null ){
 	$doc_type=1;
-	return parent::documentCreate( $doc_type, 'DocumentSell' );
+	return parent::documentCreate( $doc_type, 'DocSell' );
     }
     
     public function documentUpdate( int $doc_id, object $document ){
@@ -82,7 +79,7 @@ class DocumentSell extends DocumentBase{
     // DOCUMENT EVENTS SECTION
     //////////////////////////////////////////
     protected function documentEventsInit(){
-        $this->Topic("documentBeforeChangeIsCommited")->subscribe('DocumentSell','documentBeforeChangeIsCommited');        
+        $this->Topic("documentBeforeChangeIsCommited")->subscribe('DocSell','documentBeforeChangeIsCommited');        
     }
     
     public function documentBeforeChangeIsCommited( $field, bool $new_is_commited ){

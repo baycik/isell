@@ -355,7 +355,7 @@
 	},
 	commit:function(){
 	    if( Doc.isCreated ){
-		App.post("DocumentItems/entryDocumentCommit/"+Doc.head.props.doc_id, function ( ok ) {
+		App.post("DocumentItems/entryDocumentCommit/",{doc_id:Doc.head.props.doc_id}, function ( ok ) {
 		    if( ok*1 ){
 			Doc.head.allowUpdate=false;
 			Doc.head.reload();
@@ -375,7 +375,7 @@
 	    if( action==='delete' && !confirm("Удалить документ?") ){
 		return;
 	    }
-	    App.post("DocumentItems/entryDocumentUncommit/"+Doc.head.props.doc_id, function ( ok ) {
+	    App.post("DocumentItems/entryDocumentUncommit/",{doc_id:Doc.head.props.doc_id}, function ( ok ) {
 		if( ok*1 ){
 		    if( action==='uncommit' ){
 			Doc.head.reload();
@@ -394,7 +394,7 @@
 		return;
 	    }
 	    if( confirm("Создать копию этого документа?") ){
-		App.post("DocumentItems/duplicate/"+Doc.head.props.doc_id,function(doc_id){
+		App.post("DocumentItems/duplicate/",{doc_id:Doc.head.props.doc_id},function(doc_id){
 		    if( doc_id*1 ){
 			Doc.head.load(doc_id);
 			Doc.handler.notify('created',doc_id);

@@ -8,9 +8,9 @@
             extension:{
                 alreadyLoaded:$.Deferred(),
                 set:function( new_doc_extension ){
-                    if(new_doc_extension==1){
+                    /*if(new_doc_extension==1){
                         new_doc_extension='DocumentSell';
-                    }
+                    }*/
                     if( !new_doc_extension || Document.doc_extension===new_doc_extension ){
                         !new_doc_extension && console.log("Wrong extension"+new_doc_extension)
                         return ;
