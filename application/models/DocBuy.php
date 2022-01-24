@@ -302,7 +302,7 @@ class DocBuy extends DocumentBase{
             throw new Exception($error['message'].' '.$this->db->last_query(),500);//Internal Server Error
 	}
         if( $modify_stock && ($new_entry_data->product_quantity??false) ){
-            $product_delta_quantity=$current_entry_data->product_quantity - $new_entry_data->product_quantity;
+            $product_delta_quantity= $new_entry_data->product_quantity - $current_entry_data->product_quantity;
             $product_code=$new_entry_data->product_code??$current_entry_data->product_code;
             $stock_id=1;
             $Stock=$this->Hub->load_model("Stock");

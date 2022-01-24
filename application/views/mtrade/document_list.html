@@ -228,7 +228,7 @@
         },
         load:function(doc_id,doc_extension){
             doc_extension=doc_extension||1;
-            if( !doc_extension ){/* TODO determine current doc_extension automatically*/
+            if( !doc_extension || !isNaN(doc_extension) ){/* TODO determine current doc_extension automatically*/
                 console.log('provide doc_extension please!!!');
                 return;
             }

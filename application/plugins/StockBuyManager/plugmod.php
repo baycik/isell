@@ -239,7 +239,7 @@ $sql = "SELECT
         supply_list sl1 ON (sl1.supply_code = tmp.product_code AND sl1.supply_leftover > 0 )
             LEFT JOIN 
         supplier_list srl ON (sl.supplier_id = srl.supplier_id OR sl1.supplier_id = srl.supplier_id) 
-        GROUP BY product_code 
+        GROUP BY product_code,leftover,product_img,product_reserved,product_awaiting,popularity
         ORDER BY tmp.popularity  DESC
         ";       
 EOT;
