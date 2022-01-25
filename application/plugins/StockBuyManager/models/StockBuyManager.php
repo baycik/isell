@@ -564,7 +564,7 @@ class StockBuyManager extends Catalog{
         die;
 	
     }
-    public function matchesAddCommingLeftovers( string $query, string $registerer_param=null, string $previuos_return=null ){
+    public function matchesAddCommingLeftovers( array $query, string $registerer_param=null, string $previuos_return=null ){
         if( $previuos_return ){
             $query=$previuos_return;
         }
