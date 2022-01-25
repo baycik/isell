@@ -9,8 +9,8 @@
  * Author URI: http://isellsoft.ru
  */
 class DocumentManager extends Catalog{
-    public $result=['offset'=>'int','limit'=>'int','sortby'=>'string','sortdir'=>'(ASC|DESC)','filter'=>'json','config'=>'json'];
-    public function result($offset,$limit,$sortby,$sortdir,$filter=null,$config){
+    public $result=['offset'=>'int','limit'=>'int','sortby'=>'string','sortdir'=>'(ASC|DESC)','filter'=>'json','config'=>'array'];
+    public function result($offset,$limit,$sortby,$sortdir,$filter=null,$config=[]){
 	$add=[0];
 	$extract=[0];
         if( $config ){

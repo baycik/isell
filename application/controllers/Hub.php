@@ -145,6 +145,7 @@ class Hub extends CI_Controller{
 	    case 'string':
                 $var=  addslashes( $var );
                 break;
+	    case 'json':
 	    case 'array':
 	    case '?array':
                 $var= trim($var, "\"");

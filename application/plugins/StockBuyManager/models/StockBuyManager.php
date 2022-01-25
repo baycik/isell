@@ -85,7 +85,7 @@ class StockBuyManager extends Catalog{
 	return $this->get_list($sql);
     }
     
-    public function viewGet( string $sortby, string $sortdir, array $filter, string $out_type){
+    public function viewGet( string $sortby=null, string $sortdir=null, array $filter=[], string $out_type='.print'){
         $this->Hub->set_level(2);
 	$table=$this->listFetch(0,10000,$sortby,$sortdir,$filter);
 	$dump=[
