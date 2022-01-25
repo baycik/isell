@@ -37,8 +37,7 @@ class StockBuyManager extends Catalog{
 	$this->load->view($path);
     }
     
-    public $listFetch=['offset'=>'int','limit'=>'int','sortby'=>'string','sortdir'=>'(ASC|DESC)','filter'=>'json'];
-    public function listFetch($offset,$limit,$sortby,$sortdir,$filter=null){
+    public function listFetch( int $offset, int $limit, string $sortby=null, string $sortdir=null, array $filter=null){
         $this->Hub->set_level(2);
 	if( empty($sortby) ){
 	    $sortby="sl.product_code IS NULL,sl.product_code";
@@ -86,8 +85,7 @@ class StockBuyManager extends Catalog{
 	return $this->get_list($sql);
     }
     
-    public $viewGet=['sortby'=>'string','sortdir'=>'(ASC|DESC)','filter'=>'json','out_type'=>'string'];
-    public function viewGet($sortby,$sortdir,$filter,$out_type){
+    public function viewGet( string $sortby, string $sortdir, array $filter, string $out_type){
         $this->Hub->set_level(2);
 	$table=$this->listFetch(0,10000,$sortby,$sortdir,$filter);
 	$dump=[
@@ -109,8 +107,7 @@ class StockBuyManager extends Catalog{
 	$ViewManager->outRedirect($out_type);
     }
     
-    public $entryImport=['supplier_id'=>'int','label'=>'string'];
-    public function entryImport( $supplier_id,$label ){
+    public function entryImport( int $supplier_id, string $label ){
         $this->Hub->set_level(2);
 	$source = array_map('addslashes',$this->request('source','raw'));
 	$target = array_map('addslashes',$this->request('target','raw'));
@@ -147,16 +144,14 @@ class StockBuyManager extends Catalog{
 	return $this->db->affected_rows();
     }
     
-    public $supplyCreate=['supplier_id'=>'int'];
-    public function supplyCreate($supplier_id){
+    public function supplyCreate( int $supplier_id){
         $this->Hub->set_level(2);
 	$insert_id=$this->create('supply_list',['supplier_id'=>$supplier_id]);
 	$this->update('supply_list',['supply_code'=>$insert_id],['supply_id'=>$insert_id]);
 	return $insert_id;
     }
     
-    public $supplyUpdate=['supply_id'=>'int','field'=>'string','value'=>'string'];
-    public function supplyUpdate($supply_id,$field,$value){
+    public function supplyUpdate( int $supply_id,string $field,string $value){
         $this->Hub->set_level(2);
 	if( $field=='supplier_name' ){
 	    $field='supplier_id';
@@ -169,14 +164,14 @@ class StockBuyManager extends Catalog{
 	return $this->update('supply_list',$data,['supply_id'=>$supply_id]);
     }
  
-    public $supplyDelete=['supply_ids'=>'raw'];
-    public function supplyDelete($supply_ids){
+
+    public function supplyDelete( array $supply_ids){
         $this->Hub->set_level(2);
 	return $this->delete('supply_list','supply_id',$supply_ids);
     }
     
-    public $supplyExport=['supply_ids'=>'raw'];
-    public function supplyExport($supply_ids){
+
+    public function supplyExport( array $supply_ids){
         $this->Hub->set_level(2);
 	if( empty($supply_ids) ){
 	    return 0;
@@ -243,14 +238,12 @@ class StockBuyManager extends Catalog{
 	return array_merge($all,$this->get_list($sql));
     }
     
-    public $supplierCreate=['supplier_company_id'=>'int','label'=>'string'];
-    public function supplierCreate($supplier_company_id,$label){
+    public function supplierCreate( int $supplier_company_id, string $label){
         $this->Hub->set_level(2);
 	return $this->create('supplier_list',['supplier_company_id'=>$supplier_company_id,'supplier_name'=>$label]);
     }
     
-    public $supplierUpdate=['supplier_id'=>'int','field'=>'string','value'=>'string'];
-    public function supplierUpdate($supplier_id,$field,$value){
+    public function supplierUpdate( int $supplier_id,string $field,string $value){
         $this->Hub->set_level(2);
 	$data=[$field=>$value];
 	if( $field =='supplier_sell_discount' ){
@@ -262,8 +255,7 @@ class StockBuyManager extends Catalog{
 	return $this->update('supplier_list',$data,['supplier_id'=>$supplier_id]);
     }
     
-    public $supplierUpdatePrices=['supplier_id'=>'int'];
-    public function supplierUpdatePrices($supplier_id){
+    public function supplierUpdatePrices( int $supplier_id ){
         $this->Hub->set_level(2);
         $sql="UPDATE 
                 price_list pl
@@ -309,7 +301,7 @@ class StockBuyManager extends Catalog{
     
     
     public $supplierDelete=['supplier_id'=>'int','also_products'=>'bool'];
-    public function supplierDelete($supplier_id,$also_products){
+    public function supplierDelete( int $supplier_id, bool $also_products){
         $this->Hub->set_level(2);
 	if( $also_products ){
 	    $this->delete('supply_list',['supplier_id'=>$supplier_id]);
@@ -465,13 +457,13 @@ class StockBuyManager extends Catalog{
     }
  
     public $orderDelete=['entry_ids'=>'raw'];
-    public function orderDelete($entry_ids){
+    public function orderDelete( array $entry_ids){
         $this->Hub->set_level(2);
 	return $this->delete('supply_order','entry_id',$entry_ids);
     }
     
-    public $orderFromStock=['parent_id'=>'int'];
-    public function orderFromStock( $parent_id ){
+
+    public function orderFromStock( int $parent_id ){
         $this->Hub->set_level(2);
         $stock_cat=$this->get_value("SELECT label FROM stock_tree WHERE branch_id='$parent_id'");
 	$where="1";
@@ -532,8 +524,8 @@ class StockBuyManager extends Catalog{
 	$ViewManager->outRedirect($out_type);
     }
 
-    public $orderSubmit=['supplier_company_id'=>'int'];
-    public function orderSubmit($supplier_company_id){
+    //public $orderSubmit=['supplier_company_id'=>'int'];
+    public function orderSubmit(int $supplier_company_id){
         $this->Hub->set_level(2);
 	$this->orderTmpCreate(0,0,0);
 	$buy_order=$this->get_list("SELECT 
@@ -572,7 +564,7 @@ class StockBuyManager extends Catalog{
         die;
 	
     }
-    public function matchesAddCommingLeftovers( $query, $registerer_param=null, $previuos_return=null ){
+    public function matchesAddCommingLeftovers( string $query, string $registerer_param=null, string $previuos_return=null ){
         if( $previuos_return ){
             $query=$previuos_return;
         }
