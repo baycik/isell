@@ -148,6 +148,9 @@ class Hub extends CI_Controller{
 	    case 'json':
 	    case 'array':
 	    case '?array':
+                if( is_array($var) ){
+                    break;//native post array
+                }
                 $var= trim($var, "\"");
                 $result= json_decode( $var,true );
                 if( json_last_error()!=JSON_ERROR_NONE ){

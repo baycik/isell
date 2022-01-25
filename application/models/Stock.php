@@ -88,8 +88,8 @@ class Stock extends Catalog {
     
     
 
-    public function branchFetch( int $parent_id = 0, string $depth='top') {
-        return $this->treeFetch("stock_tree", $parent_id, $depth);
+    public function branchFetch( int $id = 0, string $depth='top') {
+        return $this->treeFetch("stock_tree", $id, $depth);
     }
 
     public function stockTreeCreate( int $parent_id, string $label) {
