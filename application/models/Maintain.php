@@ -7,6 +7,7 @@ class Maintain extends CI_Model {
 
     function __construct() {
 	$this->dirWork = realpath('.');
+        session_write_close();
     }
 
     public $getCurrentVersionStamp = [];
@@ -51,6 +52,13 @@ class Maintain extends CI_Model {
 		$this->db->query("REPLACE pref_list SET pref_name='db_applied_patches', pref_value='$db_applied_patches'");
 	    }
 	}
+    }
+    
+    public function optimizeDb(){
+	$this->Hub->set_level(4);
+        set_time_limit(300);
+        $optimize_db_file = str_replace("\\", "/", $this->dirWork.'/install/optimize_db.sql');
+        return $this->backupImportExecute($optimize_db_file);
     }
 
     private function updateConfigurator() {

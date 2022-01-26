@@ -37,6 +37,7 @@ class ViewManager extends CI_Model{
     public $out=['string','send_headers'];
     public function out( $out_type='.print', $header_mode='send_headers' ){
 	if( $this->dump ){
+            session_write_close();
 	    $this->load->library('FileEngine');
 	    $FileEngine=new FileEngine();
             $FileEngine->Hub=$this->Hub;
