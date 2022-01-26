@@ -264,10 +264,13 @@ class PluginManager extends Catalog{
             return false;
         }
 	$file_data=$this->Hub->Storage->file_restore('plugin_modifications/'.$filename);//looking for already modified file
-	if( !$file_data ){//if there is none load original one
-	    $original_file=APPPATH.$filename;
+        $original_file=APPPATH.$filename;
+	if( !$file_data && file_exists($original_file) ){//if there is none load original one
 	    $file_data=file_get_contents($original_file);
 	}
+        if( !$file_data ){
+            return true;
+        }
         $altered_data = '';
         if ($replace){
 	    $altered_data =  str_ireplace($search, $replace, $file_data);
