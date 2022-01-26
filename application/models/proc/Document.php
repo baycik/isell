@@ -766,7 +766,7 @@ class Document extends Data {
 	    }
         }
 	$cstamp = $this->doc('cstamp');
-	$this->Base->query("INSERT INTO document_view_list SET doc_id='$doc_id', view_type_id='$view_type_id', view_efield_values=IF(".(empty($efields)?0:1).",'$efields',NULL), tstamp='$cstamp', view_num='$view_num', view_role='{$view_type_props['view_role']}'");
+	$this->Base->query("INSERT INTO document_view_list SET doc_id='$doc_id', html='', view_type_id='$view_type_id', view_efield_values=IF(".(empty($efields)?0:1).",'$efields',NULL), tstamp='$cstamp', view_num='$view_num', view_role='{$view_type_props['view_role']}'");
 	return mysqli_insert_id($this->Base->db_link);
     }
     
