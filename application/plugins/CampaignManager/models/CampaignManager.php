@@ -101,7 +101,7 @@ class CampaignManager extends Catalog{
         return $where?$where." AND level<= $user_level":0;
     }
     
-    public function clientListFetch(int $campaign_id, int $offset=0,int $limit=30,string $sortby='label',string $sortdir='ASC',array $filter){
+    public function clientListFetch(int $campaign_id, int $offset=0,int $limit=30,string $sortby='label',string $sortdir='ASC',array $filter=[]){
         $this->Hub->set_level(3);
         $having=$this->makeFilter($filter);
         $where=$this->clientListFilterGet($campaign_id);

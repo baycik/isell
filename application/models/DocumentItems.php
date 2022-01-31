@@ -557,6 +557,7 @@ class DocumentItems extends DocumentCore{
     
     public $documentOut=["doc_id"=>"int","out_type"=>"string"];
     public function documentOut($doc_id,$out_type){
+        set_time_limit(300);
         $dump=[
             'tpl_files'=>'DocumentOut.xlsx',
 	    'title'=>"Document-".$this->doc('doc_num'),
