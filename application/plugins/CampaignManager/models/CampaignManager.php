@@ -158,6 +158,8 @@ class CampaignManager extends Catalog{
         } else if( $field === 'campaign_finish_at' && validate_period($value) ){
             $value=substr($value,0,10).' 23:59:59';
             $period_fill_is_needed=true;
+        } else if( $field === 'product_category_id' ){
+            $value=(int)$value;
         }
         $ok=$this->update('plugin_campaign_bonus',[$field=>$value],['campaign_bonus_id'=>$campaign_bonus_id]);
         if( $period_fill_is_needed ){
@@ -497,12 +499,15 @@ class CampaignManager extends Catalog{
                 COALESCE(filtered_product_vatless_sum * (dl.vat_rate/100+1),0)";
         $table="
                     LEFT JOIN
-                document_list dl ON $period_on 
-                                    AND doc_type = 1 
-                                    AND is_commited 
-                                    AND NOT notcount 
-                                    AND dl.cstamp>'{$campaign_bonus->campaign_start_at}' AND dl.cstamp<'{$campaign_bonus->campaign_finish_at}'
-                    JOIN (SELECT company_id FROM companies_list JOIN companies_tree USING(branch_id) WHERE $client_filter) ttt ON company_id=passive_company_id
+                    (SELECT * FROM
+                    document_list dl 
+                        WHERE 
+                            passive_company_id IN (SELECT company_id FROM companies_list JOIN companies_tree USING(branch_id) WHERE $client_filter)
+                            AND doc_type = 1 
+                            AND is_commited 
+                            AND NOT notcount 
+                            AND dl.cstamp>'{$campaign_bonus->campaign_start_at}' AND dl.cstamp<'{$campaign_bonus->campaign_finish_at}'
+                    ) dl ON $period_on
                     LEFT JOIN
                 {$product_range['table']} product_range USING (doc_id)
                     LEFT JOIN
@@ -537,12 +542,15 @@ class CampaignManager extends Catalog{
                 SUM(unfiltered_product_vatless_sum * (dl.vat_rate/100+1)";
         $table="
                     LEFT JOIN
-                document_list dl ON $period_on 
-                                    AND doc_type = 1 
-                                    AND is_commited 
-                                    AND NOT notcount 
-                                    AND dl.cstamp>'{$campaign_bonus->campaign_start_at}' AND dl.cstamp<'{$campaign_bonus->campaign_finish_at}'
-                    JOIN (SELECT company_id FROM companies_list JOIN companies_tree USING(branch_id) WHERE $client_filter) ttt ON company_id=passive_company_id
+                    (SELECT * FROM
+                    document_list dl 
+                        WHERE 
+                            passive_company_id IN (SELECT company_id FROM companies_list JOIN companies_tree USING(branch_id) WHERE $client_filter)
+                            AND doc_type = 1 
+                            AND is_commited 
+                            AND NOT notcount 
+                            AND dl.cstamp>'{$campaign_bonus->campaign_start_at}' AND dl.cstamp<'{$campaign_bonus->campaign_finish_at}'
+                    ) dl ON $period_on
                     LEFT JOIN
                 {$product_range['table']} product_range USING (doc_id)
                     LEFT JOIN
@@ -574,12 +582,15 @@ class CampaignManager extends Catalog{
                 COALESCE(GREATEST(invoice_price * (dl.vat_rate/100+1)-GREATEST(breakeven_price,self_price * (dl.vat_rate/100+1)),0) * product_quantity,0)";
         $table="
                     LEFT JOIN
-                document_list dl ON $period_on 
-                                    AND doc_type = 1 
-                                    AND is_commited 
-                                    AND NOT notcount 
-                                    AND dl.cstamp>'{$campaign_bonus->campaign_start_at}' AND dl.cstamp<'{$campaign_bonus->campaign_finish_at}'
-                    JOIN (SELECT company_id FROM companies_list JOIN companies_tree USING(branch_id) WHERE $client_filter) ttt ON company_id=passive_company_id
+                    (SELECT * FROM
+                    document_list dl 
+                        WHERE 
+                            passive_company_id IN (SELECT company_id FROM companies_list JOIN companies_tree USING(branch_id) WHERE $client_filter)
+                            AND doc_type = 1 
+                            AND is_commited 
+                            AND NOT notcount 
+                            AND dl.cstamp>'{$campaign_bonus->campaign_start_at}' AND dl.cstamp<'{$campaign_bonus->campaign_finish_at}'
+                    ) dl ON $period_on
                     LEFT JOIN
                 {$product_range['table']} product_range USING (doc_id)
                     LEFT JOIN
@@ -609,9 +620,12 @@ class CampaignManager extends Catalog{
                             amount,0),0)";
         $table="
                     LEFT JOIN
-                        acc_trans at ON $period_on
+                    (SELECT * FROM
+                        acc_trans at
+                    WHERE 
+                        passive_company_id IN (SELECT company_id FROM companies_list JOIN companies_tree USING(branch_id) WHERE $client_filter)
                         AND (acc_debit_code=$payment_account OR acc_credit_code=$payment_account)
-                    JOIN (SELECT company_id FROM companies_list JOIN companies_tree USING(branch_id) WHERE $client_filter) ttt ON company_id=passive_company_id
+                    ) at ON $period_on
                 ";
         $where="";
         return [
