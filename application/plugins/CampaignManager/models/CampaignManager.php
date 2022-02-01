@@ -501,8 +501,8 @@ class CampaignManager extends Catalog{
                                     AND doc_type = 1 
                                     AND is_commited 
                                     AND NOT notcount 
-                                    AND passive_company_id IN (SELECT company_id FROM companies_list JOIN companies_tree USING(branch_id) WHERE $client_filter)
                                     AND dl.cstamp>'{$campaign_bonus->campaign_start_at}' AND dl.cstamp<'{$campaign_bonus->campaign_finish_at}'
+                    JOIN (SELECT company_id FROM companies_list JOIN companies_tree USING(branch_id) WHERE $client_filter) ttt ON company_id=passive_company_id
                     LEFT JOIN
                 {$product_range['table']} product_range USING (doc_id)
                     LEFT JOIN
@@ -541,8 +541,8 @@ class CampaignManager extends Catalog{
                                     AND doc_type = 1 
                                     AND is_commited 
                                     AND NOT notcount 
-                                    AND passive_company_id IN (SELECT company_id FROM companies_list JOIN companies_tree USING(branch_id) WHERE $client_filter)
                                     AND dl.cstamp>'{$campaign_bonus->campaign_start_at}' AND dl.cstamp<'{$campaign_bonus->campaign_finish_at}'
+                    JOIN (SELECT company_id FROM companies_list JOIN companies_tree USING(branch_id) WHERE $client_filter) ttt ON company_id=passive_company_id
                     LEFT JOIN
                 {$product_range['table']} product_range USING (doc_id)
                     LEFT JOIN
@@ -578,8 +578,8 @@ class CampaignManager extends Catalog{
                                     AND doc_type = 1 
                                     AND is_commited 
                                     AND NOT notcount 
-                                    AND passive_company_id IN (SELECT company_id FROM companies_list JOIN companies_tree USING(branch_id) WHERE $client_filter)
                                     AND dl.cstamp>'{$campaign_bonus->campaign_start_at}' AND dl.cstamp<'{$campaign_bonus->campaign_finish_at}'
+                    JOIN (SELECT company_id FROM companies_list JOIN companies_tree USING(branch_id) WHERE $client_filter) ttt ON company_id=passive_company_id
                     LEFT JOIN
                 {$product_range['table']} product_range USING (doc_id)
                     LEFT JOIN
@@ -610,8 +610,8 @@ class CampaignManager extends Catalog{
         $table="
                     LEFT JOIN
                         acc_trans at ON $period_on
-                            AND passive_company_id IN (SELECT company_id FROM companies_list JOIN companies_tree USING(branch_id) WHERE $client_filter)
-                            AND (acc_debit_code=$payment_account OR acc_credit_code=$payment_account)
+                        AND (acc_debit_code=$payment_account OR acc_credit_code=$payment_account)
+                    JOIN (SELECT company_id FROM companies_list JOIN companies_tree USING(branch_id) WHERE $client_filter) ttt ON company_id=passive_company_id
                 ";
         $where="";
         return [
