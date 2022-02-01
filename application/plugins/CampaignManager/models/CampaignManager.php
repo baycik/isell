@@ -212,7 +212,7 @@ class CampaignManager extends Catalog{
     
     public function bonusPeriodUpdate( int $campaign_bonus_period_id, string $field, string $value='' ){
         $this->Hub->set_level(3);
-        return $this->update('plugin_campaign_bonus_periods',[$field=>$value],['campaign_bonus_period_id'=>$campaign_bonus_period_id]);
+        return $this->update('plugin_campaign_bonus_periods',[$field=>(float)$value],['campaign_bonus_period_id'=>$campaign_bonus_period_id]);
     }
     
     public function bonusPeriodDuplicate ( int $this_period_id, int $prev_period_id ){
@@ -346,29 +346,28 @@ class CampaignManager extends Catalog{
         session_write_close();
         return $this->bonusCalculateResult($campaign_bonus_id);
     }
-    
-    private function bonusCalculateResult( int $campaign_bonus_id, bool $only_current_period=false, int $bonus_limit=0 ){
+    private function bonusCalculateResult( int $campaign_bonus_id, string $timespan=null, int $bonus_limit=0 ){
         $campaign_bonus=$this->bonusGet($campaign_bonus_id);
         if( !$campaign_bonus ){
             return false;//notfound
         }
         $client_filter=$this->clientListFilterGet($campaign_bonus->campaign_id);
-        $is_current_detection="1";
         switch( $campaign_bonus->campaign_grouping_interval ){
             case 'MONTH':
                 $period_on=" YEAR(cstamp)=period_year AND MONTH(cstamp)=period_month ";
-                $is_current_detection="CONCAT(period_month,'.',period_year)=CONCAT(MONTH(NOW()),'.',YEAR(NOW()))";
+                $in_timespan="CONCAT(period_month,'.',period_year)=CONCAT(@month,'.',@year)";
                 break;
             case 'QUARTER':
                 $period_on=" YEAR(cstamp)=period_year AND QUARTER(cstamp)=period_quarter";
-                $is_current_detection="CONCAT(period_quarter,'.',period_year)=CONCAT(QUARTER(NOW()),'.',YEAR(NOW()))";
+                $in_timespan="CONCAT(period_quarter,'.',period_year)=CONCAT(@quarter,'.',@year)";
                 break;
             case 'YEAR':
                 $period_on=" YEAR(cstamp)=period_year ";
-                $is_current_detection="period_year=YEAR(NOW())";
+                $in_timespan="period_year=@year";
                 break;
             default :
                 $period_on=" 1 ";//whole period
+                $in_timespan="1";
         }
         switch( $campaign_bonus->bonus_type ){
             case 'VOLUME':
@@ -386,10 +385,11 @@ class CampaignManager extends Catalog{
             default:
                 return false;
         }
-        
+        $this->timespanCalculate($timespan);
+                
         $current_filter="";
-        if( $only_current_period ){
-            $current_filter="AND $is_current_detection";
+        if( $timespan ){
+            $current_filter="AND $in_timespan";
         }
         $limit="";
         if( $bonus_limit ){
@@ -407,7 +407,7 @@ class CampaignManager extends Catalog{
             ROUND(bonus_base/period_plan2*100) period_percent2,
             ROUND(bonus_base/period_plan3*100) period_percent3,
             (SELECT label FROM stock_tree WHERE branch_id=product_category_id) product_category_label,
-            $is_current_detection is_current
+            IF($in_timespan,1,0) is_current
         FROM (
             SELECT
                 pcb.*,
@@ -429,12 +429,12 @@ class CampaignManager extends Catalog{
                 {$bonus_base['table']}
             WHERE
                 campaign_bonus_id = $campaign_bonus_id
-                {$bonus_base['where']}
                 $current_filter
+                {$bonus_base['where']}
             GROUP BY period_year,period_quarter,period_month
             ORDER BY period_year DESC,period_quarter DESC,period_month DESC
             $limit) tt";
-//            die($sql);
+            //die($sql);         
         return $this->get_list($sql);
     }
     
@@ -625,7 +625,7 @@ class CampaignManager extends Catalog{
         $this->Hub->set_level(2);
         $this->load->view('bonus_chart.html');
     }
-    public function bonusCalculatePersonal(){
+    public function bonusCalculatePersonal( string $timespan='current' ){
         $this->Hub->set_level(2);
         $liable_user_id=$this->Hub->svar('user_id');
         $sql="SELECT * FROM plugin_campaign_list JOIN plugin_campaign_bonus USING(campaign_id) WHERE liable_user_id=$liable_user_id ORDER BY campaign_queue";
@@ -634,16 +634,16 @@ class CampaignManager extends Catalog{
         if( !$campaign_list ){
             return ['total'=>0,'bonuses'=>0];
         }
-        
-        $result_total=$campaign_list[0]->campaign_fixed_payment;
+        $result_total=0;
         foreach( $campaign_list as $campaign ){
             if( $campaign->bonus_visibility==2 ){//visible in widget
-                $current_result=$this->bonusCalculateResult($campaign->campaign_bonus_id,true);
+                $current_result=$this->bonusCalculateResult($campaign->campaign_bonus_id,$timespan);
                 $personal_bonuses[]=[
                     'campaign_name'=>$campaign->campaign_name,
                     'current_result'=>$current_result
                 ];
                 $result_total+=$current_result[0]->bonus_result??0;
+                $result_total+=$campaign->campaign_fixed_payment??0;
             }
         }
         return [
@@ -662,7 +662,7 @@ class CampaignManager extends Catalog{
         $result_total=$campaign_list[0]->campaign_fixed_payment;
         foreach( $campaign_list as $campaign ){
             if( $campaign->bonus_visibility>0 ){
-                $current_result=$this->bonusCalculateResult($campaign->campaign_bonus_id,false,3);
+                $current_result=$this->bonusCalculateResult($campaign->campaign_bonus_id);
                 $result_total+=$current_result[0]->bonus_result;
             }
         }
@@ -677,8 +677,9 @@ class CampaignManager extends Catalog{
         $this->Hub->set_level(2);
         $this->load->view("dashboard_isell.html");
     }
-    public function dashboardManagerStatistics(){
+    public function dashboardManagerStatistics( string $timespan='current' ){
         $this->Hub->set_level(2);
+        $this->timespanCalculate($timespan);
         $liable_user_id=$this->Hub->svar('user_id');
         $campaigns=$this->get_list("SELECT * FROM plugin_campaign_bonus JOIN plugin_campaign_list USING(campaign_id) WHERE liable_user_id='$liable_user_id'");
         $sqls=[];
@@ -694,7 +695,7 @@ class CampaignManager extends Catalog{
                     AND is_commited 
                     AND NOT notcount 
                     AND passive_company_id IN (SELECT company_id FROM companies_list JOIN companies_tree USING(branch_id) WHERE $client_filter)
-                    AND MONTH(cstamp) = MONTH(CURRENT_DATE()) AND YEAR(cstamp) = YEAR(CURRENT_DATE())";
+                    AND MONTH(cstamp) = @month AND YEAR(cstamp) = @year";
         }
         if( !$sqls ){
             return ['invoice_count'=>0,'client_count'=>0];
@@ -703,7 +704,9 @@ class CampaignManager extends Catalog{
         $sql="
             SELECT 
                 COUNT(DISTINCT doc_id) invoice_count,
-                COUNT(DISTINCT passive_company_id) client_count
+                COUNT(DISTINCT passive_company_id) client_count,
+                @month month,
+                @year year
             FROM (($super_table))t";
         return $this->get_row($sql);
     }
@@ -934,5 +937,19 @@ class CampaignManager extends Catalog{
                     AND doc_type=1
                     AND passive_company_id IN (SELECT company_id FROM companies_list JOIN companies_tree USING(branch_id) WHERE $client_filter)";
         return $this->query($sql);
+    }
+    private function timespanCalculate($timespan){
+        switch($timespan){
+            case 'past':
+                $this->query("SET @timespan:= DATE_SUB(NOW(), INTERVAL 1 MONTH);");
+                break;
+            case 'past-past':
+                $this->query("SET @timespan:=DATE_SUB(NOW(), INTERVAL 2 MONTH);");
+                break;
+            case 'current':
+            default:
+                $this->query("SET @timespan:=NOW();");
+        }
+        $this->query("SET @month:=MONTH(@timespan),@quarter:=QUARTER(@timespan),@year:=YEAR(@timespan);");  
     }
 }

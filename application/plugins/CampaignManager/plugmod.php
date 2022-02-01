@@ -43,7 +43,7 @@ $before[]=<<<EOT
 EOT;
 //$after[]=file_get_contents(__DIR__."/views/dashboard_isell.html");
 $after[]=<<<EOT
-<div id="CampaignManager_dashboard_holder" class="ui blue segment raised" style="margin: 10px;">
+<div id="CampaignManager_dashboard_holder" class="transp60" style="margin: 10px;">
     <script>
         $("#CampaignManager_dashboard_holder").load("CampaignManager/dashboardiSell");
     </script>

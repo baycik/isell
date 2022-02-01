@@ -1,15 +1,26 @@
 <div class="ui header">Статистика продаж за месяц</div>
-<div id="CampaignStat" class="covert">
-    <div class="ui gray image label" style="margin: 3px">
-        <i class="icon user alternate"></i> Клиентов за месяц <div class="detail">{{client_count}}</div>
+<div>
+    <div class="ui three top attached buttons" id="CampaignTimespanSelector">
+        <button class="ui button" data-timespan="current">Текущий месяц</button>
+        <button class="ui button" data-timespan="past">Прошлый месяц</button>
+        <button class="ui button" data-timespan="past-past">Позапрошлый месяц</button>
     </div>
-    <div class="ui gray image label" style="margin: 3px">
-        <i class="icon file alternate"></i> Накладных за месяц <div class="detail">{{invoice_count}}</div> 
-    </div>
-    <div class="ui gray image label" style="margin: 3px">
-        <i class="icon money"></i> Общий результат <div class="detail">{{total_result|format}}</div> 
+    <div id="CampaignStat" class="ui attached segment covert">
+        <div class="ui gray image label" style="margin: 3px">
+            <i class="icon time alternate"></i><div class="detail">{{month|month}} {{year}}</div>
+        </div>
+        <div class="ui gray image label" style="margin: 3px">
+            <i class="icon user alternate"></i> Клиентов за месяц <div class="detail">{{client_count}}</div>
+        </div>
+        <div class="ui gray image label" style="margin: 3px">
+            <i class="icon file alternate"></i> Накладных за месяц <div class="detail">{{invoice_count}}</div> 
+        </div>
+        <div class="ui gray image label" style="margin: 3px">
+            <i class="icon money"></i> Общий результат <div class="detail">{{total_result|format}}</div> 
+        </div>
     </div>
 </div>
+
 <div class="ui header">Мотивации</div>
 <div id="CampaignCharts" class="covert">
     {{campaigns.bonuses}}
@@ -183,15 +194,23 @@ App.dashboardCampaigns = {
             App.dashboardCampaigns.campaigns.load();
             App.dashboardCampaigns.statistics.load();
         }
+        $("#CampaignTimespanSelector").click(function(e){
+            var timespan=$(e.target).data('timespan');
+            if( !timespan || timespan===App.dashboardCampaigns.timespan ){
+                return;
+            }
+            App.dashboardCampaigns.timespan=timespan;
+            App.dashboardCampaigns.campaigns.load();
+            App.dashboardCampaigns.statistics.load();
+        });
     },
     campaigns: {
         scriptDeffered:{},
         load: function () {
             let url="https://cdn.jsdelivr.net/npm/chart.js@2.8.0/dist/Chart.min.js";
             this.scriptDeffered=$.ajax({url: url,dataType: "script",cache: true,async:true});
-            $.post("../CampaignManager/bonusCalculatePersonal/", function (resp) {
+            $.post("../CampaignManager/bonusCalculatePersonal/",{timespan:App.dashboardCampaigns.timespan}, function (resp) {
                 var personal_bonuses = App.json(resp);
-                console.log(personal_bonuses);
                 if (!personal_bonuses || !personal_bonuses.bonuses.length) {
                     $("#CampaignCharts").html("<h2>Нет кампаний</h2>").removeClass('covert');
                     return;
@@ -244,18 +263,23 @@ App.dashboardCampaigns = {
             });
         },
         chartDatasetCalc: function (bonus_data) {
-            var doughnut1 = this.chartDatasetCalcArc(bonus_data.current_result[0], 1);
-            var doughnut2 = this.chartDatasetCalcArc(bonus_data.current_result[0], 2);
-            var doughnut3 = this.chartDatasetCalcArc(bonus_data.current_result[0], 3);
+                var doughnut1=0,doughnut2=0,doughnut3=0;
+                if(bonus_data){
+                    doughnut1 = this.chartDatasetCalcArc(bonus_data.current_result[0], 1);
+                    doughnut2 = this.chartDatasetCalcArc(bonus_data.current_result[0], 2);
+                    doughnut3 = this.chartDatasetCalcArc(bonus_data.current_result[0], 3);
+                }
             return [
                 {data: [doughnut3, 100 - doughnut3], backgroundColor: ['#06f', '#ffffff66'], label: 'План I'},
-                {data: [doughnut2, 100 - doughnut2], backgroundColor: ['#3cf', '#ffffff66'], label: 'План II'},
+                {data: [doughnut2, 100 - doughnut2], backgroundColor: ['#0dd', '#ffffff66'], label: 'План II'},
                 {data: [doughnut1, 100 - doughnut1], backgroundColor: ['#3c3', '#ffffff66'], label: 'План III'}
             ];
         },
         chartDatasetCalcArc: function (arc_data, i) {
-            if( arc_data['period_plan' + i]>0 ){
+            if(arc_data && arc_data['period_plan' + i]>0){
                 return Math.round( Math.min(arc_data.bonus_base / arc_data['period_plan' + i] || 0.01,1) * 100);
+            } else {
+                return 100;
             }
             return null;
         }
@@ -267,7 +291,7 @@ App.dashboardCampaigns = {
             total_result:0
         },
         load:function(){
-            $.post("../CampaignManager/dashboardManagerStatistics/", function (resp) {
+            $.post("../CampaignManager/dashboardManagerStatistics/",{timespan:App.dashboardCampaigns.timespan}, function (resp) {
                 var stat = App.json(resp);
                 if (!stat) {
                     $("#CampaignCharts").html("<h2>Нет кампаний</h2>");
@@ -275,6 +299,8 @@ App.dashboardCampaigns = {
                 }
                 App.dashboardCampaigns.statistics.stat.client_count=stat.client_count;
                 App.dashboardCampaigns.statistics.stat.invoice_count=stat.invoice_count;
+                App.dashboardCampaigns.statistics.stat.month=stat.month;
+                App.dashboardCampaigns.statistics.stat.year=stat.year;
                 App.dashboardCampaigns.statistics.render();
             });
         },

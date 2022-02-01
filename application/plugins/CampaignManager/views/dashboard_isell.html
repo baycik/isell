@@ -1,21 +1,31 @@
-<div>
-    <div style="padding: 5px;border-radius: 5px;margin-bottom: 5px;background-color: #ffffffaa">
-        <h1>Статистика продаж за месяц</h1>
-        <div id="CampaignStat" class="covert">
-            <div style="margin: 3px">
-                Клиентов за месяц: <b>{{client_count}}</b>
+<div style="padding: 15px">
+    <div style="padding: 5px;border-radius: 5px;margin-bottom: 5px;">
+        <h1>Статистика продаж</h1>
+        <div style="background-color: #ddddddaa">
+            <div class="ui three top attached buttons" id="CampaignTimespanSelector">
+                <button class="ui button" data-timespan="current">Текущий месяц</button>
+                <button class="ui button" data-timespan="past">Прошлый месяц</button>
+                <button class="ui button" data-timespan="past-past">Позапрошлый месяц</button>
             </div>
-            <div style="margin: 3px">
-                Накладных за месяц: <b>{{invoice_count}}</b>
+            <div class="ui attached segment" id="CampaignStat" class="covert">
+                <p>
+                    {{month|month}} {{year}}
+                </p>
+                <p>
+                    Клиентов за месяц: <b>{{client_count}}</b>
+                </p>
+                <p>
+                    Накладных за месяц: <b>{{invoice_count}}</b>
+                </p>
+                <p>
+                    Общий результат: <b>{{total_result|format}}</b>
+                </p>
             </div>
-            <div style="margin: 3px">
-                Общий результат: <b>{{total_result|format}}</b>
-            </div>
-        </div>    
+        </div>
     </div>
-    <div id="CampaignCharts" class="covert" style="display: grid; grid-template-columns: 50% 50%;grid-gap:3px;">
+    <div id="CampaignCharts" class="covert" style="display: grid; grid-template-columns: 50% 50%;grid-gap:3px;margin: 6px;">
         {{campaigns.bonuses}}
-        <div style="padding: 5px;border-radius: 5px;background-color: #ffffffaa">
+        <div style="padding: 15px;border-radius: 5px;background-color: #ffffffaa">
             <h3>
                 {{campaign_name}} / 
                 {{current_result}}
@@ -169,18 +179,28 @@
 <script>
 (function(){
     var dashboardCampaigns = {
+        timespan:'current',
         init: function () {
             if( App.user.props.user_level>1 ){
                 dashboardCampaigns.campaigns.load();
                 dashboardCampaigns.statistics.load();
             }
+            $("#CampaignTimespanSelector").click(function(e){
+                var timespan=$(e.target).data('timespan');
+                if( !timespan || timespan===dashboardCampaigns.timespan ){
+                    return;
+                }
+                dashboardCampaigns.timespan=timespan;
+                dashboardCampaigns.campaigns.load();
+                dashboardCampaigns.statistics.load();
+            });
         },
         campaigns: {
             scriptDeffered:{},
             load: function () {
                 let url="https://cdn.jsdelivr.net/npm/chart.js@2.8.0/dist/Chart.min.js";
                 this.scriptDeffered=$.ajax({url: url,dataType: "script",cache: true,async:true});
-                $.post("CampaignManager/bonusCalculatePersonal/", function (resp) {
+                $.post("CampaignManager/bonusCalculatePersonal/",{timespan:dashboardCampaigns.timespan}, function (resp) {
                     var personal_bonuses = App.json(resp);
                     if (!personal_bonuses || !personal_bonuses.bonuses.length) {
                         $("#CampaignCharts").html("<h2>Нет кампаний</h2>").removeClass('covert');
@@ -210,6 +230,9 @@
                 }
             },
             chartAdd: function (bonus_data) {
+                if(!bonus_data.current_result[0]){
+                    return;
+                }
                 var config = {
                     type: 'doughnut',
                     data: {
@@ -234,9 +257,12 @@
                 });
             },
             chartDatasetCalc: function (bonus_data) {
-                var doughnut1 = this.chartDatasetCalcArc(bonus_data.current_result[0], 1);
-                var doughnut2 = this.chartDatasetCalcArc(bonus_data.current_result[0], 2);
-                var doughnut3 = this.chartDatasetCalcArc(bonus_data.current_result[0], 3);
+                var doughnut1=0,doughnut2=0,doughnut3=0;
+                if(bonus_data){
+                    doughnut1 = this.chartDatasetCalcArc(bonus_data.current_result[0], 1);
+                    doughnut2 = this.chartDatasetCalcArc(bonus_data.current_result[0], 2);
+                    doughnut3 = this.chartDatasetCalcArc(bonus_data.current_result[0], 3);
+                }
                 return [
                     {data: [doughnut3, 100 - doughnut3], backgroundColor: ['rgba(100,100,255)', '#ffffff66'], label: 'План I'},
                     {data: [doughnut2, 100 - doughnut2], backgroundColor: ['rgba(100,230,255)', '#ffffff66'], label: 'План II'},
@@ -244,8 +270,10 @@
                 ];
             },
             chartDatasetCalcArc: function (arc_data, i) {
-                if(arc_data['period_plan' + i]>0){
+                if(arc_data && arc_data['period_plan' + i]>0){
                     return Math.round( Math.min(arc_data.bonus_base / arc_data['period_plan' + i] || 0.01,1) * 100);
+                } else {
+                    return 100;
                 }
                 return null;
             }
@@ -257,7 +285,7 @@
                 total_result:0
             },
             load:function(){
-                $.post("CampaignManager/dashboardManagerStatistics/", function (resp) {
+                $.post("CampaignManager/dashboardManagerStatistics/",{timespan:dashboardCampaigns.timespan}, function (resp) {
                     var stat = App.json(resp);
                     if (!stat) {
                         $("#CampaignCharts").html("<h2>Нет кампаний</h2>");
@@ -265,6 +293,8 @@
                     }
                     dashboardCampaigns.statistics.stat.client_count=stat.client_count;
                     dashboardCampaigns.statistics.stat.invoice_count=stat.invoice_count;
+                    dashboardCampaigns.statistics.stat.month=stat.month;
+                    dashboardCampaigns.statistics.stat.year=stat.year;
                     dashboardCampaigns.statistics.render();
                 });
             },
