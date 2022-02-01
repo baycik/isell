@@ -13,6 +13,73 @@ class Reports_stock_movements extends Catalog{
     private $idate;
     private $fdate;
     private $all_active;
+    public function check( &$var, $type=null ){
+        $type= str_replace('?', '', $type);
+	switch( $type ){
+	    case 'raw':
+		break;
+	    case 'int':
+		$var=(int) $var;
+		break;
+	    case 'float':
+	    case 'double':
+		$var=(float) $var;
+		break;
+	    case 'bool':
+		$var=$var?1:0;
+		break;
+	    case 'escape':
+	    case 'string':
+                $var=  addslashes( $var );
+                break;
+	    case 'json':
+	    case 'array':
+	    case '?array':
+                if( is_array($var) ){
+                    break;//native post array
+                }
+                $var= trim($var, "\"");
+                $result= json_decode( $var,true );
+                if( json_last_error()!=JSON_ERROR_NONE ){
+                    $var=stripslashes($var);
+                    $result= json_decode( $var,true );
+                }
+                if( json_last_error()!=JSON_ERROR_NONE ){
+                    throw new Exception('JSON error: '.json_last_error_msg(),500);
+                }
+                $var=$result;
+                break;
+            case 'object':
+            case '?object':
+                $var= trim($var, "\"");
+                $result= json_decode( $var,false ); 
+                if( json_last_error()!=JSON_ERROR_NONE ){
+                    $var=stripslashes($var);
+                    $result= json_decode( $var,false );
+                }
+                if( json_last_error()!=JSON_ERROR_NONE ){
+                    throw new Exception('JSON error: '.json_last_error_msg(),500);
+                }
+                $var=$result;
+                break;
+	    default:
+		if( $type ){
+		    $matches=[];
+		    preg_match('/'.$type.'/u', $var, $matches);
+		    $var=  isset($matches[0])?$matches[0]:null;
+		} else {
+		    $var=  addslashes( $var );
+		}
+	}
+        return $var;
+    }
+    public function request( $name, $type=null, $default=null ){
+	$value=$this->input->get_post($name);
+	if( !is_array($value) && strlen($value)==0 ){
+	    return $default;
+	}
+        return $this->check($value,$type);
+    }
     public function __construct() {
 	$this->idate=$this->request('idate').' 00:00:00';
 	$this->fdate=$this->request('fdate').' 23:59:59';
