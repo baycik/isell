@@ -10,6 +10,73 @@
  * Trigger before: Reports_market_analyse
  */
 class Reports_market_analyse extends Catalog{
+    public function check( &$var, $type=null ){
+        $type= str_replace('?', '', $type);
+	switch( $type ){
+	    case 'raw':
+		break;
+	    case 'int':
+		$var=(int) $var;
+		break;
+	    case 'float':
+	    case 'double':
+		$var=(float) $var;
+		break;
+	    case 'bool':
+		$var=$var?1:0;
+		break;
+	    case 'escape':
+	    case 'string':
+                $var=  addslashes( $var );
+                break;
+	    case 'json':
+	    case 'array':
+	    case '?array':
+                if( is_array($var) ){
+                    break;//native post array
+                }
+                $var= trim($var, "\"");
+                $result= json_decode( $var,true );
+                if( json_last_error()!=JSON_ERROR_NONE ){
+                    $var=stripslashes($var);
+                    $result= json_decode( $var,true );
+                }
+                if( json_last_error()!=JSON_ERROR_NONE ){
+                    throw new Exception('JSON error: '.json_last_error_msg(),500);
+                }
+                $var=$result;
+                break;
+            case 'object':
+            case '?object':
+                $var= trim($var, "\"");
+                $result= json_decode( $var,false ); 
+                if( json_last_error()!=JSON_ERROR_NONE ){
+                    $var=stripslashes($var);
+                    $result= json_decode( $var,false );
+                }
+                if( json_last_error()!=JSON_ERROR_NONE ){
+                    throw new Exception('JSON error: '.json_last_error_msg(),500);
+                }
+                $var=$result;
+                break;
+	    default:
+		if( $type ){
+		    $matches=[];
+		    preg_match('/'.$type.'/u', $var, $matches);
+		    $var=  isset($matches[0])?$matches[0]:null;
+		} else {
+		    $var=  addslashes( $var );
+		}
+	}
+        return $var;
+    }
+    public function request( $name, $type=null, $default=null ){
+	$value=$this->input->get_post($name);
+	if( !is_array($value) && strlen($value)==0 ){
+	    return $default;
+	}
+        return $this->check($value,$type);
+    }
     public function __construct() {
         $this->group_by_filter=$this->request('group_by_filter');
 	$this->group_by=$this->request('group_by','\w+');
