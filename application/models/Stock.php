@@ -459,9 +459,9 @@ class Stock extends Catalog {
         return $this->db->affected_rows();
     }
 
-    public function productMove( int $parent_id, string $product_codes) {
+    public function productMove( int $parent_id, string $product_code) {
         $this->Hub->set_level(2);
-        $product_codes = str_replace(",", "','", $product_codes);
+        $product_codes = str_replace(",", "','", $product_code);
         $this->query("UPDATE stock_entries SET parent_id='$parent_id' WHERE product_code IN ('$product_codes')");
         return $this->db->affected_rows();
     }

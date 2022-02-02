@@ -151,18 +151,19 @@ class Company extends Catalog{
 	return $this->treeFetch($table, $parent_id, 'top', $assigned_path, $level, 'is_active,is_leaf,label');
     }
     
-    public $companyTreeCreate=['parent_id'=>['int',0],'label'=>'string','branch_type'=>'string'];
-    public function companyTreeCreate($parent_id,$label,$branch_type){
+    //public $companyTreeCreate=['parent_id'=>['int',0],'label'=>'string','branch_type'=>'string'];
+    public function companyTreeCreate(int $parent_id,string $label,string $branch_type){
 	$this->Hub->set_level(2);
         $def_lang = $this->Hub->acomp('language');
         $def_curr_code = $this->Hub->acomp('curr_code');
-	$branch_id=$this->treeCreate('companies_tree', $branch_type, $parent_id,$label);
+	$branch_id=$this->treeCreate('companies_tree', $branch_type, $parent_id, $label);
 	if( $branch_type=='leaf' ){
 	    $this->query("INSERT INTO companies_list SET 
                 branch_id=$branch_id,
                 company_name='$label',
                 language='$def_lang',
-                curr_code='$def_curr_code'");
+                curr_code='$def_curr_code'
+                    ");
 	    return $this->db->insert_id();
 	}
 	return 0;
