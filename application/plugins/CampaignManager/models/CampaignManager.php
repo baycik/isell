@@ -642,22 +642,31 @@ class CampaignManager extends Catalog{
     public function bonusCalculatePersonal( string $timespan='current' ){
         $this->Hub->set_level(2);
         $liable_user_id=$this->Hub->svar('user_id');
-        $sql="SELECT * FROM plugin_campaign_list JOIN plugin_campaign_bonus USING(campaign_id) WHERE liable_user_id=$liable_user_id ORDER BY campaign_queue";
+        $sql="SELECT * 
+            FROM
+                plugin_campaign_list 
+                    JOIN 
+                plugin_campaign_bonus USING(campaign_id) 
+            WHERE 
+                liable_user_id=$liable_user_id 
+            ORDER BY campaign_queue";
         $personal_bonuses=[];
         $campaign_list=$this->get_list($sql);
         if( !$campaign_list ){
             return ['total'=>0,'bonuses'=>0];
         }
-        $result_total=0;
+        $result_total=$this->get_value("SELECT SUM(campaign_fixed_payment) FROM plugin_campaign_list WHERE liable_user_id=$liable_user_id");
         foreach( $campaign_list as $campaign ){
             if( $campaign->bonus_visibility==2 ){//visible in widget
                 $current_result=$this->bonusCalculateResult($campaign->campaign_bonus_id,$timespan);
+                if(!$current_result){
+                    continue;
+                }
                 $personal_bonuses[]=[
                     'campaign_name'=>$campaign->campaign_name,
                     'current_result'=>$current_result
                 ];
                 $result_total+=$current_result[0]->bonus_result??0;
-                $result_total+=$campaign->campaign_fixed_payment??0;
             }
         }
         return [
@@ -774,11 +783,6 @@ class CampaignManager extends Catalog{
         
         $sql="SELECT
             *,
-            CONCAT(
-            '%',COALESCE(ROUND(campaign_bonus_ratio1,1),''),
-            '/',COALESCE(ROUND(campaign_bonus_ratio2,1),''),
-            '/',COALESCE(ROUND(campaign_bonus_ratio3,1),'')
-            ) bonus_ratios,
             ROUND(bonus_base*campaign_bonus_ratio1/100) result1,
             ROUND(bonus_base*campaign_bonus_ratio2/100) result2,
             ROUND(bonus_base*campaign_bonus_ratio3/100) result3
@@ -810,8 +814,32 @@ class CampaignManager extends Catalog{
                 ];
     }
     
-    public function campaignDetailedView( int $campaign_bonus_id, int $campaign_bonus_period_id, string $group_by='product_code' ){
+    public function campaignDetailedView( int $campaign_bonus_id, int $campaign_bonus_period_id, string $group_by='product_code', $out_type='.print' ){
         $table=$this->bonusCalculateDetailedResult( $campaign_bonus_id, $campaign_bonus_period_id, $group_by );
+        $total_row=[
+            'bonus_ratios'=>'',
+            'result1'=>0,
+            'result2'=>0,
+            'result3'=>0,
+            'total_sum'=>0,
+            'bonus_base'=>0,
+            'debt_finish'=>0,
+            'debt_start'=>0
+        ];
+        foreach($table['entries'] as $row){
+            $total_row['result1']+=$row->result1;
+            $total_row['result2']+=$row->result2;
+            $total_row['result3']+=$row->result3;
+            $total_row['total_sum']+=$row->total_sum;
+            $total_row['bonus_base']+=$row->bonus_base;
+            if( isset($row->debt_finish) ){
+                $row->debt_start=$row->debt_finish-$row->total_sum;
+                $total_row['debt_start']+=$row->debt_start;
+                $total_row['debt_finish']+=$row->debt_finish;
+            }
+        }
+        array_unshift($table['entries'],$total_row);
+        
         switch($group_by){
             case 'trans_id':
                 $struct=[
@@ -850,14 +878,16 @@ class CampaignManager extends Catalog{
                 ];
         }
         
-        if( $table['campaign_bonus']->bonus_type=='PAYMENT' ){
+        $showAdminCols=$this->Hub->svar('user_level')>2?true:false;
+
+        if( $table['campaign_bonus']->bonus_type=='PAYMENT' && $showAdminCols ){
             $struct= array_merge($struct,[
             ['Field'=>'debt_start','Comment'=>'Начальный долг','Align'=>'right','Width'=>20],
             ['Field'=>'total_sum','Comment'=>'Изменение долга','Align'=>'right','Width'=>20],
             ['Field'=>'debt_finish','Comment'=>'Конечный долг','Align'=>'right','Width'=>20],
             ['Field'=>'bonus_base','Comment'=>'Оплаты','Width'=>20,'Align'=>'right'],
             ]);
-        } else {
+        } else if($showAdminCols){
             $struct= array_merge($struct,[
             ['Field'=>'product_quantity','Comment'=>'Кол-во','Width'=>10,'Align'=>'right'],
             ['Field'=>'self_price','Comment'=>'Себ с НДС','Width'=>10,'Align'=>'right'],
@@ -868,54 +898,22 @@ class CampaignManager extends Catalog{
             ['Field'=>'bonus_base','Comment'=>'База Бонуса','Width'=>20,'Align'=>'right']
             ]);
         }
-        $additional_cols=[
-            ['Field'=>'bonus_ratios','Comment'=>'%','Width'=>15,'Align'=>'center'],
-            ['Field'=>'result1','Comment'=>'Рез1','Width'=>10,'Align'=>'right']
-            ];
         
-        if( $table['entries'][0]->campaign_bonus_ratio1 != $table['entries'][0]->campaign_bonus_ratio2 ){
-            $additional_cols[]=['Field'=>'result2','Comment'=>'Рез2','Width'=>10,'Align'=>'right'];
-            
+        $additional_cols=[];
+        if( $total_row['result1']>0 ){
+            $ratio1=$table['campaign_bonus']->campaign_bonus_ratio1.'%';
+            $additional_cols[]=['Field'=>'result1','Comment'=>'Рез1 '.($ratio1??''),'Width'=>10,'Align'=>'right'];
         }
-        if( $table['entries'][0]->campaign_bonus_ratio1 != $table['entries'][0]->campaign_bonus_ratio3 ){
-            $additional_cols[]=['Field'=>'result3','Comment'=>'Рез3','Width'=>10,'Align'=>'right'];
+        if( $total_row['result2']>0 ){
+            $ratio2=$table['campaign_bonus']->campaign_bonus_ratio2.'%';
+            $additional_cols[]=['Field'=>'result2','Comment'=>'Рез2 '.($ratio2??''),'Width'=>10,'Align'=>'right'];
+        }
+        if( $total_row['result3']>0 ){
+            $ratio3=$table['campaign_bonus']->campaign_bonus_ratio3.'%';
+            $additional_cols[]=['Field'=>'result3','Comment'=>'Рез3 '.($ratio3??''),'Width'=>10,'Align'=>'right'];
         }
         $struct= array_merge($struct,$additional_cols);
         
-        //return $table;
-        
-        $total_row=[
-            'bonus_ratios'=>'',
-            'result1'=>0,
-            'result2'=>0,
-            'result3'=>0,
-            'total_sum'=>0,
-            'bonus_base'=>0,
-            'debt_finish'=>0,
-            'debt_start'=>0
-        ];
-        
-        
-        
-        
-        
-        foreach($table['entries'] as $row){
-            $total_row['result1']+=$row->result1;
-            $total_row['result2']+=$row->result2;
-            $total_row['result3']+=$row->result3;
-            $total_row['total_sum']+=$row->total_sum;
-            $total_row['bonus_base']+=$row->bonus_base;
-            if( isset($row->debt_finish) ){
-                $row->debt_start=$row->debt_finish-$row->total_sum;
-                $total_row['debt_start']+=$row->debt_start;
-                $total_row['debt_finish']+=$row->debt_finish;
-            }
-        }
-        array_unshift($table['entries'],$total_row);
-        
-        //print_r($table);die;
-        
-        $out_type='.print';
 	$dump=[
 	    'tpl_files'=>'/GridTpl.xlsx',
 	    'title'=>"Экспорт таблицы",
@@ -932,9 +930,6 @@ class CampaignManager extends Catalog{
 	$ViewManager->store($dump);
 	$ViewManager->outRedirect($out_type);
     }
-    
-    
-    
     
     public function bonusPeriodBreakEvenRecalculate( int $campaign_bonus_period_id ){
         $bonus_period=$this->get_row("SELECT * FROM plugin_campaign_bonus_periods JOIN plugin_campaign_bonus USING(campaign_bonus_id) WHERE campaign_bonus_period_id=$campaign_bonus_period_id");
