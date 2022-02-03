@@ -794,3 +794,10 @@ h2{
     pointer-events:none;
     background-color: #ccccccaa !important;
 }
+
+
+
+
+.ui.segment{
+    background-color: #fffe;
+}

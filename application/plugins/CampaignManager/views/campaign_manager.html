@@ -15,8 +15,6 @@
         Mark.pipes.numberClear = function (number) {
             return Number(number) ? number : '';
         };
-
-
         var Campaign = {
             init: function () {
                 $('#CampaignManager-tabs-holder').append('<div id="CampaignManager-tabs"></div>');
@@ -44,6 +42,14 @@
                             Bonuses.periodsLoad(campaign_bonus_id);
                         });
                     }
+                });
+                $("#CampaignManager").click(function(e){
+                    var timespan=$(e.target).data('timespan');
+                    if( !timespan || timespan===Campaign.timespan ){
+                        return;
+                    }
+                    Campaign.timespan=timespan;
+                    Campaign.statistics.load();
                 });
                 this.load();
             },
@@ -142,7 +148,7 @@
                     }
                 });
             },
-            statistics: {
+/*            statistics1111: {
                 stat: {
                     client_count: 0,
                     invoice_count: 0,
@@ -167,6 +173,29 @@
                 render: function () {
                     var tpl=$("#CampaignManagerCharts_tpl").html();
                     $("#CampaignManagerCharts").html(Mark.up(tpl,this.stat));
+                }
+            },*/
+            statistics:{
+                stat:{
+                    client_count:0,
+                    invoice_count:0,
+                    total_result:0
+                },
+                load:function(){
+                    let liable_user_id=$("select[name=liable_user_id]").val();
+                    $.post("CampaignManager/dashboardManagerStatistics/",{timespan:Campaign.timespan,liable_user_id}, function (resp) {
+                        var stat = App.json(resp);
+                        if (!stat) {
+                            $("#CampaignCharts").html("<h2>Нет кампаний</h2>");
+                            return;
+                        }
+                        Campaign.statistics.stat=stat;
+                        Campaign.statistics.render();
+                    });
+                },
+                render:function(){
+                    var tpl=$("#CampaignManagerCharts_tpl").html();
+                    $("#CampaignStat").html(Mark.up(tpl,this.stat));
                 }
             }
         };
@@ -417,44 +446,56 @@
     {{/if}}
 </script>
 <script id="CampaignManagerCharts_tpl" type = "text/html">
-    <div  style="display:grid;width: 100%;grid-template-columns:150px 150px 150px 150px">
-        <div>Клиентов за месяц:</div>
-        <div> <b>{{client_count}}</b></div>
-        <div></div>
-        <div></div>
-
-
-        <div>Накладных за месяц:</div>
-        <div> <b>{{invoice_count}}</b></div>
-        <div></div>
-        <div></div>
-
-
-        <div>Общий результат:</div>
-        <div> <b>{{total_result|format}}</b></div>
-        <div></div>
-        <div></div>
+    <div class="ui gray image label" style="margin: 3px">
+        <i class="icon time alternate"></i><div class="detail">{{month|month}} {{year}}</div>
     </div>
+    <div class="ui gray image label" style="margin: 3px">
+        <i class="icon user alternate"></i> Клиентов за месяц <div class="detail">{{client_count}}</div>
+    </div>
+    <div class="ui gray image label" style="margin: 3px">
+        <i class="icon file alternate"></i> Накладных за месяц <div class="detail">{{invoice_count}}</div> 
+    </div>
+    <p>Ставка: <b>{{result_fixed|format}}</b></p>
+    <p>Общий результат: <b>{{result_total|format}}</b></p>
 </script>
 <div style="padding: 10px;">
     <div id="CampaignManager-tabs-holder"></div>
 
     <div id="CampaignManager" style="visibility:hidden">
-
         <div id="camp_manager_form">
-
-            <div class="easyui-panel" title="Настройки Кампании" style="padding:10px">
-                <input type="text" title="Название" name="campaign_name">
-                <select name="liable_user_id" title="Менеджер">
-                    <!--{{staff_list}}-->
-                    <option value="{{user_id}}">{{full_name}}</option>
-                    <!--{{/staff_list}}-->
-                </select>
-                <input type="text" title="Ставка" name="campaign_fixed_payment">
-                <hr>
-                <div id="CampaignManagerCharts"></div>
-                <hr>
-                <button id="Campaign_delete_btn"><img src="img/delete.png"> Удалить Кампанию</button>
+            <div class="ui form segment blue" style="margin-top:10px;">
+                <h3 class="ui header">{{settings.campaign_name}}</h3>
+                <div style="display:grid;grid-template-columns: 1fr 1fr;gap:10px">
+                    <div>
+                        <div class="field">
+                            <label>Менеджер</label>
+                            <select class="ui selection dropdown" name="liable_user_id">
+                                <!--{{staff_list}}-->
+                                <option value="{{user_id}}">{{full_name}}</option>
+                                <!--{{/staff_list}}-->
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label>Название</label>
+                            <input type="text" name="campaign_name">
+                        </div>
+                        <div class="field">
+                            <label>Ставка</label>
+                            <input type="text" name="campaign_fixed_payment">
+                        </div>
+                    </div>
+                    <div id="CampaignStatistics">
+                        <h4 class="ui header">Статистика продаж</h4>
+                        <div style="background-color: #ddddddaa">
+                            <div class="ui three top attached buttons" id="CampaignTimespanSelector">
+                                <button class="ui button" data-timespan="current">Текущий месяц</button>
+                                <button class="ui button" data-timespan="past">Прошлый месяц</button>
+                                <button class="ui button" data-timespan="past-past">Позапрошлый месяц</button>
+                            </div>
+                            <div class="ui attached segment" id="CampaignStat"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div class="easyui-panel" title="Расчет бонусов Кампании">
                 <select name="visibility_filter" title="Показывать кампании">

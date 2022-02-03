@@ -2,14 +2,20 @@
 /* User Level: 2
  * Group Name: Продажи
  * Plugin Name: CampaignManager
- * Version: 2019-01-05
+ * Version: 2022-02-03
  * Description: Расчет планов и бонусов менеджеров
- * Author: baycik 2019
+ * Author: baycik 2022
  * Author URI: 
  * Trigger After: CampaignManager
  */
 class CampaignManager extends Catalog{
     public $min_level=2;
+    
+    function __construct() {
+        parent::__construct();
+        session_write_close();
+    }
+    
     
     public function index(){
         $this->Hub->set_level(3);
@@ -345,7 +351,6 @@ class CampaignManager extends Catalog{
     
     public function bonusCalculate( int $campaign_bonus_id ){
         $this->Hub->set_level(3);
-        session_write_close();
         return $this->bonusCalculateResult($campaign_bonus_id);
     }
     private function bonusCalculateResult( int $campaign_bonus_id, string $timespan=null, int $bonus_limit=0 ){
@@ -639,9 +644,13 @@ class CampaignManager extends Catalog{
         $this->Hub->set_level(2);
         $this->load->view('bonus_chart.html');
     }
-    public function bonusCalculatePersonal( string $timespan='current' ){
-        $this->Hub->set_level(2);
-        $liable_user_id=$this->Hub->svar('user_id');
+    public function bonusCalculatePersonal( string $timespan='current', int $liable_user_id=null ){
+        if($liable_user_id){
+            $this->Hub->set_level(3);
+        } else {
+            $this->Hub->set_level(2);
+            $liable_user_id=$this->Hub->svar('user_id');
+        }
         $sql="SELECT * 
             FROM
                 plugin_campaign_list 
@@ -675,22 +684,22 @@ class CampaignManager extends Catalog{
                 ];
     }
     
-    public function bonusCalculateCampaignTotal( int $campaign_id =0 ){
-        $this->Hub->set_level(2);
-        $sql="SELECT * FROM plugin_campaign_list JOIN plugin_campaign_bonus USING(campaign_id) WHERE campaign_id=$campaign_id";
-        $campaign_list=$this->get_list($sql);
-        if( !$campaign_list ){
-            return 0;
-        }
-        $result_total=$campaign_list[0]->campaign_fixed_payment;
-        foreach( $campaign_list as $campaign ){
-            if( $campaign->bonus_visibility>0 ){
-                $current_result=$this->bonusCalculateResult($campaign->campaign_bonus_id);
-                $result_total+=$current_result[0]->bonus_result;
-            }
-        }
-        return $result_total;
-    }
+//    public function bonusCalculateCampaignTotal( int $campaign_id =0 ){
+//        $this->Hub->set_level(2);
+//        $sql="SELECT * FROM plugin_campaign_list JOIN plugin_campaign_bonus USING(campaign_id) WHERE campaign_id=$campaign_id";
+//        $campaign_list=$this->get_list($sql);
+//        if( !$campaign_list ){
+//            return 0;
+//        }
+//        $result_total=$campaign_list[0]->campaign_fixed_payment;
+//        foreach( $campaign_list as $campaign ){
+//            if( $campaign->bonus_visibility>0 ){
+//                $current_result=$this->bonusCalculateResult($campaign->campaign_bonus_id);
+//                $result_total+=$current_result[0]->bonus_result;
+//            }
+//        }
+//        return $result_total;
+//    }
     
     public function dashboardMobiSell(){
         $this->Hub->set_level(2);
@@ -700,13 +709,32 @@ class CampaignManager extends Catalog{
         $this->Hub->set_level(2);
         $this->load->view("dashboard_isell.html");
     }
-    public function dashboardManagerStatistics( string $timespan='current' ){
-        $this->Hub->set_level(2);
+    public function dashboardManagerStatistics( string $timespan='current', $liable_user_id=null ){
+        if($liable_user_id){
+            $this->Hub->set_level(3);
+        } else {
+            $this->Hub->set_level(2);
+            $liable_user_id=$this->Hub->svar('user_id');
+        }        
+        $sql="SELECT * 
+            FROM
+                plugin_campaign_list 
+                    JOIN 
+                plugin_campaign_bonus USING(campaign_id) 
+            WHERE 
+                liable_user_id=$liable_user_id 
+            ORDER BY campaign_queue";
+        $campaign_list=$this->get_list($sql);
+        $result_total=$result_fixed=$this->get_value("SELECT SUM(campaign_fixed_payment) FROM plugin_campaign_list WHERE liable_user_id=$liable_user_id");
+
         $this->timespanCalculate($timespan);
-        $liable_user_id=$this->Hub->svar('user_id');
-        $campaigns=$this->get_list("SELECT * FROM plugin_campaign_bonus JOIN plugin_campaign_list USING(campaign_id) WHERE liable_user_id='$liable_user_id'");
         $sqls=[];
-        foreach($campaigns as $campaign){
+        foreach($campaign_list as $campaign){
+            if( $campaign->bonus_visibility>0 ){
+                $current_result=$this->bonusCalculateResult($campaign->campaign_bonus_id,$timespan);
+                $result_total+=$current_result[0]->bonus_result??0;
+            }
+            
             $client_filter=$this->clientListFilterGet($campaign->campaign_id);
             $sqls[]="
                 SELECT
@@ -724,14 +752,17 @@ class CampaignManager extends Catalog{
             return ['invoice_count'=>0,'client_count'=>0];
         }
         $super_table=implode(') UNION (',$sqls);
-        $sql="
+        $sql_final="
             SELECT 
                 COUNT(DISTINCT doc_id) invoice_count,
                 COUNT(DISTINCT passive_company_id) client_count,
                 @month month,
                 @year year
             FROM (($super_table))t";
-        return $this->get_row($sql);
+        $statistics=$this->get_row($sql_final);
+        $statistics->result_fixed=$result_fixed;
+        $statistics->result_total=$result_total;
+        return $statistics;
     }
     ///////////////////////////////////////////////////
     //EXTENSION
