@@ -402,8 +402,7 @@ class CampaignManager extends Catalog{
         if( $bonus_limit ){
             $limit="LIMIT $bonus_limit";
         }
-        echo "\n\n\n\n";
-        echo $sql="SELECT
+        $sql="SELECT
             *,
             COALESCE(ROUND(
                 IF(bonus_base>=period_plan3 AND period_plan3,IF(period_reward3,period_reward3,bonus_base*campaign_bonus_ratio3/100),
@@ -971,7 +970,7 @@ class CampaignManager extends Catalog{
                     document_list USING(doc_id)
                 SET 
                     breakeven_price = ROUND(GET_BREAKEVEN_PRICE(product_code,passive_company_id,doc_ratio,self_price),2)
-                WHERE 
+                WHERE   
                     YEAR(cstamp)=$bonus_period->period_year
                     AND MONTH(cstamp)=$bonus_period->period_month
                     AND doc_type=1
