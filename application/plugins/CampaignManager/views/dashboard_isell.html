@@ -263,8 +263,8 @@
                 });
             },
             chartDatasetCalc: function (bonus_data) {
-                var doughnut1=0,doughnut2=0,doughnut3=0;
-                if(bonus_data){
+                var doughnut1=100,doughnut2=100,doughnut3=100;
+                if(bonus_data && bonus_data.current_result[0] && bonus_data.current_result[0]['period_plan1']>0){
                     doughnut1 = this.chartDatasetCalcArc(bonus_data.current_result[0], 1);
                     doughnut2 = this.chartDatasetCalcArc(bonus_data.current_result[0], 2);
                     doughnut3 = this.chartDatasetCalcArc(bonus_data.current_result[0], 3);
@@ -278,8 +278,6 @@
             chartDatasetCalcArc: function (arc_data, i) {
                 if(arc_data && arc_data['period_plan' + i]>0){
                     return Math.round( Math.min(arc_data.bonus_base / arc_data['period_plan' + i] || 0.01,1) * 100);
-                } else {
-                    return 100;
                 }
                 return null;
             }
