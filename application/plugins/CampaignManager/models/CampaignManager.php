@@ -374,7 +374,7 @@ class CampaignManager extends Catalog{
                 break;
             default :
                 $period_on=" 1 ";//whole period
-                $in_timespan="1";
+                $in_timespan="campaign_start_at<=@start AND campaign_finish_at>=@finish";
         }
         switch( $campaign_bonus->bonus_type ){
             case 'VOLUME':
@@ -402,8 +402,8 @@ class CampaignManager extends Catalog{
         if( $bonus_limit ){
             $limit="LIMIT $bonus_limit";
         }
-        
-        $sql="SELECT
+        echo "\n\n\n\n";
+        echo $sql="SELECT
             *,
             COALESCE(ROUND(
                 IF(bonus_base>=period_plan3 AND period_plan3,IF(period_reward3,period_reward3,bonus_base*campaign_bonus_ratio3/100),
@@ -990,6 +990,7 @@ class CampaignManager extends Catalog{
             default:
                 $this->query("SET @timespan:=NOW();");
         }
-        $this->query("SET @month:=MONTH(@timespan),@quarter:=QUARTER(@timespan),@year:=YEAR(@timespan);");  
+        $this->query("SET @month:=MONTH(@timespan),@quarter:=QUARTER(@timespan),@year:=YEAR(@timespan),@start=CONCAT(YEAR(@timespan),'-',MONTH(@timespan),'-01 00:00:00');");  
+        $this->query("SET @finish:=DATE_SUB(DATE_ADD(@start,INTERVAL 1 MONTH),INTERVAL 1 SECOND);");  
     }
 }
