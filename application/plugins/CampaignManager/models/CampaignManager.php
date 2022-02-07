@@ -406,9 +406,9 @@ class CampaignManager extends Catalog{
         $sql="SELECT
             *,
             COALESCE(ROUND(
-                IF(bonus_base>period_plan3 AND period_plan3,IF(period_reward3,period_reward3,bonus_base*campaign_bonus_ratio3/100),
-                IF(bonus_base>period_plan2 AND period_plan2,IF(period_reward2,period_reward2,bonus_base*campaign_bonus_ratio2/100),
-                IF(bonus_base>period_plan1,IF(period_reward1,period_reward1,bonus_base*campaign_bonus_ratio1/100),
+                IF(bonus_base>=period_plan3 AND period_plan3,IF(period_reward3,period_reward3,bonus_base*campaign_bonus_ratio3/100),
+                IF(bonus_base>=period_plan2 AND period_plan2,IF(period_reward2,period_reward2,bonus_base*campaign_bonus_ratio2/100),
+                IF(bonus_base>=period_plan1,IF(period_reward1,period_reward1,bonus_base*campaign_bonus_ratio1/100),
             0)))),0) bonus_result,
             ROUND(bonus_base/period_plan1*100) period_percent1,
             ROUND(bonus_base/period_plan2*100) period_percent2,
