@@ -50,7 +50,7 @@ class DocumentView extends DocumentItems{
 	}
 	if ( $is_extra==='extra' ) {
 	    $extra_fields_str = $this->get_value("SELECT view_efield_values FROM document_view_list WHERE doc_view_id='$doc_view_id'");
-            $extra_fields = json_decode($extra_fields_str);
+            $extra_fields = json_decode($extra_fields_str)??(object)[];
 	    $extra_fields->$field = $value;
 	    $field = 'view_efield_values';
 	    $value = addslashes(json_encode($extra_fields));
