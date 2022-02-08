@@ -109,7 +109,7 @@
 	delete:function(){
 	    var node=$('#Stree_tree').tree('getSelected');
 	    if( node && confirm("Удалить выделенную категорию?\n( Товарные позиции удалены не будут )")){
-		$.post("Stock/stockTreeDelete/"+node.branch_id,function(ok){
+		$.post("Stock/stockTreeDelete/",{branch_id:node.branch_id},function(ok){
 		    if( ok*1 ){
 			App.flash("Удалено: "+node.label);
 			$('#Stree_tree').tree('remove', node.target);
