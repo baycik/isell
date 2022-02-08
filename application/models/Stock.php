@@ -89,7 +89,8 @@ class Stock extends Catalog {
     
 
     public function branchFetch( int $id = 0, string $depth='top') {
-        return $this->treeFetch("stock_tree", $id, $depth);
+        $user_level=$this->Hub->svar('user_level');
+        return $this->treeFetch("stock_tree", $id, $depth, '', $user_level);
     }
 
     public function stockTreeCreate( int $parent_id, string $label) {

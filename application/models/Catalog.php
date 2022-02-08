@@ -214,7 +214,7 @@ class Catalog extends CI_Model {
             'top_id' => $parent_top_id,
             'label'=>'',
             'branch_data'=>'',
-            'level'=>0
+            'level'=>1
         ]);
         $this->treeUpdate($table, $branch_id, 'label', $label, $calc_top_id);
         return $branch_id;
