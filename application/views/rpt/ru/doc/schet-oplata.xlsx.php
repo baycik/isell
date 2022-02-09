@@ -1,4 +1,14 @@
 <?php
+    if( $this->view->doc_view->extra->personal_interest??0 ){
+        $interest=$this->view->doc_view->extra->personal_interest/100+1;
+        foreach($this->view->rows as $row){
+            $row->product_price_total=round($row->product_price_total*$interest);
+            $row->product_sum_total=round($row->product_sum_total*$interest);
+        }
+        $this->view->footer->vatless=round($this->view->footer->vatless*$interest);
+        $this->view->footer->vat=round($this->view->footer->vat*$interest);
+        $this->view->footer->total=round($this->view->footer->total*$interest);
+    }
     $this->view->a->all=  getAll($this->view->a);
     $this->view->doc_view->total_spell=  num2str($this->view->footer->total);
     $this->view->doc_view->vat_spell=  num2str($this->view->footer->vat);
