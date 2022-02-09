@@ -159,6 +159,20 @@
                 App.page_company_prefs.update('other', this.name, App.val(this), this.title);
             });
             ;
+        },
+        tree:{
+            move:function(){
+                App.loadWindow('page/company/tree',{param:{mode:'branches_only'}}).progress(function(status,folder){
+                    if( status==='selectFolder' ){
+                        let branch_id=App.pcomp.branch_id;
+                        let field='parent_id';
+                        let value=folder.branch_id;
+                        $.post("Company/companyTreeUpdate",{branch_id,field,value}).done(()=>{
+                            App.flash("Компания перенесена");
+                        });
+                    }
+                });
+            }
         }
     };
     //App.page_company_prefs.init();
@@ -286,9 +300,11 @@
                 <option value="ua">Українська</option>
                 <option value="ru">Русский</option>
             </select>
-            <div class="inp_rule">Другое</div>
-            <textarea name="path" title="Путь" readonly="readonly"></textarea>
-            <input title="Статья расходов" name="expense_label"/>
+            <div class="inp_rule">Дерево компаний</div>
+                <textarea name="path" title="Путь" readonly="readonly"></textarea>
+                <button style="width:100%" onclick="App.page_company_prefs.tree.move()"><img src="img/big_rightarrow.png"/> Перенести в другую папку</button>
+            <div class="inp_rule">Бухгалтерия</div>
+                <input title="Статья расходов" name="expense_label"/>
             <div class="inp_rule"></div>
             <div>
                 <input type="checkbox" name="is_supplier" title="Обновлять закупочные цены" data-skip="1">Обновлять закупочные цены

@@ -140,15 +140,14 @@ class Company extends Catalog{
     //////////////////////////////////////////////
     // COMPANY TREE SECTION
     //////////////////////////////////////////////
-    public $branchFetch=['id'=>['int',0]];
-    public function branchFetch($parent_id) {
+    public function branchFetch( int $id=0, string $mode='') {
 	$table = "companies_tree LEFT JOIN companies_list USING(branch_id)";
 	$assigned_path=  $this->Hub->svar('user_assigned_path');
-        if( $assigned_path && $parent_id==0 ){
-            $parent_id=null;
+        if( $assigned_path && $id==0 ){
+            $id=null;
         }
 	$level=$this->Hub->svar('user_level');
-	return $this->treeFetch($table, $parent_id, 'top', $assigned_path, $level, 'is_active,is_leaf,label');
+	return $this->treeFetch($table, $id, 'top', $assigned_path, $level, 'is_active,is_leaf,label', $mode);
     }
     
     //public $companyTreeCreate=['parent_id'=>['int',0],'label'=>'string','branch_type'=>'string'];

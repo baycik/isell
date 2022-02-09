@@ -207,7 +207,8 @@
 	    Ctree.node.find('.ok,.folder').prop('disabled',true);
 	},
         loaderTree:function(param, success, error){
-            App.get('Company/branchFetch/',param,function(resp){
+            Object.assign(param, App.page_company_tree.data.param);
+            $.get('Company/branchFetch/',param,function(resp){
                 var data=App.json(resp);
                 for(var i in data){
                     data[i].id=data[i].branch_id;

@@ -166,7 +166,7 @@ class Catalog extends CI_Model {
     ////////////////////////////////////////////////////
     // CORE TREE FUNCTIONS
     ////////////////////////////////////////////////////
-    protected function treeFetch($table, $parent_id = null, $depth = 'all', $super_path = '', $level = 0, $order = "is_leaf,label") {
+    protected function treeFetch($table, $parent_id = null, $depth = 'all', $super_path = '', $level = 0, $order = "is_leaf,label", $mode='') {
         if ($depth == 'top'){
             $depth=1;
         } else if ($depth == 'all') {
@@ -178,6 +178,9 @@ class Catalog extends CI_Model {
         $depth--;
         
         $case = ["level IS NULL OR level<=$level"];
+        if( $mode=='branches_only' ){
+            $case[] = "is_leaf<>1";
+        }
         if ($super_path !== '') {
             $case[] = "path LIKE '$super_path" . ($parent_id === null ? '' : '%') . "'";
         }
