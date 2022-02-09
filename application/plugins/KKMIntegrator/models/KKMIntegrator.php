@@ -343,7 +343,7 @@ class KKMIntegrator extends PluginBase{
         $prev_check=$this->previousCheckFind($doc_id);
         $PreviousCheck=$prev_check->check_object->data;
         if( !empty($prev_check->check_object->registration->CheckNumber) ){
-            $corrected_check_ref="Возвр.по чеку №{$prev_check->check_object->registration->CheckNumber}";
+            $corrected_check_ref="№{$prev_check->check_object->registration->CheckNumber}";
             $PreviousCheck->AdditionalAttribute=$Context['AdditionalAttribute']=$corrected_check_ref;
         }
         $PreviousCheck->AdditionalAttribute=$Context['AdditionalAttribute'];
