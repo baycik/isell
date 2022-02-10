@@ -1198,6 +1198,9 @@ class Stock extends Catalog {
     private function immediateResponse( $response ){
         ob_start();
         echo json_encode($response);
+        if (is_callable('fastcgi_finish_request')) {
+            fastcgi_finish_request();
+        }
         header('Connection: close');
         header('Content-Length: '.ob_get_length());
         ob_end_flush();
