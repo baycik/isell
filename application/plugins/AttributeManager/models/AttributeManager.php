@@ -258,9 +258,9 @@ class AttributeManager extends Catalog{
 	return $total_rows;
     }
     
-    public function tableViewGet( string $out_type='.print', int $attribute_id=0, array $filter ){
+    public function tableViewGet( string $out_type='.print', int $attribute_id=0, array $filter=null ){
         $this->Hub->set_level(3);
-	$rows=$this->getProducts( $attribute_id,0, 10000, null, null, $filter = null );
+	$rows=$this->getProducts( $attribute_id,0, 10000, null, null, $filter );
 	$dump=[
             'tpl_files_folder'=>"application/plugins/AttributeManager/views/",
 	    'tpl_files'=>'GridTpl.xlsx',
