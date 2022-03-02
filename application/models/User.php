@@ -49,7 +49,7 @@ class User extends Catalog {
         $this->Hub->load_model("Utils");
         $this->Hub->load_model("Company");
         $this->Hub->Company->selectActiveCompany(1);// not always right!!!
-        $ok_sms=$this->Utils->sendSms($user_data->user_phone,$message);
+        $ok_sms=$this->Utils->sendSms($user_data->user_phone??'',$message);
         $ok_email=$this->Utils->sendEmail($user_data->user_email,'★ MobiSell',$message);
         $this->Hub->svar('user_level',$initial_user_level);
         return $ok_sms || $ok_email;

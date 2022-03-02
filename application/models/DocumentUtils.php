@@ -42,8 +42,8 @@ class DocumentUtils extends Catalog{
              * IF cant get company than it is not permitted to user
              */
             if( !$passive_company ){
-                $this->Hub->kick_out();
-                return false;
+                http_response_code(403);
+                die();
             }
             $this->_doc = $document_head;
             if( !$this->_doc ){
