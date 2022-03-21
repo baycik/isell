@@ -800,7 +800,7 @@ class Document extends Data {
 
 	$prev_doc = $this->Base->get_row("SELECT use_vatless_price,signs_after_dot,notcount,doc_type,vat_rate FROM document_list WHERE active_company_id='$active_company_id' AND passive_company_id='$passive_company_id' AND doc_type<10 AND is_commited=1 ORDER BY cstamp DESC LIMIT 1");
         if( $doc_type==null ){
-	    $doc_type=$prev_doc['doc_type']?$prev_doc['doc_type']:1;
+	    $doc_type=$prev_doc['doc_type']??1;
 	}
         if( !$doc_type ){
             return false;
