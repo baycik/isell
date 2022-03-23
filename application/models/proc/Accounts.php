@@ -64,10 +64,10 @@ class Accounts extends Data {
         $this->unlinkCheckTrans($trans_id);
         $trans_data = $this->getTransaction($trans_id);
         $this->Base->query("DELETE FROM acc_trans WHERE trans_id=$trans_id");
-        if( $trans_data['acc_debit_code']==361 ){
+        if( $trans_data['acc_debit_code']??0==361 ){
             $this->calculatePayments($trans_data['passive_company_id']);
         }
-        if( $trans_data['acc_credit_code']==631 ){
+        if( $trans_data['acc_credit_code']??0==631 ){
             $this->calculatePayments($trans_data['passive_company_id']);
         }
         return true;
@@ -88,7 +88,7 @@ class Accounts extends Data {
 
     public function breakTransConnection($trans_id) {
         $trans_data = $this->getTransaction($trans_id);
-        if ($trans_data['trans_ref']) {//If tarnsaction has connection
+        if ($trans_data['trans_ref']??null) {//If tarnsaction has connection
             $this->updateTransaction($trans_id, array('trans_ref' => 0, 'trans_status' => 0));
             $this->updateTransaction($trans_data['trans_ref'], array('trans_ref' => 0, 'trans_status' => 0));
         }
@@ -96,7 +96,7 @@ class Accounts extends Data {
 
     private function unlinkCheckTrans($trans_id) {
         $trans_data = $this->getTransaction($trans_id);
-        if ($trans_data['check_id']) {//If transaction has linked check
+        if ($trans_data['check_id']??0) {//If transaction has linked check
             $this->Base->query("UPDATE acc_check_list SET trans_id=0 WHERE check_id=$trans_data[check_id]");
         }
     }

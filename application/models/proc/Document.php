@@ -1218,7 +1218,9 @@ class Document extends Data {
             $curr_code=$this->Base->acomp('curr_code');
             $price_label=$this->Base->pcomp('price_label');
             $current_ratio=$this->doc('doc_ratio');
-            $correction=$new_val/$current_ratio;
+            $doc_type=$this->doc('doc_type');
+            $correction_invoice=$new_val/$current_ratio;
+            $correction_self=$doc_type==2?$correction_invoice:1;
             $this->Base->query("START TRANSACTION");
 	    $this->Base->query("UPDATE document_list SET doc_ratio='$new_val' WHERE doc_id='$doc_id'");
             $this->Base->query("UPDATE 
@@ -1226,7 +1228,8 @@ class Document extends Data {
                             JOIN 
                         price_list pl ON de.product_code=pl.product_code 
                             AND label='$price_label' 
-                    SET invoice_price=invoice_price*$correction 
+                    SET invoice_price=invoice_price*$correction_invoice,
+                        self_price=self_price*$correction_self
                     WHERE doc_id='$doc_id' AND curr_code<>'' AND curr_code<>'$curr_code'");
             $this->clearTrans(); // To change
             $this->updateTrans(); //Time of trans
