@@ -615,7 +615,7 @@ class CampaignManager extends Catalog{
             ROUND(SUM(IF(acc_debit_code=$payment_account,amount,-amount))) total_sum,
             (SELECT ROUND(SUM(IF(acc_debit_code=$payment_account,amount,-amount))) FROM acc_trans at2 WHERE 
                 at2.passive_company_id=at.passive_company_id
-                AND YEAR(cstamp)<=period_year AND MONTH(cstamp)<=period_month
+                AND CONCAT(YEAR(cstamp),MONTH(cstamp)) <= CONCAT(period_year,period_month)
                 AND (acc_debit_code=$payment_account OR acc_credit_code=$payment_account)) debt_finish,";
         $select="COALESCE( IF( 
                                 acc_credit_code='$payment_account' 
