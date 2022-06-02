@@ -457,7 +457,7 @@ class KKMIntegrator extends PluginBase{
                 'Price'=>$entry->product_price,
                 'Amount'=>$entry->product_sum,
                 'Department'=>0,
-                'Tax'=>$Context['active_company']->company_vat_rate,
+                'Tax'=>$Context['document']['head']->vat_rate,
                 'SignMethodCalculation'=>4,
                 'SignCalculationObject'=>1,
                 'MeasurementUnit'=>$entry->product_unit,
