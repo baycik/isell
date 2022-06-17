@@ -22,7 +22,7 @@ class KazanExporter extends Catalog {
     public $start = ['filename'=>'string'];
     public function start($filename){
         $product_codes = $this->getSettings();
-        $this->viewGet($product_codes, $filename);
+        $this->viewGet($product_codes, 'NilsonCrimeaLeftovers');
         return true;
     }
 
@@ -60,10 +60,12 @@ class KazanExporter extends Catalog {
     }
     
     private function getProductList($product_codes){
+        $pcomp_id='932';
+        $usd_ratio=$this->Hub->pref('usd_ratio');;
         $product_codes = addslashes($product_codes);
         $sql = "
             SELECT 
-                se.product_code, se.product_quantity, pl.ru as product_name 
+                se.product_code, se.product_quantity, pl.ru as product_name ,GET_SELL_PRICE(se.product_code,$pcomp_id,$usd_ratio) product_price
             FROM 
                 stock_entries se
                 JOIN
@@ -87,7 +89,6 @@ class KazanExporter extends Catalog {
     }
  
     private function updateSettings($settings) {
-        ;
         $sql = "
             UPDATE
                 plugin_list

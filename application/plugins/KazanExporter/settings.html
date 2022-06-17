@@ -7,7 +7,8 @@
           <input type="file" id="kazan_file" name="file" multiple style="margin-bottom: 9px;">
         </div>
     <div style="text-align: center">
-        <button type="button" onclick="App.kazan_exporter_settings.export()"><img src="img/export.png" style="width:24px;"> Экспорт</button>
+        <button type="button" onclick="$.post('KazanExporter/start')"><img src="img/export.png" style="width:24px;"> Выгрузить</button>
+        <button type="button" onclick="App.kazan_exporter_settings.export()"><img src="img/file_upload.png" style="width:24px;"> Загрузить список товаров</button>
         <button type="button" onclick="App.kazan_exporter_settings.addAutoBackupTask()"><img src="img/event.png" style="width:24px;"> Добавить автовыполнение</button>
     </div>
 </form>
@@ -33,7 +34,7 @@
         export: function () {
             var uploaded_file = $('#kazan_file')[0].files;
             if(uploaded_file.length<1){
-                App.flash('Файл не выбран!');
+                App.flash('Выберите файл со списком товаров для загрузки! Формат (.csv)');
                 return;
             }
             var formData = new FormData();
