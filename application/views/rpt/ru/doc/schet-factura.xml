@@ -31,7 +31,7 @@
 
 		<ТаблСчФакт>
 		{loop name="v->rows"}
-			<СведТов НомСтр="1" НаимТов="{$value->product_name}" ОКЕИ_Тов="796" КолТов="{$value->product_quantity}" ЦенаТов="{$value->product_price}" СтТовБезНДС="{$value->product_price_vatless}" НалСт="{$value->product_vat_rate}" СтТовУчНал="{$value->product_sum_total}">
+			<СведТов НомСтр="1" НаимТов="{$value->product_name}" ОКЕИ_Тов="796" КолТов="{$value->product_quantity}" ЦенаТов="{$value->product_price}" СтТовБезНДС="{$value->product_sum_vatless}" НалСт="{$value->product_vat_rate}" СтТовУчНал="{$value->product_sum_total}">
 				<Акциз>
 					<БезАкциз>без акциза</БезАкциз>
 				</Акциз>
