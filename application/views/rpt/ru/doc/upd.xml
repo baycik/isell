@@ -36,7 +36,7 @@
 					<СумНал>{$value->product_sum_vat}</СумНал>
 				</СумНал>
 				<СвТД КодПроисх="{$value->origin_code}" НомерТД="{$value->party_label}"/>
-				<ДопСведТов ПрТовРаб="1" НаимЕдИзм="{$value->product_unit}" КрНаимСтрПр="{$value->origin_name}" КодВидТов="{$value->product_code}"/>
+				<ДопСведТов ПрТовРаб="1" НаимЕдИзм="{$value->product_unit}" КрНаимСтрПр="{$value->origin_name}" КодТов="{$value->product_code}"/>
 			</СведТов>
 		{/loop}
 
