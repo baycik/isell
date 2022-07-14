@@ -752,7 +752,7 @@ class Document extends Data {
             $already_exists=$this->Base->get_row($sql,0);
             if( $already_exists ){
                 $this->Base->msg('Бланк такого типа уже сформирован!');
-                return false;
+                //return false;
             }
             if( $doc_type==1 || $doc_type==3 ){
                 $view_num = $this->getViewNextNum($view_type_id);
