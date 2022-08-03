@@ -1345,7 +1345,7 @@ class Document extends Data {
 	}
 	if ($this->doc('doc_type') == 5) {//AGENTSELL DOCUMENT
 	    $desc = "Агентская продажа №$doc_num";
-	    //$this->makeTransaction(84, 631, $sum['total'], $desc, 'total');
+	    $this->makeTransaction(84, 631, $sum['total'], $desc, 'total');
 	    return true;
 	}
     }
