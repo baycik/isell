@@ -404,7 +404,6 @@ class Checkout extends Stock {
                 AND product_quantity_verified>product_quantity
             ";
         $entries_list_more = $this->get_list($sql_more);
-        $DocumentItems=$this->Hub->load_model('DocumentItems');
         $more_doc_id=0;
         $sql_less = "
             SELECT
@@ -426,7 +425,7 @@ class Checkout extends Stock {
             $this->checkoutUpdateDocStatus($checkout_id, 'checked_with_divergence');
             $more_doc_id = $DocumentItems->createDocument(2);
             foreach($entries_list_more as $item){
-                $DocumentItems->entryAdd(null,$item->product_code, $item->difference);
+                $DocumentItems->entryAdd($more_doc_id,$item->product_code, $item->difference);
             }
             $DocumentItems->headUpdate('doc_data',$document_comment);
             //$DocumentItems->entryDocumentCommit($more_doc_id);
@@ -435,7 +434,7 @@ class Checkout extends Stock {
             $this->checkoutUpdateDocStatus($checkout_id, 'checked_with_divergence');
             $less_doc_id = $DocumentItems->createDocument(1);
             foreach($entries_list_less as $item){
-                $DocumentItems->entryAdd(null,$item->product_code, $item->difference);
+                $DocumentItems->entryAdd($less_doc_id,$item->product_code, $item->difference);
             }
             $DocumentItems->headUpdate('doc_data',$document_comment);
             //$DocumentItems->entryDocumentCommit($less_doc_id);
