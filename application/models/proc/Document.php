@@ -457,10 +457,10 @@ class Document extends Data {
 	}
 	$doc_entry_id = mysqli_insert_id($this->Base->db_link);
         /*
-         *  bugfix getInvoicePrice accepts stripslashed product_code
+         *  bugfix getInvoicePrice accepts stripslashed product_code //WHY WHY WHY???
          */
 	if( $invoice_price===NULL ){
-	    $invoice_price = $this->getProductInvoicePrice( stripslashes($product_code) );
+	    $invoice_price = $this->getProductInvoicePrice( $product_code );
 	}
 	if (!$this->alterEntry('update', $doc_entry_id, $product_quantity, $invoice_price)) {//update not ok
 	    $this->Base->query("DELETE FROM document_entries WHERE doc_entry_id=$doc_entry_id");
@@ -1345,7 +1345,7 @@ class Document extends Data {
 	}
 	if ($this->doc('doc_type') == 5) {//AGENTSELL DOCUMENT
 	    $desc = "Агентская продажа №$doc_num";
-	    $this->makeTransaction(84, 631, $sum['total'], $desc, 'total');
+	    //$this->makeTransaction(84, 631, $sum['total'], $desc, 'total');
 	    return true;
 	}
     }

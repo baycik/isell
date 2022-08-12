@@ -130,7 +130,7 @@ class DocumentItems extends DocumentCore{
 		    ROUND(SUM(volume),2) total_volume,
 		    SUM(product_sum_vatless) vatless,
 		    SUM(product_sum_total) total,
-		    SUM(product_sum_total-product_sum_vatless) vat,
+		    ROUND(SUM(product_sum_total-product_sum_vatless),2) vat,
 		    SUM(ROUND(product_quantity*self_price,2)) self,
 		    @curr_symbol curr_symbol
 		FROM tmp_doc_entries";
