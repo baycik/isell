@@ -33,13 +33,16 @@ class PriceManager extends Catalog{
     }
     
     public function breakevenCreate( int $branch_id, int $company_id=0 ){
+        $this->Hub->set_level(4);
         $this->create('price_breakeven', ['branch_id'=>$branch_id,'company_id'=>0]);
         return $this->create('price_breakeven', ['branch_id'=>$branch_id,'company_id'=>$company_id]);
     }
     public function breakevenUpdate( int $breakeven_rule_id, string $field, string $value ){
+        $this->Hub->set_level(4);
         return $this->update('price_breakeven',[$field=>$value],['breakeven_rule_id'=>$breakeven_rule_id]);
     }
     public function breakevenDelete( int $breakeven_rule_id ){
+        $this->Hub->set_level(4);
         return $this->delete('price_breakeven',['breakeven_rule_id'=>$breakeven_rule_id]);
     }
     
