@@ -81,6 +81,9 @@
                 Mark.globals.stock_categories = data.stock_category_list;
                 App.renderTpl('CampaignManager', data);
                 $("#CampaignManager").css('visibility', 'visible');
+                if (data.settings.subject_createdby_include) {
+                    data.settings.subject_createdby_include = data.settings.subject_createdby_include.split(',');
+                }
                 if (data.settings.subject_manager_include) {
                     data.settings.subject_manager_include = data.settings.subject_manager_include.split(',');
                 }
@@ -113,7 +116,7 @@
                 });
             },
             update: function (field, value, title) {
-                if (field === 'subject_manager_include' || field === 'subject_manager_exclude') {
+                if (field === 'subject_manager_include' || field === 'subject_manager_exclude' || field === 'subject_createdby_include') {
                     value = value.join(',');
                 }
                 $.post("CampaignManager/campaignUpdate", {campaign_id: campaign_id, field: field, value: value}, function (ok) {
@@ -580,6 +583,14 @@
                         {{/staff_list}}-->
                     </select>
                     <select name="subject_manager_exclude" title="Исключить закрепленных" multiple size="6">
+                        <!--{{staff_list}}
+                        {{if full_name}}
+                        -->
+                        <option value="{{user_id}}">{{full_name}}</option>
+                        <!--{{/if}}
+                        {{/staff_list}}-->
+                    </select>
+                    <select name="subject_createdby_include" title="Включить накладные созданные" multiple size="6">
                         <!--{{staff_list}}
                         {{if full_name}}
                         -->

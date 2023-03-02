@@ -71,6 +71,18 @@ class CampaignManager extends Catalog{
         return $this->update('plugin_campaign_list',[$field=>$value],['campaign_id'=>$campaign_id]);
     }
     
+    private $documentListFilter='notset';
+    private function documentListFilterGet($campaign_id){
+        if($this->documentListFilter=='notset'){
+            $settings=$this->get_row("SELECT * FROM plugin_campaign_list WHERE campaign_id='$campaign_id'");
+            $this->documentListFilter='';
+            if( $settings->subject_createdby_include ){
+                $this->documentListFilter="AND created_by IN ($settings->subject_createdby_include)";
+            }
+        }
+        return $this->documentListFilter;
+    }
+    
     private function clientListFilterGet($campaign_id){
         $this->Hub->set_level(2);
         $settings=$this->get_row("SELECT * FROM plugin_campaign_list WHERE campaign_id='$campaign_id'");
@@ -485,7 +497,7 @@ class CampaignManager extends Catalog{
     }
     private function bonusCalculateVolume($campaign_bonus,$period_on,$client_filter){
         $product_range= $this->bonusCalculateProductRange($campaign_bonus);
-        
+        $document_filter=$this->documentListFilterGet($campaign_bonus->campaign_id);
         //print_r($product_range);
         $detailed_select="
             analyse_brand,
@@ -511,6 +523,7 @@ class CampaignManager extends Catalog{
                             AND is_commited 
                             AND NOT notcount 
                             AND dl.cstamp>'{$campaign_bonus->campaign_start_at}' AND dl.cstamp<'{$campaign_bonus->campaign_finish_at}'
+                            $document_filter
                     ) dl ON $period_on
                     LEFT JOIN
                 {$product_range['table']} product_range USING (doc_id)
@@ -526,6 +539,7 @@ class CampaignManager extends Catalog{
         ];
     }
     private function bonusCalculateFraction($campaign_bonus,$period_on,$client_filter){
+        $document_filter=$this->documentListFilterGet($campaign_bonus->campaign_id);
         $product_range= $this->bonusCalculateProductRange($campaign_bonus);
         $detailed_select="
             analyse_brand,
@@ -554,6 +568,7 @@ class CampaignManager extends Catalog{
                             AND is_commited 
                             AND NOT notcount 
                             AND dl.cstamp>'{$campaign_bonus->campaign_start_at}' AND dl.cstamp<'{$campaign_bonus->campaign_finish_at}'
+                            $document_filter
                     ) dl ON $period_on
                     LEFT JOIN
                 {$product_range['table']} product_range USING (doc_id)
@@ -569,6 +584,7 @@ class CampaignManager extends Catalog{
         ];
     }
     private function bonusCalculateProfit($campaign_bonus,$period_on,$client_filter){
+        $document_filter=$this->documentListFilterGet($campaign_bonus->campaign_id);
         $product_range= $this->bonusCalculateProductRange($campaign_bonus);
         $detailed_select="
             analyse_brand,
@@ -594,6 +610,7 @@ class CampaignManager extends Catalog{
                             AND is_commited 
                             AND NOT notcount 
                             AND dl.cstamp>'{$campaign_bonus->campaign_start_at}' AND dl.cstamp<'{$campaign_bonus->campaign_finish_at}'
+                            $document_filter
                     ) dl ON $period_on
                     LEFT JOIN
                 {$product_range['table']} product_range USING (doc_id)
@@ -729,6 +746,7 @@ class CampaignManager extends Catalog{
         $this->timespanCalculate($timespan);
         $sqls=[];
         foreach($campaign_list as $campaign){
+            $document_filter=$this->documentListFilterGet($campaign->campaign_id);
             if( $campaign->bonus_visibility>0 ){
                 $current_result=$this->bonusCalculateResult($campaign->campaign_bonus_id,$timespan);
                 $result_total+=$current_result[0]->bonus_result??0;
@@ -745,7 +763,9 @@ class CampaignManager extends Catalog{
                     AND is_commited 
                     AND NOT notcount 
                     AND passive_company_id IN (SELECT company_id FROM companies_list JOIN companies_tree USING(branch_id) WHERE $client_filter)
-                    AND MONTH(cstamp) = @month AND YEAR(cstamp) = @year";
+                    AND MONTH(cstamp) = @month AND YEAR(cstamp) = @year
+                    $document_filter
+                    ";
         }
         if( !$sqls ){
             return ['invoice_count'=>0,'client_count'=>0];
@@ -964,6 +984,7 @@ class CampaignManager extends Catalog{
     public function bonusPeriodBreakEvenRecalculate( int $campaign_bonus_period_id ){
         $bonus_period=$this->get_row("SELECT * FROM plugin_campaign_bonus_periods JOIN plugin_campaign_bonus USING(campaign_bonus_id) WHERE campaign_bonus_period_id=$campaign_bonus_period_id");
         $client_filter=$this->clientListFilterGet($bonus_period->campaign_id);
+        $document_filter=$this->documentListFilterGet($bonus_period->campaign_id);
         $sql="UPDATE 
                     document_entries 
                     JOIN
@@ -974,7 +995,9 @@ class CampaignManager extends Catalog{
                     YEAR(cstamp)=$bonus_period->period_year
                     AND MONTH(cstamp)=$bonus_period->period_month
                     AND doc_type=1
-                    AND passive_company_id IN (SELECT company_id FROM companies_list JOIN companies_tree USING(branch_id) WHERE $client_filter)";
+                    AND passive_company_id IN (SELECT company_id FROM companies_list JOIN companies_tree USING(branch_id) WHERE $client_filter)
+                    $document_filter
+                ";
         return $this->query($sql);
     }
     private function timespanCalculate($timespan){
