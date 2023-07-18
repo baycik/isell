@@ -44,7 +44,7 @@ class AccountsView extends AccountsCore{
 	    $tpl_files=$blank_set.'/LedgerPayments.xlsx';
 	    $title="Акт Сверки на".date('d.m.Y', strtotime($fdate));
         } else {
-	    $tpl_files=$blank_set.'/LedgerTransactions.xlsx';
+	    $tpl_files=$blank_set.'/LedgerTransactions2.xlsx';
 	    $title="Выписка Счета на".date('d.m.Y', strtotime($fdate));
         }
 	
