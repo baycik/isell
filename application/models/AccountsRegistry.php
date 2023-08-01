@@ -88,7 +88,7 @@ class AccountsRegistry extends AccountsCore{
 		    JOIN
 		companies_list ON company_id=passive_company_id
 		    LEFT JOIN
-                (SELECT IF(DATE(REPLACE(JSON_EXTRACT(view_efield_values, '$.tax_date'),'\"','')),DATE(REPLACE(JSON_EXTRACT(view_efield_values, '$.tax_date'),'\"','')), tstamp) as tstamp, view_num, doc_view_id, doc_id, view_role FROM document_view_list )dvl ON dl.doc_id=dvl.doc_id AND view_role='tax_bill'
+                (SELECT COALESCE(JSON_UNQUOTE(view_efield_values->'$.tax_date'),tstamp) as tstamp, view_num, doc_view_id, doc_id, view_role FROM document_view_list )dvl ON dl.doc_id=dvl.doc_id AND view_role='tax_bill'
 	    WHERE
 		active_company_id='$active_company_id'
                 AND ($period_filter)
