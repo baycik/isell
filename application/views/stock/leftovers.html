@@ -209,7 +209,7 @@
 			return;
 		    }
 
-		    $.post('Stock/productDelete', {product_code: product_codes.join(',')}, function (ok) {
+		    $.post('Stock/productDelete', {product_codes: product_codes.join(',')}, function (ok) {
 			if (ok * 1) {
 			    App.flash("Товар удален: " + product_codes.join(' , '));
 			    Leftovers.grid.reload();
