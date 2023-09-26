@@ -2,18 +2,105 @@
 
 /* Group Name: Синхронизация
  * User Level: 2
- * Plugin Name: CSVExporter
+ * Plugin Name: TezkelSync
  * Plugin URI: http://isellsoft.com
  * Version: 1.0
- * Description: Tool for csv export 
- * Author: baycik 2019
+ * Description: Tool for export 
+ * Author: baycik 2023
  * Author URI: http://isellsoft.com
  */
 
 
-class CSVExporter extends Catalog {
-    public $settings = [];
+class TezkelSync extends Catalog {
+    public $settings;
+    private function apiExecute( string $function, array $data ){
+        $url = $this->settings->gateway_url."/$function";
+        $token=$this->settings->gateway_token;
 
+        $curl = curl_init(); 
+        curl_setopt($curl, CURLOPT_POST, 1);
+        curl_setopt($curl, CURLOPT_POSTFIELDS, json_encode($data));
+
+        curl_setopt($curl, CURLOPT_URL, $url);
+        curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($curl, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+        curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($curl, CURLOPT_HTTPHEADER, ["Content-Type: application/json","Authorization: Bearer {$token}"]);
+
+        $result = curl_exec($curl);
+        $httpcode = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+        if( curl_error($curl) ){
+            print_r("{$this->settings->gateway_url} API Execution error: ".curl_error($curl));
+        }
+        curl_close($curl);
+        if( $httpcode>299 ){
+            return $httpcode.$result;
+        }
+        return $result;
+    }
+    
+    public function export_json(){
+        $this->Hub->load_model('Storage');
+        $usd_ratio = $this->Hub->pref('usd_ratio');
+        $this->settings = $this->getSettings()->json;
+        
+        
+        $categoryWhere='1';
+        $branch_ids = $this->settings->categories;
+        if($branch_ids){
+            $all_categories = [];
+            foreach ($branch_ids as $category) {
+                $all_categories = array_merge($all_categories, $this->getCategories($category->branch_id));
+            }
+            $categoryWhere="se.parent_id IN (" . implode(',', $all_categories) . ")";
+        }
+
+        
+        $export_json=[];
+        $sql="
+            SELECT
+                product_id,
+                product_code,
+                ru,
+                en,
+                product_quantity,
+                GET_SELL_PRICE(product_code, " . $this->settings->pcomp_id . ", '$usd_ratio'),
+                product_barcode,
+                product_weight,
+                product_unit,
+                analyse_type
+            FROM
+                prod_list pl 
+                    JOIN
+                stock_entries se USING (product_code)
+                    JOIN
+                stock_tree st ON (se.parent_id = st.branch_id)    
+            WHERE
+                $categoryWhere
+        ";
+        $result = $this->query($sql);
+        foreach ($result->result_array() as $row) {
+            $export_json['rows'][]=array_values($row);
+        }
+        $result->free_result();
+        $export_json['cols']=[
+            'product_external_id',
+            'product_code',
+            'product_name',
+            'product_description',
+            'product_quantity',
+            'product_price',
+            'product_barcode',
+            'product_weight',
+            'product_unit',
+            'product_category_name',
+        ];
+        return $this->apiExecute("Product/listSave",$export_json);
+    }
+    
+    
+    
+    
     public function export_csv() {
         $this->Hub->load_model('Storage');
         $usd_ratio = $this->Hub->pref('usd_ratio');
@@ -225,7 +312,7 @@ class CSVExporter extends Catalog {
                 plugin_list
             SET 
                 plugin_settings = '$encoded'
-            WHERE plugin_system_name = 'CSVExporter'    
+            WHERE plugin_system_name = 'TezkelSync'    
             ";
         $this->query($sql);
         return $this->getSettings();
@@ -237,7 +324,7 @@ class CSVExporter extends Catalog {
                 plugin_settings
             FROM 
                 plugin_list
-            WHERE plugin_system_name = 'CSVExporter'    
+            WHERE plugin_system_name = 'TezkelSync'    
             ";
         $row = $this->get_row($sql);
         return json_decode($row->plugin_settings);

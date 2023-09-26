@@ -1,0 +1,269 @@
+
+<form>
+    <div class="plugin_settings">
+        <table style="width:100%">
+            <tr>
+                <td style="vertical-align: top;width:350px">
+                    <div class="easyui-panel" title="Настройки соединения">
+                        <input name="gateway_url" title="Gateway" value="" required="required" style="width:180px" onchange="App.tezkel_sync_settings.updateSettings();"/>
+                        <input name="gateway_token" title="Token" value="" required="required" style="width:180px" onchange="App.tezkel_sync_settings.updateSettings();"/>
+                        <input type="hidden" name="pcomp_id">
+                    </div>
+                        
+                        
+                    <div class="easyui-panel" title="Рассчет цены">
+                        <div class="inp_group">
+                            <input title="Использовать цены компании" name="pcomp_name" value="" readonly="readonly" required="required" style="width:180px"/>
+                            <button type="button" onclick="App.tezkel_sync_settings.select_pcomp()" style="width:100%"><img src="img/settings.png"> Выбрать компанию</button>
+                        </div>
+                    </div>
+                </td>
+                <td style="vertical-align: top">
+                    <div id="csv_Exporter_categories_panel" style="min-width:200px;" class=" easyui-panel" title="Категории для экспорта">
+                        {{if categories}}
+                        {{categories}}
+                        <div style="clear: both;padding-top: 2px;display: flex;padding: 7px;">
+                            <div>
+                                <img src="img/delete.png" 
+                                     style="width:16px;height: auto" 
+                                     title="Удалить атрибут" 
+                                     onclick="App.tezkel_sync_settings.categories.remove(this)"
+                                     data-name="{{category_path}}"
+                                     data-id="{{branch_id}}">
+                                {{category_path}} 
+                            </div>
+                        </div>
+                        {{/categories}}
+                        {{else}}
+                        <div style="padding: 5px;">Товар всех категорий</div>
+                        {{/if}}
+                        <div style="text-align: center">
+                            <button type="button" title="Добавить категорию" onclick="App.tezkel_sync_settings.categories.add()"><img src="img/add.png"> Добавить категорию</button>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div class="plugin_notinstalled">
+        <h1>Плагин не установлен</h1>
+    </div>
+    <div style="text-align: center">
+        <select style="width:80px; height:28px;display:none" onchange="App.tezkel_sync_settings.changeMode(this.value)">
+            <option>csv</option>
+            <option>yml</option>
+        </select>
+        <button type="button" onclick="App.tezkel_sync_settings.addAutoBackupTask()"><img src="img/event.png" style="width:24px;"> Добавить автовыполнение</button>
+        <button type="button" onclick="App.tezkel_sync_settings.export()"><img src="img/export.png" style="width:24px;"> Синхронизировать сейчас</button>
+    </div>
+</form>
+
+<style>
+    #csv_Exporter_filters label b{
+        width: 100px !important;
+    }
+</style>
+<script>
+    App.tezkel_sync_settings = {
+        mode:'',
+        init: function () {
+            if( Plugins.currentData.is_activated==1 ){
+                if( Plugins.currentData.plugin_settings.active_mode ){
+                    App.tezkel_sync_settings.data = Plugins.currentData.plugin_settings;
+                } else {
+                    App.tezkel_sync_settings.data={
+                        csv:{
+                            filters: [],
+                            categories: [],
+                            publicUrl: '',
+                            pcomp_id:0,
+                            pcomp_name:''
+                        },
+                        yml:{
+                            filters: [],
+                            categories: [],
+                            publicUrl: '',
+                            pcomp_id:0,
+                            pcomp_name:''
+                        },
+                        json:{
+                            filters: [],
+                            categories: [],
+                            gateway_url: '',
+                            gateway_token: '',
+                            pcomp_id:0,
+                            pcomp_name:''
+                        },
+                        active_mode: 'json'
+                    };
+                }
+                App.tezkel_sync_settings.mode = App.tezkel_sync_settings.data.active_mode;
+                $("input[name=pcomp_id]").val(App.tezkel_sync_settings.data[App.tezkel_sync_settings.mode].pcomp_id);
+                $("input[name=pcomp_name]").val(App.tezkel_sync_settings.data[App.tezkel_sync_settings.mode].pcomp_name);
+                $("input[name=gateway_url]").val(App.tezkel_sync_settings.data[App.tezkel_sync_settings.mode].gateway_url);
+                $("input[name=gateway_token]").val(App.tezkel_sync_settings.data[App.tezkel_sync_settings.mode].gateway_token);
+                
+                $(".plugin_settings").show();
+                $(".plugin_notinstalled").hide();
+                App.tezkel_sync_settings.categories.init();
+            } else {
+                $(".plugin_settings").hide();
+                $(".plugin_notinstalled").show();
+            }
+        },
+        render:function(){
+        },
+        updateSettings: function () {
+            App.tezkel_sync_settings.data[App.tezkel_sync_settings.mode].pcomp_id=$("input[name=pcomp_id]").val();
+            App.tezkel_sync_settings.data[App.tezkel_sync_settings.mode].pcomp_name=$("input[name=pcomp_name]").val();
+            App.tezkel_sync_settings.data[App.tezkel_sync_settings.mode].gateway_url=$("input[name=gateway_url]").val();
+            App.tezkel_sync_settings.data[App.tezkel_sync_settings.mode].gateway_token=$("input[name=gateway_token]").val();
+            App.tezkel_sync_settings.data.active_mode = App.tezkel_sync_settings.mode;
+            $.post('TezkelSync/updateSettings', {settings: JSON.stringify(App.tezkel_sync_settings.data)}, function (resp) {
+                if (resp) {
+                    var response = App.json(resp);
+                    App.tezkel_sync_settings.data = response;
+                    $("input[name=pcomp_id]").val(App.tezkel_sync_settings.data[App.tezkel_sync_settings.mode].pcomp_id);
+                    $("input[name=pcomp_name]").val(App.tezkel_sync_settings.data[App.tezkel_sync_settings.mode].pcomp_name);
+                    $("input[name=gateway_url]").val(App.tezkel_sync_settings.data[App.tezkel_sync_settings.mode].gateway_url);
+                    $("input[name=gateway_token]").val(App.tezkel_sync_settings.data[App.tezkel_sync_settings.mode].gateway_token);
+                    App.tezkel_sync_settings.categories.init();
+                }
+            });
+        },
+        changeMode: function(mode){
+            App.tezkel_sync_settings.updateSettings();
+            App.tezkel_sync_settings.mode = mode;
+        },
+        export: function () {
+            if (!App.tezkel_sync_settings.data[App.tezkel_sync_settings.mode].pcomp_id && App.tezkel_sync_settings.mode !== 'yml') {
+                App.flash("Выберите клиента, цены которого будут использованы!");
+                return;
+            }
+            $.post('TezkelSync/export_'+App.tezkel_sync_settings.mode, function (ok) {
+                if (ok) {
+                    App.flash(ok+" Товаров было изменено<br>");
+                } else {
+                    App.flash("Возникла ошибка при экспорте!");
+                }
+            });
+        },
+        /*filters: {
+            list: [],
+            load: function () {
+                $.post('AttributeManager/getAttributes', function (resp) {
+                    if (resp) {
+                        App.tezkel_sync_settings.filters.list = App.json(resp);
+                        App.renderTpl('filter_select', {filter_list: App.tezkel_sync_settings.filters.list});
+                        App.renderTpl('filter_panel', {product_filters: App.tezkel_sync_settings.data[App.tezkel_sync_settings.mode].filters});
+                    }
+                });
+            },
+            remove: function (node) {
+                var attribute_id = $(node).data('id');
+                if (!confirm("Удалить атрибут " + $(node).data('name') + "?")) {
+                    return;
+                };
+                for(var i = 0; i < App.tezkel_sync_settings.data[App.tezkel_sync_settings.mode].filters.length; i++){
+                    if(attribute_id == App.tezkel_sync_settings.data[App.tezkel_sync_settings.mode].filters[i].attribute_id){
+                        App.tezkel_sync_settings.data[App.tezkel_sync_settings.mode].filters.splice(i, 1);
+                        App.tezkel_sync_settings.updateSettings();
+                        App.tezkel_sync_settings.filters.load();
+                        return;
+                    }
+                }
+            },
+            add: function () {
+                var attribute_id = $("#filter_select").val();
+                if (attribute_id == 'unset') {
+                    App.flash("Выберите фильтр");
+                    return;
+                }
+                for(var i = 0; i < App.tezkel_sync_settings.data[App.tezkel_sync_settings.mode].filters.length; i++){
+                    if(attribute_id == App.tezkel_sync_settings.data[App.tezkel_sync_settings.mode].filters[i].attribute_id){
+                        App.flash("Атрибут уже добавлен!");
+                        return;
+                    }
+                }
+                for(var i = 0; i < App.tezkel_sync_settings.filters.list.length; i++){
+                    if(attribute_id == App.tezkel_sync_settings.filters.list[i].attribute_id){
+                        var filter = App.tezkel_sync_settings.filters.list[i];
+                        break;
+                    }
+                }
+                App.tezkel_sync_settings.data[App.tezkel_sync_settings.mode].filters.push(filter);
+                App.tezkel_sync_settings.updateSettings();
+                App.tezkel_sync_settings.filters.load();
+
+            }
+        },*/
+        categories: {
+            list: [],
+            init: function () {
+                this.render();
+            },
+            render: function () {
+                App.renderTpl('csv_Exporter_categories_panel', {categories: App.tezkel_sync_settings.data[App.tezkel_sync_settings.mode].categories});
+            },
+            add: function () {
+                App.loadWindow("page/stock/tree").progress(function (status, fvalue) {
+                    if (status === 'select') {
+                        for (var i = 0; i < App.tezkel_sync_settings.data[App.tezkel_sync_settings.mode].categories.length; i++) {
+                            if (App.tezkel_sync_settings.data[App.tezkel_sync_settings.mode].categories[i].branch_id == fvalue.branch_id) {
+                                App.flash("Такая категория уже добавлена");
+                                return;
+                            }
+                        }
+                        var category_obj = {
+                            branch_id: fvalue.branch_id,
+                            category_path: fvalue.path
+                        };
+                        App.tezkel_sync_settings.data[App.tezkel_sync_settings.mode].categories.push(category_obj);
+                        App.tezkel_sync_settings.updateSettings();
+                        App.tezkel_sync_settings.categories.render();
+                    }
+                });
+            },
+            remove: function (node) {
+                var branch_id = $(node).data('id');
+                if (!confirm("Удалить атрибут " + $(node).data('name') + "?")) {
+                    return;
+                };
+                for (var i = 0; i < App.tezkel_sync_settings.data[App.tezkel_sync_settings.mode].categories.length; i++) {
+                    if (App.tezkel_sync_settings.data[App.tezkel_sync_settings.mode].categories[i].branch_id == branch_id) {
+                        App.tezkel_sync_settings.data[App.tezkel_sync_settings.mode].categories.splice(i, 1);
+                        break;
+                    }
+                }
+                App.tezkel_sync_settings.categories.render();
+                App.tezkel_sync_settings.updateSettings();
+            }
+        },
+        select_pcomp: function () {
+            App.user.pcompSelectionDialog().progress(function(status,pcomp){
+                if (status === 'select' || status === 'reset') {
+                    $("input[name=pcomp_name]").val(pcomp.label);
+                    $("input[name=pcomp_id]").val(pcomp.company_id);
+                    App.tezkel_sync_settings.updateSettings();
+                }
+            });
+        },
+	addAutoBackupTask:function(){
+	    var comment="Создание экспортного файла синхронизации";
+	    var program={
+		commands:[
+		    {model:'TezkelSync',method:'export_'+App.tezkel_sync_settings.mode,arguments:''}
+		]
+	    };
+	    var task={
+		event_program:JSON.stringify(program),
+		event_name:"Синхронизация с сайтом",
+		event_descr:comment,
+		event_label:"-TASK-",
+		event_repeat:"0 3:0"
+	    };
+	    App.loadWindow('page/events/event', task);
+	}
+    };
+    $(App.tezkel_sync_settings.init);
+</script>
