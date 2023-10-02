@@ -55,7 +55,7 @@ class TezkelSync extends Catalog {
             $categoryWhere="se.parent_id IN (" . implode(',', $all_categories) . ")";
         }
 
-        
+        //commented product_unit because of enhanced units like portion_weight on tezkel side
         $export_json=[];
         $sql="
             SELECT
@@ -67,7 +67,6 @@ class TezkelSync extends Catalog {
                 GET_SELL_PRICE(product_code, " . $this->settings->pcomp_id . ", '$usd_ratio'),
                 product_barcode,
                 product_weight,
-                product_unit,
                 analyse_type
             FROM
                 prod_list pl 
@@ -92,7 +91,7 @@ class TezkelSync extends Catalog {
             'product_price',
             'product_barcode',
             'product_weight',
-            'product_unit',
+            //'product_unit',
             'product_category_name',
         ];
         return $this->apiExecute("Product/listSave",$export_json);

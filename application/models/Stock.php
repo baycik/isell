@@ -241,10 +241,10 @@ class Stock extends Catalog {
             'ua' => $this->stripWhite($this->request('ua')),
             'en' => $this->stripWhite($this->request('en')),
             'product_unit' => $this->stripWhite($this->request('product_unit')),
-            'product_spack' => $this->request('product_spack', 'int'),
-            'product_bpack' => $this->request('product_bpack', 'int'),
-            'product_weight' => $this->request('product_weight', 'double'),
-            'product_volume' => $this->request('product_volume', 'double'),
+            'product_spack' => $this->request('product_spack', 'int',1),
+            'product_bpack' => $this->request('product_bpack', 'int',1),
+            'product_weight' => $this->request('product_weight', 'double',0),
+            'product_volume' => $this->request('product_volume', 'double',0),
             'analyse_origin' => $this->request('analyse_origin'),
             'analyse_type' => $this->request('analyse_type'),
             'analyse_brand' => $this->request('analyse_brand'),
@@ -260,7 +260,7 @@ class Stock extends Catalog {
         $stock_entries = [
             'product_code' => $product_code,
             'parent_id' => $this->request('parent_id', 'int'),
-            'product_wrn_quantity' => $this->request('product_wrn_quantity', 'int'),
+            'product_wrn_quantity' => $this->request('product_wrn_quantity', 'int',0),
             'product_img' => $this->request('product_img'),
             'party_label' => $this->request('party_label')
         ];
@@ -270,8 +270,8 @@ class Stock extends Catalog {
 
         $price_list = [
             'product_code' => $product_code,
-            'buy' => $this->request('buy', 'double'),
-            'sell' => $this->request('sell', 'double'),
+            'buy' => $this->request('buy', 'double',0),
+            'sell' => $this->request('sell', 'double',0),
             'curr_code' => $this->request('curr_code'),
             'label' =>''
         ];
