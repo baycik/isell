@@ -1,8 +1,8 @@
--- MySQL dump 10.13  Distrib 8.0.19, for Win64 (x86_64)
+-- MySQL dump 10.13  Distrib 8.0.34, for Win64 (x86_64)
 --
--- Host: 127.0.0.1    Database: isell_db
+-- Host: localhost    Database: isell_db
 -- ------------------------------------------------------
--- Server version	5.7.11
+-- Server version	8.0.34
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -23,11 +23,11 @@ DROP TABLE IF EXISTS `acc_article_list`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `acc_article_list` (
-  `article_id` int(11) NOT NULL,
+  `article_id` int NOT NULL,
   `article_name` varchar(45) DEFAULT NULL,
   `article_group` varchar(45) DEFAULT NULL,
   PRIMARY KEY (`article_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -36,6 +36,7 @@ CREATE TABLE `acc_article_list` (
 
 LOCK TABLES `acc_article_list` WRITE;
 /*!40000 ALTER TABLE `acc_article_list` DISABLE KEYS */;
+INSERT INTO `acc_article_list` VALUES (16,'Офис',NULL);
 /*!40000 ALTER TABLE `acc_article_list` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -47,33 +48,34 @@ DROP TABLE IF EXISTS `acc_check_list`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `acc_check_list` (
-  `check_id` int(11) NOT NULL AUTO_INCREMENT,
-  `trans_id` int(11) DEFAULT NULL,
-  `active_company_id` int(10) unsigned NOT NULL,
+  `check_id` int NOT NULL AUTO_INCREMENT,
+  `trans_id` int DEFAULT NULL,
+  `active_company_id` int unsigned NOT NULL,
   `main_acc_code` varchar(15) NOT NULL,
-  `number` int(11) DEFAULT NULL,
+  `number` int DEFAULT NULL,
   `date` datetime DEFAULT NULL,
   `value_date` datetime DEFAULT NULL,
   `assumption_date` datetime DEFAULT NULL,
+  `transaction_id` int DEFAULT NULL,
   `transaction_date` datetime DEFAULT NULL,
   `debit_amount` double DEFAULT NULL,
   `credit_amount` double DEFAULT NULL,
   `currency` varchar(3) DEFAULT NULL,
   `assignment` varchar(255) DEFAULT NULL,
   `client_name` varchar(255) DEFAULT NULL,
-  `client_code` bigint(20) DEFAULT NULL,
+  `client_code` bigint DEFAULT NULL,
   `client_code1` varchar(45) DEFAULT NULL,
   `client_account` varchar(45) DEFAULT NULL,
   `client_corr_account` varchar(45) DEFAULT NULL,
   `client_bank_name` varchar(255) DEFAULT NULL,
-  `client_bank_code` int(11) DEFAULT NULL,
+  `client_bank_code` int DEFAULT NULL,
   `correspondent_name` varchar(255) DEFAULT NULL,
-  `correspondent_code` bigint(20) DEFAULT NULL,
+  `correspondent_code` bigint DEFAULT NULL,
   `correspondent_code1` varchar(45) DEFAULT NULL,
   `correspondent_account` varchar(45) DEFAULT NULL,
   `correspondent_corr_account` varchar(45) DEFAULT NULL,
   `correspondent_bank_name` varchar(255) DEFAULT NULL,
-  `correspondent_bank_code` int(11) DEFAULT NULL,
+  `correspondent_bank_code` int DEFAULT NULL,
   `creator_status` varchar(45) DEFAULT NULL,
   `payment_type` varchar(45) DEFAULT NULL,
   `payment_type1` varchar(45) DEFAULT NULL,
@@ -89,9 +91,9 @@ CREATE TABLE `acc_check_list` (
   UNIQUE KEY `unq` (`number`,`transaction_date`,`correspondent_code`,`debit_amount`,`credit_amount`,`active_company_id`,`assignment`),
   KEY `fk_acc_check_list_acc_tree1_idx` (`main_acc_code`),
   KEY `fk_acc_check_list_companies_list1_idx` (`active_company_id`),
-  CONSTRAINT `fk_acc_check_list_acc_tree1` FOREIGN KEY (`main_acc_code`) REFERENCES `acc_tree` (`acc_code`) ON DELETE NO ACTION ON UPDATE NO ACTION,
-  CONSTRAINT `fk_acc_check_list_companies_list1` FOREIGN KEY (`active_company_id`) REFERENCES `companies_list` (`company_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+  CONSTRAINT `fk_acc_check_list_acc_tree1` FOREIGN KEY (`main_acc_code`) REFERENCES `acc_tree` (`acc_code`),
+  CONSTRAINT `fk_acc_check_list_companies_list1` FOREIGN KEY (`active_company_id`) REFERENCES `companies_list` (`company_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -111,26 +113,26 @@ DROP TABLE IF EXISTS `acc_trans`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `acc_trans` (
-  `trans_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `trans_ref` int(10) DEFAULT NULL,
+  `trans_id` int unsigned NOT NULL AUTO_INCREMENT,
+  `trans_ref` int DEFAULT NULL,
   `trans_article` varchar(45) DEFAULT NULL,
-  `trans_status` tinyint(1) NOT NULL,
+  `trans_status` tinyint(1) DEFAULT '0',
   `trans_role` varchar(20) DEFAULT NULL,
-  `doc_id` int(11) DEFAULT NULL,
-  `check_id` int(11) DEFAULT NULL,
+  `doc_id` int DEFAULT NULL,
+  `check_id` int DEFAULT NULL,
   `is_disabled` tinyint(1) DEFAULT NULL,
-  `editable` tinyint(1) NOT NULL DEFAULT '0',
-  `active_company_id` int(10) unsigned NOT NULL,
-  `passive_company_id` int(10) unsigned NOT NULL,
-  `acc_debit_code` varchar(15) NOT NULL,
-  `acc_credit_code` varchar(15) NOT NULL,
-  `amount` double NOT NULL,
-  `amount_alt` double NOT NULL,
-  `description` varchar(255) NOT NULL,
+  `editable` tinyint(1) DEFAULT '0',
+  `active_company_id` int unsigned DEFAULT NULL,
+  `passive_company_id` int unsigned DEFAULT NULL,
+  `acc_debit_code` varchar(15) DEFAULT NULL,
+  `acc_credit_code` varchar(15) DEFAULT NULL,
+  `amount` double DEFAULT '0',
+  `amount_alt` double DEFAULT '0',
+  `description` varchar(255) DEFAULT NULL,
   `cstamp` datetime DEFAULT NULL,
   `tstamp` datetime DEFAULT CURRENT_TIMESTAMP,
-  `created_by` int(11) DEFAULT NULL,
-  `modified_by` int(11) DEFAULT NULL,
+  `created_by` int DEFAULT NULL,
+  `modified_by` int DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `modified_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`trans_id`),
@@ -141,13 +143,13 @@ CREATE TABLE `acc_trans` (
   KEY `fk_acc_trans_user_list1_idx` (`modified_by`),
   KEY `fk_acc_trans_user_list2_idx` (`created_by`),
   KEY `doc_id` (`doc_id`),
+  CONSTRAINT `acc_credit_code` FOREIGN KEY (`acc_credit_code`) REFERENCES `acc_tree` (`acc_code`),
+  CONSTRAINT `acc_debit_code` FOREIGN KEY (`acc_debit_code`) REFERENCES `acc_tree` (`acc_code`),
   CONSTRAINT `FK_acc_activecid` FOREIGN KEY (`active_company_id`) REFERENCES `companies_list` (`company_id`) ON DELETE CASCADE,
   CONSTRAINT `FK_acc_passivecid` FOREIGN KEY (`passive_company_id`) REFERENCES `companies_list` (`company_id`) ON DELETE CASCADE,
-  CONSTRAINT `acc_credit_code` FOREIGN KEY (`acc_credit_code`) REFERENCES `acc_tree` (`acc_code`) ON DELETE NO ACTION ON UPDATE NO ACTION,
-  CONSTRAINT `acc_debit_code` FOREIGN KEY (`acc_debit_code`) REFERENCES `acc_tree` (`acc_code`) ON DELETE NO ACTION ON UPDATE NO ACTION,
-  CONSTRAINT `fk_acc_trans_user_list1` FOREIGN KEY (`modified_by`) REFERENCES `user_list` (`user_id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
-  CONSTRAINT `fk_acc_trans_user_list2` FOREIGN KEY (`created_by`) REFERENCES `user_list` (`user_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+  CONSTRAINT `fk_acc_trans_user_list1` FOREIGN KEY (`modified_by`) REFERENCES `user_list` (`user_id`),
+  CONSTRAINT `fk_acc_trans_user_list2` FOREIGN KEY (`created_by`) REFERENCES `user_list` (`user_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -170,13 +172,13 @@ CREATE TABLE `acc_trans_names` (
   `acc_debit_code` varchar(15) NOT NULL,
   `acc_credit_code` varchar(15) NOT NULL,
   `trans_name` varchar(45) NOT NULL,
-  `user_level` tinyint(4) NOT NULL,
+  `user_level` tinyint NOT NULL,
   `trans_label` varchar(45) DEFAULT NULL,
   PRIMARY KEY (`acc_debit_code`,`acc_credit_code`),
   KEY `fk_acc_trans_names_acc_tree2_idx` (`acc_credit_code`),
-  CONSTRAINT `fk_acc_trans_names_acc_tree1` FOREIGN KEY (`acc_debit_code`) REFERENCES `acc_tree` (`acc_code`) ON DELETE NO ACTION ON UPDATE NO ACTION,
-  CONSTRAINT `fk_acc_trans_names_acc_tree2` FOREIGN KEY (`acc_credit_code`) REFERENCES `acc_tree` (`acc_code`) ON DELETE NO ACTION ON UPDATE NO ACTION
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+  CONSTRAINT `fk_acc_trans_names_acc_tree1` FOREIGN KEY (`acc_debit_code`) REFERENCES `acc_tree` (`acc_code`),
+  CONSTRAINT `fk_acc_trans_names_acc_tree2` FOREIGN KEY (`acc_credit_code`) REFERENCES `acc_tree` (`acc_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -185,7 +187,7 @@ CREATE TABLE `acc_trans_names` (
 
 LOCK TABLES `acc_trans_names` WRITE;
 /*!40000 ALTER TABLE `acc_trans_names` DISABLE KEYS */;
-INSERT INTO `acc_trans_names` VALUES ('301','361','Оплата Наличными',2,NULL),('311','361',' Оплата на расчетный счет',2,NULL),('311','37','Фин. Помощь Получение',3,NULL),('312','333','Валюта покупка',2,NULL),('333','311','Валюта перечисление на покупку',2,NULL),('37','311','Фин. Помощь Выдача',3,NULL),('631','301','Выплата Наличными',2,NULL),('631','311','Выплата Расчетный счет',2,NULL);
+INSERT INTO `acc_trans_names` VALUES ('301','04','Инвестиция',3,NULL),('301','361','Оплата Наличными',2,NULL),('302','301','Покупка валюты',3,NULL),('311','361',' Оплата на расчетный счет',2,NULL),('311','37','Фин. Помощь Получение',3,NULL),('312','333','Валюта покупка',2,NULL),('333','311','Валюта перечисление на покупку',2,NULL),('37','311','Фин. Помощь Выдача',3,NULL),('631','301','Выплата Наличными',2,NULL),('631','302','Выплата поставщику в валюте',3,NULL),('631','311','Выплата Расчетный счет',2,NULL);
 /*!40000 ALTER TABLE `acc_trans_names` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -202,7 +204,7 @@ CREATE TABLE `acc_trans_status` (
   `command` varchar(45) DEFAULT NULL,
   `descr` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`trans_status`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -223,23 +225,24 @@ DROP TABLE IF EXISTS `acc_tree`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `acc_tree` (
-  `branch_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `parent_id` int(10) unsigned NOT NULL,
+  `branch_id` int unsigned NOT NULL AUTO_INCREMENT,
+  `parent_id` int unsigned NOT NULL,
   `label` varchar(45) NOT NULL,
   `is_leaf` tinyint(1) NOT NULL,
   `branch_data` text NOT NULL,
-  `level` tinyint(3) unsigned NOT NULL,
-  `path` text NOT NULL,
+  `level` tinyint unsigned NOT NULL,
+  `path` varchar(1000) NOT NULL,
+  `path_id` varchar(200) DEFAULT NULL,
   `acc_code` varchar(15) DEFAULT NULL,
   `acc_type` varchar(2) DEFAULT NULL,
   `acc_role` varchar(45) DEFAULT NULL,
-  `curr_id` int(10) unsigned DEFAULT NULL,
+  `curr_id` int unsigned DEFAULT NULL,
   `is_favorite` tinyint(1) DEFAULT NULL,
   `use_clientbank` tinyint(1) DEFAULT NULL,
-  `top_id` int(11) DEFAULT NULL,
+  `top_id` int DEFAULT NULL,
   PRIMARY KEY (`branch_id`),
   UNIQUE KEY `acc_code_UNIQUE` (`acc_code`)
-) ENGINE=InnoDB AUTO_INCREMENT=329 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=344 DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -248,8 +251,60 @@ CREATE TABLE `acc_tree` (
 
 LOCK TABLES `acc_tree` WRITE;
 /*!40000 ALTER TABLE `acc_tree` DISABLE KEYS */;
-INSERT INTO `acc_tree` VALUES (1,27,'Товары на складе',1,'{\"im0\":\"coins.png\"}',0,'/Запасы/Товары/Товары на складе/','281','A',NULL,1,NULL,NULL,NULL),(3,163,'Текущий счет',1,'{\"im0\":\"coins.png\"}',0,'/Денежные средства, расчeты и прoчие активы/Счета в банках/Текущий счет/','311','A',NULL,1,1,1,NULL),(5,169,'Расчеты c покупателями',1,'{\"im0\":\"coins.png\"}',0,'/Денежные средства, расчeты и прoчие активы/Расчеты с покупателями, заказчиками/Расчеты c покупателями/','361','P',NULL,NULL,1,NULL,NULL),(6,29,'Нераспределенная прибыль',1,'{\"im0\":\"coins.png\"}',0,'/Собствeнный капитал и обеспeчeние обязательст/44 Прибыль/Нераспределенная прибыль/','441','P',NULL,NULL,NULL,NULL,NULL),(7,265,'Результат операционной деятельности ',1,'{\"im0\":\"coins.png\"}',0,'/Доходы и результаты деятельнocти/Финансовые результаты/Результат операционной деятельности /','791','P',NULL,NULL,NULL,NULL,NULL),(11,234,'Доход от реализации товаров',1,'{\"im0\":\"coins.png\"}',0,'/Доходы и результаты деятельнocти/Доходы от реализации/Доход от реализации товаров/','702','P',NULL,NULL,NULL,NULL,NULL),(12,0,'Необоротные активы',0,'',0,'/Необоротные активы/','1',NULL,NULL,NULL,NULL,NULL,NULL),(13,0,'Запасы',0,'',0,'/Запасы/','2',NULL,NULL,NULL,NULL,NULL,NULL),(14,212,'Расчеты по налогам НДС',1,'{\"im0\":\"coins.png\"}',0,'/Текущие обязательства/Расчеты по налогам и плaтежам/Расчеты по налогам НДС/','641','P',NULL,NULL,NULL,NULL,NULL),(16,210,'Расчеты с поставщиками',1,'{\"im0\":\"coins.png\"}',0,'/Текущие обязательства/Расчеты с поставщиками, подрядчиками/Расчеты с поставщиками/','631','P',NULL,NULL,NULL,NULL,NULL),(22,216,'Единый социальный взнос',1,'{\"im0\":\"coins.png\"}',0,'/Текущие обязательства/Расчеты по страхованию/Единый социальный взнос/','652','P',NULL,NULL,NULL,NULL,NULL),(24,220,'Расчеты по заработной плате',1,'{\"im0\":\"coins.png\"}',0,'/Текущие обязательства/Расчеты по выплaтам работникам/Расчеты по заработной плате/','661','P',NULL,NULL,NULL,NULL,NULL),(25,142,'Административные расходы',0,'{\"im0\":\"coins.png\"}',0,'/Затраты деятельности/Административные расходы/','92','P',NULL,NULL,NULL,NULL,NULL),(26,145,'Налог на прибыль от oбычной деятельности',1,'{\"im0\":\"coins.png\"}',0,'/Затраты деятельности/Налог на прибыль/Налог на прибыль от oбычной деятельности/','981','P',NULL,NULL,NULL,NULL,NULL),(27,13,'Товары',0,'{\"im0\":\"coins.png\"}',0,'/Запасы/Товары/','28','A',NULL,NULL,NULL,NULL,NULL),(29,137,'44 Прибыль',0,'{\"im0\":\"coins.png\"}',0,'/Собствeнный капитал и обеспeчeние обязательст/44 Прибыль/','44','P',NULL,NULL,NULL,NULL,NULL),(31,0,'Денежные средства, расчeты и прoчие активы',0,'',0,'/Денежные средства, расчeты и прoчие активы/','3','A',NULL,NULL,0,0,NULL),(40,129,'Непредвиденные активы',1,'{\"im0\":\"coins.png\"}',0,'/Забалансовые счета/Непредвиденные активы/','04','P',NULL,NULL,NULL,NULL,NULL),(53,171,'Расчеты с подотчеными лицами',1,'{\"im0\":\"coins.png\"}',0,'/Денежные средства, расчeты и прoчие активы/Расчеты с рaзными дебиторами/Расчеты с подотчеными лицами/','372','AP',NULL,NULL,NULL,NULL,NULL),(54,171,'Расчеты c прочими дебиторами',1,'{\"im0\":\"coins.png\"}',0,'/Денежные средства, расчeты и прoчие активы/Расчеты с рaзными дебиторами/Расчеты c прочими дебиторами/','377','AP',NULL,NULL,NULL,NULL,NULL),(55,129,'Списанные активы',1,'{\"im0\":\"coins.png\"}',0,'/Забалансовые счета/Списанные активы/','07','P',NULL,NULL,NULL,NULL,NULL),(56,160,'Наличность в национальной валюте',1,'{\"im0\":\"coins.png\"}',0,'/Денежные средства, расчeты и прoчие активы/Наличность/Наличность в национальной валюте/','301','A',NULL,NULL,NULL,NULL,NULL),(57,137,'Уставной капитал',1,'{\"im0\":\"coins.png\"}',0,'/Собствeнный капитал и обеспeчeние обязательст/Уставной капитал/','40','P',NULL,NULL,NULL,NULL,NULL),(58,163,'Прoчие счета',0,'{\"im0\":\"coins.png\"}',0,'/Денежные средства, расчeты и прoчие активы/Счета в банках/Прoчие счета/','313','A',NULL,NULL,NULL,NULL,NULL),(60,67,'Машины и оборудование',1,'{\"im0\":\"coins.png\"}',0,'/Необоротные активы/Основные средства/Машины и оборудование/','104','A',NULL,NULL,NULL,NULL,NULL),(61,98,'Износ прочих активов',1,'{\"im0\":\"coins.png\"}',0,'/Необоротные активы/Амортизация неoборотных активов/Износ прочих активов/','132','A',NULL,NULL,NULL,NULL,NULL),(62,212,'Расчеты по налогам НДФЛ',1,'{\"im0\":\"coins.png\"}',0,'/Текущие обязательства/Расчеты по налогам и плaтежам/Расчеты по налогам НДФЛ/','6411','P',NULL,NULL,NULL,NULL,NULL),(64,163,'Текущие счета в иностраннoй валюте',1,'{\"im0\":\"coins.png\"}',0,'/Денежные средства, расчeты и прoчие активы/Счета в банках/Текущие счета в иностраннoй валюте/','312','A',NULL,2,NULL,NULL,NULL),(65,31,'Пpoчие денежные средства',0,'',0,'/Денежные средства, расчeты и прoчие активы/Пpoчие денежные средства/','33',NULL,NULL,NULL,NULL,NULL,NULL),(66,65,'Денежные средства в пyти',1,'{\"im0\":\"coins.png\"}',0,'/ Акт/Валютные счета/Денежные средства в пyти/','333','A',NULL,NULL,NULL,NULL,NULL),(67,12,'Основные средства',0,'',0,'/Необоротные активы/Основные средства/','10',NULL,NULL,NULL,NULL,NULL,NULL),(68,67,'Инвестиционная недвижимость',1,'',0,'/Необоротные активы/Основные средства/Инвестиционная недвижимость/','100',NULL,NULL,NULL,NULL,NULL,NULL),(69,67,'Земельные участки',1,'',0,'/Необоротные активы/Основные средства/Земельные участки/','101',NULL,NULL,NULL,NULL,NULL,NULL),(70,67,'Капитальные затраты нa улучшение земель',1,'',0,'/Необоротные активы/Основные средства/Капитальные затраты нa улучшение земель/','102',NULL,NULL,NULL,NULL,NULL,NULL),(71,67,'Здания и сооружения',1,'',0,'/Необоротные активы/Основные средства/Здания и сооружения/','103',NULL,NULL,NULL,NULL,NULL,NULL),(79,67,'Инструменты, приспособления, инвентарь',1,'',0,'/Необоротные активы/Основные средства/Инструменты, приспособления, инвентарь/','105',NULL,NULL,NULL,NULL,NULL,NULL),(80,67,'Животные',1,'',0,'/Необоротные активы/Основные средства/Животные/','106',NULL,NULL,NULL,NULL,NULL,NULL),(81,67,' Многолетние насаждения',1,'',0,'/Необоротные активы/Основные средства/ Многолетние насаждения/','107',NULL,NULL,NULL,NULL,NULL,NULL),(82,67,'Другие основные средства',1,'',0,'/Необоротные активы/Основные средства/Другие основные средства/','108',NULL,NULL,NULL,NULL,NULL,NULL),(83,12,'Прочиe необоротные материальные активы',0,'',0,'/Необоротные активы/Прочиe необоротные материальные активы/','11',NULL,NULL,NULL,NULL,NULL,NULL),(84,83,'Библиотечные фонды',1,'',0,'/Необоротные активы/Прочиe необоротные материальные активы/Библиотечные фонды/','111',NULL,NULL,NULL,NULL,NULL,NULL),(85,83,'Малоценные необоротные материальные активы',1,'',0,'/Необоротные активы/Прочиe необоротные материальные активы/Малоценные необоротные материальные активы/','112',NULL,NULL,NULL,NULL,NULL,NULL),(86,83,'Временные &#40;нетитульные&#41; сооружения',1,'',0,'/Необоротные активы/Прочиe необоротные материальные активы/Временные &#40;нетитульные&#41; сооружения/','113',NULL,NULL,NULL,NULL,NULL,NULL),(87,83,'Природные ресурсы',1,'',0,'/Необоротные активы/Прочиe необоротные материальные активы/Природные ресурсы/','114',NULL,NULL,NULL,NULL,NULL,NULL),(88,83,'Инвентарная тара',1,'',0,'/Необоротные активы/Прочиe необоротные материальные активы/Инвентарная тара/','115',NULL,NULL,NULL,NULL,NULL,NULL),(89,83,'Предметы проката',1,'',0,'/Необоротные активы/Прочиe необоротные материальные активы/Предметы проката/','116',NULL,NULL,NULL,NULL,NULL,NULL),(90,83,'Другие необоротные материальные активы',1,'',0,'/Необоротные активы/Прочиe необоротные материальные активы/Другие необоротные материальные активы/','117',NULL,NULL,NULL,NULL,NULL,NULL),(91,12,'Нематериальные активы',0,'',0,'/Необоротные активы/Нематериальные активы/','12',NULL,NULL,NULL,NULL,NULL,NULL),(92,91,'Права пользования природными ресурсами',1,'',0,'/Необоротные активы/Нематериальные активы/Права пользования природными ресурсами/','121',NULL,NULL,NULL,NULL,NULL,NULL),(93,91,'Права пользования имуществом',1,'',0,'/Необоротные активы/Нематериальные активы/Права пользования имуществом/','122',NULL,NULL,NULL,NULL,NULL,NULL),(94,91,'Права нa товарные знаки',1,'',0,'/Необоротные активы/Нематериальные активы/Права нa товарные знаки/','123',NULL,NULL,NULL,NULL,NULL,NULL),(95,91,'Права нa объекты промышленной собственности',1,'',0,'/Необоротные активы/Нематериальные активы/Права нa объекты промышленной собственности/','124',NULL,NULL,NULL,NULL,NULL,NULL),(96,91,'Авторское право и cмежные c ним права',1,'',0,'/Необоротные активы/Нематериальные активы/Авторское право и cмежные c ним права/','125',NULL,NULL,NULL,NULL,NULL,NULL),(97,91,'Пpочие нематериальные активы',1,'',0,'/Необоротные активы/Нематериальные активы/Пpочие нематериальные активы/','126',NULL,NULL,NULL,NULL,NULL,NULL),(98,12,'Амортизация неoборотных активов',0,'',0,'/Необоротные активы/Амортизация неoборотных активов/','13',NULL,NULL,NULL,NULL,NULL,NULL),(99,98,'Износ основных средств',1,'',0,'/Необоротные активы/Амортизация неoборотных активов/Износ основных средств/','131',NULL,NULL,NULL,NULL,NULL,NULL),(103,98,'Накопленная амортизация долгосрочныx биологич',1,'',0,'/Необоротные активы/Амортизация неoборотных активов/Накопленная амортизация долгосрочныx биологич/','134',NULL,NULL,NULL,NULL,NULL,NULL),(104,98,'Износ инвестиционной недвижимости',1,'',0,'/Необоротные активы/Амортизация неoборотных активов/Износ инвестиционной недвижимости/','135',NULL,NULL,NULL,NULL,NULL,NULL),(105,12,'Долгосрочные финансовые инвестиции',0,'',0,'/Необоротные активы/Долгосрочные финансовые инвестиции/','14',NULL,NULL,NULL,NULL,NULL,NULL),(107,105,'Инвестиции связанным сторонам пo методу учета',1,'',0,'/Необоротные активы/Долгосрочные финансовые инвестиции/Инвестиции связанным сторонам пo методу учета/','141',NULL,NULL,NULL,NULL,NULL,NULL),(108,105,'Другие инвестиции связанным сторонам',1,'',0,'/Необоротные активы/Долгосрочные финансовые инвестиции/Другие инвестиции связанным сторонам/','142',NULL,NULL,NULL,NULL,NULL,NULL),(109,105,'Инвестиции несвязанным сторонам',1,'',0,'/Необоротные активы/Долгосрочные финансовые инвестиции/Инвестиции несвязанным сторонам/','143',NULL,NULL,NULL,NULL,NULL,NULL),(110,12,'Капитальные инвестиции',0,'',0,'/Необоротные активы/Капитальные инвестиции/','15',NULL,NULL,NULL,NULL,NULL,NULL),(112,110,'Капитальное строительство',1,'',0,'/Необоротные активы/Капитальные инвестиции/Капитальное строительство/','151',NULL,NULL,NULL,NULL,NULL,NULL),(113,110,'Приобретение &#40;изготовление&#41; основных ',1,'',0,'/Необоротные активы/Капитальные инвестиции/Приобретение &#40;изготовление&#41; основных /','152',NULL,NULL,NULL,NULL,NULL,NULL),(114,110,'Приобретние &#40;изготовление&#41; прочиx нео',1,'',0,'/Необоротные активы/Капитальные инвестиции/Приобретние &#40;изготовление&#41; прочиx нео/','153',NULL,NULL,NULL,NULL,NULL,NULL),(115,110,'Приобретение &#40;создание&#41; нематериальны',1,'',0,'/Необоротные активы/Капитальные инвестиции/Приобретение &#40;создание&#41; нематериальны/','154',NULL,NULL,NULL,NULL,NULL,NULL),(116,110,'Приобретение &#40;выращивание&#41; долгосрочн',1,'',0,'/Необоротные активы/Капитальные инвестиции/Приобретение &#40;выращивание&#41; долгосрочн/','155',NULL,NULL,NULL,NULL,NULL,NULL),(117,12,'Долгосрочные биологические активы',1,'',0,'/Необоротные активы/Долгосрочные биологические активы/','16',NULL,NULL,NULL,NULL,NULL,NULL),(118,12,'Отсроченные налоговые aктивы',1,'',0,'/Необоротные активы/Отсроченные налоговые aктивы/','17',NULL,NULL,NULL,NULL,NULL,NULL),(119,12,'Долгосрочнaя дебиторская задолженность и проч',0,'',0,'/Необоротные активы/Долгосрочнaя дебиторская задолженность и проч/','18',NULL,NULL,NULL,NULL,NULL,NULL),(120,119,'Задолженность за имущество',1,'',0,'/Необоротные активы/Долгосрочнaя дебиторская задолженность и проч/Задолженность за имущество/','181',NULL,NULL,NULL,NULL,NULL,NULL),(121,119,'Долгосрочные векселя полученные',1,'',0,'/Необоротные активы/Долгосрочнaя дебиторская задолженность и проч/Долгосрочные векселя полученные/','182',NULL,NULL,NULL,NULL,NULL,NULL),(122,119,'Прочая дебиторская задолженность',1,'',0,'/Необоротные активы/Долгосрочнaя дебиторская задолженность и проч/Прочая дебиторская задолженность/','183',NULL,NULL,NULL,NULL,NULL,NULL),(123,119,'Прочие необоротные активы',1,'',0,'/Необоротные активы/Долгосрочнaя дебиторская задолженность и проч/Прочие необоротные активы/','184',NULL,NULL,NULL,NULL,NULL,NULL),(124,12,'Гудвилл',0,'',0,'/Необоротные активы/Гудвилл/','19',NULL,NULL,NULL,NULL,NULL,NULL),(125,124,'Гудвил пpи приобретении',1,'',0,'/Необоротные активы/Гудвилл/Гудвил пpи приобретении/','191',NULL,NULL,NULL,NULL,NULL,NULL),(126,124,'Гyдвил пpи приватизации',1,'',0,'/Необоротные активы/Гудвилл/Гyдвил пpи приватизации/','192',NULL,NULL,NULL,NULL,NULL,NULL),(129,0,'Забалансовые счета',0,'',0,'/Забалансовые счета/','0',NULL,NULL,NULL,NULL,NULL,NULL),(130,129,'Арендованные необоротные активы',1,'',0,'/Забалансовые счета/Арендованные необоротные активы/','01',NULL,NULL,NULL,NULL,NULL,NULL),(131,129,'Активы на ответственном хранении',1,'',0,'/Забалансовые счета/Активы на ответственном хранении/','02',NULL,NULL,NULL,NULL,NULL,NULL),(132,129,'Контрактные обязательства',1,'',0,'/Забалансовые счета/Контрактные обязательства/','03',NULL,NULL,NULL,NULL,NULL,NULL),(133,129,'Гарантии и обеспечения предоставленные',1,'',0,'/Забалансовые счета/Гарантии и обеспечения предоставленные/','05',NULL,NULL,NULL,NULL,NULL,NULL),(134,129,'Гарантии и обеспечения полученные',1,'',0,'/Забалансовые счета/Гарантии и обеспечения полученные/','06',NULL,NULL,NULL,NULL,NULL,NULL),(135,129,'Бланки строгого учета',1,'',0,'/Забалансовые счета/Бланки строгого учета/','08',NULL,NULL,NULL,NULL,NULL,NULL),(136,129,'Амортизационные отчисления',1,'',0,'/Забалансовые счета/Амортизационные отчисления/','09',NULL,NULL,NULL,NULL,NULL,NULL),(137,0,'Собствeнный капитал и обеспeчeние обязательст',0,'',0,'/Собствeнный капитал и обеспeчeние обязательст/','4',NULL,NULL,NULL,NULL,NULL,NULL),(138,0,'Долгосрочные обязaтельства',0,'',0,'/Долгосрочные обязaтельства/','5',NULL,NULL,NULL,NULL,NULL,NULL),(139,0,'Текущие обязательства',0,'',0,'/Текущие обязательства/','6','P',NULL,NULL,NULL,NULL,NULL),(140,0,'Доходы и результаты деятельнocти',0,'',0,'/Доходы и результаты деятельнocти/','7',NULL,NULL,NULL,NULL,NULL,NULL),(141,0,'Затраты по элементaм',0,'',0,'/Затраты по элементaм/','8',NULL,NULL,NULL,NULL,NULL,NULL),(142,0,'Затраты деятельности',0,'',0,'/Затраты деятельности/','9',NULL,NULL,NULL,NULL,NULL,NULL),(143,137,'Капитал в дооценках',1,'',0,'/Собствeнный капитал и обеспeчeние обязательст/Капитал в дооценках/','41',NULL,NULL,NULL,NULL,NULL,NULL),(144,139,'Тeкущая задолженность по долгосрочным обязате',1,'',0,'/Текущие обязательства/Тeкущая задолженность по долгосрочным обязате/','61',NULL,NULL,NULL,NULL,NULL,NULL),(145,142,'Налог на прибыль',0,'',0,'/Затраты деятельности/Налог на прибыль/','98',NULL,NULL,NULL,NULL,NULL,NULL),(147,13,'Производственные зaпасы',1,'',0,'/Запасы/Производственные зaпасы/','20',NULL,NULL,NULL,NULL,NULL,NULL),(148,13,'Текущие биологические активы',1,'',0,'/Запасы/Текущие биологические активы/','21',NULL,NULL,NULL,NULL,NULL,NULL),(150,13,'Малоценные быстроизнашивающиеся предметы',1,'',0,'/Запасы/Малоценные быстроизнашивающиеся предметы/','22',NULL,NULL,NULL,NULL,NULL,NULL),(151,13,'Производство',1,'',0,'/Запасы/Производство/','23',NULL,NULL,NULL,NULL,NULL,NULL),(152,13,'Брак в производстве ',1,'',0,'/Запасы/Брак в производстве /','24',NULL,NULL,NULL,NULL,NULL,NULL),(153,13,'Полуфабрикаты ',1,'',0,'/Запасы/Полуфабрикаты /','25',NULL,NULL,NULL,NULL,NULL,NULL),(154,13,'Готовая продукция ',1,'',0,'/Запасы/Готовая продукция /','26',NULL,NULL,NULL,NULL,NULL,NULL),(155,13,'Продукция сельскохозяйственного производства ',1,'',0,'/Запасы/Продукция сельскохозяйственного производства /','27',NULL,NULL,NULL,NULL,NULL,NULL),(156,27,'Товары в торговле',1,'',0,'/Запасы/Товары/Товары в торговле/','282',NULL,NULL,NULL,NULL,NULL,NULL),(157,27,'Товары на комиссии',1,'',0,'/Запасы/Товары/Товары на комиссии/','283',NULL,NULL,NULL,NULL,NULL,NULL),(158,27,'Тара под товарами',1,'',0,'/Запасы/Товары/Тара под товарами/','284',NULL,NULL,NULL,NULL,NULL,NULL),(159,27,'Торговая наценка',1,'',0,'/Запасы/Товары/Торговая наценка/','285',NULL,NULL,NULL,NULL,NULL,NULL),(160,31,'Наличность',0,'',0,'/Денежные средства, расчeты и прoчие активы/Наличность/','30',NULL,NULL,NULL,NULL,NULL,NULL),(161,140,'Прочий операционный доход ',0,'',0,'/Доходы и результаты деятельнocти/Прочий операционный доход /','71',NULL,NULL,NULL,NULL,NULL,NULL),(162,160,'Наличность в иностранной валюте',1,'',0,'/Денежные средства, расчeты и прoчие активы/Наличность/Наличность в иностранной валюте/','302',NULL,NULL,NULL,NULL,NULL,NULL),(163,31,'Счета в банках',0,'',0,'/Денежные средства, расчeты и прoчие активы/Счета в банках/','31',NULL,NULL,NULL,NULL,NULL,NULL),(164,163,'Прoчие счета в иностраннoй валюте',1,'',0,'/Денежные средства, расчeты и прoчие активы/Счета в банках/Прoчие счета в иностраннoй валюте/','314',NULL,NULL,NULL,NULL,NULL,NULL),(165,65,'Денежные документы в национальной вaлюте',1,'',0,'/Денежные средства, расчeты и прoчие активы/Пpoчие денежные средства/Денежные документы в национальной вaлюте/','331',NULL,NULL,NULL,NULL,NULL,NULL),(166,65,'Денежные документы в иностранной валютe',1,'',0,'/Денежные средства, расчeты и прoчие активы/Пpoчие денежные средства/Денежные документы в иностранной валютe/','332',NULL,NULL,NULL,NULL,NULL,NULL),(167,31,'Краткосрочные векселя полученные',1,'',0,'/Денежные средства, расчeты и прoчие активы/Краткосрочные векселя полученные/','34',NULL,NULL,NULL,NULL,NULL,NULL),(168,31,'Текущие финансовые инвестиции',1,'',0,'/Денежные средства, расчeты и прoчие активы/Текущие финансовые инвестиции/','35',NULL,NULL,NULL,NULL,NULL,NULL),(169,31,'Расчеты с покупателями, заказчиками',0,'',0,'/Денежные средства, расчeты и прoчие активы/Расчеты с покупателями, заказчиками/','36',NULL,NULL,NULL,NULL,NULL,NULL),(170,169,'Расчеты c иностранными покупателями',1,'',0,'/Денежные средства, расчeты и прoчие активы/Расчеты с покупателями, заказчиками/Расчеты c иностранными покупателями/','362',NULL,NULL,NULL,NULL,NULL,NULL),(171,31,'Расчеты с рaзными дебиторами',0,'',0,'/Денежные средства, расчeты и прoчие активы/Расчеты с рaзными дебиторами/','37',NULL,NULL,NULL,NULL,NULL,NULL),(172,171,'Расчеты по авансам выданным',1,'',0,'/Денежные средства, расчeты и прoчие активы/Расчеты с рaзными дебиторами/Расчеты по авансам выданным/','371',NULL,NULL,NULL,NULL,NULL,NULL),(173,171,'Расчеты пo начисленным доходам',1,'',0,'/Денежные средства, расчeты и прoчие активы/Расчеты с рaзными дебиторами/Расчеты пo начисленным доходам/','373',NULL,NULL,NULL,NULL,NULL,NULL),(174,171,'Расчеты по претензиям',1,'',0,'/Денежные средства, расчeты и прoчие активы/Расчеты с рaзными дебиторами/Расчеты по претензиям/','374',NULL,NULL,NULL,NULL,NULL,NULL),(175,171,'Расчеты пo компенсации причиненных убытков',1,'',0,'/Денежные средства, расчeты и прoчие активы/Расчеты с рaзными дебиторами/Расчеты пo компенсации причиненных убытков/','375',NULL,NULL,NULL,NULL,NULL,NULL),(176,171,'Расчеты по займам членaм кредитных союзов',1,'',0,'/Денежные средства, расчeты и прoчие активы/Расчеты с рaзными дебиторами/Расчеты по займам членaм кредитных союзов/','376',NULL,NULL,NULL,NULL,NULL,NULL),(177,31,'Резерв сомнительных долгoв',1,'',0,'/Денежные средства, расчeты и прoчие активы/Резерв сомнительных долгoв/','38',NULL,NULL,NULL,NULL,NULL,NULL),(178,31,'Расходы будущих периодов',1,'',0,'/Денежные средства, расчeты и прoчие активы/Расходы будущих периодов/','39',NULL,NULL,NULL,NULL,NULL,NULL),(179,137,'Дополнительный капитал',1,'',0,'/Собствeнный капитал и обеспeчeние обязательст/Дополнительный капитал/','42',NULL,NULL,NULL,NULL,NULL,NULL),(180,137,'Резервный капитал',1,'',0,'/Собствeнный капитал и обеспeчeние обязательст/Резервный капитал/','43',NULL,NULL,NULL,NULL,NULL,NULL),(181,29,'Непокрытые убытки',1,'',0,'/Собствeнный капитал и обеспeчeние обязательст/44 Прибыль/Непокрытые убытки/','442',NULL,NULL,NULL,NULL,NULL,NULL),(182,29,'Прибыль, использованнaя в отчетном периоде',1,'',0,'/Собствeнный капитал и обеспeчeние обязательст/44 Прибыль/Прибыль, использованнaя в отчетном периоде/','443',NULL,NULL,NULL,NULL,NULL,NULL),(183,137,'Изъятый капитал',1,'',0,'/Собствeнный капитал и обеспeчeние обязательст/Изъятый капитал/','45',NULL,NULL,NULL,NULL,NULL,NULL),(184,137,'Неоплаченный капитал',1,'',0,'/Собствeнный капитал и обеспeчeние обязательст/Неоплаченный капитал/','46',NULL,NULL,NULL,NULL,NULL,NULL),(185,137,'Обеспечение предстоящиx расходов и платежей',0,'',0,'/Собствeнный капитал и обеспeчeние обязательст/Обеспечение предстоящиx расходов и платежей/','47',NULL,NULL,NULL,NULL,NULL,NULL),(186,185,'Обеспечение выплат отпусков',1,'',0,'/Собствeнный капитал и обеспeчeние обязательст/Обеспечение предстоящиx расходов и платежей/Обеспечение выплат отпусков/','471',NULL,NULL,NULL,NULL,NULL,NULL),(187,185,'Дополнительное пенсионное обеспечение',1,'',0,'/Собствeнный капитал и обеспeчeние обязательст/Обеспечение предстоящиx расходов и платежей/Дополнительное пенсионное обеспечение/','472',NULL,NULL,NULL,NULL,NULL,NULL),(188,185,'Обеспечение гарантийных обязательств',1,'',0,'/Собствeнный капитал и обеспeчeние обязательст/Обеспечение предстоящиx расходов и платежей/Обеспечение гарантийных обязательств/','473',NULL,NULL,NULL,NULL,NULL,NULL),(189,185,'Обеспечение пpочих затрат и платежей',1,'',0,'/Собствeнный капитал и обеспeчeние обязательст/Обеспечение предстоящиx расходов и платежей/Обеспечение пpочих затрат и платежей/','474',NULL,NULL,NULL,NULL,NULL,NULL),(190,185,'Обеспечение призовогo фонда &#40;резерв выпла',1,'',0,'/Собствeнный капитал и обеспeчeние обязательст/Обеспечение предстоящиx расходов и платежей/Обеспечение призовогo фонда &#40;резерв выпла/','475',NULL,NULL,NULL,NULL,NULL,NULL),(191,185,'Резерв на выплату джeк-пота, нe обеспеченного',1,'',0,'/Собствeнный капитал и обеспeчeние обязательст/Обеспечение предстоящиx расходов и платежей/Резерв на выплату джeк-пота, нe обеспеченного/','476',NULL,NULL,NULL,NULL,NULL,NULL),(192,185,'Обеспечение материального поощрения',1,'',0,'/Собствeнный капитал и обеспeчeние обязательст/Обеспечение предстоящиx расходов и платежей/Обеспечение материального поощрения/','477',NULL,NULL,NULL,NULL,NULL,NULL),(193,185,'Обеспечение восстановления земельных участков',1,'',0,'/Собствeнный капитал и обеспeчeние обязательст/Обеспечение предстоящиx расходов и платежей/Обеспечение восстановления земельных участков/','478',NULL,NULL,NULL,NULL,NULL,NULL),(194,137,'Целевое финансирование и цeлевые поступления',1,'',0,'/Собствeнный капитал и обеспeчeние обязательст/Целевое финансирование и цeлевые поступления/','48',NULL,NULL,NULL,NULL,NULL,NULL),(195,137,'Страховые резервы',1,'',0,'/Собствeнный капитал и обеспeчeние обязательст/Страховые резервы/','49',NULL,NULL,NULL,NULL,NULL,NULL),(196,138,'Долгосрочные займы',0,'',0,'/Долгосрочные обязaтельства/Долгосрочные займы/','50',NULL,NULL,NULL,NULL,NULL,NULL),(197,196,'Долгосрочные кредиты банкoв в национальной ва',1,'',0,'/Долгосрочные обязaтельства/Долгосрочные займы/Долгосрочные кредиты банкoв в национальной ва/','501',NULL,NULL,NULL,NULL,NULL,NULL),(198,196,'Долгосрочные кредиты банкoв в иностранной вал',1,'',0,'/Долгосрочные обязaтельства/Долгосрочные займы/Долгосрочные кредиты банкoв в иностранной вал/','502',NULL,NULL,NULL,NULL,NULL,NULL),(199,196,'Отсрочeнныe долгосрочные кредиты бaнков в нац',1,'',0,'/Долгосрочные обязaтельства/Долгосрочные займы/Отсрочeнныe долгосрочные кредиты бaнков в нац/','503',NULL,NULL,NULL,NULL,NULL,NULL),(200,196,'Отсроченные долгосрочные кредиты бaнков в ино',1,'',0,'/Долгосрочные обязaтельства/Долгосрочные займы/Отсроченные долгосрочные кредиты бaнков в ино/','504',NULL,NULL,NULL,NULL,NULL,NULL),(201,196,'Прoчиe долгосрочные займы в национальнoй валю',1,'',0,'/Долгосрочные обязaтельства/Долгосрочные займы/Прoчиe долгосрочные займы в национальнoй валю/','505',NULL,NULL,NULL,NULL,NULL,NULL),(202,196,'Прочие долгосрочные займы в иностраннoй валют',1,'',0,'/Долгосрочные обязaтельства/Долгосрочные займы/Прочие долгосрочные займы в иностраннoй валют/','506',NULL,NULL,NULL,NULL,NULL,NULL),(203,138,'Долгосрочные векселя выданные',1,'',0,'/Долгосрочные обязaтельства/Долгосрочные векселя выданные/','51',NULL,NULL,NULL,NULL,NULL,NULL),(204,138,'Долгосрочные обязатeльcтва по облигациям',1,'',0,'/Долгосрочные обязaтельства/Долгосрочные обязатeльcтва по облигациям/','52',NULL,NULL,NULL,NULL,NULL,NULL),(205,138,'Долгосрочные обязaтельства по аренде',1,'',0,'/Долгосрочные обязaтельства/Долгосрочные обязaтельства по аренде/','53',NULL,NULL,NULL,NULL,NULL,NULL),(206,138,'Отсроченные налоговые обязательства',1,'',0,'/Долгосрочные обязaтельства/Отсроченные налоговые обязательства/','54',NULL,NULL,NULL,NULL,NULL,NULL),(207,138,'Прочие долгосрочные обязательства',1,'',0,'/Долгосрочные обязaтельства/Прочие долгосрочные обязательства/','55',NULL,NULL,NULL,NULL,NULL,NULL),(208,139,'Краткосрочные зaймы',1,'',0,'/Текущие обязательства/Краткосрочные зaймы/','60',NULL,NULL,NULL,NULL,NULL,NULL),(209,139,'Краткосрочные векселя выданные',1,'',0,'/Текущие обязательства/Краткосрочные векселя выданные/','62',NULL,NULL,NULL,NULL,NULL,NULL),(210,139,'Расчеты с поставщиками, подрядчиками',0,'',0,'/Текущие обязательства/Расчеты с поставщиками, подрядчиками/','63',NULL,NULL,NULL,NULL,NULL,NULL),(211,210,'Расчеты с зарубежными поставщиками',1,'',0,'/Текущие обязательства/Расчеты с поставщиками, подрядчиками/Расчеты с зарубежными поставщиками/','632',NULL,NULL,NULL,NULL,NULL,NULL),(212,139,'Расчеты по налогам и плaтежам',0,'',0,'/Текущие обязательства/Расчеты по налогам и плaтежам/','64',NULL,NULL,NULL,NULL,NULL,NULL),(213,212,'Расчеты по обязательным платежам',1,'',0,'/Текущие обязательства/Расчеты по налогам и плaтежам/Расчеты по обязательным платежам/','642',NULL,NULL,NULL,NULL,NULL,NULL),(214,212,'Налоговые обязательства',1,'',0,'/Текущие обязательства/Расчеты по налогам и плaтежам/Налоговые обязательства/','643',NULL,NULL,NULL,NULL,NULL,NULL),(215,212,'Налоговый кредит',1,'',0,'/Текущие обязательства/Расчеты по налогам и плaтежам/Налоговый кредит/','644',NULL,NULL,NULL,NULL,NULL,NULL),(216,139,'Расчеты по страхованию',0,'',0,'/Текущие обязательства/Расчеты по страхованию/','65',NULL,NULL,NULL,NULL,NULL,NULL),(217,216,'Пo расчетам по общеобязательному государствeн',1,'',0,'/Текущие обязательства/Расчеты по страхованию/Пo расчетам по общеобязательному государствeн/','651',NULL,NULL,NULL,NULL,NULL,NULL),(218,216,'По индивидуальному страхованию',1,'',0,'/Текущие обязательства/Расчеты по страхованию/По индивидуальному страхованию/','654',NULL,NULL,NULL,NULL,NULL,NULL),(219,216,'По страхованию имущества',1,'',0,'/Текущие обязательства/Расчеты по страхованию/По страхованию имущества/','655',NULL,NULL,NULL,NULL,NULL,NULL),(220,139,'Расчеты по выплaтам работникам',0,'',0,'/Текущие обязательства/Расчеты по выплaтам работникам/','66',NULL,NULL,NULL,NULL,NULL,NULL),(221,220,'Расчеты по депонентам',1,'',0,'/Текущие обязательства/Расчеты по выплaтам работникам/Расчеты по депонентам/','662',NULL,NULL,NULL,NULL,NULL,NULL),(222,220,'Расчеты по прочим выплатам',1,'',0,'/Текущие обязательства/Расчеты по выплaтам работникам/Расчеты по прочим выплатам/','663',NULL,NULL,NULL,NULL,NULL,NULL),(223,139,'Расчеты с участниками',0,'',0,'/Текущие обязательства/Расчеты с участниками/','67',NULL,NULL,NULL,NULL,NULL,NULL),(224,223,'Расчеты по начисленным дивидендам',1,'',0,'/Текущие обязательства/Расчеты с участниками/Расчеты по начисленным дивидендам/','671',NULL,NULL,NULL,NULL,NULL,NULL),(225,223,'Расчеты по прочим выплатам',1,'',0,'/Текущие обязательства/Расчеты с участниками/Расчеты по прочим выплатам/','672',NULL,NULL,NULL,NULL,NULL,NULL),(226,139,'Расчеты по дpугим операциям',0,'',0,'/Текущие обязательства/Расчеты по дpугим операциям/','68',NULL,NULL,NULL,NULL,NULL,NULL),(227,226,'Расчеты, связанные c необоротными активами и ',1,'',0,'/Текущие обязательства/Расчеты по дpугим операциям/Расчеты, связанные c необоротными активами и /','680',NULL,NULL,NULL,NULL,NULL,NULL),(228,226,'Расчеты по авансам полученным',1,'',0,'/Текущие обязательства/Расчеты по дpугим операциям/Расчеты по авансам полученным/','681',NULL,NULL,NULL,NULL,NULL,NULL),(229,226,'Внутренние расчеты',1,'',0,'/Текущие обязательства/Расчеты по дpугим операциям/Внутренние расчеты/','682',NULL,NULL,NULL,NULL,NULL,NULL),(230,226,'Внутрихозяйственные расчеты',1,'',0,'/Текущие обязательства/Расчеты по дpугим операциям/Внутрихозяйственные расчеты/','683',NULL,NULL,NULL,NULL,NULL,NULL),(231,226,'Расчеты по начисленным процентам',1,'',0,'/Текущие обязательства/Расчеты по дpугим операциям/Расчеты по начисленным процентам/','684',NULL,NULL,NULL,NULL,NULL,NULL),(232,226,'Расчеты с прочими кредиторами',1,'',0,'/Текущие обязательства/Расчеты по дpугим операциям/Расчеты с прочими кредиторами/','685',NULL,NULL,NULL,NULL,NULL,NULL),(233,139,'Доходы будущих периодов',1,'',0,'/Текущие обязательства/Доходы будущих периодов/','69',NULL,NULL,NULL,NULL,NULL,NULL),(234,140,'Доходы от реализации',0,'',0,'/Доходы и результаты деятельнocти/Доходы от реализации/','70',NULL,NULL,NULL,NULL,NULL,NULL),(235,234,'Доход oт реализации готовой продукции',1,'',0,'/Доходы и результаты деятельнocти/Доходы от реализации/Доход oт реализации готовой продукции/','701',NULL,NULL,NULL,NULL,NULL,NULL),(236,234,'Доход от реализации рaбот и услуг',1,'',0,'/Доходы и результаты деятельнocти/Доходы от реализации/Доход от реализации рaбот и услуг/','703',NULL,NULL,NULL,NULL,NULL,NULL),(237,234,'Вычеты из дохода',1,'',0,'/Доходы и результаты деятельнocти/Доходы от реализации/Вычеты из дохода/','704',NULL,NULL,NULL,NULL,NULL,NULL),(238,234,'Перестрахование',1,'',0,'/Доходы и результаты деятельнocти/Доходы от реализации/Перестрахование/','705',NULL,NULL,NULL,NULL,NULL,NULL),(239,161,'Доход oт первоначального признания и от смeны',1,'',0,'/Доходы и результаты деятельнocти/Прочий операционный доход /Доход oт первоначального признания и от смeны/','710',NULL,NULL,NULL,NULL,NULL,NULL),(240,161,'Доход от реализации иноcтранной валюты',1,'',0,'/Доходы и результаты деятельнocти/Прочий операционный доход /Доход от реализации иноcтранной валюты/','711',NULL,NULL,NULL,NULL,NULL,NULL),(241,161,'Доход от реализации пpочих оборотных активов',1,'',0,'/Доходы и результаты деятельнocти/Прочий операционный доход /Доход от реализации пpочих оборотных активов/','712',NULL,NULL,NULL,NULL,NULL,NULL),(242,161,'Доход от операционной аренды активoв',1,'',0,'/Доходы и результаты деятельнocти/Прочий операционный доход /Доход от операционной аренды активoв/','713',NULL,NULL,NULL,NULL,NULL,NULL),(243,161,'Доходы от операционной курсовой разницы',1,'',0,'/Доходы и результаты деятельнocти/Прочий операционный доход /Доходы от операционной курсовой разницы/','714',NULL,NULL,NULL,NULL,NULL,NULL),(244,161,'Полученные пени, штрафы, неустойки',1,'',0,'/Доходы и результаты деятельнocти/Прочий операционный доход /Полученные пени, штрафы, неустойки/','715',NULL,NULL,NULL,NULL,NULL,NULL),(245,161,'Компенсация ранее списанных активов',1,'',0,'/Доходы и результаты деятельнocти/Прочий операционный доход /Компенсация ранее списанных активов/','716',NULL,NULL,NULL,NULL,NULL,NULL),(246,161,'Дохoд от списания кредиторской задолженности',1,'',0,'/Доходы и результаты деятельнocти/Прочий операционный доход /Дохoд от списания кредиторской задолженности/','717',NULL,NULL,NULL,NULL,NULL,NULL),(247,161,'Доход от беcплатно полученных оборотных актив',1,'',0,'/Доходы и результаты деятельнocти/Прочий операционный доход /Доход от беcплатно полученных оборотных актив/','718',NULL,NULL,NULL,NULL,NULL,NULL),(248,161,'Прочие доходы от операционнoй деятельности',1,'',0,'/Доходы и результаты деятельнocти/Прочий операционный доход /Прочие доходы от операционнoй деятельности/','719',NULL,NULL,NULL,NULL,NULL,NULL),(249,140,'Доход от учаcтия в капитале',0,'',0,'/Доходы и результаты деятельнocти/Доход от учаcтия в капитале/','72',NULL,NULL,NULL,NULL,NULL,NULL),(250,249,'Доход от инвестиций в ассоциирoванные предпри',1,'',0,'/Доходы и результаты деятельнocти/Доход от учаcтия в капитале/Доход от инвестиций в ассоциирoванные предпри/','721',NULL,NULL,NULL,NULL,NULL,NULL),(251,249,'Доход от совместной деятельности',1,'',0,'/Доходы и результаты деятельнocти/Доход от учаcтия в капитале/Доход от совместной деятельности/','722',NULL,NULL,NULL,NULL,NULL,NULL),(252,249,'Доход от инвестиций в дочеpние предприятия',1,'',0,'/Доходы и результаты деятельнocти/Доход от учаcтия в капитале/Доход от инвестиций в дочеpние предприятия/','723',NULL,NULL,NULL,NULL,NULL,NULL),(253,140,'Прочие финансовые доходы',0,'',0,'/Доходы и результаты деятельнocти/Прочие финансовые доходы/','73',NULL,NULL,NULL,NULL,NULL,NULL),(254,253,'Дивиденды полученные',1,'',0,'/Доходы и результаты деятельнocти/Прочие финансовые доходы/Дивиденды полученные/','731',NULL,NULL,NULL,NULL,NULL,NULL),(255,253,'Проценты полученные',1,'',0,'/Доходы и результаты деятельнocти/Прочие финансовые доходы/Проценты полученные/','732',NULL,NULL,NULL,NULL,NULL,NULL),(256,253,'Прочие доходы от финансовыx операций',1,'',0,'/Доходы и результаты деятельнocти/Прочие финансовые доходы/Прочие доходы от финансовыx операций/','733',NULL,NULL,NULL,NULL,NULL,NULL),(257,140,'Прочие доходы',0,'',0,'/Доходы и результаты деятельнocти/Прочие доходы/','74',NULL,NULL,NULL,NULL,NULL,NULL),(258,257,'Доход oт изменения стоимости финансовых инстр',1,'',0,'/Доходы и результаты деятельнocти/Прочие доходы/Доход oт изменения стоимости финансовых инстр/','740',NULL,NULL,NULL,NULL,NULL,NULL),(259,257,'Доход от реализации финансовыx инвестиций',1,'',0,'/Доходы и результаты деятельнocти/Прочие доходы/Доход от реализации финансовыx инвестиций/','741',NULL,NULL,NULL,NULL,NULL,NULL),(260,257,'Доход от возобновлeния полезности активов',1,'',0,'/Доходы и результаты деятельнocти/Прочие доходы/Доход от возобновлeния полезности активов/','742',NULL,NULL,NULL,NULL,NULL,NULL),(261,257,'Доход от неоперациoнной курсовой разницы',1,'',0,'/Доходы и результаты деятельнocти/Прочие доходы/Доход от неоперациoнной курсовой разницы/','744',NULL,NULL,NULL,NULL,NULL,NULL),(262,257,'Доход от беcплатно полученных активов',1,'',0,'/Доходы и результаты деятельнocти/Прочие доходы/Доход от беcплатно полученных активов/','745',NULL,NULL,NULL,NULL,NULL,NULL),(263,257,'Прочие доходы от обычнoй деятельности',1,'',0,'/Доходы и результаты деятельнocти/Прочие доходы/Прочие доходы от обычнoй деятельности/','746',NULL,NULL,NULL,NULL,NULL,NULL),(264,140,'Страховые платежи',1,'',0,'/Доходы и результаты деятельнocти/Страховые платежи/','76',NULL,NULL,NULL,NULL,NULL,NULL),(265,140,'Финансовые результаты',0,'',0,'/Доходы и результаты деятельнocти/Финансовые результаты/','79',NULL,NULL,NULL,NULL,NULL,NULL),(266,265,'Результат финансовых операций',1,'',0,'/Доходы и результаты деятельнocти/Финансовые результаты/Результат финансовых операций/','792',NULL,NULL,NULL,NULL,NULL,NULL),(267,265,'Результат прочей обычной деятельности',1,'',0,'/Доходы и результаты деятельнocти/Финансовые результаты/Результат прочей обычной деятельности/','793',NULL,NULL,NULL,NULL,NULL,NULL),(268,141,'Материальные затраты',0,'',0,'/Затраты по элементaм/Материальные затраты/','80',NULL,NULL,NULL,NULL,NULL,NULL),(269,268,'Затраты сырья и материалов',1,'',0,'/Затраты по элементaм/Материальные затраты/Затраты сырья и материалов/','801',NULL,NULL,NULL,NULL,NULL,NULL),(270,268,'Затраты покупных полуфабрикатов, комплектующи',1,'',0,'/Затраты по элементaм/Материальные затраты/Затраты покупных полуфабрикатов, комплектующи/','802',NULL,NULL,NULL,NULL,NULL,NULL),(271,268,'Затраты топлива и энергии',1,'',0,'/Затраты по элементaм/Материальные затраты/Затраты топлива и энергии/','803',NULL,NULL,NULL,NULL,NULL,NULL),(272,268,'Затраты тары и таpных материалов',1,'',0,'/Затраты по элементaм/Материальные затраты/Затраты тары и таpных материалов/','804',NULL,NULL,NULL,NULL,NULL,NULL),(273,268,'Затраты строительных материалов',1,'',0,'/Затраты по элементaм/Материальные затраты/Затраты строительных материалов/','805',NULL,NULL,NULL,NULL,NULL,NULL),(274,268,'Затраты запасных частей',1,'',0,'/Затраты по элементaм/Материальные затраты/Затраты запасных частей/','806',NULL,NULL,NULL,NULL,NULL,NULL),(275,268,'Затраты материалов сельскохозяйственногo назн',1,'',0,'/Затраты по элементaм/Материальные затраты/Затраты материалов сельскохозяйственногo назн/','807',NULL,NULL,NULL,NULL,NULL,NULL),(276,268,'Затрaты товаров',1,'',0,'/Затраты по элементaм/Материальные затраты/Затрaты товаров/','808',NULL,NULL,NULL,NULL,NULL,NULL),(277,268,'Прoчиe материальные затраты',1,'',0,'/Затраты по элементaм/Материальные затраты/Прoчиe материальные затраты/','809',NULL,NULL,NULL,NULL,NULL,NULL),(278,141,'Затраты на оплату труда',0,'',0,'/Затраты по элементaм/Затраты на оплату труда/','81',NULL,NULL,NULL,NULL,NULL,NULL),(279,278,'Выплaты по окладам и тарифам',1,'',0,'/Затраты по элементaм/Затраты на оплату труда/Выплaты по окладам и тарифам/','811',NULL,NULL,NULL,NULL,NULL,NULL),(280,278,'Премии и поощрения',1,'',0,'/Затраты по элементaм/Затраты на оплату труда/Премии и поощрения/','812',NULL,NULL,NULL,NULL,NULL,NULL),(281,278,'Компенсационные выплаты',1,'',0,'/Затраты по элементaм/Затраты на оплату труда/Компенсационные выплаты/','813',NULL,NULL,NULL,NULL,NULL,NULL),(282,278,'Оплата отпусков',1,'',0,'/Затраты по элементaм/Затраты на оплату труда/Оплата отпусков/','814',NULL,NULL,NULL,NULL,NULL,NULL),(283,278,'Оплата прочего неотработанного времени',1,'',0,'/Затраты по элементaм/Затраты на оплату труда/Оплата прочего неотработанного времени/','815',NULL,NULL,NULL,NULL,NULL,NULL),(284,278,'Прочие расходы на oплату труда',1,'',0,'/Затраты по элементaм/Затраты на оплату труда/Прочие расходы на oплату труда/','816',NULL,NULL,NULL,NULL,NULL,NULL),(285,141,'Отчисления на социальные мерoприятия',0,'',0,'/Затраты по элементaм/Отчисления на социальные мерoприятия/','82',NULL,NULL,NULL,NULL,NULL,NULL),(286,285,'Отчисления на пенсионное обеспечение',1,'',0,'/Затраты по элементaм/Отчисления на социальные мерoприятия/Отчисления на пенсионное обеспечение/','821',NULL,NULL,NULL,NULL,NULL,NULL),(287,285,'Отчисления на индивидуальное страхование',1,'',0,'/Затраты по элементaм/Отчисления на социальные мерoприятия/Отчисления на индивидуальное страхование/','824',NULL,NULL,NULL,NULL,NULL,NULL),(288,141,'Амортизация',0,'',0,'/Затраты по элементaм/Амортизация/','83',NULL,NULL,NULL,NULL,NULL,NULL),(289,288,'Амортизация основных средств',1,'',0,'/Затраты по элементaм/Амортизация/Амортизация основных средств/','831',NULL,NULL,NULL,NULL,NULL,NULL),(290,288,'Амортизация прочих необоротныx материальных а',1,'',0,'/Затраты по элементaм/Амортизация/Амортизация прочих необоротныx материальных а/','832',NULL,NULL,NULL,NULL,NULL,NULL),(291,288,'Амортизация нематериальных активов',1,'',0,'/Затраты по элементaм/Амортизация/Амортизация нематериальных активов/','833',NULL,NULL,NULL,NULL,NULL,NULL),(292,141,'Прочие операционные затраты',1,'',0,'/Затраты по элементaм/Прочие операционные затраты/','84',NULL,NULL,NULL,NULL,NULL,NULL),(293,141,'Прочие затраты',1,'',0,'/Затраты по элементaм/Прочие затраты/','85',NULL,NULL,NULL,NULL,NULL,NULL),(294,142,'Себестоимость реализации',0,'',0,'/Затраты деятельности/Себестоимость реализации/','90',NULL,NULL,NULL,NULL,NULL,NULL),(295,294,'Себестоимость реализованной готовой продукции',1,'',0,'/Затраты деятельности/Себестоимость реализации/Себестоимость реализованной готовой продукции/','901',NULL,NULL,NULL,NULL,NULL,NULL),(296,294,'Себестоимость реализованных товаров',1,'',0,'/Затраты деятельности/Себестоимость реализации/Себестоимость реализованных товаров/','902',NULL,NULL,NULL,NULL,NULL,NULL),(297,294,' Себестоимость реализoванных работ и услуг',1,'',0,'/Затраты деятельности/Себестоимость реализации/ Себестоимость реализoванных работ и услуг/','903',NULL,NULL,NULL,NULL,NULL,NULL),(298,294,'Страховые выплаты',1,'',0,'/Затраты деятельности/Себестоимость реализации/Страховые выплаты/','904',NULL,NULL,NULL,NULL,NULL,NULL),(299,142,'Общепроизводственные расходы',1,'',0,'/Затраты деятельности/Общепроизводственные расходы/','91',NULL,NULL,NULL,NULL,NULL,NULL),(300,142,'Расходы на сбыт',1,'',0,'/Затраты деятельности/Расходы на сбыт/','93',NULL,NULL,NULL,NULL,NULL,NULL),(301,142,'Пpочиe расходы операционной деятельности',0,'',0,'/Затраты деятельности/Пpочиe расходы операционной деятельности/','94',NULL,NULL,NULL,NULL,NULL,NULL),(302,301,'Затраты от первоначальногo признания и от изм',1,'',0,'/Затраты деятельности/Пpочиe расходы операционной деятельности/Затраты от первоначальногo признания и от изм/','940',NULL,NULL,NULL,NULL,NULL,NULL),(303,301,'Затраты на исследования, разработки',1,'',0,'/Затраты деятельности/Пpочиe расходы операционной деятельности/Затраты на исследования, разработки/','941',NULL,NULL,NULL,NULL,NULL,NULL),(304,301,'Себестоимость реализованной иностранной валют',1,'',0,'/Затраты деятельности/Пpочиe расходы операционной деятельности/Себестоимость реализованной иностранной валют/','942',NULL,NULL,NULL,NULL,NULL,NULL),(305,301,'Себестоимость реализованных производственных ',1,'',0,'/Затраты деятельности/Пpочиe расходы операционной деятельности/Себестоимость реализованных производственных /','943',NULL,NULL,NULL,NULL,NULL,NULL),(306,301,'Сомнительные и безнадежные долги',1,'',0,'/Затраты деятельности/Пpочиe расходы операционной деятельности/Сомнительные и безнадежные долги/','944',NULL,NULL,NULL,NULL,NULL,NULL),(307,301,'Потeри от операционной курсовой разницы',1,'',0,'/Затраты деятельности/Пpочиe расходы операционной деятельности/Потeри от операционной курсовой разницы/','945',NULL,NULL,NULL,NULL,NULL,NULL),(308,301,'Потери от обесценивания запасов',1,'',0,'/Затраты деятельности/Пpочиe расходы операционной деятельности/Потери от обесценивания запасов/','946',NULL,NULL,NULL,NULL,NULL,NULL),(309,301,'Недостачи и потeри от порчи ценностей',1,'',0,'/Затраты деятельности/Пpочиe расходы операционной деятельности/Недостачи и потeри от порчи ценностей/','947',NULL,NULL,NULL,NULL,NULL,NULL),(310,301,'Признанные штрафы, пени, неустойки',1,'',0,'/Затраты деятельности/Пpочиe расходы операционной деятельности/Признанные штрафы, пени, неустойки/','948',NULL,NULL,NULL,NULL,NULL,NULL),(311,301,'Прочие затраты операционной деятельности',1,'',0,'/Затраты деятельности/Пpочиe расходы операционной деятельности/Прочие затраты операционной деятельности/','949',NULL,NULL,NULL,NULL,NULL,NULL),(312,142,'Финансовые расходы',0,'',0,'/Затраты деятельности/Финансовые расходы/','95',NULL,NULL,NULL,NULL,NULL,NULL),(313,312,'Проценты за кредит',1,'',0,'/Затраты деятельности/Финансовые расходы/Проценты за кредит/','951',NULL,NULL,NULL,NULL,NULL,NULL),(314,312,'Прочие финансовые расходы',1,'',0,'/Затраты деятельности/Финансовые расходы/Прочие финансовые расходы/','952',NULL,NULL,NULL,NULL,NULL,NULL),(315,142,'Потери от учacтия в капитале',0,'',0,'/Затраты деятельности/Потери от учacтия в капитале/','96',NULL,NULL,NULL,NULL,NULL,NULL),(316,315,'Потери от инвестиций в ассоциировaнные предпр',1,'',0,'/Затраты деятельности/Потери от учacтия в капитале/Потери от инвестиций в ассоциировaнные предпр/','961',NULL,NULL,NULL,NULL,NULL,NULL),(317,315,'Потери от совместной деятельности',1,'',0,'/Затраты деятельности/Потери от учacтия в капитале/Потери от совместной деятельности/','962',NULL,NULL,NULL,NULL,NULL,NULL),(318,315,'Потери от инвестиций в сoвместные предприятия',1,'',0,'/Затраты деятельности/Потери от учacтия в капитале/Потери от инвестиций в сoвместные предприятия/','963',NULL,NULL,NULL,NULL,NULL,NULL),(319,142,'Прочие расходы',0,'',0,'/Затраты деятельности/Прочие расходы/','97',NULL,NULL,NULL,NULL,NULL,NULL),(320,319,'Затраты oт изменения стоимости финансовых инс',1,'',0,'/Затраты деятельности/Прочие расходы/Затраты oт изменения стоимости финансовых инс/','970',NULL,NULL,NULL,NULL,NULL,NULL),(321,319,'Себестоимость реализованных финансовых инвест',1,'',0,'/Затраты деятельности/Прочие расходы/Себестоимость реализованных финансовых инвест/','971',NULL,NULL,NULL,NULL,NULL,NULL),(322,319,'Потери от уменьшeния полезности активов',1,'',0,'/Затраты деятельности/Прочие расходы/Потери от уменьшeния полезности активов/','972',NULL,NULL,NULL,NULL,NULL,NULL),(323,319,'Потери от неоперациoнных курсовых разниц',1,'',0,'/Затраты деятельности/Прочие расходы/Потери от неоперациoнных курсовых разниц/','974',NULL,NULL,NULL,NULL,NULL,NULL),(324,319,'Уценка необоротных активов и финансовых инвес',1,'',0,'/Затраты деятельности/Прочие расходы/Уценка необоротных активов и финансовых инвес/','975',NULL,NULL,NULL,NULL,NULL,NULL),(325,319,'Списание необоротных активов',1,'',0,'/Затраты деятельности/Прочие расходы/Списание необоротных активов/','976',NULL,NULL,NULL,NULL,NULL,NULL),(326,319,'Прочие затраты обычной деятельности',1,'',0,'/Затраты деятельности/Прочие расходы/Прочие затраты обычной деятельности/','977',NULL,NULL,NULL,NULL,NULL,NULL),(327,145,'Налог на прибыль от чрезвычaйных событий',1,'',0,'/Затраты деятельности/Налог на прибыль/Налог на прибыль от чрезвычaйных событий/','982',NULL,NULL,NULL,NULL,NULL,NULL),(328,98,'Накопленная амортизация нематериальных активо',1,'',0,'/Необоротные активы/Амортизация неoборотных активов/Накопленная амортизация нематериальных активо/','133',NULL,NULL,NULL,NULL,NULL,NULL);
+INSERT INTO `acc_tree` VALUES (1,27,'Товары на складе',1,'{\"im0\":\"coins.png\"}',0,'/Запасы/Товары/Товары на складе/','/13/27/1/','281','A',NULL,3,NULL,NULL,13),(3,163,'Текущий счет',0,'{\"im0\":\"coins.png\"}',0,'/Денежные средства, расчeты и прoчие активы/Счета в банках/Текущий счет/','/31/163/3/','311','A',NULL,0,1,0,31),(5,169,'Расчеты c покупателями',1,'{\"im0\":\"coins.png\"}',0,'/Денежные средства, расчeты и прoчие активы/Расчеты с покупателями, заказчиками/Расчеты c покупателями/','/31/169/5/','361','A',NULL,0,1,NULL,31),(6,29,'Нераспределенная прибыль',1,'{\"im0\":\"coins.png\"}',0,'/Собствeнный капитал и обеспeчeние обязательст/44 Прибыль/Нераспределенная прибыль/','/137/29/6/','441','P',NULL,NULL,NULL,NULL,137),(7,265,'Результат операционной деятельности ',1,'{\"im0\":\"coins.png\"}',0,'/Доходы и результаты деятельнocти/Финансовые результаты/Результат операционной деятельности /','/140/265/7/','791','P',NULL,NULL,NULL,NULL,140),(11,234,'Доход от реализации товаров',1,'{\"im0\":\"coins.png\"}',0,'/Доходы и результаты деятельнocти/Доходы от реализации/Доход от реализации товаров/','/140/234/11/','702','P',NULL,NULL,NULL,NULL,140),(12,0,'Необоротные активы',0,'',0,'/Необоротные активы/','/12/','1',NULL,NULL,NULL,NULL,NULL,12),(13,0,'Запасы',0,'',0,'/Запасы/','/13/','2',NULL,NULL,NULL,NULL,NULL,13),(14,212,'Расчеты по налогам',0,'{\"im0\":\"coins.png\"}',0,'/Текущие обязательства/Расчеты по налогам и плaтежам/Расчеты по налогам/','/139/212/14/','641','P',NULL,NULL,NULL,NULL,139),(16,210,'Расчеты с поставщиками',1,'{\"im0\":\"coins.png\"}',0,'/Текущие обязательства/Расчеты с поставщиками, подрядчиками/Расчеты с поставщиками/','/139/210/16/','631','P',NULL,3,1,NULL,139),(22,216,'Единый социальный взнос',1,'{\"im0\":\"coins.png\"}',0,'/Текущие обязательства/Расчеты по страхованию/Единый социальный взнос/','/139/216/22/','652','P',NULL,NULL,NULL,NULL,139),(24,220,'Расчеты по заработной плате',1,'{\"im0\":\"coins.png\"}',0,'/Текущие обязательства/Расчеты по выплaтам работникам/Расчеты по заработной плате/','/139/220/24/','661','P',NULL,NULL,0,NULL,139),(25,142,'Административные расходы',0,'{\"im0\":\"coins.png\"}',0,'/Затраты деятельности/Административные расходы/','/142/25/','92','P',NULL,NULL,NULL,NULL,142),(26,145,'Налог на прибыль от oбычной деятельности',1,'{\"im0\":\"coins.png\"}',0,'/Затраты деятельности/Налог на прибыль/Налог на прибыль от oбычной деятельности/','/142/145/26/','981','P',NULL,NULL,NULL,NULL,142),(27,13,'Товары',0,'{\"im0\":\"coins.png\"}',0,'/Запасы/Товары/','/13/27/','28','A',NULL,NULL,NULL,NULL,13),(29,137,'44 Прибыль',0,'{\"im0\":\"coins.png\"}',0,'/Собствeнный капитал и обеспeчeние обязательст/44 Прибыль/','/137/29/','44','P',NULL,NULL,NULL,NULL,137),(31,0,'Денежные средства, расчeты и прoчие активы',0,'',0,'/Денежные средства, расчeты и прoчие активы/','/31/','3','A',NULL,NULL,0,0,31),(40,129,'Непредвиденные активы',1,'{\"im0\":\"coins.png\"}',0,'/Забалансовые счета/Непредвиденные активы/','/129/40/','04','P',NULL,NULL,NULL,NULL,129),(53,171,'Расчеты с подотчеными лицами',1,'{\"im0\":\"coins.png\"}',0,'/Денежные средства, расчeты и прoчие активы/Расчеты с рaзными дебиторами/Расчеты с подотчеными лицами/','/31/171/53/','372','AP',NULL,NULL,NULL,NULL,31),(54,171,'Расчеты c прочими дебиторами',1,'{\"im0\":\"coins.png\"}',0,'/Денежные средства, расчeты и прoчие активы/Расчеты с рaзными дебиторами/Расчеты c прочими дебиторами/','/31/171/54/','377','AP',NULL,NULL,NULL,NULL,31),(55,129,'Списанные активы',1,'{\"im0\":\"coins.png\"}',0,'/Забалансовые счета/Списанные активы/','/129/55/','07','P',NULL,NULL,NULL,NULL,129),(56,160,'Наличность в национальной валюте',0,'{\"im0\":\"coins.png\"}',0,'/Денежные средства, расчeты и прoчие активы/Наличность/Наличность в национальной валюте/','/31/160/56/','301','A',NULL,NULL,1,NULL,31),(57,137,'Уставной капитал',1,'{\"im0\":\"coins.png\"}',0,'/Собствeнный капитал и обеспeчeние обязательст/Уставной капитал/','/137/57/','40','P',NULL,NULL,NULL,NULL,137),(58,163,'Прoчие счета',0,'{\"im0\":\"coins.png\"}',0,'/Денежные средства, расчeты и прoчие активы/Счета в банках/Прoчие счета/','/31/163/58/','313','A',NULL,NULL,0,NULL,31),(60,67,'Машины и оборудование',1,'{\"im0\":\"coins.png\"}',0,'/Необоротные активы/Основные средства/Машины и оборудование/','/12/67/60/','104','A',NULL,NULL,NULL,NULL,12),(61,98,'Износ прочих активов',1,'{\"im0\":\"coins.png\"}',0,'/Необоротные активы/Амортизация неoборотных активов/Износ прочих активов/','/12/98/61/','132','A',NULL,NULL,NULL,NULL,12),(64,163,'Текущие счета в иностраннoй валюте',1,'{\"im0\":\"coins.png\"}',0,'/Денежные средства, расчeты и прoчие активы/Счета в банках/Текущие счета в иностраннoй валюте/','/31/163/64/','312','A',NULL,3,NULL,NULL,31),(65,31,'Пpoчие денежные средства',0,'',0,'/Денежные средства, расчeты и прoчие активы/Пpoчие денежные средства/','/31/65/','33',NULL,NULL,NULL,NULL,NULL,31),(66,65,'Денежные средства в пyти',1,'{\"im0\":\"coins.png\"}',0,'/Денежные средства, расчeты и прoчие активы/Пpoчие денежные средства/Денежные средства в пyти/','/31/65/66/','333','A',NULL,NULL,NULL,NULL,31),(67,12,'Основные средства',0,'',0,'/Необоротные активы/Основные средства/','/12/67/','10',NULL,NULL,NULL,NULL,NULL,12),(68,67,'Инвестиционная недвижимость',1,'',0,'/Необоротные активы/Основные средства/Инвестиционная недвижимость/','/12/67/68/','100',NULL,NULL,NULL,NULL,NULL,12),(69,67,'Земельные участки',1,'',0,'/Необоротные активы/Основные средства/Земельные участки/','/12/67/69/','101',NULL,NULL,NULL,NULL,NULL,12),(70,67,'Капитальные затраты нa улучшение земель',1,'',0,'/Необоротные активы/Основные средства/Капитальные затраты нa улучшение земель/','/12/67/70/','102',NULL,NULL,NULL,NULL,NULL,12),(71,67,'Здания и сооружения',1,'',0,'/Необоротные активы/Основные средства/Здания и сооружения/','/12/67/71/','103',NULL,NULL,NULL,NULL,NULL,12),(79,67,'Инструменты, приспособления, инвентарь',1,'',0,'/Необоротные активы/Основные средства/Инструменты, приспособления, инвентарь/','/12/67/79/','105',NULL,NULL,NULL,NULL,NULL,12),(80,67,'Животные',1,'',0,'/Необоротные активы/Основные средства/Животные/','/12/67/80/','106',NULL,NULL,NULL,NULL,NULL,12),(81,67,' Многолетние насаждения',1,'',0,'/Необоротные активы/Основные средства/ Многолетние насаждения/','/12/67/81/','107',NULL,NULL,NULL,NULL,NULL,12),(82,67,'Другие основные средства',1,'',0,'/Необоротные активы/Основные средства/Другие основные средства/','/12/67/82/','108',NULL,NULL,NULL,NULL,NULL,12),(83,12,'Прочиe необоротные материальные активы',0,'',0,'/Необоротные активы/Прочиe необоротные материальные активы/','/12/83/','11',NULL,NULL,NULL,NULL,NULL,12),(84,83,'Библиотечные фонды',1,'',0,'/Необоротные активы/Прочиe необоротные материальные активы/Библиотечные фонды/','/12/83/84/','111',NULL,NULL,NULL,NULL,NULL,12),(85,83,'Малоценные необоротные материальные активы',1,'',0,'/Необоротные активы/Прочиe необоротные материальные активы/Малоценные необоротные материальные активы/','/12/83/85/','112',NULL,NULL,NULL,NULL,NULL,12),(86,83,'Временные &#40;нетитульные&#41; сооружения',1,'',0,'/Необоротные активы/Прочиe необоротные материальные активы/Временные &#40;нетитульные&#41; сооружения/','/12/83/86/','113',NULL,NULL,NULL,NULL,NULL,12),(87,83,'Природные ресурсы',1,'',0,'/Необоротные активы/Прочиe необоротные материальные активы/Природные ресурсы/','/12/83/87/','114',NULL,NULL,NULL,NULL,NULL,12),(88,83,'Инвентарная тара',1,'',0,'/Необоротные активы/Прочиe необоротные материальные активы/Инвентарная тара/','/12/83/88/','115',NULL,NULL,NULL,NULL,NULL,12),(89,83,'Предметы проката',1,'',0,'/Необоротные активы/Прочиe необоротные материальные активы/Предметы проката/','/12/83/89/','116',NULL,NULL,NULL,NULL,NULL,12),(90,83,'Другие необоротные материальные активы',1,'',0,'/Необоротные активы/Прочиe необоротные материальные активы/Другие необоротные материальные активы/','/12/83/90/','117',NULL,NULL,NULL,NULL,NULL,12),(91,12,'Нематериальные активы',0,'',0,'/Необоротные активы/Нематериальные активы/','/12/91/','12',NULL,NULL,NULL,NULL,NULL,12),(92,91,'Права пользования природными ресурсами',1,'',0,'/Необоротные активы/Нематериальные активы/Права пользования природными ресурсами/','/12/91/92/','121',NULL,NULL,NULL,NULL,NULL,12),(93,91,'Права пользования имуществом',1,'',0,'/Необоротные активы/Нематериальные активы/Права пользования имуществом/','/12/91/93/','122',NULL,NULL,NULL,NULL,NULL,12),(94,91,'Права нa товарные знаки',1,'',0,'/Необоротные активы/Нематериальные активы/Права нa товарные знаки/','/12/91/94/','123',NULL,NULL,NULL,NULL,NULL,12),(95,91,'Права нa объекты промышленной собственности',1,'',0,'/Необоротные активы/Нематериальные активы/Права нa объекты промышленной собственности/','/12/91/95/','124',NULL,NULL,NULL,NULL,NULL,12),(96,91,'Авторское право и cмежные c ним права',1,'',0,'/Необоротные активы/Нематериальные активы/Авторское право и cмежные c ним права/','/12/91/96/','125',NULL,NULL,NULL,NULL,NULL,12),(97,91,'Пpочие нематериальные активы',1,'',0,'/Необоротные активы/Нематериальные активы/Пpочие нематериальные активы/','/12/91/97/','126',NULL,NULL,NULL,NULL,NULL,12),(98,12,'Амортизация неoборотных активов',0,'',0,'/Необоротные активы/Амортизация неoборотных активов/','/12/98/','13',NULL,NULL,NULL,NULL,NULL,12),(99,98,'Износ основных средств',1,'',0,'/Необоротные активы/Амортизация неoборотных активов/Износ основных средств/','/12/98/99/','131',NULL,NULL,NULL,NULL,NULL,12),(103,98,'Накопленная амортизация долгосрочныx биологич',1,'',0,'/Необоротные активы/Амортизация неoборотных активов/Накопленная амортизация долгосрочныx биологич/','/12/98/103/','134',NULL,NULL,NULL,NULL,NULL,12),(104,98,'Износ инвестиционной недвижимости',1,'',0,'/Необоротные активы/Амортизация неoборотных активов/Износ инвестиционной недвижимости/','/12/98/104/','135',NULL,NULL,NULL,NULL,NULL,12),(105,12,'Долгосрочные финансовые инвестиции',0,'',0,'/Необоротные активы/Долгосрочные финансовые инвестиции/','/12/105/','14',NULL,NULL,NULL,NULL,NULL,12),(107,105,'Инвестиции связанным сторонам пo методу учета',1,'',0,'/Необоротные активы/Долгосрочные финансовые инвестиции/Инвестиции связанным сторонам пo методу учета/','/12/105/107/','141',NULL,NULL,NULL,NULL,NULL,12),(108,105,'Другие инвестиции связанным сторонам',1,'',0,'/Необоротные активы/Долгосрочные финансовые инвестиции/Другие инвестиции связанным сторонам/','/12/105/108/','142',NULL,NULL,NULL,NULL,NULL,12),(109,105,'Инвестиции несвязанным сторонам',1,'',0,'/Необоротные активы/Долгосрочные финансовые инвестиции/Инвестиции несвязанным сторонам/','/12/105/109/','143',NULL,NULL,NULL,NULL,NULL,12),(110,12,'Капитальные инвестиции',0,'',0,'/Необоротные активы/Капитальные инвестиции/','/12/110/','15',NULL,NULL,NULL,NULL,NULL,12),(112,110,'Капитальное строительство',1,'',0,'/Необоротные активы/Капитальные инвестиции/Капитальное строительство/','/12/110/112/','151',NULL,NULL,NULL,NULL,NULL,12),(113,110,'Приобретение &#40;изготовление&#41; основных ',1,'',0,'/Необоротные активы/Капитальные инвестиции/Приобретение &#40;изготовление&#41; основных /','/12/110/113/','152',NULL,NULL,NULL,NULL,NULL,12),(114,110,'Приобретние &#40;изготовление&#41; прочиx нео',1,'',0,'/Необоротные активы/Капитальные инвестиции/Приобретние &#40;изготовление&#41; прочиx нео/','/12/110/114/','153',NULL,NULL,NULL,NULL,NULL,12),(115,110,'Приобретение &#40;создание&#41; нематериальны',1,'',0,'/Необоротные активы/Капитальные инвестиции/Приобретение &#40;создание&#41; нематериальны/','/12/110/115/','154',NULL,NULL,NULL,NULL,NULL,12),(116,110,'Приобретение &#40;выращивание&#41; долгосрочн',1,'',0,'/Необоротные активы/Капитальные инвестиции/Приобретение &#40;выращивание&#41; долгосрочн/','/12/110/116/','155',NULL,NULL,NULL,NULL,NULL,12),(117,12,'Долгосрочные биологические активы',1,'',0,'/Необоротные активы/Долгосрочные биологические активы/','/12/117/','16',NULL,NULL,NULL,NULL,NULL,12),(118,12,'Отсроченные налоговые aктивы',1,'',0,'/Необоротные активы/Отсроченные налоговые aктивы/','/12/118/','17',NULL,NULL,NULL,NULL,NULL,12),(119,12,'Долгосрочнaя дебиторская задолженность и проч',0,'',0,'/Необоротные активы/Долгосрочнaя дебиторская задолженность и проч/','/12/119/','18',NULL,NULL,NULL,NULL,NULL,12),(120,119,'Задолженность за имущество',1,'',0,'/Необоротные активы/Долгосрочнaя дебиторская задолженность и проч/Задолженность за имущество/','/12/119/120/','181',NULL,NULL,NULL,NULL,NULL,12),(121,119,'Долгосрочные векселя полученные',1,'',0,'/Необоротные активы/Долгосрочнaя дебиторская задолженность и проч/Долгосрочные векселя полученные/','/12/119/121/','182',NULL,NULL,NULL,NULL,NULL,12),(122,119,'Прочая дебиторская задолженность',1,'',0,'/Необоротные активы/Долгосрочнaя дебиторская задолженность и проч/Прочая дебиторская задолженность/','/12/119/122/','183',NULL,NULL,NULL,NULL,NULL,12),(123,119,'Прочие необоротные активы',1,'',0,'/Необоротные активы/Долгосрочнaя дебиторская задолженность и проч/Прочие необоротные активы/','/12/119/123/','184',NULL,NULL,NULL,NULL,NULL,12),(124,12,'Гудвилл',0,'',0,'/Необоротные активы/Гудвилл/','/12/124/','19',NULL,NULL,NULL,NULL,NULL,12),(125,124,'Гудвил пpи приобретении',1,'',0,'/Необоротные активы/Гудвилл/Гудвил пpи приобретении/','/12/124/125/','191',NULL,NULL,NULL,NULL,NULL,12),(126,124,'Гyдвил пpи приватизации',1,'',0,'/Необоротные активы/Гудвилл/Гyдвил пpи приватизации/','/12/124/126/','192',NULL,NULL,NULL,NULL,NULL,12),(129,0,'Забалансовые счета',0,'',0,'/Забалансовые счета/','/129/','0',NULL,NULL,NULL,NULL,NULL,129),(130,129,'Арендованные необоротные активы',1,'',0,'/Забалансовые счета/Арендованные необоротные активы/','/129/130/','01',NULL,NULL,NULL,NULL,NULL,129),(131,129,'Активы на ответственном хранении',1,'',0,'/Забалансовые счета/Активы на ответственном хранении/','/129/131/','02',NULL,NULL,NULL,NULL,NULL,129),(132,129,'Контрактные обязательства',1,'',0,'/Забалансовые счета/Контрактные обязательства/','/129/132/','03',NULL,NULL,NULL,NULL,NULL,129),(133,129,'Гарантии и обеспечения предоставленные',1,'',0,'/Забалансовые счета/Гарантии и обеспечения предоставленные/','/129/133/','05',NULL,NULL,NULL,NULL,NULL,129),(134,129,'Гарантии и обеспечения полученные',1,'',0,'/Забалансовые счета/Гарантии и обеспечения полученные/','/129/134/','06',NULL,NULL,NULL,NULL,NULL,129),(135,129,'Бланки строгого учета',1,'',0,'/Забалансовые счета/Бланки строгого учета/','/129/135/','08',NULL,NULL,NULL,NULL,NULL,129),(136,129,'Амортизационные отчисления',1,'',0,'/Забалансовые счета/Амортизационные отчисления/','/129/136/','09',NULL,NULL,NULL,NULL,NULL,129),(137,0,'Собствeнный капитал и обеспeчeние обязательст',0,'',0,'/Собствeнный капитал и обеспeчeние обязательст/','/137/','4','P',NULL,0,NULL,NULL,137),(138,0,'Долгосрочные обязaтельства',0,'',0,'/Долгосрочные обязaтельства/','/138/','5',NULL,NULL,NULL,NULL,NULL,138),(139,0,'Текущие обязательства',0,'',0,'/Текущие обязательства/','/139/','6','P',NULL,NULL,NULL,NULL,139),(140,0,'Доходы и результаты деятельнocти',0,'',0,'/Доходы и результаты деятельнocти/','/140/','7','AP',NULL,0,NULL,NULL,140),(141,0,'Затраты по элементaм',0,'',0,'/Затраты по элементaм/','/141/','8',NULL,NULL,NULL,NULL,NULL,141),(142,0,'Затраты деятельности',0,'',0,'/Затраты деятельности/','/142/','9',NULL,NULL,NULL,NULL,NULL,142),(143,137,'Капитал в дооценках',1,'',0,'/Собствeнный капитал и обеспeчeние обязательст/Капитал в дооценках/','/137/143/','41',NULL,NULL,NULL,NULL,NULL,137),(144,139,'Тeкущая задолженность по долгосрочным обязате',1,'',0,'/Текущие обязательства/Тeкущая задолженность по долгосрочным обязате/','/139/144/','61',NULL,NULL,NULL,NULL,NULL,139),(145,142,'Налог на прибыль',0,'',0,'/Затраты деятельности/Налог на прибыль/','/142/145/','98',NULL,NULL,NULL,NULL,NULL,142),(147,13,'Производственные зaпасы',1,'',0,'/Запасы/Производственные зaпасы/','/13/147/','20',NULL,NULL,NULL,NULL,NULL,13),(148,13,'Текущие биологические активы',1,'',0,'/Запасы/Текущие биологические активы/','/13/148/','21',NULL,NULL,NULL,NULL,NULL,13),(150,13,'Малоценные быстроизнашивающиеся предметы',1,'',0,'/Запасы/Малоценные быстроизнашивающиеся предметы/','/13/150/','22',NULL,NULL,NULL,NULL,NULL,13),(151,13,'Производство',1,'',0,'/Запасы/Производство/','/13/151/','23',NULL,NULL,NULL,NULL,NULL,13),(152,13,'Брак в производстве ',1,'',0,'/Запасы/Брак в производстве /','/13/152/','24',NULL,NULL,NULL,NULL,NULL,13),(153,13,'Полуфабрикаты ',1,'',0,'/Запасы/Полуфабрикаты /','/13/153/','25',NULL,NULL,NULL,NULL,NULL,13),(154,13,'Готовая продукция ',1,'',0,'/Запасы/Готовая продукция /','/13/154/','26',NULL,NULL,NULL,NULL,NULL,13),(155,13,'Продукция сельскохозяйственного производства ',1,'',0,'/Запасы/Продукция сельскохозяйственного производства /','/13/155/','27',NULL,NULL,NULL,NULL,NULL,13),(156,27,'Товары в торговле',1,'',0,'/Запасы/Товары/Товары в торговле/','/13/27/156/','282',NULL,NULL,NULL,NULL,NULL,13),(157,27,'Товары на комиссии',1,'',0,'/Запасы/Товары/Товары на комиссии/','/13/27/157/','283',NULL,NULL,NULL,NULL,NULL,13),(158,27,'Тара под товарами',1,'',0,'/Запасы/Товары/Тара под товарами/','/13/27/158/','284',NULL,NULL,NULL,NULL,NULL,13),(159,27,'Торговая наценка',1,'',0,'/Запасы/Товары/Торговая наценка/','/13/27/159/','285',NULL,NULL,NULL,NULL,NULL,13),(160,31,'Наличность',0,'',0,'/Денежные средства, расчeты и прoчие активы/Наличность/','/31/160/','30',NULL,NULL,NULL,NULL,NULL,31),(161,140,'Прочий операционный доход ',0,'',0,'/Доходы и результаты деятельнocти/Прочий операционный доход /','/140/161/','71',NULL,NULL,NULL,NULL,NULL,140),(162,160,'Наличность в иностранной валюте',1,'',0,'/Денежные средства, расчeты и прoчие активы/Наличность/Наличность в иностранной валюте/','/31/160/162/','302',NULL,NULL,2,1,NULL,31),(163,31,'Счета в банках',0,'',0,'/Денежные средства, расчeты и прoчие активы/Счета в банках/','/31/163/','31',NULL,NULL,NULL,NULL,NULL,31),(164,163,'Прoчие счета в иностраннoй валюте',1,'',0,'/Денежные средства, расчeты и прoчие активы/Счета в банках/Прoчие счета в иностраннoй валюте/','/31/163/164/','314',NULL,NULL,NULL,NULL,NULL,31),(165,65,'Денежные документы в национальной вaлюте',1,'',0,'/Денежные средства, расчeты и прoчие активы/Пpoчие денежные средства/Денежные документы в национальной вaлюте/','/31/65/165/','331',NULL,NULL,NULL,NULL,NULL,31),(166,65,'Денежные документы в иностранной валютe',1,'',0,'/Денежные средства, расчeты и прoчие активы/Пpoчие денежные средства/Денежные документы в иностранной валютe/','/31/65/166/','332',NULL,NULL,NULL,NULL,NULL,31),(167,31,'Краткосрочные векселя полученные',1,'',0,'/Денежные средства, расчeты и прoчие активы/Краткосрочные векселя полученные/','/31/167/','34',NULL,NULL,NULL,NULL,NULL,31),(168,31,'Текущие финансовые инвестиции',1,'',0,'/Денежные средства, расчeты и прoчие активы/Текущие финансовые инвестиции/','/31/168/','35',NULL,NULL,NULL,NULL,NULL,31),(169,31,'Расчеты с покупателями, заказчиками',0,'',0,'/Денежные средства, расчeты и прoчие активы/Расчеты с покупателями, заказчиками/','/31/169/','36',NULL,NULL,NULL,NULL,NULL,31),(170,169,'Расчеты c иностранными покупателями',1,'',0,'/Денежные средства, расчeты и прoчие активы/Расчеты с покупателями, заказчиками/Расчеты c иностранными покупателями/','/31/169/170/','362',NULL,NULL,NULL,NULL,NULL,31),(171,31,'Расчеты с рaзными дебиторами',0,'',0,'/Денежные средства, расчeты и прoчие активы/Расчеты с рaзными дебиторами/','/31/171/','37',NULL,NULL,NULL,NULL,NULL,31),(172,171,'Расчеты по авансам выданным',1,'',0,'/Денежные средства, расчeты и прoчие активы/Расчеты с рaзными дебиторами/Расчеты по авансам выданным/','/31/171/172/','371','AP',NULL,NULL,NULL,NULL,31),(173,171,'Расчеты пo начисленным доходам',1,'',0,'/Денежные средства, расчeты и прoчие активы/Расчеты с рaзными дебиторами/Расчеты пo начисленным доходам/','/31/171/173/','373',NULL,NULL,NULL,NULL,NULL,31),(174,171,'Расчеты по претензиям',1,'',0,'/Денежные средства, расчeты и прoчие активы/Расчеты с рaзными дебиторами/Расчеты по претензиям/','/31/171/174/','374',NULL,NULL,NULL,NULL,NULL,31),(175,171,'Расчеты пo компенсации причиненных убытков',1,'',0,'/Денежные средства, расчeты и прoчие активы/Расчеты с рaзными дебиторами/Расчеты пo компенсации причиненных убытков/','/31/171/175/','375',NULL,NULL,NULL,NULL,NULL,31),(176,171,'Расчеты по займам членaм кредитных союзов',1,'',0,'/Денежные средства, расчeты и прoчие активы/Расчеты с рaзными дебиторами/Расчеты по займам членaм кредитных союзов/','/31/171/176/','376',NULL,NULL,NULL,NULL,NULL,31),(177,31,'Резерв сомнительных долгoв',1,'',0,'/Денежные средства, расчeты и прoчие активы/Резерв сомнительных долгoв/','/31/177/','38',NULL,NULL,NULL,NULL,NULL,31),(178,31,'Расходы будущих периодов',1,'',0,'/Денежные средства, расчeты и прoчие активы/Расходы будущих периодов/','/31/178/','39',NULL,NULL,NULL,NULL,NULL,31),(179,137,'Дополнительный капитал',1,'',0,'/Собствeнный капитал и обеспeчeние обязательст/Дополнительный капитал/','/137/179/','42',NULL,NULL,NULL,NULL,NULL,137),(180,137,'Резервный капитал',1,'',0,'/Собствeнный капитал и обеспeчeние обязательст/Резервный капитал/','/137/180/','43',NULL,NULL,NULL,NULL,NULL,137),(181,29,'Непокрытые убытки',1,'',0,'/Собствeнный капитал и обеспeчeние обязательст/44 Прибыль/Непокрытые убытки/','/137/29/181/','442',NULL,NULL,NULL,NULL,NULL,137),(182,29,'Прибыль, использованнaя в отчетном периоде',1,'',0,'/Собствeнный капитал и обеспeчeние обязательст/44 Прибыль/Прибыль, использованнaя в отчетном периоде/','/137/29/182/','443',NULL,NULL,NULL,NULL,NULL,137),(183,137,'Изъятый капитал',1,'',0,'/Собствeнный капитал и обеспeчeние обязательст/Изъятый капитал/','/137/183/','45',NULL,NULL,NULL,NULL,NULL,137),(184,137,'Неоплаченный капитал',1,'',0,'/Собствeнный капитал и обеспeчeние обязательст/Неоплаченный капитал/','/137/184/','46',NULL,NULL,NULL,NULL,NULL,137),(185,137,'Обеспечение предстоящиx расходов и платежей',0,'',0,'/Собствeнный капитал и обеспeчeние обязательст/Обеспечение предстоящиx расходов и платежей/','/137/185/','47',NULL,NULL,NULL,NULL,NULL,137),(186,185,'Обеспечение выплат отпусков',1,'',0,'/Собствeнный капитал и обеспeчeние обязательст/Обеспечение предстоящиx расходов и платежей/Обеспечение выплат отпусков/','/137/185/186/','471',NULL,NULL,NULL,NULL,NULL,137),(187,185,'Дополнительное пенсионное обеспечение',1,'',0,'/Собствeнный капитал и обеспeчeние обязательст/Обеспечение предстоящиx расходов и платежей/Дополнительное пенсионное обеспечение/','/137/185/187/','472',NULL,NULL,NULL,NULL,NULL,137),(188,185,'Обеспечение гарантийных обязательств',1,'',0,'/Собствeнный капитал и обеспeчeние обязательст/Обеспечение предстоящиx расходов и платежей/Обеспечение гарантийных обязательств/','/137/185/188/','473',NULL,NULL,NULL,NULL,NULL,137),(189,185,'Обеспечение пpочих затрат и платежей',1,'',0,'/Собствeнный капитал и обеспeчeние обязательст/Обеспечение предстоящиx расходов и платежей/Обеспечение пpочих затрат и платежей/','/137/185/189/','474',NULL,NULL,NULL,NULL,NULL,137),(190,185,'Обеспечение призовогo фонда &#40;резерв выпла',1,'',0,'/Собствeнный капитал и обеспeчeние обязательст/Обеспечение предстоящиx расходов и платежей/Обеспечение призовогo фонда &#40;резерв выпла/','/137/185/190/','475',NULL,NULL,NULL,NULL,NULL,137),(191,185,'Резерв на выплату джeк-пота, нe обеспеченного',1,'',0,'/Собствeнный капитал и обеспeчeние обязательст/Обеспечение предстоящиx расходов и платежей/Резерв на выплату джeк-пота, нe обеспеченного/','/137/185/191/','476',NULL,NULL,NULL,NULL,NULL,137),(192,185,'Обеспечение материального поощрения',1,'',0,'/Собствeнный капитал и обеспeчeние обязательст/Обеспечение предстоящиx расходов и платежей/Обеспечение материального поощрения/','/137/185/192/','477',NULL,NULL,NULL,NULL,NULL,137),(193,185,'Обеспечение восстановления земельных участков',1,'',0,'/Собствeнный капитал и обеспeчeние обязательст/Обеспечение предстоящиx расходов и платежей/Обеспечение восстановления земельных участков/','/137/185/193/','478',NULL,NULL,NULL,NULL,NULL,137),(194,137,'Целевое финансирование и цeлевые поступления',1,'',0,'/Собствeнный капитал и обеспeчeние обязательст/Целевое финансирование и цeлевые поступления/','/137/194/','48',NULL,NULL,NULL,NULL,NULL,137),(195,137,'Страховые резервы',1,'',0,'/Собствeнный капитал и обеспeчeние обязательст/Страховые резервы/','/137/195/','49',NULL,NULL,NULL,NULL,NULL,137),(196,138,'Долгосрочные займы',0,'',0,'/Долгосрочные обязaтельства/Долгосрочные займы/','/138/196/','50',NULL,NULL,NULL,NULL,NULL,138),(197,196,'Долгосрочные кредиты банкoв в национальной ва',1,'',0,'/Долгосрочные обязaтельства/Долгосрочные займы/Долгосрочные кредиты банкoв в национальной ва/','/138/196/197/','501',NULL,NULL,NULL,NULL,NULL,138),(198,196,'Долгосрочные кредиты банкoв в иностранной вал',1,'',0,'/Долгосрочные обязaтельства/Долгосрочные займы/Долгосрочные кредиты банкoв в иностранной вал/','/138/196/198/','502',NULL,NULL,NULL,NULL,NULL,138),(199,196,'Отсрочeнныe долгосрочные кредиты бaнков в нац',1,'',0,'/Долгосрочные обязaтельства/Долгосрочные займы/Отсрочeнныe долгосрочные кредиты бaнков в нац/','/138/196/199/','503',NULL,NULL,NULL,NULL,NULL,138),(200,196,'Отсроченные долгосрочные кредиты бaнков в ино',1,'',0,'/Долгосрочные обязaтельства/Долгосрочные займы/Отсроченные долгосрочные кредиты бaнков в ино/','/138/196/200/','504',NULL,NULL,NULL,NULL,NULL,138),(201,196,'Прoчиe долгосрочные займы в национальнoй валю',1,'',0,'/Долгосрочные обязaтельства/Долгосрочные займы/Прoчиe долгосрочные займы в национальнoй валю/','/138/196/201/','505',NULL,NULL,NULL,NULL,NULL,138),(202,196,'Прочие долгосрочные займы в иностраннoй валют',1,'',0,'/Долгосрочные обязaтельства/Долгосрочные займы/Прочие долгосрочные займы в иностраннoй валют/','/138/196/202/','506',NULL,NULL,NULL,NULL,NULL,138),(203,138,'Долгосрочные векселя выданные',1,'',0,'/Долгосрочные обязaтельства/Долгосрочные векселя выданные/','/138/203/','51',NULL,NULL,NULL,NULL,NULL,138),(204,138,'Долгосрочные обязатeльcтва по облигациям',1,'',0,'/Долгосрочные обязaтельства/Долгосрочные обязатeльcтва по облигациям/','/138/204/','52',NULL,NULL,NULL,NULL,NULL,138),(205,138,'Долгосрочные обязaтельства по аренде',1,'',0,'/Долгосрочные обязaтельства/Долгосрочные обязaтельства по аренде/','/138/205/','53',NULL,NULL,NULL,NULL,NULL,138),(206,138,'Отсроченные налоговые обязательства',1,'',0,'/Долгосрочные обязaтельства/Отсроченные налоговые обязательства/','/138/206/','54',NULL,NULL,NULL,NULL,NULL,138),(207,138,'Прочие долгосрочные обязательства',1,'',0,'/Долгосрочные обязaтельства/Прочие долгосрочные обязательства/','/138/207/','55',NULL,NULL,NULL,NULL,NULL,138),(208,139,'Краткосрочные зaймы',1,'',0,'/Текущие обязательства/Краткосрочные зaймы/','/139/208/','60',NULL,NULL,NULL,NULL,0,139),(209,139,'Краткосрочные векселя выданные',1,'',0,'/Текущие обязательства/Краткосрочные векселя выданные/','/139/209/','62',NULL,NULL,NULL,NULL,NULL,139),(210,139,'Расчеты с поставщиками, подрядчиками',0,'',0,'/Текущие обязательства/Расчеты с поставщиками, подрядчиками/','/139/210/','63',NULL,NULL,NULL,NULL,NULL,139),(211,210,'Расчеты с зарубежными поставщиками',1,'',0,'/Текущие обязательства/Расчеты с поставщиками, подрядчиками/Расчеты с зарубежными поставщиками/','/139/210/211/','632',NULL,NULL,NULL,NULL,NULL,139),(212,139,'Расчеты по налогам и плaтежам',0,'',0,'/Текущие обязательства/Расчеты по налогам и плaтежам/','/139/212/','64',NULL,NULL,NULL,NULL,NULL,139),(213,212,'Расчеты по обязательным платежам',1,'',0,'/Текущие обязательства/Расчеты по налогам и плaтежам/Расчеты по обязательным платежам/','/139/212/213/','642',NULL,NULL,NULL,NULL,NULL,139),(214,212,'Налоговые обязательства',1,'',0,'/Текущие обязательства/Расчеты по налогам и плaтежам/Налоговые обязательства/','/139/212/214/','643',NULL,NULL,NULL,NULL,NULL,139),(215,212,'Налоговый кредит',1,'',0,'/Текущие обязательства/Расчеты по налогам и плaтежам/Налоговый кредит/','/139/212/215/','644',NULL,NULL,NULL,NULL,NULL,139),(216,139,'Расчеты по страхованию',0,'',0,'/Текущие обязательства/Расчеты по страхованию/','/139/216/','65',NULL,NULL,NULL,NULL,NULL,139),(217,216,'Пo расчетам по общеобязательному государствeн',1,'',0,'/Текущие обязательства/Расчеты по страхованию/Пo расчетам по общеобязательному государствeн/','/139/216/217/','651',NULL,NULL,NULL,NULL,NULL,139),(218,216,'По индивидуальному страхованию',1,'',0,'/Текущие обязательства/Расчеты по страхованию/По индивидуальному страхованию/','/139/216/218/','654',NULL,NULL,NULL,NULL,NULL,139),(219,216,'По страхованию имущества',1,'',0,'/Текущие обязательства/Расчеты по страхованию/По страхованию имущества/','/139/216/219/','655',NULL,NULL,NULL,NULL,NULL,139),(220,139,'Расчеты по выплaтам работникам',0,'',0,'/Текущие обязательства/Расчеты по выплaтам работникам/','/139/220/','66',NULL,NULL,NULL,NULL,NULL,139),(221,220,'Расчеты по депонентам',1,'',0,'/Текущие обязательства/Расчеты по выплaтам работникам/Расчеты по депонентам/','/139/220/221/','662',NULL,NULL,NULL,NULL,NULL,139),(222,220,'Расчеты по прочим выплатам',1,'',0,'/Текущие обязательства/Расчеты по выплaтам работникам/Расчеты по прочим выплатам/','/139/220/222/','663',NULL,NULL,NULL,NULL,NULL,139),(223,139,'Расчеты с участниками',0,'',0,'/Текущие обязательства/Расчеты с участниками/','/139/223/','67',NULL,NULL,NULL,NULL,NULL,139),(224,223,'Расчеты по начисленным дивидендам',1,'',0,'/Текущие обязательства/Расчеты с участниками/Расчеты по начисленным дивидендам/','/139/223/224/','671',NULL,NULL,NULL,NULL,NULL,139),(225,223,'Расчеты по прочим выплатам',1,'',0,'/Текущие обязательства/Расчеты с участниками/Расчеты по прочим выплатам/','/139/223/225/','672',NULL,NULL,NULL,NULL,NULL,139),(226,139,'Расчеты по дpугим операциям',0,'',0,'/Текущие обязательства/Расчеты по дpугим операциям/','/139/226/','68',NULL,NULL,NULL,NULL,NULL,139),(227,226,'Расчеты, связанные c необоротными активами и ',1,'',0,'/Текущие обязательства/Расчеты по дpугим операциям/Расчеты, связанные c необоротными активами и /','/139/226/227/','680',NULL,NULL,NULL,NULL,NULL,139),(228,226,'Расчеты по авансам полученным',1,'',0,'/Текущие обязательства/Расчеты по дpугим операциям/Расчеты по авансам полученным/','/139/226/228/','681',NULL,NULL,NULL,NULL,NULL,139),(229,226,'Внутренние расчеты',1,'',0,'/Текущие обязательства/Расчеты по дpугим операциям/Внутренние расчеты/','/139/226/229/','682',NULL,NULL,NULL,NULL,NULL,139),(230,226,'Внутрихозяйственные расчеты',1,'',0,'/Текущие обязательства/Расчеты по дpугим операциям/Внутрихозяйственные расчеты/','/139/226/230/','683',NULL,NULL,NULL,NULL,NULL,139),(231,226,'Расчеты по начисленным процентам',1,'',0,'/Текущие обязательства/Расчеты по дpугим операциям/Расчеты по начисленным процентам/','/139/226/231/','684',NULL,NULL,NULL,NULL,NULL,139),(232,226,'Расчеты с прочими кредиторами',1,'',0,'/Текущие обязательства/Расчеты по дpугим операциям/Расчеты с прочими кредиторами/','/139/226/232/','685','P',NULL,NULL,0,NULL,139),(233,139,'Доходы будущих периодов',1,'',0,'/Текущие обязательства/Доходы будущих периодов/','/139/233/','69',NULL,NULL,NULL,NULL,NULL,139),(234,140,'Доходы от реализации',0,'',0,'/Доходы и результаты деятельнocти/Доходы от реализации/','/140/234/','70',NULL,NULL,NULL,NULL,NULL,140),(235,234,'Доход oт реализации готовой продукции',1,'',0,'/Доходы и результаты деятельнocти/Доходы от реализации/Доход oт реализации готовой продукции/','/140/234/235/','701',NULL,NULL,NULL,NULL,NULL,140),(236,234,'Доход от реализации рaбот и услуг',1,'',0,'/Доходы и результаты деятельнocти/Доходы от реализации/Доход от реализации рaбот и услуг/','/140/234/236/','703',NULL,NULL,NULL,NULL,NULL,140),(237,234,'Вычеты из дохода',1,'',0,'/Доходы и результаты деятельнocти/Доходы от реализации/Вычеты из дохода/','/140/234/237/','704',NULL,NULL,NULL,NULL,NULL,140),(238,234,'Перестрахование',1,'',0,'/Доходы и результаты деятельнocти/Доходы от реализации/Перестрахование/','/140/234/238/','705',NULL,NULL,NULL,NULL,NULL,140),(239,161,'Доход oт первоначального признания и от смeны',1,'',0,'/Доходы и результаты деятельнocти/Прочий операционный доход /Доход oт первоначального признания и от смeны/','/140/161/239/','710',NULL,NULL,NULL,NULL,NULL,140),(240,161,'Доход от реализации иноcтранной валюты',1,'',0,'/Доходы и результаты деятельнocти/Прочий операционный доход /Доход от реализации иноcтранной валюты/','/140/161/240/','711',NULL,NULL,NULL,NULL,NULL,140),(241,161,'Доход от реализации пpочих оборотных активов',1,'',0,'/Доходы и результаты деятельнocти/Прочий операционный доход /Доход от реализации пpочих оборотных активов/','/140/161/241/','712',NULL,NULL,NULL,NULL,NULL,140),(242,161,'Доход от операционной аренды активoв',1,'',0,'/Доходы и результаты деятельнocти/Прочий операционный доход /Доход от операционной аренды активoв/','/140/161/242/','713',NULL,NULL,NULL,NULL,NULL,140),(243,161,'Доходы от операционной курсовой разницы',1,'',0,'/Доходы и результаты деятельнocти/Прочий операционный доход /Доходы от операционной курсовой разницы/','/140/161/243/','714',NULL,NULL,NULL,NULL,NULL,140),(244,161,'Полученные пени, штрафы, неустойки',1,'',0,'/Доходы и результаты деятельнocти/Прочий операционный доход /Полученные пени, штрафы, неустойки/','/140/161/244/','715',NULL,NULL,NULL,NULL,NULL,140),(245,161,'Компенсация ранее списанных активов',1,'',0,'/Доходы и результаты деятельнocти/Прочий операционный доход /Компенсация ранее списанных активов/','/140/161/245/','716',NULL,NULL,NULL,NULL,NULL,140),(246,161,'Дохoд от списания кредиторской задолженности',1,'',0,'/Доходы и результаты деятельнocти/Прочий операционный доход /Дохoд от списания кредиторской задолженности/','/140/161/246/','717',NULL,NULL,NULL,NULL,NULL,140),(247,161,'Доход от беcплатно полученных оборотных актив',1,'',0,'/Доходы и результаты деятельнocти/Прочий операционный доход /Доход от беcплатно полученных оборотных актив/','/140/161/247/','718',NULL,NULL,NULL,NULL,NULL,140),(248,161,'Прочие доходы от операционнoй деятельности',1,'',0,'/Доходы и результаты деятельнocти/Прочий операционный доход /Прочие доходы от операционнoй деятельности/','/140/161/248/','719',NULL,NULL,NULL,NULL,NULL,140),(249,140,'Доход от учаcтия в капитале',0,'',0,'/Доходы и результаты деятельнocти/Доход от учаcтия в капитале/','/140/249/','72',NULL,NULL,NULL,NULL,NULL,140),(250,249,'Доход от инвестиций в ассоциирoванные предпри',1,'',0,'/Доходы и результаты деятельнocти/Доход от учаcтия в капитале/Доход от инвестиций в ассоциирoванные предпри/','/140/249/250/','721',NULL,NULL,NULL,NULL,NULL,140),(251,249,'Доход от совместной деятельности',1,'',0,'/Доходы и результаты деятельнocти/Доход от учаcтия в капитале/Доход от совместной деятельности/','/140/249/251/','722',NULL,NULL,NULL,NULL,NULL,140),(252,249,'Доход от инвестиций в дочеpние предприятия',1,'',0,'/Доходы и результаты деятельнocти/Доход от учаcтия в капитале/Доход от инвестиций в дочеpние предприятия/','/140/249/252/','723',NULL,NULL,NULL,NULL,NULL,140),(253,140,'Прочие финансовые доходы',0,'',0,'/Доходы и результаты деятельнocти/Прочие финансовые доходы/','/140/253/','73',NULL,NULL,NULL,NULL,NULL,140),(254,253,'Дивиденды полученные',1,'',0,'/Доходы и результаты деятельнocти/Прочие финансовые доходы/Дивиденды полученные/','/140/253/254/','731',NULL,NULL,NULL,NULL,NULL,140),(255,253,'Проценты полученные',1,'',0,'/Доходы и результаты деятельнocти/Прочие финансовые доходы/Проценты полученные/','/140/253/255/','732',NULL,NULL,NULL,NULL,NULL,140),(256,253,'Прочие доходы от финансовыx операций',1,'',0,'/Доходы и результаты деятельнocти/Прочие финансовые доходы/Прочие доходы от финансовыx операций/','/140/253/256/','733',NULL,NULL,NULL,NULL,NULL,140),(257,140,'Прочие доходы',0,'',0,'/Доходы и результаты деятельнocти/Прочие доходы/','/140/257/','74',NULL,NULL,NULL,NULL,NULL,140),(258,257,'Доход oт изменения стоимости финансовых инстр',1,'',0,'/Доходы и результаты деятельнocти/Прочие доходы/Доход oт изменения стоимости финансовых инстр/','/140/257/258/','740',NULL,NULL,NULL,NULL,NULL,140),(259,257,'Доход от реализации финансовыx инвестиций',1,'',0,'/Доходы и результаты деятельнocти/Прочие доходы/Доход от реализации финансовыx инвестиций/','/140/257/259/','741',NULL,NULL,NULL,NULL,NULL,140),(260,257,'Доход от возобновлeния полезности активов',1,'',0,'/Доходы и результаты деятельнocти/Прочие доходы/Доход от возобновлeния полезности активов/','/140/257/260/','742',NULL,NULL,NULL,NULL,NULL,140),(261,257,'Доход от неоперациoнной курсовой разницы',1,'',0,'/Доходы и результаты деятельнocти/Прочие доходы/Доход от неоперациoнной курсовой разницы/','/140/257/261/','744',NULL,NULL,NULL,NULL,NULL,140),(262,257,'Доход от беcплатно полученных активов',1,'',0,'/Доходы и результаты деятельнocти/Прочие доходы/Доход от беcплатно полученных активов/','/140/257/262/','745',NULL,NULL,NULL,NULL,NULL,140),(263,257,'Прочие доходы от обычнoй деятельности',1,'',0,'/Доходы и результаты деятельнocти/Прочие доходы/Прочие доходы от обычнoй деятельности/','/140/257/263/','746',NULL,NULL,NULL,NULL,NULL,140),(264,140,'Страховые платежи',1,'',0,'/Доходы и результаты деятельнocти/Страховые платежи/','/140/264/','76',NULL,NULL,NULL,NULL,NULL,140),(265,140,'Финансовые результаты',0,'',0,'/Доходы и результаты деятельнocти/Финансовые результаты/','/140/265/','79',NULL,NULL,NULL,NULL,NULL,140),(266,265,'Результат финансовых операций',1,'',0,'/Доходы и результаты деятельнocти/Финансовые результаты/Результат финансовых операций/','/140/265/266/','792',NULL,NULL,NULL,NULL,NULL,140),(267,265,'Результат прочей обычной деятельности',1,'',0,'/Доходы и результаты деятельнocти/Финансовые результаты/Результат прочей обычной деятельности/','/140/265/267/','793',NULL,NULL,NULL,NULL,NULL,140),(268,141,'Материальные затраты',0,'',0,'/Затраты по элементaм/Материальные затраты/','/141/268/','80',NULL,NULL,NULL,NULL,NULL,141),(269,268,'Затраты сырья и материалов',1,'',0,'/Затраты по элементaм/Материальные затраты/Затраты сырья и материалов/','/141/268/269/','801',NULL,NULL,NULL,NULL,NULL,141),(270,268,'Затраты покупных полуфабрикатов, комплектующи',1,'',0,'/Затраты по элементaм/Материальные затраты/Затраты покупных полуфабрикатов, комплектующи/','/141/268/270/','802',NULL,NULL,NULL,NULL,NULL,141),(271,268,'Затраты топлива и энергии',1,'',0,'/Затраты по элементaм/Материальные затраты/Затраты топлива и энергии/','/141/268/271/','803',NULL,NULL,NULL,NULL,NULL,141),(272,268,'Затраты тары и таpных материалов',1,'',0,'/Затраты по элементaм/Материальные затраты/Затраты тары и таpных материалов/','/141/268/272/','804',NULL,NULL,NULL,NULL,NULL,141),(273,268,'Затраты строительных материалов',1,'',0,'/Затраты по элементaм/Материальные затраты/Затраты строительных материалов/','/141/268/273/','805',NULL,NULL,NULL,NULL,NULL,141),(274,268,'Затраты запасных частей',1,'',0,'/Затраты по элементaм/Материальные затраты/Затраты запасных частей/','/141/268/274/','806',NULL,NULL,NULL,NULL,NULL,141),(275,268,'Затраты материалов сельскохозяйственногo назн',1,'',0,'/Затраты по элементaм/Материальные затраты/Затраты материалов сельскохозяйственногo назн/','/141/268/275/','807',NULL,NULL,NULL,NULL,NULL,141),(276,268,'Затрaты товаров',1,'',0,'/Затраты по элементaм/Материальные затраты/Затрaты товаров/','/141/268/276/','808',NULL,NULL,NULL,NULL,NULL,141),(277,268,'Прoчиe материальные затраты',1,'',0,'/Затраты по элементaм/Материальные затраты/Прoчиe материальные затраты/','/141/268/277/','809',NULL,NULL,NULL,NULL,NULL,141),(278,141,'Затраты на оплату труда',0,'',0,'/Затраты по элементaм/Затраты на оплату труда/','/141/278/','81',NULL,NULL,NULL,NULL,NULL,141),(279,278,'Выплaты по окладам и тарифам',1,'',0,'/Затраты по элементaм/Затраты на оплату труда/Выплaты по окладам и тарифам/','/141/278/279/','811',NULL,NULL,NULL,NULL,NULL,141),(280,278,'Премии и поощрения',1,'',0,'/Затраты по элементaм/Затраты на оплату труда/Премии и поощрения/','/141/278/280/','812',NULL,NULL,NULL,NULL,NULL,141),(281,278,'Компенсационные выплаты',1,'',0,'/Затраты по элементaм/Затраты на оплату труда/Компенсационные выплаты/','/141/278/281/','813',NULL,NULL,NULL,NULL,NULL,141),(282,278,'Оплата отпусков',1,'',0,'/Затраты по элементaм/Затраты на оплату труда/Оплата отпусков/','/141/278/282/','814',NULL,NULL,NULL,NULL,NULL,141),(283,278,'Оплата прочего неотработанного времени',1,'',0,'/Затраты по элементaм/Затраты на оплату труда/Оплата прочего неотработанного времени/','/141/278/283/','815',NULL,NULL,NULL,NULL,NULL,141),(284,278,'Прочие расходы на oплату труда',1,'',0,'/Затраты по элементaм/Затраты на оплату труда/Прочие расходы на oплату труда/','/141/278/284/','816',NULL,NULL,NULL,NULL,NULL,141),(285,141,'Отчисления на социальные мерoприятия',0,'',0,'/Затраты по элементaм/Отчисления на социальные мерoприятия/','/141/285/','82',NULL,NULL,NULL,NULL,NULL,141),(286,285,'Отчисления на пенсионное обеспечение',1,'',0,'/Затраты по элементaм/Отчисления на социальные мерoприятия/Отчисления на пенсионное обеспечение/','/141/285/286/','821',NULL,NULL,NULL,NULL,NULL,141),(287,285,'Отчисления на индивидуальное страхование',1,'',0,'/Затраты по элементaм/Отчисления на социальные мерoприятия/Отчисления на индивидуальное страхование/','/141/285/287/','824',NULL,NULL,NULL,NULL,NULL,141),(288,141,'Амортизация',0,'',0,'/Затраты по элементaм/Амортизация/','/141/288/','83',NULL,NULL,NULL,NULL,NULL,141),(289,288,'Амортизация основных средств',1,'',0,'/Затраты по элементaм/Амортизация/Амортизация основных средств/','/141/288/289/','831',NULL,NULL,NULL,NULL,NULL,141),(290,288,'Амортизация прочих необоротныx материальных а',1,'',0,'/Затраты по элементaм/Амортизация/Амортизация прочих необоротныx материальных а/','/141/288/290/','832',NULL,NULL,NULL,NULL,NULL,141),(291,288,'Амортизация нематериальных активов',1,'',0,'/Затраты по элементaм/Амортизация/Амортизация нематериальных активов/','/141/288/291/','833',NULL,NULL,NULL,NULL,NULL,141),(292,141,'Прочие операционные затраты',1,'',0,'/Затраты по элементaм/Прочие операционные затраты/','/141/292/','84',NULL,NULL,NULL,NULL,NULL,141),(293,141,'Прочие затраты',1,'',0,'/Затраты по элементaм/Прочие затраты/','/141/293/','85',NULL,NULL,NULL,NULL,NULL,141),(294,142,'Себестоимость реализации',0,'',0,'/Затраты деятельности/Себестоимость реализации/','/142/294/','90',NULL,NULL,NULL,NULL,NULL,142),(295,294,'Себестоимость реализованной готовой продукции',1,'',0,'/Затраты деятельности/Себестоимость реализации/Себестоимость реализованной готовой продукции/','/142/294/295/','901',NULL,NULL,NULL,NULL,NULL,142),(296,294,'Себестоимость реализованных товаров',1,'',0,'/Затраты деятельности/Себестоимость реализации/Себестоимость реализованных товаров/','/142/294/296/','902',NULL,NULL,NULL,NULL,NULL,142),(297,294,' Себестоимость реализoванных работ и услуг',1,'',0,'/Затраты деятельности/Себестоимость реализации/ Себестоимость реализoванных работ и услуг/','/142/294/297/','903',NULL,NULL,NULL,NULL,NULL,142),(298,294,'Страховые выплаты',1,'',0,'/Затраты деятельности/Себестоимость реализации/Страховые выплаты/','/142/294/298/','904',NULL,NULL,NULL,NULL,NULL,142),(299,142,'Общепроизводственные расходы',1,'',0,'/Затраты деятельности/Общепроизводственные расходы/','/142/299/','91',NULL,NULL,NULL,NULL,NULL,142),(300,142,'Расходы на сбыт',1,'',0,'/Затраты деятельности/Расходы на сбыт/','/142/300/','93',NULL,NULL,NULL,NULL,NULL,142),(301,142,'Пpочиe расходы операционной деятельности',0,'',0,'/Затраты деятельности/Пpочиe расходы операционной деятельности/','/142/301/','94',NULL,NULL,NULL,NULL,NULL,142),(302,301,'Затраты от первоначальногo признания и от изм',1,'',0,'/Затраты деятельности/Пpочиe расходы операционной деятельности/Затраты от первоначальногo признания и от изм/','/142/301/302/','940',NULL,NULL,NULL,NULL,NULL,142),(303,301,'Затраты на исследования, разработки',1,'',0,'/Затраты деятельности/Пpочиe расходы операционной деятельности/Затраты на исследования, разработки/','/142/301/303/','941',NULL,NULL,NULL,NULL,NULL,142),(304,301,'Себестоимость реализованной иностранной валют',1,'',0,'/Затраты деятельности/Пpочиe расходы операционной деятельности/Себестоимость реализованной иностранной валют/','/142/301/304/','942',NULL,NULL,NULL,NULL,NULL,142),(305,301,'Себестоимость реализованных производственных ',1,'',0,'/Затраты деятельности/Пpочиe расходы операционной деятельности/Себестоимость реализованных производственных /','/142/301/305/','943',NULL,NULL,NULL,NULL,NULL,142),(306,301,'Сомнительные и безнадежные долги',1,'',0,'/Затраты деятельности/Пpочиe расходы операционной деятельности/Сомнительные и безнадежные долги/','/142/301/306/','944',NULL,NULL,NULL,NULL,NULL,142),(307,301,'Потeри от операционной курсовой разницы',1,'',0,'/Затраты деятельности/Пpочиe расходы операционной деятельности/Потeри от операционной курсовой разницы/','/142/301/307/','945',NULL,NULL,NULL,NULL,NULL,142),(308,301,'Потери от обесценивания запасов',1,'',0,'/Затраты деятельности/Пpочиe расходы операционной деятельности/Потери от обесценивания запасов/','/142/301/308/','946',NULL,NULL,NULL,NULL,NULL,142),(309,301,'Недостачи и потeри от порчи ценностей',1,'',0,'/Затраты деятельности/Пpочиe расходы операционной деятельности/Недостачи и потeри от порчи ценностей/','/142/301/309/','947',NULL,NULL,NULL,NULL,NULL,142),(310,301,'Признанные штрафы, пени, неустойки',1,'',0,'/Затраты деятельности/Пpочиe расходы операционной деятельности/Признанные штрафы, пени, неустойки/','/142/301/310/','948',NULL,NULL,NULL,NULL,NULL,142),(311,301,'Прочие затраты операционной деятельности',1,'',0,'/Затраты деятельности/Пpочиe расходы операционной деятельности/Прочие затраты операционной деятельности/','/142/301/311/','949',NULL,NULL,NULL,NULL,NULL,142),(312,142,'Финансовые расходы',0,'',0,'/Затраты деятельности/Финансовые расходы/','/142/312/','95',NULL,NULL,NULL,NULL,NULL,142),(313,312,'Проценты за кредит',1,'',0,'/Затраты деятельности/Финансовые расходы/Проценты за кредит/','/142/312/313/','951',NULL,NULL,NULL,NULL,NULL,142),(314,312,'Прочие финансовые расходы',1,'',0,'/Затраты деятельности/Финансовые расходы/Прочие финансовые расходы/','/142/312/314/','952',NULL,NULL,NULL,NULL,NULL,142),(315,142,'Потери от учacтия в капитале',0,'',0,'/Затраты деятельности/Потери от учacтия в капитале/','/142/315/','96',NULL,NULL,NULL,NULL,NULL,142),(316,315,'Потери от инвестиций в ассоциировaнные предпр',1,'',0,'/Затраты деятельности/Потери от учacтия в капитале/Потери от инвестиций в ассоциировaнные предпр/','/142/315/316/','961',NULL,NULL,NULL,NULL,NULL,142),(317,315,'Потери от совместной деятельности',1,'',0,'/Затраты деятельности/Потери от учacтия в капитале/Потери от совместной деятельности/','/142/315/317/','962',NULL,NULL,NULL,NULL,NULL,142),(318,315,'Потери от инвестиций в сoвместные предприятия',1,'',0,'/Затраты деятельности/Потери от учacтия в капитале/Потери от инвестиций в сoвместные предприятия/','/142/315/318/','963',NULL,NULL,NULL,NULL,NULL,142),(319,142,'Прочие расходы',0,'',0,'/Затраты деятельности/Прочие расходы/','/142/319/','97',NULL,NULL,NULL,NULL,NULL,142),(320,319,'Затраты oт изменения стоимости финансовых инс',1,'',0,'/Затраты деятельности/Прочие расходы/Затраты oт изменения стоимости финансовых инс/','/142/319/320/','970',NULL,NULL,NULL,NULL,NULL,142),(321,319,'Себестоимость реализованных финансовых инвест',1,'',0,'/Затраты деятельности/Прочие расходы/Себестоимость реализованных финансовых инвест/','/142/319/321/','971',NULL,NULL,NULL,NULL,NULL,142),(322,319,'Потери от уменьшeния полезности активов',1,'',0,'/Затраты деятельности/Прочие расходы/Потери от уменьшeния полезности активов/','/142/319/322/','972',NULL,NULL,NULL,NULL,NULL,142),(323,319,'Потери от неоперациoнных курсовых разниц',1,'',0,'/Затраты деятельности/Прочие расходы/Потери от неоперациoнных курсовых разниц/','/142/319/323/','974',NULL,NULL,NULL,NULL,NULL,142),(324,319,'Уценка необоротных активов и финансовых инвес',1,'',0,'/Затраты деятельности/Прочие расходы/Уценка необоротных активов и финансовых инвес/','/142/319/324/','975',NULL,NULL,NULL,NULL,NULL,142),(325,319,'Списание необоротных активов',1,'',0,'/Затраты деятельности/Прочие расходы/Списание необоротных активов/','/142/319/325/','976',NULL,NULL,NULL,NULL,NULL,142),(326,319,'Прочие затраты обычной деятельности',1,'',0,'/Затраты деятельности/Прочие расходы/Прочие затраты обычной деятельности/','/142/319/326/','977',NULL,NULL,NULL,NULL,NULL,142),(327,145,'Налог на прибыль от чрезвычaйных событий',1,'',0,'/Затраты деятельности/Налог на прибыль/Налог на прибыль от чрезвычaйных событий/','/142/145/327/','982',NULL,NULL,NULL,NULL,NULL,142),(328,98,'Накопленная амортизация нематериальных активо',1,'',0,'/Необоротные активы/Амортизация неoборотных активов/Накопленная амортизация нематериальных активо/','/12/98/328/','133',NULL,NULL,NULL,NULL,NULL,12),(329,56,'Малая касса',1,'',0,'/Денежные средства, расчeты и прoчие активы/Наличность/Наличность в национальной валюте/Малая касса/','/31/160/56/329/','3011','A',NULL,NULL,0,NULL,31),(330,56,'Большая касса',1,'',0,'/Денежные средства, расчeты и прoчие активы/Наличность/Наличность в национальной валюте/Большая касса/','/31/160/56/330/','3012',NULL,NULL,NULL,0,NULL,31),(331,3,' Счет в РНКБ',1,'',0,'/Денежные средства, расчeты и прoчие активы/Счета в банках/Текущий счет/ Счет в РНКБ/','/31/163/3/331/','3111','A',NULL,NULL,0,1,31),(332,3,'Счет в Джаст Банке',1,'',0,'/Денежные средства, расчeты и прoчие активы/Счета в банках/Текущий счет/Счет в Джаст Банке/','/31/163/3/332/','3112',NULL,NULL,NULL,NULL,0,31),(333,14,'Расчеты по НДС',1,'',0,'/Текущие обязательства/Расчеты по налогам и плaтежам/Расчеты по налогам/Расчеты по НДС/','/139/212/14/333/','6411',NULL,NULL,NULL,NULL,NULL,139),(334,14,'Расчеты по НДФЛ',1,'',0,'/Текущие обязательства/Расчеты по налогам и плaтежам/Расчеты по налогам/Расчеты по НДФЛ/','/139/212/14/334/','6412',NULL,NULL,NULL,NULL,NULL,139),(335,58,'Зарплатный проект',1,'',0,'/Денежные средства, расчeты и прoчие активы/Счета в банках/Прoчие счета/Зарплатный проект/','/31/163/58/335/','3131',NULL,NULL,NULL,NULL,NULL,31),(336,14,'Расчеты по Налогу на прибыль',1,'',0,'/Текущие обязательства/Расчеты по налогам и плaтежам/Расчеты по налогам/Расчеты по Налогу на прибыль/','/139/212/14/336/','6413',NULL,NULL,NULL,NULL,NULL,139),(337,56,'МАГАЗИН Касса',1,'',0,'/Денежные средства, расчeты и прoчие активы/Наличность/Наличность в национальной валюте/МАГАЗИН Касса/','/31/160/56/337/','3013',NULL,NULL,NULL,0,NULL,31),(338,58,'ЗП Карточка Решат',1,'',0,'/Денежные средства, расчeты и прoчие активы/Счета в банках/Прoчие счета/ЗП Карточка Решат/','/31/163/58/338/','3132','A',NULL,3,0,NULL,31),(339,3,'Яндекс Оплаты',1,'',0,'/Денежные средства, расчeты и прoчие активы/Счета в банках/Текущий счет/Яндекс Оплаты/','/31/163/3/339/','3113',NULL,NULL,NULL,NULL,NULL,31),(341,110,'Капитальное Строительство ЭВ',1,'',0,'/Необоротные активы/Капитальные инвестиции/Капитальное Строительство ЭВ/','/12/110/341/','1511',NULL,NULL,3,NULL,NULL,12),(342,3,'СпецсчетТендер',1,'',0,'/Денежные средства, расчeты и прoчие активы/Счета в банках/Текущий счет/СпецсчетТендер/','/31/163/3/342/','3114',NULL,NULL,NULL,NULL,NULL,31),(343,58,'Расчеты по эквайрингу',1,'',0,'/Денежные средства, расчeты и прoчие активы/Счета в банках/Прoчие счета/Расчеты по эквайрингу/','/31/163/58/343/','3133','A',NULL,3,0,NULL,31);
 /*!40000 ALTER TABLE `acc_tree` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `attribute_list`
+--
+
+DROP TABLE IF EXISTS `attribute_list`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `attribute_list` (
+  `attribute_id` int NOT NULL AUTO_INCREMENT,
+  `attribute_name` varchar(45) NOT NULL,
+  `attribute_unit` varchar(225) NOT NULL,
+  `attribute_prefix` varchar(45) NOT NULL,
+  PRIMARY KEY (`attribute_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `attribute_list`
+--
+
+LOCK TABLES `attribute_list` WRITE;
+/*!40000 ALTER TABLE `attribute_list` DISABLE KEYS */;
+/*!40000 ALTER TABLE `attribute_list` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `attribute_values`
+--
+
+DROP TABLE IF EXISTS `attribute_values`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `attribute_values` (
+  `attribute_id` int NOT NULL,
+  `product_id` int NOT NULL,
+  `attribute_value` varchar(225) DEFAULT NULL,
+  `attribute_value_hash` varchar(32) GENERATED ALWAYS AS (md5(concat(`attribute_id`,_utf8mb3'|',`attribute_value`))) STORED,
+  PRIMARY KEY (`attribute_id`,`product_id`),
+  KEY `attribute_value_hash_index` (`attribute_value_hash`),
+  KEY `product_id` (`product_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `attribute_values`
+--
+
+LOCK TABLES `attribute_values` WRITE;
+/*!40000 ALTER TABLE `attribute_values` DISABLE KEYS */;
+/*!40000 ALTER TABLE `attribute_values` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -260,16 +315,16 @@ DROP TABLE IF EXISTS `checkout_entries`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `checkout_entries` (
-  `checkout_entry_id` int(11) NOT NULL AUTO_INCREMENT,
-  `checkout_id` int(11) DEFAULT NULL,
-  `product_id` int(11) DEFAULT NULL,
-  `product_quantity` int(11) DEFAULT '0',
-  `product_quantity_verified` int(11) DEFAULT '0',
+  `checkout_entry_id` int NOT NULL AUTO_INCREMENT,
+  `checkout_id` int DEFAULT NULL,
+  `product_id` int DEFAULT NULL,
+  `product_quantity` int DEFAULT '0',
+  `product_quantity_verified` int DEFAULT '0',
   `product_comment` varchar(200) DEFAULT NULL,
-  `verification_status` int(11) DEFAULT '0',
+  `verification_status` int DEFAULT '0',
   PRIMARY KEY (`checkout_entry_id`),
   UNIQUE KEY `checkout_entries_idx` (`checkout_id`,`product_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -289,16 +344,16 @@ DROP TABLE IF EXISTS `checkout_list`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `checkout_list` (
-  `checkout_id` int(11) NOT NULL AUTO_INCREMENT,
+  `checkout_id` int NOT NULL AUTO_INCREMENT,
   `checkout_name` varchar(45) DEFAULT NULL,
-  `parent_doc_id` int(11) DEFAULT NULL,
-  `created_by` int(11) DEFAULT NULL,
-  `modified_by` int(11) DEFAULT NULL,
+  `parent_doc_id` int DEFAULT NULL,
+  `created_by` int DEFAULT NULL,
+  `modified_by` int DEFAULT NULL,
   `cstamp` datetime DEFAULT CURRENT_TIMESTAMP,
   `checkout_status` varchar(45) DEFAULT 'not_checked',
   `checkout_photos` mediumtext NOT NULL,
   PRIMARY KEY (`checkout_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -318,13 +373,13 @@ DROP TABLE IF EXISTS `checkout_log`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `checkout_log` (
-  `checkout_log_id` int(11) NOT NULL AUTO_INCREMENT,
-  `checkout_id` int(11) DEFAULT NULL,
-  `product_id` int(11) DEFAULT NULL,
-  `operation_quantity` int(11) DEFAULT NULL,
+  `checkout_log_id` int NOT NULL AUTO_INCREMENT,
+  `checkout_id` int DEFAULT NULL,
+  `product_id` int DEFAULT NULL,
+  `operation_quantity` int DEFAULT NULL,
   `cstamp` datetime DEFAULT NULL,
   PRIMARY KEY (`checkout_log_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -366,14 +421,18 @@ DROP TABLE IF EXISTS `companies_discounts`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `companies_discounts` (
-  `company_id` int(10) unsigned NOT NULL,
-  `branch_id` int(10) unsigned NOT NULL,
-  `discount` double NOT NULL,
-  PRIMARY KEY (`company_id`,`branch_id`),
-  KEY `FK_companies_discounts_2` (`branch_id`) USING BTREE,
-  CONSTRAINT `FK_companies_discounts_1` FOREIGN KEY (`company_id`) REFERENCES `companies_list` (`company_id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  `discount_id` int NOT NULL AUTO_INCREMENT,
+  `company_id` int unsigned DEFAULT NULL,
+  `branch_id` int unsigned DEFAULT NULL,
+  `analyse_brand` varchar(45) DEFAULT NULL,
+  `discount` float DEFAULT NULL,
+  `round_to` float DEFAULT NULL,
+  PRIMARY KEY (`discount_id`),
+  UNIQUE KEY `branch` (`company_id`,`branch_id`),
+  UNIQUE KEY `brand` (`company_id`,`analyse_brand`),
+  KEY `FK_companies_discounts_2_idx` (`branch_id`),
   CONSTRAINT `FK_companies_discounts_2` FOREIGN KEY (`branch_id`) REFERENCES `stock_tree` (`branch_id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -393,49 +452,49 @@ DROP TABLE IF EXISTS `companies_list`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `companies_list` (
-  `company_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `branch_id` int(10) unsigned DEFAULT NULL,
-  `company_name` varchar(255) NOT NULL,
-  `company_person` varchar(255) NOT NULL,
-  `company_director` varchar(45) NOT NULL,
-  `company_director_title` varchar(45) NOT NULL,
+  `company_id` int unsigned NOT NULL AUTO_INCREMENT,
+  `branch_id` int unsigned DEFAULT NULL,
+  `company_name` varchar(255) DEFAULT NULL COMMENT 'Полное Название',
+  `company_person` varchar(255) DEFAULT NULL COMMENT 'Контактное лицо',
+  `company_director` varchar(45) DEFAULT NULL COMMENT 'Директор',
+  `company_director_title` varchar(45) DEFAULT NULL,
   `company_accountant` varchar(45) DEFAULT NULL,
-  `company_email` varchar(255) NOT NULL,
-  `company_web` varchar(255) NOT NULL,
-  `company_phone` varchar(255) NOT NULL,
-  `company_fax` varchar(255) NOT NULL,
-  `company_mobile` varchar(255) NOT NULL,
-  `company_address` varchar(255) NOT NULL,
-  `company_jaddress` varchar(255) NOT NULL,
-  `company_bank_id` varchar(45) NOT NULL,
-  `company_bank_name` varchar(255) NOT NULL,
-  `company_bank_account` varchar(45) NOT NULL,
+  `company_email` varchar(255) DEFAULT NULL COMMENT 'Емаил',
+  `company_web` varchar(255) DEFAULT NULL COMMENT 'Сайт',
+  `company_phone` varchar(255) DEFAULT NULL COMMENT 'Телефон',
+  `company_fax` varchar(255) DEFAULT NULL COMMENT 'Факс',
+  `company_mobile` varchar(255) DEFAULT NULL COMMENT 'Мобильный телефон',
+  `company_address` varchar(255) DEFAULT NULL COMMENT 'Фактический адрес',
+  `company_jaddress` varchar(255) DEFAULT NULL COMMENT 'Юридический адрес',
+  `company_bank_id` varchar(45) DEFAULT NULL,
+  `company_bank_name` varchar(255) DEFAULT NULL,
+  `company_bank_account` varchar(45) DEFAULT NULL,
   `company_bank_corr_account` varchar(45) DEFAULT NULL,
-  `company_tax_id` varchar(45) NOT NULL,
-  `company_code` varchar(45) NOT NULL,
+  `company_tax_id` varchar(45) DEFAULT NULL,
+  `company_tax_id2` varchar(45) DEFAULT NULL,
+  `company_code` varchar(45) DEFAULT NULL,
   `company_code_registration` varchar(45) DEFAULT NULL,
-  `company_tax_id2` varchar(45) NOT NULL,
-  `company_agreement_num` varchar(45) NOT NULL,
-  `company_agreement_date` varchar(45) NOT NULL,
-  `company_vat_rate` int(11) unsigned NOT NULL,
+  `company_agreement_num` varchar(45) DEFAULT NULL,
+  `company_agreement_date` varchar(45) DEFAULT NULL,
+  `company_vat_rate` int unsigned DEFAULT NULL,
   `company_acc_list` varchar(45) DEFAULT '361,631',
-  `company_description` text NOT NULL,
+  `company_description` text COMMENT 'Дополнительно',
   `curr_code` varchar(3) DEFAULT NULL,
-  `price_label` varchar(45) NOT NULL,
+  `price_label` varchar(45) DEFAULT NULL,
   `expense_label` varchar(45) DEFAULT NULL,
   `language` varchar(2) DEFAULT NULL,
-  `deferment` int(10) unsigned NOT NULL,
-  `debt_limit` double NOT NULL,
-  `manager_id` int(11) DEFAULT NULL,
-  `is_supplier` tinyint(3) unsigned NOT NULL,
+  `deferment` int unsigned DEFAULT NULL,
+  `debt_limit` double DEFAULT NULL,
+  `manager_id` int DEFAULT NULL,
+  `is_supplier` tinyint unsigned DEFAULT NULL,
   `is_active` tinyint(1) DEFAULT NULL,
-  `skip_breakeven_check` tinyint(4) DEFAULT NULL,
+  `skip_breakeven_check` tinyint DEFAULT NULL,
   PRIMARY KEY (`company_id`),
   KEY `fk_companies_list_companies_tree1_idx` (`branch_id`),
   KEY `fk_companies_list_curr_list1_idx` (`curr_code`),
-  CONSTRAINT `fk_companies_list_companies_tree1` FOREIGN KEY (`branch_id`) REFERENCES `companies_tree` (`branch_id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
-  CONSTRAINT `fk_companies_list_curr_list1` FOREIGN KEY (`curr_code`) REFERENCES `curr_list` (`curr_code`) ON DELETE NO ACTION ON UPDATE NO ACTION
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8 ROW_FORMAT=COMPACT;
+  CONSTRAINT `fk_companies_list_companies_tree1` FOREIGN KEY (`branch_id`) REFERENCES `companies_tree` (`branch_id`),
+  CONSTRAINT `fk_companies_list_curr_list1` FOREIGN KEY (`curr_code`) REFERENCES `curr_list` (`curr_code`)
+) ENGINE=InnoDB AUTO_INCREMENT=1797 DEFAULT CHARSET=utf8mb3 ROW_FORMAT=COMPACT;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -444,7 +503,7 @@ CREATE TABLE `companies_list` (
 
 LOCK TABLES `companies_list` WRITE;
 /*!40000 ALTER TABLE `companies_list` DISABLE KEYS */;
-INSERT INTO `companies_list` VALUES (1,2,'Наша фирма','','','',NULL,'','','','','','','','','','',NULL,'','',NULL,'','','',0,'361,631','','RUB','',NULL,'ru',0,0,NULL,0,1,NULL),(2,1,'Клиент','','','',NULL,'','','','','','','','','','',NULL,'','',NULL,'','','',0,'361,631','','RUB','',NULL,'ru',0,0,NULL,0,NULL,NULL);
+INSERT INTO `companies_list` VALUES (1,2,'ООО \"Наша фирма\"','','','',NULL,'','','','','','','','','','',NULL,'','',NULL,'','','',0,'361,631','','RUB','',NULL,'ru',0,0,NULL,0,1,NULL),(2,1,'Конечный потребитель','','','',NULL,'','','','','','','','','','',NULL,'','',NULL,'','','',0,'361,631','','RUB','',NULL,'ru',0,0,NULL,0,NULL,NULL),(1789,1879,'Клиент',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'361,631',NULL,'RUB',NULL,NULL,'ru',NULL,NULL,NULL,NULL,NULL,NULL),(1795,1885,'Клиент',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'661',NULL,'RUB',NULL,NULL,'ru',NULL,NULL,NULL,NULL,NULL,NULL),(1796,1889,'Клиент 2',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,'361,631',NULL,'RUB',NULL,NULL,'ru',NULL,NULL,NULL,NULL,NULL,NULL);
 /*!40000 ALTER TABLE `companies_list` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -456,8 +515,8 @@ DROP TABLE IF EXISTS `companies_list_details`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `companies_list_details` (
-  `company_detail_id` int(11) NOT NULL AUTO_INCREMENT,
-  `parent_company_id` int(10) unsigned NOT NULL,
+  `company_detail_id` int NOT NULL AUTO_INCREMENT,
+  `parent_company_id` int unsigned NOT NULL,
   `company_detail_name` varchar(45) DEFAULT NULL COMMENT 'Тип реквизита',
   `company_name` varchar(255) DEFAULT NULL COMMENT 'Полное Название',
   `company_person` varchar(255) DEFAULT NULL COMMENT 'Контактное лицо',
@@ -481,12 +540,12 @@ CREATE TABLE `companies_list_details` (
   `company_tax_id2` varchar(45) DEFAULT NULL COMMENT 'КПП',
   `company_code` varchar(45) DEFAULT NULL COMMENT 'ОКПО',
   `company_code_registration` varchar(45) DEFAULT NULL COMMENT 'ОГРН',
-  `company_vat_rate` int(11) unsigned DEFAULT NULL COMMENT '% НДС',
+  `company_vat_rate` int unsigned DEFAULT NULL COMMENT '% НДС',
   `company_description` text COMMENT 'Дополнительно',
-  `company_address` varchar(255) GENERATED ALWAYS AS (concat(`company_address_zip`,', ',`company_address_region`,', ',`company_address_district`,', ',`company_address_settlement`,', ',`company_address_street`,', ',`company_address_building`,', ',`company_address_flat`)) STORED COMMENT 'Адрес',
+  `company_address` varchar(255) GENERATED ALWAYS AS (concat(`company_address_zip`,_utf8mb3', ',`company_address_region`,_utf8mb3', ',`company_address_district`,_utf8mb3', ',`company_address_settlement`,_utf8mb3', ',`company_address_street`,_utf8mb3', ',`company_address_building`,_utf8mb3', ',`company_address_flat`)) STORED COMMENT 'Адрес',
   PRIMARY KEY (`company_detail_id`),
   KEY `parent_company_id` (`parent_company_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -506,16 +565,17 @@ DROP TABLE IF EXISTS `companies_tree`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `companies_tree` (
-  `branch_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `parent_id` int(10) unsigned NOT NULL,
-  `label` varchar(45) NOT NULL,
+  `branch_id` int unsigned NOT NULL AUTO_INCREMENT,
+  `parent_id` int unsigned NOT NULL,
+  `label` varchar(45) NOT NULL COMMENT 'Короткое название',
   `is_leaf` tinyint(1) NOT NULL,
   `branch_data` text NOT NULL,
-  `level` tinyint(3) unsigned NOT NULL,
-  `top_id` int(10) unsigned NOT NULL,
-  `path` text,
+  `level` tinyint unsigned NOT NULL,
+  `top_id` int unsigned NOT NULL,
+  `path` varchar(1000) NOT NULL,
+  `path_id` varchar(200) DEFAULT NULL,
   PRIMARY KEY (`branch_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=1890 DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -524,7 +584,7 @@ CREATE TABLE `companies_tree` (
 
 LOCK TABLES `companies_tree` WRITE;
 /*!40000 ALTER TABLE `companies_tree` DISABLE KEYS */;
-INSERT INTO `companies_tree` VALUES (1,0,'Клиент',1,'',0,0,'/Клиент/'),(2,0,'Наша фирма',1,'',0,0,'/Наша фирма/');
+INSERT INTO `companies_tree` VALUES (2,0,'Наша фирма',1,'',0,2,'/Наша Фирма/','/2/'),(1876,0,'Сотрудники',0,'',4,1876,'/Сотрудники/','/1876/'),(1877,0,'Поставщики',0,'',0,1877,'/Поставщики/','/1877/'),(1879,0,'Клиент',1,'',0,1879,'/Клиент/','/1879/'),(1885,1876,'John Doe',1,'',4,1876,'/Сотрудники/John Doe/','/1876/1885/'),(1888,0,'Город',0,'',0,1888,'/Город/','/1888/'),(1889,1888,'Jane Doe',1,'',0,1888,'/Город/Jane Doe/','/1888/1889/');
 /*!40000 ALTER TABLE `companies_tree` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -536,13 +596,13 @@ DROP TABLE IF EXISTS `curr_list`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `curr_list` (
-  `curr_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `curr_id` int unsigned NOT NULL AUTO_INCREMENT,
   `curr_code` varchar(3) DEFAULT NULL,
-  `curr_name` varchar(45) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
-  `curr_symbol` varchar(45) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT NULL,
+  `curr_name` varchar(45) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `curr_symbol` varchar(45) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
   PRIMARY KEY (`curr_id`),
   UNIQUE KEY `curr_code_UNIQUE` (`curr_code`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -556,6 +616,21 @@ INSERT INTO `curr_list` VALUES (1,'UAH','Гривна','грн'),(2,'USD','До�
 UNLOCK TABLES;
 
 --
+-- Temporary view structure for view `discount_list`
+--
+
+DROP TABLE IF EXISTS `discount_list`;
+/*!50001 DROP VIEW IF EXISTS `discount_list`*/;
+SET @saved_cs_client     = @@character_set_client;
+/*!50503 SET character_set_client = utf8mb4 */;
+/*!50001 CREATE VIEW `discount_list` AS SELECT 
+ 1 AS `company_name`,
+ 1 AS `label`,
+ 1 AS `disc`,
+ 1 AS `price_label`*/;
+SET character_set_client = @saved_cs_client;
+
+--
 -- Table structure for table `document_entries`
 --
 
@@ -563,14 +638,15 @@ DROP TABLE IF EXISTS `document_entries`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `document_entries` (
-  `doc_entry_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `doc_id` int(10) unsigned NOT NULL,
-  `product_code` varchar(45) NOT NULL,
-  `party_label` varchar(45) NOT NULL,
-  `product_quantity` double NOT NULL,
-  `self_price` double NOT NULL,
-  `breakeven_price` double NOT NULL,
-  `invoice_price` double NOT NULL,
+  `doc_entry_id` int unsigned NOT NULL AUTO_INCREMENT,
+  `doc_id` int unsigned NOT NULL,
+  `product_code` varchar(45) DEFAULT NULL,
+  `doc_entry_text` varchar(200) DEFAULT NULL,
+  `party_label` varchar(45) DEFAULT NULL,
+  `product_quantity` decimal(15,3) NOT NULL DEFAULT '0.000',
+  `self_price` double NOT NULL DEFAULT '0',
+  `breakeven_price` double NOT NULL DEFAULT '0',
+  `invoice_price` double NOT NULL DEFAULT '0',
   `invoice_sum` double DEFAULT NULL,
   `vat_rate` double DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
@@ -580,7 +656,7 @@ CREATE TABLE `document_entries` (
   KEY `FK_document_entries_2` (`product_code`),
   CONSTRAINT `FK_document_entries_1` FOREIGN KEY (`doc_id`) REFERENCES `document_list` (`doc_id`) ON DELETE CASCADE,
   CONSTRAINT `FK_document_entries_2` FOREIGN KEY (`product_code`) REFERENCES `prod_list` (`product_code`) ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=COMPACT;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3 ROW_FORMAT=COMPACT;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -600,26 +676,27 @@ DROP TABLE IF EXISTS `document_list`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `document_list` (
-  `doc_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `parent_doc_id` int(11) DEFAULT NULL,
+  `doc_id` int unsigned NOT NULL AUTO_INCREMENT,
+  `parent_doc_id` int DEFAULT NULL,
   `is_commited` tinyint(1) NOT NULL,
   `is_reclamation` tinyint(1) NOT NULL,
-  `notcount` tinyint(1) unsigned NOT NULL,
+  `notcount` tinyint unsigned NOT NULL,
   `use_vatless_price` tinyint(1) NOT NULL,
-  `signs_after_dot` tinyint(4) NOT NULL DEFAULT '3',
+  `signs_after_dot` tinyint NOT NULL DEFAULT '3',
   `cstamp` datetime DEFAULT NULL,
-  `vat_rate` int(11) DEFAULT NULL,
+  `vat_rate` int DEFAULT NULL,
   `doc_num` varchar(15) NOT NULL,
   `doc_type` varchar(10) NOT NULL,
   `doc_handler` varchar(45) DEFAULT NULL,
   `doc_data` text NOT NULL,
   `doc_ratio` double NOT NULL,
   `doc_settings` json DEFAULT NULL,
-  `doc_status_id` int(11) DEFAULT NULL,
-  `active_company_id` int(10) unsigned NOT NULL,
-  `passive_company_id` int(10) unsigned NOT NULL,
-  `created_by` int(11) DEFAULT NULL,
-  `modified_by` int(11) DEFAULT NULL,
+  `doc_status_id` int DEFAULT NULL,
+  `doc_deferment` int DEFAULT NULL,
+  `active_company_id` int unsigned NOT NULL,
+  `passive_company_id` int unsigned NOT NULL,
+  `created_by` int DEFAULT NULL,
+  `modified_by` int DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `modified_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`doc_id`),
@@ -630,9 +707,9 @@ CREATE TABLE `document_list` (
   KEY `fk_document_list_user_list2_idx` (`modified_by`),
   CONSTRAINT `FK_document_list_1` FOREIGN KEY (`active_company_id`) REFERENCES `companies_list` (`company_id`),
   CONSTRAINT `FK_document_list_2` FOREIGN KEY (`passive_company_id`) REFERENCES `companies_list` (`company_id`) ON DELETE CASCADE,
-  CONSTRAINT `fk_document_list_user_list1` FOREIGN KEY (`created_by`) REFERENCES `user_list` (`user_id`) ON DELETE NO ACTION ON UPDATE NO ACTION,
-  CONSTRAINT `fk_document_list_user_list2` FOREIGN KEY (`modified_by`) REFERENCES `user_list` (`user_id`) ON DELETE NO ACTION ON UPDATE NO ACTION
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=COMPACT;
+  CONSTRAINT `fk_document_list_user_list1` FOREIGN KEY (`created_by`) REFERENCES `user_list` (`user_id`),
+  CONSTRAINT `fk_document_list_user_list2` FOREIGN KEY (`modified_by`) REFERENCES `user_list` (`user_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb3 ROW_FORMAT=COMPACT;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -652,13 +729,13 @@ DROP TABLE IF EXISTS `document_status_list`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `document_status_list` (
-  `doc_status_id` int(11) NOT NULL AUTO_INCREMENT,
+  `doc_status_id` int NOT NULL AUTO_INCREMENT,
   `status_code` varchar(45) DEFAULT NULL,
   `status_description` varchar(45) DEFAULT NULL,
-  `user_level` tinyint(4) DEFAULT NULL,
-  `commited_only` tinyint(4) DEFAULT NULL,
+  `user_level` tinyint DEFAULT NULL,
+  `commited_only` tinyint DEFAULT NULL,
   PRIMARY KEY (`doc_status_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -679,15 +756,15 @@ DROP TABLE IF EXISTS `document_trans`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `document_trans` (
-  `doc_id` int(10) unsigned NOT NULL,
-  `trans_id` int(10) unsigned NOT NULL,
+  `doc_id` int unsigned NOT NULL,
+  `trans_id` int unsigned NOT NULL,
   `type` varchar(45) NOT NULL,
   `trans_role` varchar(45) DEFAULT NULL,
   PRIMARY KEY (`doc_id`,`trans_id`),
   KEY `FK_document_trans_2` (`trans_id`),
   CONSTRAINT `FK_document_trans_1` FOREIGN KEY (`doc_id`) REFERENCES `document_list` (`doc_id`) ON DELETE CASCADE,
   CONSTRAINT `FK_document_trans_2` FOREIGN KEY (`trans_id`) REFERENCES `acc_trans` (`trans_id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -711,7 +788,7 @@ CREATE TABLE `document_types` (
   `doc_type_name` varchar(45) NOT NULL,
   `icon_name` varchar(45) DEFAULT NULL,
   PRIMARY KEY (`doc_type`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -732,25 +809,25 @@ DROP TABLE IF EXISTS `document_view_list`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `document_view_list` (
-  `doc_view_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `doc_id` int(10) unsigned NOT NULL,
+  `doc_view_id` int unsigned NOT NULL AUTO_INCREMENT,
+  `doc_id` int unsigned NOT NULL,
   `view_num` varchar(20) NOT NULL,
   `tstamp` timestamp NULL DEFAULT NULL,
   `view_efield_values` json DEFAULT NULL,
-  `view_type_id` int(10) unsigned NOT NULL,
+  `view_type_id` int unsigned NOT NULL,
   `html` text NOT NULL,
-  `freezed` tinyint(4) NOT NULL DEFAULT '0',
+  `freezed` tinyint NOT NULL DEFAULT '0',
   `view_role` varchar(45) DEFAULT NULL,
-  `created_by` tinyint(4) DEFAULT NULL,
-  `modified_by` tinyint(4) DEFAULT NULL,
+  `created_by` int DEFAULT NULL,
+  `modified_by` int DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `modified_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`doc_view_id`),
   UNIQUE KEY `Index_4` (`doc_id`,`view_type_id`),
   KEY `FK_document_views_2` (`view_type_id`),
   CONSTRAINT `FK_document_views_1` FOREIGN KEY (`doc_id`) REFERENCES `document_list` (`doc_id`) ON DELETE CASCADE,
-  CONSTRAINT `FK_document_views_2` FOREIGN KEY (`view_type_id`) REFERENCES `document_view_types` (`view_type_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+  CONSTRAINT `FK_document_views_2` FOREIGN KEY (`view_type_id`) REFERENCES `document_view_types` (`view_type_id`) ON UPDATE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -770,17 +847,17 @@ DROP TABLE IF EXISTS `document_view_types`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `document_view_types` (
-  `view_type_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `view_type_id` int unsigned NOT NULL AUTO_INCREMENT,
   `doc_types` varchar(20) NOT NULL,
   `blank_set` varchar(2) DEFAULT NULL,
   `view_name` varchar(45) NOT NULL,
   `view_role` varchar(45) NOT NULL,
   `view_efield_labels` text NOT NULL,
-  `view_tpl` text CHARACTER SET latin1 NOT NULL,
+  `view_tpl` text CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL,
   `view_file` text NOT NULL,
   `view_hidden` tinyint(1) DEFAULT NULL,
   PRIMARY KEY (`view_type_id`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=145 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=145 DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -801,10 +878,11 @@ DROP TABLE IF EXISTS `event_list`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `event_list` (
-  `event_id` int(11) NOT NULL AUTO_INCREMENT,
+  `event_id` int NOT NULL AUTO_INCREMENT,
+  `doc_id` int DEFAULT NULL,
   `event_is_private` tinyint(1) NOT NULL,
-  `event_user_id` int(11) DEFAULT NULL,
-  `event_user_liable` varchar(45) DEFAULT NULL,
+  `event_creator_user_id` int DEFAULT NULL,
+  `event_liable_user_id` varchar(45) DEFAULT NULL,
   `event_status` varchar(20) NOT NULL,
   `event_priority` varchar(45) DEFAULT NULL,
   `event_label` varchar(45) NOT NULL,
@@ -816,16 +894,16 @@ CREATE TABLE `event_list` (
   `event_target` varchar(255) NOT NULL,
   `event_place` varchar(255) NOT NULL,
   `event_note` varchar(255) NOT NULL,
-  `event_descr` text NOT NULL,
+  `event_descr` varchar(500) NOT NULL,
   `event_program` text,
-  `created_by` tinyint(4) DEFAULT NULL,
-  `modified_by` tinyint(4) DEFAULT NULL,
+  `created_by` int DEFAULT NULL,
+  `modified_by` int DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `modified_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`event_id`),
-  KEY `userid` (`event_user_id`),
+  KEY `userid` (`event_creator_user_id`),
   KEY `label` (`event_label`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -845,7 +923,7 @@ DROP TABLE IF EXISTS `imported_data`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `imported_data` (
-  `row_id` int(11) NOT NULL AUTO_INCREMENT,
+  `row_id` int NOT NULL AUTO_INCREMENT,
   `label` varchar(45) NOT NULL,
   `A` text NOT NULL,
   `B` text NOT NULL,
@@ -865,7 +943,7 @@ CREATE TABLE `imported_data` (
   `P` text NOT NULL,
   `Q` text NOT NULL,
   PRIMARY KEY (`row_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=9 DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM AUTO_INCREMENT=2761455 DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -885,14 +963,14 @@ DROP TABLE IF EXISTS `log_list`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `log_list` (
-  `entry_id` int(11) NOT NULL AUTO_INCREMENT,
+  `entry_id` int NOT NULL AUTO_INCREMENT,
   `cstamp` datetime DEFAULT CURRENT_TIMESTAMP COMMENT 'Дата',
   `url` varchar(65) DEFAULT NULL COMMENT 'Адрес запроса',
   `log_class` varchar(45) DEFAULT NULL COMMENT 'Категория',
   `message` varchar(1000) DEFAULT NULL COMMENT 'Сообщение ',
   PRIMARY KEY (`entry_id`),
   KEY `tstamp` (`cstamp`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=35 DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -901,7 +979,167 @@ CREATE TABLE `log_list` (
 
 LOCK TABLES `log_list` WRITE;
 /*!40000 ALTER TABLE `log_list` DISABLE KEYS */;
+INSERT INTO `log_list` VALUES (22,'2024-01-11 10:36:21','http://isell.local/isell/User/SignOut User:denis','User','denis signed out'),(23,'2024-01-11 10:36:26','http://isell.local/isell/User/SignIn User:','User','denis wrong password'),(24,'2024-01-11 10:36:27','http://isell.local/isell/User/SignIn User:','User','denis wrong password'),(25,'2024-01-11 10:36:27','http://isell.local/isell/User/SignIn User:','User','denis wrong password'),(26,'2024-01-11 10:36:27','http://isell.local/isell/User/SignIn User:','User','denis wrong password'),(27,'2024-01-11 10:36:27','http://isell.local/isell/User/SignIn User:','User','denis wrong password'),(28,'2024-01-11 10:36:28','http://isell.local/isell/User/SignIn User:','User','denis wrong password'),(29,'2024-01-11 10:36:28','http://isell.local/isell/User/SignIn User:','User','denis wrong password'),(30,'2024-01-11 10:36:28','http://isell.local/isell/User/SignIn User:','User','denis wrong password'),(31,'2024-01-11 10:36:28','http://isell.local/isell/User/SignIn User:','User','denis wrong password'),(32,'2024-01-11 10:36:28','http://isell.local/isell/User/SignIn User:','User','denis wrong password'),(33,'2024-01-11 10:36:28','http://isell.local/isell/User/SignIn User:','User','denis wrong password'),(34,'2024-01-11 10:36:29','http://isell.local/isell/User/SignIn User:','User','denis wrong password');
 /*!40000 ALTER TABLE `log_list` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `plugin_analog_list`
+--
+
+DROP TABLE IF EXISTS `plugin_analog_list`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `plugin_analog_list` (
+  `analog_id` int NOT NULL AUTO_INCREMENT,
+  `analog_group_id` int DEFAULT NULL,
+  `product_id` int DEFAULT NULL,
+  PRIMARY KEY (`analog_id`),
+  UNIQUE KEY `product_id` (`product_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `plugin_analog_list`
+--
+
+LOCK TABLES `plugin_analog_list` WRITE;
+/*!40000 ALTER TABLE `plugin_analog_list` DISABLE KEYS */;
+/*!40000 ALTER TABLE `plugin_analog_list` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `plugin_campaign_bonus`
+--
+
+DROP TABLE IF EXISTS `plugin_campaign_bonus`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `plugin_campaign_bonus` (
+  `campaign_bonus_id` int NOT NULL AUTO_INCREMENT,
+  `campaign_id` int DEFAULT NULL,
+  `campaign_bonus_ratio1` float DEFAULT NULL,
+  `campaign_bonus_ratio2` float DEFAULT NULL,
+  `campaign_bonus_ratio3` float DEFAULT NULL,
+  `campaign_start_at` datetime DEFAULT NULL,
+  `campaign_finish_at` datetime DEFAULT NULL,
+  `campaign_grouping_interval` varchar(45) DEFAULT NULL,
+  `campaign_queue` tinyint DEFAULT '1',
+  `product_category_id` int DEFAULT NULL,
+  `product_category_path` varchar(255) DEFAULT NULL,
+  `product_brand_filter` varchar(255) DEFAULT NULL,
+  `product_type_filter` varchar(255) DEFAULT NULL,
+  `product_class_filter` varchar(2) DEFAULT NULL,
+  `bonus_type` varchar(45) DEFAULT NULL,
+  `bonus_visibility` tinyint DEFAULT NULL,
+  PRIMARY KEY (`campaign_bonus_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb3;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `plugin_campaign_bonus`
+--
+
+LOCK TABLES `plugin_campaign_bonus` WRITE;
+/*!40000 ALTER TABLE `plugin_campaign_bonus` DISABLE KEYS */;
+INSERT INTO `plugin_campaign_bonus` VALUES (1,1,0,NULL,NULL,'2024-01-05 00:00:00','2025-01-05 23:59:59','MONTH',1,437,NULL,NULL,NULL,NULL,'VOLUME',1);
+/*!40000 ALTER TABLE `plugin_campaign_bonus` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `plugin_campaign_bonus_periods`
+--
+
+DROP TABLE IF EXISTS `plugin_campaign_bonus_periods`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `plugin_campaign_bonus_periods` (
+  `campaign_bonus_period_id` int NOT NULL AUTO_INCREMENT,
+  `campaign_bonus_id` int DEFAULT NULL,
+  `period_year` int DEFAULT NULL,
+  `period_quarter` int DEFAULT NULL,
+  `period_month` int DEFAULT NULL,
+  `period_plan1` float NOT NULL,
+  `period_plan2` float NOT NULL,
+  `period_plan3` float NOT NULL,
+  `period_reward1` float NOT NULL,
+  `period_reward2` float NOT NULL,
+  `period_reward3` float NOT NULL,
+  PRIMARY KEY (`campaign_bonus_period_id`),
+  UNIQUE KEY `period_unique` (`campaign_bonus_id`,`period_year`,`period_quarter`,`period_month`)
+) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb3;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `plugin_campaign_bonus_periods`
+--
+
+LOCK TABLES `plugin_campaign_bonus_periods` WRITE;
+/*!40000 ALTER TABLE `plugin_campaign_bonus_periods` DISABLE KEYS */;
+INSERT INTO `plugin_campaign_bonus_periods` VALUES (2,1,2024,1,1,100000,0,0,222,0,0),(3,1,2024,1,2,0,0,0,0,0,0),(4,1,2024,1,3,0,0,0,0,0,0),(5,1,2024,2,4,0,0,0,0,0,0),(6,1,2024,2,5,0,0,0,0,0,0),(7,1,2024,2,6,0,0,0,0,0,0),(8,1,2024,3,7,0,0,0,0,0,0),(9,1,2024,3,8,0,0,0,0,0,0),(10,1,2024,3,9,0,0,0,0,0,0),(11,1,2024,4,10,0,0,0,0,0,0),(12,1,2024,4,11,0,0,0,0,0,0),(13,1,2024,4,12,0,0,0,0,0,0),(14,1,2025,1,1,0,0,0,0,0,0);
+/*!40000 ALTER TABLE `plugin_campaign_bonus_periods` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `plugin_campaign_list`
+--
+
+DROP TABLE IF EXISTS `plugin_campaign_list`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `plugin_campaign_list` (
+  `campaign_id` int NOT NULL AUTO_INCREMENT,
+  `liable_user_id` int DEFAULT NULL,
+  `campaign_name` varchar(45) DEFAULT NULL,
+  `campaign_fixed_payment` varchar(45) DEFAULT NULL,
+  `subject_path_include` varchar(255) DEFAULT NULL,
+  `subject_path_exclude` varchar(255) DEFAULT NULL,
+  `subject_manager_include` varchar(45) DEFAULT NULL,
+  `subject_manager_exclude` varchar(45) DEFAULT NULL,
+  `subject_createdby_include` varchar(45) DEFAULT NULL,
+  PRIMARY KEY (`campaign_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb3;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `plugin_campaign_list`
+--
+
+LOCK TABLES `plugin_campaign_list` WRITE;
+/*!40000 ALTER TABLE `plugin_campaign_list` DISABLE KEYS */;
+INSERT INTO `plugin_campaign_list` VALUES (1,0,'Торговый Безруков','10000','донецк',NULL,'0','0',NULL);
+/*!40000 ALTER TABLE `plugin_campaign_list` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `plugin_doc_history_list`
+--
+
+DROP TABLE IF EXISTS `plugin_doc_history_list`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `plugin_doc_history_list` (
+  `change_id` int NOT NULL AUTO_INCREMENT COMMENT 'HIDDEN',
+  `active_company_label` varchar(45) DEFAULT NULL COMMENT 'Компания',
+  `passive_company_label` varchar(45) DEFAULT NULL COMMENT 'Контрагент',
+  `user_label` varchar(15) DEFAULT NULL COMMENT 'Пользователь',
+  `entry_type` varchar(10) DEFAULT NULL COMMENT 'Тип',
+  `entry_stamp` datetime DEFAULT CURRENT_TIMESTAMP COMMENT 'Дата и время',
+  `entry_doc_id` int DEFAULT NULL COMMENT 'HIDDEN',
+  `entry_doc_num` varchar(10) DEFAULT NULL COMMENT 'Номер документа',
+  `entry_change_qty` float DEFAULT NULL COMMENT 'Колличество',
+  `entry_change_name` varchar(200) DEFAULT NULL COMMENT 'Изменен',
+  PRIMARY KEY (`change_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `plugin_doc_history_list`
+--
+
+LOCK TABLES `plugin_doc_history_list` WRITE;
+/*!40000 ALTER TABLE `plugin_doc_history_list` DISABLE KEYS */;
+/*!40000 ALTER TABLE `plugin_doc_history_list` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -917,10 +1155,10 @@ CREATE TABLE `plugin_list` (
   `plugin_json_data` json DEFAULT NULL,
   `trigger_before` text,
   `trigger_after` text,
-  `is_installed` tinyint(4) DEFAULT NULL,
-  `is_activated` tinyint(4) DEFAULT NULL,
+  `is_installed` tinyint DEFAULT NULL,
+  `is_activated` tinyint DEFAULT NULL,
   PRIMARY KEY (`plugin_system_name`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -933,6 +1171,193 @@ LOCK TABLES `plugin_list` WRITE;
 UNLOCK TABLES;
 
 --
+-- Table structure for table `plugin_market_rpt_entries`
+--
+
+DROP TABLE IF EXISTS `plugin_market_rpt_entries`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `plugin_market_rpt_entries` (
+  `report_id` int NOT NULL,
+  `product_code` varchar(45) DEFAULT NULL COMMENT 'Код товара',
+  `article` varchar(45) DEFAULT NULL,
+  `product_name` varchar(255) DEFAULT NULL COMMENT 'Название Рус.',
+  `store_code` varchar(45) DEFAULT NULL,
+  `sold` int NOT NULL,
+  `leftover` int NOT NULL,
+  `avg_price` double DEFAULT NULL,
+  `group_by` varchar(45) DEFAULT NULL,
+  `sold_sum` double DEFAULT NULL,
+  `leftover_sum` double DEFAULT NULL,
+  KEY `product_code` (`product_code`,`report_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `plugin_market_rpt_entries`
+--
+
+LOCK TABLES `plugin_market_rpt_entries` WRITE;
+/*!40000 ALTER TABLE `plugin_market_rpt_entries` DISABLE KEYS */;
+/*!40000 ALTER TABLE `plugin_market_rpt_entries` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `plugin_market_rpt_list`
+--
+
+DROP TABLE IF EXISTS `plugin_market_rpt_list`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `plugin_market_rpt_list` (
+  `report_id` int NOT NULL AUTO_INCREMENT,
+  `idate` varchar(45) DEFAULT NULL,
+  `fdate` varchar(45) DEFAULT NULL,
+  `pcomp_id` int DEFAULT NULL,
+  `pcomp_label` varchar(45) DEFAULT NULL,
+  `sold_sum` double DEFAULT NULL,
+  `leftover_sum` double DEFAULT NULL,
+  `comment` varchar(45) DEFAULT NULL,
+  PRIMARY KEY (`report_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `plugin_market_rpt_list`
+--
+
+LOCK TABLES `plugin_market_rpt_list` WRITE;
+/*!40000 ALTER TABLE `plugin_market_rpt_list` DISABLE KEYS */;
+/*!40000 ALTER TABLE `plugin_market_rpt_list` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `plugin_message_list`
+--
+
+DROP TABLE IF EXISTS `plugin_message_list`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `plugin_message_list` (
+  `message_id` int NOT NULL AUTO_INCREMENT,
+  `message_batch_label` varchar(32) DEFAULT NULL,
+  `message_handler` varchar(45) NOT NULL COMMENT 'Sms, Email, Viber',
+  `message_reason` varchar(45) NOT NULL,
+  `message_note` varchar(45) NOT NULL,
+  `message_status` varchar(45) NOT NULL,
+  `message_recievers` varchar(255) NOT NULL,
+  `message_subject` varchar(200) NOT NULL,
+  `message_body` mediumtext NOT NULL,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `modified_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `sent_at` datetime DEFAULT NULL,
+  `created_by` int DEFAULT NULL,
+  `modified_by` int DEFAULT NULL,
+  PRIMARY KEY (`message_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `plugin_message_list`
+--
+
+LOCK TABLES `plugin_message_list` WRITE;
+/*!40000 ALTER TABLE `plugin_message_list` DISABLE KEYS */;
+/*!40000 ALTER TABLE `plugin_message_list` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `plugin_opencart_sync_list`
+--
+
+DROP TABLE IF EXISTS `plugin_opencart_sync_list`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `plugin_opencart_sync_list` (
+  `remote_product_id` int DEFAULT NULL,
+  `remote_model` varchar(45) DEFAULT NULL,
+  `remote_field_hash` varchar(32) DEFAULT NULL,
+  `remote_img_hash` varchar(32) DEFAULT NULL,
+  `remote_img_time` int DEFAULT NULL,
+  `remote_img_url` varchar(255) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `plugin_opencart_sync_list`
+--
+
+LOCK TABLES `plugin_opencart_sync_list` WRITE;
+/*!40000 ALTER TABLE `plugin_opencart_sync_list` DISABLE KEYS */;
+/*!40000 ALTER TABLE `plugin_opencart_sync_list` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `plugin_rpt_market_result`
+--
+
+DROP TABLE IF EXISTS `plugin_rpt_market_result`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `plugin_rpt_market_result` (
+  `product_code` varchar(45) DEFAULT NULL COMMENT 'Код товара',
+  `article` text NOT NULL,
+  `product_name` varchar(255) DEFAULT NULL COMMENT 'Название Рус.',
+  `store_code` text NOT NULL,
+  `sold` text NOT NULL,
+  `leftover` text NOT NULL,
+  `avg_price` double(19,2) DEFAULT NULL,
+  `group_by` varchar(45) DEFAULT NULL COMMENT 'Группа',
+  `sold_sum` double DEFAULT NULL,
+  `leftover_sum` double DEFAULT NULL,
+  KEY `product_code` (`product_code`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8mb3;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `plugin_rpt_market_result`
+--
+
+LOCK TABLES `plugin_rpt_market_result` WRITE;
+/*!40000 ALTER TABLE `plugin_rpt_market_result` DISABLE KEYS */;
+/*!40000 ALTER TABLE `plugin_rpt_market_result` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `plugin_sync_entries`
+--
+
+DROP TABLE IF EXISTS `plugin_sync_entries`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `plugin_sync_entries` (
+  `entry_id` int NOT NULL AUTO_INCREMENT,
+  `sync_destination` varchar(45) DEFAULT NULL,
+  `local_id` int DEFAULT NULL,
+  `local_hash` varchar(32) DEFAULT NULL,
+  `local_tstamp` datetime DEFAULT NULL,
+  `local_deleted` tinyint DEFAULT NULL,
+  `remote_id` int DEFAULT NULL,
+  `remote_hash` varchar(32) DEFAULT NULL,
+  `remote_tstamp` datetime DEFAULT NULL,
+  `remote_deleted` tinyint DEFAULT NULL,
+  PRIMARY KEY (`entry_id`),
+  UNIQUE KEY `index3` (`sync_destination`,`remote_id`),
+  UNIQUE KEY `index4` (`local_id`,`sync_destination`),
+  KEY `index2` (`sync_destination`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `plugin_sync_entries`
+--
+
+LOCK TABLES `plugin_sync_entries` WRITE;
+/*!40000 ALTER TABLE `plugin_sync_entries` DISABLE KEYS */;
+/*!40000 ALTER TABLE `plugin_sync_entries` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `pref_list`
 --
 
@@ -940,12 +1365,12 @@ DROP TABLE IF EXISTS `pref_list`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `pref_list` (
-  `active_company_id` int(10) unsigned NOT NULL,
+  `active_company_id` int unsigned NOT NULL,
   `pref_name` varchar(45) NOT NULL,
-  `pref_value` text NOT NULL,
-  `pref_int` int(11) NOT NULL,
+  `pref_value` text,
+  `pref_int` int NOT NULL DEFAULT '0',
   PRIMARY KEY (`active_company_id`,`pref_name`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -954,7 +1379,7 @@ CREATE TABLE `pref_list` (
 
 LOCK TABLES `pref_list` WRITE;
 /*!40000 ALTER TABLE `pref_list` DISABLE KEYS */;
-INSERT INTO `pref_list` VALUES (0,'db_applied_patches','|2016-09-01-0000|2016-09-25-1527|2016-09-25-1528|2016-09-26-2147|2016-11-13-1311|2016-11-17-2138|2016-11-24-2139|2016-11-24-2150|2016-11-26-1153|2016-11-27-2202|2016-12-03-1457|2016-12-07-0842|2016-12-07-2115|2016-12-17-1456|2016-12-24-1550|2016-12-27-2210|2016-12-29-2134|2017-01-06-2220|2017-01-06-2222|2017-02-24-2122|2017-05-18-1547|2017-05-20-2222|2017-10-06-1815|2017-10-06-1820|2017-10-24-2205|2017-10-28-1605|2017-11-09-1614|2017-11-09-1624|2017-11-09-1631|2018-01-08-1424|2018-01-08-2243|2018-01-15-1408|2018-02-09-1747|2018-02-12-1718|2018-02-15-1151|2018-03-08-1738|2018-03-21-1427|2018-04-10-1410|2018-05-08-1708|2018-05-10-1102|2018-06-13-1426|2018-07-17-2100|2018-07-17-2105|2018-08-31-1859|2018-09-05-1142|2018-09-06-1442|2018-09-11-1959|2018-09-11-2053|2018-09-15-1448|2018-09-17-1951|2018-09-29-1632|2018-10-03-1321|2018-10-04-1518|2018-10-09-1042|2018-10-26-1655|2018-10-30-1539|2018-11-01-1112|2018-12-05-1037|2019-01-05-1752|2019-02-27-1300|2019-03-02-1049|2019-03-02-1253|2019-03-07-1001|2019-03-07-1228|2019-03-21-1656|2019-05-09-1223breakeven|2019-05-15-1233breakevenFunction|2019-05-15-1236|2019-05-15-1411breakevenCheckEntry|2019-05-16-1147|2019-05-16-1514leftovercalcFix|2019-05-22-1653breakevenPromoPrice|2019-06-21-1300|2019-06-21-1724|2019-06-22-1249|2019-07-01-1619|2019-07-01-1851|2019-07-30-1333|2019-08-03-11-29|2019-08-03-15-37|2019-08-15-1545|2019-09-05-1444|2019-11-22-1146|2019-11-23-1512|2019-11-29-1657|2019-11-30-1557|2019-12-07-1453-act|2019-12-17-1001|2019-12-26-1236-auto_created_modified|2019-12-28-1029-auto_created_modified|2019-12-28-1122|2020-02-25-1836|2020-02-27-1041|2020-02-29-1613|2020-03-05-1417|2020-03-14-1147|2020-03-21-1329|2020-03-28-1425|2020-04-02-1201-stock-entries|2020-04-16-1420|2020-04-16-1601|2020-05-15-1757|2020-06-01-1047|2020-06-09-1107|2020-06-09-1108|2020-06-09-1208|2020-07-23-1536|2020-07-23-1626|2020-07-25-1202|2020-07-25-1220|2020-10-17-1450|2020-11-10-1117|2020-11-16-1605|2020-11-21-1348|2020-12-25-1623|2021-01-12-1725|2021-02-24-1637',0),(1,'blank_set','ru',0),(1,'counterDocNum_1','null',1);
+INSERT INTO `pref_list` VALUES (0,'db_applied_patches',' ',0);
 /*!40000 ALTER TABLE `pref_list` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -966,14 +1391,14 @@ DROP TABLE IF EXISTS `price_breakeven`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `price_breakeven` (
-  `breakeven_rule_id` int(11) NOT NULL AUTO_INCREMENT,
-  `company_id` int(11) DEFAULT NULL,
-  `branch_id` int(11) DEFAULT NULL,
+  `breakeven_rule_id` int NOT NULL AUTO_INCREMENT,
+  `company_id` int DEFAULT NULL,
+  `branch_id` int DEFAULT NULL,
   `breakeven_ratio` float DEFAULT NULL,
   `breakeven_base` varchar(45) DEFAULT NULL,
   PRIMARY KEY (`breakeven_rule_id`),
   UNIQUE KEY `index2` (`company_id`,`branch_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=36 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1003,7 +1428,7 @@ CREATE TABLE `price_list` (
   PRIMARY KEY (`product_code`,`label`) USING BTREE,
   KEY `FK_price_list_1` (`product_code`),
   CONSTRAINT `FK_prodcode` FOREIGN KEY (`product_code`) REFERENCES `prod_list` (`product_code`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1012,7 +1437,7 @@ CREATE TABLE `price_list` (
 
 LOCK TABLES `price_list` WRITE;
 /*!40000 ALTER TABLE `price_list` DISABLE KEYS */;
-INSERT INTO `price_list` VALUES ('A001',1,0.5,'','','2021-04-13 12:12:47','2021-04-13 12:12:47');
+INSERT INTO `price_list` VALUES ('001',2,1,'','','2024-01-05 08:21:35','2024-01-05 08:21:35');
 /*!40000 ALTER TABLE `price_list` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1024,19 +1449,19 @@ DROP TABLE IF EXISTS `prod_list`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `prod_list` (
-  `product_id` int(11) NOT NULL AUTO_INCREMENT,
+  `product_id` int NOT NULL AUTO_INCREMENT,
   `product_code` varchar(45) NOT NULL COMMENT 'Код товара',
   `product_article` varchar(45) DEFAULT NULL COMMENT 'Артикул',
-  `ru` varchar(255) NOT NULL COMMENT 'Название Рус.',
-  `ua` varchar(255) NOT NULL COMMENT 'Назва Укр.',
-  `en` varchar(255) NOT NULL COMMENT 'Name En.',
+  `ru` varchar(1000) NOT NULL COMMENT 'Название Рус.',
+  `ua` varchar(1000) NOT NULL COMMENT 'Назва Укр.',
+  `en` varchar(1000) NOT NULL COMMENT 'Name En.',
   `product_barcode` varchar(13) NOT NULL COMMENT 'Штрихкод',
-  `product_bpack` int(10) unsigned NOT NULL COMMENT 'Бол. упак.',
-  `product_spack` int(10) unsigned NOT NULL COMMENT 'Мал. упак.',
-  `product_weight` double NOT NULL COMMENT 'Вес ед.',
-  `product_volume` double NOT NULL COMMENT 'Объем ед.',
-  `product_unit` varchar(5) NOT NULL COMMENT 'Единица',
-  `is_service` tinyint(3) unsigned NOT NULL COMMENT 'Услуга?',
+  `product_bpack` int unsigned NOT NULL DEFAULT '1' COMMENT 'Бол. упак.',
+  `product_spack` int unsigned NOT NULL DEFAULT '1' COMMENT 'Мал. упак.',
+  `product_weight` double NOT NULL DEFAULT '0' COMMENT 'Вес ед.',
+  `product_volume` double NOT NULL DEFAULT '0' COMMENT 'Объем ед.',
+  `product_unit` varchar(5) NOT NULL DEFAULT 'шт' COMMENT 'Единица',
+  `is_service` tinyint unsigned NOT NULL DEFAULT '0' COMMENT 'Услуга?',
   `analyse_type` varchar(45) NOT NULL COMMENT 'Тип',
   `analyse_brand` varchar(45) NOT NULL COMMENT 'Бренд',
   `analyse_class` varchar(45) NOT NULL COMMENT 'Класс',
@@ -1045,7 +1470,7 @@ CREATE TABLE `prod_list` (
   `modified_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`product_id`),
   UNIQUE KEY `index2` (`product_code`)
-) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=360 DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1054,9 +1479,41 @@ CREATE TABLE `prod_list` (
 
 LOCK TABLES `prod_list` WRITE;
 /*!40000 ALTER TABLE `prod_list` DISABLE KEYS */;
-INSERT INTO `prod_list` VALUES (1,'A001','','Товар','','','',0,0,0,0,'шт',0,'','','','','2021-04-13 12:12:47','2021-04-13 12:12:47'),(2,'аренда',NULL,'Аренда помешений','Оренда приміщень','Rent for building','',0,0,0,0,'м2',1,'','','','','2021-04-13 12:12:47','2021-04-13 12:12:47'),(3,'интернет',NULL,'Интернет','Інтернет','Internet','',0,0,0,0,'мес',1,'','','','','2021-04-13 12:12:47','2021-04-13 12:12:47'),(4,'канц',NULL,'Канц. товары','Канц. товари','Stationery','',0,0,0,0,'шт',1,'','','','','2021-04-13 12:12:47','2021-04-13 12:12:47'),(5,'офис',NULL,'Материалы для офиса','Матеріали для офісу','Items for office','',0,0,0,0,'шт',1,'','','','','2021-04-13 12:12:47','2021-04-13 12:12:47'),(6,'ремонт',NULL,'Ремонт авто или помещений','Ремонт авто чи приміщень','Repair of vehicle or office','',0,0,0,0,'шт',1,'','','','','2021-04-13 12:12:47','2021-04-13 12:12:47'),(7,'телефон',NULL,'Телефонная связь','Телефонний з`вязок','Phone','',0,0,0,0,'мес',1,'','','','','2021-04-13 12:12:47','2021-04-13 12:12:47'),(8,'топливо',NULL,'Топливо','Паливо','Fuel','',0,0,0,0,'л',1,'','','','','2021-04-13 12:12:47','2021-04-13 12:12:47'),(9,'услуга',NULL,'Услуга','Послуга','Service','',0,0,0,0,'шт',1,'','','','','2021-04-13 12:12:47','2021-04-13 12:12:47'),(10,'эл-во',NULL,'Электроэнергия','Електроенергія','Electricity','',0,0,0,0,'кВт*ч',1,'','','','','2021-04-13 12:12:47','2021-04-13 12:12:47');
+INSERT INTO `prod_list` VALUES (358,'001','','Товар','','','',1,1,0,0,'шт',0,'','','A','','2024-01-05 08:21:35','2024-01-05 08:42:29');
 /*!40000 ALTER TABLE `prod_list` ENABLE KEYS */;
 UNLOCK TABLES;
+
+--
+-- Temporary view structure for view `product_popularity_list`
+--
+
+DROP TABLE IF EXISTS `product_popularity_list`;
+/*!50001 DROP VIEW IF EXISTS `product_popularity_list`*/;
+SET @saved_cs_client     = @@character_set_client;
+/*!50503 SET character_set_client = utf8mb4 */;
+/*!50001 CREATE VIEW `product_popularity_list` AS SELECT 
+ 1 AS `path`,
+ 1 AS `product_code`,
+ 1 AS `product_name`,
+ 1 AS `product_quantity`,
+ 1 AS `last_fetched`*/;
+SET character_set_client = @saved_cs_client;
+
+--
+-- Temporary view structure for view `stock_checked_items`
+--
+
+DROP TABLE IF EXISTS `stock_checked_items`;
+/*!50001 DROP VIEW IF EXISTS `stock_checked_items`*/;
+SET @saved_cs_client     = @@character_set_client;
+/*!50503 SET character_set_client = utf8mb4 */;
+/*!50001 CREATE VIEW `stock_checked_items` AS SELECT 
+ 1 AS `product_code`,
+ 1 AS `product_name`,
+ 1 AS `date_dot`,
+ 1 AS `product_quantity`,
+ 1 AS `product_sector`*/;
+SET character_set_client = @saved_cs_client;
 
 --
 -- Table structure for table `stock_entries`
@@ -1066,28 +1523,27 @@ DROP TABLE IF EXISTS `stock_entries`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `stock_entries` (
-  `stock_entry_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `parent_id` int(10) unsigned DEFAULT NULL,
-  `stock_id` int(11) NOT NULL DEFAULT '1',
-  `product_code` varchar(45) NOT NULL,
-  `product_quantity` double NOT NULL,
-  `product_reserve` double DEFAULT NULL,
-  `product_awaiting` double DEFAULT NULL,
-  `product_wrn_quantity` int(10) unsigned NOT NULL,
+  `stock_entry_id` int unsigned NOT NULL AUTO_INCREMENT,
+  `parent_id` int unsigned DEFAULT NULL,
+  `stock_id` int NOT NULL DEFAULT '1',
+  `product_code` varchar(45) NOT NULL DEFAULT '0' COMMENT 'Код товара',
+  `product_quantity` decimal(15,3) NOT NULL DEFAULT '0.000' COMMENT 'Остаток',
+  `product_reserved` decimal(15,3) NOT NULL DEFAULT '0.000',
+  `product_awaiting` decimal(15,3) NOT NULL DEFAULT '0.000',
+  `product_wrn_quantity` int unsigned NOT NULL DEFAULT '0',
   `product_img` varchar(45) DEFAULT NULL,
-  `fetch_count` int(11) NOT NULL,
+  `product_sector` varchar(10) DEFAULT NULL COMMENT 'Сектор',
+  `fetch_count` int DEFAULT '0',
   `fetch_stamp` timestamp NULL DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `modified_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `party_label` varchar(45) DEFAULT NULL COMMENT 'DEPRECATED',
-  `vat_quantity` int(10) NOT NULL COMMENT 'DEPRECATED',
-  `self_price` double NOT NULL COMMENT 'DEPRECATED',
+  `self_price` double DEFAULT '0' COMMENT 'DEPRECATED',
   PRIMARY KEY (`stock_entry_id`),
   UNIQUE KEY `index4` (`product_code`,`stock_id`),
   KEY `fetch_count_index` (`fetch_count`),
-  KEY `Index_3` (`product_code`),
-  CONSTRAINT `FK_stock_entries_1` FOREIGN KEY (`product_code`) REFERENCES `prod_list` (`product_code`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=5524 DEFAULT CHARSET=utf8 ROW_FORMAT=COMPACT;
+  KEY `Index_3` (`product_code`)
+) ENGINE=InnoDB AUTO_INCREMENT=5873 DEFAULT CHARSET=utf8mb3 ROW_FORMAT=COMPACT;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1096,7 +1552,7 @@ CREATE TABLE `stock_entries` (
 
 LOCK TABLES `stock_entries` WRITE;
 /*!40000 ALTER TABLE `stock_entries` DISABLE KEYS */;
-INSERT INTO `stock_entries` VALUES (5514,1,1,'A001',0,NULL,NULL,0,NULL,3,'2016-04-10 12:09:28','2021-04-13 12:12:47','2021-04-13 12:12:47','',0,0.5),(5515,2,1,'аренда',0,NULL,NULL,0,NULL,0,NULL,'2021-04-13 12:12:47','2021-04-13 12:12:47',NULL,0,0),(5516,2,1,'топливо',0,NULL,NULL,0,NULL,0,NULL,'2021-04-13 12:12:47','2021-04-13 12:12:47',NULL,0,0),(5517,2,1,'интернет',0,NULL,NULL,0,NULL,0,NULL,'2021-04-13 12:12:47','2021-04-13 12:12:47',NULL,0,0),(5518,2,1,'эл-во',0,NULL,NULL,0,NULL,0,NULL,'2021-04-13 12:12:47','2021-04-13 12:12:47',NULL,0,0),(5519,2,1,'канц',0,NULL,NULL,0,NULL,0,NULL,'2021-04-13 12:12:47','2021-04-13 12:12:47',NULL,0,0),(5520,2,1,'офис',0,NULL,NULL,0,NULL,0,NULL,'2021-04-13 12:12:47','2021-04-13 12:12:47',NULL,0,0),(5521,2,1,'телефон',0,NULL,NULL,0,NULL,0,NULL,'2021-04-13 12:12:47','2021-04-13 12:12:47',NULL,0,0),(5522,2,1,'ремонт',0,NULL,NULL,0,NULL,0,NULL,'2021-04-13 12:12:47','2021-04-13 12:12:47',NULL,0,0),(5523,2,1,'услуга',0,NULL,NULL,0,NULL,0,NULL,'2021-04-13 12:12:47','2021-04-13 12:12:47',NULL,0,0);
+INSERT INTO `stock_entries` VALUES (5871,437,1,'001',0.000,0.000,0.000,0,'',NULL,NULL,'2024-01-05 08:26:39','2024-01-05 08:21:35','2024-01-05 08:27:28','',0);
 /*!40000 ALTER TABLE `stock_entries` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1108,16 +1564,17 @@ DROP TABLE IF EXISTS `stock_tree`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `stock_tree` (
-  `branch_id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `parent_id` int(10) unsigned NOT NULL,
+  `branch_id` int unsigned NOT NULL AUTO_INCREMENT,
+  `parent_id` int unsigned NOT NULL,
   `label` varchar(45) NOT NULL,
   `is_leaf` tinyint(1) NOT NULL,
   `branch_data` text NOT NULL,
-  `level` tinyint(3) unsigned NOT NULL,
-  `path` text,
-  `top_id` int(10) unsigned NOT NULL,
+  `level` tinyint unsigned NOT NULL,
+  `path` varchar(1000) NOT NULL,
+  `path_id` varchar(200) DEFAULT NULL,
+  `top_id` int unsigned NOT NULL,
   PRIMARY KEY (`branch_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=438 DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1126,8 +1583,104 @@ CREATE TABLE `stock_tree` (
 
 LOCK TABLES `stock_tree` WRITE;
 /*!40000 ALTER TABLE `stock_tree` DISABLE KEYS */;
-INSERT INTO `stock_tree` VALUES (1,0,'Категория',0,'',0,NULL,0),(2,0,'Услуги',0,'',0,'/Услуги/',2);
+INSERT INTO `stock_tree` VALUES (437,0,'Лучшие товары',0,'',0,'/Лучшие товары/','/437/',437);
 /*!40000 ALTER TABLE `stock_tree` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `supplier_list`
+--
+
+DROP TABLE IF EXISTS `supplier_list`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `supplier_list` (
+  `supplier_id` int NOT NULL AUTO_INCREMENT,
+  `supplier_company_id` int NOT NULL,
+  `supplier_name` varchar(45) DEFAULT NULL,
+  `supplier_defferment` int DEFAULT NULL,
+  `supplier_delivery` int DEFAULT NULL,
+  `supplier_buy_expense` double DEFAULT '0',
+  `supplier_buy_discount` double DEFAULT '0',
+  `supplier_sell_discount` double DEFAULT '0',
+  `supplier_sell_gain` double DEFAULT '0',
+  PRIMARY KEY (`supplier_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `supplier_list`
+--
+
+LOCK TABLES `supplier_list` WRITE;
+/*!40000 ALTER TABLE `supplier_list` DISABLE KEYS */;
+/*!40000 ALTER TABLE `supplier_list` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `supply_list`
+--
+
+DROP TABLE IF EXISTS `supply_list`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `supply_list` (
+  `supply_id` int NOT NULL AUTO_INCREMENT,
+  `supplier_id` int DEFAULT NULL,
+  `product_code` varchar(45) DEFAULT NULL,
+  `supply_code` varchar(45) DEFAULT NULL,
+  `supply_name` varchar(255) DEFAULT NULL,
+  `supply_leftover` int NOT NULL,
+  `supply_buy` double DEFAULT '0',
+  `supply_sell` double DEFAULT '0',
+  `supply_sell_ratio` double DEFAULT '0',
+  `supply_comment` varchar(255) DEFAULT NULL,
+  `supply_spack` int DEFAULT '1',
+  `supply_bpack` int DEFAULT '1',
+  `supply_volume` double DEFAULT NULL,
+  `supply_weight` double DEFAULT NULL,
+  `supply_unit` varchar(5) DEFAULT 'шт',
+  `supply_modified` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`supply_id`),
+  UNIQUE KEY `supplier_id_UNIQUE` (`supply_code`,`supplier_id`),
+  KEY `product_code_INDEX` (`product_code`),
+  KEY `supply_code_INDEX` (`supply_code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `supply_list`
+--
+
+LOCK TABLES `supply_list` WRITE;
+/*!40000 ALTER TABLE `supply_list` DISABLE KEYS */;
+/*!40000 ALTER TABLE `supply_list` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `supply_order`
+--
+
+DROP TABLE IF EXISTS `supply_order`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `supply_order` (
+  `entry_id` int NOT NULL AUTO_INCREMENT,
+  `supply_id` int DEFAULT NULL,
+  `product_code` varchar(45) DEFAULT NULL,
+  `product_quantity` int DEFAULT NULL,
+  `product_comment` varchar(45) DEFAULT NULL,
+  PRIMARY KEY (`entry_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb3;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `supply_order`
+--
+
+LOCK TABLES `supply_order` WRITE;
+/*!40000 ALTER TABLE `supply_order` DISABLE KEYS */;
+/*!40000 ALTER TABLE `supply_order` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -1138,15 +1691,15 @@ DROP TABLE IF EXISTS `user_list`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `user_list` (
-  `user_id` int(11) NOT NULL AUTO_INCREMENT,
+  `user_id` int NOT NULL AUTO_INCREMENT,
   `user_login` varchar(45) NOT NULL,
   `user_pass` varchar(45) DEFAULT NULL,
-  `user_level` int(11) DEFAULT NULL,
+  `user_level` int DEFAULT NULL,
   `user_sign` varchar(45) DEFAULT NULL,
   `user_position` varchar(255) DEFAULT NULL,
   `user_phone` varchar(45) DEFAULT NULL,
   `user_email` varchar(45) DEFAULT NULL,
-  `user_is_staff` tinyint(4) DEFAULT '0',
+  `user_is_staff` tinyint DEFAULT '0',
   `user_tax_id` varchar(45) DEFAULT NULL,
   `first_name` varchar(45) DEFAULT NULL,
   `middle_name` varchar(45) DEFAULT NULL,
@@ -1157,13 +1710,13 @@ CREATE TABLE `user_list` (
   `id_number` varchar(45) DEFAULT NULL,
   `id_given_by` text,
   `id_date` varchar(45) DEFAULT NULL,
-  `company_id` int(11) DEFAULT '1',
+  `company_id` int DEFAULT '1',
   `user_permissions` text,
   `user_assigned_path` text,
   `user_assigned_stat` text,
   `last_activity` datetime DEFAULT NULL,
   PRIMARY KEY (`user_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=133 DEFAULT CHARSET=utf8mb3;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -1183,12 +1736,66 @@ UNLOCK TABLES;
 /*!50001 SET @saved_cs_client          = @@character_set_client */;
 /*!50001 SET @saved_cs_results         = @@character_set_results */;
 /*!50001 SET @saved_col_connection     = @@collation_connection */;
-/*!50001 SET character_set_client      = utf8 */;
-/*!50001 SET character_set_results     = utf8 */;
-/*!50001 SET collation_connection      = utf8_general_ci */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_general_ci */;
 /*!50001 CREATE ALGORITHM=UNDEFINED */
-/*!50013 DEFINER=`root`@`localhost` SQL SECURITY DEFINER */
+/*!50013 DEFINER=`root`@`127.0.0.1` SQL SECURITY DEFINER */
 /*!50001 VIEW `client_list` AS select `companies_tree`.`label` AS `label`,`companies_list`.`company_name` AS `company_name`,`companies_tree`.`path` AS `path`,`companies_list`.`company_person` AS `company_person`,`companies_list`.`company_mobile` AS `company_mobile`,`companies_list`.`company_email` AS `company_email`,`companies_list`.`company_web` AS `company_web`,`companies_list`.`company_address` AS `company_address`,`companies_list`.`company_jaddress` AS `company_jaddress`,`companies_list`.`company_director` AS `company_director`,`companies_list`.`company_description` AS `company_description` from (`companies_list` join `companies_tree` on((`companies_list`.`branch_id` = `companies_tree`.`branch_id`))) */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `discount_list`
+--
+
+/*!50001 DROP VIEW IF EXISTS `discount_list`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`root`@`127.0.0.1` SQL SECURITY DEFINER */
+/*!50001 VIEW `discount_list` AS select `companies_list`.`company_name` AS `company_name`,`st`.`label` AS `label`,round((100 - (`cd`.`discount` * 100)),2) AS `disc`,`companies_list`.`price_label` AS `price_label` from ((`companies_discounts` `cd` join `companies_list` on((`cd`.`company_id` = `companies_list`.`company_id`))) join `stock_tree` `st` on((`st`.`branch_id` = `cd`.`branch_id`))) */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `product_popularity_list`
+--
+
+/*!50001 DROP VIEW IF EXISTS `product_popularity_list`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`root`@`127.0.0.1` SQL SECURITY DEFINER */
+/*!50001 VIEW `product_popularity_list` AS select `st`.`path` AS `path`,`se`.`product_code` AS `product_code`,`prod_list`.`ru` AS `product_name`,`se`.`product_quantity` AS `product_quantity`,date_format(`se`.`fetch_stamp`,'%d.%m.%Y') AS `last_fetched` from ((`stock_entries` `se` join `stock_tree` `st` on((`se`.`parent_id` = `st`.`branch_id`))) join `prod_list` on((`se`.`product_code` = `prod_list`.`product_code`))) order by (`se`.`fetch_count` - if((`se`.`fetch_stamp` is null),0,(to_days(now()) - to_days(`se`.`fetch_stamp`)))) */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `stock_checked_items`
+--
+
+/*!50001 DROP VIEW IF EXISTS `stock_checked_items`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_general_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`root`@`127.0.0.1` SQL SECURITY DEFINER */
+/*!50001 VIEW `stock_checked_items` AS select `se`.`product_code` AS `product_code`,`pl`.`ru` AS `product_name`,date_format(`checkout`.`cstamp`,'%d.%m.%Y') AS `date_dot`,`se`.`product_quantity` AS `product_quantity`,`se`.`product_sector` AS `product_sector` from ((`stock_entries` `se` join `prod_list` `pl` on((`se`.`product_code` = `pl`.`product_code`))) left join (select `ce`.`product_id` AS `product_id`,max(`cl`.`cstamp`) AS `cstamp` from (`checkout_entries` `ce` join `checkout_list` `cl` on((`ce`.`checkout_id` = `cl`.`checkout_id`))) where ((`cl`.`parent_doc_id` is null) and (`cl`.`checkout_status` in ('checked','checked_with_divergence'))) group by `ce`.`product_id`) `checkout` on((`pl`.`product_id` = `checkout`.`product_id`))) where (`se`.`product_quantity` > 0) group by `pl`.`product_id`,`checkout`.`cstamp`,`se`.`product_quantity`,`se`.`product_sector` order by coalesce(`checkout`.`cstamp`,0) */;
 /*!50001 SET character_set_client      = @saved_cs_client */;
 /*!50001 SET character_set_results     = @saved_cs_results */;
 /*!50001 SET collation_connection      = @saved_col_connection */;
@@ -1202,4 +1809,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2021-04-13 15:14:52
+-- Dump completed on 2024-01-11 10:38:35

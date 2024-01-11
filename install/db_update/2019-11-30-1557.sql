@@ -1,1 +1,0 @@
-UPDATE `document_view_types` SET `doc_types`='/1/2/3/4/', `view_efield_labels`='{\n	\"reciever\":{\"label\":\"Грузополучатель\",\"type\":\"company_id\"},\n                \"supplier\":{\"label\":\"Грузоотправитель\",\"type\":\"company_id\"},\n                \"reason\":\"Основание\"\n}' WHERE `view_type_id`='140';
