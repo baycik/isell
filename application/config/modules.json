@@ -7,6 +7,5 @@
     {"level":"1","name":"Reports","icon":"reports.png","label":"Отчеты"},
     {"level":"2","name":"Pref","icon":"pref.png","label":"Настройки"},
     {"level":"2","name":"Data","icon":"data.png","label":"Данные"},
-    {"level":"1","name":"Home","icon":"home.png","label":"Главная"},
-    {"level":"4","name":"Mtrade","icon":"trade.png","label":"mTrade"}
+    {"level":"1","name":"Home","icon":"home.png","label":"Главная"}
 ]
