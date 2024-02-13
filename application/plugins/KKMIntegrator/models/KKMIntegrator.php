@@ -451,6 +451,15 @@ class KKMIntegrator extends PluginBase{
         //include APPPATH.'views/rpt/ru/doc/BlankDatatables.php';
         
         foreach($Context['document']['entries'] as $entry){
+            $measureDict=[
+                'шт'=>0,
+                'м'=>22,
+                'кг'=>11
+            ];
+            $MeasureOfQuantity=0;//255 is other
+            if( isset($measureDict[$entry->product_unit]) ){
+                $MeasureOfQuantity=$measureDict[$entry->product_unit];
+            }
             $Register=[
                 'Name'=>$entry->product_name,
                 'Quantity'=>$entry->product_quantity,
@@ -461,6 +470,7 @@ class KKMIntegrator extends PluginBase{
                 'SignMethodCalculation'=>4,
                 'SignCalculationObject'=>1,
                 'MeasurementUnit'=>$entry->product_unit,
+                'MeasureOfQuantity'=>$MeasureOfQuantity,
                 ];
             if($Context['document']['head']->doc_type==5){//Agent document
                 $Register['AgentSign']=6;
