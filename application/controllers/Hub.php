@@ -258,11 +258,21 @@ class Hub extends CI_Controller{
 
     public function acomp($name){/*@TODO move to lazy loading of pcomp/acomp in v4.0*/
 	$acomp=$this->svar('acomp');
+        if( !$acomp ){
+            $User=$this->load_model('User');
+	    $User->reinitLoggedUser();
+            $acomp=$this->svar('acomp');
+        }
 	return isset($acomp->$name)?$acomp->$name:NULL;
     }
     
     public function pcomp($name){/*@TODO move to lazy loading of pcomp/acomp in v4.0*/
 	$pcomp=$this->svar('pcomp');
+        if( !$pcomp ){
+            $User=$this->load_model('User');
+	    $User->reinitLoggedUser();
+            $pcomp=$this->svar('pcomp');
+        }
 	return isset($pcomp->$name)?$pcomp->$name:NULL;
     }
     

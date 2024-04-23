@@ -25,25 +25,25 @@ class AccountsRegistry extends AccountsCore{
         
         $period_parts= explode('-', $period);
         if( is_numeric($period_parts[1]) ){
-            $period_filter  = "(dvl.tstamp LIKE '{$period}%')";
-            $period_filter .= "(dl.cstamp LIKE '{$period}%')";
+            $period_filter  = "(view_tax_tstamp LIKE '{$period}%')";
+            //$period_filter .= "(dl.cstamp LIKE '{$period}%')";
         } else {
             switch( $period_parts[1] ){
                 case 'I':
-                    $period_filter  = "(dvl.tstamp LIKE '{$period_parts[0]}-01%' OR dvl.tstamp LIKE '{$period_parts[0]}-02%' OR dvl.tstamp LIKE '{$period_parts[0]}-03%')";
-                    $period_filter .= " OR (dl.cstamp LIKE '{$period_parts[0]}-01%' OR dl.cstamp LIKE '{$period_parts[0]}-02%' OR dl.cstamp LIKE '{$period_parts[0]}-03%')";
+                    $period_filter  = "(view_tax_tstamp LIKE '{$period_parts[0]}-01%' OR view_tax_tstamp LIKE '{$period_parts[0]}-02%' OR view_tax_tstamp LIKE '{$period_parts[0]}-03%')";
+                    //$period_filter .= " OR (dl.cstamp LIKE '{$period_parts[0]}-01%' OR dl.cstamp LIKE '{$period_parts[0]}-02%' OR dl.cstamp LIKE '{$period_parts[0]}-03%')";
                     break;
                 case 'II':
-                    $period_filter  = "(dvl.tstamp LIKE '{$period_parts[0]}-04%' OR dvl.tstamp LIKE '{$period_parts[0]}-05%' OR dvl.tstamp LIKE '{$period_parts[0]}-06%')";
-                    $period_filter .= " OR (dl.cstamp LIKE '{$period_parts[0]}-04%' OR dl.cstamp LIKE '{$period_parts[0]}-05%' OR dl.cstamp LIKE '{$period_parts[0]}-06%')";
+                    $period_filter  = "(view_tax_tstamp LIKE '{$period_parts[0]}-04%' OR view_tax_tstamp LIKE '{$period_parts[0]}-05%' OR view_tax_tstamp LIKE '{$period_parts[0]}-06%')";
+                    //$period_filter .= " OR (dl.cstamp LIKE '{$period_parts[0]}-04%' OR dl.cstamp LIKE '{$period_parts[0]}-05%' OR dl.cstamp LIKE '{$period_parts[0]}-06%')";
                     break;
                 case 'III':
-                    $period_filter  = "(dvl.tstamp LIKE '{$period_parts[0]}-07%' OR dvl.tstamp LIKE '{$period_parts[0]}-08%' OR dvl.tstamp LIKE '{$period_parts[0]}-09%')";
-                    $period_filter .= " OR (dl.cstamp LIKE '{$period_parts[0]}-07%' OR dl.cstamp LIKE '{$period_parts[0]}-08%' OR dl.cstamp LIKE '{$period_parts[0]}-09%')";
+                    $period_filter  = "(view_tax_tstamp LIKE '{$period_parts[0]}-07%' OR view_tax_tstamp LIKE '{$period_parts[0]}-08%' OR view_tax_tstamp LIKE '{$period_parts[0]}-09%')";
+                    //$period_filter .= " OR (dl.cstamp LIKE '{$period_parts[0]}-07%' OR dl.cstamp LIKE '{$period_parts[0]}-08%' OR dl.cstamp LIKE '{$period_parts[0]}-09%')";
                     break;
                 case 'IV':
-                    $period_filter  = "(dvl.tstamp LIKE '{$period_parts[0]}-10%' OR dvl.tstamp LIKE '{$period_parts[0]}-11%' OR dvl.tstamp LIKE '{$period_parts[0]}-12%')";
-                    $period_filter .= " OR (dl.cstamp LIKE '{$period_parts[0]}-10%' OR dl.cstamp LIKE '{$period_parts[0]}-11%' OR dl.cstamp LIKE '{$period_parts[0]}-12%')";
+                    $period_filter  = "(view_tax_tstamp LIKE '{$period_parts[0]}-10%' OR view_tax_tstamp LIKE '{$period_parts[0]}-11%' OR view_tax_tstamp LIKE '{$period_parts[0]}-12%')";
+                    //$period_filter .= " OR (dl.cstamp LIKE '{$period_parts[0]}-10%' OR dl.cstamp LIKE '{$period_parts[0]}-11%' OR dl.cstamp LIKE '{$period_parts[0]}-12%')";
                     break;
             }
         }
@@ -80,8 +80,9 @@ class AccountsRegistry extends AccountsCore{
 		(SELECT ROUND(amount,2) FROM acc_trans JOIN document_trans dt USING(trans_id) WHERE dt.doc_id=dl.doc_id AND dt.trans_role='total') total,
 		(SELECT ROUND(amount,2) FROM acc_trans JOIN document_trans dt USING(trans_id) WHERE dt.doc_id=dl.doc_id AND dt.trans_role='vat') vat,
 		(SELECT ROUND(amount,2) FROM acc_trans JOIN document_trans dt USING(trans_id) WHERE dt.doc_id=dl.doc_id AND dt.trans_role='vatless') vatless,
-                (SELECT GROUP_CONCAT(DISTINCT se.party_label) party_label FROM stock_entries se JOIN document_entries de ON se.product_code = de.product_code WHERE de.doc_id = dl.doc_id) as party_labels
-	    FROM
+                (SELECT GROUP_CONCAT(DISTINCT se.party_label) party_label FROM stock_entries se JOIN document_entries de ON se.product_code = de.product_code WHERE de.doc_id = dl.doc_id) as party_labels,
+                COALESCE(dvl.tstamp,dl.cstamp) view_tax_tstamp
+            FROM
 		document_list dl
 		    JOIN
 		document_types USING(doc_type)
@@ -91,9 +92,10 @@ class AccountsRegistry extends AccountsCore{
                 (SELECT COALESCE(JSON_UNQUOTE(view_efield_values->'$.tax_date'),tstamp) as tstamp, view_num, doc_view_id, doc_id, view_role FROM document_view_list )dvl ON dl.doc_id=dvl.doc_id AND view_role='tax_bill'
 	    WHERE
 		active_company_id='$active_company_id'
-                AND ($period_filter)
 		AND is_commited=1
-		AND $direction_filter)t
+		AND $direction_filter
+            HAVING $period_filter
+            )t
 	    HAVING $having
             ORDER BY invalid DESC, SUBSTRING(cstamp,1,10))";
 	$this->query($tmp_sql);

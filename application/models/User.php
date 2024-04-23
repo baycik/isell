@@ -10,6 +10,7 @@ class User extends Catalog {
 	    $user_data = $this->get_row("SELECT * FROM user_list WHERE user_login='$login' AND user_pass='$pass_hash'");
 	    if ($user_data && $user_data->user_id) {
 		$this->initLoggedUser($user_data);
+                $this->log("$user_data->user_login signed in",'User');
 		header("HTTP/1.1 200 OK");
 		if( $mode==='get_user_data' ){
 		    return $this->getUserData();
@@ -111,6 +112,18 @@ class User extends Catalog {
         return implode($password);
     }
     
+    /**
+     * refreshes session user data
+     */
+    public function reinitLoggedUser(){
+        $user_id=$this->Hub->svar('user_id');
+        if(!$user_id){
+            return false;
+        }
+        $user_data = $this->get_row("SELECT * FROM user_list WHERE user_id='$user_id'");
+        $this->initLoggedUser($user_data);
+    }
+    
     private function initLoggedUser($user_data){
 	$this->Hub->svar('user_id', $user_data->user_id);
 	$this->Hub->svar('user_level', $user_data->user_level);
@@ -128,9 +141,11 @@ class User extends Catalog {
 	} else {
 	    $Company->switchActiveCompany();
 	}
+	if( $user_data->selected_passive_company_id ){
+	    $Company->selectPassiveCompany($user_data->selected_passive_company_id);
+	}
 	$PluginManager=$this->Hub->load_model("PluginManager");
 	$PluginManager->pluginInitTriggers();
-	$this->log("$user_data->user_login signed in",'User');
     }
     public $SignOut=[];
     public function SignOut(){

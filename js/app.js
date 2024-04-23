@@ -651,10 +651,15 @@ Mark.pipes.format = function (str) {
 App.user = {
     props: {},
     signedIn:false,
+    autorefreshClock:null,
     getData: function () {
         App.get("User/getUserData", function (resp) {
             App.user.setProps( App.json(resp) );
         });
+        clearTimeout(App.user.autorefreshClock)
+        App.user.autorefreshClock=setTimeout(()=>{
+            App.user.getData()
+        },60*60*1000)//refresh every 1 hour
     },
     setProps:function( userProps ){
         App.user.props=userProps;
@@ -678,7 +683,7 @@ App.user = {
         var user_pass=$("#user_pass").val();
         App.post("User/SignIn",{login:user_login,pass:user_pass,mode:'get_user_data'},function(resp){
             var props=App.json(resp);
-            if( props ){
+            if( resp && props ){
                 $("#SeqDialogMsg").html("");
                 App.user.setProps( props );
             } else {

@@ -151,7 +151,7 @@ class Company extends Catalog{
     }
     
     //public $companyTreeCreate=['parent_id'=>['int',0],'label'=>'string','branch_type'=>'string'];
-    public function companyTreeCreate(int $parent_id=0,string $label,string $branch_type){
+    public function companyTreeCreate(int $parent_id=0,string $label='-',string $branch_type= 'leaf'){
 	$this->Hub->set_level(2);
         $def_lang = $this->Hub->acomp('language');
         $def_curr_code = $this->Hub->acomp('curr_code');
@@ -192,6 +192,10 @@ class Company extends Catalog{
     public function selectPassiveCompany( int $company_id ){
 	$company=$this->companyGet( $company_id );
 	$this->Hub->svar('pcomp',$company);
+        if( $company ){
+	    $user_id=$this->Hub->svar('user_id');
+	    $this->update('user_list',['selected_passive_company_id'=>$company_id],['user_id'=>$user_id]);
+	}
 	return $company;
     }
     

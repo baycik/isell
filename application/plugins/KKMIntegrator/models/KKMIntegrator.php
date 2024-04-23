@@ -343,7 +343,7 @@ class KKMIntegrator extends PluginBase{
         $prev_check=$this->previousCheckFind($doc_id);
         $PreviousCheck=$prev_check->check_object->data;
         if( !empty($prev_check->check_object->registration->CheckNumber) ){
-            $corrected_check_ref="№{$prev_check->check_object->registration->CheckNumber}";
+            $corrected_check_ref="{$prev_check->check_object->registration->CheckNumber}";
             $PreviousCheck->AdditionalAttribute=$Context['AdditionalAttribute']=$corrected_check_ref;
         }
         $PreviousCheck->AdditionalAttribute=$Context['AdditionalAttribute'];
@@ -361,6 +361,56 @@ class KKMIntegrator extends PluginBase{
             'Error'=>"Неудалось провести по бухгалтерии возврат платежа. Проверьте настройки счетов учета"
         ];
     }
+    
+    
+    /**
+     * Here we are correcting previous and 
+     * @param int $doc_id
+     * @return type
+     */
+    public function correctCheck( int $doc_id ){
+        $cashier=$this->Hub->load_model('User')->userFetch();
+        $Context=[
+            'cashier'=>$cashier
+        ];
+        $prev_check=$this->previousCheckFind($doc_id);
+        $PreviousCheck=$prev_check->check_object->data;
+        if( !empty($prev_check->check_object->registration->CheckNumber) ){
+            $corrected_check_ref="{$prev_check->check_object->registration->CheckNumber}";
+            $PreviousCheck->AdditionalAttribute=$Context['AdditionalAttribute']=$corrected_check_ref;
+        }
+        $PreviousCheck->CorrectionType=0;
+        $PreviousCheck->CorrectionBaseDate=$prev_check->check_object->tstamp;
+        $PreviousCheck->CorrectionBaseNumber="1";
+
+        $PreviousCheck->CorrectionBaseName="Самостоятельно найденная ошибка";
+        $PreviousCheck->AdditionalAttribute=$Context['AdditionalAttribute'];
+        $PreviousCheck->CashierName=$Context['cashier']->user_sign;
+        $PreviousCheck->CashierVATIN=$Context['cashier']->user_tax_id;
+
+        
+        
+        $PreviousCheck->TypeCheck=3;//корректировка возврата продажи/прихода
+        $PreviousCheck->IdCommand=$this->idGenerate();
+        $registration=$this->apiExecute( $PreviousCheck );
+        if( $registration->Error ){
+            return $registration;
+        }
+        
+        $PreviousCheck->TypeCheck=2;//корректировка продажи/прихода; 
+        $PreviousCheck->IdCommand=$this->idGenerate();
+        $registration=$this->apiExecute( $PreviousCheck );
+        if( !$registration->Error ){
+            $this->saveCheckDump( $doc_id, (array) $PreviousCheck, $registration );
+        }
+        
+        return $registration;
+    }
+    
+    
+    
+    
+    
     
     private function RegisterCheckCancelPrevious( $PreviousCheck, $Context, $doc_id ){
         if( $PreviousCheck->TypeCheck==0 ){
