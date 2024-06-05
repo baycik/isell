@@ -242,7 +242,7 @@ class User extends Catalog {
 		return 'LAST_ADMIN';
 	    }
 	}
-	if( $user_id===0 ){
+	if( $user_id==0 ){
 	    return $this->create("user_list", $fields);
 	} else {
 	    return $this->update("user_list", $fields,['user_id'=>$user_id]);

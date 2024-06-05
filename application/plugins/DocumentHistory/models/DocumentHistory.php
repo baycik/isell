@@ -84,6 +84,7 @@ class DocumentHistory extends PluginBase{
                 dl.doc_id entry_doc_id,
                 dl.doc_num entry_doc_num,
                 de.product_quantity-SUM(COALESCE(pdhl.entry_change_qty,0)) entry_change_qty,
+                de.product_price entry_new_price,
                 CONCAT(pl.product_code,' ',pl.ru) entry_change_name
             FROM
                 document_entries de
