@@ -75,7 +75,7 @@ class DocumentHistory extends PluginBase{
         $this->clearList();
         $user_label=$this->Hub->svar('user_sign');
         $history_sql="
-            INSERT INTO plugin_doc_history_list (active_company_label,passive_company_label,user_label,entry_type,entry_doc_id,entry_doc_num,entry_change_qty,entry_change_name)
+            INSERT INTO plugin_doc_history_list (active_company_label,passive_company_label,user_label,entry_type,entry_doc_id,entry_doc_num,entry_change_qty,entry_new_price,entry_change_name)
             SELECT
                 acl.company_name active_company_label,
                 pcl.company_name passive_company_label,
