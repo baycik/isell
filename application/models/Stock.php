@@ -230,9 +230,20 @@ class Stock extends Catalog {
         if (!$product_code_new) {// do not match the pattern
             return false;
         }
+        $stock_entry_id=null;
         if ($product_code && $product_code <> $product_code_new) {
             $this->update('prod_list', ['product_code' => $product_code_new], ['product_code' => $product_code]);
             $affected_rows += $this->db->affected_rows() * 1;
+            
+            $sql_find_entry_id = "
+                SELECT 
+                    stock_entry_id
+                FROM 
+                    stock_entries 
+                WHERE 
+                    product_code='{$product_code}'";
+            $stock_entry=$this->get_row($sql_find_entry_id);
+            $stock_entry_id=$stock_entry->stock_entry_id;
         }
         $product_code = $product_code_new;
         $prod_list = [
@@ -264,6 +275,12 @@ class Stock extends Catalog {
             'product_img' => $this->request('product_img'),
             'party_label' => $this->request('party_label')
         ];
+        if( $stock_entry_id ){
+            /**
+             * product code changed so adding primary key value to update stock entry
+             */
+            $stock_entries['stock_entry_id']=$stock_entry_id;
+        }
         $stock_entries_set = $this->makeSet($stock_entries);
         $this->query("INSERT INTO stock_entries SET $stock_entries_set ON DUPLICATE KEY UPDATE $stock_entries_set");
         $affected_rows += $this->db->affected_rows() * 1;
