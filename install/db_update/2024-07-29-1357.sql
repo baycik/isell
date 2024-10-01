@@ -1,9 +1,4 @@
-USE `isell_db`;
-DROP function IF EXISTS `LEFTOVER_CALC`;
-
-DELIMITER $$
-USE `isell_db`$$
-CREATE DEFINER=`root`@`127.0.0.1` FUNCTION `LEFTOVER_CALC`(_product_code VARCHAR(45),_fdate DATETIME,_quantity INT,_return VARCHAR(45)) RETURNS varchar(45) CHARSET utf8mb3
+CREATE DEFINER=`root`@`127.0.0.1` FUNCTION `LEFTOVER_CALC`(_product_code VARCHAR(45),_fdate DATETIME,_quantity INT,_return VARCHAR(45)) RETURNS varchar(45) CHARSET utf8
     READS SQL DATA
     DETERMINISTIC
 BEGIN
@@ -68,7 +63,7 @@ CASE
 	WHEN _return LIKE '%first_party%' THEN 
 		RETURN @sold_first_plabel;
     WHEN _return LIKE '%selfprice%' THEN  
-		IF LEAST(@sold_total_qty,@leftover_to_date)=0 THEN
+		IF @sold_total_qty=0 AND @leftover_to_date=0 THEN
 			RETURN 0;
 		ELSE
 			RETURN COALESCE(@sold_total_self/LEAST(@sold_total_qty,@leftover_to_date),@leftover_total_sum/@leftover_to_date);
@@ -79,7 +74,4 @@ CASE
 END CASE;
 
 RETURN @leftover_to_date;
-END$$
-
-DELIMITER ;
-
+END

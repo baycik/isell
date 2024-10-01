@@ -240,7 +240,7 @@ class Reports_stock_movements extends Catalog{
                 'grand_total_stock_fqty'=>round($grand_total_stock_fqty,2),
             
 		'summary_rows'=>count($summary_rows)?$summary_rows:[[]],
-		'rows'=>count($rows)?$rows:[[]],
+		'rows'=>$rows??[[]],
 		'input'=>[
 		    'idate'=>$this->iso2dmy($this->idate),
 		    'fdate'=>$this->iso2dmy($this->fdate),
