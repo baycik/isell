@@ -446,7 +446,6 @@ class Utils extends Catalog {
             foreach ($res->result() as $row) {
                 if ($Document2->Base->pcomp('company_id') != $row->passive_company_id) {
                     $Document2->Base->selectPassiveCompany($row->passive_company_id);
-                    echo " pcomp_id" . $row->passive_company_id;
                 }
                 $doc_id = $row->doc_id;
                 $Document2->selectDoc($doc_id);
@@ -472,40 +471,50 @@ class Utils extends Catalog {
     private function selfPriceCreateTable($active_filter) {
         $sql_vars = "SET @i:=0,@pointer:=0,@current_code:='',@qty_left1:=0,@qty_left:=0,@current_self_price=0.00;";
         $sql_tbl_drop = "DROP TEMPORARY TABLE IF  EXISTS tmp_self_calc;"; #TEMPORARY TEMPORARY 
-        $sql_tbl_create = "CREATE TEMPORARY TABLE tmp_self_calc AS (SELECT 
-		doc_entry_id,
-		doc_type,
-		product_code,
-		product_quantity,
-		self_price,
-		IF(product_code <> @current_code,(@current_code:=product_code) + (@qty_left:=0) + (@current_self_price:=0),1)*0 x,
-		IF(doc_type = 2 AND NOT is_reclamation,@current_self_price:=(self_price*product_quantity+COALESCE(@current_self_price,0)*@qty_left)/(product_quantity+@qty_left),0 ) xx,
-		IF(doc_type = 2, (@qty_left:=@qty_left + product_quantity), (@qty_left:=@qty_left - product_quantity) ) qty_left,
-		@current_self_price sp,
-		i
-	     FROM (
-		SELECT 
-		    *,
-		    IF(product_code <> @current_code,(@current_code:=product_code) + (@qty_left1:=0),1)*0 x,
-		    IF(doc_type = 2, (@qty_left1:=@qty_left1 + product_quantity), (@qty_left1:=@qty_left1 - product_quantity) ) qty_left,
-		    IF(@pointer,IF(doc_type=1,@pointer,@pointer-5),@i:=@i+10) i,
-		    IF(@qty_left1<0,@pointer:=@i,@pointer:=0) pointer
-		FROM
-		    (SELECT 
-			doc_entry_id,
-			doc_type,
-			is_reclamation,
-			product_code,
-			product_quantity,
-			self_price
-		    FROM
-			document_entries
-			    JOIN 
-			document_list USING (doc_id)
-		    WHERE
-			notcount = 0 AND is_commited = 1 AND (doc_type=2 OR doc_type=1) $active_filter
-		    ORDER BY product_code ,  cstamp) t ) tt
-	    ORDER BY product_code,i);";
+        $sql_tbl_create = "CREATE TEMPORARY TABLE tmp_self_calc (
+                doc_entry_id INT,
+                doc_type INT,
+                product_code VARCHAR(45),
+                product_quantity FLOAT,
+                self_price FLOAT,
+                x VARCHAR(100),
+                xx VARCHAR(100),
+                qty_left FLOAT,
+                sp FLOAT
+            ) AS (SELECT 
+                    doc_entry_id,
+                doc_type,
+                product_code,
+                product_quantity,
+                self_price,
+                IF(product_code <> @current_code,CONCAT((@current_code:=product_code),(@qty_left:=0),(@current_self_price:=0)),1) x,
+                IF(doc_type = 2 AND NOT is_reclamation AND (product_quantity + @qty_left)>0,@current_self_price:=(self_price * product_quantity + COALESCE(@current_self_price, 0) * @qty_left) / (product_quantity + @qty_left),0) xx,
+                IF(doc_type = 2,(@qty_left:=@qty_left + product_quantity),(@qty_left:=@qty_left - product_quantity)) qty_left,
+                @current_self_price sp,
+                i 
+                FROM
+                (SELECT 
+                    *,
+                        IF(product_code <> @current_code, CONCAT((@current_code:=product_code),(@qty_left1:=0)), 1) x,
+                        IF(doc_type = 2, (@qty_left1:=@qty_left1 + product_quantity), (@qty_left1:=@qty_left1 - product_quantity)) qty_left,
+                        IF(@pointer, IF(doc_type = 1, @pointer, @pointer - 5), @i:=@i + 10) i,
+                        IF(@qty_left1 < 0, @pointer:=@i, @pointer:=0) pointer
+                FROM
+                    (SELECT 
+                    doc_entry_id,
+                        doc_type,
+                        is_reclamation,
+                        product_code,
+                        product_quantity,
+                        self_price
+                FROM
+                    document_entries
+                JOIN document_list USING (doc_id)
+                WHERE
+                    notcount = 0 AND is_commited = 1
+                        AND (doc_type = 2 OR doc_type = 1)
+                ORDER BY product_code , cstamp) t) tt
+            ORDER BY product_code , i);";
         $this->db->query($sql_vars);
         $this->db->query($sql_tbl_drop);
         $this->db->query($sql_tbl_create);
