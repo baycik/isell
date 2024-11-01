@@ -371,7 +371,8 @@ class Hub extends CI_Controller{
 	$this->output->set_header("X-isell-type:".$this->rtype);
 	
 	if( is_array($response) || is_object($response) ){
-	    $this->output->set_header("Content-type:text/plain;charset=utf8"); 
+	    //$this->output->set_header("Content-type:text/plain;charset=utf8"); 
+	    $this->output->set_header("Content-type: application/json; charset=UTF-8"); 
 	    $this->output->set_output(json_encode($response,JSON_PRETTY_PRINT|JSON_UNESCAPED_UNICODE));	    
 	}
 	else{

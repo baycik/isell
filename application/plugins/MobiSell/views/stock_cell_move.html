@@ -1,0 +1,260 @@
+<script>
+    App.stock_cell_move = {
+        async init() {
+            await this.focus()
+            this.form.init()
+        },
+        focus() {//page onened
+            App.title("Перемещение товара")
+            this.task.focus()
+            window.addEventListener('keypress',App.stock_cell_move.key.press)
+        },
+        blur(){//page closed
+            window.removeEventListener('keypress',App.stock_cell_move.key.press)
+        },
+        form:{
+            init(){
+                this.destination.init()
+                this.product.init()
+            },
+            cache( cachekey, value ){
+                if( value ){
+                    sessionStorage[cachekey]=JSON.stringify(value)
+                }
+                return JSON.parse(sessionStorage[cachekey]||null)
+            },
+            // async getcached(url,request){
+            //     const cachekey=JSON.stringify(request)
+            //     if(sessionStorage[cachekey]){
+            //         return JSON.parse(sessionStorage[cachekey])
+            //     }
+            //     const response=await $.get(url,request)
+            //     sessionStorage[cachekey]=JSON.stringify(response)
+            //     return response
+            // },
+            product:{
+                init(){
+                    $('#stock_cell_move_prod').dropdown({
+                        apiSettings: {
+                            url: 'stockLayoutProductSearch?query={query}'
+                        },
+                        onChange: function(value, text, $selectedItem) {
+                            App.stock_cell_move.task.change('product_id',value)
+                        },
+                        saveRemoteData:false
+                    })
+                },
+                async remoteSelect( product_id=null, query=null ){
+                    try{
+                        //const response=await App.stock_cell_move.form.getcached('stockLayoutProductSearch',{product_id,query:query})
+                        const response=await $.post('stockLayoutProductSearch',{product_id,query:query})
+                        $('#stock_cell_move_prod').dropdown('change values',response.results)
+                        if( response.results[0] ){
+                            $('#stock_cell_move_prod').dropdown('set selected',response.results[0].value)
+                        } else {
+                            App.flash("Товар не найден")
+                        }
+                    } catch(err){
+                        console.log(err)
+                    }
+                }
+            },
+            destination:{
+                init(){
+                    $('#stock_cell_move_dst').dropdown({
+                        apiSettings: {
+                            url: 'stockLayoutCellSearch?query={query}'
+                        },
+                        onChange: function(value, text, $selectedItem) {
+                            App.stock_cell_move.task.change('dst_cell_id',value)
+                        },
+                    })
+                },
+                async remoteSelect( cell_id=null, query=null ){
+                    try{
+                        const response=await $.get('stockLayoutCellSearch',{cell_id,query:query})//will be cached by sw
+                        $('#stock_cell_move_dst').dropdown('change values',response.results)
+                        if( response.results[0] ){
+                            $('#stock_cell_move_dst').dropdown('set selected',response.results[0].value)
+                        } else {
+                            App.flash("Ячейка назначения не найдена")
+                        }
+                    } catch(err){
+                        console.log(err)
+                    }
+                }
+            }
+        },
+        key:{
+            data:{
+                cellname_buffer:'',
+                barcode_buffer:'',
+            },
+            press(ev){
+                App.stock_cell_move.key.cellname_record(ev.key)
+                App.stock_cell_move.key.barcode_record(ev.key)
+            },
+            cellname_record( key ){
+                if( this.data.cellname_buffer && key=='Enter' ){
+                    const cellname=decodeURI(this.data.cellname_buffer)
+                    if( cellname.length>5 ){
+                        this.cellname_use(cellname)
+                    }
+                    this.data.cellname_buffer=''
+                }
+                if( key==':' ){
+                    this.data.cellname_buffer=key
+                } else
+                if( this.data.cellname_buffer ){
+                    this.data.cellname_buffer+=key
+                }
+            },
+            cellname_use( cellname ){
+                App.stock_cell_move.form.destination.remoteSelect(null,cellname)
+            },
+            barcode_record( key ){
+                if( key*1==key ){
+                    this.data.barcode_buffer+=`${key}`
+                } else {
+                    this.data.barcode_buffer=''
+                }
+                if( this.data.barcode_buffer.length==13 ){
+                    this.barcode_use(this.data.barcode_buffer)
+                    this.data.barcode_buffer=''
+                }
+            },
+            barcode_use( barcode ){
+                App.stock_cell_move.form.product.remoteSelect(null,barcode)
+            }
+        },
+        task:{
+            data:{
+                error:'',
+                wrn:''
+            },
+            async init(){
+                await this.focus()
+            },
+            async focus(){
+                await this.load()
+                this.validate()
+            },
+            async load(){
+                //const source_cell_id=App.state.source_cell_id||0
+                this.data.product_id=App.state.product_id||0
+                this.data.dst_cell_id=App.state.dst_cell_id||0
+                App.stock_cell_move.form.product.remoteSelect(this.data.product_id)
+                App.stock_cell_move.form.destination.remoteSelect(this.data.dst_cell_id)
+            },
+            change(field,value){
+                this.data[field]=value
+                this.validate()
+                location.replace(`#stock_cell_move.html#product_id=${this.data.product_id||0}&dst_cell_id=${this.data.dst_cell_id||0}`)
+            },
+            validate(){
+                this.data.error=''
+                this.data.wrn=''
+                if( this.data['src_cell_id'] && this.data['src_cell_id']==this.data['dst_cell_id']){
+                    this.data.error="Одинаковая ячейка для источника и назначения"
+                }
+                if( !this.data['product_id'] ){
+                    this.data.wrn+="Выберите товар. "
+                }
+                // if( !this.data['src_cell_id'] ){
+                //     this.data.wrn+="Укажите откуда переместить товар. "
+                // }
+                if( !this.data['dst_cell_id'] ){
+                    this.data.wrn+="Укажите новую ячейку для товара. "
+                }
+                this.data.ok=!this.data.error&&!this.data.wrn
+                this.render()
+                return this.data.ok
+            },
+            render(){
+                App.renderTpl('stock_cell_move_task',this.data)
+            },
+            async create(){
+                if( !this.validate() ){
+                    App.flash("Проверьте форму")
+                    return
+                }
+                try{
+                    const request={
+                        product_id:this.data.product_id,
+                        dst_cell_id:this.data.dst_cell_id,
+                    }
+                    const response=await $.post('stockLayoutTaskCreate',request)
+                    App.flash("Ячейка привязана")
+                    history.back()
+                    //location.hash=`#stock_cell_product.html#product_id=${this.data.product_id}`
+                } catch(err){
+                    console.log(err)
+                }
+            }
+        },
+    }
+</script>
+<style>
+#stock_cell_move_prod span.text{
+    font-size:0.6em;
+}
+#stock_cell_move_prod span.description{
+    font-size:0.8em;
+}
+</style>
+<div id="stock_sell_list">
+    <header>
+        <div class="ui segment">
+            <h2>Перемещение товара</h2>
+            <div class="ui form">
+                <div class="field">
+                    <label>Товар</label>
+                    <div id="stock_cell_move_prod" class="ui remote search dropdown icon fluid big basic labeled button">
+                        <div class="default text">товар</div>
+                        <i class="box red icon"></i>
+                    </div>
+                </div>
+                <div class="field" style="display: none;">
+                    <label>Источник</label>
+                    <div id="stock_cell_move_src" class="ui remote search dropdown icon fluid big basic labeled button">
+                        <div class="default text">из ячейки</div>
+                        <i class="sign out alternate yellow icon"></i>
+                    </div>
+                </div>
+                <div class="field">
+                    <label>Новая ячейка</label>
+                    <div id="stock_cell_move_dst" class="ui remote search dropdown icon fluid big basic labeled button">
+                        <div class="default text">в ячейку</div>
+                        <i class="sign in alternate green icon"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+    <section>
+        <div class="ui segment covert" id="stock_cell_move_task">
+            {{if wrn}}
+                <div class="ui warning message">
+                    <p>{{wrn}}</p>
+                </div>
+            {{/if}}
+            {{if error}}
+            <div class="ui negative message">
+                <div class="header">
+                    Ошибка
+                </div>
+                <p>{{error}}</p>
+            </div>
+            {{/if}}
+            {{if ok}}
+            <div class="ui form">
+                <div class="field">
+                  <button class="ui fluid icon primary button" onclick="App.stock_cell_move.task.create()"><i class="plus icon"></i> Добавить ячейку</button>
+                </div>
+            </div>
+            {{else}}
+            <button class="ui fluid icon primary disabled button"><i class="plus icon"></i> Добавить ячейку</button>
+            {{/if}}
+        </div>
+    </section>
+</div>

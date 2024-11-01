@@ -5,6 +5,7 @@ App = {
         App.sidebar.init();
         App.holder.init();
         App.user.init();
+        App.key.init()
         //App.user.signInPopup();
         if (localStorage.getItem('pcomp_id')) {
             App.pcomp = {company_id: localStorage.getItem('pcomp_id')};
@@ -39,7 +40,6 @@ App = {
         unload: function () {
             var holder_id = App.url_file.split('.')[0];
             App[holder_id] && App[holder_id].blur && App[holder_id].blur();
-
         },
         load: function (url) {
             var holder_id = App.url_file.split('.')[0];
@@ -71,6 +71,9 @@ App = {
     tplcache: {},
     json: function (text) {
         try {
+            if( typeof text != 'string' ){//response is already parsed just return it
+                return text
+            }
             return text === '' ? null : JSON.parse(text);
         } catch (e) {
             console.log('isell-app-json-err: ' + e + text);
@@ -135,8 +138,9 @@ App = {
         $("#index_confirm_popup .approve").focus();
         //$("#index_alert_popup button").c
     },
-    confirm: function (msg) {
+    confirm: function (msg,title) {
         var def = $.Deferred();
+        $("#index_confirm_popup .header").html(title);
         $("#index_confirm_popup .content").html(msg);
         $("#index_confirm_popup").modal({
             onApprove: function () {
@@ -166,6 +170,7 @@ App = {
     },
     title: function (msg) {
         $("#title").html(msg);
+        document.title=msg
     },
     user: {
         props: {},
@@ -264,6 +269,51 @@ App = {
         }
         return topic;
     },
+    key:{
+        data:{
+            barcode_buffer:'',
+            cellname_buffer:''
+        },
+        init(){
+            window.addEventListener('keypress',App.key.press)
+        },
+        press(ev){
+            App.key.cellname_record(ev.key)
+            App.key.barcode_record(ev.key)
+        },
+        cellname_record( key ){
+            if( this.data.cellname_buffer && key=='Enter' ){
+                const cellname=decodeURI(this.data.cellname_buffer)
+                if( cellname.length>5 ){
+                    this.cellname_use(cellname)
+                }
+                this.data.cellname_buffer=''
+            }
+            if( key==':' ){
+                this.data.cellname_buffer=key
+            } else
+            if( this.data.cellname_buffer ){
+                this.data.cellname_buffer+=key
+            }
+        },
+        cellname_use( cellname ){
+            App.Topic('cellname').publish(cellname)
+        },
+        barcode_record( key ){
+            if( this.data.barcode_buffer.length==13 && key=='Enter' ){
+                this.barcode_use(this.data.barcode_buffer)
+                this.data.barcode_buffer=''
+            }
+            if( key*1==key ){
+                this.data.barcode_buffer+=`${key}`
+            } else {
+                this.data.barcode_buffer=''
+            }
+        },
+        barcode_use( barcode ){
+            App.Topic('barcode').publish(barcode)
+        }
+    },
     clearCache: function () {
         navigator.serviceWorker.controller && navigator.serviceWorker.controller.postMessage('clear_cache');
         sessionStorage.clear();
@@ -283,8 +333,8 @@ App = {
         say:function( text ){
             App.speech.hush();
             var utterThis = new SpeechSynthesisUtterance(text);
-            utterThis.pitch = 1;
-            utterThis.rate = 2;
+            utterThis.pitch = 0.8;
+            utterThis.rate = 1.5;
             App.speech.synth.speak(utterThis);
         },
         hush:function(){
@@ -365,10 +415,10 @@ Mark.pipes.format = function (num) {
 
 if (localStorage.getItem("disableSW") != 1 && ('serviceWorker' in navigator)) {
     navigator.serviceWorker.register('../MobiSell/sw.js', {scope: '../MobiSell/'})
-            .then(function (reg) {
-                //console.log('serviceWorker Registration succeeded. Scope is ' + reg.scope);
-            }).catch(function (error) {
-        console.log('serviceWorker Registration failed with ' + error);
+    .then(function (reg) {
+        console.log('SW Registration ok.');
+    }).catch(function (error) {
+        console.log('SW Registration failed with ' + error);
     });
 
     navigator.serviceWorker.addEventListener('message', function (event) {

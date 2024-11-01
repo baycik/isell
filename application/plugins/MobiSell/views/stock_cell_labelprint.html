@@ -1,0 +1,163 @@
+<script>
+    App.stock_cell_labelprint = {
+        async init() {
+            App.title("Печать этикеток");
+            this.label.init()
+            //$(window).bind('hashchange', ()=>{this.focus()})
+        },
+        async focus() {
+            App.title("Печать этикеток");
+            this.label.init()
+        },
+        label:{
+            init(){
+                this.load()
+            },
+            data:{},
+            async load(){
+                try{
+                    const filter_data={
+                        ids:App.state.cell_ids.split(',')
+                    }
+                    const request = {
+                        filter:JSON.stringify(filter_data)
+                    }
+                    this.data = await $.post('stockLayoutCellsGet',request)
+                    this.render()
+                }
+                catch(err){
+                    console.log(err)
+                }
+            },
+            print(){
+                this.render()
+                window.print()
+            },
+            render(){
+                App.renderTpl('stock_cell_labelprint_grid',this.data)
+                for( label of this.data.cells){
+                    let text=":"+encodeURI(`${label.cell_sector}-${label.cell_level}-${label.cell_number}`)
+                    let qrcode = new QRCode(`stock_cell_labelprint_${label.cell_id}`,{
+                        text: text,
+                        width: 175,
+                        height: 175,
+                        colorDark : "#000000",
+                        colorLight : "#ffffff",
+                        correctLevel : QRCode.CorrectLevel.H
+                    });
+                }
+            }
+        }
+    }
+    Mark.pipes.level_color = function (num) {
+        return num<0.1?'gray':num<0.5?'green':num<0.7?'yellow':'red'
+    };
+    Mark.pipes.level_value = function (num) {
+        return Math.round(num*100)
+    };
+</script>
+<style>
+    @media print {
+        body {
+            position: initial !important;
+            background-color: white !important;
+            max-height: 0 !important;
+            overflow: hidden !important;
+        }
+        body>* {
+            visibility: hidden !important;
+            overflow: visible !important;
+            position: fixed;
+        }
+        header{
+            display: none;
+        }
+        .printDiv, .printDiv * {
+            visibility: visible !important;
+            overflow: inherit !important;
+        }
+    }
+    @media screen{
+        .printDiv{
+            width:700px;
+            transform: scale(0.45);
+            transform-origin: top left;
+        }
+    }
+    .printLabel{
+        padding: 15px;
+        font-family: 'arial black';
+        font-size: 60px;
+        page-break-inside: avoid;
+        margin-bottom: 100px;
+    }
+    .printLabel>div{
+        display: grid;
+        grid-template-columns: 1fr min-content;
+        gap:3px;
+    }
+    .printLabel>div>div{
+        display: grid;
+        grid-template-columns: 1fr min-content;
+    }
+    .printLabel_cell_sector{
+        text-transform: uppercase;
+        padding: 0.5em 0.1em 0.5em 0;
+        border: 3px solid #000;
+    }
+    .printLabel_cell_level{
+        height: 1.5em;
+        display: flex;
+        align-items: center;
+        justify-content: start;
+        border: 3px solid #000;
+        padding: 0.5em 0.1em 0.5em 0;
+    }
+    .printLabel_cell_number{
+        background-color: #000;
+        color: #fff;
+        font-size: 1.5em;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 100px;
+        padding: 5px;
+    }
+</style>
+<div id="stock_sell_list">
+    <header>
+        <div class="ui segment">
+            <h2>Печать этикеток</h2>
+            <div class="ui labeled icon mini menu">
+                <a class="item" onclick="window.print()">
+                    <i class="grey print icon"></i>
+                    Печать
+                </a>
+                <a class="right item" onclick="history.back()">
+                    <i class="grey close icon"></i>
+                    Закрыть
+                </a>
+            </div>
+        </div>
+    </header>
+    <section class="printDiv covert" id="stock_cell_labelprint_grid">
+        {{cells}}
+        <div class="printLabel">
+            <div>
+                <div>
+                    <div>
+                        <div class="printLabel_cell_sector">{{cell_sector|blank>}}</div>
+                        <div class="printLabel_cell_level">{{cell_level|blank>}}</div>
+                    </div>
+                    <div class="printLabel_cell_number">
+                        {{cell_number|blank>}}
+                    </div>
+                </div>
+                <div>
+                    <div id="stock_cell_labelprint_{{cell_id}}" class="printLabel_cell_qr"></div>   
+                </div>
+            </div>
+        </div>
+        {{/cells}}
+    </section>
+</div>

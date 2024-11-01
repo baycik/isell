@@ -1,0 +1,332 @@
+<script>
+    App.stock_cell_view = {
+        is_focused:false,
+        async init() {
+            await this.cell.init()
+            await this.stored.init()
+            this.focus()
+        },
+        async focus() {
+            App.title("Ячейка")
+            await this.cell.focus()
+            await this.stored.focus()
+            this.is_focused=true
+        },
+        blur(){
+            this.is_focused=false
+        },
+        stored:{
+            data:{},
+            async init(){
+                await this.focus()
+                App.Topic('barcode').subscribe((barcode)=>{
+                    if(!App.stock_cell_view.is_focused){
+                        return
+                    }
+                    this.linkByBarcode(barcode)
+                })
+            },
+            async focus(){
+            },
+            async load(){
+                try{
+                    const request = {
+                        cell_id:App.stock_cell_view.cell.data.cell_id
+                    }
+                    this.data=await $.post('stockLayoutCellProductsGet',request)
+                    this.render()
+                    App.stock_cell_view.incoming.load()
+                } catch{/** */}
+            },
+            render(){
+                App.renderTpl('stock_cell_view_products',this.data)
+            },
+            async linkByBarcode(barcode){
+                if( this.data.products??0 ){
+                    for(let product of this.data.products){
+                        if(product.product_barcode==barcode){
+                            this.productUnlink(product.product_id,product.product_name)
+                            return
+                        }
+                    }
+                }
+                try{
+                    const request = {
+                        barcode
+                    }
+                    const response=await $.post('stockLayoutProductGet',request)
+                    this.productLink(response.product.product_id)
+                } catch{
+                    App.flash("Не удалось добавить товар")
+                }
+            },
+            
+            productLink(product_id){
+                location.hash=`#stock_cell_move.html#product_id=${product_id}&dst_cell_id=${App.stock_cell_view.cell.data.cell_id}`
+            },
+            productUnlink(product_id,product_name){
+                App.confirm(`Открепить товар "${product_name}" от этой ячейки?`,"Открепление товара").done(async ()=>{
+                    const request={
+                        cell_id:App.stock_cell_view.cell.data.cell_id,
+                        product_id
+                    }
+                    await $.post('stockLayoutUnlink',request)
+                    App.flash("Товар откреплен")
+                    this.load()
+                    App.stock_cell_view.cell.load()
+                })
+            }
+        },
+        incoming:{
+            data:{},
+            async load(){
+                try{
+                    const request = {
+                        cell_id:App.stock_cell_view.cell.data.cell_id
+                    }
+                    this.data=await $.post('stockLayoutCellIncomingsGet',request)
+                    this.render()
+                } catch{/** */}
+            },
+            render(){
+                App.renderTpl('stock_cell_view_incoming',this.data)
+            },
+        },
+        cell:{
+            clock:null,
+            data:{},
+            async init(){
+                App.Topic('cellname').subscribe((cellname)=>{
+                    if(!App.stock_cell_view.is_focused){
+                        return
+                    }
+                    this.searchAndLoad(cellname)
+                })
+            },
+            async focus(){
+                this.data.cell_id=App.state.cell_id??0
+                await this.load()
+            },
+            render(){
+                App.renderTpl('stock_cell_view_props',this.data)
+                $("#stock_cell_view_props .progress").progress()
+            },
+            async load(){
+                if( (this.data.cell_id??0) == 0 ){
+                    return
+                }
+                const request = {
+                    cell_id:this.data.cell_id
+                }
+                this.data=await $.post('stockLayoutCellGet',request)
+                if( !this.data.cell_id ){
+                    App.flash("Ячейка не найдена")
+                    location.hash="#stock_cell_list.html"
+                    return 
+                }
+                this.render()
+                App.stock_cell_view.stored.load()
+            },
+            async searchAndLoad(cellname){
+                const request={
+                    query:cellname,
+                    limit:1,
+                }
+                const response=await $.get('stockLayoutCellSearch',request)
+                const cell_id=response.results[0].value??0
+                if( cell_id ){
+                    App.flash(`Загружаем ${response.results[0].name}`)
+                    this.data.cell_id=cell_id
+                    location.replace("#stock_cell_view.html#cell_id="+this.data.cell_id)
+                    await this.load()
+                } else {
+                    App.flash("Ячейка не найдена")
+                }
+            },
+            copy(){
+                App.confirm(`Создать копию?`,"Копия ячейки").done(async ()=>{
+                    const newcell={
+                        cell_sector:this.data.cell_sector,
+                        cell_level:this.data.cell_level,
+
+                        cell_width:this.data.cell_width,
+                        cell_height:this.data.cell_height,
+                        cell_depth:this.data.cell_depth,
+                    }
+                    const request = {
+                        cell:JSON.stringify(newcell),
+                    }
+                    this.data.cell_id=await $.post('stockLayoutCellCreate',request)
+                    location.replace("#stock_cell_view.html#cell_id="+this.data.cell_id)
+                    await this.load()
+                })
+            },
+            moveIn( product_id=0 ){
+                location.hash=`#stock_cell_move.html#destination_cell_id=${this.data.cell_id}&product_id=${product_id}`
+            },
+            moveOut( product_id ){
+                location.hash=`#stock_cell_move.html#source_cell_id=${this.data.cell_id}&product_id=${product_id}`
+            }
+        },
+        label:{
+            print(){
+                this.render()
+                window.print()
+            },
+            render(){
+                App.renderTpl('stock_cell_view_label',App.stock_cell_view.cell.data)
+                let text="#"+encodeURI(`${App.stock_cell_view.cell.data.cell_sector}.${App.stock_cell_view.cell.data.cell_level}.${App.stock_cell_view.cell.data.cell_number}`)
+                let qrcode = new QRCode("stock_cell_view_qr",{
+                    text: text,
+                    width: 175,
+                    height: 175,
+                    colorDark : "#000000",
+                    colorLight : "#ffffff",
+                    correctLevel : QRCode.CorrectLevel.H
+                });
+            }
+        }
+    }
+    Mark.pipes.level_color = function (num) {
+        return num<0.1?'gray':num<0.7?'green':num<1?'yellow':'red'
+    };
+    Mark.pipes.level_value = function (num) {
+        if(!num){
+            num=0
+        }
+        return Math.round(num*100)
+    };
+</script>
+<style>
+    #stock_cell_view_props .ui.ui.progress.success .bar{
+        background-color: red !important;
+    }
+    #stock_cell_view_props a{
+        color: #999;
+    }
+    .table{
+        display:grid;
+        grid-template-columns:1fr 80px min-content;
+        font-size:.8em;
+    }
+    .table_r{
+        display:contents;
+    }
+    .table_r:hover>div{
+        background-color: #def;
+    }
+    .table_r>div{
+        padding: 10px;
+        border-bottom: 1px #ccc solid;
+    }
+</style>
+<div id="stock_sell_list">
+    <header>
+        <div class="ui segment covert" id="stock_cell_view_props">
+            <h2>Складская ячейка</h2>
+            <div class="ui labeled icon mini menu">
+                <a class="item" href="#stock_cell_list.html">
+                    <i class="grey home icon"></i>
+                    Главная
+                </a>
+                <a class="item" onclick="App.stock_cell_view.cell.copy()">
+                    <i class="grey copy outline icon"></i>
+                    Копировать
+                </a>
+                <a class="item" href="#stock_cell_edit.html#cell_id={{cell_id}}">
+                    <i class="grey edit icon"></i>
+                    Изменить
+                </a>
+                <a class="item" href="#stock_cell_labelprint.html#cell_ids={{cell_id}}">
+                    <i class="grey print icon"></i>
+                    Этикетка
+                </a>
+            </div>
+            <div class="ui grid">
+                <div class="one column row">
+                    <div class="column">
+                        <div class="ui right pointing massive fluid label blue">:{{cell_sector|blank>}}-{{cell_level|blank>}}-{{cell_number|blank>}}</div>
+                    </div>
+                </div>
+                <div class="two column row">
+                    <div class="column" style="color:#999">
+                        {{cell_width|blank>?}}х{{cell_height|blank>?}}х{{cell_depth|blank>?}}см<br>
+                        заполнено <b>{{used_volume|blank>0}}</b>/<b>{{cell_volume|blank>0}}м³</b>
+                    </div>
+                    <div class="column">
+                        <div class="ui large {{cell_fullness|level_color}} progress" data-percent="{{cell_fullness|level_value}}">
+                            <div class=" bar">
+                                <div class=" progress">{{cell_fullness|level_value}}%</div>
+                            </div>
+                            <div class="label"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="one column row">
+                    <div class="column">
+                        {{if cell_comment}}
+                        <div class="ui info message">
+                            {{cell_comment|blank>}}
+                        </div>
+                        {{/if}}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+    <section>
+        <div class="ui raised blue segment" >
+            <h3>Товары в ячейке</h3>
+            <div id="stock_cell_view_products" class="covert">
+                {{if products}}
+                    {{products}}
+                    <div class="ui grid">
+                        <div class="three wide column">
+                            <a href="#stock_cell_product.html#product_id={{product_id}}">
+                                <img src="../Storage/image_flush/?size=50x50&path=/dynImg/{{product_img}}"/>
+                            </a>
+                        </div>
+                        <div class="ten wide column">
+                            <a href="#stock_cell_product.html#product_id={{product_id}}" style="text-decoration: none;color: inherit;font-size: 0.8em;">
+                                #<b>{{product_code}}</b> {{product_name}} <i style="color:#999">{{product_barcode}}</i> 
+                            </a>
+                        </div>
+                        <div class="three wide column">
+                            <button class="ui icon button" onclick="App.stock_cell_view.stored.productUnlink('{{product_id}}','{{product_name}}')">
+                                <i class="trash icon"></i>    
+                            </button>
+                        </div>
+                    </div>
+                    {{/products}}
+
+                {{else}}
+                    <div class="ui warning message">
+                        <p>Ячейка пустая</p>
+                    </div>
+                {{/if}}
+            </div>
+
+            <div class="inline">
+                <button class="ui fluid icon tertiary button" onclick="App.stock_cell_view.stored.productLink()"><i class="plus icon"></i> Добавить товар</button>
+            </div>
+
+        </div>
+    </section>
+    <section id="stock_cell_view_incoming" class="covert">
+        {{if products}}
+        <div class="ui segment" >
+            <h3 style="color:#999">Ожидаемые поступления</h3>
+            {{products}}
+            <div class="ui grid">
+                <div class="ten wide column" style="color: #999;font-size: 0.8em;">
+                        #<b>{{product_code}}</b> {{product_name}}
+                </div>
+                <div class="six wide column">
+                    {{product_quantity}}{{product_unit}}
+                </div>
+            </div>
+            {{/products}}
+        </div>
+        {{/if}}
+    </section>
+</div>

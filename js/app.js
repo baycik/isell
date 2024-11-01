@@ -336,15 +336,26 @@ $(App.init);
 //////////////////////////////////////////////////
 //UTILS
 //////////////////////////////////////////////////
-App.json=function( text ){
-    try{
-	return text===''?null:JSON.parse(text);
+// App.json=function( text ){
+//     try{
+// 	return text===''?null:JSON.parse(text);
+//     }
+//     catch(e){
+// 	console.log('isell-app-json-err: '+e+text);
+// 	return null;
+//     }
+// };
+App.json= function (text) {
+    try {
+        if( typeof text != 'string' ){//response is already parsed just return it
+            return text
+        }
+        return text === '' ? null : JSON.parse(text);
+    } catch (e) {
+        console.log('isell-app-json-err: ' + e + text);
+        return null;
     }
-    catch(e){
-	console.log('isell-app-json-err: '+e+text);
-	return null;
-    }
-};
+},
 App.uri = function () {
     var args = Array.prototype.slice.call(arguments);
     return args.map(function(text){

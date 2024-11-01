@@ -1,0 +1,170 @@
+<script>
+    App.stock_cell_edit = {
+        init: function () {
+            this.cell.init()
+            this.focus()
+        },
+        focus: function () {
+            App.title("Изменение ячейки")
+            this.cell.focus()
+        },
+        cell:{
+            clock:null,
+            data:{},
+            init(){
+                $(".stock_cell_form input").on('focus',function(){
+                    this.select()
+                })
+            },
+            focus(){
+                this.data.cell_id=App.state.cell_id??0
+                this.load()
+            },
+            change( field, value ){
+                clearTimeout(this.clock)
+                this.clock=setTimeout(()=>{this.update(field,value)},500)
+            },
+            async load(){
+                if( !(this.data.cell_id>0) ){
+                    await this.create()
+                    return 
+                }
+                const request = {
+                    cell_id:this.data.cell_id
+                }
+                this.data=await $.post('stockLayoutCellGet',request)
+                if( !this.data.cell_id ){
+                    App.flash("Ячейка не найдена")
+                    location.hash="#stock_cell_list.html"
+                    return
+                }
+                this.render()
+            },
+            loadInForm(fvalue){
+                $(".stock_cell_form input").each(function (i, element) {
+                    $(element).val(fvalue[element.name])
+                })
+            },
+            render(){
+                this.loadInForm(this.data)
+                App.renderTpl('stock_cell_edit_props',this.data)
+            },
+            async create(){
+                this.data.cell_number=10
+                const request = {
+                    cell:JSON.stringify({cell_sector:'',cell_number:this.data.cell_number})
+                }
+                this.data.cell_id=await $.post('stockLayoutCellCreate',request)
+                location.replace("#stock_cell_edit.html#cell_id="+this.data.cell_id)
+                this.load()
+            },
+            async update( field, value ){
+                if( !this.data.cell_id ){
+                    await this.create()
+                }
+                try{
+                    this.data[field]=value
+                    const request = {
+                        cell:JSON.stringify(this.data)
+                    }
+                    const response = await $.post('stockLayoutCellUpdate',request)
+                    if( response==-1 ){
+                        await this.load()
+                        return
+                    }
+                    App.flash("Сохранено");
+                }
+                catch(err){
+                    console.log(err)
+                }
+            },
+            async delete(){
+                App.confirm(`Удалить ячейку?`,'Удаление').done(async ()=>{
+                    try{
+                        const request = {
+                            cell_id:this.data.cell_id
+                        }
+                        const response = await $.post('stockLayoutCellDelete',request)
+                        App.flash("Удалено");
+                        location.hash="#stock_cell_list.html"
+                    }
+                    catch(err){
+                        console.log(err)
+                    }
+                })
+            } 
+        },
+    }
+</script>
+<style>
+    .stock_cell_form .fields .field{
+        width:30% !important;
+    }
+</style>
+<div>
+    <header>
+        <div class="ui segment covert" id="stock_cell_edit_props">
+            <h2>Редактирование ячейки</h2>
+            <div class="ui labeled icon mini menu">
+                <a class="item" href="#stock_cell_list.html">
+                    <i class="grey home icon"></i>
+                    Главная
+                </a>
+                {{if cell_id}}
+                <a class="item"  onclick="App.stock_cell_edit.cell.delete()">
+                    <i class="grey trash icon"></i>
+                    Удалить
+                </a>
+                {{/if}}
+                <a class="right item" onclick="history.back()">
+                    <i class="grey close icon"></i>
+                    Закрыть
+                </a>
+            </div>
+        </div>
+    </header>
+    <section>
+        <div class="ui blue segment">
+            <h3>Адрес</h3>
+            <div class="ui form stock_cell_form">
+                <div class="fields">
+                  <div class="field">
+                    <label>Сектор</label>
+                    <input type="text" placeholder="сектор" name="cell_sector" oninput="App.stock_cell_edit.cell.change(this.name,this.value)" required pattern="[^\s]{3,}">
+                  </div>
+                  <div class="field">
+                    <label>Уровень</label>
+                    <input type="text" placeholder="уровень" name="cell_level" oninput="App.stock_cell_edit.cell.change(this.name,this.value)" required pattern="\d+">
+                  </div>
+                  <div class="field">
+                    <label>Номер</label>
+                    <input type="text" placeholder="номер" name="cell_number" oninput="App.stock_cell_edit.cell.change(this.name,this.value)" required pattern="\d+">
+                  </div>
+                </div>
+                <div class="ui divider"></div>
+
+                <h3>Габариты</h3>
+                <div class="fields">
+                    <div class="field">
+                        <label>Ширина (см)</label>
+                        <input type="text" placeholder="ширина" name="cell_width" oninput="App.stock_cell_edit.cell.change(this.name,this.value)" required pattern="\d+">
+                    </div>
+                    <div class="field">
+                        <label>Высота (см)</label>
+                        <input type="text" placeholder="высота" name="cell_height" oninput="App.stock_cell_edit.cell.change(this.name,this.value)" required pattern="\d+">
+                    </div>
+                    <div class="field">
+                        <label>Глубина (см)</label>
+                        <input type="text" placeholder="глубина" name="cell_depth" oninput="App.stock_cell_edit.cell.change(this.name,this.value)" required pattern="\d+">
+                    </div>
+                </div>
+                <div class="ui divider"></div>
+                <h3>Дополнительно</h3>
+                <div class="field">
+                    <label>Комментарий</label>
+                    <input type="text" placeholder="описание ячейки" name="cell_comment" oninput="App.stock_cell_edit.cell.change(this.name,this.value)">
+                </div>
+            </div>
+        </div>
+    </section>
+</div>

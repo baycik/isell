@@ -16,12 +16,13 @@
     <script type="text/javascript" src="../js/jquery-2.1.1.min.js"></script>
     <script type="text/javascript" src="../js/Semantic-UI/semantic.min.js"></script>
 	-->
-	<script type="text/javascript" src="jquery-3.1.1.min.js"></script>
+	<script type="text/javascript" src="jquery-3.7.1.min.js"></script>
 	<script type="text/javascript" src="semantic/semantic.min.js"></script>
 	<link rel="stylesheet" href="semantic/semantic.min.css" />
 
 
     <script type="text/javascript" src="../js/markup.min.js"></script>
+	<script type="text/javascript" src="qrcode.min.js"></script>
     <script type="text/javascript" src="app.js" crossOrigin="use-credentials"></script>
     <style>
 	.covert{
@@ -54,58 +55,58 @@
 </head>
 <body>
     <div class="ui right vertical inverted sidebar labeled icon menu">
-	<a href="#home.html" class="item">
-	    <i class="home icon"></i>
-	    Главная
-	</a>
-	<a href="#stock.html" class="item">
-	    <i class="cube icon"></i>
-	    Каталог товаров
-	</a>
-	<a href="#document_list.html" class="item">
-	    <i class="list layout icon"></i>
-	    Список Документов
-	</a>
-	<a href="#document.html" class="item">
-	    <i class="file outline icon"></i>
-	    Создать документ
-	</a>
-        <a href="#payments.html" class="item">
-	    <i class="exchange icon"></i>
-	    Взаиморасчет
-	</a>
-	<a href="#checkout_document_list.html" class="item">
-	    <i class="clipboard check icon"></i>
-	    Склад учет
-	</a>
-	<a href="#stock_cell_list.html" class="item">
-	    <i class="pallet icon"></i>
-	    Склад карта
-	</a>
-    	<a href="javascript:App.clearCache()" class="item">
-		<i class="refresh icon"></i>
-		Сбросить настройки
-	</a>
-	<a href="javascript:App.user.signOut()" class="item">
-	    <i class="sign out icon"></i>
-	    Выход
-	</a>
+		<a href="#home.html" class="item">
+			<i class="home icon"></i>
+			Главная
+		</a>
+		<a href="#stock.html" class="item">
+			<i class="cube icon"></i>
+			Каталог товаров
+		</a>
+		<a href="#document_list.html" class="item">
+			<i class="list layout icon"></i>
+			Список Документов
+		</a>
+		<a href="#document.html" class="item">
+			<i class="file outline icon"></i>
+			Создать документ
+		</a>
+			<a href="#payments.html" class="item">
+			<i class="exchange icon"></i>
+			Взаиморасчет
+		</a>
+		<a href="#checkout_document_list.html" class="item">
+			<i class="clipboard check icon"></i>
+			Склад учет
+		</a>
+		<a href="#stock_cell_list.html" class="item">
+			<i class="sitemap icon"></i>
+			Карта склада
+		</a>
+			<a href="javascript:App.clearCache()" class="item">
+			<i class="refresh icon"></i>
+			Сбросить настройки
+		</a>
+		<a href="javascript:App.user.signOut()" class="item">
+			<i class="sign out icon"></i>
+			Выход
+		</a>
     </div>
-    <div class="ui basic icon top fixed menu">
-	<div class="left menu mobisell_backbutton">
-	    <a href="javascript:history.back();" class="item ">
-		<i class="left arrow icon"></i>
-	    </a>
-	    <span class="ui tiny header item" id="title"></span>
-	</div>
-	
-	<div class="right menu">
-	    <a id="toggle" class="item">
-		<i class="sidebar icon"></i>
-		Меню
-	    </a>
-	</div>
-	<div id="status" style="display: none;"></div>
+    <div class="ui top fixed  menu">
+		<div class="left menu mobisell_backbutton">
+			<a href="javascript:history.back();" class="item "><i class="left arrow icon"></i></a>
+		</div>
+		<div class="item">
+			<div class="ui sub header" id="title"></div>
+		</div>
+		
+		<div class="right menu">
+			<a id="toggle" class="item">
+			<i class="sidebar icon"></i>
+			Меню
+			</a>
+		</div>
+		<div id="status" style="display: none;"></div>
     </div>
     
     
@@ -144,29 +145,29 @@
     </div>
     
     <div class="ui modal" id="index_alert_popup">
-	<div class="header">Внимание</div>
-	<div class="content"> --- </div>
-	<div class="actions">
-	    <button class="ui secondary approve button"><i class="icon check"></i> Ок</button>
-	</div>
+		<div class="header">Внимание</div>
+		<div class="content"> --- </div>
+		<div class="actions">
+			<button class="ui secondary approve button"><i class="icon check"></i> Ок</button>
+		</div>
     </div>
     <div class="ui modal" id="index_confirm_popup">
-	<div class="header">Вопрос</div>
-	<div class="content"> --- </div>
-	<div class="actions">
-	    <button class="ui positive approve button"><i class="icon check"></i> Ок</button>
-            <button class="ui negative deny button"><i class="icon close"></i> Отменить</button>
-	</div>
+		<div class="header">Вопрос</div>
+		<div class="content" style="padding-top: 50px !important;padding-bottom: 50px !important;"> --- </div>
+		<div class="actions">
+			<button class="ui positive approve button"><i class="icon check"></i> Ок</button>
+				<button class="ui negative deny button"><i class="icon close"></i> Отменить</button>
+		</div>
     </div>
     <div class="ui modal" id="index_prompt_popup">
-	<div class="header">Вопрос</div>
-        <div class="content ui input">
-            <input type="text" style="width:100%">
-        </div>
-	<div class="actions">
-	    <button class="ui positive approve button"><i class="icon check"></i> Ок</button>
-            <button class="ui negative deny button"><i class="icon close"></i> Отменить</button>
-	</div>
+		<div class="header">Вопрос</div>
+			<div class="content ui input">
+				<input type="text" style="width:100%">
+			</div>
+		<div class="actions">
+			<button class="ui positive approve button"><i class="icon check"></i> Ок</button>
+				<button class="ui negative deny button"><i class="icon close"></i> Отменить</button>
+		</div>
     </div>
 </body>
 </html>

@@ -429,8 +429,8 @@ class MobiSell extends PluginManager {
     }
     
     private function notify($subject,$view_file,$data){
-	$this->settings=$this->settingsDataFetch('MobiSell');
-	$Utils=$this->Hub->load_model('Utils');
+        $this->settings=$this->settingsDataFetch('MobiSell');
+        $Utils=$this->Hub->load_model('Utils');
         $text=$this->load->view($view_file,$data,true);
         if( isset($this->settings->plugin_settings->email) && $this->settings->plugin_settings->email ){
             $Utils->sendEmail( $this->settings->plugin_settings->email, $subject, $text, NULL, 'nocopy' );
@@ -450,4 +450,365 @@ class MobiSell extends PluginManager {
         }
         $this->notify($message['subject'],$message['view'],$message['data']);
     }
+
+
+
+    /**
+     * STOCK LAYOUT CELL SECTION
+     */
+    public function stockLayoutCellGet( int $cell_id ){
+        $this->db->select("plugin_stock_layout_cells.*");
+        $this->db->select("ROUND(SUM(product_volume*product_quantity/allocated_volume*cell_volume),2) used_volume");
+        $this->db->select("ROUND(SUM(product_volume*product_quantity/allocated_volume),2) cell_fullness");
+        $this->db->join('plugin_stock_layout_links','cell_id','left');
+        $this->db->join('prod_list','product_id','left');
+        $this->db->join('stock_entries','product_code','left');
+        return $this->get('plugin_stock_layout_cells',['cell_id'=>$cell_id]);
+    }
+
+    private function stockLayoutCellNumberGet( string $cell_sector, int $cell_level ){
+        $increment_by=10;
+        $next_number=$increment_by;
+        $this->db->from('plugin_stock_layout_cells');
+        $this->db->where('cell_sector',$cell_sector);
+        $this->db->where('cell_level',$cell_level);
+        $this->db->select_max('cell_number');
+        $result=$this->db->get();
+        if( $result ){
+            $row=$result->row();
+            $max_number=$row->cell_number;
+            $next_number=$increment_by*(floor($max_number/$increment_by)+1);
+        }
+        return $next_number;
+    }
+
+    public function stockLayoutCellCreate( object $cell ){
+        $cell->cell_level??=1;
+        if( isset($cell->cell_sector) && isset($cell->cell_level) && empty($cell->cell_number) ){//look what next number is
+            $cell->cell_number=$this->stockLayoutCellNumberGet($cell->cell_sector,$cell->cell_level);
+        }
+        return $this->create('plugin_stock_layout_cells',$cell);
+    }
+
+    public function stockLayoutCellUpdate( object $cell ){
+        $update=[];
+        $allowed_fields=['cell_realm','cell_sector','cell_level','cell_number','cell_height','cell_width','cell_depth','cell_comment'];
+        foreach($cell as $field=>$value){
+            if( !in_array($field,$allowed_fields) ){
+                continue;
+            }
+            $update[$field]=$cell->{$field};
+        }
+        $result=$this->update('plugin_stock_layout_cells',$update,['cell_id'=>$cell->cell_id]);
+        $this->stockLayoutCellRecalculate($cell->cell_id);
+        return $result;
+    }
+
+    public function stockLayoutCellDelete( int $cell_id ){
+        $ok=$this->db->delete('plugin_stock_layout_cells',['cell_id'=>$cell_id]);
+        $this->db->delete('plugin_stock_layout_links',['cell_id'=>$cell_id]);
+        return $ok;
+    }
+
+
+    public function stockLayoutMapGet( int $count_incoming=0, string $orderby=null ){
+        $this->db->select("plugin_stock_layout_cells.cell_sector");
+        $this->db->from('plugin_stock_layout_cells');
+        $this->db->join('plugin_stock_layout_links','cell_id','left');
+        $this->db->join('prod_list','product_id','left');
+        $this->db->join('stock_entries','product_code','left');
+        $this->db->group_by('cell_sector');
+        $this->db->where('is_valid',1);
+
+        if( $count_incoming ){
+            $reserved_quantity_sql="
+                CREATE TEMPORARY TABLE tmp_reserved AS (
+                    SELECT 
+                        product_code,SUM(product_quantity) incoming_quantity
+                    FROM
+                        document_entries
+                            JOIN
+                        document_list USING(doc_id)
+                            JOIN
+                        document_status_list USING(doc_status_id)
+                    WHERE
+                        doc_type=2
+                        AND status_code='reserved'
+                    GROUP BY product_code
+                );
+            ";
+            $this->db->query($reserved_quantity_sql);
+            $this->db->select("AVG((product_quantity+IFNULL(incoming_quantity,0))*product_volume/allocated_volume) cell_fullness");
+            $this->db->join('tmp_reserved','product_code','left');
+        } else {
+            $this->db->select("AVG(product_volume*product_quantity/allocated_volume) cell_fullness");
+        }
+        if( $orderby=='cell_fullness' ){
+            $this->db->order_by("cell_fullness","DESC");
+        } else {
+            $this->db->order_by("cell_sector");
+        }
+        
+
+        $sector_list=$this->db->get();
+        if( !$sector_list ){
+            return 0;
+        }
+        $sectors=$sector_list->result();
+
+        $global_fullness=0;
+        $fullness=array_map(function($sector){
+            return $sector->cell_fullness??0;
+        },$sectors);
+        if( count($fullness) ) {
+            $global_fullness = array_sum($fullness)/count($fullness);
+        }
+
+        return [
+            'sectors'=>$sectors,
+            'global_fullness'=>$global_fullness,
+        ];
+    }
+    public function stockLayoutCellsGet( object $filter=null, int $count_incoming=0, string $orderby=null ){
+        if( $filter->query??0 ){
+            $this->db->like("CONCAT(':',cell_sector,'-',cell_level,'-',cell_number)",trim($filter->query));
+            $this->db->or_like("CONCAT('#',ru,' ',product_barcode,' ',product_code)",trim($filter->query));
+        }
+        if( $filter->ids??0 ){
+            $this->db->where_in('cell_id',$filter->ids);
+        }
+        if( $filter->limit??0 ){
+            $this->db->limit($filter->limit);
+        }
+        if( $filter->offset??0 ){
+            $this->db->offset($filter->offset);
+        }
+        $this->db->select("plugin_stock_layout_cells.*");
+        $this->db->select("GROUP_CONCAT(SUBSTRING(ru, 1, 15) SEPARATOR '..., ') stored_prods");
+        $this->db->from('plugin_stock_layout_cells');
+        $this->db->join('plugin_stock_layout_links','cell_id','left');
+        $this->db->join('prod_list','product_id','left');
+        $this->db->join('stock_entries','product_code','left');
+        $this->db->group_by('cell_id');
+
+        if( $orderby=='cell_fullness' ){
+            $this->db->order_by("cell_fullness","DESC");
+        } else {
+            $this->db->order_by("cell_sector,cell_level,cell_number");
+        }
+        
+        if( $count_incoming ){
+            $reserved_quantity_sql="
+                CREATE TEMPORARY TABLE tmp_reserved AS (
+                    SELECT 
+                        product_code,SUM(product_quantity) incoming_quantity
+                    FROM
+                        document_entries
+                            JOIN
+                        document_list USING(doc_id)
+                            JOIN
+                        document_status_list USING(doc_status_id)
+                    WHERE
+                        doc_type=2
+                        AND status_code='reserved'
+                    GROUP BY product_code
+                );
+            ";
+            $this->db->query($reserved_quantity_sql);
+            $this->db->select("SUM((product_quantity+IFNULL(incoming_quantity,0))*product_volume/allocated_volume) cell_fullness");
+            $this->db->join('tmp_reserved','product_code','left');
+        } else {
+            $this->db->select("SUM(product_volume*product_quantity/allocated_volume) cell_fullness");
+        }
+
+        $cell_list=$this->db->get();
+        if( !$cell_list ){
+            return 0;
+        }
+        return [
+            'cells'=>$cell_list->result()
+        ];
+    }
+    
+    public function stockLayoutCellProductsGet( int $cell_id ){
+        $this->db->select('product_id,product_code,ru product_name,product_barcode,product_quantity,product_unit,product_img,stored_quantity');
+        $this->db->from('plugin_stock_layout_links');
+        $this->db->join('prod_list','product_id');
+        $this->db->join('stock_entries','product_code');
+        $this->db->where('cell_id',$cell_id);
+
+        $product_list=$this->db->get();
+        if( !$product_list ){
+            return 0;
+        }
+        return [
+            'products'=>$product_list->result()
+        ];
+    }
+
+    public function stockLayoutCellIncomingsGet( int $cell_id ){
+        $this->db->select('product_id,product_code,ru product_name,SUM(product_quantity) product_quantity,product_unit');
+        $this->db->from('plugin_stock_layout_links');
+        $this->db->join('prod_list','product_id');
+        $this->db->join('document_entries','product_code');
+        $this->db->join('document_list','doc_id');
+        $this->db->join('document_status_list','doc_status_id');
+        $this->db->where('cell_id',$cell_id);
+        $this->db->where('status_code','reserved');
+        $this->db->where('doc_type','2');
+        $this->db->group_by('product_id');
+
+        $product_list=$this->db->get();
+        if( !$product_list ){
+            return 0;
+        }
+        return [
+            'products'=>$product_list->result()
+        ];
+    }
+
+    public function stockLayoutCellSearch( string $query=null, string $cell_id=null, int $limit=10 ){
+        if( $query??0 ){
+            $this->db->like("CONCAT(':',cell_sector,'-',cell_level,'-',cell_number)",trim($query));
+        }
+        if( $cell_id??0 ){
+            $this->db->where_in("cell_id",$cell_id);
+        }
+        $this->db->limit($limit);
+        $this->db->select("CONCAT(':',cell_sector,'-',cell_level,'-',cell_number) `name`,cell_id `value`");
+        $this->db->from('plugin_stock_layout_cells');
+        $this->db->group_by('cell_id');
+
+        $cell_list=$this->db->get();
+        if( !$cell_list ){
+            return [
+                'success'=>false,
+                'results'=>[]
+            ];
+        }
+        return [
+            'success'=>true,
+            'results'=>$cell_list->result()
+        ];
+    }
+
+
+    /**
+     * STOCK LAYOUT PRODUCT SECTION
+     */
+    public function stockLayoutProductGet( int $product_id=0, string $barcode=null ){
+        $this->db->select('product_id,product_code,ru product_name,product_barcode,product_quantity,product_unit,product_img');
+
+        $this->db->select("ROUND(product_volume*product_quantity,2) product_volume_total");
+        $this->db->select("ROUND(SUM(sub_cell_volume),2) allocated_volume_total");
+        $this->db->select("ROUND(product_volume*product_quantity/SUM(sub_cell_volume),2) allocated_volume_fullness");
+        $this->db->from('prod_list');
+        $this->db->join('stock_entries','product_code');
+        $this->db->join('plugin_stock_layout_links','product_id','left');
+        $this->db->group_by('product_id');
+
+        if( $product_id ){
+            $this->db->where('product_id',$product_id);
+        } else 
+        if( $barcode ){
+            $this->db->where('product_barcode',$barcode);
+        } else {
+            return 'noid';
+        }
+        
+
+        $product=$this->db->get();
+
+        if( !$product ){
+            return 0;
+        }
+        return [
+            'product'=>$product->row()
+        ];
+    }
+    public function stockLayoutProductCellsGet( int $product_id ){
+        $this->db->select("cell_id,cell_sector,cell_level,cell_number,stored_volume,stored_quantity");
+        $this->db->select("(stored_volume/cell_volume) cell_fullness");
+
+        $this->db->from('plugin_stock_layout_links');
+        $this->db->join('plugin_stock_layout_cells','cell_id','left');
+        $this->db->where('product_id',$product_id);
+
+        $result=$this->db->get();
+        if( !$result ){
+            return 0;
+        }
+        return [
+            'cells'=>$result->result()
+        ];
+    }
+
+    public function stockLayoutProductSearch( string $query=null, int $cell_id=null, int $product_id=null ){
+        if( $query??0 ){
+            $this->db->like("CONCAT('#',product_code,' ',ru,' ',product_barcode)",trim($query));
+        }
+        if( $product_id??0 ){
+            $this->db->where_in("product_id",$product_id);
+        }
+        $img_path="../Storage/image_flush/?size=50x50&path=/dynImg/";
+        $this->db->select("SUBSTRING(ru, 1, 30) `name`,product_code  `description`, product_id `value`");
+        $this->db->select("CONCAT('$img_path',product_img) `image`");
+
+        //$this->db->from('plugin_stock_layout_cells');
+        //$this->db->join('plugin_stock_layout_links','cell_id','left');
+        $this->db->from('prod_list');
+        $this->db->join('stock_entries','product_code');
+        $this->db->limit(10);
+
+        $product_list=$this->db->get();
+
+        return [
+            'success'=>true,
+            'results'=>$product_list->result()
+        ];
+    }
+
+    public function stockLayoutProductUnassignedGet(){
+
+    }
+    
+    /**
+     * STOCK LAYOUT TASK SECTION
+     */
+    public function stockLayoutTaskCreate( int $product_id, int $dst_cell_id ){
+        $cell_product=[
+            'product_id'=>$product_id,
+            'cell_id'=>$dst_cell_id
+        ];
+        $result=$this->create('plugin_stock_layout_links',$cell_product);
+        $this->stockLayoutCellRecalculate($dst_cell_id);
+        return $result;
+    }
+
+    public function stockLayoutUnlink( int $product_id, int $cell_id ){
+        $result=$this->db->delete('plugin_stock_layout_links',['cell_id'=>$cell_id,'product_id'=>$product_id]);
+        $this->stockLayoutCellRecalculate($cell_id);
+        return $result;
+    }
+
+    public function stockLayoutCellRecalculate( int $cell_id ){
+        $this->db->select("cell_volume/COUNT(*) sub_cell_volume,GROUP_CONCAT(product_id) product_ids");
+        $this->db->from('plugin_stock_layout_cells');
+        $this->db->join('plugin_stock_layout_links','cell_id');
+        $this->db->where('cell_id',$cell_id);
+        $cell_info=$this->db->get()->row();
+
+        $this->db->update('plugin_stock_layout_links',['sub_cell_volume'=>$cell_info->sub_cell_volume],['cell_id'=>$cell_id]);
+
+        $this->db->select("product_id,SUM(sub_cell_volume) allocated_volume");
+        $this->db->from('plugin_stock_layout_links');
+        $this->db->where_in('product_id',explode(',',$cell_info->product_ids));
+        $product_infos=$this->db->get()->result();
+
+        foreach($product_infos as $info){
+            $this->db->update('plugin_stock_layout_links',['allocated_volume'=>$info->allocated_volume],['product_id'=>$info->product_id]);
+        }
+    }
+
+
 }

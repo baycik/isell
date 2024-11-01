@@ -1,10 +1,10 @@
 /*!
- * # Semantic UI 2.5.0 - Reveal
- * http://github.com/semantic-org/semantic-ui/
+ * # Fomantic-UI 2.9.3 - Reveal
+ * https://github.com/fomantic/Fomantic-UI/
  *
  *
  * Released under the MIT license
- * http://opensource.org/licenses/MIT
+ * https://opensource.org/licenses/MIT
  *
  */
 
@@ -16,12 +16,12 @@
 .ui.reveal {
   display: inherit;
   position: relative !important;
-  font-size: 0em !important;
+  font-size: 0;
 }
 .ui.reveal > .visible.content {
   position: absolute !important;
-  top: 0em !important;
-  left: 0em !important;
+  top: 0 !important;
+  left: 0 !important;
   z-index: 3 !important;
   transition: all 0.5s ease 0.1s;
 }
@@ -42,10 +42,9 @@
 *******************************/
 
 
-/*--------------
-      Slide
----------------*/
-
+/* --------------
+          Slide
+    --------------- */
 .ui.slide.reveal {
   position: relative !important;
   overflow: hidden !important;
@@ -56,7 +55,7 @@
   width: 100%;
   white-space: normal;
   float: left;
-  margin: 0em;
+  margin: 0;
   transition: transform 0.5s ease 0.1s;
 }
 .ui.slide.reveal > .visible.content {
@@ -64,7 +63,7 @@
 }
 .ui.slide.reveal > .hidden.content {
   position: absolute !important;
-  left: 0% !important;
+  left: 0 !important;
   width: 100% !important;
   transform: translateX(100%) !important;
 }
@@ -74,10 +73,10 @@
 }
 .ui.slide.active.reveal > .hidden.content,
 .ui.slide.reveal:hover > .hidden.content {
-  transform: translateX(0%) !important;
+  transform: translateX(0) !important;
 }
 .ui.slide.right.reveal > .visible.content {
-  transform: translateX(0%) !important;
+  transform: translateX(0) !important;
 }
 .ui.slide.right.reveal > .hidden.content {
   transform: translateX(-100%) !important;
@@ -88,7 +87,7 @@
 }
 .ui.slide.right.active.reveal > .hidden.content,
 .ui.slide.right.reveal:hover > .hidden.content {
-  transform: translateX(0%) !important;
+  transform: translateX(0) !important;
 }
 .ui.slide.up.reveal > .hidden.content {
   transform: translateY(100%) !important;
@@ -99,7 +98,7 @@
 }
 .ui.slide.up.active.reveal > .hidden.content,
 .ui.slide.up.reveal:hover > .hidden.content {
-  transform: translateY(0%) !important;
+  transform: translateY(0) !important;
 }
 .ui.slide.down.reveal > .hidden.content {
   transform: translateY(-100%) !important;
@@ -110,13 +109,12 @@
 }
 .ui.slide.down.active.reveal > .hidden.content,
 .ui.slide.down.reveal:hover > .hidden.content {
-  transform: translateY(0%) !important;
+  transform: translateY(0) !important;
 }
 
-/*--------------
-      Fade
----------------*/
-
+/* --------------
+          Fade
+    --------------- */
 .ui.fade.reveal > .visible.content {
   opacity: 1;
 }
@@ -125,10 +123,9 @@
   opacity: 0;
 }
 
-/*--------------
-      Move
----------------*/
-
+/* --------------
+          Move
+    --------------- */
 .ui.move.reveal {
   position: relative !important;
   overflow: hidden !important;
@@ -138,7 +135,7 @@
   display: block;
   float: left;
   white-space: normal;
-  margin: 0em;
+  margin: 0;
   transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1) 0.1s;
 }
 .ui.move.reveal > .visible.content {
@@ -146,7 +143,7 @@
 }
 .ui.move.reveal > .hidden.content {
   position: absolute !important;
-  left: 0% !important;
+  left: 0 !important;
   width: 100% !important;
 }
 .ui.move.active.reveal > .visible.content,
@@ -166,13 +163,12 @@
   transform: translateY(100%) !important;
 }
 
-/*--------------
-     Rotate
----------------*/
-
+/* --------------
+         Rotate
+    --------------- */
 .ui.rotate.reveal > .visible.content {
   transition-duration: 0.5s;
-  transform: rotate(0deg);
+  transform: rotate(0);
 }
 .ui.rotate.reveal > .visible.content,
 .ui.rotate.right.reveal > .visible.content {
@@ -226,28 +222,46 @@
 *******************************/
 
 
-/*--------------
+/* --------------
      Visible
----------------*/
-
+--------------- */
 .ui.visible.reveal {
   overflow: visible;
 }
 
-/*--------------
+/* --------------
      Instant
----------------*/
-
+--------------- */
 .ui.instant.reveal > .content {
   transition-delay: 0s !important;
 }
 
-/*--------------
+/* --------------
      Sizing
----------------*/
-
+--------------- */
 .ui.reveal > .content {
-  font-size: 1rem !important;
+  font-size: 1rem;
+}
+.ui.mini.reveal > .content {
+  font-size: 0.78571429rem;
+}
+.ui.tiny.reveal > .content {
+  font-size: 0.85714286rem;
+}
+.ui.small.reveal > .content {
+  font-size: 0.92857143rem;
+}
+.ui.large.reveal > .content {
+  font-size: 1.14285714rem;
+}
+.ui.big.reveal > .content {
+  font-size: 1.28571429rem;
+}
+.ui.huge.reveal > .content {
+  font-size: 1.42857143rem;
+}
+.ui.massive.reveal > .content {
+  font-size: 1.71428571rem;
 }
 
 

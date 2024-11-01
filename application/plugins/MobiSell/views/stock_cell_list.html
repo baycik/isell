@@ -1,0 +1,275 @@
+<script>
+    App.stock_cell_list = {
+        is_focused:false,
+        init() {
+            this.head.init()
+            this.entries.init()
+            this.focus()
+        },
+        focus() {
+            App.title("Карта склада")
+            this.is_focused=true
+            this.entries.focus()
+        },
+        blur(){
+            this.is_focused=false
+        },
+        head:{
+            data:{},
+            init(){
+
+            },
+            render(){
+
+                //
+            }
+        },
+        entries:{
+            init(){
+                let onscan=(query)=>{
+                    if(!App.stock_cell_list.is_focused){
+                        return
+                    }
+                    this.search(query)
+                }
+                App.Topic('barcode').subscribe(onscan)
+                App.Topic('cellname').subscribe(onscan)
+                $('#stock_cell_list .ui.accordion').accordion();
+                if( localStorage.stock_layout_count_incoming==1){
+                    $('input[name=stock_layout_count_incoming]').prop('checked', localStorage.stock_layout_count_incoming==1)
+                    $('#stock_cell_list .ui.accordion').accordion('open',0);
+                }
+                $('input[name=stock_layout_orderby_fullness]').prop('checked', localStorage.stock_layout_orderby_fullness==1)
+            },
+            focus(){
+                this.reset()
+                this.load()
+            },
+            data:{
+                cells:[]
+            },
+            render(){
+                App.renderTpl('stock_cell_list_props',this.data)
+                App.renderTpl('stock_cell_list_grid',this.data)
+            },
+            create(){
+                location.hash="#stock_cell_edit.html#cell_id=0"
+            },
+            open(cell_id){
+                location.hash=`#stock_cell_view.html#cell_id=${cell_id}`
+            },
+            print(){
+                let cell_ids=[]
+                for(cell of App.stock_cell_list.entries.data.cells){
+                    cell_ids.push(cell.cell_id)
+                }
+                location.hash=`#stock_cell_labelprint.html#cell_ids=${cell_ids.join(',')}`
+            },
+            search( query ){
+                $("#stock_cell_list_search input").val(query)
+                this.filter_data.query=query
+                this.reset()
+                this.load()
+            },
+            filter_data:{
+                offset:0,
+                limit:20,
+            },
+            filter( query ){
+                this.filter_data.query=query
+                this.refresh()
+            },
+            clock:null,
+            refresh(){
+                clearTimeout(this.clock)
+                this.clock=setTimeout(()=>{
+                    this.reset()
+                    this.load()
+                },500)
+            },
+            reset(){
+                this.filter_data.offset=0
+                this.data.cells=[]
+            },
+            async load(){
+                $("#stock_cell_list_search").addClass('loading')
+                if( this.filter_data.query ){
+                    await this.loadCells()
+                } else {
+                    await this.loadMap()
+                }
+                $("#stock_cell_list_search").removeClass('loading')
+            },
+            async loadCells(){
+                try{
+                    const count_incoming= localStorage.stock_layout_count_incoming==1?1:0
+                    const orderby=localStorage.stock_layout_orderby_fullness==1?'cell_fullness':'cell_name'
+                    const request = {
+                        filter:JSON.stringify(this.filter_data),
+                        count_incoming,
+                        orderby
+                    }
+                    const response=await $.post('stockLayoutCellsGet',request)
+                    const cells=this.data.cells.concat(response.cells)
+                    this.filter_data.offset=cells.length
+
+                    this.data={
+                        cells:cells
+                    }
+                    this.render()
+                }
+                catch(err){
+                    console.log(err)
+                }
+            },
+            async loadMap(){
+                try{
+                    const count_incoming= localStorage.stock_layout_count_incoming==1?1:0
+                    const orderby=localStorage.stock_layout_orderby_fullness==1?'cell_fullness':'cell_name'
+                    const request = {
+                        count_incoming,
+                        orderby
+                    }
+                    const response=await $.post('stockLayoutMapGet',request)
+                    this.data={
+                        sectors:response.sectors,
+                        global_fullness:response.global_fullness
+                    }
+                    this.render()
+                }
+                catch(err){
+                    console.log(err)
+                }
+            }
+        }
+    }
+
+
+    Mark.pipes.level_color = function (num) {
+        return num<0.1?'gray':num<0.7?'green':num<1?'yellow':'red'
+    };
+    Mark.pipes.level_value = function (num) {
+        return Math.round(num*100)
+    };
+</script>
+<style>
+    #stock_cell_list_grid>div>div>div{
+        padding: 10px;
+        border-bottom:1px solid #def
+    }
+</style>
+<div id="stock_sell_list">
+    <header>
+        <div class="ui segment covert" id="stock_cell_list_props">
+            <h2><i class="sitemap icon"></i> Карта склада</h2>
+            <div class="ui labeled icon mini menu">
+                <a class="item" onclick="App.stock_cell_list.entries.create()">
+                    <i class="grey plus icon"></i>
+                    Добавить
+                </a>
+                {{if cells}}
+                <a class="item" onclick="App.stock_cell_list.entries.print()">
+                    <i class="grey print icon"></i>
+                    Этикетки
+                </a>
+                {{/if}}
+            </div>
+        </div>
+    </header>
+    <section>
+        <div class="ui blue segment">
+            <h3>Ячейки</h3>
+            <div class="ui search">
+                <div class="ui left icon action input" style="width:100%" id="stock_cell_list_search">
+                    <i class="search icon"></i>
+                    <input class="prompt" type="text" placeholder="поиск ячейки или товара" oninput="App.stock_cell_list.entries.filter(this.value)">
+                    <button class="basic ui icon button" onclick="App.stock_cell_list.entries.search('');this.blur()">
+                        <i class="close icon"></i>
+                    </button>
+                </div>
+            </div><!-- style="display: grid;grid-template-columns: repeat(auto-fill, 150px);gap:5px" -->
+            <div id="stock_cell_list_grid" class="covert" style="padding-top: 15px;">
+            {{if sectors}}
+                <div style="margin-bottom: 15px;">
+                    <div class="ui black large fluid label" style="text-transform: uppercase;" onclick="App.stock_cell_list.entries.search(':')">
+                        <i class="{{global_fullness|level_color}} square icon"></i>
+                        ВЕСЬ СКЛАД <div class="ui label">{{global_fullness|level_value}}%</div>
+                    </div>
+                </div>
+                <div style="display: grid;grid-template-columns: repeat(auto-fill, 130px);gap:10px">
+                    {{sectors}}
+                    <div onclick="App.stock_cell_list.entries.search(':{{cell_sector}}')" style="cursor: pointer;">
+                        <div class="ui grey large label" style="text-transform: uppercase;">
+                            <i class="{{cell_fullness|level_color}} square icon"></i>
+                            :{{cell_sector}}
+                        </div>                        
+                    </div>
+                    {{/sectors}}
+                </div>
+            {{else}}
+            {{if cells}}
+                <div style="display: grid;grid-template-columns: 120px 2fr 1fr;">
+                    {{cells}}
+                    <div style="display: contents;cursor: pointer;" onclick="App.stock_cell_list.entries.open('{{cell_id}}')">
+                        <div>
+                            {{if is_valid|equals>1}}
+                            <div class="ui right pointing icon label blue">
+                                :{{cell_sector|blank>}}-{{cell_level|blank>}}-{{cell_number|blank>}}
+                            </div>
+                            {{else}}
+                            <div class="ui right pointing icon label brown">
+                                <s>:{{cell_sector|blank>}}-{{cell_level|blank>}}-{{cell_number|blank>}}</s>
+                            </div>
+                            {{/if}}
+                        </div>
+                        <div style="font-size:0.6em;color:#666;line-height: 1em;max-height: 6em;overflow: hidden;">
+                            {{stored_prods|blank>}}...
+                        </div>
+                        <div style="text-align:right">
+                            {{if cell_fullness}}
+                            <div class="ui {{cell_fullness|level_color}} circular label">{{cell_fullness|level_value}}%</div>
+                            {{/if}}
+                        </div>
+                    </div>
+                    {{/cells}}
+                </div>
+                <div class="inline">
+                    <button class="ui fluid icon tertiary button" onclick="App.stock_cell_list.entries.load()">загрузить ещё</button>
+                </div>
+            {{else}}
+                <div class="ui warning message">
+                    <p>Не найдено</p>
+                </div>
+            {{/if}}
+            {{/if}}
+        </div>
+
+
+        <div class="ui styled accordion" style="margin-top: 60px;">
+            <div class="title">
+              <i class="settings icon"></i>
+              Настройки
+            </div>
+            <div class="content">
+                <div class="ui vertical text menu">
+                    <div class="item">
+                        <div class="ui slider checkbox">
+                            <input name="stock_layout_count_incoming" id="stock_layout_count_incoming" class="" type="checkbox" onchange="localStorage.setItem('stock_layout_count_incoming',$(this).is(':checked')?1:0);App.stock_cell_list.entries.refresh()">
+                            <label for="stock_layout_count_incoming">Учитывать ожидаемые товары</label>
+                        </div>
+                    </div>
+                    <div class="item">
+                        <div class="ui slider checkbox">
+                            <input name="stock_layout_orderby_fullness" id="stock_layout_orderby_fullness" type="checkbox" onchange="localStorage.setItem('stock_layout_orderby_fullness',$(this).is(':checked')?1:0);App.stock_cell_list.entries.refresh()">
+                            <label for="stock_layout_orderby_fullness">Сортировать по заполнености</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        </div>
+    </section>
+
+</div>
