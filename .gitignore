@@ -5,3 +5,4 @@
 /composer.lock
 /rector.php
 /composer.json
+/application/logs/
