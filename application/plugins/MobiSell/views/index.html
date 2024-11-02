@@ -75,14 +75,16 @@
 			<i class="exchange icon"></i>
 			Взаиморасчет
 		</a>
+		{{if user_level|more>1}}
 		<a href="#checkout_document_list.html" class="item">
 			<i class="clipboard check icon"></i>
-			Склад учет
+			Учет склада
 		</a>
 		<a href="#stock_cell_list.html" class="item">
 			<i class="sitemap icon"></i>
 			Карта склада
 		</a>
+		{{/if}}
 			<a href="javascript:App.clearCache()" class="item">
 			<i class="refresh icon"></i>
 			Сбросить настройки

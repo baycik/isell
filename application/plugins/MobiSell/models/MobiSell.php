@@ -457,6 +457,7 @@ class MobiSell extends PluginManager {
      * STOCK LAYOUT CELL SECTION
      */
     public function stockLayoutCellGet( int $cell_id ){
+        $this->Hub->set_level(2);
         $this->db->select("plugin_stock_layout_cells.*");
         $this->db->select("ROUND(SUM(product_volume*product_quantity/allocated_volume*cell_volume),2) used_volume");
         $this->db->select("ROUND(SUM(product_volume*product_quantity/allocated_volume),2) cell_fullness");
@@ -483,6 +484,7 @@ class MobiSell extends PluginManager {
     }
 
     public function stockLayoutCellCreate( object $cell ){
+        $this->Hub->set_level(2);
         $cell->cell_level=$cell->cell_level??1;
         if( isset($cell->cell_sector) && isset($cell->cell_level) && empty($cell->cell_number) ){//look what next number is
             $cell->cell_number=$this->stockLayoutCellNumberGet($cell->cell_sector,$cell->cell_level);
@@ -499,6 +501,7 @@ class MobiSell extends PluginManager {
     }
 
     public function stockLayoutCellUpdate( object $cell ){
+        $this->Hub->set_level(2);
         $update=[];
         $allowed_fields=['cell_realm','cell_sector','cell_level','cell_number','cell_height','cell_width','cell_depth','cell_comment'];
         foreach($cell as $field=>$value){
@@ -515,6 +518,7 @@ class MobiSell extends PluginManager {
     }
 
     public function stockLayoutCellDelete( int $cell_id ){
+        $this->Hub->set_level(2);
         $ok=$this->db->delete('plugin_stock_layout_cells',['cell_id'=>$cell_id]);
         $this->db->delete('plugin_stock_layout_links',['cell_id'=>$cell_id]);
         return $ok;
@@ -522,6 +526,7 @@ class MobiSell extends PluginManager {
 
 
     public function stockLayoutMapGet( int $count_incoming=0, string $orderby=null ){
+        $this->Hub->set_level(2);
         $this->db->select("plugin_stock_layout_cells.cell_sector");
         $this->db->from('plugin_stock_layout_cells');
         $this->db->join('plugin_stock_layout_links','cell_id','left');
@@ -580,6 +585,7 @@ class MobiSell extends PluginManager {
         ];
     }
     public function stockLayoutCellsGet( object $filter=null, int $count_incoming=0, string $orderby=null ){
+        $this->Hub->set_level(2);
         if( $filter->query??0 ){
             $this->db->like("CONCAT(':',cell_sector,'-',cell_level,'-',cell_number)",trim($filter->query));
             $this->db->or_like("CONCAT('#',ru,' ',product_barcode,' ',product_code)",trim($filter->query));
@@ -641,6 +647,7 @@ class MobiSell extends PluginManager {
     }
     
     public function stockLayoutCellProductsGet( int $cell_id ){
+        $this->Hub->set_level(2);
         $this->db->select('product_id,product_code,ru product_name,product_barcode,product_quantity,product_unit,product_img,stored_quantity');
         $this->db->from('plugin_stock_layout_links');
         $this->db->join('prod_list','product_id');
@@ -657,6 +664,7 @@ class MobiSell extends PluginManager {
     }
 
     public function stockLayoutCellIncomingsGet( int $cell_id=null, int $product_id=null ){
+        $this->Hub->set_level(2);
         $this->db->select('product_id,product_code,ru product_name,SUM(product_quantity) product_quantity,product_unit');
         $this->db->from('plugin_stock_layout_links');
         $this->db->join('prod_list','product_id');
@@ -685,6 +693,7 @@ class MobiSell extends PluginManager {
     }
 
     public function stockLayoutCellSearch( string $query=null, string $cell_id=null, int $limit=10 ){
+        $this->Hub->set_level(2);
         if( $query??0 ){
             $this->db->like("CONCAT(':',cell_sector,'-',cell_level,'-',cell_number)",trim($query));
         }
@@ -714,6 +723,7 @@ class MobiSell extends PluginManager {
      * STOCK LAYOUT PRODUCT SECTION
      */
     public function stockLayoutProductGet( int $product_id=0, string $barcode=null ){
+        $this->Hub->set_level(2);
         $this->db->select('product_id,product_code,ru product_name,product_barcode,product_quantity,product_unit,product_img');
 
         $this->db->select("ROUND(product_volume*product_quantity,2) product_volume_total");
@@ -743,6 +753,7 @@ class MobiSell extends PluginManager {
         ];
     }
     public function stockLayoutProductCellsGet( int $product_id ){
+        $this->Hub->set_level(2);
         $this->db->select("cell_id,cell_sector,cell_level,cell_number,stored_volume,stored_quantity");
         $this->db->select("(stored_volume/cell_volume) cell_fullness");
 
@@ -760,6 +771,7 @@ class MobiSell extends PluginManager {
     }
 
     public function stockLayoutProductSearch( string $query=null, int $cell_id=null, int $product_id=null ){
+        $this->Hub->set_level(2);
         if( $query??0 ){
             $this->db->like("CONCAT('#',product_code,' ',ru,' ',product_barcode)",trim($query));
         }
@@ -792,6 +804,7 @@ class MobiSell extends PluginManager {
      * STOCK LAYOUT TASK SECTION
      */
     public function stockLayoutTaskCreate( int $product_id, int $dst_cell_id ){
+        $this->Hub->set_level(2);
         $cell_product=[
             'product_id'=>$product_id,
             'cell_id'=>$dst_cell_id
@@ -805,6 +818,7 @@ class MobiSell extends PluginManager {
     }
 
     public function stockLayoutUnlink( int $product_id, int $cell_id ){
+        $this->Hub->set_level(2);
         $result=$this->db->delete('plugin_stock_layout_links',['cell_id'=>$cell_id,'product_id'=>$product_id]);
 
         $cell_product_ids=$this->stockLayoutCellRecalculate($cell_id);
@@ -814,7 +828,7 @@ class MobiSell extends PluginManager {
         return $result;
     }
 
-    public function stockLayoutProductRecalculate( array $product_ids ){
+    private function stockLayoutProductRecalculate( array $product_ids ){
         $this->db->select("product_id,product_code,SUM(sub_cell_volume) allocated_volume");
         $this->db->select("GROUP_CONCAT(CONCAT(':',cell_sector,'-',cell_level,'-',cell_number) ORDER BY `cell_sector`,`cell_level`,`cell_number` SEPARATOR ', ') product_sector ");
         $this->db->from('plugin_stock_layout_links');
@@ -830,7 +844,7 @@ class MobiSell extends PluginManager {
         }
     }
 
-    public function stockLayoutCellRecalculate( int $cell_id ){
+    private function stockLayoutCellRecalculate( int $cell_id ){
         $this->db->select("cell_volume/COUNT(*) sub_cell_volume,GROUP_CONCAT(product_id) product_ids");
         $this->db->from('plugin_stock_layout_cells');
         $this->db->join('plugin_stock_layout_links','cell_id');
