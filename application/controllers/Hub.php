@@ -359,30 +359,30 @@ class Hub extends CI_Controller{
     }
     
     public function response( $response ){
-	if( isset($this->bridge) && $this->bridge->msg ){
-	    $this->msg.=$this->bridge->msg;
-	} 
-        if( $this->log_output_messages ){
-            $this->load_model('Catalog')->log($this->svar('user_login').': '.$this->msg);
-        } else {
-            $this->output->set_header("X-isell-msg:".urlencode($this->msg));
-        }
-        
-	$this->output->set_header("X-isell-type:".$this->rtype);
-	
-	if( is_array($response) || is_object($response) ){
-	    $this->output->set_header("Content-type:text/plain;charset=utf8"); 
-	    //$this->output->set_header("Content-type: application/json; charset=UTF-8"); 
-	    $this->output->set_output(json_encode($response,JSON_PRETTY_PRINT|JSON_UNESCAPED_UNICODE));	    
-	}
-	else{
-	    if( is_bool($response) ){
-		$response*=1;
-	    }
-	    $this->output->set_header("Content-type:text/html;charset=utf8"); 
-	    $this->output->set_output($response);	    
-	}
-        $this->output->_display();
-	exit;
+		if( isset($this->bridge) && $this->bridge->msg ){
+			$this->msg.=$this->bridge->msg;
+		} 
+			if( $this->log_output_messages ){
+				$this->load_model('Catalog')->log($this->svar('user_login').': '.$this->msg);
+			} else {
+				$this->output->set_header("X-isell-msg:".urlencode($this->msg));
+			}
+			
+		$this->output->set_header("X-isell-type:".$this->rtype);
+		
+		if( is_array($response) || is_object($response) ){
+			//$this->output->set_header("Content-type:text/plain;charset=utf8"); 
+			$this->output->set_header("Content-type: application/json; charset=UTF-8"); 
+			$this->output->set_output(json_encode($response,JSON_PRETTY_PRINT|JSON_UNESCAPED_UNICODE));	    
+		}
+		else{
+			if( is_bool($response) ){
+			$response*=1;
+			}
+			$this->output->set_header("Content-type:text/html;charset=utf8"); 
+			$this->output->set_output($response);	    
+		}
+			$this->output->_display();
+		exit;
     }
 }

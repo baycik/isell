@@ -161,7 +161,7 @@
                 App.KKMIntegrator_checkprint.view.info("");
                 $.post('KKMIntegrator/' + command, Data || {}).done(function (resp) {
                     try {
-                        var response = JSON.parse(resp);
+                        var response = App.json(resp);
                         if (response.Error && response.Error != "") {
                             App.KKMIntegrator_checkprint.view.error(response.Error);
                             def.reject();

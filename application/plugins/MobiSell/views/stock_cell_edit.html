@@ -50,20 +50,24 @@
                 App.renderTpl('stock_cell_edit_props',this.data)
             },
             async create(){
-                this.data.cell_number=10
+                location.replace(`#stock_cell_edit.html#cell_id=0`)
+                this.data.cell_number||=10
                 const request = {
-                    cell:JSON.stringify({cell_sector:'',cell_number:this.data.cell_number})
+                    cell:JSON.stringify(this.data)
                 }
                 this.data.cell_id=await $.post('stockLayoutCellCreate',request)
-                location.replace("#stock_cell_edit.html#cell_id="+this.data.cell_id)
-                this.load()
+                if( this.data.cell_id>0 ){
+                    location.replace("#stock_cell_edit.html#cell_id="+this.data.cell_id)
+                    this.load()
+                }
             },
             async update( field, value ){
-                if( !this.data.cell_id ){
+                this.data[field]=value
+                if( !(this.data.cell_id>0) ){
                     await this.create()
+                    return
                 }
                 try{
-                    this.data[field]=value
                     const request = {
                         cell:JSON.stringify(this.data)
                     }

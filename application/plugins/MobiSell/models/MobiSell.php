@@ -487,7 +487,15 @@ class MobiSell extends PluginManager {
         if( isset($cell->cell_sector) && isset($cell->cell_level) && empty($cell->cell_number) ){//look what next number is
             $cell->cell_number=$this->stockLayoutCellNumberGet($cell->cell_sector,$cell->cell_level);
         }
-        return $this->create('plugin_stock_layout_cells',$cell);
+        $update=[];
+        $allowed_fields=['cell_realm','cell_sector','cell_level','cell_number','cell_height','cell_width','cell_depth','cell_comment'];
+        foreach($cell as $field=>$value){
+            if( !in_array($field,$allowed_fields) ){
+                continue;
+            }
+            $update[$field]=$cell->{$field};
+        }
+        return $this->create('plugin_stock_layout_cells',$update);
     }
 
     public function stockLayoutCellUpdate( object $cell ){
