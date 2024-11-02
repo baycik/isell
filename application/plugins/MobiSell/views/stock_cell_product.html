@@ -104,10 +104,11 @@
 
                 this.render()
                 await App.stock_cell_product.stored.load()
+                await App.stock_cell_product.incoming.load();
             },
             async cellUnlink( cell_id, cell_name ){
                 const product_id=this.data.product_id
-                App.confirm(`Открепить ячейку ${cell_name} от этого товара?`).done(async ()=>{
+                App.confirm(`Открепить ячейку "${cell_name}" от этого товара?`).done(async ()=>{
                     const request={
                         cell_id,
                         product_id:this.data.product_id
@@ -120,16 +121,28 @@
             cellLink(){
                 location.hash=`#stock_cell_move.html#product_id=${this.data.product_id}&dst_cell_id=0`
             }
-        }
+        },
+        incoming:{
+            data:{},
+            async load(){
+                try{
+                    const request = {
+                        product_id:App.stock_cell_product.product.data.product_id
+                    }
+                    this.data=await $.post('stockLayoutCellIncomingsGet',request)
+                    this.render()
+                } catch{/** */}
+            },
+            render(){
+                App.renderTpl('stock_cell_product_incoming',this.data)
+            },
+        },
     }
     Mark.pipes.level_color = function (num) {
-        return num<0.1?'gray':num<0.7?'green':num<1?'yellow':'red'
+        return num<0.3?'gray':num<0.7?'green':num<1?'yellow':'red'
     };
     Mark.pipes.level_value = function (num) {
-        if(!num){
-            num=1
-        }
-        return Math.round(num*100)
+        return Math.round(num*100) || 0
     };
 </script>
 <style>
@@ -154,6 +167,10 @@
         <div class="ui segment covert" id="stock_cell_product_props">
             <h2>Товар</h2>
             <div class="ui labeled icon mini menu">
+                <a class="item" href="#stock_cell_list.html">
+                    <i class="grey home icon"></i>
+                    Главная
+                </a>
 
                 <a class="right item" onclick="history.back()">
                     <i class="grey close icon"></i>
@@ -196,8 +213,8 @@
                     </div>
                     <div></div>
                     <div style="text-align:right">
-                        <button class="ui icon button" onclick="App.stock_cell_product.product.cellUnlink('{{cell_id}}','{{cell_sector|blank>}} {{cell_level|blank>}}-{{cell_number|blank>}}')">
-                            <i class="trash alternative icon"></i>    
+                        <button class="ui icon button" onclick="App.stock_cell_product.product.cellUnlink('{{cell_id}}',':{{cell_sector|blank>}}-{{cell_level|blank>}}-{{cell_number|blank>}}')">
+                            <i class="unlink icon"></i>  
                         </button>
                     </div>
                 </div>
@@ -209,8 +226,25 @@
                 </div>
             {{/if}}
             <div class="inline">
-                <button class="ui fluid icon tertiary button" onclick="App.stock_cell_product.product.cellLink()"><i class="plus icon"></i> Добавить ячейку</button>
+                <button class="ui fluid icon tertiary button" onclick="App.stock_cell_product.product.cellLink()"><i class="linkify icon"></i> Добавить ячейку</button>
             </div>
         </div>        
+    </section>
+    <section id="stock_cell_product_incoming" class="covert">
+        {{if products}}
+        <div class="ui segment" >
+            <h3 style="color:#999">Ожидаемые поступления</h3>
+            {{products}}
+            <div class="ui grid">
+                <div class="ten wide column" style="color: #999;font-size: 0.8em;">
+                        #<b>{{product_code}}</b> {{product_name}}
+                </div>
+                <div class="six wide column">
+                    {{product_quantity}}{{product_unit}}
+                </div>
+            </div>
+            {{/products}}
+        </div>
+        {{/if}}
     </section>
 </div>

@@ -14,7 +14,7 @@ CREATE TABLE `plugin_stock_layout_cells` (
   `is_valid` tinyint GENERATED ALWAYS AS (((`cell_sector` is not null) and (`cell_level` is not null) and (`cell_number` is not null) and (`cell_volume` is not null))) VIRTUAL,
   PRIMARY KEY (`cell_id`),
   UNIQUE KEY `psc_uq` (`cell_sector`,`cell_level`,`cell_number`,`cell_realm`) /*!80000 INVISIBLE */
-) ENGINE=InnoDB AUTO_INCREMENT=40 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=40 DEFAULT CHARSET=utf8mb4;
 
 
 CREATE TABLE `plugin_stock_layout_links` (
@@ -30,4 +30,4 @@ CREATE TABLE `plugin_stock_layout_links` (
   KEY `psc_pid_idx` (`product_id`),
   CONSTRAINT `psc_cid` FOREIGN KEY (`cell_id`) REFERENCES `plugin_stock_layout_cells` (`cell_id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `psc_pid` FOREIGN KEY (`product_id`) REFERENCES `prod_list` (`product_id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=70 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=70 DEFAULT CHARSET=utf8mb4;

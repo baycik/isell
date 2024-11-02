@@ -143,13 +143,11 @@
             }
         }
     }
-
-
     Mark.pipes.level_color = function (num) {
-        return num<0.1?'gray':num<0.7?'green':num<1?'yellow':'red'
+        return num<0.3?'gray':num<0.7?'green':num<1?'yellow':'red'
     };
     Mark.pipes.level_value = function (num) {
-        return Math.round(num*100)
+        return Math.round(num*100) || 0
     };
 </script>
 <style>
@@ -193,7 +191,7 @@
                 <div style="margin-bottom: 15px;">
                     <div class="ui black large fluid label" style="text-transform: uppercase;" onclick="App.stock_cell_list.entries.search(':')">
                         <i class="{{global_fullness|level_color}} square icon"></i>
-                        ВЕСЬ СКЛАД <div class="ui label">{{global_fullness|level_value}}%</div>
+                        Все ячейки {{if global_fullness}}<div class="ui label">{{global_fullness|level_value}}%</div>{{/if}}
                     </div>
                 </div>
                 <div style="display: grid;grid-template-columns: repeat(auto-fill, 130px);gap:10px">
@@ -208,6 +206,12 @@
                 </div>
             {{else}}
             {{if cells}}
+                <div style="margin-bottom: 15px;">
+                    <div class="ui large fluid label" onclick="App.stock_cell_list.entries.search('');$('#stock_cell_list_search').blur()">
+                        <i class="arrow left icon"></i>
+                        карта
+                    </div>
+                </div>
                 <div style="display: grid;grid-template-columns: 120px 2fr 1fr;">
                     {{cells}}
                     <div style="display: contents;cursor: pointer;" onclick="App.stock_cell_list.entries.open('{{cell_id}}')">
@@ -237,6 +241,12 @@
                     <button class="ui fluid icon tertiary button" onclick="App.stock_cell_list.entries.load()">загрузить ещё</button>
                 </div>
             {{else}}
+                <div style="margin-bottom: 15px;">
+                    <div class="ui black large fluid label" style="text-transform: uppercase;" onclick="App.stock_cell_list.entries.search(':')">
+                        <i class="{{global_fullness|level_color}} square icon"></i>
+                        Все ячейки {{if global_fullness}}<div class="ui label">{{global_fullness|level_value}}%</div>{{/if}}
+                    </div>
+                </div>
                 <div class="ui warning message">
                     <p>Не найдено</p>
                 </div>

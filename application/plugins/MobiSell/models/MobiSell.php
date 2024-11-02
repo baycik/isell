@@ -483,7 +483,7 @@ class MobiSell extends PluginManager {
     }
 
     public function stockLayoutCellCreate( object $cell ){
-        $cell->cell_level??=1;
+        $cell->cell_level=$cell->cell_level??1;
         if( isset($cell->cell_sector) && isset($cell->cell_level) && empty($cell->cell_number) ){//look what next number is
             $cell->cell_number=$this->stockLayoutCellNumberGet($cell->cell_sector,$cell->cell_level);
         }
@@ -500,7 +500,9 @@ class MobiSell extends PluginManager {
             $update[$field]=$cell->{$field};
         }
         $result=$this->update('plugin_stock_layout_cells',$update,['cell_id'=>$cell->cell_id]);
-        $this->stockLayoutCellRecalculate($cell->cell_id);
+        if( isset($update['cell_width']) || isset($update['cell_height']) || isset($update['cell_depth']) ){
+            $this->stockLayoutCellRecalculate($cell->cell_id);
+        }
         return $result;
     }
 
@@ -646,17 +648,24 @@ class MobiSell extends PluginManager {
         ];
     }
 
-    public function stockLayoutCellIncomingsGet( int $cell_id ){
+    public function stockLayoutCellIncomingsGet( int $cell_id=null, int $product_id=null ){
         $this->db->select('product_id,product_code,ru product_name,SUM(product_quantity) product_quantity,product_unit');
         $this->db->from('plugin_stock_layout_links');
         $this->db->join('prod_list','product_id');
         $this->db->join('document_entries','product_code');
         $this->db->join('document_list','doc_id');
         $this->db->join('document_status_list','doc_status_id');
-        $this->db->where('cell_id',$cell_id);
         $this->db->where('status_code','reserved');
         $this->db->where('doc_type','2');
         $this->db->group_by('product_id');
+        if($cell_id){
+            $this->db->where('cell_id',$cell_id);
+        } else 
+        if($product_id){
+            $this->db->where('product_id',$product_id);
+        } else {
+            return 0;
+        }
 
         $product_list=$this->db->get();
         if( !$product_list ){
@@ -716,7 +725,6 @@ class MobiSell extends PluginManager {
             return 'noid';
         }
         
-
         $product=$this->db->get();
 
         if( !$product ){
@@ -781,14 +789,37 @@ class MobiSell extends PluginManager {
             'cell_id'=>$dst_cell_id
         ];
         $result=$this->create('plugin_stock_layout_links',$cell_product);
-        $this->stockLayoutCellRecalculate($dst_cell_id);
+
+        $cell_product_ids=$this->stockLayoutCellRecalculate($dst_cell_id);
+        $this->stockLayoutProductRecalculate( $cell_product_ids );
+
         return $result;
     }
 
     public function stockLayoutUnlink( int $product_id, int $cell_id ){
         $result=$this->db->delete('plugin_stock_layout_links',['cell_id'=>$cell_id,'product_id'=>$product_id]);
-        $this->stockLayoutCellRecalculate($cell_id);
+
+        $cell_product_ids=$this->stockLayoutCellRecalculate($cell_id);
+        $cell_product_ids[]=$product_id;
+        $this->stockLayoutProductRecalculate( $cell_product_ids );
+
         return $result;
+    }
+
+    public function stockLayoutProductRecalculate( array $product_ids ){
+        $this->db->select("product_id,product_code,SUM(sub_cell_volume) allocated_volume");
+        $this->db->select("GROUP_CONCAT(CONCAT(':',cell_sector,'-',cell_level,'-',cell_number) ORDER BY `cell_sector`,`cell_level`,`cell_number` SEPARATOR ', ') product_sector ");
+        $this->db->from('plugin_stock_layout_links');
+        $this->db->join('plugin_stock_layout_cells','cell_id');
+        $this->db->join('prod_list','product_id');
+        $this->db->where_in('product_id',$product_ids);
+        $this->db->group_by('product_id');
+        $product_infos=$this->db->get()->result();
+
+        foreach($product_infos as $info){
+            $this->db->update('plugin_stock_layout_links',['allocated_volume'=>$info->allocated_volume],['product_id'=>$info->product_id]);
+            $this->db->update('stock_entries',['product_sector'=>$info->product_sector],['product_code'=>$info->product_code]);
+        }
     }
 
     public function stockLayoutCellRecalculate( int $cell_id ){
@@ -799,15 +830,7 @@ class MobiSell extends PluginManager {
         $cell_info=$this->db->get()->row();
 
         $this->db->update('plugin_stock_layout_links',['sub_cell_volume'=>$cell_info->sub_cell_volume],['cell_id'=>$cell_id]);
-
-        $this->db->select("product_id,SUM(sub_cell_volume) allocated_volume");
-        $this->db->from('plugin_stock_layout_links');
-        $this->db->where_in('product_id',explode(',',$cell_info->product_ids));
-        $product_infos=$this->db->get()->result();
-
-        foreach($product_infos as $info){
-            $this->db->update('plugin_stock_layout_links',['allocated_volume'=>$info->allocated_volume],['product_id'=>$info->product_id]);
-        }
+        return explode(',',$cell_info->product_ids);
     }
 
 

@@ -188,13 +188,10 @@
         }
     }
     Mark.pipes.level_color = function (num) {
-        return num<0.1?'gray':num<0.7?'green':num<1?'yellow':'red'
+        return num<0.3?'gray':num<0.7?'green':num<1?'yellow':'red'
     };
     Mark.pipes.level_value = function (num) {
-        if(!num){
-            num=0
-        }
-        return Math.round(num*100)
+        return Math.round(num*100) || 0
     };
 </script>
 <style>
@@ -293,7 +290,7 @@
                         </div>
                         <div class="three wide column">
                             <button class="ui icon button" onclick="App.stock_cell_view.stored.productUnlink('{{product_id}}','{{product_name}}')">
-                                <i class="trash icon"></i>    
+                                <i class="unlink icon"></i>    
                             </button>
                         </div>
                     </div>
@@ -307,7 +304,7 @@
             </div>
 
             <div class="inline">
-                <button class="ui fluid icon tertiary button" onclick="App.stock_cell_view.stored.productLink()"><i class="plus icon"></i> Добавить товар</button>
+                <button class="ui fluid icon tertiary button" onclick="App.stock_cell_view.stored.productLink()"><i class="linkify icon"></i> Добавить товар</button>
             </div>
 
         </div>
