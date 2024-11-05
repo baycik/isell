@@ -2,8 +2,8 @@ CREATE TABLE `plugin_stock_layout_cells` (
   `cell_id` int NOT NULL AUTO_INCREMENT,
   `cell_realm` varchar(45) DEFAULT ' ',
   `cell_sector` varchar(45) DEFAULT NULL,
-  `cell_level` varchar(45) DEFAULT NULL,
-  `cell_number` varchar(45) DEFAULT NULL,
+  `cell_level` int DEFAULT NULL,
+  `cell_number` int DEFAULT NULL,
   `cell_width` int DEFAULT NULL,
   `cell_height` int DEFAULT NULL,
   `cell_depth` int DEFAULT NULL,
@@ -14,7 +14,7 @@ CREATE TABLE `plugin_stock_layout_cells` (
   `is_valid` tinyint GENERATED ALWAYS AS (((`cell_sector` is not null) and (`cell_level` is not null) and (`cell_number` is not null) and (`cell_volume` is not null))) VIRTUAL,
   PRIMARY KEY (`cell_id`),
   UNIQUE KEY `psc_uq` (`cell_sector`,`cell_level`,`cell_number`,`cell_realm`) /*!80000 INVISIBLE */
-) ENGINE=InnoDB AUTO_INCREMENT=40 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 
 CREATE TABLE `plugin_stock_layout_links` (

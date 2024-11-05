@@ -1,21 +1,22 @@
 <script>
     App.home = {
-	init: function () {
+	async init() {
 	    this.focus();
-            App.user.getData();
-            setTimeout(App.home.initSettings,1000);
+		App.user.getData();
+		setTimeout(App.home.initSettings,1000);
 	},
 	focus: function () {
 	    App.title("Главная");
 	},
-        initSettings:function(){
-            var device_has_numeric_keypad=localStorage.getItem('device_has_numeric_keypad')==='true'?1:0;
-            $('input[name=device_has_numeric_keypad]').prop('checked', device_has_numeric_keypad);
-            
-            var disable_document_create_notification=localStorage.getItem('disable_document_create_notification')==='true'?1:0;
-            $('input[name=disable_document_create_notification]').prop('checked', disable_document_create_notification);
-            $("#home_version_date").html(new Date(document.lastModified).toLocaleDateString());
-        }
+	initSettings:function(){
+		var device_has_numeric_keypad=localStorage.getItem('device_has_numeric_keypad')==='true'?1:0;
+		$('input[name=device_has_numeric_keypad]').prop('checked', device_has_numeric_keypad);
+		
+		var disable_document_create_notification=localStorage.getItem('disable_document_create_notification')==='true'?1:0;
+		$('input[name=disable_document_create_notification]').prop('checked', disable_document_create_notification);
+		$("#home_version_date").html(new Date(document.lastModified).toLocaleDateString());
+		$('#user_info .ui.accordion').accordion();
+	}
     };
 </script>
 <div style="text-align: center; margin-top: 15px">
@@ -37,74 +38,76 @@
     </div>
     {{/if}}
     <div>
-	<div class="ui vertical menu fluid">
-	    <a href="#stock.html" class="item">
-			<i class="cube icon"></i>
-			Каталог товаров
-	    </a>
-	    <a href="#document.html" class="item">
-			<i class="file outline icon"></i>
-			Создать документ
-	    </a>
-	    <a href="#document_list.html" class="item">
-			<i class="list layout icon"></i>
-			Список Документов
-	    </a>
-	    <a href="#company_list.html" class="item">
-			<i class="users icon"></i>
-			Список Клиентов
-	    </a>
-		<a href="#payments.html" class="item">
-			<i class="exchange icon"></i>
-			Взаиморасчет
-	    </a>
-		{{if user_level|more>1}}
-		<a href="#checkout_document_list.html" class="item">
-			<i class="clipboard check icon"></i>
-			Учет склада
-		</a>
-		<a href="#stock_cell_list.html" class="item">
-			<i class="sitemap icon"></i>
-			Карта склада
-		</a>
-		{{/if}}
-	</div>
-	<div class="ui vertical menu fluid">
-	    <div class="item">
-		<i class="settings icon"></i>
-		Настройки
-		<div class="ui secondary vertical menu fluid">
-		    <a href="javascript:App.clearCache()" class="item">
-			<i class="refresh icon"></i>
-			Сбросить настройки
-		    </a>
-		    <a href="mailto:bay@nilson.ua?subject=MobiSell Поддержка&body=Добрый день, есть замечания к программе" class="inverted item">
-			<i class="question circle icon"></i>
-			Задать вопрос разработчику
-		    </a>
-		    <a href="javascript:App.user.signInPopup()" class="inverted item">
-			<i class="sign in icon"></i>
-			Вход
-		    </a>
-		    <a href="javascript:App.user.signOut()" class="inverted item">
-			<i class="sign out icon"></i>
-			Выход
-		    </a>
-                    <div class="inverted item">
-                        <div class="ui slider checkbox device_has_numeric_keypad">
-                            <input name="device_has_numeric_keypad" class="" type="checkbox" onchange="localStorage.setItem('device_has_numeric_keypad',$(this).is(':checked'));">
-                            <label>Использовать цифровую клавиатуру</label>
-                        </div>
-                    </div>
-                    <div class="inverted item">
-                        <div class="ui slider checkbox disable_document_create_notification">
-                            <input name="disable_document_create_notification" class="" type="checkbox" onchange="localStorage.setItem('disable_document_create_notification',$(this).is(':checked'));">
-                            <label>Не уведомлять офис о создании документа</label>
-                        </div>
-                    </div>
+		<div class="ui vertical menu fluid">
+			<a href="#stock.html" class="item">
+				<i class="cube icon"></i>
+				Каталог товаров
+			</a>
+			<a href="#document.html" class="item">
+				<i class="file outline icon"></i>
+				Создать документ
+			</a>
+			<a href="#document_list.html" class="item">
+				<i class="list layout icon"></i>
+				Список Документов
+			</a>
+			<a href="#company_list.html" class="item">
+				<i class="users icon"></i>
+				Список Клиентов
+			</a>
+			<a href="#payments.html" class="item">
+				<i class="exchange icon"></i>
+				Взаиморасчет
+			</a>
+			{{if user_level|more>1}}
+			<a href="#checkout_document_list.html" class="item">
+				<i class="clipboard check icon"></i>
+				Учет склада
+			</a>
+			<a href="#stock_cell_list.html" class="item">
+				<i class="sitemap icon"></i>
+				Карта склада
+			</a>
+			{{/if}}
 		</div>
-	    </div>
-	</div>
+		<div class="ui styled accordion" style="margin-top: 60px;">
+			<div class="title">
+				<i class="settings icon"></i>
+				Настройки
+			</div>
+			<div class="content">
+				<div class="ui secondary vertical menu fluid">
+					<a href="javascript:App.clearCache()" class="item">
+					<i class="refresh icon"></i>
+					Сбросить настройки
+					</a>
+					<a href="mailto:bay@nilson.ua?subject=MobiSell Поддержка&body=Добрый день, есть замечания к программе" class="inverted item">
+					<i class="question circle icon"></i>
+					Задать вопрос разработчику
+					</a>
+					<a href="javascript:App.user.signInPopup()" class="inverted item">
+					<i class="sign in icon"></i>
+					Вход
+					</a>
+					<a href="javascript:App.user.signOut()" class="inverted item">
+					<i class="sign out icon"></i>
+					Выход
+					</a>
+							<div class="inverted item">
+								<div class="ui slider checkbox device_has_numeric_keypad">
+									<input name="device_has_numeric_keypad" class="" type="checkbox" onchange="localStorage.setItem('device_has_numeric_keypad',$(this).is(':checked'));">
+									<label>Использовать цифровую клавиатуру</label>
+								</div>
+							</div>
+							<div class="inverted item">
+								<div class="ui slider checkbox disable_document_create_notification">
+									<input name="disable_document_create_notification" class="" type="checkbox" onchange="localStorage.setItem('disable_document_create_notification',$(this).is(':checked'));">
+									<label>Не уведомлять офис о создании документа</label>
+								</div>
+							</div>
+				</div>
+			</div>
+		</div>
     </div>
 </div>
 

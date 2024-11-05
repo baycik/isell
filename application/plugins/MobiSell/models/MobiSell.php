@@ -459,12 +459,21 @@ class MobiSell extends PluginManager {
     public function stockLayoutCellGet( int $cell_id ){
         $this->Hub->set_level(2);
         $this->db->select("plugin_stock_layout_cells.*");
-        $this->db->select("ROUND(SUM(product_volume*product_quantity/allocated_volume*cell_volume),2) used_volume");
-        $this->db->select("ROUND(SUM(product_volume*product_quantity/allocated_volume),2) cell_fullness");
+        $this->db->select("ROUND(SUM((product_volume*product_quantity/allocated_volume*sub_cell_volume)),2) used_volume");
+        $this->db->from('plugin_stock_layout_cells');
         $this->db->join('plugin_stock_layout_links','cell_id','left');
         $this->db->join('prod_list','product_id','left');
         $this->db->join('stock_entries','product_code','left');
-        return $this->get('plugin_stock_layout_cells',['cell_id'=>$cell_id]);
+        $this->db->where('cell_id',$cell_id);
+        $this->db->group_by('cell_id');
+
+        $result=$this->db->get();
+        if(!$result){
+            return false;
+        }
+        $cell=$result->row();
+        $cell->cell_fullness=$cell->used_volume/$cell->cell_volume;
+        return $cell;
     }
 
     private function stockLayoutCellNumberGet( string $cell_sector, int $cell_level ){
@@ -523,7 +532,6 @@ class MobiSell extends PluginManager {
         $this->db->delete('plugin_stock_layout_links',['cell_id'=>$cell_id]);
         return $ok;
     }
-
 
     public function stockLayoutMapGet( int $count_incoming=0, string $orderby=null ){
         $this->Hub->set_level(2);
@@ -599,7 +607,7 @@ class MobiSell extends PluginManager {
         if( $filter->offset??0 ){
             $this->db->offset($filter->offset);
         }
-        $this->db->select("plugin_stock_layout_cells.*");
+        $this->db->select('cell_id,cell_sector,cell_level,cell_number,is_valid');
         $this->db->select("GROUP_CONCAT(SUBSTRING(ru, 1, 15) SEPARATOR '..., ') stored_prods");
         $this->db->from('plugin_stock_layout_cells');
         $this->db->join('plugin_stock_layout_links','cell_id','left');
@@ -631,10 +639,10 @@ class MobiSell extends PluginManager {
                 );
             ";
             $this->db->query($reserved_quantity_sql);
-            $this->db->select("SUM((product_quantity+IFNULL(incoming_quantity,0))*product_volume/allocated_volume) cell_fullness");
+            $this->db->select("SUM( (product_quantity+IFNULL(incoming_quantity,0))*product_volume/allocated_volume*sub_cell_volume)/cell_volume cell_fullness");
             $this->db->join('tmp_reserved','product_code','left');
         } else {
-            $this->db->select("SUM(product_volume*product_quantity/allocated_volume) cell_fullness");
+            $this->db->select("SUM(product_volume*product_quantity/allocated_volume*sub_cell_volume)/cell_volume cell_fullness");
         }
 
         $cell_list=$this->db->get();

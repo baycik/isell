@@ -223,8 +223,7 @@
             <h2>Складская ячейка</h2>
             <div class="ui labeled icon mini menu">
                 <a class="item" href="#stock_cell_list.html">
-                    <i class="grey home icon"></i>
-                    Главная
+                    <i class="sitemap grey icon"></i> Карта
                 </a>
                 <a class="item" onclick="App.stock_cell_view.cell.copy()">
                     <i class="grey copy outline icon"></i>
@@ -248,7 +247,7 @@
                 <div class="two column row">
                     <div class="column" style="color:#999">
                         {{cell_width|blank>?}}х{{cell_height|blank>?}}х{{cell_depth|blank>?}}см<br>
-                        заполнено <b>{{used_volume|blank>0}}</b>/<b>{{cell_volume|blank>0}}м³</b>
+                        заполнено <b>{{used_volume|blank>0}}</b>/<b>{{cell_volume|blank>0|format}}м³</b>
                     </div>
                     <div class="column">
                         <div class="ui large {{cell_fullness|level_color}} progress" data-percent="{{cell_fullness|level_value}}">
