@@ -21,7 +21,7 @@ $search[]=<<<EOT
 CHK_ENTRY(doc_entry_id) AS row_status,
 EOT;
 $replace[]=<<<EOT
-PLUGIN_CHK_ANALOG(CHK_ENTRY(doc_entry_id),doc_type,product_id,product_quantity,analyse_class,doc_settings->>'$.analogskip') AS row_status,
+PLUGIN_CHK_ANALOG(CHK_ENTRY(doc_entry_id),doc_type,product_id,product_quantity,analyse_class,JSON_UNQUOTE(JSON_EXTRACT(doc_settings, '$.analogskip'))) AS row_status,
 EOT;
 $before[]=<<<EOT
 EOT;
@@ -35,7 +35,7 @@ $search[]=<<<EOT
 CHK_ENTRY(doc_entry_id) AS row_status
 EOT;
 $replace[]=<<<EOT
-PLUGIN_CHK_ANALOG(CHK_ENTRY(doc_entry_id),doc_type,product_id,product_quantity,analyse_class,doc_settings->>'$.analogskip') AS row_status
+PLUGIN_CHK_ANALOG(CHK_ENTRY(doc_entry_id),doc_type,product_id,product_quantity,analyse_class, JSON_UNQUOTE(JSON_EXTRACT(doc_settings, '$.analogskip')) ) AS row_status
 EOT;
 $before[]=<<<EOT
 EOT;
@@ -49,7 +49,7 @@ $search[]=<<<EOT
 CHK_ENTRY(de.doc_entry_id) AS row_status
 EOT;
 $replace[]=<<<'EOT'
-PLUGIN_CHK_ANALOG(CHK_ENTRY(de.doc_entry_id),".$this->doc('doc_type').",product_id,product_quantity,analyse_class,doc_settings->>'$.analogskip') AS row_status
+PLUGIN_CHK_ANALOG(CHK_ENTRY(de.doc_entry_id),".$this->doc('doc_type').",product_id,product_quantity,analyse_class,JSON_UNQUOTE(JSON_EXTRACT(doc_settings, '$.analogskip'))) AS row_status
 EOT;
 $before[]=<<<EOT
 EOT;
@@ -110,14 +110,14 @@ $filename[]=<<<EOT
 plugins/MobiSell/views/document.html
 EOT;
 $search[]=<<<EOT
-	    handleClick: function (row_node) {
-		var index = $(row_node).data('row-index');
-		var entry = App.document.doc.entries[index];
+		row: {
 EOT;
 $replace[]=<<<EOT
 EOT;
 $before[]=<<<EOT
-        
+EOT;
+$after[]=<<<EOT
+
             swap:function(node){
                 $('#document_entry_analog_dialog').modal('hide');
                 var product_id=$(node).data('product_id');
@@ -132,22 +132,16 @@ $before[]=<<<EOT
                 });
             },
 EOT;
-$after[]=<<<EOT
-EOT;
 
 $filename[]=<<<EOT
 plugins/MobiSell/views/document.html
 EOT;
 $search[]=<<<EOT
-	    handleClick: function (row_node) {
-		var index = $(row_node).data('row-index');
-		var entry = App.document.doc.entries[index];
+				App.document.row.edit(entry, index);
 EOT;
 $replace[]=<<<EOT
 EOT;
 $before[]=<<<EOT
-EOT;
-$after[]=<<<EOT
                 if(event.target && event.target.outerHTML.indexOf('icon undo')>-1 ){
                     event.stopPropagation();
                     $('#document_entry_analog_dialog').modal().modal('show');
@@ -160,6 +154,8 @@ $after[]=<<<EOT
                     });
                     return;
                 }
+EOT;
+$after[]=<<<EOT
 EOT;
 
 $filename[]=<<<EOT
@@ -250,7 +246,7 @@ $filename[]=<<<EOT
 plugins/MobiSell/views/stock.html
 EOT;
 $search[]=<<<EOT
-<div class="product-name-column">
+                        <div class="product-name-column">
 EOT;
 $replace[]=<<<EOT
 EOT;
