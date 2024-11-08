@@ -21,7 +21,7 @@ $search[]=<<<EOT
 CHK_ENTRY(doc_entry_id) AS row_status,
 EOT;
 $replace[]=<<<EOT
-PLUGIN_CHK_ANALOG(CHK_ENTRY(doc_entry_id),doc_type,product_id,product_quantity,analyse_class) AS row_status,
+PLUGIN_CHK_ANALOG(CHK_ENTRY(doc_entry_id),doc_type,product_id,product_quantity,analyse_class,doc_settings->>'$.analogskip') AS row_status,
 EOT;
 $before[]=<<<EOT
 EOT;
@@ -35,7 +35,21 @@ $search[]=<<<EOT
 CHK_ENTRY(doc_entry_id) AS row_status
 EOT;
 $replace[]=<<<EOT
-PLUGIN_CHK_ANALOG(CHK_ENTRY(doc_entry_id),doc_type,product_id,product_quantity,analyse_class) AS row_status
+PLUGIN_CHK_ANALOG(CHK_ENTRY(doc_entry_id),doc_type,product_id,product_quantity,analyse_class,doc_settings->>'$.analogskip') AS row_status
+EOT;
+$before[]=<<<EOT
+EOT;
+$after[]=<<<EOT
+EOT;
+
+$filename[]=<<<EOT
+models/proc/Document.php
+EOT;
+$search[]=<<<EOT
+CHK_ENTRY(de.doc_entry_id) AS row_status
+EOT;
+$replace[]=<<<'EOT'
+PLUGIN_CHK_ANALOG(CHK_ENTRY(de.doc_entry_id),".$this->doc('doc_type').",product_id,product_quantity,analyse_class,doc_settings->>'$.analogskip') AS row_status
 EOT;
 $before[]=<<<EOT
 EOT;
@@ -66,7 +80,7 @@ $filename[]=<<<EOT
 plugins/MobiSell/views/document.html
 EOT;
 $search[]=<<<EOT
-if ( status == 'wrn' ) {
+if (status == 'wrn') {
 EOT;
 $replace[]=<<<EOT
 EOT;
@@ -75,6 +89,7 @@ $before[]=<<<EOT
 			    App.document.doc.entries[i].status_icon = "undo";
 			    App.document.doc.entries[i].status_color = "red";
 			    App.document.doc.entries[i].status_message = 'Есть аналог; '+(message.split(';')[1]||'');
+                App.document.doc.has_error=1
 			} else 
                         if ( status.indexOf('ok_analog')>-1 ) {
 			    App.document.doc.entries[i].status_icon = "undo";
@@ -201,6 +216,9 @@ $before[]=<<<EOT
                             <b>{{product_code}}</b> {{product_name}} 
                             {{if analyse_class|equals>C}}
                             <i class="icon star"></i>
+                            {{/if}}
+                            {{if analyse_class|equals>D}}
+                            <i class="red  fire icon"></i>
                             {{/if}}
                         </td>
                         <td>

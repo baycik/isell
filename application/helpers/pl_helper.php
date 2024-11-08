@@ -1,7 +1,11 @@
 <?php
 
 function pl( $data ){
-    log_message('error', json_encode($data,JSON_UNESCAPED_UNICODE & JSON_PRETTY_PRINT & JSON_UNESCAPED_SLASHES));
+    if( is_array($data) || is_object($data) ){
+        log_message('error', json_encode($data,JSON_UNESCAPED_UNICODE & JSON_PRETTY_PRINT & JSON_UNESCAPED_SLASHES));
+    } else {
+        log_message('error', $data);
+    }
 }
 
 function ql( $context ){

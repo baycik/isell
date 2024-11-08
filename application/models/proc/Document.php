@@ -1117,7 +1117,7 @@ class Document extends Data {
             CHK_ENTRY(de.doc_entry_id) AS row_status,
             '',
             party_label";
-	$sql['table'] = "document_entries de JOIN prod_list pl USING(product_code)";
+	$sql['table'] = "document_entries de JOIN prod_list pl USING(product_code) JOIN document_list dl USING(doc_id)";
 	$sql['where'] = "doc_id='$doc_id'";
 	return $sql;
     }

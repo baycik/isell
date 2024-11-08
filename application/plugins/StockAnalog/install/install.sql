@@ -6,9 +6,12 @@ CREATE TABLE `plugin_analog_list` (
   UNIQUE KEY `product_id` (`product_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
+DROP function IF EXISTS `PLUGIN_CHK_ANALOG`;
 
 DELIMITER $$
-CREATE DEFINER=`root`@`localhost` FUNCTION `PLUGIN_CHK_ANALOG`( _row_status VARCHAR(100) CHARSET utf8, _doc_type INT, _product_id INT, _product_quantity FLOAT, _analyse_class CHAR ) RETURNS varchar(255) CHARSET utf8
+CREATE DEFINER=`root`@`localhost` FUNCTION `PLUGIN_CHK_ANALOG`( _row_status VARCHAR(100) CHARSET utf8, _doc_type INT, _product_id INT, _product_quantity FLOAT, _analyse_class CHAR, _analog_skip VARCHAR(100) ) RETURNS varchar(255) CHARSET utf8
+    READS SQL DATA
+    DETERMINISTIC
 BEGIN
 DECLARE _status_severity VARCHAR(3);
 DECLARE _status_msg VARCHAR(100) CHARSET utf8;
@@ -16,6 +19,11 @@ DECLARE _analog_code VARCHAR(100) CHARSET utf8;
 DECLARE _analog_name VARCHAR(100) CHARSET utf8;
 DECLARE _analog_priority BOOL;
 DECLARE _analog_quantity VARCHAR(10) CHARSET utf8;
+DECLARE _analog_class VARCHAR(1);
+
+IF FIND_IN_SET(_product_id,_analog_skip) THEN
+	RETURN _row_status;
+END IF;
 
 CASE
 	WHEN _doc_type=1 THEN
@@ -32,12 +40,14 @@ SELECT
 	product_code,
 	ru,
 	_analyse_class<analyse_class,
-    CONCAT(se.product_quantity,pl.product_unit)
+    CONCAT(se.product_quantity,pl.product_unit),
+	analyse_class
 INTO
 	_analog_code,
 	_analog_name,
 	_analog_priority,
-    _analog_quantity
+    _analog_quantity,
+	_analog_class
 FROM 
 	plugin_analog_list pal1
 		JOIN
@@ -49,7 +59,7 @@ FROM
 WHERE 
 	pal1.product_id=_product_id
 	AND pal2.product_id<>_product_id
-	AND se.product_quantity>=_product_quantity
+	AND _product_quantity>0
 ORDER BY analyse_class DESC
 LIMIT 1;
 		
@@ -57,6 +67,9 @@ CASE
 	WHEN _analog_code IS NOT NULL AND _doc_type=1 THEN
 		IF _status_severity='ok' AND _analog_priority THEN
 			SET _status_severity='wrn';
+		END IF;
+		IF _analog_class='D' THEN
+			SET _status_severity='err';
 		END IF;
 		RETURN CONCAT(_status_severity,"_analog"," Найден ",IF(_analog_priority,"приоритетный ",""),"аналог: ",_analog_code," ",_analog_name,"; ",_status_msg);
 	WHEN _analog_code AND _doc_type=2 THEN
@@ -67,6 +80,5 @@ CASE
 	ELSE
 		RETURN _row_status;
 END CASE;
-
 END$$
 DELIMITER ;

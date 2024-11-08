@@ -61,7 +61,11 @@
                         <td>{{product_code}} {{product_name}}                                        
                             {{if analyse_class|equals>C}}
                             <i class="icon star"></i>
-                            {{/if}}</td>
+                            {{/if}}
+                            {{if analyse_class|equals>D}}
+                            <i class="red  fire icon"></i>
+                            {{/if}}
+                        </td>
                         <td>{{product_quantity}}</td>
                         <td>{{product_price}}</td>
                     </tr>

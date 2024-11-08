@@ -1,1007 +1,1045 @@
 <script>
-    App.document = {
-	doc: {
-            doc_id:0
-        },
-	init: function () {
-	    App.document.initTab();
-	    App.document.head.init();
-	    App.document.focus();
-	    App.document.suggestion.init();
-            App.Topic('hashChange').subscribe(function (state,module) {
-                App.document.load(App.state.doc_id);
-            });
-	},
-	focus: function () {
-            App.title("Документ");
-	},
-	load: function (doc_id) {
-	    if (!doc_id) {
-		$("#document_container").hide();
-		$("#document_create_dialog").show();
-		App.document.create();
-		return false;
-	    }
-            if( App.document.doc.doc_id==doc_id ){
-                return ;
-            }
-            App.document.doc.doc_id=doc_id*1;
-	    $("#document_container").show();
-	    $("#document_create_dialog").hide();
-	    App.flash('Документ: загрузка...');
-	    $.post("documentGet/", {doc_id: doc_id}, function (resp) {
-		App.document.set(App.json(resp));
-		App.flash('Документ: ОК');
-	    });
-	},
-	set: function (doc) {
-	    App.document.doc = doc;
-	    App.document.render();
-            App.user.setActiveCompany({company_id:doc.head.active_company_id,label:doc.head.active_company_label});
-            App.user.setPassiveCompany({company_id:doc.head.passive_company_id,label:doc.head.label});
-	},
-	render: function () {
-	    App.document.row.parseStatus();
-	    App.renderTpl('document_entries', App.document.doc);
-	    App.document.head.set(App.document.doc.head);
-	},
-	createModalInit: function () {
-	    $('.pcomp_id').dropdown({
-		apiSettings: {
-		    url: 'compListFetch/'
+	App.document = {
+		doc: {
+			doc_id: 0
 		},
-		fields: {
-		    value: 'company_id',
-		    name: 'label',
-		    text: 'label'
+		init: function () {
+			App.document.initTab();
+			App.document.head.init();
+			App.document.focus();
+			App.document.suggestion.init();
+			App.Topic('hashChange').subscribe(function (state, module) {
+				App.document.load(App.state.doc_id);
+			});
 		},
-		filterRemoteData: true,
-		fullTextSearch: true,
-                saveRemoteData:false
-	    });
-	    $('.acomp_id').dropdown({
-		apiSettings: {
-		    url: 'compListFetch/?mode=active_only'
+		focus: function () {
+			App.title("Документ");
 		},
-		fields: {
-		    value: 'company_id',
-		    name: 'label',
-		    text: 'label'
-		},
-		filterRemoteData: true,
-		fullTextSearch: true
-	    });
-	    $('#document_create_dialog_frm').form({
-		fields: {
-		    doc_type: 'empty',
-		    acomp_id: 'empty',
-		    pcomp_id: 'empty'
-		},
-		onSuccess: function () {
-		    var fvalue = $('#document_create_dialog_frm').form('get values');
-                    if( App.stock && App.stock.cart.list.length ){
-                        fvalue.entries=JSON.stringify(App.stock.cart.list);
-                        App.stock.cart.list=[];
-                        App.stock.cart.store();
-                    }
-		    $.post("documentCreate/", fvalue, function (resp) {
-			var new_doc_id = resp * 1;
-			if (new_doc_id) {
-			    location.hash = "#" + App.url_file + "#doc_id=" + new_doc_id;
-                            if( !localStorage.getItem('disable_document_create_notification') ){
-                                App.document.notify_created();
-                            }
+		load: function (doc_id) {
+			if (!doc_id) {
+				$("#document_container").hide();
+				$("#document_create_dialog").show();
+				App.document.create();
+				return false;
 			}
-		    });
-		}
-	    });
-	},
-	create: function () {
-	    App.document.createModalInit();
-	    $('.pcomp_id')
-		    .dropdown("set text", App.user.pcomp.label)
-		    .dropdown('set value', App.user.pcomp.company_id);
-	    $('.acomp_id')
-		    .dropdown("set text", App.user.acomp.label)
-		    .dropdown('set value', App.user.acomp.company_id);
-	    $(".doc_type")
-		    .dropdown("set selected", 1);
-	    //$("#document_create_dialog").show();
-	},
-        notify_created:function(){
-            App.flash("Отправляется...");
-            setTimeout(function(){
-                $.post("notify_pending/",{message:App.document.doc.head.doc_data}).done(function(){
-                    App.flash("Сообщение отправлено!");
-                });
-            },1000);
-        },
-	initTab: function () {
-	    $('.menu .item').tab({
-		onVisible: function (type) {
-		    if (type === 'prefs') {
-			App.document.discount.init();
-		    } else if (type === 'blanks'){
-                        App.document.blanks.init();
-                    }
-		}
-	    });
-	    $('.menu .item').tab('change tab', 'entries');
-	},
-	head: {
-	    suppressUpdate: false,
-	    init: function () {
-		$('.activecomp').dropdown({
-		    apiSettings: {
-			url: 'compListFetch/?mode=active_only'
-		    },
-		    fields: {
-			value: 'company_id',
-			name: 'label',
-			text: 'label'
-		    },
-		    filterRemoteData: true,
-		    fullTextSearch: true,
-		    onChange: function (value, text, $choice) {
-			App.document.head.update('active_company_id', value);
-		    }
-		});
-		$('.passivecomp').dropdown({
-		    apiSettings: {
-			url: 'compListFetch/'
-		    },
-		    fields: {
-			value: 'company_id',
-			name: 'label',
-			text: 'label'
-		    },
-		    filterRemoteData: true,
-		    fullTextSearch: true,
-		    onChange: function (value, text, $choice) {
-			App.document.head.update('passive_company_id', value);
-		    }
-		});
-		$('.doc_num').on('change', function () {
-		    App.document.head.update('doc_num', $(this).val());
-		});
-		$('.doc_data').on('change', function () {
-		    App.document.head.update('doc_data', $(this).val());
-		});
-		$('.is_commited').checkbox({
-		    onChecked: function () {
-			App.document.head.update('is_commited', 1);
-		    },
-		    onUnchecked: function () {
-			App.document.head.update('is_commited', 0);
-		    }
-		});
-		$('.is_event_created').checkbox({
-		    onChecked: function () {
-			App.document.head.update('is_event_created', 1);
-		    },
-		    onUnchecked: function () {
-			App.document.head.update('is_event_created', 0);
-		    }
-		});
+			if (App.document.doc.doc_id == doc_id) {
+				return;
+			}
+			App.document.doc.doc_id = doc_id * 1;
+			$("#document_container").show();
+			$("#document_create_dialog").hide();
+			App.flash('Документ: загрузка...');
+			$.post("documentGet/", { doc_id: doc_id }, function (resp) {
+				App.document.set(App.json(resp));
+				App.flash('Документ: ОК');
+			});
+		},
+		set: function (doc) {
+			App.document.doc = doc;
+			App.document.render();
+			App.user.setActiveCompany({ company_id: doc.head.active_company_id, label: doc.head.active_company_label });
+			App.user.setPassiveCompany({ company_id: doc.head.passive_company_id, label: doc.head.label });
+		},
+		render: function () {
+			App.document.row.parseStatus();
+			App.renderTpl('document_entries', App.document.doc);
+			App.document.head.set(App.document.doc.head);
+		},
+		createModalInit: function () {
+			$('.pcomp_id').dropdown({
+				apiSettings: {
+					url: 'compListFetch/'
+				},
+				fields: {
+					value: 'company_id',
+					name: 'label',
+					text: 'label'
+				},
+				filterRemoteData: true,
+				fullTextSearch: true,
+				saveRemoteData: false
+			});
+			$('.acomp_id').dropdown({
+				apiSettings: {
+					url: 'compListFetch/?mode=active_only'
+				},
+				fields: {
+					value: 'company_id',
+					name: 'label',
+					text: 'label'
+				},
+				filterRemoteData: true,
+				fullTextSearch: true
+			});
+			$('#document_create_dialog_frm').form({
+				fields: {
+					doc_type: 'empty',
+					acomp_id: 'empty',
+					pcomp_id: 'empty'
+				},
+				onSuccess: function () {
+					var fvalue = $('#document_create_dialog_frm').form('get values');
+					if (App.stock && App.stock.cart.list.length) {
+						fvalue.entries = JSON.stringify(App.stock.cart.list);
+						App.stock.cart.list = [];
+						App.stock.cart.store();
+					}
+					$.post("documentCreate/", fvalue, function (resp) {
+						var new_doc_id = resp * 1;
+						if (new_doc_id) {
+							location.hash = "#" + App.url_file + "#doc_id=" + new_doc_id;
+							if (!localStorage.getItem('disable_document_create_notification')) {
+								App.document.notify_created();
+							}
+						}
+					});
+				}
+			});
+		},
+		create: function () {
+			App.document.createModalInit();
+			$('.pcomp_id')
+				.dropdown("set text", App.user.pcomp.label)
+				.dropdown('set value', App.user.pcomp.company_id);
+			$('.acomp_id')
+				.dropdown("set text", App.user.acomp.label)
+				.dropdown('set value', App.user.acomp.company_id);
+			$(".doc_type")
+				.dropdown("set selected", 1);
+			//$("#document_create_dialog").show();
+		},
+		notify_created: function () {
+			App.flash("Отправляется...");
+			setTimeout(function () {
+				$.post("notify_pending/", { message: App.document.doc.head.doc_data }).done(function () {
+					App.flash("Сообщение отправлено!");
+				});
+			}, 1000);
+		},
+		initTab: function () {
+			$('.menu .item').tab({
+				onVisible: function (type) {
+					if (type === 'prefs') {
+						App.document.discount.init();
+					} else if (type === 'blanks') {
+						App.document.blanks.init();
+					}
+				}
+			});
+			$('.menu .item').tab('change tab', 'entries');
+		},
+		head: {
+			suppressUpdate: false,
+			init: function () {
+				$('.activecomp').dropdown({
+					apiSettings: {
+						url: 'compListFetch/?mode=active_only'
+					},
+					fields: {
+						value: 'company_id',
+						name: 'label',
+						text: 'label'
+					},
+					filterRemoteData: true,
+					fullTextSearch: true,
+					onChange: function (value, text, $choice) {
+						App.document.head.update('active_company_id', value);
+					}
+				});
+				$('.passivecomp').dropdown({
+					apiSettings: {
+						url: 'compListFetch/'
+					},
+					fields: {
+						value: 'company_id',
+						name: 'label',
+						text: 'label'
+					},
+					filterRemoteData: true,
+					fullTextSearch: true,
+					onChange: function (value, text, $choice) {
+						App.document.head.update('passive_company_id', value);
+					}
+				});
+				$('.doc_num').on('change', function () {
+					App.document.head.update('doc_num', $(this).val());
+				});
+				$('.doc_data').on('change', function () {
+					App.document.head.update('doc_data', $(this).val());
+				});
+				$('.is_commited').checkbox({
+					onChecked: function () {
+						App.document.head.update('is_commited', 1);
+					},
+					onUnchecked: function () {
+						App.document.head.update('is_commited', 0);
+					}
+				});
+				$('.is_event_created').checkbox({
+					onChecked: function () {
+						App.document.head.update('is_event_created', 1);
+					},
+					onUnchecked: function () {
+						App.document.head.update('is_event_created', 0);
+					}
+				});
 
-		$('.doc_date').change(function(){
-                    var date_iso=$(this).val();
-                    console.log(date_iso);
-                    //App.document.head.update('doc_date', date);
-                });
-	    },
-	    set: function (head) {
-                App.document.head.suppressUpdate = true;
-                App.renderTpl('document_header', head);
-                $('.activecomp').dropdown('set value', head.active_company_id);
-                $('.activecomp').dropdown('set text', head.active_company_label);
-                $('.passivecomp').dropdown('set value', head.passive_company_id);
-                $('.passivecomp').dropdown('set text', head.label);
-                $('.doc_num').val(head.doc_num);
-                $('.doc_data').val(head.doc_data);
-                $('.is_commited').checkbox("set " + (head.is_commited > 0 ? "checked" : "unchecked"));
-                $('.is_event_created').checkbox("set " + (head.is_event_created > 0 ? "checked" : "unchecked"));
-                $('.doc_date').val(App.toIso(head.doc_date));
-                App.document.head.suppressUpdate = false;
-                App.renderTpl('document_checkout_button', {checkout_id: App.document.doc.head.checkout_id});
-                App.document.head.switchView(head);
-	    },
-	    switchView: function (head) {
-		var hilight = (Math.abs(head.doc_type) === 1) ? 'green' : 'purple';
-		if (head.is_commited * 1) {
-		    $("#document_header_segment").addClass(hilight);
-		    $("#document_header_form").addClass(hilight);
-		    $('.activecomp').addClass('disabled');
-		    $('.passivecomp').addClass('disabled');
-		    $('#document_delete_button').addClass('disabled');
-		} else {
-		    $("#document_header_segment").removeClass(hilight);
-		    $("#document_header_form").removeClass(hilight);
-		    $('.activecomp').removeClass('disabled');
-		    $('.passivecomp').removeClass('disabled');
-		    $('#document_delete_button').removeClass('disabled');
-		}
-	    },
-	    update: function (field, value) {
-		if (App.document.head.suppressUpdate) {
-		    return;
-		}
-		App.flash('Документ: сохранение...');
-		App.document.doc.head[field] = value;
-		return $.post("documentHeadUpdate/", {doc_id: App.document.doc.head.doc_id, field: field, value: value}, function (resp) {
-		    var doc = App.json(resp);
-		    if(doc){
-			App.document.set(doc);
-			App.flash('Документ: сохранен');
-		    }
-		});
-	    },
-	    remove: function () {
-		if (confirm("Удалить документ?")) {
-		    App.document.head.update('is_commited', 0).done(function(){
-			alert("Документ удален");
-			location.hash = '#home.html';
-		    });
-		}
-	    }
-	},
-        blanks:{
-            init: function (){
-                App.document.blanks.load();
-            },
-            load: function (){
-                if( App.document.doc.head ){
-                    $.post('../DocumentView/viewListFetch/'+App.document.doc.head.doc_id, function (xhr) {
-                        App.document.doc.views = App.json(xhr);
-                        App.renderTpl('document_blanks',{blanks:App.document.doc.views});
-                        console.log(App.document.doc.views);
-                        /*Doc.view.views = Doc.view.compile(App.json(xhr));
-                        App.renderTpl('Doc_view_tile',{views:Doc.view.views});*/
-                    });
-                }
-            },
-            create:function(view_type_id){
-                $.post("../DocumentView/viewCreate/",{view_type_id:view_type_id},function(doc_view_id){
-                    if( doc_view_id*1 ){
-                        App.document.blanks.open(doc_view_id);
-                        App.document.blanks.load();
-                    } else {
-                        App.flash ('Невозможно создать');
-                    }
-                });
-            },
-            open: function (doc_view_id){
-                if (App.document.blanks.popup){
-                    App.document.blanks.popup.close();  
-                   
-                }
-                App.document.blanks.popup = window.open("../DocumentView/documentViewGet/?out_type=.print&doc_view_id="+doc_view_id*1, '_blank');
-            }
-        },
-        discount:{
-            init:function(){
-                $("#document_discounts").change(function(e){
-                    var $input=$(e.target);
-                    var discount_id=$input.parent().parent().data('discount_id');
-                    var title=$input.attr('title');
-                    var field=$input.attr('name');
-                    var raw_value=$input.val();
-                    var value=raw_value;
-                    
-                    if( field!=='analyse_brand' ){
-                        var value=parseFloat(raw_value);
-                    }
-                    if( field==='minus' ){
-                        field='discount';
-                        value=1-value/100;
-                        $("div[data-discount_id="+discount_id+"]").find("input[name=plus]").val('');
-                    }
-                    if( field==='plus' ){
-                        field='discount';
-                        value=1+value/100;
-                        $("div[data-discount_id="+discount_id+"]").find("input[name=minus]").val('');
-                    }
-                    
-                    function doupdate(){
-                        App.document.discount.update(discount_id,field,value,title).then(function(){
-                            if(raw_value!==value){
-                                App.document.discount.load();
-                            }
-                        });
-                    }
-                    if(discount_id){
-                        doupdate();
-                    } else {
-                        var branch_id=$input.parent().parent().data('branch_id');
-                        var analyse_brand=$input.parent().parent().find('input[name=analyse_brand]').val();
-                        var row_title=$input.parent().parent().attr('title');
-                        App.document.discount.create(branch_id,analyse_brand,row_title).then(function(resp){
-                            discount_id=resp;
-                            doupdate();
-                        });
-                    }
-                });
-                $("#document_discounts").click(function(e){
-                    var $button=$(e.target);
-                    var action=$button.data('action');
-                    if( action === 'delete' ){
-                        var discount_id=$button.parent().parent().data('discount_id');
-                        App.document.discount.delete(discount_id);
-                    }
-                    if( action==='create_cat' ){
-                        App.loadWindow('page/stock/tree').progress(function(status,branch){
-                            if(status==='select'){
-                                App.document.discount.create(branch.branch_id,null,branch.label).then(App.document.load);
-                            }
-                        });
-                    }
-                    if( action==='create_brand' ){
-                        var brand=prompt("Введите название бренда товаров со скидкой");
-                        if(brand===null){
-                            return;
-                        }
-                        App.document.discount.create(null,brand,brand).then(App.document.load);
-                    }
-                });
-                App.document.discount.load();
-            },
-            load: function () {
-		App.flash('Скидки: загрузка...');
-		$.get('./documentDiscountsGet', {passive_company_id: App.document.doc.head.passive_company_id}, function (resp) {
-		    var prefs = App.json(resp);
-		    if (prefs && prefs.discount_cat) {
-                        
-			App.document.discount.render(prefs);
-			App.flash('Скидки: ОК');
-                    }
-                });
-            },
-            create:function(branch_id,analyse_brand,title){
-                if( branch_id===0 ){
-                    branch_id=null; 
-                }
-                return $.post('../Company/discountCreate',{branch_id:branch_id,analyse_brand:analyse_brand},function(ok){
-                    if( ok*1 ){
-                        App.flash("Создано новое правило на: "+title);
-                    }
-                });
-            },
-            update:function(discount_id,field,value,title){
-                return $.post( '../Company/discountUpdate',{discount_id:discount_id,field:field,value:value}, function(ok){
-                    if( ok*1 ){
-                        App.flash("Сохранено: "+title);
-                    } else {
-                        App.document.load();
-                    }
-                });
-            },
-            delete:function(discount_id){
-                if(!discount_id){
-                    return true;
-                }
-                return $.post('../Company/discountDelete',{discount_id:discount_id},function(ok){
-                    if(ok*1){
-                        App.flash('Правило удалено');
-                    }
-                    App.document.load();
-                });
-            },
-            render:function(data){
-                for(let discount of data.discount_cat){
-                    discount.path=discount.path.replace(/^[\/]|[\/]$/g,'');
-                }
-                if(data.discount_cat[0] && data.discount_cat[0].branch_id!=0){
-                    data.discount_cat.unshift({
-                        discount_id:0,
-                        branch_id:0,
-                        analyse_brand:'',
-                        round_to:'',
-                        plus:'',
-                        minus:'',
-                        path:''
-                    });
-                }
-                App.renderTpl("document_discounts",data);
-            }
-        },
-	row: {
-	    add: function (suggest_entry) {
-		suggest_entry.product_quantity = suggest_entry.product_spack;
-		App.document.row.edit(suggest_entry, null);
-	    },
-	    edit: function (entry, index) {
-                entry.user_level=App.user.props.user_level;
-		App.renderTpl('document_entry_dialog', entry);
-		$('#document_entry_dialog').modal({
-		    onDeny: function () {
-			App.document.row.remove(index);
-		    },
-		    onApprove: function () {
-			entry.product_quantity = $("#document_entry_dialog input[name=product_quantity]").val();
-			entry.product_price = $("#document_entry_dialog input[name=product_price]").val();
-			App.document.row.save(entry, index);
-		    },
-		    onVisible: function () {
-                        $("#document_entry_dialog input").select();
-                        $('.ui.accordion').accordion({
-                            onVisible:function(){
-                                $('#document_entry_dialog').modal('refresh');
-                            }
-                        });
-		    }
-		}).modal('show');
-		//$("#document_entry_dialog input[name=product_quantity]").val(entry.product_quantity);
-	    },
-	    save: function (entry, index) {
-		if (index === null) {//new entry
-		    var merged = App.document.row.merge_if_code_exists(entry);
-		    entry = merged.entry;
-		    index = merged.index;
-		}
-		App.document.row.save_on_server(entry);
-		entry.product_sum_total = (entry.product_quantity * entry.product_price_total).toFixed(2);
-		App.document.doc.entries[index] = entry;
-		App.document.row.sort();
-		App.document.render();
-	    },
-	    save_on_server: function (entry) {
-		var params = {
-		    doc_id: App.document.doc.head.doc_id,
-		    doc_entry_id: entry.doc_entry_id,
-		    product_code: entry.product_code,
-		    product_quantity: entry.product_quantity,
-                    product_price:0
-		};
-                if( entry.product_price ){
-                    params.product_price=entry.product_price;
-                }
-		$.post('documentEntryUpdate/', params, function (resp) {
-		    App.document.set(App.json(resp));
-		});
-	    },
-	    merge_if_code_exists: function (entry_to_merge) {
-		for (var index in App.document.doc.entries) {
-		    var entry = App.document.doc.entries[index];
-		    if (entry.product_code === entry_to_merge.product_code) {
-			entry.product_quantity = entry.product_quantity * 1 + entry_to_merge.product_quantity * 1;
-			return {entry: entry, index: index};
-		    }
-		}
-		App.document.doc.entries.push(entry_to_merge);
-		var index = App.document.doc.entries.length - 1;
-		return {entry: entry_to_merge, index: index};
-	    },
-	    remove: function (index) {
-		var removed = App.document.doc.entries.splice(index, 1);
-		if (removed && removed[0].doc_entry_id) {
-		    App.document.row.remove_on_server(removed[0].doc_entry_id);
-		}
-		App.document.render();
-	    },
-	    remove_on_server: function (doc_entry_id) {
-		var params = {
-		    doc_id: App.document.doc.head.doc_id,
-		    doc_entry_id: doc_entry_id
-		};
-		$.post('documentEntryRemove/', params, function (resp) {
-		    App.document.set(App.json(resp));
-		});
-	    },
-	    sort: function () {
-		function compare(a, b) {
-		    if (a.product_code < b.product_code)
-			return -1;
-		    if (a.product_code > b.product_code)
-			return 1;
-		    return 0;
-		}
-		App.document.doc.entries.sort(compare);
-	    },
-	    handleClick: function (row_node) {
-		var index = $(row_node).data('row-index');
-		var entry = App.document.doc.entries[index];
-		App.document.row.edit(entry, index);
-	    },
-	    parseStatus: function () {
-		for (var i in App.document.doc.entries) {
-		    if (App.document.doc.entries[i].row_status) {
-			var status_chunks = App.document.doc.entries[i].row_status.split(" ");
-			var status = status_chunks.shift();
-			var message = status_chunks.join(" ");
-			if (status == 'ok' || status == 'info' || App.user.props.user_level<2) {
-			    App.document.doc.entries[i].status_icon = "check";
-			    App.document.doc.entries[i].status_color = "green";
-			    App.document.doc.entries[i].status_message = "";
-			} else
-                        if ( status == 'wrn' ) {
-			    App.document.doc.entries[i].status_icon = "warning sign";
-			    App.document.doc.entries[i].status_color = "orange";
-			    App.document.doc.entries[i].status_message = message;
-			} else
-			if ( status == 'err' ) {
-			    App.document.doc.entries[i].status_icon = "warning circle";
-			    App.document.doc.entries[i].status_color = "red";
-			    App.document.doc.entries[i].status_message = message;
-			} else
-                        if ( status.indexOf('awaiting')>-1 ) {
-			    App.document.doc.entries[i].status_icon = "clock outline";
-			    App.document.doc.entries[i].status_color = "orange";
-			    App.document.doc.entries[i].status_message = message;
-			} else 
-                        if ( status.indexOf('reserve')>-1 ) {
-			    App.document.doc.entries[i].status_icon = "box";
-			    App.document.doc.entries[i].status_color = "red";
-			    App.document.doc.entries[i].status_message = message;
-			} else
-			if ( status.indexOf('breakeven')>-1 ) {
-			    App.document.doc.entries[i].status_icon = "arrow alternate circle down outline";
-			    App.document.doc.entries[i].status_color = "red";
-			    App.document.doc.entries[i].status_message = message;
+				$('.doc_date').change(function () {
+					var date_iso = $(this).val();
+					console.log(date_iso);
+					//App.document.head.update('doc_date', date);
+				});
+			},
+			set: function (head) {
+				App.document.head.suppressUpdate = true;
+				App.renderTpl('document_header', head);
+				$('.activecomp').dropdown('set value', head.active_company_id);
+				$('.activecomp').dropdown('set text', head.active_company_label);
+				$('.passivecomp').dropdown('set value', head.passive_company_id);
+				$('.passivecomp').dropdown('set text', head.label);
+				$('.doc_num').val(head.doc_num);
+				$('.doc_data').val(head.doc_data);
+				$('.is_commited').checkbox("set " + (head.is_commited > 0 ? "checked" : "unchecked"));
+				$('.is_event_created').checkbox("set " + (head.is_event_created > 0 ? "checked" : "unchecked"));
+				$('.doc_date').val(App.toIso(head.doc_date));
+				App.document.head.suppressUpdate = false;
+				App.renderTpl('document_checkout_button', { checkout_id: App.document.doc.head.checkout_id });
+				App.document.head.switchView(head);
+			},
+			switchView: function (head) {
+				var hilight = (Math.abs(head.doc_type) === 1) ? 'green' : 'purple';
+				if (head.is_commited * 1) {
+					$("#document_header_segment").addClass(hilight);
+					$("#document_header_form").addClass(hilight);
+					$('.activecomp').addClass('disabled');
+					$('.passivecomp').addClass('disabled');
+					$('#document_delete_button').addClass('disabled');
+				} else {
+					$("#document_header_segment").removeClass(hilight);
+					$("#document_header_form").removeClass(hilight);
+					$('.activecomp').removeClass('disabled');
+					$('.passivecomp').removeClass('disabled');
+					$('#document_delete_button').removeClass('disabled');
+				}
+			},
+			update: function (field, value) {
+				if (App.document.head.suppressUpdate) {
+					return;
+				}
+				App.flash('Документ: сохранение...');
+				App.document.doc.head[field] = value;
+				return $.post("documentHeadUpdate/", { doc_id: App.document.doc.head.doc_id, field: field, value: value }, function (resp) {
+					var doc = App.json(resp);
+					if (doc) {
+						App.document.set(doc);
+						App.flash('Документ: сохранен');
+					}
+				});
+			},
+			remove: function () {
+				if (confirm("Удалить документ?")) {
+					App.document.head.update('is_commited', 0).done(function () {
+						alert("Документ удален");
+						location.hash = '#home.html';
+					});
+				}
 			}
-		    }
-		}
-	    }
-	},
-	suggestion: {
-	    q: '',
-	    entries: [],
-	    init: function () {
-		App.renderTpl('doc_suggestion_entries', {entries: []});
-		$("#doc_suggestion").accordion({
-		    onOpen: function () {
-			App.document.suggestion.search("");
-		    }
-		});
-		$("#doc_suggestion input").on('keyup', function () {
-		    App.document.suggestion.search($("#doc_suggestion input").val());
-		});
-	    },
-	    search: function (q) {
-		clearTimeout(this.clock);
-		this.clock = setTimeout(function () {
-		    App.document.suggestion.q = q;
-		    App.document.suggestion.entries = [];
-		    App.document.suggestion.load();
-		}, 200);
-	    },
-	    load: function () {
-		App.flash('Подсказки: загрузка...');
-		var offset = App.document.suggestion.entries.length || 0;
-		$.post('../DocumentItems/suggestFetch', {offset: offset, q: App.document.suggestion.q, doc_id: App.document.doc.head.doc_id}, function (resp) {
-		    var suggestion = App.json(resp);
-		    App.document.suggestion.entries = App.document.suggestion.entries.concat(suggestion);
-		    App.document.suggestion.render();
-		    if (suggestion && suggestion.length > 0) {
-			$("#load_suggestions_button").show();
-		    } else {
-			$("#load_suggestions_button").hide();
-		    }
-		    App.flash('Подсказки: ОК');
-		});
-	    },
-	    clear:function(){
-		$("#doc_suggestion input").val('');
-		App.document.suggestion.search('');
-	    },
-	    render: function () {
-		App.renderTpl('doc_suggestion_entries', {entries: App.document.suggestion.entries});
-	    },
-	    handleClick: function (row_node) {
-		var index = $(row_node).data('row-index');
-		var suggest_entry = App.document.suggestion.entries[index];
-		App.document.row.add(suggest_entry);
-	    }
-	},
-        go_to_checkout: function(){
-            if(App.document.doc.head){
-                location.hash = '#checkout_document.html#checkout_id=' + App.document.doc.head.checkout_id;
-            } else {
-                this.create_checkout();  
-            }
-        },
-        create_checkout:function(){
-                if(confirm("Создать список проверки?")){
-                    var params = {
-                        parent_doc_id: App.document.doc.head.doc_id,
-                        checkout_name: (App.document.doc.head.label + " Док. №" + App.document.doc.head.doc_num)
-                    };
-                    $.post("../Checkout/checkoutDocumentCreate", params, function(resp){
-                        App.flash('Создано!');
-                        location.hash = '#checkout_document.html#checkout_id='+resp;
-                    });
-                }
-        },
-    };
-    $(App.document.init);
+		},
+		blanks: {
+			init: function () {
+				App.document.blanks.load();
+			},
+			load: function () {
+				if (App.document.doc.head) {
+					$.post('../DocumentView/viewListFetch/' + App.document.doc.head.doc_id, function (xhr) {
+						App.document.doc.views = App.json(xhr);
+						App.renderTpl('document_blanks', { blanks: App.document.doc.views });
+						console.log(App.document.doc.views);
+						/*Doc.view.views = Doc.view.compile(App.json(xhr));
+						App.renderTpl('Doc_view_tile',{views:Doc.view.views});*/
+					});
+				}
+			},
+			create: function (view_type_id) {
+				$.post("../DocumentView/viewCreate/", { view_type_id: view_type_id }, function (doc_view_id) {
+					if (doc_view_id * 1) {
+						App.document.blanks.open(doc_view_id);
+						App.document.blanks.load();
+					} else {
+						App.flash('Невозможно создать');
+					}
+				});
+			},
+			open: function (doc_view_id) {
+				if (App.document.blanks.popup) {
+					App.document.blanks.popup.close();
+
+				}
+				App.document.blanks.popup = window.open("../DocumentView/documentViewGet/?out_type=.print&doc_view_id=" + doc_view_id * 1, '_blank');
+			}
+		},
+		discount: {
+			init: function () {
+				$("#document_discounts").change(function (e) {
+					var $input = $(e.target);
+					var discount_id = $input.parent().parent().data('discount_id');
+					var title = $input.attr('title');
+					var field = $input.attr('name');
+					var raw_value = $input.val();
+					var value = raw_value;
+
+					if (field !== 'analyse_brand') {
+						var value = parseFloat(raw_value);
+					}
+					if (field === 'minus') {
+						field = 'discount';
+						value = 1 - value / 100;
+						$("div[data-discount_id=" + discount_id + "]").find("input[name=plus]").val('');
+					}
+					if (field === 'plus') {
+						field = 'discount';
+						value = 1 + value / 100;
+						$("div[data-discount_id=" + discount_id + "]").find("input[name=minus]").val('');
+					}
+
+					function doupdate() {
+						App.document.discount.update(discount_id, field, value, title).then(function () {
+							if (raw_value !== value) {
+								App.document.discount.load();
+							}
+						});
+					}
+					if (discount_id) {
+						doupdate();
+					} else {
+						var branch_id = $input.parent().parent().data('branch_id');
+						var analyse_brand = $input.parent().parent().find('input[name=analyse_brand]').val();
+						var row_title = $input.parent().parent().attr('title');
+						App.document.discount.create(branch_id, analyse_brand, row_title).then(function (resp) {
+							discount_id = resp;
+							doupdate();
+						});
+					}
+				});
+				$("#document_discounts").click(function (e) {
+					var $button = $(e.target);
+					var action = $button.data('action');
+					if (action === 'delete') {
+						var discount_id = $button.parent().parent().data('discount_id');
+						App.document.discount.delete(discount_id);
+					}
+					if (action === 'create_cat') {
+						App.loadWindow('page/stock/tree').progress(function (status, branch) {
+							if (status === 'select') {
+								App.document.discount.create(branch.branch_id, null, branch.label).then(App.document.load);
+							}
+						});
+					}
+					if (action === 'create_brand') {
+						var brand = prompt("Введите название бренда товаров со скидкой");
+						if (brand === null) {
+							return;
+						}
+						App.document.discount.create(null, brand, brand).then(App.document.load);
+					}
+				});
+				App.document.discount.load();
+			},
+			load: function () {
+				App.flash('Скидки: загрузка...');
+				$.get('./documentDiscountsGet', { passive_company_id: App.document.doc.head.passive_company_id }, function (resp) {
+					var prefs = App.json(resp);
+					if (prefs && prefs.discount_cat) {
+
+						App.document.discount.render(prefs);
+						App.flash('Скидки: ОК');
+					}
+				});
+			},
+			create: function (branch_id, analyse_brand, title) {
+				if (branch_id === 0) {
+					branch_id = null;
+				}
+				return $.post('../Company/discountCreate', { branch_id: branch_id, analyse_brand: analyse_brand }, function (ok) {
+					if (ok * 1) {
+						App.flash("Создано новое правило на: " + title);
+					}
+				});
+			},
+			update: function (discount_id, field, value, title) {
+				return $.post('../Company/discountUpdate', { discount_id: discount_id, field: field, value: value }, function (ok) {
+					if (ok * 1) {
+						App.flash("Сохранено: " + title);
+					} else {
+						App.document.load();
+					}
+				});
+			},
+			delete: function (discount_id) {
+				if (!discount_id) {
+					return true;
+				}
+				return $.post('../Company/discountDelete', { discount_id: discount_id }, function (ok) {
+					if (ok * 1) {
+						App.flash('Правило удалено');
+					}
+					App.document.load();
+				});
+			},
+			render: function (data) {
+				for (let discount of data.discount_cat) {
+					discount.path = discount.path.replace(/^[\/]|[\/]$/g, '');
+				}
+				if (data.discount_cat[0] && data.discount_cat[0].branch_id != 0) {
+					data.discount_cat.unshift({
+						discount_id: 0,
+						branch_id: 0,
+						analyse_brand: '',
+						round_to: '',
+						plus: '',
+						minus: '',
+						path: ''
+					});
+				}
+				App.renderTpl("document_discounts", data);
+			}
+		},
+		row: {
+			add: function (suggest_entry) {
+				suggest_entry.product_quantity = suggest_entry.product_spack;
+				App.document.row.edit(suggest_entry, null);
+			},
+			edit: function (entry, index) {
+				entry.user_level = App.user.props.user_level;
+				App.renderTpl('document_entry_dialog', entry);
+				$('#document_entry_dialog').modal({
+					onDeny: function () {
+						App.document.row.remove(index);
+					},
+					onApprove: function () {
+						entry.product_quantity = $("#document_entry_dialog input[name=product_quantity]").val();
+						entry.product_price = $("#document_entry_dialog input[name=product_price]").val();
+						App.document.row.save(entry, index);
+					},
+					onVisible: function () {
+						$("#document_entry_dialog input").select();
+						$('.ui.accordion').accordion({
+							onVisible: function () {
+								$('#document_entry_dialog').modal('refresh');
+							}
+						});
+					}
+				}).modal('show');
+				//$("#document_entry_dialog input[name=product_quantity]").val(entry.product_quantity);
+			},
+			save: function (entry, index) {
+				if (index === null) {//new entry
+					var merged = App.document.row.merge_if_code_exists(entry);
+					entry = merged.entry;
+					index = merged.index;
+				}
+				App.document.row.save_on_server(entry);
+				entry.product_sum_total = (entry.product_quantity * entry.product_price_total).toFixed(2);
+				App.document.doc.entries[index] = entry;
+				App.document.row.sort();
+				App.document.render();
+			},
+			save_on_server: function (entry) {
+				var params = {
+					doc_id: App.document.doc.head.doc_id,
+					doc_entry_id: entry.doc_entry_id,
+					product_code: entry.product_code,
+					product_quantity: entry.product_quantity,
+					product_price: 0
+				};
+				if (entry.product_price) {
+					params.product_price = entry.product_price;
+				}
+				$.post('documentEntryUpdate/', params, function (resp) {
+					App.document.set(App.json(resp));
+				});
+			},
+			merge_if_code_exists: function (entry_to_merge) {
+				for (var index in App.document.doc.entries) {
+					var entry = App.document.doc.entries[index];
+					if (entry.product_code === entry_to_merge.product_code) {
+						entry.product_quantity = entry.product_quantity * 1 + entry_to_merge.product_quantity * 1;
+						return { entry: entry, index: index };
+					}
+				}
+				App.document.doc.entries.push(entry_to_merge);
+				var index = App.document.doc.entries.length - 1;
+				return { entry: entry_to_merge, index: index };
+			},
+			remove: function (index) {
+				var removed = App.document.doc.entries.splice(index, 1);
+				if (removed && removed[0].doc_entry_id) {
+					App.document.row.remove_on_server(removed[0].doc_entry_id);
+				}
+				App.document.render();
+			},
+			remove_on_server: function (doc_entry_id) {
+				var params = {
+					doc_id: App.document.doc.head.doc_id,
+					doc_entry_id: doc_entry_id
+				};
+				$.post('documentEntryRemove/', params, function (resp) {
+					App.document.set(App.json(resp));
+				});
+			},
+			sort: function () {
+				function compare(a, b) {
+					if (a.product_code < b.product_code)
+						return -1;
+					if (a.product_code > b.product_code)
+						return 1;
+					return 0;
+				}
+				App.document.doc.entries.sort(compare);
+			},
+			handleClick: function (row_node) {
+				var index = $(row_node).data('row-index');
+				var entry = App.document.doc.entries[index];
+				App.document.row.edit(entry, index);
+			},
+			parseStatus: function () {
+				for (var i in App.document.doc.entries) {
+					if (App.document.doc.entries[i].row_status) {
+						var status_chunks = App.document.doc.entries[i].row_status.split(" ");
+						var status = status_chunks.shift();
+						var message = status_chunks.join(" ");
+						if (status == 'ok' || status == 'info' || App.user.props.user_level < 2) {
+							App.document.doc.entries[i].status_icon = "check";
+							App.document.doc.entries[i].status_color = "green";
+							App.document.doc.entries[i].status_message = "";
+						} else
+						if (status == 'wrn') {
+							App.document.doc.entries[i].status_icon = "warning sign";
+							App.document.doc.entries[i].status_color = "orange";
+							App.document.doc.entries[i].status_message = message;
+						} else
+						if (status == 'err') {
+							App.document.doc.entries[i].status_icon = "warning circle";
+							App.document.doc.entries[i].status_color = "red";
+							App.document.doc.entries[i].status_message = message;
+							App.document.doc.has_error=1;
+						} else
+						if (status.indexOf('awaiting') > -1) {
+							App.document.doc.entries[i].status_icon = "clock outline";
+							App.document.doc.entries[i].status_color = "orange";
+							App.document.doc.entries[i].status_message = message;
+						} else
+						if (status.indexOf('reserve') > -1) {
+							App.document.doc.entries[i].status_icon = "box";
+							App.document.doc.entries[i].status_color = "red";
+							App.document.doc.entries[i].status_message = message;
+						} else
+						if (status.indexOf('breakeven') > -1) {
+							App.document.doc.entries[i].status_icon = "arrow alternate circle down outline";
+							App.document.doc.entries[i].status_color = "red";
+							App.document.doc.entries[i].status_message = message;
+						}
+					}
+				}
+			}
+		},
+		suggestion: {
+			q: '',
+			entries: [],
+			init: function () {
+				App.renderTpl('doc_suggestion_entries', { entries: [] });
+				$("#doc_suggestion").accordion({
+					onOpen: function () {
+						App.document.suggestion.search("");
+					}
+				});
+				$("#doc_suggestion input").on('keyup', function () {
+					App.document.suggestion.search($("#doc_suggestion input").val());
+				});
+			},
+			search: function (q) {
+				clearTimeout(this.clock);
+				this.clock = setTimeout(function () {
+					App.document.suggestion.q = q;
+					App.document.suggestion.entries = [];
+					App.document.suggestion.load();
+				}, 200);
+			},
+			load: function () {
+				App.flash('Подсказки: загрузка...');
+				var offset = App.document.suggestion.entries.length || 0;
+				$.post('../DocumentItems/suggestFetch', { offset: offset, q: App.document.suggestion.q, doc_id: App.document.doc.head.doc_id }, function (resp) {
+					var suggestion = App.json(resp);
+					App.document.suggestion.entries = App.document.suggestion.entries.concat(suggestion);
+					App.document.suggestion.render();
+					if (suggestion && suggestion.length > 0) {
+						$("#load_suggestions_button").show();
+					} else {
+						$("#load_suggestions_button").hide();
+					}
+					App.flash('Подсказки: ОК');
+				});
+			},
+			clear: function () {
+				$("#doc_suggestion input").val('');
+				App.document.suggestion.search('');
+			},
+			render: function () {
+				App.renderTpl('doc_suggestion_entries', { entries: App.document.suggestion.entries });
+			},
+			handleClick: function (row_node) {
+				var index = $(row_node).data('row-index');
+				var suggest_entry = App.document.suggestion.entries[index];
+				App.document.row.add(suggest_entry);
+			}
+		},
+		go_to_checkout: function () {
+			if (App.document.doc.head) {
+				location.hash = '#checkout_document.html#checkout_id=' + App.document.doc.head.checkout_id;
+			} else {
+				this.create_checkout();
+			}
+		},
+		create_checkout: function () {
+			if (confirm("Создать список проверки?")) {
+				var params = {
+					parent_doc_id: App.document.doc.head.doc_id,
+					checkout_name: (App.document.doc.head.label + " Док. №" + App.document.doc.head.doc_num)
+				};
+				$.post("../Checkout/checkoutDocumentCreate", params, function (resp) {
+					App.flash('Создано!');
+					location.hash = '#checkout_document.html#checkout_id=' + resp;
+				});
+			}
+		},
+	};
+	$(App.document.init);
 </script>
 <style>
-    #document_entries .four.wide.column{
-	text-align: right;
-    }
-    .discount_minus input{
-	width:80px;
-	color: #dfd;
-    }
-    .discount_plus input{
-	width:80px;
-	background-color: #fdd;
-    }
+	#document_entries .four.wide.column {
+		text-align: right;
+	}
+
+	.discount_minus input {
+		width: 80px;
+		color: #dfd;
+	}
+
+	.discount_plus input {
+		width: 80px;
+		background-color: #fdd;
+	}
 </style>
 <div id="document_container">
-    <div id="document_header_segment" class="ui message">
-	<div id="document_header" class="ui attached segment covert">
-	    <div class="header">
-		{{if doc_type|equals>1}}Продажа{{/if}}
-		{{if doc_type|equals>2}}Покупка{{/if}}
-		{{if doc_type|equals>-1}}Возврат от клиента{{/if}}
-		{{if doc_type|equals>-2}}Возврат поставщику{{/if}}
-	    </div>
-            <a href="#company_card.html#company_id={{passive_company_id}}">{{label}}</a> 
-	    {{if doc_type|divisible>2}}<i class="purple icon arrow right"></i>{{else}}<i class="green icon arrow left"></i>{{/if}}
-	    {{active_company_label}}
-	    <b>от</b> {{doc_date}} <b>№</b>{{doc_num}}
+	<div id="document_header_segment" class="ui message">
+		<div id="document_header" class="ui attached segment covert">
+			<div class="header">
+				{{if doc_type|equals>1}}Продажа{{/if}}
+				{{if doc_type|equals>2}}Покупка{{/if}}
+				{{if doc_type|equals>-1}}Возврат от клиента{{/if}}
+				{{if doc_type|equals>-2}}Возврат поставщику{{/if}}
+			</div>
+			<a href="#company_card.html#company_id={{passive_company_id}}">{{label}}</a>
+			{{if doc_type|divisible>2}}<i class="purple icon arrow right"></i>{{else}}<i
+				class="green icon arrow left"></i>{{/if}}
+			{{active_company_label}}
+			<b>от</b> {{doc_date}} <b>№</b>{{doc_num}}
+		</div>
+		<form class="ui form ">
+			<div class="field">
+				<label>Документ проведен</label>
+				<div class="ui slider checkbox is_commited">
+					<input name="is_commited" class="" type="checkbox">
+					<label></label>
+				</div>
+			</div>
+			<div class="field">
+				<label>В списке доставки</label>
+				<div class="ui slider checkbox is_event_created">
+					<input name="is_event_created" class="" type="checkbox">
+					<label></label>
+				</div>
+			</div>
+			<div class="field">
+				<label>Комментарий</label>
+				<textarea class="doc_data" placeholder="Комментарий" rows="1">{{doc_data}}</textarea>
+			</div>
+		</form>
 	</div>
-	<form class="ui form ">
-	    <div class="field">
-		<label>Документ проведен</label>
-		<div class="ui slider checkbox is_commited">
-		    <input name="is_commited" class="" type="checkbox">
-		    <label></label>
-		</div>
-	    </div>
-	    <div class="field">
-		<label>В списке доставки</label>
-		<div class="ui slider checkbox is_event_created">
-		    <input name="is_event_created" class="" type="checkbox">
-		    <label></label>
-		</div>
-	    </div>
-	    <div class="field">
-		<label>Комментарий</label>
-		<textarea class="doc_data" placeholder="Комментарий" rows="1">{{doc_data}}</textarea>
-	    </div>
-	</form>
-    </div>
-    <div class="ui top attached tabular menu">
-	<a class="active item" data-tab="entries">Накладная</a>
-        <a class="item" data-tab="blanks">Печать</a>
-	<a class="item" data-tab="prefs">Настройки</a>
-       
-    </div>
-    <div class="ui bottom attached  tab segment covert" data-tab="entries" id="document_entries">
-	<table class="ui selectable  table  stackable blue">
-	    <thead>
-		<tr>
-		    <th>
-			<div class="ui grid">
-			    <div class="two wide column">№</div>
-			    <div class="fourteen wide column">Название</div>
-			</div>
-		    </th>
-		    <th>
-			<div class="ui grid">
-			    <div class="four wide column">Код</div>
-			    <div class="four wide column">Кол-во</div>
-			    <div class="four wide column">Цена</div>
-			    <div class="four wide column">Сумма</div>
-			</div>
-		    </th>
-		</tr>
-	    </thead>
-	    <tbody>
-		<!-- {{if entries}} {{entries}} -->
-		<tr data-row-index="{{#}}" onclick="App.document.row.handleClick(this)">
-                    <td><span style="color:{{status_color}}"><i class="icon {{status_icon}} {{status_color}}"></i> {{status_message}}</span> {{##}}) {{product_name}}
-		    </td>
-		    <td>
-			<div class="ui grid">
-			    <div class="four wide column">{{product_code}}</div>
-			    <div class="four wide column">{{product_quantity}}{{product_unit}}</div>
-			    <div class="four wide column">{{product_price_total}}</div>
-			    <div class="four wide column">{{product_sum_total}}</div>
-			</div>
-		    </td>
-		</tr>
-		<!-- {{/entries}} {{else}}-->
-		<tr>
-		    <td colspan="4">Документ пуст</td>
-		</tr>
-		<!--{{/if}}-->
-	    </tbody>
-	    <tfoot class="full-width">
-		<tr>
-		    <td>
-			<div class="ui grid">
-			    <div class="eight wide column">{{footer.total_weight|blank>0}}кг </div>
-			    <div class="eight wide column">{{footer.total_volume|blank>0}}м<sup>3</sup></div>
-			</div>
-		    </td>
-		    <td style="text-align: right;">{{footer.total|blank>0}}{{footer.curr_symbol}}</td>
-		</tr>
-	    </tfoot>
-	</table>
-    </div>
-        
-    <div class="ui bottom attached tab segment" data-tab="blanks">
-        <div id="document_blanks" class="ui unstackable two column grid">
-            <!--{{blanks}}-->
-            <div class="eight wide column" >
-                {{if doc_view_id|more>0}}
-                <div class="ui green button fluid" onclick="App.document.blanks.open({{doc_view_id}})" >
-                    <div>{{view_name}} №{{view_num}}</div>
-                    <div>{{view_date}}</div>
-                </div>
-                {{else}}
-                <button class="ui button fluid" onclick="App.document.blanks.create({{view_type_id}})" >
-                    {{view_name}}
-                </button>
-                {{/if}}
-            </div>
-            <!--{{/blanks}}-->
-        </div>
-    </div>
-    
-    <div class="ui bottom attached tab segment" data-tab="prefs">
-	<div class="ui form fluid segment" id="document_header_controls">
-	    <div class="fields">
-		<div class="four wide field">
-		    <label>Дата</label>
-		    <input placeholder="Дата" type="date" class="doc_date">
-		</div>
-		<div class="four wide field">
-		    <label>Номер</label>
-		    <input placeholder="Номер" type="text" class="doc_num">
-		</div>
-		<div class="four wide field">
-		    <label>Клиент</label>
-		    <div class="ui search selection remote dropdown passivecomp">
-			<input name="passivecomp" type="hidden">
-			<i class="dropdown icon"></i>
-			<div class="default text"></div>
-			<div class="menu"></div>
-		    </div>
-		</div>
-		<div class="four wide field">
-		    <label>Наша фирма</label>
-		    <div class="ui search selection remote dropdown activecomp">
-			<input name="activecomp" type="hidden">
-			<i class="dropdown icon"></i>
-			<div class="default text"></div>
-			<div class="menu"></div>
-		    </div>
-		</div>
-	    </div>
+	<div class="ui top attached tabular menu">
+		<a class="active item" data-tab="entries">Накладная</a>
+		<a class="item" data-tab="blanks">Печать</a>
+		<a class="item" data-tab="prefs">Настройки</a>
+
 	</div>
-        <div id="document_checkout_button" class="ui equal width centered grid" style="margin-top:10px; margin-bottom:10px">
-        {{if checkout_id|more>0}}      
-        <a href="#checkout_document.html#checkout_id={{checkout_id}}"><i class="clipboard list icon"></i> Открыть проверку</a>
-        {{/if}}
-        <button id="document_create_checkout_button" class="ui button" onclick="App.document.create_checkout()"><i class="plus icon"></i> Проверить</button> 
-	<button class="ui positive button" onclick="App.document.notify_created();">Уведомить Офис</button>
-	<button id="document_delete_button" class="ui negative button" onclick="App.document.head.remove()">Удалить документ</button>
-        </div>
-        
-        <div><h3>Скидки</h3></div>
-        <div id="document_discounts" class="ui form segment" style="display:grid;grid-template-columns:4fr 1fr 1fr 1fr;gap:10px;">
-                <div><b>Категория</b></div>
-                <div><b>Округлять</b></div>
-                <div><b>Скидка</b></div>
-                <div><b>Наценка</b></div>
-                {{discount_cat}}
-                <div class="discount_row" data-discount_id="{{discount_id}}" data-branch_id="{{branch_id}}" style="display:contents;" title="{{path}}">
-                    <div>
-                        {{if branch_id|more>0}}
-                            {{path}}:
-                        {{else}}
-                        <u title="Действует, когда товар не попадает ни под одно другое правило">Все категории</u>:
-                        {{/if}}
-                    </div> 
-                    <div>
-                        <input type="text" title="Округлять цену до значения, кратного этому числу" value="{{round_to|blank>}}" name="round_to">
-                    </div>
-                    <div>
-                        <input class="ui input" type="text" title="Скидка % {{path}}" value="{{minus}}" name="minus">
-                    </div>
-                    <div>
-                        <input type="text" title="Наценка % {{path}}" value="{{plus}}" name="plus">
-                    </div>
-                </div>
-                {{/discount_cat}}
-                {{if discount_brand}}
-                <div><b>Бренд</b></div>
-                <div><b>Округлять</b></div>
-                <div><b>Скидка</b></div>
-                <div><b>Наценка</b></div>
-                {{/if}}
-                {{discount_brand}}
-                <div class="discount_row" data-discount_id="{{discount_id}}"  style="display:contents;" title="{{path}}">
-                    <div>
-                        <input type="text" title="Бренд" value="{{label}}" name="analyse_brand">
-                    </div> 
-                    <div>
-                        <input type="text" title="Округлять цену до значения, кратного этому числу" value="{{round_to|blank>}}" name="round_to">
-                    </div>
-                    <div>
-                        <input type="text" title="Скидка % {{path}}" value="{{minus}}" name="minus">
-                    </div>
-                    <div>
-                        <input type="text" title="Наценка % {{path}}" value="{{plus}}" name="plus">
-                    </div>
-                </div>
-                {{/discount_brand}}
-            </div>
-    </div>
-
-
-    <div class="ui inverted segment blue">
-	<div class="ui inverted fluid accordion " id="doc_suggestion"> 
-	    <div class="title"><i class="add icon"></i>Добавить товар</div>
-	    <div class="content ">
-		<div class="ui left icon right labeled input fluid" style="margin-bottom: 5px;">
-		    <i class="search icon"></i>
-		    <input placeholder="Поиск по коду или названию" type="text">
-		    <div class="ui basic label" onclick="App.document.suggestion.clear()"><i class="close icon"></i></div>
-		</div>
-		<div class="covert" id="doc_suggestion_entries">
-		    <table class="ui very compact table unstackable">
+	<div class="ui bottom attached  tab segment covert" data-tab="entries" id="document_entries">
+		<table class="ui selectable  table  stackable blue">
+			<thead>
+				<tr>
+					<th>
+						<div class="ui grid">
+							<div class="two wide column">№</div>
+							<div class="fourteen wide column">Название</div>
+						</div>
+					</th>
+					<th>
+						<div class="ui grid">
+							<div class="four wide column">Код</div>
+							<div class="four wide column">Кол-во</div>
+							<div class="four wide column">Цена</div>
+							<div class="four wide column">Сумма</div>
+						</div>
+					</th>
+				</tr>
+			</thead>
 			<tbody>
-			    <!-- {{if entries}} {{entries}} -->
-			    <tr>
-				<td  style="height:50px" data-row-index="{{#}}">
-                                    <a href="#product.html#product_id={{product_id}}">
-				    <img style="width:50px" src="../Storage/image_flush/?size=50x50&path=/dynImg/{{product_img}}">
-                                    </a>
-				</td>
-				<td data-row-index="{{#}}" onclick="App.document.suggestion.handleClick(this)">
-				    <div class="ui grid stackable" style="{{if leftover|less>1}} color:red !important {{/if}}">
-					<div class="eight wide column" style="padding: .5rem !important">{{product_name}} 
-                                        {{if analyse_class|equals>C}}
-                                        <i class="icon star"></i>
-                                        {{/if}}
-                                        </div>
-					<div class="eight wide column" style="padding: .5rem !important">
-					    <div class="ui grid" style="opacity:0.7">
-						<div class="six wide column">{{product_code}}</div>
-						<div class="five wide column right aligned">{{product_price_total}}р</div>
-						<div class="five wide column right aligned">{{leftover}}{{product_unit}}
-                                                    <div>
-                                                        {{if product_reserved|more>0}}
-                                                        <span style="color:red">-{{product_reserved}}</span>
-                                                        {{/if}}
-                                                        {{if product_awaiting|more>0}}
-                                                        <span style="color:green">+{{product_awaiting}}</span>
-                                                        {{/if}}
-                                                    </div>
-                                                </div></div>
-                                        </div>
-				    </div>
-				</td>
-			    </tr>
-			    <!-- {{/entries}} {{else}}-->
-			    <tr>
-				<td colspan="2">Ничего не найдено</td>
-			    </tr>
-			    <!--{{/if}}-->
+				<!-- {{if entries}} {{entries}} -->
+				<tr data-row-index="{{#}}" onclick="App.document.row.handleClick(this)">
+					<td><span style="color:{{status_color}}"><i class="icon {{status_icon}} {{status_color}}"></i>
+							{{status_message}}</span> {{##}}) {{product_name}}
+					</td>
+					<td>
+						<div class="ui grid">
+							<div class="four wide column">{{product_code}}</div>
+							<div class="four wide column">{{product_quantity}}{{product_unit}}</div>
+							<div class="four wide column">{{product_price_total}}</div>
+							<div class="four wide column">{{product_sum_total}}</div>
+						</div>
+					</td>
+				</tr>
+				<!-- {{/entries}} {{else}}-->
+				<tr>
+					<td colspan="4">Документ пуст</td>
+				</tr>
+				<!--{{/if}}-->
+
+
+
 			</tbody>
-		    </table>
-		    <button class="ui button fluid" id="load_suggestions_button" onclick="App.document.suggestion.load();">Показать еще ...</button>
+			<tfoot class="full-width">
+				<tr>
+					<td>
+						<div class="ui grid">
+							<div class="eight wide column">{{footer.total_weight|blank>0}}кг </div>
+							<div class="eight wide column">{{footer.total_volume|blank>0}}м<sup>3</sup></div>
+						</div>
+					</td>
+					<td style="text-align: right;">{{footer.total|blank>0}}{{footer.curr_symbol}}</td>
+				</tr>
+			</tfoot>
+		</table>
+
+		{{if has_error}}
+		<div class="ui negative message">
+			Имеются проблемы в документе
 		</div>
-	    </div>
+		{{/if}}
 	</div>
-    </div>
+
+	<div class="ui bottom attached tab segment" data-tab="blanks">
+		<div id="document_blanks" class="ui unstackable two column grid">
+			<!--{{blanks}}-->
+			<div class="eight wide column">
+				{{if doc_view_id|more>0}}
+				<div class="ui green button fluid" onclick="App.document.blanks.open({{doc_view_id}})">
+					<div>{{view_name}} №{{view_num}}</div>
+					<div>{{view_date}}</div>
+				</div>
+				{{else}}
+				<button class="ui button fluid" onclick="App.document.blanks.create({{view_type_id}})">
+					{{view_name}}
+				</button>
+				{{/if}}
+			</div>
+			<!--{{/blanks}}-->
+		</div>
+	</div>
+
+	<div class="ui bottom attached tab segment" data-tab="prefs">
+		<div class="ui form fluid segment" id="document_header_controls">
+			<div class="fields">
+				<div class="four wide field">
+					<label>Дата</label>
+					<input placeholder="Дата" type="date" class="doc_date">
+				</div>
+				<div class="four wide field">
+					<label>Номер</label>
+					<input placeholder="Номер" type="text" class="doc_num">
+				</div>
+				<div class="four wide field">
+					<label>Клиент</label>
+					<div class="ui search selection remote dropdown passivecomp">
+						<input name="passivecomp" type="hidden">
+						<i class="dropdown icon"></i>
+						<div class="default text"></div>
+						<div class="menu"></div>
+					</div>
+				</div>
+				<div class="four wide field">
+					<label>Наша фирма</label>
+					<div class="ui search selection remote dropdown activecomp">
+						<input name="activecomp" type="hidden">
+						<i class="dropdown icon"></i>
+						<div class="default text"></div>
+						<div class="menu"></div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<div id="document_checkout_button" class="ui equal width centered grid"
+			style="margin-top:10px; margin-bottom:10px">
+			{{if checkout_id|more>0}}
+			<a href="#checkout_document.html#checkout_id={{checkout_id}}"><i class="clipboard list icon"></i> Открыть
+				проверку</a>
+			{{/if}}
+			<button id="document_create_checkout_button" class="ui button" onclick="App.document.create_checkout()"><i
+					class="plus icon"></i> Проверить</button>
+			<button class="ui positive button" onclick="App.document.notify_created();">Уведомить Офис</button>
+			<button id="document_delete_button" class="ui negative button" onclick="App.document.head.remove()">Удалить
+				документ</button>
+		</div>
+
+		<div>
+			<h3>Скидки</h3>
+		</div>
+		<div id="document_discounts" class="ui form segment"
+			style="display:grid;grid-template-columns:4fr 1fr 1fr 1fr;gap:10px;">
+			<div><b>Категория</b></div>
+			<div><b>Округлять</b></div>
+			<div><b>Скидка</b></div>
+			<div><b>Наценка</b></div>
+			{{discount_cat}}
+			<div class="discount_row" data-discount_id="{{discount_id}}" data-branch_id="{{branch_id}}"
+				style="display:contents;" title="{{path}}">
+				<div>
+					{{if branch_id|more>0}}
+					{{path}}:
+					{{else}}
+					<u title="Действует, когда товар не попадает ни под одно другое правило">Все категории</u>:
+					{{/if}}
+				</div>
+				<div>
+					<input type="text" title="Округлять цену до значения, кратного этому числу"
+						value="{{round_to|blank>}}" name="round_to">
+				</div>
+				<div>
+					<input class="ui input" type="text" title="Скидка % {{path}}" value="{{minus}}" name="minus">
+				</div>
+				<div>
+					<input type="text" title="Наценка % {{path}}" value="{{plus}}" name="plus">
+				</div>
+			</div>
+			{{/discount_cat}}
+			{{if discount_brand}}
+			<div><b>Бренд</b></div>
+			<div><b>Округлять</b></div>
+			<div><b>Скидка</b></div>
+			<div><b>Наценка</b></div>
+			{{/if}}
+			{{discount_brand}}
+			<div class="discount_row" data-discount_id="{{discount_id}}" style="display:contents;" title="{{path}}">
+				<div>
+					<input type="text" title="Бренд" value="{{label}}" name="analyse_brand">
+				</div>
+				<div>
+					<input type="text" title="Округлять цену до значения, кратного этому числу"
+						value="{{round_to|blank>}}" name="round_to">
+				</div>
+				<div>
+					<input type="text" title="Скидка % {{path}}" value="{{minus}}" name="minus">
+				</div>
+				<div>
+					<input type="text" title="Наценка % {{path}}" value="{{plus}}" name="plus">
+				</div>
+			</div>
+			{{/discount_brand}}
+		</div>
+	</div>
+
+
+	<div class="ui inverted segment blue">
+		<div class="ui inverted fluid accordion " id="doc_suggestion">
+			<div class="title"><i class="add icon"></i>Добавить товар</div>
+			<div class="content ">
+				<div class="ui left icon right labeled input fluid" style="margin-bottom: 5px;">
+					<i class="search icon"></i>
+					<input placeholder="Поиск по коду или названию" type="text">
+					<div class="ui basic label" onclick="App.document.suggestion.clear()"><i class="close icon"></i>
+					</div>
+				</div>
+				<div class="covert" id="doc_suggestion_entries">
+					<table class="ui very compact table unstackable">
+						<tbody>
+							<!-- {{if entries}} {{entries}} -->
+							<tr>
+								<td style="height:50px" data-row-index="{{#}}">
+									<a href="#product.html#product_id={{product_id}}">
+										<img style="width:50px"
+											src="../Storage/image_flush/?size=50x50&path=/dynImg/{{product_img}}">
+									</a>
+								</td>
+								<td data-row-index="{{#}}" onclick="App.document.suggestion.handleClick(this)">
+									<div class="ui grid stackable"
+										style="{{if leftover|less>1}} color:red !important {{/if}}">
+										<div class="eight wide column" style="padding: .5rem !important">
+											{{product_name}}
+											{{if analyse_class|equals>C}}
+											<i class="icon star"></i>
+											{{/if}}
+										</div>
+										<div class="eight wide column" style="padding: .5rem !important">
+											<div class="ui grid" style="opacity:0.7">
+												<div class="six wide column">{{product_code}}</div>
+												<div class="five wide column right aligned">{{product_price_total}}р
+												</div>
+												<div class="five wide column right aligned">{{leftover}}{{product_unit}}
+													<div>
+														{{if product_reserved|more>0}}
+														<span style="color:red">-{{product_reserved}}</span>
+														{{/if}}
+														{{if product_awaiting|more>0}}
+														<span style="color:green">+{{product_awaiting}}</span>
+														{{/if}}
+													</div>
+												</div>
+											</div>
+										</div>
+									</div>
+								</td>
+							</tr>
+							<!-- {{/entries}} {{else}}-->
+							<tr>
+								<td colspan="2">Ничего не найдено</td>
+							</tr>
+							<!--{{/if}}-->
+						</tbody>
+					</table>
+					<button class="ui button fluid" id="load_suggestions_button"
+						onclick="App.document.suggestion.load();">Показать еще ...</button>
+				</div>
+			</div>
+		</div>
+	</div>
 </div>
 
-<div class="ui raised segment"  id="document_create_dialog" style="display: none">
-    <h2>Создать документ</h2>
-    <div class="content">
-        <div class="ui form" id="document_create_dialog_frm">
-	    <div class="fields ">
-		<div class="six wide field">
-		    <label>Тип документа</label>
-		    <div class="ui selection dropdown doc_type">
-			<input name="doc_type" type="hidden">
-			<i class="dropdown icon"></i>
-			<span class="default text">Выбрать тип</span>
-			<div class="menu">
-			    <div class="item" data-value="1">
-				<i class="green icon arrow left"></i>
-				Продажа клиенту
-			    </div>
-			    <div class="item" data-value="-1">
-				<i class="purple icon arrow right"></i>
-				Возврат от клиента
-			    </div>
-			    <div class="item" data-value="2">
-				<i class="purple icon arrow right"></i>
-				Покупка у поставщика
-			    </div>
-			    <div class="item" data-value="-2">
-				<i class="green icon arrow left"></i>
-				Возврат поставщику
-			    </div>
+<div class="ui raised segment" id="document_create_dialog" style="display: none">
+	<h2>Создать документ</h2>
+	<div class="content">
+		<div class="ui form" id="document_create_dialog_frm">
+			<div class="fields ">
+				<div class="six wide field">
+					<label>Тип документа</label>
+					<div class="ui selection dropdown doc_type">
+						<input name="doc_type" type="hidden">
+						<i class="dropdown icon"></i>
+						<span class="default text">Выбрать тип</span>
+						<div class="menu">
+							<div class="item" data-value="1">
+								<i class="green icon arrow left"></i>
+								Продажа клиенту
+							</div>
+							<div class="item" data-value="-1">
+								<i class="purple icon arrow right"></i>
+								Возврат от клиента
+							</div>
+							<div class="item" data-value="2">
+								<i class="purple icon arrow right"></i>
+								Покупка у поставщика
+							</div>
+							<div class="item" data-value="-2">
+								<i class="green icon arrow left"></i>
+								Возврат поставщику
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="five wide field">
+					<label>Клиент</label>
+					<div class="ui search selection remote dropdown pcomp_id">
+						<input name="pcomp_id" type="hidden">
+						<i class="dropdown icon"></i>
+						<div class="default text">Выбрать клиента</div>
+						<div class="menu"></div>
+					</div>
+				</div>
+				<div class="five wide field">
+					<label>Наша фирма</label>
+					<div class="ui search selection remote dropdown acomp_id">
+						<input name="acomp_id" type="hidden">
+						<i class="dropdown icon"></i>
+						<div class="default text">Выбрать нашу фирму</div>
+						<div class="menu"></div>
+					</div>
+				</div>
 			</div>
-		    </div>
+			<p></p>
+			<div class="actions">
+				<div class="ui button positive submit"><i class="file outline icon"></i>Создать</div>
+				<div class="ui button cancel" onclick="location.hash = ''"><i class="home icon"></i>Главная</div>
+			</div>
 		</div>
-		<div class="five wide field">
-		    <label>Клиент</label>
-		    <div class="ui search selection remote dropdown pcomp_id">
-			<input name="pcomp_id" type="hidden">
-			<i class="dropdown icon"></i>
-			<div class="default text">Выбрать клиента</div>
-			<div class="menu"></div>
-		    </div>
-		</div>
-		<div class="five wide field">
-		    <label>Наша фирма</label>
-		    <div class="ui search selection remote dropdown acomp_id">
-			<input name="acomp_id" type="hidden">
-			<i class="dropdown icon"></i>
-			<div class="default text">Выбрать нашу фирму</div>
-			<div class="menu"></div>
-		    </div>
-		</div>
-	    </div>
-            <p></p>
-	    <div class="actions">
-		<div class="ui button positive submit"><i class="file outline icon"></i>Создать</div>
-		<div class="ui button cancel" onclick="location.hash = ''"><i class="home icon"></i>Главная</div>
-	    </div>
 	</div>
-    </div>
 
 </div>
 
 <div class="ui modal" id="document_entry_dialog">
-    <div class="header">Редактирование строки</div>
-    <div class="content">
-	<div class="ui stackable grid">
-	    <div class="eight wide column"><span style="color:#666">{{product_code}}</span> {{product_name}}</div>
-	    <div class="eight wide column">
-		<div class="ui right labeled fluid input">
-                    <input placeholder="Колличество" type="number" name="product_quantity" value="{{product_quantity}}">
-		    <div class="ui basic label">{{product_unit}}</div>
+	<div class="header">Редактирование строки</div>
+	<div class="content">
+		<div class="ui stackable grid">
+			<div class="eight wide column"><span style="color:#666">{{product_code}}</span> {{product_name}}</div>
+			<div class="eight wide column">
+				<div class="ui right labeled fluid input">
+					<input placeholder="Колличество" type="number" name="product_quantity" value="{{product_quantity}}">
+					<div class="ui basic label">{{product_unit}}</div>
+				</div>
+			</div>
 		</div>
-	    </div>
+		<div class="actions">
+			<div class="ui stackable grid">
+				<div class="eight wide column">
+					<div class="ui positive approve fluid button"><i class="icon save"></i> Ок</div>
+				</div>
+				<div class="eight wide column">
+					<div class="ui grey close fluid button" onclick="$('#document_entry_dialog').modal('hide');"><i
+							class="icon close"></i> Отмена</div>
+				</div>
+			</div>
+			<!--{{if user_level|more>1}}-->
+			<div class="ui horizontal divider"></div>
+			<div class="ui styled fluid accordion" style="text-align: left"
+				onclick="$('#document_entry_dialog').modal('refresh');">
+				<div class="title">
+					<i class="dropdown icon"></i>
+					Еще действия
+				</div>
+				<div class="content">
+					<div class="ui stackable grid">
+						<div class="ten wide column">
+							<div class="ui labeled input fluid">
+								<label class="ui label">Цена</label>
+								<input placeholder="Цена" type="number" name="product_price" value="{{product_price}}">
+							</div>
+						</div>
+						<div class="six wide column">
+							<div class="title">
+								<i class="arrow circle down icon"></i>
+								Минимальная цена
+							</div>
+							<div class="content">
+								{{breakeven_price}}
+							</div>
+						</div>
+						<div class="eight wide column">
+							<div class="ui negative deny button"><i class="trash alternate icon"></i> Удалить</div>
+						</div>
+						<div class="eight wide column">
+							<a onclick="$('#document_entry_dialog').modal('hide');"
+								href="#product.html#product_id={{product_id}}">Карточка товара</a>
+						</div>
+					</div>
+				</div>
+			</div>
+			<!--{{/if}}-->
+		</div>
 	</div>
-        <div class="actions">
-            <div class="ui stackable grid">
-                <div class="eight wide column"><div class="ui positive approve fluid button"><i class="icon save"></i> Ок</div></div>
-                <div class="eight wide column"><div class="ui grey close fluid button" onclick="$('#document_entry_dialog').modal('hide');"><i class="icon close"></i> Отмена</div></div>
-            </div>
-            <!--{{if user_level|more>1}}-->
-            <div class="ui horizontal divider"></div>
-            <div class="ui styled fluid accordion" style="text-align: left" onclick="$('#document_entry_dialog').modal('refresh');">
-                <div class="title">
-                    <i class="dropdown icon"></i>
-                    Еще действия
-                </div>
-                <div class="content">
-                    <div class="ui stackable grid">
-                        <div class="ten wide column">
-                            <div class="ui labeled input fluid">
-                                <label class="ui label">Цена</label>
-                                <input placeholder="Цена" type="number" name="product_price" value="{{product_price}}">
-                            </div>
-                        </div>
-                        <div class="six wide column">
-                            <div class="title">
-                                <i class="arrow circle down icon"></i>
-                                Минимальная цена
-                            </div>
-                            <div class="content">
-                                {{breakeven_price}}
-                            </div>
-                        </div>
-                        <div class="eight wide column">
-                            <div class="ui negative deny button"><i class="trash alternate icon"></i> Удалить</div>
-                        </div>
-                        <div class="eight wide column">
-                            <a onclick="$('#document_entry_dialog').modal('hide');" href="#product.html#product_id={{product_id}}">Карточка товара</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <!--{{/if}}-->
-        </div>
-    </div>
 </div>

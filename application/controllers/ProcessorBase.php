@@ -282,7 +282,16 @@ class ProcessorBase extends Session {
 	if ( isset($this->$class_name) ){
 	    return $this->$class_name;
 	}
-	require_once "application/models/proc/$class_name.php";
+
+	$path = 'application/models/proc/';
+	set_include_path(get_include_path() . PATH_SEPARATOR . $path);
+
+
+	if( file_exists(BAY_STORAGE."plugin_modifications/models/proc/$class_name.php") ){
+		require_once BAY_STORAGE."plugin_modifications/models/proc/$class_name.php";
+	} else {
+		require_once "application/models/proc/$class_name.php";
+	}
 	$this->$class_name = new $class_name();
 	$this->$class_name->Base = $this;
 	if (method_exists($this->$class_name, 'Init'))

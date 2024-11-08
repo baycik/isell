@@ -42,7 +42,7 @@ class StockAnalog extends Catalog{
            $having = "HAVING ".$this->makeFilter($filter); 
         }
         $this->query("SET @minprice:=0, @currentid:=0, @difflimit:=1.15");
-	$sql ="
+	    $sql ="
             SELECT
                 *,
                 IF(@currentid<>analog_group_id,(@currentid:=analog_group_id)*0+(@minprice:=product_price)*0,product_price/@minprice>@difflimit) diff
@@ -172,19 +172,49 @@ class StockAnalog extends Catalog{
                     doc_entry_id='$doc_entry_id') de ON de.product_id=pal1.product_id
             WHERE
                 pal1.product_id<>pl.product_id
-                AND IF(doc_type=1,se.product_quantity>=de.product_quantity,1)
+                AND IF(doc_type=1,se.product_quantity>0,1)
             ";
         return $this->get_list($sql);
     }
     
     public function analogEntrySwap( int $doc_entry_id, int $product_id ){
-        $product_code=$this->get_value("SELECT product_code FROM prod_list WHERE product_id='$product_id'");
-        $CurrentEntry=$this->get_row("SELECT * FROM document_entries JOIN document_list USING(doc_id) WHERE doc_entry_id='$doc_entry_id'");
+        $Analog=$this->get_row("SELECT 
+                product_code,product_quantity
+            FROM 
+                prod_list 
+            JOIN
+                stock_entries USING(product_code)
+            WHERE 
+                product_id='$product_id'"
+        );
+        $CurrentEntry=$this->get_row("SELECT 
+                doc_id,product_id,product_quantity,doc_settings 
+            FROM 
+                document_entries 
+            JOIN 
+                document_list USING(doc_id) 
+            JOIN 
+                prod_list USING(product_code) 
+            WHERE 
+                doc_entry_id='$doc_entry_id'"
+        );
         
         $DocumentItems=$this->Hub->load_model("DocumentItems");
         $DocumentItems->selectDoc($CurrentEntry->doc_id);
-        $DocumentItems->entryAdd($CurrentEntry->doc_id, $product_code, $CurrentEntry->product_quantity);
-        $DocumentItems->entryDelete( $CurrentEntry->doc_id, $CurrentEntry->doc_entry_id );
+        if( $Analog->product_quantity>=$CurrentEntry->product_quantity ){
+            $DocumentItems->entryAdd($CurrentEntry->doc_id, $Analog->product_code, $CurrentEntry->product_quantity);
+            $DocumentItems->entryDelete( $CurrentEntry->doc_id, $doc_entry_id );
+        } else {
+            $DocumentItems->entryAdd($CurrentEntry->doc_id, $Analog->product_code, $Analog->product_quantity);
+            $DocumentItems->entryUpdate($CurrentEntry->doc_id, $doc_entry_id, 'product_quantity', $CurrentEntry->product_quantity-$Analog->product_quantity );
+        }
+
+        $docsettings=json_decode($CurrentEntry->doc_settings??'{}');
+        if( empty($docsettings->analogskip) ){
+            $docsettings->analogskip='';
+        }
+        $docsettings->analogskip.=",{$CurrentEntry->product_id}";
+        $this->query("UPDATE document_list SET doc_settings='".json_encode($docsettings)."' WHERE doc_id='$CurrentEntry->doc_id'");
         return true;
     }
     

@@ -587,7 +587,7 @@ class Stock extends Catalog {
 		) t
 	    ORDER BY sold_sum);";
         $sql_calc = "SET @A:=@sold_total*0.8,@B:=@sold_total*0.15,@C:=@sold_total*0.05;";
-        $sql_update = "UPDATE prod_list JOIN tmp_abc_chart USING(product_code) SET analyse_class=IF(sold_total<@C,'C',IF(sold_total<@B+@C,'B','A'));";
+        $sql_update = "UPDATE prod_list JOIN tmp_abc_chart USING(product_code) SET analyse_class=IF(sold_total<@C,'C',IF(sold_total<@B+@C,'B','A')) WHERE analyse_class<>'D';";
         $this->query($sql_prepare1);
         $this->query($sql_prepare2);
         $this->query($sql_create);
