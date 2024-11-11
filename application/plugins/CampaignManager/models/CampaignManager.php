@@ -207,7 +207,26 @@ class CampaignManager extends Catalog{
     }
     
     private function bonusGet($campaign_bonus_id){
-        return $this->get('plugin_campaign_bonus',['campaign_bonus_id'=>$campaign_bonus_id]);
+        $this->db->select("
+            `campaign_bonus_id`,
+            `campaign_id`,
+            `campaign_bonus_ratio1`,
+            `campaign_bonus_ratio2`,
+            `campaign_bonus_ratio3`,
+            `campaign_start_at`,
+            `campaign_finish_at`,
+            `campaign_grouping_interval`,
+            `campaign_queue`,
+            `product_category_id`,
+            `product_category_path`,
+            `product_brand_filter`,
+            `product_type_filter`,
+            `product_class_filter`,
+            `bonus_type`,
+            `bonus_visibility`");
+        $this->db->from('plugin_campaign_bonus');
+        $this->db->where('campaign_bonus_id',$campaign_bonus_id);
+        return $this->db->get()->row();
     }
     private function bonusesGet( int $campaign_id, int $visibility_filter ){
         $this->bonusUpdateQueue($campaign_id);
@@ -361,9 +380,40 @@ class CampaignManager extends Catalog{
         return $this->query($sql);
     }
     
-    public function bonusCalculate( int $campaign_bonus_id ){
+    public function bonusCalculate( int $campaign_bonus_id, bool $use_cache=true ){
         $this->Hub->set_level(3);
-        return $this->bonusCalculateResult($campaign_bonus_id);
+        if( $use_cache ){
+            $this->db->select('cache');
+            $this->db->from('plugin_campaign_bonus');
+            $this->db->where('campaign_bonus_id',$campaign_bonus_id);
+            $this->db->where('cache_expired_at>NOW()');
+            $bonus_periods=json_decode($this->db->get()->row('cache'));
+            
+            if( $bonus_periods ){
+                $current=$this->bonusCalculateResult($campaign_bonus_id, 'current')[0]??null;
+                $past=$this->bonusCalculateResult($campaign_bonus_id, 'past')[0]??null;
+                foreach($bonus_periods as $i=>$period){
+                    if( $past && $period->period_year==$past->period_year && $period->period_month==$past->period_month ){
+                        $past->cache=null;
+                        $bonus_periods[$i]=$past;
+                    }
+                    if( $current && $period->period_year==$current->period_year && $period->period_month==$current->period_month ){
+                        $current->cache=null;
+                        $bonus_periods[$i]=$current;
+                    }
+                }
+                return $bonus_periods;
+            }
+        }
+        $bonus=$this->bonusCalculateResult($campaign_bonus_id);
+        if( $bonus ){
+            $cache=[
+                'cache'=>json_encode($bonus),
+                'cache_expired_at'=>date('Y-m-d H:i:s',time()+35*24*60*60)//30 days
+            ];
+            $this->db->update('plugin_campaign_bonus',$cache,['campaign_bonus_id'=>$campaign_bonus_id]);
+        }
+        return $bonus;
     }
     private function bonusCalculateResult( int $campaign_bonus_id, string $timespan=null, int $bonus_limit=0 ){
         $campaign_bonus=$this->bonusGet($campaign_bonus_id);
@@ -428,7 +478,22 @@ class CampaignManager extends Catalog{
             IF($in_timespan,1,0) is_current
         FROM (
             SELECT
-                pcb.*,
+                `campaign_bonus_id`,
+                `campaign_id`,
+                `campaign_bonus_ratio1`,
+                `campaign_bonus_ratio2`,
+                `campaign_bonus_ratio3`,
+                `campaign_start_at`,
+                `campaign_finish_at`,
+                `campaign_grouping_interval`,
+                `campaign_queue`,
+                `product_category_id`,
+                `product_category_path`,
+                `product_brand_filter`,
+                `product_type_filter`,
+                `product_class_filter`,
+                `bonus_type`,
+                `bonus_visibility`,
                 campaign_bonus_period_id,
                 period_year,
                 period_quarter,

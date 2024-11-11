@@ -252,7 +252,7 @@
                 });
                 $(".CampaignManager_bonuses_reload").click(function () {
                     var campaign_bonus_id = $(this).data('campaign_bonus_id');
-                    Bonuses.periodsLoad(campaign_bonus_id);
+                    Bonuses.periodsLoad(campaign_bonus_id,use_cache=0);
                 });
 
                 for (let bonus of Campaign.data.bonuses) {
@@ -300,8 +300,8 @@
                     });
                 },500);
             },
-            periodsLoad: function (campaign_bonus_id) {
-                return $.post("CampaignManager/bonusCalculate", {campaign_bonus_id: campaign_bonus_id}, function (resp) {
+            periodsLoad: function (campaign_bonus_id,use_cache) {
+                return $.post("CampaignManager/bonusCalculate", {campaign_bonus_id: campaign_bonus_id,use_cache}, function (resp) {
                     var periodsCardData = App.json(resp);
                     Bonuses.periodsRender(campaign_bonus_id, periodsCardData);
                 });

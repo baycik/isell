@@ -161,6 +161,9 @@
         <div class="ui segment covert" id="stock_cell_list_props">
             <h2><i class="sitemap icon"></i> Карта склада</h2>
             <div class="ui labeled icon mini menu">
+                <a class="item" onclick="App.stock_cell_list.entries.search()">
+                    <i class="sitemap grey icon"></i> Карта
+                </a>
                 <a class="item" onclick="App.stock_cell_list.entries.create()">
                     <i class="grey plus icon"></i>
                     Добавить
@@ -212,16 +215,16 @@
                         карта
                     </div>
                 </div>
-                <div style="display: grid;grid-template-columns: 120px 2fr 1fr;">
+                <div style="display: grid;grid-template-columns: 130px 2fr 1fr;">
                     {{cells}}
                     <div style="display: contents;cursor: pointer;" onclick="App.stock_cell_list.entries.open('{{cell_id}}')">
                         <div>
                             {{if is_valid|equals>1}}
-                            <div class="ui right pointing icon label blue">
+                            <div class="ui right pointing icon label blue" style="text-transform: uppercase;white-space: nowrap;">
                                 :{{cell_sector|blank>}}-{{cell_level|blank>}}-{{cell_number|blank>}}
                             </div>
                             {{else}}
-                            <div class="ui right pointing icon label brown">
+                            <div class="ui right pointing icon label brown" style="text-transform: uppercase;">
                                 <s>:{{cell_sector|blank>}}-{{cell_level|blank>}}-{{cell_number|blank>}}</s>
                             </div>
                             {{/if}}
