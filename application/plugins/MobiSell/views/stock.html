@@ -818,10 +818,13 @@
                         </div>
                         <div class="product-name-column">
                             <a href="#product.html#product_id={{product_id}}">
-                                {{product_name}}
                                 {{if analyse_class|equals>C}}
-                                <i class="icon star"></i>
+                                <i class="icon yellow star"></i>
                                 {{/if}}
+                                {{if analyse_class|equals>D}}
+                                <i class="icon red fire"></i>
+                                {{/if}}
+                                {{product_name}}
                             </a>
                         </div>
                         <div class="product-info-column">

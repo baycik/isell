@@ -377,6 +377,7 @@ class Catalog extends CI_Model {
     
     private $vocabulary=[
         'Promotion'=>"Акция",
+        'Class'=>"Класс",
         'Discount'=>"Скидка",
         'Special_price'=>"Спец. цена",
         'Other'=>"Другое",

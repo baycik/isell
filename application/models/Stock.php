@@ -962,6 +962,19 @@ class Stock extends Catalog {
             $this->matchesFilterBuildOption($group_id,  $option_label, $option_condition );
         }
     }
+
+    protected function matchesFilterBuildAnalyticsClass(){
+        $group_id='analyse_class';
+        $group_name=$this->lang("Class");
+        $options=$this->get_list("SELECT DISTINCT $group_id FROM tmp_matches_list ORDER BY $group_id");
+        $this->matchesFilterBuildGroup( $group_id, $group_name );
+        foreach( $options as $option ){
+            $option_value=$option->{$group_id};
+            $option_label=$option_value?$option_value:$this->lang("Other");
+            $option_condition=" $group_id='$option_value'";
+            $this->matchesFilterBuildOption($group_id,  $option_label, $option_condition );
+        }
+    }
     
     protected function matchesFilterBuildPromotions(){
         $group_id='special_prices';
@@ -1143,6 +1156,7 @@ class Stock extends Catalog {
         $this->matchesFilterBuildPrice();
         $this->matchesFilterBuildPromotions();
         $this->matchesFilterBuildAnalytics();
+        $this->matchesFilterBuildAnalyticsClass();
         $Events->Topic('beforeMatchesFilterBuild')->publish($this);
     }
     

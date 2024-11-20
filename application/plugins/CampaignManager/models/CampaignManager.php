@@ -395,6 +395,7 @@ class CampaignManager extends Catalog{
                 foreach($bonus_periods as $i=>$period){
                     if( $past && $period->period_year==$past->period_year && $period->period_month==$past->period_month ){
                         $past->cache=null;
+                        $past->is_current=0;
                         $bonus_periods[$i]=$past;
                     }
                     if( $current && $period->period_year==$current->period_year && $period->period_month==$current->period_month ){
