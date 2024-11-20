@@ -101,7 +101,14 @@
                         </tr>
                         <tr>
                             <td>Класс:</td>
-                            <td>{{analyse_class}}</td>
+                            <td>{{analyse_class}}
+                                {{if analyse_class|equals>C}}
+                                <i class="icon yellow star"></i>
+                                {{/if}}
+                                {{if analyse_class|equals>D}}
+                                <i class="icon red fire"></i>
+                                {{/if}}
+                            </td>
                         </tr>
                         <tr>
                             <td>Происхождение:</td>
