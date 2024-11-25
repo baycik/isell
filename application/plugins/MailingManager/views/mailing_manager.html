@@ -353,7 +353,7 @@ App.mailing_manager=
             } else {
                 $.post('MailingManager/messageGet', {message_id: message_id}, function (resp) {
                     if (resp) {
-                        MessageEditor.message = JSON.parse(resp);
+                        MessageEditor.message = resp;
                         MessageEditor.renderView();
                     }
                 });
@@ -430,7 +430,7 @@ App.mailing_manager=
                     MessageEditor.data.reciever_list = {};
                     MessageEditor.data.template_list = {};
                     MessageEditor.data.manual_reciever_list = [];
-                    var response = JSON.parse(resp);
+                    var response = resp;
                     if(response && response.settings){
                         MessageEditor.data.reciever_list = response.settings.reciever_list;
                         MessageEditor.data.template_list = response.settings.template_list;
