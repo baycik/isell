@@ -472,7 +472,7 @@ class MobiSell extends PluginManager {
             return false;
         }
         $cell=$result->row();
-        $cell->cell_fullness=$cell->used_volume/$cell->cell_volume;
+        $cell->cell_fullness=$cell->cell_volume?$cell->used_volume/$cell->cell_volume:0;
         return $cell;
     }
 
