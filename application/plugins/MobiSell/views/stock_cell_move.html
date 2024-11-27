@@ -214,15 +214,15 @@
                         <i class="box red icon"></i>
                     </div>
                 </div>
-                <div class="field" style="display: none;">
+                <!-- <div class="field" style="display: none;">
                     <label>Источник</label>
                     <div id="stock_cell_move_src" class="ui remote search dropdown icon fluid big basic labeled button">
                         <div class="default text">из ячейки</div>
                         <i class="sign out alternate yellow icon"></i>
                     </div>
-                </div>
+                </div> -->
                 <div class="field">
-                    <label>Новая ячейка</label>
+                    <label>Ячейка</label>
                     <div id="stock_cell_move_dst" class="ui remote search dropdown icon fluid big basic labeled button">
                         <div class="default text">в ячейку</div>
                         <i class="sign in alternate green icon"></i>
@@ -249,11 +249,11 @@
             {{if ok}}
             <div class="ui form">
                 <div class="field">
-                  <button class="ui fluid icon primary button" onclick="App.stock_cell_move.task.create()"><i class="plus icon"></i> Добавить ячейку</button>
+                  <button class="ui fluid icon primary button" onclick="App.stock_cell_move.task.create()"><i class="plus icon"></i> Связать ячейку и товар</button>
                 </div>
             </div>
             {{else}}
-            <button class="ui fluid icon primary disabled button"><i class="plus icon"></i> Добавить ячейку</button>
+            <button class="ui fluid icon primary disabled button"><i class="plus icon"></i> Связать ячейку и товар</button>
             {{/if}}
         </div>
     </section>
