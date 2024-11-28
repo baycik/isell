@@ -190,7 +190,7 @@ EOT;
 $before[]=<<<EOT
 EOT;
 $after[]=<<<EOT
-<div class="ui grey label">{{product_sector|blank>}}</div>
+<div class="ui blue label">{{product_sector|blank>}}</div>
 EOT;
 
 

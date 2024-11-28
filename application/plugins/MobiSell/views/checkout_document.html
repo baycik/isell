@@ -58,7 +58,7 @@
             return def.promise();
         },
         focus: function () {
-            App.title("Документ для проверки");
+            App.title("Проверки");
             App.checkout_document.entries.selection_mode_toggle('off');
             App.checkout_document.currentType = 'Document';
             App.checkout_document.initTab();
@@ -933,7 +933,7 @@
     </div>
     <div id="log_list"  class='covert'>
         {{if log_list}}
-        <table class="ui unstackable compact selectable table" >
+        <table class="ui unstackable compact table" >
             <thead>
                 <tr>
                     <th>
@@ -947,8 +947,8 @@
                 <!--{{log_list}}-->
                 <tr class="log_list_row" style="border: 1px">
                     <td class="log_name">
-                        <div class="ui two column unstackable grid">
-                            <div class="sixteen wide column"><b>{{product_code}}</b> {{ru}}</div>
+                        <div style="max-width: 70vw;">
+                            <b>{{product_code}}</b> {{ru}}
                         </div>
                     </td>
                     <td class="center-aligned">                      
