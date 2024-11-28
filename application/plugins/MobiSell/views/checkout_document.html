@@ -698,6 +698,7 @@
     }
     div table .product_row .product_name {
         max-height: 7.3em !important;
+        max-width: 70vw;
         overflow: hidden !important;
     }
     div table .product_row .product_name div .three.wide.column{
@@ -821,10 +822,9 @@
 
 <div class="ui attached tab" style="background-color:#fff" data-tab="Document">
     <div class="ui field">
-        <h4 class="ui header">Фильтр по списку</h4>
         <div class="ui left icon right labeled input fluid" style="margin-bottom: 5px;">
             <i class="search icon"></i>
-            <input id="checkout_document_entries_search_input" placeholder="Введите название или код..." type="text" 
+            <input id="checkout_document_entries_search_input" placeholder="Введите название или код" type="text" 
                    oninput="App.checkout_document.entries.filter();return false;">
             <div class="ui basic label" onclick="$('#checkout_document_entries_search_input').val('');App.checkout_document.entries.filter()"><i class="close icon"></i></div>
         </div>
@@ -848,7 +848,7 @@
                 <td class="product_name">
                     <b>{{product_code}}</b> {{ru}}
                 </td>
-                <td>
+                <td style="width:100px">
                     <div style="font-size:16px; font-weight: bold; text-align: right">
                         {{if verification_status|equals>0}}
                         <span style="color:red">
@@ -920,10 +920,9 @@
 <div id="checkout_log_tab" class="ui attached tab" style="background-color:#fff" data-tab="Log">
     <div id="checkout_document_log_search" class="ui field">
         <div class="ui field">
-            <h4 class="ui header">Фильтр по операциям</h4>
             <div class="ui left icon right labeled input fluid" style="margin-bottom: 5px;">
                 <i class="search icon"></i>
-                <input id="checkout_document_log_search_input" placeholder="Введите название или код..." type="text" 
+                <input id="checkout_document_log_search_input" placeholder="Введите название или код" type="text" 
                        oninput="App.checkout_document.log.render()">
                 <div class="ui basic label" onclick="App.checkout_document.clear_searchbar()"><i class="close icon"></i></div>
             </div>
