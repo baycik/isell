@@ -5,7 +5,7 @@
 	init: function () {
 	    this.node.window({
 		title: 'Редактирование проводки',
-		width: 470,
+		width: 510,
 		height: 'auto',
 		onClose: function(){
 		    App.page_accounts_shared_trans_edit.handler.notify('close',App.page_accounts_shared_trans_edit.data);
@@ -265,16 +265,16 @@
     <input type="hidden" name="trans_id">
     <input type="hidden" name="trans_ref">
     <input type="hidden" name="check_id">
-    <div style="display: inline-block;width: 215px;float:left;">
+    <div style="display: inline-block;width: 235px;float:left;">
         <input style="width:115px;height: 30px" type="date" name="trans_date" title="Дата" required="required">
         <input style="width:115px;height: 30px" type="text" required="required" name="amount" id="Tedit_amount" title="Сумма" onchange="Tedit.calc('amount');">
     </div>
-    <div id="Tedit_alt_currency" style="display: none;width: 215px;float:left;">
+    <div id="Tedit_alt_currency" style="display: none;width: 235px;float:left;">
 	<input style="width:115px;height: 30px" type="text" name="ratio" id="Tedit_ratio" title="Курс" onchange="Tedit.calc('ratio');" >
 	<input style="width:115px;height: 30px" type="text" name="amount_alt" id="Tedit_amount_alt" title="Сумма вал" onchange="Tedit.calc('amount_alt');">
     </div>
     <div style="float:left;" onclick="$('#Tedit_alt_currency').toggle();" title="Эквивалент суммы в валюте"><button type="button">$</button></div>
-    <input style="width:320px" class="easyui-combobox" name="passive_company_id" id="tedit_comp_cmb" title="Контрагент" data-options="
+    <input style="width:350px" class="easyui-combobox" name="passive_company_id" id="tedit_comp_cmb" title="Контрагент" data-options="
 	   valueField: 'company_id',
 	   textField: 'label',
 	   loader:Tedit.pcompLoader,
@@ -289,7 +289,7 @@
 		    }
 		}]
 	   ">
-    <input style="width:320px" class="easyui-combobox" name="trans_type" id="tedit_trans_type_cmb" title="Проводка" data-options="
+    <input style="width:350px" class="easyui-combobox" name="trans_type" id="tedit_trans_type_cmb" title="Проводка" data-options="
 	   valueField: 'trans_type',
 	   textField: 'trans_name',
 	   url:'AccountsCore/transNameListFetch',
@@ -307,7 +307,7 @@
 		}]
 	   ">
     <div>
-	<input style="width:105px" class="easyui-textbox" title="Дебет" name="debit" id="tedit_debit" data-options="
+	<input style="width:120px" class="easyui-textbox" title="Дебет" name="debit" id="tedit_debit" data-options="
 	       onChange: Tedit.transnameSet,
 	       icons: [{
 		    iconCls:'icon-settings16',
@@ -316,7 +316,7 @@
 		    }
 		}]
 	       ">
-	<input style="width:105px" class="easyui-textbox" title="Кредит" name="credit" id="tedit_credit" data-options="
+	<input style="width:120px" class="easyui-textbox" title="Кредит" name="credit" id="tedit_credit" data-options="
 	       onChange: Tedit.transnameSet,
 	       icons: [{
 		    iconCls:'icon-settings16',
@@ -326,13 +326,13 @@
 		}]
 	       ">
     </div>
-    <input style="width:320px" class="easyui-textbox" name="description" id="tedit_description_txt" title="Комментарий" data-options="
+    <input style="width:350px" class="easyui-textbox" name="description" id="tedit_description_txt" title="Комментарий" data-options="
 	   multiline:true,
 	   height:66,
 	   required:true
 	   ">
     <div id="tedit_article_holder" style="display: block">
-    <input style="width:320px" class="easyui-combobox" name="trans_article" title="Статья" data-options="
+    <input style="width:350px" class="easyui-combobox" name="trans_article" title="Статья" data-options="
 	   valueField: 'article_name',
 	   textField: 'article_name',
 	   url:'AccountsData/articleListFetch',
