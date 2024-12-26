@@ -266,12 +266,12 @@
     <input type="hidden" name="trans_ref">
     <input type="hidden" name="check_id">
     <div style="display: inline-block;width: 215px;float:left;">
-        <input style="width:105px;height: 30px" type="date" name="trans_date" title="Дата" required="required">
-        <input style="width:105px;height: 30px" type="text" required="required" name="amount" id="Tedit_amount" title="Сумма" onchange="Tedit.calc('amount');">
+        <input style="width:115px;height: 30px" type="date" name="trans_date" title="Дата" required="required">
+        <input style="width:115px;height: 30px" type="text" required="required" name="amount" id="Tedit_amount" title="Сумма" onchange="Tedit.calc('amount');">
     </div>
     <div id="Tedit_alt_currency" style="display: none;width: 215px;float:left;">
-	<input style="width:105px;height: 30px" type="text" name="ratio" id="Tedit_ratio" title="Курс" onchange="Tedit.calc('ratio');" >
-	<input style="width:105px;height: 30px" type="text" name="amount_alt" id="Tedit_amount_alt" title="Сумма вал" onchange="Tedit.calc('amount_alt');">
+	<input style="width:115px;height: 30px" type="text" name="ratio" id="Tedit_ratio" title="Курс" onchange="Tedit.calc('ratio');" >
+	<input style="width:115px;height: 30px" type="text" name="amount_alt" id="Tedit_amount_alt" title="Сумма вал" onchange="Tedit.calc('amount_alt');">
     </div>
     <div style="float:left;" onclick="$('#Tedit_alt_currency').toggle();" title="Эквивалент суммы в валюте"><button type="button">$</button></div>
     <input style="width:320px" class="easyui-combobox" name="passive_company_id" id="tedit_comp_cmb" title="Контрагент" data-options="
