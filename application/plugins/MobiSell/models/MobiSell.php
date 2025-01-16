@@ -810,7 +810,7 @@ class MobiSell extends PluginManager {
         ];
     }
 
-    public function stockLayoutProductBarcodeSet( int $product_id , int $product_barcode ){
+    public function stockLayoutProductBarcodeSet( int $product_id , string $product_barcode ){
         $this->Hub->set_level(2);
         $this->db->update('prod_list',['product_barcode'=>$product_barcode],['product_id'=>$product_id]);
         return 1;
