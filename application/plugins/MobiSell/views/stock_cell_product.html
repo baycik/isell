@@ -84,6 +84,21 @@
                 App.renderTpl('stock_cell_product_props',this.data.product)
                 $("#stock_cell_product_props .progress").progress()
             },
+            async barcodeSet(){
+                const barcode=prompt("Введите штрихкод","")
+                if( !barcode || barcode.length!=13 ){
+                    return
+                }
+                try{
+                    const request = {
+                        product_id:App.stock_cell_product.product.data.product_id,
+                        product_barcode:barcode
+                    }
+                    await $.post('stockLayoutProductBarcodeSet',request)
+                    await this.load()
+                    this.render()
+                } catch{/** */}
+            },
             loadByBarcode(barcode){
                 this.data.product_id=null
                 this.data.barcode=barcode
@@ -182,6 +197,12 @@
                 </div>
                 <div class="thirteen wide column">
                     #<b>{{product_code}}</b> {{product_name}} <i style="color:#999">{{product_barcode}}</i> 
+                    {{if product_barcode|empty}}
+                        <br>
+                        <button onclick="App.stock_cell_product.product.barcodeSet()" class="ui basic button"><i class="barcode icon"></i>Добавить штрихкод</button>
+                    {{else}}
+                        <button onclick="App.stock_cell_product.product.barcodeSet()" class="ui basic button"><i class="barcode icon"></i>изменить</button>
+                    {{/if}}
                 </div>
             </div>
             <div class="ui grid">

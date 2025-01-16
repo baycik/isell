@@ -781,7 +781,13 @@ class MobiSell extends PluginManager {
     public function stockLayoutProductSearch( string $query=null, int $cell_id=null, int $product_id=null ){
         $this->Hub->set_level(2);
         if( $query??0 ){
-            $this->db->like("CONCAT('#',product_code,' ',ru,' ',product_barcode)",trim($query));
+            $words=explode(" ",trim($query));
+            $this->db->like("CONCAT('#',product_code,' ',ru,' ',product_barcode)",array_shift($words));
+            if( count($words) ){
+                foreach($words as $word){
+                    $this->db->like("CONCAT(product_code,' ',ru)",$word);
+                }
+            }
         }
         if( $product_id??0 ){
             $this->db->where_in("product_id",$product_id);
@@ -804,8 +810,10 @@ class MobiSell extends PluginManager {
         ];
     }
 
-    public function stockLayoutProductUnassignedGet(){
-
+    public function stockLayoutProductBarcodeSet( int $product_id , int $product_barcode ){
+        $this->Hub->set_level(2);
+        $this->db->update('prod_list',['product_barcode'=>$product_barcode],['product_id'=>$product_id]);
+        return 1;
     }
     
     /**
