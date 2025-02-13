@@ -11,7 +11,8 @@
 class StockSaleCalculator extends PluginManager {
     
     public function promoSet( int $branch_id, int $day_passed=90, float $deviation=5 ){
-        $pcomp_id=$this->Hub->pcomp('company_id');        
+        $full_sale_day_passed=$day_passed*2;
+        $full_sale_discount=0.7;  
         $usd_ratio=$this->Hub->pref('usd_ratio');
         $clear_old_promo_sql="
             DELETE FROM
@@ -29,11 +30,13 @@ class StockSaleCalculator extends PluginManager {
                     path_id LIKE '/$branch_id/%');";
         $this->query($clear_old_promo_sql);
         $create_new_promo_sql="
-            INSERT price_list (product_code,label,sell)
+            INSERT price_list (product_code,label,sell,buy,curr_code)
             SELECT 
                 se.product_code,
                 'PROMO',
-                ROUND(IF(self_price>0,self_price,IF(prl.curr_code='USD',$usd_ratio,1)*buy) * (1 + RAND() / 100 * $deviation),2) new_promo_price
+                ROUND(IF(self_price>0,self_price,IF(prl.curr_code='USD',$usd_ratio,1)*buy) * (1 + RAND() / 100 * $deviation),2) * (IF(DATEDIFF(NOW(), fetch_stamp) > $full_sale_day_passed,$full_sale_discount,1)) new_promo_price,
+                0,
+                ''
             FROM
                 stock_entries se
                     JOIN
@@ -45,7 +48,7 @@ class StockSaleCalculator extends PluginManager {
             WHERE
                 path_id LIKE '/$branch_id/%'
                 AND fetch_stamp IS NOT NULL
-                AND DATEDIFF(NOW(), fetch_stamp) > $day_passed
+                AND ( DATEDIFF(NOW(), fetch_stamp) > $day_passed OR analyse_class='D' )
                 AND product_quantity>0
                 AND (self_price>0 OR buy>0)
             HAVING

@@ -148,10 +148,10 @@ class AccountsCore extends Catalog
 				$passive_filter = " AND passive_company_id='" . $this->Hub->pcomp('company_id') . "'";
 			}
 			$balance = ",(
-		SELECT 
-		    SUM(ROUND(IF(at.acc_code=acc_debit_code,-amount,amount),2))
-		FROM acc_trans
-		WHERE (acc_debit_code=at.acc_code OR acc_credit_code=at.acc_code) AND active_company_id=$active_company_id $passive_filter)*IF(acc_type='P',1,-1) balance";
+					SELECT 
+						SUM(ROUND(IF(at.acc_code=acc_debit_code,-amount,amount),2))
+					FROM acc_trans
+					WHERE (acc_debit_code=at.acc_code OR acc_credit_code=at.acc_code) AND active_company_id=$active_company_id $passive_filter)*IF(acc_type='P',1,-1) balance";
 		}
 		if ($use_passive_filter) {
 			$acc_list = $this->Hub->pcomp('company_acc_list');

@@ -77,23 +77,23 @@ class AccountsData extends AccountsCore{
     
     public $accountFavoritesFetch=['use_passive_filter'=>['int',0],'get_client_bank_accs'=>['int',0]];
     public function accountFavoritesFetch( $use_passive_filter=false, $get_client_bank_accs=false ){
-	if( $use_passive_filter ){
-            $this->Hub->set_level(1);
-	    $acc_list=$this->Hub->pcomp('company_acc_list');
-	} else {
-            $this->Hub->set_level(2);
-	    $where=$get_client_bank_accs?'use_clientbank=1':'is_favorite=1';
-	    $acc_list= $this->get_value("SELECT GROUP_CONCAT(acc_code SEPARATOR ',') FROM acc_tree WHERE $where");
+		if( $use_passive_filter ){
+			$this->Hub->set_level(1);
+			$acc_list=$this->Hub->pcomp('company_acc_list');
+		} else {
+			$this->Hub->set_level(2);
+			$where=$get_client_bank_accs?'use_clientbank=1':'is_favorite=1';
+			$acc_list= $this->get_value("SELECT GROUP_CONCAT(acc_code SEPARATOR ',') FROM acc_tree WHERE $where");
+		}
+		$accs=explode(',',$acc_list);
+		$favs=[];
+		if( count($accs) ){
+			foreach( $accs as $acc_code ){
+				$favs[]=$this->getAccountProperties($acc_code, true, $use_passive_filter);
+			}
+		}
+		return $favs;
 	}
-	$accs=explode(',',$acc_list);
-	$favs=[];
-	if( count($accs) ){
-	    foreach( $accs as $acc_code ){
-		$favs[]=$this->getAccountProperties($acc_code, true, $use_passive_filter);
-	    }
-	}
-	return $favs;
-   }
    
    public $accountFavoritesToggle=['acc_code'=>'string','is_favorite'=>'int','use_passive_filter'=>['int',0]];
    public function accountFavoritesToggle( $acc_code, $is_favorite, $use_passive_filter=false ){
