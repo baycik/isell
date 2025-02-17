@@ -566,19 +566,21 @@ class Stock extends Catalog {
 	    FROM
 		(SELECT
 		    product_code,
-		    COALESCE((SELECT 
+		    COALESCE((
+            SELECT 
 			SUM(de.product_quantity*invoice_price)
-		    FROM 
+		        FROM 
 			document_entries de
 			    JOIN
 			document_list dl USING(doc_id)
-		    WHERE
+		        WHERE
 			de.product_code=se.product_code
-                        AND doc_type=1
-			AND is_commited=1 
-			AND notcount=0
-                        AND dl.cstamp<'$fdate 23:59:59'
-			AND DATEDIFF('$fdate 23:59:59',dl.cstamp)<$period
+                AND doc_type=1
+                AND is_commited=1 
+                AND notcount=0
+                AND notreckon=0
+                AND dl.cstamp<'$fdate 23:59:59'
+			    AND DATEDIFF('$fdate 23:59:59',dl.cstamp)<$period
 			$where_active
 		    ),0) sold_sum
 		FROM
