@@ -184,7 +184,7 @@ class Stock extends Catalog {
  		    LEFT JOIN
 		document_entries de ON de.product_code=t.product_code
 		    LEFT JOIN
-		document_list dl ON de.doc_id=dl.doc_id AND dl.is_commited=1 AND dl.doc_type=1 AND notcount=0
+		document_list dl ON de.doc_id=dl.doc_id AND dl.is_commited=1 AND dl.doc_type=1 AND notcount=0 AND notreckon=0
 	    GROUP BY t.product_code,t.parent_id,t.product_quantity,t.product_reserved,t.product_awaiting,t.product_wrn_quantity
 	    HAVING {$having['outer']}
 	    ";

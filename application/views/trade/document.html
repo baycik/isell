@@ -1104,21 +1104,35 @@
 		   precision:0,
 		   onChange:function(val,old){Doc.head.update('vat_rate',val,old)}
 		   ">
-	    <input type="text" name="doc_ratio" class="easyui-numberbox" title="Курс" data-options="
-		   min:1,
-		   precision:2,
-		   onChange:function(val,old){Doc.head.update('doc_ratio',val,old)}
-		   ">
+		<input type="text" name="doc_ratio" class="easyui-numberbox" title="Курс" data-options="
+		min:1,
+		precision:2,
+		onChange:function(val,old){Doc.head.update('doc_ratio',val,old)}
+		">
+
+		<div class="inp_rule"></div>
+
+
+
 	    <input name="extra_expenses" class="easyui-numberbox" title="Доп. расходы" data-options="
 		   min:0,
 		   precision:0,
 		   onChange:function(val,old){Doc.head.update('extra_expenses',val,old)}
-		   ">
+		   " />
 	    <input name="doc_deferment" class="easyui-numberbox" title="Спец. отсрочка" data-options="
 		   min:0,
 		   precision:0,
 		   onChange:function(val,old){Doc.head.update('doc_deferment',val,old)}
+		   " />
+		<select class="easyui-combobox" name="notreckon" id="Doc_notreckon_cmb" title="В статистике" data-options="
+		   editable:false,
+		   panelHeight:'auto',
+		   onChange:function(val,old){Doc.head.update('notreckon',val,old)}
 		   ">
+	   <option value="0">Учитывать</option>
+	   <option value="1">Неучитывать</option>
+	   </select>
+
 	    <div style="padding:1px;text-align: right;" class="transp60">
 		Дополнительные инструменты: 
 		<span class="icon-24 icon-sms" title="Отправить СМС" onclick="Doc.head.sendSms();"> </span>

@@ -128,6 +128,7 @@ class DocumentCore extends DocumentUtils{
 		is_reclamation,
 		is_commited,
 		notcount,
+		notreckon,
 		vat_rate,
 		use_vatless_price,
 		signs_after_dot,

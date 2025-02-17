@@ -798,7 +798,7 @@ class Document extends Data {
 	$ratios = $this->Base->PrefOld->prefGet();
 	$doc_ratio = $ratios["usd_ratio"]??1;
 
-	$prev_doc = $this->Base->get_row("SELECT use_vatless_price,signs_after_dot,notcount,doc_type,vat_rate FROM document_list WHERE active_company_id='$active_company_id' AND passive_company_id='$passive_company_id' AND doc_type<10 AND is_commited=1 ORDER BY cstamp DESC LIMIT 1");
+	$prev_doc = $this->Base->get_row("SELECT use_vatless_price,signs_after_dot,notcount,notreckon,doc_type,vat_rate FROM document_list WHERE active_company_id='$active_company_id' AND passive_company_id='$passive_company_id' AND doc_type<10 AND is_commited=1 ORDER BY cstamp DESC LIMIT 1");
         if( $doc_type==null ){
 	    $doc_type=$prev_doc['doc_type']??1;
 	}
@@ -808,6 +808,7 @@ class Document extends Data {
 	$next_doc_num = $this->getNextDocNum($doc_type,$creation_mode);
 	if ($prev_doc) {
 	    $pnotcount = $prev_doc['notcount'];
+	    $pnotreckon = $prev_doc['notreckon'];
 	    $psignsafterdot = $prev_doc['signs_after_dot'];
 	    $pusevatlessprice = $prev_doc['use_vatless_price'];
             /*if( $vat_rate!==$prev_doc['vat_rate'] ){
@@ -816,6 +817,7 @@ class Document extends Data {
 	    $vat_rate=$prev_doc['vat_rate'];*/
 	} else {
 	    $pnotcount = 0;
+		$pnotreckon = 0;
 	    $psignsafterdot = 2;
 	    $pusevatlessprice = 0;
 	}
@@ -827,6 +829,7 @@ class Document extends Data {
             use_vatless_price='$pusevatlessprice', 
             signs_after_dot='$psignsafterdot', 
             notcount='$pnotcount',
+            notreckon='$pnotreckon',
             doc_ratio='$doc_ratio',
             doc_num='$next_doc_num',
             doc_status_id=1,
@@ -1260,7 +1263,10 @@ class Document extends Data {
 		return false;
 	    $this->Base->query("UPDATE document_list SET notcount=IF(notcount,0,1) WHERE doc_id='$doc_id'");
 	    $this->selectDoc($doc_id);
-
+	} else
+	if ($field == 'notreckon') {
+	    $this->Base->query("UPDATE document_list SET notreckon=IF(notreckon,0,1) WHERE doc_id='$doc_id'");
+	    $this->selectDoc($doc_id);
 	} else
 	if ($field == 'is_reclamation') {
 	    if ($this->isCommited())
