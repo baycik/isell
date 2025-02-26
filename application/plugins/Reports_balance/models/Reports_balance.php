@@ -108,7 +108,7 @@ class Reports_balance extends Catalog
                     FROM
                         acc_trans
                     WHERE
-                        cstamp<'$fdate'
+                        cstamp<'{$fdate} 23:59:59'
                         AND acc_debit_code LIKE CONCAT(acc_code,'%')
                         $active_filter) 
                 -
@@ -118,7 +118,7 @@ class Reports_balance extends Catalog
                     FROM
                         acc_trans
                     WHERE
-                        cstamp<'$fdate'
+                        cstamp<'{$fdate} 23:59:59'
                         AND acc_credit_code LIKE CONCAT(acc_code,'%')
                         $active_filter),'')*$sign leftover$i";
         }
@@ -184,7 +184,7 @@ class Reports_balance extends Catalog
             $active = array_merge($active, $this->getAccountLeftover($acc_code));
         }
         foreach ($this->accounts['passive'] as $acc_code) {
-            $passive = array_merge($passive, $this->getAccountLeftover($acc_code));
+            $passive = array_merge($passive, $this->getAccountLeftover($acc_code,-1));
         }
         $view = [
             'input' => [

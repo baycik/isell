@@ -124,65 +124,67 @@ class Reports_client_expired_debts extends Catalog{
 	return $direction_filter?'HAVING ('.implode(' OR ', $direction_filter).')':'HAVING 0';
     }
     public function viewGet(){
-	$active_filter=$this->all_active?'':' AND active_company_id='.$this->Hub->acomp('company_id');
+		$active_filter=$this->all_active?'':' AND acc_trans.active_company_id='.$this->Hub->acomp('company_id');
         $date_filter='';
         if( $this->fdate ){
             $date_filter="AND acc_trans.cstamp<'$this->fdate 23:59:59' ";
         }
         $user_level=$this->Hub->svar('user_level');
         $path_filter=$this->getAssignedPathWhere();
-	$having =$this->getDirectionFilter();
+		$having =$this->getDirectionFilter();
         $having.=$this->filter_value?"AND (".$this->or_like($this->filter_by,$this->filter_value).")":"";
         $having.=" AND ( sell>$this->threshold OR buy>$this->threshold OR exp>$this->threshold )";
 
-	$sql="
-	    SELECT
-		label,
-		REPLACE(path,'/','/ ') path,
-                deferment,
-		phone,
-                buy,
-                sell,
-                ROUND(IF(sell > allow, sell - allow, 0)) AS exp,
-                FLOOR(expday / 30.417) m,
-                ROUND(expday - FLOOR(expday / 30.417) * 30.417) d
-	    FROM
-		(SELECT 
-		    path,
-		    label,
-		    deferment,
-		    ROUND(SUM(IF(acc_debit_code=361,amount,IF(acc_credit_code=361,-amount,0))),2) sell,
-		    ROUND(SUM(IF(acc_debit_code=631,-amount,IF(acc_credit_code=631,amount,0))),2) buy,
-		    ROUND(SUM(
-		    IF(
-		    DATEDIFF(NOW(),acc_trans.cstamp)<=IF(doc_deferment,doc_deferment,deferment) AND (trans_status=1 OR trans_status=2),IF(acc_debit_code=361,amount,0),0)
-		    ),2) allow,
-		    MAX(IF(DATEDIFF(NOW(),acc_trans.cstamp)>IF(doc_deferment,doc_deferment,deferment) AND (trans_status=1 OR trans_status=2),DATEDIFF(NOW(),acc_trans.cstamp),0)) AS expday,
-		    CONCAT(company_mobile,' ',company_phone) phone
-                FROM
-		    companies_list
-			LEFT JOIN 
-		    acc_trans ON company_id=passive_company_id
-                        LEFT JOIN
-                    document_list USING(doc_id)
-			LEFT JOIN
-		    companies_tree USING(branch_id)
-		WHERE 
-		    level<='$user_level'
-                    $date_filter
-		    $active_filter
-		    $path_filter
-                GROUP BY companies_list.company_id
-		
-		ORDER BY expday DESC) expired
-		$having";
+		$sql="
+			SELECT
+				label,
+				REPLACE(path,'/','/ ') path,
+				deferment,
+				phone,
+				buy,
+				sell,
+				ROUND(IF(sell > allow, sell - allow, 0)) AS exp,
+				FLOOR(expday / 30.417) m,
+				ROUND(expday - FLOOR(expday / 30.417) * 30.417) d
+			FROM
+			(SELECT 
+				path,
+				label,
+				deferment,
+				ROUND(SUM(IF(acc_debit_code=361,amount,IF(acc_credit_code=361,-amount,0))),2) sell,
+				ROUND(SUM(IF(acc_debit_code=631,-amount,IF(acc_credit_code=631,amount,0))),2) buy,
+				ROUND(SUM(
+				IF(
+					DATEDIFF(NOW(),acc_trans.cstamp)<=IF(doc_deferment,doc_deferment,deferment) AND (trans_status=1 OR trans_status=2),IF(acc_debit_code=361,amount,0),0)
+				),2) allow,
+				MAX(IF(DATEDIFF(NOW(),acc_trans.cstamp)>IF(doc_deferment,doc_deferment,deferment) AND (trans_status=1 OR trans_status=2),DATEDIFF(NOW(),acc_trans.cstamp),0)) AS expday,
+				CONCAT(company_mobile,' ',company_phone) phone
+			FROM
+				companies_list
+					LEFT JOIN 
+				acc_trans ON company_id=passive_company_id
+					LEFT JOIN
+				document_list USING(doc_id)
+					LEFT JOIN
+				companies_tree USING(branch_id)
+			WHERE 
+				level<='$user_level'
+				$date_filter
+				$active_filter
+				$path_filter
+			GROUP BY 
+				companies_list.company_id
+			ORDER BY 
+				expday DESC
+			) expired
+			$having";
 	
-	//echo "<pre>$sql";
-	//die();
+		//echo "<pre>$sql";
+		//die();
 	
-	$rows=$this->get_list($sql);
+		$rows=$this->get_list($sql);
 
-	$total_our_debt=0;
+		$total_our_debt=0;
         $total_their_debt=0;
         $total_their_exp=0;
         foreach( $rows as $row ){
