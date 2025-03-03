@@ -132,8 +132,8 @@ class DocumentItems extends DocumentCore
         $sql = "SELECT
 		    ROUND(SUM(weight),2) total_weight,
 		    ROUND(SUM(volume),2) total_volume,
-		    SUM(product_sum_vatless) vatless,
-		    SUM(product_sum_total) total,
+		    ROUND(SUM(product_sum_vatless),2) vatless,
+		    ROUND(SUM(product_sum_total),2) total,
 		    ROUND(SUM(product_sum_total-product_sum_vatless),2) vat,
 		    SUM(ROUND(product_quantity*self_price,2)) self,
 		    @curr_symbol curr_symbol

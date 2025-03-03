@@ -286,12 +286,10 @@
                 <option value="USD">Доллар</option>
                 <option value="RUB">Рубль</option>
             </select>
-            <div class="inp_rule">Контроль</div>
-            <input name="deferment" title="Отсрочка">
-            <input name="debt_limit" title="Лимит долга">
+            <div class="inp_rule">Менеджер</div>
             <select name="manager_id" title="Закреплен за">
                 <!--{{staff_list}}-->
-                <option value="{{user_id}}">{{full_name}}</option>
+                <option value="{{user_id}}">{{if full_name}}{{full_name}}{{else}}{{last_name}} {{first_name}} ???{{/if}}</option>
                 <!--{{/staff_list}}-->
             </select>
             <div class="inp_rule">Предпочтения</div>
@@ -312,6 +310,15 @@
             <div>
                 <input type="checkbox" name="skip_breakeven_check" title="Не проверять порог рентабельности" data-skip="1"> Не проверять порог рентабельности
             </div>
+        </div>
+        <div id="page_company_prefs_other" class="easyui-panel" title="Контроль задолженности" style="width:360px;padding: 3px;" data-options="collapsible:true,collapsed:false">
+            <div class="inp_rule">Базовая отсрочка</div>
+            <input name="debt_limit" type="number" title="Лимит суммы">
+            <input name="deferment" type="number" title="Отсрочка дней">
+
+            <div class="inp_rule">Стоп отгрузки</div>
+            <input name="debt_limit_restr" type="number" title="Лимит суммы">
+            <input name="deferment_restr" type="number" title="Отсрочка дней">
         </div>
     </div>
 </div>

@@ -303,21 +303,23 @@ class Company extends Catalog{
                 ";
         
 	$sql_other="SELECT
-		deferment,
+				deferment,
                 debt_limit,
-		curr_code,
-		price_label,
+				deferment_restr,
+                debt_limit_restr,
+				curr_code,
+				price_label,
                 expense_label,
-		manager_id,
-		is_supplier,
+				manager_id,
+				is_supplier,
                 skip_breakeven_check,
-		company_acc_list,
-		language,
+				company_acc_list,
+				language,
 		'".$this->Hub->pcomp('path')."' path
 	    FROM
-		companies_list
+			companies_list
 	    WHERE 
-		company_id='$passive_company_id'
+			company_id='$passive_company_id'
 	    ";
 	return [
 		'discount_cat'=>$this->get_list($sql_discount_cat),
@@ -330,11 +332,11 @@ class Company extends Catalog{
     
     public $companyPrefsUpdate=['type'=>'string','field'=>'[0-9a-z_]+','value'=>'string'];
     public function companyPrefsUpdate( $type, $field, $value='' ){
-	$this->Hub->set_level(3);
-        if( in_array($field, array('deferment','debt_limit','skip_breakeven_check')) ){
+		$this->Hub->set_level(3);
+        if( in_array($field, array('deferment','debt_limit','deferment_restr','debt_limit_restr','skip_breakeven_check','expense_label')) ){
             $this->Hub->set_level(4);
         }
-        if( in_array($field, array('deferment','debt_limit','curr_code','price_label','expense_label','manager_id','is_supplier','skip_breakeven_check','company_acc_list','language')) ){
+        if( in_array($field, array('deferment','debt_limit','deferment_restr','debt_limit_restr','curr_code','price_label','expense_label','manager_id','is_supplier','skip_breakeven_check','company_acc_list','language')) ){
             $passive_company_id = $this->Hub->pcomp('company_id');
             $this->query("UPDATE companies_list SET $field='$value' WHERE company_id=$passive_company_id");
             $ok=$this->db->affected_rows();

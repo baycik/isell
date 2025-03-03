@@ -501,7 +501,7 @@ class Accounts extends Data {
     public function getAccountBalance($acc_code, $pcomp_id = NULL, $deferment=0) {
 	$active_company_id=$this->Base->acomp('company_id');
         $passive_case = ($pcomp_id === NULL) ? "" : "passive_company_id=$pcomp_id AND";
-        $account = $this->Base->get_row("SELECT * FROM acc_tree WHERE acc_code='$acc_code'");
+        //$account = $this->Base->get_row("SELECT * FROM acc_tree WHERE acc_code='$acc_code'");
         $account = $this->Base->get_row("SELECT 
                 ROUND(SUM(IF(acc_debit_code='$acc_code',amount,-amount)),2) balance,
                 ROUND(SUM(IF(DATEDIFF(NOW(),acc_trans.cstamp)<=$deferment AND (trans_status=1 OR trans_status=2),IF(acc_debit_code=361,amount,0),0)),2) allowed_balance

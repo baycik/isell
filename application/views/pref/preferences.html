@@ -107,28 +107,36 @@
 	<tr>
 	    <td style="vertical-align: top;width:340px;">
 		<input name="usd_ratio" title="Курс доллара">
-		<input name="default_debt_limit" title="Лимит долга по умолчанию">
-		<div class="inp_rule">При добавлении в документ дублирующей строки</div>
-		<input type="checkbox" name="add_duplicate_rows" title="Прибавлять к количество">
-		<div class="inp_rule">Аналитика по классам ABC в закуп. документах</div>
-		<input type="checkbox" name="use_class_analytics_in_buy_doc" title="Использовать аналитику">
 	    </td>
 	    <td style="vertical-align: top;width:340px;">
-		<div class="easyui-panel" title="Подписи в документах" data-options="collapsible:true,collapsed:true" style="width:340px;float:left">
-		    <input name="director_name" title="Руководитель ФИО">
+		<div class="easyui-panel" title="Контроль задолженности" data-options="collapsible:true,collapsed:true" style="width:340px;float:left">
+			<div class="inp_rule">Предупреждение</div>
+			<input name="default_debt_limit" title="Лимит суммы"> 
+			<input name="default_debt_defferment" title="Отсрочка дней"> 
+			<div class="inp_rule">Стоп отгрузка</div>
+			<input name="restrictive_debt_limit" title="Лимит суммы"> 
+			<input name="restrictive_debt_defferment" title="Отсрочка дней"> 
+		</div>
+		<div class="easyui-panel" title="Документы" data-options="collapsible:true,collapsed:true" style="width:340px;float:left">
+			<div class="inp_rule">При добавлении в документ дублирующей строки</div>
+			<input type="checkbox" name="add_duplicate_rows" title="Прибавлять к количество">
+			<div class="inp_rule">Аналитика по классам ABC в закуп. документах</div>
+			<input type="checkbox" name="use_class_analytics_in_buy_doc" title="Использовать аналитику">
+			<div class="inp_rule">Подписи в документах</div>
+			<input name="director_name" title="Руководитель ФИО">
 		    <input name="director_tin" title="Руководитель ИНН">
 		    <input name="accountant_name" title="Бухгалтер ФИО">
 		    <input name="accountant_tin" title="Бухгалтер ИНН">
-		    <input name="digital_signature" type="hidden" title="Цифровая подпись">	    
+		    <input name="digital_signature" type="hidden" title="Цифровая подпись">	   
 		</div>
-		<div class="easyui-panel" title="Настройки бланков" data-options="collapsible:true,collapsed:true" style="width:340px;float:left">
+		<div class="easyui-panel" title="Бланки" data-options="collapsible:true,collapsed:true" style="width:340px;float:left">
 		    <input type="checkbox" title="Округлять до цены с НДС в накладных" name="use_total_as_base">
 		    <select name="blank_set" title="Комплект бланков">
 			<option value="ua">Україна</option>
 			<option value="ru">Россия</option>
 		    </select>
                 </div>
-                <div class="easyui-panel" title="Настройки нумерации" data-options="collapsible:true,collapsed:true" style="width:340px;float:left;padding: 10px">
+                <div class="easyui-panel" title="Нумерация документов" data-options="collapsible:true,collapsed:true" style="width:340px;float:left;padding: 10px">
                     <div id="pref_counters" style="display:grid;grid-template-columns:30px 50% auto auto;gap:5px;" class="covert">
                     {{if .}}
                         <div></div><div></div><div>Префикс</div><div>Значение</div>
@@ -141,9 +149,7 @@
                     {{/if}}
                     </div>
 		</div>                
-                
-                
-		<div class="easyui-panel" title="Настройки Емаил SMTP" data-options="collapsible:true,collapsed:true" style="width:340px;float:left">
+		<div class="easyui-panel" title="Емаил SMTP" data-options="collapsible:true,collapsed:true" style="width:340px;float:left">
 		    <input name="SMTP_SERVER" title="SMTP Сервер">
 		    <input name="SMTP_USER" title="Пользователь">
 		    <input name="SMTP_PASS" title="Пароль">
@@ -157,21 +163,21 @@
 		    <input name="SMTP_SENDER_NAME" title="Имя отправителя">
 		    <input type="checkbox" title="Дублировать на Емаил отправителя" name="SMTP_SEND_COPY">
 		</div>
-		<div class="easyui-panel" title="Настройки Traccar" data-options="collapsible:true,collapsed:true" style="width:340px;float:left">
+		<div class="easyui-panel" title="Traccar" data-options="collapsible:true,collapsed:true" style="width:340px;float:left">
 		    <input name="TRACCAR_GATEWAY" title="Gateway">
 		    <input name="TRACCAR_AUTORIZATION" title="API Key">
 		</div>
-		<div class="easyui-panel" title="Настройки ДевиноСМС" data-options="collapsible:true,collapsed:true" style="width:340px;float:left">
+		<div class="easyui-panel" title="ДевиноСМС" data-options="collapsible:true,collapsed:true" style="width:340px;float:left">
 		    <input name="SMS_SENDER" title="Отправитель">
 		    <input name="SMS_USER" title="Пользователь">
 		    <input name="SMS_PASS" title="Пароль">
 		</div>
-		<div class="easyui-panel" title="Настройки FTP" data-options="collapsible:true,collapsed:true" style="width:340px;float:left">
+		<div class="easyui-panel" title="FTP" data-options="collapsible:true,collapsed:true" style="width:340px;float:left">
 		    <input name="FTP_SERVER" title="Сервер">
 		    <input name="FTP_USER" title="Пользователь">
 		    <input name="FTP_PASS" title="Пароль">
 		</div>
-		<div class="easyui-panel" title="Настройки клиент-банка" data-options="collapsible:true,collapsed:true" style="width:340px;float:left">
+		<div class="easyui-panel" title="Клиент-банка" data-options="collapsible:true,collapsed:true" style="width:340px;float:left">
 		    <input type="checkbox" title="Идентификатор в платежных поручениях ИНН" name="tax_id_in_checks"> <br>
 		    <textarea title="Порядок полей в файле .csv клиент банка" name="clientbank_fields" style="height: 200px"></textarea>
 		</div>
