@@ -138,7 +138,7 @@ class AccountsBank extends AccountsData
 	{
 		$csv_raw = file_get_contents($UPLOADED_FILE);
 		$csv = iconv('Windows-1251', 'UTF-8', $csv_raw);
-		$csv_lines = explode("\n", $csv);
+		$csv_lines = explode(";\r\n", $csv);
 		array_shift($csv_lines);
 		$csv_sequence = explode(',', str_replace('-', '_', $this->Hub->pref('clientbank_fields')));
 		foreach ($csv_lines as $line) {
@@ -162,7 +162,7 @@ class AccountsBank extends AccountsData
 		$active_company_id = $this->Hub->acomp('company_id');
 		$fields = ['number', 'date', 'value_date', 'debit_amount', 'credit_amount', 'assumption_date', 'currency', 'transaction_date', 'client_name', 'client_code', 'client_account', 'client_bank_name', 'client_bank_code', 'correspondent_name', 'correspondent_code', 'correspondent_account', 'correspondent_bank_name', 'correspondent_bank_code', 'assignment'];
 		
-		$numeric_fields=['number', 'debit_amount', 'credit_amount','client_bank_code', 'correspondent_bank_code','client_code',];
+		$numeric_fields=['number', 'debit_amount', 'credit_amount','client_bank_code', 'correspondent_bank_code','client_code','correspondent_code'];
 		$set = ["active_company_id='$active_company_id'", "main_acc_code='$main_acc_code'"];
 		foreach ($fields as $field) {
 			$value = isset($check[$field]) ? $check[$field] : '';
@@ -181,7 +181,7 @@ class AccountsBank extends AccountsData
 			}
 			$set[] = "$field='" . addslashes($value) . "' ";
 		}
-		$this->query("INSERT INTO acc_check_list SET " . implode(',', $set), false);
+		$this->query("INSERT INTO acc_check_list SET " . implode(',', $set)." ON DUPLICATE KEY UPDATE ". implode(',', $set), false);
 		return true;
 	}
 
