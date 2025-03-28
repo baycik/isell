@@ -56,7 +56,7 @@ class FileEngine {
             $this->rain = new RainTPL();
             $this->rain->configure('tpl_dir', $this->tpl_dir);
             $this->rain->configure('tpl_ext', substr($this->tpl_ext, 1));
-            $this->rain->configure('cache_dir', sys_get_temp_dir());
+            //$this->rain->configure('cache_dir', sys_get_temp_dir());
         }
     }
 

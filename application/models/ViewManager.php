@@ -58,8 +58,8 @@ class ViewManager extends CI_Model{
 		$FileEngine->show_controls = true;
 		$FileEngine->user_data = [
 		    'title' => $this->dump->title,
-		    'msg' => $this->dump->user_data->text,
-		    'email' => $this->dump->user_data->email,
+		    'msg' => $this->dump->user_data->text??'',
+		    'email' => $this->dump->user_data->email??'',
 		    'fgenerator'=>'ViewManager',
 		    'out_type'=>$out_type,
 		    'dump_id' => $this->dump->dump_id

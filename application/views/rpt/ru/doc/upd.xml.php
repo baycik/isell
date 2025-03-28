@@ -130,7 +130,11 @@ $this->view->footer->vat+=$subvat;
 /////////////////////////////////////////////////
 function todmy( $iso ){
    $ymd= explode('-', $iso);
-   return "$ymd[2].$ymd[1].$ymd[0]";
+
+    if( !$iso || !$ymd ){
+        return '';
+    }
+    return "$ymd[2].$ymd[1].$ymd[0]";
 }
 function format($num){
     return number_format($num, 2,'.','');
