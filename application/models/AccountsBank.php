@@ -161,6 +161,8 @@ class AccountsBank extends AccountsData
 		error_reporting(E_ERROR | E_WARNING | E_PARSE);
 		$active_company_id = $this->Hub->acomp('company_id');
 		$fields = ['number', 'date', 'value_date', 'debit_amount', 'credit_amount', 'assumption_date', 'currency', 'transaction_date', 'client_name', 'client_code', 'client_account', 'client_bank_name', 'client_bank_code', 'correspondent_name', 'correspondent_code', 'correspondent_account', 'correspondent_bank_name', 'correspondent_bank_code', 'assignment'];
+		
+		$numeric_fields=['number', 'debit_amount', 'credit_amount','client_bank_code', 'correspondent_bank_code','client_code',];
 		$set = ["active_company_id='$active_company_id'", "main_acc_code='$main_acc_code'"];
 		foreach ($fields as $field) {
 			$value = isset($check[$field]) ? $check[$field] : '';
@@ -168,11 +170,14 @@ class AccountsBank extends AccountsData
 				$value = str_replace(',', '.', $value);
 			}
 			if (strpos($field, 'date') !== false) {
-				preg_match_all('/(\d{2})[^\d](\d{2})[^\d](\d{4})( \d\d:\d\d(:\d\d)?)?/i', $value, $matches);
-				if (empty($matches[3][0])) {
+				$ok=preg_match_all('/(\d{2})[^\d](\d{2})[^\d](\d{4})( \d\d:\d\d(:\d\d)?)?/i', $value, $matches);
+				if( !$ok ){
 					continue;
 				}
 				$value = "{$matches[3][0]}-{$matches[2][0]}-{$matches[1][0]}{$matches[4][0]}";
+			} else
+			if( in_array($field,$numeric_fields) ){
+				$value=(float) $value;
 			}
 			$set[] = "$field='" . addslashes($value) . "' ";
 		}
