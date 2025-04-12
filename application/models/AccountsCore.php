@@ -149,7 +149,7 @@ class AccountsCore extends Catalog
 			}
 			$balance = ",(
 					SELECT 
-						SUM(ROUND(IF(at.acc_code=acc_debit_code,-amount,amount),2))
+						ROUND(SUM(IF(at.acc_code=acc_debit_code,-amount,amount)),2)
 					FROM acc_trans
 					WHERE (acc_debit_code=at.acc_code OR acc_credit_code=at.acc_code) AND active_company_id=$active_company_id $passive_filter)*IF(acc_type='P',1,-1) balance";
 		}

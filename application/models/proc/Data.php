@@ -168,9 +168,8 @@ class Data {
     }
 
     public function loadFromFile($table_name, $file_name) {
-        require_once "libraries/report/PHPExcel.php";
         $structure = $this->getGridStructure($table_name);
-        $this->PHPexcel = PHPExcel_IOFactory::load($file_name);
+        $this->PHPexcel = \PhpOffice\PhpSpreadsheet\IOFactory::load($file_name);
         if ($this->PHPexcel) {
             $this->Worksheet = $this->PHPexcel->getActiveSheet();
             foreach ($this->Worksheet->getRowIterator() as $row) {

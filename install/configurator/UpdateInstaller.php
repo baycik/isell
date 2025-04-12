@@ -146,7 +146,7 @@ class UpdateInstaller {
 
     private function query($query) {
 	if (!isset($this->link)) {
-	    $this->link = mysqli_connect('localhost', BAY_DB_USER, BAY_DB_PASS);
+	    $this->link = mysqli_connect('127.0.0.1', BAY_DB_USER, BAY_DB_PASS);
 	}
 	mysqli_query($this->link, "SET NAMES utf8");
 	$result = mysqli_query($this->link, $query);

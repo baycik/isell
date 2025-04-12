@@ -420,21 +420,25 @@ class Utils extends Catalog {
     public $stockQtyRecalculate = [];
 
     public function stockQtyRecalculate() {
-        $sql = "
-	    UPDATE 
-		stock_entries se
-	    SET 
-		se.product_quantity = 
-		(SELECT 
-			SUM(IF(doc_type = 2,de.product_quantity,- de.product_quantity)) calc_product_quantity
-		    FROM
-			document_entries de
-			    JOIN
-			document_list dl USING (doc_id)     
-		    WHERE
-			de.product_code=se.product_code AND (doc_type = 1 OR doc_type = 2) AND dl.is_commited = 1 AND dl.notcount = 0
-		GROUP BY product_code)";
-        $this->db->query($sql);
+        $this->db->query("DROP TEMPORARY TABLE IF EXISTS tmp_stock_recalc;");
+        $this->db->query("CREATE TEMPORARY TABLE tmp_stock_recalc (PRIMARY KEY (product_code)) AS(
+            SELECT 
+                product_code,
+                IFNULL(SUM(IF(doc_type = 2,de.product_quantity,- de.product_quantity)),0) totalqty
+            FROM
+                document_entries de
+                    JOIN
+                document_list dl USING (doc_id)   
+            WHERE
+                (doc_type = 1 OR doc_type = 2) AND dl.is_commited = 1 AND dl.notcount = 0
+            GROUP BY product_code
+        );");
+        $this->db->query("UPDATE 
+                stock_entries se
+                    JOIN
+                tmp_stock_recalc USING(product_code)
+            SET 
+                se.product_quantity =  totalqty;");
         return $this->db->affected_rows();
     }
 
