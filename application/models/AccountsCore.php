@@ -466,8 +466,8 @@ class AccountsCore extends Catalog
 				SET
 					trans_status=CASE
 						WHEN acc_debit_code <> $acc_code THEN 0
-						WHEN running_sum>=0 THEN 3
-						WHEN amount+running_sum>5 THEN 2
+						WHEN running_sum>=-$sensitivity THEN 3
+						WHEN amount+running_sum>$sensitivity THEN 2
 						ELSE 1
 					END";
 		} else {
@@ -492,7 +492,7 @@ class AccountsCore extends Catalog
 			SET
 				trans_status=CASE
 					WHEN acc_credit_code <> $acc_code THEN 0
-					WHEN running_sum<=0 THEN 8
+					WHEN running_sum<=$sensitivity THEN 8
 					WHEN running_sum+$sensitivity<amount THEN 7
 					ELSE 6
 				END";
