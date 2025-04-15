@@ -86,7 +86,7 @@ class AccountsCore extends Catalog
 			}
 			return false;
 		}
-		throw new Exception("Access denied for deletion of this transaction: {$trans_data['acc_debit_code']}_{$trans_data['acc_credit_code']}", 403);
+		throw new Exception("Access denied for deletion of this transaction", 403);
 	}
 
 	private function transResolveConnections($trans_id, $trans_data)
@@ -444,49 +444,58 @@ class AccountsCore extends Catalog
 		$active_company_id = $this->Hub->acomp('company_id');
 		$sensitivity = 5.00;
 		//$this->profile("before  transPaymentCalculate");
-		$this->query("SET @sum:=0.0;");
 		if ($side == 'debit') {
-			$calculate_sql = "
-                    UPDATE
-                        acc_trans
-                    SET trans_status=IF(acc_debit_code = $acc_code,
-                            (@sum:=@sum - amount)*0 + 
-                            IF(amount<0,0,
-                                IF(ROUND(@sum,2) <= 0 ,1,
-                                    IF(@sum+$sensitivity< amount, 2, 3)
-                                )
-                            ),
-                            (@sum:=@sum + amount)*0
-                        )
-                    WHERE
-                        active_company_id=$active_company_id
-                        AND passive_company_id = '$pcomp_id'
-                        AND trans_status <> 4
-                        AND trans_status <> 5
-                        AND (acc_debit_code = $acc_code
-                        OR acc_credit_code = $acc_code)
-                    ORDER BY acc_debit_code = $acc_code, amount>0, cstamp;";
+			$calculate_sql="
+				WITH trans_subtotal AS (
+					SELECT 
+						trans_id,
+						SUM(IF(acc_debit_code <> $acc_code,1,-1)*amount) OVER (ORDER BY acc_debit_code = $acc_code, amount>0, cstamp) running_sum
+					FROM
+						acc_trans
+					WHERE
+						active_company_id=$active_company_id
+						AND passive_company_id = $pcomp_id
+						AND (trans_status NOT IN (4,5) OR trans_status IS NULL)
+						AND (acc_debit_code = $acc_code OR acc_credit_code = $acc_code)
+				)
+	
+				UPDATE
+					acc_trans
+						JOIN
+					trans_subtotal USING(trans_id)
+				SET
+					trans_status=CASE
+						WHEN acc_debit_code <> $acc_code THEN 0
+						WHEN running_sum>=0 THEN 3
+						WHEN amount+running_sum>5 THEN 2
+						ELSE 1
+					END";
 		} else {
-			$calculate_sql = "
-                    UPDATE
-                        acc_trans
-                    SET trans_status=IF(acc_credit_code = $acc_code,
-                            (@sum:=@sum - amount)*0 + 
-                            IF(amount<0,0,
-                                IF(ROUND(@sum,2) <= 0 ,6,
-                                    IF(@sum+$sensitivity< amount, 7, 8)
-                                )
-                            ),
-                            (@sum:=@sum + amount)*0
-                        )
-                    WHERE
-                        active_company_id=$active_company_id
-                        AND passive_company_id = $pcomp_id
-                        AND trans_status <> 9
-                        AND trans_status <> 10
-                        AND (acc_debit_code = $acc_code
-                        OR acc_credit_code = $acc_code)
-                    ORDER BY acc_credit_code = $acc_code, amount>0, cstamp;";
+			$calculate_sql="
+			WITH trans_subtotal AS (
+				SELECT 
+					trans_id,
+					SUM(IF(acc_credit_code = $acc_code,1,-1)*amount) OVER (ORDER BY acc_credit_code = $acc_code, amount>0, cstamp) running_sum
+				FROM
+					acc_trans
+				WHERE
+					active_company_id=$active_company_id
+					AND passive_company_id = $pcomp_id
+					AND (trans_status NOT IN (9,10) OR trans_status IS NULL)
+					AND (acc_debit_code = $acc_code OR acc_credit_code = $acc_code)
+			)
+
+			UPDATE
+				acc_trans
+					JOIN
+				trans_subtotal USING(trans_id)
+			SET
+				trans_status=CASE
+					WHEN acc_credit_code <> $acc_code THEN 0
+					WHEN running_sum<=0 THEN 8
+					WHEN running_sum+$sensitivity<amount THEN 7
+					ELSE 6
+				END";
 		}
 		$this->query($calculate_sql);
 		//$this->profile("after  transPaymentCalculate");

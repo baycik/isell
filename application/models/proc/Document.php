@@ -382,7 +382,7 @@ class Document extends Data
                 SET 
                     product_quantity = $quantity,
                     invoice_price = $invoice,
-                    self_price = '$self',
+                    self_price = IF('$self','$self',0),
                     party_label = '$party_label'
                 WHERE
                     doc_entry_id = '$doc_entry_id'";
