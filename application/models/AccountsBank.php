@@ -161,11 +161,11 @@ class AccountsBank extends AccountsData
 		$active_company_tax_id=$this->Hub->acomp('company_tax_id');
 		$Parser1C=new Kily\Tools1C\ClientBankExchange\Parser($file_path);
 		foreach($Parser1C->documents as $d) {
+			$date=( implode('.',array_reverse(explode('-',$d->{'Дата'}))) ).' '.'00:00:00';
 			$check=[
-				'transaction_date'=>$d->{'КвитанцияДата'}.' '.$d->{'КвитанцияВремя'},
-
 				'number'=>$d->{'Номер'},
-				'date'=>$d->{'КвитанцияДата'}.' '.$d->{'КвитанцияВремя'},
+				'date'=>$date,
+				'transaction_date'=>$date,
 				'assignment'=>$d->{'НазначениеПлатежа'},
 				'payment_queue'=>$d->{'Очередность'},
 			];
@@ -173,9 +173,9 @@ class AccountsBank extends AccountsData
 				$check['credit_amount']=$d->{'Сумма'};
 
 				$check['correspondent_code']=$d->{'ПлательщикИНН'};
-				$check['correspondent_name']=$d->{'Плательщик1'};
+				$check['correspondent_name']=$d->{'Плательщик1'}??$d->{'Плательщик'};
 				$check['correspondent_bank_code']=$d->{'ПлательщикБИК'};
-				$check['correspondent_bank_name']=$d->{'ПлательщикБанк1'}.$d->{'ПлательщикБанк2'};
+				$check['correspondent_bank_name']=($d->{'ПлательщикБанк1'}??'').($d->{'ПлательщикБанк2'}??'');
 				$check['correspondent_corr_account']=$d->{'ПлательщикКорсчет'};
 				$check['correspondent_account']=$d->{'ПлательщикСчет'};
 			} else 
@@ -183,9 +183,9 @@ class AccountsBank extends AccountsData
 				$check['debit_amount']=$d->{'Сумма'};
 
 				$check['correspondent_code']=$d->{'ПолучательИНН'};
-				$check['correspondent_name']=$d->{'Получатель1'};
+				$check['correspondent_name']=$d->{'Получатель1'}??$d->{'Получатель'};
 				$check['correspondent_bank_code']=$d->{'ПолучательБИК'};
-				$check['correspondent_bank_name']=$d->{'ПолучательБанк1'}.$d->{'ПолучательБанк2'};
+				$check['correspondent_bank_name']=($d->{'ПолучательБанк1'}??'').($d->{'ПолучательБанк2'}??'');
 				$check['correspondent_corr_account']=$d->{'ПолучательКорсчет'};
 				$check['correspondent_account']=$d->{'ПолучательСчет'};
 			} else {
@@ -221,7 +221,6 @@ class AccountsBank extends AccountsData
 			}
 			$set[] = "$field='" . addslashes($value) . "' ";
 		}
-		pl($set);
 		$this->query("INSERT INTO acc_check_list SET " . implode(',', $set)." ON DUPLICATE KEY UPDATE ". implode(',', $set), false);
 		return true;
 	}
