@@ -130,6 +130,7 @@ class AccountsBank extends AccountsData
 			if (strrpos($_FILES['upload_file']['name'], '.csv')) {
 				return $this->parseCSV($_FILES['upload_file']['tmp_name'], $main_acc_code);
 			}
+			return $this->parse1C($_FILES['upload_file']['tmp_name'], $main_acc_code);
 		}
 		return 'error' . $_FILES['upload_file']['error'];
 	}
@@ -150,6 +151,45 @@ class AccountsBank extends AccountsData
 			$vals = str_getcsv($line, ';');
 			foreach ($csv_sequence as $field) {
 				$check[trim($field)] = $vals[$i++] ?? null;
+			}
+			$this->addCheckDocument($check, $main_acc_code);
+		}
+		return 'imported';
+	}
+
+	private function parse1C($file_path, $main_acc_code){
+		$active_company_tax_id=$this->Hub->acomp('company_tax_id');
+		$Parser1C=new Kily\Tools1C\ClientBankExchange\Parser($file_path);
+		foreach($Parser1C->documents as $d) {
+			$check=[
+				'transaction_date'=>$d->{'КвитанцияДата'}.' '.$d->{'КвитанцияВремя'},
+
+				'number'=>$d->{'Номер'},
+				'date'=>$d->{'КвитанцияДата'}.' '.$d->{'КвитанцияВремя'},
+				'assignment'=>$d->{'НазначениеПлатежа'},
+				'payment_queue'=>$d->{'Очередность'},
+			];
+			if($active_company_tax_id==$d->{'ПолучательИНН'}){
+				$check['credit_amount']=$d->{'Сумма'};
+
+				$check['correspondent_code']=$d->{'ПлательщикИНН'};
+				$check['correspondent_name']=$d->{'Плательщик1'};
+				$check['correspondent_bank_code']=$d->{'ПлательщикБИК'};
+				$check['correspondent_bank_name']=$d->{'ПлательщикБанк1'}.$d->{'ПлательщикБанк2'};
+				$check['correspondent_corr_account']=$d->{'ПлательщикКорсчет'};
+				$check['correspondent_account']=$d->{'ПлательщикСчет'};
+			} else 
+			if($active_company_tax_id==$d->{'ПлательщикИНН'}){
+				$check['debit_amount']=$d->{'Сумма'};
+
+				$check['correspondent_code']=$d->{'ПолучательИНН'};
+				$check['correspondent_name']=$d->{'Получатель1'};
+				$check['correspondent_bank_code']=$d->{'ПолучательБИК'};
+				$check['correspondent_bank_name']=$d->{'ПолучательБанк1'}.$d->{'ПолучательБанк2'};
+				$check['correspondent_corr_account']=$d->{'ПолучательКорсчет'};
+				$check['correspondent_account']=$d->{'ПолучательСчет'};
+			} else {
+				continue;
 			}
 			$this->addCheckDocument($check, $main_acc_code);
 		}
@@ -181,6 +221,7 @@ class AccountsBank extends AccountsData
 			}
 			$set[] = "$field='" . addslashes($value) . "' ";
 		}
+		pl($set);
 		$this->query("INSERT INTO acc_check_list SET " . implode(',', $set)." ON DUPLICATE KEY UPDATE ". implode(',', $set), false);
 		return true;
 	}
