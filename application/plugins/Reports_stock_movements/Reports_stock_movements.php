@@ -132,18 +132,30 @@ class Reports_stock_movements extends Catalog
             SELECT
                 product_code,
                 SUM( IF(cstamp<'$this->idate',IF(doc_type=2,product_quantity,-product_quantity),0) ) stock_iqty,
-                SUM( IF(doc_type=2 AND cstamp<'$this->idate',self_price *IF($this->include_vat,dl.vat_rate/100+1,1) *IF($this->in_alt_currency AND doc_ratio,1/doc_ratio,1) *product_quantity,0) ) buy_isum,
-                SUM( IF(doc_type=2 AND cstamp<'$this->idate',product_quantity,0) ) buy_iqty,
+                SUM( 
+                IF(cstamp<'$this->idate',
+                    IF(doc_type=2,product_quantity,-product_quantity)
+                    *self_price
+                    *IF($this->include_vat,dl.vat_rate/100+1,1)
+                    *IF($this->in_alt_currency AND doc_ratio,1/doc_ratio,1)
+                 ,0)
+                 ) stock_isum,
+
 
                 SUM( IF(doc_type=2 AND cstamp>'$this->idate',self_price *IF($this->include_vat,dl.vat_rate/100+1,1) *IF($this->in_alt_currency AND doc_ratio,1/doc_ratio,1) *product_quantity,0) ) buy_sum,
                 SUM( IF(doc_type=2 AND cstamp>'$this->idate',product_quantity,0) ) buy_qty,
                     
                 SUM( IF(doc_type=1 AND cstamp>'$this->idate',self_price *IF($this->include_vat,dl.vat_rate/100+1,1) *IF($this->in_alt_currency AND doc_ratio,1/doc_ratio,1) *product_quantity,0) ) sell_sum,
                 SUM( IF(doc_type=1 AND cstamp>'$this->idate',product_quantity,0) ) sell_qty,
-                    
+
+
                 SUM( IF(doc_type=2,product_quantity,-product_quantity) ) stock_fqty,
-                SUM( IF(doc_type=2,self_price *IF($this->include_vat,dl.vat_rate/100+1,1) *IF($this->in_alt_currency AND doc_ratio,1/doc_ratio,1) *product_quantity,0) ) buy_fsum,
-                SUM( IF(doc_type=2,product_quantity,0) ) buy_fqty
+                SUM( 
+                    IF(doc_type=2,product_quantity,-product_quantity)
+                    *self_price
+                    *IF($this->include_vat,dl.vat_rate/100+1,1)
+                    *IF($this->in_alt_currency AND doc_ratio,1/doc_ratio,1)
+                 ) stock_fsum
             FROM
                 document_list dl
                     JOIN
@@ -161,7 +173,7 @@ class Reports_stock_movements extends Catalog
                 ru,
                 
                 stock_iqty,
-                IF(buy_iqty>0,(buy_isum/buy_iqty)*stock_iqty,0) stock_isum,
+                stock_isum,
                 
                 buy_qty,
                 buy_sum,
@@ -170,7 +182,7 @@ class Reports_stock_movements extends Catalog
                 sell_sum,
                 
                 stock_fqty,
-                IF(buy_fqty>0,(buy_fsum/buy_fqty)*stock_fqty,0) stock_fsum,
+                stock_fsum,
 
                 CONCAT(IF('$this->group_by'='parent_id',(SELECT `path` FROM stock_tree WHERE branch_id=se.parent_id),$this->group_by) $this->group_by2_slash) group_by,
                 $this->group_by $this->group_by2_comma

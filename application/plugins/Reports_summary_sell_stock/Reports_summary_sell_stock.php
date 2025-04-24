@@ -128,13 +128,19 @@ class Reports_summary_sell_stock extends Catalog
         $sql_tmp_create1 = "CREATE TEMPORARY TABLE tmp_summary_sell_buy (PRIMARY KEY (product_code)) AS(
             SELECT
                 product_code,
-                SUM( IF(doc_type=2,product_quantity,-product_quantity) ) stock_qty,
-
                 SUM( IF(doc_type=2 AND cstamp<'$this->fdate', self_price *IF($this->include_vat,dl.vat_rate/100+1,1) *IF($this->in_alt_currency AND doc_ratio,1/doc_ratio,1) *product_quantity,0) ) buy_prod_sum,
                 SUM( IF(doc_type=2 AND cstamp<'$this->fdate', product_quantity,0) ) buy_qty,
 
                 SUM( IF(doc_type=1 AND cstamp>'$this->idate',invoice_price*IF($this->include_vat,dl.vat_rate/100+1,1)/IF($this->in_alt_currency,doc_ratio,1)*product_quantity,0) ) sell_prod_sum,
-                SUM( IF(doc_type=1 AND cstamp>'$this->idate',product_quantity,0) ) sell_qty
+                SUM( IF(doc_type=1 AND cstamp>'$this->idate',product_quantity,0) ) sell_qty,
+
+                SUM( IF(doc_type=2,product_quantity,-product_quantity) ) stock_fqty,
+                SUM( 
+                    IF(doc_type=2,product_quantity,-product_quantity)
+                    *self_price
+                    *IF($this->include_vat,dl.vat_rate/100+1,1)
+                    *IF($this->in_alt_currency AND doc_ratio,1/doc_ratio,1)
+                 ) stock_fsum
             FROM
                 document_entries de
                     JOIN
@@ -150,10 +156,11 @@ class Reports_summary_sell_stock extends Catalog
             SELECT 
                 product_code _product_code,
                 ru,
-                sell_prod_sum,
-                IF(buy_qty>0,(buy_prod_sum/buy_qty)*stock_qty,0) stock_entry_sum,
-                stock_qty,
                 sell_qty,
+                sell_prod_sum,
+
+                stock_fqty,
+                stock_fsum,
                 CONCAT(IF('$this->group_by'='parent_id',(SELECT `path` FROM stock_tree WHERE branch_id=se.parent_id),$this->group_by) $this->group_by2_slash) group_by,
                 $this->group_by $this->group_by2_comma
             FROM
@@ -167,15 +174,15 @@ class Reports_summary_sell_stock extends Catalog
         $sql_summary = "SELECT 
                 group_by,
                 SUM(sell_prod_sum) sell_sum,
-                SUM(stock_entry_sum) stock_sum,
-                SUM(stock_qty) stock_sum_qty,
+                SUM(stock_fsum) stock_sum,
+                SUM(stock_fqty) stock_sum_qty,
                 SUM(sell_qty) sell_sum_qty
             FROM
                 tmp_summary_sell_stock
             GROUP BY
 		        $this->group_by $this->group_by2_comma
             HAVING
-                sell_sum OR stock_sum
+                ABS(sell_sum)>1 OR ABS(stock_sum)>1
             ORDER BY
                 sell_sum DESC,stock_sum DESC
             ";

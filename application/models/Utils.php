@@ -529,8 +529,8 @@ class Utils extends Catalog {
     public function selfPriceInvoiceRecalculate($idatedmy, $fdatedmy, $active_mode = '') {
         set_time_limit(300);
         session_write_close();
-        $idate = $this->dmy2iso($idatedmy) . ' 00:00:00';
-        $fdate = $this->dmy2iso($fdatedmy) . ' 23:59:59';
+        $idate = $idatedmy . ' 00:00:00';
+        $fdate = $fdatedmy . ' 23:59:59';
         if ($active_mode == 'all_active') {
             $active_filter = '';
         } else {
