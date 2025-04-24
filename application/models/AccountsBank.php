@@ -169,16 +169,6 @@ class AccountsBank extends AccountsData
 				'assignment'=>$d->{'НазначениеПлатежа'},
 				'payment_queue'=>$d->{'Очередность'},
 			];
-			if($active_company_tax_id==$d->{'ПолучательИНН'}){
-				$check['credit_amount']=$d->{'Сумма'};
-
-				$check['correspondent_code']=$d->{'ПлательщикИНН'};
-				$check['correspondent_name']=$d->{'Плательщик1'}??$d->{'Плательщик'};
-				$check['correspondent_bank_code']=$d->{'ПлательщикБИК'};
-				$check['correspondent_bank_name']=($d->{'ПлательщикБанк1'}??'').($d->{'ПлательщикБанк2'}??'');
-				$check['correspondent_corr_account']=$d->{'ПлательщикКорсчет'};
-				$check['correspondent_account']=$d->{'ПлательщикСчет'};
-			} else 
 			if($active_company_tax_id==$d->{'ПлательщикИНН'}){
 				$check['debit_amount']=$d->{'Сумма'};
 
@@ -189,6 +179,16 @@ class AccountsBank extends AccountsData
 				$check['correspondent_corr_account']=$d->{'ПолучательКорсчет'};
 				$check['correspondent_account']=$d->{'ПолучательСчет'};
 			} else {
+			if($active_company_tax_id==$d->{'ПолучательИНН'}){
+				$check['credit_amount']=$d->{'Сумма'};
+
+				$check['correspondent_code']=$d->{'ПлательщикИНН'};
+				$check['correspondent_name']=$d->{'Плательщик1'}??$d->{'Плательщик'};
+				$check['correspondent_bank_code']=$d->{'ПлательщикБИК'};
+				$check['correspondent_bank_name']=($d->{'ПлательщикБанк1'}??'').($d->{'ПлательщикБанк2'}??'');
+				$check['correspondent_corr_account']=$d->{'ПлательщикКорсчет'};
+				$check['correspondent_account']=$d->{'ПлательщикСчет'};
+			} else 
 				continue;
 			}
 			$this->addCheckDocument($check, $main_acc_code);
