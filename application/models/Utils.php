@@ -467,10 +467,78 @@ class Utils extends Catalog {
     ////////////////////////////////////////////////////////////
     // SELF RECALCULATION FUNCTIONS
     ////////////////////////////////////////////////////////////
+    private function selfPriceCreateTable2(){
+        $sql="
+        WITH stock_movements AS (
+            SELECT 
+                dl.cstamp,
+                doc_entry_id,
+                product_code,
+                doc_type,
+                is_reclamation,
+                ABS(product_quantity) product_quantity,
+                self_price,
+                IF(doc_type=1 AND is_reclamation=0 OR doc_type=2 AND is_reclamation=1,'sell','buy') movement_type,
+                SUM(ABS(product_quantity)) OVER (PARTITION BY product_code,IF(doc_type=1 AND is_reclamation=0 OR doc_type=2 AND is_reclamation=1,'sell','buy') ORDER BY cstamp,doc_entry_id) - ABS(product_quantity) range_from,
+                SUM(ABS(product_quantity)) OVER (PARTITION BY product_code,IF(doc_type=1 AND is_reclamation=0 OR doc_type=2 AND is_reclamation=1,'sell','buy') ORDER BY cstamp,doc_entry_id) range_to
+            FROM 
+                document_entries de
+                    JOIN
+                document_list dl USING(doc_id)
+            WHERE doc_type IN(1,2) AND is_commited=1 AND notcount=0
+        )
+        UPDATE
+            document_entries
+                JOIN
+        (SELECT
+            #sell.cstamp,
+            #sell.product_quantity sell_product_quantity,
+            #sell.self_price sell_self_price,
+            #sell.range_from sell_range_from,
+            #sell.range_to sell_range_to,
+            #buy.cstamp,
+            #buy.product_code,
+            #buy.product_quantity buy_product_quantity,
+            #buy.range_from buy_range_from,
+            #buy.range_to buy_range_to,
+            #buy.self_price buy_self_price,
+            
+            sell.doc_entry_id sell_doc_entry_id,
+            SUM(buy.self_price * (sell.product_quantity -IF(sell.range_to>buy.range_to,sell.range_to-buy.range_to,0)  -IF(buy.range_from>sell.range_from,buy.range_from-sell.range_from,0) ))
+            / SUM( sell.product_quantity -IF(sell.range_to>buy.range_to,sell.range_to-buy.range_to,0)  -IF(buy.range_from>sell.range_from,buy.range_from-sell.range_from,0) )
+            avg_self
+        FROM
+            stock_movements buy 
+                LEFT JOIN
+            stock_movements sell 
+                ON 
+                    buy.product_code=sell.product_code
+                    AND buy.movement_type='buy'
+                    AND sell.movement_type='sell'
+                    AND (
+                        sell.range_from>=buy.range_from AND sell.range_from<buy.range_to
+                        OR sell.range_to>buy.range_from AND sell.range_to<=buy.range_to
+                        OR buy.range_from>=sell.range_from AND buy.range_from<sell.range_to
+                        OR buy.range_to>sell.range_from AND buy.range_to<=sell.range_to
+                    )
+        WHERE buy.movement_type='buy'
+        GROUP BY sell.doc_entry_id) entry_self_prices
+            ON doc_entry_id = sell_doc_entry_id
+        SET
+            self_price=avg_self;
+        ";
+    }
+
+
+
+
+
     private function selfPriceCorrectEntries() {
         $sql_update = "UPDATE document_entries de JOIN tmp_self_calc tsc USING(doc_entry_id) SET de.self_price=tsc.sp WHERE doc_type=1;";
         $this->db->query($sql_update);
     }
+
+
 
     private function selfPriceCreateTable($active_filter) {
         $sql_vars = "SET @i:=0,@pointer:=0,@current_code:='',@qty_left1:=0,@qty_left:=0,@current_self_price=0.00;";

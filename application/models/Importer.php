@@ -11,10 +11,10 @@ class Importer extends Catalog
 		$having = $this->makeFilter($filter);
 		$sql = "
 	    SELECT 
-		*
+			*
 	    FROM 
-		imported_data
-            WHERE label LIKE '%$label%'
+			imported_data
+		WHERE label LIKE '%$label%'
 	    HAVING $having
 	    ORDER BY $sortby $sortdir
 	    LIMIT $limit OFFSET $offset";
@@ -42,6 +42,8 @@ class Importer extends Catalog
 		return $insert_id;
 	}
 
+
+	private $PHPexcel,$Worksheet;
 	public $Up = ['label' => 'string'];
 	public function Up($label)
 	{

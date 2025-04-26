@@ -198,7 +198,9 @@ class StockAnalog extends Catalog{
             WHERE 
                 doc_entry_id='$doc_entry_id'"
         );
-        
+        if( empty($CurrentEntry) ){
+            return;
+        }
         $DocumentItems=$this->Hub->load_model("DocumentItems");
         $DocumentItems->selectDoc($CurrentEntry->doc_id);
         if( $Analog->product_quantity>=$CurrentEntry->product_quantity ){

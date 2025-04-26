@@ -130,7 +130,7 @@ class Stock extends Catalog {
 
     private function columnsGet($mode) {
         $lvl1 = "product_id, parent_id,parent_label,t.product_code,ru,t.product_quantity,product_unit,product_reserved,product_awaiting,is_service";
-        $lvl2 = ",product_id, product_wrn_quantity,SUM(IF(TO_DAYS(NOW()) - TO_DAYS(dl.cstamp) <= 30,de.product_quantity,0)) m1,ROUND( SUM(IF(TO_DAYS(NOW()) - TO_DAYS(dl.cstamp) <= 92,de.product_quantity,0))/3 ) m3";
+        $lvl2 = ",product_id, product_wrn_quantity,SUM(IF(DATEDIFF(NOW(),cstamp) <= 30,de.product_quantity,0)) m1,ROUND(SUM(IF(DATEDIFF(NOW(),cstamp) <= 92,de.product_quantity,0)) / 3) m3";
         $adv = ",product_id, t.self_price,sell,buy,curr_code,product_img,product_spack,product_bpack,product_weight,product_volume,t.party_label,analyse_origin,product_barcode,analyse_type,analyse_brand,analyse_class,product_article";
         if ($this->Hub->svar('user_level') < 2) {
             return $lvl1;
@@ -152,42 +152,50 @@ class Stock extends Catalog {
             $where = "WHERE se.parent_id IN (" . implode(',', $branch_ids) . ")";
         }
         $sql = "SELECT
-		$columns
+		    $columns
 	    FROM
 		    (SELECT 
-			st.label parent_label,
-			pl.*,
-			ROUND(pp.sell,5) sell,
-			ROUND(pp.buy,5) buy,
-			pp.curr_code,
-			se.stock_entry_id,
-			se.parent_id,
-			se.party_label,
-			se.product_quantity,
-			se.product_wrn_quantity,
-			se.product_img,
-			se.self_price,
-                        product_reserved,
-                        product_awaiting
+                st.label parent_label,
+                pl.*,
+                ROUND(pp.sell,5) sell,
+                ROUND(pp.buy,5) buy,
+                pp.curr_code,
+                se.stock_entry_id,
+                se.parent_id,
+                se.party_label,
+                se.product_quantity,
+                se.product_wrn_quantity,
+                se.product_img,
+                se.self_price,
+                product_reserved,
+                product_awaiting
 		    FROM
-			stock_entries se
-			    JOIN
-			prod_list pl ON pl.product_code=se.product_code
-			    LEFT JOIN
-			price_list pp ON pp.product_code=se.product_code AND pp.label=''
-			    LEFT JOIN
-			stock_tree st ON se.parent_id=branch_id
+                stock_entries se
+                    JOIN
+                prod_list pl ON pl.product_code=se.product_code
+                    LEFT JOIN
+                price_list pp ON pp.product_code=se.product_code AND pp.label=''
+                    LEFT JOIN
+                stock_tree st ON se.parent_id=branch_id
 			$where
 			HAVING {$having['inner']}
 			ORDER BY $sortby $sortdir
 			LIMIT $limit OFFSET $offset) t		
- 		    LEFT JOIN
-		document_entries de ON de.product_code=t.product_code
-		    LEFT JOIN
-		document_list dl ON de.doc_id=dl.doc_id AND dl.is_commited=1 AND dl.doc_type=1 AND notcount=0 AND notreckon=0
+ 		        LEFT JOIN
+            (SELECT
+                product_code,
+                product_quantity,
+                cstamp
+            FROM
+                document_entries de
+                    JOIN
+                document_list dl 
+                ON de.doc_id = dl.doc_id
+            WHERE
+                dl.is_commited = 1 AND dl.doc_type = 1 AND notcount = 0 AND notreckon = 0 AND cstamp>DATE_ADD(NOW(),INTERVAL -92 DAY)
+            ) de ON de.product_code = t.product_code
 	    GROUP BY t.product_code,t.parent_id,t.product_quantity,t.product_reserved,t.product_awaiting,t.product_wrn_quantity
-	    HAVING {$having['outer']}
-	    ";
+	    HAVING {$having['outer']}";
         return $this->get_list($sql);
     }
 
@@ -198,14 +206,14 @@ class Stock extends Catalog {
     public function productGetLabeledPrices(string $product_code) {
         $sql_price = "
 	    SELECT 
-		ROUND(sell,2) sell,
-		ROUND(buy,2) buy,
-		curr_code,
-		label 
+            ROUND(sell,2) sell,
+            ROUND(buy,2) buy,
+            curr_code,
+            label 
 	    FROM 
-		price_list 
+		    price_list 
 	    WHERE 
-		product_code='{$product_code}' AND label<>''";
+		    product_code='{$product_code}' AND label<>''";
         return $this->get_list($sql_price);
     }
 
@@ -376,7 +384,9 @@ class Stock extends Catalog {
             if( $only_update ){
                 $this->query("UPDATE $table SET $set_list WHERE product_code='$product_code'");
             } else {
-                $this->query("INSERT INTO $table SET $set_list $set_parent_id ON DUPLICATE KEY UPDATE $set_list");
+                try{
+                    $this->query("INSERT INTO $table SET $set_list $set_parent_id ON DUPLICATE KEY UPDATE $set_list");
+                } catch (\Throwable $e){}
             }
             if( $this->db->affected_rows()>0 ){
                 $affected_rows++;
@@ -924,7 +934,7 @@ class Stock extends Catalog {
         function getCountCondition($group_id,$filter_tree,$filter_selected_grouped){
             $and_case=[];
             foreach( $filter_selected_grouped as $selected_group_id=>$options ){
-                if( $group_id===$selected_group_id ){
+                if( $group_id===$selected_group_id || empty($filter_tree[$selected_group_id]->condition) ){
                     continue;
                 }
                 $and_case[]=$filter_tree[$selected_group_id]->condition;

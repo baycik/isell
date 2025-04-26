@@ -82,7 +82,7 @@
             {else}
                     {if="$num=count($value->rows)"}
                     {loop name="$value->rows"}
-                        <tr style="height: {$value1->rows_height}px;" {if="$value->product_price!=$value->promo_product_price"}class="promo"{/if}>
+                        <tr style="height: {$value1->rows_height??25}px;" {if="$value->product_price!=$value->promo_product_price"}class="promo"{/if}>
                             <td class="product_code" {if="$value->in_stock"}style="color:black"{/if}>{$value->product_code}</td>
                             <td class="product_name">{$value->product_name}</td>
                             <td class="product_price"> 

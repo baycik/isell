@@ -1,54 +1,57 @@
 <?php
-trait DocumentBaseSuggestion{
-    
-    public function suggestFetch( string $q='', int $offset=0,int $limit=10, int $doc_id=0, int $category_id=0 ){
+trait DocumentBaseSuggestion
+{
+
+    public function suggestFetch(string $q = '', int $offset = 0, int $limit = 10, int $doc_id = 0, int $category_id = 0)
+    {
         session_write_close();
-        $matches=$this->suggestResultFetch($q, $offset, $limit, $doc_id, $category_id);
-        if( !$matches ){
-            $matches=$this->suggestResultFetch($this->transliterate($q,'fromlatin'), $offset, $limit, $doc_id, $category_id);
+        $matches = $this->suggestResultFetch($q, $offset, $limit, $doc_id, $category_id);
+        if (!$matches) {
+            $matches = $this->suggestResultFetch($this->transliterate($q, 'fromlatin'), $offset, $limit, $doc_id, $category_id);
         }
-        if( !$matches ){
-            $matches=$this->suggestResultFetch($this->transliterate($q,'fromcyrilic'), $offset, $limit, $doc_id, $category_id);
+        if (!$matches) {
+            $matches = $this->suggestResultFetch($this->transliterate($q, 'fromcyrilic'), $offset, $limit, $doc_id, $category_id);
         }
         return $matches;
     }
-    
-    private function suggestResultFetch( string $q, int $offset=0,int $limit=10, int $doc_id=0, int $category_id=0 ){
-        $pcomp_id=$this->Hub->pcomp('company_id');
-        $usd_ratio=$this->Hub->pref('usd_ratio');
-	if( $doc_id ){
-	    $this->documentSelect($doc_id);
-	    $pcomp_id=$this->doc('passive_company_id');
-	    $usd_ratio=$this->doc('doc_ratio');
-	}
-	$where="1";
-	if( strlen($q)==13 && is_numeric($q) ){
-	    $where="product_barcode=$q";
-	} else if( $q ){
-	    $cases=[];
-	    $clues=  explode(' ', $q);
-	    foreach ($clues as $clue) {
-		if ($clue == ''){
-		    continue;
-		}
-		$cases[]="(pl.product_code LIKE '%$clue%' OR ru LIKE '%$clue%')";
-	    }
-	    if( count($cases)>0 ){
-		$where=implode(' AND ',$cases);
-	    }
-	}
-        if( $category_id ){
+
+    private function suggestResultFetch(string $q, int $offset = 0, int $limit = 10, int $doc_id = 0, int $category_id = 0)
+    {
+        $pcomp_id = $this->Hub->pcomp('company_id');
+        $usd_ratio = $this->Hub->pref('usd_ratio');
+        if ($doc_id) {
+            $this->documentSelect($doc_id);
+            $pcomp_id = $this->doc('passive_company_id');
+            $usd_ratio = $this->doc('doc_ratio');
+        }
+        $where = "1";
+        if (strlen($q) == 13 && is_numeric($q)) {
+            $where = "product_barcode=$q";
+        } else if ($q) {
+            $cases = [];
+            $clues =  explode(' ', addslashes($q));
+            foreach ($clues as $clue) {
+                if ($clue == '') {
+                    continue;
+                }
+                $cases[] = "(pl.product_code LIKE '%$clue%' OR ru LIKE '%$clue%')";
+            }
+            if (count($cases) > 0) {
+                $where = implode(' AND ', $cases);
+            }
+        }
+        if ($category_id) {
             $branch_ids = $this->treeGetSub('stock_tree', $category_id);
             $where .= " AND parent_id IN (" . implode(',', $branch_ids) . ")";
         }
-//        if( $this->doc('doc_type')==3 || $this->doc('doc_type')==4 ){
-//            $where .= " AND is_service=1";
-//        }
+        //        if( $this->doc('doc_type')==3 || $this->doc('doc_type')==4 ){
+        //            $where .= " AND is_service=1";
+        //        }
         $this->query("SET @promo_limit:=3;");
-	$sql="
+        $sql = "
             SELECT
                 *,
-		ROUND(GET_SELL_PRICE(product_code,'$pcomp_id','$usd_ratio'),2) product_price_total,
+		        ROUND(GET_SELL_PRICE(product_code,'$pcomp_id','$usd_ratio'),2) product_price_total,
                 ROUND(GET_PRICE(product_code,'$pcomp_id','$usd_ratio'),2) product_price_total_raw
             FROM (
                 SELECT
@@ -80,7 +83,8 @@ trait DocumentBaseSuggestion{
         return $suggested;
     }
 
-    public function pickerListFetch( int $parent_id=0, int $offset=0, int $limit=10, string $sortby=null, string $sortdir=null, array $filter=[]) {
+    public function pickerListFetch(int $parent_id = 0, int $offset = 0, int $limit = 10, string $sortby = null, string $sortdir = null, array $filter = [])
+    {
         $pcomp_id = $this->Hub->pcomp('company_id');
         $doc_ratio = $this->Hub->pref('usd_ratio');
 

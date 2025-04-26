@@ -749,9 +749,10 @@
         row_template:'',
 	formatter:function(row_data){
             row_data.bgcolor="";
+			row_data.product_price_total=App.formatNum(row_data.product_price_total)
             if( row_data.product_price_total_raw-row_data.product_price_total>0 ){
                 row_data.bgcolor="#00ff0033";
-                row_data.product_price_total="<s>"+row_data.product_price_total_raw+"</s><br>"+row_data.product_price_total;
+                row_data.product_price_total="<s>"+App.formatNum(row_data.product_price_total_raw)+"</s><br>"+row_data.product_price_total;
             }
             row_data.icon="";
             if( row_data.analyse_class==='C' ){
@@ -884,9 +885,10 @@
 	clear: both;
     }
     .combobox-item .img{
-	width:30px;
-	height:30px;
+	width:50px;
+	height:50px;
 	display: inline-block;
+	margin:1px;
     }
     .combobox-item .props{
 	float:right;
@@ -971,7 +973,7 @@
     }
     .grid-container1{
         display:grid;
-        grid-template-columns: 7% 65% 15% 13%;
+        grid-template-columns: 7% 65% 11% 11% 6%;
         padding: 2px 0px;
     }
     .product-delivery-available{
@@ -990,11 +992,14 @@
         margin-left: 6px;
     }
     .template-container{
-        border-top: 1px solid lightblue;
         display: flow-root;
         margin-top: -6px;
         padding-top: 5px;
+		font-family: Arial;
     }
+	.panel.combo-p .combo-panel{
+		border:none;
+	}
     .template-container:hover{
         background-color: #eaf2ff;
     }
@@ -1143,8 +1148,8 @@
 	    </div>
 	</div>
 	<div>
-	    <div id="Doc_tool_bar" class="" style="height: 35px;padding-top: 5px;text-align: right;border-top:1px #ccc solid;position: relative">
-		<div style="display: inline-block;left:1px;top:0px;position: absolute;" title="↑ для вывода предыдущего кода">
+	    <div id="Doc_tool_bar" class="" style="height: 35px;padding-top: 5px;text-align: right;position: relative">
+		<div style="display: inline-block;left:1px;top:0px;position: absolute;padding-bottom:5px;" title="↑ для вывода предыдущего кода">
 		    <input class="easyui-combobox" id="Doc_suggest_cmb" style="width:250px;" data-options="
 			   valueField: 'product_code',
 			   textField: 'product_code',
@@ -1162,7 +1167,7 @@
 			   onSelect: Doc.suggest.select
 			   ">
 		    <input type="text" class="easyui-numberbox" id="Doc_sugg_qty" style="width:50px;" data-options="min:1,precision:0,prompt:'Кол-во'">
-		    <button type="button" title="Добавить строку в документ" style="margin:4px;margin-bottom:0px;padding: 3px;" onclick="Doc.suggest.qtySubmit();">+</button>
+		    <button type="button" title="Добавить строку в документ" style="margin:4px;margin-bottom:0px;padding: 6px;" onclick="Doc.suggest.qtySubmit();">➕</button>
 		</div>
 		<span class="icon-24 icon-commit" title="Провести документ" id="Doc_commit_btn" onclick="Doc.head.commit();"> </span>
 		<span class="icon-24 icon-uncommit" title="Отменить документ" onclick="Doc.head.uncommit();"> </span>
@@ -1182,20 +1187,23 @@
 	DOCUMENT SUGGEST TEMPLATE 
 	----------------------------
 	-->
-        <div id="suggest-template" style='display: none; border-bottom: 1px solid #a7e3ff;'>
-            <div class="template-container">
-                <div class="grid-container1" style="background-color:{{bgcolor}}">
+        <div id="suggest-template" style='display: none;'>
+            <div class="template-container" style="background-color:{{bgcolor}}">
+                <div class="grid-container1">
                     {{if is_service|more>0}}
-                    <div class="grid-item" style="color:blue; padding: 0px 10px;grid-column: 1 / 2 span"> {{ product_name }}</div>
-                    <div class="grid-item">{{ product_price_total|blank> }}</div>
-                    <div class="grid-item" style="color:green"></div>
+						<div class="grid-item" style="color:blue; padding: 0px 10px;grid-column: 1 / 2 span"> {{ product_name }}</div>
+						<div class="grid-item">{{ product_price_total|blank> }}₽</div>
+						<div class="grid-item" style="color:green"></div>
                     {{else}}
-                    <div class="img grid-item">
-                        <img src="Storage/image_flush/?size=30x30&path=/dynImg/{{ product_img }}">
-                    </div> 
-                    <div class="grid-item" style="color:{{if leftover|less>1}}red{{/if}}; padding: 0px 10px"><b>{{ product_code }}</b> {{ product_name }} {{icon|blank>}}</div>
-                    <div class="grid-item">{{ product_price_total }}</div>
-                    <div class="grid-item" style="color:green">[x{{ product_spack}}] {{ leftover }}{{ product_unit }}</div>
+						<div class="img grid-item">
+							<img src="Storage/image_flush/?size=70x70&path=/dynImg/{{ product_img }}" style="width:50px;height: auto;">
+						</div> 
+						<div class="grid-item" style="color:{{if leftover|less>1}}red{{/if}}; padding: 0px 10px"><b>{{ product_code }}</b> {{ product_name }} {{icon|blank>}}</div>
+						<div class="grid-item" style="text-align: right;">{{ product_price_total|blank> }}₽</div>
+							<div class="grid-item" style="text-align: right;color:green">
+								<span style="color:{{if leftover|less>1}}red{{/if}};">{{ leftover }}{{ product_unit }}</span>
+							</div>
+						<div class="grid-item" style="text-align: right;color:#999;">[x{{ product_spack}}]</div>
                     {{/if}}
                 </div>
             </div>    

@@ -145,7 +145,9 @@ class MobiSell extends PluginManager {
         $DocumentItems = $this->Hub->load_model("DocumentItems");
         $document = $DocumentItems->entryDocumentGet($doc_id);
         $document['head'] = $DocumentItems->headGet($doc_id);
-        $document['head']->is_event_created = $this->documentShipmentEventId($doc_id);
+        if( !empty($document['head']) ){
+            $document['head']->is_event_created = $this->documentShipmentEventId($doc_id);
+        }
         return $document;
     }
     private function documentShipmentEventId($doc_id) {

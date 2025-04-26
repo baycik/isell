@@ -72,6 +72,9 @@ class DocumentHistory extends PluginBase{
     }
     
     public function onEntryChanged( $doc_entry_id, $doc, $arguments ){
+        if( intval($doc_entry_id)==0 ){
+            return;//if error like code_duplicated
+        }
         $this->clearList();
         $user_label=$this->Hub->svar('user_sign');
         $history_sql="
