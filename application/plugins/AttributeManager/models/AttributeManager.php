@@ -128,7 +128,10 @@ class AttributeManager extends Catalog{
     }
     
 
-    public function getAttributesByCode(string $product_code){
+    public function getAttributesByCode(?string $product_code=null){
+        if( empty($product_code) ){
+            return null;
+        }
         $this->Hub->set_level(3);
         $sql = "
             SELECT * 

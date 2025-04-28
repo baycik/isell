@@ -827,7 +827,12 @@ class MobiSell extends PluginManager {
             'product_id'=>$product_id,
             'cell_id'=>$dst_cell_id
         ];
-        $result=$this->create('plugin_stock_layout_links',$cell_product);
+        try{
+            $result=$this->create('plugin_stock_layout_links',$cell_product);
+        } catch(  \Throwable $e ){
+            //unique key duplicate
+            return 0;
+        }
 
         $cell_product_ids=$this->stockLayoutCellRecalculate($dst_cell_id);
         $this->stockLayoutProductRecalculate( $cell_product_ids );

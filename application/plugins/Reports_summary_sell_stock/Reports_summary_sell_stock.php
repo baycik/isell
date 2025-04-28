@@ -237,8 +237,6 @@ class Reports_summary_sell_stock extends Catalog
                 'count_sells' => $this->count_sells,
                 'in_alt_currency' => $this->in_alt_currency,
                 'include_vat' => $this->include_vat,
-                'group_by_client' => $this->group_by_client,
-                'language' => $this->language,
                 'group_by_filter' => $this->group_by_filter,
                 'group_by' => $this->group_by
             ]

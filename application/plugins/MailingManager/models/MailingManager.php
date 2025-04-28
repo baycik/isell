@@ -135,6 +135,7 @@ class MailingManager extends PluginBase {
         $this->messageChangeStatus($message_id, 'created', 'processing');
     }
     
+    private $message_composing_aborted;
     private $error_log=[];
     private function messageRenderTpl( string $message_template, $context ){
         $message_template=preg_replace_callback('/{{(\w+)\.?(\w+)?(\([^\)]+\))?}}/',function($matches) use ($context){
@@ -339,21 +340,21 @@ class MailingManager extends PluginBase {
         $this->messageBatchChangeStatus($message_batch_label, 'created', 'processing');
     }
     
-    private function messageBatchRecieversGet( $message ){
-        $reciever_list = [];
-        if((int) $message['message_reciever_list']){
-            $reciever_list += array_merge($reciever_list,$this->messageBatchRecieverListGet($message['message_reciever_list']));
-        }
-        if(!empty($message['message_recievers'])){
-            $custom_recievers = explode(',', $message['message_recievers']);
-            foreach($custom_recievers as $custom_reciever){
-                $custom_reciever_object = (object)[];
-                $custom_reciever_object->{$message['message_handler']} = $custom_reciever;
-                $reciever_list[] = $custom_reciever_object;
-            }
-        }
-        return $reciever_list;
-    }
+    // private function messageBatchRecieversGet( $message ){
+    //     $reciever_list = [];
+    //     if((int) $message['message_reciever_list']){
+    //         $reciever_list += array_merge($reciever_list,$this->messageBatchRecieverListGet($message['message_reciever_list']));
+    //     }
+    //     if(!empty($message['message_recievers'])){
+    //         $custom_recievers = explode(',', $message['message_recievers']);
+    //         foreach($custom_recievers as $custom_reciever){
+    //             $custom_reciever_object = (object)[];
+    //             $custom_reciever_object->{$message['message_handler']} = $custom_reciever;
+    //             $reciever_list[] = $custom_reciever_object;
+    //         }
+    //     }
+    //     return $reciever_list;
+    // }
 
     public function messageBatchListGet( string $filter=null ){
         $where = $this->messageListFilterGet( $filter );
@@ -567,7 +568,7 @@ class MailingManager extends PluginBase {
                 "disabled" => 0
             ]]
         ];
-        $doc_id='';
+        $doc_id=null;
         $event_date= date( "Y-m-d H:i:s", strtotime(date("Y-m-d H:i:s")."+1 minute"));
         $event_priority='3medium';
         $event_name='Рассылка';

@@ -303,7 +303,7 @@ class Checkout extends Stock
     {
         $this->Hub->set_level(2);
         $user_id = $this->Hub->svar('user_id');
-        $checkout_id = $this->create('checkout_list', ['checkout_name' => $checkout_name, 'parent_doc_id' => null, 'created_by' => $user_id, 'modified_by' => $user_id]);
+        $checkout_id = $this->create('checkout_list', ['checkout_name' => $checkout_name, 'checkout_photos' => '', 'parent_doc_id' => null, 'created_by' => $user_id, 'modified_by' => $user_id]);
         if ($parent_id > 0) {
             $stock_entries_list = $this->listFetch($parent_id, 0, 10000, 'product_code', 'ASC', null, 'advanced');
             foreach ($stock_entries_list as $entry) {
