@@ -4,7 +4,7 @@
         init:function(){
             App.page_stock_reserve.table.init();
             App.Topic('hashChange').subscribe(function(state,module){
-                if( module !== 'Stock' ){
+                if( App.module.current!='Stock' ){
 					return
 				}
                 App.page_stock_reserve.table.filter_from_state();

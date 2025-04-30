@@ -98,7 +98,7 @@
 					}
 				});
 				App.Topic('hashChange').subscribe(function () {
-					if(location.hash!='#Stock'){
+					if(App.module.current!='Stock'){
 						return
 					}
 					let columns = Leftovers.table.columnsGet();

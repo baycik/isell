@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="windows-1251"?>
-<Файл ИдФайл="<?php echo $document_name; ?>" ВерсПрог="iSell(версия 4)" ВерсФорм="5.07" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<Файл ИдФайл="<?php echo $document_name; ?>" ВерсПрог="iSell(версия 4)" ВерсФорм="5.11" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 	<Документ Индекс="0000080" НомКорр="<?php echo $data['correction_num']; ?>">
 		<КнигаПокуп СумНДСВсКПк="<?php echo $data['sub_totals']->sum_total; ?>">
                     <?php foreach($data['rows'] as $index => $item){ ?>
