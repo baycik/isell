@@ -467,7 +467,7 @@ class Utils extends Catalog {
     ////////////////////////////////////////////////////////////
     // SELF RECALCULATION FUNCTIONS
     ////////////////////////////////////////////////////////////
-    private function selfPriceCreateTable2(){
+    private function selfPriceRecalculate(){
         $sql="
         WITH stock_movements AS (
             SELECT 
@@ -604,8 +604,8 @@ class Utils extends Catalog {
         } else {
             $active_filter = " AND active_company_id='" . $this->Hub->acomp('company_id') . "'";
         }
-        $this->selfPriceCreateTable($active_filter);
-        $this->selfPriceCorrectEntries();
+        //$this->selfPriceCreateTable($active_filter);
+        $this->selfPriceRecalculate();
         $this->selfPriceCalculateExtraExpenses($idate, $fdate, $active_filter);
         $this->selfPriceStockAssign();
         $this->selfPriceOldApiRecalculate($idate, $fdate, $active_filter);
@@ -649,12 +649,13 @@ class Utils extends Catalog {
         $sql_tbl_drop = "DROP TEMPORARY TABLE IF  EXISTS tmp_stock_self;";
         $sql_tbl_create = "
 	    CREATE TEMPORARY TABLE tmp_stock_self AS(
-	    SELECT 
-		*
-	    FROM
-		(SELECT product_code,sp,qty_left FROM tmp_self_calc ORDER BY i DESC) ttt
-	    WHERE
-		IF(@current_product_code <> product_code,@current_product_code:=product_code,0));";
+            SELECT 
+                *
+            FROM
+		        (SELECT product_code,sp,qty_left FROM tmp_self_calc ORDER BY i DESC) ttt
+	        WHERE
+		        IF(@current_product_code <> product_code,@current_product_code:=product_code,0)
+        );";
         $sql_update = "UPDATE stock_entries JOIN tmp_stock_self USING(product_code) SET self_price=sp;";
         $this->db->query($sql_vars);
         $this->db->query($sql_tbl_drop);

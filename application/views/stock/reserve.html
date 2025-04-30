@@ -3,7 +3,10 @@
     App.page_stock_reserve={
         init:function(){
             App.page_stock_reserve.table.init();
-            App.Topic('hashChange').subscribe(function(hash_object){
+            App.Topic('hashChange').subscribe(function(state,module){
+                if( module !== 'Stock' ){
+					return
+				}
                 App.page_stock_reserve.table.filter_from_state();
             });
         },

@@ -151,42 +151,44 @@
     };
 
 </script>
-<div  class="ui blue segment">
+<div  class="ui attached segment">
     <form class="ui form">
-        <div class="field">
-            <label>Наша фирма</label>
-            <div class="ui fluid search selection remote dropdown acomp_id">
-                <input name="acomp_id" type="hidden">
-                <i class="dropdown icon"></i>
-                <div class="default text">Выбрать клиента</div>
-                <div class="menu"></div>
+        <div class="two fields">
+            <div class="field">
+                <label>Наша фирма</label>
+                <div class="ui fluid search selection remote dropdown acomp_id">
+                    <input name="acomp_id" type="hidden">
+                    <i class="dropdown icon"></i>
+                    <div class="default text">Выбрать клиента</div>
+                    <div class="menu"></div>
+                </div>
+            </div>
+            <div class="field">
+                <label>Клиент</label>
+                <div class="ui fluid search selection remote dropdown pcomp_id">
+                    <input name="pcomp_id" type="hidden">
+                    <i class="dropdown icon"></i>
+                    <div class="default text">Выбрать клиента</div>
+                    <div class="menu"></div>
+                </div>
             </div>
         </div>
-        <div class="field">
-            <label>Клиент</label>
-            <div class="ui fluid search selection remote dropdown pcomp_id">
-                <input name="pcomp_id" type="hidden">
-                <i class="dropdown icon"></i>
-                <div class="default text">Выбрать клиента</div>
-                <div class="menu"></div>
+        <div style="display: grid;grid-template-columns: 1fr 1fr">
+            <div class="field">
+                <label>Начало</label>
+                <div class="ui input left icon">
+                    <i class="calendar icon"></i>
+                    <input  id="idate" value="" type="date" onchange="App.payments.reset();App.payments.load(App.payments.currentType)">
+                </div>
+            </div>
+            <div class="field">
+                <label>Конец</label>
+                <div class="ui input left icon">
+                    <i class="calendar icon"></i>
+                    <input  id="fdate" value="" type="date" onchange="App.payments.reset();App.payments.load(App.payments.currentType)">
+                </div>
             </div>
         </div>
-      <div class="two fields">
-        <div class="field">
-            <label>Начало</label>
-            <div class="ui input left icon">
-                <i class="calendar icon"></i>
-                <input  id="idate" value="" type="date" onchange="App.payments.reset();App.payments.load(App.payments.currentType)">
-            </div>
-        </div>
-        <div class="field">
-            <label>Конец</label>
-            <div class="ui input left icon">
-                <i class="calendar icon"></i>
-                <input  id="fdate" value="" type="date" onchange="App.payments.reset();App.payments.load(App.payments.currentType)">
-            </div>
-        </div>
-      </div>
     </form>
 </div>
 
@@ -194,160 +196,145 @@
     <a class="active item" data-tab="361">Покупатель</a>
     <a class="item" data-tab="631">Поставщик</a>
 </div>
-<div id="payments_361" class="ui bottom attached  tab segment covert" data-tab="361">
-    <div class="ui grid" style="margin-bottom: -9px;">
-        <div class="four wide column" style="background-color: #dfd">Начальный остаток {{sub_totals.ibal|blank>-}}</div>
-        <div class="four wide column" style="background-color: #eee">Оборот расход {{sub_totals.pdebit|blank>-}}</div>
-        <div class="four wide column" style="background-color: #eee">Оборот приход {{sub_totals.pcredit|blank>-}} </div>
-        <div class="four wide column" style="background-color: #def">Конечный остаток {{sub_totals.fbal|blank>-}} </div>
-    </div>
-    <table class="ui green selectable stackable table">
+<div id="payments_361" class="ui bottom attached  tab covert" data-tab="361">
+    {{if sub_totals.fbal}}
+    <table class="ui unstackable  table">
+        <tr>
+            <td>Начало</td>
+            <td colspan="2" style="text-align: right;">{{sub_totals.ibal|format}}</td>
+        </tr>
+        <tr>
+            <td>Оборот</td>
+            <td style="text-align: right;">{{sub_totals.pcredit|format}}</td>
+            <td style="text-align: right;">{{sub_totals.pcredit|format}}</td>
+        </tr>
+        <tr>
+            <td>Конец</td>
+            <td colspan="2" style="text-align: right;">{{sub_totals.fbal|format}}</td>
+        </tr>
+    </table>
+    {{/if}}
+    <table class="ui green striped table">
+        <!-- {{if payments}} -->
         <thead>
             <tr>
                 <th>
                     <div class="ui grid">
-                        <div class="sixteen wide column"></div>
-                    </div>
-                </th>
-                <th>
-                    <div class="ui grid">
                         <div class="four wide column">Дата</div>
-                        <div class="twelve wide column"><i>Описание</i></div>
+                        <div class="twelve wide column">Описание</div>
                     </div>
                 </th>
                 <th>
                     <div class="ui grid">
-                        <div class="six wide column" style="color:darkred">Расход</div>
-                        <div class="five wide column" style="color:green">Приход</div>
-                        <div class="five wide column" style="color:darkgray">Остаток</div>
+                        <div class="six wide column">Расход</div>
+                        <div class="five wide column">Приход</div>
+                        <div class="five wide column">Остаток</div>
                     </div>
                 </th>
             </tr>
         </thead>
-        <!-- {{if payments}} {{payments}} -->
+        <tbody>
+        <!-- {{payments}} -->
         <tr>
-            <td>
-                <div class="ui grid">
-                    <div class="sixteen wide column">
-                        {{if editable|equals>0}}
-                        <button type="button" class="circular ui icon  button" style="background-color:#dfd" data-trans_id="{{trans_id}}"
-                            onclick="App.payments.documentOpen(this)">
-                        <i class="file outline icon"></i>
-                    </button>
-                    {{/if}}
-                    </div>
-                </div>
+            <td style="font-weight:unset;">
+                {{if editable|equals>0}}
+                <button type="button" class="circular ui icon  button" data-trans_id="{{trans_id}}"onclick="App.payments.documentOpen(this)">
+                    <i class="file outline icon"></i>
+                </button>
+                {{/if}}
+                {{trans_date}}<i> {{description}}</i>
             </td>
             <td>
                 <div class="ui grid">
-                    <div class="four wide column">
-                        <b>{{trans_date}}</b>
-                    </div>
-                    <div class="twelve wide column">
-                        <i>{{description}}</i>
-                    </div>
-                </div>
-            </td>
-            <td>
-                <div class="ui grid">
-                    <div class="six wide column" style="color:darkred">{{debit}}</div>
-                    <div class="five wide column" style="color:green">{{credit}}</div>
-                    <div class="five wide column" style="color:darkgray">{{row_total}}</div>
+                    <div class="six wide column" style="color:red;text-align: right">{{debit|format}}</div>
+                    <div class="five wide column" style="color:green;text-align: right">{{credit|format}}</div>
+                    <div class="five wide column" style="color:rgb(103, 103, 103);text-align: right">{{row_total|format}}</div>
                 </div>
             </td>
         </tr>
         <!-- {{/payments}} {{else}} -->
         <tr>
-            <td colspan="5"><i class="red icon question"></i>Ничего не найдено</td>
+            <td colspan="2">Ничего не найдено 🥺</td>
         </tr>
         <!-- {{/if}}-->
+        </tbody>
     </table>
     {{if loading_finished|more>0}} 
-    <div class="ui info message" style="clear: both;text-align: center;">
-        Загрузка завершена
-    </div>   
     {{else}} 
-    <button id='stock_load_more' class='ui fluid button'
-            onclick="App.payments.loadMore()"> 
-        Показать ещё...
-    </button>    
+    <button id='stock_load_more' class='ui fluid button' onclick="App.payments.loadMore()"> 
+        Загрузить ещё...
+    </button>
     {{/if}}
 </div> 
 
-<div id="payments_631" class="ui bottom attached  tab segment covert" data-tab="631">
-    <div class="ui grid" style="margin-bottom: -9px;">
-        <div class="four wide column" style="background-color: #dfd">Начальный остаток {{sub_totals.ibal|blank>-}}</div>
-        <div class="four wide column" style="background-color: #eee">Оборот расход {{sub_totals.pdebit|blank>-}}</div>
-        <div class="four wide column" style="background-color: #eee">Оборот приход {{sub_totals.pcredit|blank>-}} </div>
-        <div class="four wide column" style="background-color: #def">Конечный остаток {{sub_totals.fbal|blank>-}} </div>
-    </div>
-    <table class="ui purple selectable  table">
+<div id="payments_631" class="ui bottom attached  tab covert" data-tab="631">
+    {{if sub_totals.fbal}}
+    <table class="ui unstackable  table">
+        <tr>
+            <td>Начало</td>
+            <td colspan="2" style="text-align: right;">{{sub_totals.ibal|format}}</td>
+        </tr>
+        <tr>
+            <td>Оборот</td>
+            <td style="text-align: right;">{{sub_totals.pcredit|format}}</td>
+            <td style="text-align: right;">{{sub_totals.pcredit|format}}</td>
+        </tr>
+        <tr>
+            <td>Конец</td>
+            <td colspan="2" style="text-align: right;">{{sub_totals.fbal|format}}</td>
+        </tr>
+    </table>
+    {{/if}}
+    <table class="ui purple striped table">
+        <!-- {{if payments}} -->
         <thead>
             <tr>
                 <th>
                     <div class="ui grid">
-                        <div class="sixteen wide column"></div>
-                    </div>
-                </th>
-                <th>
-                    <div class="ui grid">
                         <div class="four wide column">Дата</div>
-                        <div class="twelve wide column"><i>Описание</i></div>
+                        <div class="twelve wide column">Описание</div>
                     </div>
                 </th>
                 <th>
                     <div class="ui grid">
-                        <div class="six wide column" style="color:darkred">Расход</div>
-                        <div class="five wide column" style="color:green">Приход</div>
-                        <div class="five wide column" style="color:darkgray">Остаток</div>
+                        <div class="six wide column">Расход</div>
+                        <div class="five wide column">Приход</div>
+                        <div class="five wide column">Остаток</div>
                     </div>
                 </th>
             </tr>
         </thead>
-        <!-- {{if payments}} {{payments}} -->
+        <tbody>
+        <!-- {{payments}} -->
         <tr>
-            <td class="one wide column">
-                <div class="ui grid">
-                    <div class="sixteen wide column">
+            <td style="font-weight:unset;">
                 {{if editable|equals>0}}
-                <i class="ui file outline icon"></i>
+                <button type="button" class="circular ui icon  button" data-trans_id="{{trans_id}}"onclick="App.payments.documentOpen(this)">
+                    <i class="file outline icon"></i>
+                </button>
                 {{/if}}
-                    </div>
-                </div>
+                {{trans_date}}<i> {{description}}</i>
             </td>
             <td>
                 <div class="ui grid">
-                    <div class="four wide column">
-                        <b>{{trans_date}}</b>
-                    </div>
-                    <div class="twelve wide column">
-                        <i>{{description}}</i>
-                    </div>
-                </div>
-            </td>
-            <td>
-                <div class="ui grid">
-                    <div class="six wide column" style="color:darkred">{{debit}}</div>
-                    <div class="five wide column" style="color:green">{{credit}}</div>
-                    <div class="five wide column" style="color:darkgray">{{row_total}}</div>
+                    <div class="six wide column" style="color:red;text-align: right">{{debit|format}}</div>
+                    <div class="five wide column" style="color:green;text-align: right">{{credit|format}}</div>
+                    <div class="five wide column" style="color:rgb(103, 103, 103);text-align: right">{{row_total|format}}</div>
                 </div>
             </td>
         </tr>
         <!-- {{/payments}} {{else}} -->
         <tr>
-            <td colspan="5"><i class="red icon question"></i>Ничего не найдено</td>
+            <td colspan="2">Ничего не найдено 🥺</td>
         </tr>
         <!-- {{/if}}-->
+        </tbody>
     </table>
     {{if loading_finished|more>0}} 
-    <div class="ui info message" style="clear: both;text-align: center;">
-        Загрузка завершена
-    </div>   
     {{else}} 
-    <button id='stock_load_more' class='ui fluid button'
-            onclick="App.payments.loadMore()"> 
-        Показать ещё...
-    </button>    
+    <button id='stock_load_more' class='ui fluid button' onclick="App.payments.loadMore()"> 
+        Загрузить ещё...
+    </button>
     {{/if}}
 </div> 
 

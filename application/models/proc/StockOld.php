@@ -75,9 +75,7 @@ class StockOld extends Data {
                         stock_entries
                     SET
                         product_quantity=product_quantity+$amount,
-                        self_price=(self_price*product_quantity+$self_price*$amount)
-                                /
-                            (product_quantity+$amount)
+                        self_price= IF(product_quantity+$amount>0, (self_price*product_quantity+$self_price*$amount) / (product_quantity+$amount) ,0)
                     WHERE
                         product_code='$product_code'
                     ";
@@ -88,12 +86,7 @@ class StockOld extends Data {
                         stock_entries
                     SET
                         product_quantity=product_quantity-$amount,
-                        self_price=
-                            IF(product_quantity-$amount>0,
-                            (self_price*product_quantity-$self_price*$amount)
-                                /
-                            (product_quantity-$amount)
-                            ,0)
+                        self_price= IF(product_quantity-$amount>0, (self_price*product_quantity-$self_price*$amount) / (product_quantity-$amount) ,0)
                     WHERE
                         product_code='$product_code'
                         AND product_quantity-$amount>=0

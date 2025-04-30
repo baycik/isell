@@ -9,6 +9,9 @@
 			App.document.focus();
 			App.document.suggestion.init();
 			App.Topic('hashChange').subscribe(function (state, module) {
+				if(location.hash!='#Trade'){
+					return
+				}
 				App.document.load(App.state.doc_id);
 			});
 		},

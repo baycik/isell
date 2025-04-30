@@ -88,28 +88,33 @@
 	cursor: pointer;
     }
 </style>
-<form class="ui form">
-    <div class="field">
-	<label>Дата</label>
-	<div class="field">
-	    <div class="ui left icon right labeled input">
-		<i class="calendar icon"></i>
-                <input name="date_filter" placeholder="Дата" type="date" id="doc_list_datefilter" onchange="App.document_list.reload();">
-	    </div>
-	</div>
-    </div>
-    <div class="field">
-	<label>Фильтр</label>
-	<div class="field">
-	    <div class="ui left icon right labeled input">
-		<i class="search icon"></i>
-		<input name="document_filter" placeholder="Название компании, номер, дата документа" type="text" onkeyup="App.document_list.compSearch(this.value)">
-		<div class="ui basic label" onclick="App.document_list.clearFilter()"><i class="close icon"></i></div>
-	    </div>
-	</div>
-    </div>
-</form>
 
+<div class="ui attached segment">
+	<form class="ui form">
+		<div class="field">
+			<label>Поиск</label>
+			<div class="field">
+				<div class="ui left icon right labeled input">
+				<i class="search icon"></i>
+				<input name="document_filter" placeholder="Название компании, номер, дата документа" type="text" onkeyup="App.document_list.compSearch(this.value)">
+				<div class="ui basic label" onclick="App.document_list.clearFilter()"><i class="close icon"></i></div>
+				</div>
+			</div>
+		</div>
+		<div class="field">
+			<label>Дата</label>
+			<div class="field">
+				<div class="ui left icon right labeled input">
+				<i class="calendar icon"></i>
+						<input name="date_filter" placeholder="Дата" type="date" id="doc_list_datefilter" onchange="App.document_list.reload();">
+				</div>
+			</div>
+		</div>
+	</form>
+	<br>
+	
+	<a href="#document.html" class="ui fluid primary button"><i class="plus icon"></i> Создать накладную</a>
+</div>
 
 
 <div class="ui top attached tabular menu doclist_tabs">
@@ -117,57 +122,55 @@
     <a class="item" data-tab="buy">Приход</a>
 </div>
 <div class="ui bottom attached  tab covert" data-tab="sell" id="documents_sell">
-    <a href="#document.html"><i class="plus icon"></i> Добавить документ</a>
     <table class="ui green selectable  table unstackable">
-	<thead>
-	    <tr>
-		<th>№</th>
-		<th>Клиент</th>
-		<th>Сумма</th>
-		<th>!</th>
-	    </tr>
-	</thead>
-	<tbody>
-	    <!-- {{if doc_list}} {{doc_list}} -->
-	    <tr data-doc-id="{{doc_id}}" onclick="App.document_list.handleClick(this)">
-		<td><i class="green icon arrow left"></i>{{doc_date}} <i style="color:#666">№{{doc_num}} {{doc_type_name}}</i></td>
-		<td>{{label}}</td>
-		<td style="text-align:right">{{amount}}</td>
-		<td style="text-align:right">{{if is_commited|more>0}}<i class="gray checkmark box icon"></i>{{else}}<i class="square outline icon"></i>{{/if}}</td>
-	    </tr>
-	    <!-- {{/doc_list}} {{else}}-->
-	    <tr>
-		<td colspan="4"><i class="red icon question"></i>Ничего не найдено</td>
-	    </tr>
-	    <!--{{/if}}-->
-	</tbody>
+		<thead>
+			<tr>
+			<th>№</th>
+			<th>Клиент</th>
+			<th>Сумма</th>
+			<th></th>
+			</tr>
+		</thead>
+		<tbody>
+			<!-- {{if doc_list}} {{doc_list}} -->
+			<tr data-doc-id="{{doc_id}}" onclick="App.document_list.handleClick(this)">
+			<td><i class="green icon arrow left"></i>{{doc_date}} <i style="color:#666">№{{doc_num}} {{doc_type_name}}</i></td>
+			<td>{{label}}</td>
+			<td style="text-align:right;"><nobr>{{amount|format}}</nobr></td>
+			<td style="text-align:right">{{if is_commited|more>0}}<i class="gray checkmark box icon"></i>{{else}}<i class="square outline icon"></i>{{/if}}</td>
+			</tr>
+			<!-- {{/doc_list}} {{else}}-->
+			<tr>
+			<td colspan="4">Ничего не найдено 🥺</td>
+			</tr>
+			<!--{{/if}}-->
+		</tbody>
     </table>
 </div>
 <div class="ui bottom attached tab covert" data-tab="buy" id="documents_buy">
-    <a href="#document.html"><i class="plus icon"></i> Добавить документ</a>
     <table class="ui purple selectable unstackable table ">
-	<thead>
-	    <tr>
-		<th>№</th>
-		<th>Поставщик</th>
-		<th>Сумма</th>
-		<th>!</th>
-	    </tr>
-	</thead>
-	<tbody>
-	    <!-- {{if doc_list}} {{doc_list}} -->
-	    <tr data-doc-id="{{doc_id}}" onclick="App.document_list.handleClick(this)">
-		<td><i class="purple icon arrow right"></i>{{doc_date}} <i style="color:#666">№{{doc_num}} {{doc_type_name}}</i></td>
-		<td>{{label}}</td>
-		<td style="text-align:right">{{amount}}</td>
-		<td style="text-align:right">{{if is_commited|more>0}}<i class="gray checkmark box icon"></i>{{else}}<i class="square outline icon"></i>{{/if}}</td>
-	    </tr>
-	    <!-- {{/doc_list}} {{else}}-->
-	    <tr>
-		<td colspan="4"><i class="red icon question"></i>Ничего не найдено</td>
-	    </tr>
-	    <!--{{/if}}-->
-	</tbody>
+		<thead>
+			<tr>
+			<th>№</th>
+			<th>Поставщик</th>
+			<th>Сумма</th>
+			<th>!</th>
+			</tr>
+		</thead>
+		<tbody>
+			<!-- {{if doc_list}} {{doc_list}} -->
+			<tr data-doc-id="{{doc_id}}" onclick="App.document_list.handleClick(this)">
+			<td><i class="purple icon arrow right"></i>{{doc_date}} <i style="color:#666">№{{doc_num}} {{doc_type_name}}</i></td>
+			<td>{{label}}</td>
+			<td style="text-align:right"><nobr>{{amount|format}}</nobr></td>
+			<td style="text-align:right">{{if is_commited|more>0}}<i class="gray checkmark box icon"></i>{{else}}<i class="square outline icon"></i>{{/if}}</td>
+			</tr>
+			<!-- {{/doc_list}} {{else}}-->
+			<tr>
+			<td colspan="4">Ничего не найдено 🥺</td>
+			</tr>
+			<!--{{/if}}-->
+		</tbody>
     </table>
 </div>
 <button class="ui loading fluid button" onclick="App.document_list.loadMore()">Показать еще...</button>

@@ -571,7 +571,7 @@ class DocumentItems extends DocumentCore
         }
         $target_list =  implode(',', $target);
         $source_list =  implode(',', $source);
-        $sql = "INSERT INTO $table ($target_list) 
+        $sql = "INSERT IGNORE INTO $table ($target_list) 
             SELECT $source_list 
                 FROM imported_data 
                 WHERE label='$label' AND $product_code_source 

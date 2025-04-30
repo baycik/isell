@@ -404,6 +404,8 @@ $(document).ajaxComplete(function (event, xhr, settings) {
 });
 
 Mark.pipes.format = function (num) {
+    if( !num )
+        return ''
     return Number.parseFloat(num).toLocaleString(
             'en-US',
             {style: 'decimal',

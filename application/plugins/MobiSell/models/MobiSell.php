@@ -55,54 +55,63 @@ class MobiSell extends PluginManager {
     }
     public $doclistGet = ['type' => 'string', 'date' => '([0-9\-]+)', 'offset' => ['int', 0], 'limit' => ['int', 10], 'filter' => 'string'];
     public function doclistGet($type, $date, $offset, $limit, $filter) {
-        $filter= str_replace(' ', '%', $filter);
+
         $assigned_path = $this->Hub->svar('user_assigned_path');
         $level = $this->Hub->svar('user_level');
         $doc_type = ($type == 'sell' ? 1 : 2);
-        $sql_tmp="CREATE TEMPORARY TABLE tmp_alowed_companies
+        $sql_tmp="CREATE TEMPORARY TABLE tmp_alowed_companies (company_id INT,label VARCHAR(45), INDEX(company_id))
                 SELECT
                     company_id,
-                    label,
-                    level
+                    label
                 FROM
                     companies_list
                         JOIN 
                     companies_tree USING (branch_id)
                 WHERE
-                    path LIKE '$assigned_path%';";
+                    `path` LIKE '$assigned_path%'
+                    AND `level`<=$level
+                    ;";
         $this->query($sql_tmp);
+
+        $where_cases[]="doc_type='$doc_type'";
+        if($date){
+            $where_cases[]="cstamp LIKE '$date%'";
+        }
+        if($filter){
+            $filter= str_replace(' ', '%', $filter);
+            $where_cases[]="CONCAT(label,'|',doc_num,'|',DATE_FORMAT(cstamp,'%d.%m.%Y')) LIKE '%$filter%'";
+        }
+        $where=implode(" AND ",$where_cases);
+
         $sql = "
             SELECT
-		doc_id,
-		dl.doc_num,
-		DATE_FORMAT(cstamp,'%d.%m.%Y') doc_date,
-		is_commited,
-		COALESCE(
-		    ROUND((SELECT amount 
-			FROM 
-			    acc_trans 
-				JOIN 
-			    document_trans dt USING(trans_id)
-			WHERE dt.doc_id=dl.doc_id 
-			AND dt.trans_role='total'
-		    ),2),
-		    (SELECT SUM(ROUND(invoice_price*product_quantity*(1+dl.vat_rate/100),2)) FROM document_entries de WHERE de.doc_id=dl.doc_id),
-                    0
-                ) amount,
-		label,
+                doc_id,
+                dl.doc_num,
+                DATE_FORMAT(cstamp,'%d.%m.%Y') doc_date,
+                is_commited,
+                COALESCE(
+                    ROUND((SELECT amount 
+                    FROM 
+                        acc_trans 
+                        JOIN 
+                        document_trans dt USING(trans_id)
+                    WHERE dt.doc_id=dl.doc_id 
+                    AND dt.trans_role='total'
+                    ),2),
+                    (SELECT SUM(ROUND(invoice_price*product_quantity*(1+dl.vat_rate/100),2)) FROM document_entries de WHERE de.doc_id=dl.doc_id),
+                            0
+                        ) amount,
+                label,
                 (SELECT doc_type_name FROM document_types dt WHERE dt.doc_type=(dl.doc_type*IF(is_reclamation,-1,1))) doc_type_name
-	    FROM
-            (SELECT * FROM
-		document_list dl
-		    JOIN 
-		tmp_alowed_companies ON company_id=passive_company_id
-	    WHERE
-		cstamp LIKE '$date%'
-		AND doc_type='$doc_type'
-		AND CONCAT(label,'|',doc_num,'|',DATE_FORMAT(cstamp,'%d.%m.%Y')) LIKE '%$filter%'
-		AND level<=$level
-	    ORDER BY cstamp DESC, doc_type
-	    LIMIT $limit OFFSET $offset) dl
+            FROM
+                (SELECT * FROM
+                    document_list dl
+                        JOIN 
+                    tmp_alowed_companies ON company_id=passive_company_id
+                WHERE $where
+                ORDER BY cstamp DESC, doc_type
+                LIMIT $limit OFFSET $offset
+                ) dl
 	    ";
         return $this->get_list($sql);
     }

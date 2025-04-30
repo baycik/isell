@@ -398,9 +398,9 @@ App.calc=function( expression ){
 };
 App.formatNum = function (num, mode) {
     if ( !num && num !== 0 || mode === 'clear' && num * 1 === 0) {
-	return '';
+	    return '';
     }
-    return Number.parseFloat(num).toLocaleString('en-US',{ style: 'decimal',minimumFractionDigits:2 }).replace(/,/g,' ');
+    return Number.parseFloat(num).toLocaleString('en-US',{ style: 'decimal',minimumFractionDigits:2 }).replace(/,/g,' ')||0;
 };
 App.formElements=function( fquery ){
     return $(fquery + " input," + fquery + " textarea," + fquery + " select");
@@ -655,7 +655,7 @@ $.fn.datebox.defaults.parser = function (input) {
 
 
 Mark.pipes.format = function (str) {
-    return App.formatNum(str);
+    return App.formatNum(str,'clear');
 };
 
 

@@ -224,6 +224,9 @@ class Catalog extends CI_Model {
     }
 
     protected function treeUpdate($table, $branch_id, $field, $value, $calc_top_id = false) {
+        if($field == 'parent_id'){
+            $value=(int) $value;
+        }
         if ($field == 'parent_id' && $this->treeisLeaf($table, $value) || $field == 'label' && !$value) {
             /* parent must be not leaf and label should not be empty */
             $this->Hub->msg($field == 'parent_id' ? "Not folder" : "Label should not be empty");
