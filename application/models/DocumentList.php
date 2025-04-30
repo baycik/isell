@@ -10,6 +10,7 @@ class DocumentList extends Catalog
 	//public $listFetch=['offset'=>['int',0],'limit'=>['int',50],'sortby'=>'string','sortdir'=>'(ASC|DESC)','filter'=>'json','mode'=>'string','colmode'=>'string'];
 	public function listFetch(int $offset, int $limit, string $sortby = null, string $sortdir = null, array $filter = null, string $mode = null, string $colmode = null)
 	{
+		session_write_close();
 		$fields = ['cstamp', 'doc_num', 'label'];
 		if (empty($sortby)) {
 			$sortby = 'cstamp';
@@ -93,6 +94,7 @@ class DocumentList extends Catalog
 			document_view_types dvt USING(view_type_id)
 			GROUP BY doc_id
 			HAVING $having
+			ORDER BY dl.is_commited , cstamp DESC
             ";
 		$rows = $this->get_list($sql);
 		return $empty_row ? array_merge([$empty_row], $rows) : $rows;

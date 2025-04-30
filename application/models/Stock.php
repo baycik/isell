@@ -140,6 +140,7 @@ class Stock extends Catalog {
 
 
     public function listFetch( int $parent_id=0, int $offset=0, int $limit=0, string $sortby=null, string $sortdir=null, array $filter = null, string $mode = "simple") {
+        session_write_close();
         if (empty($sortby)) {
             $sortby = "se.parent_id,se.product_code";
             $sortdir = "ASC";
@@ -646,6 +647,7 @@ class Stock extends Catalog {
     }
 
     public function reserveListFetch(int $offset=0, int $limit=0, string $sortby='cstamp', string $sortdir='DESC', array $filter = null) {
+        session_write_close();
         $this->Hub->set_level(2);
         if (empty($sortby)) {
             $sortby = "cstamp";

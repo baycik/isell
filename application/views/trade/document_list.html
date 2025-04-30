@@ -141,16 +141,25 @@
 						DocList.table.setDimensions("#doclist_sg .slick-viewport", DocList.table.columnSummaryWidth);
 					});
 					App.Topic('activeCompanySelected').subscribe(function (company) {
+						if(location.hash!='#Trade'){
+							return
+						}
 						DocList.grid.updateOptions({ params: { mode: 'show_only_pcomp_docs,add_empty_row' } });
 						DocList.tools.reload();
 						Document.load(0);
 					});
 					App.Topic('passiveCompanySelected').subscribe(function (company) {
+						if(location.hash!='#Trade'){
+							return
+						}
 						DocList.grid.updateOptions({ params: { mode: 'show_only_pcomp_docs,add_empty_row' } });
 						DocList.tools.reload();
 						Document.load(0);
 					});
 					App.Topic('passiveCompanyReset').subscribe(function (company) {
+						if(location.hash!='#Trade'){
+							return
+						}
 						DocList.grid.updateOptions({ params: { mode: 'add_empty_row' } });
 						DocList.tools.reload();
 						Document.load(0);

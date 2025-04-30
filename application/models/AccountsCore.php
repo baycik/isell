@@ -182,6 +182,7 @@ class AccountsCore extends Catalog
 	];
 	public function ledgerFetch(string $acc_code, $idate = '', $fdate = '', $page = 1, $rows = 30, $use_passive_filter = false)
 	{
+		session_write_close();
 		$idate .= ' 00:00:00';
 		$fdate .= ' 23:59:59';
 
