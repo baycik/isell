@@ -555,15 +555,15 @@ class Utils extends Catalog {
                 sp FLOAT
             ) AS (SELECT 
                     doc_entry_id,
-                doc_type,
-                product_code,
-                product_quantity,
-                self_price,
-                IF(product_code <> @current_code,CONCAT((@current_code:=product_code),(@qty_left:=0),(@current_self_price:=0)),1) x,
-                IF(doc_type = 2 AND NOT is_reclamation AND (product_quantity + @qty_left)>0,@current_self_price:=(self_price * product_quantity + COALESCE(@current_self_price, 0) * @qty_left) / (product_quantity + @qty_left),0) xx,
-                IF(doc_type = 2,(@qty_left:=@qty_left + product_quantity),(@qty_left:=@qty_left - product_quantity)) qty_left,
-                @current_self_price sp,
-                i 
+                    doc_type,
+                    product_code,
+                    product_quantity,
+                    self_price,
+                    IF(product_code <> @current_code,CONCAT((@current_code:=product_code),(@qty_left:=0),(@current_self_price:=0)),1) x,
+                    IF(doc_type = 2 AND NOT is_reclamation AND (product_quantity + @qty_left)>0,@current_self_price:=(self_price * product_quantity + COALESCE(@current_self_price, 0) * @qty_left) / (product_quantity + @qty_left),0) xx,
+                    IF(doc_type = 2,(@qty_left:=@qty_left + product_quantity),(@qty_left:=@qty_left - product_quantity)) qty_left,
+                    @current_self_price sp,
+                    i 
                 FROM
                 (SELECT 
                     *,
@@ -573,7 +573,7 @@ class Utils extends Catalog {
                         IF(@qty_left1 < 0, @pointer:=@i, @pointer:=0) pointer
                 FROM
                     (SELECT 
-                    doc_entry_id,
+                        doc_entry_id,
                         doc_type,
                         is_reclamation,
                         product_code,
@@ -604,7 +604,8 @@ class Utils extends Catalog {
         } else {
             $active_filter = " AND active_company_id='" . $this->Hub->acomp('company_id') . "'";
         }
-        //$this->selfPriceCreateTable($active_filter);
+        $this->selfPriceCreateTable($active_filter);
+        $this->selfPriceCorrectEntries();
         $this->selfPriceRecalculate();
         $this->selfPriceCalculateExtraExpenses($idate, $fdate, $active_filter);
         $this->selfPriceStockAssign();

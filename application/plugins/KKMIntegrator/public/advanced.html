@@ -76,6 +76,7 @@
                 }
             },
             error(message) {
+                console.log(message)
                 if (!message || message == "") {
                     App.KKMIntegrator_advanced.block_submit = false;
                     $("#kkmintegrator_advanced_error").hide();
@@ -103,9 +104,8 @@
         kkm: {
             apiExecute(command, Data) {
                 var def = $.Deferred()
-                $.post('KKMIntegrator/' + command, Data || {}).done(function (resp) {
+                $.post('KKMIntegrator/' + command, Data || {}).done(function (response) {
                     try {
-                        var response = JSON.parse(resp);
                         if (response.Error && response.Error != "") {
                             App.KKMIntegrator_advanced.view.error(response.Error);
                             def.reject();

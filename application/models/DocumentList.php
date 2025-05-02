@@ -76,16 +76,19 @@ class DocumentList extends Catalog
 						0 )doc_total,
 			(SELECT CONCAT(code,' ',descr) FROM acc_trans_status JOIN acc_trans USING(trans_status) JOIN document_trans dt USING(trans_id) WHERE dt.doc_id=dl.doc_id ORDER BY trans_id LIMIT 1) trans_status
 			FROM 
-				(SELECT * FROM document_list dl
+				(SELECT 
+					* 
+					FROM 
+						document_list dl
+							JOIN
+						companies_list cl ON passive_company_id=company_id
+							JOIN
+						companies_tree ct USING(branch_id)
 					WHERE
 					dl.active_company_id = '$active_company_id' $andwhere
 					AND doc_type IN (1,2,3,4,5,-1,-2)
 					ORDER BY dl.is_commited,$sortby $sortdir
 					LIMIT $limit OFFSET $offset) dl
-				JOIN
-			companies_list cl ON passive_company_id=company_id
-				JOIN
-			companies_tree ct USING(branch_id)
 				LEFT JOIN
 			document_types dt USING(doc_type)
 				LEFT JOIN
