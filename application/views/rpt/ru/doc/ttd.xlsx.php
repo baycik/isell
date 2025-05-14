@@ -47,10 +47,10 @@
    }
 $this->setPageOrientation( "landscape" );
 
-if( $this->view->doc_view->extra->goods_reciever_okpo ){
+if( $this->view->doc_view->extra->goods_reciever_okpo??null ){
     $this->view->goods_reciever_okpo=$this->view->doc_view->extra->goods_reciever_okpo;
 }
-if( $this->view->doc_view->extra->goods_reciever ){
+if( $this->view->doc_view->extra->goods_reciever??null ){
     $this->view->goods_reciever=$this->view->doc_view->extra->goods_reciever;
 }
 

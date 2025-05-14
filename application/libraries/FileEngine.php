@@ -135,7 +135,7 @@ class FileEngine {
             $tmppdf = $parent . "/pdf-tmp$rnd.pdf";
             $pdfengine = $parent . '/wkhtmltopdf.exe';
             file_put_contents($tmphtml, $full_html);
-            exec("$pdfengine --zoom 1.2 -O $this->page_orientation $tmphtml $tmppdf  2>&1", $output);
+            exec("$pdfengine --enable-local-file-access --zoom 1.2 -O $this->page_orientation $tmphtml $tmppdf  2>&1", $output);
             if (count($output)) {
                 file_put_contents($parent . '/pdferror.log', implode("\n", $output));
             }

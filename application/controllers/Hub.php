@@ -1,6 +1,10 @@
 <?php
 date_default_timezone_set('Europe/Moscow');
 spl_autoload_register(function ($class_name) {
+
+	if(@include $class_name . '.php'){
+		return;
+	}
 	$model_packages = [BAY_STORAGE . 'plugin_modifications/', APPPATH];
 	foreach ($model_packages as $package) {
 		$filename = $package . 'models/' . $class_name . '.php';
