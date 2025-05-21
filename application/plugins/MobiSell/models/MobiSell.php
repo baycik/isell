@@ -863,9 +863,9 @@ class MobiSell extends PluginManager {
     private function stockLayoutProductRecalculate( array $product_ids ){
         $this->db->select("product_id,product_code,SUM(sub_cell_volume) allocated_volume");
         $this->db->select("GROUP_CONCAT(CONCAT(':',cell_sector,'-',cell_level,'-',cell_number) ORDER BY `cell_sector`,`cell_level`,`cell_number` SEPARATOR ', ') product_sector ");
-        $this->db->from('plugin_stock_layout_links');
-        $this->db->join('plugin_stock_layout_cells','cell_id');
-        $this->db->join('prod_list','product_id');
+        $this->db->from('prod_list');
+        $this->db->join('plugin_stock_layout_links','product_id','left');
+        $this->db->join('plugin_stock_layout_cells','cell_id','left');
         $this->db->where_in('product_id',$product_ids);
         $this->db->group_by('product_id');
         $product_infos=$this->db->get()->result();
