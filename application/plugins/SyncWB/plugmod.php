@@ -1,0 +1,15 @@
+<?php
+$filename[]=<<<EOT
+views/stock/stock_main.html
+EOT;
+$search[]=<<<EOT
+<!--PLUGIN-TABS-->
+EOT;
+$replace[]=<<<EOT
+EOT;
+$before[]=<<<EOT
+EOT;
+$after[]=<<<EOT
+\n  <div title="WB Синхронизатор" href="SyncWB/index.html" ></div>
+EOT;
+    

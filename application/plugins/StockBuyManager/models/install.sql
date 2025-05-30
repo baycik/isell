@@ -3,18 +3,18 @@
  * Created: May 4, 2017
  */
 CREATE TABLE `supply_list` (
-  `supply_id` int(11) NOT NULL AUTO_INCREMENT,
-  `supplier_id` int(11) DEFAULT NULL,
+  `supply_id` int NOT NULL AUTO_INCREMENT,
+  `supplier_id` int DEFAULT NULL,
   `product_code` varchar(45) DEFAULT NULL,
   `supply_code` varchar(45) DEFAULT NULL,
   `supply_name` varchar(255) DEFAULT NULL,
-  `supply_leftover` int(11) NOT NULL,
+  `supply_leftover` int NOT NULL DEFAULT '0',
   `supply_buy` double DEFAULT '0',
   `supply_sell` double DEFAULT '0',
   `supply_sell_ratio` double DEFAULT '0',
   `supply_comment` varchar(255) DEFAULT NULL,
-  `supply_spack` int(11) DEFAULT '1',
-  `supply_bpack` int(11) DEFAULT '1',
+  `supply_spack` int DEFAULT '1',
+  `supply_bpack` int DEFAULT '1',
   `supply_volume` double DEFAULT NULL,
   `supply_weight` double DEFAULT NULL,
   `supply_unit` varchar(5) DEFAULT 'шт',
@@ -23,7 +23,7 @@ CREATE TABLE `supply_list` (
   UNIQUE KEY `supplier_id_UNIQUE` (`supply_code`,`supplier_id`),
   KEY `product_code_INDEX` (`product_code`),
   KEY `supply_code_INDEX` (`supply_code`)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb3;
 
 
 CREATE TABLE `supplier_list` (

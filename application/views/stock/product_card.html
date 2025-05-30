@@ -1,240 +1,245 @@
 <script type="text/javascript">
-    /*global App */
-    App.page_stock_product_card = {
-        closeOnSave:true,
-	parsed:true,
-	init: function () {
-	    this.node.window({
-		title: 'Товарная карточка',
-		width: 800,
-                top:50,
-		height: 'auto',
-		shadow:false,
-		onClose:function(){
-                    App.page_stock_product_card.node.remove();
-		    delete App.page_stock_product_card;
-		}
-	    });
-	    this.node.window('window').css('position','fixed');
-	    
-	    if( this.data.product_code ){
-                App.page_stock_product_card.productGet(this.data.product_code);
-	    }
-	    else if( !this.data ){//new product
-		App.page_stock_product_card.data={
-		    labeled_prices:[{
-			sell:0,
-			buy:0,
-			curr_code:'',
-			label:''
-		    }] 
-		};
-		App.page_stock_product_card.unpackPrices();
-	    }
-            /*PLUGINS GO HERE!!DO NOT ERASE THIS TEXT, ITS AN ANCHOR*/
-            
-	    App.page_stock_product_card.initWidgets();
-            if( this.data.enablePrevnext ){
-                $("#stock_prod_card_prevnext").css('visibility','visible');   
-            }
-            $("input[name=product_code_new]").change(function(){
-                var product_code=$(this).val();
-                $.post("Stock/productCheck",{product_code:product_code},function(resp){
-                    var product_exists=App.json(resp);
-                    if( product_exists && confirm(`Найден товар с кодом ${product_code}. Загрузить?`) ){
-                        App.page_stock_product_card.data.product_code=product_code;
-                        App.page_stock_product_card.productGet();
-                    }
-                });
-            });
-	},
-	price:{
-	    load:function(){
-		App.get("Stock/productGetLabeledPrices",{product_code:App.page_stock_product_card.data.product_code},function(resp){
-		    App.page_stock_product_card.labeled_prices=App.json(resp);
-		    App.page_stock_product_card.price.unpack(App.page_stock_product_card.labeled_prices);
-		});
-	    },
-	    unpack:function(labeled_prices){
-		App.renderTpl('page_stock_product_card_pricetable',{labeled_prices:labeled_prices});
-                for(var i in labeled_prices){
-                    $("#page_stock_product_card_pricetable select[name='curr_code-"+labeled_prices[i].label+"']").val(labeled_prices[i].curr_code);
-                }
-	    },
-	    pack:function(){
-		var labeled_prices=App.page_stock_product_card.labeled_prices;
-		var packed_labeled_prices=[];
-		var data=App.page_stock_product_card.data;
-		for(var i in labeled_prices ){
-		    packed_labeled_prices.push({
-			sell:data['sell-'+labeled_prices[i].label],
-			buy:data['buy-'+labeled_prices[i].label],
-			curr_code:data['curr_code-'+labeled_prices[i].label],
-			label:labeled_prices[i].label
-		    });
-		    delete App.page_stock_product_card.data['sell-'+labeled_prices[i]['label']];
-		    delete App.page_stock_product_card.data['buy-'+labeled_prices[i]['label']];
-		    delete App.page_stock_product_card.data['curr_code-'+labeled_prices[i]['label']];
-		}
-		App.page_stock_product_card.data.labeled_prices=JSON.stringify(packed_labeled_prices);
-	    },
-	    remove:function(node){
-		var label=$(node).data('label');
-		if( !confirm("Удалить категорию цен "+label+"?") ){
-		    return ;
-		}
-		$.post("Stock/productLabeledPriceRemove/",{product_code:App.page_stock_product_card.data.product_code,label:label},function(resp){
-		    App.page_stock_product_card.price.load();
-		});
-	    },
-	    add:function(){
-		var label=prompt("Введите название новой категории цен");
-		if( label ){
-		    $.post("Stock/productLabeledPriceAdd",{product_code:App.page_stock_product_card.data.product_code,label:label},function(resp){
-			App.page_stock_product_card.price.load();
-		    });
-		}
-	    }
-	},
-        productGet:function(){
-            var focus=this.data.focus;
-            App.get("Stock/productGet",{product_code:App.page_stock_product_card.data.product_code},function(resp){
-                if( resp ){
-                    App.page_stock_product_card.data=App.json(resp);
-                }
-                App.page_stock_product_card.data.focus=focus;
-                App.page_stock_product_card.initWidgets();
-                App.page_stock_product_card.img.load();
-                App.page_stock_product_card.price.load();
-            });
-        },
-	initWidgets:function(){
-	    App.page_stock_product_card.data.product_code_new=App.page_stock_product_card.data.product_code;
-	    App.setupForm("#page_stock_product_card_frm", App.page_stock_product_card.data);
-	    $.parser.parse("#page_stock_product_card");//for easy ui
-	    $('#page_stock_product_card input').on('focus', function() {
-		this.select();
-	    });
-	    $("input[name="+this.data.focus+"]").select();
-	    $("#Stock_parent_id").combobox('setValue',App.page_stock_product_card.data.parent_id);
-	    $("#Stock_parent_id").combobox('setText',App.page_stock_product_card.data.parent_label);
-	    this.serviceCheck();
-	},
-	categoryLoader:function(param, success, error){
-	    if( param.q===undefined ){
-		success([{branch_id:App.page_stock_product_card.data.parent_id,label:App.page_stock_product_card.data.parent_label}]);
-		return ;
-	    }
-	    $.get('Stock/labelFetch/', param, function (xhr) {
-		var resp = App.json(xhr);
-		success(resp[0] ? resp : []);
-	    });
-	},
-	submit:function(e){
-	    e.preventDefault();
-	    this.data=App.collectForm("#page_stock_product_card_frm");
-	    if( this.data.product_code_new.match(/^[\(\)\[\]\<\>\wабвгдеёжзийклмнопрстуфхцчшщъыьэюяіїє\. ,-]+$/i) ){
-		this.price.pack();
-		return $.post('Stock/productSave/',this.data,function(ok){
-		    if( ok*1 ){
-			App.flash("Свойства товара сохранены");
-                        if( App.page_stock_product_card.closeOnSave ){
-                            App.page_stock_product_card.handler.notify('save',App.page_stock_product_card.data);
-                        }
-		    } else {
-			App.flash("Свойства товара не изменились");
-		    }
-                    //App.page_stock_product_card.closeOnSave=true;
-		}).then(function(){//!!!!!!!!!!!!!!!!!!!!!
-		    if( App.page_stock_product_card.closeOnSave ){
-			App.page_stock_product_card.node.window('close');
-		    }
-		});
-	    } else {
-		alert("Код товара не должен содержать сивол: "+(this.data.product_code_new.match(/[^\wабвгдеёжзийклмнопрстуфхцчшщъыьэюяіїє\. ,-]/ig)||[]).join(""));
-	    }
-	},
-        next:function( direction ){
-            App.page_stock_product_card.closeOnSave=false;
-            $("#page_stock_product_card_frm").submit();
-            App.page_stock_product_card.handler.notify(direction<0?'prev':'next');
-        },
-        stockTree:function(){
-            App.loadWindow('page/stock/tree').progress(function(status,category){
-                if( status==='select' ){
-                    $("#Stock_parent_id").combobox('setValue',category.branch_id);
-                    $("#Stock_parent_id").combobox('setText',category.label);
-                }
-            });
-        },
-	serviceCheck:function(){
-	    var is_service=App.val("#product_card_srv_chk");
-	    this.node.find('.only_product_props input').attr('disabled',is_service?'disabled':null);
-	},
-	img:{
-	    load:function(){
-		var file_name=$("input[name=product_img]").val()?'Storage/image_flush/?size=150x140&path=dynImg/'+$("input[name=product_img]").val():"img/product.png";
-		$("#page_stock_product_card_thumb").attr('src',file_name);
-	    },
-	    up:function(filelist){
-		if( filelist.length ){
-		    if( filelist[0].type.indexOf('image')===-1 ){
-			alert("Файл должен быть изображением");
-			return false;
-		    }
-		    if( $("input[name=product_img]").val() ){
-			App.page_stock_product_card.img.remove();
-		    }
-		    var file_name=(new Date()).getTime()+'.'+filelist[0].name.split('.').pop();//filelist[0].name;
-		    
-		    var url = 'Storage/upload/?dir=dynImg&filename='+file_name;
-		    var xhr = new XMLHttpRequest();
-		    var fd = new FormData();
-		    xhr.open("POST", url, true);
-		    xhr.onreadystatechange = function() {
-			if (xhr.readyState === 4 && xhr.status === 200) {
-			    if( xhr.responseText==='uploaded1' ){
-				App.flash("Файл загружен.");
-				$("input[name=product_img]").val(file_name);
-				App.page_stock_product_card.img.load();
-			    } else {
-				App.flash("Не удалось загрузить "+xhr.responseText);
-			    }
+	/*global App */
+	App.page_stock_product_card = {
+		closeOnSave: true,
+		parsed: true,
+		init: function () {
+			this.node.window({
+				title: 'Товарная карточка',
+				width: 800,
+				top: 50,
+				height: 'auto',
+				shadow: false,
+				onClose: function () {
+					App.page_stock_product_card.node.remove();
+					delete App.page_stock_product_card;
+				}
+			});
+			this.node.window('window').css('position', 'fixed');
+
+			if (this.data.product_code) {
+				App.page_stock_product_card.productGet(this.data.product_code);
 			}
-		    };
-		    fd.append("upload_file", filelist[0]);
-		    xhr.send(fd);
+			else if (!this.data) {//new product
+				App.page_stock_product_card.data = {
+					labeled_prices: [{
+						sell: 0,
+						buy: 0,
+						curr_code: '',
+						label: ''
+					}]
+				};
+				App.page_stock_product_card.unpackPrices();
+			}
+			/*PLUGINS GO HERE!!DO NOT ERASE THIS TEXT, ITS AN ANCHOR*/
+
+			App.page_stock_product_card.initWidgets();
+			if (this.data.enablePrevnext) {
+				$("#stock_prod_card_prevnext").css('visibility', 'visible');
+			}
+			$("input[name=product_code_new]").change(function () {
+				var product_code = $(this).val();
+				$.post("Stock/productCheck", { product_code: product_code }, function (resp) {
+					var product_exists = App.json(resp);
+					if (product_exists && confirm(`Найден товар с кодом ${product_code}. Загрузить?`)) {
+						App.page_stock_product_card.data.product_code = product_code;
+						App.page_stock_product_card.productGet();
+					}
+				});
+			});
+		},
+		price: {
+			load: function () {
+				App.get("Stock/productGetLabeledPrices", { product_code: App.page_stock_product_card.data.product_code }, function (resp) {
+					App.page_stock_product_card.labeled_prices = App.json(resp);
+					App.page_stock_product_card.price.unpack(App.page_stock_product_card.labeled_prices);
+				});
+			},
+			unpack: function (labeled_prices) {
+				App.renderTpl('page_stock_product_card_pricetable', { labeled_prices: labeled_prices });
+				for (var i in labeled_prices) {
+					$("#page_stock_product_card_pricetable select[name='curr_code-" + labeled_prices[i].label + "']").val(labeled_prices[i].curr_code);
+				}
+			},
+			pack: function () {
+				var labeled_prices = App.page_stock_product_card.labeled_prices;
+				var packed_labeled_prices = [];
+				var data = App.page_stock_product_card.data;
+				for (var i in labeled_prices) {
+					packed_labeled_prices.push({
+						sell: data['sell-' + labeled_prices[i].label],
+						buy: data['buy-' + labeled_prices[i].label],
+						curr_code: data['curr_code-' + labeled_prices[i].label],
+						label: labeled_prices[i].label
+					});
+					delete App.page_stock_product_card.data['sell-' + labeled_prices[i]['label']];
+					delete App.page_stock_product_card.data['buy-' + labeled_prices[i]['label']];
+					delete App.page_stock_product_card.data['curr_code-' + labeled_prices[i]['label']];
+				}
+				App.page_stock_product_card.data.labeled_prices = JSON.stringify(packed_labeled_prices);
+			},
+			remove: function (node) {
+				var label = $(node).data('label');
+				if (!confirm("Удалить категорию цен " + label + "?")) {
+					return;
+				}
+				$.post("Stock/productLabeledPriceRemove/", { product_code: App.page_stock_product_card.data.product_code, label: label }, function (resp) {
+					App.page_stock_product_card.price.load();
+				});
+			},
+			add: function () {
+				var label = prompt("Введите название новой категории цен");
+				if (label) {
+					$.post("Stock/productLabeledPriceAdd", { product_code: App.page_stock_product_card.data.product_code, label: label }, function (resp) {
+						App.page_stock_product_card.price.load();
+					});
+				}
+			}
+		},
+		productGet: function () {
+			var focus = this.data.focus;
+			App.get("Stock/productGet", { product_code: App.page_stock_product_card.data.product_code }, function (resp) {
+				if (resp) {
+					App.page_stock_product_card.data = App.json(resp);
+				}
+				App.page_stock_product_card.data.focus = focus;
+				App.page_stock_product_card.initWidgets();
+				App.page_stock_product_card.img.load();
+				App.page_stock_product_card.price.load();
+			});
+		},
+		initWidgets: function () {
+			App.page_stock_product_card.data.product_code_new = App.page_stock_product_card.data.product_code;
+			App.setupForm("#page_stock_product_card_frm", App.page_stock_product_card.data);
+			$.parser.parse("#page_stock_product_card");//for easy ui
+			$('#page_stock_product_card input').on('focus', function () {
+				this.select();
+			});
+			$("input[name=" + this.data.focus + "]").select();
+			$("#Stock_parent_id").combobox('setValue', App.page_stock_product_card.data.parent_id);
+			$("#Stock_parent_id").combobox('setText', App.page_stock_product_card.data.parent_label);
+			this.serviceCheck();
+		},
+		categoryLoader: function (param, success, error) {
+			if (param.q === undefined) {
+				success([{ branch_id: App.page_stock_product_card.data.parent_id, label: App.page_stock_product_card.data.parent_label }]);
+				return;
+			}
+			$.get('Stock/labelFetch/', param, function (xhr) {
+				var resp = App.json(xhr);
+				success(resp[0] ? resp : []);
+			});
+		},
+		submit: function (e) {
+			e.preventDefault();
+			this.data = App.collectForm("#page_stock_product_card_frm");
+			if (this.data.product_code_new.match(/^[\(\)\[\]\<\>\wабвгдеёжзийклмнопрстуфхцчшщъыьэюяіїє\. ,-]+$/i)) {
+				this.price.pack();
+				return $.post('Stock/productSave/', this.data, function (ok) {
+					if (ok * 1) {
+						App.flash("Свойства товара сохранены");
+						if (App.page_stock_product_card.closeOnSave) {
+							App.page_stock_product_card.handler.notify('save', App.page_stock_product_card.data);
+						}
+					} else {
+						App.flash("Свойства товара не изменились");
+					}
+					//App.page_stock_product_card.closeOnSave=true;
+				}).then(function () {//!!!!!!!!!!!!!!!!!!!!!
+					if (App.page_stock_product_card.closeOnSave) {
+						App.page_stock_product_card.node.window('close');
+					}
+				});
+			} else {
+				alert("Код товара не должен содержать сивол: " + (this.data.product_code_new.match(/[^\wабвгдеёжзийклмнопрстуфхцчшщъыьэюяіїє\. ,-]/ig) || []).join(""));
+			}
+		},
+		next: function (direction) {
+			App.page_stock_product_card.closeOnSave = false;
+			$("#page_stock_product_card_frm").submit();
+			App.page_stock_product_card.handler.notify(direction < 0 ? 'prev' : 'next');
+		},
+		stockTree: function () {
+			App.loadWindow('page/stock/tree').progress(function (status, category) {
+				if (status === 'select') {
+					$("#Stock_parent_id").combobox('setValue', category.branch_id);
+					$("#Stock_parent_id").combobox('setText', category.label);
+				}
+			});
+		},
+		serviceCheck: function () {
+			var is_service = App.val("#product_card_srv_chk");
+			this.node.find('.only_product_props input').attr('disabled', is_service ? 'disabled' : null);
+		},
+		img: {
+			load: function () {
+				var file_name = $("input[name=product_img]").val() ? 'Storage/image_flush/?size=150x140&path=dynImg/' + $("input[name=product_img]").val() : "img/product.png";
+				$("#page_stock_product_card_thumb").attr('src', file_name);
+			},
+			up: function (filelist) {
+				if (filelist.length) {
+					if (filelist[0].type.indexOf('image') === -1) {
+						alert("Файл должен быть изображением");
+						return false;
+					}
+					if ($("input[name=product_img]").val()) {
+						App.page_stock_product_card.img.remove();
+					}
+					var file_name = (new Date()).getTime() + '.' + filelist[0].name.split('.').pop();//filelist[0].name;
+
+					var url = 'Storage/upload/?dir=dynImg&filename=' + file_name;
+					var xhr = new XMLHttpRequest();
+					var fd = new FormData();
+					xhr.open("POST", url, true);
+					xhr.onreadystatechange = function () {
+						if (xhr.readyState === 4 && xhr.status === 200) {
+							if (xhr.responseText === 'uploaded1') {
+								App.flash("Файл загружен.");
+								$("input[name=product_img]").val(file_name);
+								App.page_stock_product_card.img.load();
+							} else {
+								App.flash("Не удалось загрузить " + xhr.responseText);
+							}
+						}
+					};
+					fd.append("upload_file", filelist[0]);
+					xhr.send(fd);
+				}
+			},
+			remove: function () {
+				var file_name = $("input[name=product_img]").val();
+				$("input[name=product_img]").val('');
+				$.post('Storage/file_remove/?path=dynImg/' + file_name, function (ok) {
+					if (ok * 1) {
+						App.flash("Файл удален");
+						App.page_stock_product_card.img.load();
+					}
+				});
+			}
 		}
-	    },
-	    remove:function(){
-		var file_name=$("input[name=product_img]").val();
-		$("input[name=product_img]").val('');
-		$.post('Storage/file_remove/?path=dynImg/'+file_name,function(ok){
-		    if(ok*1){
-			App.flash("Файл удален");
-			App.page_stock_product_card.img.load();
-		    }
-		});
-	    }
-	}
-    };
+	};
 </script>
 <form id="page_stock_product_card_frm" onsubmit="App.page_stock_product_card.submit(event)">
-    <input type="hidden" name="product_img">
-    <input type="hidden" name="product_code">
-    <div class="inp_group" style="width: 450px;vertical-align: top">
-	<div style="position: relative;float:left;width:130px;height:140px;">
-	    <input type="file" id="page_stock_product_card_file" accept="image/*" style="display:none" onchange="App.page_stock_product_card.img.up(this.files)">
-	    <div style="text-align: center">
-		<img src="img/product.png" id="page_stock_product_card_thumb" style="cursor:pointer" onclick="window.open(this.src.replace('150x140','1200x1200'))" />
-	    </div>
-	    <div style="position: absolute;bottom:1px;right:2px;">
-		<button class="tiny_button" type="button" title="Отправить файл" onclick="$('#page_stock_product_card_file').click();">Загрузить</button>
-		<button class="tiny_button" type="button" title="Удалить файл" onclick="App.page_stock_product_card.img.remove()">Удалить</button>		
-	    </div>
-	</div>
-	<input name="is_service" title="Услуга" type="checkbox" id="product_card_srv_chk" onclick="App.page_stock_product_card.serviceCheck(this)">
-	<input class="easyui-combobox" name="parent_id" id="Stock_parent_id" title="Категория" data-options="
+	<input type="hidden" name="product_img">
+	<input type="hidden" name="product_code">
+	<div class="inp_group" style="width: 450px;vertical-align: top">
+		<div style="position: relative;float:left;width:130px;height:140px;">
+			<input type="file" id="page_stock_product_card_file" accept="image/*" style="display:none"
+				onchange="App.page_stock_product_card.img.up(this.files)">
+			<div style="text-align: center">
+				<img src="img/product.png" id="page_stock_product_card_thumb" style="cursor:pointer"
+					onclick="window.open(this.src.replace('150x140','1200x1200'))" />
+			</div>
+			<div style="position: absolute;bottom:1px;right:2px;">
+				<button class="tiny_button" type="button" title="Отправить файл"
+					onclick="$('#page_stock_product_card_file').click();">Загрузить</button>
+				<button class="tiny_button" type="button" title="Удалить файл"
+					onclick="App.page_stock_product_card.img.remove()">Удалить</button>
+			</div>
+		</div>
+		<input name="is_service" title="Услуга" type="checkbox" id="product_card_srv_chk"
+			onclick="App.page_stock_product_card.serviceCheck(this)">
+		<input class="easyui-combobox" name="parent_id" id="Stock_parent_id" title="Категория" data-options="
 		valueField: 'branch_id',
 		textField: 'label',
 		loader:App.page_stock_product_card.categoryLoader,
@@ -248,94 +253,106 @@
 			 }
 		     }]
 		">
-	<input name="product_code_new" title="Код" required="required">
-	<input name="product_unit" title="Единица" required="required">
-	<input name="product_wrn_quantity" title="Мин. кол-во">
-        <textarea name="ru" title="Название Рус" style="width:330px" required="required"></textarea>
-	<div class="easyui-panel" title="Другие названия" data-options="collapsible:true,collapsed:true">
-            <textarea name="ua" title="Название Укр" style="width:330px"></textarea>
-            <textarea name="en" title="Название Англ" style="width:330px"></textarea>
-	</div>
-	<div class="inp_rule">Цены на товар</div>
-	<div>
-	    <div style="font-weight: bold">
-		<div style="width:120px;float:left;">Категория</div>
-		<div style="width:110px;float:left;">Продажа</div>
-		<div style="width:110px;float:left;">Покупка</div>
-		<div style="width:110px;float:left;">Валюта</div>
-	    </div>
-	    <div>
-		<div style="width:120px;float:left;">Основная</div>
-		<div style="width:110px;float:left;"><input name="sell" onchange="this.value=App.calc(this.value)" class="icon-calc16" style="background-position: right;width:100px"></div>
-		<div style="width:110px;float:left;"><input name="buy" onchange="this.value=App.calc(this.value)" class="icon-calc16" style="background-position: right;width:100px"></div>
-		<div style="width:110px;float:left;">
-		    <select name="curr_code" style="width:100px;">
-			<option value=""></option>
-			<option value="UAH">UAH Гривна</option>
-			<option value="USD">USD Доллар</option>
-			<option value="RUB">RUB Рубль</option>
-		    </select>
+		<input name="product_code_new" title="Код" required="required">
+		<input name="product_unit" title="Единица" required="required">
+		<input name="product_wrn_quantity" title="Мин. кол-во">
+		<textarea name="ru" title="Название Рус" style="width:330px" required="required"></textarea>
+		<div class="easyui-panel" title="Другие названия" data-options="collapsible:true,collapsed:true">
+			<textarea name="ua" title="Название Укр" style="width:330px"></textarea>
+			<textarea name="en" title="Название Англ" style="width:330px"></textarea>
 		</div>
-	    </div>
-	</div>
-	<div id="page_stock_product_card_pricetable" class="covert">
-	    {{labeled_prices}}
-	    <div style="clear: both;padding-top: 2px;">
-		<div style="width:120px;float:left;">
-		    <img src="img/delete.png" 
-			 style="width:16px;height: auto;vertical-align: middle" 
-			 title="Удалить категорию цен" 
-			 onclick="App.page_stock_product_card.price.remove(this)"
-			 data-label="{{label}}"> {{label}} 
+		<div class="inp_rule">Цены на товар</div>
+		<div>
+			<div style="font-weight: bold">
+				<div style="width:120px;float:left;">Категория</div>
+				<div style="width:110px;float:left;">Продажа</div>
+				<div style="width:110px;float:left;">Покупка</div>
+				<div style="width:110px;float:left;">Валюта</div>
+			</div>
+			<div>
+				<div style="width:120px;float:left;">Основная</div>
+				<div style="width:110px;float:left;"><input name="sell" onchange="this.value=App.calc(this.value)"
+						class="icon-calc16" style="background-position: right;width:100px"></div>
+				<div style="width:110px;float:left;"><input name="buy" onchange="this.value=App.calc(this.value)"
+						class="icon-calc16" style="background-position: right;width:100px"></div>
+				<div style="width:110px;float:left;">
+					<select name="curr_code" style="width:100px;">
+						<option value=""></option>
+						<option value="UAH">UAH Гривна</option>
+						<option value="USD">USD Доллар</option>
+						<option value="RUB">RUB Рубль</option>
+					</select>
+				</div>
+			</div>
 		</div>
-		<div style="width:110px;float:left;">
-		    <input name="sell-{{label}}" value="{{sell}}" onchange="this.value=App.calc(this.value)" class="icon-calc16" style="background-position: right;width:100px">
+		<div id="page_stock_product_card_pricetable" class="covert">
+			{{labeled_prices}}
+			<div style="clear: both;padding-top: 2px;">
+				<div style="width:120px;float:left;">
+					<img src="img/delete.png" style="width:16px;height: auto;vertical-align: middle"
+						title="Удалить категорию цен" onclick="App.page_stock_product_card.price.remove(this)"
+						data-label="{{label}}"> {{label}}
+				</div>
+				<div style="width:110px;float:left;">
+					<input name="sell-{{label}}" value="{{sell}}" onchange="this.value=App.calc(this.value)"
+						class="icon-calc16" style="background-position: right;width:100px">
+				</div>
+				<div style="width:110px;float:left;">
+					<input name="buy-{{label}}" value="{{buy}}" onchange="this.value=App.calc(this.value)"
+						class="icon-calc16" style="background-position: right;width:100px">
+				</div>
+				<div style="width:110px;float:left;">
+					<select name="curr_code-{{label}}" value="{{curr_code}}" style="width:100px;">
+						<option value="">Основная</option>
+						<option value="UAH">UAH Гривна</option>
+						<option value="USD">USD Доллар</option>
+						<option value="RUB">RUB Рубль</option>
+					</select>
+				</div>
+			</div>
+			{{/labeled_prices}}
+			<button class="tiny_button" type="button" title="Добавить категорию цен"
+				onclick="App.page_stock_product_card.price.add()"><img src="img/add.png"> Добавить</button>
 		</div>
-		<div style="width:110px;float:left;">
-		    <input name="buy-{{label}}" value="{{buy}}" onchange="this.value=App.calc(this.value)" class="icon-calc16" style="background-position: right;width:100px">
+	</div>
+	<div class="inp_group only_product_props" style="width: 320px;vertical-align: top">
+		<div class="easyui-panel" title="Упаковка вес объем" data-options="collapsible:true">
+			<input name="product_spack" title="В коробке">
+			<input name="product_bpack" title="В ящике">
+			<input name="product_weight" title="Вес кг">
+			<input name="product_volume" title="Объем м3">
 		</div>
-		<div style="width:110px;float:left;">
-		    <select name="curr_code-{{label}}" value="{{curr_code}}" style="width:100px;">
-			<option value="">Основная</option>
-			<option value="UAH">UAH Гривна</option>
-			<option value="USD">USD Доллар</option>
-			<option value="RUB">RUB Рубль</option>
-		    </select>
+		<div class="easyui-panel" title="Кода" data-options="collapsible:true,collapsed:true">
+			<input name="analyse_origin" title="Происхождение">
+			<input name="party_label" title="Партия">
+			<input name="product_barcode" title="Штрихкод">
+			<input name="product_article" title="Артикул">
 		</div>
-	    </div>
-	    {{/labeled_prices}}
-	    <button class="tiny_button" type="button" title="Добавить категорию цен" onclick="App.page_stock_product_card.price.add()"><img src="img/add.png"> Добавить</button>
+		<div class="easyui-panel" title="Аналитика" data-options="collapsible:true,collapsed:true">
+			<input name="analyse_type" title="Тип">
+			<input name="analyse_brand" title="Бренд">
+			<input name="analyse_class" title="Класс">
+		</div>
+		<!--PLUGINS-->
 	</div>
-    </div>
-    <div class="inp_group only_product_props" style="width: 320px;vertical-align: top">
-	<div class="easyui-panel" title="Упаковка вес объем" data-options="collapsible:true">
-	    <input name="product_spack" title="В коробке">
-	    <input name="product_bpack" title="В ящике">
-	    <input name="product_weight" title="Вес кг">
-	    <input name="product_volume" title="Объем м3">
+	<div style="text-align: center;margin-top: 15px;clear: both">
+		<button type="submit" onclick="App.page_stock_product_card.closeOnSave=true;"><img src="img/Save-24.png" />
+			Сохранить</button>
+		<button type="button" onclick="App.page_stock_product_card.node.window('close')"><img src="img/close24.png" />
+			Закрыть</button>
+		<span id="stock_prod_card_prevnext" style="visibility: hidden">
+			| <button type="button" onclick="App.page_stock_product_card.next(-1)"
+				title="Сохранить и открыть предидущий"><img src="img/2leftarrow.png" style="width:24px;height: auto;" />
+				Пред.</button>
+			<button type="button" onclick="App.page_stock_product_card.next(1)"
+				title="Сохранить и открыть следующий"><img src="img/2rightarrow.png" style="width:24px;height: auto;" />
+				След.</button>
+		</span>
+		| <a href="#"
+			onclick="location='#Stock#stock_main_tabs=Резерв&product_code='+App.page_stock_product_card.data.product_code;App.page_stock_product_card.node.window('close');return false;"><img
+				src="img/reserved.png" style="width:24px;height: auto;" /> Резервы по товару</a>
+		| <a href="#"
+			onclick="location='#Stock#stock_main_tabs=Движения товара&product_code='+App.page_stock_product_card.data.product_code;App.page_stock_product_card.node.window('close');return false;">Движения
+			товара</a>
 	</div>
-	<div class="easyui-panel" title="Кода" data-options="collapsible:true,collapsed:true">
-	    <input name="analyse_origin" title="Происхождение">
-	    <input name="party_label" title="Партия">
-	    <input name="product_barcode" title="Штрихкод">
-	    <input name="product_article" title="Артикул">
-	</div>
-	<div class="easyui-panel" title="Аналитика" data-options="collapsible:true,collapsed:true">
-	    <input name="analyse_type" title="Тип">
-	    <input name="analyse_brand" title="Бренд">
-	    <input name="analyse_class" title="Класс">
-	</div>
-        <!--PLUGINS-->
-    </div>
-    <div style="text-align: center;margin-top: 15px;clear: both">
-        <button type="submit" onclick="App.page_stock_product_card.closeOnSave=true;"><img src="img/Save-24.png" /> Сохранить</button>
-	<button type="button" onclick="App.page_stock_product_card.node.window('close')"><img src="img/close24.png" /> Закрыть</button>
-        <span id="stock_prod_card_prevnext" style="visibility: hidden">
-            | <button type="button" onclick="App.page_stock_product_card.next(-1)" title="Сохранить и открыть предидущий"><img src="img/2leftarrow.png" style="width:24px;height: auto;"/> Пред.</button>
-            <button type="button" onclick="App.page_stock_product_card.next(1)" title="Сохранить и открыть следующий"><img src="img/2rightarrow.png" style="width:24px;height: auto;"/> След.</button>
-        </span>
-        | <a href="#" onclick="location='#Stock#stock_main_tabs=Резерв&product_code='+App.page_stock_product_card.data.product_code;App.page_stock_product_card.node.window('close');return false;"><img src="img/reserved.png" style="width:24px;height: auto;" /> Резервы по товару</a>
-        | <a href="#" onclick="location='#Stock#stock_main_tabs=Движения товара&product_code='+App.page_stock_product_card.data.product_code;App.page_stock_product_card.node.window('close');return false;">Движения товара</a>
-    </div>
 </form>
-
