@@ -229,6 +229,8 @@ class Document extends Data
 	{
 		$this->Base->set_level(2);
 		$doc_id = $this->doc('doc_id');
+		pl('commit');
+
 		$this->Base->query("START TRANSACTION");
 		if ($this->isCommited()) {
 			$this->Base->msg("Документ уже проведен!\n");
@@ -253,6 +255,7 @@ class Document extends Data
 		}
 		$res = $this->Base->query("SELECT doc_entry_id FROM document_entries WHERE doc_id=$doc_id");
 		while ($entry = mysqli_fetch_assoc($res)) {
+			pl($entry);
 			if (!$this->alterEntry('commit', $entry['doc_entry_id'], NULL, NULL)) {
 				$name = $this->Base->get_row("SELECT $company_lang FROM document_entries JOIN prod_list USING(product_code) WHERE doc_entry_id=$entry[doc_entry_id]", 0);
 				$this->Base->msg("Невозможно провести строку: \"$name\"\n");
@@ -1484,21 +1487,21 @@ class Document extends Data
 
 	protected function getProductSellSelfPrice($product_code, $invoice_qty, $fdate)
 	{
-		return $this->Base->get_row("SELECT LEFTOVER_CALC('$product_code','$fdate','$invoice_qty','selfprice')", 0);
+		//return $this->Base->get_row("SELECT LEFTOVER_CALC('$product_code','$fdate','$invoice_qty','selfprice')", 0);
 
-		//	$this->Base->LoadClass('StockOld');
-		//	$stock_self = $this->Base->StockOld->getEntrySelfPrice($product_code);
-		//	if ($stock_self > 0)
-		//	    return $stock_self;
-		//	/*
-		//	 * IF self price is not set
-		//	 * qty=0 or something else set
-		//	 * selfPrice as current buy price
-		//	 */
-		//	$price = $this->getRawProductPrice($product_code, $this->doc('doc_ratio'));
-		//	$price_self = $price['buy'] ? $price['buy'] : $price['sell'];
-		//	//$this->Base->StockOld->setEntrySelfPrice($product_code, $price_self);
-		//	return $price_self;
+			$this->Base->LoadClass('StockOld');
+			$stock_self = $this->Base->StockOld->getEntrySelfPrice($product_code);
+			if ($stock_self > 0)
+			    return $stock_self;
+			/*
+			 * IF self price is not set
+			 * qty=0 or something else set
+			 * selfPrice as current buy price
+			 */
+			$price = $this->getRawProductPrice($product_code, $this->doc('doc_ratio'));
+			$price_self = $price['buy'] ? $price['buy'] : $price['sell'];
+			//$this->Base->StockOld->setEntrySelfPrice($product_code, $price_self);
+			return $price_self;
 	}
 
 	protected function getProductPrice($product_code)

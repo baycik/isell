@@ -1,12 +1,14 @@
 <?php
 require_once 'Catalog.php';
-class Chat extends Catalog{
-    public $min_level=1;
-    
-    public $getUserList=[];
-    public function getUserList(){
-	$my_id = $this->Hub->svar('user_id');
-        $sql="SELECT
+class Chat extends Catalog
+{
+    public $min_level = 1;
+
+    public $getUserList = [];
+    public function getUserList()
+    {
+        $my_id = $this->Hub->svar('user_id');
+        $sql = "SELECT
                 user_id,
                 user_login,
                 CONCAT(first_name, ' ', last_name) name,
@@ -23,47 +25,50 @@ class Chat extends Catalog{
                 ";
         $list = $this->get_list($sql);
         $system_user = (object)[
-            'user_id'=>'0',
-            'user_login'=>'iSellBot',
-            'name'=>'Системные уведомления',
-            'user_is_staff'=>'2',
-            'is_online'=>'1',
+            'user_id' => '0',
+            'user_login' => 'iSellBot',
+            'name' => 'Системные уведомления',
+            'user_is_staff' => '2',
+            'is_online' => '1',
             'has_new' => $this->get_value("SELECT 1 FROM event_list WHERE created_by=0 AND event_status='undone' AND event_date<NOW() AND event_liable_user_id='$my_id' LIMIT 1"),
-             'popularity' => '0'   
+            'popularity' => '0'
         ];
         array_unshift($list, $system_user);
         return $list;
     }
-    
-    public $sendRecieve=['int'];
-    public function sendRecieve( $his_id='all' ){
-	$msg=$this->request('message');
-	if( $this->request('is_phone_sms','bool') ){
-	    if( $this->sendPhoneSms($his_id, $msg) ){
-		$msg="[sms] ".$msg;
-	    }
-	}
-        if( $his_id && $msg ){
+
+    public $sendRecieve = ['int'];
+    public function sendRecieve($his_id = 'all')
+    {
+        $msg = $this->request('message');
+        if ($this->request('is_phone_sms', 'bool')) {
+            if ($this->sendPhoneSms($his_id, $msg)) {
+                $msg = "[sms] " . $msg;
+            }
+        }
+        if ($his_id && $msg) {
             $this->addMessage($his_id, $msg);
         }
-	return $this->getDialog($his_id);
+        return $this->getDialog($his_id);
     }
-    private function sendPhoneSms($his_id,$msg){
-        if( $his_id>0 ){
-            $user_phone=$this->get_value("SELECT user_phone FROM user_list WHERE user_id='$his_id'");
-            $Utils=$this->Hub->load_model('Utils');
-            $sender=$this->Hub->svar('user_sign');
-           return $user_phone && $Utils->sendSms($user_phone,"$sender написал вам в чате: \n$msg");
+    private function sendPhoneSms($his_id, $msg)
+    {
+        if ($his_id > 0) {
+            $user_phone = $this->get_value("SELECT user_phone FROM user_list WHERE user_id='$his_id'");
+            $Utils = $this->Hub->load_model('Utils');
+            $sender = $this->Hub->svar('user_sign');
+            return $user_phone && $Utils->sendSms($user_phone, "$sender написал вам в чате: \n$msg");
         }
-	return false;
+        return false;
     }
-    public function addMessage( $his_id, $msg ,$system_message = false){
-        if($system_message){
+    public function addMessage($his_id, $msg, $system_message = false)
+    {
+        if ($system_message) {
             $my_id = '0';
         } else {
-           $my_id = $this->Hub->svar('user_id'); 
+            $my_id = $this->Hub->svar('user_id');
         }
-        $sql="INSERT INTO
+        $sql = "INSERT INTO
                 event_list
               SET 
                 event_label='Chat',
@@ -77,15 +82,17 @@ class Chat extends Catalog{
         $this->query($sql);
     }
 
-    private function setAsRead(){
-	$this->query("UPDATE event_list SET event_status='done' WHERE event_id=@undone_id;");
+    private function setAsRead()
+    {
+        $this->query("UPDATE event_list SET event_status='done' WHERE event_id=@undone_id;");
     }
-    
-    public $getDialog=['int','int'];
-    public function getDialog( $his_id, $limit=15 ){
-	$my_id = $this->Hub->svar('user_id');
-	$this->query("SET @undone_id=0;");
-	$sql="
+
+    public $getDialog = ['int', 'int'];
+    public function getDialog($his_id, $limit = 15)
+    {
+        $my_id = $this->Hub->svar('user_id');
+        $this->query("SET @undone_id=0;");
+        $sql = "
 	    SELECT * FROM (SELECT
 		event_id,
 		event_descr,
@@ -107,28 +114,33 @@ class Chat extends Catalog{
 	    LIMIT $limit) t
 		ORDER BY event_date
 	    ";
-	$dialog=$this->get_list($sql);
-        foreach($dialog as $msg){
-            $msg->event_descr= htmlentities($msg->event_descr);
+        $dialog = $this->get_list($sql);
+        foreach ($dialog as $msg) {
+            $msg->event_descr = htmlentities($msg->event_descr);
         }
-	$this->setAsRead();
-        return ['dialog'=>$dialog,'has_new'=>$this->checkNew('skip_tasks')];
+        $this->setAsRead();
+        return ['dialog' => $dialog, 'has_new' => $this->checkNew('skip_tasks')];
     }
-    
-    public function checkNew( string $mode='' ){
-	$my_id = $this->Hub->svar('user_id');
-	$sql="SELECT 
-		COUNT(*) 
+
+    public function checkNew(string $mode = '')
+    {
+        $my_id = $this->Hub->svar('user_id');
+        $sql = "SELECT 
+		    COUNT(*) 
 	    FROM 
-		event_list 
-	    WHERE 
-		event_status='undone' AND event_date<NOW() AND event_liable_user_id='$my_id'";
-	$new_message_count=$this->get_value($sql);
+		    event_list 
+        WHERE 
+		    event_status='undone' 
+            AND event_date<NOW() 
+            AND event_liable_user_id='$my_id'
+        ";
+        $new_message_count = $this->get_value($sql);
         $this->query("UPDATE user_list SET last_activity=NOW() WHERE user_id='$my_id'");
-	if( $new_message_count>0 ){
-	    return $new_message_count;
-	}
-        if( $mode!=='skip_tasks' ){
+        if ($new_message_count > 0) {
+            return $new_message_count;
+        }
+        if ($mode !== 'skip_tasks') {
+            session_write_close();
             $this->Hub->load_model("Task")->doNext();
         }
     }

@@ -146,7 +146,7 @@ class Maintain extends CI_Model
 			mkdir($this->dirDbBackup, 0777, true);
 		}
 		$output = [];
-		$filename = $this->dirDbBackup . date('Ymd_His') . "_" . BAY_DB_NAME . '_BACKUP.sql';
+		$filename = $this->dirDbBackup . date('Y-m-d_H.i.s') . "_" . BAY_DB_NAME . '_BACKUP.sql';
 		exec("$path_to_mysql/bin/mysqldump --user=" . BAY_DB_USER . " --password=" . BAY_DB_PASS . "  --default-character-set=utf8 --single-transaction=TRUE --routines --events  " . BAY_DB_NAME . " >" . $filename, $output);
 		if (count($output)) {
 			file_put_contents($filename . '.log', implode("\n", $output));
@@ -170,7 +170,7 @@ class Maintain extends CI_Model
 		return $filename;
 	}
 
-	public function backupDumpZip($filename)
+	public function backupDumpZip( string $filename)
 	{
 		$zip = new ZipArchive();
 		$created=$zip->open("$filename.zip", ZipArchive::CREATE);
