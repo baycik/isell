@@ -467,129 +467,112 @@ class Utils extends Catalog {
     ////////////////////////////////////////////////////////////
     // SELF RECALCULATION FUNCTIONS
     ////////////////////////////////////////////////////////////
-    private function selfPriceRecalculate(){
-        $sql="
-        WITH stock_movements AS (
-            SELECT 
-                dl.cstamp,
-                doc_entry_id,
-                product_code,
-                doc_type,
-                is_reclamation,
-                ABS(product_quantity) product_quantity,
-                self_price,
-                IF(doc_type=1 AND is_reclamation=0 OR doc_type=2 AND is_reclamation=1,'sell','buy') movement_type,
-                SUM(ABS(product_quantity)) OVER (PARTITION BY product_code,IF(doc_type=1 AND is_reclamation=0 OR doc_type=2 AND is_reclamation=1,'sell','buy') ORDER BY cstamp,doc_entry_id) - ABS(product_quantity) range_from,
-                SUM(ABS(product_quantity)) OVER (PARTITION BY product_code,IF(doc_type=1 AND is_reclamation=0 OR doc_type=2 AND is_reclamation=1,'sell','buy') ORDER BY cstamp,doc_entry_id) range_to
-            FROM 
-                document_entries de
-                    JOIN
-                document_list dl USING(doc_id)
-            WHERE doc_type IN(1,2) AND is_commited=1 AND notcount=0
-        )
-        UPDATE
-            document_entries
-                JOIN
-        (SELECT
-            #sell.cstamp,
-            #sell.product_quantity sell_product_quantity,
-            #sell.self_price sell_self_price,
-            #sell.range_from sell_range_from,
-            #sell.range_to sell_range_to,
-            #buy.cstamp,
-            #buy.product_code,
-            #buy.product_quantity buy_product_quantity,
-            #buy.range_from buy_range_from,
-            #buy.range_to buy_range_to,
-            #buy.self_price buy_self_price,
-            
-            sell.doc_entry_id sell_doc_entry_id,
-            SUM(buy.self_price * (sell.product_quantity -IF(sell.range_to>buy.range_to,sell.range_to-buy.range_to,0)  -IF(buy.range_from>sell.range_from,buy.range_from-sell.range_from,0) ))
-            / SUM( sell.product_quantity -IF(sell.range_to>buy.range_to,sell.range_to-buy.range_to,0)  -IF(buy.range_from>sell.range_from,buy.range_from-sell.range_from,0) )
-            avg_self
-        FROM
-            stock_movements buy 
-                LEFT JOIN
-            stock_movements sell 
-                ON 
-                    buy.product_code=sell.product_code
-                    AND buy.movement_type='buy'
-                    AND sell.movement_type='sell'
-                    AND (
-                        sell.range_from>=buy.range_from AND sell.range_from<buy.range_to
-                        OR sell.range_to>buy.range_from AND sell.range_to<=buy.range_to
-                        OR buy.range_from>=sell.range_from AND buy.range_from<sell.range_to
-                        OR buy.range_to>sell.range_from AND buy.range_to<=sell.range_to
-                    )
-        WHERE buy.movement_type='buy'
-        GROUP BY sell.doc_entry_id) entry_self_prices
-            ON doc_entry_id = sell_doc_entry_id
-        SET
-            self_price=avg_self;
-        ";
-    }
-
-
-
-
-
     private function selfPriceCorrectEntries() {
-        $sql_update = "UPDATE document_entries de JOIN tmp_self_calc tsc USING(doc_entry_id) SET de.self_price=tsc.sp WHERE doc_type=1;";
-        $this->db->query($sql_update);
+        $update_entries_sql="UPDATE
+                document_entries
+                    JOIN
+            (SELECT
+                #sell.cstamp,
+                #sell.product_quantity sell_product_quantity,
+                #sell.self_price sell_self_price,
+                #sell.range_from sell_range_from,
+                #sell.range_to sell_range_to,
+                #buy.cstamp,
+                #buy.product_code,
+                #buy.product_quantity buy_product_quantity,
+                #buy.range_from buy_range_from,
+                #buy.range_to buy_range_to,
+                #buy.self_price buy_self_price,
+                
+                sell.doc_entry_id sell_doc_entry_id,
+                SUM( buy.self_price * (sell.product_quantity -IF(sell.range_to>buy.range_to,sell.range_to-buy.range_to,0)  -IF(buy.range_from>sell.range_from,buy.range_from-sell.range_from,0) ))
+                / 
+                SUM( sell.product_quantity -IF(sell.range_to>buy.range_to,sell.range_to-buy.range_to,0) -IF(buy.range_from>sell.range_from,buy.range_from-sell.range_from,0) )
+                avg_self
+            FROM
+                buy 
+                    LEFT JOIN
+                sell 
+                    ON 
+                        buy.product_code=sell.product_code
+                        AND (
+                            sell.range_from>=buy.range_from AND sell.range_from<buy.range_to
+                            OR sell.range_to>buy.range_from AND sell.range_to<=buy.range_to
+                            OR buy.range_from>=sell.range_from AND buy.range_from<sell.range_to
+                            OR buy.range_to>sell.range_from AND buy.range_to<=sell.range_to
+                        )
+            GROUP BY sell.doc_entry_id) entry_self_prices
+                ON doc_entry_id = sell_doc_entry_id
+            SET
+                self_price=avg_self;";
+        $this->db->query($update_entries_sql);
     }
 
 
 
     private function selfPriceCreateTable($active_filter) {
-        $sql_vars = "SET @i:=0,@pointer:=0,@current_code:='',@qty_left1:=0,@qty_left:=0,@current_self_price=0.00;";
-        $sql_tbl_drop = "DROP TEMPORARY TABLE IF  EXISTS tmp_self_calc;"; #TEMPORARY TEMPORARY 
-        $sql_tbl_create = "CREATE TEMPORARY TABLE tmp_self_calc (
+        $drop_sql="DROP TEMPORARY TABLE IF EXISTS buy,sell;";
+        $create_sell_sql="CREATE TEMPORARY TABLE sell (
+                cstamp DATETIME,
                 doc_entry_id INT,
-                doc_type INT,
                 product_code VARCHAR(45),
-                product_quantity FLOAT,
                 self_price FLOAT,
-                x VARCHAR(100),
-                xx VARCHAR(100),
-                qty_left FLOAT,
-                sp FLOAT
-            ) AS (SELECT 
-                    doc_entry_id,
-                    doc_type,
-                    product_code,
-                    product_quantity,
-                    self_price,
-                    IF(product_code <> @current_code,CONCAT((@current_code:=product_code),(@qty_left:=0),(@current_self_price:=0)),1) x,
-                    IF(doc_type = 2 AND NOT is_reclamation AND (product_quantity + @qty_left)>0,@current_self_price:=(self_price * product_quantity + COALESCE(@current_self_price, 0) * @qty_left) / (product_quantity + @qty_left),0) xx,
-                    IF(doc_type = 2,(@qty_left:=@qty_left + product_quantity),(@qty_left:=@qty_left - product_quantity)) qty_left,
-                    @current_self_price sp,
-                    i 
-                FROM
-                (SELECT 
+                product_quantity FLOAT,
+                range_to FLOAT,
+                range_from FLOAT
+            ) AS (
+                SELECT
                     *,
-                        IF(product_code <> @current_code, CONCAT((@current_code:=product_code),(@qty_left1:=0)), 1) x,
-                        IF(doc_type = 2, (@qty_left1:=@qty_left1 + product_quantity), (@qty_left1:=@qty_left1 - product_quantity)) qty_left,
-                        IF(@pointer, IF(doc_type = 1, @pointer, @pointer - 5), @i:=@i + 10) i,
-                        IF(@qty_left1 < 0, @pointer:=@i, @pointer:=0) pointer
-                FROM
-                    (SELECT 
+                    range_to-product_quantity range_from
+                FROM(
+                    SELECT 
+                        cstamp,
                         doc_entry_id,
-                        doc_type,
-                        is_reclamation,
                         product_code,
-                        product_quantity,
-                        self_price
-                FROM
-                    document_entries
-                JOIN document_list USING (doc_id)
-                WHERE
-                    notcount = 0 AND is_commited = 1
-                        AND (doc_type = 2 OR doc_type = 1)
-                ORDER BY product_code , cstamp) t) tt
-            ORDER BY product_code , i);";
-        $this->db->query($sql_vars);
-        $this->db->query($sql_tbl_drop);
-        $this->db->query($sql_tbl_create);
+                        self_price,
+                        ABS(product_quantity) product_quantity,
+                        SUM(ABS(product_quantity)) OVER (PARTITION BY product_code ORDER BY cstamp) range_to
+                    FROM 
+                        document_entries de
+                            JOIN
+                        document_list dl USING(doc_id)
+                            #JOIN prod_list pl ON pl.product_code=de.product_code
+                    WHERE (doc_type=1 AND NOT is_reclamation OR doc_type=2 AND is_reclamation) AND is_commited=1 AND notcount=0
+                ) tmp1
+            );
+        ";
+        $create_buy_sql="CREATE TEMPORARY TABLE IF NOT EXISTS buy (
+                cstamp DATETIME,
+                doc_entry_id INT,
+                product_code VARCHAR(45),
+                self_price FLOAT,
+                product_quantity FLOAT,
+                range_to FLOAT,
+                range_from FLOAT
+            ) AS (
+                SELECT
+                    *,
+                    range_to-product_quantity range_from
+                FROM(
+                    SELECT 
+                        cstamp,
+                        doc_entry_id,
+                        product_code,
+                        self_price,
+                        ABS(product_quantity) product_quantity,
+                        SUM(ABS(product_quantity)) OVER (PARTITION BY product_code ORDER BY cstamp) range_to
+                    FROM 
+                        document_entries de
+                            JOIN
+                        document_list dl USING(doc_id)
+                            #JOIN prod_list pl ON pl.product_code=de.product_code
+                    WHERE (doc_type=2 AND NOT is_reclamation OR doc_type=1 AND is_reclamation) AND is_commited=1 AND notcount=0
+                ) tmp1
+            );
+        ";
+        $this->db->query($drop_sql);
+        $this->db->query($create_sell_sql);
+        $this->db->query($create_buy_sql);
     }
 
     public $selfPriceInvoiceRecalculate = ['string', 'string', 'string'];
@@ -606,7 +589,6 @@ class Utils extends Catalog {
         }
         $this->selfPriceCreateTable($active_filter);
         $this->selfPriceCorrectEntries();
-        $this->selfPriceRecalculate();
         $this->selfPriceCalculateExtraExpenses($idate, $fdate, $active_filter);
         $this->selfPriceStockAssign();
         $this->selfPriceOldApiRecalculate($idate, $fdate, $active_filter);
@@ -646,22 +628,29 @@ class Utils extends Catalog {
     
     
     private function selfPriceStockAssign() {
-        $sql_vars = "SET @current_product_code:='';";
-        $sql_tbl_drop = "DROP TEMPORARY TABLE IF  EXISTS tmp_stock_self;";
-        $sql_tbl_create = "
-	    CREATE TEMPORARY TABLE tmp_stock_self AS(
-            SELECT 
-                *
+        $leftover_table_sql="(SELECT
+                product_code,
+                SUM(LEAST(range_to-max_sell,product_quantity)) leftover,
+                SUM(LEAST(range_to-max_sell,product_quantity)*self_price) leftover_sum
             FROM
-		        (SELECT product_code,sp,qty_left FROM tmp_self_calc ORDER BY i DESC) ttt
-	        WHERE
-		        IF(@current_product_code <> product_code,@current_product_code:=product_code,0)
-        );";
-        $sql_update = "UPDATE stock_entries JOIN tmp_stock_self USING(product_code) SET self_price=sp;";
-        $this->db->query($sql_vars);
-        $this->db->query($sql_tbl_drop);
-        $this->db->query($sql_tbl_create);
-        $this->db->query($sql_update);
+                buy
+                    LEFT JOIN
+                (SELECT product_code,MAX(range_to) max_sell FROM sell GROUP BY product_code) maxsell USING(product_code)
+            WHERE 
+                buy.range_to>max_sell
+            GROUP BY product_code) leftovers";
+            /**
+             * Should we update leftover quantity?
+             */
+        $stock_update_sql="
+            UPDATE
+                stock_entries
+                    JOIN
+                $leftover_table_sql USING(product_code)
+            SET
+                self_price=leftover_sum/leftover
+        ";
+        $this->db->query($stock_update_sql);
         return $this->db->affected_rows();
     }
 
