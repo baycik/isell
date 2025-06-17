@@ -80,9 +80,9 @@
                 }
                 Mark.globals.stock_categories = data.stock_category_list;
                 data.is_sudo=App.user.props.user_level==4?1:0
+                data.settings.owner_id??=0//if is null set to 0
                 App.renderTpl('CampaignManager', data);
                 $("#CampaignManager").css('visibility', 'visible');
-                $("#CampaignManager").css('display', 'block');
                 if (data.settings.subject_createdby_include) {
                     data.settings.subject_createdby_include = data.settings.subject_createdby_include.split(',');
                 }

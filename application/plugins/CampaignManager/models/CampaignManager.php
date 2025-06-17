@@ -80,16 +80,16 @@ class CampaignManager extends Catalog{
         return $this->update('plugin_campaign_list',[$field=>$value],['campaign_id'=>$campaign_id]);
     }
     
-    private $documentListFilter='notset';
+    private $documentListFilter;
     private function documentListFilterGet($campaign_id){
-        if($this->documentListFilter=='notset'){
+        if( empty($this->documentListFilter[$campaign_id]) ){
             $settings=$this->get_row("SELECT * FROM plugin_campaign_list WHERE campaign_id='$campaign_id'");
-            $this->documentListFilter='';
+            $this->documentListFilter[$campaign_id]='';
             if( $settings->subject_createdby_include ){
-                $this->documentListFilter="AND created_by IN ($settings->subject_createdby_include)";
+                $this->documentListFilter[$campaign_id]="AND created_by IN ($settings->subject_createdby_include)";
             }
         }
-        return $this->documentListFilter;
+        return $this->documentListFilter[$campaign_id];
     }
     
     private function clientListFilterGet($campaign_id){
