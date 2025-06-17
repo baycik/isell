@@ -24,27 +24,35 @@ class CampaignManager extends Catalog{
     
     public function install(){
         $this->Hub->set_level(4);
-	$install_file=__DIR__."/../install/install.sql";
-	$this->load->model('Maintain');
-	return $this->Maintain->backupImportExecute($install_file);
+        $install_file=__DIR__."/../install/install.sql";
+        $this->load->model('Maintain');
+        return $this->Maintain->backupImportExecute($install_file);
     }
     
     public function uninstall(){
         $this->Hub->set_level(4);
-	$uninstall_file=__DIR__."/../install/uninstall.sql";
-	$this->load->model('Maintain');
-	return $this->Maintain->backupImportExecute($uninstall_file);
+        $uninstall_file=__DIR__."/../install/uninstall.sql";
+        $this->load->model('Maintain');
+        return $this->Maintain->backupImportExecute($uninstall_file);
     }
     
     public function campaignListFetch(){
         $this->Hub->set_level(3);
-        $sql="SELECT * FROM plugin_campaign_list ORDER BY campaign_name";
+        $owner_filter="WHERE owner_id=".$this->Hub->svar('user_id');
+        if( sudo() ){
+            $owner_filter="";
+        }
+        $sql="SELECT * FROM plugin_campaign_list $owner_filter ORDER BY campaign_name";
         return $this->get_list($sql);
     }
     
     public function campaignGet( int $campaign_id, int $visibility_filter=1 ){
         $this->Hub->set_level(3);
-        $settings=$this->get_row("SELECT *,$visibility_filter visibility_filter FROM plugin_campaign_list WHERE campaign_id='$campaign_id'");
+        $owner_filter="AND owner_id=".$this->Hub->svar('user_id');
+        if( sudo() ){
+            $owner_filter="";
+        }
+        $settings=$this->get_row("SELECT *,$visibility_filter visibility_filter FROM plugin_campaign_list WHERE campaign_id='$campaign_id' $owner_filter");
         //$settings->subject_manager_include=explode(',',$settings->subject_manager_include);
         return [
             'settings'=>$settings,
@@ -56,7 +64,8 @@ class CampaignManager extends Catalog{
     
     public function campaignAdd( string $campaign_name ){
         $this->Hub->set_level(3);
-        return $this->create('plugin_campaign_list',['campaign_name'=>$campaign_name,'liable_user_id'=>0,'subject_manager_include'=>0,'subject_manager_exclude'=>0]);
+        $owner_id=$this->Hub->svar('user_id');
+        return $this->create('plugin_campaign_list',['campaign_name'=>$campaign_name,'liable_user_id'=>0,'subject_manager_include'=>0,'subject_manager_exclude'=>0,'owner_id'=>$owner_id]);
     }
     
     public function campaignRemove(int $campaign_id){
