@@ -1,0 +1,322 @@
+<script>
+	App.plugin_sync_wb_cards = {
+		init: function () {
+			this.listInit();
+		},
+		listInit: function () {
+			var settings = {
+				columns: [
+					//{ id: 'wb_nmID', field: 'wb_nmID', name: 'WB ID', width: 70 },
+					{ id: 'wb_vendorCode', field: 'wb_vendorCode', name: 'WB Код', width: 100 },
+					{ id: 'wb_title', field: 'wb_title', name: 'WB Название', width: 200 },
+					//{ id: 'wb_description', field: 'wb_description', name: 'WB Описание', width: 200 },
+
+					{ id: 'product_code', field: 'product_code', name: 'Код', width: 100, editor: Slick.Editors.Text },
+					{ id: 'product_name', field: 'product_name', name: 'Название', width: 200 },
+					{ id: 'sync_status', field: 'sync_status', name: 'Статус', width: 100 },
+					{ id: 'uploaded_at', field: 'uploaded_at', name: 'Выгружено', width: 100 },
+				],
+				options: {
+					editable: true,
+					autoedit: true,
+					enableCellNavigation: true,
+					enableColumnReorder: false,
+					enableFilter: true,
+					multiSelect: true,
+					url: 'SyncWB/listFetch/'
+				}
+			};
+			var grid_sg = App.plugin_sync_wb.grid_sg = new SlickInfinite("#sync_wb_rpt_sg", settings);
+			grid_sg.onSelectedRowsChanged.subscribe(function (e, selection) {
+				var selectedRow = selection.grid.getDataItem(selection.rows[0])
+				//App.plugin_sync_wb.card.render(selectedRow)
+			});
+			grid_sg.onCellChange.subscribe(function (e, data) {
+				var updatedEntry = data.item;
+				var field = grid_sg.getColumns()[data.cell].field;
+				var value = updatedEntry[field];
+				App.plugin_sync_wb.table.update(updatedEntry.card_id, field, value).done(function () {
+					grid_sg.rowReload(data.row);
+				});
+			});
+			var tableTools = {
+				import: function () {
+					App.plugin_sync_wb.table.import();
+				},
+				entryDelete: function () {
+					var selected_rows = grid_sg.getSelectedRows();
+					if (!selected_rows.length) {
+						App.flash("Ни одна строка не выбрана!");
+						return;
+					}
+					if (!confirm("Удалить выделенные строчки?")) {
+						return;
+					}
+					let card_ids=[]
+					for (var i in selected_rows) {
+						var row_data = grid_sg.getDataItem(selected_rows[i]);
+						card_ids.push(row_data.card_id);
+					}
+					$.post('SyncWB/listDelete', { card_ids: card_ids }, function (ok) {
+						if (ok * 1) {
+							grid_sg.reload();
+						}
+					});
+				},
+				listSyncDown(){
+					return $.post('SyncWB/listSyncCard/')
+				},
+				reload: function () {
+					grid_sg.reload();
+				}
+			};
+			$(".x-plugin-wbsync span").click(function (e) {
+				var action = $(e.target).data('action');
+				if (action) {
+					tableTools[action] && tableTools[action]();
+				}
+			});
+		},
+		table:{
+			update(card_id, field, value){
+				return $.post('SyncWB/itemUpdate/',{card_id,field,value})
+			},
+			import: function () {
+				var sync_wb_frm_tpl = '<input required="required" type="checkbox" name="action_delete" title="Удалить эти товары">';
+				var config = [
+					{ name: 'Код', field: 'product_code', assigned: 'A' }
+				];
+				App.loadWindow('page/dialog/importer', { label: 'wbsync', fields_to_import: config, extra_html: sync_wb_frm_tpl }).progress(function (status, fvalue, Importer) {
+					if (status === 'submit') {
+						if (!App.pcomp) {
+							alert("Выберите клиента!");
+							App.user.pcompSelectionDialog();
+							return;
+						}
+						fvalue.pcomp_id = App.pcomp.company_id;
+						var msg = "Загрузить отчет для '" + App.pcomp.label + "'?\n\n";
+						msg += "Начальная дата: " + fvalue.idate + "\n";
+						msg += "Конечная дата: " + fvalue.fdate + "\n";
+						if (confirm(msg)) {
+							$.post('SyncWB/reportImport', fvalue, function (ok) {
+								if (ok * 1) {
+									App.plugin_sync_wb.grid_sg.reload();
+									Importer.close();
+								}
+							});
+						}
+					}
+				});
+			}
+		},
+		card:{
+			async render( data ){
+				if(data.wb_images){
+					data.images=data.wb_images.split(',')
+				}
+				if(data.wb_characteristics){
+					data.characteristics=await this.characteristicsExpand(data)
+					console.log(data.characteristics)
+				}
+				if(data.wb_dimensions){
+					data.dimensions=[App.json(data.wb_dimensions)]
+				}
+				App.renderTpl('#wbsync_card_info',data)
+				App.setupForm("#wbsync_card_info", data)
+			},
+			characteristicsCache:[],
+			async characteristicsExpand( productRow ){
+				let productChars=App.json(productRow.wb_characteristics)
+
+				let allChars=this.characteristicsCache[productRow.wb_subjectID]
+				if( !allChars ){
+					allChars=this.characteristicsCache[productRow.wb_subjectID]=await $.get('SyncWB/itemSyncCharsGet',{subjectId:productRow.wb_subjectID})
+				}
+				let unsetChars=[]
+				for(k in allChars){
+					let is_unset=true
+					for(i in productChars){
+						if(allChars[k].charcID==productChars[i].id){
+							is_unset=false
+							break
+						}
+					}
+					if( is_unset ){
+						unsetChars.push(
+							{
+								id:allChars[k].charcID,
+								name:allChars[k].name,
+								value:[],
+								schema:allChars[k]
+							})
+					}
+				}
+				return [...productChars,...unsetChars]
+			},
+			characteristicsUpsert(id,value){
+				console.log(id,value)
+			}
+		}
+	
+	
+	};
+
+	App.require(["js/slick/lib/jquery.event.drag-2.3.0.js"], function () {
+		App.require([
+			"js/slick/slick.core.js",
+			"js/slick/plugins/slick.rowselectionmodel.js",
+			"js/slick/slick.editors.js",
+			"js/slick/slickinfinite.js",
+			"js/slick/slick.grid.js"
+		], function () {
+			setTimeout(function () {
+				App.plugin_sync_wb_cards.listInit();
+			}, 0);
+			//App.plugin_sync_wb.listInit();
+		});
+	})
+</script>
+<style>
+	.wbsync_tablesection{
+		padding: 5px;
+		text-align: right;
+	}
+	.wbsync_card textarea{
+		width:100%;
+	}
+	.wbsync_chip{
+		background-color: #0003;
+		border-radius: 10px;
+		display: inline-block;
+		padding: 3px;
+		padding-left: 10px;
+		padding-right: 10px;
+		margin: 3px;
+	}
+</style>
+
+<div style="display: grid;grid-template-columns: 800px 500px;">
+	<div>
+		<div class="x-plugin-wbsync" style="display: grid;grid-template-columns: 300px 300px 200px;">
+			<div style="background-color: #ece;" class="wbsync_tablesection">
+				WB
+				<span class="icon-24 icon-import" title="Загрузить файл" data-action="listSyncDown"> </span>
+				<span class="icon-24 icon-delete" title="Удалить выбранные строчки" data-action="entryDelete"> </span>
+			</div>
+			<div style="background-color: #def;" class="wbsync_tablesection">
+				iSell
+				<span class="icon-24 icon-import" title="Загрузить файл" data-action="import"> </span>
+				<span class="icon-24 icon-delete" title="Удалить выбранные строчки" data-action="entryDelete"> </span>
+			</div>
+			<div style="background-color: #ccc;" class="wbsync_tablesection">
+				<span class="icon-24 icon-refresh" title="Обновить" data-action="reload"> </span>
+			</div>
+		</div>
+		<div id="sync_wb_rpt_sg" style="height:700px;"></div>
+	</div>
+	<div class="wbsync_card transp60">
+		<div id="wbsync_card_info" class="covert">
+			<table>
+				<tr>
+					<th style="width:500px"></th>
+				</tr>
+				<tr>
+					<td><h3>Фото</h3></td>
+				</tr>
+				<tr>
+					<td>
+					{{images}}
+					<a href="{{.}}" target="_blank">
+						<img src="{{.}}" style="width: 45px; height: auto; margin: 2px;border-radius: 5px;"/>
+					</a>
+					{{/images}}
+					</td>
+				</tr>
+
+				<tr>
+					<td><h3>Название</h3></td>
+				</tr>
+				<tr>
+					<td>{{product_name|blank>}}</td>
+				</tr>
+				<tr>
+					<td><textarea name="wb_title" rows="4"></textarea></td>
+				</tr>
+
+				<tr>
+					<td><h3>Описание</h3></td>
+				</tr>
+				<tr>
+					<td><textarea name="wb_description" rows="4"></textarea></td>
+				</tr>
+
+				<tr>
+					<td><h3>Цена</h3></td>
+				</tr>
+				<tr>
+					<td>
+						Бренд: <div class="wbsync_chip">{{wb_brand}}</div>
+					</td>
+				</tr>
+
+
+				<tr>
+					<td>
+						<h3 style="display: inline-block;">Категория</h3>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						Бренд: <div class="wbsync_chip">{{wb_brand}}</div>
+						Категория: <div class="wbsync_chip">{{wb_subjectName}}</div>
+					</td>
+				</tr>
+
+				<tr>
+					<td><h5 style="display: inline-block;">Характеристики</h5></td>
+				</tr>
+				<tr>
+					<td>
+						<ul>
+							{{characteristics}}
+							<li data-id="{{id}}">
+								{{name}}:
+								{{value}}
+									<div class="wbsync_chip">{{.|blank>}}</div>
+								{{/value}}
+							</li>
+							{{/characteristics}}
+						</ul>
+					</td>
+				</tr>
+
+				<tr>
+					<td><h3 style="display: inline-block;">Размеры</h3></td>
+				</tr>
+				<tr>
+					<td>
+						<ul>
+							{{dimensions}}
+							<li>
+								Ширина:<div class="wbsync_chip">{{width}}</div>
+							</li>
+							<li>
+								Высота:<div class="wbsync_chip">{{height}}</div>
+							</li>
+							<li>
+								Длина:<div class="wbsync_chip">{{length}}</div>
+							</li>
+							<li>
+								Вес:<div class="wbsync_chip">{{weightBrutto}}</div>
+							</li>
+							{{/dimensions}}
+						</ul>
+					</td>
+				</tr>
+
+
+
+			</table>
+		</div>
+	</div>
+</div>

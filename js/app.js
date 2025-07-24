@@ -813,7 +813,7 @@ App.user = {
             App.handler.notify('activeCompanyReset');
             App.Topic('activeCompanyReset').publish();
         }
-    }
+    },
 };
 App.topics={};
 App.Topic = function (id) {

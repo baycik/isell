@@ -579,7 +579,7 @@
 	    return value;
 	},
 	abcCalculate: function (value, row) {
-            if( Doc.head.props.doc_type==2 ){
+            if( Doc.head.props.doc_type==2 && row?.analyse_class ){
                var color=row.analyse_class.replace("A","rgba(0,255,0,0.3)").replace("B","rgba(255,255,0,0.5)").replace("C","rgba(255,0,0,0.3)");
                 return "background-color:"+color; 
             }
@@ -1196,7 +1196,9 @@
 						<div class="grid-item" style="color:green"></div>
                     {{else}}
 						<div class="img grid-item">
-							<img src="Storage/image_flush/?size=70x70&path=/dynImg/{{ product_img }}" style="width:50px;height: auto;">
+							{{if product_img}}
+							<img src="Storage/image_flush/?size=70x70&path=/dynImg/{{ product_img }}" style="width:50px;height: auto;" alt=""/>
+							{{/if}}
 						</div> 
 						<div class="grid-item" style="color:{{if leftover|less>1}}red{{/if}}; padding: 0px 10px"><b>{{ product_code }}</b> {{ product_name }} {{icon|blank>}}</div>
 						<div class="grid-item" style="text-align: right;">{{ product_price_total|blank> }}₽</div>

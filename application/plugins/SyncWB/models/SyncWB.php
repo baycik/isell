@@ -70,8 +70,7 @@ class SyncWB extends PluginBase
     public function deactivate() {}
 
 
-    private function apiExecute( string $function, ?array $request=null, string $method='POST' ){
-        $url="https://content-api.wildberries.ru/content/v2/$function";
+    private function apiExecute( string $url, ?array $request=null, string $method='POST' ){
         $headers[]="Authorization: {$this->plugin_settings->token}";
         $curl = curl_init(); 
         switch( $method ){
@@ -114,7 +113,7 @@ class SyncWB extends PluginBase
         return json_decode($result);
     }
 
-    public function listSync(){
+    public function listSyncCard(){
         $request=[
             "settings"=>[
                 "filter"=>[
@@ -127,38 +126,27 @@ class SyncWB extends PluginBase
         ];
         $cards=[];
         for( $i=0; $i<1; $i++ ){
-            $response=$this->apiExecute('get/cards/list',$request,'POST');
+            $response=$this->apiExecute('https://content-api.wildberries.ru/content/v2/get/cards/list',$request,'POST');
             $cards=array_merge($cards,$response->cards);
-            $this->listSyncDown($response->cards);
             if( $response->cursor->total<$request["settings"]["cursor"]["limit"] ){
                 break;
             }
             $request["settings"]["cursor"]["updatedAt"]=$response->cursor->updatedAt;
             $request["settings"]["cursor"]["nmID"]=$response->cursor->nmID;
         }
-        print_r($cards);
+        $this->listSyncCardUpsert($cards);
+        $this->listSyncPrice();
+        
+        $this->listSyncFill();
     }
-    public function itemSyncCharsGet( int $subjectId ){
-        $response=$this->apiExecute("object/charcs/{$subjectId}",null,'GET');
-        if( isset($response->data) ){
-            return $response->data;
+    private function listSyncCardUpsert( $cards ){
+        if( !is_array($cards) ){
+            return false;
         }
-        return [];
-    }
-
-    public function listSyncCardUpdate( object $card ){
-        pl($card);die;
-        $response=$this->apiExecute("cards/update",(array)$card);
-        return $response;
-    }
-
-
-    public function listSyncDown( $cards ){
         foreach($cards as $card){
             $images=[];
             if( !empty($card->photos) ){
                 foreach($card->photos as $photo){
-                    //pl($photo);
                     $images[]=$photo->big;
                 }
             }
@@ -177,21 +165,97 @@ class SyncWB extends PluginBase
                 'wb_updatedAt'=>$card->updatedAt,
                 'wb_characteristics'=>json_encode($card->characteristics),
                 'wb_dimensions'=>json_encode($card->dimensions),
-                'wb_images'=>implode(",",$images)
+                'wb_images'=>implode(",",$images),
+                'sync_status'=>'down_card'
             ];
-            $existing_record=$this->db->select('card_id')->from('plugin_sync_wb')->where('wb_nmID', $card->nmID)->get();
-            //print_r($existing_record);
-            //die;
-            if($existing_record->num_rows){
-                $existing_card=$existing_record->row();
-                $this->db->where('card_id', $existing_card->card_id);
-                $this->db->update('plugin_sync_wb',$set);
-            } else {
-                $this->db->insert('plugin_sync_wb',$set);
+            $set_fields=[];
+            foreach($set as $key=>$val){
+                $set_fields[]=" `$key`='".addslashes($val)."'";
             }
+            $set_sql=implode(",",$set_fields);
+
+            $upsert_sql="
+                INSERT INTO
+                    plugin_sync_wb
+                SET
+                    $set_sql
+                ON DUPLICATE KEY UPDATE
+                    $set_sql";
+            $this->query($upsert_sql);
         }
-        $this->listSyncFill();
     }
+
+    public function listSyncPrice(){
+        $limit=3;
+        $request=[
+            "limit"=>$limit,
+            "offset"=>0,
+            //"filterNmID"=>0
+        ];
+        $cards=[];
+        for( $i=0; $i<1; $i++ ){
+            $response=$this->apiExecute('https://discounts-prices-api.wildberries.ru/api/v2/list/goods/filter',$request,'GET');
+            $cards=array_merge($cards,$response->data->listGoods);
+
+            $count=count($response->data->listGoods);
+            if( $count<$request["limit"] ){
+                break;
+            }
+            $request["offset"]=$count+$request["limit"];
+        }
+        $this->listSyncPriceUpsert($cards);
+    }
+    private function listSyncPriceUpsert( $cards ){
+        if( !is_array($cards) ){
+            return false;
+        }
+        foreach($cards as $card){
+            $set=[
+                'wb_nmID'=>$card->nmID,
+                'sync_status'=>'down_price'
+            ];
+            if( is_array($card->sizes) ){
+                $set['wb_price']=$card->sizes[0]->price;
+                $set['wb_price_promo']=$card->sizes[0]->discountedPrice;
+            }
+            $set_fields=[];
+            foreach($set as $key=>$val){
+                $set_fields[]=" `$key`='".addslashes($val)."'";
+            }
+            $set_sql=implode(",",$set_fields);
+
+            $upsert_sql="
+                INSERT INTO
+                    plugin_sync_wb
+                SET
+                    $set_sql
+                ON DUPLICATE KEY UPDATE
+                    $set_sql";
+            $this->query($upsert_sql);
+        }
+    }
+
+
+
+
+
+
+
+    public function itemSyncCharsGet( int $subjectId ){
+        $response=$this->apiExecute("https://content-api.wildberries.ru/content/v2/object/charcs/{$subjectId}",null,'GET');
+        if( isset($response->data) ){
+            return $response->data;
+        }
+        return [];
+    }
+
+    public function listSyncCardUpdate( object $card ){
+        pl($card);die;
+        $response=$this->apiExecute("https://content-api.wildberries.ru/content/v2/cards/update",(array)$card);
+        return $response;
+    }
+
+
     private function listSyncFill( ?array $filter=null ){
         $where="1";
         if( isset($filter['card_id']) ){
@@ -208,6 +272,7 @@ class SyncWB extends PluginBase
                 stock_tree st ON st.branch_id=se.parent_id
             SET
                 wb.product_id=pl.product_id,
+                wb.product_code=pl.product_code,
                 wb.product_name=ru,
                 wb.product_category=path,
                 wb.product_quantity=se.product_quantity
@@ -251,5 +316,15 @@ class SyncWB extends PluginBase
     }
 
 
-
+    public function pcompanySet( int $pcomp_id, string $pcomp_name ){
+        echo $update_sql="UPDATE
+                plugin_list
+            SET
+                plugin_json_data = JSON_SET(IFNULL(`plugin_json_data`,'{}'),'$.pcomp_id','$pcomp_id','$.pcomp_name','$pcomp_name')
+            WHERE
+	            plugin_system_name='SyncWB'
+            ";
+        $this->query($update_sql);
+        return $this->db->affected_rows();
+    }
 }
