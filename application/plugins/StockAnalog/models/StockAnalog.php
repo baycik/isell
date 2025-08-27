@@ -141,6 +141,25 @@ class StockAnalog extends Catalog{
     }
     
     public function analogListGet( int $doc_entry_id ){
+        $CurrentEntry=$this->get_row("SELECT 
+                doc_id,product_id,product_quantity,doc_settings 
+            FROM 
+                document_entries 
+            JOIN 
+                document_list USING(doc_id) 
+            JOIN 
+                prod_list USING(product_code) 
+            WHERE 
+                doc_entry_id='$doc_entry_id'"
+        );
+        $docsettings=json_decode($CurrentEntry->doc_settings??'{}');
+        if( empty($docsettings->analogskip) ){
+            $docsettings->analogskip='';
+        }
+        $docsettings->analogskip.=",{$CurrentEntry->product_id}";
+        $this->query("UPDATE document_list SET doc_settings='".json_encode($docsettings)."' WHERE doc_id='$CurrentEntry->doc_id'");
+
+
         $sql="
             SELECT
                 pl.product_id,

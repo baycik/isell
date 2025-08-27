@@ -87,8 +87,7 @@ class ViewManager extends CI_Model
 			$headerTpl = $Worksheet->getCellByColumnAndRow($headerX, $headerY)->getValue();
 			$cellTpl = $Worksheet->getCellByColumnAndRow($headerX, $headerY + 1)->getValue();
 			foreach ($this->dump->struct as $i => $column) {
-				if ($column->Width) {
-				} else if (preg_match("/(int|decimal|double)/", $column->Type)) {
+				if (preg_match("/(int|decimal|double)/", $column->Type)) {
 					$column->Width = 8;
 				} else if (preg_match("/varchar\((\d+)\)/", $column->Type, $matches)) {
 					$column->Width = $matches[1] < 50 ? 15 : 50;
