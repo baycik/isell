@@ -759,9 +759,9 @@
 				row_data.icon = '<i class="icon star"></i>';
 			}
 
-			row_data.leftover_color='black'
+			row_data.leftover_color='#333'
 			if (row_data.leftover <1) {
-				row_data.leftover_color='red'
+				row_data.leftover_color='#f33'
 			}
 			
 			var row_html = Mark.up(Doc.suggest.row_template, row_data);
@@ -1002,7 +1002,7 @@
 
 	.product-delivery-available {
 		float: right;
-		font-size:0.8em;
+		font-size:0.7em;
 		display: inline-block;
 		padding: 0px 10px;
 	}
