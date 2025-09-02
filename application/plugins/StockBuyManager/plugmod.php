@@ -44,7 +44,7 @@ $filename[]=<<<EOT
 views/trade/document.html
 EOT;
 $search[]=<<<EOT
-formatter:function(row_data){
+formatter: function (row_data) {
 EOT;
 $replace[]=<<<EOT
 EOT;
@@ -59,7 +59,7 @@ $filename[]=<<<EOT
 views/trade/document.html
 EOT;
 $search[]=<<<'EOT'
-<div class="grid-item" style="color:green">[x{{ product_spack}}] {{ leftover }}{{ product_unit }}</div>
+<span style="color:{{leftover_color}};">{{ leftover }}{{ product_unit }}</span>
 EOT;
 $replace[]=<<<EOT
 EOT;
