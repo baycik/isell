@@ -62,7 +62,7 @@ $filename[]=<<<EOT
 views/trade/document.html
 EOT;
 $search[]=<<<EOT
-tooltip:function(value, row){
+tooltip: function (value, row) {
 EOT;
 $replace[]=<<<EOT
 EOT;
