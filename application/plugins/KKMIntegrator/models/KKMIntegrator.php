@@ -247,7 +247,7 @@ class KKMIntegrator extends PluginBase{
         $active_company=$this->Hub->load_model('Company')->companyGet($document['head']->active_company_id);
         $passive_company=$this->Hub->load_model('Company')->companyGet($document['head']->passive_company_id);
         $acquiring=(object)[
-            'PayByProcessing'=>false, //В тестовом чеке автоматический эквайринг выключен
+            'PayByProcessing'=>true, //В тестовом чеке автоматический эквайринг выключен
             // Номер устройства для эквайринга - Null - из настроек на сервере, 0 - любое, число - номер конкретного устройства
             'NumDeviceByProcessing'=>null,
             // Номер чека для эквайринга
