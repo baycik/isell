@@ -574,7 +574,7 @@ class KKMIntegrator extends PluginBase{
                 document_list 
             SET 
                 doc_settings='".addslashes($new_settings)."',
-                doc_data=CONCAT(doc_data,'\nНапечатан чек №{$check_dump['registration']->CheckNumber} ',DATE_FORMAT(NOW(),'%d.%m.%Y %H:%i:%s'),'{$check_dump['data']['CashierName']}')
+                doc_data=CONCAT(doc_data,'\nНапечатан чек №{$check_dump['registration']?->CheckNumber} ',DATE_FORMAT(NOW(),'%d.%m.%Y %H:%i:%s'),'{$check_dump['data']['CashierName']}')
             WHERE
                 doc_id=$doc_id";
         return $this->query($sql);
