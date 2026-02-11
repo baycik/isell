@@ -1,0 +1,1 @@
+INSERT INTO `document_view_types` (`doc_types`, `blank_set`, `view_name`, `view_role`, `view_efield_labels`, `view_tpl`, `view_file`) VALUES ('/1/', 'ru', 'Накладная полная', 'sell_bill', '{\"personal_interest\":\"Личный интерес%\"}', 'ru/doc/nakladnayaFull.xlsx', ' ');
