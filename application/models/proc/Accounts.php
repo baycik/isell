@@ -167,7 +167,7 @@ class Accounts extends Data {
      * ***************** */
 
     public function calculatePayments($pcomp_id = NULL) {
-	$active_company_id=$this->Base->acomp('company_id');
+	    $active_company_id=$this->Base->acomp('company_id');
         if (!isset($pcomp_id))
             $pcomp_id = $this->Base->pcomp('company_id');
         $sensitivity=5.00;
@@ -175,24 +175,24 @@ class Accounts extends Data {
         $this->Base->query("SET @sum:=0.0;");
         $this->Base->query("
                 UPDATE
-                        acc_trans
-                SET trans_status=IF(acc_debit_code = $acc_code,
-                                (@sum:=@sum - amount)*0 + 
-                                IF(amount<0,0,
-                                        IF(ROUND(@sum,2) <= 0 ,1,
-                                                IF(@sum+$sensitivity< amount, 2, 3)
-                                        )
-                                ),
-                                (@sum:=@sum + amount)*0
-                        )
+                    acc_trans
+                SET trans_status=
+                    IF(acc_debit_code = $acc_code,
+                        (@sum:=@sum - amount) * 0 + 
+                        IF( trans_status IN (4,5),trans_status,
+                            IF(amount < 0,0,
+                                IF(ROUND(@sum, 2) > 0,3,
+                                    IF(@sum + $sensitivity + amount<0 , 1, 2)
+                                )
+                            )
+                        ),
+                        (@sum:=@sum + amount) * 0
+                    )
                 WHERE
-			active_company_id = $active_company_id
-                        AND passive_company_id = '$pcomp_id'
-			AND trans_status <> 4
-			AND trans_status <> 5
-			AND (acc_debit_code = $acc_code
-			OR acc_credit_code = $acc_code)
-                ORDER BY acc_debit_code = $acc_code, amount>0, cstamp;");
+                    active_company_id = $active_company_id
+                    AND passive_company_id = '$pcomp_id'
+                    AND (acc_debit_code = $acc_code OR acc_credit_code = $acc_code)
+                    ORDER BY acc_debit_code = $acc_code, amount>0, SUBSTRING(cstamp,1,10), trans_id");//
     }
     
     /*     * ****************

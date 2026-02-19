@@ -40,25 +40,25 @@ class Pref extends Catalog {
     }
     public $getPrefs=['[a-zA-Z0-9_\-,]+'];
     public function getPrefs($pref_names="") {// "pref1,pref2,pref3"
-	$active_company_id=$this->Hub->acomp('company_id');
-	if( $pref_names ){
-	    $where = "WHERE active_company_id='$active_company_id' AND (pref_name='" . str_replace(',', "' OR pref_name='", $pref_names) . "')"; 
-	} else {
-	    $where = "WHERE active_company_id='$active_company_id'";
-	}
+        $active_company_id=$this->Hub->acomp('company_id');
+        if( $pref_names ){
+            $where = "WHERE active_company_id='$active_company_id' AND (pref_name='" . str_replace(',', "' OR pref_name='", $pref_names) . "')"; 
+        } else {
+            $where = "WHERE active_company_id='$active_company_id'";
+        }
         $this->query("SET SESSION group_concat_max_len = 1000000;");
         $prefs = $this->get_row("SELECT GROUP_CONCAT(pref_value SEPARATOR '~|~') pvals,GROUP_CONCAT(pref_name SEPARATOR '~|~') pnames FROM pref_list  $where");
         return (object) array_combine(explode('~|~', $prefs->pnames), explode('~|~', $prefs->pvals));
     }
     //public $setPrefs=['[a-zA-Z0-9_\-]+','[^|]+'];
     public function setPrefs( string $field, string $value='' ) {
-	$active_company_id=$this->Hub->acomp('company_id');
-	$this->Hub->set_level(2);
-	if( !$field ){
-	    return false;
-	}
-	$this->query("REPLACE pref_list SET pref_name='$field',pref_value='$value',active_company_id='$active_company_id'");
-	return $this->db->affected_rows()>0?1:0;
+        $active_company_id=$this->Hub->acomp('company_id');
+        $this->Hub->set_level(2);
+        if( !$field ){
+            return false;
+        }
+        $this->query("REPLACE pref_list SET pref_name='$field',pref_value='$value',active_company_id='$active_company_id'");
+        return $this->db->affected_rows()>0?1:0;
     }
     
     

@@ -74,10 +74,10 @@ class Reports_client_expired_debts extends Catalog{
         return $var;
     }
     public function request( $name, $type=null, $default=null ){
-	$value=$this->input->get_post($name);
-	if( !is_array($value) && strlen($value)==0 ){
-	    return $default;
-	}
+		$value=$this->input->get_post($name);
+		if( !is_array($value) && strlen($value)==0 ){
+			return $default;
+		}
         return $this->check($value,$type);
     }
 
@@ -87,41 +87,41 @@ class Reports_client_expired_debts extends Catalog{
 	$this->their_debts=$this->request('their_debts','bool');
 	$this->filter_by=$this->request('filter_by','\w+');
 	$this->filter_value=$this->request('filter_value');
-        $this->fdate=$this->request('fdate');
-        $this->threshold=$this->request('threshold','int',0);
+	$this->fdate=$this->request('fdate');
+	$this->threshold=$this->request('threshold','int',0);
 	parent::__construct();
     }
     private function or_like($field,$value){
-	$cases=explode(",",$value);
-	$filter=[];
-	foreach($cases as $case){
-	    if($case){
-		$filter[]="$field LIKE '%$case%'";
-	    }
-	}
-	return implode(" OR ",$filter);
+		$cases=explode(",",$value);
+		$filter=[];
+		foreach($cases as $case){
+			if($case){
+			$filter[]="$field LIKE '%$case%'";
+			}
+		}
+		return implode(" OR ",$filter);
     }
     private function dmy2iso( $dmy ){
-	$chunks=  explode('.', $dmy);
-	return "$chunks[2]-$chunks[1]-$chunks[0]";
+		$chunks=  explode('.', $dmy);
+		return "$chunks[2]-$chunks[1]-$chunks[0]";
     }
     private function iso2dmy( $iso ){
-	$chunks=  explode('-', $iso);
-	return "$chunks[2].$chunks[1].$chunks[0]";
+		$chunks=  explode('-', $iso);
+		return "$chunks[2].$chunks[1].$chunks[0]";
     }
     private function getAssignedPathWhere(){
         $assigned_path=$this->Hub->svar('user_assigned_path');
         return $assigned_path?"AND (path LIKE '".str_replace(',',"%' OR path LIKE '",$assigned_path.'')."%')":"";    
     }
     private function getDirectionFilter(){
-	$direction_filter=[];
-	if($this->our_debts){
-	    $direction_filter[]="buy<>0";
-	}
-	if($this->their_debts){
-	    $direction_filter[]="sell<>0";
-	}
-	return $direction_filter?'HAVING ('.implode(' OR ', $direction_filter).')':'HAVING 0';
+		$direction_filter=[];
+		if($this->our_debts){
+			$direction_filter[]="buy<>0";
+		}
+		if($this->their_debts){
+			$direction_filter[]="sell<>0";
+		}
+		return $direction_filter?'HAVING ('.implode(' OR ', $direction_filter).')':'HAVING 0';
     }
     public function viewGet(){
 		$active_filter=$this->all_active?'':' AND acc_trans.active_company_id='.$this->Hub->acomp('company_id');
@@ -134,6 +134,10 @@ class Reports_client_expired_debts extends Catalog{
 		$having =$this->getDirectionFilter();
         $having.=$this->filter_value?"AND (".$this->or_like($this->filter_by,$this->filter_value).")":"";
         $having.=" AND ( sell>$this->threshold OR buy>$this->threshold OR exp>$this->threshold )";
+
+		$Pref = $this->Hub->load_model('Pref');
+		$pref = $Pref->getPrefs('default_debt_defferment');
+		$default_debt_defferment=$pref->default_debt_defferment??0;
 
 		$sql="
 			SELECT
@@ -150,14 +154,20 @@ class Reports_client_expired_debts extends Catalog{
 			(SELECT 
 				path,
 				label,
-				deferment,
+				IF(deferment,deferment,$default_debt_defferment) deferment,
 				ROUND(SUM(IF(acc_debit_code=361,amount,IF(acc_credit_code=361,-amount,0))),2) sell,
 				ROUND(SUM(IF(acc_debit_code=631,-amount,IF(acc_credit_code=631,amount,0))),2) buy,
 				ROUND(SUM(
 				IF(
-					DATEDIFF(NOW(),acc_trans.cstamp)<=IF(doc_deferment,doc_deferment,deferment) AND (trans_status=1 OR trans_status=2),IF(acc_debit_code=361,amount,0),0)
+					DATEDIFF(NOW(),acc_trans.cstamp)<=IF(doc_deferment,doc_deferment,IF(deferment,deferment,$default_debt_defferment)) AND (trans_status=1 OR trans_status=2),IF(acc_debit_code=361,amount,0),0)
 				),2) allow,
-				MAX(IF(DATEDIFF(NOW(),acc_trans.cstamp)>IF(doc_deferment,doc_deferment,deferment) AND (trans_status=1 OR trans_status=2),DATEDIFF(NOW(),acc_trans.cstamp),0)) AS expday,
+				MAX(IF(
+						DATEDIFF(NOW(),acc_trans.cstamp)>
+							IF(doc_deferment,doc_deferment,IF(deferment,deferment,$default_debt_defferment))
+							AND (trans_status=1 OR trans_status=2),
+						DATEDIFF(NOW(),acc_trans.cstamp)
+					,0)
+				) AS expday,
 				CONCAT(company_mobile,' ',company_phone) phone
 			FROM
 				companies_list
@@ -178,7 +188,6 @@ class Reports_client_expired_debts extends Catalog{
 				expday DESC
 			) expired
 			$having";
-	
 		//echo "<pre>$sql";
 		//die();
 	
