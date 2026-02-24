@@ -271,8 +271,17 @@ class Utils extends Catalog {
             $this->Hub->msg("Sms can not be sent. https is not available");
             return false;
         }
-        if (time() - $this->Hub->svar('smsSessionTime') * 1 > 24 * 60) {
-            $sid = json_decode(file_get_contents("https://integrationapi.net/rest/user/sessionId?login=" . $this->Hub->pref('SMS_USER') . "&password=" . $this->Hub->pref('SMS_PASS')));
+        if (1 || (time() - $this->Hub->svar('smsSessionTime') * 1 > 24 * 60)) {
+            $sid = json_decode(file_get_contents(
+                "https://integrationapi.net/rest/user/sessionId?login=" . $this->Hub->pref('SMS_USER') . "&password=" . $this->Hub->pref('SMS_PASS'),
+                false,
+                stream_context_create([
+                    "ssl"=>[
+                        "verify_peer"=>false,
+                        "verify_peer_name"=>false,
+                    ]
+                ])
+            ));
             if (!$sid) {
                 $this->Hub->msg('Authorization to SMS service failed');
                 return false;
@@ -280,26 +289,52 @@ class Utils extends Catalog {
             $this->Hub->svar('smsSessionId', $sid);
             $this->Hub->svar('smsSessionTime', time());
         }
-        $post_vars = array(
-            'SessionID' => $this->Hub->svar('smsSessionId'),
-            'SourceAddress' => $this->Hub->pref('SMS_SENDER'),
+        // $post_vars = array(
+        //     'SessionID' => $this->Hub->svar('smsSessionId'),
+        //     'SourceAddress' => $this->Hub->pref('SMS_SENDER'),
+        //     'DestinationAddresses' => $number,
+        //     'Data' => $body
+        // );
+        // $opts = array(
+        //     'http' => [
+        //         'header' => "Content-Type: application/x-www-form-urlencoded\r\n",
+        //         'method' => "POST",
+        //         'content' => http_build_query($post_vars)
+        //     ],
+        //     // "ssl"=>[
+        //     //     "verify_peer"=>false,
+        //     //     "verify_peer_name"=>false,
+        //     // ]
+        // );
+        // try{
+        //     $response = file_get_contents('https://integrationapi.net/rest/Sms/SendBulk/', false, stream_context_create($opts));
+
+
+        $post_vars = [
+            'SessionID'            => $this->Hub->svar('smsSessionId'),
+            //'SourceAddress'        => $this->Hub->pref('SMS_SENDER'),
             'DestinationAddresses' => $number,
-            'Data' => $body
-        );
-        $opts = array(
-            'http' => [
-                'header' => "Content-Type: application/x-www-form-urlencoded\r\n",
-                'method' => "POST",
-                'content' => http_build_query($post_vars)
-            ]
-        );
+            'Data'                 => $body,
+        ];
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, 'https://integrationapi.net/rest/Sms/SendBulk/');
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($post_vars));
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: application/x-www-form-urlencoded'
+        ]);
+
         try{
-            $response = file_get_contents('https://integrationapi.net/rest/Sms/SendBulk/', false, stream_context_create($opts));
+            $response = curl_exec($ch);
+            curl_close($ch);
             $msg_ids = json_decode($response);			
         } catch( Exception $e ){
             $this->log($e);
         }
-        if (!$msg_ids[0]) {
+        //print_r($msg_ids);die;
+        if ( isset($msg_ids->Code) ) {
             $this->Hub->msg('Sending SMS is failed');
             $this->Hub->svar('smsSessionTime', 0);
             return false;
