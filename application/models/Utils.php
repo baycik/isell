@@ -211,7 +211,12 @@ class Utils extends Catalog {
     }
     public function sendTraccar( $number, $message ){
         $url = $this->Hub->pref('TRACCAR_GATEWAY');
-        
+        $token=$this->Hub->pref('TRACCAR_AUTORIZATION');
+
+        if(!$token || !$url){
+            pl("sendTraccar credentials are not set");
+            return false;
+        }
         $chunk=70;
         $length=mb_strlen($message);
         if($length>$chunk){
@@ -230,7 +235,7 @@ class Utils extends Catalog {
             'message' => $message
         ];
         $headers=[
-            "Authorization: ".$this->Hub->pref('TRACCAR_AUTORIZATION')
+            "Authorization: ".$token
         ];
         $curl = curl_init();
         curl_setopt($curl, CURLOPT_POST, 1);
@@ -253,16 +258,58 @@ class Utils extends Catalog {
         return false;
     }
     
-    
-    
-    
+    public function sendSmsGate($number,$body){
+        $username = $this->Hub->pref('SMSGate_username');
+        $password = $this->Hub->pref('SMSGate_password');
+        $url = $this->Hub->pref('SMSGate_url');
+        if(!$username || !$password || !$url){
+            pl("sendSmsGate credentials are not set");
+            $this->Hub->msg("sendSmsGate Настройки для отправки смс не установленны");
+            return false;
+        }
+
+        $data = [
+            "textMessage" => ["text" => $body],
+            "phoneNumbers" => [$number]
+        ];
+
+        $options = [
+            "http" => [
+                "method"  => "POST",
+                "header"  => "Content-Type: application/json\r\n"
+                        . "Authorization: Basic " . base64_encode("$username:$password") . "\r\n",
+                "content" => json_encode($data),
+                "timeout" => 15
+            ],
+            "ssl"=>[
+                "verify_peer"=>false,
+                "verify_peer_name"=>false,
+            ]
+        ];
+        $context = stream_context_create($options);
+        $result = @file_get_contents($url, false, $context);
+        pl($result);
+        if ($result === false) {
+            pl($http_response_header ?? []);
+            return false;
+        }
+        return true;
+    }
     
     public $sendSms = ['to' => 'string', 'body' => 'string'];
-
     public function sendSms($number = null, $body = null) {
         if( $this->sendTraccar($number, $body) ){
             return true;
         }
+        if( $this->sendSmsGate($number, $body) ){
+            return true;
+        }
+        return false;
+
+
+
+
+        
         if (!$this->Hub->pref('SMS_SENDER') || !$this->Hub->pref('SMS_USER') || !$this->Hub->pref('SMS_PASS')) {
             $this->Hub->msg("Настройки для отправки смс не установленны");
             return false;

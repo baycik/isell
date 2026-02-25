@@ -82,7 +82,6 @@ class FileEngine {
 
     private function setup_compilator($out_ext) {//Finding suitable template to output needed file type
         $tpl_file_byformat=null;
-        $tpl_file_byexpiration=null;
         foreach ($this->tpl_files as $tpl_file) {
             $tpl_ext = substr($tpl_file, strrpos($tpl_file, '.'));
             if ($this->conversion_table[$tpl_ext]) {
@@ -94,6 +93,19 @@ class FileEngine {
             }
         }
         $tpl_file_basename=str_replace($this->tpl_ext,'',$tpl_file_byformat);
+        $tpl_file="{$this->tpl_files_folder}{$tpl_file_basename}{$this->tpl_ext}";//default filepath 
+
+        $tpl_file_byexpiration=$this->searchFileByExpiration($tpl_file_basename);
+        if($tpl_file_byexpiration){
+            $tpl_file=$tpl_file_byexpiration;
+        }
+        $this->compile($tpl_file);
+    }
+
+    /**
+     * Looking for a tpl file that has expiration
+     */
+    private function searchFileByExpiration($tpl_file_basename){
         $tpl_file_search_pattern="{$this->tpl_files_folder}{$tpl_file_basename}*{$this->tpl_ext}";
         $tpl_file_list=glob($tpl_file_search_pattern);
         arsort($tpl_file_list);
@@ -102,15 +114,11 @@ class FileEngine {
             foreach($tpl_file_list as $filename){
                 preg_match('/(\d\d\d\d-\d\d-\d\d)/', $filename, $out);
                 if( isset($out[0]) && $view_date[0]>=$out[0] ){
-                    $tpl_file_byexpiration=$filename;
-                    break;
+                    return $filename;
                 }
             }
         }
-        if(!$tpl_file_byexpiration){
-            $tpl_file_byexpiration= array_shift($tpl_file_list);
-        }
-        $this->compile($tpl_file_byexpiration);
+        return null;
     }
 
     public function send($file_name, $is_printpage = false) {
