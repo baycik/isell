@@ -450,8 +450,7 @@ class AccountsCore extends Catalog
 				WITH trans_subtotal AS (
 					SELECT 
 						trans_id,
-						SUM(IF(acc_debit_code <> $acc_code,1,-1)*amount) OVER (ORDER BY acc_debit_code = $acc_code, amount>0,  SUBSTRING(cstamp,1,10), trans_id) running_sum,
-						trans_status
+						SUM(IF(acc_debit_code <> $acc_code,1,-1)*amount) OVER (ORDER BY acc_debit_code = $acc_code, amount>0,  SUBSTRING(cstamp,1,10), trans_id) running_sum
 					FROM
 						acc_trans
 					WHERE
