@@ -450,13 +450,13 @@ class AccountsCore extends Catalog
 				WITH trans_subtotal AS (
 					SELECT 
 						trans_id,
-						SUM(IF(acc_debit_code <> $acc_code,1,-1)*amount) OVER (ORDER BY acc_debit_code = $acc_code, amount>0, cstamp) running_sum
+						SUM(IF(acc_debit_code <> $acc_code,1,-1)*amount) OVER (ORDER BY acc_debit_code = $acc_code, amount>0,  SUBSTRING(cstamp,1,10), trans_id) running_sum,
+						trans_status
 					FROM
 						acc_trans
 					WHERE
 						active_company_id=$active_company_id
 						AND passive_company_id = $pcomp_id
-						AND (trans_status NOT IN (4,5) OR trans_status IS NULL)
 						AND (acc_debit_code = $acc_code OR acc_credit_code = $acc_code)
 				)
 	
@@ -466,6 +466,7 @@ class AccountsCore extends Catalog
 					trans_subtotal USING(trans_id)
 				SET
 					trans_status=CASE
+						WHEN trans_status IN (4,5) THEN trans_status
 						WHEN acc_debit_code <> $acc_code THEN 0
 						WHEN running_sum>=-$sensitivity THEN 3
 						WHEN amount+running_sum>$sensitivity THEN 2
@@ -499,6 +500,7 @@ class AccountsCore extends Catalog
 				END";
 		}
 		$this->query($calculate_sql);
+		pl($calculate_sql);
 		//$this->profile("after  transPaymentCalculate");
 	}
 	private function transPaymentCalculateIfNeeded($pcomp_id, $account)
