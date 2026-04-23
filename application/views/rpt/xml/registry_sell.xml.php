@@ -1,9 +1,19 @@
 <?xml version="1.0" encoding="windows-1251"?>
-<Файл  ИдФайл="<?php echo $document_name; ?>" ВерсПрог="iSell(версия 4)" ВерсФорм="5.11" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<Файл  ИдФайл="<?php echo $document_name; ?>" ВерсПрог="iSell(версия 6)" ВерсФорм="5.12" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 	<Документ Индекс="0000090" НомКорр="<?php echo $data['correction_num']; ?>">
-		<КнигаПрод СтПродБезНДС20="<?=$data['sub_totals']->sum_vatless; ?>"  СтПродБезНДС0="<?=$data['sub_totals']->sum_total; ?>" СумНДСВсКПр20="<?=$data['sub_totals']->sum_vat; ?>"  СтПродОсвВсКПр="0.00">
+		<КнигаПрод 
+            СтПродБезНДС22="<?=$data['sub_totals']->sum_vatless; ?>"  
+            СтПродБезНДС0="<?=$data['sub_totals']->sum_total; ?>" 
+            СумНДСВсКПр22="<?=$data['sub_totals']->sum_vat; ?>" 
+            СтПродОсвВсКПр="0.00">
                     <?php foreach($data['rows'] as $index => $item){ ?>
-                        <КнПродСтр НомерПор="<?php echo $index+1; ?>" НомСчФПрод="<?php echo $item->tax_bill_num; ?>" ДатаСчФПрод="<?php echo $item->cdate; ?>" СтоимПродСФ="<?php echo abs($item->total); ?>" СтоимПродСФ20="<?php echo abs($item->vatless); ?>" СумНДССФ20="<?php echo abs($item->vat); ?>">
+                        <КнПродСтр 
+                            НомерПор="<?php echo $index+1; ?>" 
+                            НомСчФПрод="<?php echo $item->tax_bill_num; ?>" 
+                            ДатаСчФПрод="<?php echo $item->cdate; ?>" 
+                            СтоимПродСФ="<?php echo abs($item->total); ?>" 
+                            СтоимПродСФ22="<?php echo abs($item->vatless); ?>" 
+                            СумНДССФ22="<?php echo abs($item->vat); ?>">
                             <КодВидОпер>01</КодВидОпер>
                             <СвПокуп>
                                     <?php if(strlen($item->company_tax_id) == 12){  ?>

@@ -57,109 +57,109 @@ class AccountsRegistry extends AccountsCore{
         if($this->xml_filter){
            $having .= " AND invalid = 0 ";
         }
-	$active_company_id=$this->Hub->acomp('company_id');
-	$this->query("DROP TEMPORARY TABLE IF EXISTS tax_bill_reg");
+        $active_company_id=$this->Hub->acomp('company_id');
+        $this->query("DROP TEMPORARY TABLE IF EXISTS tax_bill_reg");
         $this->query("SET SESSION group_concat_max_len = 1024*5;");
-	$tmp_sql="CREATE TEMPORARY TABLE tax_bill_reg ( INDEX(doc_view_id) ) ENGINE=MyISAM AS ( 
-            SELECT
-                *,
-                ($invalid_condition) AS invalid
-            FROM(    
-            SELECT
-		dl.doc_id,
-		doc_view_id,
-		doc_type_name,
-		CONCAT(icon_name,' ',doc_type_name) doc_type,
-		view_num tax_bill_num,
-		DATE_FORMAT(dl.cstamp,'%d.%m.%Y') cdate,
-		DATE_FORMAT(dvl.tstamp,'%d.%m.%Y') tax_bill_date,
-		IF(company_tax_id,company_name,CONCAT(company_name,' (НЕПЛАТЕЛЬЩИК НАЛОГА)')) company_name,
-		company_tax_id,
-		company_tax_id2,
-                dl.cstamp,
-		(SELECT ROUND(amount,2) FROM acc_trans JOIN document_trans dt USING(trans_id) WHERE dt.doc_id=dl.doc_id AND dt.trans_role='total') total,
-		(SELECT ROUND(amount,2) FROM acc_trans JOIN document_trans dt USING(trans_id) WHERE dt.doc_id=dl.doc_id AND dt.trans_role='vat') vat,
-		(SELECT ROUND(amount,2) FROM acc_trans JOIN document_trans dt USING(trans_id) WHERE dt.doc_id=dl.doc_id AND dt.trans_role='vatless') vatless,
-                (SELECT GROUP_CONCAT(DISTINCT se.party_label) party_label FROM stock_entries se JOIN document_entries de ON se.product_code = de.product_code WHERE de.doc_id = dl.doc_id) as party_labels,
-                COALESCE(dvl.tstamp,dl.cstamp) view_tax_tstamp
-            FROM
-		document_list dl
-		    JOIN
-		document_types USING(doc_type)
-		    JOIN
-		companies_list ON company_id=passive_company_id
-		    LEFT JOIN
-                (SELECT COALESCE(JSON_UNQUOTE(view_efield_values->'$.tax_date'),tstamp) as tstamp, view_num, doc_view_id, doc_id, view_role FROM document_view_list )dvl ON dl.doc_id=dvl.doc_id AND view_role='tax_bill'
-	    WHERE
-		active_company_id='$active_company_id'
-		AND is_commited=1
-		AND $direction_filter
-            HAVING $period_filter
-            )t
-	    HAVING $having
-            ORDER BY invalid DESC, SUBSTRING(cstamp,1,10))";
-	$this->query($tmp_sql);
-	if( $mode=='group_by_comp' ){
-	    $sql="SELECT 
-		    company_name,
-		    company_tax_id,
-		    SUM(total) total,
-		    SUM(vatless) vatless,
-		    SUM(vat) vat 
-		FROM 
-		    tax_bill_reg 
-		GROUP BY company_tax_id
-		LIMIT $rows OFFSET $offset";
-            $sql_sub="SELECT 
+        $tmp_sql="CREATE TEMPORARY TABLE tax_bill_reg ( INDEX(doc_view_id) ) ENGINE=MyISAM AS ( 
+                SELECT
                     *,
-                    COUNT(*) count
+                    ($invalid_condition) AS invalid
+                FROM(    
+                SELECT
+            dl.doc_id,
+            doc_view_id,
+            doc_type_name,
+            CONCAT(icon_name,' ',doc_type_name) doc_type,
+            view_num tax_bill_num,
+            DATE_FORMAT(dl.cstamp,'%d.%m.%Y') cdate,
+            DATE_FORMAT(dvl.tstamp,'%d.%m.%Y') tax_bill_date,
+            IF(company_tax_id,company_name,CONCAT(company_name,' (НЕПЛАТЕЛЬЩИК НАЛОГА)')) company_name,
+            company_tax_id,
+            company_tax_id2,
+                    dl.cstamp,
+            (SELECT ROUND(amount,2) FROM acc_trans JOIN document_trans dt USING(trans_id) WHERE dt.doc_id=dl.doc_id AND dt.trans_role='total') total,
+            (SELECT ROUND(amount,2) FROM acc_trans JOIN document_trans dt USING(trans_id) WHERE dt.doc_id=dl.doc_id AND dt.trans_role='vat') vat,
+            (SELECT ROUND(amount,2) FROM acc_trans JOIN document_trans dt USING(trans_id) WHERE dt.doc_id=dl.doc_id AND dt.trans_role='vatless') vatless,
+                    (SELECT GROUP_CONCAT(DISTINCT se.party_label) party_label FROM stock_entries se JOIN document_entries de ON se.product_code = de.product_code WHERE de.doc_id = dl.doc_id) as party_labels,
+                    COALESCE(dvl.tstamp,dl.cstamp) view_tax_tstamp
                 FROM
-                    (SELECT
+            document_list dl
+                JOIN
+            document_types USING(doc_type)
+                JOIN
+            companies_list ON company_id=passive_company_id
+                LEFT JOIN
+                    (SELECT COALESCE(JSON_UNQUOTE(view_efield_values->'$.tax_date'),tstamp) as tstamp, view_num, doc_view_id, doc_id, view_role FROM document_view_list )dvl ON dl.doc_id=dvl.doc_id AND view_role='tax_bill'
+            WHERE
+            active_company_id='$active_company_id'
+            AND is_commited=1
+            AND $direction_filter
+                HAVING $period_filter
+                )t
+            HAVING $having
+                ORDER BY invalid DESC, SUBSTRING(cstamp,1,10))";
+        $this->query($tmp_sql);
+        if( $mode=='group_by_comp' ){
+            $sql="SELECT 
+                company_name,
+                company_tax_id,
+                SUM(total) total,
+                SUM(vatless) vatless,
+                SUM(vat) vat 
+            FROM 
+                tax_bill_reg 
+            GROUP BY company_tax_id
+            LIMIT $rows OFFSET $offset";
+                $sql_sub="SELECT 
+                        *,
+                        COUNT(*) count
+                    FROM
+                        (SELECT
+                            SUM(total) sum_total,
+                            SUM(vatless) sum_vatless,
+                            SUM(vat) sum_vat
+                        FROM tax_bill_reg
+                        GROUP BY company_tax_id) t";
+            } else {
+            $sql="SELECT * FROM tax_bill_reg LIMIT $rows OFFSET $offset";
+                $sql_sub="SELECT 
+                        COUNT(*) count,
                         SUM(total) sum_total,
                         SUM(vatless) sum_vatless,
                         SUM(vat) sum_vat
-                    FROM tax_bill_reg
-                    GROUP BY company_tax_id) t";
-        } else {
-	    $sql="SELECT * FROM tax_bill_reg LIMIT $rows OFFSET $offset";
-            $sql_sub="SELECT 
-                    COUNT(*) count,
-                    SUM(total) sum_total,
-                    SUM(vatless) sum_vatless,
-                    SUM(vat) sum_vat
-                FROM tax_bill_reg";
-	}
-	$rows=$this->get_list($sql);
+                    FROM tax_bill_reg";
+        }
+        $rows=$this->get_list($sql);
         $sub_totals=$this->get_row($sql_sub);
-	if( !count($rows) ){
-	    $rows=[[]];
-	}
-	return [
-	    'rows'=>$rows,
-	    'sub_totals'=>$sub_totals,
-	    'total'=>$sub_totals->count
-	];
+        if( !count($rows) ){
+            $rows=[[]];
+        }
+        return [
+            'rows'=>$rows,
+            'sub_totals'=>$sub_totals,
+            'total'=>$sub_totals->count
+        ];
     }
     
     public $registryViewGet=['period'=>'string','mode'=>'string','out_type'=>['string','.print']];
     public function registryViewGet($period,$mode,$out_type){
-	$blank_set=$this->Hub->pref('blank_set');
-	$dump=[
-	    'tpl_files'=>$blank_set.'/AccDocumentRegistry.xlsx',
-	    'title'=>"Реестр документов",
-	    'user_data'=>[
-		'email'=>$this->Hub->svar('pcomp')?$this->Hub->svar('pcomp')->company_email:'',
-		'text'=>'Доброго дня'
-	    ],
-	    'view'=>[
-		'period'=>$period,
-		'buy'=>$this->registryFetch($period, $mode,'buy'),
-		'sell'=>$this->registryFetch($period, $mode,'sell')
-	    ]
-	];
-	$ViewManager=$this->Hub->load_model('ViewManager');
-	$ViewManager->store($dump);
-	$ViewManager->outRedirect($out_type);
+        $blank_set=$this->Hub->pref('blank_set');
+        $dump=[
+            'tpl_files'=>$blank_set.'/AccDocumentRegistry.xlsx',
+            'title'=>"Реестр документов",
+            'user_data'=>[
+            'email'=>$this->Hub->svar('pcomp')?$this->Hub->svar('pcomp')->company_email:'',
+            'text'=>'Доброго дня'
+            ],
+            'view'=>[
+            'period'=>$period,
+            'buy'=>$this->registryFetch($period, $mode,'buy'),
+            'sell'=>$this->registryFetch($period, $mode,'sell')
+            ]
+        ];
+        $ViewManager=$this->Hub->load_model('ViewManager');
+        $ViewManager->store($dump);
+        $ViewManager->outRedirect($out_type);
     }
     
     
@@ -179,7 +179,7 @@ class AccountsRegistry extends AccountsCore{
             $data = $this->registryFetch($period, '',$type);
         }
         $data['correction_num'] = $fields->correction_num;
-	$blank = "./application/views/rpt/xml/registry_$type.xml.php";
+	    $blank = "./application/views/rpt/xml/registry_$type.xml.php";
         //$handled_period = $this->handleQuarter($period);
         $acomp_info = $this->Hub->svar('acomp');
         $document_name = $this->generateUniqueFileName($acomp_info, $type, $period);
