@@ -160,12 +160,23 @@ class AccountsCore extends Catalog
 			$is_favorite = "is_favorite";
 		}
 
+		$owner_filter="";
+		$user_level=$this->Hub->svar('user_level');
+		if($user_level!=4){
+			$user_id=$this->Hub->svar('user_id');
+			$owner_filter=" AND (owner_ally_ids IS NULL OR FIND_IN_SET($user_id,owner_ally_ids))";
+		}
+
 		$sql = "SELECT
-		* $balance, $is_favorite is_favorite
-	    FROM 
-		acc_tree at
-		    JOIN curr_list cl ON IF(at.curr_id,cl.curr_id=at.curr_id,cl.curr_id='$default_curr_id')
-            WHERE acc_code='$acc_code'";
+				*
+				 $balance,
+				 $is_favorite is_favorite
+			FROM 
+				acc_tree at
+		    		JOIN 
+				curr_list cl ON IF(at.curr_id,cl.curr_id=at.curr_id,cl.curr_id='$default_curr_id')
+            WHERE 
+				acc_code='$acc_code' $owner_filter";
 		return $this->get_row($sql);
 	}
 
@@ -183,6 +194,14 @@ class AccountsCore extends Catalog
 	public function ledgerFetch(string $acc_code, $idate = '', $fdate = '', $page = 1, $rows = 30, $use_passive_filter = false)
 	{
 		session_write_close();
+
+
+
+
+
+
+
+
 		$idate .= ' 00:00:00';
 		$fdate .= ' 23:59:59';
 

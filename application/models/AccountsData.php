@@ -72,34 +72,69 @@ class AccountsData extends AccountsCore
 	public $accountTreeUpdate = ['branch_id' => 'int', 'field' => '[a-z0-9_]*', 'value' => 'string'];
 	public function accountTreeUpdate($branch_id, $field, $value = '')
 	{
-		$this->Hub->set_level(3);
+		$this->Hub->set_level(4);
 		return $this->treeUpdate('acc_tree', $branch_id, $field, $value);
 	}
 
 	public $balanceTreeDelete = ['branch_id' => 'int'];
 	public function balanceTreeDelete($branch_id)
 	{
-		$this->Hub->set_level(3);
+		$this->Hub->set_level(4);
 		return $this->treeDelete('acc_tree', $branch_id);
 	}
 
+	public function allowedStaffListGet(){
+		$this->Hub->set_level(4);
+		$sql="SELECT 
+				user_id,
+				CONCAT(first_name,' ',middle_name,' ',last_name) full_name
+			FROM
+				user_list
+			WHERE
+				user_is_staff=1
+					AND
+				user_level>=3";
+		$staff_list=$this->get_list( $sql );
+		return $staff_list;
+	}
+
+	//public $allowStaffAccess=['owner_ally_ids'=>'array'];
+	public function allowStaffAccess( int $acc_code, array $owner_ally_ids ){
+		$this->Hub->set_level(4);
+		if( in_array(0, $owner_ally_ids) ){
+			$owner_ally_ids_set=null;
+		} else {
+			$owner_ally_ids_set=implode(',',$owner_ally_ids);
+		}
+		return $this->update('acc_tree', ['owner_ally_ids' => $owner_ally_ids_set], ['acc_code' => $acc_code]);
+	}
+
 	public $accountFavoritesFetch = ['use_passive_filter' => ['int', 0], 'get_client_bank_accs' => ['int', 0]];
-	public function accountFavoritesFetch($use_passive_filter = false, $get_client_bank_accs = false)
-	{
+	public function accountFavoritesFetch($use_passive_filter = false, $get_client_bank_accs = false){
+		session_write_close();
 		if ($use_passive_filter) {
+			//limited access
 			$this->Hub->set_level(1);
 			$acc_list = $this->Hub->pcomp('company_acc_list');
 		} else {
 			$this->Hub->set_level(2);
 			$where = $get_client_bank_accs ? 'use_clientbank=1' : 'is_favorite=1';
+
+			// $user_level=$this->Hub->svar('user_level');
+			// if($user_level!=4){
+			// 	$user_id=$this->Hub->svar('user_id');
+			// 	$where.=" AND (owner_ally_ids IS NULL OR FIND_IN_SET($user_id,owner_ally_ids))";
+			// }
 			$acc_list = $this->get_value("SELECT GROUP_CONCAT(acc_code SEPARATOR ',') FROM acc_tree WHERE $where");
 		}
-		session_write_close();
 		$accs = explode(',', $acc_list);
 		$favs = [];
 		if (count($accs)) {
 			foreach ($accs as $acc_code) {
-				$favs[] = $this->getAccountProperties($acc_code, true, $use_passive_filter);
+				$accProperties=$this->getAccountProperties($acc_code, true, $use_passive_filter);
+				if($accProperties){
+					$favs[] = $accProperties;
+				}
 			}
 		}
 		return $favs;

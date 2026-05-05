@@ -75,7 +75,7 @@
 			toggle: function () {
 				Ledger.acc_props.is_favorite = Ledger.acc_props.is_favorite * 1 ? 0 : 1;
 
-				var props = { acc_code: Ledger.acc_props.acc_code, is_favorite: Ledger.acc_props.is_favorite, use_passive_filter: Ledger.data.passive_filter * 1 };
+				var props = { acc_code: Ledger.acc_props.acc_code, is_favorite: Ledger.acc_props.is_favorite, use_passive_filter: Ledger.data.passive_filter?1:0 };
 				App.post("AccountsData/accountFavoritesToggle/", props, function (ok) {
 					Ledger.fav.init();
 					App.renderTpl('Ledger_acc_props', Ledger.acc_props);
