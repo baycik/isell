@@ -153,18 +153,17 @@ class AccountsCore extends Catalog
 					FROM acc_trans
 					WHERE (acc_debit_code=at.acc_code OR acc_credit_code=at.acc_code) AND active_company_id=$active_company_id $passive_filter)*IF(acc_type='P',1,-1) balance";
 		}
+		$owner_filter="";
 		if ($use_passive_filter) {
 			$acc_list = $this->Hub->pcomp('company_acc_list');
 			$is_favorite = ($acc_list && strpos($acc_list, $acc_code) !== false) ? 1 : 0;
 		} else {
 			$is_favorite = "is_favorite";
-		}
-
-		$owner_filter="";
-		$user_level=$this->Hub->svar('user_level');
-		if($user_level!=4){
-			$user_id=$this->Hub->svar('user_id');
-			$owner_filter=" AND (owner_ally_ids IS NULL OR FIND_IN_SET($user_id,owner_ally_ids))";
+			$user_level=$this->Hub->svar('user_level');
+			if($user_level!=4){
+				$user_id=$this->Hub->svar('user_id');
+				$owner_filter=" AND (owner_ally_ids IS NULL OR FIND_IN_SET($user_id,owner_ally_ids))";
+			}
 		}
 
 		$sql = "SELECT
@@ -194,27 +193,23 @@ class AccountsCore extends Catalog
 	public function ledgerFetch(string $acc_code, $idate = '', $fdate = '', $page = 1, $rows = 30, $use_passive_filter = false)
 	{
 		session_write_close();
-
-
-
-
-
-
-
-
 		$idate .= ' 00:00:00';
 		$fdate .= ' 23:59:59';
 
 		$props = $this->getAccountProperties($acc_code, false, $use_passive_filter);
+		if (!$props) {
+			$this->Hub->msg("Нет доступа");
+			return [];
+		}
+		if (!$acc_code || !$idate || !$fdate ) {
+			return [];
+		}
 		if ($use_passive_filter) {
 			$this->Hub->set_level(1);
 			$props->curr_id = $this->Hub->pcomp('curr_id');
 			$props->curr_symbol = $this->Hub->pcomp('curr_symbol');
 		} else {
 			$this->Hub->set_level(3);
-		}
-		if (!$acc_code || !$idate || !$fdate) {
-			return [];
 		}
 		$using_alt_currency = false;
 		if ($props->curr_id) {
