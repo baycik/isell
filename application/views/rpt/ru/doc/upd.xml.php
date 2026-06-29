@@ -107,6 +107,8 @@ foreach ($this->view->rows as &$row) {
         $row->origin_code='-';
     }
 
+    $row->product_name=htmlentities($row->product_name);
+
     $subcount+=$row->product_quantity;
     $subvatless+=$row->product_sum_vatless;
     $subvat+=$row->product_sum_vat;

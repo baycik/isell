@@ -65,6 +65,13 @@ class PriceManager extends Catalog{
                 ROUND(buy,2) buy,
                 ROUND(GET_BREAKEVEN_PRICE(product_code,$company_id,$usd_ratio,LEFTOVER_CALC(product_code,NOW(),product_quantity,'selfprice')),2) breakeven_price
             FROM
+
+            (SELECT
+                 product_code,
+				 ru,
+				 product_quantity,
+				 buy
+            FROM
                 stock_entries se
                     JOIN
                 stock_tree st ON se.parent_id=st.branch_id
@@ -79,7 +86,7 @@ class PriceManager extends Catalog{
                 $having
             ORDER BY 
                 $sortby $sortdir
-            LIMIT $limit OFFSET $offset";
+            LIMIT $limit OFFSET $offset) ttt";
         return $this->get_list($sql);
     }
 
