@@ -1073,7 +1073,7 @@ class Document extends Data
                     document_list
                         JOIN
                     document_entries de USING(doc_id)
-                        JOIN 
+                        LEFT JOIN 
                     prod_list pl USING(product_code)
                         LEFT JOIN
                     price_list ppl ON de.product_code=ppl.product_code AND label='$pcomp_price_label'
@@ -1367,6 +1367,10 @@ class Document extends Data
 		} else {
 			return false;
 		}
+
+
+
+					pl($sum );
 		/*
 	  1,2,3,8,9 Active
 
@@ -1392,6 +1396,7 @@ class Document extends Data
 		}
 		if ($this->doc('doc_type') == 3) { //SERVICEOUT DOCUMENT
 			$desc = "Акт Оказанных Услуг №$doc_num";
+
 			$this->makeTransaction(361, 703, $sum['total'], $desc, 'total');
 			$this->makeTransaction(703, 441, $sum['vatless'], $desc, 'vatless');
 			$this->makeTransaction(703, 641, $sum['vat'], $desc, 'vat');
