@@ -64,6 +64,7 @@ class StockSectorManager extends Catalog{
         
         $sql_bills_get="
             SELECT
+                dl.is_commited,
                 dl.doc_num,
                 DATE_FORMAT(dl.cstamp,'%d.%m.%Y') doc_date_dot,
                 ct.label pcomp_label,

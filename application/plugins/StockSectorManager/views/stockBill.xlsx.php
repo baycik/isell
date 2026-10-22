@@ -7,3 +7,12 @@
 
         $this->view=$StockSectorManager->viewCreate($this->view->head->doc_id);
     }
+
+    if( isset($this->view->bills) ){
+        foreach($this->view->bills as $bill){
+            $bill->commited_status="";
+            if( $bill->is_commited??null ){
+                $bill->commited_status="ПРОВЕДЕН";
+            }
+        }
+    }
