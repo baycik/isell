@@ -255,7 +255,7 @@ class KKMIntegrator extends PluginBase{
             // Печатать Слип-чек после чека (а не в чеке)
             'PrintSlipAfterCheck'=>false,
             // Печатать Слип-чек дополнительно для кассира (основной слип-чек уже будет печататся в составе чека)
-            'PrintSlipForCashier'=>true,
+            'PrintSlipForCashier'=>false,
             //Если это чек возврата то возможны два поля для отмены транзакции (если не указано то по эквайрингу будет не отмена а возврат оплаты)
             'RRNCode'=>"", // RRNCode из операции эквайринга. Только для отмены оплаты! Для Оплаты или возврата оплаты не заполнять!
             'AuthorizationCode'=>"", // AuthorizationCode из операции эквайринга. Только для отмены оплаты! Для Оплаты или возврата оплаты не заполнять!
@@ -712,7 +712,7 @@ class KKMIntegrator extends PluginBase{
             'NumDevice'=>0,
             'CashierName'=>$cashier->user_sign,
             'CashierVATIN'=>$cashier->user_tax_id,
-            'NotPrint'=>false,
+            'NotPrint'=>true,
             'IdDevice'=>"",
             'IdCommand'=>$this->idGenerate()
         ];
@@ -729,7 +729,7 @@ class KKMIntegrator extends PluginBase{
             'NumDevice'=>0,
             'CashierName'=>$cashier->user_sign,
             'CashierVATIN'=>$cashier->user_tax_id,
-            'NotPrint'=>false,
+            'NotPrint'=>true,
             'IdDevice'=>"",
             'IdCommand'=>$this->idGenerate()
         ];
