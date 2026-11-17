@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{$v->head->title}</title>
+    <style>
+        .receipt-wrapper {
+            width: 100%;
+            padding: 10px;
+            max-width: 20cm;
+        }
+
+        /* Заголовок документа */
+        .doc-header {
+            text-align: center;
+            
+            padding: 10px;
+        }
+
+        .doc-title {
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 2em;
+        }
+
+        .doc-subtitle {
+            margin-top: 2px;
+            font-size: 1.5em;
+        }
+
+        .bill-card {
+            border-bottom: 1px solid #000;
+            margin-bottom: 6px;
+            page-break-inside: avoid;
+            text-align: left;
+            background-color: blanchedalmond;
+            margin-top: 30px;
+        }
+
+        .bill-row-top {
+            display: flex;
+        }
+        .bill-row-bottom {
+            display: flex;
+        }
+
+
+
+
+
+
+        .bill-row-top > div {
+            padding: 3px 4px;
+        }
+
+        .bill-status { width: 25%; text-transform: uppercase; background-color: #000; color:#fff }
+        .bill-num    { width: 25%; }
+        .bill-date   { width: 25%; }
+        .bill-count  { width: 25%; text-align: right; }
+
+
+        .bill-row-bottom > div {
+            padding: 3px 4px;
+            word-break: break-word;
+        }
+
+        .bill-client  { width: 50%; font-weight: bold; }
+        .bill-comment { width: 50%; font-style: italic; }
+
+        .items-section {
+            margin-top: 30px;
+        }
+
+        .item-card {
+            border-bottom: 2px solid #000;
+            margin-bottom: 5px;
+            page-break-inside: avoid;
+        }
+
+        .item-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 6px;
+            padding-top: 10px;
+        }
+
+        .item-card-header > div > div {
+            padding: 2px 3px;
+        }
+
+        
+
+
+
+
+        .item-name {
+            text-align: left;
+            word-break: break-word;
+            flex: 1;
+        }
+
+        .item-qty {
+            font-weight: bold;
+            font-size: 1.2em;
+            white-space: nowrap;
+            padding: 10px;
+            background-color: #000;
+            color: #fff;
+        }
+
+        .item-bottom-header {
+            display: flex;
+            color: #000;
+            text-align: left;
+            
+
+        }
+        .item-card-header > div {
+            font-weight: bold;
+            padding: 2px 3px;
+            border-bottom:#000 solid 3px;
+        }
+
+        .item-bottom {
+            display: flex;
+            color: #000;
+            text-align: left;
+            
+            background-color: lightskyblue;
+        }
+
+        .item-bottom > div {
+            padding: 2px 3px;
+        }
+
+        .item-bottom > div:last-child {
+            border-right: none;
+        }
+
+        .col-sector { 
+            width: 25%;
+        }
+        .col-order  { 
+            width: 25%;
+            text-align: right;
+         }
+        .col-code   {
+            width: 25%;
+            text-align: right;
+        }
+        .col-stock  {
+            width: 25%;
+            text-align: right;
+        }
+
+        .doc-footer {
+            margin-top: 10px;
+            padding-top: 5px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        @media (min-width: 15cm){/** A4*/
+            .bill-card {
+                border: 1px #000 solid;
+                display: flex;
+            }
+            .bill-row-top {
+                width: 50%;
+            }
+            .bill-row-bottom {
+                width: 50%;
+            }
+
+
+            .item-card-header{
+                display: flex;
+                border: 1px #000 solid;
+            }
+            .item-card-header .item-top,.item-card-header .item-bottom{
+                background-color: lightskyblue
+            }
+            .item-card{
+                display: flex;
+                margin-bottom: 0px;
+            }
+            .item-card .col-sector{
+                font-size:0.8em;
+            }
+            .item-top{
+                width: 50%;
+                padding-top: 0px;
+                border-left:1px #000 solid;
+            }
+            .item-bottom{
+                width: 50%;
+                background-color: #fff;
+                border-left:1px #000 solid;
+            }
+        }
+        @media (max-width: 10cm){/** 80mm*/
+            .receipt-wrapper {
+                font-size:30px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="page receipt-wrapper">
+
+    <div class="doc-header">
+        <div class="doc-title">{$v->head->title}</div>
+        <div class="doc-subtitle">Складская накладная от {$v->head->date} г.</div>
+    </div>
+
+    {loop="$v->bills"}
+    <div class="bill-card">
+        <div class="bill-row-top">
+            <div class="bill-status">{if="isset($value->status)"}{$value->status}{else}ПРОВЕДЕН{/if}</div>
+            <div class="bill-num">№ {$value->doc_num}</div>
+            <div class="bill-date">{$value->doc_date_dot}</div>
+            <div class="bill-count">{$value->doc_entry_count} поз.</div>
+        </div>
+        <div class="bill-row-bottom">
+            <div class="bill-client">Клиент: {$value->pcomp_label}</div>
+            <div class="bill-comment">{$value->doc_comment}</div>
+        </div>
+    </div>
+    {/loop}
+
+    <div class="items-section">
+        <div class="item-card-header">
+            <div class="item-bottom">
+                <div class="col-sector" title="Сектор">
+                    <span class="lbl">Сектор</span>
+                </div>
+                <div class="col-order" title="Заказ №">
+                    <span class="lbl">Заказ №</span>
+                </div>
+                <div class="col-code" title="Код">
+                    <span class="lbl">Код</span>
+                </div>
+                <div class="col-stock" title="Остаток">
+                    <span class="lbl">Остаток</span>
+                </div>
+            </div>
+            <div class="item-top">
+                <div>Название</div>
+                <div>Количество</div>
+            </div>
+        </div>
+        {loop="$v->rows"}
+        <div class="item-card">
+            <div class="item-bottom">
+                <div class="col-sector" title="Сектор">
+                    {$value->product_sector}
+                </div>
+                <div class="col-order" title="Заказ №">
+                    {$value->doc_num}
+                </div>
+                <div class="col-code" title="Код">
+                    {$value->product_code}
+                </div>
+                <div class="col-stock" title="Остаток">
+                    {$value->product_leftover}
+                </div>
+            </div>
+            <div class="item-top">
+                <div class="item-name">{$value->product_name}</div>
+                <div class="item-qty">{$value->product_quantity} {$value->product_unit}</div>
+            </div>
+        </div>
+        {/loop}
+    </div>
+    <div class="doc-footer">
+        <div>Выписал: <strong>{$v->head->issuer}</strong></div>
+    </div>
+</div>
+
+</body>
+</html>

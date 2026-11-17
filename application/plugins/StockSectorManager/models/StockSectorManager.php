@@ -103,21 +103,24 @@ class StockSectorManager extends Catalog{
     }
     
     
-    public function viewOut( string $doc_ids, string $out_type='.print', string $title ){
+    public function viewOut( string $doc_ids, ?string $out_type, string $title ){
+        if(!$out_type){
+            $out_type='.print';
+        }
         $this->Hub->set_level(2);
         $view=$this->viewCreate( $doc_ids, $title );
-	$dump=[
-	    'tpl_files'=>'../../plugins/StockSectorManager/views/stockBill.xlsx',
-	    'title'=>"Сводная складская накладная",
-	    'user_data'=>[
-		'email'=>$this->Hub->svar('pcomp')?$this->Hub->svar('pcomp')->company_email:'',
-		'text'=>'Доброго дня'
-	    ],
-	    'view'=>$view
-	];
-	$ViewManager=$this->Hub->load_model('ViewManager');
-	$ViewManager->store($dump);
-	$ViewManager->outRedirect($out_type);
+        $dump=[
+                'tpl_files'=>'../../plugins/StockSectorManager/views/stockBill.html',
+                'title'=>"Сводная складская накладная",
+                'user_data'=>[
+                'email'=>$this->Hub->svar('pcomp')?$this->Hub->svar('pcomp')->company_email:'',
+                'text'=>'Доброго дня'
+            ],
+            'view'=>$view
+        ];
+        $ViewManager=$this->Hub->load_model('ViewManager');
+        $ViewManager->store($dump);
+        $ViewManager->outRedirect($out_type);
     }
     
 }
