@@ -121,6 +121,8 @@ class StockSectorManager extends Catalog{
         $ViewManager=$this->Hub->load_model('ViewManager');
         $ViewManager->store($dump);
         $ViewManager->outRedirect($out_type);
+
+        
     }
     
 }
