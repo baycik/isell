@@ -256,6 +256,12 @@
             <div class="bill-client">Клиент: {$value->pcomp_label}</div>
             <div class="bill-comment">{$value->doc_comment}</div>
         </div>
+
+        {if="$value->doc_type==2"}
+            <div class="bill-row-bottom">
+                <div class="bill-status" style="width: 100%; text-align: center;">ПРИХОДАЯ НАКЛАДНАЯ</div>
+            </div>
+        {/if}
     </div>
     {/loop}
 
