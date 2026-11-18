@@ -14,7 +14,6 @@
         /* Заголовок документа */
         .doc-header {
             text-align: center;
-            
             padding: 10px;
         }
 
@@ -31,19 +30,19 @@
         }
 
         .bill-card {
-            border-bottom: 1px solid #000;
-            margin-bottom: 6px;
+            border: 1px solid #000;
             page-break-inside: avoid;
             text-align: left;
-            background-color: blanchedalmond;
-            margin-top: 30px;
         }
 
         .bill-row-top {
             display: flex;
+            border-top: 3px solid #000;
+            background-color: lightskyblue;
         }
         .bill-row-bottom {
             display: flex;
+            
         }
 
 
@@ -70,45 +69,43 @@
         .bill-comment { width: 50%; font-style: italic; }
 
         .items-section {
-            margin-top: 30px;
+            margin-top: 70px;
         }
 
         .item-card {
-            border-bottom: 2px solid #000;
+            border-bottom: 4px solid #000;
             margin-bottom: 5px;
             page-break-inside: avoid;
         }
-
-        .item-top {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            gap: 6px;
-            padding-top: 10px;
-        }
-
         .item-card-header > div > div {
             padding: 2px 3px;
         }
 
-        
-
-
-
-
+        .item-top {
+            width:100%;
+            display: grid;
+            grid-template-columns: 8fr 1fr 1fr;
+            padding-top: 10px;
+        }
         .item-name {
             text-align: left;
             word-break: break-word;
+            font-size: 1.2em;
             flex: 1;
         }
 
         .item-qty {
             font-weight: bold;
-            font-size: 1.2em;
+            font-size: 1.5em;
             white-space: nowrap;
             padding: 10px;
             background-color: #000;
             color: #fff;
+        }
+
+        .item-check {
+            border: 5px solid #000;
+            padding: 10px;
         }
 
         .item-bottom-header {
@@ -125,34 +122,29 @@
         }
 
         .item-bottom {
-            display: flex;
+            width:100%;
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
             color: #000;
             text-align: left;
-            
-            background-color: lightskyblue;
         }
 
         .item-bottom > div {
             padding: 2px 3px;
         }
-
-        .item-bottom > div:last-child {
-            border-right: none;
+        .item-counter{
+            display: inline-block;
+            font-weight: bold;
+            font-size: 1.2em;
         }
 
-        .col-sector { 
-            width: 25%;
-        }
         .col-order  { 
-            width: 25%;
             text-align: right;
          }
         .col-code   {
-            width: 25%;
             text-align: right;
         }
         .col-stock  {
-            width: 25%;
             text-align: right;
         }
 
@@ -166,39 +158,70 @@
         @media (min-width: 15cm){/** A4*/
             .bill-card {
                 border: 1px #000 solid;
-                display: flex;
             }
             .bill-row-top {
-                width: 50%;
+                border-top: none;
+                width: 100%;
+                background-color: cornsilk;
             }
             .bill-row-bottom {
-                width: 50%;
+                border: none;
+                width: 100%;
+                background-color: cornsilk;
             }
 
 
             .item-card-header{
-                display: flex;
                 border: 1px #000 solid;
             }
+            .item-card-header > div{
+                border: none;
+            }
             .item-card-header .item-top,.item-card-header .item-bottom{
-                background-color: lightskyblue
+                background-color: lightskyblue;
+                
+                border-bottom:1px #000 solid;
             }
             .item-card{
-                display: flex;
                 margin-bottom: 0px;
+                border-bottom: 1px solid #000;
+                border-right: 1px solid #000;
             }
             .item-card .col-sector{
                 font-size:0.8em;
             }
             .item-top{
-                width: 50%;
-                padding-top: 0px;
+                width: auto;
+                padding-top: 10px;
                 border-left:1px #000 solid;
             }
             .item-bottom{
-                width: 50%;
+                width: auto;
                 background-color: #fff;
                 border-left:1px #000 solid;
+            }
+
+
+
+
+            .item-name {
+                text-align: left;
+                word-break: break-word;
+                flex: 1;
+            }
+
+            .item-qty {
+                font-weight: bold;
+                font-size: 1.5em;
+                white-space: nowrap;
+                padding: 5px;
+                background: none;
+                color: #000;
+            }
+
+            .item-check {
+                border: 1px solid #000;
+                padding: 10px;
             }
         }
         @media (max-width: 10cm){/** 80mm*/
@@ -220,7 +243,11 @@
     {loop="$v->bills"}
     <div class="bill-card">
         <div class="bill-row-top">
-            <div class="bill-status">{if="isset($value->status)"}{$value->status}{else}ПРОВЕДЕН{/if}</div>
+            {if="isset($value->commited_status) && $value->commited_status"}
+                <div class="bill-status">{$value->commited_status}</div>
+            {else}
+                <div class="bill-num">-</div>
+            {/if}
             <div class="bill-num">№ {$value->doc_num}</div>
             <div class="bill-date">{$value->doc_date_dot}</div>
             <div class="bill-count">{$value->doc_entry_count} поз.</div>
@@ -249,8 +276,9 @@
                 </div>
             </div>
             <div class="item-top">
-                <div>Название</div>
+                <div class="item-name">Название</div>
                 <div>Количество</div>
+                <div>✓</div>
             </div>
         </div>
         {loop="$v->rows"}
@@ -270,8 +298,9 @@
                 </div>
             </div>
             <div class="item-top">
-                <div class="item-name">{$value->product_name}</div>
-                <div class="item-qty">{$value->product_quantity} {$value->product_unit}</div>
+                <div class="item-name"><div class="item-counter">{$counter+1}.</div> {$value->product_name} ({$value->product_unit})</div>
+                <div class="item-qty">{$value->product_quantity}</div>
+                <div class="item-check"></div>
             </div>
         </div>
         {/loop}
