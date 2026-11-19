@@ -1,9 +1,4 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{$v->head->title}</title>
+
     <style>
         .receipt-wrapper {
             width: 100%;
@@ -74,8 +69,7 @@
 
         .item-card {
             border-bottom: 4px solid #000;
-            margin-bottom: 5px;
-            page-break-inside: avoid;
+            break-inside: avoid;
         }
         .item-card-header > div > div {
             padding: 2px 3px;
@@ -143,6 +137,8 @@
          }
         .col-code   {
             text-align: right;
+            font-size:1.2em;
+            font-weight: bold;
         }
         .col-stock  {
             text-align: right;
@@ -227,6 +223,14 @@
         @media (max-width: 10cm){/** 80mm*/
             .receipt-wrapper {
                 font-size:30px;
+                margin-right: 10px;
+            }
+            .item-card  > div > div{
+                padding-top: 10px;
+            }
+            @page{
+                size: 80mm auto;
+                margin:0;
             }
         }
     </style>
@@ -271,11 +275,11 @@
                 <div class="col-sector" title="Сектор">
                     <span class="lbl">Сектор</span>
                 </div>
-                <div class="col-order" title="Заказ №">
-                    <span class="lbl">Заказ №</span>
-                </div>
                 <div class="col-code" title="Код">
                     <span class="lbl">Код</span>
+                </div>
+                <div class="col-order" title="Заказ №">
+                    <span class="lbl">Заказ №</span>
                 </div>
                 <div class="col-stock" title="Остаток">
                     <span class="lbl">Остаток</span>
@@ -293,11 +297,11 @@
                 <div class="col-sector" title="Сектор">
                     {$value->product_sector}
                 </div>
-                <div class="col-order" title="Заказ №">
-                    {$value->doc_num}
-                </div>
                 <div class="col-code" title="Код">
                     {$value->product_code}
+                </div>
+                <div class="col-order" title="Заказ №">
+                    {$value->doc_num}
                 </div>
                 <div class="col-stock" title="Остаток">
                     {$value->product_leftover}
@@ -315,6 +319,3 @@
         <div>Выписал: <strong>{$v->head->issuer}</strong></div>
     </div>
 </div>
-
-</body>
-</html>
